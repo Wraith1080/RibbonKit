@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Input;
 using System.Windows.Media;
 using RibbonKit.Layout;
 
@@ -16,9 +17,13 @@ namespace RibbonKit.Controls;
 /// </code>
 /// </summary>
 [TemplatePart(Name = MenuHostPartName, Type = typeof(UIElement))]
+[TemplatePart(Name = TogglePartName, Type = typeof(ButtonBase))]
+[TemplatePart(Name = PopupPartName, Type = typeof(Popup))]
 public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
 {
     private const string MenuHostPartName = "PART_MenuHost";
+    private const string TogglePartName = "PART_Toggle";
+    private const string PopupPartName = "PART_Popup";
 
     /// <summary>Identifies the <see cref="Header"/> dependency property.</summary>
     public static readonly DependencyProperty HeaderProperty =
@@ -87,6 +92,9 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
             new FrameworkPropertyMetadata(null, OnScreenTipChanged));
 
     private UIElement? _menuHost;
+    private ButtonBase? _toggle;
+    private Popup? _popup;
+    private long _popupClosedTick;
 
     static RibbonDropDownButton()
     {
@@ -162,10 +170,49 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
             _menuHost.RemoveHandler(ButtonBase.ClickEvent, new RoutedEventHandler(OnMenuItemClicked));
         }
 
+        if (_toggle is not null)
+        {
+            _toggle.PreviewMouseLeftButtonDown -= OnTogglePreviewMouseLeftButtonDown;
+        }
+
+        if (_popup is not null)
+        {
+            _popup.Closed -= OnPopupClosed;
+        }
+
         base.OnApplyTemplate();
 
         _menuHost = GetTemplateChild(MenuHostPartName) as UIElement;
         _menuHost?.AddHandler(ButtonBase.ClickEvent, new RoutedEventHandler(OnMenuItemClicked));
+
+        _toggle = GetTemplateChild(TogglePartName) as ButtonBase;
+        if (_toggle is not null)
+        {
+            _toggle.PreviewMouseLeftButtonDown += OnTogglePreviewMouseLeftButtonDown;
+        }
+
+        _popup = GetTemplateChild(PopupPartName) as Popup;
+        if (_popup is not null)
+        {
+            _popup.Closed += OnPopupClosed;
+        }
+    }
+
+    private void OnPopupClosed(object? sender, EventArgs e)
+    {
+        _popupClosedTick = Environment.TickCount64;
+    }
+
+    private void OnTogglePreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        // Pressing the toggle while the dropdown is open closes the popup (it holds
+        // mouse capture) BEFORE this event reaches the toggle — which would then
+        // re-toggle and reopen. Swallow presses that arrive right after our own popup
+        // closed so the click means "close", not "close and reopen".
+        if (!IsDropDownOpen && Environment.TickCount64 - _popupClosedTick < 250)
+        {
+            e.Handled = true;
+        }
     }
 
     void IRibbonSizeAware.ApplySizeState(RibbonGroupSizeState state) => ApplySizeStateCore(state);

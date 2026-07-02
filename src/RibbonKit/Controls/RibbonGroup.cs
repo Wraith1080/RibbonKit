@@ -109,6 +109,7 @@ public class RibbonGroup : HeaderedItemsControl
     private Popup? _popup;
     private ToggleButton? _collapsedButton;
     private ButtonBase? _dialogLauncher;
+    private long _popupClosedTick;
 
     static RibbonGroup()
     {
@@ -201,6 +202,11 @@ public class RibbonGroup : HeaderedItemsControl
             _dialogLauncher.Click -= OnDialogLauncherClick;
         }
 
+        if (_collapsedButton is not null)
+        {
+            _collapsedButton.PreviewMouseLeftButtonDown -= OnCollapsedButtonPreviewMouseLeftButtonDown;
+        }
+
         base.OnApplyTemplate();
 
         _normalHost = GetTemplateChild(NormalHostPartName) as Decorator;
@@ -218,6 +224,22 @@ public class RibbonGroup : HeaderedItemsControl
         if (_dialogLauncher is not null)
         {
             _dialogLauncher.Click += OnDialogLauncherClick;
+        }
+
+        if (_collapsedButton is not null)
+        {
+            _collapsedButton.PreviewMouseLeftButtonDown += OnCollapsedButtonPreviewMouseLeftButtonDown;
+        }
+    }
+
+    private void OnCollapsedButtonPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        // Same capture quirk as dropdown buttons: pressing the collapsed button while
+        // its flyout is open closes the popup first, and the click would reopen it.
+        // Swallow presses arriving right after our own popup closed.
+        if (_popup?.IsOpen != true && Environment.TickCount64 - _popupClosedTick < 250)
+        {
+            e.Handled = true;
         }
     }
 
@@ -273,6 +295,8 @@ public class RibbonGroup : HeaderedItemsControl
 
     private void OnPopupClosed(object? sender, EventArgs e)
     {
+        _popupClosedTick = Environment.TickCount64;
+
         // Move the content back into the ribbon so it is ready when the group expands.
         if (_popupHost?.Child is { } content && _normalHost is not null)
         {

@@ -15,8 +15,8 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Primary" Color="#1A1A1A" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Secondary" Color="#616161" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Accent" Color="#0F6CBD" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.HoverBackground" Color="#E9E9E9" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.PressedBackground" Color="#E0E0E0" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.HoverBackground" Color="#E6E6E6" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.PressedBackground" Color="#DADADA" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CheckedBackground" Color="#CDE0F3" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CheckedHoverBackground" Color="#BDD5EC" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverBackground" Color="#EAEAEA" />
@@ -31,8 +31,8 @@
          Ribbon
          ============================================================ -->
     <Style TargetType="{x:Type controls:Ribbon}">
-        <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Ribbon.Background}" />
-        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+        <Setter Property="Background" Value="{StaticResource RibbonKit.Brushes.Ribbon.Background}" />
+        <Setter Property="Foreground" Value="{StaticResource RibbonKit.Brushes.Text.Primary}" />
         <Setter Property="FontFamily" Value="Segoe UI" />
         <Setter Property="FontSize" Value="12" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
@@ -93,7 +93,7 @@
                                                         <Grid>
                                                             <Path x:Name="ChevronUp"
                                                                   Data="M0,3.5 L3.5,0 L7,3.5"
-                                                                  Stroke="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
+                                                                  Stroke="{StaticResource RibbonKit.Brushes.Text.Secondary}"
                                                                   StrokeThickness="1.5"
                                                                   StrokeStartLineCap="Round"
                                                                   StrokeEndLineCap="Round"
@@ -101,7 +101,7 @@
                                                                   VerticalAlignment="Center" />
                                                             <Path x:Name="ChevronDown"
                                                                   Data="M0,0 L3.5,3.5 L7,0"
-                                                                  Stroke="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
+                                                                  Stroke="{StaticResource RibbonKit.Brushes.Text.Secondary}"
                                                                   StrokeThickness="1.5"
                                                                   StrokeStartLineCap="Round"
                                                                   StrokeEndLineCap="Round"
@@ -113,7 +113,7 @@
                                                     <ControlTemplate.Triggers>
                                                         <Trigger Property="IsMouseOver" Value="True">
                                                             <Setter TargetName="Chrome" Property="Background"
-                                                                    Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
+                                                                    Value="{StaticResource RibbonKit.Brushes.Control.HoverBackground}" />
                                                         </Trigger>
                                                         <Trigger Property="IsChecked" Value="True">
                                                             <Setter TargetName="ChevronUp" Property="Visibility" Value="Collapsed" />
@@ -129,8 +129,8 @@
                         </Grid>
                         <Border x:Name="ContentHost"
                                 Grid.Row="1"
-                                Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
-                                BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}"
+                                Background="{StaticResource RibbonKit.Brushes.Ribbon.ContentBackground}"
+                                BorderBrush="{StaticResource RibbonKit.Brushes.Ribbon.Border}"
                                 BorderThickness="0,1,0,1">
                             <ContentPresenter ContentSource="SelectedContent" Margin="6,2" />
                         </Border>
@@ -151,7 +151,7 @@
          Office 2024 accent underline
          ============================================================ -->
     <Style TargetType="{x:Type controls:RibbonTab}">
-        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+        <Setter Property="Foreground" Value="{StaticResource RibbonKit.Brushes.Text.Primary}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type controls:RibbonTab}">
@@ -171,18 +171,18 @@
                                    RadiusY="1.5"
                                    Margin="10,0"
                                    VerticalAlignment="Bottom"
-                                   Fill="{DynamicResource RibbonKit.Brushes.Accent}"
+                                   Fill="{StaticResource RibbonKit.Brushes.Accent}"
                                    Visibility="Collapsed" />
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="HeaderChrome" Property="Background"
-                                    Value="{DynamicResource RibbonKit.Brushes.Tab.HoverBackground}" />
+                                    Value="{StaticResource RibbonKit.Brushes.Tab.HoverBackground}" />
                         </Trigger>
                         <Trigger Property="IsSelected" Value="True">
                             <Setter TargetName="SelectionIndicator" Property="Visibility" Value="Visible" />
                             <Setter Property="Foreground"
-                                    Value="{DynamicResource RibbonKit.Brushes.Accent}" />
+                                    Value="{StaticResource RibbonKit.Brushes.Accent}" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.4" />
@@ -254,7 +254,7 @@
                                     <ContentPresenter ContentSource="Header"
                                                       HorizontalAlignment="Center"
                                                       TextElement.FontSize="11"
-                                                      TextElement.Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
+                                                      TextElement.Foreground="{StaticResource RibbonKit.Brushes.Text.Secondary}" />
                                     <!-- ↘ dialog launcher, shown via ShowDialogLauncher -->
                                     <Button x:Name="PART_DialogLauncher"
                                             HorizontalAlignment="Right"
@@ -273,7 +273,7 @@
                                                                     CornerRadius="2"
                                                                     SnapsToDevicePixels="True">
                                                                 <Path Data="M1,1 H3.5 M1,1 V3.5 M2.5,2.5 L7,7 M7,7 V4.5 M7,7 H4.5"
-                                                                      Stroke="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
+                                                                      Stroke="{StaticResource RibbonKit.Brushes.Text.Secondary}"
                                                                       StrokeThickness="1.2"
                                                                       StrokeStartLineCap="Round"
                                                                       StrokeEndLineCap="Round"
@@ -283,7 +283,7 @@
                                                             <ControlTemplate.Triggers>
                                                                 <Trigger Property="IsMouseOver" Value="True">
                                                                     <Setter TargetName="Chrome" Property="Background"
-                                                                            Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
+                                                                            Value="{StaticResource RibbonKit.Brushes.Control.HoverBackground}" />
                                                                 </Trigger>
                                                             </ControlTemplate.Triggers>
                                                         </ControlTemplate>
@@ -306,7 +306,7 @@
                                 <Style TargetType="{x:Type ToggleButton}">
                                     <Setter Property="Focusable" Value="True" />
                                     <Setter Property="Foreground"
-                                            Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+                                            Value="{StaticResource RibbonKit.Brushes.Text.Primary}" />
                                     <Setter Property="Template">
                                         <Setter.Value>
                                             <ControlTemplate TargetType="{x:Type ToggleButton}">
@@ -320,15 +320,15 @@
                                                 <ControlTemplate.Triggers>
                                                     <Trigger Property="IsMouseOver" Value="True">
                                                         <Setter TargetName="Chrome" Property="Background"
-                                                                Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
+                                                                Value="{StaticResource RibbonKit.Brushes.Control.HoverBackground}" />
                                                     </Trigger>
                                                     <Trigger Property="IsChecked" Value="True">
                                                         <Setter TargetName="Chrome" Property="Background"
-                                                                Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
+                                                                Value="{StaticResource RibbonKit.Brushes.Control.PressedBackground}" />
                                                     </Trigger>
                                                     <Trigger Property="IsPressed" Value="True">
                                                         <Setter TargetName="Chrome" Property="Background"
-                                                                Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
+                                                                Value="{StaticResource RibbonKit.Brushes.Control.PressedBackground}" />
                                                     </Trigger>
                                                 </ControlTemplate.Triggers>
                                             </ControlTemplate>
@@ -345,7 +345,7 @@
                                            TextAlignment="Center"
                                            Margin="0,4,0,0" />
                                 <Path Data="M0,0 L3.5,3.5 L7,0"
-                                      Stroke="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
+                                      Stroke="{StaticResource RibbonKit.Brushes.Text.Secondary}"
                                       StrokeThickness="1.5"
                                       StrokeStartLineCap="Round"
                                       StrokeEndLineCap="Round"
@@ -362,8 +362,8 @@
                                PlacementTarget="{Binding ElementName=PART_CollapsedButton}"
                                IsOpen="{Binding IsChecked, ElementName=PART_CollapsedButton, Mode=TwoWay}">
                             <Border x:Name="PART_PopupHost"
-                                    Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
-                                    BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
+                                    Background="{StaticResource RibbonKit.Brushes.Ribbon.ContentBackground}"
+                                    BorderBrush="{StaticResource RibbonKit.Brushes.ScreenTip.Border}"
                                     BorderThickness="1"
                                     CornerRadius="6"
                                     Padding="6,4"
@@ -377,7 +377,7 @@
                         <Rectangle Grid.Column="1"
                                    Width="1"
                                    Margin="1,10"
-                                   Fill="{DynamicResource RibbonKit.Brushes.Group.Separator}" />
+                                   Fill="{StaticResource RibbonKit.Brushes.Group.Separator}" />
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="SizeState" Value="Collapsed">
@@ -397,7 +397,7 @@
          RibbonButton — Large / Medium / Small layouts via triggers
          ============================================================ -->
     <Style TargetType="{x:Type controls:RibbonButton}">
-        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+        <Setter Property="Foreground" Value="{StaticResource RibbonKit.Brushes.Text.Primary}" />
         <Setter Property="Focusable" Value="True" />
         <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
         <Setter Property="VerticalAlignment" Value="Stretch" />
@@ -467,11 +467,11 @@
                         </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="Chrome" Property="Background"
-                                    Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
+                                    Value="{StaticResource RibbonKit.Brushes.Control.HoverBackground}" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
                             <Setter TargetName="Chrome" Property="Background"
-                                    Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
+                                    Value="{StaticResource RibbonKit.Brushes.Control.PressedBackground}" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.4" />
@@ -486,15 +486,15 @@
          RibbonScreenTip — rich tooltip
          ============================================================ -->
     <Style TargetType="{x:Type controls:RibbonScreenTip}">
-        <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.ScreenTip.Background}" />
-        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+        <Setter Property="Background" Value="{StaticResource RibbonKit.Brushes.ScreenTip.Background}" />
+        <Setter Property="Foreground" Value="{StaticResource RibbonKit.Brushes.Text.Primary}" />
         <Setter Property="FontFamily" Value="Segoe UI" />
         <Setter Property="FontSize" Value="12" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type controls:RibbonScreenTip}">
                     <Border Background="{TemplateBinding Background}"
-                            BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
+                            BorderBrush="{StaticResource RibbonKit.Brushes.ScreenTip.Border}"
                             BorderThickness="1"
                             CornerRadius="4"
                             Padding="10,8"
@@ -508,7 +508,7 @@
                                        Text="{TemplateBinding Description}"
                                        TextWrapping="Wrap"
                                        Margin="0,4,0,0"
-                                       Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
+                                       Foreground="{StaticResource RibbonKit.Brushes.Text.Secondary}" />
                         </StackPanel>
                     </Border>
                     <ControlTemplate.Triggers>
@@ -529,7 +529,7 @@
          RibbonToggleButton — like RibbonButton + checked accent tint
          ============================================================ -->
     <Style TargetType="{x:Type controls:RibbonToggleButton}">
-        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+        <Setter Property="Foreground" Value="{StaticResource RibbonKit.Brushes.Text.Primary}" />
         <Setter Property="Focusable" Value="True" />
         <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
         <Setter Property="VerticalAlignment" Value="Stretch" />
@@ -594,15 +594,15 @@
                         </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="Chrome" Property="Background"
-                                    Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
+                                    Value="{StaticResource RibbonKit.Brushes.Control.HoverBackground}" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
                             <Setter TargetName="Chrome" Property="Background"
-                                    Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
+                                    Value="{StaticResource RibbonKit.Brushes.Control.PressedBackground}" />
                         </Trigger>
                         <Trigger Property="IsChecked" Value="True">
                             <Setter TargetName="Chrome" Property="Background"
-                                    Value="{DynamicResource RibbonKit.Brushes.Control.CheckedBackground}" />
+                                    Value="{StaticResource RibbonKit.Brushes.Control.CheckedBackground}" />
                         </Trigger>
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
@@ -610,7 +610,7 @@
                                 <Condition Property="IsMouseOver" Value="True" />
                             </MultiTrigger.Conditions>
                             <Setter TargetName="Chrome" Property="Background"
-                                    Value="{DynamicResource RibbonKit.Brushes.Control.CheckedHoverBackground}" />
+                                    Value="{StaticResource RibbonKit.Brushes.Control.CheckedHoverBackground}" />
                         </MultiTrigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.4" />
@@ -625,7 +625,7 @@
          RibbonDropDownButton — button that opens a menu flyout
          ============================================================ -->
     <Style TargetType="{x:Type controls:RibbonDropDownButton}">
-        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+        <Setter Property="Foreground" Value="{StaticResource RibbonKit.Brushes.Text.Primary}" />
         <Setter Property="Focusable" Value="False" />
         <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
         <Setter Property="VerticalAlignment" Value="Stretch" />
@@ -651,11 +651,11 @@
                                                 <ControlTemplate.Triggers>
                                                     <Trigger Property="IsMouseOver" Value="True">
                                                         <Setter TargetName="Chrome" Property="Background"
-                                                                Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
+                                                                Value="{StaticResource RibbonKit.Brushes.Control.HoverBackground}" />
                                                     </Trigger>
                                                     <Trigger Property="IsChecked" Value="True">
                                                         <Setter TargetName="Chrome" Property="Background"
-                                                                Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
+                                                                Value="{StaticResource RibbonKit.Brushes.Control.PressedBackground}" />
                                                     </Trigger>
                                                 </ControlTemplate.Triggers>
                                             </ControlTemplate>
@@ -679,7 +679,7 @@
                                                MaxWidth="76"
                                                Margin="0,4,0,0" />
                                     <Path Data="M0,0 L3.5,3.5 L7,0"
-                                          Stroke="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
+                                          Stroke="{StaticResource RibbonKit.Brushes.Text.Secondary}"
                                           StrokeThickness="1.5"
                                           StrokeStartLineCap="Round"
                                           StrokeEndLineCap="Round"
@@ -699,7 +699,7 @@
                                                Margin="5,0,2,0"
                                                VerticalAlignment="Center" />
                                     <Path Data="M0,0 L3.5,3.5 L7,0"
-                                          Stroke="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
+                                          Stroke="{StaticResource RibbonKit.Brushes.Text.Secondary}"
                                           StrokeThickness="1.5"
                                           StrokeStartLineCap="Round"
                                           StrokeEndLineCap="Round"
@@ -717,7 +717,7 @@
                                            Margin="2,3"
                                            VerticalAlignment="Center" />
                                     <Path Data="M0,0 L3.5,3.5 L7,0"
-                                          Stroke="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
+                                          Stroke="{StaticResource RibbonKit.Brushes.Text.Secondary}"
                                           StrokeThickness="1.5"
                                           StrokeStartLineCap="Round"
                                           StrokeEndLineCap="Round"
@@ -732,8 +732,8 @@
                                Placement="Bottom"
                                IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
                             <Border x:Name="PART_MenuHost"
-                                    Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
-                                    BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
+                                    Background="{StaticResource RibbonKit.Brushes.Ribbon.ContentBackground}"
+                                    BorderBrush="{StaticResource RibbonKit.Brushes.ScreenTip.Border}"
                                     BorderThickness="1"
                                     CornerRadius="6"
                                     Padding="4"
@@ -771,7 +771,7 @@
          RibbonSplitButton — command part + chevron dropdown part
          ============================================================ -->
     <Style TargetType="{x:Type controls:RibbonSplitButton}">
-        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+        <Setter Property="Foreground" Value="{StaticResource RibbonKit.Brushes.Text.Primary}" />
         <Setter Property="Focusable" Value="False" />
         <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
         <Setter Property="VerticalAlignment" Value="Stretch" />
@@ -803,11 +803,11 @@
                                                 <ControlTemplate.Triggers>
                                                     <Trigger Property="IsMouseOver" Value="True">
                                                         <Setter TargetName="Chrome" Property="Background"
-                                                                Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
+                                                                Value="{StaticResource RibbonKit.Brushes.Control.HoverBackground}" />
                                                     </Trigger>
                                                     <Trigger Property="IsPressed" Value="True">
                                                         <Setter TargetName="Chrome" Property="Background"
-                                                                Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
+                                                                Value="{StaticResource RibbonKit.Brushes.Control.PressedBackground}" />
                                                     </Trigger>
                                                 </ControlTemplate.Triggers>
                                             </ControlTemplate>
@@ -868,7 +868,7 @@
                                                         Margin="0,1,1,1"
                                                         SnapsToDevicePixels="True">
                                                     <Path Data="M0,0 L3.5,3.5 L7,0"
-                                                          Stroke="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
+                                                          Stroke="{StaticResource RibbonKit.Brushes.Text.Secondary}"
                                                           StrokeThickness="1.5"
                                                           StrokeStartLineCap="Round"
                                                           StrokeEndLineCap="Round"
@@ -878,11 +878,11 @@
                                                 <ControlTemplate.Triggers>
                                                     <Trigger Property="IsMouseOver" Value="True">
                                                         <Setter TargetName="Chrome" Property="Background"
-                                                                Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
+                                                                Value="{StaticResource RibbonKit.Brushes.Control.HoverBackground}" />
                                                     </Trigger>
                                                     <Trigger Property="IsChecked" Value="True">
                                                         <Setter TargetName="Chrome" Property="Background"
-                                                                Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
+                                                                Value="{StaticResource RibbonKit.Brushes.Control.PressedBackground}" />
                                                     </Trigger>
                                                 </ControlTemplate.Triggers>
                                             </ControlTemplate>
@@ -897,8 +897,8 @@
                                Placement="Bottom"
                                IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
                             <Border x:Name="PART_MenuHost"
-                                    Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
-                                    BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
+                                    Background="{StaticResource RibbonKit.Brushes.Ribbon.ContentBackground}"
+                                    BorderBrush="{StaticResource RibbonKit.Brushes.ScreenTip.Border}"
                                     BorderThickness="1"
                                     CornerRadius="6"
                                     Padding="4"
@@ -936,7 +936,7 @@
          RibbonMenuItem — row inside dropdown flyouts
          ============================================================ -->
     <Style TargetType="{x:Type controls:RibbonMenuItem}">
-        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+        <Setter Property="Foreground" Value="{StaticResource RibbonKit.Brushes.Text.Primary}" />
         <Setter Property="MinWidth" Value="160" />
         <Setter Property="Template">
             <Setter.Value>
@@ -966,11 +966,11 @@
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="Chrome" Property="Background"
-                                    Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
+                                    Value="{StaticResource RibbonKit.Brushes.Control.HoverBackground}" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
                             <Setter TargetName="Chrome" Property="Background"
-                                    Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
+                                    Value="{StaticResource RibbonKit.Brushes.Control.PressedBackground}" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.4" />
