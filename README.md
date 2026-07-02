@@ -2,7 +2,7 @@
 
 An open-source, Office Fluent UI–style **Ribbon control library for WPF** on modern .NET (net8.0-windows / net9.0-windows).
 
-> **Status: early development (Phase 0 — scaffold).** The API is not stable and nothing is ready for production use yet. Follow the [roadmap](docs/03-ROADMAP.md) to see where things are headed.
+> **Status: early development (Phase 1 — core ribbon skeleton).** Tabs, groups, three button sizes, ScreenTips, the adaptive sizing engine, and the Office 2024 light theme are in place. The API is not stable yet. Follow the [roadmap](docs/03-ROADMAP.md) to see where things are headed.
 
 ## Planned features
 

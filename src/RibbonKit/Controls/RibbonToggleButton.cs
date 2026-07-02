@@ -1,0 +1,158 @@
+using System.Windows;
+using System.Windows.Controls.Primitives;
+using System.Windows.Media;
+using RibbonKit.Layout;
+
+namespace RibbonKit.Controls;
+
+/// <summary>
+/// A ribbon toggle button (e.g. Bold/Italic/Underline): renders like a
+/// <see cref="RibbonButton"/> in three sizes and shows an accent-tinted background
+/// while checked.
+/// </summary>
+public class RibbonToggleButton : ToggleButton, IRibbonSizeAware
+{
+    /// <summary>Identifies the <see cref="Header"/> dependency property.</summary>
+    public static readonly DependencyProperty HeaderProperty =
+        DependencyProperty.Register(
+            nameof(Header),
+            typeof(string),
+            typeof(RibbonToggleButton),
+            new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsMeasure));
+
+    /// <summary>Identifies the <see cref="Icon"/> dependency property.</summary>
+    public static readonly DependencyProperty IconProperty =
+        DependencyProperty.Register(
+            nameof(Icon),
+            typeof(ImageSource),
+            typeof(RibbonToggleButton),
+            new FrameworkPropertyMetadata(null));
+
+    /// <summary>Identifies the <see cref="LargeIcon"/> dependency property.</summary>
+    public static readonly DependencyProperty LargeIconProperty =
+        DependencyProperty.Register(
+            nameof(LargeIcon),
+            typeof(ImageSource),
+            typeof(RibbonToggleButton),
+            new FrameworkPropertyMetadata(null));
+
+    /// <summary>Identifies the <see cref="Size"/> dependency property.</summary>
+    public static readonly DependencyProperty SizeProperty =
+        DependencyProperty.Register(
+            nameof(Size),
+            typeof(RibbonControlSize),
+            typeof(RibbonToggleButton),
+            new FrameworkPropertyMetadata(
+                RibbonControlSize.Large,
+                FrameworkPropertyMetadataOptions.AffectsMeasure));
+
+    /// <summary>Identifies the <see cref="SizeDefinition"/> dependency property.</summary>
+    public static readonly DependencyProperty SizeDefinitionProperty =
+        DependencyProperty.Register(
+            nameof(SizeDefinition),
+            typeof(string),
+            typeof(RibbonToggleButton),
+            new FrameworkPropertyMetadata(null));
+
+    /// <summary>Identifies the <see cref="ScreenTipTitle"/> dependency property.</summary>
+    public static readonly DependencyProperty ScreenTipTitleProperty =
+        DependencyProperty.Register(
+            nameof(ScreenTipTitle),
+            typeof(string),
+            typeof(RibbonToggleButton),
+            new FrameworkPropertyMetadata(null, OnScreenTipChanged));
+
+    /// <summary>Identifies the <see cref="ScreenTipText"/> dependency property.</summary>
+    public static readonly DependencyProperty ScreenTipTextProperty =
+        DependencyProperty.Register(
+            nameof(ScreenTipText),
+            typeof(string),
+            typeof(RibbonToggleButton),
+            new FrameworkPropertyMetadata(null, OnScreenTipChanged));
+
+    static RibbonToggleButton()
+    {
+        DefaultStyleKeyProperty.OverrideMetadata(
+            typeof(RibbonToggleButton),
+            new FrameworkPropertyMetadata(typeof(RibbonToggleButton)));
+    }
+
+    /// <summary>The button's label text.</summary>
+    public string? Header
+    {
+        get => (string?)GetValue(HeaderProperty);
+        set => SetValue(HeaderProperty, value);
+    }
+
+    /// <summary>The 16px icon used by the Medium and Small layouts.</summary>
+    public ImageSource? Icon
+    {
+        get => (ImageSource?)GetValue(IconProperty);
+        set => SetValue(IconProperty, value);
+    }
+
+    /// <summary>The 32px icon used by the Large layout. Falls back to <see cref="Icon"/> when unset.</summary>
+    public ImageSource? LargeIcon
+    {
+        get => (ImageSource?)GetValue(LargeIconProperty);
+        set => SetValue(LargeIconProperty, value);
+    }
+
+    /// <summary>The size the button currently renders at.</summary>
+    public RibbonControlSize Size
+    {
+        get => (RibbonControlSize)GetValue(SizeProperty);
+        set => SetValue(SizeProperty, value);
+    }
+
+    /// <summary>
+    /// Comma-separated sizes for the group states Large, Medium, Small — e.g.
+    /// <c>"Large, Medium, Small"</c>. When set, the sizing engine drives <see cref="Size"/>.
+    /// </summary>
+    public string? SizeDefinition
+    {
+        get => (string?)GetValue(SizeDefinitionProperty);
+        set => SetValue(SizeDefinitionProperty, value);
+    }
+
+    /// <summary>Bold first line of the ScreenTip (rich tooltip).</summary>
+    public string? ScreenTipTitle
+    {
+        get => (string?)GetValue(ScreenTipTitleProperty);
+        set => SetValue(ScreenTipTitleProperty, value);
+    }
+
+    /// <summary>Descriptive body of the ScreenTip.</summary>
+    public string? ScreenTipText
+    {
+        get => (string?)GetValue(ScreenTipTextProperty);
+        set => SetValue(ScreenTipTextProperty, value);
+    }
+
+    void IRibbonSizeAware.ApplySizeState(RibbonGroupSizeState state)
+    {
+        string? definition = SizeDefinition;
+        if (string.IsNullOrWhiteSpace(definition))
+        {
+            return;
+        }
+
+        RibbonGroupSizeState effectiveState =
+            state == RibbonGroupSizeState.Collapsed ? RibbonGroupSizeState.Large : state;
+
+        try
+        {
+            Size = RibbonSizeDefinition.SizeFor(definition, effectiveState);
+        }
+        catch (ArgumentException)
+        {
+            // Invalid definitions are ignored during layout.
+        }
+    }
+
+    private static void OnScreenTipChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        var button = (RibbonToggleButton)d;
+        ScreenTipHelper.Update(button, button.ScreenTipTitle, button.ScreenTipText);
+    }
+}

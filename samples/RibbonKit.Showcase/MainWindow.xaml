@@ -3,17 +3,169 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:rk="urn:ribbonkit"
         Title="RibbonKit Showcase"
-        Width="1000"
-        Height="640"
-        WindowStartupLocation="CenterScreen">
+        Width="1080"
+        Height="680"
+        MinWidth="360"
+        WindowStartupLocation="CenterScreen"
+        Background="White">
     <DockPanel>
-        <rk:Ribbon DockPanel.Dock="Top" />
+        <rk:Ribbon DockPanel.Dock="Top">
+
+            <rk:RibbonTab Header="Home">
+                <!-- ResizeThenCollapse: buttons shrink in place first, then the group
+                     collapses to a flyout button as the last step -->
+                <rk:RibbonGroup Header="Clipboard"
+                                Icon="{StaticResource Icon.Paste}"
+                                ReductionMode="ResizeThenCollapse">
+                    <rk:RibbonSplitButton Header="Paste"
+                                          LargeIcon="{StaticResource Icon.Paste}"
+                                          Icon="{StaticResource Icon.Paste}"
+                                          SizeDefinition="Large, Medium, Small"
+                                          ScreenTipTitle="Paste (Ctrl+V)"
+                                          ScreenTipText="Click for a normal paste, or open the menu for more paste options.">
+                        <rk:RibbonMenuItem Header="Paste" Icon="{StaticResource Icon.Paste}" />
+                        <rk:RibbonMenuItem Header="Paste Special..." Icon="{StaticResource Icon.Copy}" />
+                        <rk:RibbonMenuItem Header="Keep Text Only" />
+                    </rk:RibbonSplitButton>
+                    <StackPanel VerticalAlignment="Center">
+                        <rk:RibbonButton Header="Cut" Size="Medium"
+                                         Icon="{StaticResource Icon.Cut}"
+                                         SizeDefinition="Medium, Medium, Small"
+                                         ScreenTipTitle="Cut (Ctrl+X)"
+                                         ScreenTipText="Remove the selection and put it on the Clipboard." />
+                        <rk:RibbonButton Header="Copy" Size="Medium"
+                                         Icon="{StaticResource Icon.Copy}"
+                                         SizeDefinition="Medium, Medium, Small"
+                                         ScreenTipTitle="Copy (Ctrl+C)"
+                                         ScreenTipText="Put a copy of the selection on the Clipboard." />
+                        <rk:RibbonButton Header="Format Painter" Size="Medium"
+                                         Icon="{StaticResource Icon.FormatPainter}"
+                                         SizeDefinition="Medium, Medium, Small"
+                                         ScreenTipTitle="Format Painter"
+                                         ScreenTipText="Copy formatting from one place and apply it to another." />
+                    </StackPanel>
+                </rk:RibbonGroup>
+
+                <!-- CanResize=False: this group never shrinks, no matter how narrow -->
+                <rk:RibbonGroup Header="Font"
+                                Icon="{StaticResource Icon.Bold}"
+                                CanResize="False"
+                                ShowDialogLauncher="True">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <rk:RibbonToggleButton Size="Small"
+                                               Icon="{StaticResource Icon.Bold}"
+                                               ScreenTipTitle="Bold (Ctrl+B)"
+                                               ScreenTipText="Make your text bold." />
+                        <rk:RibbonToggleButton Size="Small"
+                                               Icon="{StaticResource Icon.Italic}"
+                                               ScreenTipTitle="Italic (Ctrl+I)"
+                                               ScreenTipText="Italicize your text." />
+                        <rk:RibbonToggleButton Size="Small"
+                                               Icon="{StaticResource Icon.Underline}"
+                                               ScreenTipTitle="Underline (Ctrl+U)"
+                                               ScreenTipText="Underline your text." />
+                    </StackPanel>
+                </rk:RibbonGroup>
+
+                <!-- Highest ReductionPriority shrinks first -->
+                <!-- Default mode: collapses straight to a flyout button (Office 2024 style) -->
+                <rk:RibbonGroup Header="Styles" Icon="{StaticResource Icon.Style}" ReductionPriority="10">
+                    <rk:RibbonButton Header="Normal"
+                                     LargeIcon="{StaticResource Icon.Style}"
+                                     Icon="{StaticResource Icon.Style}"
+                                     SizeDefinition="Large, Medium, Small"
+                                     ScreenTipTitle="Normal style" />
+                    <rk:RibbonButton Header="Heading 1"
+                                     LargeIcon="{StaticResource Icon.Style}"
+                                     Icon="{StaticResource Icon.Style}"
+                                     SizeDefinition="Large, Medium, Small"
+                                     ScreenTipTitle="Heading 1 style" />
+                    <rk:RibbonButton Header="Heading 2"
+                                     LargeIcon="{StaticResource Icon.Style}"
+                                     Icon="{StaticResource Icon.Style}"
+                                     SizeDefinition="Large, Medium, Small"
+                                     ScreenTipTitle="Heading 2 style" />
+                </rk:RibbonGroup>
+
+                <!-- Shrinks after Styles; Clipboard (no priority) shrinks last, largest-first -->
+                <rk:RibbonGroup Header="Editing" Icon="{StaticResource Icon.Find}" ReductionPriority="5">
+                    <StackPanel VerticalAlignment="Center">
+                        <rk:RibbonButton Header="Find" Size="Medium"
+                                         Icon="{StaticResource Icon.Find}"
+                                         SizeDefinition="Medium, Medium, Small"
+                                         ScreenTipTitle="Find (Ctrl+F)"
+                                         ScreenTipText="Search for text in your document." />
+                        <rk:RibbonButton Header="Replace" Size="Medium"
+                                         Icon="{StaticResource Icon.Replace}"
+                                         SizeDefinition="Medium, Medium, Small"
+                                         ScreenTipTitle="Replace (Ctrl+H)"
+                                         ScreenTipText="Search for text and replace it with something else." />
+                        <rk:RibbonDropDownButton Header="Select" Size="Medium"
+                                                 Icon="{StaticResource Icon.Select}"
+                                                 SizeDefinition="Medium, Medium, Small"
+                                                 ScreenTipTitle="Select"
+                                                 ScreenTipText="Select text or objects in your document.">
+                            <rk:RibbonMenuItem Header="Select All" />
+                            <rk:RibbonMenuItem Header="Select Objects" Icon="{StaticResource Icon.Select}" />
+                            <rk:RibbonMenuItem Header="Selection Pane..." />
+                        </rk:RibbonDropDownButton>
+                    </StackPanel>
+                </rk:RibbonGroup>
+            </rk:RibbonTab>
+
+            <rk:RibbonTab Header="Insert">
+                <rk:RibbonGroup Header="Tables" Icon="{StaticResource Icon.Table}">
+                    <rk:RibbonButton Header="Table"
+                                     LargeIcon="{StaticResource Icon.Table}"
+                                     Icon="{StaticResource Icon.Table}"
+                                     SizeDefinition="Large, Medium, Small"
+                                     ScreenTipTitle="Table"
+                                     ScreenTipText="Insert a table into your document." />
+                </rk:RibbonGroup>
+                <rk:RibbonGroup Header="Illustrations" Icon="{StaticResource Icon.Picture}">
+                    <rk:RibbonButton Header="Pictures"
+                                     LargeIcon="{StaticResource Icon.Picture}"
+                                     Icon="{StaticResource Icon.Picture}"
+                                     SizeDefinition="Large, Medium, Small"
+                                     ScreenTipTitle="Pictures"
+                                     ScreenTipText="Insert pictures from your computer or the web." />
+                </rk:RibbonGroup>
+                <rk:RibbonGroup Header="Links" Icon="{StaticResource Icon.Link}">
+                    <rk:RibbonButton Header="Link"
+                                     LargeIcon="{StaticResource Icon.Link}"
+                                     Icon="{StaticResource Icon.Link}"
+                                     SizeDefinition="Large, Medium, Small"
+                                     ScreenTipTitle="Link (Ctrl+K)"
+                                     ScreenTipText="Create a link to a webpage or another place in your document." />
+                </rk:RibbonGroup>
+            </rk:RibbonTab>
+
+            <rk:RibbonTab Header="View">
+                <rk:RibbonGroup Header="Zoom" Icon="{StaticResource Icon.Find}">
+                    <rk:RibbonButton Header="Zoom"
+                                     LargeIcon="{StaticResource Icon.Find}"
+                                     Icon="{StaticResource Icon.Find}"
+                                     SizeDefinition="Large, Medium, Small"
+                                     ScreenTipTitle="Zoom"
+                                     ScreenTipText="Zoom the document to a specific level." />
+                </rk:RibbonGroup>
+            </rk:RibbonTab>
+
+        </rk:Ribbon>
+
         <Grid Background="White">
-            <TextBlock Text="Document area"
-                       HorizontalAlignment="Center"
-                       VerticalAlignment="Center"
-                       Foreground="#B0B0B0"
-                       FontSize="16" />
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="RibbonKit — Phase 1: core ribbon skeleton"
+                           FontSize="18" Foreground="#6B6B6B" TextAlignment="Center" />
+                <TextBlock Text="Make the window narrower: groups collapse to flyout buttons by priority — Styles (10) → Editing (5) → Clipboard (default, resizes first) — Font never reduces (CanResize=False)."
+                           FontSize="13" Foreground="#9A9A9A" Margin="0,8,0,0" TextAlignment="Center" />
+                <TextBlock Text="Click a collapsed group button to open its flyout with the full group content."
+                           FontSize="13" Foreground="#9A9A9A" Margin="0,2,0,0" TextAlignment="Center" />
+                <TextBlock Text="New: Paste is a split button, Select is a dropdown, B/I/U are toggles, Font has a ↘ dialog launcher — and double-click a tab (or the ˄ chevron) to minimize the ribbon."
+                           FontSize="13" Foreground="#9A9A9A" Margin="0,2,0,0" TextAlignment="Center" />
+                <TextBlock Text="Hover any button for its ScreenTip."
+                           FontSize="13" Foreground="#9A9A9A" Margin="0,2,0,0" TextAlignment="Center" />
+            </StackPanel>
         </Grid>
     </DockPanel>
 </Window>
