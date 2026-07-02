@@ -234,10 +234,14 @@ public class RibbonGroup : HeaderedItemsControl
 
     private void OnCollapsedButtonPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        // Same capture quirk as dropdown buttons: pressing the collapsed button while
-        // its flyout is open closes the popup first, and the click would reopen it.
-        // Swallow presses arriving right after our own popup closed.
-        if (_popup?.IsOpen != true && Environment.TickCount64 - _popupClosedTick < 250)
+        // Clicking the collapsed button while its flyout is open must CLOSE it, not
+        // close-and-reopen. Handle both event orderings (see RibbonDropDownButton).
+        if (_popup?.IsOpen == true)
+        {
+            _collapsedButton?.SetCurrentValue(ToggleButton.IsCheckedProperty, false);
+            e.Handled = true;
+        }
+        else if (Environment.TickCount64 - _popupClosedTick < 250)
         {
             e.Handled = true;
         }

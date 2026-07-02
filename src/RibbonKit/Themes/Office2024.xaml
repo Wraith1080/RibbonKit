@@ -175,7 +175,11 @@
                                    Visibility="Collapsed" />
                     </Grid>
                     <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
+                        <!-- SourceName scoping matters: TabItem.IsMouseOver is also true while
+                             the mouse is over the tab's CONTENT (IsMouseOver propagates up the
+                             logical tree), which made the header flicker while hovering ribbon
+                             buttons. Only the header chrome itself should trigger hover. -->
+                        <Trigger SourceName="HeaderChrome" Property="IsMouseOver" Value="True">
                             <Setter TargetName="HeaderChrome" Property="Background"
                                     Value="{StaticResource RibbonKit.Brushes.Tab.HoverBackground}" />
                         </Trigger>

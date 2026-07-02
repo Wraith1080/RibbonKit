@@ -205,11 +205,19 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
 
     private void OnTogglePreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        // Pressing the toggle while the dropdown is open closes the popup (it holds
-        // mouse capture) BEFORE this event reaches the toggle — which would then
-        // re-toggle and reopen. Swallow presses that arrive right after our own popup
-        // closed so the click means "close", not "close and reopen".
-        if (!IsDropDownOpen && Environment.TickCount64 - _popupClosedTick < 250)
+        // Clicking the toggle while the dropdown is open must CLOSE it, not close-and-
+        // reopen. Two orderings exist:
+        // 1. The press reaches the toggle while the popup is still open (the toggle's
+        //    press would steal mouse capture, close the popup, then re-toggle on
+        //    release) — close the dropdown ourselves and swallow the press.
+        // 2. The popup already closed itself on this press (outside-click capture) —
+        //    swallow presses arriving right after our own popup closed.
+        if (IsDropDownOpen)
+        {
+            SetCurrentValue(IsDropDownOpenProperty, false);
+            e.Handled = true;
+        }
+        else if (Environment.TickCount64 - _popupClosedTick < 250)
         {
             e.Handled = true;
         }
