@@ -1,0 +1,15 @@
+<Project>
+
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <!-- Allows compiling the Windows-targeted projects on non-Windows CI agents if ever needed -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <Company>RibbonKit</Company>
+    <Product>RibbonKit</Product>
+    <Copyright>Copyright (c) 2026 Irfan Rahmat and RibbonKit contributors</Copyright>
+  </PropertyGroup>
+
+</Project>

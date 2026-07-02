@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0-windows;net9.0-windows</TargetFrameworks>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>RibbonKit</RootNamespace>
+    <AssemblyName>RibbonKit</AssemblyName>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Packaging">
+    <PackageId>RibbonKit</PackageId>
+    <Version>0.1.0-alpha.1</Version>
+    <Authors>Irfan Rahmat</Authors>
+    <Description>Open-source Office Fluent UI-style Ribbon control library for WPF on modern .NET: adaptive button sizing, galleries, backstage, contextual tabs, quick access toolbar, KeyTips, and Office 2007-2024 themes.</Description>
+    <PackageTags>wpf;ribbon;fluent;office;ui;controls</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/YOUR-GITHUB-USERNAME/RibbonKit</RepositoryUrl>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>
