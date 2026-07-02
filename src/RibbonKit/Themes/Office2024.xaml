@@ -207,6 +207,7 @@
              content from painting over the document area. -->
         <Setter Property="Height" Value="{StaticResource RibbonKit.Metrics.GroupsRowHeight}" />
         <Setter Property="ClipToBounds" Value="True" />
+        <Setter Property="KeyboardNavigation.DirectionalNavigation" Value="Continue" />
         <Setter Property="ItemsPanel">
             <Setter.Value>
                 <ItemsPanelTemplate>
@@ -229,6 +230,7 @@
          ============================================================ -->
     <Style TargetType="{x:Type controls:RibbonGroup}">
         <Setter Property="Focusable" Value="False" />
+        <Setter Property="KeyboardNavigation.DirectionalNavigation" Value="Continue" />
         <Setter Property="ItemsPanel">
             <Setter.Value>
                 <ItemsPanelTemplate>
@@ -361,7 +363,7 @@
                         <!-- Flyout that hosts the group's full content while collapsed -->
                         <Popup x:Name="PART_Popup"
                                AllowsTransparency="True"
-                               StaysOpen="False"
+                               StaysOpen="True"
                                Placement="Bottom"
                                PlacementTarget="{Binding ElementName=PART_CollapsedButton}"
                                IsOpen="{Binding IsChecked, ElementName=PART_CollapsedButton, Mode=TwoWay}">
@@ -732,7 +734,7 @@
                         </ToggleButton>
                         <Popup x:Name="PART_Popup"
                                AllowsTransparency="True"
-                               StaysOpen="False"
+                               StaysOpen="True"
                                Placement="Bottom"
                                IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
                             <Border x:Name="PART_MenuHost"
@@ -897,7 +899,7 @@
                         </ToggleButton>
                         <Popup x:Name="PART_Popup"
                                AllowsTransparency="True"
-                               StaysOpen="False"
+                               StaysOpen="True"
                                Placement="Bottom"
                                IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
                             <Border x:Name="PART_MenuHost"
@@ -975,6 +977,150 @@
                         <Trigger Property="IsPressed" Value="True">
                             <Setter TargetName="Chrome" Property="Background"
                                     Value="{StaticResource RibbonKit.Brushes.Control.PressedBackground}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ============================================================
+         RibbonComboBox — optional label + compact selection box
+         (the Office font-family / font-size pattern)
+         ============================================================ -->
+    <Style TargetType="{x:Type controls:RibbonComboBox}">
+        <Setter Property="Foreground" Value="{StaticResource RibbonKit.Brushes.Text.Primary}" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
+        <Setter Property="ItemContainerStyle">
+            <Setter.Value>
+                <Style TargetType="{x:Type ComboBoxItem}">
+                    <Setter Property="Foreground" Value="{StaticResource RibbonKit.Brushes.Text.Primary}" />
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="{x:Type ComboBoxItem}">
+                                <Border x:Name="Chrome"
+                                        Background="Transparent"
+                                        CornerRadius="3"
+                                        Padding="7,4"
+                                        SnapsToDevicePixels="True">
+                                    <ContentPresenter VerticalAlignment="Center" />
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsHighlighted" Value="True">
+                                        <Setter TargetName="Chrome" Property="Background"
+                                                Value="{StaticResource RibbonKit.Brushes.Control.HoverBackground}" />
+                                    </Trigger>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter TargetName="Chrome" Property="Background"
+                                                Value="{StaticResource RibbonKit.Brushes.Control.CheckedBackground}" />
+                                    </Trigger>
+                                    <Trigger Property="IsEnabled" Value="False">
+                                        <Setter Property="Opacity" Value="0.4" />
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type controls:RibbonComboBox}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock x:Name="HeaderText"
+                                   Text="{TemplateBinding Header}"
+                                   VerticalAlignment="Center"
+                                   Margin="2,0,6,0" />
+                        <Grid Width="{TemplateBinding InputWidth}">
+                            <Border x:Name="Chrome"
+                                    Background="#FFFFFF"
+                                    BorderBrush="{StaticResource RibbonKit.Brushes.ScreenTip.Border}"
+                                    BorderThickness="1"
+                                    CornerRadius="3"
+                                    SnapsToDevicePixels="True" />
+                            <ToggleButton x:Name="DropToggle"
+                                          ClickMode="Press"
+                                          Focusable="False"
+                                          IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+                                <ToggleButton.Style>
+                                    <Style TargetType="{x:Type ToggleButton}">
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="{x:Type ToggleButton}">
+                                                    <Border Background="Transparent">
+                                                        <Path Data="M0,0 L3.5,3.5 L7,0"
+                                                              Stroke="{StaticResource RibbonKit.Brushes.Text.Secondary}"
+                                                              StrokeThickness="1.5"
+                                                              StrokeStartLineCap="Round"
+                                                              StrokeEndLineCap="Round"
+                                                              HorizontalAlignment="Right"
+                                                              VerticalAlignment="Center"
+                                                              Margin="0,0,7,0" />
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </ToggleButton.Style>
+                            </ToggleButton>
+                            <ContentPresenter x:Name="ContentSite"
+                                              IsHitTestVisible="False"
+                                              Margin="8,0,22,0"
+                                              VerticalAlignment="Center"
+                                              Content="{TemplateBinding SelectionBoxItem}"
+                                              ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                              ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}" />
+                            <TextBox x:Name="PART_EditableTextBox"
+                                     Visibility="Hidden"
+                                     Margin="5,1,21,1"
+                                     Padding="0"
+                                     Background="Transparent"
+                                     BorderThickness="0"
+                                     VerticalContentAlignment="Center"
+                                     Focusable="True" />
+                            <Popup x:Name="PART_Popup"
+                                   AllowsTransparency="True"
+                                   Placement="Bottom"
+                                   IsOpen="{TemplateBinding IsDropDownOpen}">
+                                <Border Background="{StaticResource RibbonKit.Brushes.Ribbon.ContentBackground}"
+                                        BorderBrush="{StaticResource RibbonKit.Brushes.ScreenTip.Border}"
+                                        BorderThickness="1"
+                                        CornerRadius="4"
+                                        Padding="3"
+                                        Margin="4,2,8,8"
+                                        MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
+                                        MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                                    <Border.Effect>
+                                        <DropShadowEffect BlurRadius="8" ShadowDepth="2" Opacity="0.25" />
+                                    </Border.Effect>
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                                  HorizontalScrollBarVisibility="Disabled">
+                                        <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained" />
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                    </StackPanel>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Header" Value="{x:Null}">
+                            <Setter TargetName="HeaderText" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="IsEditable" Value="True">
+                            <Setter TargetName="PART_EditableTextBox" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="ContentSite" Property="Visibility" Value="Hidden" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chrome" Property="BorderBrush"
+                                    Value="{StaticResource RibbonKit.Brushes.Text.Secondary}" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                            <Setter TargetName="Chrome" Property="BorderBrush"
+                                    Value="{StaticResource RibbonKit.Brushes.Accent}" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.4" />

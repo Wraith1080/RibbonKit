@@ -1,8 +1,12 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Windows;
+using System.Windows.Automation.Peers;
 using System.Windows.Controls;
 using System.Windows.Markup;
+// Alias: WPF's legacy Microsoft ribbon declares identically-named peers in
+// System.Windows.Automation.Peers, so the reference must be disambiguated.
+using RibbonAutomationPeer = RibbonKit.Automation.RibbonAutomationPeer;
 
 namespace RibbonKit.Controls;
 
@@ -80,6 +84,9 @@ public class Ribbon : Control
         get => (RibbonTab?)GetValue(SelectedTabProperty);
         set => SetValue(SelectedTabProperty, value);
     }
+
+    /// <inheritdoc />
+    protected override AutomationPeer OnCreateAutomationPeer() => new RibbonAutomationPeer(this);
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {

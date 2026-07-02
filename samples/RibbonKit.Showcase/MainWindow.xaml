@@ -51,7 +51,35 @@
                                 Icon="{StaticResource Icon.Bold}"
                                 CanResize="False"
                                 ShowDialogLauncher="True">
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <StackPanel VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                            <rk:RibbonComboBox InputWidth="128"
+                                               IsEditable="True"
+                                               SelectedIndex="0"
+                                               ScreenTipTitle="Font"
+                                               ScreenTipText="Pick a font for your text.">
+                                <ComboBoxItem Content="Calibri" />
+                                <ComboBoxItem Content="Segoe UI" />
+                                <ComboBoxItem Content="Arial" />
+                                <ComboBoxItem Content="Times New Roman" />
+                                <ComboBoxItem Content="Consolas" />
+                                <ComboBoxItem Content="Georgia" />
+                            </rk:RibbonComboBox>
+                            <rk:RibbonComboBox InputWidth="48"
+                                               Margin="4,0,0,0"
+                                               SelectedIndex="2"
+                                               ScreenTipTitle="Font Size"
+                                               ScreenTipText="Change the size of your text.">
+                                <ComboBoxItem Content="9" />
+                                <ComboBoxItem Content="10" />
+                                <ComboBoxItem Content="11" />
+                                <ComboBoxItem Content="12" />
+                                <ComboBoxItem Content="14" />
+                                <ComboBoxItem Content="18" />
+                                <ComboBoxItem Content="24" />
+                            </rk:RibbonComboBox>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
                         <rk:RibbonToggleButton Size="Small"
                                                Icon="{StaticResource Icon.Bold}"
                                                ScreenTipTitle="Bold (Ctrl+B)"
@@ -64,6 +92,7 @@
                                                Icon="{StaticResource Icon.Underline}"
                                                ScreenTipTitle="Underline (Ctrl+U)"
                                                ScreenTipText="Underline your text." />
+                        </StackPanel>
                     </StackPanel>
                 </rk:RibbonGroup>
 

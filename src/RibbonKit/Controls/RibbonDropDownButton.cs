@@ -1,9 +1,12 @@
 using System.Windows;
+using System.Windows.Automation.Peers;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
-using System.Windows.Input;
 using System.Windows.Media;
 using RibbonKit.Layout;
+// Alias: WPF's legacy Microsoft ribbon declares identically-named peers in
+// System.Windows.Automation.Peers, so the reference must be disambiguated.
+using RibbonDropDownButtonAutomationPeer = RibbonKit.Automation.RibbonDropDownButtonAutomationPeer;
 
 namespace RibbonKit.Controls;
 
@@ -16,13 +19,16 @@ namespace RibbonKit.Controls;
 /// &lt;/rk:RibbonDropDownButton&gt;
 /// </code>
 /// </summary>
+/// <remarks>
+/// The flyout popup uses <c>StaysOpen=True</c> plus <see cref="PopupDismissHelper"/>
+/// for light-dismiss, so WPF's popup mouse-capture never interferes with the opener
+/// toggle — the toggle keeps completely standard click semantics.
+/// </remarks>
 [TemplatePart(Name = MenuHostPartName, Type = typeof(UIElement))]
-[TemplatePart(Name = TogglePartName, Type = typeof(ButtonBase))]
 [TemplatePart(Name = PopupPartName, Type = typeof(Popup))]
 public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
 {
     private const string MenuHostPartName = "PART_MenuHost";
-    private const string TogglePartName = "PART_Toggle";
     private const string PopupPartName = "PART_Popup";
 
     /// <summary>Identifies the <see cref="Header"/> dependency property.</summary>
@@ -91,16 +97,24 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
             typeof(RibbonDropDownButton),
             new FrameworkPropertyMetadata(null, OnScreenTipChanged));
 
+    private readonly PopupDismissHelper _dismissHelper;
     private UIElement? _menuHost;
-    private ButtonBase? _toggle;
     private Popup? _popup;
-    private long _popupClosedTick;
 
     static RibbonDropDownButton()
     {
         DefaultStyleKeyProperty.OverrideMetadata(
             typeof(RibbonDropDownButton),
             new FrameworkPropertyMetadata(typeof(RibbonDropDownButton)));
+    }
+
+    /// <summary>Initializes the dropdown button and its light-dismiss plumbing.</summary>
+    public RibbonDropDownButton()
+    {
+        _dismissHelper = new PopupDismissHelper(
+            this,
+            () => _popup,
+            () => SetCurrentValue(IsDropDownOpenProperty, false));
     }
 
     /// <summary>The button's label text.</summary>
@@ -170,13 +184,9 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
             _menuHost.RemoveHandler(ButtonBase.ClickEvent, new RoutedEventHandler(OnMenuItemClicked));
         }
 
-        if (_toggle is not null)
-        {
-            _toggle.PreviewMouseLeftButtonDown -= OnTogglePreviewMouseLeftButtonDown;
-        }
-
         if (_popup is not null)
         {
+            _popup.Opened -= OnPopupOpened;
             _popup.Closed -= OnPopupClosed;
         }
 
@@ -185,43 +195,16 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
         _menuHost = GetTemplateChild(MenuHostPartName) as UIElement;
         _menuHost?.AddHandler(ButtonBase.ClickEvent, new RoutedEventHandler(OnMenuItemClicked));
 
-        _toggle = GetTemplateChild(TogglePartName) as ButtonBase;
-        if (_toggle is not null)
-        {
-            _toggle.PreviewMouseLeftButtonDown += OnTogglePreviewMouseLeftButtonDown;
-        }
-
         _popup = GetTemplateChild(PopupPartName) as Popup;
         if (_popup is not null)
         {
+            _popup.Opened += OnPopupOpened;
             _popup.Closed += OnPopupClosed;
         }
     }
 
-    private void OnPopupClosed(object? sender, EventArgs e)
-    {
-        _popupClosedTick = Environment.TickCount64;
-    }
-
-    private void OnTogglePreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-    {
-        // Clicking the toggle while the dropdown is open must CLOSE it, not close-and-
-        // reopen. Two orderings exist:
-        // 1. The press reaches the toggle while the popup is still open (the toggle's
-        //    press would steal mouse capture, close the popup, then re-toggle on
-        //    release) — close the dropdown ourselves and swallow the press.
-        // 2. The popup already closed itself on this press (outside-click capture) —
-        //    swallow presses arriving right after our own popup closed.
-        if (IsDropDownOpen)
-        {
-            SetCurrentValue(IsDropDownOpenProperty, false);
-            e.Handled = true;
-        }
-        else if (Environment.TickCount64 - _popupClosedTick < 250)
-        {
-            e.Handled = true;
-        }
-    }
+    /// <inheritdoc />
+    protected override AutomationPeer OnCreateAutomationPeer() => new RibbonDropDownButtonAutomationPeer(this);
 
     void IRibbonSizeAware.ApplySizeState(RibbonGroupSizeState state) => ApplySizeStateCore(state);
 
@@ -246,6 +229,10 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
             // Invalid definitions are ignored during layout.
         }
     }
+
+    private void OnPopupOpened(object? sender, EventArgs e) => _dismissHelper.OnOpened();
+
+    private void OnPopupClosed(object? sender, EventArgs e) => _dismissHelper.OnClosed();
 
     private void OnMenuItemClicked(object sender, RoutedEventArgs e)
     {

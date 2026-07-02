@@ -1,6 +1,10 @@
 using System.Windows;
+using System.Windows.Automation.Peers;
 using System.Windows.Controls;
 using System.Windows.Media;
+// Alias: WPF's legacy Microsoft ribbon declares identically-named peers in
+// System.Windows.Automation.Peers, so the reference must be disambiguated.
+using RibbonMenuItemAutomationPeer = RibbonKit.Automation.RibbonMenuItemAutomationPeer;
 
 namespace RibbonKit.Controls;
 
@@ -48,4 +52,7 @@ public class RibbonMenuItem : Button
         get => (ImageSource?)GetValue(IconProperty);
         set => SetValue(IconProperty, value);
     }
+
+    /// <inheritdoc />
+    protected override AutomationPeer OnCreateAutomationPeer() => new RibbonMenuItemAutomationPeer(this);
 }

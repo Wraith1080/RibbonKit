@@ -1,6 +1,10 @@
 using System.Windows;
+using System.Windows.Automation.Peers;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
+// Alias: WPF's legacy Microsoft ribbon declares identically-named peers in
+// System.Windows.Automation.Peers, so the reference must be disambiguated.
+using RibbonSplitButtonAutomationPeer = RibbonKit.Automation.RibbonSplitButtonAutomationPeer;
 
 namespace RibbonKit.Controls;
 
@@ -80,6 +84,22 @@ public class RibbonSplitButton : RibbonDropDownButton
         if (_primary is not null)
         {
             _primary.Click += OnPrimaryClick;
+        }
+    }
+
+    /// <inheritdoc />
+    protected override AutomationPeer OnCreateAutomationPeer() => new RibbonSplitButtonAutomationPeer(this);
+
+    /// <summary>
+    /// Performs the primary action on behalf of UI Automation's Invoke pattern:
+    /// raises <see cref="Click"/> and executes <see cref="Command"/>.
+    /// </summary>
+    internal void AutomationInvokePrimary()
+    {
+        RaiseEvent(new RoutedEventArgs(ClickEvent, this));
+        if (Command is { } command && command.CanExecute(CommandParameter))
+        {
+            command.Execute(CommandParameter);
         }
     }
 

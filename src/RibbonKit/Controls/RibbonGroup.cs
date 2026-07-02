@@ -1,10 +1,14 @@
 using System.Collections.Specialized;
 using System.Windows;
+using System.Windows.Automation.Peers;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using RibbonKit.Layout;
+// Alias: WPF's legacy Microsoft ribbon declares identically-named peers in
+// System.Windows.Automation.Peers, so the reference must be disambiguated.
+using RibbonGroupAutomationPeer = RibbonKit.Automation.RibbonGroupAutomationPeer;
 
 namespace RibbonKit.Controls;
 
@@ -109,7 +113,7 @@ public class RibbonGroup : HeaderedItemsControl
     private Popup? _popup;
     private ToggleButton? _collapsedButton;
     private ButtonBase? _dialogLauncher;
-    private long _popupClosedTick;
+    private PopupDismissHelper? _dismissHelper;
 
     static RibbonGroup()
     {
@@ -202,11 +206,6 @@ public class RibbonGroup : HeaderedItemsControl
             _dialogLauncher.Click -= OnDialogLauncherClick;
         }
 
-        if (_collapsedButton is not null)
-        {
-            _collapsedButton.PreviewMouseLeftButtonDown -= OnCollapsedButtonPreviewMouseLeftButtonDown;
-        }
-
         base.OnApplyTemplate();
 
         _normalHost = GetTemplateChild(NormalHostPartName) as Decorator;
@@ -226,26 +225,10 @@ public class RibbonGroup : HeaderedItemsControl
             _dialogLauncher.Click += OnDialogLauncherClick;
         }
 
-        if (_collapsedButton is not null)
-        {
-            _collapsedButton.PreviewMouseLeftButtonDown += OnCollapsedButtonPreviewMouseLeftButtonDown;
-        }
     }
 
-    private void OnCollapsedButtonPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-    {
-        // Clicking the collapsed button while its flyout is open must CLOSE it, not
-        // close-and-reopen. Handle both event orderings (see RibbonDropDownButton).
-        if (_popup?.IsOpen == true)
-        {
-            _collapsedButton?.SetCurrentValue(ToggleButton.IsCheckedProperty, false);
-            e.Handled = true;
-        }
-        else if (Environment.TickCount64 - _popupClosedTick < 250)
-        {
-            e.Handled = true;
-        }
-    }
+    /// <inheritdoc />
+    protected override AutomationPeer OnCreateAutomationPeer() => new RibbonGroupAutomationPeer(this);
 
     private void OnDialogLauncherClick(object sender, RoutedEventArgs e)
     {
@@ -289,6 +272,14 @@ public class RibbonGroup : HeaderedItemsControl
 
     private void OnPopupOpened(object? sender, EventArgs e)
     {
+        // Light-dismiss is managed explicitly (the popup uses StaysOpen=True so WPF's
+        // capture-based dismissal never races the collapsed button's clicks).
+        _dismissHelper ??= new PopupDismissHelper(
+            this,
+            () => _popup,
+            () => _collapsedButton?.SetCurrentValue(ToggleButton.IsCheckedProperty, false));
+        _dismissHelper.OnOpened();
+
         // Move the group's content grid from the (hidden) in-ribbon host into the flyout.
         if (_normalHost?.Child is { } content && _popupHost is not null)
         {
@@ -299,7 +290,7 @@ public class RibbonGroup : HeaderedItemsControl
 
     private void OnPopupClosed(object? sender, EventArgs e)
     {
-        _popupClosedTick = Environment.TickCount64;
+        _dismissHelper?.OnClosed();
 
         // Move the content back into the ribbon so it is ready when the group expands.
         if (_popupHost?.Child is { } content && _normalHost is not null)

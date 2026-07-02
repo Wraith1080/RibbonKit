@@ -1,7 +1,11 @@
 using System.Windows;
+using System.Windows.Automation.Peers;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using RibbonKit.Layout;
+// Alias: WPF's legacy Microsoft ribbon declares identically-named peers in
+// System.Windows.Automation.Peers, so the reference must be disambiguated.
+using RibbonToggleButtonAutomationPeer = RibbonKit.Automation.RibbonToggleButtonAutomationPeer;
 
 namespace RibbonKit.Controls;
 
@@ -128,6 +132,9 @@ public class RibbonToggleButton : ToggleButton, IRibbonSizeAware
         get => (string?)GetValue(ScreenTipTextProperty);
         set => SetValue(ScreenTipTextProperty, value);
     }
+
+    /// <inheritdoc />
+    protected override AutomationPeer OnCreateAutomationPeer() => new RibbonToggleButtonAutomationPeer(this);
 
     void IRibbonSizeAware.ApplySizeState(RibbonGroupSizeState state)
     {
