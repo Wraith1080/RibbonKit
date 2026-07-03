@@ -8,12 +8,19 @@
                  MinWidth="360"
                  WindowStartupLocation="CenterScreen"
                  Background="White">
+    <!-- Quick access buttons live in the title bar, like Office -->
+    <rk:RibbonWindow.TitleBarContent>
+        <StackPanel Orientation="Horizontal">
+            <rk:RibbonButton Size="Small" Icon="{StaticResource Icon.Save}"
+                             ScreenTipTitle="Save (Ctrl+S)" ScreenTipText="Save your document." />
+            <rk:RibbonButton Size="Small" Icon="{StaticResource Icon.Undo}"
+                             ScreenTipTitle="Undo (Ctrl+Z)" ScreenTipText="Undo your last action." />
+            <rk:RibbonButton Size="Small" Icon="{StaticResource Icon.Redo}"
+                             ScreenTipTitle="Redo (Ctrl+Y)" ScreenTipText="Redo the last undone action." />
+        </StackPanel>
+    </rk:RibbonWindow.TitleBarContent>
     <DockPanel>
-        <!-- QuickAccessPosition options: TabRow (next to File) or BelowRibbon (Office
-             2024 default, shown here). A third placement — the title bar — is available
-             via rk:RibbonWindow.TitleBarContent and auto-hides while the backstage is
-             open. -->
-        <rk:Ribbon DockPanel.Dock="Top" QuickAccessPosition="BelowRibbon">
+        <rk:Ribbon DockPanel.Dock="Top">
             <rk:Ribbon.Backstage>
                 <rk:Backstage>
                     <rk:BackstageTabItem Header="Info">
@@ -57,15 +64,6 @@
                     </rk:BackstageTabItem>
                 </rk:Backstage>
             </rk:Ribbon.Backstage>
-
-            <rk:Ribbon.QuickAccessItems>
-                <rk:RibbonButton Size="Small" Icon="{StaticResource Icon.Save}"
-                                 ScreenTipTitle="Save (Ctrl+S)" ScreenTipText="Save your document." />
-                <rk:RibbonButton Size="Small" Icon="{StaticResource Icon.Undo}"
-                                 ScreenTipTitle="Undo (Ctrl+Z)" ScreenTipText="Undo your last action." />
-                <rk:RibbonButton Size="Small" Icon="{StaticResource Icon.Redo}"
-                                 ScreenTipTitle="Redo (Ctrl+Y)" ScreenTipText="Redo the last undone action." />
-            </rk:Ribbon.QuickAccessItems>
 
             <rk:RibbonTab Header="Home">
                 <!-- ResizeThenCollapse: buttons shrink in place first, then the group
@@ -312,23 +310,6 @@
                                      SizeDefinition="Large, Medium, Small"
                                      ScreenTipTitle="Zoom"
                                      ScreenTipText="Zoom the document to a specific level." />
-                </rk:RibbonGroup>
-                <!-- Runtime theme switch — same templates, different token dictionary -->
-                <rk:RibbonGroup Header="Theme" Icon="{StaticResource Icon.Style}">
-                    <rk:RibbonButton Header="Office 2024"
-                                     LargeIcon="{StaticResource Icon.Style}"
-                                     Icon="{StaticResource Icon.Style}"
-                                     SizeDefinition="Large, Medium, Small"
-                                     Click="OnApplyOffice2024"
-                                     ScreenTipTitle="Office 2024 theme"
-                                     ScreenTipText="Apply the modern light theme." />
-                    <rk:RibbonButton Header="Office 2019"
-                                     LargeIcon="{StaticResource Icon.Style}"
-                                     Icon="{StaticResource Icon.Style}"
-                                     SizeDefinition="Large, Medium, Small"
-                                     Click="OnApplyOffice2019"
-                                     ScreenTipTitle="Office 2019 theme"
-                                     ScreenTipText="Apply the Office 2019 light theme (blue accent, flatter grays)." />
                 </rk:RibbonGroup>
             </rk:RibbonTab>
 

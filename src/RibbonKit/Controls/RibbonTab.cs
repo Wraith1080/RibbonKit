@@ -29,6 +29,14 @@ public class RibbonTab : TabItem
     /// <summary>Identifies the read-only <see cref="Groups"/> dependency property.</summary>
     public static readonly DependencyProperty GroupsProperty = GroupsPropertyKey.DependencyProperty;
 
+    /// <summary>Identifies the <see cref="IsContextual"/> dependency property.</summary>
+    public static readonly DependencyProperty IsContextualProperty =
+        DependencyProperty.Register(
+            nameof(IsContextual),
+            typeof(bool),
+            typeof(RibbonTab),
+            new FrameworkPropertyMetadata(false));
+
     static RibbonTab()
     {
         DefaultStyleKeyProperty.OverrideMetadata(
@@ -50,6 +58,18 @@ public class RibbonTab : TabItem
     /// <summary>The groups shown in the ribbon when this tab is selected.</summary>
     public ObservableCollection<RibbonGroup> Groups =>
         (ObservableCollection<RibbonGroup>)GetValue(GroupsProperty);
+
+    /// <summary>
+    /// Marks this as a contextual tab (e.g. "Picture Format"): the header renders with
+    /// an accent tint. Show and hide it by setting <see cref="UIElement.Visibility"/>
+    /// from application state; the ribbon moves selection to the first visible tab
+    /// when a selected contextual tab disappears.
+    /// </summary>
+    public bool IsContextual
+    {
+        get => (bool)GetValue(IsContextualProperty);
+        set => SetValue(IsContextualProperty, value);
+    }
 
     /// <summary>
     /// Double-clicking a tab header toggles ribbon minimize mode, matching Office.

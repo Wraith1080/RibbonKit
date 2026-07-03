@@ -2,7 +2,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using RibbonKit.Controls;
-using RibbonKit.Theming;
 
 namespace RibbonKit.Showcase;
 
@@ -19,12 +18,6 @@ public partial class MainWindow : RibbonWindow
     {
         InitializeComponent();
     }
-
-    private void OnApplyOffice2024(object sender, RoutedEventArgs e) =>
-        ThemeManager.Apply(Application.Current, RibbonTheme.Office2024);
-
-    private void OnApplyOffice2019(object sender, RoutedEventArgs e) =>
-        ThemeManager.Apply(Application.Current, RibbonTheme.Office2019);
 
     private void OnPictureSelected(object sender, RoutedEventArgs e)
     {

@@ -38,6 +38,20 @@ public enum RibbonGroupSizeState
 }
 
 /// <summary>
+/// Where the ribbon renders its <see cref="Controls.Ribbon.QuickAccessItems"/>.
+/// (A third placement — the window title bar — is available manually via
+/// <see cref="Controls.RibbonWindow.TitleBarContent"/>.)
+/// </summary>
+public enum RibbonQuickAccessPosition
+{
+    /// <summary>In the tab strip row, right after the application button.</summary>
+    TabRow,
+
+    /// <summary>In a full-width row below the ribbon — the classic Office option.</summary>
+    BelowRibbon,
+}
+
+/// <summary>
 /// How the sizing engine reduces a <see cref="Controls.RibbonGroup"/> when ribbon
 /// width runs out.
 /// </summary>

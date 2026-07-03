@@ -1,0 +1,87 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:system="clr-namespace:System;assembly=System.Runtime">
+
+    <!-- ============================================================
+         Office 2024 (light) token palette. Merge this in App.xaml, or
+         swap it at runtime via RibbonKit.Theming.ThemeManager. The
+         shared templates in Office2024.xaml reference these by key.
+         ============================================================ -->
+    <!-- Transparent so the ribbon area shows the window background (no grey box):
+         the ribbon body floats as a white card over it. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Background" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.ContentBackground" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Border" Color="#E0E0E0" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Primary" Color="#1A1A1A" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Secondary" Color="#616161" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Accent" Color="#0F6CBD" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.HoverBackground" Color="#E6E6E6" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.PressedBackground" Color="#DADADA" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CheckedBackground" Color="#CDE0F3" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CheckedHoverBackground" Color="#BDD5EC" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ContextualBackground" Color="#E4F0FB" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ContextualHoverBackground" Color="#D5E7F7" />
+    <!-- Tab strip. Office 2024 uses UNDERLINES: the hover/selected FILLS are Transparent,
+         the hover/selected UNDERLINES carry the color. (A theme flips this by making the
+         underlines Transparent and the fills colored — see Office 2019.) -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.Foreground" Color="#1A1A1A" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverBackground" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverUnderline" Color="#B8B8B8" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedBackground" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedUnderline" Color="#0F6CBD" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedForeground" Color="#0F6CBD" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Group.Separator" Color="#E0E0E0" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.Background" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.Border" Color="#D1D1D1" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemHoverBackground" Color="#2B7FC7" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemSelectedBackground" Color="#0A5799" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ContentBackground" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.HoverBackground" Color="#E5E5E5" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.PressedBackground" Color="#D6D6D6" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.CloseHoverBackground" Color="#E81123" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.ClosePressedBackground" Color="#F1707A" />
+
+    <!-- Title bar band: light, matching the ribbon (Office 2024 has no colored band). -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.TitleBar.Background" Color="#F3F3F3" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.TitleBar.Foreground" Color="#1A1A1A" />
+
+    <!-- Application (File) button: a flat, tab-like button (NOT a solid accent block;
+         that belongs to Office 2010/2013). Turns accent only while the backstage is open. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.Background" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.Foreground" Color="#1A1A1A" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverBackground" Color="#E6E6E6" />
+
+    <system:Double x:Key="RibbonKit.Metrics.GroupsRowHeight">96</system:Double>
+
+    <!-- Corner radii — rounded (modern Fluent look). Themes that want sharp corners
+         (Office 2019/2013) set these to 0. -->
+    <CornerRadius x:Key="RibbonKit.Metrics.ControlCornerRadius">4</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.SmallControlCornerRadius">2</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.PopupCornerRadius">6</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.TabCornerRadius">4,4,0,0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.SplitLeftCornerRadius">4,0,0,4</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.SplitRightCornerRadius">0,4,4,0</CornerRadius>
+
+    <!-- Ribbon body as a floating rounded card (Office 2024/365 Fluent look):
+         inset margin, all-around border, rounded corners. -->
+    <Thickness x:Key="RibbonKit.Metrics.ContentBorderThickness">1</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.ContentMargin">7,1,7,7</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadius">8</CornerRadius>
+    <!-- Card geometry when the QAT sits below the ribbon: top corners rounded, bottom
+         square, and no bottom margin so the QAT bar connects flush. -->
+    <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadiusTop">8,8,0,0</CornerRadius>
+    <Thickness x:Key="RibbonKit.Metrics.ContentMarginQatBelow">7,1,7,0</Thickness>
+
+    <!-- Soft drop shadow that lifts the ribbon card. Flat themes zero its opacity. -->
+    <DropShadowEffect x:Key="RibbonKit.Effects.ContentShadow"
+                      BlurRadius="12" ShadowDepth="2" Direction="270"
+                      Opacity="0.16" Color="#000000" RenderingBias="Performance" />
+
+    <!-- Below-ribbon QAT: a full-width bar connecting flush under the card (flat top
+         border to merge with the card's square bottom, rounded bottom corners). -->
+    <Thickness x:Key="RibbonKit.Metrics.QatExtenderMargin">7,0,7,7</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.QatExtenderBorderThickness">1,0,1,1</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.QatExtenderCornerRadius">0,0,8,8</CornerRadius>
+
+</ResourceDictionary>

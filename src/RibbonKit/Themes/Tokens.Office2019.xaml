@@ -1,0 +1,84 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:system="clr-namespace:System;assembly=System.Runtime">
+
+    <!-- ============================================================
+         Office 2019 (colorful) token palette. Same keys as Office 2024,
+         different values: a blue tab strip flowing out of the blue title
+         bar, white tab text, an active tab that connects to the light
+         ribbon body, and fully flat (zero-radius) chrome.
+         ============================================================ -->
+    <!-- Tab strip band = the title bar blue (they merge into one band). -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Background" Color="#2B579A" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.ContentBackground" Color="#F5F4F3" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Border" Color="#C8C6C4" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Primary" Color="#201F1E" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Secondary" Color="#605E5C" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Accent" Color="#2B579A" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.HoverBackground" Color="#DEDCDA" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.PressedBackground" Color="#CFCDCB" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CheckedBackground" Color="#CEDCF0" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CheckedHoverBackground" Color="#BBCFEA" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ContextualBackground" Color="#3D66A8" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ContextualHoverBackground" Color="#4E74B4" />
+    <!-- Tabs sit on the blue band. Office 2019 uses FILLS, not underlines: the hover FILL
+         is a lighter blue box, the selected FILL is the light body color (connected tab),
+         and BOTH underline tokens are Transparent so no underline ever shows. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.Foreground" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverBackground" Color="#3D66A8" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverUnderline" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedBackground" Color="#F5F4F3" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedUnderline" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedForeground" Color="#201F1E" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Group.Separator" Color="#C8C6C4" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.Background" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.Border" Color="#C8C6C4" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemHoverBackground" Color="#3D66A8" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemSelectedBackground" Color="#1F3F72" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ContentBackground" Color="#FFFFFF" />
+    <!-- Caption buttons sit on the blue title band: hover/pressed are darker blues. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.HoverBackground" Color="#3D66A8" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.PressedBackground" Color="#1F3F72" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.CloseHoverBackground" Color="#E81123" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.ClosePressedBackground" Color="#F1707A" />
+
+    <!-- Office 2019: colored (blue) title bar with white text and caption glyphs,
+         over a light tab strip. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.TitleBar.Background" Color="#2B579A" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.TitleBar.Foreground" Color="#FFFFFF" />
+
+    <!-- Office 2019 File button is flat/tab-like too (the solid accent block is a
+         2010/2013 trait). Accent only while the backstage is open. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.Background" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.Foreground" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverBackground" Color="#3D66A8" />
+
+    <system:Double x:Key="RibbonKit.Metrics.GroupsRowHeight">96</system:Double>
+
+    <!-- Office 2019 is fully flat: every corner radius is zero. -->
+    <CornerRadius x:Key="RibbonKit.Metrics.ControlCornerRadius">0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.SmallControlCornerRadius">0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.PopupCornerRadius">0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.TabCornerRadius">0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.SplitLeftCornerRadius">0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.SplitRightCornerRadius">0</CornerRadius>
+
+    <!-- Office 2019: no floating card. Bottom border only, so the light body connects
+         seamlessly under the blue tab strip and the active (light) tab merges into it. -->
+    <Thickness x:Key="RibbonKit.Metrics.ContentBorderThickness">0,0,0,1</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.ContentMargin">0</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadius">0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadiusTop">0</CornerRadius>
+    <Thickness x:Key="RibbonKit.Metrics.ContentMarginQatBelow">0</Thickness>
+
+    <!-- Flat theme: no ribbon shadow. -->
+    <DropShadowEffect x:Key="RibbonKit.Effects.ContentShadow"
+                      Opacity="0" BlurRadius="0" ShadowDepth="0" />
+
+    <!-- Flat below-ribbon QAT: a plain full-width strip with a bottom border. -->
+    <Thickness x:Key="RibbonKit.Metrics.QatExtenderMargin">0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.QatExtenderBorderThickness">0,0,0,1</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.QatExtenderCornerRadius">0</CornerRadius>
+
+</ResourceDictionary>

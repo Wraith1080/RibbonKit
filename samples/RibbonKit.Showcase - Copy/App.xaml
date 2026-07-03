@@ -5,10 +5,6 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <!-- Token dictionary in app scope: the shared templates resolve their
-                     colors/metrics from here via DynamicResource. Swap at runtime with
-                     RibbonKit.Theming.ThemeManager.Apply(...). -->
-                <ResourceDictionary Source="/RibbonKit;component/Themes/Tokens.Office2024.xaml" />
                 <ResourceDictionary Source="Icons.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>

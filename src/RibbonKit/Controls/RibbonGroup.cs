@@ -292,11 +292,34 @@ public class RibbonGroup : HeaderedItemsControl
     {
         _dismissHelper?.OnClosed();
 
+        // Any gallery still expanded inside this flyout must close FIRST, so it
+        // re-homes its items presenter back into its strip before we reclaim the
+        // content — otherwise the presenter stays orphaned in the gallery's popup
+        // and the gallery renders empty back in the ribbon.
+        if (_popupHost?.Child is { } flyoutContent)
+        {
+            CloseNestedGalleryPopups(flyoutContent);
+        }
+
         // Move the content back into the ribbon so it is ready when the group expands.
         if (_popupHost?.Child is { } content && _normalHost is not null)
         {
             _popupHost.Child = null;
             _normalHost.Child = content;
+        }
+    }
+
+    private static void CloseNestedGalleryPopups(DependencyObject node)
+    {
+        if (node is InRibbonGallery { IsDropDownOpen: true } gallery)
+        {
+            gallery.SetCurrentValue(InRibbonGallery.IsDropDownOpenProperty, false);
+        }
+
+        int count = VisualTreeHelper.GetChildrenCount(node);
+        for (int i = 0; i < count; i++)
+        {
+            CloseNestedGalleryPopups(VisualTreeHelper.GetChild(node, i));
         }
     }
 
