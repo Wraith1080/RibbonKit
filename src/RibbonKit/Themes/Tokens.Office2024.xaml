@@ -31,6 +31,11 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedBackground" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedUnderline" Color="#0F6CBD" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedForeground" Color="#0F6CBD" />
+    <!-- Active-tab outline is off in 2024 (the accent underline marks selection). -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedBorderBrush" Color="Transparent" />
+    <Thickness x:Key="RibbonKit.Metrics.TabSelectedBorderThickness">0</Thickness>
+    <!-- Small gap before the File button. -->
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonMargin">8,4,2,0</Thickness>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Group.Separator" Color="#E0E0E0" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.Background" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.Border" Color="#D1D1D1" />
@@ -47,10 +52,12 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.TitleBar.Foreground" Color="#1A1A1A" />
 
     <!-- Application (File) button: a flat, tab-like button (NOT a solid accent block;
-         that belongs to Office 2010/2013). Turns accent only while the backstage is open. -->
+         that belongs to Office 2010/2013). Underline hover like the tabs; turns accent
+         only while the backstage is open. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.Background" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.Foreground" Color="#1A1A1A" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverBackground" Color="#E6E6E6" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverBackground" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverUnderline" Color="#B8B8B8" />
 
     <system:Double x:Key="RibbonKit.Metrics.GroupsRowHeight">96</system:Double>
 

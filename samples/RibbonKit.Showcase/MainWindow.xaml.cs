@@ -26,6 +26,9 @@ public partial class MainWindow : RibbonWindow
     private void OnApplyOffice2019(object sender, RoutedEventArgs e) =>
         ThemeManager.Apply(Application.Current, RibbonTheme.Office2019);
 
+    private void OnApplyOffice2013(object sender, RoutedEventArgs e) =>
+        ThemeManager.Apply(Application.Current, RibbonTheme.Office2013);
+
     private void OnPictureSelected(object sender, RoutedEventArgs e)
     {
         if (PictureFormatTab is not null)

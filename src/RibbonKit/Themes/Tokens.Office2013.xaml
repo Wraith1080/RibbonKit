@@ -1,0 +1,89 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:system="clr-namespace:System;assembly=System.Runtime">
+
+    <!-- ============================================================
+         Office 2013 ("White") token palette. Same keys as the other
+         themes. Defining traits: very flat and white, a colored (blue)
+         title bar over a WHITE tab strip (unlike 2019's blue strip),
+         a SOLID accent File button, and blue-tinted hovers.
+         ============================================================ -->
+    <!-- Tab strip is white in the 2013 White theme (title bar is the only colored band). -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Background" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.ContentBackground" Color="#FFFFFF" />
+    <!-- Prominent medium-gray outline around the ribbon body and the active tab. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Border" Color="#919191" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Primary" Color="#444444" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Secondary" Color="#777777" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Accent" Color="#2B579A" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.HoverBackground" Color="#E8EEF7" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.PressedBackground" Color="#D0E0F5" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CheckedBackground" Color="#D4E4F7" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CheckedHoverBackground" Color="#C4D8F0" />
+    <!-- Flat theme: fills, not underlines. Tabs on the white strip: dark text, light-blue
+         hover box, white connected active tab with an accent (blue) label. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ContextualBackground" Color="#E8EEF7" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ContextualHoverBackground" Color="#D4E4F7" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.Foreground" Color="#444444" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverBackground" Color="#E8EEF7" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverUnderline" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedBackground" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedUnderline" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedForeground" Color="#2B579A" />
+    <!-- Metro trait: the active tab is outlined (top + sides) and cuts into the ribbon body. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedBorderBrush" Color="#919191" />
+    <Thickness x:Key="RibbonKit.Metrics.TabSelectedBorderThickness">1,1,1,0</Thickness>
+    <!-- The File button hits the window's left edge, flush and full-height. -->
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonMargin">0</Thickness>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Group.Separator" Color="#D4D4D4" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.Background" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.Border" Color="#D4D4D4" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemHoverBackground" Color="#3D66A8" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemSelectedBackground" Color="#1F3F72" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ContentBackground" Color="#FFFFFF" />
+    <!-- Caption buttons sit on the WHITE title bar: light-gray hover, dark glyphs. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.HoverBackground" Color="#E5E5E5" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.PressedBackground" Color="#D6D6D6" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.CloseHoverBackground" Color="#E81123" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.ClosePressedBackground" Color="#F1707A" />
+
+    <!-- Office 2013 White: the title bar is NOT colored — it's white, matching the
+         area behind the ribbon. Only the File button and accents carry the blue. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.TitleBar.Background" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.TitleBar.Foreground" Color="#444444" />
+
+    <!-- Office 2013: the File button IS a solid accent block with white text
+         (a darker-accent fill on hover, no underline). -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.Background" Color="#2B579A" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.Foreground" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverBackground" Color="#1F3F72" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverUnderline" Color="Transparent" />
+
+    <system:Double x:Key="RibbonKit.Metrics.GroupsRowHeight">96</system:Double>
+
+    <!-- Fully flat: every corner radius is zero. -->
+    <CornerRadius x:Key="RibbonKit.Metrics.ControlCornerRadius">0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.SmallControlCornerRadius">0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.PopupCornerRadius">0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.TabCornerRadius">0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.SplitLeftCornerRadius">0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.SplitRightCornerRadius">0</CornerRadius>
+
+    <!-- Prominent outline all around the ribbon body (Metro look). -->
+    <Thickness x:Key="RibbonKit.Metrics.ContentBorderThickness">1</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.ContentMargin">0</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadius">0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadiusTop">0</CornerRadius>
+    <Thickness x:Key="RibbonKit.Metrics.ContentMarginQatBelow">0</Thickness>
+
+    <!-- Flat theme: no ribbon shadow. -->
+    <DropShadowEffect x:Key="RibbonKit.Effects.ContentShadow"
+                      Opacity="0" BlurRadius="0" ShadowDepth="0" />
+
+    <!-- Flat below-ribbon QAT: a plain full-width strip with a bottom border. -->
+    <Thickness x:Key="RibbonKit.Metrics.QatExtenderMargin">0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.QatExtenderBorderThickness">0,0,0,1</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.QatExtenderCornerRadius">0</CornerRadius>
+
+</ResourceDictionary>

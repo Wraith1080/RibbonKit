@@ -328,7 +328,14 @@
                                      SizeDefinition="Large, Medium, Small"
                                      Click="OnApplyOffice2019"
                                      ScreenTipTitle="Office 2019 theme"
-                                     ScreenTipText="Apply the Office 2019 light theme (blue accent, flatter grays)." />
+                                     ScreenTipText="Apply the Office 2019 colorful theme (blue tab strip, flat)." />
+                    <rk:RibbonButton Header="Office 2013"
+                                     LargeIcon="{StaticResource Icon.Style}"
+                                     Icon="{StaticResource Icon.Style}"
+                                     SizeDefinition="Large, Medium, Small"
+                                     Click="OnApplyOffice2013"
+                                     ScreenTipTitle="Office 2013 theme"
+                                     ScreenTipText="Apply the Office 2013 White theme (flat, white strip, solid File button)." />
                 </rk:RibbonGroup>
             </rk:RibbonTab>
 

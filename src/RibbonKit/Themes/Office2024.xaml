@@ -106,7 +106,7 @@
                                  when the hosting Ribbon has no Backstage assigned -->
                             <ToggleButton x:Name="ApplicationButton"
                                           Grid.Column="0"
-                                          Margin="8,4,2,0"
+                                          Margin="{DynamicResource RibbonKit.Metrics.ApplicationButtonMargin}"
                                           Content="{Binding ApplicationButtonHeader, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
                                           IsChecked="{Binding IsBackstageOpen, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}, Mode=TwoWay}">
                                 <ToggleButton.Style>
@@ -133,13 +133,13 @@
                                                                    RadiusY="1.25"
                                                                    Margin="10,0"
                                                                    VerticalAlignment="Bottom"
-                                                                   Fill="{DynamicResource RibbonKit.Brushes.Tab.HoverUnderline}"
+                                                                   Fill="{DynamicResource RibbonKit.Brushes.ApplicationButton.HoverUnderline}"
                                                                    Visibility="Collapsed" />
                                                     </Grid>
                                                     <ControlTemplate.Triggers>
                                                         <Trigger Property="IsMouseOver" Value="True">
                                                             <Setter TargetName="Chrome" Property="Background"
-                                                                    Value="{DynamicResource RibbonKit.Brushes.Tab.HoverBackground}" />
+                                                                    Value="{DynamicResource RibbonKit.Brushes.ApplicationButton.HoverBackground}" />
                                                             <Setter TargetName="HoverUnderline" Property="Visibility" Value="Visible" />
                                                         </Trigger>
                                                         <!-- Backstage open: File highlights in accent, like Office -->
@@ -297,6 +297,8 @@
                     <Grid>
                         <Border x:Name="HeaderChrome"
                                 Background="Transparent"
+                                BorderBrush="Transparent"
+                                BorderThickness="0"
                                 CornerRadius="{DynamicResource RibbonKit.Metrics.TabCornerRadius}"
                                 Padding="12,7,12,9">
                             <ContentPresenter ContentSource="Header"
@@ -348,6 +350,13 @@
                         <Trigger Property="IsSelected" Value="True">
                             <Setter TargetName="HeaderChrome" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Tab.SelectedBackground}" />
+                            <!-- Office 2013/Metro: the active tab is outlined on top and
+                                 sides (no bottom) so it connects into the ribbon body.
+                                 Other themes keep this Transparent / zero-thickness. -->
+                            <Setter TargetName="HeaderChrome" Property="BorderBrush"
+                                    Value="{DynamicResource RibbonKit.Brushes.Tab.SelectedBorderBrush}" />
+                            <Setter TargetName="HeaderChrome" Property="BorderThickness"
+                                    Value="{DynamicResource RibbonKit.Metrics.TabSelectedBorderThickness}" />
                             <Setter TargetName="SelectionIndicator" Property="Visibility" Value="Visible" />
                             <Setter TargetName="HoverIndicator" Property="Visibility" Value="Collapsed" />
                             <Setter Property="Foreground"
@@ -1766,9 +1775,10 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="WindowState" Value="Maximized">
-                            <!-- Maximized windows overhang the work area by the resize
-                                 border; compensate so content isn't clipped. -->
-                            <Setter TargetName="WindowRoot" Property="Margin" Value="7" />
+                            <!-- No overhang-compensation margin needed: RibbonWindow
+                                 constrains the maximized bounds to the monitor work area
+                                 (WM_GETMINMAXINFO), so the ribbon card keeps its own
+                                 side margin when maximized. -->
                             <Setter TargetName="MaximizeButton" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="RestoreButton" Property="Visibility" Value="Visible" />
                         </Trigger>

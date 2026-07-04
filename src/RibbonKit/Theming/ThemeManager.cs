@@ -8,11 +8,13 @@ public enum RibbonTheme
     /// <summary>The modern Office look (light). Default theme.</summary>
     Office2024,
 
-    /// <summary>Office 2019 (light): flatter warm grays, classic Office blue accent.</summary>
+    /// <summary>Office 2019 (colorful): blue tab strip, white tab text, flat chrome.</summary>
     Office2019,
 
-    // Office2013, Office2010, and Office2007 arrive in later Phase 6 batches
-    // (see docs/03-ROADMAP.md).
+    /// <summary>Office 2013 ("White"): flat, white tab strip, blue title bar, solid File button.</summary>
+    Office2013,
+
+    // Office2010 and Office2007 arrive in later Phase 6 batches (see docs/03-ROADMAP.md).
 }
 
 /// <summary>
