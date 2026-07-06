@@ -192,6 +192,26 @@ public class RibbonGroup : HeaderedItemsControl
 
     internal void SetSizeState(RibbonGroupSizeState state) => SetValue(SizeStatePropertyKey, state);
 
+    /// <summary>
+    /// The single button shown while the group is collapsed; its flyout hosts the full
+    /// content. Exposed for the KeyTip service, which targets it when the group is
+    /// collapsed. <see langword="null"/> before the template is applied.
+    /// </summary>
+    internal ToggleButton? CollapsedButton => _collapsedButton;
+
+    /// <summary>
+    /// The group's content once it has re-homed into the collapsed flyout, or
+    /// <see langword="null"/> when not collapsed/open. Used by the KeyTip service to
+    /// badge the controls inside an open flyout.
+    /// </summary>
+    internal UIElement? FlyoutContent => _popupHost?.Child;
+
+    /// <summary>
+    /// The small ↘ dialog-launcher button, or <see langword="null"/> before the template
+    /// is applied. Exposed so the KeyTip service can badge it.
+    /// </summary>
+    internal ButtonBase? DialogLauncher => _dialogLauncher;
+
     /// <inheritdoc />
     public override void OnApplyTemplate()
     {

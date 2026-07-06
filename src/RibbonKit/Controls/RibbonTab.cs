@@ -35,7 +35,25 @@ public class RibbonTab : TabItem
             nameof(IsContextual),
             typeof(bool),
             typeof(RibbonTab),
-            new FrameworkPropertyMetadata(false));
+            new FrameworkPropertyMetadata(false, OnContextualAppearanceChanged));
+
+    /// <summary>Identifies the <see cref="ContextualColor"/> dependency property.</summary>
+    public static readonly DependencyProperty ContextualColorProperty =
+        DependencyProperty.Register(
+            nameof(ContextualColor),
+            typeof(Brush),
+            typeof(RibbonTab),
+            new FrameworkPropertyMetadata(null, OnContextualAppearanceChanged));
+
+    private static readonly DependencyPropertyKey ContextualBrushPropertyKey =
+        DependencyProperty.RegisterReadOnly(
+            nameof(ContextualBrush),
+            typeof(Brush),
+            typeof(RibbonTab),
+            new FrameworkPropertyMetadata(null));
+
+    /// <summary>Identifies the read-only <see cref="ContextualBrush"/> dependency property.</summary>
+    public static readonly DependencyProperty ContextualBrushProperty = ContextualBrushPropertyKey.DependencyProperty;
 
     static RibbonTab()
     {
@@ -69,6 +87,50 @@ public class RibbonTab : TabItem
     {
         get => (bool)GetValue(IsContextualProperty);
         set => SetValue(IsContextualProperty, value);
+    }
+
+    /// <summary>
+    /// The color that tints this contextual tab (like Office's per-tool-group color).
+    /// In the 2024 theme it colors the header text — muted when unselected, full when
+    /// selected — and the selection underline; flatter themes (2019/2013) color the
+    /// header text. When left unset on a contextual tab, the theme accent is used.
+    /// Has no effect unless <see cref="IsContextual"/> is <see langword="true"/>.
+    /// </summary>
+    public Brush? ContextualColor
+    {
+        get => (Brush?)GetValue(ContextualColorProperty);
+        set => SetValue(ContextualColorProperty, value);
+    }
+
+    /// <summary>
+    /// The effective contextual tint the template renders: <see cref="ContextualColor"/>
+    /// when set, otherwise the theme accent (resolved when the template is applied). This
+    /// is what the control template binds to, so a contextual tab is never left with an
+    /// unset (invisible) header color.
+    /// </summary>
+    public Brush? ContextualBrush => (Brush?)GetValue(ContextualBrushProperty);
+
+    /// <inheritdoc />
+    public override void OnApplyTemplate()
+    {
+        base.OnApplyTemplate();
+        UpdateContextualBrush();
+    }
+
+    private static void OnContextualAppearanceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
+        ((RibbonTab)d).UpdateContextualBrush();
+
+    private void UpdateContextualBrush()
+    {
+        // Prefer the explicit color; fall back to the theme accent so a contextual tab
+        // is never rendered with an unset (invisible) header color.
+        Brush? brush = ContextualColor;
+        if (brush is null && IsContextual)
+        {
+            brush = TryFindResource("RibbonKit.Brushes.Accent") as Brush;
+        }
+
+        SetValue(ContextualBrushPropertyKey, brush);
     }
 
     /// <summary>

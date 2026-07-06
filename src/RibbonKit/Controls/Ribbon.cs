@@ -109,6 +109,7 @@ public class Ribbon : Control
         tabs.CollectionChanged += OnTabsCollectionChanged;
         SetValue(TabsPropertyKey, tabs);
         SetValue(QuickAccessItemsPropertyKey, new ObservableCollection<object>());
+        _keyTipService = new KeyTipService(this);
         Loaded += OnLoaded;
     }
 
@@ -179,6 +180,10 @@ public class Ribbon : Control
     }
 
     private BackstageAdorner? _backstageAdorner;
+
+    // Owns the Alt/F10 KeyTip experience for this ribbon; wires itself to the host
+    // window on Loaded. Held so it lives as long as the ribbon.
+    private readonly KeyTipService _keyTipService;
 
     private static void OnIsBackstageOpenChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {

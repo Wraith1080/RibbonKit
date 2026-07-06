@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
+using System.Windows.Media;
 
 namespace RibbonKit.Controls;
 
@@ -18,8 +19,11 @@ namespace RibbonKit.Controls;
 /// &lt;/rk:RibbonWindow&gt;
 /// </code>
 /// </summary>
+[TemplatePart(Name = WindowRootPartName, Type = typeof(FrameworkElement))]
 public class RibbonWindow : Window
 {
+    private const string WindowRootPartName = "PART_WindowRoot";
+
     /// <summary>Identifies the <see cref="TitleBarContent"/> dependency property.</summary>
     public static readonly DependencyProperty TitleBarContentProperty =
         DependencyProperty.Register(
@@ -35,6 +39,8 @@ public class RibbonWindow : Window
             typeof(bool),
             typeof(RibbonWindow),
             new FrameworkPropertyMetadata(true));
+
+    private FrameworkElement? _windowRoot;
 
     static RibbonWindow()
     {
@@ -58,6 +64,12 @@ public class RibbonWindow : Window
         CommandBindings.Add(new System.Windows.Input.CommandBinding(
             SystemCommands.CloseWindowCommand,
             (_, _) => SystemCommands.CloseWindow(this)));
+
+        // A maximized WindowChrome window is resized by Windows to hang past every screen
+        // edge (the layout of the resize frame), and re-measuring on SizeChanged keeps the
+        // compensation inset current if the window is dragged to a monitor of a different
+        // resolution/DPI while maximized.
+        SizeChanged += (_, _) => UpdateMaximizeInset();
     }
 
     /// <summary>
@@ -82,75 +94,170 @@ public class RibbonWindow : Window
     }
 
     /// <inheritdoc />
+    public override void OnApplyTemplate()
+    {
+        base.OnApplyTemplate();
+        _windowRoot = GetTemplateChild(WindowRootPartName) as FrameworkElement;
+        UpdateMaximizeInset();
+    }
+
+    /// <inheritdoc />
     protected override void OnSourceInitialized(EventArgs e)
     {
         base.OnSourceInitialized(e);
 
-        // Constrain the maximized window to the monitor's WORK AREA. Without this, a
-        // WindowChrome window maximizes larger than the screen (overhanging by the
-        // resize frame), which clips content at the edges and eats the ribbon card's
-        // side margin. Handling WM_GETMINMAXINFO keeps the maximized size exact, so no
-        // fragile per-DPI compensation margin is needed and the card keeps its margin.
-        var handle = new WindowInteropHelper(this).Handle;
+        // First line of defence: ask Windows to keep the maximized window inside the
+        // monitor's WORK AREA (so it respects the taskbar and doesn't overhang). This is
+        // the classic WM_GETMINMAXINFO fix and it's enough for a bare Window — but a
+        // WindowChrome window re-introduces the overhang through its own (miscalculated)
+        // non-client frame sizing, so the measured inset below is what actually guarantees
+        // the caption buttons and ribbon stay on-screen. Keeping the hook is still worth
+        // it: when it does constrain the window, the measured overhang simply comes out as
+        // zero, so the two mechanisms never double up.
+        IntPtr handle = new WindowInteropHelper(this).EnsureHandle();
         HwndSource.FromHwnd(handle)?.AddHook(WindowHook);
+        UpdateMaximizeInset();
+    }
+
+    /// <inheritdoc />
+    protected override void OnStateChanged(EventArgs e)
+    {
+        base.OnStateChanged(e);
+        UpdateMaximizeInset();
+    }
+
+    /// <inheritdoc />
+    protected override void OnDpiChanged(DpiScale oldDpi, DpiScale newDpi)
+    {
+        base.OnDpiChanged(oldDpi, newDpi);
+        UpdateMaximizeInset();
+    }
+
+    /// <summary>
+    /// Insets the window root by the exact amount the maximized window spills past the
+    /// monitor's work area, so content sits flush at the visible edges (nothing clipped,
+    /// the caption buttons stay on-screen, and the ribbon card keeps its side margin).
+    /// The overhang is MEASURED from the real window rect vs. the monitor rect and
+    /// converted from device pixels to DIPs, so it is exact at every DPI — no reliance on
+    /// <see cref="SystemParameters.WindowResizeBorderThickness"/>, whose value is
+    /// ambiguous across Windows versions and is what makes the usual fixes flaky.
+    /// </summary>
+    private void UpdateMaximizeInset()
+    {
+        if (_windowRoot is null)
+        {
+            return;
+        }
+
+        Thickness target = default;
+
+        if (WindowState == WindowState.Maximized)
+        {
+            IntPtr hwnd = new WindowInteropHelper(this).Handle;
+            if (hwnd != IntPtr.Zero
+                && GetWindowRect(hwnd, out NativeRect win))
+            {
+                IntPtr monitor = MonitorFromWindow(hwnd, MonitorDefaultToNearest);
+                var monitorInfo = new NativeMonitorInfo { cbSize = Marshal.SizeOf<NativeMonitorInfo>() };
+                if (monitor != IntPtr.Zero && GetMonitorInfo(monitor, ref monitorInfo))
+                {
+                    NativeRect work = monitorInfo.rcWork;
+                    DpiScale dpi = VisualTreeHelper.GetDpi(this);
+                    double sx = dpi.DpiScaleX <= 0 ? 1.0 : dpi.DpiScaleX;
+                    double sy = dpi.DpiScaleY <= 0 ? 1.0 : dpi.DpiScaleY;
+
+                    // How far the window spills past the work area on each edge (device px),
+                    // clamped to >= 0, then converted to DIPs for the WPF layout margin.
+                    target = new Thickness(
+                        Math.Max(0, work.Left - win.Left) / sx,
+                        Math.Max(0, work.Top - win.Top) / sy,
+                        Math.Max(0, win.Right - work.Right) / sx,
+                        Math.Max(0, win.Bottom - work.Bottom) / sy);
+                }
+            }
+        }
+
+        // Avoid re-triggering layout (SizeChanged -> UpdateMaximizeInset -> ...) when the
+        // inset hasn't actually changed.
+        if (!ThicknessesClose(_windowRoot.Margin, target))
+        {
+            _windowRoot.Margin = target;
+        }
+    }
+
+    private static bool ThicknessesClose(Thickness a, Thickness b)
+    {
+        const double eps = 0.5;
+        return Math.Abs(a.Left - b.Left) < eps
+            && Math.Abs(a.Top - b.Top) < eps
+            && Math.Abs(a.Right - b.Right) < eps
+            && Math.Abs(a.Bottom - b.Bottom) < eps;
     }
 
     private static IntPtr WindowHook(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
     {
         const int WmGetMinMaxInfo = 0x0024;
-        if (msg == WmGetMinMaxInfo)
+        if (msg == WmGetMinMaxInfo && ConstrainMaximizedBounds(hwnd, lParam))
         {
-            ConstrainMaximizedBounds(hwnd, lParam);
             handled = true;
         }
 
         return IntPtr.Zero;
     }
 
-    private static void ConstrainMaximizedBounds(IntPtr hwnd, IntPtr lParam)
+    private static bool ConstrainMaximizedBounds(IntPtr hwnd, IntPtr lParam)
     {
-        const int MonitorDefaultToNearest = 0x00000002;
         IntPtr monitor = MonitorFromWindow(hwnd, MonitorDefaultToNearest);
         if (monitor == IntPtr.Zero)
         {
-            return;
+            return false;
         }
 
-        var monitorInfo = new MonitorInfo { cbSize = Marshal.SizeOf<MonitorInfo>() };
+        var monitorInfo = new NativeMonitorInfo { cbSize = Marshal.SizeOf<NativeMonitorInfo>() };
         if (!GetMonitorInfo(monitor, ref monitorInfo))
         {
-            return;
+            return false;
         }
 
-        var mmi = Marshal.PtrToStructure<MinMaxInfo>(lParam);
-        Rect work = monitorInfo.rcWork;
-        Rect area = monitorInfo.rcMonitor;
+        var mmi = Marshal.PtrToStructure<NativeMinMaxInfo>(lParam);
+        NativeRect work = monitorInfo.rcWork;   // desktop minus taskbar, in device pixels
+        NativeRect area = monitorInfo.rcMonitor; // full monitor, in device pixels
 
-        // Position and size the maximized window to the work area (monitor-relative),
-        // so it never overhangs the screen or covers the taskbar.
+        int width = work.Right - work.Left;
+        int height = work.Bottom - work.Top;
+
         mmi.ptMaxPosition.X = work.Left - area.Left;
         mmi.ptMaxPosition.Y = work.Top - area.Top;
-        mmi.ptMaxSize.X = work.Right - work.Left;
-        mmi.ptMaxSize.Y = work.Bottom - work.Top;
+        mmi.ptMaxSize.X = width;
+        mmi.ptMaxSize.Y = height;
+        mmi.ptMaxTrackSize.X = width;
+        mmi.ptMaxTrackSize.Y = height;
 
         Marshal.StructureToPtr(mmi, lParam, true);
+        return true;
     }
+
+    private const int MonitorDefaultToNearest = 0x00000002;
 
     [DllImport("user32.dll")]
     private static extern IntPtr MonitorFromWindow(IntPtr hwnd, int flags);
 
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
-    private static extern bool GetMonitorInfo(IntPtr hMonitor, ref MonitorInfo lpmi);
+    private static extern bool GetMonitorInfo(IntPtr hMonitor, ref NativeMonitorInfo lpmi);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool GetWindowRect(IntPtr hwnd, out NativeRect lpRect);
 
     [StructLayout(LayoutKind.Sequential)]
-    private struct Point
+    private struct NativePoint
     {
         public int X;
         public int Y;
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    private struct Rect
+    private struct NativeRect
     {
         public int Left;
         public int Top;
@@ -159,21 +266,21 @@ public class RibbonWindow : Window
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    private struct MinMaxInfo
+    private struct NativeMinMaxInfo
     {
-        public Point ptReserved;
-        public Point ptMaxSize;
-        public Point ptMaxPosition;
-        public Point ptMinTrackSize;
-        public Point ptMaxTrackSize;
+        public NativePoint ptReserved;
+        public NativePoint ptMaxSize;
+        public NativePoint ptMaxPosition;
+        public NativePoint ptMinTrackSize;
+        public NativePoint ptMaxTrackSize;
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    private struct MonitorInfo
+    private struct NativeMonitorInfo
     {
         public int cbSize;
-        public Rect rcMonitor;
-        public Rect rcWork;
+        public NativeRect rcMonitor;
+        public NativeRect rcWork;
         public int dwFlags;
     }
 }

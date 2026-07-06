@@ -75,6 +75,26 @@
                                 </Setter.Value>
                             </Setter>
                         </Trigger>
+                        <!-- Minimized + QAT below: the ribbon body card is collapsed, so the
+                             QAT bar is left standing alone under the tab strip. Make it a
+                             self-contained floating card — round ALL corners (not just the
+                             bottom), border it all the way around, and give it the small top
+                             gap the card used to occupy — matching Office. It reverts to the
+                             flush-connected strip automatically when the ribbon is restored.
+                             Flat themes (2019/2013) point these tokens at their strip values,
+                             so nothing changes shape for them. -->
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="QuickAccessPosition" Value="BelowRibbon" />
+                                <Condition Property="IsMinimized" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="QatBelowHost" Property="CornerRadius"
+                                    Value="{DynamicResource RibbonKit.Metrics.QatExtenderCornerRadiusMinimized}" />
+                            <Setter TargetName="QatBelowHost" Property="BorderThickness"
+                                    Value="{DynamicResource RibbonKit.Metrics.QatExtenderBorderThicknessMinimized}" />
+                            <Setter TargetName="QatBelowHost" Property="Margin"
+                                    Value="{DynamicResource RibbonKit.Metrics.QatExtenderMarginMinimized}" />
+                        </MultiTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
@@ -181,7 +201,7 @@
                             </ItemsControl>
                             <TabPanel Grid.Column="2"
                                       IsItemsHost="True"
-                                      Margin="2,4,4,0"
+                                      Margin="{DynamicResource RibbonKit.Metrics.TabStripMargin}"
                                       Background="Transparent" />
                             <!-- Minimize chevron: toggles Ribbon.IsMinimized -->
                             <ToggleButton x:Name="MinimizeToggle"
@@ -301,20 +321,26 @@
                                 BorderThickness="0"
                                 CornerRadius="{DynamicResource RibbonKit.Metrics.TabCornerRadius}"
                                 Padding="12,7,12,9">
-                            <ContentPresenter ContentSource="Header"
-                                              HorizontalAlignment="Center"
-                                              VerticalAlignment="Center"
-                                              RecognizesAccessKey="True" />
+                            <Grid>
+                                <!-- Normal header text: theme foreground (and selected
+                                     foreground while selected). -->
+                                <ContentPresenter x:Name="HeaderText"
+                                                  ContentSource="Header"
+                                                  HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center"
+                                                  RecognizesAccessKey="True" />
+                                <!-- Contextual header text: tinted by the tab's ContextualBrush,
+                                     muted until selected. Only shown for contextual tabs. -->
+                                <ContentPresenter x:Name="ContextualHeaderText"
+                                                  ContentSource="Header"
+                                                  HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center"
+                                                  RecognizesAccessKey="True"
+                                                  TextElement.Foreground="{TemplateBinding ContextualBrush}"
+                                                  Opacity="{DynamicResource RibbonKit.Metrics.ContextualUnselectedOpacity}"
+                                                  Visibility="Collapsed" />
+                            </Grid>
                         </Border>
-                        <!-- Accent strip marking contextual tabs (Picture Format etc.) -->
-                        <Rectangle x:Name="ContextualMarker"
-                                   Height="3"
-                                   RadiusX="1.5"
-                                   RadiusY="1.5"
-                                   Margin="6,0"
-                                   VerticalAlignment="Top"
-                                   Fill="{DynamicResource RibbonKit.Brushes.Accent}"
-                                   Visibility="Collapsed" />
                         <!-- The template carries BOTH an underline and a fill for hover and
                              for selection; a theme picks its style by making the unwanted
                              token Transparent (2024 = underlines; 2019 = fills/pills). -->
@@ -334,10 +360,23 @@
                                    VerticalAlignment="Bottom"
                                    Fill="{DynamicResource RibbonKit.Brushes.Tab.SelectedUnderline}"
                                    Visibility="Collapsed" />
+                        <!-- Selected contextual tab's underline, tinted the same as its
+                             header text. Height is a theme token (2024 = 3, flat themes = 0)
+                             so only underline themes show it. -->
+                        <Rectangle x:Name="ContextualSelectionIndicator"
+                                   Height="{DynamicResource RibbonKit.Metrics.ContextualUnderlineHeight}"
+                                   RadiusX="1.5"
+                                   RadiusY="1.5"
+                                   Margin="10,0"
+                                   VerticalAlignment="Bottom"
+                                   Fill="{TemplateBinding ContextualBrush}"
+                                   Visibility="Collapsed" />
                     </Grid>
                     <ControlTemplate.Triggers>
+                        <!-- Contextual tabs render their header via the tinted presenter. -->
                         <Trigger Property="IsContextual" Value="True">
-                            <Setter TargetName="ContextualMarker" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="HeaderText" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="ContextualHeaderText" Property="Visibility" Value="Visible" />
                         </Trigger>
                         <!-- Hover shows the fill AND the underline; each theme zeroes the
                              one it doesn't use. SourceName scoping matters — TabItem.IsMouseOver
@@ -362,6 +401,17 @@
                             <Setter Property="Foreground"
                                     Value="{DynamicResource RibbonKit.Brushes.Tab.SelectedForeground}" />
                         </Trigger>
+                        <!-- Selected contextual tab: full-strength tint, tinted underline,
+                             and the normal accent underline hidden in its favor. -->
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsContextual" Value="True" />
+                                <Condition Property="IsSelected" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="ContextualHeaderText" Property="Opacity" Value="1" />
+                            <Setter TargetName="SelectionIndicator" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="ContextualSelectionIndicator" Property="Visibility" Value="Visible" />
+                        </MultiTrigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.4" />
                         </Trigger>
@@ -541,17 +591,22 @@
                                Placement="Bottom"
                                PlacementTarget="{Binding ElementName=PART_CollapsedButton}"
                                IsOpen="{Binding IsChecked, ElementName=PART_CollapsedButton, Mode=TwoWay}">
-                            <Border x:Name="PART_PopupHost"
-                                    Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
-                                    BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
-                                    BorderThickness="1"
-                                    CornerRadius="{DynamicResource RibbonKit.Metrics.PopupCornerRadius}"
-                                    Padding="6,4"
-                                    Margin="4,2,8,8">
-                                <Border.Effect>
-                                    <DropShadowEffect BlurRadius="8" ShadowDepth="2" Opacity="0.25" />
-                                </Border.Effect>
-                            </Border>
+                            <!-- AdornerDecorator wraps the host so the re-homed flyout content
+                                 (set as PART_PopupHost.Child at runtime) has an adorner layer
+                                 for KeyTip badges. -->
+                            <AdornerDecorator>
+                                <Border x:Name="PART_PopupHost"
+                                        Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
+                                        BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
+                                        BorderThickness="1"
+                                        CornerRadius="{DynamicResource RibbonKit.Metrics.PopupCornerRadius}"
+                                        Padding="6,4"
+                                        Margin="4,2,8,8">
+                                    <Border.Effect>
+                                        <DropShadowEffect BlurRadius="8" ShadowDepth="2" Opacity="0.25" />
+                                    </Border.Effect>
+                                </Border>
+                            </AdornerDecorator>
                         </Popup>
 
                         <Rectangle Grid.Column="1"
@@ -921,7 +976,11 @@
                                 <Border.Effect>
                                     <DropShadowEffect BlurRadius="8" ShadowDepth="2" Opacity="0.25" />
                                 </Border.Effect>
-                                <ItemsPresenter />
+                                <!-- AdornerDecorator gives the popup its own adorner layer so
+                                     KeyTip badges can render over the menu items. -->
+                                <AdornerDecorator>
+                                    <ItemsPresenter />
+                                </AdornerDecorator>
                             </Border>
                         </Popup>
                     </Grid>
@@ -1086,7 +1145,11 @@
                                 <Border.Effect>
                                     <DropShadowEffect BlurRadius="8" ShadowDepth="2" Opacity="0.25" />
                                 </Border.Effect>
-                                <ItemsPresenter />
+                                <!-- AdornerDecorator gives the popup its own adorner layer so
+                                     KeyTip badges can render over the menu items. -->
+                                <AdornerDecorator>
+                                    <ItemsPresenter />
+                                </AdornerDecorator>
                             </Border>
                         </Popup>
                     </Grid>
@@ -1630,9 +1693,12 @@
         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
         <Setter Property="WindowChrome.WindowChrome">
             <Setter.Value>
+                <!-- No GlassFrameThickness="-1": extending the DWM glass across the whole
+                     window breaks WindowChrome's maximize/work-area handling (the window
+                     then overhangs the screen when maximized). Default glass + the
+                     WM_GETMINMAXINFO hook in RibbonWindow keep maximize correct. -->
                 <WindowChrome CaptionHeight="34"
-                              ResizeBorderThickness="6"
-                              GlassFrameThickness="-1"
+                              ResizeBorderThickness="{x:Static SystemParameters.WindowResizeBorderThickness}"
                               CornerRadius="0"
                               UseAeroCaptionButtons="False" />
             </Setter.Value>
@@ -1640,7 +1706,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type controls:RibbonWindow}">
-                    <Border x:Name="WindowRoot" Background="{TemplateBinding Background}">
+                    <Border x:Name="PART_WindowRoot" Background="{TemplateBinding Background}">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="34" />
@@ -1775,10 +1841,13 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="WindowState" Value="Maximized">
-                            <!-- No overhang-compensation margin needed: RibbonWindow
-                                 constrains the maximized bounds to the monitor work area
-                                 (WM_GETMINMAXINFO), so the ribbon card keeps its own
-                                 side margin when maximized. -->
+                            <!-- The maximize overhang (a WindowChrome window is placed to
+                                 hang past every screen edge) is compensated in code:
+                                 RibbonWindow measures how far the window spills past the
+                                 monitor work area and insets PART_WindowRoot by exactly
+                                 that, so the caption buttons stay on-screen and the ribbon
+                                 card keeps its side margin. Here we only swap the caption
+                                 glyph from Maximize to Restore. -->
                             <Setter TargetName="MaximizeButton" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="RestoreButton" Property="Visibility" Value="Visible" />
                         </Trigger>

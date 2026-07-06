@@ -16,6 +16,7 @@ namespace RibbonKit.Controls;
 public class RibbonSplitButton : RibbonDropDownButton
 {
     private const string PrimaryPartName = "PART_Primary";
+    private const string TogglePartName = "PART_Toggle";
 
     /// <summary>Identifies the <see cref="Click"/> routed event (primary part clicked).</summary>
     public static readonly RoutedEvent ClickEvent = EventManager.RegisterRoutedEvent(
@@ -41,6 +42,7 @@ public class RibbonSplitButton : RibbonDropDownButton
             new FrameworkPropertyMetadata(null));
 
     private ButtonBase? _primary;
+    private ToggleButton? _toggle;
 
     static RibbonSplitButton()
     {
@@ -85,7 +87,15 @@ public class RibbonSplitButton : RibbonDropDownButton
         {
             _primary.Click += OnPrimaryClick;
         }
+
+        _toggle = GetTemplateChild(TogglePartName) as ToggleButton;
     }
+
+    /// <summary>The primary (command) part; the KeyTip service badges it separately.</summary>
+    internal ButtonBase? PrimaryPart => _primary;
+
+    /// <summary>The chevron (menu) part; the KeyTip service badges it separately.</summary>
+    internal ToggleButton? TogglePart => _toggle;
 
     /// <inheritdoc />
     protected override AutomationPeer OnCreateAutomationPeer() => new RibbonSplitButtonAutomationPeer(this);

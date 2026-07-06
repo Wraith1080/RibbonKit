@@ -34,8 +34,16 @@
     <!-- Metro trait: the active tab is outlined (top + sides) and cuts into the ribbon body. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedBorderBrush" Color="#919191" />
     <Thickness x:Key="RibbonKit.Metrics.TabSelectedBorderThickness">1,1,1,0</Thickness>
+    <!-- Contextual tabs: this flat theme only tints the header text (no underline, no
+         mute) — selection stays the outlined active tab. -->
+    <system:Double x:Key="RibbonKit.Metrics.ContextualUnderlineHeight">0</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.ContextualUnselectedOpacity">1</system:Double>
     <!-- The File button hits the window's left edge, flush and full-height. -->
     <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonMargin">0</Thickness>
+    <!-- Tabs sit flush to the top (no top inset) so they line up with the full-height
+         File button and meet the title bar's lower edge — the colored title bar then
+         connects straight into the tab row. -->
+    <Thickness x:Key="RibbonKit.Metrics.TabStripMargin">2,0,4,0</Thickness>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Group.Separator" Color="#D4D4D4" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.Background" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.Border" Color="#D4D4D4" />
@@ -47,6 +55,12 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.PressedBackground" Color="#D6D6D6" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.CloseHoverBackground" Color="#E81123" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.ClosePressedBackground" Color="#F1707A" />
+
+    <!-- KeyTip badges: a white chip with a gray border and dark text, matching the flat
+         Metro look. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.KeyTip.Background" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.KeyTip.Border" Color="#7A7A7A" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.KeyTip.Foreground" Color="#444444" />
 
     <!-- Office 2013 White: the title bar is NOT colored — it's white, matching the
          area behind the ribbon. Only the File button and accents carry the blue. -->
@@ -85,5 +99,11 @@
     <Thickness x:Key="RibbonKit.Metrics.QatExtenderMargin">0</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.QatExtenderBorderThickness">0,0,0,1</Thickness>
     <CornerRadius x:Key="RibbonKit.Metrics.QatExtenderCornerRadius">0</CornerRadius>
+
+    <!-- Flat theme: the minimized QAT keeps the same full-width, bottom-bordered strip
+         (no floating card), so these match the normal values above. -->
+    <Thickness x:Key="RibbonKit.Metrics.QatExtenderMarginMinimized">0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.QatExtenderBorderThicknessMinimized">0,0,0,1</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.QatExtenderCornerRadiusMinimized">0</CornerRadius>
 
 </ResourceDictionary>

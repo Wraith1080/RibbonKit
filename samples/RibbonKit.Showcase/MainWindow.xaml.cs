@@ -29,6 +29,26 @@ public partial class MainWindow : RibbonWindow
     private void OnApplyOffice2013(object sender, RoutedEventArgs e) =>
         ThemeManager.Apply(Application.Current, RibbonTheme.Office2013);
 
+    private void OnToggleAccentTitleBar(object sender, RoutedEventArgs e) =>
+        ThemeManager.SetAccentedTitleBar(Application.Current, (sender as RibbonToggleButton)?.IsChecked == true);
+
+    private void OnAccentGalleryChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (AccentGallery is null || GetStyleTag(AccentGallery.SelectedItem) is not { } tag)
+        {
+            return;
+        }
+
+        if (tag == "reset")
+        {
+            ThemeManager.ClearAccent(Application.Current);
+        }
+        else if (ColorConverter.ConvertFromString(tag) is Color color)
+        {
+            ThemeManager.SetAccent(Application.Current, color);
+        }
+    }
+
     private void OnPictureSelected(object sender, RoutedEventArgs e)
     {
         if (PictureFormatTab is not null)

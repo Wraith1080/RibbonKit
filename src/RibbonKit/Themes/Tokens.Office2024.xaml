@@ -34,8 +34,15 @@
     <!-- Active-tab outline is off in 2024 (the accent underline marks selection). -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedBorderBrush" Color="Transparent" />
     <Thickness x:Key="RibbonKit.Metrics.TabSelectedBorderThickness">0</Thickness>
+    <!-- Contextual tabs: 2024 tints the header text and shows a tinted selection
+         underline (height 3), and mutes the text until the tab is selected. -->
+    <system:Double x:Key="RibbonKit.Metrics.ContextualUnderlineHeight">3</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.ContextualUnselectedOpacity">0.6</system:Double>
     <!-- Small gap before the File button. -->
     <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonMargin">8,4,2,0</Thickness>
+    <!-- Top inset of the tab headers. Matches the File button's top so the two align;
+         a theme can drop the top to 0 to let the tabs meet the title bar. -->
+    <Thickness x:Key="RibbonKit.Metrics.TabStripMargin">2,4,4,0</Thickness>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Group.Separator" Color="#E0E0E0" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.Background" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.Border" Color="#D1D1D1" />
@@ -46,6 +53,11 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.PressedBackground" Color="#D6D6D6" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.CloseHoverBackground" Color="#E81123" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.ClosePressedBackground" Color="#F1707A" />
+
+    <!-- KeyTip badges (Alt access-key chips): a light box with a thin border and dark text. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.KeyTip.Background" Color="#EFEFEF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.KeyTip.Border" Color="#A6A6A6" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.KeyTip.Foreground" Color="#1A1A1A" />
 
     <!-- Title bar band: light, matching the ribbon (Office 2024 has no colored band). -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.TitleBar.Background" Color="#F3F3F3" />
@@ -90,5 +102,12 @@
     <Thickness x:Key="RibbonKit.Metrics.QatExtenderMargin">7,0,7,7</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.QatExtenderBorderThickness">1,0,1,1</Thickness>
     <CornerRadius x:Key="RibbonKit.Metrics.QatExtenderCornerRadius">0,0,8,8</CornerRadius>
+
+    <!-- When the ribbon is minimized the body card disappears and the QAT bar stands
+         alone, so it becomes a fully rounded, fully bordered floating card with a small
+         top gap (the space the card used to hold). -->
+    <Thickness x:Key="RibbonKit.Metrics.QatExtenderMarginMinimized">7,1,7,7</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.QatExtenderBorderThicknessMinimized">1</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.QatExtenderCornerRadiusMinimized">8</CornerRadius>
 
 </ResourceDictionary>

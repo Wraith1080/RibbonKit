@@ -7,6 +7,7 @@
                  Height="680"
                  MinWidth="360"
                  WindowStartupLocation="CenterScreen"
+                 UseLayoutRounding="True"
                  Background="White">
     <DockPanel>
         <!-- QuickAccessPosition options: TabRow (next to File) or BelowRibbon (Office
@@ -97,6 +98,7 @@
                         <rk:RibbonButton Header="Format Painter" Size="Medium"
                                          Icon="{StaticResource Icon.FormatPainter}"
                                          SizeDefinition="Medium, Medium, Small"
+                                         rk:KeyTip.Keys="FP"
                                          ScreenTipTitle="Format Painter"
                                          ScreenTipText="Copy formatting from one place and apply it to another." />
                     </StackPanel>
@@ -279,6 +281,7 @@
             <rk:RibbonTab x:Name="PictureFormatTab"
                           Header="Picture Format"
                           IsContextual="True"
+                          ContextualColor="#C43E96"
                           Visibility="Collapsed">
                 <rk:RibbonGroup Header="Adjust" Icon="{StaticResource Icon.Picture}">
                     <rk:RibbonButton Header="Corrections"
@@ -336,6 +339,51 @@
                                      Click="OnApplyOffice2013"
                                      ScreenTipTitle="Office 2013 theme"
                                      ScreenTipText="Apply the Office 2013 White theme (flat, white strip, solid File button)." />
+                </rk:RibbonGroup>
+                <!-- Accent customization: title-bar accent toggle + swappable accent color -->
+                <rk:RibbonGroup Header="Accent" Icon="{StaticResource Icon.Style}">
+                    <rk:RibbonToggleButton Header="Colored Title Bar"
+                                           Size="Large"
+                                           LargeIcon="{StaticResource Icon.Style}"
+                                           Icon="{StaticResource Icon.Style}"
+                                           Checked="OnToggleAccentTitleBar"
+                                           Unchecked="OnToggleAccentTitleBar"
+                                           ScreenTipTitle="Colored title bar"
+                                           ScreenTipText="Color the title bar with the accent color (best in the Office 2024 theme)." />
+                    <!-- Accent swatches as a gallery: pick a color to recolor the theme -->
+                    <rk:InRibbonGallery x:Name="AccentGallery"
+                                        Width="150"
+                                        VerticalAlignment="Center"
+                                        SelectionChanged="OnAccentGalleryChanged">
+                        <rk:RibbonGalleryItem Tag="reset" ToolTip="Theme default accent">
+                            <Border Width="40" Height="22" CornerRadius="3"
+                                    BorderThickness="1" BorderBrush="#B0B0B0" Background="Transparent">
+                                <TextBlock Text="Auto" FontSize="9" Foreground="#616161"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                        </rk:RibbonGalleryItem>
+                        <rk:RibbonGalleryItem Tag="#0F6CBD" ToolTip="Blue">
+                            <Border Width="40" Height="22" CornerRadius="3" Background="#0F6CBD" />
+                        </rk:RibbonGalleryItem>
+                        <rk:RibbonGalleryItem Tag="#107C41" ToolTip="Green">
+                            <Border Width="40" Height="22" CornerRadius="3" Background="#107C41" />
+                        </rk:RibbonGalleryItem>
+                        <rk:RibbonGalleryItem Tag="#038387" ToolTip="Teal">
+                            <Border Width="40" Height="22" CornerRadius="3" Background="#038387" />
+                        </rk:RibbonGalleryItem>
+                        <rk:RibbonGalleryItem Tag="#8764B8" ToolTip="Purple">
+                            <Border Width="40" Height="22" CornerRadius="3" Background="#8764B8" />
+                        </rk:RibbonGalleryItem>
+                        <rk:RibbonGalleryItem Tag="#C43E96" ToolTip="Magenta">
+                            <Border Width="40" Height="22" CornerRadius="3" Background="#C43E96" />
+                        </rk:RibbonGalleryItem>
+                        <rk:RibbonGalleryItem Tag="#CA5010" ToolTip="Orange">
+                            <Border Width="40" Height="22" CornerRadius="3" Background="#CA5010" />
+                        </rk:RibbonGalleryItem>
+                        <rk:RibbonGalleryItem Tag="#D13438" ToolTip="Red">
+                            <Border Width="40" Height="22" CornerRadius="3" Background="#D13438" />
+                        </rk:RibbonGalleryItem>
+                    </rk:InRibbonGallery>
                 </rk:RibbonGroup>
             </rk:RibbonTab>
 
