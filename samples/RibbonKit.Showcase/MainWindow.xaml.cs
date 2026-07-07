@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using RibbonKit.Animation;
 using RibbonKit.Controls;
 using RibbonKit.Theming;
 
@@ -48,6 +49,18 @@ public partial class MainWindow : RibbonWindow
             ThemeManager.SetAccent(Application.Current, color);
         }
     }
+
+    private void OnAnimationOff(object sender, RoutedEventArgs e) =>
+        RibbonAnimation.GlobalLevel = RibbonAnimationLevel.None;
+
+    private void OnAnimationSubtle(object sender, RoutedEventArgs e) =>
+        RibbonAnimation.GlobalLevel = RibbonAnimationLevel.Subtle;
+
+    private void OnAnimationExpressive(object sender, RoutedEventArgs e) =>
+        RibbonAnimation.GlobalLevel = RibbonAnimationLevel.Expressive;
+
+    private void OnToggleRespectSystemMotion(object sender, RoutedEventArgs e) =>
+        RibbonAnimation.RespectSystemReduceMotion = (sender as RibbonToggleButton)?.IsChecked == true;
 
     private void OnPictureSelected(object sender, RoutedEventArgs e)
     {

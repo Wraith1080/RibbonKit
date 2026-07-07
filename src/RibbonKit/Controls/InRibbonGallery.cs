@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using RibbonKit.Animation;
 
 namespace RibbonKit.Controls;
 
@@ -146,6 +147,9 @@ public class InRibbonGallery : RibbonGallery
             }
 
             _scrollViewer?.SetCurrentValue(ScrollViewer.VerticalScrollBarVisibilityProperty, ScrollBarVisibility.Auto);
+
+            // Fade + slide the expanded gallery in (honors the global animation level).
+            RibbonMotion.PlayOpen(_popupHost, RibbonAnimationAction.Gallery);
         }
         else
         {

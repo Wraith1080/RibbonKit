@@ -5,6 +5,7 @@ using System.Windows.Automation.Peers;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Markup;
+using RibbonKit.Animation;
 // Alias: WPF's legacy Microsoft ribbon declares identically-named peers in
 // System.Windows.Automation.Peers, so the reference must be disambiguated.
 using RibbonAutomationPeer = RibbonKit.Automation.RibbonAutomationPeer;
@@ -50,7 +51,9 @@ public class Ribbon : Control
             nameof(QuickAccessPosition),
             typeof(RibbonQuickAccessPosition),
             typeof(Ribbon),
-            new FrameworkPropertyMetadata(RibbonQuickAccessPosition.TabRow));
+            new FrameworkPropertyMetadata(
+                RibbonQuickAccessPosition.TabRow,
+                OnQuickAccessPositionChanged));
 
     /// <summary>Identifies the <see cref="IsMinimized"/> dependency property.</summary>
     public static readonly DependencyProperty IsMinimizedProperty =
@@ -58,7 +61,10 @@ public class Ribbon : Control
             nameof(IsMinimized),
             typeof(bool),
             typeof(Ribbon),
-            new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
+            new FrameworkPropertyMetadata(
+                false,
+                FrameworkPropertyMetadataOptions.BindsTwoWayByDefault,
+                OnIsMinimizedChanged));
 
     /// <summary>Identifies the <see cref="IsBackstageOpen"/> dependency property.</summary>
     public static readonly DependencyProperty IsBackstageOpenProperty =
@@ -87,6 +93,43 @@ public class Ribbon : Control
             typeof(Ribbon),
             new FrameworkPropertyMetadata("File"));
 
+    /// <summary>
+    /// Attached flag the ribbon sets on a QAT button while it sits on a colored surface
+    /// (an accent title bar, or the colored Office 2019 tab strip). The button template
+    /// then draws its icon as a white silhouette and uses <see cref="QatHoverBackgroundProperty"/>
+    /// for its hover, so the QAT blends with the colored band like Office.
+    /// </summary>
+    public static readonly DependencyProperty QatOnColoredSurfaceProperty =
+        DependencyProperty.RegisterAttached(
+            "QatOnColoredSurface",
+            typeof(bool),
+            typeof(Ribbon),
+            new FrameworkPropertyMetadata(false));
+
+    /// <summary>Sets the <see cref="QatOnColoredSurfaceProperty"/> for an element.</summary>
+    public static void SetQatOnColoredSurface(DependencyObject element, bool value) =>
+        element.SetValue(QatOnColoredSurfaceProperty, value);
+
+    /// <summary>Gets the <see cref="QatOnColoredSurfaceProperty"/> for an element.</summary>
+    public static bool GetQatOnColoredSurface(DependencyObject element) =>
+        (bool)element.GetValue(QatOnColoredSurfaceProperty);
+
+    /// <summary>Attached hover-background brush used by a QAT button on a colored surface.</summary>
+    public static readonly DependencyProperty QatHoverBackgroundProperty =
+        DependencyProperty.RegisterAttached(
+            "QatHoverBackground",
+            typeof(System.Windows.Media.Brush),
+            typeof(Ribbon),
+            new FrameworkPropertyMetadata(null));
+
+    /// <summary>Sets the <see cref="QatHoverBackgroundProperty"/> for an element.</summary>
+    public static void SetQatHoverBackground(DependencyObject element, System.Windows.Media.Brush? value) =>
+        element.SetValue(QatHoverBackgroundProperty, value);
+
+    /// <summary>Gets the <see cref="QatHoverBackgroundProperty"/> for an element.</summary>
+    public static System.Windows.Media.Brush? GetQatHoverBackground(DependencyObject element) =>
+        (System.Windows.Media.Brush?)element.GetValue(QatHoverBackgroundProperty);
+
     /// <summary>Identifies the <see cref="SelectedTab"/> dependency property.</summary>
     public static readonly DependencyProperty SelectedTabProperty =
         DependencyProperty.Register(
@@ -108,9 +151,12 @@ public class Ribbon : Control
         var tabs = new ObservableCollection<RibbonTab>();
         tabs.CollectionChanged += OnTabsCollectionChanged;
         SetValue(TabsPropertyKey, tabs);
-        SetValue(QuickAccessItemsPropertyKey, new ObservableCollection<object>());
+        var quickAccessItems = new ObservableCollection<object>();
+        quickAccessItems.CollectionChanged += (_, _) => UpdateQatButtonContext();
+        SetValue(QuickAccessItemsPropertyKey, quickAccessItems);
         _keyTipService = new KeyTipService(this);
         Loaded += OnLoaded;
+        Unloaded += OnUnloaded;
     }
 
     /// <summary>The tabs hosted by this ribbon.</summary>
@@ -185,9 +231,60 @@ public class Ribbon : Control
     // window on Loaded. Held so it lives as long as the ribbon.
     private readonly KeyTipService _keyTipService;
 
+    // Quick-access-toolbar placement plumbing. When QuickAccessPosition is TitleBar the
+    // items are projected into the host RibbonWindow's TitleBarContent via this host; the
+    // shared context menu lets the user move the QAT between placements (like Office).
+    private System.Windows.Controls.ItemsControl? _titleBarQatHost;
+    private object? _savedTitleBarContent;
+    private System.Windows.Controls.ContextMenu? _qatContextMenu;
+    private System.Windows.Controls.MenuItem? _qatTitleBarItem;
+    private System.Windows.Controls.MenuItem? _qatAboveItem;
+    private System.Windows.Controls.MenuItem? _qatBelowItem;
+
+    // Cross-fade plumbing: the nested tab control whose selection changes drive a content
+    // cross-fade, and the ribbon body host that fades.
+    private RibbonTabControl? _ribbonTabControl;
+    private FrameworkElement? _ribbonContentHost;
+
     private static void OnIsBackstageOpenChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         ((Ribbon)d).UpdateBackstageOverlay((bool)e.NewValue);
+    }
+
+    private static void OnIsMinimizedChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        // The ribbon body's visibility is managed here (not by a template trigger) so the
+        // body can slide UP + fade OUT before it collapses, and slide DOWN + fade IN when it
+        // reappears. Only transform/opacity animate — the row height is never animated, so
+        // the window's layout still snaps cleanly once the body is hidden/shown.
+        var ribbon = (Ribbon)d;
+        ribbon._ribbonContentHost ??= FindDescendantByName(ribbon, "ContentHost");
+        if (ribbon._ribbonContentHost is not { } host)
+        {
+            return;
+        }
+
+        if ((bool)e.NewValue)
+        {
+            // Minimize: lift the body away, then collapse the row once it's gone.
+            RibbonMotion.PlayClose(
+                host,
+                RibbonAnimationAction.RibbonMinimize,
+                RibbonSlideFrom.Top,
+                () =>
+                {
+                    if (ribbon.IsMinimized)
+                    {
+                        host.Visibility = Visibility.Collapsed;
+                    }
+                });
+        }
+        else
+        {
+            // Restore: show the row, then slide + fade the body back into place.
+            host.Visibility = Visibility.Visible;
+            RibbonMotion.PlayOpen(host, RibbonAnimationAction.RibbonMinimize, RibbonSlideFrom.Top);
+        }
     }
 
     private void UpdateBackstageOverlay(bool open)
@@ -222,6 +319,10 @@ public class Ribbon : Control
             {
                 element.Focusable = true;
                 element.Focus(); // So Esc works immediately.
+
+                // Fade the backstage overlay in (honors the global animation level). A plain
+                // fade avoids the sliver a full-window slide would reveal on the trailing edge.
+                RibbonMotion.PlaySlideIn(element, RibbonAnimationAction.Backstage,RibbonSlideFrom.Left);
             }
         }
         else if (_backstageAdorner is not null)
@@ -252,9 +353,293 @@ public class Ribbon : Control
     /// <inheritdoc />
     protected override AutomationPeer OnCreateAutomationPeer() => new RibbonAutomationPeer(this);
 
+    /// <inheritdoc />
+    public override void OnApplyTemplate()
+    {
+        base.OnApplyTemplate();
+
+        // Right-clicking either in-ribbon QAT host opens the placement menu.
+        System.Windows.Controls.ContextMenu menu = EnsureQatContextMenu();
+        if (GetTemplateChild("QatTabRowHost") is FrameworkElement tabRowHost)
+        {
+            tabRowHost.ContextMenu = menu;
+        }
+
+        if (GetTemplateChild("QatBelowHost") is FrameworkElement belowHost)
+        {
+            belowHost.ContextMenu = menu;
+        }
+
+        UpdateQuickAccessPlacement();
+    }
+
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         EnsureSelection();
+
+        // The tab-row QAT host lives in the nested RibbonTabControl's template, so it isn't
+        // reachable via this control's GetTemplateChild — find it in the realized visual
+        // tree (available by Loaded) and give it the same placement menu.
+        if (FindDescendantByName(this, "QatTabRowHost") is { ContextMenu: null } tabRowHost)
+        {
+            tabRowHost.ContextMenu = EnsureQatContextMenu();
+        }
+
+        // React to accent / colored-title-bar / theme changes so the QAT icons + hover keep
+        // matching their surface. Re-hook defensively (Loaded can fire more than once).
+        Theming.ThemeManager.Changed -= OnThemeConfigurationChanged;
+        Theming.ThemeManager.Changed += OnThemeConfigurationChanged;
+
+        // Subscribe to the nested tab control's selection so switching tabs can cross-fade
+        // the ribbon body (the control lives in the RibbonTabControl template, not ours).
+        if (_ribbonTabControl is null && FindDescendantByType<RibbonTabControl>(this) is { } tabControl)
+        {
+            _ribbonTabControl = tabControl;
+            tabControl.SelectionChanged += OnRibbonTabSelectionChanged;
+        }
+
+        // Visibility of the ribbon body is code-managed (see OnIsMinimizedChanged); sync it
+        // to the current state in case the ribbon loaded already minimized.
+        _ribbonContentHost ??= FindDescendantByName(this, "ContentHost");
+        if (_ribbonContentHost is not null)
+        {
+            _ribbonContentHost.Visibility = IsMinimized ? Visibility.Collapsed : Visibility.Visible;
+        }
+
+        UpdateQuickAccessPlacement();
+        UpdateQatButtonContext();
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        Theming.ThemeManager.Changed -= OnThemeConfigurationChanged;
+        if (_ribbonTabControl is not null)
+        {
+            _ribbonTabControl.SelectionChanged -= OnRibbonTabSelectionChanged;
+            _ribbonTabControl = null;
+        }
+    }
+
+    private void OnRibbonTabSelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        // Only the tab strip's own selection counts — ignore selection bubbling up from
+        // galleries, combo boxes, or the backstage nested inside a tab's content.
+        if (!ReferenceEquals(e.OriginalSource, _ribbonTabControl) || IsMinimized)
+        {
+            return;
+        }
+
+        _ribbonContentHost ??= FindDescendantByName(this, "ContentHost");
+        FrameworkElement? target = (_ribbonContentHost as System.Windows.Controls.Border)?.Child as FrameworkElement
+            ?? _ribbonContentHost;
+        // Slide (no fade): the new content is already realized at full opacity, so a fade
+        // would flash it transparent for a frame — a subtle rise reads cleanly instead.
+        RibbonMotion.PlaySlideIn(target, RibbonAnimationAction.TabSwitch, RibbonSlideFrom.Top);
+    }
+
+    private void OnThemeConfigurationChanged(object? sender, EventArgs e) => UpdateQatButtonContext();
+
+    /// <summary>
+    /// Sets, on each QAT button, whether it currently sits on a colored surface and the
+    /// hover brush to use there — so the button template can white-out its icon and match
+    /// the surrounding band's hover. Applied directly (not via inheritance) so it is robust
+    /// regardless of how the items are hosted.
+    /// </summary>
+    private void UpdateQatButtonContext()
+    {
+        bool accentTitleBar = Theming.ThemeManager.IsAccentedTitleBar;
+        bool titleBarColored = QuickAccessPosition == RibbonQuickAccessPosition.TitleBar && accentTitleBar;
+        bool tabRowColored = QuickAccessPosition == RibbonQuickAccessPosition.TabRow
+            && accentTitleBar
+            && Theming.ThemeManager.CurrentTheme == Theming.RibbonTheme.Office2019;
+        bool colored = titleBarColored || tabRowColored;
+
+        // Match the hover of the neighbouring chrome: the caption buttons in the title bar,
+        // the tabs on the strip.
+        string? hoverKey = titleBarColored ? "RibbonKit.Brushes.CaptionButton.HoverBackground"
+            : tabRowColored ? "RibbonKit.Brushes.Tab.HoverBackground"
+            : null;
+
+        foreach (object entry in QuickAccessItems)
+        {
+            if (entry is not FrameworkElement element)
+            {
+                continue;
+            }
+
+            SetQatOnColoredSurface(element, colored);
+            if (colored && hoverKey is not null)
+            {
+                element.SetResourceReference(QatHoverBackgroundProperty, hoverKey);
+            }
+            else
+            {
+                element.ClearValue(QatHoverBackgroundProperty);
+            }
+        }
+    }
+
+    private static FrameworkElement? FindDescendantByName(DependencyObject root, string name)
+    {
+        int count = System.Windows.Media.VisualTreeHelper.GetChildrenCount(root);
+        for (int i = 0; i < count; i++)
+        {
+            DependencyObject child = System.Windows.Media.VisualTreeHelper.GetChild(root, i);
+            if (child is FrameworkElement element && element.Name == name)
+            {
+                return element;
+            }
+
+            if (FindDescendantByName(child, name) is { } found)
+            {
+                return found;
+            }
+        }
+
+        return null;
+    }
+
+    private static T? FindDescendantByType<T>(DependencyObject root) where T : DependencyObject
+    {
+        int count = System.Windows.Media.VisualTreeHelper.GetChildrenCount(root);
+        for (int i = 0; i < count; i++)
+        {
+            DependencyObject child = System.Windows.Media.VisualTreeHelper.GetChild(root, i);
+            if (child is T match)
+            {
+                return match;
+            }
+
+            if (FindDescendantByType<T>(child) is { } found)
+            {
+                return found;
+            }
+        }
+
+        return null;
+    }
+
+    private static void OnQuickAccessPositionChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
+        ((Ribbon)d).UpdateQuickAccessPlacement();
+
+    /// <summary>
+    /// Projects the quick-access items into the host <see cref="RibbonWindow"/>'s title
+    /// bar when <see cref="QuickAccessPosition"/> is <see cref="RibbonQuickAccessPosition.TitleBar"/>,
+    /// and restores the window's prior title-bar content otherwise. Exactly one host binds
+    /// the (single-parent) item elements at a time, so the switch reparents them cleanly.
+    /// </summary>
+    private void UpdateQuickAccessPlacement()
+    {
+        // The quick-access items are single-parent UIElements shared between hosts, so the
+        // OLD host must release them before the NEW one claims them. When leaving the title
+        // bar, release synchronously (the title-bar host is higher in the tree, so it frees
+        // the items at the next layout before the in-ribbon host — lower — claims them).
+        if (QuickAccessPosition != RibbonQuickAccessPosition.TitleBar && _titleBarQatHost is not null)
+        {
+            _titleBarQatHost.ItemsSource = null;
+        }
+
+        // Apply the final placement after a layout pass, so whichever host currently owns
+        // the items has released them before we (re)claim — avoids a transient double-parent.
+        Dispatcher.BeginInvoke(
+            System.Windows.Threading.DispatcherPriority.Background,
+            (Action)ApplyQuickAccessPlacement);
+    }
+
+    private void ApplyQuickAccessPlacement()
+    {
+        var window = Window.GetWindow(this) as RibbonWindow;
+
+        if (QuickAccessPosition == RibbonQuickAccessPosition.TitleBar && window is not null)
+        {
+            _titleBarQatHost ??= CreateTitleBarQatHost();
+
+            // Remember whatever the window was showing (unless it's already our host) so we
+            // can put it back when the QAT leaves the title bar.
+            if (!ReferenceEquals(window.TitleBarContent, _titleBarQatHost))
+            {
+                _savedTitleBarContent = window.TitleBarContent;
+            }
+
+            window.SetCurrentValue(RibbonWindow.TitleBarContentProperty, _titleBarQatHost);
+            _titleBarQatHost.ItemsSource = QuickAccessItems;
+        }
+        else
+        {
+            if (_titleBarQatHost is not null)
+            {
+                _titleBarQatHost.ItemsSource = null;
+            }
+
+            if (window is not null && ReferenceEquals(window.TitleBarContent, _titleBarQatHost))
+            {
+                window.SetCurrentValue(RibbonWindow.TitleBarContentProperty, _savedTitleBarContent);
+                _savedTitleBarContent = null;
+            }
+        }
+
+        UpdateQatButtonContext();
+    }
+
+    private System.Windows.Controls.ItemsControl CreateTitleBarQatHost()
+    {
+        var panel = new FrameworkElementFactory(typeof(System.Windows.Controls.StackPanel));
+        panel.SetValue(System.Windows.Controls.StackPanel.OrientationProperty, System.Windows.Controls.Orientation.Horizontal);
+
+        return new System.Windows.Controls.ItemsControl
+        {
+            Focusable = false,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(2, 0, 6, 0),
+            ItemsPanel = new ItemsPanelTemplate(panel),
+            ContextMenu = EnsureQatContextMenu(),
+        };
+    }
+
+    private System.Windows.Controls.ContextMenu EnsureQatContextMenu()
+    {
+        if (_qatContextMenu is not null)
+        {
+            return _qatContextMenu;
+        }
+
+        _qatTitleBarItem = new System.Windows.Controls.MenuItem { Header = "Show Quick Access Toolbar in the Title Bar" };
+        _qatTitleBarItem.Click += (_, _) =>
+            SetCurrentValue(QuickAccessPositionProperty, RibbonQuickAccessPosition.TitleBar);
+
+        _qatAboveItem = new System.Windows.Controls.MenuItem { Header = "Show Quick Access Toolbar Above the Ribbon" };
+        _qatAboveItem.Click += (_, _) =>
+            SetCurrentValue(QuickAccessPositionProperty, RibbonQuickAccessPosition.TabRow);
+
+        _qatBelowItem = new System.Windows.Controls.MenuItem { Header = "Show Quick Access Toolbar Below the Ribbon" };
+        _qatBelowItem.Click += (_, _) =>
+            SetCurrentValue(QuickAccessPositionProperty, RibbonQuickAccessPosition.BelowRibbon);
+
+        _qatContextMenu = new System.Windows.Controls.ContextMenu();
+        _qatContextMenu.Items.Add(_qatTitleBarItem);
+        _qatContextMenu.Items.Add(_qatAboveItem);
+        _qatContextMenu.Items.Add(_qatBelowItem);
+        _qatContextMenu.Opened += OnQatContextMenuOpened;
+        return _qatContextMenu;
+    }
+
+    private void OnQatContextMenuOpened(object sender, RoutedEventArgs e)
+    {
+        // Show a check next to the current placement.
+        if (_qatTitleBarItem is not null)
+        {
+            _qatTitleBarItem.IsChecked = QuickAccessPosition == RibbonQuickAccessPosition.TitleBar;
+        }
+
+        if (_qatAboveItem is not null)
+        {
+            _qatAboveItem.IsChecked = QuickAccessPosition == RibbonQuickAccessPosition.TabRow;
+        }
+
+        if (_qatBelowItem is not null)
+        {
+            _qatBelowItem.IsChecked = QuickAccessPosition == RibbonQuickAccessPosition.BelowRibbon;
+        }
     }
 
     private void OnTabsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)

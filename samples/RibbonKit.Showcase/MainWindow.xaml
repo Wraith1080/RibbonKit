@@ -385,6 +385,39 @@
                         </rk:RibbonGalleryItem>
                     </rk:InRibbonGallery>
                 </rk:RibbonGroup>
+                <!-- Global animation level (per-action overrides available in the API) -->
+                <rk:RibbonGroup Header="Motion" Icon="{StaticResource Icon.Style}">
+                    <rk:RibbonButton Header="No Motion"
+                                     LargeIcon="{StaticResource Icon.Style}"
+                                     Icon="{StaticResource Icon.Style}"
+                                     SizeDefinition="Large, Medium, Small"
+                                     Click="OnAnimationOff"
+                                     ScreenTipTitle="No motion"
+                                     ScreenTipText="Turn every ribbon transition off — actions snap instantly." />
+                    <rk:RibbonButton Header="Subtle"
+                                     LargeIcon="{StaticResource Icon.Style}"
+                                     Icon="{StaticResource Icon.Style}"
+                                     SizeDefinition="Large, Medium, Small"
+                                     Click="OnAnimationSubtle"
+                                     ScreenTipTitle="Subtle motion (default)"
+                                     ScreenTipText="Short, understated fades and small slides." />
+                    <rk:RibbonButton Header="Expressive"
+                                     LargeIcon="{StaticResource Icon.Style}"
+                                     Icon="{StaticResource Icon.Style}"
+                                     SizeDefinition="Large, Medium, Small"
+                                     Click="OnAnimationExpressive"
+                                     ScreenTipTitle="Expressive motion"
+                                     ScreenTipText="Longer, more pronounced motion with springier easing." />
+                    <rk:RibbonToggleButton Header="Respect System"
+                                           Size="Medium"
+                                           IsChecked="True"
+                                           LargeIcon="{StaticResource Icon.Style}"
+                                           Icon="{StaticResource Icon.Style}"
+                                           Checked="OnToggleRespectSystemMotion"
+                                           Unchecked="OnToggleRespectSystemMotion"
+                                           ScreenTipTitle="Respect system reduced motion"
+                                           ScreenTipText="When on, a system-wide reduced-motion setting forces motion off." />
+                </rk:RibbonGroup>
             </rk:RibbonTab>
 
         </rk:Ribbon>

@@ -3,6 +3,7 @@ using System.Windows.Automation.Peers;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
+using RibbonKit.Animation;
 using RibbonKit.Layout;
 // Alias: WPF's legacy Microsoft ribbon declares identically-named peers in
 // System.Windows.Automation.Peers, so the reference must be disambiguated.
@@ -230,7 +231,11 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
         }
     }
 
-    private void OnPopupOpened(object? sender, EventArgs e) => _dismissHelper.OnOpened();
+    private void OnPopupOpened(object? sender, EventArgs e)
+    {
+        _dismissHelper.OnOpened();
+        RibbonMotion.PlayOpen(_menuHost as FrameworkElement, RibbonAnimationAction.DropdownMenu);
+    }
 
     private void OnPopupClosed(object? sender, EventArgs e) => _dismissHelper.OnClosed();
 

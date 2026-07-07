@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
+using RibbonKit.Animation;
 using RibbonKit.Layout;
 // Alias: WPF's legacy Microsoft ribbon declares identically-named peers in
 // System.Windows.Automation.Peers, so the reference must be disambiguated.
@@ -306,6 +307,9 @@ public class RibbonGroup : HeaderedItemsControl
             _normalHost.Child = null;
             _popupHost.Child = content;
         }
+
+        // Fade + slide the collapsed-group flyout in (honors the global animation level).
+        RibbonMotion.PlayOpen(_popupHost, RibbonAnimationAction.DropdownMenu);
     }
 
     private void OnPopupClosed(object? sender, EventArgs e)

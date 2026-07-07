@@ -28,6 +28,9 @@
          is a lighter blue box, the selected FILL is the light body color (connected tab),
          and BOTH underline tokens are Transparent so no underline ever shows. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.Foreground" Color="#201F1E" />
+    <!-- Hover fill for chrome buttons on the tab strip (File button, minimize toggle),
+         matching the tab hover. Becomes accent-tinted when the title bar is colored. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.ControlHoverBackground" Color="#EDEDED" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverBackground" Color="#EDEDED" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverUnderline" Color="Transparent" />
     <!-- Selected tab is true white (matches the white ribbon body), standing out from the
@@ -72,10 +75,10 @@
          2010/2013 trait). Accent only while the backstage is open. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.Background" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.Foreground" Color="#201F1E" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverBackground" Color="#DADADA" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverBackground" Color="#EDEDED" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverUnderline" Color="Transparent" />
 
-    <system:Double x:Key="RibbonKit.Metrics.GroupsRowHeight">96</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.GroupsRowHeight">104</system:Double>
 
     <!-- Office 2019 is fully flat: every corner radius is zero. -->
     <CornerRadius x:Key="RibbonKit.Metrics.ControlCornerRadius">0</CornerRadius>

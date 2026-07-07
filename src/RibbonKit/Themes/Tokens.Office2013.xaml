@@ -26,6 +26,8 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ContextualBackground" Color="#E8EEF7" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ContextualHoverBackground" Color="#D4E4F7" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.Foreground" Color="#444444" />
+    <!-- Hover fill for chrome buttons on the tab strip (File button, minimize toggle). -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.ControlHoverBackground" Color="#E5E5E5" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverBackground" Color="#E8EEF7" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverUnderline" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedBackground" Color="#FFFFFF" />
@@ -74,7 +76,7 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverBackground" Color="#1F3F72" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverUnderline" Color="Transparent" />
 
-    <system:Double x:Key="RibbonKit.Metrics.GroupsRowHeight">96</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.GroupsRowHeight">104</system:Double>
 
     <!-- Fully flat: every corner radius is zero. -->
     <CornerRadius x:Key="RibbonKit.Metrics.ControlCornerRadius">0</CornerRadius>

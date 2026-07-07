@@ -243,7 +243,7 @@
                                                     <ControlTemplate.Triggers>
                                                         <Trigger Property="IsMouseOver" Value="True">
                                                             <Setter TargetName="Chrome" Property="Background"
-                                                                    Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
+                                                                    Value="{DynamicResource RibbonKit.Brushes.TabStrip.ControlHoverBackground}" />
                                                         </Trigger>
                                                         <Trigger Property="IsChecked" Value="True">
                                                             <Setter TargetName="ChevronUp" Property="Visibility" Value="Collapsed" />
@@ -275,10 +275,9 @@
                         </Border>
                     </Grid>
                     <ControlTemplate.Triggers>
-                        <DataTrigger Binding="{Binding IsMinimized, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
-                                     Value="True">
-                            <Setter TargetName="ContentHost" Property="Visibility" Value="Collapsed" />
-                        </DataTrigger>
+                        <!-- The ribbon body's Visibility while minimized is managed in code
+                             (Ribbon.OnIsMinimizedChanged) so it can slide up + fade out before
+                             collapsing, and slide back in on restore. -->
                         <DataTrigger Binding="{Binding QuickAccessPosition, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
                                      Value="TabRow">
                             <Setter TargetName="QatTabRowHost" Property="Visibility" Value="Visible" />
@@ -648,7 +647,7 @@
                             <!-- Large: 32px icon over wrapped label -->
                             <StackPanel x:Name="LargeLayout"
                                         Orientation="Vertical"
-                                        Margin="6,4"
+                                        Margin="6,8,6,0"
                                         VerticalAlignment="Center">
                                 <Image x:Name="LargeImage"
                                        Source="{TemplateBinding LargeIcon}"
@@ -659,6 +658,7 @@
                                            TextAlignment="Center"
                                            TextWrapping="Wrap"
                                            MaxWidth="76"
+                                           MinHeight="32"
                                            Margin="0,4,0,0" />
                             </StackPanel>
                             <!-- Medium: 16px icon + label in a row -->
@@ -677,17 +677,34 @@
                             </StackPanel>
                             <!-- Small: 16px icon only. Tight vertical margin so a stack of
                                  three small buttons plus the group caption fits the fixed
-                                 96px groups row. -->
-                            <Image x:Name="SmallLayout"
-                                   Source="{TemplateBinding Icon}"
-                                   Width="16" Height="16"
-                                   Stretch="Uniform"
-                                   Margin="5,3"
-                                   VerticalAlignment="Center"
-                                   Visibility="Collapsed" />
+                                 groups row. Two renderings: the normal colour icon, and a
+                                 flat white silhouette shown when Ribbon.QatOnColoredSurface
+                                 is set (QAT on a colored title bar / strip). -->
+                            <Grid x:Name="SmallLayout"
+                                  Margin="5,3"
+                                  VerticalAlignment="Center"
+                                  Visibility="Collapsed">
+                                <Image x:Name="SmallImage"
+                                       Source="{TemplateBinding Icon}"
+                                       Width="16" Height="16"
+                                       Stretch="Uniform" />
+                                <Rectangle x:Name="SmallImageTint" Width="16" Height="16"
+                                           Fill="#FFFFFF"
+                                           Visibility="Collapsed">
+                                    <Rectangle.OpacityMask>
+                                        <ImageBrush ImageSource="{Binding Icon, RelativeSource={RelativeSource TemplatedParent}}" />
+                                    </Rectangle.OpacityMask>
+                                </Rectangle>
+                            </Grid>
                         </Grid>
                     </Border>
                     <ControlTemplate.Triggers>
+                        <!-- QAT on a colored surface (accent title bar / colored strip): draw
+                             the icon as a white silhouette instead of its full colour. -->
+                        <Trigger Property="controls:Ribbon.QatOnColoredSurface" Value="True">
+                            <Setter TargetName="SmallImage" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="SmallImageTint" Property="Visibility" Value="Visible" />
+                        </Trigger>
                         <Trigger Property="LargeIcon" Value="{x:Null}">
                             <Setter TargetName="LargeImage" Property="Source"
                                     Value="{Binding Icon, RelativeSource={RelativeSource TemplatedParent}}" />
@@ -711,6 +728,16 @@
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.4" />
                         </Trigger>
+                        <!-- On a colored surface, hover with the surrounding band's brush
+                             (caption/tab hover) instead of the neutral control hover. -->
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsMouseOver" Value="True" />
+                                <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="Chrome" Property="Background"
+                                    Value="{Binding Path=(controls:Ribbon.QatHoverBackground), RelativeSource={RelativeSource TemplatedParent}}" />
+                        </MultiTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
@@ -779,7 +806,7 @@
                         <Grid>
                             <StackPanel x:Name="LargeLayout"
                                         Orientation="Vertical"
-                                        Margin="6,4"
+                                        Margin="6,8,6,0"
                                         VerticalAlignment="Center">
                                 <Image x:Name="LargeImage"
                                        Source="{TemplateBinding LargeIcon}"
@@ -790,6 +817,7 @@
                                            TextAlignment="Center"
                                            TextWrapping="Wrap"
                                            MaxWidth="76"
+                                           MinHeight="32"
                                            Margin="0,4,0,0" />
                             </StackPanel>
                             <StackPanel x:Name="MediumLayout"
@@ -901,7 +929,7 @@
                             <Grid>
                                 <StackPanel x:Name="LargeLayout"
                                             Orientation="Vertical"
-                                            Margin="6,4"
+                                            Margin="6,8,6,0"
                                             VerticalAlignment="Center">
                                     <Image x:Name="LargeImage"
                                            Source="{TemplateBinding LargeIcon}"
@@ -912,6 +940,7 @@
                                                TextAlignment="Center"
                                                TextWrapping="Wrap"
                                                MaxWidth="76"
+                                               MinHeight="32"
                                                Margin="0,4,0,0" />
                                     <Path Data="M0,0 L3.5,3.5 L7,0"
                                           Stroke="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
@@ -1057,7 +1086,7 @@
                             <Grid>
                                 <StackPanel x:Name="LargeLayout"
                                             Orientation="Vertical"
-                                            Margin="6,4"
+                                            Margin="6,8,6,0"
                                             VerticalAlignment="Center">
                                     <Image x:Name="LargeImage"
                                            Source="{TemplateBinding LargeIcon}"
@@ -1068,6 +1097,7 @@
                                                TextAlignment="Center"
                                                TextWrapping="Wrap"
                                                MaxWidth="76"
+                                               MinHeight="32"
                                                Margin="0,4,0,0" />
                                 </StackPanel>
                                 <StackPanel x:Name="MediumLayout"

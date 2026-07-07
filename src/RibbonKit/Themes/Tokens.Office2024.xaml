@@ -26,6 +26,10 @@
          the hover/selected UNDERLINES carry the color. (A theme flips this by making the
          underlines Transparent and the fills colored — see Office 2019.) -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.Foreground" Color="#1A1A1A" />
+    <!-- Hover fill for chrome buttons sitting on the tab strip (File button, minimize
+         toggle), so they highlight like the tabs. Tracks the accent when the title bar
+         is colored. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.ControlHoverBackground" Color="#E6E6E6" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverBackground" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverUnderline" Color="#B8B8B8" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedBackground" Color="Transparent" />
@@ -71,7 +75,7 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverBackground" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverUnderline" Color="#B8B8B8" />
 
-    <system:Double x:Key="RibbonKit.Metrics.GroupsRowHeight">96</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.GroupsRowHeight">104</system:Double>
 
     <!-- Corner radii — rounded (modern Fluent look). Themes that want sharp corners
          (Office 2019/2013) set these to 0. -->

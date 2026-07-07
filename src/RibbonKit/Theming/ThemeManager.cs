@@ -53,6 +53,7 @@ public static class ThemeManager
     private const string TabStripForegroundKey = "RibbonKit.Brushes.TabStrip.Foreground";
     private const string AppButtonForegroundKey = "RibbonKit.Brushes.ApplicationButton.Foreground";
     private const string TabHoverKey = "RibbonKit.Brushes.Tab.HoverBackground";
+    private const string TabStripControlHoverKey = "RibbonKit.Brushes.TabStrip.ControlHoverBackground";
 
     // Every key the accent system may override, so a theme switch can clear the previous
     // theme's accent overrides before re-deriving for the new one.
@@ -70,6 +71,15 @@ public static class ThemeManager
 
     /// <summary>The theme most recently applied via <see cref="Apply"/>, if any.</summary>
     public static RibbonTheme? CurrentTheme { get; private set; }
+
+    /// <summary>Whether the accent title bar (<see cref="SetAccentedTitleBar"/>) is on.</summary>
+    public static bool IsAccentedTitleBar => _accentTitleBar;
+
+    /// <summary>
+    /// Raised whenever the theme, accent, or accent-title-bar configuration changes, so
+    /// dependent visuals (e.g. the ribbon's quick-access icons) can re-evaluate.
+    /// </summary>
+    public static event EventHandler? Changed;
 
     /// <summary>
     /// Applies <paramref name="theme"/> application-wide, replacing any token
@@ -107,6 +117,7 @@ public static class ThemeManager
         // Re-derive customizations for the freshly-applied theme.
         ApplyAccentOverrides(application);
         ApplyTitleBarOverride(application);
+        Changed?.Invoke(null, EventArgs.Empty);
     }
 
     /// <summary>
@@ -121,6 +132,7 @@ public static class ThemeManager
         _accent = accent;
         ApplyAccentOverrides(application);
         ApplyTitleBarOverride(application); // an accented title bar tracks the accent
+        Changed?.Invoke(null, EventArgs.Empty);
     }
 
     /// <summary>Clears a custom accent set via <see cref="SetAccent"/>, reverting to the
@@ -131,6 +143,7 @@ public static class ThemeManager
         _accent = null;
         ApplyAccentOverrides(application);
         ApplyTitleBarOverride(application);
+        Changed?.Invoke(null, EventArgs.Empty);
     }
 
     /// <summary>
@@ -142,7 +155,11 @@ public static class ThemeManager
     {
         ArgumentNullException.ThrowIfNull(application);
         _accentTitleBar = enabled;
+        // Re-establish the accent baseline first (it owns the File-button hover on 2013),
+        // then layer the title-bar/strip colors on top.
+        ApplyAccentOverrides(application);
         ApplyTitleBarOverride(application);
+        Changed?.Invoke(null, EventArgs.Empty);
     }
 
     private static void ApplyAccentOverrides(Application application)
@@ -198,6 +215,10 @@ public static class ThemeManager
         resources.Remove(TabStripForegroundKey);
         resources.Remove(AppButtonForegroundKey);
         resources.Remove(TabHoverKey);
+        resources.Remove(TabStripControlHoverKey);
+        // Note: ApplicationButton.HoverBackground is NOT cleared here — it is owned by the
+        // accent system (which runs first and re-establishes its baseline); we only layer
+        // an override onto it in the colored-strip branch below.
 
         if (!_accentTitleBar)
         {
@@ -211,13 +232,18 @@ public static class ThemeManager
         resources[CaptionPressedKey] = Frozen(Mix(accent, Colors.Black, 0.15));
 
         // Office 2019's tab-strip band tracks the title bar: color it (and its text) too,
-        // so the whole top reads as one accent band. Other themes keep a neutral strip.
+        // so the whole top reads as one accent band. The chrome buttons that sit on the
+        // strip (File button, minimize toggle) get the same accent-tinted hover as the
+        // tabs. Other themes keep a neutral strip.
         if (CurrentTheme == RibbonTheme.Office2019)
         {
+            Color stripHover = Mix(accent, Colors.White, 0.18);
             resources[RibbonBackgroundKey] = Frozen(accent);
             resources[TabStripForegroundKey] = Frozen(Colors.White);
             resources[AppButtonForegroundKey] = Frozen(Colors.White);
-            resources[TabHoverKey] = Frozen(Mix(accent, Colors.White, 0.18));
+            resources[TabHoverKey] = Frozen(stripHover);
+            resources[TabStripControlHoverKey] = Frozen(stripHover);
+            resources[AppButtonHoverKey] = Frozen(stripHover);
         }
     }
 
