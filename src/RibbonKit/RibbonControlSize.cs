@@ -57,6 +57,24 @@ public enum RibbonQuickAccessPosition
 }
 
 /// <summary>
+/// The visual design of the <see cref="Controls.Backstage"/> (File menu) chrome.
+/// </summary>
+public enum RibbonBackstageDesign
+{
+    /// <summary>
+    /// The Office 2013–2019 look: a solid accent-colored navigation column with white
+    /// text and a white back arrow.
+    /// </summary>
+    Classic,
+
+    /// <summary>
+    /// The Office 2024 look: a light navigation rail with dark text, rounded item
+    /// highlights, and an accent selection bar — matching modern Office.
+    /// </summary>
+    Modern,
+}
+
+/// <summary>
 /// How the sizing engine reduces a <see cref="Controls.RibbonGroup"/> when ribbon
 /// width runs out.
 /// </summary>

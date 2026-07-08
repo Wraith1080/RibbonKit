@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using RibbonKit.Animation;
 using RibbonKit.Controls;
+using RibbonKit.Interop;
 using RibbonKit.Theming;
 
 namespace RibbonKit.Showcase;
@@ -61,6 +62,45 @@ public partial class MainWindow : RibbonWindow
 
     private void OnToggleRespectSystemMotion(object sender, RoutedEventArgs e) =>
         RibbonAnimation.RespectSystemReduceMotion = (sender as RibbonToggleButton)?.IsChecked == true;
+
+    private void OnToggleBackstageDesign(object sender, RoutedEventArgs e)
+    {
+        if (ShowcaseBackstage is not null)
+        {
+            ShowcaseBackstage.Design = (sender as RibbonToggleButton)?.IsChecked == true
+                ? RibbonBackstageDesign.Modern
+                : RibbonBackstageDesign.Classic;
+        }
+    }
+
+    private Brush? _opaqueWindowBackground;
+
+    private void OnToggleMica(object sender, RoutedEventArgs e)
+    {
+        var toggle = sender as RibbonToggleButton;
+
+        if (toggle?.IsChecked == true)
+        {
+            // Mica needs Windows 11 22H2+. If the DWM rejects it, undo the toggle and stop.
+            if (!MicaHelper.TrySetBackdrop(this, RibbonBackdrop.Mica))
+            {
+                toggle.IsChecked = false;
+                return;
+            }
+
+            _opaqueWindowBackground ??= Background;
+            Background = Brushes.Transparent;
+            MainContentArea.Background = Brushes.Transparent;
+            ShowcaseBackstage.Translucent = false;
+        }
+        else
+        {
+            MicaHelper.TrySetBackdrop(this, RibbonBackdrop.None);
+            Background = _opaqueWindowBackground ?? Brushes.White;
+            MainContentArea.Background = Brushes.White;
+            ShowcaseBackstage.Translucent = false;
+        }
+    }
 
     private void OnPictureSelected(object sender, RoutedEventArgs e)
     {

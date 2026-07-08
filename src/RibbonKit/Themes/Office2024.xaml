@@ -1398,26 +1398,43 @@
         </Setter>
     </Style>
 
+    <!-- Modern (Office 2024) backstage palette — a light rail with neutral highlights.
+         The selection bar and selected-item text use the live theme accent. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.NavBackground" Color="#F5F4F3" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.Foreground" Color="#201F1E" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemHover" Color="#EDEBE9" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemSelected" Color="#E1DFDD" />
+    <!-- Translucent variants used when Backstage.Translucent is on (to reveal Mica). -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.NavBackgroundTranslucent" Color="#CCF5F4F3" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ContentTranslucent" Color="#E6FFFFFF" />
+
     <!-- ============================================================
-         Backstage — accent nav column (back button + tabs) + content
+         Backstage — navigation column (back button + tabs) + content.
+         Two looks via the inherited Backstage.Design property: Classic
+         (solid accent column, default) and Modern (the light 2024 rail).
          ============================================================ -->
     <Style TargetType="{x:Type controls:Backstage}">
         <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Backstage.ContentBackground}" />
+        <!-- Nav-column foreground (back arrow + item text). White for the accent column;
+             the Modern trigger switches it to dark for the light rail. -->
+        <Setter Property="Foreground" Value="#FFFFFF" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type controls:Backstage}">
-                    <Grid Background="{TemplateBinding Background}">
+                    <Grid x:Name="RootGrid" Background="{TemplateBinding Background}">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="220" />
+                            <ColumnDefinition x:Name="NavColumnDef" Width="220" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <Border Grid.Column="0" Background="{DynamicResource RibbonKit.Brushes.Accent}">
+                        <Border x:Name="NavColumn" Grid.Column="0"
+                                Background="{DynamicResource RibbonKit.Brushes.Accent}">
                             <DockPanel LastChildFill="False">
                                 <Button x:Name="PART_BackButton"
                                         DockPanel.Dock="Top"
                                         Width="36" Height="36"
                                         Margin="20,20,20,24"
                                         HorizontalAlignment="Left"
+                                        Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type controls:Backstage}}}"
                                         ToolTip="Back">
                                     <Button.Style>
                                         <Style TargetType="{x:Type Button}">
@@ -1425,13 +1442,17 @@
                                                 <Setter.Value>
                                                     <ControlTemplate TargetType="{x:Type Button}">
                                                         <Grid Background="Transparent">
-                                                            <Ellipse x:Name="Ring"
-                                                                     Stroke="#FFFFFF"
+                                                            <!-- Foreground-tinted hover disc: subtle on
+                                                                 both the accent column and the light rail. -->
+                                                            <Ellipse x:Name="HoverFill"
+                                                                     Fill="{TemplateBinding Foreground}"
+                                                                     Opacity="0" />
+                                                            <Ellipse Stroke="{TemplateBinding Foreground}"
                                                                      StrokeThickness="1.5"
                                                                      Fill="Transparent" />
                                                             <!-- Symmetric bounds so centering is exact -->
                                                             <Path Data="M12,6 H0 M0,6 L5,1 M0,6 L5,11"
-                                                                  Stroke="#FFFFFF"
+                                                                  Stroke="{TemplateBinding Foreground}"
                                                                   StrokeThickness="2"
                                                                   StrokeStartLineCap="Round"
                                                                   StrokeEndLineCap="Round"
@@ -1441,8 +1462,7 @@
                                                         </Grid>
                                                         <ControlTemplate.Triggers>
                                                             <Trigger Property="IsMouseOver" Value="True">
-                                                                <Setter TargetName="Ring" Property="Fill"
-                                                                        Value="{DynamicResource RibbonKit.Brushes.Backstage.ItemHoverBackground}" />
+                                                                <Setter TargetName="HoverFill" Property="Opacity" Value="0.15" />
                                                             </Trigger>
                                                         </ControlTemplate.Triggers>
                                                     </ControlTemplate>
@@ -1456,12 +1476,39 @@
                                           Background="Transparent" />
                             </DockPanel>
                         </Border>
-                        <Border Grid.Column="1"
+                        <Border x:Name="ContentArea" Grid.Column="1"
                                 Background="{DynamicResource RibbonKit.Brushes.Backstage.ContentBackground}"
                                 Padding="42,32">
                             <ContentPresenter ContentSource="SelectedContent" />
                         </Border>
                     </Grid>
+                    <ControlTemplate.Triggers>
+                        <!-- Modern (2024): a narrower, light rail with dark foreground. -->
+                        <Trigger Property="controls:Backstage.Design" Value="Modern">
+                            <Setter Property="Foreground"
+                                    Value="{StaticResource RibbonKit.Brushes.Backstage.Modern.Foreground}" />
+                            <Setter TargetName="NavColumn" Property="Background"
+                                    Value="{StaticResource RibbonKit.Brushes.Backstage.Modern.NavBackground}" />
+                            <Setter TargetName="NavColumnDef" Property="Width" Value="200" />
+                        </Trigger>
+
+                        <!-- Translucent (reveal a window Mica/Acrylic backdrop behind the
+                             backstage): clear the root fill and soften the content panel. Placed
+                             AFTER the Modern trigger so the translucent nav brush wins. -->
+                        <Trigger Property="Translucent" Value="True">
+                            <Setter TargetName="RootGrid" Property="Background" Value="Transparent" />
+                            <Setter TargetName="ContentArea" Property="Background"
+                                    Value="{StaticResource RibbonKit.Brushes.Backstage.ContentTranslucent}" />
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="controls:Backstage.Design" Value="Modern" />
+                                <Condition Property="Translucent" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="NavColumn" Property="Background"
+                                    Value="{StaticResource RibbonKit.Brushes.Backstage.Modern.NavBackgroundTranslucent}" />
+                        </MultiTrigger>
+                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
@@ -1476,15 +1523,38 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type controls:BackstageTabItem}">
-                    <Border x:Name="Chrome"
-                            Background="Transparent"
-                            Padding="26,11"
-                            SnapsToDevicePixels="True">
-                        <ContentPresenter ContentSource="Header"
-                                          VerticalAlignment="Center"
-                                          RecognizesAccessKey="True" />
-                    </Border>
+                    <Grid SnapsToDevicePixels="True">
+                        <!-- Accent selection bar on the left edge (Modern only). -->
+                        <Rectangle x:Name="SelBar"
+                                   Width="3"
+                                   HorizontalAlignment="Left"
+                                   Margin="0,5"
+                                   RadiusX="1.5" RadiusY="1.5"
+                                   Fill="{DynamicResource RibbonKit.Brushes.Accent}"
+                                   Visibility="Collapsed" />
+                        <Border x:Name="Chrome"
+                                Background="Transparent"
+                                CornerRadius="0"
+                                Padding="26,11">
+                            <StackPanel Orientation="Horizontal">
+                                <!-- Reserved icon column: a foreground-tinted silhouette of
+                                     the item's Icon. When no Icon is set the mask is empty, so
+                                     the 16px slot stays blank and every item stays aligned. -->
+                                <Grid Width="16" Height="16" Margin="0,0,12,0" VerticalAlignment="Center">
+                                    <Rectangle Fill="{TemplateBinding Foreground}">
+                                        <Rectangle.OpacityMask>
+                                            <ImageBrush ImageSource="{Binding Icon, RelativeSource={RelativeSource TemplatedParent}}" />
+                                        </Rectangle.OpacityMask>
+                                    </Rectangle>
+                                </Grid>
+                                <ContentPresenter ContentSource="Header"
+                                                  VerticalAlignment="Center"
+                                                  RecognizesAccessKey="True" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
                     <ControlTemplate.Triggers>
+                        <!-- Classic (accent column): full-width fills. -->
                         <Trigger SourceName="Chrome" Property="IsMouseOver" Value="True">
                             <Setter TargetName="Chrome" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Backstage.ItemHoverBackground}" />
@@ -1493,6 +1563,36 @@
                             <Setter TargetName="Chrome" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Backstage.ItemSelectedBackground}" />
                         </Trigger>
+
+                        <!-- Modern (2024): dark text, an inset rounded highlight, and an
+                             accent bar + accent text on the selected item. These come AFTER
+                             the classic triggers so they win when the design is Modern. -->
+                        <Trigger Property="controls:Backstage.Design" Value="Modern">
+                            <Setter Property="Foreground"
+                                    Value="{StaticResource RibbonKit.Brushes.Backstage.Modern.Foreground}" />
+                            <Setter TargetName="Chrome" Property="CornerRadius" Value="4" />
+                            <Setter TargetName="Chrome" Property="Margin" Value="8,1" />
+                            <Setter TargetName="Chrome" Property="Padding" Value="14,9" />
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="controls:Backstage.Design" Value="Modern" />
+                                <Condition SourceName="Chrome" Property="IsMouseOver" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="Chrome" Property="Background"
+                                    Value="{StaticResource RibbonKit.Brushes.Backstage.Modern.ItemHover}" />
+                        </MultiTrigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="controls:Backstage.Design" Value="Modern" />
+                                <Condition Property="IsSelected" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="Chrome" Property="Background"
+                                    Value="{StaticResource RibbonKit.Brushes.Backstage.Modern.ItemSelected}" />
+                            <Setter TargetName="SelBar" Property="Visibility" Value="Visible" />
+                            <Setter Property="Foreground"
+                                    Value="{DynamicResource RibbonKit.Brushes.Accent}" />
+                        </MultiTrigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.5" />
                         </Trigger>
@@ -1728,6 +1828,7 @@
                      then overhangs the screen when maximized). Default glass + the
                      WM_GETMINMAXINFO hook in RibbonWindow keep maximize correct. -->
                 <WindowChrome CaptionHeight="34"
+                              GlassFrameThickness="-1"
                               ResizeBorderThickness="{x:Static SystemParameters.WindowResizeBorderThickness}"
                               CornerRadius="0"
                               UseAeroCaptionButtons="False" />

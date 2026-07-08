@@ -16,7 +16,32 @@
              open. -->
         <rk:Ribbon DockPanel.Dock="Top" QuickAccessPosition="BelowRibbon">
             <rk:Ribbon.Backstage>
-                <rk:Backstage>
+                <rk:Backstage x:Name="ShowcaseBackstage" Design="Modern">
+                    <rk:BackstageTabItem Header="Home" Icon="{StaticResource Icon.Style}">
+                        <StackPanel HorizontalAlignment="Left" MaxWidth="720">
+                            <TextBlock Text="Good morning" FontSize="30" FontWeight="Light" Margin="0,0,0,20" />
+                            <TextBlock Text="New" FontSize="15" FontWeight="SemiBold" Margin="0,0,0,10" />
+                            <WrapPanel Margin="0,0,0,28">
+                                <Border Width="130" Height="168" Background="#FFFFFF" BorderBrush="#D1D1D1"
+                                        BorderThickness="1" CornerRadius="2" Margin="0,0,16,0">
+                                    <TextBlock Text="Blank document" HorizontalAlignment="Center"
+                                               VerticalAlignment="Bottom" Margin="0,0,0,10" FontSize="12" />
+                                </Border>
+                                <Border Width="130" Height="168" Background="#1F3864" CornerRadius="2" Margin="0,0,16,0">
+                                    <TextBlock Text="Report" Foreground="#FFFFFF" HorizontalAlignment="Center"
+                                               VerticalAlignment="Bottom" Margin="0,0,0,10" FontSize="12" />
+                                </Border>
+                                <Border Width="130" Height="168" Background="#2E75B6" CornerRadius="2">
+                                    <TextBlock Text="Newsletter" Foreground="#FFFFFF" HorizontalAlignment="Center"
+                                               VerticalAlignment="Bottom" Margin="0,0,0,10" FontSize="12" />
+                                </Border>
+                            </WrapPanel>
+                            <TextBlock Text="Recent" FontSize="15" FontWeight="SemiBold" Margin="0,0,0,10" />
+                            <TextBlock Text="Quarterly report.docx" Margin="0,5" Foreground="#1A1A1A" />
+                            <TextBlock Text="Meeting notes.docx" Margin="0,5" Foreground="#1A1A1A" />
+                            <TextBlock Text="RibbonKit roadmap.docx" Margin="0,5" Foreground="#1A1A1A" />
+                        </StackPanel>
+                    </rk:BackstageTabItem>
                     <rk:BackstageTabItem Header="Info">
                         <StackPanel MaxWidth="560" HorizontalAlignment="Left">
                             <TextBlock Text="Info" FontSize="28" FontWeight="Light" Margin="0,0,0,16" />
@@ -25,7 +50,7 @@
                                        TextWrapping="Wrap" Foreground="#616161" Margin="0,8,0,0" />
                         </StackPanel>
                     </rk:BackstageTabItem>
-                    <rk:BackstageTabItem Header="New">
+                    <rk:BackstageTabItem Header="New" Icon="{StaticResource Icon.Picture}">
                         <StackPanel HorizontalAlignment="Left">
                             <TextBlock Text="New" FontSize="28" FontWeight="Light" Margin="0,0,0,16" />
                             <WrapPanel>
@@ -47,7 +72,7 @@
                             </WrapPanel>
                         </StackPanel>
                     </rk:BackstageTabItem>
-                    <rk:BackstageTabItem Header="Open">
+                    <rk:BackstageTabItem Header="Open" Icon="{StaticResource Icon.Table}">
                         <StackPanel HorizontalAlignment="Left" MaxWidth="560">
                             <TextBlock Text="Open" FontSize="28" FontWeight="Light" Margin="0,0,0,16" />
                             <TextBlock Text="Recent" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,8" />
@@ -409,7 +434,7 @@
                                      ScreenTipTitle="Expressive motion"
                                      ScreenTipText="Longer, more pronounced motion with springier easing." />
                     <rk:RibbonToggleButton Header="Respect System"
-                                           Size="Large"
+                                           Size="Medium"
                                            IsChecked="True"
                                            LargeIcon="{StaticResource Icon.Style}"
                                            Icon="{StaticResource Icon.Style}"
@@ -418,11 +443,31 @@
                                            ScreenTipTitle="Respect system reduced motion"
                                            ScreenTipText="When on, a system-wide reduced-motion setting forces motion off." />
                 </rk:RibbonGroup>
+                <!-- Backstage design: modern (2024) light rail vs classic (2013) accent column -->
+                <rk:RibbonGroup Header="Backstage" Icon="{StaticResource Icon.Style}">
+                    <rk:RibbonToggleButton Header="Modern Backstage"
+                                           Size="Large"
+                                           IsChecked="True"
+                                           LargeIcon="{StaticResource Icon.Style}"
+                                           Icon="{StaticResource Icon.Style}"
+                                           Checked="OnToggleBackstageDesign"
+                                           Unchecked="OnToggleBackstageDesign"
+                                           ScreenTipTitle="Modern backstage (Office 2024)"
+                                           ScreenTipText="Toggle between the modern 2024 light rail and the classic 2013 accent column. Open the File menu to see it." />
+                    <rk:RibbonToggleButton Header="Mica"
+                                           Size="Medium"
+                                           LargeIcon="{StaticResource Icon.Style}"
+                                           Icon="{StaticResource Icon.Style}"
+                                           Checked="OnToggleMica"
+                                           Unchecked="OnToggleMica"
+                                           ScreenTipTitle="Mica backdrop (Windows 11)"
+                                           ScreenTipText="Apply the Windows 11 Mica material behind the window and the backstage. Requires Windows 11 22H2+." />
+                </rk:RibbonGroup>
             </rk:RibbonTab>
 
         </rk:Ribbon>
 
-        <Grid Background="White">
+        <Grid x:Name="MainContentArea" Background="White">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                 <TextBlock Text="RibbonKit — Phase 1: core ribbon skeleton"
                            FontSize="18" Foreground="#6B6B6B" TextAlignment="Center" />
