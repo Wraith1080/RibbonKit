@@ -234,7 +234,10 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
     private void OnPopupOpened(object? sender, EventArgs e)
     {
         _dismissHelper.OnOpened();
-        RibbonMotion.PlayOpen(_menuHost as FrameworkElement, RibbonAnimationAction.DropdownMenu);
+        // Animate the menu's inner content, not the popup's own child border — transforming
+        // that border would shift the transparent popup's resting position (see InRibbonGallery).
+        FrameworkElement? content = (_menuHost as Border)?.Child as FrameworkElement ?? _menuHost as FrameworkElement;
+        RibbonMotion.PlayOpen(content, RibbonAnimationAction.DropdownMenu);
     }
 
     private void OnPopupClosed(object? sender, EventArgs e) => _dismissHelper.OnClosed();

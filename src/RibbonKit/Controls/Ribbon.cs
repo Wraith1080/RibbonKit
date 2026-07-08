@@ -246,6 +246,15 @@ public class Ribbon : Control
     private RibbonTabControl? _ribbonTabControl;
     private FrameworkElement? _ribbonContentHost;
 
+    // Below-ribbon quick-access bar and the last measured body height, so the bar can glide
+    // by that height (staying visible) as the body collapses/expands on minimize/restore.
+    private FrameworkElement? _qatBelowHost;
+    private double _lastRibbonBodyHeight;
+
+    // Backstage close is animated (slide out), so the adorner is removed only after the
+    // exit animation; this guards against a re-open racing the pending removal.
+    private bool _backstageClosing;
+
     private static void OnIsBackstageOpenChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         ((Ribbon)d).UpdateBackstageOverlay((bool)e.NewValue);
@@ -264,9 +273,26 @@ public class Ribbon : Control
             return;
         }
 
+        // The below-ribbon quick-access bar sits under the body; when the body collapses it
+        // would jump up by the body's height. Glide it by that height so it follows the body
+        // (staying visible) instead of snapping. Only relevant when the QAT is below.
+        FrameworkElement? qat = ribbon.QuickAccessPosition == RibbonQuickAccessPosition.BelowRibbon
+            ? ribbon._qatBelowHost
+            : null;
+
         if ((bool)e.NewValue)
         {
-            // Minimize: lift the body away, then collapse the row once it's gone.
+            // Remember the body height (still visible now) so restore can reuse it.
+            if (host.ActualHeight > 0d)
+            {
+                ribbon._lastRibbonBodyHeight = host.ActualHeight;
+            }
+
+            // The bar glides UP by the body height in step with the body's fade-out...
+            RibbonMotion.AnimateTranslateY(qat, RibbonAnimationAction.RibbonMinimize, 0d, -ribbon._lastRibbonBodyHeight);
+
+            // Minimize: lift the body away, then collapse the row. Resetting the bar's
+            // transform in the same step as the collapse keeps it visually stationary.
             RibbonMotion.PlayClose(
                 host,
                 RibbonAnimationAction.RibbonMinimize,
@@ -276,14 +302,18 @@ public class Ribbon : Control
                     if (ribbon.IsMinimized)
                     {
                         host.Visibility = Visibility.Collapsed;
+                        RibbonMotion.Rest(qat);
                     }
                 });
         }
         else
         {
-            // Restore: show the row, then slide + fade the body back into place.
+            // Restore: show the row and slide + fade the body back in. The bar starts at the
+            // minimized (raised) offset and glides DOWN to rest in step with the body — the
+            // From value is applied on the same frame as the row appears, so it stays put.
             host.Visibility = Visibility.Visible;
             RibbonMotion.PlayOpen(host, RibbonAnimationAction.RibbonMinimize, RibbonSlideFrom.Top);
+            RibbonMotion.AnimateTranslateY(qat, RibbonAnimationAction.RibbonMinimize, -ribbon._lastRibbonBodyHeight, 0d);
         }
     }
 
@@ -298,7 +328,23 @@ public class Ribbon : Control
 
         if (open)
         {
-            if (_backstageAdorner is not null || Backstage is not UIElement content)
+            _backstageClosing = false;
+
+            // Reopening while a close animation is still running: reuse the existing overlay
+            // and just replay the entrance (never create a second adorner for the same
+            // content, which a single UIElement can't have two of).
+            if (_backstageAdorner is not null)
+            {
+                if (Backstage is FrameworkElement reopening)
+                {
+                    reopening.Focus();
+                    RibbonMotion.PlayOpen(reopening, RibbonAnimationAction.Backstage, RibbonSlideFrom.Left);
+                }
+
+                return;
+            }
+
+            if (Backstage is not UIElement content)
             {
                 return;
             }
@@ -320,16 +366,37 @@ public class Ribbon : Control
                 element.Focusable = true;
                 element.Focus(); // So Esc works immediately.
 
-                // Fade the backstage overlay in (honors the global animation level). A plain
-                // fade avoids the sliver a full-window slide would reveal on the trailing edge.
-                RibbonMotion.PlaySlideIn(element, RibbonAnimationAction.Backstage,RibbonSlideFrom.Left);
+                // Slide the backstage overlay in from the left (honors the global animation level).
+                RibbonMotion.PlayOpen(element, RibbonAnimationAction.Backstage, RibbonSlideFrom.Left);
             }
         }
-        else if (_backstageAdorner is not null)
+        else if (_backstageAdorner is not null && !_backstageClosing)
         {
-            AdornerLayer.GetAdornerLayer(_backstageAdorner.AdornedElement)?.Remove(_backstageAdorner);
-            _backstageAdorner.Detach();
-            _backstageAdorner = null;
+            // Slide the backstage back out to the left (mirroring the entrance), then remove
+            // the adorner once the exit animation finishes.
+            _backstageClosing = true;
+            BackstageAdorner adorner = _backstageAdorner;
+            FrameworkElement? content = Backstage as FrameworkElement;
+
+            RibbonMotion.PlayClose(
+                content,
+                RibbonAnimationAction.Backstage,
+                RibbonSlideFrom.Left,
+                () =>
+                {
+                    // A re-open may have cancelled the close mid-flight; only tear down if
+                    // we're still closing.
+                    if (!_backstageClosing)
+                    {
+                        return;
+                    }
+
+                    AdornerLayer.GetAdornerLayer(adorner.AdornedElement)?.Remove(adorner);
+                    adorner.Detach();
+                    _backstageAdorner = null;
+                    _backstageClosing = false;
+                    RibbonMotion.Rest(content);
+                });
         }
     }
 
@@ -367,6 +434,7 @@ public class Ribbon : Control
 
         if (GetTemplateChild("QatBelowHost") is FrameworkElement belowHost)
         {
+            _qatBelowHost = belowHost;
             belowHost.ContextMenu = menu;
         }
 

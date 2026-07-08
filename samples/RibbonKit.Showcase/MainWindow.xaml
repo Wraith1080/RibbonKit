@@ -409,7 +409,7 @@
                                      ScreenTipTitle="Expressive motion"
                                      ScreenTipText="Longer, more pronounced motion with springier easing." />
                     <rk:RibbonToggleButton Header="Respect System"
-                                           Size="Medium"
+                                           Size="Large"
                                            IsChecked="True"
                                            LargeIcon="{StaticResource Icon.Style}"
                                            Icon="{StaticResource Icon.Style}"

@@ -230,6 +230,41 @@ public static class RibbonMotion
         }
     }
 
+    /// <summary>
+    /// Animates <paramref name="element"/>'s vertical <see cref="TranslateTransform"/> from
+    /// <paramref name="fromY"/> to <paramref name="toY"/> (in DIPs) WITHOUT touching opacity.
+    /// Used to carry the below-ribbon quick-access bar along with the collapsing/expanding
+    /// ribbon body so it glides to its new spot instead of jumping. Snaps to rest (0) when
+    /// the action is disabled.
+    /// </summary>
+    public static void AnimateTranslateY(
+        FrameworkElement? element,
+        RibbonAnimationAction action,
+        double fromY,
+        double toY)
+    {
+        if (element is null)
+        {
+            return;
+        }
+
+        if (!RibbonAnimation.IsEnabled(action))
+        {
+            Rest(element);
+            return;
+        }
+
+        TranslateTransform translate = EnsureTranslate(element);
+        translate.BeginAnimation(TranslateTransform.XProperty, null);
+        translate.SetValue(TranslateTransform.XProperty, 0d);
+
+        var anim = new DoubleAnimation(fromY, toY, RibbonAnimation.GetDuration(action))
+        {
+            EasingFunction = RibbonAnimation.GetEase(action),
+        };
+        translate.BeginAnimation(TranslateTransform.YProperty, anim);
+    }
+
     /// <summary>Clears any running transition and returns the element to its resting state.</summary>
     public static void Rest(FrameworkElement? element)
     {

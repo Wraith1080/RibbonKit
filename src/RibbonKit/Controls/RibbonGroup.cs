@@ -309,7 +309,8 @@ public class RibbonGroup : HeaderedItemsControl
         }
 
         // Fade + slide the collapsed-group flyout in (honors the global animation level).
-        RibbonMotion.PlayOpen(_popupHost, RibbonAnimationAction.DropdownMenu);
+        // Animate the inner content, not the popup's own child border (see InRibbonGallery).
+        RibbonMotion.PlayOpen(_popupHost?.Child as FrameworkElement, RibbonAnimationAction.DropdownMenu);
     }
 
     private void OnPopupClosed(object? sender, EventArgs e)

@@ -149,7 +149,10 @@ public class InRibbonGallery : RibbonGallery
             _scrollViewer?.SetCurrentValue(ScrollViewer.VerticalScrollBarVisibilityProperty, ScrollBarVisibility.Auto);
 
             // Fade + slide the expanded gallery in (honors the global animation level).
-            RibbonMotion.PlayOpen(_popupHost, RibbonAnimationAction.Gallery);
+            // Animate the popup's INNER content, not the popup's own child border: the
+            // transparent popup positions itself from that border, so transforming it would
+            // bake the start offset into the popup's resting position (dropping it down).
+            RibbonMotion.PlayOpen(_popupHost?.Child as FrameworkElement, RibbonAnimationAction.Gallery);
         }
         else
         {
