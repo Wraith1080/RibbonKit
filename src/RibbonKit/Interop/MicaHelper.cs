@@ -44,6 +44,11 @@ public static class MicaHelper
     // DWMWINDOWATTRIBUTE.DWMWA_SYSTEMBACKDROP_TYPE (Windows 11 22H2+).
     private const int DwmwaSystemBackdropType = 38;
 
+    // DWMWA_WINDOW_CORNER_PREFERENCE / DWMWA_BORDER_COLOR (Windows 11 21H2+, build 22000).
+    private const int DwmwaWindowCornerPreference = 33;
+    private const int DwmwaBorderColor = 34;
+    private const int DwmwcpRound = 2; // DWM_WINDOW_CORNER_PREFERENCE.DWMWCP_ROUND
+
     // Window-style access for stripping the system menu (see ShowNativeCaptionButtons).
     private const int GwlStyle = -16;
     private const int WsSysMenu = 0x00080000;
@@ -179,5 +184,40 @@ public static class MicaHelper
             IntPtr.Zero,
             0, 0, 0, 0,
             SwpNoSize | SwpNoMove | SwpNoZOrder | SwpNoActivate | SwpFrameChanged);
+    }
+
+    /// <summary>
+    /// Asks the DWM to round <paramref name="window"/>'s corners (and, when
+    /// <paramref name="borderColor"/> is given, draw a matching border), so a
+    /// <c>WindowStyle="None"</c> + <see cref="WindowChrome"/> window still gets the Windows 11
+    /// rounded look (custom-chrome windows don't round by default). No-op before Windows 11
+    /// (build 22000) or before the window has an HWND — call it from
+    /// <see cref="Window.OnSourceInitialized"/>.
+    /// </summary>
+    /// <param name="borderColor">Optional border color as <c>0x00BBGGRR</c> (a COLORREF); omit
+    /// to leave the DWM's default border.</param>
+    public static void SetRoundedCorners(Window window, int? borderColor = null)
+    {
+        ArgumentNullException.ThrowIfNull(window);
+
+        if (Environment.OSVersion.Platform != PlatformID.Win32NT
+            || Environment.OSVersion.Version.Build < 22000)
+        {
+            return;
+        }
+
+        IntPtr hwnd = new WindowInteropHelper(window).Handle;
+        if (hwnd == IntPtr.Zero)
+        {
+            return;
+        }
+
+        int preference = DwmwcpRound;
+        DwmSetWindowAttribute(hwnd, DwmwaWindowCornerPreference, ref preference, sizeof(int));
+
+        if (borderColor is int color)
+        {
+            DwmSetWindowAttribute(hwnd, DwmwaBorderColor, ref color, sizeof(int));
+        }
     }
 }

@@ -2114,75 +2114,168 @@
         </Setter>
     </Style>
 
+    <!-- Title-bar close button: transparent, X glyph, Windows-red hover. No min/max — a
+         modal dialog needs only Close (reuses the RibbonWindow close-glyph pattern). -->
+    <Style x:Key="OptionsDialogCloseButtonStyle" TargetType="{x:Type Button}">
+        <Setter Property="Width" Value="46" />
+        <Setter Property="Height" Value="34" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Button}">
+                    <Border x:Name="Chrome" Background="Transparent">
+                        <Path x:Name="Glyph"
+                              Data="M0,0 L9,9 M9,0 L0,9"
+                              Stroke="{DynamicResource RibbonKit.Brushes.Text.Primary}"
+                              StrokeThickness="1"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="#E81123" />
+                            <Setter TargetName="Glyph" Property="Stroke" Value="#FFFFFF" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="#F1707A" />
+                            <Setter TargetName="Glyph" Property="Stroke" Value="#FFFFFF" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <Style TargetType="{x:Type controls:RibbonOptionsDialog}">
         <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}" />
         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+        <!-- Custom chrome: WindowStyle=None (set in code) + WindowChrome, so the dialog draws
+             its own white title bar with a single Close button. CaptionHeight matches the
+             title bar height so it's draggable; ResizeBorderThickness makes the edges
+             resize-grabbable. Corners are rounded by the DWM (MicaHelper.SetRoundedCorners in
+             OnSourceInitialized), which also draws the border — hence no WindowChrome corner
+             radius and no border on the root here (a square one would fight the rounded DWM
+             corners). -->
+        <Setter Property="WindowChrome.WindowChrome">
+            <Setter.Value>
+                <WindowChrome CaptionHeight="34"
+                              GlassFrameThickness="0"
+                              ResizeBorderThickness="{x:Static SystemParameters.WindowResizeBorderThickness}"
+                              CornerRadius="0"
+                              UseAeroCaptionButtons="False" />
+            </Setter.Value>
+        </Setter>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type controls:RibbonOptionsDialog}">
-                    <!-- Native window chrome is kept (a plain dialog, like Word Options);
-                         only the client area is templated. AdornerDecorator so tooltips /
-                         validation adorners inside pages can render. -->
+                    <!-- AdornerDecorator so tooltips / validation adorners inside pages render. -->
                     <AdornerDecorator>
                         <Border Background="{TemplateBinding Background}">
                             <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="190" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="34" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
 
-                                <!-- Page rail -->
-                                <Border Grid.Column="0"
-                                        Background="{StaticResource OptionsDialog.RailBackground}"
-                                        BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}"
-                                        BorderThickness="0,0,1,0">
-                                    <ListBox x:Name="PART_PageList"
-                                             Background="Transparent"
-                                             BorderThickness="0"
-                                             Margin="0,12,0,12"
-                                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                                             ItemsSource="{TemplateBinding Pages}"
-                                             SelectedItem="{Binding SelectedPage, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
-                                        <ListBox.ItemContainerStyle>
-                                            <!-- The page control draws its own hover/selection;
-                                                 the container contributes no chrome. -->
-                                            <Style TargetType="{x:Type ListBoxItem}">
-                                                <Setter Property="Template">
-                                                    <Setter.Value>
-                                                        <ControlTemplate TargetType="{x:Type ListBoxItem}">
-                                                            <ContentPresenter />
-                                                        </ControlTemplate>
-                                                    </Setter.Value>
-                                                </Setter>
-                                            </Style>
-                                        </ListBox.ItemContainerStyle>
-                                    </ListBox>
-                                </Border>
+                                <!-- Custom white title bar: Title on the left (no icon),
+                                     Close on the right (no minimize/maximize). -->
+                                <Grid Grid.Row="0" Background="Transparent">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0"
+                                               Text="{TemplateBinding Title}"
+                                               FontSize="12"
+                                               VerticalAlignment="Center"
+                                               Margin="14,0,0,0"
+                                               TextTrimming="CharacterEllipsis"
+                                               Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+                                    <Button x:Name="PART_CloseButton"
+                                            Grid.Column="1"
+                                            WindowChrome.IsHitTestVisibleInChrome="True"
+                                            Style="{StaticResource OptionsDialogCloseButtonStyle}"
+                                            ToolTip="Close" />
+                                </Grid>
 
-                                <!-- Selected page: title, content, action buttons -->
-                                <Grid Grid.Column="1">
+                                <!-- Body: [rail | page] over a full-width action-button bar.
+                                     The rail lives ONLY in the top row, so it ends where the
+                                     content does — the button bar spans the full width below. -->
+                                <Grid Grid.Row="1">
                                     <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto" />
                                         <RowDefinition Height="*" />
                                         <RowDefinition Height="Auto" />
                                     </Grid.RowDefinitions>
 
-                                    <TextBlock Grid.Row="0"
-                                               Text="{Binding SelectedPage.Header, RelativeSource={RelativeSource TemplatedParent}}"
-                                               FontSize="20"
-                                               FontWeight="SemiBold"
-                                               Foreground="{TemplateBinding Foreground}"
-                                               Margin="24,18,24,10" />
+                                    <Grid Grid.Row="0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="190" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
 
-                                    <ScrollViewer Grid.Row="1"
-                                                  VerticalScrollBarVisibility="Auto"
-                                                  HorizontalScrollBarVisibility="Disabled"
-                                                  Focusable="False"
-                                                  Padding="24,0,24,12">
-                                        <ContentPresenter Content="{Binding SelectedPage.Content, RelativeSource={RelativeSource TemplatedParent}}" />
-                                    </ScrollViewer>
+                                        <!-- Page rail -->
+                                        <Border Grid.Column="0"
+                                                Background="{StaticResource OptionsDialog.RailBackground}"
+                                                BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}"
+                                                BorderThickness="0,0,1,0">
+                                            <ListBox x:Name="PART_PageList"
+                                                     Background="Transparent"
+                                                     BorderThickness="0"
+                                                     Margin="0,12,0,12"
+                                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                                     ItemsSource="{TemplateBinding Pages}"
+                                                     SelectedItem="{Binding SelectedPage, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+                                                <ListBox.ItemContainerStyle>
+                                                    <!-- The page control draws its own hover/selection;
+                                                         the container contributes no chrome. -->
+                                                    <Style TargetType="{x:Type ListBoxItem}">
+                                                        <Setter Property="Template">
+                                                            <Setter.Value>
+                                                                <ControlTemplate TargetType="{x:Type ListBoxItem}">
+                                                                    <ContentPresenter />
+                                                                </ControlTemplate>
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                    </Style>
+                                                </ListBox.ItemContainerStyle>
+                                            </ListBox>
+                                        </Border>
 
-                                    <Border Grid.Row="2"
+                                        <!-- Selected page: heading + content. The content sits
+                                             in a ScrollViewer so TALL user pages scroll (a
+                                             convenience — the app needn't wrap its own content).
+                                             The built-in RibbonQuickAccessPage opts OUT by
+                                             capping its height to the viewport (see its style),
+                                             so its own ListBoxes scroll and the dialog does not. -->
+                                        <Grid Grid.Column="1">
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="*" />
+                                            </Grid.RowDefinitions>
+                                            <TextBlock Grid.Row="0"
+                                                       Text="{Binding SelectedPage.Header, RelativeSource={RelativeSource TemplatedParent}}"
+                                                       FontSize="20"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{TemplateBinding Foreground}"
+                                                       Margin="24,14,24,10" />
+                                            <!-- VerticalScrollBarVisibility is set in code per
+                                                 page: Disabled for an IRibbonFillPage (constrains
+                                                 the content so it FILLS the viewport and scrolls
+                                                 its own inner regions), Auto otherwise (tall app
+                                                 pages scroll in the dialog). -->
+                                            <ScrollViewer x:Name="PART_ContentScroll"
+                                                          Grid.Row="1"
+                                                          VerticalScrollBarVisibility="Auto"
+                                                          HorizontalScrollBarVisibility="Disabled"
+                                                          Focusable="False"
+                                                          Padding="24,0,24,14">
+                                                <ContentPresenter Content="{Binding SelectedPage.Content, RelativeSource={RelativeSource TemplatedParent}}" />
+                                            </ScrollViewer>
+                                        </Grid>
+                                    </Grid>
+
+                                    <!-- Action buttons: full width, below the rail + content. -->
+                                    <Border Grid.Row="1"
                                             BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}"
                                             BorderThickness="0,1,0,0">
                                         <StackPanel Orientation="Horizontal"
@@ -2214,7 +2307,10 @@
          ============================================================ -->
     <Style TargetType="{x:Type controls:RibbonQuickAccessPage}">
         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
-        <Setter Property="MinHeight" Value="320" />
+        <!-- The page fills the content area because it is an IRibbonFillPage: the dialog hosts
+             it in a ScrollViewer with vertical scroll DISABLED, which constrains it to the
+             viewport height (a Stretch Control then fills). No explicit Height/MaxHeight needed —
+             its own two ListBoxes scroll internally. -->
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type controls:RibbonQuickAccessPage}">

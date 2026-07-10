@@ -44,7 +44,7 @@ public sealed class RibbonCommandEntry
 [TemplatePart(Name = RemoveButtonPartName, Type = typeof(ButtonBase))]
 [TemplatePart(Name = UpButtonPartName, Type = typeof(ButtonBase))]
 [TemplatePart(Name = DownButtonPartName, Type = typeof(ButtonBase))]
-public class RibbonQuickAccessPage : Control
+public class RibbonQuickAccessPage : Control, IRibbonFillPage
 {
     private const string AvailableListPartName = "PART_AvailableList";
     private const string CurrentListPartName = "PART_CurrentList";

@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Markup;
+using RibbonKit.Interop;
 
 namespace RibbonKit.Controls;
 
@@ -29,13 +30,17 @@ namespace RibbonKit.Controls;
 /// </remarks>
 [ContentProperty(nameof(Pages))]
 [TemplatePart(Name = PageListPartName, Type = typeof(Selector))]
+[TemplatePart(Name = ContentScrollPartName, Type = typeof(ScrollViewer))]
 [TemplatePart(Name = OkButtonPartName, Type = typeof(ButtonBase))]
 [TemplatePart(Name = CancelButtonPartName, Type = typeof(ButtonBase))]
+[TemplatePart(Name = CloseButtonPartName, Type = typeof(ButtonBase))]
 public class RibbonOptionsDialog : Window
 {
     private const string PageListPartName = "PART_PageList";
+    private const string ContentScrollPartName = "PART_ContentScroll";
     private const string OkButtonPartName = "PART_OkButton";
     private const string CancelButtonPartName = "PART_CancelButton";
+    private const string CloseButtonPartName = "PART_CloseButton";
 
     private static readonly DependencyPropertyKey PagesPropertyKey =
         DependencyProperty.RegisterReadOnly(
@@ -53,10 +58,15 @@ public class RibbonOptionsDialog : Window
             nameof(SelectedPage),
             typeof(RibbonOptionsPage),
             typeof(RibbonOptionsDialog),
-            new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
+            new FrameworkPropertyMetadata(
+                null,
+                FrameworkPropertyMetadataOptions.BindsTwoWayByDefault,
+                OnSelectedPageChanged));
 
+    private ScrollViewer? _contentScroll;
     private ButtonBase? _okButton;
     private ButtonBase? _cancelButton;
+    private ButtonBase? _closeButton;
 
     static RibbonOptionsDialog()
     {
@@ -76,6 +86,12 @@ public class RibbonOptionsDialog : Window
         ShowInTaskbar = false;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
 
+        // Custom chrome: the template draws a white title bar with a single Close button
+        // (no icon, no minimize/maximize — a modal dialog needs none). WindowChrome (in the
+        // theme style) makes that title bar draggable and the borders resize-grabbable.
+        WindowStyle = WindowStyle.None;
+        ResizeMode = ResizeMode.CanResize;
+
         // A page must be selected for the content area to show anything; default to the
         // first page once the dialog is up (unless the caller pre-selected one).
         Loaded += (_, _) => EnsurePageSelection();
@@ -90,6 +106,16 @@ public class RibbonOptionsDialog : Window
     {
         get => (RibbonOptionsPage?)GetValue(SelectedPageProperty);
         set => SetValue(SelectedPageProperty, value);
+    }
+
+    /// <inheritdoc />
+    protected override void OnSourceInitialized(EventArgs e)
+    {
+        base.OnSourceInitialized(e);
+
+        // WindowStyle=None windows don't get Windows 11 rounded corners for free — ask the DWM
+        // to round them (with a light border so the white dialog reads against a white backdrop).
+        MicaHelper.SetRoundedCorners(this, borderColor: 0x00E0E0E0);
     }
 
     /// <summary>
@@ -111,10 +137,19 @@ public class RibbonOptionsDialog : Window
             _cancelButton.Click -= OnCancelClick;
         }
 
+        if (_closeButton is not null)
+        {
+            _closeButton.Click -= OnCancelClick;
+        }
+
         base.OnApplyTemplate();
 
+        _contentScroll = GetTemplateChild(ContentScrollPartName) as ScrollViewer;
         _okButton = GetTemplateChild(OkButtonPartName) as ButtonBase;
         _cancelButton = GetTemplateChild(CancelButtonPartName) as ButtonBase;
+        _closeButton = GetTemplateChild(CloseButtonPartName) as ButtonBase;
+
+        UpdateContentScrollMode();
 
         if (_okButton is not null)
         {
@@ -125,6 +160,12 @@ public class RibbonOptionsDialog : Window
         {
             _cancelButton.Click += OnCancelClick;
         }
+
+        // The title-bar Close button is a cancel (no Applied), like clicking Cancel.
+        if (_closeButton is not null)
+        {
+            _closeButton.Click += OnCancelClick;
+        }
     }
 
     private void EnsurePageSelection()
@@ -133,6 +174,28 @@ public class RibbonOptionsDialog : Window
         {
             SelectedPage = Pages[0];
         }
+    }
+
+    private static void OnSelectedPageChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
+        ((RibbonOptionsDialog)d).UpdateContentScrollMode();
+
+    /// <summary>
+    /// Chooses how the current page is hosted: a page whose content is an
+    /// <see cref="IRibbonFillPage"/> gets a NON-scrolling viewport (vertical scroll disabled),
+    /// so the ScrollViewer constrains it to the content area and it fills (and scrolls its own
+    /// inner regions). Any other page keeps <see cref="ScrollBarVisibility.Auto"/> so tall
+    /// content scrolls in the dialog — the convenient default for arbitrary app pages.
+    /// </summary>
+    private void UpdateContentScrollMode()
+    {
+        if (_contentScroll is null)
+        {
+            return;
+        }
+
+        _contentScroll.VerticalScrollBarVisibility = SelectedPage?.Content is IRibbonFillPage
+            ? ScrollBarVisibility.Disabled
+            : ScrollBarVisibility.Auto;
     }
 
     private void OnOkClick(object sender, RoutedEventArgs e)
@@ -156,6 +219,18 @@ public class RibbonOptionsDialog : Window
             Close();
         }
     }
+}
+
+/// <summary>
+/// Marks a page's <see cref="RibbonOptionsPage.Content"/> as self-managing its vertical space.
+/// The <see cref="RibbonOptionsDialog"/> then hosts it WITHOUT a scrolling viewport, so it fills
+/// the content area (and scrolls its own inner regions) instead of the dialog scrolling it.
+/// Content that does NOT implement this gets the dialog's scrollbar when it's taller than the
+/// content area — the convenient default for arbitrary application pages. The built-in
+/// <see cref="RibbonQuickAccessPage"/> implements this so its command lists scroll internally.
+/// </summary>
+public interface IRibbonFillPage
+{
 }
 
 /// <summary>

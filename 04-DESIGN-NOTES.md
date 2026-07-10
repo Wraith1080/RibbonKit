@@ -380,15 +380,42 @@ customize page, and ONE extensible options dialog the app can merge its own page
 (so RibbonKit's customization pages and the app's options live together, like Word).
 
 - **`RibbonOptionsDialog`** (`Controls/RibbonOptionsDialog.cs`): a lookless `Window` —
-  left nav rail of `Pages` + selected page content + OK/Cancel (native title bar kept).
-  `RibbonOptionsPage : HeaderedContentControl` is one page; its `Content` can be ANY
-  element, including app user controls — that's the extensibility. **Key template trick:**
-  the page control's own template renders ONLY its Header (it *is* the nav entry, hosted in
-  `PART_PageList`), while the dialog presents `SelectedPage.Content` separately — this
-  avoids the element ever having two visual parents. Result flow: OK raises **`Applied`**
-  (the app's persist cue, per user's "dialog result event" requirement) then sets
-  `DialogResult=true`; Cancel → `false`. Styles ride theme tokens; rail brush is a local
-  static (Modern-backstage precedent).
+  custom white title bar (see below) + left nav rail of `Pages` + selected page content +
+  OK/Cancel. `RibbonOptionsPage : HeaderedContentControl` is one page; its `Content` can be
+  ANY element, including app user controls — that's the extensibility. **Key template
+  trick:** the page control's own template renders ONLY its Header (it *is* the nav entry,
+  hosted in `PART_PageList`), while the dialog presents `SelectedPage.Content` separately —
+  this avoids the element ever having two visual parents. Result flow: OK raises
+  **`Applied`** (the app's persist cue, per user's "dialog result event" requirement) then
+  sets `DialogResult=true`; Cancel → `false`. Styles ride theme tokens; rail brush is a
+  local static (Modern-backstage precedent).
+  - **Chrome + layout (user-refined):** `WindowStyle=None` + `WindowChrome`
+    (`CaptionHeight=34`, `ResizeBorderThickness=SystemParameters.WindowResizeBorderThickness`)
+    + `ResizeMode=CanResize` → the dialog draws its OWN white title bar: `Title` text left
+    (no icon), a single Close button right (`PART_CloseButton`, reuses the RibbonWindow
+    close-glyph/red-hover; no min/max — a modal needs none). Close = Cancel (no `Applied`).
+    **Rounded corners:** a `WindowStyle=None` window doesn't get Win11 rounding for free, so
+    `MicaHelper.SetRoundedCorners` (new; `DWMWA_WINDOW_CORNER_PREFERENCE=ROUND` +
+    `DWMWA_BORDER_COLOR`) is called from `OnSourceInitialized`; the template therefore keeps
+    `WindowChrome CornerRadius=0` and NO root border (the DWM draws the rounded border — a
+    square one would fight it). Win10 (< build 22000) is a no-op (square, as it would be
+    anyway). Layout: outer 2-row grid (title bar | body); body is 2 rows (rail+page | button
+    bar), so the nav **rail spans only the rail+page row** and ends where the content does —
+    the button bar is full width beneath both.
+  - **Scroll policy (user-refined) — per-page via `IRibbonFillPage`:** the page content is
+    hosted in a ScrollViewer (`PART_ContentScroll`) whose `VerticalScrollBarVisibility` the
+    dialog sets in code (`UpdateContentScrollMode`, on `SelectedPage` change / `OnApplyTemplate`):
+    `Disabled` when `SelectedPage.Content` is an **`IRibbonFillPage`**, else `Auto`. A ScrollViewer
+    with vertical scroll *Disabled* measures its content with the finite viewport height (not
+    infinity), so a Stretch control FILLS it — that's how `RibbonQuickAccessPage` (which
+    implements `IRibbonFillPage`) fills the content area while its own two ListBoxes scroll
+    internally; the dialog scrollbar never appears for it. Any other page keeps `Auto`, so tall
+    app content scrolls in the dialog (convenient default). Extensible: a user page can implement
+    `IRibbonFillPage` to fill too.
+    **Dead ends we tried first:** no-scroll + a fixed `MinHeight` (magic number); then a
+    ScrollViewer + `MaxHeight`=viewport (only *caps*, so inside the infinite-height ScrollViewer
+    the page shrank to content and floated short/centered); then `Height`=`ViewportHeight` binding
+    (fragile). The Disabled-scroll approach needs no page-height binding at all.
 - **QAT proxies (`Ribbon.AddToQuickAccess`)**: a WPF element has ONE visual parent, so
   adding a ribbon control to the QAT creates a small PROXY button mirroring its 16px
   icon/ScreenTip. Invocation reuses `KeyTipService.InvokeControl` (now `internal` static) —
