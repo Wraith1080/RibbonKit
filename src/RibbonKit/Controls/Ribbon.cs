@@ -254,6 +254,39 @@ public class Ribbon : Control
     public event EventHandler? QuickAccessCustomizeRequested;
 
     /// <summary>
+    /// Raised when the user picks "Customize the Ribbon…" from a right-click menu. The
+    /// application typically responds by opening a <see cref="RibbonOptionsDialog"/>
+    /// containing a <see cref="RibbonCustomizePage"/>.
+    /// </summary>
+    public event EventHandler? RibbonCustomizeRequested;
+
+    /// <summary>
+    /// Identifies the <c>IsCustom</c> attached property: marks a <see cref="RibbonTab"/> or
+    /// <see cref="RibbonGroup"/> as user-created (or user-editable). The customize page
+    /// (<see cref="RibbonCustomizePage"/>) only allows destructive operations — removing, and
+    /// adding commands into — on custom containers, mirroring Office's rules. Tabs/groups the
+    /// page creates are marked automatically; an app may pre-mark its own XAML-declared ones
+    /// to make them user-editable.
+    /// </summary>
+    public static readonly DependencyProperty IsCustomProperty =
+        DependencyProperty.RegisterAttached(
+            "IsCustom",
+            typeof(bool),
+            typeof(Ribbon),
+            new FrameworkPropertyMetadata(false));
+
+    /// <summary>Marks an element as user-created/user-editable for the customize page.</summary>
+    public static void SetIsCustom(DependencyObject element, bool value) =>
+        element.SetValue(IsCustomProperty, value);
+
+    /// <summary>Whether the element is user-created/user-editable (see <see cref="IsCustomProperty"/>).</summary>
+    public static bool GetIsCustom(DependencyObject element) =>
+        (bool)element.GetValue(IsCustomProperty);
+
+    internal void RaiseRibbonCustomizeRequested() =>
+        RibbonCustomizeRequested?.Invoke(this, EventArgs.Empty);
+
+    /// <summary>
     /// Adds <paramref name="source"/> (a command control living in a ribbon group) to the
     /// quick access toolbar. Because a WPF element can only have one visual parent, the
     /// control is not moved: a small PROXY button is created that mirrors its 16px icon and
@@ -269,7 +302,7 @@ public class Ribbon : Control
             return false;
         }
 
-        QuickAccessItems.Add(CreateQuickAccessProxy(source));
+        QuickAccessItems.Add(CreateCommandProxy(source, RibbonControlSize.Small));
         return true;
     }
 
@@ -280,7 +313,12 @@ public class Ribbon : Control
             ReferenceEquals(item, source)
             || (item is DependencyObject d && ReferenceEquals(GetQuickAccessSource(d), source)));
 
-    private FrameworkElement CreateQuickAccessProxy(FrameworkElement source)
+    /// <summary>
+    /// Creates a proxy button mirroring <paramref name="source"/>'s icon/ScreenTip that invokes
+    /// it, at the given <paramref name="size"/>. Small proxies serve the quick access toolbar;
+    /// Medium ones (icon + label) serve custom ribbon groups built by the customize page.
+    /// </summary>
+    internal FrameworkElement CreateCommandProxy(FrameworkElement source, RibbonControlSize size)
     {
         FrameworkElement proxy;
         switch (source)
@@ -291,7 +329,7 @@ public class Ribbon : Control
                 // clicking either updates both and the source's Checked/Unchecked handlers run.
                 var proxyToggle = new RibbonToggleButton
                 {
-                    Size = RibbonControlSize.Small,
+                    Size = size,
                     Icon = toggle.Icon ?? toggle.LargeIcon,
                     Header = toggle.Header,
                     ScreenTipTitle = toggle.ScreenTipTitle ?? toggle.Header,
@@ -312,7 +350,7 @@ public class Ribbon : Control
             {
                 // Invoke the split's PRIMARY action (KeyTipService routes through the
                 // control's UIA Invoke pattern, which calls AutomationInvokePrimary).
-                var proxyButton = MakeProxyButton(split.Icon ?? split.LargeIcon, split.Header, split.ScreenTipTitle, split.ScreenTipText);
+                var proxyButton = MakeProxyButton(size, split.Icon ?? split.LargeIcon, split.Header, split.ScreenTipTitle, split.ScreenTipText);
                 proxyButton.Click += (_, _) => KeyTipService.InvokeControl(split);
                 proxy = proxyButton;
                 break;
@@ -322,7 +360,7 @@ public class Ribbon : Control
             {
                 // v1 limitation: the menu opens at the SOURCE control's ribbon location (the
                 // popup is placed relative to it), not at the QAT proxy.
-                var proxyButton = MakeProxyButton(dropDown.Icon ?? dropDown.LargeIcon, dropDown.Header, dropDown.ScreenTipTitle, dropDown.ScreenTipText);
+                var proxyButton = MakeProxyButton(size, dropDown.Icon ?? dropDown.LargeIcon, dropDown.Header, dropDown.ScreenTipTitle, dropDown.ScreenTipText);
                 proxyButton.Click += (_, _) =>
                     dropDown.SetCurrentValue(RibbonDropDownButton.IsDropDownOpenProperty, true);
                 proxy = proxyButton;
@@ -331,7 +369,7 @@ public class Ribbon : Control
 
             case RibbonButton button:
             {
-                var proxyButton = MakeProxyButton(button.Icon ?? button.LargeIcon, button.Header, button.ScreenTipTitle, button.ScreenTipText);
+                var proxyButton = MakeProxyButton(size, button.Icon ?? button.LargeIcon, button.Header, button.ScreenTipTitle, button.ScreenTipText);
                 proxyButton.Click += (_, _) => KeyTipService.InvokeControl(button);
                 proxy = proxyButton;
                 break;
@@ -340,7 +378,7 @@ public class Ribbon : Control
             default:
             {
                 // Unknown control type: generic proxy that invokes via UIA patterns.
-                var proxyButton = MakeProxyButton(null, null, source.ToString(), null);
+                var proxyButton = MakeProxyButton(size, null, null, source.ToString(), null);
                 proxyButton.Click += (_, _) => KeyTipService.InvokeControl(source);
                 proxy = proxyButton;
                 break;
@@ -352,10 +390,10 @@ public class Ribbon : Control
     }
 
     private static RibbonButton MakeProxyButton(
-        System.Windows.Media.ImageSource? icon, string? header, string? tipTitle, string? tipText) =>
+        RibbonControlSize size, System.Windows.Media.ImageSource? icon, string? header, string? tipTitle, string? tipText) =>
         new()
         {
-            Size = RibbonControlSize.Small,
+            Size = size,
             Icon = icon,
             Header = header,
             ScreenTipTitle = tipTitle ?? header,
@@ -389,6 +427,9 @@ public class Ribbon : Control
         var customizeItem = new System.Windows.Controls.MenuItem { Header = "Customize Quick Access Toolbar…" };
         customizeItem.Click += (_, _) => QuickAccessCustomizeRequested?.Invoke(this, EventArgs.Empty);
 
+        var customizeRibbonItem = new System.Windows.Controls.MenuItem { Header = "Customize the Ribbon…" };
+        customizeRibbonItem.Click += (_, _) => RaiseRibbonCustomizeRequested();
+
         var collapseItem = new System.Windows.Controls.MenuItem
         {
             Header = "Collapse the Ribbon",
@@ -399,6 +440,7 @@ public class Ribbon : Control
         var menu = new System.Windows.Controls.ContextMenu { PlacementTarget = target };
         menu.Items.Add(addItem);
         menu.Items.Add(customizeItem);
+        menu.Items.Add(customizeRibbonItem);
         menu.Items.Add(new System.Windows.Controls.Separator());
         menu.Items.Add(collapseItem);
         menu.IsOpen = true;

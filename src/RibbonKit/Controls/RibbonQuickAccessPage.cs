@@ -187,59 +187,9 @@ public class RibbonQuickAccessPage : Control, IRibbonFillPage
             return;
         }
 
-        var entries = new ObservableCollection<RibbonCommandEntry>();
-        if (Ribbon is { } ribbon)
-        {
-            foreach (RibbonTab tab in ribbon.Tabs)
-            {
-                string tabName = tab.Header?.ToString() ?? "Tab";
-                foreach (RibbonGroup group in tab.Groups)
-                {
-                    string groupName = group.Header?.ToString() ?? "Group";
-                    foreach (object item in group.Items)
-                    {
-                        CollectCommands(item as DependencyObject, $"{tabName} › {groupName}", entries, depth: 0);
-                    }
-                }
-            }
-        }
-
-        _availableList.ItemsSource = entries;
-    }
-
-    // Groups host arbitrary content (stack panels, grids…), so commandable controls are
-    // found by walking the logical tree. Depth-capped defensively; popup content (menu
-    // items, gallery tiles) is never reached because those types aren't descended into.
-    private static void CollectCommands(
-        DependencyObject? node, string path, ObservableCollection<RibbonCommandEntry> entries, int depth)
-    {
-        if (node is null || depth > 6)
-        {
-            return;
-        }
-
-        switch (node)
-        {
-            case RibbonToggleButton toggle:
-                entries.Add(new RibbonCommandEntry(
-                    toggle, $"{path} › {Caption(toggle.Header, toggle.ScreenTipTitle)}", toggle.Icon ?? toggle.LargeIcon));
-                return;
-            case RibbonButton button:
-                entries.Add(new RibbonCommandEntry(
-                    button, $"{path} › {Caption(button.Header, button.ScreenTipTitle)}", button.Icon ?? button.LargeIcon));
-                return;
-            // Covers RibbonSplitButton too (it derives from RibbonDropDownButton). Added as a
-            // whole; the proxy invokes the primary action (split) or opens the menu (dropdown).
-            case RibbonDropDownButton dropDown:
-                entries.Add(new RibbonCommandEntry(
-                    dropDown, $"{path} › {Caption(dropDown.Header, dropDown.ScreenTipTitle)}", dropDown.Icon ?? dropDown.LargeIcon));
-                return;
-        }
-
-        foreach (object child in LogicalTreeHelper.GetChildren(node))
-        {
-            CollectCommands(child as DependencyObject, path, entries, depth + 1);
-        }
+        _availableList.ItemsSource = Ribbon is { } ribbon
+            ? RibbonCommandCatalog.CollectAvailable(ribbon)
+            : new ObservableCollection<RibbonCommandEntry>();
     }
 
     private void RebuildCurrentList()
@@ -256,7 +206,10 @@ public class RibbonQuickAccessPage : Control, IRibbonFillPage
             {
                 if (item is FrameworkElement element)
                 {
-                    entries.Add(DescribeQuickAccessItem(element));
+                    // Proxies added via AddToQuickAccess carry a reference to their source
+                    // control — the catalog describes the source (its header/icon);
+                    // hand-declared QAT items describe themselves.
+                    entries.Add(RibbonCommandCatalog.Describe(element));
                 }
             }
         }
@@ -268,27 +221,6 @@ public class RibbonQuickAccessPage : Control, IRibbonFillPage
             _currentList.SelectedIndex = selected;
         }
     }
-
-    private static RibbonCommandEntry DescribeQuickAccessItem(FrameworkElement element)
-    {
-        // Proxies added via AddToQuickAccess carry a reference to their source control —
-        // describe the source (its header/icon). Hand-declared QAT items describe themselves.
-        FrameworkElement subject = RibbonKit.Controls.Ribbon.GetQuickAccessSource(element) ?? element;
-        (string? header, string? tipTitle, ImageSource? icon) = subject switch
-        {
-            RibbonToggleButton t => (t.Header, t.ScreenTipTitle, t.Icon ?? t.LargeIcon),
-            RibbonButton b => (b.Header, b.ScreenTipTitle, b.Icon ?? b.LargeIcon),
-            RibbonDropDownButton d => (d.Header, d.ScreenTipTitle, d.Icon ?? d.LargeIcon),
-            _ => (null, null, null),
-        };
-
-        return new RibbonCommandEntry(element, Caption(header, tipTitle), icon);
-    }
-
-    private static string Caption(string? header, string? screenTipTitle) =>
-        !string.IsNullOrWhiteSpace(header) ? header
-        : !string.IsNullOrWhiteSpace(screenTipTitle) ? screenTipTitle
-        : "(command)";
 
     private void OnAddClick(object sender, RoutedEventArgs e)
     {

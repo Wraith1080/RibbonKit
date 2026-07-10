@@ -2391,4 +2391,173 @@
         </Setter>
     </Style>
 
+    <!-- ============================================================
+         RibbonCustomizePage — the built-in "Customize the Ribbon"
+         page: available commands | Add/Remove | structure tree (tabs
+         → groups → commands, checkbox = tab visibility) | Up/Down,
+         with New Tab / New Group / Rename below the tree
+         ============================================================ -->
+    <Style TargetType="{x:Type controls:RibbonCustomizePage}">
+        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+        <Setter Property="MinHeight" Value="240" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type controls:RibbonCustomizePage}">
+                    <ControlTemplate.Resources>
+                        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+
+                        <!-- Left list rows: 16px icon + "Tab › Group › Command" caption -->
+                        <DataTemplate x:Key="CustomizeCommandEntryTemplate">
+                            <StackPanel Orientation="Horizontal" Margin="2,1">
+                                <Image Source="{Binding Icon}"
+                                       Width="16" Height="16"
+                                       Margin="0,0,8,0"
+                                       VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding DisplayName}"
+                                           VerticalAlignment="Center"
+                                           TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                        </DataTemplate>
+
+                        <!-- Tree rows: visibility checkbox (tabs only) + optional icon + caption -->
+                        <HierarchicalDataTemplate DataType="{x:Type controls:RibbonCustomizeNode}"
+                                                  ItemsSource="{Binding Children}">
+                            <StackPanel Orientation="Horizontal" Margin="0,1">
+                                <CheckBox IsChecked="{Binding IsVisibleChecked, Mode=TwoWay}"
+                                          Visibility="{Binding ShowCheckBox, Converter={StaticResource BoolToVisibility}}"
+                                          VerticalAlignment="Center"
+                                          Margin="0,0,6,0"
+                                          Focusable="False" />
+                                <Image Source="{Binding Icon}"
+                                       Width="16" Height="16"
+                                       Margin="0,0,6,0"
+                                       VerticalAlignment="Center">
+                                    <Image.Style>
+                                        <Style TargetType="{x:Type Image}">
+                                            <Style.Triggers>
+                                                <!-- No icon → no reserved gap (tab captions
+                                                     would indent for nothing). -->
+                                                <DataTrigger Binding="{Binding Icon}" Value="{x:Null}">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Image.Style>
+                                </Image>
+                                <TextBlock Text="{Binding Header}"
+                                           VerticalAlignment="Center"
+                                           TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                        </HierarchicalDataTemplate>
+                    </ControlTemplate.Resources>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Column="0" Grid.Row="0"
+                                   Text="Choose commands from the ribbon:"
+                                   Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
+                                   FontSize="12"
+                                   Margin="0,0,0,6" />
+                        <TextBlock Grid.Column="2" Grid.Row="0"
+                                   Text="Customize the ribbon:"
+                                   Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
+                                   FontSize="12"
+                                   Margin="0,0,0,6" />
+
+                        <ListBox x:Name="PART_AvailableList"
+                                 Grid.Column="0" Grid.Row="1"
+                                 Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
+                                 BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
+                                 BorderThickness="1"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                 ItemTemplate="{StaticResource CustomizeCommandEntryTemplate}" />
+
+                        <StackPanel Grid.Column="1" Grid.Row="1"
+                                    VerticalAlignment="Center"
+                                    Margin="12,0">
+                            <Button x:Name="PART_AddButton"
+                                    Content="Add ▸"
+                                    Style="{StaticResource OptionsDialogActionButtonStyle}"
+                                    Margin="0,0,0,6" />
+                            <Button x:Name="PART_RemoveButton"
+                                    Content="◂ Remove"
+                                    Style="{StaticResource OptionsDialogActionButtonStyle}" />
+                        </StackPanel>
+
+                        <TreeView x:Name="PART_Tree"
+                                  Grid.Column="2" Grid.Row="1"
+                                  Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
+                                  BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
+                                  BorderThickness="1"
+                                  Padding="2"
+                                  ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            <TreeView.ItemContainerStyle>
+                                <!-- Mirror tree state into the node view-model so the page can
+                                     re-select/re-expand programmatically after each rebuild. -->
+                                <Style TargetType="{x:Type TreeViewItem}">
+                                    <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                                    <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                                </Style>
+                            </TreeView.ItemContainerStyle>
+                        </TreeView>
+
+                        <StackPanel Grid.Column="3" Grid.Row="1"
+                                    VerticalAlignment="Center"
+                                    Margin="12,0,0,0">
+                            <Button x:Name="PART_UpButton"
+                                    Content="▲ Up"
+                                    Style="{StaticResource OptionsDialogActionButtonStyle}"
+                                    Margin="0,0,0,6" />
+                            <Button x:Name="PART_DownButton"
+                                    Content="▼ Down"
+                                    Style="{StaticResource OptionsDialogActionButtonStyle}" />
+                        </StackPanel>
+
+                        <!-- Structure tools, under the tree like Office -->
+                        <Grid Grid.Column="2" Grid.ColumnSpan="2" Grid.Row="2" Margin="0,8,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Button x:Name="PART_NewTabButton"
+                                    Grid.Column="0"
+                                    Content="New Tab"
+                                    Style="{StaticResource OptionsDialogActionButtonStyle}"
+                                    Margin="0,0,6,0" />
+                            <Button x:Name="PART_NewGroupButton"
+                                    Grid.Column="1"
+                                    Content="New Group"
+                                    Style="{StaticResource OptionsDialogActionButtonStyle}"
+                                    Margin="0,0,12,0" />
+                            <TextBox x:Name="PART_RenameBox"
+                                     Grid.Column="2"
+                                     VerticalContentAlignment="Center"
+                                     Padding="6,4"
+                                     Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
+                                     BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
+                                     Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}"
+                                     Margin="0,0,6,0" />
+                            <Button x:Name="PART_RenameButton"
+                                    Grid.Column="3"
+                                    Content="Rename"
+                                    Style="{StaticResource OptionsDialogActionButtonStyle}" />
+                        </Grid>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
 </ResourceDictionary>

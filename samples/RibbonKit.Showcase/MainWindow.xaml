@@ -17,7 +17,8 @@
         <rk:Ribbon x:Name="MainRibbon"
                    DockPanel.Dock="Top"
                    QuickAccessPosition="BelowRibbon"
-                   QuickAccessCustomizeRequested="OnCustomizeQuickAccess">
+                   QuickAccessCustomizeRequested="OnCustomizeQuickAccess"
+                   RibbonCustomizeRequested="OnCustomizeRibbon">
             <rk:Ribbon.Backstage>
                 <rk:Backstage x:Name="ShowcaseBackstage" Design="Modern">
                     <rk:BackstageTabItem Header="Home" Icon="{StaticResource Icon.Style}">

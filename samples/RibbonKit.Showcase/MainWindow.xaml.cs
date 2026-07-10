@@ -126,20 +126,36 @@ public partial class MainWindow : RibbonWindow
         }
     }
 
+    private enum OptionsPageKind
+    {
+        Editor,
+        CustomizeRibbon,
+        QuickAccess,
+    }
+
     private void OnOpenOptions(object sender, RoutedEventArgs e) =>
-        OpenOptionsDialog(selectQuickAccessPage: false);
+        OpenOptionsDialog(OptionsPageKind.Editor);
 
     // Raised by the ribbon's right-click "Customize Quick Access Toolbar…" items.
     private void OnCustomizeQuickAccess(object sender, EventArgs e) =>
-        OpenOptionsDialog(selectQuickAccessPage: true);
+        OpenOptionsDialog(OptionsPageKind.QuickAccess);
+
+    // Raised by the ribbon's right-click "Customize the Ribbon…" item.
+    private void OnCustomizeRibbon(object sender, EventArgs e) =>
+        OpenOptionsDialog(OptionsPageKind.CustomizeRibbon);
 
     /// <summary>
     /// The merged options dialog: an app-provided page ("Editor") next to RibbonKit's
-    /// built-in Quick Access Toolbar customization page — one dialog, like Word Options.
+    /// built-in Customize Ribbon and Quick Access Toolbar pages — one dialog, like Word.
     /// </summary>
-    private void OpenOptionsDialog(bool selectQuickAccessPage)
+    private void OpenOptionsDialog(OptionsPageKind select)
     {
         var editorPage = new RibbonOptionsPage { Header = "Editor", Content = BuildEditorOptionsContent() };
+        var customizePage = new RibbonOptionsPage
+        {
+            Header = "Customize Ribbon",
+            Content = new RibbonCustomizePage { Ribbon = MainRibbon },
+        };
         var qatPage = new RibbonOptionsPage
         {
             Header = "Quick Access Toolbar",
@@ -148,11 +164,18 @@ public partial class MainWindow : RibbonWindow
 
         var dialog = new RibbonOptionsDialog { Title = "Options", Owner = this };
         dialog.Pages.Add(editorPage);
+        dialog.Pages.Add(customizePage);
         dialog.Pages.Add(qatPage);
-        dialog.SelectedPage = selectQuickAccessPage ? qatPage : editorPage;
+        dialog.SelectedPage = select switch
+        {
+            OptionsPageKind.CustomizeRibbon => customizePage,
+            OptionsPageKind.QuickAccess => qatPage,
+            _ => editorPage,
+        };
 
-        // The dialog raises Applied on OK — the app's cue to persist its settings (the QAT
-        // page edits the ribbon live). ShowDialog's bool result carries the same decision.
+        // The dialog raises Applied on OK — the app's cue to persist its settings (the
+        // customization pages edit the ribbon live). ShowDialog's bool result carries the
+        // same decision.
         dialog.Applied += (_, _) => StatusReady.Content = "Options applied";
         dialog.ShowDialog();
     }

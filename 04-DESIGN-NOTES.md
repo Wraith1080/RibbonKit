@@ -458,6 +458,45 @@ customize page, and ONE extensible options dialog the app can merge its own page
   persistence (serialize QAT sources + ribbon layout). Slots into the dialog as just
   another `RibbonOptionsPage`.
 
+### 3.16 "Customize the Ribbon" structure page
+
+`Controls/RibbonCustomizePage.cs` — the second built-in dialog page (the §3.15 sketch,
+built). Layout mirrors Word: available commands (left) | Add/Remove | structure TreeView
+(right: tabs → groups → commands, checkbox = tab visibility) | Up/Down, with New Tab /
+New Group / Rename under the tree. Implements `IRibbonFillPage`.
+
+- **Office-consistent rules** (they keep customization reversible): reorder anything
+  in-parent; hide/show any non-contextual tab EXCEPT the last visible one (the checkbox
+  snaps back — note: the refusal notification must be **dispatched**, a synchronous
+  `PropertyChanged` inside the setter is swallowed by the binding's reentrancy guard);
+  ADD commands only into CUSTOM groups; REMOVE only custom tabs/groups/commands; RENAME
+  tabs, groups, and custom (proxy) commands. **Contextual tabs are excluded** from the
+  tree — the app drives their visibility (a manual checkbox would fight it).
+- **`Ribbon.IsCustom` attached property** marks user-created tabs/groups (the page sets it
+  on New Tab/New Group; apps may pre-mark XAML-declared ones to make them user-editable).
+  Custom entries display an "(Custom)" suffix like Office. New custom groups get a
+  vertical-`WrapPanel` items panel so Medium proxies wrap into 3-row columns instead of
+  the default StackPanel overflowing the groups row.
+- **Command proxies reused from §3.15**: `CreateQuickAccessProxy` generalized to
+  `Ribbon.CreateCommandProxy(source, size)` — Small for the QAT, Medium (icon + label) for
+  custom groups. Same invoke/toggle-sync semantics.
+- **`RibbonCommandCatalog`** (new, internal): the command discovery/description helpers
+  extracted from the QAT page so both pages agree — `CollectControls` (logical-tree walk,
+  depth-capped, skips proxies to prevent proxy-of-proxy chains), `CollectAvailable`
+  (path-prefixed entries), `Describe` (caption+icon; a renamed proxy shows its own header).
+- **Tree mechanics**: `RibbonCustomizeNode` (public, INPC) exposes `IsSelected`/`IsExpanded`
+  two-way bound via `TreeViewItem` `ItemContainerStyle` — that's what lets the page
+  re-select the moved/renamed/added item after each full tree rebuild (rebuild-per-edit is
+  deliberate: trees are small, incremental sync isn't worth it). Custom groups list their
+  `Items` directly (mutable: add/remove/reorder = `Items` ops); built-in groups show their
+  commands via the catalog walk **read-only** (they live inside arbitrary panels, so
+  `Items`-level ops are impossible — also why command reorder is custom-groups-only).
+- **`Ribbon.RibbonCustomizeRequested`** event + "Customize the Ribbon…" in the ribbon
+  right-click menu (next to the QAT one). Showcase: third dialog page "Customize Ribbon";
+  both right-click entries open the dialog pre-selected on the matching page.
+- **Still deferred:** persistence (serialize layout + QAT; enables Reset/Import/Export),
+  drag-drop in the tree, moving groups across tabs.
+
 ## 4. Workflow / Session Conventions
 
 - Cloud workspace: `/home/user/ribbonkit/`. The user's machine:
@@ -475,28 +514,28 @@ customize page, and ONE extensible options dialog the app can merge its own page
 
 ## 5. Current State & Next Steps
 
-**Working and confirmed by user: everything through §3.13.** The items that were previously
-pending verification are now all confirmed working on real hardware — backstage slide-out,
-QAT glide on minimize, modern backstage design, backstage icons, and Mica (the glass-frame
-black-background fix, the maximize-with-glass overhang, the title-bar-through-Mica rule, the
-glass-frame border/rounded-corner fix on un-toggle, the WS_SYSMENU caption-button
-suppression, and the opaque backstage under Mica). Also confirmed: the 2024 tab-underline
-hover-flicker fix, the ComboBox min-height, and the showcase document-editor layout. **No
-runtime verification is outstanding.**
+**Working and confirmed by user: everything through §3.15** — including the QAT
+customization + merged options dialog with all its refinements (custom close-only title
+bar, DWM rounded corners, resizable, per-page scroll policy via `IRibbonFillPage`), plus
+everything previously confirmed (Mica suite, tab-flicker fix, ComboBox height, document-
+editor layout).
 
 Still to check: the §3.14 XAML **design-time** preview (active tab + backstage) on the
 VS/Blend surface — a designer-only check (does the designer honor the `d:` attributes and
-render the design host); and the new §3.15 QAT customization + options dialog, which ships
-unbuilt and needs a first build/run pass (dialog rendering, right-click menus, proxy
-invoke/toggle sync, QAT page add/remove/reorder).
+render the design host); and the new §3.16 "Customize the Ribbon" page, which ships unbuilt
+and needs a first build/run pass (tree rendering + checkbox visibility, tab/group reorder,
+New Tab/New Group/Rename, add/remove proxies in custom groups, last-visible-tab guard).
 
 Backlog (rough priority):
 
-1. Remaining animations: hover cross-fade, true sliding tab marker (shared animated
+1. Customization persistence: serialize ribbon layout (tab order/visibility, custom
+   tabs/groups, proxy commands by source identity) + QAT contents; enables Reset and
+   Import/Export in the customize pages (§3.16's deferred tail).
+2. Remaining animations: hover cross-fade, true sliding tab marker (shared animated
    underline on the tab strip), contextual-tab appear, KeyTip badge pop, toggle-state,
    theme-switch cross-fade.
-2. Mica hardening (future): dark-mode-aware translucency. (Maximize-with-glass and the
+3. Mica hardening (future): dark-mode-aware translucency. (Maximize-with-glass and the
    glass-frame border fix are verified — see §3.12.)
-3. Office2010 / Office2007 themes (roadmap Phase 6).
-4. Dark mode (2019 white-tab note in §3.6 anticipates it).
-5. GitHub publish: repo URL placeholder in csproj (`YOUR-GITHUB-USERNAME`).
+4. Office2010 / Office2007 themes (roadmap Phase 6).
+5. Dark mode (2019 white-tab note in §3.6 anticipates it).
+6. GitHub publish: repo URL placeholder in csproj (`YOUR-GITHUB-USERNAME`).
