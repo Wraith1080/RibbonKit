@@ -326,4 +326,261 @@
         </DrawingImage.Drawing>
     </DrawingImage>
 
+    <!-- ================= View-tab + group icons (added) ================= -->
+
+    <!-- Zoom: magnifier with a plus. -->
+    <DrawingImage x:Key="Icon.Zoom">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Brush="Transparent" Geometry="M0,0 H24 V24 H0 Z" />
+                <GeometryDrawing>
+                    <GeometryDrawing.Geometry>
+                        <EllipseGeometry Center="10.5,10.5" RadiusX="6" RadiusY="6" />
+                    </GeometryDrawing.Geometry>
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="#5A6270" Thickness="2" />
+                    </GeometryDrawing.Pen>
+                </GeometryDrawing>
+                <GeometryDrawing Geometry="M10.5,7.5 V13.5 M7.5,10.5 H13.5">
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="#0F6CBD" Thickness="1.8" StartLineCap="Round" EndLineCap="Round" />
+                    </GeometryDrawing.Pen>
+                </GeometryDrawing>
+                <GeometryDrawing Geometry="M15.2,15.2 L21,21">
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="#0F6CBD" Thickness="2.5" StartLineCap="Round" EndLineCap="Round" />
+                    </GeometryDrawing.Pen>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <!-- Palette: theme colours — a palette with a thumb hole and colour wells. -->
+    <DrawingImage x:Key="Icon.Palette">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Brush="Transparent" Geometry="M0,0 H24 V24 H0 Z" />
+                <GeometryDrawing Brush="#EEF3F9">
+                    <GeometryDrawing.Geometry>
+                        <EllipseGeometry Center="12,12" RadiusX="9" RadiusY="8" />
+                    </GeometryDrawing.Geometry>
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="#5A6270" Thickness="1.6" />
+                    </GeometryDrawing.Pen>
+                </GeometryDrawing>
+                <GeometryDrawing Brush="#FFFFFF">
+                    <GeometryDrawing.Geometry>
+                        <EllipseGeometry Center="14.5,15" RadiusX="2.2" RadiusY="2.2" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <GeometryDrawing Brush="#0F6CBD">
+                    <GeometryDrawing.Geometry><EllipseGeometry Center="8,9.5" RadiusX="1.5" RadiusY="1.5" /></GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <GeometryDrawing Brush="#107C41">
+                    <GeometryDrawing.Geometry><EllipseGeometry Center="11.5,7" RadiusX="1.5" RadiusY="1.5" /></GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <GeometryDrawing Brush="#F2C94C">
+                    <GeometryDrawing.Geometry><EllipseGeometry Center="15.5,8" RadiusX="1.5" RadiusY="1.5" /></GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <GeometryDrawing Brush="#D13438">
+                    <GeometryDrawing.Geometry><EllipseGeometry Center="7,13.5" RadiusX="1.5" RadiusY="1.5" /></GeometryDrawing.Geometry>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <!-- ColorDrop: accent colour — a paint droplet with a highlight. -->
+    <DrawingImage x:Key="Icon.ColorDrop">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Brush="Transparent" Geometry="M0,0 H24 V24 H0 Z" />
+                <GeometryDrawing Brush="#0F6CBD" Geometry="M12,3 C12,3 5.5,10.5 5.5,15 A6.5,6.5 0 0 0 18.5,15 C18.5,10.5 12,3 12,3 Z">
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="#0B5394" Thickness="1" LineJoin="Round" />
+                    </GeometryDrawing.Pen>
+                </GeometryDrawing>
+                <GeometryDrawing Geometry="M9,14.8 A3,3 0 0 0 11.2,17.6">
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="#BBD4EE" Thickness="1.6" StartLineCap="Round" EndLineCap="Round" />
+                    </GeometryDrawing.Pen>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <!-- Motion (group): an effects sparkle. -->
+    <DrawingImage x:Key="Icon.Motion">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Brush="Transparent" Geometry="M0,0 H24 V24 H0 Z" />
+                <GeometryDrawing Brush="#0F6CBD" Geometry="M11,3 L12.7,9.3 L19,11 L12.7,12.7 L11,19 L9.3,12.7 L3,11 L9.3,9.3 Z" />
+                <GeometryDrawing Brush="#7AA7D9" Geometry="M18,14 L18.8,16.2 L21,17 L18.8,17.8 L18,20 L17.2,17.8 L15,17 L17.2,16.2 Z" />
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <!-- No Motion: a greyed sparkle struck through. -->
+    <DrawingImage x:Key="Icon.MotionOff">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Brush="Transparent" Geometry="M0,0 H24 V24 H0 Z" />
+                <GeometryDrawing Brush="#B9C4D4" Geometry="M12,4.5 L13.4,10 L18.9,11.4 L13.4,12.8 L12,18.3 L10.6,12.8 L5.1,11.4 L10.6,10 Z" />
+                <GeometryDrawing Geometry="M5,19 L19,5">
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="#5A6270" Thickness="2" StartLineCap="Round" EndLineCap="Round" />
+                    </GeometryDrawing.Pen>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <!-- Subtle: a single small sparkle. -->
+    <DrawingImage x:Key="Icon.MotionLow">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Brush="Transparent" Geometry="M0,0 H24 V24 H0 Z" />
+                <GeometryDrawing Brush="#0F6CBD" Geometry="M12,7 L13,11 L17,12 L13,13 L12,17 L11,13 L7,12 L11,11 Z" />
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <!-- Expressive: a big sparkle plus an accent second sparkle. -->
+    <DrawingImage x:Key="Icon.MotionHigh">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Brush="Transparent" Geometry="M0,0 H24 V24 H0 Z" />
+                <GeometryDrawing Brush="#0F6CBD" Geometry="M10,3 L11.7,9.3 L18,11 L11.7,12.7 L10,19 L8.3,12.7 L2,11 L8.3,9.3 Z" />
+                <GeometryDrawing Brush="#F2C94C" Geometry="M18,13 L18.8,15.2 L21,16 L18.8,16.8 L18,19 L17.2,16.8 L15,16 L17.2,15.2 Z" />
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <!-- Gear: settings / respect-system. -->
+    <DrawingImage x:Key="Icon.Gear">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Brush="Transparent" Geometry="M0,0 H24 V24 H0 Z" />
+                <GeometryDrawing Geometry="M12,3 V6 M12,18 V21 M3,12 H6 M18,12 H21 M5.64,5.64 L7.76,7.76 M16.24,16.24 L18.36,18.36 M18.36,5.64 L16.24,7.76 M7.76,16.24 L5.64,18.36">
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="#5A6270" Thickness="2" StartLineCap="Round" EndLineCap="Round" />
+                    </GeometryDrawing.Pen>
+                </GeometryDrawing>
+                <GeometryDrawing Brush="#EEF3F9">
+                    <GeometryDrawing.Geometry>
+                        <EllipseGeometry Center="12,12" RadiusX="5" RadiusY="5" />
+                    </GeometryDrawing.Geometry>
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="#5A6270" Thickness="2" />
+                    </GeometryDrawing.Pen>
+                </GeometryDrawing>
+                <GeometryDrawing Brush="#0F6CBD">
+                    <GeometryDrawing.Geometry>
+                        <EllipseGeometry Center="12,12" RadiusX="1.8" RadiusY="1.8" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <!-- Backstage: the File view — a left-rail panel. -->
+    <DrawingImage x:Key="Icon.Backstage">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Brush="Transparent" Geometry="M0,0 H24 V24 H0 Z" />
+                <GeometryDrawing Brush="#FFFFFF">
+                    <GeometryDrawing.Geometry>
+                        <RectangleGeometry Rect="3,4,18,16" RadiusX="2" RadiusY="2" />
+                    </GeometryDrawing.Geometry>
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="#5A6270" Thickness="2" />
+                    </GeometryDrawing.Pen>
+                </GeometryDrawing>
+                <GeometryDrawing Brush="#0F6CBD" Geometry="M3,6 A2,2 0 0 1 5,4 H9 V20 H5 A2,2 0 0 1 3,18 Z" />
+                <GeometryDrawing Geometry="M12,9 H18 M12,12 H18 M12,15 H16">
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="#9AA3B0" Thickness="1.5" StartLineCap="Round" EndLineCap="Round" />
+                    </GeometryDrawing.Pen>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <!-- Mica: translucent stacked panes (the Windows 11 material). -->
+    <DrawingImage x:Key="Icon.Mica">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Brush="Transparent" Geometry="M0,0 H24 V24 H0 Z" />
+                <GeometryDrawing Brush="#660F6CBD">
+                    <GeometryDrawing.Geometry>
+                        <RectangleGeometry Rect="4,4,12,12" RadiusX="2.5" RadiusY="2.5" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <GeometryDrawing Brush="#667AA7D9">
+                    <GeometryDrawing.Geometry>
+                        <RectangleGeometry Rect="8,8,12,12" RadiusX="2.5" RadiusY="2.5" />
+                    </GeometryDrawing.Geometry>
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="#5A6270" Thickness="1.2" />
+                    </GeometryDrawing.Pen>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <!-- Font: a large 'A' and a small 'a' — the type / font metaphor. -->
+    <DrawingImage x:Key="Icon.Font">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Brush="Transparent" Geometry="M0,0 H24 V24 H0 Z" />
+                <GeometryDrawing Brush="#5A6270" Geometry="M4,19.5 L8,6.5 H10 L14,19.5 H11.7 L10.9,16.6 H7.1 L6.3,19.5 Z M7.6,14.6 H10.4 L9,9.5 Z" />
+                <GeometryDrawing Brush="#0F6CBD" Geometry="M14.2,19.5 L16.7,11 H18.1 L20.6,19.5 H18.7 L18.2,17.7 H16.6 L16.1,19.5 Z M16.9,16.1 H17.9 L17.4,13.9 Z" />
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <!-- Crop: the picture crop tool. -->
+    <DrawingImage x:Key="Icon.Crop">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Brush="Transparent" Geometry="M0,0 H24 V24 H0 Z" />
+                <GeometryDrawing Brush="#C7D6E8">
+                    <GeometryDrawing.Geometry>
+                        <RectangleGeometry Rect="7,7,10,10" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <GeometryDrawing Geometry="M7,3 V17 H21 M3,7 H17 V21">
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="#5A6270" Thickness="2" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+                    </GeometryDrawing.Pen>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <!-- Sliders: adjust — three tracks with knobs. -->
+    <DrawingImage x:Key="Icon.Sliders">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Brush="Transparent" Geometry="M0,0 H24 V24 H0 Z" />
+                <GeometryDrawing Geometry="M4,7 H20 M4,12 H20 M4,17 H20">
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="#9AA3B0" Thickness="2" StartLineCap="Round" EndLineCap="Round" />
+                    </GeometryDrawing.Pen>
+                </GeometryDrawing>
+                <GeometryDrawing Brush="#FFFFFF">
+                    <GeometryDrawing.Geometry><EllipseGeometry Center="9,7" RadiusX="2.4" RadiusY="2.4" /></GeometryDrawing.Geometry>
+                    <GeometryDrawing.Pen><Pen Brush="#0F6CBD" Thickness="2" /></GeometryDrawing.Pen>
+                </GeometryDrawing>
+                <GeometryDrawing Brush="#FFFFFF">
+                    <GeometryDrawing.Geometry><EllipseGeometry Center="15,12" RadiusX="2.4" RadiusY="2.4" /></GeometryDrawing.Geometry>
+                    <GeometryDrawing.Pen><Pen Brush="#0F6CBD" Thickness="2" /></GeometryDrawing.Pen>
+                </GeometryDrawing>
+                <GeometryDrawing Brush="#FFFFFF">
+                    <GeometryDrawing.Geometry><EllipseGeometry Center="10,17" RadiusX="2.4" RadiusY="2.4" /></GeometryDrawing.Geometry>
+                    <GeometryDrawing.Pen><Pen Brush="#0F6CBD" Thickness="2" /></GeometryDrawing.Pen>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
 </ResourceDictionary>

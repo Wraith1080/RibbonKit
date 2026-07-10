@@ -144,7 +144,7 @@
                 <!-- CanResize=False: this group never shrinks, no matter how narrow -->
                 <rk:RibbonGroup Header="Font"
                                 rk:Ribbon.CommandId="group.home.font"
-                                Icon="{StaticResource Icon.Bold}"
+                                Icon="{StaticResource Icon.Font}"
                                 CanResize="False"
                                 ShowDialogLauncher="True">
                     <StackPanel VerticalAlignment="Center">
@@ -330,24 +330,24 @@
                           IsContextual="True"
                           ContextualColor="#C43E96"
                           Visibility="Collapsed">
-                <rk:RibbonGroup Header="Adjust" Icon="{StaticResource Icon.Picture}">
+                <rk:RibbonGroup Header="Adjust" Icon="{StaticResource Icon.Sliders}">
                     <rk:RibbonButton Header="Corrections"
-                                     LargeIcon="{StaticResource Icon.Picture}"
-                                     Icon="{StaticResource Icon.Picture}"
+                                     LargeIcon="{StaticResource Icon.Sliders}"
+                                     Icon="{StaticResource Icon.Sliders}"
                                      SizeDefinition="Large, Medium, Small"
                                      ScreenTipTitle="Corrections"
                                      ScreenTipText="Improve brightness, contrast, or sharpness." />
                     <rk:RibbonButton Header="Color"
-                                     LargeIcon="{StaticResource Icon.Style}"
-                                     Icon="{StaticResource Icon.Style}"
+                                     LargeIcon="{StaticResource Icon.ColorDrop}"
+                                     Icon="{StaticResource Icon.ColorDrop}"
                                      SizeDefinition="Large, Medium, Small"
                                      ScreenTipTitle="Color"
                                      ScreenTipText="Change the color of your picture." />
                 </rk:RibbonGroup>
-                <rk:RibbonGroup Header="Size" Icon="{StaticResource Icon.Table}">
+                <rk:RibbonGroup Header="Size" Icon="{StaticResource Icon.Crop}">
                     <rk:RibbonButton Header="Crop"
-                                     LargeIcon="{StaticResource Icon.Cut}"
-                                     Icon="{StaticResource Icon.Cut}"
+                                     LargeIcon="{StaticResource Icon.Crop}"
+                                     Icon="{StaticResource Icon.Crop}"
                                      SizeDefinition="Large, Medium, Small"
                                      ScreenTipTitle="Crop"
                                      ScreenTipText="Crop the picture to remove unwanted areas." />
@@ -355,45 +355,45 @@
             </rk:RibbonTab>
 
             <rk:RibbonTab Header="View" rk:Ribbon.CommandId="tab.view">
-                <rk:RibbonGroup Header="Zoom" rk:Ribbon.CommandId="group.view.zoom" Icon="{StaticResource Icon.Find}">
+                <rk:RibbonGroup Header="Zoom" rk:Ribbon.CommandId="group.view.zoom" Icon="{StaticResource Icon.Zoom}">
                     <rk:RibbonButton Header="Zoom"
                                      rk:Ribbon.CommandId="cmd.zoom"
-                                     LargeIcon="{StaticResource Icon.Find}"
-                                     Icon="{StaticResource Icon.Find}"
+                                     LargeIcon="{StaticResource Icon.Zoom}"
+                                     Icon="{StaticResource Icon.Zoom}"
                                      SizeDefinition="Large, Medium, Small"
                                      ScreenTipTitle="Zoom"
                                      ScreenTipText="Zoom the document to a specific level." />
                 </rk:RibbonGroup>
                 <!-- Runtime theme switch — same templates, different token dictionary -->
-                <rk:RibbonGroup Header="Theme" rk:Ribbon.CommandId="group.view.theme" Icon="{StaticResource Icon.Style}">
+                <rk:RibbonGroup Header="Theme" rk:Ribbon.CommandId="group.view.theme" Icon="{StaticResource Icon.Palette}">
                     <rk:RibbonButton Header="Office 2024"
-                                     LargeIcon="{StaticResource Icon.Style}"
-                                     Icon="{StaticResource Icon.Style}"
+                                     LargeIcon="{StaticResource Icon.Palette}"
+                                     Icon="{StaticResource Icon.Palette}"
                                      SizeDefinition="Large, Medium, Small"
                                      Click="OnApplyOffice2024"
                                      ScreenTipTitle="Office 2024 theme"
                                      ScreenTipText="Apply the modern light theme." />
                     <rk:RibbonButton Header="Office 2019"
-                                     LargeIcon="{StaticResource Icon.Style}"
-                                     Icon="{StaticResource Icon.Style}"
+                                     LargeIcon="{StaticResource Icon.Palette}"
+                                     Icon="{StaticResource Icon.Palette}"
                                      SizeDefinition="Large, Medium, Small"
                                      Click="OnApplyOffice2019"
                                      ScreenTipTitle="Office 2019 theme"
                                      ScreenTipText="Apply the Office 2019 colorful theme (blue tab strip, flat)." />
                     <rk:RibbonButton Header="Office 2013"
-                                     LargeIcon="{StaticResource Icon.Style}"
-                                     Icon="{StaticResource Icon.Style}"
+                                     LargeIcon="{StaticResource Icon.Palette}"
+                                     Icon="{StaticResource Icon.Palette}"
                                      SizeDefinition="Large, Medium, Small"
                                      Click="OnApplyOffice2013"
                                      ScreenTipTitle="Office 2013 theme"
                                      ScreenTipText="Apply the Office 2013 White theme (flat, white strip, solid File button)." />
                 </rk:RibbonGroup>
                 <!-- Accent customization: title-bar accent toggle + swappable accent color -->
-                <rk:RibbonGroup Header="Accent" rk:Ribbon.CommandId="group.view.accent" Icon="{StaticResource Icon.Style}">
+                <rk:RibbonGroup Header="Accent" rk:Ribbon.CommandId="group.view.accent" Icon="{StaticResource Icon.ColorDrop}">
                     <rk:RibbonToggleButton Header="Colored Title Bar"
                                            Size="Large"
-                                           LargeIcon="{StaticResource Icon.Style}"
-                                           Icon="{StaticResource Icon.Style}"
+                                           LargeIcon="{StaticResource Icon.ColorDrop}"
+                                           Icon="{StaticResource Icon.ColorDrop}"
                                            Checked="OnToggleAccentTitleBar"
                                            Unchecked="OnToggleAccentTitleBar"
                                            ScreenTipTitle="Colored title bar"
@@ -434,64 +434,64 @@
                     </rk:InRibbonGallery>
                 </rk:RibbonGroup>
                 <!-- Global animation level (per-action overrides available in the API) -->
-                <rk:RibbonGroup Header="Motion" rk:Ribbon.CommandId="group.view.motion" Icon="{StaticResource Icon.Style}">
+                <rk:RibbonGroup Header="Motion" rk:Ribbon.CommandId="group.view.motion" Icon="{StaticResource Icon.Motion}">
                     <rk:RibbonButton Header="No Motion"
-                                     LargeIcon="{StaticResource Icon.Style}"
-                                     Icon="{StaticResource Icon.Style}"
+                                     LargeIcon="{StaticResource Icon.MotionOff}"
+                                     Icon="{StaticResource Icon.MotionOff}"
                                      SizeDefinition="Large, Medium, Small"
                                      Click="OnAnimationOff"
                                      ScreenTipTitle="No motion"
                                      ScreenTipText="Turn every ribbon transition off — actions snap instantly." />
                     <rk:RibbonButton Header="Subtle"
-                                     LargeIcon="{StaticResource Icon.Style}"
-                                     Icon="{StaticResource Icon.Style}"
+                                     LargeIcon="{StaticResource Icon.MotionLow}"
+                                     Icon="{StaticResource Icon.MotionLow}"
                                      SizeDefinition="Large, Medium, Small"
                                      Click="OnAnimationSubtle"
                                      ScreenTipTitle="Subtle motion (default)"
                                      ScreenTipText="Short, understated fades and small slides." />
                     <rk:RibbonButton Header="Expressive"
-                                     LargeIcon="{StaticResource Icon.Style}"
-                                     Icon="{StaticResource Icon.Style}"
+                                     LargeIcon="{StaticResource Icon.MotionHigh}"
+                                     Icon="{StaticResource Icon.MotionHigh}"
                                      SizeDefinition="Large, Medium, Small"
                                      Click="OnAnimationExpressive"
                                      ScreenTipTitle="Expressive motion"
                                      ScreenTipText="Longer, more pronounced motion with springier easing." />
                     <rk:RibbonToggleButton Header="Respect System"
-                                           Size="Medium"
+                                           Size="Large"
                                            IsChecked="True"
-                                           LargeIcon="{StaticResource Icon.Style}"
-                                           Icon="{StaticResource Icon.Style}"
+                                           LargeIcon="{StaticResource Icon.Gear}"
+                                           Icon="{StaticResource Icon.Gear}"
                                            Checked="OnToggleRespectSystemMotion"
                                            Unchecked="OnToggleRespectSystemMotion"
                                            ScreenTipTitle="Respect system reduced motion"
                                            ScreenTipText="When on, a system-wide reduced-motion setting forces motion off." />
                 </rk:RibbonGroup>
                 <!-- Backstage design: modern (2024) light rail vs classic (2013) accent column -->
-                <rk:RibbonGroup Header="Backstage" rk:Ribbon.CommandId="group.view.backstage" Icon="{StaticResource Icon.Style}">
+                <rk:RibbonGroup Header="Backstage" rk:Ribbon.CommandId="group.view.backstage" Icon="{StaticResource Icon.Backstage}">
                     <rk:RibbonToggleButton Header="Modern Backstage"
                                            Size="Large"
                                            IsChecked="True"
-                                           LargeIcon="{StaticResource Icon.Style}"
-                                           Icon="{StaticResource Icon.Style}"
+                                           LargeIcon="{StaticResource Icon.Backstage}"
+                                           Icon="{StaticResource Icon.Backstage}"
                                            Checked="OnToggleBackstageDesign"
                                            Unchecked="OnToggleBackstageDesign"
                                            ScreenTipTitle="Modern backstage (Office 2024)"
                                            ScreenTipText="Toggle between the modern 2024 light rail and the classic 2013 accent column. Open the File menu to see it." />
                     <rk:RibbonToggleButton Header="Mica"
-                                           Size="Medium"
-                                           LargeIcon="{StaticResource Icon.Style}"
-                                           Icon="{StaticResource Icon.Style}"
+                                           Size="Large"
+                                           LargeIcon="{StaticResource Icon.Mica}"
+                                           Icon="{StaticResource Icon.Mica}"
                                            Checked="OnToggleMica"
                                            Unchecked="OnToggleMica"
                                            ScreenTipTitle="Mica backdrop (Windows 11)"
                                            ScreenTipText="Apply the Windows 11 Mica material behind the window and the backstage. Requires Windows 11 22H2+." />
                 </rk:RibbonGroup>
-                <rk:RibbonGroup Header="Application" rk:Ribbon.CommandId="group.view.application" Icon="{StaticResource Icon.Style}">
+                <rk:RibbonGroup Header="Application" rk:Ribbon.CommandId="group.view.application" Icon="{StaticResource Icon.Gear}">
                     <rk:RibbonButton Header="Options"
                                      rk:Ribbon.CommandId="cmd.options"
                                      Size="Large"
-                                     LargeIcon="{StaticResource Icon.Style}"
-                                     Icon="{StaticResource Icon.Style}"
+                                     LargeIcon="{StaticResource Icon.Gear}"
+                                     Icon="{StaticResource Icon.Gear}"
                                      Click="OnOpenOptions"
                                      ScreenTipTitle="Options"
                                      ScreenTipText="Open the merged options dialog: the app's own pages plus the Quick Access Toolbar customization page. Also reachable by right-clicking any ribbon button." />
