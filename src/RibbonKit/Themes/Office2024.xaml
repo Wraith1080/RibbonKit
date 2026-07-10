@@ -2018,4 +2018,281 @@
         </Setter>
     </Style>
 
+    <!-- ============================================================
+         RibbonOptionsDialog — Word-Options-style dialog: page rail on
+         the left, selected page content on the right, OK/Cancel below.
+         Rail brushes are LOCAL statics (same precedent as the Modern
+         backstage brushes); everything else rides the theme tokens.
+         ============================================================ -->
+    <SolidColorBrush x:Key="OptionsDialog.RailBackground" Color="#F5F4F3" />
+
+    <Style x:Key="OptionsDialogActionButtonStyle" TargetType="{x:Type Button}">
+        <Setter Property="MinWidth" Value="88" />
+        <Setter Property="Padding" Value="14,6" />
+        <Setter Property="Focusable" Value="True" />
+        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+        <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Button}">
+                    <Border x:Name="Chrome"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                            Padding="{TemplateBinding Padding}"
+                            SnapsToDevicePixels="True">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chrome" Property="Opacity" Value="0.88" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Chrome" Property="Opacity" Value="0.75" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="OptionsDialogPrimaryButtonStyle"
+           TargetType="{x:Type Button}"
+           BasedOn="{StaticResource OptionsDialogActionButtonStyle}">
+        <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Accent}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Accent}" />
+        <Setter Property="Foreground" Value="#FFFFFF" />
+    </Style>
+
+    <!-- The page control IS the nav entry: it renders only its Header (the dialog presents
+         the page's Content separately), highlighting from its host ListBoxItem's state. -->
+    <Style TargetType="{x:Type controls:RibbonOptionsPage}">
+        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type controls:RibbonOptionsPage}">
+                    <Grid Background="Transparent">
+                        <Border x:Name="Chrome"
+                                Background="Transparent"
+                                CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                Padding="14,8"
+                                Margin="8,1"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter ContentSource="Header"
+                                              TextElement.Foreground="{TemplateBinding Foreground}"
+                                              VerticalAlignment="Center" />
+                        </Border>
+                        <Rectangle x:Name="SelectedBar"
+                                   Width="3"
+                                   RadiusX="1.5"
+                                   RadiusY="1.5"
+                                   Margin="8,9"
+                                   HorizontalAlignment="Left"
+                                   Fill="{DynamicResource RibbonKit.Brushes.Accent}"
+                                   Visibility="Collapsed" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chrome" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
+                        </Trigger>
+                        <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType={x:Type ListBoxItem}}}"
+                                     Value="True">
+                            <Setter TargetName="Chrome" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.Control.CheckedBackground}" />
+                            <Setter TargetName="SelectedBar" Property="Visibility" Value="Visible" />
+                            <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Accent}" />
+                        </DataTrigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="{x:Type controls:RibbonOptionsDialog}">
+        <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}" />
+        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type controls:RibbonOptionsDialog}">
+                    <!-- Native window chrome is kept (a plain dialog, like Word Options);
+                         only the client area is templated. AdornerDecorator so tooltips /
+                         validation adorners inside pages can render. -->
+                    <AdornerDecorator>
+                        <Border Background="{TemplateBinding Background}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="190" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Page rail -->
+                                <Border Grid.Column="0"
+                                        Background="{StaticResource OptionsDialog.RailBackground}"
+                                        BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}"
+                                        BorderThickness="0,0,1,0">
+                                    <ListBox x:Name="PART_PageList"
+                                             Background="Transparent"
+                                             BorderThickness="0"
+                                             Margin="0,12,0,12"
+                                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                             ItemsSource="{TemplateBinding Pages}"
+                                             SelectedItem="{Binding SelectedPage, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+                                        <ListBox.ItemContainerStyle>
+                                            <!-- The page control draws its own hover/selection;
+                                                 the container contributes no chrome. -->
+                                            <Style TargetType="{x:Type ListBoxItem}">
+                                                <Setter Property="Template">
+                                                    <Setter.Value>
+                                                        <ControlTemplate TargetType="{x:Type ListBoxItem}">
+                                                            <ContentPresenter />
+                                                        </ControlTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </Style>
+                                        </ListBox.ItemContainerStyle>
+                                    </ListBox>
+                                </Border>
+
+                                <!-- Selected page: title, content, action buttons -->
+                                <Grid Grid.Column="1">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0"
+                                               Text="{Binding SelectedPage.Header, RelativeSource={RelativeSource TemplatedParent}}"
+                                               FontSize="20"
+                                               FontWeight="SemiBold"
+                                               Foreground="{TemplateBinding Foreground}"
+                                               Margin="24,18,24,10" />
+
+                                    <ScrollViewer Grid.Row="1"
+                                                  VerticalScrollBarVisibility="Auto"
+                                                  HorizontalScrollBarVisibility="Disabled"
+                                                  Focusable="False"
+                                                  Padding="24,0,24,12">
+                                        <ContentPresenter Content="{Binding SelectedPage.Content, RelativeSource={RelativeSource TemplatedParent}}" />
+                                    </ScrollViewer>
+
+                                    <Border Grid.Row="2"
+                                            BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}"
+                                            BorderThickness="0,1,0,0">
+                                        <StackPanel Orientation="Horizontal"
+                                                    HorizontalAlignment="Right"
+                                                    Margin="16,12,16,12">
+                                            <Button x:Name="PART_OkButton"
+                                                    Content="OK"
+                                                    IsDefault="True"
+                                                    Style="{StaticResource OptionsDialogPrimaryButtonStyle}" />
+                                            <Button x:Name="PART_CancelButton"
+                                                    Content="Cancel"
+                                                    IsCancel="True"
+                                                    Margin="8,0,0,0"
+                                                    Style="{StaticResource OptionsDialogActionButtonStyle}" />
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+                            </Grid>
+                        </Border>
+                    </AdornerDecorator>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ============================================================
+         RibbonQuickAccessPage — the built-in QAT customization page:
+         available ribbon commands | Add/Remove/Up/Down | current QAT
+         ============================================================ -->
+    <Style TargetType="{x:Type controls:RibbonQuickAccessPage}">
+        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+        <Setter Property="MinHeight" Value="320" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type controls:RibbonQuickAccessPage}">
+                    <ControlTemplate.Resources>
+                        <!-- Shared 16px-icon + caption row for both lists -->
+                        <DataTemplate x:Key="CommandEntryTemplate">
+                            <StackPanel Orientation="Horizontal" Margin="2,1">
+                                <Image Source="{Binding Icon}"
+                                       Width="16" Height="16"
+                                       Margin="0,0,8,0"
+                                       VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding DisplayName}"
+                                           VerticalAlignment="Center"
+                                           TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ControlTemplate.Resources>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Column="0" Grid.Row="0"
+                                   Text="Choose commands from the ribbon:"
+                                   Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
+                                   FontSize="12"
+                                   Margin="0,0,0,6" />
+                        <TextBlock Grid.Column="2" Grid.Row="0"
+                                   Text="Current Quick Access Toolbar:"
+                                   Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
+                                   FontSize="12"
+                                   Margin="0,0,0,6" />
+
+                        <ListBox x:Name="PART_AvailableList"
+                                 Grid.Column="0" Grid.Row="1"
+                                 Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
+                                 BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
+                                 BorderThickness="1"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                 ItemTemplate="{StaticResource CommandEntryTemplate}" />
+
+                        <StackPanel Grid.Column="1" Grid.Row="1"
+                                    VerticalAlignment="Center"
+                                    Margin="12,0">
+                            <Button x:Name="PART_AddButton"
+                                    Content="Add ▸"
+                                    Style="{StaticResource OptionsDialogActionButtonStyle}"
+                                    Margin="0,0,0,6" />
+                            <Button x:Name="PART_RemoveButton"
+                                    Content="◂ Remove"
+                                    Style="{StaticResource OptionsDialogActionButtonStyle}"
+                                    Margin="0,0,0,18" />
+                            <Button x:Name="PART_UpButton"
+                                    Content="▲ Up"
+                                    Style="{StaticResource OptionsDialogActionButtonStyle}"
+                                    Margin="0,0,0,6" />
+                            <Button x:Name="PART_DownButton"
+                                    Content="▼ Down"
+                                    Style="{StaticResource OptionsDialogActionButtonStyle}" />
+                        </StackPanel>
+
+                        <ListBox x:Name="PART_CurrentList"
+                                 Grid.Column="2" Grid.Row="1"
+                                 Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
+                                 BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
+                                 BorderThickness="1"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                 ItemTemplate="{StaticResource CommandEntryTemplate}" />
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
 </ResourceDictionary>

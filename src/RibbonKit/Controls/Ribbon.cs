@@ -227,6 +227,206 @@ public class Ribbon : Control
         set => SetValue(SelectedIndexProperty, value);
     }
 
+    private static readonly DependencyPropertyKey QuickAccessSourcePropertyKey =
+        DependencyProperty.RegisterAttachedReadOnly(
+            "QuickAccessSource",
+            typeof(FrameworkElement),
+            typeof(Ribbon),
+            new FrameworkPropertyMetadata(null));
+
+    /// <summary>
+    /// Identifies the read-only <c>QuickAccessSource</c> attached property: on a quick-access
+    /// proxy created by <see cref="AddToQuickAccess"/>, the ribbon control it mirrors.
+    /// </summary>
+    public static readonly DependencyProperty QuickAccessSourceProperty =
+        QuickAccessSourcePropertyKey.DependencyProperty;
+
+    /// <summary>Gets the ribbon control a quick-access proxy mirrors, or <see langword="null"/>
+    /// for hand-declared quick-access items.</summary>
+    public static FrameworkElement? GetQuickAccessSource(DependencyObject element) =>
+        (FrameworkElement?)element.GetValue(QuickAccessSourceProperty);
+
+    /// <summary>
+    /// Raised when the user picks "Customize Quick Access Toolbar…" from a right-click menu.
+    /// The application typically responds by opening a <see cref="RibbonOptionsDialog"/>
+    /// containing a <see cref="RibbonQuickAccessPage"/> (plus its own options pages).
+    /// </summary>
+    public event EventHandler? QuickAccessCustomizeRequested;
+
+    /// <summary>
+    /// Adds <paramref name="source"/> (a command control living in a ribbon group) to the
+    /// quick access toolbar. Because a WPF element can only have one visual parent, the
+    /// control is not moved: a small PROXY button is created that mirrors its 16px icon and
+    /// ScreenTip and invokes it (toggles stay state-synced via a two-way IsChecked binding).
+    /// Returns <see langword="false"/> when the control is already in the QAT.
+    /// </summary>
+    public bool AddToQuickAccess(FrameworkElement source)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+
+        if (IsInQuickAccess(source))
+        {
+            return false;
+        }
+
+        QuickAccessItems.Add(CreateQuickAccessProxy(source));
+        return true;
+    }
+
+    /// <summary>Whether <paramref name="source"/> is already in the quick access toolbar,
+    /// either directly or via a proxy created by <see cref="AddToQuickAccess"/>.</summary>
+    public bool IsInQuickAccess(FrameworkElement source) =>
+        QuickAccessItems.Any(item =>
+            ReferenceEquals(item, source)
+            || (item is DependencyObject d && ReferenceEquals(GetQuickAccessSource(d), source)));
+
+    private FrameworkElement CreateQuickAccessProxy(FrameworkElement source)
+    {
+        FrameworkElement proxy;
+        switch (source)
+        {
+            case RibbonToggleButton toggle:
+            {
+                // State lives on the SOURCE: the proxy's IsChecked is two-way bound to it, so
+                // clicking either updates both and the source's Checked/Unchecked handlers run.
+                var proxyToggle = new RibbonToggleButton
+                {
+                    Size = RibbonControlSize.Small,
+                    Icon = toggle.Icon ?? toggle.LargeIcon,
+                    Header = toggle.Header,
+                    ScreenTipTitle = toggle.ScreenTipTitle ?? toggle.Header,
+                    ScreenTipText = toggle.ScreenTipText,
+                };
+                proxyToggle.SetBinding(
+                    System.Windows.Controls.Primitives.ToggleButton.IsCheckedProperty,
+                    new System.Windows.Data.Binding(nameof(RibbonToggleButton.IsChecked))
+                    {
+                        Source = toggle,
+                        Mode = System.Windows.Data.BindingMode.TwoWay,
+                    });
+                proxy = proxyToggle;
+                break;
+            }
+
+            case RibbonSplitButton split:
+            {
+                // Invoke the split's PRIMARY action (KeyTipService routes through the
+                // control's UIA Invoke pattern, which calls AutomationInvokePrimary).
+                var proxyButton = MakeProxyButton(split.Icon ?? split.LargeIcon, split.Header, split.ScreenTipTitle, split.ScreenTipText);
+                proxyButton.Click += (_, _) => KeyTipService.InvokeControl(split);
+                proxy = proxyButton;
+                break;
+            }
+
+            case RibbonDropDownButton dropDown:
+            {
+                // v1 limitation: the menu opens at the SOURCE control's ribbon location (the
+                // popup is placed relative to it), not at the QAT proxy.
+                var proxyButton = MakeProxyButton(dropDown.Icon ?? dropDown.LargeIcon, dropDown.Header, dropDown.ScreenTipTitle, dropDown.ScreenTipText);
+                proxyButton.Click += (_, _) =>
+                    dropDown.SetCurrentValue(RibbonDropDownButton.IsDropDownOpenProperty, true);
+                proxy = proxyButton;
+                break;
+            }
+
+            case RibbonButton button:
+            {
+                var proxyButton = MakeProxyButton(button.Icon ?? button.LargeIcon, button.Header, button.ScreenTipTitle, button.ScreenTipText);
+                proxyButton.Click += (_, _) => KeyTipService.InvokeControl(button);
+                proxy = proxyButton;
+                break;
+            }
+
+            default:
+            {
+                // Unknown control type: generic proxy that invokes via UIA patterns.
+                var proxyButton = MakeProxyButton(null, null, source.ToString(), null);
+                proxyButton.Click += (_, _) => KeyTipService.InvokeControl(source);
+                proxy = proxyButton;
+                break;
+            }
+        }
+
+        proxy.SetValue(QuickAccessSourcePropertyKey, source);
+        return proxy;
+    }
+
+    private static RibbonButton MakeProxyButton(
+        System.Windows.Media.ImageSource? icon, string? header, string? tipTitle, string? tipText) =>
+        new()
+        {
+            Size = RibbonControlSize.Small,
+            Icon = icon,
+            Header = header,
+            ScreenTipTitle = tipTitle ?? header,
+            ScreenTipText = tipText,
+        };
+
+    /// <summary>
+    /// Right-clicking a command control in a ribbon group offers "Add to Quick Access
+    /// Toolbar" (Office-style). Quick-access items are NOT handled here — their hosts carry
+    /// the shared placement menu, which opens (and marks the event handled) before it
+    /// bubbles this far.
+    /// </summary>
+    protected override void OnContextMenuOpening(System.Windows.Controls.ContextMenuEventArgs e)
+    {
+        base.OnContextMenuOpening(e);
+
+        if (e.Handled || ResolveCommandControl(e.OriginalSource as DependencyObject) is not { } target)
+        {
+            return;
+        }
+
+        e.Handled = true;
+
+        var addItem = new System.Windows.Controls.MenuItem
+        {
+            Header = "Add to Quick Access Toolbar",
+            IsEnabled = !IsInQuickAccess(target),
+        };
+        addItem.Click += (_, _) => AddToQuickAccess(target);
+
+        var customizeItem = new System.Windows.Controls.MenuItem { Header = "Customize Quick Access Toolbar…" };
+        customizeItem.Click += (_, _) => QuickAccessCustomizeRequested?.Invoke(this, EventArgs.Empty);
+
+        var collapseItem = new System.Windows.Controls.MenuItem
+        {
+            Header = "Collapse the Ribbon",
+            IsChecked = IsMinimized,
+        };
+        collapseItem.Click += (_, _) => SetCurrentValue(IsMinimizedProperty, !IsMinimized);
+
+        var menu = new System.Windows.Controls.ContextMenu { PlacementTarget = target };
+        menu.Items.Add(addItem);
+        menu.Items.Add(customizeItem);
+        menu.Items.Add(new System.Windows.Controls.Separator());
+        menu.Items.Add(collapseItem);
+        menu.IsOpen = true;
+    }
+
+    // Walks up from the right-clicked element (visual parent first, logical as fallback so
+    // popup content and text elements still resolve) to the nearest ribbon command control,
+    // stopping at the ribbon itself.
+    private FrameworkElement? ResolveCommandControl(DependencyObject? node)
+    {
+        while (node is not null && !ReferenceEquals(node, this))
+        {
+            if (node is RibbonButton or RibbonToggleButton or RibbonDropDownButton)
+            {
+                return (FrameworkElement)node;
+            }
+
+            // VisualTreeHelper.GetParent throws for non-visual nodes (a Run in a header,
+            // FlowDocument content), so only visuals take the visual-tree step.
+            DependencyObject? next = node is System.Windows.Media.Visual or System.Windows.Media.Media3D.Visual3D
+                ? System.Windows.Media.VisualTreeHelper.GetParent(node)
+                : null;
+            node = next ?? LogicalTreeHelper.GetParent(node);
+        }
+
+        return null;
+    }
+
     /// <summary>Whether the backstage overlay is open.</summary>
     public bool IsBackstageOpen
     {
@@ -275,6 +475,13 @@ public class Ribbon : Control
     private System.Windows.Controls.MenuItem? _qatTitleBarItem;
     private System.Windows.Controls.MenuItem? _qatAboveItem;
     private System.Windows.Controls.MenuItem? _qatBelowItem;
+    private System.Windows.Controls.MenuItem? _qatRemoveItem;
+    private System.Windows.Controls.Separator? _qatRemoveSeparator;
+
+    // The quick-access item under the cursor when the QAT context menu was opened —
+    // captured in the hosts' ContextMenuOpening (the menu itself is shared between hosts,
+    // so the Opened event alone cannot tell which item was right-clicked).
+    private FrameworkElement? _qatMenuTarget;
 
     // Cross-fade plumbing: the nested tab control whose selection changes drive a content
     // cross-fade, and the ribbon body host that fades.
@@ -497,17 +704,17 @@ public class Ribbon : Control
     {
         base.OnApplyTemplate();
 
-        // Right-clicking either in-ribbon QAT host opens the placement menu.
-        System.Windows.Controls.ContextMenu menu = EnsureQatContextMenu();
+        // Right-clicking either in-ribbon QAT host opens the placement menu (which also
+        // offers Remove-from-QAT when the click lands on an item).
         if (GetTemplateChild("QatTabRowHost") is FrameworkElement tabRowHost)
         {
-            tabRowHost.ContextMenu = menu;
+            AttachQatContextMenu(tabRowHost);
         }
 
         if (GetTemplateChild("QatBelowHost") is FrameworkElement belowHost)
         {
             _qatBelowHost = belowHost;
-            belowHost.ContextMenu = menu;
+            AttachQatContextMenu(belowHost);
         }
 
         _designBackstageHost = GetTemplateChild("PART_DesignBackstageHost") as Border;
@@ -532,7 +739,7 @@ public class Ribbon : Control
         // tree (available by Loaded) and give it the same placement menu.
         if (FindDescendantByName(this, "QatTabRowHost") is { ContextMenu: null } tabRowHost)
         {
-            tabRowHost.ContextMenu = EnsureQatContextMenu();
+            AttachQatContextMenu(tabRowHost);
         }
 
         // React to accent / colored-title-bar / theme changes so the QAT icons + hover keep
@@ -736,14 +943,15 @@ public class Ribbon : Control
         var panel = new FrameworkElementFactory(typeof(System.Windows.Controls.StackPanel));
         panel.SetValue(System.Windows.Controls.StackPanel.OrientationProperty, System.Windows.Controls.Orientation.Horizontal);
 
-        return new System.Windows.Controls.ItemsControl
+        var host = new System.Windows.Controls.ItemsControl
         {
             Focusable = false,
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(2, 0, 6, 0),
             ItemsPanel = new ItemsPanelTemplate(panel),
-            ContextMenu = EnsureQatContextMenu(),
         };
+        AttachQatContextMenu(host);
+        return host;
     }
 
     private System.Windows.Controls.ContextMenu EnsureQatContextMenu()
@@ -765,16 +973,87 @@ public class Ribbon : Control
         _qatBelowItem.Click += (_, _) =>
             SetCurrentValue(QuickAccessPositionProperty, RibbonQuickAccessPosition.BelowRibbon);
 
+        // Shown only when the right-click landed on a quick-access ITEM (the hosts'
+        // ContextMenuOpening captures which one into _qatMenuTarget).
+        _qatRemoveItem = new System.Windows.Controls.MenuItem { Header = "Remove from Quick Access Toolbar" };
+        _qatRemoveItem.Click += (_, _) =>
+        {
+            if (_qatMenuTarget is not null)
+            {
+                QuickAccessItems.Remove(_qatMenuTarget);
+                _qatMenuTarget = null;
+            }
+        };
+
+        var customizeItem = new System.Windows.Controls.MenuItem { Header = "Customize Quick Access Toolbar…" };
+        customizeItem.Click += (_, _) => QuickAccessCustomizeRequested?.Invoke(this, EventArgs.Empty);
+
+        _qatRemoveSeparator = new System.Windows.Controls.Separator();
+
         _qatContextMenu = new System.Windows.Controls.ContextMenu();
+        _qatContextMenu.Items.Add(_qatRemoveItem);
+        _qatContextMenu.Items.Add(_qatRemoveSeparator);
         _qatContextMenu.Items.Add(_qatTitleBarItem);
         _qatContextMenu.Items.Add(_qatAboveItem);
         _qatContextMenu.Items.Add(_qatBelowItem);
+        _qatContextMenu.Items.Add(new System.Windows.Controls.Separator());
+        _qatContextMenu.Items.Add(customizeItem);
         _qatContextMenu.Opened += OnQatContextMenuOpened;
         return _qatContextMenu;
     }
 
+    /// <summary>
+    /// Attaches the shared QAT context menu to a host, plus the opening hook that records
+    /// which quick-access item (if any) was under the cursor — the menu itself is shared,
+    /// so the target must be captured per-open.
+    /// </summary>
+    private void AttachQatContextMenu(FrameworkElement host)
+    {
+        host.ContextMenu = EnsureQatContextMenu();
+        host.ContextMenuOpening -= OnQatHostContextMenuOpening;
+        host.ContextMenuOpening += OnQatHostContextMenuOpening;
+    }
+
+    private void OnQatHostContextMenuOpening(object sender, System.Windows.Controls.ContextMenuEventArgs e)
+    {
+        _qatMenuTarget = ResolveQuickAccessItem(e.OriginalSource as DependencyObject);
+    }
+
+    // Walks up from the right-clicked element to the element that is itself a member of
+    // QuickAccessItems (the proxy/declared small button), or null when the click landed on
+    // host chrome rather than an item.
+    private FrameworkElement? ResolveQuickAccessItem(DependencyObject? node)
+    {
+        while (node is not null)
+        {
+            if (node is FrameworkElement element && QuickAccessItems.Contains(element))
+            {
+                return element;
+            }
+
+            DependencyObject? next = node is System.Windows.Media.Visual or System.Windows.Media.Media3D.Visual3D
+                ? System.Windows.Media.VisualTreeHelper.GetParent(node)
+                : null;
+            node = next ?? LogicalTreeHelper.GetParent(node);
+        }
+
+        return null;
+    }
+
     private void OnQatContextMenuOpened(object sender, RoutedEventArgs e)
     {
+        // "Remove" applies only when the right-click landed on an actual QAT item.
+        Visibility removeVisibility = _qatMenuTarget is null ? Visibility.Collapsed : Visibility.Visible;
+        if (_qatRemoveItem is not null)
+        {
+            _qatRemoveItem.Visibility = removeVisibility;
+        }
+
+        if (_qatRemoveSeparator is not null)
+        {
+            _qatRemoveSeparator.Visibility = removeVisibility;
+        }
+
         // Show a check next to the current placement.
         if (_qatTitleBarItem is not null)
         {

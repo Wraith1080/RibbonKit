@@ -298,10 +298,11 @@ An opaque backstage fully covers the content behind it, so Mica shows only in th
 bar / ribbon chrome, never bleeding through the backstage page. (`Backstage.Translucent`
 is kept as a library API, just unused by the sample.)
 
-- **UNVERIFIED on real hardware**: maximize with Mica ON still needs testing (glass may
-  reintroduce the overhang the measured compensation must absorb). Also verify: native
-  buttons truly gone with a transparent bar; theme-switch keeps the bar transparent;
-  colored-title-bar toggle flips 2024 back to an opaque accent bar correctly.
+- **VERIFIED on real hardware (user-confirmed):** maximize with Mica ON stays inside the
+  work area (the measured compensation absorbs the glass overhang); native caption buttons
+  are gone with a transparent bar; a theme switch keeps the bar transparent; and the
+  colored-title-bar toggle flips 2024 back to an opaque accent bar. Only remaining Mica idea
+  is a future one: dark-mode-aware translucency.
 
 ### 3.13 UI polish fixes
 
@@ -372,6 +373,64 @@ instead of guessing. Two mechanisms, both driven by the developer's design-time 
   drive the designer from the build box); `d:` honoring and design-surface rendering are the
   two things to confirm there.
 
+### 3.15 QAT customization + extensible options dialog (Word-Options style)
+
+Goal: Office-style customization — right-click "Add to Quick Access Toolbar", a QAT
+customize page, and ONE extensible options dialog the app can merge its own pages into
+(so RibbonKit's customization pages and the app's options live together, like Word).
+
+- **`RibbonOptionsDialog`** (`Controls/RibbonOptionsDialog.cs`): a lookless `Window` —
+  left nav rail of `Pages` + selected page content + OK/Cancel (native title bar kept).
+  `RibbonOptionsPage : HeaderedContentControl` is one page; its `Content` can be ANY
+  element, including app user controls — that's the extensibility. **Key template trick:**
+  the page control's own template renders ONLY its Header (it *is* the nav entry, hosted in
+  `PART_PageList`), while the dialog presents `SelectedPage.Content` separately — this
+  avoids the element ever having two visual parents. Result flow: OK raises **`Applied`**
+  (the app's persist cue, per user's "dialog result event" requirement) then sets
+  `DialogResult=true`; Cancel → `false`. Styles ride theme tokens; rail brush is a local
+  static (Modern-backstage precedent).
+- **QAT proxies (`Ribbon.AddToQuickAccess`)**: a WPF element has ONE visual parent, so
+  adding a ribbon control to the QAT creates a small PROXY button mirroring its 16px
+  icon/ScreenTip. Invocation reuses `KeyTipService.InvokeControl` (now `internal` static) —
+  the UIA Invoke/Toggle path KeyTips already use, so split buttons invoke their PRIMARY via
+  their automation peer. Toggles instead get a **two-way `IsChecked` binding** to the source
+  (state lives on the source; both stay in sync; source Checked/Unchecked handlers run).
+  Proxies carry the readonly attached `Ribbon.QuickAccessSource` so Remove/duplicate-check/
+  dialog can map proxy → source (`IsInQuickAccess` checks both identity and source).
+  **v1 limitation:** a dropdown proxy opens the source's popup at the *ribbon* location, not
+  at the QAT. Combos/galleries aren't offered as candidates.
+- **`RibbonQuickAccessPage`** (`Controls/RibbonQuickAccessPage.cs`): the built-in customize
+  page — available commands (left; flattened from `Tabs→Groups→logical descendants`, since
+  groups host arbitrary panels; depth-capped, popup content never reached because those
+  types aren't descended into) | Add/Remove/Up/Down | current QAT (right). Display via
+  `RibbonCommandEntry` wrappers ("Home › Font › Bold" + icon). Edits are LIVE on
+  `QuickAccessItems` (Office batches until OK; simpler v1 — `Applied` still signals when to
+  persist). Subscribes `QuickAccessItems.CollectionChanged` while loaded so a right-click
+  add elsewhere refreshes the open dialog.
+- **Right-click menus**: `Ribbon.OnContextMenuOpening` override — if the (visual-then-
+  logical; `VisualTreeHelper.GetParent` throws on non-visuals like `Run`s, hence the guard)
+  ancestor walk from the click finds a `RibbonButton`/`RibbonToggleButton`/
+  `RibbonDropDownButton`, it opens: Add to QAT (disabled if already there) / Customize
+  Quick Access Toolbar… / Collapse the Ribbon. QAT items are untouched by this path —
+  their hosts carry the shared placement menu, which opens (and sets Handled) before the
+  event bubbles to the ribbon. That shared menu gained "Remove from Quick Access Toolbar"
+  (+ separator, both hidden when the click wasn't on an item) and "Customize…": the hosts'
+  `ContextMenuOpening` records which item was clicked into `_qatMenuTarget`
+  (`AttachQatContextMenu` wires menu + hook at all three host sites), because the SHARED
+  menu's Opened event alone can't tell.
+- **`Ribbon.QuickAccessCustomizeRequested`** event: raised by both "Customize…" items; the
+  app opens its merged dialog (RibbonKit doesn't open a dialog itself — the app owns it, so
+  IT decides which pages exist).
+- Showcase: View → Application → **Options** button; both entry points open the same dialog
+  (an app "Editor" demo page + the QAT page; the right-click path pre-selects the QAT page);
+  `Applied` sets the status bar to "Options applied".
+- **Deferred (design sketched, not built):** the "Customize the Ribbon" structure page —
+  tab show/hide checkboxes (→ `tab.Visibility`), tab/group reordering (the `Tabs` /
+  `tab.Groups` observable collections already support `Move`; group moves across tabs =
+  remove+add, mind single-parent timing à la §3.8), custom tabs/groups, and customization
+  persistence (serialize QAT sources + ribbon layout). Slots into the dialog as just
+  another `RibbonOptionsPage`.
+
 ## 4. Workflow / Session Conventions
 
 - Cloud workspace: `/home/user/ribbonkit/`. The user's machine:
@@ -384,21 +443,33 @@ instead of guessing. Two mechanisms, both driven by the developer's design-time 
   immediately, and "just update your side + reply 'Got it'" for their own edits.
 - User's own edits so far: `UseLayoutRounding="True"` on the showcase RibbonWindow
   (fixes blurriness); tab-switch slide direction Bottom→Top; backstage open changed
-  fade→slide-from-left.
+  fade→slide-from-left; document panel margin 14→`8,8,8,0` (aligns the panel edges with
+  the ribbon card's inner edge: 7px card margin + 1px border).
 
 ## 5. Current State & Next Steps
 
-Working and confirmed by user: everything through §3.9, plus animation increments with
-the flicker/popup-drop fixes. Pending user verification: backstage slide-out, QAT
-glide on minimize, modern backstage design, backstage icons, Mica (glass-frame fix).
+**Working and confirmed by user: everything through §3.13.** The items that were previously
+pending verification are now all confirmed working on real hardware — backstage slide-out,
+QAT glide on minimize, modern backstage design, backstage icons, and Mica (the glass-frame
+black-background fix, the maximize-with-glass overhang, the title-bar-through-Mica rule, the
+glass-frame border/rounded-corner fix on un-toggle, the WS_SYSMENU caption-button
+suppression, and the opaque backstage under Mica). Also confirmed: the 2024 tab-underline
+hover-flicker fix, the ComboBox min-height, and the showcase document-editor layout. **No
+runtime verification is outstanding.**
+
+Still to check: the §3.14 XAML **design-time** preview (active tab + backstage) on the
+VS/Blend surface — a designer-only check (does the designer honor the `d:` attributes and
+render the design host); and the new §3.15 QAT customization + options dialog, which ships
+unbuilt and needs a first build/run pass (dialog rendering, right-click menus, proxy
+invoke/toggle sync, QAT page add/remove/reorder).
 
 Backlog (rough priority):
 
 1. Remaining animations: hover cross-fade, true sliding tab marker (shared animated
    underline on the tab strip), contextual-tab appear, KeyTip badge pop, toggle-state,
    theme-switch cross-fade.
-2. Mica hardening: maximize-with-glass verification; possibly re-measure insets on
-   glass changes; dark-mode-aware translucency.
+2. Mica hardening (future): dark-mode-aware translucency. (Maximize-with-glass and the
+   glass-frame border fix are verified — see §3.12.)
 3. Office2010 / Office2007 themes (roadmap Phase 6).
 4. Dark mode (2019 white-tab note in §3.6 anticipates it).
 5. GitHub publish: repo URL placeholder in csproj (`YOUR-GITHUB-USERNAME`).

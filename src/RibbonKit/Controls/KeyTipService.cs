@@ -673,7 +673,13 @@ internal sealed class KeyTipService
 
     // ---- Helpers ------------------------------------------------------------------
 
-    private static void InvokeControl(UIElement element)
+    /// <summary>
+    /// Invokes a ribbon control's default action through its UI Automation patterns
+    /// (Invoke/Toggle), with special handling for combos, galleries, and tab items.
+    /// Shared by KeyTip invocation and the quick-access proxy buttons (see
+    /// <see cref="Ribbon.AddToQuickAccess"/>), so both paths behave identically.
+    /// </summary>
+    internal static void InvokeControl(UIElement element)
     {
         switch (element)
         {

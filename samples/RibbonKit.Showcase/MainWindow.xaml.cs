@@ -126,6 +126,54 @@ public partial class MainWindow : RibbonWindow
         }
     }
 
+    private void OnOpenOptions(object sender, RoutedEventArgs e) =>
+        OpenOptionsDialog(selectQuickAccessPage: false);
+
+    // Raised by the ribbon's right-click "Customize Quick Access Toolbar…" items.
+    private void OnCustomizeQuickAccess(object sender, EventArgs e) =>
+        OpenOptionsDialog(selectQuickAccessPage: true);
+
+    /// <summary>
+    /// The merged options dialog: an app-provided page ("Editor") next to RibbonKit's
+    /// built-in Quick Access Toolbar customization page — one dialog, like Word Options.
+    /// </summary>
+    private void OpenOptionsDialog(bool selectQuickAccessPage)
+    {
+        var editorPage = new RibbonOptionsPage { Header = "Editor", Content = BuildEditorOptionsContent() };
+        var qatPage = new RibbonOptionsPage
+        {
+            Header = "Quick Access Toolbar",
+            Content = new RibbonQuickAccessPage { Ribbon = MainRibbon },
+        };
+
+        var dialog = new RibbonOptionsDialog { Title = "Options", Owner = this };
+        dialog.Pages.Add(editorPage);
+        dialog.Pages.Add(qatPage);
+        dialog.SelectedPage = selectQuickAccessPage ? qatPage : editorPage;
+
+        // The dialog raises Applied on OK — the app's cue to persist its settings (the QAT
+        // page edits the ribbon live). ShowDialog's bool result carries the same decision.
+        dialog.Applied += (_, _) => StatusReady.Content = "Options applied";
+        dialog.ShowDialog();
+    }
+
+    /// <summary>Stand-in for an application options page — any UserControl works here.</summary>
+    private static object BuildEditorOptionsContent()
+    {
+        var panel = new StackPanel { MaxWidth = 460, HorizontalAlignment = HorizontalAlignment.Left };
+        panel.Children.Add(new TextBlock
+        {
+            Text = "An app-provided page living in the same dialog as RibbonKit's customization pages — add any UserControl as a RibbonOptionsPage's content.",
+            TextWrapping = TextWrapping.Wrap,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x61, 0x61, 0x61)),
+            Margin = new Thickness(0, 0, 0, 14),
+        });
+        panel.Children.Add(new CheckBox { Content = "Check spelling as you type", IsChecked = true, Margin = new Thickness(0, 0, 0, 6) });
+        panel.Children.Add(new CheckBox { Content = "Autosave every 10 minutes", IsChecked = true, Margin = new Thickness(0, 0, 0, 6) });
+        panel.Children.Add(new CheckBox { Content = "Show formatting marks" });
+        return panel;
+    }
+
     private void OnPictureSelected(object sender, RoutedEventArgs e)
     {
         if (PictureFormatTab is not null)

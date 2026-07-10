@@ -2,9 +2,6 @@
                  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:rk="urn:ribbonkit"
-                 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-                 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-                 mc:Ignorable="d"  
                  Title="RibbonKit Showcase"
                  Width="1080"
                  Height="680"
@@ -17,7 +14,10 @@
              2024 default, shown here). A third placement — the title bar — is available
              via rk:RibbonWindow.TitleBarContent and auto-hides while the backstage is
              open. -->
-        <rk:Ribbon DockPanel.Dock="Top" QuickAccessPosition="BelowRibbon">
+        <rk:Ribbon x:Name="MainRibbon"
+                   DockPanel.Dock="Top"
+                   QuickAccessPosition="BelowRibbon"
+                   QuickAccessCustomizeRequested="OnCustomizeQuickAccess">
             <rk:Ribbon.Backstage>
                 <rk:Backstage x:Name="ShowcaseBackstage" Design="Modern">
                     <rk:BackstageTabItem Header="Home" Icon="{StaticResource Icon.Style}">
@@ -466,6 +466,15 @@
                                            ScreenTipTitle="Mica backdrop (Windows 11)"
                                            ScreenTipText="Apply the Windows 11 Mica material behind the window and the backstage. Requires Windows 11 22H2+." />
                 </rk:RibbonGroup>
+                <rk:RibbonGroup Header="Application" Icon="{StaticResource Icon.Style}">
+                    <rk:RibbonButton Header="Options"
+                                     Size="Large"
+                                     LargeIcon="{StaticResource Icon.Style}"
+                                     Icon="{StaticResource Icon.Style}"
+                                     Click="OnOpenOptions"
+                                     ScreenTipTitle="Options"
+                                     ScreenTipText="Open the merged options dialog: the app's own pages plus the Quick Access Toolbar customization page. Also reachable by right-clicking any ribbon button." />
+                </rk:RibbonGroup>
             </rk:RibbonTab>
 
         </rk:Ribbon>
@@ -492,7 +501,7 @@
                     <StatusBarItem DockPanel.Dock="Left" Content="English (United States)" />
                     <StatusBarItem DockPanel.Dock="Right" Content="100%" Margin="0,0,10,0" />
                     <Separator DockPanel.Dock="Right" />
-                    <StatusBarItem DockPanel.Dock="Right" Content="Ready" />
+                    <StatusBarItem x:Name="StatusReady" DockPanel.Dock="Right" Content="Ready" />
                 </StatusBar>
 
                 <!-- Document panel: a card with rounded TOP corners whose square bottom meets
@@ -500,7 +509,9 @@
                      background + rounded corners, so the RichTextBox itself is borderless and
                      transparent. Keeps an opaque white fill so the Mica backdrop shows only in
                      the surrounding margin, not through the document. -->
-                <Border Margin="14,14,14,0"
+                <!-- Margin 8 (user-tuned): aligns the panel's edges with the ribbon card's
+                     inner edge (7px card margin + 1px border). -->
+                <Border Margin="8,8,8,0"
                         Background="White"
                         BorderBrush="#E0E0E0"
                         BorderThickness="1"
