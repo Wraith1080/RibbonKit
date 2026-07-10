@@ -30,7 +30,7 @@ public enum RibbonBackdrop
 /// <remarks>
 /// <para>
 /// The backdrop only shows through parts of the window that are actually transparent, so the
-/// caller must clear the window's <see cref="Window.Background"/> (and any opaque content that
+/// caller must clear the window's <see cref="System.Windows.Controls.Control.Background"/> (and any opaque content that
 /// should reveal the material) to <c>Transparent</c> while a backdrop is active, and restore
 /// the opaque brushes when turning it off.
 /// </para>
@@ -194,6 +194,7 @@ public static class MicaHelper
     /// (build 22000) or before the window has an HWND — call it from
     /// <see cref="Window.OnSourceInitialized"/>.
     /// </summary>
+    /// <param name="window">The window whose corners to round; must already have an HWND.</param>
     /// <param name="borderColor">Optional border color as <c>0x00BBGGRR</c> (a COLORREF); omit
     /// to leave the DWM's default border.</param>
     public static void SetRoundedCorners(Window window, int? borderColor = null)

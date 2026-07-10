@@ -6,7 +6,7 @@ using System.Windows.Media;
 namespace RibbonKit.Interop;
 
 /// <summary>
-/// Keeps a <see cref="WindowChrome"/>-style borderless window (WindowStyle=None + WindowChrome)
+/// Keeps a <see cref="System.Windows.Shell.WindowChrome"/>-style borderless window (WindowStyle=None + WindowChrome)
 /// from spilling past the monitor work area when maximized. A maximized WindowChrome window is
 /// sized by Windows to hang past every screen edge, which clips content, hides caption buttons,
 /// and covers the taskbar. This attaches two defences, exactly as <see cref="Controls.RibbonWindow"/>

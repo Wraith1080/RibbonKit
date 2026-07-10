@@ -231,7 +231,7 @@ public class RibbonOptionsDialog : Window
 }
 
 /// <summary>
-/// Marks a page's <see cref="RibbonOptionsPage.Content"/> as self-managing its vertical space.
+/// Marks a page's <see cref="ContentControl.Content"/> as self-managing its vertical space.
 /// The <see cref="RibbonOptionsDialog"/> then hosts it WITHOUT a scrolling viewport, so it fills
 /// the content area (and scrolls its own inner regions) instead of the dialog scrolling it.
 /// Content that does NOT implement this gets the dialog's scrollbar when it's taller than the
