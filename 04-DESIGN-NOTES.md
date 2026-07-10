@@ -1,0 +1,404 @@
+# RibbonKit — Design Notes & Session Context
+
+> Living document capturing architecture decisions, implemented features, and the
+> hard-won pitfalls of this project. Written so that any future session (human or AI)
+> can pick up exactly where we left off without re-discovering these lessons.
+>
+> Last updated: July 2026.
+
+## 1. Project Overview
+
+**RibbonKit** is an open-source (MIT) WPF custom control library recreating the Office
+Fluent UI Ribbon on modern .NET.
+
+Locked decisions:
+
+- **Targets `net8.0-windows` and `net9.0-windows` only.** No .NET Framework support.
+- Open source, packaged for NuGet (`RibbonKit`, currently `0.1.0-alpha.1`).
+- Planning docs live in `docs/` inside the repo.
+- Sample app: `samples/RibbonKit.Showcase` (a Word-like demo window).
+
+Repo layout:
+
+```
+src/RibbonKit/
+  Animation/       RibbonAnimation.cs (config), RibbonMotion.cs (transitions)
+  Automation/      UIA peers (aliased: WPF's legacy ribbon has same-named peers)
+  Controls/        All lookless controls (Ribbon, tabs, buttons, galleries, backstage, KeyTips, QAT)
+  Interop/         MicaHelper.cs (DWM system backdrop)
+  Layout/          Adaptive sizing engine (RibbonGroupsPanel, ReductionAlgorithm, RibbonSizeDefinition)
+  Themes/          Generic.xaml, Office2024.xaml (ALL templates), Tokens.Office{2024,2019,2013}.xaml
+  Theming/         ThemeManager.cs
+samples/RibbonKit.Showcase/
+```
+
+## 2. Core Architecture
+
+### 2.1 One template set, token-driven themes
+
+- **All control templates live in `Themes/Office2024.xaml`** (~1900 lines), shared by
+  every theme. Templates never hardcode colors/metrics — they reference tokens via
+  `DynamicResource` (`RibbonKit.Brushes.*`, `RibbonKit.Metrics.*`, `RibbonKit.Effects.*`).
+- **Per-theme values** live in `Tokens.Office2024.xaml`, `Tokens.Office2019.xaml`,
+  `Tokens.Office2013.xaml`. Same keys, different values. A theme "chooses" a visual
+  style by zeroing what it doesn't use (e.g. flat themes set underline brushes to
+  `Transparent`, corner radii to `0`, `ContextualUnderlineHeight` to `0`).
+- The app merges one token dictionary into `Application.Resources` (App.xaml), and
+  `ThemeManager.Apply` swaps it at runtime.
+
+Theme identities:
+
+- **Office2024** (default): light, rounded "floating card" ribbon body with shadow,
+  accent underline tab selection.
+- **Office2019** ("modern grey"): flat, grey band (`#E6E6E6`) behind tabs, white body,
+  fill/pill tab selection. When the colored-title-bar toggle is ON the band + title bar
+  turn accent-colored with white text.
+- **Office2013** ("White"): fully flat/square, white strip, outlined active tab that
+  cuts into the body, SOLID accent File button, tabs flush to the title bar.
+
+### 2.2 ThemeManager (`Theming/ThemeManager.cs`)
+
+- `Apply(app, theme)` swaps the merged token dictionary.
+- **Runtime overrides layer on top by setting keys directly on `Application.Resources`**
+  — own-dictionary entries beat merged dictionaries, and `DynamicResource` picks up the
+  change live. Always *clear all override keys first*, then re-derive (prevents leaking
+  a 2024 underline onto flat 2019, etc.).
+- `SetAccent(app, color)`: derives a full accent family via `Mix()` (blend toward
+  white/black). **Theme-aware**: only overrides tokens that theme actually uses.
+- `SetAccentedTitleBar(app, bool)`: colors the title bar; in 2019 also the tab-strip
+  band, hovers, and foregrounds. **Order matters**: it re-runs `ApplyAccentOverrides`
+  first because the accent system owns `ApplicationButton.HoverBackground` for 2013.
+- `Changed` static event fires after every Apply/SetAccent/ClearAccent/SetAccentedTitleBar
+  — the Ribbon listens to re-evaluate QAT icon tinting.
+- `IsAccentedTitleBar`, `CurrentTheme` are queryable statics.
+
+### 2.3 Window chrome (`Controls/RibbonWindow.cs`)
+
+- Custom chrome via `WindowChrome` (`CaptionHeight=34`, `UseAeroCaptionButtons=False`),
+  themed caption buttons, a `TitleBarContent` slot (used by the title-bar QAT).
+- **Maximize overhang fix (important)**: a maximized WindowChrome window hangs past the
+  monitor work area. `WM_GETMINMAXINFO` hooks did NOT fix it reliably. The working fix
+  is *measured margin compensation*: on state/DPI changes, measure `GetWindowRect` vs
+  `MonitorFromWindow`/`GetMonitorInfo.rcWork`, convert device px → DIP via
+  `VisualTreeHelper.GetDpi`, and inset `PART_WindowRoot` by exactly that margin.
+- The template intentionally had **no `GlassFrameThickness="-1"`** (it broke maximize
+  before the measured fix); Mica later required extending glass — see §3.10.
+
+## 3. Implemented Features (chronological, with pitfalls)
+
+### 3.1 Core ribbon skeleton
+Tabs/groups/buttons (`RibbonButton`, `RibbonToggleButton`, `RibbonSplitButton`,
+`RibbonDropDownButton`, `RibbonComboBox`), adaptive sizing engine
+(Large→Medium→Small→Collapsed by `ReductionPriority`, `ReductionMode`, `CanResize`;
+`SizeDefinition="Large, Medium, Small"` strings), collapsed-group flyouts that re-home
+the group's content grid into a popup, galleries with live preview
+(`RibbonGallery`/`InRibbonGallery` share ONE items presenter re-homed between strip and
+popup — re-homing is driven by the *property* change, never Popup.Closed, which is
+unreliable for nested popups), backstage overlay, ScreenTips, QAT, minimize, UIA peers.
+
+**Popup pattern used everywhere**: `StaysOpen=True` + custom `PopupDismissHelper` for
+light-dismiss, so WPF popup mouse-capture never steals the opener toggle's clicks.
+
+### 3.2 Minimized QAT card (2024)
+When minimized with QAT below, the extender becomes a floating card: token trio
+`QatExtenderMargin/BorderThickness/CornerRadius` + `*Minimized` variants; flat themes
+point both at the same values so nothing changes shape.
+
+### 3.3 KeyTips (Alt / F10)
+`KeyTip.cs` (attached props: `KeyTip.Keys`, auto-derivation from headers),
+`KeyTipAdorner.cs` (badge visuals via theme tokens), `KeyTipService.cs` (state machine).
+
+- Badges render in **per-target `AdornerLayer`s** — popups need their own
+  `AdornerDecorator` inside the popup template (dropdown/split menu hosts + group
+  flyout popup all have one).
+- Levels: root (tabs + QAT + File) → tab level (groups' controls) → menu levels.
+  Split buttons badge primary and chevron separately; collapsed groups badge the
+  collapsed button then descend into the opened flyout; dialog launchers, gallery
+  expanders, and backstage items are all badged.
+- **Bug fixed**: pressing Alt while the backstage was open showed ribbon KeyTips —
+  `Enter()` now builds a backstage-level when `_ribbon.IsBackstageOpen` (and doesn't
+  close a mouse-opened backstage on exit).
+- Invocation goes through UIA patterns (Invoke/Toggle) so it works for every control.
+
+### 3.4 Contextual tabs = custom coloring (no marker line)
+`RibbonTab.ContextualColor` (Brush) + read-only `ContextualBrush` (falls back to theme
+accent). The old *upper marker line was removed*. Template has TWO header presenters
+(`HeaderText` / tinted `ContextualHeaderText`) and a tinted
+`ContextualSelectionIndicator` underline.
+
+- 2024: tinted text dimmed via `ContextualUnselectedOpacity=0.6` until selected;
+  selected = full tint + tinted underline (normal accent underline hidden).
+- 2019/2013: tinted text only (`ContextualUnderlineHeight=0`, opacity 1).
+- Showcase: PictureFormatTab uses `ContextualColor="#C43E96"`, shown by the Insert
+  Picture toggle.
+
+### 3.5 Colored title bar + accent customization
+Showcase View tab has a "Colored Title Bar" toggle and an accent gallery (swatches with
+hex `Tag`, "Auto" resets). All accents derive from ONE color via `SetAccent`.
+
+### 3.6 2019 modernization & hover consistency
+2019 recolored grey/white (`Ribbon.Background=#E6E6E6`, white selected tab/body). The
+band **tracks the colored-title-bar toggle** (accent when on, grey when off). File
+button + minimize toggle hover on the colored strip use the
+`TabStrip.ControlHoverBackground` token synced to `Tab.HoverBackground` — but do NOT
+unconditionally clear `ApplicationButton.HoverBackground`; the 2013 accent system owns
+it (only set in the 2019 branch, after re-running accent overrides).
+
+### 3.7 Large-button label alignment
+Multi-line labels made buttons uneven. Fix: all four large layouts
+(button/toggle/dropdown/split) use `Margin="6,8,6,0"` (icons top-anchored ~10px down)
++ label `MinHeight="32"` (reserves 2 lines) + `GroupsRowHeight` 96→104. Do NOT
+vertically center large content — icons must line up across the row.
+
+### 3.8 QAT placement (TitleBar / TabRow / BelowRibbon) + context menu
+`RibbonQuickAccessPosition.TitleBar` added. Right-click context menu (3 placements,
+check on current) attached to all three hosts.
+
+- **`QatTabRowHost` lives in the nested RibbonTabControl template** — NOT reachable via
+  the Ribbon's `GetTemplateChild`. Find it with a visual-tree search in `OnLoaded`.
+- **Single-parent reparenting rule**: exactly ONE host binds `ItemsSource` at a time.
+  Leaving the title bar releases synchronously; the new claim is deferred via
+  `Dispatcher.BeginInvoke(Background)` so the old host frees the items past a layout
+  pass first (avoids transient double-parent exceptions).
+- Title-bar host is code-created (`ItemsControl` + horizontal StackPanel), projected
+  into `RibbonWindow.TitleBarContent`; previous content is saved/restored.
+
+### 3.9 QAT white icons on colored surfaces
+When the QAT sits on an accent surface (title bar with colored-title-bar ON, or 2019
+tab row with colored band), icons turn white silhouettes and hover matches the band.
+
+- **Inherited attached properties DID NOT propagate** to the QAT buttons across the
+  ItemsControl/reparenting boundary — that approach failed. The working model is
+  **direct-set**: `Ribbon.QatOnColoredSurface` (bool) + `Ribbon.QatHoverBackground`
+  (brush, set via `SetResourceReference` to the neighbouring chrome's hover token) are
+  set *on each item* in `UpdateQatButtonContext()`, re-run on `ThemeManager.Changed`,
+  collection changes, and placement changes.
+- White icon = `Rectangle Fill=#FFFFFF` with `OpacityMask=ImageBrush(Icon)`; the small
+  layout has `SmallImage` + hidden `SmallImageTint`, swapped by template trigger.
+
+### 3.10 Animation system (global + per-action)
+**Configuration model chosen by user: global level + per-action overrides, default
+Subtle.**
+
+- `Animation/RibbonAnimation.cs`: `GlobalLevel` (`None/Subtle/Expressive`),
+  `SetActionLevel/ClearActionLevel` per `RibbonAnimationAction` (12 actions:
+  RibbonMinimize, Backstage, TabMarker, TabSwitch, Gallery, DropdownMenu, Hover,
+  QuickAccessMove, ContextualTab, KeyTip, ToggleState, ThemeSwitch).
+  `RespectSystemReduceMotion` (default true) → effective level None when
+  `SystemParameters.ClientAreaAnimation` is off. Per-action durations (Subtle ~90–220ms;
+  Expressive ×1.4) and slide offsets (Expressive ×1.8); easing CubicOut, Expressive gets
+  BackEase on marker/QAT/KeyTip/Toggle. `Initialize(app)` publishes
+  `RibbonKit.Animation.Duration.*` Duration tokens for template storyboards.
+- `Animation/RibbonMotion.cs`: `PlayOpen` (fade+slide from an edge), `PlayClose`
+  (fade+slide out, with completion callback), `PlaySlideIn` (slide WITHOUT opacity),
+  `PlayFadeIn`, `AnimateTranslateY` (translate-only glide), `Rest`.
+
+**Hard rules learned:**
+
+1. **Never animate layout properties** (Width/Height/Margin) — transforms + opacity only.
+2. **Never fade an element that's already rendered opaque** — resetting it to 0 first
+   reads as a flicker. This killed the QAT-move cross-fade (removed) and changed tab
+   switch to slide-only (`PlaySlideIn`).
+3. **Never transform a Popup's direct child** — the transparent popup positions itself
+   from that child's bounds, so a start offset bakes into the popup's resting position
+   (the gallery "dropped a few pixels"). Animate the child's *inner content*.
+4. Minimize/restore: the body's Visibility is **code-managed** (template trigger
+   removed) — slide up + fade out, collapse row in the Completed callback; restore
+   shows the row then slides down. Row height itself is never animated.
+5. The below-ribbon QAT bar **glides with the body** on minimize/restore via
+   `AnimateTranslateY(±bodyHeight)` (body height captured while visible), staying
+   visible; transform resets in the same step as the collapse so it looks stationary.
+6. Backstage: slide-in from LEFT on open; slide-out LEFT on close with the adorner
+   removed in the Completed callback (`_backstageClosing` guard; re-open mid-close
+   reuses the existing adorner — a UIElement can't have two).
+7. Tab switch: slide from **Top** (content drops down away from the tab strip — user
+   preference).
+
+Wired so far: dropdown/split/flyout menus, gallery expand, backstage open/close, ribbon
+minimize/restore (+QAT glide), tab-switch slide. **Not yet wired**: hover cross-fade,
+true sliding tab marker (current = content slide; the underline doesn't glide between
+tabs yet), contextual-tab appear, KeyTip pop, toggle-state, theme-switch fade.
+Showcase: View → Motion group (None/Subtle/Expressive + Respect System toggle);
+`App.xaml.cs` calls `RibbonAnimation.Initialize(this)`.
+
+### 3.11 Backstage redesign (Modern 2024) + icons
+`RibbonBackstageDesign` enum (`Classic`/`Modern`); `Backstage.Design` is an **inherited
+attached property** so nav items restyle from one setting (this inheritance works
+because backstage items are direct logical children — unlike the QAT case in §3.9).
+
+- Modern: light rail `#F5F4F3` (width 200 vs classic 220), dark text, rounded inset
+  item highlights, selected = light fill + 3px accent left bar + accent text.
+- Classic (default): the original accent column, untouched — backward compatible.
+- The back button tints via `TemplateBinding Foreground` with a foreground-tinted
+  hover disc (works on both designs).
+- `BackstageTabItem.Icon` (ImageSource): rendered as a **foreground-tinted silhouette**
+  (Rectangle + OpacityMask) in an always-reserved 16px column → icon-less items stay
+  aligned. Selected item's icon goes accent automatically.
+- **Modern.* brushes use `StaticResource`** — they're defined inside Office2024.xaml
+  itself; DynamicResource lookup from a template can't reliably find theme-dictionary
+  locals (only app-scope tokens). Accent-driven parts stay DynamicResource.
+- Trigger order matters: Modern trigger first, then Translucent triggers (later wins).
+- Showcase: `Design="Modern"` default, Home/Info/New/Open items (Info deliberately has
+  no icon to demo alignment), View → Backstage group toggle.
+
+### 3.12 Mica (Windows 11 system backdrop) — EXPERIMENTAL
+`Interop/MicaHelper.cs`: `TrySetBackdrop(window, RibbonBackdrop)` sets
+`DWMWA_SYSTEMBACKDROP_TYPE` (38); `None/Mica/Acrylic/Tabbed`; requires build ≥22621
+(`IsSupported`), returns false otherwise (toggle self-reverts).
+
+- **Black-background pitfall (real bug we hit)**: the backdrop only composites where
+  the DWM glass frame reaches. Our chrome has no glass → transparent window rendered
+  BLACK. Fix: `ExtendGlassFrame(window, full)` swaps in a WindowChrome clone with
+  `GlassFrameThickness = -1` (or 0 to restore), preserving caption/resize settings.
+  Uses WindowChrome (not raw `DwmExtendFrameIntoClientArea`) so it survives WPF's
+  chrome re-application.
+- `Backstage.Translucent` (bool): transparent root + semi-transparent content
+  (`#E6FFFFFF`) and modern nav (`#CCF5F4F3`) so Mica shows through the backstage.
+  **No longer used by the showcase** — see the backstage-opaque decision below.
+- Showcase Mica toggle: backdrop + glass + transparent Window/MainContentArea
+  backgrounds; all restored on un-toggle.
+
+**Glass-frame-on-un-toggle pitfall (real bug we hit):** turning Mica OFF used to call
+`ExtendGlassFrame(false)`, collapsing `GlassFrameThickness` to `0` — which **destroyed the
+window border and Windows 11 rounded corners**. Cause: the RibbonWindow template keeps
+`GlassFrameThickness="-1"` as its resting state, and on a WindowChrome window (native NC
+frame stripped) that extended glass is the *only* thing the DWM has to draw the border and
+rounded corners. Collapsing to `0` removes them. (It only became visible after we added the
+`WS_SYSMENU` toggle's `SWP_FRAMECHANGED`, which forces the frame to recompute.) Fix: on
+Mica-off, **leave the glass extended** (don't call `ExtendGlassFrame(false)`) — the opaque
+window background is enough to avoid the black-background problem. `ExtendGlassFrame`'s
+remarks now warn about the `false`/`0` case.
+
+**Title-bar-through-Mica (added this session):** the title bar can go transparent so
+Mica composites through it, but *only* in the case where a solid bar isn't wanted:
+Office 2024 **and** the title bar is not colored. Rules: 2024 + non-colored →
+transparent (Mica); any other theme + non-colored → keep the theme's light grey/white
+band; colored title bar (any theme) → keep the accent. This lives in
+`ThemeManager.SetTitleBarBackdrop(app, bool)` / `IsTitleBarBackdrop`, which sets/clears a
+transparent `TitleBar.Background` override inside `ApplyTitleBarOverride`. Because that
+method runs on every `Apply`/accent/accent-title-bar change, the transparency is
+**re-derived on theme switch** — fixing the earlier bug where changing theme reverted the
+title bar to a solid color instead of staying transparent. Caption foreground/hover are
+left at their theme defaults (dark text + light hover), which read fine over the material.
+
+**Native caption buttons pitfall (real bug we hit):** with the glass frame extended
+(`-1`), a *transparent* title bar let the DWM's own min/max/close buttons show through and
+overlap our custom caption buttons (they were previously just covered by the opaque bar).
+Fix: `MicaHelper.ShowNativeCaptionButtons(window, bool)` strips/restores `WS_SYSMENU` via
+`SetWindowLong(GWL_STYLE)` + `SetWindowPos(SWP_FRAMECHANGED)`. Chosen over
+`WindowStyle="None"` deliberately: it's surgical (leaves `WindowStyle` =
+`SingleBorderWindow`, so all the tuned maximize/snap/work-area handling is unchanged) and
+it toggles **live** with no HWND recreation — which `WindowStyle` can't do. Trade-off:
+Alt+Space system menu + window-icon menu are gone while it's off (fine for a fully
+custom-chrome window). Toggled in sync with the Mica on/off state.
+
+**Backstage stays opaque under Mica (decision this session):** the modern
+`Translucent` effect didn't read well over Mica, so the showcase no longer enables it.
+An opaque backstage fully covers the content behind it, so Mica shows only in the title
+bar / ribbon chrome, never bleeding through the backstage page. (`Backstage.Translucent`
+is kept as a library API, just unused by the sample.)
+
+- **UNVERIFIED on real hardware**: maximize with Mica ON still needs testing (glass may
+  reintroduce the overhang the measured compensation must absorb). Also verify: native
+  buttons truly gone with a transparent bar; theme-switch keeps the bar transparent;
+  colored-title-bar toggle flips 2024 back to an opaque accent bar correctly.
+
+### 3.13 UI polish fixes
+
+- **Gallery scroll-to-chosen-item: ATTEMPTED, then REVERTED (known-good restored).** The
+  idea: committing a pick in an `InRibbonGallery`'s expanded popup would close the popup
+  (Office-style) and scroll the single-row strip to the selected tile so you'd see the pick
+  once the popup was gone. It was implemented via `OnSelectionChanged` (deferred close) +
+  a `ScrollSelectedItemIntoView` on close. **It repeatedly broke popup hit-testing** and was
+  backed out — `InRibbonGallery.cs` is now the original pre-feature version.
+  - **Why it's fragile (for whoever retries this):** the strip and the popup share ONE
+    `ScrollViewer` that re-homes between them. Scrolling that scroller for the strip (whose
+    viewport is a single ~54px row) leaves it in a state that corrupts the popup's
+    hit-testing when the same scroller is re-homed there. Symptoms walked through three
+    forms: (1) selecting the tile *below* the clicked one (leftover vertical offset carried
+    into the popup — clicks off by exactly the offset, clamped at the ends); (2) after adding
+    `ScrollToVerticalOffset(0)` on open, a *scale-like* miss where only the top row selected
+    correctly and everything lower clamped to the last item (the scroller's **viewport was
+    stale** right after the re-home — top row hit-tests, everything past the stale viewport
+    clamps to the bottom). Rendering stayed correct throughout, so it *looked* like a DPI
+    scale bug but wasn't (it worked at the same DPI before the feature).
+  - **If retried:** don't scroll the shared re-homed scroller. Give the popup its **own**
+    items presenter (don't re-home), or reset/relayout on the popup's `Opened` event once the
+    content is actually laid out — not synchronously right after the re-home.
+- **Tab underline hover flicker (2024) fixed.** The hover trigger is scoped to
+  `SourceName="HeaderChrome"`, but the three indicator rectangles (`HoverIndicator`,
+  `SelectionIndicator`, `ContextualSelectionIndicator`) are *siblings* overlaying it. A
+  hit-testable underline stole the mouse from HeaderChrome → `IsMouseOver` dropped → the
+  underline hid → the hit fell back to HeaderChrome → repeat = flicker (only on the
+  hover underline; the active tab has no hover state so it never flickered). Fix:
+  `IsHitTestVisible="False"` on all three indicators. The File button was immune because
+  its trigger uses the button's own `IsMouseOver` and its underline is a descendant.
+- **ComboBox height.** The input box had no min height, collapsing to the text height.
+  Added `MinHeight="24"` to the input `Grid` in the `RibbonComboBox` template.
+- **Showcase content area → document editor.** The centered instruction StackPanel was
+  replaced with a Word-like layout: a `Border` "panel" with rounded TOP corners
+  (`CornerRadius="8,8,0,0"`, square bottom meeting the status bar) hosting an editable
+  `RichTextBox` (`DocumentEditor`, borderless/transparent so the panel supplies the card
+  look), plus a `StatusBar` docked at the bottom (DockPanel items panel so left cluster and
+  right zoom split to the edges). The same instruction text now lives in the RichTextBox's
+  `FlowDocument`. **Live-preview wiring note:** the preview sentence is a named `Run`
+  (`x:Name="StylePreviewText"`) inside the document — `Run` exposes the same
+  `FontSize/FontWeight/FontStyle/Foreground` the old `TextBlock` did, so `ApplyStyleToSample`
+  in the code-behind kept working unchanged (just retargeted from a TextBlock to a Run).
+
+### 3.14 XAML design-time preview (active tab + backstage)
+
+Goal: see a specific tab's content — and the backstage — on the XAML designer surface
+instead of guessing. Two mechanisms, both driven by the developer's design-time `d:` attrs.
+
+- **Active tab.** Added `Ribbon.SelectedIndex` (int, two-way, mirrored with `SelectedTab`
+  via `OnSelectedTabChanged`/`OnSelectedIndexChanged` behind a `_syncingSelection` guard).
+  It's a real runtime API too, but its point here is design-time: `d:SelectedIndex="2"`
+  previews the third tab's groups on the surface without touching runtime selection.
+  Timing: a `SelectedIndex` set before the child tabs are parsed (or a `d:` value applied
+  during tree construction) is re-applied by `OnTabsCollectionChanged` and honored by
+  `EnsureSelection`, so it lands once the tabs exist.
+- **Backstage.** The runtime overlay is a `BackstageAdorner` added to **the window's**
+  adorner layer via `Window.GetWindow(this)` — which is null in the designer, so the
+  overlay silently no-ops and nothing shows. Fix: a design-mode-only path. The Ribbon
+  template carries a normally-Collapsed `PART_DesignBackstageHost` (`Border`,
+  `Grid.RowSpan="2"`, `MinHeight="440"`); `UpdateBackstageOverlay` checks
+  `DesignerProperties.GetIsInDesignMode` and, when true, hosts the `Backstage` element in
+  that border (no window, no adorner, no animation) instead of the adorner. `OnApplyTemplate`
+  reflects `IsBackstageOpen` into it once the host exists. Runtime is untouched (the design
+  host stays Collapsed/empty). Preview it with `d:IsBackstageOpen="True"`. Note: the design
+  host lives inside the ribbon, so the preview covers the ribbon's area (not the whole
+  window) — enough to see/edit backstage content. **Needs verification in VS/Blend** (can't
+  drive the designer from the build box); `d:` honoring and design-surface rendering are the
+  two things to confirm there.
+
+## 4. Workflow / Session Conventions
+
+- Cloud workspace: `/home/user/ribbonkit/`. The user's machine:
+  `C:\Users\LENOVO\Claude\Projects\Professional Ribbon Custom Control for WPF\`
+  (device `brin-mm-2026-0004`).
+- **No WPF build available in the Linux sandbox** — every change ships unbuilt; the
+  user builds/tests on Windows and reports back. Deliver files via SendUserFile when
+  the device bridge is offline (it has been, lately); push directly when connected.
+- The user prefers: concise explanations, minimal-formatting replies, files delivered
+  immediately, and "just update your side + reply 'Got it'" for their own edits.
+- User's own edits so far: `UseLayoutRounding="True"` on the showcase RibbonWindow
+  (fixes blurriness); tab-switch slide direction Bottom→Top; backstage open changed
+  fade→slide-from-left.
+
+## 5. Current State & Next Steps
+
+Working and confirmed by user: everything through §3.9, plus animation increments with
+the flicker/popup-drop fixes. Pending user verification: backstage slide-out, QAT
+glide on minimize, modern backstage design, backstage icons, Mica (glass-frame fix).
+
+Backlog (rough priority):
+
+1. Remaining animations: hover cross-fade, true sliding tab marker (shared animated
+   underline on the tab strip), contextual-tab appear, KeyTip badge pop, toggle-state,
+   theme-switch cross-fade.
+2. Mica hardening: maximize-with-glass verification; possibly re-measure insets on
+   glass changes; dark-mode-aware translucency.
+3. Office2010 / Office2007 themes (roadmap Phase 6).
+4. Dark mode (2019 white-tab note in §3.6 anticipates it).
+5. GitHub publish: repo URL placeholder in csproj (`YOUR-GITHUB-USERNAME`).

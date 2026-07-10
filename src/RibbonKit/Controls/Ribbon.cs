@@ -136,7 +136,21 @@ public class Ribbon : Control
             nameof(SelectedTab),
             typeof(RibbonTab),
             typeof(Ribbon),
-            new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
+            new FrameworkPropertyMetadata(
+                null,
+                FrameworkPropertyMetadataOptions.BindsTwoWayByDefault,
+                OnSelectedTabChanged));
+
+    /// <summary>Identifies the <see cref="SelectedIndex"/> dependency property.</summary>
+    public static readonly DependencyProperty SelectedIndexProperty =
+        DependencyProperty.Register(
+            nameof(SelectedIndex),
+            typeof(int),
+            typeof(Ribbon),
+            new FrameworkPropertyMetadata(
+                -1,
+                FrameworkPropertyMetadataOptions.BindsTwoWayByDefault,
+                OnSelectedIndexChanged));
 
     static Ribbon()
     {
@@ -200,6 +214,19 @@ public class Ribbon : Control
         set => SetValue(SelectedTabProperty, value);
     }
 
+    /// <summary>
+    /// The index of the selected tab within <see cref="Tabs"/> (a convenience over
+    /// <see cref="SelectedTab"/>, kept in sync with it in both directions). <c>-1</c> when no
+    /// tab is selected. Especially useful for <b>design-time preview</b>: set a design-time-only
+    /// <c>d:SelectedIndex="2"</c> on the ribbon to view a specific tab's content on the XAML
+    /// designer surface without changing the runtime selection.
+    /// </summary>
+    public int SelectedIndex
+    {
+        get => (int)GetValue(SelectedIndexProperty);
+        set => SetValue(SelectedIndexProperty, value);
+    }
+
     /// <summary>Whether the backstage overlay is open.</summary>
     public bool IsBackstageOpen
     {
@@ -226,6 +253,14 @@ public class Ribbon : Control
     }
 
     private BackstageAdorner? _backstageAdorner;
+
+    // Design-time-only host for the backstage preview (see UpdateDesignTimeBackstage). The
+    // runtime adorner path needs a real Window the XAML designer doesn't provide.
+    private Border? _designBackstageHost;
+
+    // Guards the SelectedTab <-> SelectedIndex mirroring so setting one to reflect the other
+    // never bounces back and re-enters.
+    private bool _syncingSelection;
 
     // Owns the Alt/F10 KeyTip experience for this ribbon; wires itself to the host
     // window on Loaded. Held so it lives as long as the ribbon.
@@ -319,6 +354,16 @@ public class Ribbon : Control
 
     private void UpdateBackstageOverlay(bool open)
     {
+        // The XAML designer doesn't host the ribbon in a real Window, so the runtime adorner
+        // path below (which needs Window.GetWindow) can't run — it would silently no-op and the
+        // backstage would never appear on the surface. In design mode, route the backstage into
+        // an in-template host instead so its content is visible and editable while designing.
+        if (System.ComponentModel.DesignerProperties.GetIsInDesignMode(this))
+        {
+            UpdateDesignTimeBackstage(open);
+            return;
+        }
+
         // Office hides title-bar quick access content while the backstage is open;
         // the overlay only covers the window CONTENT, so the title bar must opt in.
         if (Window.GetWindow(this) is RibbonWindow ribbonWindow)
@@ -400,6 +445,33 @@ public class Ribbon : Control
         }
     }
 
+    /// <summary>
+    /// Design-time-only backstage rendering. Hosts the <see cref="Backstage"/> content directly
+    /// in the ribbon template's <c>PART_DesignBackstageHost</c> (no window, no adorner layer, no
+    /// animation), so it shows and can be edited on the XAML designer surface. Only ever called
+    /// under <see cref="System.ComponentModel.DesignerProperties.GetIsInDesignMode"/>; the runtime
+    /// path is untouched. Safe to parent the element here because the runtime adorner path is
+    /// skipped in design mode, so the backstage is not hosted anywhere else.
+    /// </summary>
+    private void UpdateDesignTimeBackstage(bool open)
+    {
+        if (_designBackstageHost is null)
+        {
+            return;
+        }
+
+        if (open && Backstage is UIElement content)
+        {
+            _designBackstageHost.Child = content;
+            _designBackstageHost.Visibility = Visibility.Visible;
+        }
+        else
+        {
+            _designBackstageHost.Child = null;
+            _designBackstageHost.Visibility = Visibility.Collapsed;
+        }
+    }
+
     private static void OnBackstageChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         var ribbon = (Ribbon)d;
@@ -436,6 +508,16 @@ public class Ribbon : Control
         {
             _qatBelowHost = belowHost;
             belowHost.ContextMenu = menu;
+        }
+
+        _designBackstageHost = GetTemplateChild("PART_DesignBackstageHost") as Border;
+
+        // In the designer the runtime adorner path can't run (no host Window). If the backstage
+        // was already flagged open before the template was applied, reflect it into the
+        // design-time host now that the host exists.
+        if (System.ComponentModel.DesignerProperties.GetIsInDesignMode(this))
+        {
+            UpdateDesignTimeBackstage(IsBackstageOpen);
         }
 
         UpdateQuickAccessPlacement();
@@ -735,6 +817,13 @@ public class Ribbon : Control
             SelectedTab = null;
         }
 
+        // A SelectedIndex set before its target tab existed (including a design-time
+        // d:SelectedIndex applied during tree construction) takes effect once the tab arrives.
+        if (SelectedTab is null && SelectedIndex >= 0)
+        {
+            ApplySelectedIndex(SelectedIndex);
+        }
+
         if (IsLoaded)
         {
             EnsureSelection();
@@ -751,12 +840,62 @@ public class Ribbon : Control
         }
     }
 
+    private static void OnSelectedTabChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        var ribbon = (Ribbon)d;
+        if (ribbon._syncingSelection)
+        {
+            return;
+        }
+
+        // Mirror the selected tab back into SelectedIndex so the two stay in lock-step.
+        ribbon._syncingSelection = true;
+        try
+        {
+            ribbon.SelectedIndex = e.NewValue is RibbonTab tab ? ribbon.Tabs.IndexOf(tab) : -1;
+        }
+        finally
+        {
+            ribbon._syncingSelection = false;
+        }
+    }
+
+    private static void OnSelectedIndexChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
+        ((Ribbon)d).ApplySelectedIndex((int)e.NewValue);
+
+    private void ApplySelectedIndex(int index)
+    {
+        // Ignore re-entrancy from the SelectedTab mirror, and out-of-range indices — the tabs
+        // may not be populated yet (a XAML attribute, or a design-time d:SelectedIndex, is
+        // applied before the child tabs are parsed). OnTabsCollectionChanged re-applies a pending
+        // index once the tabs exist.
+        if (_syncingSelection || index < 0 || index >= Tabs.Count)
+        {
+            return;
+        }
+
+        _syncingSelection = true;
+        try
+        {
+            SelectedTab = Tabs[index];
+        }
+        finally
+        {
+            _syncingSelection = false;
+        }
+    }
+
     private void EnsureSelection()
     {
-        if (SelectedTab is null && Tabs.Count > 0)
+        if (SelectedTab is not null || Tabs.Count == 0)
         {
-            SelectedTab = FindFirstVisibleTab();
+            return;
         }
+
+        // Honor a pending SelectedIndex (e.g. a design-time d:SelectedIndex applied before the
+        // tabs were parsed); otherwise fall back to the first visible tab.
+        int index = SelectedIndex;
+        SelectedTab = index >= 0 && index < Tabs.Count ? Tabs[index] : FindFirstVisibleTab();
     }
 
     private RibbonTab? FindFirstVisibleTab() =>

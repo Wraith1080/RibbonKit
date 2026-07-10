@@ -88,17 +88,41 @@ public partial class MainWindow : RibbonWindow
                 return;
             }
 
+            // The backdrop only composites where the DWM glass reaches: without extending
+            // the glass across the client area, a transparent window renders BLACK.
+            MicaHelper.ExtendGlassFrame(this, full: true);
+
+            // Strip WS_SYSMENU so the DWM's native min/max/close buttons don't show through a
+            // transparent title bar and overlap our custom caption buttons.
+            MicaHelper.ShowNativeCaptionButtons(this, false);
+
             _opaqueWindowBackground ??= Background;
             Background = Brushes.Transparent;
             MainContentArea.Background = Brushes.Transparent;
-            ShowcaseBackstage.Translucent = false;
+
+            // Let the title bar go transparent so Mica shows through it — but only for the 2024
+            // look with a non-colored title bar (ThemeManager enforces that rule and re-derives
+            // it across theme/accent changes, so switching themes no longer reverts it).
+            ThemeManager.SetTitleBarBackdrop(Application.Current, true);
+
+            // Backstage stays opaque (Translucent left false): it fully covers the content
+            // behind it, so Mica shows in the title bar / ribbon chrome but does not bleed
+            // through the backstage page.
         }
         else
         {
             MicaHelper.TrySetBackdrop(this, RibbonBackdrop.None);
+
+            // Do NOT collapse the glass frame here. The RibbonWindow template keeps
+            // GlassFrameThickness="-1" as its resting state, and that extended glass is what
+            // gives the window its Windows 11 border and rounded corners (WindowChrome strips
+            // the native non-client frame, so the DWM glass is all that renders them).
+            // Collapsing it to 0 destroys the border/corners — and there's no black-background
+            // risk to avoid, because the visible content is opaque white again below.
+            MicaHelper.ShowNativeCaptionButtons(this, true);
+            ThemeManager.SetTitleBarBackdrop(Application.Current, false);
             Background = _opaqueWindowBackground ?? Brushes.White;
             MainContentArea.Background = Brushes.White;
-            ShowcaseBackstage.Translucent = false;
         }
     }
 

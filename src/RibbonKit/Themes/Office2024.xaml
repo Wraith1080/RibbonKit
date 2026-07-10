@@ -63,6 +63,21 @@
                                     </ItemsControl.ItemsPanel>
                                 </ItemsControl>
                             </Border>
+
+                            <!-- Design-time-only backstage preview surface. At runtime the
+                                 backstage is hosted in the WINDOW's adorner layer (see
+                                 Ribbon.UpdateBackstageOverlay); that path needs a real Window,
+                                 which the XAML designer doesn't provide, so the Ribbon routes the
+                                 backstage into this in-template host instead while in design mode.
+                                 Stays Collapsed and empty at runtime — the code only fills it under
+                                 DesignerProperties.GetIsInDesignMode. MinHeight just gives the
+                                 preview room on the surface; it has no effect while Collapsed. -->
+                            <Border x:Name="PART_DesignBackstageHost"
+                                    Grid.Row="0"
+                                    Grid.RowSpan="2"
+                                    Visibility="Collapsed"
+                                    MinHeight="440"
+                                    Background="{DynamicResource RibbonKit.Brushes.Backstage.ContentBackground}" />
                         </Grid>
                     </Border>
                     <ControlTemplate.Triggers>
@@ -342,13 +357,21 @@
                         </Border>
                         <!-- The template carries BOTH an underline and a fill for hover and
                              for selection; a theme picks its style by making the unwanted
-                             token Transparent (2024 = underlines; 2019 = fills/pills). -->
+                             token Transparent (2024 = underlines; 2019 = fills/pills).
+                             IsHitTestVisible="False" on all three indicators: they overlay
+                             HeaderChrome (the hover trigger's SourceName). If they were
+                             hit-testable, hovering directly on the underline would steal the
+                             hit from HeaderChrome — dropping its IsMouseOver, hiding the
+                             underline, which hands the hit back to HeaderChrome, and so on:
+                             an endless flicker. Transparent-to-mouse indicators keep the hit
+                             on HeaderChrome underneath. -->
                         <Rectangle x:Name="HoverIndicator"
                                    Height="2.5"
                                    RadiusX="1.25"
                                    RadiusY="1.25"
                                    Margin="10,0"
                                    VerticalAlignment="Bottom"
+                                   IsHitTestVisible="False"
                                    Fill="{DynamicResource RibbonKit.Brushes.Tab.HoverUnderline}"
                                    Visibility="Collapsed" />
                         <Rectangle x:Name="SelectionIndicator"
@@ -357,6 +380,7 @@
                                    RadiusY="1.5"
                                    Margin="10,0"
                                    VerticalAlignment="Bottom"
+                                   IsHitTestVisible="False"
                                    Fill="{DynamicResource RibbonKit.Brushes.Tab.SelectedUnderline}"
                                    Visibility="Collapsed" />
                         <!-- Selected contextual tab's underline, tinted the same as its
@@ -368,6 +392,7 @@
                                    RadiusY="1.5"
                                    Margin="10,0"
                                    VerticalAlignment="Bottom"
+                                   IsHitTestVisible="False"
                                    Fill="{TemplateBinding ContextualBrush}"
                                    Visibility="Collapsed" />
                     </Grid>
@@ -1303,7 +1328,9 @@
                                    Text="{TemplateBinding Header}"
                                    VerticalAlignment="Center"
                                    Margin="2,0,6,0" />
-                        <Grid Width="{TemplateBinding InputWidth}">
+                        <!-- MinHeight gives the input box vertical breathing room: without it
+                             the box collapses to the text height and reads as cramped. -->
+                        <Grid Width="{TemplateBinding InputWidth}" MinHeight="24">
                             <Border x:Name="Chrome"
                                     Background="#FFFFFF"
                                     BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"

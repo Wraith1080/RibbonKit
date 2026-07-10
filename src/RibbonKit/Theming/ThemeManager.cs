@@ -68,12 +68,16 @@ public static class ThemeManager
     private static ResourceDictionary? _current;
     private static Color? _accent;
     private static bool _accentTitleBar;
+    private static bool _titleBarBackdrop;
 
     /// <summary>The theme most recently applied via <see cref="Apply"/>, if any.</summary>
     public static RibbonTheme? CurrentTheme { get; private set; }
 
     /// <summary>Whether the accent title bar (<see cref="SetAccentedTitleBar"/>) is on.</summary>
     public static bool IsAccentedTitleBar => _accentTitleBar;
+
+    /// <summary>Whether the transparent title bar (<see cref="SetTitleBarBackdrop"/>) is on.</summary>
+    public static bool IsTitleBarBackdrop => _titleBarBackdrop;
 
     /// <summary>
     /// Raised whenever the theme, accent, or accent-title-bar configuration changes, so
@@ -162,6 +166,24 @@ public static class ThemeManager
         Changed?.Invoke(null, EventArgs.Empty);
     }
 
+    /// <summary>
+    /// Toggles a transparent title bar so a window system backdrop (Mica/Acrylic) shows through
+    /// it. The transparency is applied <b>only</b> for the Office 2024 look with a non-colored
+    /// title bar; other themes keep their light band, and a colored title bar
+    /// (<see cref="SetAccentedTitleBar"/>) keeps its accent — matching where a solid title bar is
+    /// expected. Persists across <see cref="Apply"/>, so switching themes re-derives it correctly
+    /// (a non-2024 theme reverts to its solid band instead of leaking the transparent override).
+    /// The caller is still responsible for the actual DWM backdrop and glass frame (see
+    /// <see cref="RibbonKit.Interop.MicaHelper"/>).
+    /// </summary>
+    public static void SetTitleBarBackdrop(Application application, bool enabled)
+    {
+        ArgumentNullException.ThrowIfNull(application);
+        _titleBarBackdrop = enabled;
+        ApplyTitleBarOverride(application);
+        Changed?.Invoke(null, EventArgs.Empty);
+    }
+
     private static void ApplyAccentOverrides(Application application)
     {
         ResourceDictionary resources = application.Resources;
@@ -219,6 +241,20 @@ public static class ThemeManager
         // Note: ApplicationButton.HoverBackground is NOT cleared here — it is owned by the
         // accent system (which runs first and re-establishes its baseline); we only layer
         // an override onto it in the colored-strip branch below.
+
+        // Transparent title bar so a window backdrop (Mica) shows through — but ONLY for the
+        // Office 2024 look with a NON-colored title bar. A colored title bar falls through to
+        // the accent branch below (opaque accent); any other theme with a non-colored title bar
+        // returns with no override, keeping that theme's solid light band. The caption
+        // foreground/hover tokens are intentionally left at their theme defaults (dark text, a
+        // light hover) which read correctly over the material.
+        if (_titleBarBackdrop
+            && !_accentTitleBar
+            && (CurrentTheme ?? RibbonTheme.Office2024) == RibbonTheme.Office2024)
+        {
+            resources[TitleBarBackgroundKey] = Brushes.Transparent;
+            return;
+        }
 
         if (!_accentTitleBar)
         {
