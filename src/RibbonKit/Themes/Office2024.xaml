@@ -2523,6 +2523,15 @@
                                     Style="{StaticResource OptionsDialogActionButtonStyle}" />
                         </StackPanel>
 
+                        <!-- Reset restores the host-supplied baseline (factory ribbon),
+                             discarding all customizations. Bottom-left, like Office. -->
+                        <Button x:Name="PART_ResetButton"
+                                Grid.Column="0" Grid.Row="2"
+                                HorizontalAlignment="Left"
+                                Content="Reset"
+                                Style="{StaticResource OptionsDialogActionButtonStyle}"
+                                Margin="0,8,0,0" />
+
                         <!-- Structure tools, under the tree like Office. Edit… opens the
                              per-target dialog (name / icon / layout / size). -->
                         <Grid Grid.Column="2" Grid.ColumnSpan="2" Grid.Row="2" Margin="0,8,0,0">

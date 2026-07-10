@@ -165,6 +165,7 @@ public sealed class RibbonCustomizeNode : INotifyPropertyChanged
 [TemplatePart(Name = NewTabButtonPartName, Type = typeof(ButtonBase))]
 [TemplatePart(Name = NewGroupButtonPartName, Type = typeof(ButtonBase))]
 [TemplatePart(Name = EditButtonPartName, Type = typeof(ButtonBase))]
+[TemplatePart(Name = ResetButtonPartName, Type = typeof(ButtonBase))]
 public class RibbonCustomizePage : Control, IRibbonFillPage
 {
     private const string AvailableListPartName = "PART_AvailableList";
@@ -176,6 +177,7 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
     private const string NewTabButtonPartName = "PART_NewTabButton";
     private const string NewGroupButtonPartName = "PART_NewGroupButton";
     private const string EditButtonPartName = "PART_EditButton";
+    private const string ResetButtonPartName = "PART_ResetButton";
 
     /// <summary>Identifies the <see cref="Ribbon"/> dependency property.</summary>
     public static readonly DependencyProperty RibbonProperty =
@@ -184,6 +186,14 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
             typeof(Ribbon),
             typeof(RibbonCustomizePage),
             new FrameworkPropertyMetadata(null, (d, _) => ((RibbonCustomizePage)d).RebuildAll()));
+
+    /// <summary>Identifies the <see cref="ResetLayout"/> dependency property.</summary>
+    public static readonly DependencyProperty ResetLayoutProperty =
+        DependencyProperty.Register(
+            nameof(ResetLayout),
+            typeof(string),
+            typeof(RibbonCustomizePage),
+            new FrameworkPropertyMetadata(null, (d, _) => ((RibbonCustomizePage)d).UpdateButtonStates()));
 
     private readonly ObservableCollection<RibbonCustomizeNode> _rootNodes = new();
 
@@ -196,6 +206,7 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
     private ButtonBase? _newTabButton;
     private ButtonBase? _newGroupButton;
     private ButtonBase? _editButton;
+    private ButtonBase? _resetButton;
     private RibbonCustomizeNode? _selectedNode;
 
     static RibbonCustomizePage()
@@ -218,6 +229,17 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
         set => SetValue(RibbonProperty, value);
     }
 
+    /// <summary>
+    /// The baseline layout JSON (a <see cref="RibbonCustomizationSerializer.Serialize"/> capture
+    /// of the ribbon in its factory state) that the Reset button restores. When
+    /// <see langword="null"/>, the host hasn't supplied a baseline and Reset stays disabled.
+    /// </summary>
+    public string? ResetLayout
+    {
+        get => (string?)GetValue(ResetLayoutProperty);
+        set => SetValue(ResetLayoutProperty, value);
+    }
+
     /// <inheritdoc />
     public override void OnApplyTemplate()
     {
@@ -228,6 +250,7 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
         Unhook(_newTabButton, OnNewTabClick);
         Unhook(_newGroupButton, OnNewGroupClick);
         Unhook(_editButton, OnEditClick);
+        Unhook(_resetButton, OnResetClick);
         if (_tree is not null)
         {
             _tree.SelectedItemChanged -= OnTreeSelectionChanged;
@@ -249,6 +272,7 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
         _newTabButton = GetTemplateChild(NewTabButtonPartName) as ButtonBase;
         _newGroupButton = GetTemplateChild(NewGroupButtonPartName) as ButtonBase;
         _editButton = GetTemplateChild(EditButtonPartName) as ButtonBase;
+        _resetButton = GetTemplateChild(ResetButtonPartName) as ButtonBase;
 
         Hook(_addButton, OnAddClick);
         Hook(_removeButton, OnRemoveClick);
@@ -257,6 +281,7 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
         Hook(_newTabButton, OnNewTabClick);
         Hook(_newGroupButton, OnNewGroupClick);
         Hook(_editButton, OnEditClick);
+        Hook(_resetButton, OnResetClick);
 
         if (_tree is not null)
         {
@@ -425,6 +450,7 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
         SetEnabled(_newTabButton, Ribbon is not null);
         SetEnabled(_newGroupButton, ResolveTab(node) is not null);
         SetEnabled(_editButton, CanEdit(node));
+        SetEnabled(_resetButton, Ribbon is not null && !string.IsNullOrEmpty(ResetLayout));
     }
 
     /// <summary>The selected item's raw header — the display header carries the "(Custom)"
@@ -618,6 +644,7 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
 
         var tab = new RibbonTab { Header = "New Tab" };
         Controls.Ribbon.SetIsCustom(tab, true);
+        Controls.Ribbon.SetCommandId(tab, NewCustomId());
         tab.Groups.Add(CreateCustomGroup());
 
         // Insert after the tab containing the selection (Office behavior), else append.
@@ -652,12 +679,16 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
     {
         var group = new RibbonGroup { Header = "New Group" };
         Controls.Ribbon.SetIsCustom(group, true);
+        Controls.Ribbon.SetCommandId(group, NewCustomId());
 
         // Stacked applies the vertical-wrap items panel (3-row columns of Medium/Small
         // proxies) via RibbonGroup.ApplyGroupLayout — the customize default, like Office.
         group.Layout = RibbonGroupLayout.Stacked;
         return group;
     }
+
+    // A generated persistence id so user-created tabs/groups survive save/restore.
+    private static string NewCustomId() => "custom:" + Guid.NewGuid().ToString("N");
 
     /// <summary>
     /// Opens the edit dialog for the selection. What's editable follows the target
@@ -769,6 +800,22 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
 
                 break;
         }
+    }
+
+    /// <summary>
+    /// Restores the ribbon to <see cref="ResetLayout"/> — the host-supplied baseline capture —
+    /// discarding every user customization (custom tabs/groups/commands, reorders, renames,
+    /// visibility, sizes). Live like the other edits; the dialog's Apply persists the reset.
+    /// </summary>
+    private void OnResetClick(object sender, RoutedEventArgs e)
+    {
+        if (Ribbon is not { } ribbon || string.IsNullOrEmpty(ResetLayout))
+        {
+            return;
+        }
+
+        RibbonCustomizationSerializer.Apply(ribbon, ResetLayout);
+        RebuildAll();
     }
 
     // Renames change the "Tab › Group › Command" paths shown on the left.

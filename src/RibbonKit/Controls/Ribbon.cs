@@ -283,6 +283,29 @@ public class Ribbon : Control
     public static bool GetIsCustom(DependencyObject element) =>
         (bool)element.GetValue(IsCustomProperty);
 
+    /// <summary>
+    /// Identifies the <c>CommandId</c> attached property: a stable string identity used by
+    /// <see cref="RibbonCustomizationSerializer"/> to persist and restore customization across
+    /// runs. Assign a unique id to each built-in tab, group, and command an app wants
+    /// persistable (proxies reference their source command by this id, so a saved custom group
+    /// re-finds its commands even though the proxy objects don't survive). Custom tabs/groups
+    /// created by <see cref="RibbonCustomizePage"/> auto-get a generated id.
+    /// </summary>
+    public static readonly DependencyProperty CommandIdProperty =
+        DependencyProperty.RegisterAttached(
+            "CommandId",
+            typeof(string),
+            typeof(Ribbon),
+            new FrameworkPropertyMetadata(null));
+
+    /// <summary>Sets the persistence identity of a tab/group/command (see <see cref="CommandIdProperty"/>).</summary>
+    public static void SetCommandId(DependencyObject element, string? value) =>
+        element.SetValue(CommandIdProperty, value);
+
+    /// <summary>Gets the persistence identity of a tab/group/command, or <see langword="null"/>.</summary>
+    public static string? GetCommandId(DependencyObject element) =>
+        (string?)element.GetValue(CommandIdProperty);
+
     internal void RaiseRibbonCustomizeRequested() =>
         RibbonCustomizeRequested?.Invoke(this, EventArgs.Empty);
 

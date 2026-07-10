@@ -526,6 +526,67 @@ New Group / Rename under the tree. Implements `IRibbonFillPage`.
     from which sections are enabled (base + icon/layout/size adders) — deterministic, no
     SizeToContent.
 
+### 3.17 Customization persistence (serialize / restore / Reset)
+
+`Controls/RibbonCustomizationSerializer.cs` (new, public static) — saves and restores the
+user's ribbon customizations as JSON so they survive restarts, and so **Reset / Import /
+Export are all just `Apply` of a different string**. Two entry points: `Serialize(ribbon)
+→ string` and `Apply(ribbon, json)`.
+
+- **Stable identity via `Ribbon.CommandId`** (new attached string property): the whole
+  scheme keys off a stable id. Proxies don't survive a restart, so a saved "custom group
+  contains Bold" persists Bold's **source id** (`cmd.bold`), and `Apply` recreates the proxy
+  via `CreateCommandProxy(source, size)`. Custom tabs/groups created in the page auto-get a
+  generated id (`"custom:" + Guid.N`). Built-in **tabs/groups** without an id are left alone
+  (not serialized, never touched by `Apply`) so an app opts into tab/group persistence
+  incrementally.
+- **Command tagging is OPTIONAL (`BuildIdentity`)**: a command need NOT carry an explicit
+  `CommandId` to be addable to a custom group and survive restart. `BuildIdentity` walks the
+  ribbon once and keys every command under BOTH its explicit id (when set) AND an auto-derived
+  path id (`auto:tabKey/groupKey/caption#index`, where tab/group keys prefer their CommandId
+  then fall back to header). Serialize writes the preferred id (explicit else auto); `Apply`'s
+  `sources` map registers both forms, so either resolves. Explicit ids are still better (stable
+  across built-in renames/reorders); the auto id is the fallback. **This was the fix for
+  "custom-group items don't persist"** — the first cut silently dropped any proxy whose source
+  wasn't hand-tagged, and most showcase commands weren't. The per-group index stays stable
+  because custom groups are all-proxy and the catalog skips proxies, so they contribute no
+  controls to the walk.
+- **What's captured** (`RibbonLayoutDto`): per non-contextual tab — id, IsCustom, header,
+  visibility, and its groups; per group — id, IsCustom, header, `Layout`, and (custom only)
+  an `IconCommandId` + the proxy commands (each = source id + header + size); plus the QAT
+  as an ordered list of `Ref` ids (a proxy persists its source's id; a hand-declared QAT
+  item persists its own id). Contextual tabs and id-less built-ins are skipped.
+- **Icon persistence without serializing pixels**: a custom group's `Icon` is matched
+  (`ReferenceEquals`) against a `CommandId → ImageSource` lookup harvested from the ribbon,
+  stored as that command's id, and re-resolved on load. Icons never leave the app; the JSON
+  carries only ids.
+- **Full-reconcile `Apply`** (robust from ANY starting state — that's what makes Reset
+  trivial): (1) catalog current identity → live elements from the CURRENT ribbon (the
+  catalog **excludes proxies**, so `sources` holds only real commands + declared QAT items);
+  (2) strip every custom tab/group back to the built-in skeleton; (3) rebuild the desired
+  tab list — create custom tabs, re-find built-in ones by id, set visibility/header, and
+  reconcile each tab's groups (create custom groups + their proxies, rename built-ins);
+  (4) reorder tabs to match, appending any current tab the layout didn't mention (a
+  newly-shipped built-in, a contextual tab) at the end — so unknown/contextual content is
+  preserved, not destroyed; (5) rebuild the QAT in saved order. **Missing ids are skipped;
+  a corrupt/foreign string is caught (`JsonException`) and leaves the ribbon as-is.**
+- **Reset wired into the page**: `RibbonCustomizePage` gains a `ResetLayout` string DP + a
+  `PART_ResetButton` (bottom-left of the template, like Office). The host passes the
+  **baseline** it captured at startup; clicking Reset does `Apply(ribbon, ResetLayout)` then
+  rebuilds the tree. The button disables when no baseline is supplied.
+- **Showcase round-trip** (`MainWindow`): on `Loaded`, **capture the baseline first**
+  (`Serialize` the factory ribbon — this is the Reset target, so it must precede any restore),
+  then `Apply` the saved JSON from
+  `%LocalAppData%\RibbonKitShowcase\ribbon-customization.json` if present. The options
+  dialog's `Applied` event (raised on OK) writes the current `Serialize` back to that file.
+  All the showcase's tabs/groups + the key commands (Paste/Cut/Copy/Format Painter, B/I/U,
+  Find/Replace/Select, Table/Pictures/Link, Zoom/Options) and the three QAT buttons now
+  carry `rk:Ribbon.CommandId`s so they're addable and round-trip.
+- **Ordering invariant**: baseline capture MUST run before restore, and `Apply`'s
+  proxy-excluding `sources` walk is what lets Reset work *after* customization (the custom
+  proxies are ignored; Bold is re-found in its built-in Font group). Import/Export are not
+  yet surfaced in the UI but are one `Apply`/`Serialize` call away.
+
 ## 4. Workflow / Session Conventions
 
 - Cloud workspace: `/home/user/ribbonkit/`. The user's machine:
@@ -556,11 +617,16 @@ proxy labels from small sources, the Edit… dialog (name/icon/layout/size per t
 group layout switching Stacked↔Large with size normalization, and add-proxy sizing in
 Large-layout groups.
 
+Also to check (§3.17, just built): customization **persistence** — restart the showcase
+and confirm added custom tabs/groups, added commands, renames, tab hide/reorder, group
+icon/layout, and QAT edits all survive; that **Reset** restores the factory ribbon from any
+state; and that a deleted/corrupt JSON file just starts clean.
+
 Backlog (rough priority):
 
-1. Customization persistence: serialize ribbon layout (tab order/visibility, custom
-   tabs/groups, proxy commands by source identity) + QAT contents; enables Reset and
-   Import/Export in the customize pages (§3.16's deferred tail).
+1. Import/Export UI: surface the §3.17 `Serialize`/`Apply` as file-picker buttons in the
+   customize page (the serializer already supports it; only the buttons + file dialogs are
+   missing). Drag-drop in the tree and moving groups across tabs also remain.
 2. Remaining animations: hover cross-fade, true sliding tab marker (shared animated
    underline on the tab strip), contextual-tab appear, KeyTip badge pop, toggle-state,
    theme-switch cross-fade.

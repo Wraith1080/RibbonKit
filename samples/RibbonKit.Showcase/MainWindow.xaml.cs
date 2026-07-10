@@ -1,3 +1,5 @@
+using System;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -15,11 +17,66 @@ namespace RibbonKit.Showcase;
 /// </summary>
 public partial class MainWindow : RibbonWindow
 {
+    // Where this app persists the user's ribbon customizations between runs. A real app
+    // would use its own product folder; LocalApplicationData keeps it per-user, per-machine.
+    private static readonly string CustomizationFile = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "RibbonKitShowcase",
+        "ribbon-customization.json");
+
     private string _committedStyle = "Normal";
+
+    // The factory ribbon captured at startup (before saved edits are applied) — the layout
+    // the customize page's Reset button restores.
+    private string? _baselineLayout;
 
     public MainWindow()
     {
         InitializeComponent();
+        Loaded += OnWindowLoaded;
+    }
+
+    private void OnWindowLoaded(object sender, RoutedEventArgs e)
+    {
+        Loaded -= OnWindowLoaded; // One-shot: capture the baseline and restore once.
+
+        // Capture the pristine ribbon FIRST — this is the Reset target, so it must be taken
+        // before any saved customization is layered on.
+        _baselineLayout = RibbonCustomizationSerializer.Serialize(MainRibbon);
+
+        // Then restore the user's saved customizations, if the file exists. Apply tolerates a
+        // missing/foreign/corrupt string, so a bad file just leaves the factory ribbon.
+        try
+        {
+            if (File.Exists(CustomizationFile))
+            {
+                RibbonCustomizationSerializer.Apply(MainRibbon, File.ReadAllText(CustomizationFile));
+            }
+        }
+        catch (IOException)
+        {
+            // Unreadable file — start from the factory ribbon.
+        }
+        catch (UnauthorizedAccessException)
+        {
+        }
+    }
+
+    // Persists the ribbon's current customization; called when the options dialog applies.
+    private void SaveCustomization()
+    {
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(CustomizationFile)!);
+            File.WriteAllText(CustomizationFile, RibbonCustomizationSerializer.Serialize(MainRibbon));
+        }
+        catch (IOException)
+        {
+            // Best-effort persistence — a locked/unwritable file just isn't saved this time.
+        }
+        catch (UnauthorizedAccessException)
+        {
+        }
     }
 
     private void OnApplyOffice2024(object sender, RoutedEventArgs e) =>
@@ -154,7 +211,7 @@ public partial class MainWindow : RibbonWindow
         var customizePage = new RibbonOptionsPage
         {
             Header = "Customize Ribbon",
-            Content = new RibbonCustomizePage { Ribbon = MainRibbon },
+            Content = new RibbonCustomizePage { Ribbon = MainRibbon, ResetLayout = _baselineLayout },
         };
         var qatPage = new RibbonOptionsPage
         {
@@ -176,7 +233,11 @@ public partial class MainWindow : RibbonWindow
         // The dialog raises Applied on OK — the app's cue to persist its settings (the
         // customization pages edit the ribbon live). ShowDialog's bool result carries the
         // same decision.
-        dialog.Applied += (_, _) => StatusReady.Content = "Options applied";
+        dialog.Applied += (_, _) =>
+        {
+            SaveCustomization();
+            StatusReady.Content = "Options applied";
+        };
         dialog.ShowDialog();
     }
 
