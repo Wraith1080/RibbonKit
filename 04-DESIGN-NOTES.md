@@ -587,6 +587,51 @@ Export are all just `Apply` of a different string**. Two entry points: `Serializ
   proxies are ignored; Bold is re-found in its built-in Font group). Import/Export are not
   yet surfaced in the UI but are one `Apply`/`Serialize` call away.
 
+### 3.18 QAT/dialog polish batch (context menus, persistence, maximize, layout, hover)
+
+Six nagging issues after persistence landed:
+
+- **QAT item right-click menu now works in ALL placements.** Only the title-bar QAT showed the
+  Remove/placement menu; the tab-row and below-ribbon hosts fell through to the ribbon's
+  "Add to QAT" command menu. Cause: those hosts live INSIDE the ribbon, so a right-click on a
+  QAT proxy (itself a `RibbonButton`) bubbled to `Ribbon.OnContextMenuOpening`, where
+  `ResolveCommandControl` matched the proxy and hijacked it (marking the event handled, which
+  suppressed the host's own menu). Fix: `OnContextMenuOpening` now bails early when the click
+  resolves to a `QuickAccessItems` member (`ResolveQuickAccessItem`), letting the host's shared
+  placement/Remove menu open. The title-bar host was unaffected because it's projected into the
+  window, outside the ribbon's tree.
+- **QAT placement now persists.** Added `QuickAccessPosition` to `RibbonLayoutDto`
+  (serialize/apply). Because placement and item add/remove happen via the RIGHT-CLICK menus (not
+  the options dialog), the showcase now also saves eagerly: it subscribes to
+  `QuickAccessItems.CollectionChanged` and to `QuickAccessPosition` changes (via
+  `DependencyPropertyDescriptor`) AFTER the initial restore, so those out-of-dialog edits persist
+  too. (Kept in the same JSON file — no need for a separate one; the position is one nullable
+  enum field, null in older files → left as-is.)
+- **Options dialog maximize fixed.** `RibbonOptionsDialog` is resizable, so it can be maximized
+  (double-click title bar / Win+Up) and overhung the work area like any WindowChrome window. New
+  `Interop/MaximizeGuard.cs` encapsulates the exact mechanism `RibbonWindow` uses (WM_GETMINMAXINFO
+  clamp + measured work-area inset applied to a `PART_WindowRoot`); the dialog attaches it in its
+  ctor and names its template root. Deliberately duplicates RibbonWindow's logic rather than
+  refactoring that verified type — consolidation is a future cleanup.
+- **Customize QAT page now matches the Customize Ribbon page.** Up/Down moved out of the middle
+  button stack into a fourth column to the RIGHT of the current-QAT list (mirroring the ribbon
+  page's tree+Up/Down layout). Up/Down are icon-only (▲/▼) via a new compact
+  `OptionsDialogReorderButtonStyle` (BasedOn the action style, MinWidth 40) applied on BOTH pages.
+  Add/Remove now read `Add »` / `« Remove` (the tiny ▸/◂ glyphs were near-invisible).
+- **Dialog action buttons show real, accent-following hover/press now.** `OptionsDialogActionButtonStyle`
+  faded the chrome via `Opacity` (0.88/0.75) — imperceptible on a white button over a white dialog.
+  Now the shared template overlays a translucent wash of the CURRENT accent (`Wash` border, accent
+  `Background`, `Opacity` 0→0.16 hover→0.30 press) plus an accent border, so hover is a light tint
+  of whatever the accent is (light green for a green accent, not a fixed blue). Every button on the
+  customize pages already shares this one style (Add/Remove/Up/Down/New Tab/New Group/Edit/Reset,
+  and Cancel), so they all follow suit — no per-button setup. **Two gotchas hit and fixed:**
+  (1) the accent (OK) button uses `OptionsDialogPrimaryButtonStyle`, which needs its OWN template —
+  an accent wash on an already-accent fill is invisible — so it washes translucent WHITE (lighten)
+  on hover and BLACK (darken) on press, staying in the accent family for any accent colour;
+  (2) the wash must fill the whole button, so `Padding` is applied to the CONTENT (`ContentPresenter.Margin`),
+  NOT the Chrome border — a Chrome padding leaves an un-washed rim ("only the centre lights up").
+  (Ribbon command buttons were already fine: `#E6E6E6` hover on the `#FFFFFF` ContentBackground.)
+
 ## 4. Workflow / Session Conventions
 
 - Cloud workspace: `/home/user/ribbonkit/`. The user's machine:

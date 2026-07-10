@@ -460,6 +460,16 @@ public class Ribbon : Control
     {
         base.OnContextMenuOpening(e);
 
+        // A quick-access ITEM was right-clicked (the tab-row / below-ribbon hosts live INSIDE
+        // the ribbon, so the event bubbles here). Its proxy is a RibbonButton, which
+        // ResolveCommandControl would wrongly match and hijack with the "Add to QAT" menu —
+        // suppressing the host's placement/Remove menu. Bail so the host menu opens. (The
+        // title-bar host is projected into the window, outside this tree, so it never hit this.)
+        if (ResolveQuickAccessItem(e.OriginalSource as DependencyObject) is not null)
+        {
+            return;
+        }
+
         if (e.Handled || ResolveCommandControl(e.OriginalSource as DependencyObject) is not { } target)
         {
             return;

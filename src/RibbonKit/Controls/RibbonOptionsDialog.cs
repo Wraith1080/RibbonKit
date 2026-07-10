@@ -29,6 +29,7 @@ namespace RibbonKit.Controls;
 /// can either subscribe to <see cref="Applied"/> or check the <c>ShowDialog()</c> return.
 /// </remarks>
 [ContentProperty(nameof(Pages))]
+[TemplatePart(Name = WindowRootPartName, Type = typeof(FrameworkElement))]
 [TemplatePart(Name = PageListPartName, Type = typeof(Selector))]
 [TemplatePart(Name = ContentScrollPartName, Type = typeof(ScrollViewer))]
 [TemplatePart(Name = OkButtonPartName, Type = typeof(ButtonBase))]
@@ -36,6 +37,7 @@ namespace RibbonKit.Controls;
 [TemplatePart(Name = CloseButtonPartName, Type = typeof(ButtonBase))]
 public class RibbonOptionsDialog : Window
 {
+    private const string WindowRootPartName = "PART_WindowRoot";
     private const string PageListPartName = "PART_PageList";
     private const string ContentScrollPartName = "PART_ContentScroll";
     private const string OkButtonPartName = "PART_OkButton";
@@ -63,6 +65,7 @@ public class RibbonOptionsDialog : Window
                 FrameworkPropertyMetadataOptions.BindsTwoWayByDefault,
                 OnSelectedPageChanged));
 
+    private FrameworkElement? _windowRoot;
     private ScrollViewer? _contentScroll;
     private ButtonBase? _okButton;
     private ButtonBase? _cancelButton;
@@ -91,6 +94,11 @@ public class RibbonOptionsDialog : Window
         // theme style) makes that title bar draggable and the borders resize-grabbable.
         WindowStyle = WindowStyle.None;
         ResizeMode = ResizeMode.CanResize;
+
+        // The dialog can still be maximized (double-click the title bar / Win+Up). A maximized
+        // WindowChrome window overhangs the work area — constrain + inset it exactly as the main
+        // window does, so content isn't clipped and the taskbar stays visible.
+        MaximizeGuard.Attach(this, () => _windowRoot);
 
         // A page must be selected for the content area to show anything; default to the
         // first page once the dialog is up (unless the caller pre-selected one).
@@ -144,6 +152,7 @@ public class RibbonOptionsDialog : Window
 
         base.OnApplyTemplate();
 
+        _windowRoot = GetTemplateChild(WindowRootPartName) as FrameworkElement;
         _contentScroll = GetTemplateChild(ContentScrollPartName) as ScrollViewer;
         _okButton = GetTemplateChild(OkButtonPartName) as ButtonBase;
         _cancelButton = GetTemplateChild(CancelButtonPartName) as ButtonBase;

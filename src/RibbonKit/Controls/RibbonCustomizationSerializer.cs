@@ -171,6 +171,7 @@ public static class RibbonCustomizationSerializer
             }
         }
 
+        layout.QuickAccessPosition = ribbon.QuickAccessPosition;
         return layout;
     }
 
@@ -281,6 +282,12 @@ public static class RibbonCustomizationSerializer
             {
                 ribbon.QuickAccessItems.Add(ribbon.CreateCommandProxy(source, RibbonControlSize.Small));
             }
+        }
+
+        // 6. Restore the QAT placement (title bar / above / below). Null in older files → keep current.
+        if (layout.QuickAccessPosition is { } position)
+        {
+            ribbon.QuickAccessPosition = position;
         }
     }
 
@@ -492,6 +499,9 @@ public static class RibbonCustomizationSerializer
         public List<TabDto> Tabs { get; set; } = new();
 
         public List<QatDto> QuickAccess { get; set; } = new();
+
+        /// <summary>The QAT placement (title bar / above / below). Null in older files → left as-is.</summary>
+        public RibbonQuickAccessPosition? QuickAccessPosition { get; set; }
     }
 
     internal sealed class TabDto

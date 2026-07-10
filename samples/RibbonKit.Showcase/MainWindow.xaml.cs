@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -60,6 +61,15 @@ public partial class MainWindow : RibbonWindow
         catch (UnauthorizedAccessException)
         {
         }
+
+        // Persist QAT edits made OUTSIDE the options dialog too: right-click "Add/Remove from
+        // Quick Access Toolbar" mutates QuickAccessItems, and the placement menu changes
+        // QuickAccessPosition — neither goes through the dialog's Apply. Subscribe AFTER the
+        // restore above so replaying the saved state doesn't itself trigger a save.
+        MainRibbon.QuickAccessItems.CollectionChanged += (_, _) => SaveCustomization();
+        DependencyPropertyDescriptor
+            .FromProperty(Ribbon.QuickAccessPositionProperty, typeof(Ribbon))
+            ?.AddValueChanged(MainRibbon, (_, _) => SaveCustomization());
     }
 
     // Persists the ribbon's current customization; called when the options dialog applies.

@@ -2036,21 +2036,39 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type Button}">
+                    <!-- The Padding is applied to the CONTENT (not the Chrome), so the accent
+                         wash + border fill the WHOLE button edge-to-edge — otherwise only the
+                         inner (un-padded) area would light up on hover. -->
                     <Border x:Name="Chrome"
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="1"
                             CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
-                            Padding="{TemplateBinding Padding}"
                             SnapsToDevicePixels="True">
-                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <Grid>
+                            <!-- Accent-follow hover/press: a translucent wash of the CURRENT
+                                 accent over the white button gives a light tint of whatever the
+                                 accent is (light green for a green accent, etc.) — never a fixed
+                                 blue. Opacity, not a baked colour, so it tracks accent changes. -->
+                            <Border x:Name="Wash"
+                                    Background="{DynamicResource RibbonKit.Brushes.Accent}"
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                    Opacity="0" />
+                            <ContentPresenter Margin="{TemplateBinding Padding}"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center" />
+                        </Grid>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Chrome" Property="Opacity" Value="0.88" />
+                            <Setter TargetName="Wash" Property="Opacity" Value="0.16" />
+                            <Setter TargetName="Chrome" Property="BorderBrush"
+                                    Value="{DynamicResource RibbonKit.Brushes.Accent}" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="Chrome" Property="Opacity" Value="0.75" />
+                            <Setter TargetName="Wash" Property="Opacity" Value="0.30" />
+                            <Setter TargetName="Chrome" Property="BorderBrush"
+                                    Value="{DynamicResource RibbonKit.Brushes.Accent}" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.4" />
@@ -2061,12 +2079,64 @@
         </Setter>
     </Style>
 
+    <!-- The accent (OK) button needs its OWN template: the action style washes the button with
+         the accent colour, which is invisible on a button already filled with that accent. Here a
+         translucent WHITE wash lightens it on hover and a translucent BLACK wash darkens it on
+         press — accent-agnostic, always staying in the accent's own colour family. -->
     <Style x:Key="OptionsDialogPrimaryButtonStyle"
            TargetType="{x:Type Button}"
            BasedOn="{StaticResource OptionsDialogActionButtonStyle}">
         <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Accent}" />
         <Setter Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Accent}" />
         <Setter Property="Foreground" Value="#FFFFFF" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Button}">
+                    <!-- Padding on the CONTENT, not the Chrome, so the wash fills the whole
+                         button (a Chrome Padding would leave the padded rim un-washed — the
+                         "only the centre lights up" bug). -->
+                    <Border x:Name="Chrome"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                            SnapsToDevicePixels="True">
+                        <Grid>
+                            <!-- Wash fills the Chrome, over the accent fill, under the label. -->
+                            <Border x:Name="Wash"
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                    Opacity="0" />
+                            <ContentPresenter Margin="{TemplateBinding Padding}"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center" />
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Wash" Property="Background" Value="#FFFFFF" />
+                            <Setter TargetName="Wash" Property="Opacity" Value="0.22" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Wash" Property="Background" Value="#000000" />
+                            <Setter TargetName="Wash" Property="Opacity" Value="0.16" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Compact icon-only variant for the Up/Down reorder buttons on the customization pages.
+         Inherits the action style's template (so hover/press feedback matches) but is narrow. -->
+    <Style x:Key="OptionsDialogReorderButtonStyle"
+           TargetType="{x:Type Button}"
+           BasedOn="{StaticResource OptionsDialogActionButtonStyle}">
+        <Setter Property="MinWidth" Value="40" />
+        <Setter Property="Padding" Value="6" />
+        <Setter Property="FontSize" Value="11" />
     </Style>
 
     <!-- The page control IS the nav entry: it renders only its Header (the dialog presents
@@ -2170,7 +2240,9 @@
                 <ControlTemplate TargetType="{x:Type controls:RibbonOptionsDialog}">
                     <!-- AdornerDecorator so tooltips / validation adorners inside pages render. -->
                     <AdornerDecorator>
-                        <Border Background="{TemplateBinding Background}">
+                        <!-- PART_WindowRoot: MaximizeGuard insets this by the maximize overhang so
+                             a maximized dialog's content stays inside the monitor work area. -->
+                        <Border x:Name="PART_WindowRoot" Background="{TemplateBinding Background}">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="34" />
@@ -2333,6 +2405,7 @@
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
@@ -2358,23 +2431,16 @@
                                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                  ItemTemplate="{StaticResource CommandEntryTemplate}" />
 
+                        <!-- Add / Remove between the two lists (like the Customize Ribbon page). -->
                         <StackPanel Grid.Column="1" Grid.Row="1"
                                     VerticalAlignment="Center"
                                     Margin="12,0">
                             <Button x:Name="PART_AddButton"
-                                    Content="Add ▸"
+                                    Content="Add »"
                                     Style="{StaticResource OptionsDialogActionButtonStyle}"
                                     Margin="0,0,0,6" />
                             <Button x:Name="PART_RemoveButton"
-                                    Content="◂ Remove"
-                                    Style="{StaticResource OptionsDialogActionButtonStyle}"
-                                    Margin="0,0,0,18" />
-                            <Button x:Name="PART_UpButton"
-                                    Content="▲ Up"
-                                    Style="{StaticResource OptionsDialogActionButtonStyle}"
-                                    Margin="0,0,0,6" />
-                            <Button x:Name="PART_DownButton"
-                                    Content="▼ Down"
+                                    Content="« Remove"
                                     Style="{StaticResource OptionsDialogActionButtonStyle}" />
                         </StackPanel>
 
@@ -2385,6 +2451,22 @@
                                  BorderThickness="1"
                                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                  ItemTemplate="{StaticResource CommandEntryTemplate}" />
+
+                        <!-- Up / Down to the RIGHT of the current list, mirroring the ribbon
+                             page — icon-only reorder buttons. -->
+                        <StackPanel Grid.Column="3" Grid.Row="1"
+                                    VerticalAlignment="Center"
+                                    Margin="12,0,0,0">
+                            <Button x:Name="PART_UpButton"
+                                    Content="▲"
+                                    Style="{StaticResource OptionsDialogReorderButtonStyle}"
+                                    ToolTip="Move Up"
+                                    Margin="0,0,0,6" />
+                            <Button x:Name="PART_DownButton"
+                                    Content="▼"
+                                    Style="{StaticResource OptionsDialogReorderButtonStyle}"
+                                    ToolTip="Move Down" />
+                        </StackPanel>
                     </Grid>
                 </ControlTemplate>
             </Setter.Value>
@@ -2486,11 +2568,11 @@
                                     VerticalAlignment="Center"
                                     Margin="12,0">
                             <Button x:Name="PART_AddButton"
-                                    Content="Add ▸"
+                                    Content="Add »"
                                     Style="{StaticResource OptionsDialogActionButtonStyle}"
                                     Margin="0,0,0,6" />
                             <Button x:Name="PART_RemoveButton"
-                                    Content="◂ Remove"
+                                    Content="« Remove"
                                     Style="{StaticResource OptionsDialogActionButtonStyle}" />
                         </StackPanel>
 
@@ -2515,12 +2597,14 @@
                                     VerticalAlignment="Center"
                                     Margin="12,0,0,0">
                             <Button x:Name="PART_UpButton"
-                                    Content="▲ Up"
-                                    Style="{StaticResource OptionsDialogActionButtonStyle}"
+                                    Content="▲"
+                                    Style="{StaticResource OptionsDialogReorderButtonStyle}"
+                                    ToolTip="Move Up"
                                     Margin="0,0,0,6" />
                             <Button x:Name="PART_DownButton"
-                                    Content="▼ Down"
-                                    Style="{StaticResource OptionsDialogActionButtonStyle}" />
+                                    Content="▼"
+                                    Style="{StaticResource OptionsDialogReorderButtonStyle}"
+                                    ToolTip="Move Down" />
                         </StackPanel>
 
                         <!-- Reset restores the host-supplied baseline (factory ribbon),
