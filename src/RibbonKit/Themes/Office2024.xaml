@@ -2523,7 +2523,8 @@
                                     Style="{StaticResource OptionsDialogActionButtonStyle}" />
                         </StackPanel>
 
-                        <!-- Structure tools, under the tree like Office -->
+                        <!-- Structure tools, under the tree like Office. Edit… opens the
+                             per-target dialog (name / icon / layout / size). -->
                         <Grid Grid.Column="2" Grid.ColumnSpan="2" Grid.Row="2" Margin="0,8,0,0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
@@ -2539,22 +2540,163 @@
                             <Button x:Name="PART_NewGroupButton"
                                     Grid.Column="1"
                                     Content="New Group"
-                                    Style="{StaticResource OptionsDialogActionButtonStyle}"
-                                    Margin="0,0,12,0" />
-                            <TextBox x:Name="PART_RenameBox"
-                                     Grid.Column="2"
-                                     VerticalContentAlignment="Center"
-                                     Padding="6,4"
-                                     Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
-                                     BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
-                                     Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}"
-                                     Margin="0,0,6,0" />
-                            <Button x:Name="PART_RenameButton"
+                                    Style="{StaticResource OptionsDialogActionButtonStyle}" />
+                            <Button x:Name="PART_EditButton"
                                     Grid.Column="3"
-                                    Content="Rename"
+                                    Content="Edit…"
                                     Style="{StaticResource OptionsDialogActionButtonStyle}" />
                         </Grid>
                     </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ============================================================
+         RibbonCustomizeEditDialog — the small per-target edit modal
+         opened by the customize page's Edit… button: name (always),
+         icon + layout (custom groups), size (custom-group commands).
+         Same chrome recipe as the options dialog (custom white title
+         bar, close-only, DWM rounded corners from code).
+         ============================================================ -->
+    <Style TargetType="{x:Type controls:RibbonCustomizeEditDialog}">
+        <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}" />
+        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+        <Setter Property="WindowChrome.WindowChrome">
+            <Setter.Value>
+                <WindowChrome CaptionHeight="34"
+                              GlassFrameThickness="0"
+                              ResizeBorderThickness="0"
+                              CornerRadius="0"
+                              UseAeroCaptionButtons="False" />
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type controls:RibbonCustomizeEditDialog}">
+                    <ControlTemplate.Resources>
+                        <Style x:Key="EditDialogLabelStyle" TargetType="{x:Type TextBlock}">
+                            <Setter Property="FontSize" Value="12" />
+                            <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
+                            <Setter Property="Margin" Value="0,0,0,4" />
+                        </Style>
+                    </ControlTemplate.Resources>
+                    <AdornerDecorator>
+                        <Border Background="{TemplateBinding Background}">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="34" />
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <!-- Title bar: Title left (no icon), Close only -->
+                                <Grid Grid.Row="0" Background="Transparent">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0"
+                                               Text="{TemplateBinding Title}"
+                                               FontSize="12"
+                                               VerticalAlignment="Center"
+                                               Margin="14,0,0,0"
+                                               TextTrimming="CharacterEllipsis"
+                                               Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+                                    <Button x:Name="PART_CloseButton"
+                                            Grid.Column="1"
+                                            WindowChrome.IsHitTestVisibleInChrome="True"
+                                            Style="{StaticResource OptionsDialogCloseButtonStyle}"
+                                            ToolTip="Close" />
+                                </Grid>
+
+                                <!-- Sections; the control collapses the ones that don't
+                                     apply to the current target. -->
+                                <StackPanel Grid.Row="1" Margin="16,8,16,4">
+                                    <TextBlock Text="Name:" Style="{StaticResource EditDialogLabelStyle}" />
+                                    <TextBox x:Name="PART_NameBox"
+                                             VerticalContentAlignment="Center"
+                                             Padding="6,5"
+                                             Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
+                                             BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
+                                             Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}"
+                                             Margin="0,0,0,12" />
+
+                                    <StackPanel x:Name="PART_IconSection" Margin="0,0,0,12">
+                                        <TextBlock Text="Icon (from this ribbon's commands):"
+                                                   Style="{StaticResource EditDialogLabelStyle}" />
+                                        <ListBox x:Name="PART_IconList"
+                                                 MaxHeight="150"
+                                                 Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
+                                                 BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
+                                                 BorderThickness="1"
+                                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                            <ListBox.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <WrapPanel />
+                                                </ItemsPanelTemplate>
+                                            </ListBox.ItemsPanel>
+                                            <ListBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Grid Width="36" Height="36">
+                                                        <Image Source="{Binding Icon}"
+                                                               Width="20" Height="20"
+                                                               HorizontalAlignment="Center"
+                                                               VerticalAlignment="Center" />
+                                                        <TextBlock Text="None"
+                                                                   FontSize="10"
+                                                                   HorizontalAlignment="Center"
+                                                                   VerticalAlignment="Center"
+                                                                   Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="{x:Type TextBlock}">
+                                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsNone}" Value="True">
+                                                                            <Setter Property="Visibility" Value="Visible" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ListBox.ItemTemplate>
+                                        </ListBox>
+                                    </StackPanel>
+
+                                    <StackPanel x:Name="PART_LayoutSection" Margin="0,0,0,12">
+                                        <TextBlock Text="Group layout:" Style="{StaticResource EditDialogLabelStyle}" />
+                                        <ComboBox x:Name="PART_LayoutBox" />
+                                    </StackPanel>
+
+                                    <StackPanel x:Name="PART_SizeSection" Margin="0,0,0,12">
+                                        <TextBlock Text="Button size:" Style="{StaticResource EditDialogLabelStyle}" />
+                                        <ComboBox x:Name="PART_SizeBox" />
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <!-- Action buttons -->
+                                <Border Grid.Row="2"
+                                        BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}"
+                                        BorderThickness="0,1,0,0">
+                                    <StackPanel Orientation="Horizontal"
+                                                HorizontalAlignment="Right"
+                                                Margin="16,10,16,10">
+                                        <Button x:Name="PART_OkButton"
+                                                Content="OK"
+                                                IsDefault="True"
+                                                Style="{StaticResource OptionsDialogPrimaryButtonStyle}" />
+                                        <Button x:Name="PART_CancelButton"
+                                                Content="Cancel"
+                                                IsCancel="True"
+                                                Margin="8,0,0,0"
+                                                Style="{StaticResource OptionsDialogActionButtonStyle}" />
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+                        </Border>
+                    </AdornerDecorator>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>

@@ -497,6 +497,35 @@ New Group / Rename under the tree. Implements `IRibbonFillPage`.
 - **Still deferred:** persistence (serialize layout + QAT; enables Reset/Import/Export),
   drag-drop in the tree, moving groups across tabs.
 
+**Round 2 (user-verified round 1, then requested):**
+
+- **Proxy label fix:** small-sized sources (B/I/U) have no `Header`, so Medium/Large proxies
+  were label-less. Proxies now derive a label from the ScreenTip title with the trailing
+  "(Ctrl+B)"-style shortcut stripped (`StripShortcutSuffix`) — label "Bold", tooltip keeps
+  the full title. Proxies also copy `LargeIcon` now (needed for the Large layout).
+- **`RibbonGroup.Layout`** (DP + `RibbonGroupLayout` enum): `Default` (content-driven, never
+  forces anything — built-ins safe), `Stacked` (vertical-wrap panel → 3-row columns;
+  items Medium/Small), `Large` (horizontal row; items forced Large). Setting it swaps the
+  ItemsPanel and normalizes direct items' sizes (`NormalizeItemSize`: Large layout → Large;
+  Stacked demotes Large→Medium, preserves Medium/Small). New custom groups set `Stacked`
+  explicitly (the enum's `Default` default means the change callback fires). Add-command
+  proxies size to the target group's layout.
+- **Edit dialog** (`RibbonCustomizeEditDialog`, replaces the cramped inline rename row —
+  the "Edit…" button under the tree): a small `SizeToContent=Height` modal with the same
+  chrome recipe as the options dialog (white close-only title bar, DWM rounded corners).
+  Per-target sections: name (always; built-in tabs/groups = name-only, like Office);
+  custom groups add an **icon picker harvested from the ribbon's own icons**
+  (`RibbonCommandCatalog.CollectIcons`, + "no icon"; user-chosen: self-contained over
+  app-supplied) and the **layout choice** (Stacked/Large — user chose the two-layout set);
+  custom-group commands add **button size** (Medium/Small), shown locked to "Large" when
+  the group's layout is Large. Office fun fact honored: Office's own "Rename" dialog for
+  custom groups is secretly this (it has a symbol picker).
+  - **Sizing fix (user-hit):** `SizeToContent=Height` + `WindowStyle=None` + WindowChrome
+    **collapsed the dialog width** to ~nothing (WPF mis-measures a custom-chrome window's
+    size). Replaced with a fixed `Width=460` and a `Height` derived in `OnSourceInitialized`
+    from which sections are enabled (base + icon/layout/size adders) — deterministic, no
+    SizeToContent.
+
 ## 4. Workflow / Session Conventions
 
 - Cloud workspace: `/home/user/ribbonkit/`. The user's machine:
@@ -522,9 +551,10 @@ editor layout).
 
 Still to check: the §3.14 XAML **design-time** preview (active tab + backstage) on the
 VS/Blend surface — a designer-only check (does the designer honor the `d:` attributes and
-render the design host); and the new §3.16 "Customize the Ribbon" page, which ships unbuilt
-and needs a first build/run pass (tree rendering + checkbox visibility, tab/group reorder,
-New Tab/New Group/Rename, add/remove proxies in custom groups, last-visible-tab guard).
+render the design host); and §3.16 **round 2** (the round-1 page itself is user-verified):
+proxy labels from small sources, the Edit… dialog (name/icon/layout/size per target),
+group layout switching Stacked↔Large with size normalization, and add-proxy sizing in
+Large-layout groups.
 
 Backlog (rough priority):
 

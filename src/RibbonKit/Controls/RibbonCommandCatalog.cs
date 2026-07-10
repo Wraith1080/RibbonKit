@@ -120,4 +120,35 @@ internal static class RibbonCommandCatalog
         !string.IsNullOrWhiteSpace(header) ? header
         : !string.IsNullOrWhiteSpace(screenTipTitle) ? screenTipTitle
         : "(command)";
+
+    /// <summary>
+    /// Every distinct icon the ribbon already uses (command icons + group icons), for the
+    /// custom-group icon picker — self-contained and automatically app-consistent.
+    /// </summary>
+    internal static List<ImageSource> CollectIcons(Ribbon ribbon)
+    {
+        var icons = new List<ImageSource>();
+
+        void Add(ImageSource? icon)
+        {
+            if (icon is not null && !icons.Contains(icon))
+            {
+                icons.Add(icon);
+            }
+        }
+
+        foreach (RibbonTab tab in ribbon.Tabs)
+        {
+            foreach (RibbonGroup group in tab.Groups)
+            {
+                Add(group.Icon);
+                foreach (FrameworkElement control in CollectControls(group))
+                {
+                    Add(Describe(control).Icon);
+                }
+            }
+        }
+
+        return icons;
+    }
 }

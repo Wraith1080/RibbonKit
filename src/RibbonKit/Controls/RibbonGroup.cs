@@ -14,6 +14,24 @@ using RibbonGroupAutomationPeer = RibbonKit.Automation.RibbonGroupAutomationPeer
 namespace RibbonKit.Controls;
 
 /// <summary>
+/// How a group lays out DIRECT command items (the proxies in user-created custom groups —
+/// see <see cref="RibbonCustomizePage"/>). Built-in groups keep <see cref="Default"/>:
+/// their layout comes from their own hand-composed content, which this property never
+/// overrides.
+/// </summary>
+public enum RibbonGroupLayout
+{
+    /// <summary>Content-driven — the group's own panels decide. Never forced.</summary>
+    Default,
+
+    /// <summary>Items wrap vertically into 3-row columns; each item may be Medium or Small.</summary>
+    Stacked,
+
+    /// <summary>One horizontal row of Large buttons; item sizes are locked to Large.</summary>
+    Large,
+}
+
+/// <summary>
 /// A labeled group of controls inside a <see cref="RibbonTab"/>. Renders its items in
 /// a row with the group name underneath and a separator on its right edge. When ribbon
 /// width runs out, the group collapses to a single button whose flyout shows the full
@@ -109,6 +127,14 @@ public class RibbonGroup : HeaderedItemsControl
             typeof(RibbonGroup),
             new FrameworkPropertyMetadata(true, OnLayoutPolicyChanged));
 
+    /// <summary>Identifies the <see cref="Layout"/> dependency property.</summary>
+    public static readonly DependencyProperty LayoutProperty =
+        DependencyProperty.Register(
+            nameof(Layout),
+            typeof(RibbonGroupLayout),
+            typeof(RibbonGroup),
+            new FrameworkPropertyMetadata(RibbonGroupLayout.Default, OnGroupLayoutChanged));
+
     private Decorator? _normalHost;
     private Border? _popupHost;
     private Popup? _popup;
@@ -189,6 +215,84 @@ public class RibbonGroup : HeaderedItemsControl
     {
         get => (bool)GetValue(CanResizeProperty);
         set => SetValue(CanResizeProperty, value);
+    }
+
+    /// <summary>
+    /// The canned layout for DIRECT command items — meaningful for user-created custom
+    /// groups whose items are proxy buttons. Setting <see cref="RibbonGroupLayout.Stacked"/>
+    /// or <see cref="RibbonGroupLayout.Large"/> swaps the items panel and normalizes the
+    /// items' sizes to what the layout allows. <see cref="RibbonGroupLayout.Default"/>
+    /// (the default) never touches anything, so built-in groups are unaffected.
+    /// </summary>
+    public RibbonGroupLayout Layout
+    {
+        get => (RibbonGroupLayout)GetValue(LayoutProperty);
+        set => SetValue(LayoutProperty, value);
+    }
+
+    private static void OnGroupLayoutChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
+        ((RibbonGroup)d).ApplyGroupLayout((RibbonGroupLayout)e.NewValue);
+
+    private void ApplyGroupLayout(RibbonGroupLayout layout)
+    {
+        if (layout == RibbonGroupLayout.Default)
+        {
+            return; // Content-driven: never force a panel onto hand-composed content.
+        }
+
+        // Panel: Large = one horizontal row; Stacked = vertical wrap into 3-row columns
+        // (bounded by the groups-row height, so overflow starts a new column).
+        FrameworkElementFactory panel;
+        if (layout == RibbonGroupLayout.Large)
+        {
+            panel = new FrameworkElementFactory(typeof(StackPanel));
+            panel.SetValue(StackPanel.OrientationProperty, Orientation.Horizontal);
+        }
+        else
+        {
+            panel = new FrameworkElementFactory(typeof(WrapPanel));
+            panel.SetValue(WrapPanel.OrientationProperty, Orientation.Vertical);
+        }
+
+        ItemsPanel = new ItemsPanelTemplate(panel);
+
+        foreach (object item in Items)
+        {
+            NormalizeItemSize(item, layout);
+        }
+    }
+
+    /// <summary>
+    /// Clamps a direct command item's size to what <paramref name="layout"/> allows:
+    /// Large layout forces Large; Stacked demotes Large to Medium but preserves a chosen
+    /// Medium/Small.
+    /// </summary>
+    internal static void NormalizeItemSize(object item, RibbonGroupLayout layout)
+    {
+        void Apply(RibbonControlSize current, Action<RibbonControlSize> set)
+        {
+            if (layout == RibbonGroupLayout.Large)
+            {
+                set(RibbonControlSize.Large);
+            }
+            else if (current == RibbonControlSize.Large)
+            {
+                set(RibbonControlSize.Medium);
+            }
+        }
+
+        switch (item)
+        {
+            case RibbonButton button:
+                Apply(button.Size, s => button.Size = s);
+                break;
+            case RibbonToggleButton toggle:
+                Apply(toggle.Size, s => toggle.Size = s);
+                break;
+            case RibbonDropDownButton dropDown: // covers RibbonSplitButton
+                Apply(dropDown.Size, s => dropDown.Size = s);
+                break;
+        }
     }
 
     internal void SetSizeState(RibbonGroupSizeState state) => SetValue(SizeStatePropertyKey, state);

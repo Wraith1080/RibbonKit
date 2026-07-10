@@ -331,7 +331,11 @@ public class Ribbon : Control
                 {
                     Size = size,
                     Icon = toggle.Icon ?? toggle.LargeIcon,
-                    Header = toggle.Header,
+                    LargeIcon = toggle.LargeIcon ?? toggle.Icon,
+                    // Small-sized sources often have no Header (icon-only); fall back to the
+                    // ScreenTip title minus its "(Ctrl+B)"-style shortcut, so a Medium/Large
+                    // proxy still gets a label.
+                    Header = toggle.Header ?? StripShortcutSuffix(toggle.ScreenTipTitle),
                     ScreenTipTitle = toggle.ScreenTipTitle ?? toggle.Header,
                     ScreenTipText = toggle.ScreenTipText,
                 };
@@ -350,7 +354,7 @@ public class Ribbon : Control
             {
                 // Invoke the split's PRIMARY action (KeyTipService routes through the
                 // control's UIA Invoke pattern, which calls AutomationInvokePrimary).
-                var proxyButton = MakeProxyButton(size, split.Icon ?? split.LargeIcon, split.Header, split.ScreenTipTitle, split.ScreenTipText);
+                var proxyButton = MakeProxyButton(size, split.Icon ?? split.LargeIcon, split.LargeIcon ?? split.Icon, split.Header, split.ScreenTipTitle, split.ScreenTipText);
                 proxyButton.Click += (_, _) => KeyTipService.InvokeControl(split);
                 proxy = proxyButton;
                 break;
@@ -360,7 +364,7 @@ public class Ribbon : Control
             {
                 // v1 limitation: the menu opens at the SOURCE control's ribbon location (the
                 // popup is placed relative to it), not at the QAT proxy.
-                var proxyButton = MakeProxyButton(size, dropDown.Icon ?? dropDown.LargeIcon, dropDown.Header, dropDown.ScreenTipTitle, dropDown.ScreenTipText);
+                var proxyButton = MakeProxyButton(size, dropDown.Icon ?? dropDown.LargeIcon, dropDown.LargeIcon ?? dropDown.Icon, dropDown.Header, dropDown.ScreenTipTitle, dropDown.ScreenTipText);
                 proxyButton.Click += (_, _) =>
                     dropDown.SetCurrentValue(RibbonDropDownButton.IsDropDownOpenProperty, true);
                 proxy = proxyButton;
@@ -369,7 +373,7 @@ public class Ribbon : Control
 
             case RibbonButton button:
             {
-                var proxyButton = MakeProxyButton(size, button.Icon ?? button.LargeIcon, button.Header, button.ScreenTipTitle, button.ScreenTipText);
+                var proxyButton = MakeProxyButton(size, button.Icon ?? button.LargeIcon, button.LargeIcon ?? button.Icon, button.Header, button.ScreenTipTitle, button.ScreenTipText);
                 proxyButton.Click += (_, _) => KeyTipService.InvokeControl(button);
                 proxy = proxyButton;
                 break;
@@ -378,7 +382,7 @@ public class Ribbon : Control
             default:
             {
                 // Unknown control type: generic proxy that invokes via UIA patterns.
-                var proxyButton = MakeProxyButton(size, null, null, source.ToString(), null);
+                var proxyButton = MakeProxyButton(size, null, null, null, source.ToString(), null);
                 proxyButton.Click += (_, _) => KeyTipService.InvokeControl(source);
                 proxy = proxyButton;
                 break;
@@ -390,15 +394,38 @@ public class Ribbon : Control
     }
 
     private static RibbonButton MakeProxyButton(
-        RibbonControlSize size, System.Windows.Media.ImageSource? icon, string? header, string? tipTitle, string? tipText) =>
+        RibbonControlSize size,
+        System.Windows.Media.ImageSource? icon,
+        System.Windows.Media.ImageSource? largeIcon,
+        string? header,
+        string? tipTitle,
+        string? tipText) =>
         new()
         {
             Size = size,
             Icon = icon,
-            Header = header,
+            LargeIcon = largeIcon,
+            // Small-sized sources often have no Header (icon-only); derive one from the
+            // ScreenTip title minus its "(Ctrl+B)"-style shortcut suffix.
+            Header = header ?? StripShortcutSuffix(tipTitle),
             ScreenTipTitle = tipTitle ?? header,
             ScreenTipText = tipText,
         };
+
+    /// <summary>"Bold (Ctrl+B)" → "Bold": drops one trailing parenthesized suffix, the common
+    /// shortcut convention in ScreenTip titles, when deriving a label from one.</summary>
+    private static string? StripShortcutSuffix(string? tipTitle)
+    {
+        if (string.IsNullOrWhiteSpace(tipTitle))
+        {
+            return tipTitle;
+        }
+
+        int open = tipTitle.LastIndexOf(" (", StringComparison.Ordinal);
+        return open > 0 && tipTitle.EndsWith(")", StringComparison.Ordinal)
+            ? tipTitle[..open]
+            : tipTitle;
+    }
 
     /// <summary>
     /// Right-clicking a command control in a ribbon group offers "Add to Quick Access

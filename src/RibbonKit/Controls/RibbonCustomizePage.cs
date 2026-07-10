@@ -164,8 +164,7 @@ public sealed class RibbonCustomizeNode : INotifyPropertyChanged
 [TemplatePart(Name = DownButtonPartName, Type = typeof(ButtonBase))]
 [TemplatePart(Name = NewTabButtonPartName, Type = typeof(ButtonBase))]
 [TemplatePart(Name = NewGroupButtonPartName, Type = typeof(ButtonBase))]
-[TemplatePart(Name = RenameBoxPartName, Type = typeof(TextBox))]
-[TemplatePart(Name = RenameButtonPartName, Type = typeof(ButtonBase))]
+[TemplatePart(Name = EditButtonPartName, Type = typeof(ButtonBase))]
 public class RibbonCustomizePage : Control, IRibbonFillPage
 {
     private const string AvailableListPartName = "PART_AvailableList";
@@ -176,8 +175,7 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
     private const string DownButtonPartName = "PART_DownButton";
     private const string NewTabButtonPartName = "PART_NewTabButton";
     private const string NewGroupButtonPartName = "PART_NewGroupButton";
-    private const string RenameBoxPartName = "PART_RenameBox";
-    private const string RenameButtonPartName = "PART_RenameButton";
+    private const string EditButtonPartName = "PART_EditButton";
 
     /// <summary>Identifies the <see cref="Ribbon"/> dependency property.</summary>
     public static readonly DependencyProperty RibbonProperty =
@@ -197,8 +195,7 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
     private ButtonBase? _downButton;
     private ButtonBase? _newTabButton;
     private ButtonBase? _newGroupButton;
-    private TextBox? _renameBox;
-    private ButtonBase? _renameButton;
+    private ButtonBase? _editButton;
     private RibbonCustomizeNode? _selectedNode;
 
     static RibbonCustomizePage()
@@ -230,7 +227,7 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
         Unhook(_downButton, OnDownClick);
         Unhook(_newTabButton, OnNewTabClick);
         Unhook(_newGroupButton, OnNewGroupClick);
-        Unhook(_renameButton, OnRenameClick);
+        Unhook(_editButton, OnEditClick);
         if (_tree is not null)
         {
             _tree.SelectedItemChanged -= OnTreeSelectionChanged;
@@ -239,11 +236,6 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
         if (_availableList is not null)
         {
             _availableList.SelectionChanged -= OnAvailableSelectionChanged;
-        }
-
-        if (_renameBox is not null)
-        {
-            _renameBox.KeyDown -= OnRenameBoxKeyDown;
         }
 
         base.OnApplyTemplate();
@@ -256,8 +248,7 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
         _downButton = GetTemplateChild(DownButtonPartName) as ButtonBase;
         _newTabButton = GetTemplateChild(NewTabButtonPartName) as ButtonBase;
         _newGroupButton = GetTemplateChild(NewGroupButtonPartName) as ButtonBase;
-        _renameBox = GetTemplateChild(RenameBoxPartName) as TextBox;
-        _renameButton = GetTemplateChild(RenameButtonPartName) as ButtonBase;
+        _editButton = GetTemplateChild(EditButtonPartName) as ButtonBase;
 
         Hook(_addButton, OnAddClick);
         Hook(_removeButton, OnRemoveClick);
@@ -265,7 +256,7 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
         Hook(_downButton, OnDownClick);
         Hook(_newTabButton, OnNewTabClick);
         Hook(_newGroupButton, OnNewGroupClick);
-        Hook(_renameButton, OnRenameClick);
+        Hook(_editButton, OnEditClick);
 
         if (_tree is not null)
         {
@@ -276,11 +267,6 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
         if (_availableList is not null)
         {
             _availableList.SelectionChanged += OnAvailableSelectionChanged;
-        }
-
-        if (_renameBox is not null)
-        {
-            _renameBox.KeyDown += OnRenameBoxKeyDown;
         }
 
         RebuildAll();
@@ -422,20 +408,6 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
     private void OnTreeSelectionChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
     {
         _selectedNode = e.NewValue as RibbonCustomizeNode;
-
-        // Offer the raw header for renaming (the display header carries the "(Custom)" suffix).
-        if (_renameBox is not null)
-        {
-            _renameBox.Text = _selectedNode?.Item switch
-            {
-                RibbonTab tab => tab.Header?.ToString() ?? string.Empty,
-                RibbonGroup group => group.Header?.ToString() ?? string.Empty,
-                RibbonButton button => button.Header ?? string.Empty,
-                RibbonToggleButton toggle => toggle.Header ?? string.Empty,
-                _ => string.Empty,
-            };
-        }
-
         UpdateButtonStates();
     }
 
@@ -452,13 +424,19 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
         SetEnabled(_downButton, CanMove(node, +1));
         SetEnabled(_newTabButton, Ribbon is not null);
         SetEnabled(_newGroupButton, ResolveTab(node) is not null);
-        bool canRename = CanRename(node);
-        SetEnabled(_renameButton, canRename);
-        if (_renameBox is not null)
-        {
-            _renameBox.IsEnabled = canRename;
-        }
+        SetEnabled(_editButton, CanEdit(node));
     }
+
+    /// <summary>The selected item's raw header — the display header carries the "(Custom)"
+    /// suffix and must not be offered for editing.</summary>
+    private string RawHeaderOfSelection() => _selectedNode?.Item switch
+    {
+        RibbonTab tab => tab.Header?.ToString() ?? string.Empty,
+        RibbonGroup group => group.Header?.ToString() ?? string.Empty,
+        RibbonButton button => button.Header ?? string.Empty,
+        RibbonToggleButton toggle => toggle.Header ?? string.Empty,
+        _ => string.Empty,
+    };
 
     private static void SetEnabled(ButtonBase? button, bool enabled)
     {
@@ -501,12 +479,13 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
         return index >= 0 && target >= 0 && target < count;
     }
 
-    private bool CanRename(RibbonCustomizeNode? node) => node switch
+    // Tabs and groups are always editable (name-only for built-ins, like Office); commands
+    // only when they're PROXIES in a custom group — editing a built-in control would change
+    // the actual ribbon button.
+    private bool CanEdit(RibbonCustomizeNode? node) => node switch
     {
         { Kind: RibbonCustomizeNodeKind.Tab } => true,
         { Kind: RibbonCustomizeNodeKind.Group } => true,
-        // Only PROXY commands (custom-group members) are renameable — renaming a built-in
-        // control would change the actual ribbon button.
         { Kind: RibbonCustomizeNodeKind.Command, Parent.IsCustom: true } => true,
         _ => false,
     };
@@ -547,8 +526,12 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
             return;
         }
 
-        // Medium proxy: 16px icon + label, the natural size for custom groups (Office-like).
-        FrameworkElement proxy = ribbon.CreateCommandProxy(entry.Control, RibbonControlSize.Medium);
+        // Proxy size follows the target group's layout: Large layout → Large buttons;
+        // otherwise Medium (16px icon + label), the natural stacked-column size.
+        RibbonControlSize proxySize = group.Layout == RibbonGroupLayout.Large
+            ? RibbonControlSize.Large
+            : RibbonControlSize.Medium;
+        FrameworkElement proxy = ribbon.CreateCommandProxy(entry.Control, proxySize);
 
         // Insert after the selected command when one is selected, else append.
         int insertAt = _selectedNode is { Kind: RibbonCustomizeNodeKind.Command } commandNode
@@ -670,51 +653,122 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
         var group = new RibbonGroup { Header = "New Group" };
         Controls.Ribbon.SetIsCustom(group, true);
 
-        // Medium proxies wrap into columns (like Office's 3-row layout) instead of the
-        // default vertical StackPanel overflowing past the groups row.
-        var panel = new FrameworkElementFactory(typeof(WrapPanel));
-        panel.SetValue(WrapPanel.OrientationProperty, Orientation.Vertical);
-        group.ItemsPanel = new ItemsPanelTemplate(panel);
+        // Stacked applies the vertical-wrap items panel (3-row columns of Medium/Small
+        // proxies) via RibbonGroup.ApplyGroupLayout — the customize default, like Office.
+        group.Layout = RibbonGroupLayout.Stacked;
         return group;
     }
 
-    private void OnRenameBoxKeyDown(object sender, KeyEventArgs e)
+    /// <summary>
+    /// Opens the edit dialog for the selection. What's editable follows the target
+    /// (Office-style): built-in tabs/groups and custom tabs → name; custom groups → name +
+    /// icon (harvested from the ribbon's own icons) + layout; custom-group commands → name +
+    /// size, locked to Large when the group's layout is Large.
+    /// </summary>
+    private void OnEditClick(object sender, RoutedEventArgs e)
     {
-        if (e.Key == Key.Enter)
-        {
-            OnRenameClick(sender, e);
-            e.Handled = true;
-        }
-    }
-
-    private void OnRenameClick(object sender, RoutedEventArgs e)
-    {
-        string? name = _renameBox?.Text?.Trim();
-        if (string.IsNullOrEmpty(name) || _selectedNode is not { } node || !CanRename(node))
+        if (Ribbon is not { } ribbon || _selectedNode is not { } node || !CanEdit(node))
         {
             return;
         }
 
+        var dialog = new RibbonCustomizeEditDialog
+        {
+            Owner = Window.GetWindow(this),
+            Title = node.Kind switch
+            {
+                RibbonCustomizeNodeKind.Tab => "Edit Tab",
+                RibbonCustomizeNodeKind.Group => "Edit Group",
+                _ => "Edit Command",
+            },
+            ItemName = RawHeaderOfSelection(),
+        };
+
+        RibbonGroupLayout parentLayout = (node.Parent?.Item as RibbonGroup)?.Layout ?? RibbonGroupLayout.Default;
+        switch (node)
+        {
+            case { Kind: RibbonCustomizeNodeKind.Group, IsCustom: true } when node.Item is RibbonGroup group:
+                dialog.CanEditIcon = true;
+                dialog.IconChoices = RibbonCommandCatalog.CollectIcons(ribbon);
+                dialog.SelectedIcon = group.Icon;
+                dialog.CanEditLayout = true;
+                dialog.SelectedLayout = group.Layout;
+                break;
+
+            case { Kind: RibbonCustomizeNodeKind.Command, Parent.IsCustom: true }:
+                dialog.CanEditSize = true;
+                dialog.SizeLocked = parentLayout == RibbonGroupLayout.Large;
+                dialog.SelectedSize = node.Item switch
+                {
+                    RibbonButton b => b.Size,
+                    RibbonToggleButton t => t.Size,
+                    RibbonDropDownButton d => d.Size,
+                    _ => RibbonControlSize.Medium,
+                };
+                break;
+        }
+
+        if (dialog.ShowDialog() != true)
+        {
+            return;
+        }
+
+        ApplyEdit(node, dialog);
+        RebuildTree(selectItem: node.Item);
+        RebuildAvailableListOnly();
+    }
+
+    private static void ApplyEdit(RibbonCustomizeNode node, RibbonCustomizeEditDialog dialog)
+    {
+        string? name = dialog.ItemName;
         switch (node.Item)
         {
-            case RibbonTab tab:
+            case RibbonTab tab when !string.IsNullOrWhiteSpace(name):
                 tab.Header = name;
                 break;
             case RibbonGroup group:
-                group.Header = name;
+                if (!string.IsNullOrWhiteSpace(name))
+                {
+                    group.Header = name;
+                }
+
+                if (dialog.CanEditIcon)
+                {
+                    group.Icon = dialog.SelectedIcon;
+                }
+
+                if (dialog.CanEditLayout)
+                {
+                    // Applies the panel and normalizes the item sizes (see RibbonGroup.Layout).
+                    group.Layout = dialog.SelectedLayout;
+                }
+
                 break;
             case RibbonButton button:
-                button.Header = name;
+                if (!string.IsNullOrWhiteSpace(name))
+                {
+                    button.Header = name;
+                }
+
+                if (dialog.CanEditSize && !dialog.SizeLocked)
+                {
+                    button.Size = dialog.SelectedSize;
+                }
+
                 break;
             case RibbonToggleButton toggle:
-                toggle.Header = name;
-                break;
-            default:
-                return;
-        }
+                if (!string.IsNullOrWhiteSpace(name))
+                {
+                    toggle.Header = name;
+                }
 
-        RebuildTree(selectItem: node.Item);
-        RebuildAvailableListOnly();
+                if (dialog.CanEditSize && !dialog.SizeLocked)
+                {
+                    toggle.Size = dialog.SelectedSize;
+                }
+
+                break;
+        }
     }
 
     // Renames change the "Tab › Group › Command" paths shown on the left.
