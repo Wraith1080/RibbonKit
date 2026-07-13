@@ -80,7 +80,10 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
             nameof(IsDropDownOpen),
             typeof(bool),
             typeof(RibbonDropDownButton),
-            new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
+            new FrameworkPropertyMetadata(
+                false,
+                FrameworkPropertyMetadataOptions.BindsTwoWayByDefault,
+                OnIsDropDownOpenChanged));
 
     /// <summary>Identifies the <see cref="ScreenTipTitle"/> dependency property.</summary>
     public static readonly DependencyProperty ScreenTipTitleProperty =
@@ -101,6 +104,8 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
     private readonly PopupDismissHelper _dismissHelper;
     private UIElement? _menuHost;
     private Popup? _popup;
+    private RibbonDropDownButton? _borrowSource;
+    private bool _borrowed;
 
     static RibbonDropDownButton()
     {
@@ -204,6 +209,52 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
         }
     }
 
+    /// <summary>
+    /// Makes THIS dropdown a PROXY of <paramref name="source"/> (see
+    /// <see cref="Ribbon.CreateCommandProxy"/>): it's a real dropdown button living elsewhere
+    /// (the QAT / a custom group), with its OWN popup — so the flyout opens under the proxy and
+    /// toggles/dismisses correctly, unlike merely re-opening the source. It has no items of its
+    /// own; instead it BORROWS the source's menu items while open (moved in on open, returned on
+    /// close by <see cref="OnIsDropDownOpenChanged"/>). Borrowing (not sharing) avoids the
+    /// single-parent conflict — a <see cref="RibbonMenuItem"/> can only live in one dropdown — and
+    /// works even when the source's own tab isn't currently realized, since <see cref="Items"/> is
+    /// a logical collection independent of visual realization.
+    /// </summary>
+    internal void BorrowMenuFrom(RibbonDropDownButton source) => _borrowSource = source;
+
+    private static void OnIsDropDownOpenChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        var button = (RibbonDropDownButton)d;
+
+        // Borrow the source's items as the proxy OPENS — before the popup lays out, so it sizes to
+        // the real menu. (Returning them happens in OnPopupClosed, deferred, to avoid reparenting
+        // a menu item mid-click.) The _borrowed guard makes a quick close→reopen a no-op.
+        if ((bool)e.NewValue && button._borrowSource is { } source && !button._borrowed)
+        {
+            MoveItems(source, button);
+            button._borrowed = true;
+        }
+    }
+
+    private void ReturnBorrowedItems()
+    {
+        if (_borrowSource is { } source && _borrowed)
+        {
+            MoveItems(this, source);
+            _borrowed = false;
+        }
+    }
+
+    private static void MoveItems(RibbonDropDownButton from, RibbonDropDownButton to)
+    {
+        while (from.Items.Count > 0)
+        {
+            object item = from.Items[0];
+            from.Items.RemoveAt(0);
+            to.Items.Add(item);
+        }
+    }
+
     /// <inheritdoc />
     protected override AutomationPeer OnCreateAutomationPeer() => new RibbonDropDownButtonAutomationPeer(this);
 
@@ -240,7 +291,26 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
         RibbonMotion.PlayOpen(content, RibbonAnimationAction.DropdownMenu);
     }
 
-    private void OnPopupClosed(object? sender, EventArgs e) => _dismissHelper.OnClosed();
+    private void OnPopupClosed(object? sender, EventArgs e)
+    {
+        _dismissHelper.OnClosed();
+
+        // Return borrowed items AFTER the popup has closed and the UI thread is idle, so we never
+        // reparent a menu item while its click is still being dispatched. Deferred + guarded, so a
+        // fast close→reopen keeps the items in the proxy (the reopen re-checks IsDropDownOpen).
+        if (_borrowSource is not null && _borrowed)
+        {
+            Dispatcher.BeginInvoke(
+                System.Windows.Threading.DispatcherPriority.Background,
+                new Action(() =>
+                {
+                    if (!IsDropDownOpen)
+                    {
+                        ReturnBorrowedItems();
+                    }
+                }));
+        }
+    }
 
     private void OnMenuItemClicked(object sender, RoutedEventArgs e)
     {

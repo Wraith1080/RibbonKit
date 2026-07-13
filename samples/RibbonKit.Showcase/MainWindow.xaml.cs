@@ -203,6 +203,15 @@ public partial class MainWindow : RibbonWindow
     private void OnOpenOptions(object sender, RoutedEventArgs e) =>
         OpenOptionsDialog(OptionsPageKind.Editor);
 
+    // Backstage footer BUTTON items: they run an action instead of switching to a page.
+    private void OnBackstageOptions(object sender, RoutedEventArgs e)
+    {
+        MainRibbon.IsBackstageOpen = false; // leave the backstage, like Word
+        OpenOptionsDialog(OptionsPageKind.Editor);
+    }
+
+    private void OnBackstageExit(object sender, RoutedEventArgs e) => Close();
+
     // Raised by the ribbon's right-click "Customize Quick Access Toolbar…" items.
     private void OnCustomizeQuickAccess(object sender, EventArgs e) =>
         OpenOptionsDialog(OptionsPageKind.QuickAccess);

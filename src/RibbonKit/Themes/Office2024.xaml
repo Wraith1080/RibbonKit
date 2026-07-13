@@ -682,8 +682,10 @@
                                 <TextBlock Text="{TemplateBinding Header}"
                                            TextAlignment="Center"
                                            TextWrapping="Wrap"
+                                           TextTrimming="CharacterEllipsis"
                                            MaxWidth="76"
                                            MinHeight="32"
+                                           MaxHeight="48"
                                            Margin="0,4,0,0" />
                             </StackPanel>
                             <!-- Medium: 16px icon + label in a row -->
@@ -753,8 +755,9 @@
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.4" />
                         </Trigger>
-                        <!-- On a colored surface, hover with the surrounding band's brush
-                             (caption/tab hover) instead of the neutral control hover. -->
+                        <!-- On a colored surface, hover/press with the surrounding band's brushes
+                             (caption/tab) instead of the neutral control brushes. Pressed comes
+                             AFTER hover so it wins while the button is held. -->
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
                                 <Condition Property="IsMouseOver" Value="True" />
@@ -762,6 +765,14 @@
                             </MultiTrigger.Conditions>
                             <Setter TargetName="Chrome" Property="Background"
                                     Value="{Binding Path=(controls:Ribbon.QatHoverBackground), RelativeSource={RelativeSource TemplatedParent}}" />
+                        </MultiTrigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsPressed" Value="True" />
+                                <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="Chrome" Property="Background"
+                                    Value="{Binding Path=(controls:Ribbon.QatPressedBackground), RelativeSource={RelativeSource TemplatedParent}}" />
                         </MultiTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -841,8 +852,10 @@
                                 <TextBlock Text="{TemplateBinding Header}"
                                            TextAlignment="Center"
                                            TextWrapping="Wrap"
+                                           TextTrimming="CharacterEllipsis"
                                            MaxWidth="76"
                                            MinHeight="32"
+                                           MaxHeight="48"
                                            Margin="0,4,0,0" />
                             </StackPanel>
                             <StackPanel x:Name="MediumLayout"
@@ -858,13 +871,23 @@
                                            Margin="5,0,2,0"
                                            VerticalAlignment="Center" />
                             </StackPanel>
-                            <Image x:Name="SmallLayout"
-                                   Source="{TemplateBinding Icon}"
-                                   Width="16" Height="16"
-                                   Stretch="Uniform"
-                                   Margin="5,3"
-                                   VerticalAlignment="Center"
-                                   Visibility="Collapsed" />
+                            <Grid x:Name="SmallLayout"
+                                  Width="16" Height="16"
+                                  Margin="5,3"
+                                  VerticalAlignment="Center"
+                                  Visibility="Collapsed">
+                                <Image x:Name="SmallImage"
+                                       Source="{TemplateBinding Icon}"
+                                       Width="16" Height="16"
+                                       Stretch="Uniform" />
+                                <Rectangle x:Name="SmallImageTint" Width="16" Height="16"
+                                           Fill="#FFFFFF"
+                                           Visibility="Collapsed">
+                                    <Rectangle.OpacityMask>
+                                        <ImageBrush ImageSource="{Binding Icon, RelativeSource={RelativeSource TemplatedParent}}" />
+                                    </Rectangle.OpacityMask>
+                                </Rectangle>
+                            </Grid>
                         </Grid>
                     </Border>
                     <ControlTemplate.Triggers>
@@ -903,6 +926,37 @@
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.4" />
                         </Trigger>
+                        <!-- QAT on a colored surface: white silhouette icon, and band-based
+                             hover/pressed/checked so the toggle blends like the plain buttons.
+                             These come LAST so they win; checked/pressed after hover. -->
+                        <Trigger Property="controls:Ribbon.QatOnColoredSurface" Value="True">
+                            <Setter TargetName="SmallImage" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="SmallImageTint" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsMouseOver" Value="True" />
+                                <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="Chrome" Property="Background"
+                                    Value="{Binding Path=(controls:Ribbon.QatHoverBackground), RelativeSource={RelativeSource TemplatedParent}}" />
+                        </MultiTrigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsChecked" Value="True" />
+                                <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="Chrome" Property="Background"
+                                    Value="{Binding Path=(controls:Ribbon.QatPressedBackground), RelativeSource={RelativeSource TemplatedParent}}" />
+                        </MultiTrigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsPressed" Value="True" />
+                                <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="Chrome" Property="Background"
+                                    Value="{Binding Path=(controls:Ribbon.QatPressedBackground), RelativeSource={RelativeSource TemplatedParent}}" />
+                        </MultiTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
@@ -945,6 +999,27 @@
                                                         <Setter TargetName="Chrome" Property="Background"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
                                                     </Trigger>
+                                                    <!-- On a colored QAT surface, hover with the band's brush (matches
+                                                         RibbonButton) instead of the neutral gray. The checked (OPEN)
+                                                         state comes AFTER hover and uses the pressed brush, so the open
+                                                         dropdown holds ONE stable background regardless of IsMouseOver —
+                                                         which is what was flickering. -->
+                                                    <MultiTrigger>
+                                                        <MultiTrigger.Conditions>
+                                                            <Condition Property="IsMouseOver" Value="True" />
+                                                            <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
+                                                        </MultiTrigger.Conditions>
+                                                        <Setter TargetName="Chrome" Property="Background"
+                                                                Value="{Binding (controls:Ribbon.QatHoverBackground), RelativeSource={RelativeSource Self}}" />
+                                                    </MultiTrigger>
+                                                    <MultiTrigger>
+                                                        <MultiTrigger.Conditions>
+                                                            <Condition Property="IsChecked" Value="True" />
+                                                            <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
+                                                        </MultiTrigger.Conditions>
+                                                        <Setter TargetName="Chrome" Property="Background"
+                                                                Value="{Binding (controls:Ribbon.QatPressedBackground), RelativeSource={RelativeSource Self}}" />
+                                                    </MultiTrigger>
                                                 </ControlTemplate.Triggers>
                                             </ControlTemplate>
                                         </Setter.Value>
@@ -961,19 +1036,17 @@
                                            Width="32" Height="32"
                                            Stretch="Uniform"
                                            HorizontalAlignment="Center" />
-                                    <TextBlock Text="{TemplateBinding Header}"
-                                               TextAlignment="Center"
+                                    <!-- The dropdown chevron is INLINE at the end of the label (like
+                                         Word) after whitespace, so it wraps with the last word and
+                                         adds NO extra row — the button then matches a plain large
+                                         button's height instead of being taller. -->
+                                    <TextBlock TextAlignment="Center"
                                                TextWrapping="Wrap"
+                                               TextTrimming="CharacterEllipsis"
                                                MaxWidth="76"
                                                MinHeight="32"
-                                               Margin="0,4,0,0" />
-                                    <Path Data="M0,0 L3.5,3.5 L7,0"
-                                          Stroke="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
-                                          StrokeThickness="1.5"
-                                          StrokeStartLineCap="Round"
-                                          StrokeEndLineCap="Round"
-                                          HorizontalAlignment="Center"
-                                          Margin="0,3,0,0" />
+                                               MaxHeight="48"
+                                               Margin="0,4,0,0"><Run Text="{Binding Header, RelativeSource={RelativeSource TemplatedParent}}" /><Run FontFamily="Segoe MDL2 Assets" FontSize="9" Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" Text="  &#xE70D;" /></TextBlock>
                                 </StackPanel>
                                 <StackPanel x:Name="MediumLayout"
                                             Orientation="Horizontal"
@@ -1000,12 +1073,24 @@
                                             Margin="3,0"
                                             VerticalAlignment="Center"
                                             Visibility="Collapsed">
-                                    <Image Source="{TemplateBinding Icon}"
-                                           Width="16" Height="16"
-                                           Stretch="Uniform"
-                                           Margin="2,3"
-                                           VerticalAlignment="Center" />
-                                    <Path Data="M0,0 L3.5,3.5 L7,0"
+                                    <!-- Two renderings: the normal colour icon, and a flat white
+                                         silhouette shown when the QAT sits on a colored surface
+                                         (accent title bar / strip) — matches RibbonButton. -->
+                                    <Grid Width="16" Height="16" Margin="2,3" VerticalAlignment="Center">
+                                        <Image x:Name="SmallImage"
+                                               Source="{TemplateBinding Icon}"
+                                               Width="16" Height="16"
+                                               Stretch="Uniform" />
+                                        <Rectangle x:Name="SmallImageTint" Width="16" Height="16"
+                                                   Fill="#FFFFFF"
+                                                   Visibility="Collapsed">
+                                            <Rectangle.OpacityMask>
+                                                <ImageBrush ImageSource="{Binding Icon, RelativeSource={RelativeSource TemplatedParent}}" />
+                                            </Rectangle.OpacityMask>
+                                        </Rectangle>
+                                    </Grid>
+                                    <Path x:Name="SmallChevron"
+                                          Data="M0,0 L3.5,3.5 L7,0"
                                           Stroke="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
                                           StrokeThickness="1.5"
                                           StrokeStartLineCap="Round"
@@ -1050,6 +1135,12 @@
                         <Trigger Property="Size" Value="Small">
                             <Setter TargetName="LargeLayout" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="SmallLayout" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <!-- QAT on a colored surface: white silhouette icon + white chevron. -->
+                        <Trigger Property="controls:Ribbon.QatOnColoredSurface" Value="True">
+                            <Setter TargetName="SmallImage" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="SmallImageTint" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="SmallChevron" Property="Stroke" Value="#FFFFFF" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.4" />
@@ -1102,6 +1193,22 @@
                                                         <Setter TargetName="Chrome" Property="Background"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
                                                     </Trigger>
+                                                    <MultiTrigger>
+                                                        <MultiTrigger.Conditions>
+                                                            <Condition Property="IsMouseOver" Value="True" />
+                                                            <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
+                                                        </MultiTrigger.Conditions>
+                                                        <Setter TargetName="Chrome" Property="Background"
+                                                                Value="{Binding (controls:Ribbon.QatHoverBackground), RelativeSource={RelativeSource Self}}" />
+                                                    </MultiTrigger>
+                                                    <MultiTrigger>
+                                                        <MultiTrigger.Conditions>
+                                                            <Condition Property="IsPressed" Value="True" />
+                                                            <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
+                                                        </MultiTrigger.Conditions>
+                                                        <Setter TargetName="Chrome" Property="Background"
+                                                                Value="{Binding (controls:Ribbon.QatPressedBackground), RelativeSource={RelativeSource Self}}" />
+                                                    </MultiTrigger>
                                                 </ControlTemplate.Triggers>
                                             </ControlTemplate>
                                         </Setter.Value>
@@ -1121,8 +1228,10 @@
                                     <TextBlock Text="{TemplateBinding Header}"
                                                TextAlignment="Center"
                                                TextWrapping="Wrap"
+                                               TextTrimming="CharacterEllipsis"
                                                MaxWidth="76"
                                                MinHeight="32"
+                                               MaxHeight="48"
                                                Margin="0,4,0,0" />
                                 </StackPanel>
                                 <StackPanel x:Name="MediumLayout"
@@ -1138,13 +1247,23 @@
                                                Margin="5,0,2,0"
                                                VerticalAlignment="Center" />
                                 </StackPanel>
-                                <Image x:Name="SmallLayout"
-                                       Source="{TemplateBinding Icon}"
-                                       Width="16" Height="16"
-                                       Stretch="Uniform"
-                                       Margin="5,3"
-                                       VerticalAlignment="Center"
-                                       Visibility="Collapsed" />
+                                <Grid x:Name="SmallLayout"
+                                      Width="16" Height="16"
+                                      Margin="5,3"
+                                      VerticalAlignment="Center"
+                                      Visibility="Collapsed">
+                                    <Image x:Name="SmallImage"
+                                           Source="{TemplateBinding Icon}"
+                                           Width="16" Height="16"
+                                           Stretch="Uniform" />
+                                    <Rectangle x:Name="SmallImageTint" Width="16" Height="16"
+                                               Fill="#FFFFFF"
+                                               Visibility="Collapsed">
+                                        <Rectangle.OpacityMask>
+                                            <ImageBrush ImageSource="{Binding Icon, RelativeSource={RelativeSource TemplatedParent}}" />
+                                        </Rectangle.OpacityMask>
+                                    </Rectangle>
+                                </Grid>
                             </Grid>
                         </Button>
                         <ToggleButton x:Name="PART_Toggle"
@@ -1161,7 +1280,8 @@
                                                         CornerRadius="{DynamicResource RibbonKit.Metrics.SplitRightCornerRadius}"
                                                         Margin="0,1,1,1"
                                                         SnapsToDevicePixels="True">
-                                                    <Path Data="M0,0 L3.5,3.5 L7,0"
+                                                    <Path x:Name="ToggleChevron"
+                                                          Data="M0,0 L3.5,3.5 L7,0"
                                                           Stroke="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
                                                           StrokeThickness="1.5"
                                                           StrokeStartLineCap="Round"
@@ -1178,6 +1298,26 @@
                                                         <Setter TargetName="Chrome" Property="Background"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
                                                     </Trigger>
+                                                    <!-- Colored QAT surface: white chevron + band hover/open state. -->
+                                                    <Trigger Property="controls:Ribbon.QatOnColoredSurface" Value="True">
+                                                        <Setter TargetName="ToggleChevron" Property="Stroke" Value="#FFFFFF" />
+                                                    </Trigger>
+                                                    <MultiTrigger>
+                                                        <MultiTrigger.Conditions>
+                                                            <Condition Property="IsMouseOver" Value="True" />
+                                                            <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
+                                                        </MultiTrigger.Conditions>
+                                                        <Setter TargetName="Chrome" Property="Background"
+                                                                Value="{Binding (controls:Ribbon.QatHoverBackground), RelativeSource={RelativeSource Self}}" />
+                                                    </MultiTrigger>
+                                                    <MultiTrigger>
+                                                        <MultiTrigger.Conditions>
+                                                            <Condition Property="IsChecked" Value="True" />
+                                                            <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
+                                                        </MultiTrigger.Conditions>
+                                                        <Setter TargetName="Chrome" Property="Background"
+                                                                Value="{Binding (controls:Ribbon.QatPressedBackground), RelativeSource={RelativeSource Self}}" />
+                                                    </MultiTrigger>
                                                 </ControlTemplate.Triggers>
                                             </ControlTemplate>
                                         </Setter.Value>
@@ -1220,6 +1360,12 @@
                         <Trigger Property="Size" Value="Small">
                             <Setter TargetName="LargeLayout" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="SmallLayout" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <!-- QAT on a colored surface: white silhouette primary icon (chevron is
+                             whitened in the toggle's own template). -->
+                        <Trigger Property="controls:Ribbon.QatOnColoredSurface" Value="True">
+                            <Setter TargetName="SmallImage" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="SmallImageTint" Property="Visibility" Value="Visible" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.4" />
@@ -1455,7 +1601,7 @@
                         </Grid.ColumnDefinitions>
                         <Border x:Name="NavColumn" Grid.Column="0"
                                 Background="{DynamicResource RibbonKit.Brushes.Accent}">
-                            <DockPanel LastChildFill="False">
+                            <DockPanel LastChildFill="True">
                                 <Button x:Name="PART_BackButton"
                                         DockPanel.Dock="Top"
                                         Width="36" Height="36"
@@ -1498,9 +1644,14 @@
                                         </Style>
                                     </Button.Style>
                                 </Button>
-                                <TabPanel DockPanel.Dock="Top"
+                                <!-- Top items pack from the top, Bottom items pin to the bottom
+                                     (Word's Account / Options footer), with a divider between. The
+                                     bottom margin keeps footer items off the window's bottom edge. -->
+                                <controls:BackstageNavPanel
                                           IsItemsHost="True"
-                                          Background="Transparent" />
+                                          Background="Transparent"
+                                          Margin="0,0,0,14"
+                                          SeparatorBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type controls:Backstage}}}" />
                             </DockPanel>
                         </Border>
                         <Border x:Name="ContentArea" Grid.Column="1"

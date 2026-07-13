@@ -557,6 +557,40 @@
         </DrawingImage.Drawing>
     </DrawingImage>
 
+    <!-- Account: a person silhouette. -->
+    <DrawingImage x:Key="Icon.Account">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Brush="Transparent" Geometry="M0,0 H24 V24 H0 Z" />
+                <GeometryDrawing Brush="#5A6270">
+                    <GeometryDrawing.Geometry>
+                        <EllipseGeometry Center="12,8" RadiusX="4" RadiusY="4" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <GeometryDrawing Brush="#0F6CBD" Geometry="M4,20 C4,15.6 7.6,13 12,13 C16.4,13 20,15.6 20,20 Z" />
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <!-- Exit: a door with an out arrow. -->
+    <DrawingImage x:Key="Icon.Exit">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Brush="Transparent" Geometry="M0,0 H24 V24 H0 Z" />
+                <GeometryDrawing Geometry="M13,4 H6 A2,2 0 0 0 4,6 V18 A2,2 0 0 0 6,20 H13">
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="#5A6270" Thickness="2" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+                    </GeometryDrawing.Pen>
+                </GeometryDrawing>
+                <GeometryDrawing Geometry="M10,12 H20 M20,12 L16.5,8.5 M20,12 L16.5,15.5">
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="#0F6CBD" Thickness="2" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+                    </GeometryDrawing.Pen>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
     <!-- Sliders: adjust — three tracks with knobs. -->
     <DrawingImage x:Key="Icon.Sliders">
         <DrawingImage.Drawing>

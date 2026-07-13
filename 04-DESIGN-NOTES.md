@@ -632,6 +632,107 @@ Six nagging issues after persistence landed:
   NOT the Chrome border — a Chrome padding leaves an un-washed rim ("only the centre lights up").
   (Ribbon command buttons were already fine: `#E6E6E6` hover on the `#FFFFFF` ContentBackground.)
 
+### 3.19 Dropdown proxies (real dropdown that borrows the source's menu)
+
+Adding a `RibbonDropDownButton` (e.g. "Select") to the QAT or a custom group needs a proxy whose
+flyout drops under the PROXY, toggles/dismisses correctly, and works regardless of the source's
+tab. A first cut made the proxy a plain button that re-opened the SOURCE dropdown (optionally
+retargeting the source popup's `PlacementTarget`) — but that had two flaws: clicking the proxy
+re-fired "open" so it never toggled closed and the source's dismiss helper didn't recognise the
+proxy as its opener; and it depended on the source being realized, so a proxy in a custom group on
+another tab did nothing (the source's popup didn't exist).
+
+Fixed by making the proxy a **real `RibbonDropDownButton` with its own popup** that BORROWS the
+source's menu items while open:
+
+- `CreateCommandProxy` builds a `RibbonDropDownButton` (mirroring the source's icon/header/size/
+  ScreenTip) and calls `proxyDrop.BorrowMenuFrom(source)`. Being a real dropdown, it gets the
+  correct toggle (its `PART_Toggle` two-way-binds `IsDropDownOpen`), its own `PopupDismissHelper`,
+  and a popup placed under ITSELF — so placement, toggle-close, and light-dismiss all just work.
+- **Borrow, don't share.** A `RibbonMenuItem` is a single-parent UIElement, so it can't live in
+  two dropdowns. `OnIsDropDownOpenChanged` moves the source's items INTO the proxy as it opens
+  (before the popup lays out, so it sizes to the real menu); `OnPopupClosed` moves them back.
+  `Items` is a logical collection that exists whether or not the source's tab is realized, so this
+  works cross-tab — the fix for the custom-group case.
+- **Return is deferred + guarded.** Items are returned on a `DispatcherPriority.Background` post so
+  we never reparent a menu item mid-click-dispatch, and a `_borrowed` flag + an `IsDropDownOpen`
+  re-check make a fast close→reopen a no-op (items stay in the proxy) — no loss, no double-move.
+- Only one of {source, any proxy} shows the menu at a time (only one popup open at once), so the
+  source is whole whenever its proxy is closed.
+- **Split proxies now include the dropdown too.** A split-button QAT proxy is a real
+  `RibbonSplitButton`: its primary part invokes the source's primary action, and its chevron opens
+  the source's menu under the proxy (borrowed, same as the dropdown proxy). So the split's dropdown
+  IS in the QAT, matching Office.
+- **Colored-surface QAT tinting is unified across ALL button types.** `Ribbon.QatOnColoredSurface`
+  / `QatHoverBackground` / `QatPressedBackground` (new) are `Inherits` attached properties, so a
+  dropdown/split proxy's NESTED parts (opener toggle, split primary + chevron) read them in their
+  own templates. Every QAT button — RibbonButton, RibbonToggleButton, dropdown opener, split
+  primary + toggle — now white-outs its Small icon (and chevron) on a colored surface AND carries
+  a consistent set of state triggers: `IsMouseOver+colored → QatHoverBackground`, then
+  `IsPressed/IsChecked+colored → QatPressedBackground` LAST so the pressed/open/checked state wins
+  and holds ONE stable background. That last part fixed three bugs: (1) the **flicker** — an open
+  dropdown/split had no colored "open" state, so it flipped between the band hover and the neutral
+  gray checked box as `IsMouseOver` changed during the click; (2) **no pressed effect** on a colored
+  bar — the colored hover trigger used to win over the neutral pressed one, so nothing changed on
+  press; (3) the **toggle** (e.g. Bold) had NO colored treatment at all — dark icon on an opaque
+  light box. `QatPressedBackground` is set to `CaptionButton.PressedBackground` (title bar) so the
+  pressed/checked look matches the window's caption buttons.
+  - **Gotcha (nested parts must read the brush via `AncestorType`, not inheritance).** The nested
+    opener/primary/chevron read `QatHoverBackground`/`QatPressedBackground` from the proxy via
+    `RelativeSource AncestorType={x:Type controls:RibbonDropDownButton}` — NOT `RelativeSource Self`.
+    Those brushes are set on the proxy with `SetResourceReference`, and a resource-reference value
+    does NOT reliably propagate its resolved brush to inheriting template children (the plain bool
+    `QatOnColoredSurface` does, which is why the trigger still *fires*). With `Self` the setter got
+    `null`, and a `Border` with `Background=null` is NOT hit-testable — so on a WindowChrome title
+    bar the click fell THROUGH the button to the caption (drag/maximize) and no hover/press showed.
+    Reading the live value off the proxy fixes both. (RibbonButton was fine because it reads via
+    `TemplatedParent`, i.e. the proxy itself.)
+
+### 3.20 Large-button label: inline dropdown chevron + multi-line ellipsis
+
+- **Inline chevron (dropdown Large layout).** The Large `RibbonDropDownButton` drew its ▾ as a
+  separate `<Path>` ROW under the label, making the button taller than a plain large button (a
+  visible vertical offset in a mixed group). Now the chevron is part of the LABEL text — a Segoe
+  MDL2 `ChevronDown` (`&#xE70D;`) in a small trailing `<Run>` after two spaces — so it flows and
+  wraps with the last word (like Word) and adds no extra row. The button then matches a plain
+  large button's height. Medium/Small keep their inline Path (they're already horizontal, no
+  offset). Split-button's arrow is a separate side column, so it was never affected.
+- **Multi-line ellipsis (all large layouts).** Long labels wrapped past two lines and grew the
+  button unbounded. WPF `TextBlock` has no `MaxLines` (that's UWP), but `TextWrapping="Wrap"` +
+  `TextTrimming="CharacterEllipsis"` + a height cap gives multi-line ellipsis: it wraps up to the
+  cap, then ellipsizes the last visible line. Applied to RibbonButton / RibbonToggleButton /
+  RibbonSplitButton / RibbonDropDownButton large labels with `MaxHeight="48"` (≈3 lines at the
+  default ~12px font; `MinHeight="32"` still reserves 2). **Tradeoff:** the cap is a pixel height,
+  not an exact line count (fine at the current font; would need `MaxHeight` ∝ FontSize to be
+  font-independent), and allowing 3 lines lets a long-labelled button be taller than its 2-line
+  neighbours (Office usually caps at 2 for uniformity) — change the one `MaxHeight` to `32` for a
+  strict 2-line cap.
+
+### 3.21 Backstage: footer items, button items, design-time page preview
+
+- **Design-time page preview (#1).** `Backstage` is a `TabControl`, so `SelectedIndex` already
+  selects the previewed page — no new plumbing. Recipe: `d:IsBackstageOpen="True"` on the ribbon
+  (its design-time host renders the backstage on the surface) + `d:SelectedIndex="N"` on the
+  backstage. Documented on the `Backstage` summary; demoed in the showcase.
+- **Footer section (#2).** New `BackstageItemPlacement { Top, Bottom }` + a `BackstageTabItem.Placement`
+  property, and a custom `BackstageNavPanel : Panel` used as the `IsItemsHost` (replacing the plain
+  `TabPanel`). It packs Top items from the top and Bottom items from the bottom (Word's Account /
+  Options footer), drawing a subtle divider above the footer block (a `SeparatorBrush` bound to the
+  backstage Foreground, rendered at 0.25 opacity). All items stay in the one `TabControl`, so
+  selection is unchanged — only vertical arrangement differs. The nav `DockPanel` is now
+  `LastChildFill="True"` so the panel fills the column (letting bottom items reach the bottom).
+  Works for both designs (shared template; divider follows the design's foreground).
+- **Button items (#3).** `BackstageTabItem.IsButton` makes an item an ACTION, not a page: it gains
+  `Command`/`CommandParameter` and a `Click` routed event. `OnPreviewMouseLeftButtonDown` marks the
+  input handled (suppressing TabItem's bubbling selection) and calls `Activate()` (raise Click, run
+  Command); `OnKeyDown` does the same for Enter/Space. A safety net in `Backstage.OnSelectionChanged`
+  reverts selection off any button item (guarded against re-entrancy) so it can never become the
+  active page even via keyboard — and arrowing PAST one does nothing (invocation is click/Enter only).
+  Showcase: an "Account" footer page plus "Options" and "Exit" footer buttons (new Account/Exit icons).
+- **Deferred (#4): Tab-focus leak.** With the backstage open, Tab still reaches the ribbon behind the
+  adorner overlay — a focus-scoping fix over the adorner layer. Deferred by user agreement; likely
+  needs the background content made non-tab-reachable (or a focus trap) while the backstage is open.
+
 ## 4. Workflow / Session Conventions
 
 - Cloud workspace: `/home/user/ribbonkit/`. The user's machine:

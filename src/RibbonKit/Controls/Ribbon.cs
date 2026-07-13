@@ -104,7 +104,9 @@ public class Ribbon : Control
             "QatOnColoredSurface",
             typeof(bool),
             typeof(Ribbon),
-            new FrameworkPropertyMetadata(false));
+            // Inherits so a split/dropdown proxy's nested primary/chevron parts can read it too
+            // (their hover triggers live in nested templates, below the element the ribbon sets).
+            new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.Inherits));
 
     /// <summary>Sets the <see cref="QatOnColoredSurfaceProperty"/> for an element.</summary>
     public static void SetQatOnColoredSurface(DependencyObject element, bool value) =>
@@ -120,7 +122,7 @@ public class Ribbon : Control
             "QatHoverBackground",
             typeof(System.Windows.Media.Brush),
             typeof(Ribbon),
-            new FrameworkPropertyMetadata(null));
+            new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.Inherits));
 
     /// <summary>Sets the <see cref="QatHoverBackgroundProperty"/> for an element.</summary>
     public static void SetQatHoverBackground(DependencyObject element, System.Windows.Media.Brush? value) =>
@@ -129,6 +131,23 @@ public class Ribbon : Control
     /// <summary>Gets the <see cref="QatHoverBackgroundProperty"/> for an element.</summary>
     public static System.Windows.Media.Brush? GetQatHoverBackground(DependencyObject element) =>
         (System.Windows.Media.Brush?)element.GetValue(QatHoverBackgroundProperty);
+
+    /// <summary>Attached pressed/checked-background brush used by a QAT button on a colored surface,
+    /// so pressing/toggling shows a stable "active" state (matches the caption buttons).</summary>
+    public static readonly DependencyProperty QatPressedBackgroundProperty =
+        DependencyProperty.RegisterAttached(
+            "QatPressedBackground",
+            typeof(System.Windows.Media.Brush),
+            typeof(Ribbon),
+            new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.Inherits));
+
+    /// <summary>Sets the <see cref="QatPressedBackgroundProperty"/> for an element.</summary>
+    public static void SetQatPressedBackground(DependencyObject element, System.Windows.Media.Brush? value) =>
+        element.SetValue(QatPressedBackgroundProperty, value);
+
+    /// <summary>Gets the <see cref="QatPressedBackgroundProperty"/> for an element.</summary>
+    public static System.Windows.Media.Brush? GetQatPressedBackground(DependencyObject element) =>
+        (System.Windows.Media.Brush?)element.GetValue(QatPressedBackgroundProperty);
 
     /// <summary>Identifies the <see cref="SelectedTab"/> dependency property.</summary>
     public static readonly DependencyProperty SelectedTabProperty =
@@ -375,22 +394,40 @@ public class Ribbon : Control
 
             case RibbonSplitButton split:
             {
-                // Invoke the split's PRIMARY action (KeyTipService routes through the
-                // control's UIA Invoke pattern, which calls AutomationInvokePrimary).
-                var proxyButton = MakeProxyButton(size, split.Icon ?? split.LargeIcon, split.LargeIcon ?? split.Icon, split.Header, split.ScreenTipTitle, split.ScreenTipText);
-                proxyButton.Click += (_, _) => KeyTipService.InvokeControl(split);
-                proxy = proxyButton;
+                // A real split proxy: the primary part invokes the source's primary action, and
+                // the chevron opens the source's menu under the proxy (borrowed, like the dropdown
+                // proxy) — so the dropdown IS included in the QAT, matching Office.
+                var proxySplit = new RibbonSplitButton
+                {
+                    Size = size,
+                    Icon = split.Icon ?? split.LargeIcon,
+                    LargeIcon = split.LargeIcon ?? split.Icon,
+                    Header = split.Header ?? StripShortcutSuffix(split.ScreenTipTitle),
+                    ScreenTipTitle = split.ScreenTipTitle ?? split.Header,
+                    ScreenTipText = split.ScreenTipText,
+                };
+                proxySplit.Click += (_, _) => KeyTipService.InvokeControl(split);
+                proxySplit.BorrowMenuFrom(split);
+                proxy = proxySplit;
                 break;
             }
 
             case RibbonDropDownButton dropDown:
             {
-                // v1 limitation: the menu opens at the SOURCE control's ribbon location (the
-                // popup is placed relative to it), not at the QAT proxy.
-                var proxyButton = MakeProxyButton(size, dropDown.Icon ?? dropDown.LargeIcon, dropDown.LargeIcon ?? dropDown.Icon, dropDown.Header, dropDown.ScreenTipTitle, dropDown.ScreenTipText);
-                proxyButton.Click += (_, _) =>
-                    dropDown.SetCurrentValue(RibbonDropDownButton.IsDropDownOpenProperty, true);
-                proxy = proxyButton;
+                // A real dropdown proxy with its OWN popup: the flyout opens under the proxy and
+                // toggles/dismisses correctly, and it works even when the source's tab isn't
+                // realized. It borrows the source's menu items while open (see BorrowMenuFrom).
+                var proxyDrop = new RibbonDropDownButton
+                {
+                    Size = size,
+                    Icon = dropDown.Icon ?? dropDown.LargeIcon,
+                    LargeIcon = dropDown.LargeIcon ?? dropDown.Icon,
+                    Header = dropDown.Header ?? StripShortcutSuffix(dropDown.ScreenTipTitle),
+                    ScreenTipTitle = dropDown.ScreenTipTitle ?? dropDown.Header,
+                    ScreenTipText = dropDown.ScreenTipText,
+                };
+                proxyDrop.BorrowMenuFrom(dropDown);
+                proxy = proxyDrop;
                 break;
             }
 
@@ -919,6 +956,12 @@ public class Ribbon : Control
             : tabRowColored ? "RibbonKit.Brushes.Tab.HoverBackground"
             : null;
 
+        // Pressed/checked-state brush for the same colored surfaces (matches the caption buttons'
+        // pressed look on the title bar). Falls back to the hover brush on the tab strip.
+        string? pressedKey = titleBarColored ? "RibbonKit.Brushes.CaptionButton.PressedBackground"
+            : tabRowColored ? "RibbonKit.Brushes.Tab.HoverBackground"
+            : null;
+
         foreach (object entry in QuickAccessItems)
         {
             if (entry is not FrameworkElement element)
@@ -929,11 +972,21 @@ public class Ribbon : Control
             SetQatOnColoredSurface(element, colored);
             if (colored && hoverKey is not null)
             {
-                element.SetResourceReference(QatHoverBackgroundProperty, hoverKey);
+                // Resolve to CONCRETE brushes (not SetResourceReference). A DynamicResource
+                // reference set on the proxy does NOT propagate its resolved value through
+                // property-value inheritance to nested template parts (PART_Toggle/PART_Primary
+                // read it via RelativeSource Self) — they came back null. A plain SetValue does
+                // inherit. A null Background also makes the part's Chrome border non-hit-testable,
+                // so on the WindowChrome caption the hover trigger would drop the border out of
+                // hit-testing and the click fell through to the title bar. Resolve from the Ribbon
+                // (guaranteed connected to the theme resource scope; a QAT element may not be).
+                SetQatHoverBackground(element, TryFindResource(hoverKey) as System.Windows.Media.Brush);
+                SetQatPressedBackground(element, TryFindResource(pressedKey) as System.Windows.Media.Brush);
             }
             else
             {
                 element.ClearValue(QatHoverBackgroundProperty);
+                element.ClearValue(QatPressedBackgroundProperty);
             }
         }
     }

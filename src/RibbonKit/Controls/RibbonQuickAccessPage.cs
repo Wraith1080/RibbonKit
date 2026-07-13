@@ -150,7 +150,7 @@ public class RibbonQuickAccessPage : Control, IRibbonFillPage
 
     private void RebuildBothLists()
     {
-        ObserveRibbon(Ribbon);
+        ObserveRibbon(Ribbon)   ;
         RebuildAvailableList();
         RebuildCurrentList();
     }
