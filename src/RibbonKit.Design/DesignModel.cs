@@ -31,4 +31,48 @@ internal static class DesignModel
     /// </summary>
     public static void Add(ModelItem parent, string collectionProperty, ModelItem child) =>
         parent.Properties[collectionProperty].Collection.Add(child);
+
+    /// <summary>
+    /// Reorders <paramref name="item"/> within its parent's <paramref name="parentCollectionProperty"/>
+    /// collection by <paramref name="delta"/> (-1 = left/earlier, +1 = right/later). No-op at the ends.
+    /// </summary>
+    public static void Move(ModelItem item, string parentCollectionProperty, int delta)
+    {
+        ModelItem parent = item.Parent;
+        if (parent is null)
+        {
+            return;
+        }
+
+        ModelItemCollection collection = parent.Properties[parentCollectionProperty].Collection;
+        int from = collection.IndexOf(item);
+        int to = from + delta;
+        if (from < 0 || to < 0 || to >= collection.Count)
+        {
+            return;
+        }
+
+        using (ModelEditingScope scope = item.BeginEdit(delta < 0 ? "Move Left" : "Move Right"))
+        {
+            collection.Remove(item);
+            collection.Insert(to, item);
+            scope.Complete();
+        }
+    }
+
+    /// <summary>Removes <paramref name="item"/> from its parent's <paramref name="parentCollectionProperty"/> collection.</summary>
+    public static void Delete(ModelItem item, string parentCollectionProperty)
+    {
+        ModelItem parent = item.Parent;
+        if (parent is null)
+        {
+            return;
+        }
+
+        using (ModelEditingScope scope = item.BeginEdit("Delete"))
+        {
+            parent.Properties[parentCollectionProperty].Collection.Remove(item);
+            scope.Complete();
+        }
+    }
 }

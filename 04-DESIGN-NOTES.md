@@ -754,39 +754,72 @@ source's menu items while open:
   it's self-contained on the control and needs no open/close state on the ribbon. Only plain Tab was
   trapped (`ControlTabNavigation` left alone so the TabControl's Ctrl+Tab page switching is unchanged).
 
-### 3.22 Design-time smart tags / quick actions (XAML designer) — first cut
+### 3.22 Design-time smart tags / quick actions (XAML designer) — VERIFIED IN VS
 
 New `src/RibbonKit.Design/` project: **design-time only** tooling for the VS/Blend XAML
-designer (toolbox defaults + right-click "Add …" verbs for building a ribbon on the surface).
-Runtime is untouched — the demo app owns any runtime contextual UI.
+designer (toolbox defaults + right-click verbs for building a ribbon on the surface). Runtime is
+untouched — the demo app owns any runtime contextual UI. **All of the below is user-confirmed
+working in VS.**
 
-- **Targets the NEW (surface-isolation) WPF designer**, not the legacy .NET Framework one. That
-  dictated the whole shape: the design assembly targets **net472** (VS runs on .NET Framework),
-  outputs **`RibbonKit.DesignTools.dll`** (the new `*.designtools.dll` discovery convention — the
-  old one was `*.design.dll`), and is discovered from a **`Design` subfolder next to `RibbonKit.dll`**
-  (csproj `DeployToDesignFolder` target copies into both TFM output folders; NuGet path is
-  `lib/<tfm>/Design/`).
+**The architecture (the part that dictated everything):**
+
+- **Targets the NEW (surface-isolation) WPF designer**, not the legacy one. So the design assembly
+  targets **net472** (VS runs on .NET Framework), outputs **`RibbonKit.DesignTools.dll`** (the new
+  `*.designtools.dll` discovery convention — the old one was `*.design.dll`), and is discovered from
+  a **`Design` subfolder next to `RibbonKit.dll`** (csproj `DeployToDesignFolder` target copies into
+  both TFM output folders; NuGet path is `lib/<tfm>/Design/`). **`RibbonKit.Design` is NOT added to
+  the .sln** by default — build it once, then **close/reopen the designer** (it caches design assemblies).
 - **Process-isolated from the runtime controls**: the extension can't reference RibbonKit or use
-  `typeof` on control types. Everything is by **string type name** (`"RibbonKit.Controls.Ribbon"`)
-  and edits go through the **Model API** (`ModelItem`, `ModelEditingScope`, `ModelFactory.CreateItem`
-  with a `TypeIdentifier`), never live instances.
+  `typeof` on control types. Everything is by **string type name** and edits go through the **Model API**.
 - SDK: `Microsoft.VisualStudio.DesignTools.Extensibility` (namespaces
   `...Extensibility.{Metadata,Features,Model,Interaction}`). Registration = `[assembly: ProvideMetadata]`
   + `IProvideAttributeTable` / `AttributeTableBuilder.AddCustomAttributes(typeName, new FeatureAttribute(...))`.
-- Providers shipped: `RibbonDefaultInitializer : DefaultInitializer` (dropped Ribbon gets a "Home"
-  tab + "Group"); `ContextMenuProvider`s for Ribbon ("Add Tab"), RibbonTab ("Add Group"), RibbonGroup
-  ("Add Button/Toggle/Split/Drop-Down"). Content collections used: `Ribbon.Tabs → RibbonTab.Groups →
-  RibbonGroup.Items` (all `[ContentProperty]`, so `modelItem.Content.Collection.Add(...)`); button
-  caption is `Header`.
-- **Can only be validated in VS** (like §3.14) — the Linux box can't compile net472/designer code.
-  `SETUP-DESIGNTOOLS.md` has the setup steps + a "verify-in-VS" checklist for the ~4 API spots most
-  likely to need a one-line tweak (package version; the Interaction namespace; the
-  `ModelFactory.CreateItem`/`TypeIdentifier` line; and the group's `Items` collection if `.Content`
-  doesn't resolve for `HeaderedItemsControl`).
-- **Deferred to next cut** (by scope choice): `ParentAdapter` parenting rules (needs full
-  `CanParent`/`Parent`/`RemoveParent`, riskier to ship blind); the floating **smart-tag adorner panel**
-  (glyph + task list via `AdornerProvider`); and the NuGet `Design/` packaging target.
-- **NEEDS FIRST BUILD/VERIFY IN VS** — nothing here has been compiled yet.
+
+**Hard-won specifics (all verified — don't re-derive):**
+
+- **`TypeIdentifier` is in `...Extensibility.Metadata`** (not `.Model`), and its 2-arg ctor takes the
+  **XAML namespace**, NOT the CLR namespace. RibbonKit declares `[assembly: XmlnsDefinition("urn:ribbonkit",
+  "RibbonKit.Controls")]`, so `new TypeIdentifier("urn:ribbonkit", "RibbonTab")` + `ModelFactory.CreateItem(
+  item.Context, id)`. Passing the CLR namespace made `CreateItem` silently fail (see next point) — this
+  was THE bug that made "menus show but nothing happens".
+- **The designer swallows exceptions thrown inside providers** — a failed edit just looks like nothing
+  happened. `Diagnostics.cs` (`DesignLog`) wraps every action and logs start/ok/FAILED+exception to
+  `%TEMP%\RibbonKit.DesignTools.log`. Keep it while iterating; strip before shipping.
+- Adds use explicit collection property names, not `.Content`: `DesignModel.Add(parent, "Tabs"/"Groups"/"Items", child)`
+  (avoids `.Content` ambiguity for the group's `HeaderedItemsControl.Items`). Button/nav caption = `Header`.
+- **Enums are set by NAME STRING** — `props["QuickAccessPosition"].SetValue("BelowRibbon")`,
+  `props["Placement"].SetValue("Bottom")` — because the design assembly can't reference the enum type;
+  the property's type converter resolves it. Verified working.
+- Singleton / checked state via `ContextMenuProvider.UpdateItemStatus`: `MenuAction.Enabled` /
+  `.Checkable` / `.Checked`; read current values with `ModelProperty.Value` (is it set? → null when not)
+  and `ModelProperty.ComputedValue` (effective value incl. defaults).
+
+**Verbs shipped (all working):**
+
+- Toolbox: `RibbonDefaultInitializer` seeds a dropped Ribbon with a "Home" tab + "Group".
+- Ribbon: Add Tab; **Add Backstage** (once — disabled after one exists via `UpdateItemStatus`; also
+  surfaces the File button, which is hidden while `Backstage` is null; seeds one "Info" nav item);
+  **Quick Access Toolbar** submenu (`MenuGroup`, HasDropDown) — Title Bar / Tab Row / Below Ribbon,
+  radio-checked on the current `QuickAccessPosition`.
+- RibbonTab: Add Group + Move Tab Left/Right + Delete Tab.
+- RibbonGroup: Add Button/Toggle/Split/Drop-Down + Move Group Left/Right + Delete Group.
+- Leaf controls (button/toggle/split/drop-down): one provider on all four types — Move Control Left/Right + Delete Control.
+- Backstage: **Add Nav Item** (a page) + **Add Nav Button** (a footer action: `IsButton=true`, `Placement="Bottom"`).
+- Reorder = `ModelItemCollection` IndexOf/Remove/Insert via `item.Parent`; Delete = `.Remove`. All single-undo.
+
+**Deferred / next:**
+
+- **Toolbox + Properties-window polish** (next): hide internal part-types from the toolbox, add a
+  "RibbonKit" category, and add `[Category]`/`[Description]`/browsability to control properties.
+- **Smart-tag adorner panel** (`AdornerProvider`) — the floating glyph + task list; this is where the
+  design-only **preview toggles** belong (preview a tab / open-close backstage), because a context-menu
+  verb would persist `SelectedIndex`/`IsBackstageOpen` into runtime XAML (leak). The File button also
+  can't host a verb (it's a template part, not a selectable `ModelItem`).
+- **Design-time "Add to QAT"**: held — QAT items are runtime-generated proxies of a source command, not
+  plain XAML, so there's nothing clean to write into markup. Needs a dedicated approach.
+- `ParentAdapter` parenting rules; NuGet `Design/` packaging target. "Add Application Button" was
+  **dropped** — no such element; the File button is intrinsic and appears with `Backstage` (only its
+  text, `ApplicationButtonHeader`, is settable).
 
 ## 4. Workflow / Session Conventions
 

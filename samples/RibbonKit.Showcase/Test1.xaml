@@ -12,15 +12,26 @@
                  WindowStartupLocation="CenterScreen"
                  UseLayoutRounding="True"
                  Background="White">
-    <rk:Ribbon HorizontalAlignment="Left" Margin="84,248,0,0" VerticalAlignment="Top" Width="953">
-        <rk:RibbonTab Header="Home">
-            <rk:RibbonGroup Header="Group">
-                <rk:RibbonButton Header="Button"/>
-            </rk:RibbonGroup>
-            <rk:RibbonGroup Header="New Group"/>
-        </rk:RibbonTab>
-        <rk:RibbonTab Header="New Tab">
-            <rk:RibbonGroup Header="New Group"/>
-        </rk:RibbonTab>
-    </rk:Ribbon>
+    <DockPanel>
+        <rk:Ribbon DockPanel.Dock="Top" QuickAccessPosition="BelowRibbon" d:IsBackstageOpen="false">
+            <rk:Ribbon.Backstage>
+                <rk:Backstage>
+                    <rk:BackstageTabItem Header="Info"/>
+                    <rk:BackstageTabItem Header="Page"/>
+                    <rk:BackstageTabItem Header="Action" IsButton="True" Placement="Bottom"/>
+                </rk:Backstage>
+            </rk:Ribbon.Backstage>
+            <rk:RibbonTab Header="Home">
+                <rk:RibbonGroup Header="New Group">
+                    <rk:RibbonButton Header="Button"/>
+                </rk:RibbonGroup>
+                <rk:RibbonGroup Header="Group">
+                    <rk:RibbonButton Header="Button"/>
+                </rk:RibbonGroup>
+            </rk:RibbonTab>
+            <rk:RibbonTab Header="New Tab">
+                <rk:RibbonGroup Header="New Group"/>
+            </rk:RibbonTab>
+        </rk:Ribbon>
+    </DockPanel>
 </rk:RibbonWindow>

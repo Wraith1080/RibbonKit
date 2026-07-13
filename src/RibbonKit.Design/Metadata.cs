@@ -22,6 +22,11 @@ internal sealed class Metadata : IProvideAttributeTable
     private const string RibbonType = "RibbonKit.Controls.Ribbon";
     private const string RibbonTabType = "RibbonKit.Controls.RibbonTab";
     private const string RibbonGroupType = "RibbonKit.Controls.RibbonGroup";
+    private const string BackstageType = "RibbonKit.Controls.Backstage";
+    private const string RibbonButtonType = "RibbonKit.Controls.RibbonButton";
+    private const string RibbonToggleButtonType = "RibbonKit.Controls.RibbonToggleButton";
+    private const string RibbonSplitButtonType = "RibbonKit.Controls.RibbonSplitButton";
+    private const string RibbonDropDownButtonType = "RibbonKit.Controls.RibbonDropDownButton";
 
     /// <inheritdoc />
     public AttributeTable AttributeTable
@@ -41,10 +46,23 @@ internal sealed class Metadata : IProvideAttributeTable
                 RibbonTabType,
                 new FeatureAttribute(typeof(RibbonTabContextMenuProvider)));
 
-            // Group: "Add Button / Toggle / Split / Drop-Down".
+            // Backstage: "Add Nav Item" / "Add Nav Button".
+            builder.AddCustomAttributes(
+                BackstageType,
+                new FeatureAttribute(typeof(BackstageContextMenuProvider)));
+
+            // Group: "Add Button / Toggle / Split / Drop-Down" + reorder/delete the group.
             builder.AddCustomAttributes(
                 RibbonGroupType,
                 new FeatureAttribute(typeof(RibbonGroupContextMenuProvider)));
+
+            // Leaf controls: reorder/delete within their group. One provider serves all four
+            // button types (it acts on the current selection).
+            var controlProvider = new FeatureAttribute(typeof(RibbonControlContextMenuProvider));
+            builder.AddCustomAttributes(RibbonButtonType, controlProvider);
+            builder.AddCustomAttributes(RibbonToggleButtonType, controlProvider);
+            builder.AddCustomAttributes(RibbonSplitButtonType, controlProvider);
+            builder.AddCustomAttributes(RibbonDropDownButtonType, controlProvider);
 
             return builder.CreateTable();
         }
