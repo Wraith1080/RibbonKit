@@ -24,6 +24,8 @@
 
   <ItemGroup>
     <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <!-- New XAML designer toolbox allowlist (effective only when consumed as a NuGet package). -->
+    <None Include="tools\VisualStudioToolsManifest.xml" Pack="true" PackagePath="tools\" />
   </ItemGroup>
 
 </Project>

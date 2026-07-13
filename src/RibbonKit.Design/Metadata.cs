@@ -64,6 +64,9 @@ internal sealed class Metadata : IProvideAttributeTable
             builder.AddCustomAttributes(RibbonSplitButtonType, controlProvider);
             builder.AddCustomAttributes(RibbonDropDownButtonType, controlProvider);
 
+            // Properties-window categories + descriptions for the main controls.
+            PropertyMetadata.Register(builder);
+
             return builder.CreateTable();
         }
     }
