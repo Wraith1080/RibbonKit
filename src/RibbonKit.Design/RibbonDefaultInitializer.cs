@@ -10,17 +10,16 @@ namespace RibbonKit.Design;
 public sealed class RibbonDefaultInitializer : DefaultInitializer
 {
     /// <inheritdoc />
-    public override void InitializeDefaults(ModelItem item) =>
-        DesignLog.Run("InitializeDefaults", () =>
-        {
-            // item == the new Ribbon.
-            ModelItem tab = DesignModel.Create(item, "RibbonTab");
-            tab.Properties["Header"].SetValue("Home");
+    public override void InitializeDefaults(ModelItem item)
+    {
+        // item == the new Ribbon.
+        ModelItem tab = DesignModel.Create(item, "RibbonTab");
+        tab.Properties["Header"].SetValue("Home");
 
-            ModelItem group = DesignModel.Create(item, "RibbonGroup");
-            group.Properties["Header"].SetValue("Group");
+        ModelItem group = DesignModel.Create(item, "RibbonGroup");
+        group.Properties["Header"].SetValue("Group");
 
-            DesignModel.Add(tab, "Groups", group);   // group -> tab.Groups
-            DesignModel.Add(item, "Tabs", tab);      // tab   -> ribbon.Tabs
-        });
+        DesignModel.Add(tab, "Groups", group);   // group -> tab.Groups
+        DesignModel.Add(item, "Tabs", tab);      // tab   -> ribbon.Tabs
+    }
 }

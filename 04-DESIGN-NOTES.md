@@ -807,19 +807,44 @@ working in VS.**
 - Backstage: **Add Nav Item** (a page) + **Add Nav Button** (a footer action: `IsButton=true`, `Placement="Bottom"`).
 - Reorder = `ModelItemCollection` IndexOf/Remove/Insert via `item.Parent`; Delete = `.Remove`. All single-undo.
 
-**Deferred / next:**
+**Toolbox + Properties-window polish — DONE (Properties verified; toolbox is package-only):**
 
-- **Toolbox + Properties-window polish** (next): hide internal part-types from the toolbox, add a
-  "RibbonKit" category, and add `[Category]`/`[Description]`/browsability to control properties.
-- **Smart-tag adorner panel** (`AdornerProvider`) — the floating glyph + task list; this is where the
-  design-only **preview toggles** belong (preview a tab / open-close backstage), because a context-menu
-  verb would persist `SelectedIndex`/`IsBackstageOpen` into runtime XAML (leak). The File button also
-  can't host a verb (it's a template part, not a selectable `ModelItem`).
+- Properties window: `PropertyMetadata.cs` puts the main controls' key properties under a "RibbonKit"
+  category with descriptions, via the design attribute table (`AddCustomAttributes(type, prop,
+  new CategoryAttribute(...), new DescriptionAttribute(...))`). **Verified showing in VS.** `IsBackstageOpen`
+  is `[Browsable(false)]` (grid footgun — it'd persist to runtime; preview via `d:` instead); `SelectedIndex`
+  kept visible with a runtime-vs-preview warning.
+- Toolbox: the NEW designer does **NOT** use `ToolboxBrowsableAttribute`. Toolbox is populated from a
+  NuGet-package **`tools\VisualStudioToolsManifest.xml`** allowlist (`<FileList><File Reference="RibbonKit.dll">
+  <ToolboxItems VSCategory="RibbonKit" UIFramework="WPF"><Item Type="..."/>`). Created + wired into the
+  package (`None Include ... Pack`). **Only takes effect when RibbonKit is consumed as a NuGet package** —
+  a project-reference setup still reflects all public controls, so it does nothing in the current showcase.
+
+**Smart-tag adorner panel — ATTEMPTED, DOESN'T RENDER in the new designer (don't retry blindly):**
+
+- Empirically tested (`PrimarySelectionAdornerProvider`): the types all **exist and compile**
+  (`PrimarySelectionAdornerProvider`, `AdornerPanel`, `AdornerPlacementCollection` in
+  `...Extensibility.Interaction`), the provider **activates** on ribbon selection (logged
+  `Activate`/`Deactivate`), and `Adorners.Add` succeeds (count = 1) — **but the custom WPF adorner UI
+  never paints on the surface.** Explicit-size + on-surface placement didn't help. Conclusion: the new
+  **surface-isolation** designer renders the surface in a separate process from where the extension runs,
+  so custom adorner *visuals* aren't hosted (matches Microsoft's unresolved 2025 Q&A). Adorner *activation
+  + model editing* work; adorner *rendering* does not. **The glyph/flyout smart tag is not achievable in
+  the new designer with this API.** Spike file kept out of the committed project.
+- Consequence: the **context-menu verbs are the delivery surface** for quick actions (they already cover
+  every action the flyout would have). **Design-only preview** of a tab / backstage uses the idiomatic
+  `d:SelectedIndex` / `d:IsBackstageOpen` in XAML (works today). A `DesignModeValueProvider` (design-time
+  value that renders but isn't serialized) is the only remaining avenue to a togglable preview and is
+  unexplored — note it changes *values*, which DO render, unlike adorner overlays.
+
+**Still deferred:**
+
 - **Design-time "Add to QAT"**: held — QAT items are runtime-generated proxies of a source command, not
   plain XAML, so there's nothing clean to write into markup. Needs a dedicated approach.
-- `ParentAdapter` parenting rules; NuGet `Design/` packaging target. "Add Application Button" was
-  **dropped** — no such element; the File button is intrinsic and appears with `Backstage` (only its
-  text, `ApplicationButtonHeader`, is settable).
+- `ParentAdapter` parenting rules; NuGet `Design/` packaging target (also carries the toolbox manifest).
+  "Add Application Button" was **dropped** — no such element; the File button is intrinsic and appears with
+  `Backstage` (only its text, `ApplicationButtonHeader`, is settable).
+- `Diagnostics.cs` (`DesignLog`) is still wired into every verb — strip before shipping.
 
 ## 4. Workflow / Session Conventions
 

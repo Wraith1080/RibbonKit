@@ -43,7 +43,7 @@ public sealed class RibbonContextMenuProvider : ContextMenuProvider
     private MenuAction MakeQatItem(string caption, string enumValue)
     {
         var action = new MenuAction(caption) { Checkable = true };
-        action.Execute += (sender, e) => DesignLog.Run("QAT: " + caption, () =>
+        action.Execute += (sender, e) =>
         {
             ModelItem ribbon = e.Selection.PrimarySelection;
             using (ModelEditingScope scope = ribbon.BeginEdit("Quick Access Toolbar: " + caption))
@@ -53,7 +53,7 @@ public sealed class RibbonContextMenuProvider : ContextMenuProvider
                 ribbon.Properties["QuickAccessPosition"].SetValue(enumValue);
                 scope.Complete();
             }
-        });
+        };
         return action;
     }
 
@@ -71,46 +71,44 @@ public sealed class RibbonContextMenuProvider : ContextMenuProvider
         _qatBelowRibbon.Checked = current == "BelowRibbon";
     }
 
-    private void OnAddTab(object sender, MenuActionEventArgs e) =>
-        DesignLog.Run("Add Tab", () =>
+    private void OnAddTab(object sender, MenuActionEventArgs e)
+    {
+        ModelItem ribbon = e.Selection.PrimarySelection;
+        using (ModelEditingScope scope = ribbon.BeginEdit("Add Tab"))
         {
-            ModelItem ribbon = e.Selection.PrimarySelection;
-            using (ModelEditingScope scope = ribbon.BeginEdit("Add Tab"))
-            {
-                ModelItem tab = DesignModel.Create(ribbon, "RibbonTab");
-                tab.Properties["Header"].SetValue("New Tab");
+            ModelItem tab = DesignModel.Create(ribbon, "RibbonTab");
+            tab.Properties["Header"].SetValue("New Tab");
 
-                ModelItem group = DesignModel.Create(ribbon, "RibbonGroup");
-                group.Properties["Header"].SetValue("New Group");
-                DesignModel.Add(tab, "Groups", group);
+            ModelItem group = DesignModel.Create(ribbon, "RibbonGroup");
+            group.Properties["Header"].SetValue("New Group");
+            DesignModel.Add(tab, "Groups", group);
 
-                DesignModel.Add(ribbon, "Tabs", tab);
-                scope.Complete();
-            }
-        });
+            DesignModel.Add(ribbon, "Tabs", tab);
+            scope.Complete();
+        }
+    }
 
-    private void OnAddBackstage(object sender, MenuActionEventArgs e) =>
-        DesignLog.Run("Add Backstage", () =>
+    private void OnAddBackstage(object sender, MenuActionEventArgs e)
+    {
+        ModelItem ribbon = e.Selection.PrimarySelection;
+        if (ribbon.Properties["Backstage"].Value is not null)
         {
-            ModelItem ribbon = e.Selection.PrimarySelection;
-            if (ribbon.Properties["Backstage"].Value is not null)
-            {
-                return; // already has one (belt-and-braces with UpdateItemStatus)
-            }
+            return; // already has one (belt-and-braces with UpdateItemStatus)
+        }
 
-            using (ModelEditingScope scope = ribbon.BeginEdit("Add Backstage"))
-            {
-                ModelItem backstage = DesignModel.Create(ribbon, "Backstage");
+        using (ModelEditingScope scope = ribbon.BeginEdit("Add Backstage"))
+        {
+            ModelItem backstage = DesignModel.Create(ribbon, "Backstage");
 
-                // Seed one nav item so the backstage isn't empty.
-                ModelItem item = DesignModel.Create(ribbon, "BackstageTabItem");
-                item.Properties["Header"].SetValue("Info");
-                DesignModel.Add(backstage, "Items", item);
+            // Seed one nav item so the backstage isn't empty.
+            ModelItem item = DesignModel.Create(ribbon, "BackstageTabItem");
+            item.Properties["Header"].SetValue("Info");
+            DesignModel.Add(backstage, "Items", item);
 
-                ribbon.Properties["Backstage"].SetValue(backstage);
-                scope.Complete();
-            }
-        });
+            ribbon.Properties["Backstage"].SetValue(backstage);
+            scope.Complete();
+        }
+    }
 }
 
 /// <summary>Backstage-level verbs: Add Nav Item (a page) and Add Nav Button (a footer action).</summary>
@@ -127,33 +125,31 @@ public sealed class BackstageContextMenuProvider : ContextMenuProvider
         Items.Add(addButton);
     }
 
-    private void OnAddNavItem(object sender, MenuActionEventArgs e) =>
-        DesignLog.Run("Add Nav Item", () =>
+    private void OnAddNavItem(object sender, MenuActionEventArgs e)
+    {
+        ModelItem backstage = e.Selection.PrimarySelection;
+        using (ModelEditingScope scope = backstage.BeginEdit("Add Nav Item"))
         {
-            ModelItem backstage = e.Selection.PrimarySelection;
-            using (ModelEditingScope scope = backstage.BeginEdit("Add Nav Item"))
-            {
-                ModelItem item = DesignModel.Create(backstage, "BackstageTabItem");
-                item.Properties["Header"].SetValue("Page");
-                DesignModel.Add(backstage, "Items", item);
-                scope.Complete();
-            }
-        });
+            ModelItem item = DesignModel.Create(backstage, "BackstageTabItem");
+            item.Properties["Header"].SetValue("Page");
+            DesignModel.Add(backstage, "Items", item);
+            scope.Complete();
+        }
+    }
 
-    private void OnAddNavButton(object sender, MenuActionEventArgs e) =>
-        DesignLog.Run("Add Nav Button", () =>
+    private void OnAddNavButton(object sender, MenuActionEventArgs e)
+    {
+        ModelItem backstage = e.Selection.PrimarySelection;
+        using (ModelEditingScope scope = backstage.BeginEdit("Add Nav Button"))
         {
-            ModelItem backstage = e.Selection.PrimarySelection;
-            using (ModelEditingScope scope = backstage.BeginEdit("Add Nav Button"))
-            {
-                ModelItem item = DesignModel.Create(backstage, "BackstageTabItem");
-                item.Properties["Header"].SetValue("Action");
-                item.Properties["IsButton"].SetValue(true);      // action, not a page
-                item.Properties["Placement"].SetValue("Bottom"); // footer, like Word's Account/Options
-                DesignModel.Add(backstage, "Items", item);
-                scope.Complete();
-            }
-        });
+            ModelItem item = DesignModel.Create(backstage, "BackstageTabItem");
+            item.Properties["Header"].SetValue("Action");
+            item.Properties["IsButton"].SetValue(true);      // action, not a page
+            item.Properties["Placement"].SetValue("Bottom"); // footer, like Word's Account/Options
+            DesignModel.Add(backstage, "Items", item);
+            scope.Complete();
+        }
+    }
 }
 
 /// <summary>"Add Group" plus reorder/delete for a selected <c>RibbonTab</c> (within its Ribbon.Tabs).</summary>
@@ -168,18 +164,17 @@ public sealed class RibbonTabContextMenuProvider : ContextMenuProvider
         DesignVerbs.AddReorderAndDelete(this, "Tabs", "Tab");
     }
 
-    private void OnAddGroup(object sender, MenuActionEventArgs e) =>
-        DesignLog.Run("Add Group", () =>
+    private void OnAddGroup(object sender, MenuActionEventArgs e)
+    {
+        ModelItem tab = e.Selection.PrimarySelection;
+        using (ModelEditingScope scope = tab.BeginEdit("Add Group"))
         {
-            ModelItem tab = e.Selection.PrimarySelection;
-            using (ModelEditingScope scope = tab.BeginEdit("Add Group"))
-            {
-                ModelItem group = DesignModel.Create(tab, "RibbonGroup");
-                group.Properties["Header"].SetValue("New Group");
-                DesignModel.Add(tab, "Groups", group);
-                scope.Complete();
-            }
-        });
+            ModelItem group = DesignModel.Create(tab, "RibbonGroup");
+            group.Properties["Header"].SetValue("New Group");
+            DesignModel.Add(tab, "Groups", group);
+            scope.Complete();
+        }
+    }
 }
 
 /// <summary>"Add Button/Toggle/Split/Drop-Down" plus reorder/delete for a selected <c>RibbonGroup</c> (within its Tab.Groups).</summary>
@@ -202,21 +197,20 @@ public sealed class RibbonGroupContextMenuProvider : ContextMenuProvider
         Items.Add(action);
     }
 
-    private static void AddControl(MenuActionEventArgs e, string typeName, string label) =>
-        DesignLog.Run(label, () =>
+    private static void AddControl(MenuActionEventArgs e, string typeName, string label)
+    {
+        ModelItem group = e.Selection.PrimarySelection;
+        using (ModelEditingScope scope = group.BeginEdit(label))
         {
-            ModelItem group = e.Selection.PrimarySelection;
-            using (ModelEditingScope scope = group.BeginEdit(label))
-            {
-                ModelItem control = DesignModel.Create(group, typeName);
+            ModelItem control = DesignModel.Create(group, typeName);
 
-                // All the button types carry their caption in "Header" (see RibbonButton.Header).
-                control.Properties["Header"]?.SetValue(label);
+            // All the button types carry their caption in "Header" (see RibbonButton.Header).
+            control.Properties["Header"]?.SetValue(label);
 
-                DesignModel.Add(group, "Items", control); // control -> group.Items
-                scope.Complete();
-            }
-        });
+            DesignModel.Add(group, "Items", control); // control -> group.Items
+            scope.Complete();
+        }
+    }
 }
 
 /// <summary>
@@ -239,18 +233,15 @@ internal static class DesignVerbs
     public static void AddReorderAndDelete(ContextMenuProvider provider, string parentCollection, string noun)
     {
         var left = new MenuAction("Move " + noun + " Left");
-        left.Execute += (s, e) => DesignLog.Run("Move " + noun + " Left",
-            () => DesignModel.Move(e.Selection.PrimarySelection, parentCollection, -1));
+        left.Execute += (s, e) => DesignModel.Move(e.Selection.PrimarySelection, parentCollection, -1);
         provider.Items.Add(left);
 
         var right = new MenuAction("Move " + noun + " Right");
-        right.Execute += (s, e) => DesignLog.Run("Move " + noun + " Right",
-            () => DesignModel.Move(e.Selection.PrimarySelection, parentCollection, +1));
+        right.Execute += (s, e) => DesignModel.Move(e.Selection.PrimarySelection, parentCollection, +1);
         provider.Items.Add(right);
 
         var delete = new MenuAction("Delete " + noun);
-        delete.Execute += (s, e) => DesignLog.Run("Delete " + noun,
-            () => DesignModel.Delete(e.Selection.PrimarySelection, parentCollection));
+        delete.Execute += (s, e) => DesignModel.Delete(e.Selection.PrimarySelection, parentCollection);
         provider.Items.Add(delete);
     }
 }
