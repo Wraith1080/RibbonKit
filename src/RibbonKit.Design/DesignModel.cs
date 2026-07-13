@@ -8,29 +8,27 @@ namespace RibbonKit.Design;
 /// </summary>
 internal static class DesignModel
 {
-    /// <summary>CLR namespace that all the ribbon controls live in (inside RibbonKit.dll).</summary>
-    private const string ControlsNamespace = "RibbonKit.Controls";
-
     /// <summary>
-    /// Creates a new design-time <see cref="ModelItem"/> for one of our controls, identified by
-    /// simple type name (e.g. "RibbonTab"). The caller adds it into the right collection.
+    /// The XAML namespace the ribbon controls live under — RibbonKit declares
+    /// <c>[assembly: XmlnsDefinition("urn:ribbonkit", "RibbonKit.Controls")]</c>, which is why
+    /// the showcase uses <c>xmlns:rk="urn:ribbonkit"</c>. The designer resolves a
+    /// <see cref="TypeIdentifier"/> by XAML namespace + type name (NOT the CLR namespace), so this
+    /// must match the xmlns, otherwise <see cref="ModelFactory.CreateItem"/> can't find the type.
     /// </summary>
-    /// <remarks>
-    /// VERIFY IN VS: the new designer identifies types with <see cref="TypeIdentifier"/> (a
-    /// namespace + name string), not <c>System.Type</c>. If the designer can't resolve a type,
-    /// this is the single line to adjust — e.g. the namespace form (CLR vs xmlns) or the
-    /// <see cref="ModelFactory.CreateItem(EditingContext, TypeIdentifier)"/> overload.
-    /// </remarks>
-    public static ModelItem Create(ModelItem sibling, string typeName)
+    private const string Xmlns = "urn:ribbonkit";
+
+    /// <summary>Creates a new design-time <see cref="ModelItem"/> for one of our controls by simple type name.</summary>
+    public static ModelItem Create(ModelItem context, string typeName)
     {
-        var id = new TypeIdentifier(ControlsNamespace, typeName);
-        return ModelFactory.CreateItem(sibling.Context, id);
+        var id = new TypeIdentifier(Xmlns, typeName);
+        return ModelFactory.CreateItem(context.Context, id);
     }
 
     /// <summary>
-    /// Adds <paramref name="child"/> into <paramref name="parent"/>'s content collection
-    /// (Ribbon→Tabs, RibbonTab→Groups, RibbonGroup→Items — all declared as the content property).
+    /// Adds <paramref name="child"/> into the named collection property of <paramref name="parent"/>
+    /// (Ribbon→"Tabs", RibbonTab→"Groups", RibbonGroup→"Items"). Using the property name explicitly
+    /// avoids any ambiguity over which property is the "content" one (esp. for the group's Items).
     /// </summary>
-    public static void AddChild(ModelItem parent, ModelItem child) =>
-        parent.Content.Collection.Add(child);
+    public static void Add(ModelItem parent, string collectionProperty, ModelItem child) =>
+        parent.Properties[collectionProperty].Collection.Add(child);
 }

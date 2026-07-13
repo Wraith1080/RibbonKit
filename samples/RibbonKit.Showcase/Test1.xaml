@@ -1,0 +1,26 @@
+﻿<rk:RibbonWindow x:Class="RibbonKit.Showcase.Test1"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:rk="urn:ribbonkit"
+                 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                 mc:Ignorable="d"
+                 Title="RibbonKit Test"
+                 Width="1080"
+                 Height="680"
+                 MinWidth="360"
+                 WindowStartupLocation="CenterScreen"
+                 UseLayoutRounding="True"
+                 Background="White">
+    <rk:Ribbon HorizontalAlignment="Left" Margin="84,248,0,0" VerticalAlignment="Top" Width="953">
+        <rk:RibbonTab Header="Home">
+            <rk:RibbonGroup Header="Group">
+                <rk:RibbonButton Header="Button"/>
+            </rk:RibbonGroup>
+            <rk:RibbonGroup Header="New Group"/>
+        </rk:RibbonTab>
+        <rk:RibbonTab Header="New Tab">
+            <rk:RibbonGroup Header="New Group"/>
+        </rk:RibbonTab>
+    </rk:Ribbon>
+</rk:RibbonWindow>
