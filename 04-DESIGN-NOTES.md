@@ -754,6 +754,40 @@ source's menu items while open:
   it's self-contained on the control and needs no open/close state on the ribbon. Only plain Tab was
   trapped (`ControlTabNavigation` left alone so the TabControl's Ctrl+Tab page switching is unchanged).
 
+### 3.22 Design-time smart tags / quick actions (XAML designer) — first cut
+
+New `src/RibbonKit.Design/` project: **design-time only** tooling for the VS/Blend XAML
+designer (toolbox defaults + right-click "Add …" verbs for building a ribbon on the surface).
+Runtime is untouched — the demo app owns any runtime contextual UI.
+
+- **Targets the NEW (surface-isolation) WPF designer**, not the legacy .NET Framework one. That
+  dictated the whole shape: the design assembly targets **net472** (VS runs on .NET Framework),
+  outputs **`RibbonKit.DesignTools.dll`** (the new `*.designtools.dll` discovery convention — the
+  old one was `*.design.dll`), and is discovered from a **`Design` subfolder next to `RibbonKit.dll`**
+  (csproj `DeployToDesignFolder` target copies into both TFM output folders; NuGet path is
+  `lib/<tfm>/Design/`).
+- **Process-isolated from the runtime controls**: the extension can't reference RibbonKit or use
+  `typeof` on control types. Everything is by **string type name** (`"RibbonKit.Controls.Ribbon"`)
+  and edits go through the **Model API** (`ModelItem`, `ModelEditingScope`, `ModelFactory.CreateItem`
+  with a `TypeIdentifier`), never live instances.
+- SDK: `Microsoft.VisualStudio.DesignTools.Extensibility` (namespaces
+  `...Extensibility.{Metadata,Features,Model,Interaction}`). Registration = `[assembly: ProvideMetadata]`
+  + `IProvideAttributeTable` / `AttributeTableBuilder.AddCustomAttributes(typeName, new FeatureAttribute(...))`.
+- Providers shipped: `RibbonDefaultInitializer : DefaultInitializer` (dropped Ribbon gets a "Home"
+  tab + "Group"); `ContextMenuProvider`s for Ribbon ("Add Tab"), RibbonTab ("Add Group"), RibbonGroup
+  ("Add Button/Toggle/Split/Drop-Down"). Content collections used: `Ribbon.Tabs → RibbonTab.Groups →
+  RibbonGroup.Items` (all `[ContentProperty]`, so `modelItem.Content.Collection.Add(...)`); button
+  caption is `Header`.
+- **Can only be validated in VS** (like §3.14) — the Linux box can't compile net472/designer code.
+  `SETUP-DESIGNTOOLS.md` has the setup steps + a "verify-in-VS" checklist for the ~4 API spots most
+  likely to need a one-line tweak (package version; the Interaction namespace; the
+  `ModelFactory.CreateItem`/`TypeIdentifier` line; and the group's `Items` collection if `.Content`
+  doesn't resolve for `HeaderedItemsControl`).
+- **Deferred to next cut** (by scope choice): `ParentAdapter` parenting rules (needs full
+  `CanParent`/`Parent`/`RemoveParent`, riskier to ship blind); the floating **smart-tag adorner panel**
+  (glyph + task list via `AdornerProvider`); and the NuGet `Design/` packaging target.
+- **NEEDS FIRST BUILD/VERIFY IN VS** — nothing here has been compiled yet.
+
 ## 4. Workflow / Session Conventions
 
 - Cloud workspace: `/home/user/ribbonkit/`. The user's machine:

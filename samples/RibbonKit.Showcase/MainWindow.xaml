@@ -22,7 +22,7 @@
                    QuickAccessPosition="BelowRibbon"
                    QuickAccessCustomizeRequested="OnCustomizeQuickAccess"
                    RibbonCustomizeRequested="OnCustomizeRibbon"
-                   d:IsBackstageOpen="True">
+                   d:IsBackstageOpen="false">
             <rk:Ribbon.Backstage>
                 <!-- d:SelectedIndex previews a specific backstage page on the XAML designer
                      surface (paired with d:IsBackstageOpen above). Runtime is unaffected. -->
