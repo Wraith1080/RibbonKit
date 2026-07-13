@@ -85,6 +85,23 @@ public class Backstage : TabControl
             new FrameworkPropertyMetadata(Dock.Left));
     }
 
+    /// <summary>Initializes a new <see cref="Backstage"/>.</summary>
+    public Backstage()
+    {
+        // Focus trap. The backstage is shown as a full-window overlay in the WINDOW'S ADORNER
+        // LAYER — a separate visual branch that paints on top of the ribbon but does NOT sit
+        // between it and the keyboard-focus tree. Without a trap, Tab walks straight past the
+        // overlay into the ribbon/document controls sitting behind it (they're visually covered
+        // but still in the tab order), which is the "Tab leaks to the ribbon" bug.
+        //
+        // Cycle contains Tab (and Shift+Tab) within this element's subtree and wraps at the
+        // ends, so once focus is inside the backstage (the host Focus()es it on open) keyboard
+        // focus can never escape while it's open — matching Office. When the overlay closes the
+        // element leaves the tree, so the setting is inert the rest of the time; safe to apply
+        // unconditionally because a Backstage is only ever used as this overlay.
+        KeyboardNavigation.SetTabNavigation(this, KeyboardNavigationMode.Cycle);
+    }
+
     /// <summary>
     /// The backstage chrome design: <see cref="RibbonBackstageDesign.Classic"/> (the
     /// accent-colored 2013 column, default) or <see cref="RibbonBackstageDesign.Modern"/>

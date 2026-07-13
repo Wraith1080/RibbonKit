@@ -741,9 +741,18 @@ source's menu items while open:
   reverts selection off any button item (guarded against re-entrancy) so it can never become the
   active page even via keyboard — and arrowing PAST one does nothing (invocation is click/Enter only).
   Showcase: an "Account" footer page plus "Options" and "Exit" footer buttons (new Account/Exit icons).
-- **Deferred (#4): Tab-focus leak.** With the backstage open, Tab still reaches the ribbon behind the
-  adorner overlay — a focus-scoping fix over the adorner layer. Deferred by user agreement; likely
-  needs the background content made non-tab-reachable (or a focus trap) while the backstage is open.
+- **Tab-focus leak (#4) — FIXED.** With the backstage open, Tab used to reach the ribbon/document
+  controls behind the adorner overlay. Root cause: the backstage lives in the WINDOW'S ADORNER LAYER
+  (a separate visual branch that paints on top of the content but isn't between it and the focus tree),
+  so those covered-but-still-tabbable controls stayed in the tab order. Fix: a **focus trap** on the
+  `Backstage` element — `KeyboardNavigation.SetTabNavigation(this, Cycle)` in the (new) instance
+  constructor. Cycle contains Tab/Shift+Tab within the backstage subtree and wraps at the ends, so once
+  the host `Focus()`es the backstage on open (existing behavior, both the fresh-open and reopen-during-
+  close paths) focus can never escape while it's up — matching Office. Applied unconditionally: a
+  `Backstage` is only ever this overlay, and when closed the element leaves the tree so the setting is
+  inert. Chose the focus trap over disabling the background content (the note's other option) because
+  it's self-contained on the control and needs no open/close state on the ribbon. Only plain Tab was
+  trapped (`ControlTabNavigation` left alone so the TabControl's Ctrl+Tab page switching is unchanged).
 
 ## 4. Workflow / Session Conventions
 
@@ -762,23 +771,15 @@ source's menu items while open:
 
 ## 5. Current State & Next Steps
 
-**Working and confirmed by user: everything through §3.15** — including the QAT
+**Working and confirmed by user: everything through §3.21** — including the QAT
 customization + merged options dialog with all its refinements (custom close-only title
-bar, DWM rounded corners, resizable, per-page scroll policy via `IRibbonFillPage`), plus
-everything previously confirmed (Mica suite, tab-flicker fix, ComboBox height, document-
-editor layout).
-
-Still to check: the §3.14 XAML **design-time** preview (active tab + backstage) on the
-VS/Blend surface — a designer-only check (does the designer honor the `d:` attributes and
-render the design host); and §3.16 **round 2** (the round-1 page itself is user-verified):
-proxy labels from small sources, the Edit… dialog (name/icon/layout/size per target),
-group layout switching Stacked↔Large with size normalization, and add-proxy sizing in
-Large-layout groups.
-
-Also to check (§3.17, just built): customization **persistence** — restart the showcase
-and confirm added custom tabs/groups, added commands, renames, tab hide/reorder, group
-icon/layout, and QAT edits all survive; that **Reset** restores the factory ribbon from any
-state; and that a deleted/corrupt JSON file just starts clean.
+bar, DWM rounded corners, resizable, per-page scroll policy via `IRibbonFillPage`), the
+Customize-the-Ribbon page + Edit… dialog, customization **persistence** (round-trip / Reset /
+corrupt-JSON-starts-clean), the §3.18 QAT/dialog polish batch, the §3.19 dropdown/split QAT
+proxies, the §3.20 large-label chevron/ellipsis work, and the §3.21 backstage footer/button
+items. The §3.14 XAML **design-time** preview (active tab + backstage on the VS/Blend surface)
+is also user-confirmed. The §3.21 #4 **backstage Tab-focus leak is now fixed** (focus trap;
+see §3.21). Nothing in §3 remains in the "needs verification" state.
 
 Backlog (rough priority):
 
