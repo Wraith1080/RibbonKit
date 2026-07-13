@@ -13,9 +13,9 @@
                  UseLayoutRounding="True"
                  Background="White">
     <DockPanel>
-        <rk:Ribbon DockPanel.Dock="Top" QuickAccessPosition="BelowRibbon" d:IsBackstageOpen="false">
+        <rk:Ribbon DockPanel.Dock="Top" QuickAccessPosition="BelowRibbon">
             <rk:Ribbon.Backstage>
-                <rk:Backstage>
+                <rk:Backstage Design="Modern" >
                     <rk:BackstageTabItem Header="Info"/>
                     <rk:BackstageTabItem Header="Page"/>
                     <rk:BackstageTabItem Header="Action" IsButton="True" Placement="Bottom"/>
@@ -25,11 +25,11 @@
                 <rk:RibbonGroup Header="New Group">
                     <rk:RibbonButton Header="Button"/>
                 </rk:RibbonGroup>
-                <rk:RibbonGroup Header="Group">
-                    <rk:RibbonButton Header="Button"/>
+                <rk:RibbonGroup Header="Test Group">
+                    <rk:RibbonButton Header="Test Button"/>
                 </rk:RibbonGroup>
             </rk:RibbonTab>
-            <rk:RibbonTab Header="New Tab">
+            <rk:RibbonTab Header="Test Tab">
                 <rk:RibbonGroup Header="New Group"/>
             </rk:RibbonTab>
         </rk:Ribbon>

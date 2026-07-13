@@ -23,10 +23,20 @@ internal static class PropertyMetadata
             "The File-button content (typically a Backstage). The File button is hidden while this is null.");
         Describe(b, "RibbonKit.Controls.Ribbon", "ApplicationButtonHeader",
             "Text of the application (File) button. Default: \"File\".");
-        Describe(b, "RibbonKit.Controls.Ribbon", "IsBackstageOpen",
-            "Whether the backstage overlay is open. For a design-time preview use d:IsBackstageOpen.");
+        // IsBackstageOpen and SelectedIndex are RUNTIME properties: editing them in the Properties
+        // grid changes runtime behavior (the grid can't write the design-time-only "d:" namespace).
+        // Hide IsBackstageOpen from the grid — an app launching with the backstage open is ~always a
+        // mistake; preview it via d:IsBackstageOpen in XAML. Browsable(false) is grid-only; the
+        // property stays fully usable in XAML/binding and at runtime.
+        b.AddCustomAttributes("RibbonKit.Controls.Ribbon", "IsBackstageOpen",
+            new BrowsableAttribute(false),
+            new CategoryAttribute(Category),
+            new DescriptionAttribute(
+                "Opens the backstage at RUNTIME. For a design-time-only preview, add d:IsBackstageOpen=\"True\" in XAML."));
+
+        // SelectedIndex stays visible (choosing a startup tab is legitimate), but warn it's runtime.
         Describe(b, "RibbonKit.Controls.Ribbon", "SelectedIndex",
-            "Index of the selected tab. For a design-time preview use d:SelectedIndex.");
+            "Selected tab index — a RUNTIME property (sets the startup tab). For a design-time-only preview that won't affect runtime, add d:SelectedIndex=\"N\" in XAML.");
 
         // ── Button family (shared properties) ────────────────────────────────────────────
         foreach (string type in new[]
