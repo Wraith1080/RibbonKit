@@ -285,6 +285,37 @@ public static class RibbonMotion
         }
     }
 
+    /// <summary>
+    /// Cross-fades a highlight "wash" layer to shown (<paramref name="show"/> = <see langword="true"/>,
+    /// opacity 1) or hidden (opacity 0) using the given action's timing. Snaps instantly when the
+    /// action is disabled or system reduced-motion is on. Used by the ribbon buttons for their
+    /// hover / press / checked highlights — animating only a wash's opacity keeps the theme brush on
+    /// the wash and needs no colour math. Template storyboards can't do this because a
+    /// <c>DynamicResource</c> duration makes a templated storyboard un-freezable.
+    /// </summary>
+    public static void FadeWash(FrameworkElement? wash, bool show, RibbonAnimationAction action)
+    {
+        if (wash is null)
+        {
+            return;
+        }
+
+        double target = show ? 1d : 0d;
+
+        if (!RibbonAnimation.IsEnabled(action))
+        {
+            wash.BeginAnimation(UIElement.OpacityProperty, null);
+            wash.Opacity = target;
+            return;
+        }
+
+        var fade = new DoubleAnimation(target, RibbonAnimation.GetDuration(action))
+        {
+            EasingFunction = RibbonAnimation.GetEase(action),
+        };
+        wash.BeginAnimation(UIElement.OpacityProperty, fade);
+    }
+
     private static void Slide(
         TranslateTransform translate,
         DependencyProperty axis,

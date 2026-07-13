@@ -214,10 +214,32 @@
                                     </ItemsPanelTemplate>
                                 </ItemsControl.ItemsPanel>
                             </ItemsControl>
-                            <TabPanel Grid.Column="2"
-                                      IsItemsHost="True"
-                                      Margin="{DynamicResource RibbonKit.Metrics.TabStripMargin}"
-                                      Background="Transparent" />
+                            <Grid Grid.Column="2">
+                                <TabPanel IsItemsHost="True"
+                                          Margin="{DynamicResource RibbonKit.Metrics.TabStripMargin}"
+                                          Background="Transparent" />
+                                <!-- Shared selection underline that GLIDES between tabs
+                                     (RibbonTabControl positions/animates it). Replaces the
+                                     per-tab SelectionIndicator/ContextualSelectionIndicator for
+                                     the accent underline; flat themes (2019/2013) leave
+                                     Tab.SelectedUnderline Transparent, so it's invisible there
+                                     and those themes keep their pill/fill selection. Width +
+                                     TranslateTransform.X are animated (X glide + width) — a lone
+                                     marker in its own cell, so animating Width re-arranges only
+                                     itself and never cascades a ribbon re-layout. -->
+                                <Rectangle x:Name="PART_TabMarker"
+                                           Height="3" Width="0"
+                                           RadiusX="1.5" RadiusY="1.5"
+                                           HorizontalAlignment="Left"
+                                           VerticalAlignment="Top"
+                                           IsHitTestVisible="False"
+                                           Opacity="0"
+                                           Fill="{DynamicResource RibbonKit.Brushes.Tab.SelectedUnderline}">
+                                    <Rectangle.RenderTransform>
+                                        <TranslateTransform x:Name="PART_TabMarkerTranslate" />
+                                    </Rectangle.RenderTransform>
+                                </Rectangle>
+                            </Grid>
                             <!-- Minimize chevron: toggles Ribbon.IsMinimized -->
                             <ToggleButton x:Name="MinimizeToggle"
                                           Grid.Column="3"
@@ -420,7 +442,8 @@
                                     Value="{DynamicResource RibbonKit.Brushes.Tab.SelectedBorderBrush}" />
                             <Setter TargetName="HeaderChrome" Property="BorderThickness"
                                     Value="{DynamicResource RibbonKit.Metrics.TabSelectedBorderThickness}" />
-                            <Setter TargetName="SelectionIndicator" Property="Visibility" Value="Visible" />
+                            <!-- Selection underline is now the shared gliding PART_TabMarker
+                                 (in the RibbonTabControl template), not this per-tab rectangle. -->
                             <Setter TargetName="HoverIndicator" Property="Visibility" Value="Collapsed" />
                             <Setter Property="Foreground"
                                     Value="{DynamicResource RibbonKit.Brushes.Tab.SelectedForeground}" />
@@ -433,8 +456,8 @@
                                 <Condition Property="IsSelected" Value="True" />
                             </MultiTrigger.Conditions>
                             <Setter TargetName="ContextualHeaderText" Property="Opacity" Value="1" />
-                            <Setter TargetName="SelectionIndicator" Property="Visibility" Value="Collapsed" />
-                            <Setter TargetName="ContextualSelectionIndicator" Property="Visibility" Value="Visible" />
+                            <!-- The selected contextual tab's tinted underline is now drawn by
+                                 the shared gliding PART_TabMarker (tinted to ContextualBrush). -->
                         </MultiTrigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.4" />
@@ -669,6 +692,17 @@
                             Margin="1"
                             SnapsToDevicePixels="True">
                         <Grid>
+                            <!-- Hover/press cross-fade layers: opacity is animated 0<->1 over the
+                                 Hover duration token, so the highlight eases instead of snapping.
+                                 Behind the content, non-hit-testable. -->
+                            <Border x:Name="HoverWash"
+                                    Background="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}"
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                    Opacity="0" IsHitTestVisible="False" />
+                            <Border x:Name="PressWash"
+                                    Background="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}"
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                    Opacity="0" IsHitTestVisible="False" />
                             <!-- Large: 32px icon over wrapped label -->
                             <StackPanel x:Name="LargeLayout"
                                         Orientation="Vertical"
@@ -744,14 +778,12 @@
                             <Setter TargetName="LargeLayout" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="SmallLayout" Property="Visibility" Value="Visible" />
                         </Trigger>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Chrome" Property="Background"
-                                    Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
-                        </Trigger>
-                        <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="Chrome" Property="Background"
-                                    Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
-                        </Trigger>
+                        <!-- Hover/press highlight is a cross-fade of HoverWash/PressWash, driven in
+                             code (RibbonButton.OnPropertyChanged -> RibbonMotion.FadeWash) so it
+                             honors the animation level / reduced-motion — template storyboards can't
+                             read the runtime Duration tokens (a DynamicResource makes the storyboard
+                             un-freezable). Off a colored surface only; the QAT-on-colored variants
+                             below stay instant. -->
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.4" />
                         </Trigger>
@@ -840,6 +872,22 @@
                             Margin="1"
                             SnapsToDevicePixels="True">
                         <Grid>
+                            <!-- Checked / hover / press cross-fade layers. Checked eases over the
+                                 ToggleState token; hover/press over the Hover token. Checked+hover
+                                 composes (check wash + hover wash) rather than a separate brush.
+                                 Behind the content, non-hit-testable. -->
+                            <Border x:Name="CheckWash"
+                                    Background="{DynamicResource RibbonKit.Brushes.Control.CheckedBackground}"
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                    Opacity="0" IsHitTestVisible="False" />
+                            <Border x:Name="HoverWash"
+                                    Background="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}"
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                    Opacity="0" IsHitTestVisible="False" />
+                            <Border x:Name="PressWash"
+                                    Background="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}"
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                    Opacity="0" IsHitTestVisible="False" />
                             <StackPanel x:Name="LargeLayout"
                                         Orientation="Vertical"
                                         Margin="6,8,6,0"
@@ -903,26 +951,11 @@
                             <Setter TargetName="LargeLayout" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="SmallLayout" Property="Visibility" Value="Visible" />
                         </Trigger>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Chrome" Property="Background"
-                                    Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
-                        </Trigger>
-                        <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="Chrome" Property="Background"
-                                    Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
-                        </Trigger>
-                        <Trigger Property="IsChecked" Value="True">
-                            <Setter TargetName="Chrome" Property="Background"
-                                    Value="{DynamicResource RibbonKit.Brushes.Control.CheckedBackground}" />
-                        </Trigger>
-                        <MultiTrigger>
-                            <MultiTrigger.Conditions>
-                                <Condition Property="IsChecked" Value="True" />
-                                <Condition Property="IsMouseOver" Value="True" />
-                            </MultiTrigger.Conditions>
-                            <Setter TargetName="Chrome" Property="Background"
-                                    Value="{DynamicResource RibbonKit.Brushes.Control.CheckedHoverBackground}" />
-                        </MultiTrigger>
+                        <!-- Hover/press/checked highlight is a cross-fade of HoverWash/PressWash/
+                             CheckWash, driven in code (RibbonToggleButton.OnPropertyChanged ->
+                             RibbonMotion.FadeWash) so it honors the animation level / reduced-motion.
+                             Checked+hover composes the check wash under the hover wash. Off a colored
+                             surface only; the QAT-on-colored variants below stay instant. -->
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.4" />
                         </Trigger>

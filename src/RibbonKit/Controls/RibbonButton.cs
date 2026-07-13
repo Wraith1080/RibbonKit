@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Automation.Peers;
 using System.Windows.Controls;
 using System.Windows.Media;
+using RibbonKit.Animation;
 using RibbonKit.Layout;
 // Alias: WPF's legacy Microsoft ribbon declares identically-named peers in
 // System.Windows.Automation.Peers, so the reference must be disambiguated.
@@ -140,6 +141,40 @@ public class RibbonButton : Button, IRibbonSizeAware
 
     /// <inheritdoc />
     protected override AutomationPeer OnCreateAutomationPeer() => new RibbonButtonAutomationPeer(this);
+
+    // ── Hover / press cross-fade (drives the template's HoverWash / PressWash layers) ────────
+    private FrameworkElement? _hoverWash;
+    private FrameworkElement? _pressWash;
+
+    /// <inheritdoc />
+    public override void OnApplyTemplate()
+    {
+        base.OnApplyTemplate();
+        _hoverWash = GetTemplateChild("HoverWash") as FrameworkElement;
+        _pressWash = GetTemplateChild("PressWash") as FrameworkElement;
+        UpdateWashes();
+    }
+
+    /// <inheritdoc />
+    protected override void OnPropertyChanged(DependencyPropertyChangedEventArgs e)
+    {
+        base.OnPropertyChanged(e);
+        if (e.Property == IsMouseOverProperty
+            || e.Property == IsPressedProperty
+            || e.Property == Ribbon.QatOnColoredSurfaceProperty)
+        {
+            UpdateWashes();
+        }
+    }
+
+    // Neutral hover/press is a wash cross-fade; on a colored surface (QAT on an accent title bar /
+    // strip) the template's instant band brushes win, so the washes stay hidden there.
+    private void UpdateWashes()
+    {
+        bool neutral = !Ribbon.GetQatOnColoredSurface(this);
+        RibbonMotion.FadeWash(_hoverWash, neutral && IsMouseOver, RibbonAnimationAction.Hover);
+        RibbonMotion.FadeWash(_pressWash, neutral && IsPressed, RibbonAnimationAction.Hover);
+    }
 
     void IRibbonSizeAware.ApplySizeState(RibbonGroupSizeState state) => ApplySizeState(state);
 
