@@ -916,7 +916,12 @@ public class Ribbon : Control
         RibbonMotion.PlaySlideIn(target, RibbonAnimationAction.TabSwitch, RibbonSlideFrom.Top);
     }
 
-    private void OnThemeConfigurationChanged(object? sender, EventArgs e) => UpdateQatButtonContext();
+    private void OnThemeConfigurationChanged(object? sender, EventArgs e)
+    {
+        UpdateQatButtonContext();
+        // Soften a theme/accent swap with a quick opacity settle on the ribbon strip.
+        RibbonMotion.PlayThemeCrossfade(_ribbonTabControl, RibbonAnimationAction.ThemeSwitch);
+    }
 
     /// <summary>
     /// Sets, on each QAT button, whether it currently sits on a colored surface and the

@@ -316,6 +316,32 @@ public static class RibbonMotion
         wash.BeginAnimation(UIElement.OpacityProperty, fade);
     }
 
+    /// <summary>
+    /// A subtle "refresh" for a theme or accent change: the element dips to ~85% opacity and
+    /// settles back to 100% over the action's timing, softening the swap. Not a full fade (that
+    /// would flash an already-opaque element to transparent). Instant when the action is disabled.
+    /// </summary>
+    public static void PlayThemeCrossfade(FrameworkElement? element, RibbonAnimationAction action)
+    {
+        if (element is null)
+        {
+            return;
+        }
+
+        if (!RibbonAnimation.IsEnabled(action))
+        {
+            element.BeginAnimation(UIElement.OpacityProperty, null);
+            element.Opacity = 1d;
+            return;
+        }
+
+        var fade = new DoubleAnimation(0.85d, 1d, RibbonAnimation.GetDuration(action))
+        {
+            EasingFunction = RibbonAnimation.GetEase(action),
+        };
+        element.BeginAnimation(UIElement.OpacityProperty, fade);
+    }
+
     private static void Slide(
         TranslateTransform translate,
         DependencyProperty axis,
