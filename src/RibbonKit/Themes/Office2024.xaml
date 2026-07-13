@@ -764,7 +764,7 @@
                                 <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
                             </MultiTrigger.Conditions>
                             <Setter TargetName="Chrome" Property="Background"
-                                    Value="{Binding Path=(controls:Ribbon.QatHoverBackground), RelativeSource={RelativeSource TemplatedParent}}" />
+                                    Value="{DynamicResource RibbonKit.Brushes.Qat.ColoredHoverBackground}" />
                         </MultiTrigger>
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
@@ -772,7 +772,7 @@
                                 <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
                             </MultiTrigger.Conditions>
                             <Setter TargetName="Chrome" Property="Background"
-                                    Value="{Binding Path=(controls:Ribbon.QatPressedBackground), RelativeSource={RelativeSource TemplatedParent}}" />
+                                    Value="{DynamicResource RibbonKit.Brushes.Qat.ColoredPressedBackground}" />
                         </MultiTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -939,7 +939,7 @@
                                 <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
                             </MultiTrigger.Conditions>
                             <Setter TargetName="Chrome" Property="Background"
-                                    Value="{Binding Path=(controls:Ribbon.QatHoverBackground), RelativeSource={RelativeSource TemplatedParent}}" />
+                                    Value="{DynamicResource RibbonKit.Brushes.Qat.ColoredHoverBackground}" />
                         </MultiTrigger>
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
@@ -947,7 +947,7 @@
                                 <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
                             </MultiTrigger.Conditions>
                             <Setter TargetName="Chrome" Property="Background"
-                                    Value="{Binding Path=(controls:Ribbon.QatPressedBackground), RelativeSource={RelativeSource TemplatedParent}}" />
+                                    Value="{DynamicResource RibbonKit.Brushes.Qat.ColoredPressedBackground}" />
                         </MultiTrigger>
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
@@ -955,7 +955,7 @@
                                 <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
                             </MultiTrigger.Conditions>
                             <Setter TargetName="Chrome" Property="Background"
-                                    Value="{Binding Path=(controls:Ribbon.QatPressedBackground), RelativeSource={RelativeSource TemplatedParent}}" />
+                                    Value="{DynamicResource RibbonKit.Brushes.Qat.ColoredPressedBackground}" />
                         </MultiTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -1010,7 +1010,7 @@
                                                             <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
                                                         </MultiTrigger.Conditions>
                                                         <Setter TargetName="Chrome" Property="Background"
-                                                                Value="{Binding (controls:Ribbon.QatHoverBackground), RelativeSource={RelativeSource Self}}" />
+                                                                Value="{DynamicResource RibbonKit.Brushes.Qat.ColoredHoverBackground}" />
                                                     </MultiTrigger>
                                                     <MultiTrigger>
                                                         <MultiTrigger.Conditions>
@@ -1018,7 +1018,7 @@
                                                             <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
                                                         </MultiTrigger.Conditions>
                                                         <Setter TargetName="Chrome" Property="Background"
-                                                                Value="{Binding (controls:Ribbon.QatPressedBackground), RelativeSource={RelativeSource Self}}" />
+                                                                Value="{DynamicResource RibbonKit.Brushes.Qat.ColoredPressedBackground}" />
                                                     </MultiTrigger>
                                                 </ControlTemplate.Triggers>
                                             </ControlTemplate>
@@ -1199,7 +1199,7 @@
                                                             <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
                                                         </MultiTrigger.Conditions>
                                                         <Setter TargetName="Chrome" Property="Background"
-                                                                Value="{Binding (controls:Ribbon.QatHoverBackground), RelativeSource={RelativeSource Self}}" />
+                                                                Value="{DynamicResource RibbonKit.Brushes.Qat.ColoredHoverBackground}" />
                                                     </MultiTrigger>
                                                     <MultiTrigger>
                                                         <MultiTrigger.Conditions>
@@ -1207,7 +1207,7 @@
                                                             <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
                                                         </MultiTrigger.Conditions>
                                                         <Setter TargetName="Chrome" Property="Background"
-                                                                Value="{Binding (controls:Ribbon.QatPressedBackground), RelativeSource={RelativeSource Self}}" />
+                                                                Value="{DynamicResource RibbonKit.Brushes.Qat.ColoredPressedBackground}" />
                                                     </MultiTrigger>
                                                 </ControlTemplate.Triggers>
                                             </ControlTemplate>
@@ -1308,7 +1308,7 @@
                                                             <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
                                                         </MultiTrigger.Conditions>
                                                         <Setter TargetName="Chrome" Property="Background"
-                                                                Value="{Binding (controls:Ribbon.QatHoverBackground), RelativeSource={RelativeSource Self}}" />
+                                                                Value="{DynamicResource RibbonKit.Brushes.Qat.ColoredHoverBackground}" />
                                                     </MultiTrigger>
                                                     <MultiTrigger>
                                                         <MultiTrigger.Conditions>
@@ -1316,7 +1316,7 @@
                                                             <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
                                                         </MultiTrigger.Conditions>
                                                         <Setter TargetName="Chrome" Property="Background"
-                                                                Value="{Binding (controls:Ribbon.QatPressedBackground), RelativeSource={RelativeSource Self}}" />
+                                                                Value="{DynamicResource RibbonKit.Brushes.Qat.ColoredPressedBackground}" />
                                                     </MultiTrigger>
                                                 </ControlTemplate.Triggers>
                                             </ControlTemplate>

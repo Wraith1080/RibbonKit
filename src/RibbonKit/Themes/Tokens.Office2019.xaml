@@ -57,6 +57,11 @@
     <!-- Caption buttons sit on the light grey title band: subtle grey hover/pressed. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.HoverBackground" Color="#D8D8D8" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.PressedBackground" Color="#C8C8C8" />
+    <!-- Safety-net defaults for the QAT-on-colored-band hover/pressed wash. The Ribbon
+         overrides both keys per-button with the live caption/tab band brushes
+         (Ribbon.UpdateQatButtonContext); these only surface if a trigger fires first. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Qat.ColoredHoverBackground" Color="#2EFFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Qat.ColoredPressedBackground" Color="#4DFFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.CloseHoverBackground" Color="#E81123" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.ClosePressedBackground" Color="#F1707A" />
 

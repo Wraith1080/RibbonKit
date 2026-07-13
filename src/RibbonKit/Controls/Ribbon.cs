@@ -96,8 +96,9 @@ public class Ribbon : Control
     /// <summary>
     /// Attached flag the ribbon sets on a QAT button while it sits on a colored surface
     /// (an accent title bar, or the colored Office 2019 tab strip). The button template
-    /// then draws its icon as a white silhouette and uses <see cref="QatHoverBackgroundProperty"/>
-    /// for its hover, so the QAT blends with the colored band like Office.
+    /// then draws its icon as a white silhouette and uses the brushes published under
+    /// <see cref="QatColoredHoverBackgroundKey"/> / <see cref="QatColoredPressedBackgroundKey"/>
+    /// for its hover/pressed states, so the QAT blends with the colored band like Office.
     /// </summary>
     public static readonly DependencyProperty QatOnColoredSurfaceProperty =
         DependencyProperty.RegisterAttached(
@@ -116,38 +117,20 @@ public class Ribbon : Control
     public static bool GetQatOnColoredSurface(DependencyObject element) =>
         (bool)element.GetValue(QatOnColoredSurfaceProperty);
 
-    /// <summary>Attached hover-background brush used by a QAT button on a colored surface.</summary>
-    public static readonly DependencyProperty QatHoverBackgroundProperty =
-        DependencyProperty.RegisterAttached(
-            "QatHoverBackground",
-            typeof(System.Windows.Media.Brush),
-            typeof(Ribbon),
-            new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.Inherits));
+    /// <summary>
+    /// Resource key under which the ribbon publishes, on each QAT button, the hover brush to
+    /// use while the button sits on a colored surface. Button templates consume it with
+    /// <c>{DynamicResource}</c>, which resolves through the element tree and always yields a
+    /// concrete brush — unlike bindings to inherited attached properties, which template
+    /// children could not reliably read (see design notes §3.21).
+    /// </summary>
+    public const string QatColoredHoverBackgroundKey = "RibbonKit.Brushes.Qat.ColoredHoverBackground";
 
-    /// <summary>Sets the <see cref="QatHoverBackgroundProperty"/> for an element.</summary>
-    public static void SetQatHoverBackground(DependencyObject element, System.Windows.Media.Brush? value) =>
-        element.SetValue(QatHoverBackgroundProperty, value);
-
-    /// <summary>Gets the <see cref="QatHoverBackgroundProperty"/> for an element.</summary>
-    public static System.Windows.Media.Brush? GetQatHoverBackground(DependencyObject element) =>
-        (System.Windows.Media.Brush?)element.GetValue(QatHoverBackgroundProperty);
-
-    /// <summary>Attached pressed/checked-background brush used by a QAT button on a colored surface,
-    /// so pressing/toggling shows a stable "active" state (matches the caption buttons).</summary>
-    public static readonly DependencyProperty QatPressedBackgroundProperty =
-        DependencyProperty.RegisterAttached(
-            "QatPressedBackground",
-            typeof(System.Windows.Media.Brush),
-            typeof(Ribbon),
-            new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.Inherits));
-
-    /// <summary>Sets the <see cref="QatPressedBackgroundProperty"/> for an element.</summary>
-    public static void SetQatPressedBackground(DependencyObject element, System.Windows.Media.Brush? value) =>
-        element.SetValue(QatPressedBackgroundProperty, value);
-
-    /// <summary>Gets the <see cref="QatPressedBackgroundProperty"/> for an element.</summary>
-    public static System.Windows.Media.Brush? GetQatPressedBackground(DependencyObject element) =>
-        (System.Windows.Media.Brush?)element.GetValue(QatPressedBackgroundProperty);
+    /// <summary>
+    /// Resource key for the pressed/checked companion of <see cref="QatColoredHoverBackgroundKey"/>,
+    /// so pressing/toggling shows a stable "active" state (matches the caption buttons).
+    /// </summary>
+    public const string QatColoredPressedBackgroundKey = "RibbonKit.Brushes.Qat.ColoredPressedBackground";
 
     /// <summary>Identifies the <see cref="SelectedTab"/> dependency property.</summary>
     public static readonly DependencyProperty SelectedTabProperty =
@@ -972,21 +955,28 @@ public class Ribbon : Control
             SetQatOnColoredSurface(element, colored);
             if (colored && hoverKey is not null)
             {
-                // Resolve to CONCRETE brushes (not SetResourceReference). A DynamicResource
-                // reference set on the proxy does NOT propagate its resolved value through
-                // property-value inheritance to nested template parts (PART_Toggle/PART_Primary
-                // read it via RelativeSource Self) — they came back null. A plain SetValue does
-                // inherit. A null Background also makes the part's Chrome border non-hit-testable,
-                // so on the WindowChrome caption the hover trigger would drop the border out of
-                // hit-testing and the click fell through to the title bar. Resolve from the Ribbon
-                // (guaranteed connected to the theme resource scope; a QAT element may not be).
-                SetQatHoverBackground(element, TryFindResource(hoverKey) as System.Windows.Media.Brush);
-                SetQatPressedBackground(element, TryFindResource(pressedKey) as System.Windows.Media.Brush);
+                // Publish the band's brushes as RESOURCES on the proxy, not as attached-property
+                // values. Template children (the dropdown/split PART_Toggle/PART_Primary chrome)
+                // could not reliably read an inherited brush property through a Setter binding —
+                // it came back null, and a Border whose trigger sets Background to null drops out
+                // of hit-testing, so on the WindowChrome caption the click fell through to the
+                // title bar. {DynamicResource} lookup, by contrast, walks the element tree from
+                // the Chrome border up to this proxy, always finds these entries, and re-resolves
+                // automatically when we rewrite them on a theme/accent change. Resolve the actual
+                // brush from the Ribbon (guaranteed connected to the theme resource scope; a QAT
+                // element may not be), and never store null — fall back to Transparent, which
+                // stays hit-testable.
+                element.Resources[QatColoredHoverBackgroundKey] =
+                    TryFindResource(hoverKey) as System.Windows.Media.Brush
+                    ?? System.Windows.Media.Brushes.Transparent;
+                element.Resources[QatColoredPressedBackgroundKey] =
+                    TryFindResource(pressedKey) as System.Windows.Media.Brush
+                    ?? System.Windows.Media.Brushes.Transparent;
             }
             else
             {
-                element.ClearValue(QatHoverBackgroundProperty);
-                element.ClearValue(QatPressedBackgroundProperty);
+                element.Resources.Remove(QatColoredHoverBackgroundKey);
+                element.Resources.Remove(QatColoredPressedBackgroundKey);
             }
         }
     }

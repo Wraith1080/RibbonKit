@@ -55,6 +55,11 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ContentBackground" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.HoverBackground" Color="#E5E5E5" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.PressedBackground" Color="#D6D6D6" />
+    <!-- Safety-net defaults for the QAT-on-colored-band hover/pressed wash. The Ribbon
+         overrides both keys per-button with the live caption/tab band brushes
+         (Ribbon.UpdateQatButtonContext); these only surface if a trigger fires first. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Qat.ColoredHoverBackground" Color="#2EFFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Qat.ColoredPressedBackground" Color="#4DFFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.CloseHoverBackground" Color="#E81123" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.ClosePressedBackground" Color="#F1707A" />
 

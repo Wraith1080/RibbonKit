@@ -169,10 +169,12 @@ tab row with colored band), icons turn white silhouettes and hover matches the b
 
 - **Inherited attached properties DID NOT propagate** to the QAT buttons across the
   ItemsControl/reparenting boundary — that approach failed. The working model is
-  **direct-set**: `Ribbon.QatOnColoredSurface` (bool) + `Ribbon.QatHoverBackground`
-  (brush, set via `SetResourceReference` to the neighbouring chrome's hover token) are
-  set *on each item* in `UpdateQatButtonContext()`, re-run on `ThemeManager.Changed`,
-  collection changes, and placement changes.
+  **direct-set**: `Ribbon.QatOnColoredSurface` (bool, direct-set + `Inherits` so nested
+  template parts see it) plus **per-item resource overrides** for the brushes —
+  `UpdateQatButtonContext()` writes the resolved band brushes into each item's
+  `Resources` under `RibbonKit.Brushes.Qat.ColoredHoverBackground` /
+  `...ColoredPressedBackground`, and templates consume them with `{DynamicResource}`.
+  Re-run on `ThemeManager.Changed`, collection changes, and placement changes.
 - White icon = `Rectangle Fill=#FFFFFF` with `OpacityMask=ImageBrush(Icon)`; the small
   layout has `SmallImage` + hidden `SmallImageTint`, swapped by template trigger.
 
@@ -664,29 +666,39 @@ source's menu items while open:
   the source's menu under the proxy (borrowed, same as the dropdown proxy). So the split's dropdown
   IS in the QAT, matching Office.
 - **Colored-surface QAT tinting is unified across ALL button types.** `Ribbon.QatOnColoredSurface`
-  / `QatHoverBackground` / `QatPressedBackground` (new) are `Inherits` attached properties, so a
-  dropdown/split proxy's NESTED parts (opener toggle, split primary + chevron) read them in their
-  own templates. Every QAT button — RibbonButton, RibbonToggleButton, dropdown opener, split
-  primary + toggle — now white-outs its Small icon (and chevron) on a colored surface AND carries
-  a consistent set of state triggers: `IsMouseOver+colored → QatHoverBackground`, then
-  `IsPressed/IsChecked+colored → QatPressedBackground` LAST so the pressed/open/checked state wins
+  (bool, `Inherits`) gates the triggers; the brushes are **per-item resource overrides** consumed
+  via `{DynamicResource RibbonKit.Brushes.Qat.ColoredHoverBackground}` / `...ColoredPressedBackground`
+  (see gotcha below). Every QAT button — RibbonButton, RibbonToggleButton, dropdown opener, split
+  primary + toggle — white-outs its Small icon (and chevron) on a colored surface AND carries
+  a consistent set of state triggers: `IsMouseOver+colored → ColoredHoverBackground`, then
+  `IsPressed/IsChecked+colored → ColoredPressedBackground` LAST so the pressed/open/checked state wins
   and holds ONE stable background. That last part fixed three bugs: (1) the **flicker** — an open
   dropdown/split had no colored "open" state, so it flipped between the band hover and the neutral
   gray checked box as `IsMouseOver` changed during the click; (2) **no pressed effect** on a colored
   bar — the colored hover trigger used to win over the neutral pressed one, so nothing changed on
   press; (3) the **toggle** (e.g. Bold) had NO colored treatment at all — dark icon on an opaque
-  light box. `QatPressedBackground` is set to `CaptionButton.PressedBackground` (title bar) so the
+  light box. The pressed key resolves to `CaptionButton.PressedBackground` (title bar) so the
   pressed/checked look matches the window's caption buttons.
-  - **Gotcha (nested parts must read the brush via `AncestorType`, not inheritance).** The nested
-    opener/primary/chevron read `QatHoverBackground`/`QatPressedBackground` from the proxy via
-    `RelativeSource AncestorType={x:Type controls:RibbonDropDownButton}` — NOT `RelativeSource Self`.
-    Those brushes are set on the proxy with `SetResourceReference`, and a resource-reference value
-    does NOT reliably propagate its resolved brush to inheriting template children (the plain bool
-    `QatOnColoredSurface` does, which is why the trigger still *fires*). With `Self` the setter got
-    `null`, and a `Border` with `Background=null` is NOT hit-testable — so on a WindowChrome title
-    bar the click fell THROUGH the button to the caption (drag/maximize) and no hover/press showed.
-    Reading the live value off the proxy fixes both. (RibbonButton was fine because it reads via
-    `TemplatedParent`, i.e. the proxy itself.)
+  - **Gotcha (brushes for nested template parts: publish as RESOURCES, not bindable properties).**
+    Three binding-based attempts to hand the band brushes to the dropdown/split proxies' nested
+    parts (opener toggle, split primary + chevron) all failed the same way: the trigger `Setter`
+    binding produced `null`, and a `Border` whose trigger sets `Background=null` is NOT
+    hit-testable — so on a WindowChrome title bar hovering dropped the button out of hit-testing
+    and the click fell THROUGH to the caption (drag/maximize), with no hover/press visuals.
+    The attempts: (a) `Inherits` attached brush set via `SetResourceReference` + `RelativeSource
+    Self` read — a resource-reference value does not propagate its resolved brush to inheriting
+    template children (the plain bool `QatOnColoredSurface` does, which is why the triggers still
+    *fired*); (b) `RelativeSource AncestorType` read — `FindAncestor` in a template-trigger
+    `Setter.Value` never delivered the value; (c) plain `SetValue` of resolved brushes + `Self`
+    read — still null at the nested `Chrome` (user-verified). What DOES work — user-verified —
+    is a plain `{DynamicResource}` in the trigger setter. So `UpdateQatButtonContext()` resolves
+    the band brushes (via `TryFindResource` on the Ribbon, never-null with a `Transparent`
+    fallback) and writes them into each item's `Resources` under the two `Qat.Colored*` keys;
+    resource lookup walks from the nested `Chrome` up to the proxy, finds the override, and
+    re-resolves when the entries are rewritten on theme/accent changes. Token dictionaries carry
+    safety-net defaults for both keys so an unresolved lookup can never reintroduce the null.
+    ALL colored hover/pressed setters (plain + toggle buttons too, previously `TemplatedParent`
+    bindings) now use the same two keys — one mechanism everywhere.
 
 ### 3.20 Large-button label: inline dropdown chevron + multi-line ellipsis
 
