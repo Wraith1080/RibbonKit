@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using Microsoft.VisualStudio.DesignTools.Extensibility.Metadata;
 using Microsoft.VisualStudio.DesignTools.Extensibility.Model;
 
@@ -72,6 +74,108 @@ internal static class DesignModel
         using (ModelEditingScope scope = item.BeginEdit("Delete"))
         {
             parent.Properties[parentCollectionProperty].Collection.Remove(item);
+            scope.Complete();
+        }
+    }
+
+    // ---- Reads (used by the editor dialog to build its tree) --------------------------
+
+    /// <summary>
+    /// The child <see cref="ModelItem"/>s in <paramref name="parent"/>'s named collection property,
+    /// or an empty list when the property is unset. A snapshot (safe to iterate while editing).
+    /// </summary>
+    public static IReadOnlyList<ModelItem> Children(ModelItem parent, string collectionProperty)
+    {
+        ModelProperty property = parent.Properties[collectionProperty];
+        ModelItemCollection collection = property?.Collection;
+        return collection is null ? new List<ModelItem>() : collection.ToList();
+    }
+
+    /// <summary>The effective <c>Header</c> text of <paramref name="item"/> (includes defaults), or "" when it has none.</summary>
+    public static string Header(ModelItem item)
+    {
+        ModelProperty header = item.Properties["Header"];
+        return header?.ComputedValue?.ToString() ?? string.Empty;
+    }
+
+    /// <summary>The simple type name of <paramref name="item"/> (e.g. <c>"RibbonButton"</c>).</summary>
+    public static string TypeName(ModelItem item) => item.ItemType.Name;
+
+    /// <summary>The zero-based index of <paramref name="item"/> in its parent's collection, or -1.</summary>
+    public static int IndexInParent(ModelItem item, string parentCollectionProperty)
+    {
+        ModelItem parent = item.Parent;
+        return parent is null ? -1 : parent.Properties[parentCollectionProperty].Collection.IndexOf(item);
+    }
+
+    /// <summary>The number of siblings in <paramref name="item"/>'s parent collection (0 when it has no parent).</summary>
+    public static int SiblingCount(ModelItem item, string parentCollectionProperty)
+    {
+        ModelItem parent = item.Parent;
+        return parent is null ? 0 : parent.Properties[parentCollectionProperty].Collection.Count;
+    }
+
+    // ---- Scoped creation / rename (each is a single undo, like the right-click verbs) --
+
+    /// <summary>Adds a new tab (seeded with one group) to <paramref name="ribbon"/> and returns it.</summary>
+    public static ModelItem AddTab(ModelItem ribbon)
+    {
+        using (ModelEditingScope scope = ribbon.BeginEdit("Add Tab"))
+        {
+            ModelItem tab = Create(ribbon, "RibbonTab");
+            tab.Properties["Header"].SetValue("New Tab");
+
+            ModelItem group = Create(ribbon, "RibbonGroup");
+            group.Properties["Header"].SetValue("New Group");
+            Add(tab, "Groups", group);
+
+            Add(ribbon, "Tabs", tab);
+            scope.Complete();
+            return tab;
+        }
+    }
+
+    /// <summary>Adds a new group to <paramref name="tab"/> and returns it.</summary>
+    public static ModelItem AddGroup(ModelItem tab)
+    {
+        using (ModelEditingScope scope = tab.BeginEdit("Add Group"))
+        {
+            ModelItem group = Create(tab, "RibbonGroup");
+            group.Properties["Header"].SetValue("New Group");
+            Add(tab, "Groups", group);
+            scope.Complete();
+            return group;
+        }
+    }
+
+    /// <summary>
+    /// Adds a new leaf control of type <paramref name="typeName"/> (a button/toggle/split/drop-down)
+    /// to <paramref name="group"/>, labelled <paramref name="label"/>, and returns it.
+    /// </summary>
+    public static ModelItem AddControl(ModelItem group, string typeName, string label)
+    {
+        using (ModelEditingScope scope = group.BeginEdit("Add " + label))
+        {
+            ModelItem control = Create(group, typeName);
+            control.Properties["Header"]?.SetValue(label);
+            Add(group, "Items", control);
+            scope.Complete();
+            return control;
+        }
+    }
+
+    /// <summary>Sets <paramref name="item"/>'s <c>Header</c> to <paramref name="header"/> as a single undo.</summary>
+    public static void Rename(ModelItem item, string header)
+    {
+        ModelProperty property = item.Properties["Header"];
+        if (property is null)
+        {
+            return;
+        }
+
+        using (ModelEditingScope scope = item.BeginEdit("Rename"))
+        {
+            property.SetValue(header);
             scope.Complete();
         }
     }

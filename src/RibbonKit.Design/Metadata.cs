@@ -35,11 +35,13 @@ internal sealed class Metadata : IProvideAttributeTable
         {
             var builder = new AttributeTableBuilder();
 
-            // Ribbon: seed a starter tab/group when dropped, and offer "Add Tab" on right-click.
+            // Ribbon: seed a starter tab/group when dropped, offer "Add Tab" / "Edit Ribbon…" on
+            // right-click, and translate SelectedIndex to the editor's chosen design-only preview tab.
             builder.AddCustomAttributes(
                 RibbonType,
                 new FeatureAttribute(typeof(RibbonDefaultInitializer)),
-                new FeatureAttribute(typeof(RibbonContextMenuProvider)));
+                new FeatureAttribute(typeof(RibbonContextMenuProvider)),
+                new FeatureAttribute(typeof(SelectedTabPreviewProvider)));
 
             // Tab: "Add Group".
             builder.AddCustomAttributes(

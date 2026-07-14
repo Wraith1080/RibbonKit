@@ -862,7 +862,80 @@ working in VS.**
   `Backstage` (only its text, `ApplicationButtonHeader`, is settable).
 - `Diagnostics.cs` (`DesignLog`) is still wired into every verb — strip before shipping.
 
-### 3.23 Animation polish batch — all six remaining transitions wired
+### 3.23 Ribbon Editor dialog (design-time) + tab-preview feasibility
+
+Loop back to design-time tooling: a launchable **structure editor** dialog, plus settling
+whether a `d:`-driven tab-preview toggle is achievable.
+
+**Feasibility findings (verified against the current designer API, July 2026):**
+
+- **Dialogs from verbs — YES.** The design assembly loads INSIDE the VS process (net472);
+  only the *surface* is process-isolated. So a `MenuAction.Execute` handler can `new
+  Window(...).ShowDialog()` — a plain code-built WPF window works (the runtime dialogs' themed
+  templates aren't available here since the design assembly can't reference RibbonKit). This is
+  unlike the adorner wall (§3.22): adorner *visuals* need the surface's process; a dialog does not.
+- **Writing a literal `d:SelectedIndex` from an extension — NO.** The new ModelItem API has no
+  design-namespace write path; `Properties["SelectedIndex"].SetValue(n)` writes the REAL attribute
+  (persists to runtime). Confirmed against the ModelItem members list and the MS migration doc.
+  Hand-authored `d:SelectedIndex` still works (the XAML *parser* honors it — §3.14) but can't be
+  emitted programmatically.
+- **Design-only preview toggle — YES, via `DesignModeValueProvider`** (supported in the new
+  designer; the avenue §3.22 flagged as the one left). It returns a design-time render value for a
+  property without serializing it, and re-runs on `InvalidateProperty`. Registration pattern
+  (from Microsoft's own sample): `Properties.Add(new TypeIdentifier("RibbonKit.Controls.Ribbon"),
+  "SelectedIndex")` + override `TranslatePropertyValue(ModelItem, PropertyIdentifier, object)`.
+  The shipping toggle stores a chosen preview index (design-only backing the dialog writes) and
+  returns it here; a literal `d:` write is neither needed nor possible.
+- Aside: `SuggestedActionProvider` (the selected-element quick-actions flyout) is a newer
+  extensibility point that renders in a POPUP (not on the surface) — a possible nicer launcher than
+  the context menu later. Noted, not built.
+
+**Built this session:**
+
+- `RibbonEditorWindow.cs` — code-only WPF modal: a Tabs → Groups → Controls tree, a toolbar
+  (Add Tab / Add Group / Add Control ▾ / Move Up / Move Down / Delete) and a Header rename box.
+  Owned to the VS main window via `WindowInteropHelper` + `Process…MainWindowHandle` (best-effort).
+  Edits go straight to the `ModelItem` tree through `DesignModel`; each op is its own undo (no
+  OK/Cancel transaction — surface updates live, matching the verb model). Chose per-op scopes over
+  a session-long `ModelEditingScope`/reconcile for lowest risk and to preserve unmodeled props.
+- `DesignModel.cs` — added read helpers (`Children`, `Header`, `TypeName`, `IndexInParent`,
+  `SiblingCount`) and scoped create/rename helpers (`AddTab`, `AddGroup`, `AddControl`, `Rename`).
+- `ContextMenuProviders.cs` — "Edit Ribbon…" launcher verb on `RibbonContextMenuProvider`.
+**Spike result (confirmed on Windows):** the dialog shows cleanly and modally from the verb —
+so dialogs-from-verbs is proven. But a load-time-only `DesignModeValueProvider` did **nothing**:
+the new designer calls `TranslatePropertyValue` **lazily** — only on
+`ValueTranslationService.InvalidateProperty` or when the property is edited in the designer, never
+on initial parse (the migration doc's fine print, now verified). The load-time spike never called
+`InvalidateProperty`, so it never fired.
+
+**Real preview toggle — built on the correct trigger (`TabPreview.cs`):**
+
+- `SelectedTabPreviewProvider : DesignModeValueProvider` on `Ribbon.SelectedIndex` returns the
+  editor's chosen preview index from `TranslatePropertyValue`; nothing is serialized and the
+  running app is untouched (provider isn't invoked for run-time code).
+- The trigger is the piece the spike missed: any feature holding the ModelItem can force
+  re-evaluation via
+  `ribbon.Context.Services.GetRequiredService<ValueTranslationService>().InvalidateProperty(ribbon, selectedIndexId)`
+  (pattern lifted from Microsoft's CustomComboBox sample, where an AdornerProvider does it — we
+  don't need the adorner, just the service call). `TabPreviewCoordinator.Set(ribbon, index)` stores
+  the index in design-session state and fires that invalidation; the editor's **Preview tab** combo
+  ("(no preview)" + one entry per tab) calls it. This is the supported equivalent of hand-authored
+  `d:SelectedIndex` — which can't be written programmatically (no design-namespace write path in the
+  model API). Preview is session state, so it resets on designer reload; that's fine for a live toggle.
+- Replaced the throwaway `SelectedTabPreviewProviderSpike.cs`; `Metadata.cs` now registers the real
+  `SelectedTabPreviewProvider`.
+
+**Confirmed working on Windows (user-verified):** changing the editor's **Preview tab** combo
+repaints the design surface to the chosen tab, with nothing written to the XAML and no runtime
+effect. So the full chain — `TabPreviewCoordinator.Set` → `ValueTranslationService.InvalidateProperty`
+→ `SelectedTabPreviewProvider.TranslatePropertyValue` → the ribbon's selection visual — works end
+to end; the §3.14 `EnsureSelection` fallback was not needed. The dialog-from-verb path is likewise
+confirmed. Design-time component work (editor + design-only preview) is done.
+
+Cleanup: delete the retired `SelectedTabPreviewProviderSpike.cs` (unregistered/inert, replaced by
+`TabPreview.cs`).
+
+### 3.24 Animation polish batch — all six remaining transitions wired
 
 - **Hover/press cross-fade**: `RibbonButton`/`RibbonToggleButton` call `RibbonMotion.FadeWash`
   on their `_hoverWash`/`_pressWash` (and, for the toggle, `_checkWash`) layers instead of

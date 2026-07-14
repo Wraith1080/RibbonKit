@@ -17,6 +17,13 @@ public sealed class RibbonContextMenuProvider : ContextMenuProvider
 
     public RibbonContextMenuProvider()
     {
+        // Full structure editor (tabs / groups / controls) in one modal, launched from the
+        // Ribbon's right-click menu. The verb bodies below remain as quick single-action
+        // shortcuts; this opens the richer tree UI.
+        var edit = new MenuAction("Edit Ribbon…");
+        edit.Execute += OnEditRibbon;
+        Items.Add(edit);
+
         var addTab = new MenuAction("Add Tab");
         addTab.Execute += OnAddTab;
         Items.Add(addTab);
@@ -69,6 +76,16 @@ public sealed class RibbonContextMenuProvider : ContextMenuProvider
         _qatTitleBar.Checked = current == "TitleBar";
         _qatTabRow.Checked = current == "TabRow";
         _qatBelowRibbon.Checked = current == "BelowRibbon";
+    }
+
+    private void OnEditRibbon(object sender, MenuActionEventArgs e)
+    {
+        ModelItem ribbon = e.Selection.PrimarySelection;
+
+        // Runs in-process on the VS UI thread, so a plain WPF modal is fine here. The dialog
+        // edits the same ModelItem tree these verbs do; each of its edits is its own undo.
+        var window = new RibbonEditorWindow(ribbon);
+        window.ShowDialog();
     }
 
     private void OnAddTab(object sender, MenuActionEventArgs e)
