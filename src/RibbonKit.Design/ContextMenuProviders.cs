@@ -1,3 +1,5 @@
+using System;
+using System.Windows;
 using Microsoft.VisualStudio.DesignTools.Extensibility.Interaction;
 using Microsoft.VisualStudio.DesignTools.Extensibility.Model;
 
@@ -80,12 +82,28 @@ public sealed class RibbonContextMenuProvider : ContextMenuProvider
 
     private void OnEditRibbon(object sender, MenuActionEventArgs e)
     {
-        ModelItem ribbon = e.Selection.PrimarySelection;
-
         // Runs in-process on the VS UI thread, so a plain WPF modal is fine here. The dialog
         // edits the same ModelItem tree these verbs do; each of its edits is its own undo.
-        var window = new RibbonEditorWindow(ribbon);
-        window.ShowDialog();
+        // Wrapped so a failure surfaces (a throw here would otherwise be swallowed by the
+        // designer and the editor would just never appear).
+        try
+        {
+            DesignLog.Write("Edit Ribbon: opening editor…");
+            ModelItem ribbon = e.Selection.PrimarySelection;
+            var window = new RibbonEditorWindow(ribbon);
+            window.ShowDialog();
+            DesignLog.Write("Edit Ribbon: editor closed.");
+        }
+        catch (Exception ex)
+        {
+            DesignLog.Error("OnEditRibbon", ex);
+            MessageBox.Show(
+                "The Ribbon Editor could not open.\n\n" + ex.Message
+                + "\n\nFull details were logged to:\n" + DesignLog.Path,
+                "Ribbon Editor",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
     }
 
     private void OnAddTab(object sender, MenuActionEventArgs e)

@@ -54,12 +54,65 @@ an in-place rebuild won't reload).
 Every verb is a single undo.
 
 **Ribbon Editor dialog (`RibbonEditorWindow`):** "Edit Ribbon…" opens a modal with a tree of
-Tabs → Groups → Controls and a toolbar (Add Tab · Add Group · Add Control ▾ · Move Up/Down ·
-Delete) plus a Header rename box. It runs in-process on the VS UI thread (only the design
+Tabs → Groups → items and a toolbar (Add Tab · Add Group · Add Control ▾ · Add Stack · Move Up/Down ·
+Delete) plus a Header rename box. A group's items can be leaf controls OR **layout containers**
+(`StackPanel`) that hold their own children, so the tree recurses into any node with a `Children`
+collection — matching the Office pattern of a vertical stack of horizontal icon rows. "Add Stack"
+inserts a `StackPanel` (vertical in a group, horizontal inside another stack); "Add Control" targets
+whatever's selected (a group's `Items`, a container's `Children`, or as a sibling of a control) and
+defaults stacked buttons to `Size="Small"`. Container nodes expose an `Orientation` editor. The
+"Add Control ▾" menu covers Button / Toggle / Split / Drop-Down (each gets a Header caption) plus Combo
+Box, Gallery (in-ribbon / drop-down), and Separator (no caption); creation tries the RibbonKit xmlns
+first, then WPF framework namespaces (so `Separator` works too). The tree also descends into **item
+containers** — combo boxes and galleries (their `Items`) — and surfaces the **Backstage** (the File
+menu) as its own root node with editable nav items. **Add Item** creates the right child for the
+selected container (a `ComboBoxItem`, `RibbonGalleryItem`, or backstage `BackstageTabItem`). The
+**Caption** box edits `Header` or `Content` (whichever the item has), so it renames buttons, tabs,
+backstage pages, and combo/gallery items alike. A **Show backstage** checkbox (next to Preview tab)
+opens the backstage on the surface design-only — same `DesignModeValueProvider` path as the tab
+preview, now covering `IsBackstageOpen` too; it enables only when the ribbon has a backstage. It runs in-process on the VS UI thread (only the design
 *surface* is process-isolated, not extension code), so it's a plain code-built WPF `Window`
 (the design assembly can't reference RibbonKit's themes). Every change is applied straight to
 the `ModelItem` tree through `DesignModel`, each as its own single undo — same transaction model
 as the verbs, no OK/Cancel wrapper. The surface updates live.
+
+The dialog also has a **per-item property panel** that shows editors for the selected node,
+skipping any property the type doesn't have (via `DesignModel.HasProperty` / `FindProperty`):
+
+- Controls (button/toggle/split/drop-down): `Size` (Large/Medium/Small), `SizeDefinition`,
+  `ScreenTipTitle`, `ScreenTipText`.
+- Tab: `IsContextual`, `ContextualColor` (typed as a name or `#hex`, applied through the brush converter).
+- Group: `ShowDialogLauncher`, `ReductionMode` (Collapse/ResizeThenCollapse/Resize), `CanResize`.
+
+Enum and brush values are set as strings and resolved by the property's type converter (same trick
+as the QAT verb's enum set); an invalid value is logged, not thrown. Each edit is its own undo.
+
+Controls also have **Icon / Large icon** editing (verified working). Each row shows the current
+resource key and has a "…" button that opens the **icon picker** (`IconPickerDialog`):
+
+- It always lists the icon keys **already used elsewhere in this ribbon** (no file needed).
+- **"Load Icons.xaml…"** browses to the project's icon dictionary; it's parsed in-process
+  (`XamlReader.Load`) so the icons show as real **thumbnails**, and the dictionary is cached for the
+  session (`IconCatalog`). A filter box narrows the grid; the current icon is highlighted.
+- Picking a tile (or typing a key + Set) writes `{StaticResource key}` via `DesignModel.SetStaticResource`,
+  which builds a StaticResource **ModelItem** with `ResourceKey` set in the model — a raw
+  `StaticResourceExtension` object loses its key when the model serializes it, so that indirection is
+  required. `GetStaticResourceKey` reads the current key back.
+
+The extension can't auto-discover Icons.xaml (resources live in the isolated surface process; there's
+no document-path service), which is why the file is loaded once via the browse button per session.
+
+## Diagnostics (`DesignLog`)
+
+The design tooling has no console and usually no attached debugger, so `DesignLog` appends to a
+log file: **`%LOCALAPPDATA%\RibbonKit\DesignTools.log`** (falls back to `%TEMP%`). The "Edit
+Ribbon…" verb is wrapped in try/catch — if the dialog can't open it logs the full exception and
+shows a MessageBox with the log path. The dialog's tree reads are defensive: each tab / group /
+control node is read in isolation, so a control type or property the reader can't handle is logged
+(with the offending type) and skipped rather than aborting the whole editor. To investigate an
+editor problem, reproduce it, then open the log — the last lines show how far construction got and
+any `ERROR …` entry names the item that failed. `DesignLog.Enabled = false` silences it; it's a
+development aid — gate or remove before shipping.
 
 ## Tab preview via DesignModeValueProvider (design-only, no runtime leak)
 

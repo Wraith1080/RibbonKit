@@ -935,6 +935,118 @@ confirmed. Design-time component work (editor + design-only preview) is done.
 Cleanup: delete the retired `SelectedTabPreviewProviderSpike.cs` (unregistered/inert, replaced by
 `TabPreview.cs`).
 
+**Property editors added (per-item panel in the dialog):** the editor now shows a property panel
+for the selected node, driven by a small spec table + `DesignModel.HasProperty` so only properties
+the type actually has are shown (leans on the `FindProperty` lesson). Covered this pass: controls —
+`Size` (enum), `SizeDefinition`, `ScreenTipTitle`, `ScreenTipText`; tab — `IsContextual` (bool),
+`ContextualColor` (string via brush converter); group — `ShowDialogLauncher` (bool), `ReductionMode`
+(enum), `CanResize` (bool). Editors: text (commit on Enter/lost-focus), checkbox (Click, so a
+programmatic initial set doesn't write), enum combo (values set as strings → type converter, the QAT
+trick). `DesignModel.SetProperty` wraps each in a scope and swallows/logs converter failures (e.g. a
+bad colour) so a typo never crashes the dialog. Each edit = one undo. KeyTip access keys were
+**deferred** (attached property — different model access, unproven; user opted to skip this pass).
+
+**Icon picker (`Icon`/`LargeIcon`) — user wants the full Icons.xaml picker; treated as a spike.**
+Icons are `DrawingImage` resources keyed `Icon.*` in the showcase's `Icons.xaml`, referenced as
+`Icon="{StaticResource Icon.Paste}"`. So the picker needs to (1) enumerate those keys and (2) write
+a **StaticResource reference** to the property — NOT a plain value or a URI (the icons are inline
+vector resources, no file/URI form exists). Both halves use under-documented APIs (`ModelResource`
+in `…Extensibility.Services`; no clear StaticResource-write on `ModelProperty`/`ModelFactory`) and
+can't be tested from the Linux box, so — consistent with how the `d:` preview and the smart-tag
+adorner were handled — it gets a probe before a full build.
+
+**Write-spike round 1 (raw extension) — FAILED, informatively (user-confirmed):**
+`property.SetValue(new StaticResourceExtension(key))` wrote `Icon="{StaticResource}"` with the **key
+dropped**. Lesson: the model serializes the model TREE, not a raw CLR object's internals — a live
+markup-extension object's `ResourceKey` is invisible to it. (Also confirmed `ModelFactory.CreateItem`
+in the new API has NO `params object[] arguments` overload, so the key can't be passed as a ctor arg.)
+
+**Round 2 (shipped): build the extension as a ModelItem + set `ResourceKey` in the model.**
+`CreateStaticResourceItem` does `ModelFactory.CreateItem(ctx, <StaticResource TypeIdentifier>)` then
+`ext.Properties["ResourceKey"].SetValue(key)`, and `SetStaticResource` assigns that ModelItem to the
+target property. The exact `TypeIdentifier` form is unverified, so it tries three in order —
+`(presentationNs,"StaticResourceExtension")`, `(presentationNs,"StaticResource")`, and CLR
+`"System.Windows.StaticResourceExtension"` — logging which one creates successfully.
+`SetStaticResource` then reads the key back and logs `read-back key = '…' (expected '…')`.
+
+**Read-back added (`GetStaticResourceKey`).** The icon fields show the current key for buttons that
+already have an icon, and read-back is what let round 2's write be verified.
+
+**CONFIRMED WORKING on Windows (user):** setting an icon on a blank button, reading an existing
+button's icon key, and copying it to another all work; the log is clean with correct read-back and no
+errors. Icon read+write via a StaticResource model item is fully proven.
+
+**Visual picker shipped (`IconPickerDialog` + `IconCatalog`).** Enumeration was the last constraint:
+no reliable resource-enumeration API, `ModelItem.Source` is not a file path, and resources live in the
+isolated surface process the extension can't read — so the extension can't auto-discover Icons.xaml.
+Design that needs zero uncertain APIs: a "…" button on each icon row opens a picker that (1) always
+lists the icon keys **already used elsewhere in this ribbon** (a pure model walk, `CollectUsedIconKeys`),
+and (2) has **"Load Icons.xaml…"** — an `OpenFileDialog` that parses the file with `XamlReader.Load`
+in the extension's own WPF context, so the `DrawingImage` values render as real **thumbnails**; the
+loaded dictionary is cached for the session (`IconCatalog`). A filter box narrows the grid, the current
+key is highlighted, and clicking a tile writes via the proven `SetStaticResource`. Graceful: useful
+with no file loaded (used-keys), and it can't hit an undocumented API. Trimmed the now-proven spike
+logging (read-back / create-attempt / model-type lines). Later polish: remember the Icons.xaml path
+across sessions; a "(none)" tile to clear an icon (needs a verified `ClearValue`).
+
+**Nested containers (StackPanels) in the editor — DONE.** Real ribbons put a `StackPanel` (often a
+vertical column of horizontal icon rows) inside a group's `Items`, not just leaf controls. The editor
+now models that: `NodeKind` gained `Container`, `NodeInfo` stores its parent collection explicitly
+(the same kind can live in a group's `Items` or a container's `Children`), and `AddItemNodes` recurses
+into any node that has a `Children` collection (`HasProperty(child,"Children")` — Panels have it,
+ribbon controls don't). New verbs: **Add Stack** (`DesignModel.AddStackPanel` via `CreateFramework`,
+which creates the WPF `StackPanel` through the presentation xmlns / CLR-name fallback) — vertical in a
+group, horizontal inside another stack; **Add Control** now targets the selection's child collection
+(`ResolveChildTarget`: group→`Items`, container→`Children`, control→sibling) and defaults stacked
+buttons to `Size="Small"`. Container nodes get an `Orientation` editor; `ResolveTab` now walks
+ancestors by type so Add-Group works from any depth; `CollectUsedIconKeys` recurses into containers.
+`DesignModel.AddControl` generalized to `(parent, collection, type, label, size)`.
+
+**More control types in Add Control (DONE).** The menu now also offers Combo Box (`RibbonComboBox`),
+Gallery in-ribbon (`InRibbonGallery`), Gallery drop-down (`RibbonGallery`), and `Separator`. `AddControl`
+made `header` optional (only buttons get a caption + the Small-in-stack default; combos/galleries/
+separators get neither) and now creates via `CreateAny` — tries the RibbonKit xmlns, then the framework
+namespaces — so `Separator` (a `System.Windows.Controls` type) works alongside the RibbonKit controls.
+Galleries/combos are leaf nodes (no `Children`), so the tree shows them without descending into their
+items; editing gallery/combo items is a possible later step.
+
+**Item editing (combo / gallery / backstage) + backstage toggle — DONE.** The tree now descends into
+item containers too: a combo/gallery (`ItemRule` matches `RibbonComboBox` / `RibbonGallery` /
+`InRibbonGallery`) expands via its `Items`, and the **Backstage** — a scalar `ribbon.Backstage`
+property, not part of `Tabs` — is surfaced as its own root node whose nav items (`BackstageTabItem`)
+are editable. New **Add Item** verb creates the right child per container (`ComboBoxItem` /
+`RibbonGalleryItem` / `BackstageTabItem`) via `DesignModel.AddItem`, resolved by `ResolveItemTarget`
+(the container itself, or the container of a selected item → sibling). Caption editing generalized:
+the box is now **Caption** and edits `Header` OR `Content` (`DesignModel.CaptionProperty`/`GetCaption`/
+`SetCaption`) — combo/gallery items caption via `Content`, everything else via `Header` — so the same
+box renames buttons, tabs, backstage pages, and combo/gallery items. Item creation reuses `CreateAny`
+(so framework `ComboBoxItem` and RibbonKit `RibbonGalleryItem`/`BackstageTabItem` both work).
+
+**Show-backstage toggle:** a "Show backstage" checkbox next to the preview-tab combo, driven by the
+same `DesignModeValueProvider` mechanism as the tab preview — `SelectedTabPreviewProvider` now also
+translates `Ribbon.IsBackstageOpen`, and `TabPreviewCoordinator` gained `SetBackstage`/`TryGetBackstage`
+(+ the invalidation targets `IsBackstageOpen`). Design-only, no XAML/runtime effect; the design-mode
+backstage host from §3.14 renders it. The checkbox enables only when the ribbon has a `Backstage`.
+
+**Diagnostics added (`DesignLog.cs`):** the editor opened fine on a barebones ribbon but failed to
+open on the full MainWindow.xaml ribbon — a hard throw during construction, which the designer
+swallows so the dialog just never appears. Added a file-based log
+(`%LOCALAPPDATA%\RibbonKit\DesignTools.log`), wrapped the "Edit Ribbon…" verb in try/catch (logs +
+MessageBox with the log path), and made the dialog's tree reads defensive via
+`SafeChildren`/`SafeHeader`/`SafeType`.
+
+**Root cause found + fixed (user log, confirmed):** `ModelItem.Properties["Header"]` **throws
+`ArgumentException` when the type has no such property — it does NOT return null** (my original
+assumption). The full ribbon has controls in groups without a `Header` (combo boxes, galleries, …),
+so reading them threw and aborted construction; the barebones ribbon had only headered buttons, so
+it never hit it. Fix: `DesignModel.FindProperty(item, name)` wraps the throwing indexer and returns
+null for an absent property; `Children`/`Header`/`HasHeader`/`IndexInParent`/`SiblingCount`/`Rename`
+all route through it. The editor now walks mixed control types cleanly (no logged errors), labels a
+header-less control by its type, and **disables Rename/​the header box for header-less items while
+keeping Move/Delete** (those are structural, not header-dependent). This is a general lesson for all
+future design-model access: never assume `Properties[name]` returns null for a missing property —
+go through `FindProperty`.
+
 ### 3.24 Animation polish batch — all six remaining transitions wired
 
 - **Hover/press cross-fade**: `RibbonButton`/`RibbonToggleButton` call `RibbonMotion.FadeWash`

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.VisualStudio.DesignTools.Extensibility.Metadata;
@@ -81,21 +82,175 @@ internal static class DesignModel
     // ---- Reads (used by the editor dialog to build its tree) --------------------------
 
     /// <summary>
+    /// The named <see cref="ModelProperty"/>, or <see langword="null"/> when the item's type doesn't
+    /// define it. NOTE: the designer's <c>Properties[name]</c> indexer THROWS
+    /// <see cref="ArgumentException"/> for an unknown property (it does NOT return null), so every
+    /// "does this type have property X?" check must go through here. This is why the editor can walk
+    /// mixed control types (a group holding buttons, combo boxes, galleries — only some have a Header).
+    /// </summary>
+    public static ModelProperty FindProperty(ModelItem item, string name)
+    {
+        try
+        {
+            return item.Properties[name];
+        }
+        catch (ArgumentException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
     /// The child <see cref="ModelItem"/>s in <paramref name="parent"/>'s named collection property,
-    /// or an empty list when the property is unset. A snapshot (safe to iterate while editing).
+    /// or an empty list when the property is absent/unset. A snapshot (safe to iterate while editing).
     /// </summary>
     public static IReadOnlyList<ModelItem> Children(ModelItem parent, string collectionProperty)
     {
-        ModelProperty property = parent.Properties[collectionProperty];
-        ModelItemCollection collection = property?.Collection;
+        ModelItemCollection collection = FindProperty(parent, collectionProperty)?.Collection;
         return collection is null ? new List<ModelItem>() : collection.ToList();
     }
 
-    /// <summary>The effective <c>Header</c> text of <paramref name="item"/> (includes defaults), or "" when it has none.</summary>
-    public static string Header(ModelItem item)
+    /// <summary>The effective <c>Header</c> text of <paramref name="item"/> (includes defaults), or "" when the type has no Header.</summary>
+    public static string Header(ModelItem item) =>
+        FindProperty(item, "Header")?.ComputedValue?.ToString() ?? string.Empty;
+
+    /// <summary>Whether <paramref name="item"/>'s type defines a <c>Header</c> property (so it can be renamed).</summary>
+    public static bool HasHeader(ModelItem item) => FindProperty(item, "Header") != null;
+
+    /// <summary>Whether <paramref name="item"/>'s type defines the named property.</summary>
+    public static bool HasProperty(ModelItem item, string name) => FindProperty(item, name) != null;
+
+    /// <summary>The effective value of the named property (includes defaults), or null when absent.</summary>
+    public static object GetValue(ModelItem item, string name) => FindProperty(item, name)?.ComputedValue;
+
+    /// <summary>The effective value of the named property as text, or "" when absent/null.</summary>
+    public static string GetString(ModelItem item, string name) => GetValue(item, name)?.ToString() ?? string.Empty;
+
+    /// <summary>The effective value of the named boolean property (false when absent or unparseable).</summary>
+    public static bool GetBool(ModelItem item, string name)
     {
-        ModelProperty header = item.Properties["Header"];
-        return header?.ComputedValue?.ToString() ?? string.Empty;
+        object value = GetValue(item, name);
+        return value is bool b ? b : bool.TryParse(value?.ToString(), out bool parsed) && parsed;
+    }
+
+    /// <summary>
+    /// Sets the named property to <paramref name="value"/> as a single undo. Enums and brushes can be
+    /// passed as strings — the property's type converter resolves them (same as the QAT verb's enum set).
+    /// A conversion failure (e.g. an invalid colour string) is logged, not thrown.
+    /// </summary>
+    public static void SetProperty(ModelItem item, string name, object value)
+    {
+        ModelProperty property = FindProperty(item, name);
+        if (property is null)
+        {
+            return;
+        }
+
+        try
+        {
+            using (ModelEditingScope scope = item.BeginEdit("Set " + name))
+            {
+                property.SetValue(value);
+                scope.Complete();
+            }
+        }
+        catch (Exception ex)
+        {
+            DesignLog.Error("SetProperty " + name + " = '" + value + "'", ex);
+        }
+    }
+
+    /// <summary>
+    /// The resource key of a <c>{StaticResource …}</c>-valued property (e.g. an icon), or "" when the
+    /// property is unset or isn't a static resource. Reading this back is also the key diagnostic: it
+    /// logs the model type of an existing icon value, which reveals exactly how a StaticResource is
+    /// represented in the model (and therefore how to create one).
+    /// </summary>
+    public static string GetStaticResourceKey(ModelItem item, string name)
+    {
+        ModelProperty property = FindProperty(item, name);
+        ModelItem value = property?.Value;
+        if (value is null)
+        {
+            return string.Empty;
+        }
+
+        return FindProperty(value, "ResourceKey")?.ComputedValue?.ToString() ?? string.Empty;
+    }
+
+    /// <summary>
+    /// Sets the named property to a <c>{StaticResource <paramref name="key"/>}</c> reference — used for
+    /// icon properties, whose values are <c>DrawingImage</c> resources in Icons.xaml (there is no plain
+    /// value / URI form). A raw <c>StaticResourceExtension</c> CLR object loses its key when serialized
+    /// (the model writes an empty <c>{StaticResource}</c>); the model serializes the model TREE, so the
+    /// extension must be created as a <see cref="ModelItem"/> with its <c>ResourceKey</c> set in the model.
+    /// Read-back is logged so a Windows build confirms whether the key round-trips.
+    /// </summary>
+    public static void SetStaticResource(ModelItem item, string name, string key)
+    {
+        ModelProperty property = FindProperty(item, name);
+        if (property is null || string.IsNullOrWhiteSpace(key))
+        {
+            return;
+        }
+
+        key = key.Trim();
+
+        try
+        {
+            using (ModelEditingScope scope = item.BeginEdit("Set " + name))
+            {
+                ModelItem extension = CreateStaticResourceItem(item, key);
+                if (extension is null)
+                {
+                    DesignLog.Error("SetStaticResource", new Exception("could not create a StaticResource model item"));
+                    return;
+                }
+
+                property.SetValue(extension);
+                scope.Complete();
+            }
+        }
+        catch (Exception ex)
+        {
+            DesignLog.Error("SetStaticResource " + name + " = {StaticResource " + key + "}", ex);
+        }
+    }
+
+    /// <summary>
+    /// Creates a StaticResource markup-extension <see cref="ModelItem"/> with <c>ResourceKey</c> =
+    /// <paramref name="key"/>. Tries a couple of type-identifier forms since the exact one the new
+    /// designer wants is unverified; each attempt is logged so we can see which works.
+    /// </summary>
+    private static ModelItem CreateStaticResourceItem(ModelItem context, string key)
+    {
+        const string PresentationNs = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+        var attempts = new[]
+        {
+            new TypeIdentifier(PresentationNs, "StaticResourceExtension"),
+            new TypeIdentifier(PresentationNs, "StaticResource"),
+            new TypeIdentifier("System.Windows.StaticResourceExtension"),
+        };
+
+        foreach (TypeIdentifier id in attempts)
+        {
+            try
+            {
+                ModelItem extension = ModelFactory.CreateItem(context.Context, id);
+                ModelProperty resourceKey = FindProperty(extension, "ResourceKey");
+                if (resourceKey != null)
+                {
+                    resourceKey.SetValue(key);
+                    return extension;
+                }
+            }
+            catch (Exception ex)
+            {
+                DesignLog.Write("create " + id + " failed: " + ex.Message);
+            }
+        }
+
+        return null;
     }
 
     /// <summary>The simple type name of <paramref name="item"/> (e.g. <c>"RibbonButton"</c>).</summary>
@@ -104,15 +259,15 @@ internal static class DesignModel
     /// <summary>The zero-based index of <paramref name="item"/> in its parent's collection, or -1.</summary>
     public static int IndexInParent(ModelItem item, string parentCollectionProperty)
     {
-        ModelItem parent = item.Parent;
-        return parent is null ? -1 : parent.Properties[parentCollectionProperty].Collection.IndexOf(item);
+        ModelItemCollection collection = item.Parent is null ? null : FindProperty(item.Parent, parentCollectionProperty)?.Collection;
+        return collection?.IndexOf(item) ?? -1;
     }
 
     /// <summary>The number of siblings in <paramref name="item"/>'s parent collection (0 when it has no parent).</summary>
     public static int SiblingCount(ModelItem item, string parentCollectionProperty)
     {
-        ModelItem parent = item.Parent;
-        return parent is null ? 0 : parent.Properties[parentCollectionProperty].Collection.Count;
+        ModelItemCollection collection = item.Parent is null ? null : FindProperty(item.Parent, parentCollectionProperty)?.Collection;
+        return collection?.Count ?? 0;
     }
 
     // ---- Scoped creation / rename (each is a single undo, like the right-click verbs) --
@@ -150,24 +305,105 @@ internal static class DesignModel
 
     /// <summary>
     /// Adds a new leaf control of type <paramref name="typeName"/> (a button/toggle/split/drop-down)
-    /// to <paramref name="group"/>, labelled <paramref name="label"/>, and returns it.
+    /// into <paramref name="parent"/>'s <paramref name="collectionProperty"/> (a group's <c>Items</c>
+    /// or a container's <c>Children</c>), labelled <paramref name="label"/>. When <paramref name="size"/>
+    /// is given it seeds the control's <c>Size</c> (e.g. "Small" for stacked icon rows). Returns the control.
     /// </summary>
-    public static ModelItem AddControl(ModelItem group, string typeName, string label)
+    public static ModelItem AddControl(ModelItem parent, string collectionProperty, string typeName, string header = null, string size = null)
     {
-        using (ModelEditingScope scope = group.BeginEdit("Add " + label))
+        using (ModelEditingScope scope = parent.BeginEdit("Add " + (header ?? typeName)))
         {
-            ModelItem control = Create(group, typeName);
-            control.Properties["Header"]?.SetValue(label);
-            Add(group, "Items", control);
+            ModelItem control = CreateAny(parent, typeName);
+            if (control is null)
+            {
+                DesignLog.Error("AddControl", new Exception("could not create " + typeName));
+                return null;
+            }
+
+            if (!string.IsNullOrEmpty(header))
+            {
+                FindProperty(control, "Header")?.SetValue(header);
+            }
+
+            if (size != null)
+            {
+                FindProperty(control, "Size")?.SetValue(size);
+            }
+
+            Add(parent, collectionProperty, control);
             scope.Complete();
             return control;
         }
     }
 
-    /// <summary>Sets <paramref name="item"/>'s <c>Header</c> to <paramref name="header"/> as a single undo.</summary>
+    /// <summary>Creates a control by simple type name, trying the RibbonKit xmlns first, then WPF framework types (for <c>Separator</c> etc.).</summary>
+    private static ModelItem CreateAny(ModelItem context, string typeName)
+    {
+        try
+        {
+            return ModelFactory.CreateItem(context.Context, new TypeIdentifier(Xmlns, typeName));
+        }
+        catch
+        {
+            // Not a RibbonKit type — fall through to the framework namespaces.
+        }
+
+        return CreateFramework(context, typeName);
+    }
+
+    /// <summary>
+    /// Adds a new <c>StackPanel</c> (a framework type, created via the presentation namespace) into
+    /// <paramref name="parent"/>'s <paramref name="collectionProperty"/>, with the given
+    /// <paramref name="orientation"/> ("Vertical"/"Horizontal"), and returns it. Null if it couldn't
+    /// be created (logged).
+    /// </summary>
+    public static ModelItem AddStackPanel(ModelItem parent, string collectionProperty, string orientation)
+    {
+        using (ModelEditingScope scope = parent.BeginEdit("Add Stack Panel"))
+        {
+            ModelItem stack = CreateFramework(parent, "StackPanel");
+            if (stack is null)
+            {
+                DesignLog.Error("AddStackPanel", new Exception("could not create StackPanel"));
+                return null;
+            }
+
+            FindProperty(stack, "Orientation")?.SetValue(orientation);
+            Add(parent, collectionProperty, stack);
+            scope.Complete();
+            return stack;
+        }
+    }
+
+    /// <summary>Creates a WPF framework element (e.g. <c>StackPanel</c>) by simple type name, trying the presentation xmlns then the CLR name.</summary>
+    private static ModelItem CreateFramework(ModelItem context, string typeName)
+    {
+        const string PresentationNs = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+        var attempts = new[]
+        {
+            new TypeIdentifier(PresentationNs, typeName),
+            new TypeIdentifier("System.Windows.Controls." + typeName),
+        };
+
+        foreach (TypeIdentifier id in attempts)
+        {
+            try
+            {
+                return ModelFactory.CreateItem(context.Context, id);
+            }
+            catch (Exception ex)
+            {
+                DesignLog.Write("create framework " + id + " failed: " + ex.Message);
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>Sets <paramref name="item"/>'s <c>Header</c> to <paramref name="header"/> as a single undo (no-op if the type has no Header).</summary>
     public static void Rename(ModelItem item, string header)
     {
-        ModelProperty property = item.Properties["Header"];
+        ModelProperty property = FindProperty(item, "Header");
         if (property is null)
         {
             return;
@@ -177,6 +413,59 @@ internal static class DesignModel
         {
             property.SetValue(header);
             scope.Complete();
+        }
+    }
+
+    // ---- Caption (Header for controls/tabs/backstage items; Content for combo/gallery items) --
+
+    /// <summary>The property that carries an item's editable caption: <c>Header</c> if it has one, else <c>Content</c>, else null.</summary>
+    public static string CaptionProperty(ModelItem item) =>
+        HasHeader(item) ? "Header" : (HasProperty(item, "Content") ? "Content" : null);
+
+    /// <summary>Whether <paramref name="item"/> has an editable caption (Header or Content).</summary>
+    public static bool HasCaption(ModelItem item) => CaptionProperty(item) != null;
+
+    /// <summary>The item's caption text (from Header or Content), or "".</summary>
+    public static string GetCaption(ModelItem item)
+    {
+        string property = CaptionProperty(item);
+        return property is null ? string.Empty : GetString(item, property);
+    }
+
+    /// <summary>Sets the item's caption (Header or Content, whichever it has) as a single undo.</summary>
+    public static void SetCaption(ModelItem item, string text)
+    {
+        string property = CaptionProperty(item);
+        if (property != null)
+        {
+            SetProperty(item, property, text);
+        }
+    }
+
+    /// <summary>
+    /// Adds a child item (a combo/gallery/backstage entry) of type <paramref name="typeName"/> to
+    /// <paramref name="container"/>'s <c>Items</c>, captioned <paramref name="label"/> on
+    /// <paramref name="captionProperty"/> (<c>Content</c> or <c>Header</c>). Returns the item, or null.
+    /// </summary>
+    public static ModelItem AddItem(ModelItem container, string typeName, string captionProperty, string label)
+    {
+        using (ModelEditingScope scope = container.BeginEdit("Add " + label))
+        {
+            ModelItem item = CreateAny(container, typeName);
+            if (item is null)
+            {
+                DesignLog.Error("AddItem", new System.Exception("could not create " + typeName));
+                return null;
+            }
+
+            if (!string.IsNullOrEmpty(captionProperty) && !string.IsNullOrEmpty(label))
+            {
+                FindProperty(item, captionProperty)?.SetValue(label);
+            }
+
+            Add(container, "Items", item);
+            scope.Complete();
+            return item;
         }
     }
 }

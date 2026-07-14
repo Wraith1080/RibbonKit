@@ -9,36 +9,41 @@ using Microsoft.VisualStudio.DesignTools.Extensibility.Model;
 
 namespace RibbonKit.Design;
 
-/// <summary>The level a tree node sits at, which decides its parent collection and the verbs that apply.</summary>
+/// <summary>The level a tree node sits at, which decides which verbs apply.</summary>
 internal enum NodeKind
 {
     Ribbon,
     Tab,
     Group,
+
+    /// <summary>A layout container inside a group (a <c>StackPanel</c> etc.) — has a <c>Children</c> collection we recurse into.</summary>
+    Container,
+
+    /// <summary>A leaf control (button/toggle/split/drop-down, combo, gallery, …).</summary>
     Control,
 }
 
-/// <summary>Pairs a <see cref="ModelItem"/> with the <see cref="NodeKind"/> the tree is showing it as.</summary>
+/// <summary>
+/// Pairs a <see cref="ModelItem"/> with the <see cref="NodeKind"/> the tree shows it as, plus the
+/// name of the collection it lives in on its parent. That collection is stored (not derived from
+/// kind) because the same kind can sit in different collections: a control or nested container is in
+/// a group's <c>Items</c> OR a parent container's <c>Children</c>, depending on where it was dropped.
+/// </summary>
 internal sealed class NodeInfo
 {
-    public NodeInfo(ModelItem item, NodeKind kind)
+    public NodeInfo(ModelItem item, NodeKind kind, string parentCollection)
     {
         Item = item;
         Kind = kind;
+        ParentCollection = parentCollection;
     }
 
     public ModelItem Item { get; }
 
     public NodeKind Kind { get; }
 
-    /// <summary>The property name of the collection this node lives in on its parent (null for the ribbon root).</summary>
-    public string ParentCollection => Kind switch
-    {
-        NodeKind.Tab => "Tabs",
-        NodeKind.Group => "Groups",
-        NodeKind.Control => "Items",
-        _ => null,
-    };
+    /// <summary>The collection property this node lives in on its parent (null for the ribbon root).</summary>
+    public string ParentCollection { get; }
 }
 
 /// <summary>
@@ -73,12 +78,17 @@ internal sealed class RibbonEditorWindow : Window
 
     private Button _addGroup;
     private Button _addControl;
+    private Button _addStack;
+    private Button _addItem;
     private Button _moveUp;
     private Button _moveDown;
     private Button _delete;
     private Button _rename;
     private ComboBox _previewCombo;
+    private CheckBox _backstageCheck;
     private bool _syncingPreview;
+    private readonly StackPanel _propsPanel = new StackPanel { Orientation = Orientation.Vertical };
+    private bool _syncingProps;
 
     /// <summary>Creates the editor over <paramref name="ribbon"/> (the selected Ribbon's design model item).</summary>
     public RibbonEditorWindow(ModelItem ribbon)
@@ -86,10 +96,10 @@ internal sealed class RibbonEditorWindow : Window
         _ribbon = ribbon ?? throw new ArgumentNullException(nameof(ribbon));
 
         Title = "Ribbon Editor";
-        Width = 720;
-        Height = 520;
-        MinWidth = 560;
-        MinHeight = 380;
+        Width = 780;
+        Height = 580;
+        MinWidth = 600;
+        MinHeight = 420;
         ShowInTaskbar = false;
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
         UseLayoutRounding = true;
@@ -104,13 +114,16 @@ internal sealed class RibbonEditorWindow : Window
                 new WindowInteropHelper(this).Owner = vs;
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // Non-fatal: without an owner the window is still shown, just not VS-owned.
+            DesignLog.Error("set VS owner", ex); // non-fatal: window is still shown, just unowned
         }
 
+        DesignLog.Write("RibbonEditorWindow: building layout…");
         Content = BuildLayout();
+        DesignLog.Write("RibbonEditorWindow: layout built; building tree…");
         RebuildTree();
+        DesignLog.Write("RibbonEditorWindow: ready.");
     }
 
     // ---- UI construction --------------------------------------------------------------
@@ -144,6 +157,8 @@ internal sealed class RibbonEditorWindow : Window
         Button addTab = MakeButton("Add Tab", (_, _) => OnAddTab());
         _addGroup = MakeButton("Add Group", (_, _) => OnAddGroup());
         _addControl = MakeButton("Add Control ▾", OnAddControlClick);
+        _addStack = MakeButton("Add Stack", (_, _) => OnAddStack());
+        _addItem = MakeButton("Add Item", (_, _) => OnAddItem());
         _moveUp = MakeButton("Move Up", (_, _) => OnMove(-1));
         _moveDown = MakeButton("Move Down", (_, _) => OnMove(+1));
         _delete = MakeButton("Delete", (_, _) => OnDelete());
@@ -151,17 +166,25 @@ internal sealed class RibbonEditorWindow : Window
         _toolbar.Children.Add(addTab);
         _toolbar.Children.Add(_addGroup);
         _toolbar.Children.Add(_addControl);
+        _toolbar.Children.Add(_addStack);
+        _toolbar.Children.Add(_addItem);
         _toolbar.Children.Add(new Separator { Width = 1, Margin = new Thickness(4, 2, 4, 2) });
         _toolbar.Children.Add(_moveUp);
         _toolbar.Children.Add(_moveDown);
         _toolbar.Children.Add(_delete);
 
-        // The "Add Control" type menu.
+        // The "Add Control" type menu. Buttons carry a Header caption; combos/galleries/separators
+        // don't (isButton = false), so no stray "ComboBox" label is written.
         _addControlMenu = new ContextMenu { PlacementTarget = _addControl, Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom };
-        _addControlMenu.Items.Add(MakeControlMenuItem("Button", "RibbonButton"));
-        _addControlMenu.Items.Add(MakeControlMenuItem("Toggle Button", "RibbonToggleButton"));
-        _addControlMenu.Items.Add(MakeControlMenuItem("Split Button", "RibbonSplitButton"));
-        _addControlMenu.Items.Add(MakeControlMenuItem("Drop-Down Button", "RibbonDropDownButton"));
+        _addControlMenu.Items.Add(MakeControlMenuItem("Button", "RibbonButton", true));
+        _addControlMenu.Items.Add(MakeControlMenuItem("Toggle Button", "RibbonToggleButton", true));
+        _addControlMenu.Items.Add(MakeControlMenuItem("Split Button", "RibbonSplitButton", true));
+        _addControlMenu.Items.Add(MakeControlMenuItem("Drop-Down Button", "RibbonDropDownButton", true));
+        _addControlMenu.Items.Add(new Separator());
+        _addControlMenu.Items.Add(MakeControlMenuItem("Combo Box", "RibbonComboBox", false));
+        _addControlMenu.Items.Add(MakeControlMenuItem("Gallery (in-ribbon)", "InRibbonGallery", false));
+        _addControlMenu.Items.Add(MakeControlMenuItem("Gallery (drop-down)", "RibbonGallery", false));
+        _addControlMenu.Items.Add(MakeControlMenuItem("Separator", "Separator", false));
 
         return _toolbar;
     }
@@ -189,26 +212,35 @@ internal sealed class RibbonEditorWindow : Window
 
     private UIElement BuildDetailsPanel()
     {
-        var panel = new StackPanel { Orientation = Orientation.Vertical };
+        var grid = new Grid();
+        grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // title
+        grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // type
+        grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // header
+        grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) }); // properties
+        grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // preview
 
-        panel.Children.Add(new TextBlock
+        var title = new TextBlock
         {
             Text = "Selected item",
             FontWeight = FontWeights.SemiBold,
             Margin = new Thickness(0, 0, 0, 8),
-        });
+        };
+        Grid.SetRow(title, 0);
+        grid.Children.Add(title);
 
         var typeRow = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 8) };
         typeRow.Children.Add(new TextBlock { Text = "Type: ", VerticalAlignment = VerticalAlignment.Center });
         typeRow.Children.Add(_typeText);
-        panel.Children.Add(typeRow);
+        Grid.SetRow(typeRow, 1);
+        grid.Children.Add(typeRow);
 
         var headerRow = new StackPanel { Orientation = Orientation.Horizontal };
-        headerRow.Children.Add(new TextBlock { Text = "Header: ", VerticalAlignment = VerticalAlignment.Center });
+        headerRow.Children.Add(new TextBlock { Text = "Caption: ", VerticalAlignment = VerticalAlignment.Center });
         headerRow.Children.Add(_headerBox);
-        _rename = MakeButton("Rename", (_, _) => OnRename());
+        _rename = MakeButton("Apply", (_, _) => OnRename());
         headerRow.Children.Add(_rename);
-        panel.Children.Add(headerRow);
+        Grid.SetRow(headerRow, 2);
+        grid.Children.Add(headerRow);
 
         // Enter in the header box commits the rename.
         _headerBox.KeyDown += (_, e) =>
@@ -220,35 +252,49 @@ internal sealed class RibbonEditorWindow : Window
             }
         };
 
-        panel.Children.Add(new TextBlock
+        // Dynamic per-item property editors (scrolls when there are many).
+        var propsScroll = new ScrollViewer
         {
-            Text = "Changes apply immediately. Each add, move, delete, or rename is a single "
-                 + "undo (Ctrl+Z) on the design surface.",
-            TextWrapping = TextWrapping.Wrap,
-            Opacity = 0.7,
-            Margin = new Thickness(0, 16, 0, 0),
-        });
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+            Margin = new Thickness(0, 12, 0, 0),
+            Content = _propsPanel,
+        };
+        Grid.SetRow(propsScroll, 3);
+        grid.Children.Add(propsScroll);
 
         // Design-only tab preview: shows a tab on the surface without writing to the XAML.
-        panel.Children.Add(new Separator { Margin = new Thickness(0, 16, 0, 12) });
+        var previewArea = new StackPanel { Orientation = Orientation.Vertical };
+        previewArea.Children.Add(new Separator { Margin = new Thickness(0, 12, 0, 12) });
 
         var previewRow = new StackPanel { Orientation = Orientation.Horizontal };
         previewRow.Children.Add(new TextBlock { Text = "Preview tab: ", VerticalAlignment = VerticalAlignment.Center });
         _previewCombo = new ComboBox { MinWidth = 180 };
         _previewCombo.SelectionChanged += OnPreviewChanged;
         previewRow.Children.Add(_previewCombo);
-        panel.Children.Add(previewRow);
-
-        panel.Children.Add(new TextBlock
+        _backstageCheck = new CheckBox
         {
-            Text = "Design-only: renders a tab on the surface without changing your XAML or the "
-                 + "running app. Reset to “(no preview)” to clear it.",
+            Content = "Show backstage",
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(16, 0, 0, 0),
+        };
+        _backstageCheck.Click += OnBackstageToggle;
+        previewRow.Children.Add(_backstageCheck);
+        previewArea.Children.Add(previewRow);
+
+        previewArea.Children.Add(new TextBlock
+        {
+            Text = "Design-only: renders a tab (and optionally the backstage) on the surface without "
+                 + "changing your XAML or the running app. Reset to “(no preview)” to clear the tab. "
+                 + "Structure and property edits apply immediately (each is one Ctrl+Z).",
             TextWrapping = TextWrapping.Wrap,
             Opacity = 0.7,
             Margin = new Thickness(0, 4, 0, 0),
         });
+        Grid.SetRow(previewArea, 4);
+        grid.Children.Add(previewArea);
 
-        return panel;
+        return grid;
     }
 
     private UIElement BuildFooter()
@@ -288,10 +334,10 @@ internal sealed class RibbonEditorWindow : Window
         return button;
     }
 
-    private MenuItem MakeControlMenuItem(string caption, string typeName)
+    private MenuItem MakeControlMenuItem(string caption, string typeName, bool isButton)
     {
         var item = new MenuItem { Header = caption };
-        item.Click += (_, _) => OnAddControl(typeName, caption);
+        item.Click += (_, _) => OnAddControl(typeName, caption, isButton);
         return item;
     }
 
@@ -302,37 +348,74 @@ internal sealed class RibbonEditorWindow : Window
         _map.Clear();
         _tree.Items.Clear();
 
-        var rootItem = MakeTreeItem(new NodeInfo(_ribbon, NodeKind.Ribbon), "Ribbon");
+        var rootItem = MakeTreeItem(new NodeInfo(_ribbon, NodeKind.Ribbon, null), "Ribbon");
         rootItem.IsExpanded = true;
         _tree.Items.Add(rootItem);
 
-        foreach (ModelItem tab in DesignModel.Children(_ribbon, "Tabs"))
+        // Backstage (the File menu) is a scalar property of the ribbon, not part of Tabs — surface it
+        // as its own node so its nav items can be edited. ParentCollection stays null (it's not in a
+        // collection, so Move/Delete don't apply).
+        ModelItem backstage = DesignModel.FindProperty(_ribbon, "Backstage")?.Value;
+        if (backstage != null)
         {
-            TreeViewItem tabItem = MakeTreeItem(new NodeInfo(tab, NodeKind.Tab), DesignModel.Header(tab));
-            tabItem.IsExpanded = true;
-            rootItem.Items.Add(tabItem);
-
-            foreach (ModelItem group in DesignModel.Children(tab, "Groups"))
+            try
             {
-                TreeViewItem groupItem = MakeTreeItem(new NodeInfo(group, NodeKind.Group), DesignModel.Header(group));
-                groupItem.IsExpanded = true;
-                tabItem.Items.Add(groupItem);
+                TreeViewItem backstageItem = MakeTreeItem(new NodeInfo(backstage, NodeKind.Control, null), "Backstage");
+                backstageItem.IsExpanded = true;
+                rootItem.Items.Add(backstageItem);
+                AddItemNodes(backstageItem, backstage, "Items"); // nav items
+            }
+            catch (Exception ex)
+            {
+                DesignLog.Error("build backstage node", ex);
+            }
+        }
 
-                foreach (ModelItem control in DesignModel.Children(group, "Items"))
+        // Each node is read defensively: the complex ribbons have control types and properties
+        // the starter one doesn't, and one bad read shouldn't abort the whole editor. Anything
+        // that throws is logged (with the offending type) and skipped.
+        IReadOnlyList<ModelItem> tabs = SafeChildren(_ribbon, "Tabs");
+        DesignLog.Write("RebuildTree: " + tabs.Count + " tab(s).");
+
+        foreach (ModelItem tab in tabs)
+        {
+            TreeViewItem tabItem;
+            try
+            {
+                tabItem = MakeTreeItem(new NodeInfo(tab, NodeKind.Tab, "Tabs"), SafeHeader(tab));
+                tabItem.IsExpanded = true;
+                rootItem.Items.Add(tabItem);
+            }
+            catch (Exception ex)
+            {
+                DesignLog.Error("build tab node (" + SafeType(tab) + ")", ex);
+                continue;
+            }
+
+            foreach (ModelItem group in SafeChildren(tab, "Groups"))
+            {
+                TreeViewItem groupItem;
+                try
                 {
-                    string label = DesignModel.Header(control);
-                    string display = string.IsNullOrEmpty(label)
-                        ? FriendlyType(DesignModel.TypeName(control))
-                        : label + "  [" + FriendlyType(DesignModel.TypeName(control)) + "]";
-                    TreeViewItem controlItem = MakeTreeItem(new NodeInfo(control, NodeKind.Control), display);
-                    groupItem.Items.Add(controlItem);
+                    groupItem = MakeTreeItem(new NodeInfo(group, NodeKind.Group, "Groups"), SafeHeader(group));
+                    groupItem.IsExpanded = true;
+                    tabItem.Items.Add(groupItem);
                 }
+                catch (Exception ex)
+                {
+                    DesignLog.Error("build group node (" + SafeType(group) + ")", ex);
+                    continue;
+                }
+
+                // A group's items may be leaf controls OR layout containers (StackPanels) that
+                // hold their own children — recurse into any container's Children.
+                AddItemNodes(groupItem, group, "Items");
             }
         }
 
         // Restore selection to the requested item (default: the ribbon root).
         ModelItem target = select ?? _ribbon;
-        if (_map.TryGetValue(target, out TreeViewItem selected))
+        if (target != null && _map.TryGetValue(target, out TreeViewItem selected))
         {
             selected.IsSelected = true;
             selected.BringIntoView();
@@ -340,6 +423,102 @@ internal sealed class RibbonEditorWindow : Window
 
         PopulatePreviewCombo();
         UpdateDetails();
+    }
+
+    /// <summary>
+    /// Adds the children of <paramref name="parentModel"/>'s <paramref name="collection"/> as tree nodes.
+    /// A Panel (<c>Children</c> collection) becomes a Container node; a combo/gallery (an item container
+    /// with an <c>Items</c> collection) is a Control node we still recurse into; everything else is a leaf.
+    /// </summary>
+    private void AddItemNodes(TreeViewItem parentTreeItem, ModelItem parentModel, string collection)
+    {
+        foreach (ModelItem child in SafeChildren(parentModel, collection))
+        {
+            try
+            {
+                if (DesignModel.HasProperty(child, "Children"))
+                {
+                    // Layout container (StackPanel etc.).
+                    string display = FriendlyType(SafeType(child));
+                    string orientation = DesignModel.GetString(child, "Orientation");
+                    if (!string.IsNullOrEmpty(orientation))
+                    {
+                        display += " (" + orientation + ")";
+                    }
+
+                    TreeViewItem containerItem = MakeTreeItem(new NodeInfo(child, NodeKind.Container, collection), display);
+                    containerItem.IsExpanded = true;
+                    parentTreeItem.Items.Add(containerItem);
+
+                    AddItemNodes(containerItem, child, "Children");
+                }
+                else if (ItemRule(child) != null)
+                {
+                    // Item container (combo box / gallery) — a leaf-styled control we recurse into.
+                    string label = DesignModel.GetCaption(child);
+                    string type = FriendlyType(SafeType(child));
+                    string display = string.IsNullOrEmpty(label) ? type : label + "  [" + type + "]";
+                    TreeViewItem node = MakeTreeItem(new NodeInfo(child, NodeKind.Control, collection), display);
+                    node.IsExpanded = true;
+                    parentTreeItem.Items.Add(node);
+
+                    AddItemNodes(node, child, "Items");
+                }
+                else
+                {
+                    string label = DesignModel.GetCaption(child);
+                    string type = FriendlyType(SafeType(child));
+                    string display = string.IsNullOrEmpty(label) ? type : label + "  [" + type + "]";
+                    TreeViewItem controlItem = MakeTreeItem(new NodeInfo(child, NodeKind.Control, collection), display);
+                    parentTreeItem.Items.Add(controlItem);
+                }
+            }
+            catch (Exception ex)
+            {
+                DesignLog.Error("build item node (" + SafeType(child) + ")", ex);
+            }
+        }
+    }
+
+    // Defensive model reads — log the failure (with the item's type where possible) and carry on.
+
+    private static IReadOnlyList<ModelItem> SafeChildren(ModelItem parent, string collectionProperty)
+    {
+        try
+        {
+            return DesignModel.Children(parent, collectionProperty);
+        }
+        catch (Exception ex)
+        {
+            DesignLog.Error("read " + collectionProperty + " of " + SafeType(parent), ex);
+            return new List<ModelItem>();
+        }
+    }
+
+    private static string SafeHeader(ModelItem item)
+    {
+        try
+        {
+            return DesignModel.Header(item);
+        }
+        catch (Exception ex)
+        {
+            DesignLog.Error("read Header", ex);
+            return string.Empty;
+        }
+    }
+
+    private static string SafeType(ModelItem item)
+    {
+        try
+        {
+            return DesignModel.TypeName(item);
+        }
+        catch (Exception ex)
+        {
+            DesignLog.Error("read ItemType", ex);
+            return "?";
+        }
     }
 
     /// <summary>Rebuilds the "Preview tab" list from the current tabs, keeping any active preview selected.</summary>
@@ -351,25 +530,31 @@ internal sealed class RibbonEditorWindow : Window
             _previewCombo.Items.Clear();
             _previewCombo.Items.Add("(no preview)");
 
-            IReadOnlyList<ModelItem> tabs = DesignModel.Children(_ribbon, "Tabs");
+            IReadOnlyList<ModelItem> tabs = SafeChildren(_ribbon, "Tabs");
             for (int i = 0; i < tabs.Count; i++)
             {
-                string header = DesignModel.Header(tabs[i]);
+                string header = SafeHeader(tabs[i]);
                 _previewCombo.Items.Add("Tab " + (i + 1) + (string.IsNullOrEmpty(header) ? string.Empty : ": " + header));
             }
 
             int selected = 0;
-            if (TabPreviewCoordinator.TryGet(_ribbon, out int idx) && idx >= 0 && idx < tabs.Count)
+            if (TabPreviewCoordinator.TryGetTab(_ribbon, out int idx) && idx >= 0 && idx < tabs.Count)
             {
                 selected = idx + 1; // +1 for the "(no preview)" row at index 0
             }
             else if (TabPreviewCoordinator.CurrentIndex.HasValue)
             {
                 // The previewed tab no longer exists (e.g. it was deleted) — clear the preview.
-                TabPreviewCoordinator.Set(_ribbon, null);
+                TabPreviewCoordinator.SetTab(_ribbon, null);
             }
 
             _previewCombo.SelectedIndex = selected;
+
+            // Backstage toggle: only meaningful when the ribbon actually has a backstage.
+            bool hasBackstage = DesignModel.FindProperty(_ribbon, "Backstage")?.Value != null;
+            _backstageCheck.IsEnabled = hasBackstage;
+            _backstageCheck.IsChecked = hasBackstage
+                && TabPreviewCoordinator.TryGetBackstage(_ribbon, out bool open) && open;
         }
         finally
         {
@@ -385,7 +570,15 @@ internal sealed class RibbonEditorWindow : Window
         }
 
         int sel = _previewCombo.SelectedIndex;
-        TabPreviewCoordinator.Set(_ribbon, sel <= 0 ? (int?)null : sel - 1);
+        TabPreviewCoordinator.SetTab(_ribbon, sel <= 0 ? (int?)null : sel - 1);
+    }
+
+    private void OnBackstageToggle(object sender, RoutedEventArgs e)
+    {
+        if (!_syncingPreview)
+        {
+            TabPreviewCoordinator.SetBackstage(_ribbon, _backstageCheck.IsChecked == true);
+        }
     }
 
     private TreeViewItem MakeTreeItem(NodeInfo info, string text)
@@ -405,6 +598,11 @@ internal sealed class RibbonEditorWindow : Window
         "RibbonToggleButton" => "Toggle",
         "RibbonSplitButton" => "Split",
         "RibbonDropDownButton" => "Drop-Down",
+        "RibbonComboBox" => "Combo Box",
+        "InRibbonGallery" => "Gallery (in-ribbon)",
+        "RibbonGallery" => "Gallery",
+        "Separator" => "Separator",
+        "StackPanel" => "Stack Panel",
         _ => typeName,
     };
 
@@ -423,48 +621,409 @@ internal sealed class RibbonEditorWindow : Window
         }
         else
         {
-            _typeText.Text = node.Kind == NodeKind.Control
-                ? FriendlyType(DesignModel.TypeName(node.Item)) + " (" + DesignModel.TypeName(node.Item) + ")"
+            string type = SafeType(node.Item);
+            _typeText.Text = node.Kind == NodeKind.Control || node.Kind == NodeKind.Container
+                ? FriendlyType(type) + " (" + type + ")"
                 : node.Kind.ToString();
-            _headerBox.Text = node.Kind == NodeKind.Ribbon ? string.Empty : DesignModel.Header(node.Item);
+            _headerBox.Text = node.Kind == NodeKind.Ribbon ? string.Empty : DesignModel.GetCaption(node.Item);
         }
 
-        bool isTab = node?.Kind == NodeKind.Tab;
-        bool isGroup = node?.Kind == NodeKind.Group;
-        bool isControl = node?.Kind == NodeKind.Control;
-        bool renameable = isTab || isGroup || isControl;
+        // Anything with a parent collection (tab / group / container / control / item) can be moved/deleted.
+        bool structural = node != null && node.ParentCollection != null;
+        // Caption edits work for Header controls AND Content items (combo/gallery items).
+        bool renameable = node != null && node.Kind != NodeKind.Ribbon && DesignModel.HasCaption(node.Item);
 
-        // Add Group needs a tab context; Add Control needs a group context.
         _addGroup.IsEnabled = ResolveTab(node) != null;
-        _addControl.IsEnabled = ResolveGroup(node) != null;
+        bool canAddChild = ResolveChildTarget(node) != null;
+        _addControl.IsEnabled = canAddChild;
+        _addStack.IsEnabled = canAddChild;
+        _addItem.IsEnabled = ResolveItemTarget(node) != null; // combo/gallery/backstage entries
 
         _rename.IsEnabled = renameable;
         _headerBox.IsEnabled = renameable;
-        _delete.IsEnabled = renameable;
+        _delete.IsEnabled = structural;
 
         // Move enabled only when there is somewhere to move to.
-        int index = renameable ? DesignModel.IndexInParent(node.Item, node.ParentCollection) : -1;
-        int count = renameable ? DesignModel.SiblingCount(node.Item, node.ParentCollection) : 0;
-        _moveUp.IsEnabled = renameable && index > 0;
-        _moveDown.IsEnabled = renameable && index >= 0 && index < count - 1;
+        int index = -1;
+        int count = 0;
+        if (structural)
+        {
+            try
+            {
+                index = DesignModel.IndexInParent(node.Item, node.ParentCollection);
+                count = DesignModel.SiblingCount(node.Item, node.ParentCollection);
+            }
+            catch (Exception ex)
+            {
+                DesignLog.Error("index/count of " + SafeType(node.Item), ex);
+            }
+        }
+
+        _moveUp.IsEnabled = structural && index > 0;
+        _moveDown.IsEnabled = structural && index >= 0 && index < count - 1;
+
+        BuildProps(node);
     }
 
-    /// <summary>The tab a new group would go into, given the current selection (tab / group / control ancestor).</summary>
-    private ModelItem ResolveTab(NodeInfo node) => node?.Kind switch
+    // ---- Per-item property editors ----------------------------------------------------
+
+    private enum EditorKind
     {
-        NodeKind.Tab => node.Item,
-        NodeKind.Group => node.Item.Parent,
-        NodeKind.Control => node.Item.Parent?.Parent,
-        _ => null,
+        Text,
+        Bool,
+        Enum,
+        IconRef,
+    }
+
+    private sealed class PropSpec
+    {
+        public PropSpec(string name, string label, EditorKind kind, string[] enumValues = null)
+        {
+            Name = name;
+            Label = label;
+            Kind = kind;
+            EnumValues = enumValues;
+        }
+
+        public string Name { get; }
+
+        public string Label { get; }
+
+        public EditorKind Kind { get; }
+
+        public string[] EnumValues { get; }
+    }
+
+    private static readonly PropSpec[] ControlSpecs =
+    {
+        new PropSpec("Size", "Size", EditorKind.Enum, new[] { "Large", "Medium", "Small" }),
+        new PropSpec("Icon", "Icon (resource key)", EditorKind.IconRef),
+        new PropSpec("LargeIcon", "Large icon (resource key)", EditorKind.IconRef),
+        new PropSpec("SizeDefinition", "Size definition", EditorKind.Text),
+        new PropSpec("ScreenTipTitle", "ScreenTip title", EditorKind.Text),
+        new PropSpec("ScreenTipText", "ScreenTip text", EditorKind.Text),
     };
 
-    /// <summary>The group a new control would go into, given the current selection (group / control).</summary>
-    private ModelItem ResolveGroup(NodeInfo node) => node?.Kind switch
+    private static readonly PropSpec[] TabSpecs =
     {
-        NodeKind.Group => node.Item,
-        NodeKind.Control => node.Item.Parent,
-        _ => null,
+        new PropSpec("IsContextual", "Contextual tab", EditorKind.Bool),
+        new PropSpec("ContextualColor", "Contextual color", EditorKind.Text),
     };
+
+    private static readonly PropSpec[] GroupSpecs =
+    {
+        new PropSpec("ShowDialogLauncher", "Show dialog launcher", EditorKind.Bool),
+        new PropSpec("ReductionMode", "Reduction mode", EditorKind.Enum, new[] { "Collapse", "ResizeThenCollapse", "Resize" }),
+        new PropSpec("CanResize", "Can resize", EditorKind.Bool),
+    };
+
+    private static readonly PropSpec[] ContainerSpecs =
+    {
+        new PropSpec("Orientation", "Orientation", EditorKind.Enum, new[] { "Horizontal", "Vertical" }),
+    };
+
+    private static PropSpec[] SpecsFor(NodeKind kind) => kind switch
+    {
+        NodeKind.Control => ControlSpecs,
+        NodeKind.Tab => TabSpecs,
+        NodeKind.Group => GroupSpecs,
+        NodeKind.Container => ContainerSpecs,
+        _ => System.Array.Empty<PropSpec>(),
+    };
+
+    /// <summary>Rebuilds the property editors for the selected item, skipping any property it doesn't have.</summary>
+    private void BuildProps(NodeInfo node)
+    {
+        _syncingProps = true;
+        try
+        {
+            _propsPanel.Children.Clear();
+
+            if (node is null || node.Kind == NodeKind.Ribbon)
+            {
+                return;
+            }
+
+            bool any = false;
+            foreach (PropSpec spec in SpecsFor(node.Kind))
+            {
+                if (!DesignModel.HasProperty(node.Item, spec.Name))
+                {
+                    continue;
+                }
+
+                _propsPanel.Children.Add(BuildPropRow(node.Item, spec));
+                any = true;
+            }
+
+            if (!any)
+            {
+                _propsPanel.Children.Add(new TextBlock { Text = "No editable properties.", Opacity = 0.6 });
+            }
+        }
+        finally
+        {
+            _syncingProps = false;
+        }
+    }
+
+    private UIElement BuildPropRow(ModelItem item, PropSpec spec)
+    {
+        var row = new Grid { Margin = new Thickness(0, 0, 0, 6) };
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(150) });
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+        var label = new TextBlock { Text = spec.Label, VerticalAlignment = VerticalAlignment.Center };
+        Grid.SetColumn(label, 0);
+        row.Children.Add(label);
+
+        UIElement editor = spec.Kind switch
+        {
+            EditorKind.Bool => BuildBoolEditor(item, spec),
+            EditorKind.Enum => BuildEnumEditor(item, spec),
+            EditorKind.IconRef => BuildIconEditor(item, spec),
+            _ => BuildTextEditor(item, spec),
+        };
+        Grid.SetColumn(editor, 1);
+        row.Children.Add(editor);
+
+        return row;
+    }
+
+    private UIElement BuildTextEditor(ModelItem item, PropSpec spec)
+    {
+        var box = new TextBox
+        {
+            Text = DesignModel.GetString(item, spec.Name),
+            VerticalContentAlignment = VerticalAlignment.Center,
+        };
+
+        void Commit()
+        {
+            if (!_syncingProps)
+            {
+                DesignModel.SetProperty(item, spec.Name, box.Text ?? string.Empty);
+            }
+        }
+
+        box.LostFocus += (_, _) => Commit();
+        box.KeyDown += (_, e) =>
+        {
+            if (e.Key == Key.Enter)
+            {
+                Commit();
+                e.Handled = true;
+            }
+        };
+        return box;
+    }
+
+    private UIElement BuildBoolEditor(ModelItem item, PropSpec spec)
+    {
+        var check = new CheckBox
+        {
+            IsChecked = DesignModel.GetBool(item, spec.Name),
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        // Click fires only on user interaction (not on the initial IsChecked set above).
+        check.Click += (_, _) => DesignModel.SetProperty(item, spec.Name, check.IsChecked == true);
+        return check;
+    }
+
+    // Icon editor: a "…" button opens the visual picker (icons used in this ribbon, plus the full
+    // Icons.xaml catalog once loaded); the text field shows/accepts the resource key directly. Both
+    // write via the proven DesignModel.SetStaticResource (a {StaticResource key} model reference).
+    private UIElement BuildIconEditor(ModelItem item, PropSpec spec)
+    {
+        var dock = new DockPanel { LastChildFill = true };
+
+        var set = new Button { Content = "Set", Margin = new Thickness(6, 0, 0, 0), Padding = new Thickness(10, 3, 10, 3) };
+        DockPanel.SetDock(set, Dock.Right);
+        dock.Children.Add(set);
+
+        var browse = new Button { Content = "…", Margin = new Thickness(6, 0, 0, 0), Padding = new Thickness(10, 3, 10, 3) };
+        DockPanel.SetDock(browse, Dock.Right);
+        dock.Children.Add(browse);
+
+        var box = new TextBox
+        {
+            Text = DesignModel.GetStaticResourceKey(item, spec.Name),
+            VerticalContentAlignment = VerticalAlignment.Center,
+        };
+        dock.Children.Add(box);
+
+        void Apply()
+        {
+            if (!_syncingProps)
+            {
+                DesignModel.SetStaticResource(item, spec.Name, box.Text);
+            }
+        }
+
+        set.Click += (_, _) => Apply();
+        box.KeyDown += (_, e) =>
+        {
+            if (e.Key == Key.Enter)
+            {
+                Apply();
+                e.Handled = true;
+            }
+        };
+
+        browse.Click += (_, _) =>
+        {
+            var picker = new IconPickerDialog(CollectUsedIconKeys(), box.Text) { Owner = this };
+            if (picker.ShowDialog() == true && !string.IsNullOrEmpty(picker.SelectedKey))
+            {
+                box.Text = picker.SelectedKey;
+                DesignModel.SetStaticResource(item, spec.Name, picker.SelectedKey);
+            }
+        };
+        return dock;
+    }
+
+    /// <summary>Every distinct icon resource key already used on a control/group in this ribbon (for the picker's default list).</summary>
+    private List<string> CollectUsedIconKeys()
+    {
+        var keys = new List<string>();
+
+        void Collect(ModelItem owner, string prop)
+        {
+            string key = DesignModel.GetStaticResourceKey(owner, prop);
+            if (!string.IsNullOrEmpty(key))
+            {
+                keys.Add(key);
+            }
+        }
+
+        void Walk(ModelItem parent, string collection)
+        {
+            foreach (ModelItem child in DesignModel.Children(parent, collection))
+            {
+                Collect(child, "Icon");
+                Collect(child, "LargeIcon");
+                if (DesignModel.HasProperty(child, "Children"))
+                {
+                    Walk(child, "Children"); // descend into stack panels etc.
+                }
+            }
+        }
+
+        foreach (ModelItem tab in DesignModel.Children(_ribbon, "Tabs"))
+        {
+            foreach (ModelItem group in DesignModel.Children(tab, "Groups"))
+            {
+                Collect(group, "Icon");
+                Walk(group, "Items");
+            }
+        }
+
+        return keys;
+    }
+
+    private UIElement BuildEnumEditor(ModelItem item, PropSpec spec)
+    {
+        var combo = new ComboBox();
+        foreach (string value in spec.EnumValues)
+        {
+            combo.Items.Add(value);
+        }
+
+        string current = DesignModel.GetString(item, spec.Name);
+        combo.SelectedItem = combo.Items.Contains(current) ? current : null;
+
+        combo.SelectionChanged += (_, _) =>
+        {
+            if (!_syncingProps && combo.SelectedItem is string chosen)
+            {
+                DesignModel.SetProperty(item, spec.Name, chosen);
+            }
+        };
+        return combo;
+    }
+
+    /// <summary>The nearest <c>RibbonTab</c> ancestor of the selection (walks up through any nesting), or null.</summary>
+    private ModelItem ResolveTab(NodeInfo node)
+    {
+        ModelItem current = node?.Item;
+        while (current != null)
+        {
+            if (SafeType(current) == "RibbonTab")
+            {
+                return current;
+            }
+
+            current = current.Parent;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Where a new control or container should be added, given the selection: into a group's
+    /// <c>Items</c>, into a container's <c>Children</c>, or as a sibling of the selected control.
+    /// Null when the selection can't host a child (ribbon/tab).
+    /// </summary>
+    private (ModelItem Parent, string Collection)? ResolveChildTarget(NodeInfo node)
+    {
+        switch (node?.Kind)
+        {
+            case NodeKind.Group:
+                return (node.Item, "Items");
+            case NodeKind.Container:
+                return (node.Item, "Children");
+            case NodeKind.Control:
+                return node.Item.Parent is ModelItem parent ? (parent, node.ParentCollection) : default((ModelItem, string)?);
+            default:
+                return null;
+        }
+    }
+
+    /// <summary>Where an "Add Item" would go, and what child type/caption it uses.</summary>
+    private struct ItemTarget
+    {
+        public ModelItem Container;
+        public string TypeName;
+        public string CaptionProperty;
+        public string Label;
+    }
+
+    /// <summary>The item-add rule for an item container by type name, or null if it isn't one.</summary>
+    private static ItemTarget? ItemRule(ModelItem container)
+    {
+        switch (SafeType(container))
+        {
+            case "RibbonComboBox":
+                return new ItemTarget { Container = container, TypeName = "ComboBoxItem", CaptionProperty = "Content", Label = "Item" };
+            case "RibbonGallery":
+            case "InRibbonGallery":
+                return new ItemTarget { Container = container, TypeName = "RibbonGalleryItem", CaptionProperty = "Content", Label = "Item" };
+            case "Backstage":
+                return new ItemTarget { Container = container, TypeName = "BackstageTabItem", CaptionProperty = "Header", Label = "Page" };
+            default:
+                return null;
+        }
+    }
+
+    /// <summary>
+    /// Resolves an "Add Item" target from the selection: the combo/gallery/backstage itself, or the
+    /// container of the selected item (so you can add a sibling). Null when neither applies.
+    /// </summary>
+    private ItemTarget? ResolveItemTarget(NodeInfo node)
+    {
+        if (node?.Item is null)
+        {
+            return null;
+        }
+
+        ItemTarget? here = ItemRule(node.Item);
+        if (here != null)
+        {
+            return here;
+        }
+
+        return node.Item.Parent != null ? ItemRule(node.Item.Parent) : null;
+    }
 
     // ---- Commands ---------------------------------------------------------------------
 
@@ -492,13 +1051,36 @@ internal sealed class RibbonEditorWindow : Window
         }
     }
 
-    private void OnAddControl(string typeName, string label)
+    private void OnAddControl(string typeName, string caption, bool isButton)
     {
-        ModelItem group = ResolveGroup(Selected);
-        if (group != null)
+        (ModelItem Parent, string Collection)? target = ResolveChildTarget(Selected);
+        if (target != null)
         {
-            ModelItem control = DesignModel.AddControl(group, typeName, label);
-            RebuildTree(control);
+            // Only buttons get a Header caption; buttons stacked inside a container default to
+            // Small (the icon-row form). Combos/galleries/separators get neither.
+            string header = isButton ? caption : null;
+            string size = isButton && target.Value.Collection == "Children" ? "Small" : null;
+            ModelItem control = DesignModel.AddControl(target.Value.Parent, target.Value.Collection, typeName, header, size);
+            if (control != null)
+            {
+                RebuildTree(control);
+            }
+        }
+    }
+
+    private void OnAddStack()
+    {
+        (ModelItem Parent, string Collection)? target = ResolveChildTarget(Selected);
+        if (target != null)
+        {
+            // A stack in a group is the outer vertical column; a stack inside another stack is a
+            // horizontal row (matching the Office pattern of rows-of-icons within a column).
+            string orientation = target.Value.Collection == "Children" ? "Horizontal" : "Vertical";
+            ModelItem stack = DesignModel.AddStackPanel(target.Value.Parent, target.Value.Collection, orientation);
+            if (stack != null)
+            {
+                RebuildTree(stack);
+            }
         }
     }
 
@@ -535,7 +1117,20 @@ internal sealed class RibbonEditorWindow : Window
             return;
         }
 
-        DesignModel.Rename(node.Item, _headerBox.Text ?? string.Empty);
+        DesignModel.SetCaption(node.Item, _headerBox.Text ?? string.Empty);
         RebuildTree(node.Item);
+    }
+
+    private void OnAddItem()
+    {
+        ItemTarget? target = ResolveItemTarget(Selected);
+        if (target != null)
+        {
+            ModelItem item = DesignModel.AddItem(target.Value.Container, target.Value.TypeName, target.Value.CaptionProperty, target.Value.Label);
+            if (item != null)
+            {
+                RebuildTree(item);
+            }
+        }
     }
 }
