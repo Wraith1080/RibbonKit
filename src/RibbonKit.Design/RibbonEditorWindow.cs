@@ -185,6 +185,7 @@ internal sealed class RibbonEditorWindow : Window
         _addControlMenu.Items.Add(MakeControlMenuItem("Gallery (in-ribbon)", "InRibbonGallery", false));
         _addControlMenu.Items.Add(MakeControlMenuItem("Gallery (drop-down)", "RibbonGallery", false));
         _addControlMenu.Items.Add(MakeControlMenuItem("Separator", "Separator", false));
+        _addControlMenu.Items.Add(MakeControlMenuItem("Text Block", "TextBlock", false));
 
         return _toolbar;
     }
@@ -363,7 +364,10 @@ internal sealed class RibbonEditorWindow : Window
                 TreeViewItem backstageItem = MakeTreeItem(new NodeInfo(backstage, NodeKind.Control, null), "Backstage");
                 backstageItem.IsExpanded = true;
                 rootItem.Items.Add(backstageItem);
-                AddItemNodes(backstageItem, backstage, "Items"); // nav items
+                foreach (ModelItem navItem in SafeChildren(backstage, "Items"))
+                {
+                    AddNode(backstageItem, navItem, "Items"); // nav items
+                }
             }
             catch (Exception ex)
             {
@@ -407,9 +411,13 @@ internal sealed class RibbonEditorWindow : Window
                     continue;
                 }
 
-                // A group's items may be leaf controls OR layout containers (StackPanels) that
-                // hold their own children — recurse into any container's Children.
-                AddItemNodes(groupItem, group, "Items");
+                // A group's items may be leaf controls, layout containers (StackPanels), item
+                // containers (combos/galleries), or controls with rich Content — AddNode recurses
+                // into whichever structure each child has.
+                foreach (ModelItem child in SafeChildren(group, "Items"))
+                {
+                    AddNode(groupItem, child, "Items");
+                }
             }
         }
 
@@ -426,58 +434,63 @@ internal sealed class RibbonEditorWindow : Window
     }
 
     /// <summary>
-    /// Adds the children of <paramref name="parentModel"/>'s <paramref name="collection"/> as tree nodes.
-    /// A Panel (<c>Children</c> collection) becomes a Container node; a combo/gallery (an item container
-    /// with an <c>Items</c> collection) is a Control node we still recurse into; everything else is a leaf.
+    /// Adds <paramref name="child"/> (which lives in its parent's <paramref name="parentCollection"/>,
+    /// or null for a scalar <c>Content</c> element) as a tree node, then recurses into whatever
+    /// structure it has: a Panel's <c>Children</c>, an item container's <c>Items</c> (combo/gallery),
+    /// or a rich <c>Content</c> element (a gallery item's visual). One bad node is logged and skipped.
     /// </summary>
-    private void AddItemNodes(TreeViewItem parentTreeItem, ModelItem parentModel, string collection)
+    private void AddNode(TreeViewItem parentTreeItem, ModelItem child, string parentCollection)
     {
-        foreach (ModelItem child in SafeChildren(parentModel, collection))
+        try
         {
-            try
+            bool isPanel = DesignModel.HasProperty(child, "Children");
+            NodeKind kind = isPanel ? NodeKind.Container : NodeKind.Control;
+            TreeViewItem node = MakeTreeItem(new NodeInfo(child, kind, parentCollection), DisplayFor(child, isPanel));
+            parentTreeItem.Items.Add(node);
+
+            if (isPanel)
             {
-                if (DesignModel.HasProperty(child, "Children"))
+                node.IsExpanded = true;
+                foreach (ModelItem c in SafeChildren(child, "Children"))
                 {
-                    // Layout container (StackPanel etc.).
-                    string display = FriendlyType(SafeType(child));
-                    string orientation = DesignModel.GetString(child, "Orientation");
-                    if (!string.IsNullOrEmpty(orientation))
-                    {
-                        display += " (" + orientation + ")";
-                    }
-
-                    TreeViewItem containerItem = MakeTreeItem(new NodeInfo(child, NodeKind.Container, collection), display);
-                    containerItem.IsExpanded = true;
-                    parentTreeItem.Items.Add(containerItem);
-
-                    AddItemNodes(containerItem, child, "Children");
-                }
-                else if (ItemRule(child) != null)
-                {
-                    // Item container (combo box / gallery) — a leaf-styled control we recurse into.
-                    string label = DesignModel.GetCaption(child);
-                    string type = FriendlyType(SafeType(child));
-                    string display = string.IsNullOrEmpty(label) ? type : label + "  [" + type + "]";
-                    TreeViewItem node = MakeTreeItem(new NodeInfo(child, NodeKind.Control, collection), display);
-                    node.IsExpanded = true;
-                    parentTreeItem.Items.Add(node);
-
-                    AddItemNodes(node, child, "Items");
-                }
-                else
-                {
-                    string label = DesignModel.GetCaption(child);
-                    string type = FriendlyType(SafeType(child));
-                    string display = string.IsNullOrEmpty(label) ? type : label + "  [" + type + "]";
-                    TreeViewItem controlItem = MakeTreeItem(new NodeInfo(child, NodeKind.Control, collection), display);
-                    parentTreeItem.Items.Add(controlItem);
+                    AddNode(node, c, "Children");
                 }
             }
-            catch (Exception ex)
+            else if (ItemRule(child) != null)
             {
-                DesignLog.Error("build item node (" + SafeType(child) + ")", ex);
+                node.IsExpanded = true;
+                foreach (ModelItem c in SafeChildren(child, "Items"))
+                {
+                    AddNode(node, c, "Items");
+                }
             }
+
+            // NOTE: we intentionally do NOT descend into a control's Content element — expanding every
+            // backstage page / gallery item into its full visual tree was too noisy. Content that is a
+            // plain string (a combo item's text, etc.) is shown/edited as the item's caption instead.
         }
+        catch (Exception ex)
+        {
+            DesignLog.Error("build node (" + SafeType(child) + ")", ex);
+        }
+    }
+
+    private static string DisplayFor(ModelItem item, bool isPanel)
+    {
+        string type = FriendlyType(SafeType(item));
+        if (isPanel)
+        {
+            string orientation = DesignModel.GetString(item, "Orientation");
+            return string.IsNullOrEmpty(orientation) ? type : type + " (" + orientation + ")";
+        }
+
+        string label = DesignModel.GetCaption(item);
+        if (string.IsNullOrEmpty(label) && type == "Text Block")
+        {
+            label = DesignModel.GetString(item, "Text"); // show a TextBlock by its text
+        }
+
+        return string.IsNullOrEmpty(label) ? type : label + "  [" + type + "]";
     }
 
     // Defensive model reads — log the failure (with the item's type where possible) and carry on.
@@ -603,6 +616,10 @@ internal sealed class RibbonEditorWindow : Window
         "RibbonGallery" => "Gallery",
         "Separator" => "Separator",
         "StackPanel" => "Stack Panel",
+        "RibbonGalleryItem" => "Gallery Item",
+        "ComboBoxItem" => "Combo Item",
+        "BackstageTabItem" => "Backstage Page",
+        "TextBlock" => "Text Block",
         _ => typeName,
     };
 
@@ -722,6 +739,29 @@ internal sealed class RibbonEditorWindow : Window
         new PropSpec("Orientation", "Orientation", EditorKind.Enum, new[] { "Horizontal", "Vertical" }),
     };
 
+    // Type-specific editors, keyed by simple type name. Shown ahead of the kind-based specs.
+    private static readonly PropSpec[] BackstageItemSpecs =
+    {
+        new PropSpec("IsButton", "Is button (action)", EditorKind.Bool),
+        new PropSpec("Placement", "Placement", EditorKind.Enum, new[] { "Top", "Bottom" }),
+    };
+
+    private static readonly PropSpec[] ComboSpecs =
+    {
+        new PropSpec("InputWidth", "Input width", EditorKind.Text),
+        new PropSpec("IsEditable", "Editable", EditorKind.Bool),
+    };
+
+    // For editing a gallery item's content visually (its TextBlocks): text and basic appearance.
+    private static readonly PropSpec[] TextBlockSpecs =
+    {
+        new PropSpec("Text", "Text", EditorKind.Text),
+        new PropSpec("FontSize", "Font size", EditorKind.Text),
+        new PropSpec("FontWeight", "Font weight", EditorKind.Enum, new[] { "Normal", "Light", "SemiBold", "Bold" }),
+        new PropSpec("FontStyle", "Font style", EditorKind.Enum, new[] { "Normal", "Italic" }),
+        new PropSpec("Foreground", "Foreground", EditorKind.Text),
+    };
+
     private static PropSpec[] SpecsFor(NodeKind kind) => kind switch
     {
         NodeKind.Control => ControlSpecs,
@@ -730,6 +770,36 @@ internal sealed class RibbonEditorWindow : Window
         NodeKind.Container => ContainerSpecs,
         _ => System.Array.Empty<PropSpec>(),
     };
+
+    private static PropSpec[] TypeSpecs(string typeName) => typeName switch
+    {
+        "BackstageTabItem" => BackstageItemSpecs,
+        "RibbonComboBox" => ComboSpecs,
+        "TextBlock" => TextBlockSpecs,
+        _ => System.Array.Empty<PropSpec>(),
+    };
+
+    /// <summary>Type-specific editors first, then the kind's editors, de-duplicated by name.</summary>
+    private List<PropSpec> SpecsForNode(NodeInfo node)
+    {
+        var result = new List<PropSpec>();
+        var seen = new HashSet<string>();
+
+        void AddAll(PropSpec[] specs)
+        {
+            foreach (PropSpec spec in specs)
+            {
+                if (seen.Add(spec.Name))
+                {
+                    result.Add(spec);
+                }
+            }
+        }
+
+        AddAll(TypeSpecs(SafeType(node.Item)));
+        AddAll(SpecsFor(node.Kind));
+        return result;
+    }
 
     /// <summary>Rebuilds the property editors for the selected item, skipping any property it doesn't have.</summary>
     private void BuildProps(NodeInfo node)
@@ -745,7 +815,7 @@ internal sealed class RibbonEditorWindow : Window
             }
 
             bool any = false;
-            foreach (PropSpec spec in SpecsFor(node.Kind))
+            foreach (PropSpec spec in SpecsForNode(node))
             {
                 if (!DesignModel.HasProperty(node.Item, spec.Name))
                 {

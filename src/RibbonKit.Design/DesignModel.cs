@@ -418,12 +418,75 @@ internal static class DesignModel
 
     // ---- Caption (Header for controls/tabs/backstage items; Content for combo/gallery items) --
 
-    /// <summary>The property that carries an item's editable caption: <c>Header</c> if it has one, else <c>Content</c>, else null.</summary>
-    public static string CaptionProperty(ModelItem item) =>
-        HasHeader(item) ? "Header" : (HasProperty(item, "Content") ? "Content" : null);
+    /// <summary>
+    /// The property that carries an item's editable text caption: <c>Header</c> if it's a simple value,
+    /// else <c>Content</c> if it's a simple value, else <c>Tag</c> for a gallery item (whose Content is a
+    /// visual, not text), else null. Complex values (e.g. a <c>StackPanel</c> in a gallery item's Content)
+    /// are skipped so the tree never shows a stringified object handle.
+    /// </summary>
+    public static string CaptionProperty(ModelItem item)
+    {
+        if (IsScalarValue(FindProperty(item, "Header")))
+        {
+            return "Header";
+        }
+
+        if (IsScalarValue(FindProperty(item, "Content")))
+        {
+            return "Content";
+        }
+
+        // Gallery items carry a visual in Content but identify themselves by Tag.
+        if (TypeNameOrEmpty(item) == "RibbonGalleryItem" && IsScalarValue(FindProperty(item, "Tag")))
+        {
+            return "Tag";
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// True when the property holds a simple text/number value (or is unset). Keys off the value's TYPE,
+    /// not <c>ModelProperty.Value</c>: this designer wraps even a plain string in a child ModelItem, so
+    /// a <c>Value != null</c> test wrongly flags string Header/Content as "complex". A real complex value
+    /// (a StackPanel, etc.) surfaces here as a non-string object.
+    /// </summary>
+    private static bool IsScalarValue(ModelProperty property)
+    {
+        if (property is null)
+        {
+            return false;
+        }
+
+        object computed = property.ComputedValue;
+        return computed is null || computed is string || computed.GetType().IsPrimitive || computed is decimal;
+    }
+
+    private static string TypeNameOrEmpty(ModelItem item)
+    {
+        try
+        {
+            return item.ItemType.Name;
+        }
+        catch
+        {
+            return string.Empty;
+        }
+    }
 
     /// <summary>Whether <paramref name="item"/> has an editable caption (Header or Content).</summary>
     public static bool HasCaption(ModelItem item) => CaptionProperty(item) != null;
+
+    /// <summary>
+    /// The single complex element held in <paramref name="item"/>'s <c>Content</c> (e.g. a gallery item's
+    /// visual StackPanel), or null when Content is unset or a plain text value (a string is the item's
+    /// caption, not a child element).
+    /// </summary>
+    public static ModelItem ContentElement(ModelItem item)
+    {
+        ModelProperty content = FindProperty(item, "Content");
+        return content is null || IsScalarValue(content) ? null : content.Value;
+    }
 
     /// <summary>The item's caption text (from Header or Content), or "".</summary>
     public static string GetCaption(ModelItem item)

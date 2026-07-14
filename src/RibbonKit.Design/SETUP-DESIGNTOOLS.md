@@ -67,8 +67,15 @@ first, then WPF framework namespaces (so `Separator` works too). The tree also d
 containers** — combo boxes and galleries (their `Items`) — and surfaces the **Backstage** (the File
 menu) as its own root node with editable nav items. **Add Item** creates the right child for the
 selected container (a `ComboBoxItem`, `RibbonGalleryItem`, or backstage `BackstageTabItem`). The
-**Caption** box edits `Header` or `Content` (whichever the item has), so it renames buttons, tabs,
-backstage pages, and combo/gallery items alike. A **Show backstage** checkbox (next to Preview tab)
+**Caption** box edits `Header`, `Content`, or (for gallery items, whose Content is a visual) `Tag` —
+whichever carries simple text — so it names buttons, tabs, backstage pages, combo items, and gallery
+items (shown by their Tag) alike. Property editors are also type-aware: a backstage page shows
+`IsButton` / `Placement`, a combo box shows `InputWidth` / `IsEditable`, on top of the shared
+control/tab/group editors. The tree recurses into Panels (`Children`) and item
+containers (`Items`, i.e. combos/galleries/backstage) but NOT into a control's `Content` (expanding
+every page/gallery item's visual tree was too noisy). A combo item's text lives in its `Content` (a
+string) and is edited via the **Caption** box. `TextBlock` editors and an "Add Text Block" menu entry
+exist for text added directly into a group's panels. A **Show backstage** checkbox (next to Preview tab)
 opens the backstage on the surface design-only — same `DesignModeValueProvider` path as the tab
 preview, now covering `IsBackstageOpen` too; it enables only when the ribbon has a backstage. It runs in-process on the VS UI thread (only the design
 *surface* is process-isolated, not extension code), so it's a plain code-built WPF `Window`

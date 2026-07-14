@@ -1022,11 +1022,37 @@ the box is now **Caption** and edits `Header` OR `Content` (`DesignModel.Caption
 box renames buttons, tabs, backstage pages, and combo/gallery items. Item creation reuses `CreateAny`
 (so framework `ComboBoxItem` and RibbonKit `RibbonGalleryItem`/`BackstageTabItem` both work).
 
+**Gallery-item caption fix + type-specific props (DONE).** A `RibbonGalleryItem`'s `Content` is a
+`StackPanel` (a visual), so stringifying it showed garbage like `Handle=103 … (StackPanel)`.
+`CaptionProperty` now skips **complex** values (`ModelProperty.Value != null` / non-primitive
+`ComputedValue`) and falls back to `Tag` for gallery items (their idiomatic identity — "Normal",
+"Heading 1", …). So the tree shows gallery items by Tag, combo items by their string Content, and
+buttons/tabs/backstage pages by Header — and the Caption box edits whichever applies. Added
+type-specific property editors (shown ahead of the kind-based ones, deduped by name): `BackstageTabItem`
+→ `IsButton`, `Placement` (Top/Bottom) [+ its `Icon` via the control specs]; `RibbonComboBox` →
+`InputWidth`, `IsEditable` [+ ScreenTip]. Wired via `TypeSpecs(typeName)` + `SpecsForNode`.
+
 **Show-backstage toggle:** a "Show backstage" checkbox next to the preview-tab combo, driven by the
 same `DesignModeValueProvider` mechanism as the tab preview — `SelectedTabPreviewProvider` now also
 translates `Ribbon.IsBackstageOpen`, and `TabPreviewCoordinator` gained `SetBackstage`/`TryGetBackstage`
 (+ the invalidation targets `IsBackstageOpen`). Design-only, no XAML/runtime effect; the design-mode
 backstage host from §3.14 renders it. The checkbox enables only when the ribbon has a `Backstage`.
+
+**Gallery-item content editing — TRIED, then ROLLED BACK (too noisy).** `AddNode` briefly descended
+into a control's rich `Content`, but expanding every backstage page and gallery item into its full
+visual tree (Borders, page bodies, etc.) drowned the structure. Reverted: `AddNode` now recurses only
+into Panels (`Children`) and item containers (`Items`), never a control's Content. (`TextBlock` editors
++ "Add Text Block" + `ContentElement` are kept — inert unless a TextBlock is added to a group panel.)
+
+**Scalar-value fix (the real bug behind the noise).** This designer wraps even a plain **string** value
+in a child `ModelItem`, so `ModelProperty.Value != null` is NOT a reliable "is complex?" test — it
+wrongly flagged string Header/Content as complex. Symptoms: items showed only their type (empty caption,
+couldn't edit the header), and a combo item's string Content expanded into a bogus "String" child.
+`IsScalarValue` now keys off `ComputedValue`'s TYPE (string / primitive / decimal → scalar) instead of
+`Value`. Result: items display "caption [type]" again and the Caption box edits Header; a combo item's
+**Content** is a scalar string, so it's shown/edited via the Caption box (no "String" child) — which is
+how combo-item content editing is now done; and a gallery item's complex Content is correctly skipped,
+so its caption falls back to `Tag`.
 
 **Diagnostics added (`DesignLog.cs`):** the editor opened fine on a barebones ribbon but failed to
 open on the full MainWindow.xaml ribbon — a hard throw during construction, which the designer
