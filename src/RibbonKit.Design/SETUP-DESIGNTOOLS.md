@@ -71,7 +71,9 @@ selected container (a `ComboBoxItem`, `RibbonGalleryItem`, or backstage `Backsta
 whichever carries simple text — so it names buttons, tabs, backstage pages, combo items, and gallery
 items (shown by their Tag) alike. Property editors are also type-aware: a backstage page shows
 `IsButton` / `Placement`, a combo box shows `InputWidth` / `IsEditable`, on top of the shared
-control/tab/group editors. The tree recurses into Panels (`Children`) and item
+control/tab/group editors. Color properties (`ContextualColor`, a TextBlock's `Foreground`) use a
+**color editor** — a live swatch + hex/name box + a "…" button opening a palette picker
+(`ColorPickerDialog`, self-contained WPF, no WinForms). The tree recurses into Panels (`Children`) and item
 containers (`Items`, i.e. combos/galleries/backstage) but NOT into a control's `Content` (expanding
 every page/gallery item's visual tree was too noisy). A combo item's text lives in its `Content` (a
 string) and is edited via the **Caption** box. `TextBlock` editors and an "Add Text Block" menu entry

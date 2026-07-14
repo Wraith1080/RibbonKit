@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
+using System.Windows.Media;
 using Microsoft.VisualStudio.DesignTools.Extensibility.Model;
 
 namespace RibbonKit.Design;
@@ -690,6 +691,7 @@ internal sealed class RibbonEditorWindow : Window
         Bool,
         Enum,
         IconRef,
+        Color,
     }
 
     private sealed class PropSpec
@@ -724,7 +726,7 @@ internal sealed class RibbonEditorWindow : Window
     private static readonly PropSpec[] TabSpecs =
     {
         new PropSpec("IsContextual", "Contextual tab", EditorKind.Bool),
-        new PropSpec("ContextualColor", "Contextual color", EditorKind.Text),
+        new PropSpec("ContextualColor", "Contextual color", EditorKind.Color),
     };
 
     private static readonly PropSpec[] GroupSpecs =
@@ -759,7 +761,7 @@ internal sealed class RibbonEditorWindow : Window
         new PropSpec("FontSize", "Font size", EditorKind.Text),
         new PropSpec("FontWeight", "Font weight", EditorKind.Enum, new[] { "Normal", "Light", "SemiBold", "Bold" }),
         new PropSpec("FontStyle", "Font style", EditorKind.Enum, new[] { "Normal", "Italic" }),
-        new PropSpec("Foreground", "Foreground", EditorKind.Text),
+        new PropSpec("Foreground", "Foreground", EditorKind.Color),
     };
 
     private static PropSpec[] SpecsFor(NodeKind kind) => kind switch
@@ -852,6 +854,7 @@ internal sealed class RibbonEditorWindow : Window
             EditorKind.Bool => BuildBoolEditor(item, spec),
             EditorKind.Enum => BuildEnumEditor(item, spec),
             EditorKind.IconRef => BuildIconEditor(item, spec),
+            EditorKind.Color => BuildColorEditor(item, spec),
             _ => BuildTextEditor(item, spec),
         };
         Grid.SetColumn(editor, 1);
@@ -989,6 +992,66 @@ internal sealed class RibbonEditorWindow : Window
         }
 
         return keys;
+    }
+
+    private UIElement BuildColorEditor(ModelItem item, PropSpec spec)
+    {
+        var dock = new DockPanel { LastChildFill = true };
+
+        var pick = new Button { Content = "…", Margin = new Thickness(6, 0, 0, 0), Padding = new Thickness(10, 3, 10, 3) };
+        DockPanel.SetDock(pick, Dock.Right);
+        dock.Children.Add(pick);
+
+        var swatch = new Border
+        {
+            Width = 18,
+            Height = 18,
+            BorderThickness = new Thickness(1),
+            BorderBrush = SystemColors.ActiveBorderBrush,
+            Margin = new Thickness(0, 0, 6, 0),
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        DockPanel.SetDock(swatch, Dock.Left);
+        dock.Children.Add(swatch);
+
+        var box = new TextBox
+        {
+            Text = DesignModel.GetString(item, spec.Name),
+            VerticalContentAlignment = VerticalAlignment.Center,
+        };
+        dock.Children.Add(box);
+
+        void UpdateSwatch() => swatch.Background = ColorPickerDialog.ParseBrush(box.Text);
+
+        void Commit()
+        {
+            if (!_syncingProps)
+            {
+                DesignModel.SetProperty(item, spec.Name, box.Text ?? string.Empty);
+                UpdateSwatch();
+            }
+        }
+
+        UpdateSwatch();
+        box.LostFocus += (_, _) => Commit();
+        box.KeyDown += (_, e) =>
+        {
+            if (e.Key == Key.Enter)
+            {
+                Commit();
+                e.Handled = true;
+            }
+        };
+        pick.Click += (_, _) =>
+        {
+            var dialog = new ColorPickerDialog(box.Text) { Owner = this };
+            if (dialog.ShowDialog() == true && !string.IsNullOrEmpty(dialog.SelectedColor))
+            {
+                box.Text = dialog.SelectedColor;
+                Commit();
+            }
+        };
+        return dock;
     }
 
     private UIElement BuildEnumEditor(ModelItem item, PropSpec spec)

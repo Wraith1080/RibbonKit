@@ -1044,6 +1044,13 @@ visual tree (Borders, page bodies, etc.) drowned the structure. Reverted: `AddNo
 into Panels (`Children`) and item containers (`Items`), never a control's Content. (`TextBlock` editors
 + "Add Text Block" + `ContentElement` are kept — inert unless a TextBlock is added to a group panel.)
 
+**Color swatch picker (DONE).** `ContextualColor` and `TextBlock.Foreground` are now a `Color`
+editor kind (`BuildColorEditor`): a live swatch + hex/name box + a "…" button that opens a
+self-contained WPF `ColorPickerDialog` (a palette of standard/Office swatches plus a hex box with
+preview — no WinForms dependency). Picking or typing still writes the value as a string through the
+type converter (so it round-trips as a brush); `ColorPickerDialog.ParseBrush` renders the swatch and
+is tolerant of invalid input (falls back to transparent).
+
 **Scalar-value fix (the real bug behind the noise).** This designer wraps even a plain **string** value
 in a child `ModelItem`, so `ModelProperty.Value != null` is NOT a reliable "is complex?" test — it
 wrongly flagged string Header/Content as complex. Symptoms: items showed only their type (empty caption,
@@ -1103,6 +1110,34 @@ go through `FindProperty`.
 
 With this batch, animation polish (backlog item 2 as of the prior session) is complete —
 no unwired transitions remain.
+
+### 3.25 Ribbon horizontal scroll (tab strip + groups row)
+
+When the window is too narrow for even the fully-collapsed groups — or for all the tabs — Office shows
+left/right chevron buttons to scroll the overflow into view. Added the same to RibbonKit.
+
+- **`Layout/RibbonScrollContentHost.cs`** — a `Decorator` that shows its single child clipped to the
+  viewport and offset by a `TranslateTransform`, exposing `ExtentWidth`/`ViewportWidth`/`CanScrollLeft`/
+  `CanScrollRight` (readonly DPs) and `ScrollLeft`/`ScrollRightCommand`. Key trick vs a stock
+  `ScrollViewer`: `ConstrainChildWidth=true` measures the child at the **viewport** width (not
+  infinity), so the adaptive `RibbonGroupsPanel` still reduces groups to fit FIRST; scrolling engages
+  only when the fully-reduced row is *still* wider than the viewport. The tab strip leaves it off
+  (`false`) so tabs keep natural size and scroll when too many. Mouse-wheel scrolls horizontally.
+- **`Office2024.xaml`** — the `RibbonTabControl` template now wraps both the `TabPanel` (with the
+  gliding `PART_TabMarker` INSIDE the scroller, so the marker scrolls in lockstep with its tab) and the
+  `SelectedContent` groups presenter in a `RibbonScrollContentHost`, each with two rounded chevron
+  `RepeatButton`s (`RibbonKit.ScrollLeftButton`/`RightButton`, `ControlCornerRadius` token). The buttons
+  **overlay** the content edges (no layout space) so showing/hiding them can't reflow-oscillate; they're
+  bound to the host's commands + `CanScroll*` via `BooleanToVisibilityConverter`. `PART_TabScroll` /
+  `PART_ContentScroll`. Runtime feature — needs a Windows build to confirm layout + the marker-under-scroll.
+- **Clamp fix (first build: groups clipped but no chevron).** WPF's `Measure` clamps an element's
+  reported `DesiredSize` to the width you pass it — so measuring the groups row at the viewport (to force
+  reduction) also clamped its width to the viewport, hiding the overflow, so `ExtentWidth` never exceeded
+  it. Fix: the scroller now measures the child **unconstrained** (true width, no clamp), and
+  `RibbonGroupsPanel` reduces to the viewport by reading `RibbonScrollContentHost.TargetChildWidth` from
+  its ancestor scroller (`FindScrollHost`) when it's measured at infinite width. Reduce-then-scroll
+  preserved; overflow now actually visible to the scroller. (The tab strip was already measured at
+  infinity, so it wasn't affected.)
 
 ## 4. Workflow / Session Conventions
 
