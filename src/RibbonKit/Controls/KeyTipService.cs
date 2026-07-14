@@ -7,6 +7,7 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
+using RibbonKit.Animation;
 using RibbonKit.Layout;
 
 namespace RibbonKit.Controls;
@@ -656,6 +657,7 @@ internal sealed class KeyTipService
             item.Layer = layer;
             item.Shown = true;
             item.Adorner.Dimmed = false;
+            RibbonMotion.PlayKeyTipPop(item.Adorner, RibbonAnimationAction.KeyTip);
         }
     }
 

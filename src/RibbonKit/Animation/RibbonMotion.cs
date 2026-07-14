@@ -342,6 +342,50 @@ public static class RibbonMotion
         element.BeginAnimation(UIElement.OpacityProperty, fade);
     }
 
+    /// <summary>
+    /// Plays a KeyTip badge's pop-in transition when it first appears: a quick fade
+    /// combined with a short downward settle, using the <see cref="RibbonAnimationAction.KeyTip"/>
+    /// timing. Unlike <see cref="PlayOpen"/>, the opacity animation releases itself once it
+    /// completes (falling back to a plain local value) so the caller can still toggle opacity
+    /// afterward with a direct property set — needed because <c>KeyTipAdorner.Dimmed</c> sets
+    /// <see cref="UIElement.OpacityProperty"/> directly to dim/undim a badge as the user types,
+    /// which an animation still holding the property (its default <c>FillBehavior.HoldEnd</c>)
+    /// would silently swallow. Instant when the action is disabled.
+    /// </summary>
+    public static void PlayKeyTipPop(FrameworkElement? element, RibbonAnimationAction action)
+    {
+        if (element is null)
+        {
+            return;
+        }
+
+        if (!RibbonAnimation.IsEnabled(action))
+        {
+            Rest(element);
+            return;
+        }
+
+        Duration duration = RibbonAnimation.GetDuration(action);
+        IEasingFunction ease = RibbonAnimation.GetEase(action);
+
+        var fade = new DoubleAnimation(0d, 1d, duration) { EasingFunction = ease };
+        fade.Completed += (_, _) =>
+        {
+            element.BeginAnimation(UIElement.OpacityProperty, null);
+            element.Opacity = 1d;
+        };
+        element.BeginAnimation(UIElement.OpacityProperty, fade);
+
+        double offset = RibbonAnimation.GetSlideOffset(action);
+        if (offset <= 0d)
+        {
+            return;
+        }
+
+        TranslateTransform translate = EnsureTranslate(element);
+        Slide(translate, TranslateTransform.YProperty, -offset, duration, ease);
+    }
+
     private static void Slide(
         TranslateTransform translate,
         DependencyProperty axis,

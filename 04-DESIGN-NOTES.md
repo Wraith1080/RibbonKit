@@ -193,7 +193,13 @@ Subtle.**
   `RibbonKit.Animation.Duration.*` Duration tokens for template storyboards.
 - `Animation/RibbonMotion.cs`: `PlayOpen` (fade+slide from an edge), `PlayClose`
   (fade+slide out, with completion callback), `PlaySlideIn` (slide WITHOUT opacity),
-  `PlayFadeIn`, `AnimateTranslateY` (translate-only glide), `Rest`.
+  `PlayFadeIn`, `AnimateTranslateY` (translate-only glide), `FadeWash` (cross-fades a
+  hover/press/checked highlight layer's opacity — used by buttons/toggles since a
+  templated storyboard can't animate a `DynamicResource` duration), `PlayThemeCrossfade`
+  (85%→100% opacity dip on theme/accent change — not a full fade, which would flash an
+  already-opaque element to transparent), `PlayKeyTipPop` (KeyTip badge fade+short
+  downward settle; releases its own opacity animation on completion — see hard rule 8),
+  `Rest`.
 
 **Hard rules learned:**
 
@@ -215,11 +221,21 @@ Subtle.**
    reuses the existing adorner — a UIElement can't have two).
 7. Tab switch: slide from **Top** (content drops down away from the tab strip — user
    preference).
+8. **An opacity animation's default `FillBehavior.HoldEnd` swallows later plain
+   property sets.** `KeyTipAdorner.Dimmed` sets `Opacity` directly to dim/undim a badge
+   as the user types; if the pop-in animation were left holding the property, those
+   sets would silently do nothing. `PlayKeyTipPop` clears its own animation
+   (`BeginAnimation(OpacityProperty, null)`) and sets a plain `Opacity = 1d` in its
+   `Completed` handler so the property is a normal local value again afterward.
 
-Wired so far: dropdown/split/flyout menus, gallery expand, backstage open/close, ribbon
-minimize/restore (+QAT glide), tab-switch slide. **Not yet wired**: hover cross-fade,
-true sliding tab marker (current = content slide; the underline doesn't glide between
-tabs yet), contextual-tab appear, KeyTip pop, toggle-state, theme-switch fade.
+**All planned transitions are now wired:** dropdown/split/flyout menus, gallery expand,
+backstage open/close, ribbon minimize/restore (+QAT glide), tab-switch slide, hover/press
+cross-fade (`RibbonButton`/`RibbonToggleButton` via `FadeWash`), the sliding tab marker
+(`RibbonTabControl` — a real underline glide between tabs, not just content slide),
+contextual-tab appear (`RibbonTab.cs`, `PlayOpen` with `ContextualTab`), toggle-state
+cross-fade (`RibbonToggleButton`'s check wash), theme-switch cross-fade (`Ribbon.cs` calls
+`PlayThemeCrossfade` on the tab control), and KeyTip badge pop-in (`KeyTipService.AddAdorners`
+calls `PlayKeyTipPop` once per badge, the same run it first shows it — see hard rule 8).
 Showcase: View → Motion group (None/Subtle/Expressive + Respect System toggle);
 `App.xaml.cs` calls `RibbonAnimation.Initialize(this)`.
 
@@ -846,6 +862,37 @@ working in VS.**
   `Backstage` (only its text, `ApplicationButtonHeader`, is settable).
 - `Diagnostics.cs` (`DesignLog`) is still wired into every verb — strip before shipping.
 
+### 3.23 Animation polish batch — all six remaining transitions wired
+
+- **Hover/press cross-fade**: `RibbonButton`/`RibbonToggleButton` call `RibbonMotion.FadeWash`
+  on their `_hoverWash`/`_pressWash` (and, for the toggle, `_checkWash`) layers instead of
+  an instant visibility flip.
+- **True sliding tab marker**: `RibbonTabControl` now owns `PART_TabMarker` +
+  `PART_TabMarkerTranslate` and glides the underline between tabs (`UpdateMarker`,
+  `RibbonAnimationAction.TabMarker`) instead of only sliding the tab content.
+- **Contextual-tab appear**: `RibbonTab.cs` plays `RibbonMotion.PlayOpen(this,
+  RibbonAnimationAction.ContextualTab, RibbonSlideFrom.Top)` when a tab's contextual
+  coloring turns on.
+- **Toggle-state cross-fade**: covered by the hover/press item above — same `FadeWash`
+  call, `ToggleState` action, `_checkWash` layer.
+- **Theme-switch cross-fade**: `Ribbon.cs` calls `RibbonMotion.PlayThemeCrossfade` on the
+  tab control when the active theme/accent changes (85%→100% opacity dip, not a full
+  fade — a full fade would flash the already-opaque ribbon to transparent first).
+- **KeyTip badge pop** (the last of the six, added this session): `RibbonMotion` gained a
+  new `PlayKeyTipPop` method (fade + short downward settle, `RibbonAnimationAction.KeyTip`
+  timing), called once from `KeyTipService.AddAdorners` right where a badge is first shown
+  (that call site already guards on `item.Shown`, so it fires once per badge, not on every
+  keystroke while typing a KeyTip). **Gotcha discovered and fixed**: a `DoubleAnimation`'s
+  default `FillBehavior.HoldEnd` keeps holding the `Opacity` property after it finishes,
+  which would have silently broken `KeyTipAdorner.Dimmed` (a plain property setter used to
+  dim/undim a badge as the user types a multi-character KeyTip). `PlayKeyTipPop` clears its
+  own animation and sets a plain `Opacity = 1d` in the fade's `Completed` handler so the
+  property is back to a normal local value by the time `Dimmed` needs to touch it. See
+  hard rule 8 in §3.10.
+
+With this batch, animation polish (backlog item 2 as of the prior session) is complete —
+no unwired transitions remain.
+
 ## 4. Workflow / Session Conventions
 
 - Cloud workspace: `/home/user/ribbonkit/`. The user's machine:
@@ -873,16 +920,22 @@ items. The §3.14 XAML **design-time** preview (active tab + backstage on the VS
 is also user-confirmed. The §3.21 #4 **backstage Tab-focus leak is now fixed** (focus trap;
 see §3.21). Nothing in §3 remains in the "needs verification" state.
 
+**Animation polish is now complete.** All six items formerly tracked here — hover
+cross-fade, the true sliding tab marker (shared animated underline), contextual-tab
+appear, toggle-state cross-fade, theme-switch cross-fade, and KeyTip badge pop — are
+wired and confirmed; see §3/"Wired so far" list above for the code sites. KeyTip badge
+pop was the last of the six: `RibbonMotion.PlayKeyTipPop` plays a fade + short downward
+settle from `KeyTipService.AddAdorners`, self-releasing its opacity animation on
+completion so the existing dim/undim-while-typing logic (`KeyTipAdorner.Dimmed`) keeps
+working afterward (hard rule 8).
+
 Backlog (rough priority):
 
 1. Import/Export UI: surface the §3.17 `Serialize`/`Apply` as file-picker buttons in the
    customize page (the serializer already supports it; only the buttons + file dialogs are
    missing). Drag-drop in the tree and moving groups across tabs also remain.
-2. Remaining animations: hover cross-fade, true sliding tab marker (shared animated
-   underline on the tab strip), contextual-tab appear, KeyTip badge pop, toggle-state,
-   theme-switch cross-fade.
-3. Mica hardening (future): dark-mode-aware translucency. (Maximize-with-glass and the
+2. Mica hardening (future): dark-mode-aware translucency. (Maximize-with-glass and the
    glass-frame border fix are verified — see §3.12.)
-4. Office2010 / Office2007 themes (roadmap Phase 6).
-5. Dark mode (2019 white-tab note in §3.6 anticipates it).
-6. GitHub publish: repo URL placeholder in csproj (`YOUR-GITHUB-USERNAME`).
+3. Office2010 / Office2007 themes (roadmap Phase 6).
+4. Dark mode (2019 white-tab note in §3.6 anticipates it).
+5. GitHub publish: repo URL placeholder in csproj (`YOUR-GITHUB-USERNAME`).
