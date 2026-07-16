@@ -1302,6 +1302,15 @@ settle from `KeyTipService.AddAdorners`, self-releasing its opacity animation on
 completion so the existing dim/undim-while-typing logic (`KeyTipAdorner.Dimmed`) keeps
 working afterward (hard rule 8).
 
+**Import / Export (customize page) — DONE.** `RibbonCustomizePage` now has **Import…** / **Export…**
+buttons beside **Reset** (bottom-left, `PART_ImportButton` / `PART_ExportButton` in the Office2024
+template). Export writes `RibbonCustomizationSerializer.Serialize(ribbon)` to a `.json` the user picks
+(`Microsoft.Win32.SaveFileDialog`, no WinForms); Import reads one back (`OpenFileDialog`) and
+`Apply`s it, then `RebuildAll`. File IO is guarded (IO/access/security exceptions → a `MessageBox`),
+and `Apply` already tolerates a foreign/corrupt string, so a bad file can't corrupt the ribbon. Import
+mutates the live ribbon immediately (same as Reset); the host persists it when the options dialog's
+Apply fires. The serializer already round-tripped (§3.17) — this was just the missing UI.
+
 **Design-time editor — done this arc:** the runtime ribbon horizontal scroll (§3.25, incl. the
 reduce-then-scroll clamp fix and the chevrons-return-on-tab-switch fix), split/drop-down button menu-item
 editing, `Ribbon.CommandId` + `KeyTip.Keys` attached-property editors (attached-property model access
@@ -1324,10 +1333,7 @@ panel's `Children` (any group/panel), and item entries↔`Items` of a container 
 
 Backlog (rough priority):
 
-1. Import/Export UI: surface the §3.17 `Serialize`/`Apply` as file-picker buttons in the
-   customize page (the serializer already supports it; only the buttons + file dialogs are
-   missing).
-2. Design editor: optional clear-to-default buttons for scalar properties. (Drag-drop tree
+1. Design editor: optional clear-to-default buttons for scalar properties. (Drag-drop tree
    reordering + cross-tab/group moves are now DONE — see §5 "Drag-drop reordering".)
 3. Mica hardening (future): dark-mode-aware translucency. (Maximize-with-glass and the
    glass-frame border fix are verified — see §3.12.)

@@ -2902,13 +2902,26 @@
                         </StackPanel>
 
                         <!-- Reset restores the host-supplied baseline (factory ribbon),
-                             discarding all customizations. Bottom-left, like Office. -->
-                        <Button x:Name="PART_ResetButton"
-                                Grid.Column="0" Grid.Row="2"
-                                HorizontalAlignment="Left"
-                                Content="Reset"
-                                Style="{StaticResource OptionsDialogActionButtonStyle}"
-                                Margin="0,8,0,0" />
+                             discarding all customizations. Import/Export round-trip the current
+                             layout to a JSON file. Bottom-left, like Office. -->
+                        <StackPanel Grid.Column="0" Grid.Row="2"
+                                    Orientation="Horizontal"
+                                    HorizontalAlignment="Left"
+                                    Margin="0,8,0,0">
+                            <Button x:Name="PART_ResetButton"
+                                    Content="Reset"
+                                    Style="{StaticResource OptionsDialogActionButtonStyle}"
+                                    Margin="0,0,6,0" />
+                            <Button x:Name="PART_ImportButton"
+                                    Content="Import…"
+                                    Style="{StaticResource OptionsDialogActionButtonStyle}"
+                                    ToolTip="Load a saved ribbon layout from a file"
+                                    Margin="0,0,6,0" />
+                            <Button x:Name="PART_ExportButton"
+                                    Content="Export…"
+                                    Style="{StaticResource OptionsDialogActionButtonStyle}"
+                                    ToolTip="Save the current ribbon layout to a file" />
+                        </StackPanel>
 
                         <!-- Structure tools, under the tree like Office. Edit… opens the
                              per-target dialog (name / icon / layout / size). -->

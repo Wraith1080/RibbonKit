@@ -1,3 +1,4 @@
+using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows;
@@ -166,6 +167,8 @@ public sealed class RibbonCustomizeNode : INotifyPropertyChanged
 [TemplatePart(Name = NewGroupButtonPartName, Type = typeof(ButtonBase))]
 [TemplatePart(Name = EditButtonPartName, Type = typeof(ButtonBase))]
 [TemplatePart(Name = ResetButtonPartName, Type = typeof(ButtonBase))]
+[TemplatePart(Name = ImportButtonPartName, Type = typeof(ButtonBase))]
+[TemplatePart(Name = ExportButtonPartName, Type = typeof(ButtonBase))]
 public class RibbonCustomizePage : Control, IRibbonFillPage
 {
     private const string AvailableListPartName = "PART_AvailableList";
@@ -178,6 +181,8 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
     private const string NewGroupButtonPartName = "PART_NewGroupButton";
     private const string EditButtonPartName = "PART_EditButton";
     private const string ResetButtonPartName = "PART_ResetButton";
+    private const string ImportButtonPartName = "PART_ImportButton";
+    private const string ExportButtonPartName = "PART_ExportButton";
 
     /// <summary>Identifies the <see cref="Ribbon"/> dependency property.</summary>
     public static readonly DependencyProperty RibbonProperty =
@@ -207,6 +212,8 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
     private ButtonBase? _newGroupButton;
     private ButtonBase? _editButton;
     private ButtonBase? _resetButton;
+    private ButtonBase? _importButton;
+    private ButtonBase? _exportButton;
     private RibbonCustomizeNode? _selectedNode;
 
     static RibbonCustomizePage()
@@ -251,6 +258,8 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
         Unhook(_newGroupButton, OnNewGroupClick);
         Unhook(_editButton, OnEditClick);
         Unhook(_resetButton, OnResetClick);
+        Unhook(_importButton, OnImportClick);
+        Unhook(_exportButton, OnExportClick);
         if (_tree is not null)
         {
             _tree.SelectedItemChanged -= OnTreeSelectionChanged;
@@ -273,6 +282,8 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
         _newGroupButton = GetTemplateChild(NewGroupButtonPartName) as ButtonBase;
         _editButton = GetTemplateChild(EditButtonPartName) as ButtonBase;
         _resetButton = GetTemplateChild(ResetButtonPartName) as ButtonBase;
+        _importButton = GetTemplateChild(ImportButtonPartName) as ButtonBase;
+        _exportButton = GetTemplateChild(ExportButtonPartName) as ButtonBase;
 
         Hook(_addButton, OnAddClick);
         Hook(_removeButton, OnRemoveClick);
@@ -282,6 +293,8 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
         Hook(_newGroupButton, OnNewGroupClick);
         Hook(_editButton, OnEditClick);
         Hook(_resetButton, OnResetClick);
+        Hook(_importButton, OnImportClick);
+        Hook(_exportButton, OnExportClick);
 
         if (_tree is not null)
         {
@@ -817,6 +830,81 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
         RibbonCustomizationSerializer.Apply(ribbon, ResetLayout);
         RebuildAll();
     }
+
+    // Export: write the current customization JSON to a file the user picks. Import: read one back
+    // and Apply it (Apply tolerates a foreign/corrupt string — see the serializer — so a bad file
+    // can't corrupt the ribbon, but the file read itself is guarded and surfaced as a message box).
+    private void OnExportClick(object sender, RoutedEventArgs e)
+    {
+        if (Ribbon is not { } ribbon)
+        {
+            return;
+        }
+
+        var dialog = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = "Export Ribbon Customization",
+            Filter = "Ribbon layout (*.json)|*.json|All files (*.*)|*.*",
+            DefaultExt = ".json",
+            FileName = "ribbon-customization.json",
+            AddExtension = true,
+            OverwritePrompt = true,
+        };
+
+        if (dialog.ShowDialog(Window.GetWindow(this)) != true)
+        {
+            return;
+        }
+
+        try
+        {
+            System.IO.File.WriteAllText(dialog.FileName, RibbonCustomizationSerializer.Serialize(ribbon));
+        }
+        catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException or System.Security.SecurityException)
+        {
+            ShowError("Couldn't save the file.\n\n" + ex.Message);
+        }
+    }
+
+    private void OnImportClick(object sender, RoutedEventArgs e)
+    {
+        if (Ribbon is not { } ribbon)
+        {
+            return;
+        }
+
+        var dialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = "Import Ribbon Customization",
+            Filter = "Ribbon layout (*.json)|*.json|All files (*.*)|*.*",
+            DefaultExt = ".json",
+            CheckFileExists = true,
+        };
+
+        if (dialog.ShowDialog(Window.GetWindow(this)) != true)
+        {
+            return;
+        }
+
+        string json;
+        try
+        {
+            json = System.IO.File.ReadAllText(dialog.FileName);
+        }
+        catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException or System.Security.SecurityException)
+        {
+            ShowError("Couldn't read the file.\n\n" + ex.Message);
+            return;
+        }
+
+        // Apply reconciles from any string and ignores unknown/foreign content, so an invalid layout
+        // leaves the ribbon usable rather than throwing.
+        RibbonCustomizationSerializer.Apply(ribbon, json);
+        RebuildAll();
+    }
+
+    private void ShowError(string message) =>
+        MessageBox.Show(Window.GetWindow(this), message, "Ribbon Customization", MessageBoxButton.OK, MessageBoxImage.Warning);
 
     // Renames change the "Tab › Group › Command" paths shown on the left.
     private void RebuildAvailableListOnly()
