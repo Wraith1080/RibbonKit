@@ -63,6 +63,56 @@ internal static class DesignModel
         }
     }
 
+    /// <summary>
+    /// Moves <paramref name="item"/> out of its current <paramref name="fromCollectionProperty"/> and into
+    /// <paramref name="targetParent"/>'s <paramref name="toCollectionProperty"/> at <paramref name="insertIndex"/>,
+    /// as a single undo. Handles both plain reordering (same parent+collection — the insert index is
+    /// adjusted for the removal shift) and cross-parent moves (a group to another tab, a control to
+    /// another group/panel). The caller is responsible for compatibility (which collection accepts the
+    /// item). No-op when either collection can't be resolved.
+    /// </summary>
+    public static void MoveInto(ModelItem item, string fromCollectionProperty, ModelItem targetParent, string toCollectionProperty, int insertIndex)
+    {
+        ModelItem fromParent = item.Parent;
+        if (fromParent is null || targetParent is null)
+        {
+            return;
+        }
+
+        ModelItemCollection fromCollection = FindProperty(fromParent, fromCollectionProperty)?.Collection;
+        ModelItemCollection toCollection = FindProperty(targetParent, toCollectionProperty)?.Collection;
+        if (fromCollection is null || toCollection is null)
+        {
+            return;
+        }
+
+        bool sameCollection = ReferenceEquals(fromParent, targetParent) && fromCollectionProperty == toCollectionProperty;
+
+        try
+        {
+            using (ModelEditingScope scope = item.BeginEdit("Move"))
+            {
+                int oldIndex = fromCollection.IndexOf(item);
+                fromCollection.Remove(item);
+
+                int index = insertIndex;
+                // Removing an earlier item from the same collection shifts every later index down by one.
+                if (sameCollection && oldIndex >= 0 && oldIndex < index)
+                {
+                    index--;
+                }
+
+                index = Math.Max(0, Math.Min(index, toCollection.Count));
+                toCollection.Insert(index, item);
+                scope.Complete();
+            }
+        }
+        catch (Exception ex)
+        {
+            DesignLog.Error("MoveInto", ex);
+        }
+    }
+
     /// <summary>Removes <paramref name="item"/> from its parent's <paramref name="parentCollectionProperty"/> collection.</summary>
     public static void Delete(ModelItem item, string parentCollectionProperty)
     {

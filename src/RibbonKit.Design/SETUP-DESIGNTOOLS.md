@@ -55,7 +55,12 @@ Every verb is a single undo.
 
 **Ribbon Editor dialog (`RibbonEditorWindow`):** "Edit Ribbon…" opens a modal with a tree of
 Tabs → Groups → items and a toolbar (Add Tab · Add Group · Add Control ▾ · Add Stack · Move Up/Down ·
-Delete) plus a Header rename box. A group's items can be leaf controls OR **layout containers**
+Delete) plus a Header rename box. Nodes can also be **dragged** to reorder or reparent: a blue line
+between rows drops before/after that sibling, a blue box over a container row drops *into* it (append).
+Drops are type-checked the same way the verbs are — tabs among tabs, groups among groups (including
+across tabs), controls among a group's/panel's children (including across groups/panels), and
+combo/gallery/menu/backstage items among containers of the same item type; a node can't be dropped into
+itself or its own descendant. Each drag is a single undo (`DesignModel.MoveInto`). A group's items can be leaf controls OR **layout containers**
 (`StackPanel`) that hold their own children, so the tree recurses into any node with a `Children`
 collection — matching the Office pattern of a vertical stack of horizontal icon rows. "Add Stack"
 inserts a `StackPanel` (vertical in a group, horizontal inside another stack); "Add Control" targets

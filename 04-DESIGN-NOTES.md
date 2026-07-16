@@ -1305,17 +1305,30 @@ working afterward (hard rule 8).
 **Design-time editor — done this arc:** the runtime ribbon horizontal scroll (§3.25, incl. the
 reduce-then-scroll clamp fix and the chevrons-return-on-tab-switch fix), split/drop-down button menu-item
 editing, `Ribbon.CommandId` + `KeyTip.Keys` attached-property editors (attached-property model access
-proven — `Find(PropertyIdentifier)`), the backstage page switcher, and the modern context menus (§3.26).
-Showcase gained a Disable-Samples demo (button/split/group disabled states).
+proven — `Find(PropertyIdentifier)`), the backstage page switcher, the modern context menus (§3.26), and
+**drag-drop tree reordering** (see below). Showcase gained a Disable-Samples demo (button/split/group
+disabled states).
+
+**Drag-drop reordering (RibbonEditorWindow):** drag a tree node onto another to reorder or reparent.
+`PreviewMouseLeftButtonDown` records the candidate + start point; `PreviewMouseMove` starts
+`DragDrop.DoDragDrop` once past the system drag threshold (so a plain click still selects). `DragOver`
+builds a `DropPlan` and shows a `DropAdorner` (a blue insertion line above/below the target row, or a
+rounded box for an "into"/append drop, chosen by where the pointer sits in the row's header height);
+`Drop` applies it via `DesignModel.MoveInto` (remove-from + insert-into as one undo, with the insert
+index adjusted for the removal shift when it's a same-collection reorder). Compatibility (`Accepts`)
+mirrors the verbs: tabs↔Tabs, groups↔Groups (any tab), real controls/panels↔a group's `Items` or a
+panel's `Children` (any group/panel), and item entries↔`Items` of a container of the SAME item type
+(so a `RibbonMenuItem` can move between dropdowns/splits, a `ComboBoxItem` between combos, etc.).
+`IsAncestorOrSelf` blocks dropping a node into itself or its own subtree. The drag payload is the
+`NodeInfo` itself (in-process WPF drag-drop keeps the managed reference, so an internal type is fine).
 
 Backlog (rough priority):
 
 1. Import/Export UI: surface the §3.17 `Serialize`/`Apply` as file-picker buttons in the
    customize page (the serializer already supports it; only the buttons + file dialogs are
    missing).
-2. Design editor: **drag-drop tree reordering** and moving groups across tabs (explicitly
-   deferred by the user in favour of the item-editing work above). Optional: clear-to-default
-   buttons for scalar properties.
+2. Design editor: optional clear-to-default buttons for scalar properties. (Drag-drop tree
+   reordering + cross-tab/group moves are now DONE — see §5 "Drag-drop reordering".)
 3. Mica hardening (future): dark-mode-aware translucency. (Maximize-with-glass and the
    glass-frame border fix are verified — see §3.12.)
 4. Office2010 / Office2007 themes (roadmap Phase 6).

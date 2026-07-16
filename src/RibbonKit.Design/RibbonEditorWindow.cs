@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
@@ -92,6 +93,11 @@ internal sealed class RibbonEditorWindow : Window
     private bool _syncingPreview;
     private readonly StackPanel _propsPanel = new StackPanel { Orientation = Orientation.Vertical };
     private bool _syncingProps;
+
+    // Drag-drop reorder state.
+    private Point _dragStart;
+    private NodeInfo _dragSource;
+    private DropAdorner _dropAdorner;
 
     /// <summary>Creates the editor over <paramref name="ribbon"/> (the selected Ribbon's design model item).</summary>
     public RibbonEditorWindow(ModelItem ribbon)
@@ -204,6 +210,12 @@ internal sealed class RibbonEditorWindow : Window
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
         _tree.SelectedItemChanged += (_, _) => UpdateDetails();
+        _tree.AllowDrop = true;
+        _tree.PreviewMouseLeftButtonDown += OnTreeMouseDown;
+        _tree.PreviewMouseMove += OnTreeMouseMove;
+        _tree.DragOver += OnTreeDragOver;
+        _tree.Drop += OnTreeDrop;
+        _tree.DragLeave += (_, _) => ClearDropAdorner();
         Grid.SetColumn(_tree, 0);
         grid.Children.Add(_tree);
 
@@ -1408,6 +1420,362 @@ internal sealed class RibbonEditorWindow : Window
 
         DesignModel.Move(node.Item, node.ParentCollection, delta);
         RebuildTree(node.Item);
+    }
+
+    // ---- Drag-drop reordering ---------------------------------------------------------
+    //
+    // Drag a tree node onto another to reorder or reparent it: a line between rows inserts before/after
+    // that sibling; a box over a container row drops INTO it (append). Compatibility mirrors the toolbar
+    // verbs — tabs among tabs, groups among groups (incl. across tabs), controls among a group/panel's
+    // children (incl. across groups/panels), and combo/gallery/menu/backstage items among containers of
+    // the same item type. Each drop is one undo via DesignModel.MoveInto.
+
+    private void OnTreeMouseDown(object sender, MouseButtonEventArgs e)
+    {
+        _dragStart = e.GetPosition(null);
+        _dragSource = NodeAt(ContainerAtPoint(e.OriginalSource as DependencyObject));
+    }
+
+    private void OnTreeMouseMove(object sender, MouseEventArgs e)
+    {
+        if (e.LeftButton != MouseButtonState.Pressed || _dragSource is null || !IsDraggable(_dragSource))
+        {
+            return;
+        }
+
+        Point now = e.GetPosition(null);
+        if (Math.Abs(now.X - _dragStart.X) < SystemParameters.MinimumHorizontalDragDistance
+            && Math.Abs(now.Y - _dragStart.Y) < SystemParameters.MinimumVerticalDragDistance)
+        {
+            return;
+        }
+
+        NodeInfo source = _dragSource;
+        _dragSource = null; // consume so we don't re-enter DoDragDrop
+        try
+        {
+            DragDrop.DoDragDrop(_tree, source, DragDropEffects.Move);
+        }
+        catch (Exception ex)
+        {
+            DesignLog.Error("DoDragDrop", ex);
+        }
+        finally
+        {
+            ClearDropAdorner();
+        }
+    }
+
+    private void OnTreeDragOver(object sender, DragEventArgs e)
+    {
+        DropPlan? plan = PlanFromEvent(e);
+        e.Effects = plan is null ? DragDropEffects.None : DragDropEffects.Move;
+        if (plan is { } p)
+        {
+            ShowDropAdorner(p.TargetItem, p.Mode);
+        }
+        else
+        {
+            ClearDropAdorner();
+        }
+
+        e.Handled = true;
+    }
+
+    private void OnTreeDrop(object sender, DragEventArgs e)
+    {
+        ClearDropAdorner();
+        if (PlanFromEvent(e) is not { } plan)
+        {
+            return;
+        }
+
+        DesignModel.MoveInto(plan.Source.Item, plan.Source.ParentCollection, plan.TargetParent, plan.CollectionProperty, plan.Index);
+        RebuildTree(plan.Source.Item);
+        e.Handled = true;
+    }
+
+    /// <summary>Builds the drop plan for the current drag position, or null when the drop isn't allowed.</summary>
+    private DropPlan? PlanFromEvent(DragEventArgs e)
+    {
+        if (e.Data?.GetData(typeof(NodeInfo)) is not NodeInfo source)
+        {
+            return null;
+        }
+
+        TreeViewItem targetItem = ContainerAtPoint(e.OriginalSource as DependencyObject);
+        NodeInfo target = NodeAt(targetItem);
+        if (target is null || target.Item is null || ReferenceEquals(target.Item, source.Item))
+        {
+            return null;
+        }
+
+        DropMode mode = ModeFor(targetItem, e.GetPosition(targetItem));
+
+        // "Into": append into the target when it's a container that accepts the source.
+        if (mode == DropMode.Into && ContainerAccept(target, source) is { } into
+            && !IsAncestorOrSelf(source.Item, into.Parent))
+        {
+            return new DropPlan(source, targetItem, DropMode.Into, into.Parent, into.Collection, CountOf(into.Parent, into.Collection));
+        }
+
+        // Before/After: insert as a sibling of the target in the target's own collection.
+        ModelItem parent = target.Item.Parent;
+        string collection = target.ParentCollection;
+        if (parent is null || collection is null || !Accepts(parent, collection, source) || IsAncestorOrSelf(source.Item, parent))
+        {
+            return null;
+        }
+
+        int targetIndex = DesignModel.IndexInParent(target.Item, collection);
+        if (targetIndex < 0)
+        {
+            return null;
+        }
+
+        int index = mode == DropMode.After ? targetIndex + 1 : targetIndex;
+        return new DropPlan(source, targetItem, mode == DropMode.After ? DropMode.After : DropMode.Before, parent, collection, index);
+    }
+
+    /// <summary>The count of a parent's collection (the append index for an "into" drop).</summary>
+    private static int CountOf(ModelItem parent, string collectionProperty) => SafeChildren(parent, collectionProperty).Count;
+
+    /// <summary>Decides before/into/after from where the pointer sits within the target row's header.</summary>
+    private static DropMode ModeFor(TreeViewItem targetItem, Point posInItem)
+    {
+        double headerHeight = HeaderHeight(targetItem);
+        double y = posInItem.Y;
+        if (y < headerHeight * 0.3d)
+        {
+            return DropMode.Before;
+        }
+
+        if (y > headerHeight * 0.7d)
+        {
+            return DropMode.After;
+        }
+
+        return DropMode.Into;
+    }
+
+    private static double HeaderHeight(TreeViewItem item)
+    {
+        if (FindVisualChild<ContentPresenter>(item) is { ActualHeight: > 0 } header)
+        {
+            return header.ActualHeight;
+        }
+
+        return Math.Min(item.ActualHeight <= 0 ? 22d : item.ActualHeight, 22d);
+    }
+
+    /// <summary>Whether a node can be dragged (structural node with a home collection, not the root).</summary>
+    private static bool IsDraggable(NodeInfo node) =>
+        node is { ParentCollection: not null } && node.Kind != NodeKind.Ribbon;
+
+    /// <summary>True when <paramref name="node"/> is an entry inside a combo/gallery/menu/backstage (vs a group control).</summary>
+    private static bool IsItemEntry(NodeInfo node) =>
+        node.Kind == NodeKind.Control && node.Item?.Parent != null && ItemRule(node.Item.Parent) != null;
+
+    /// <summary>Whether the collection <paramref name="collection"/> on <paramref name="parent"/> may hold <paramref name="source"/>.</summary>
+    private static bool Accepts(ModelItem parent, string collection, NodeInfo source)
+    {
+        switch (source.Kind)
+        {
+            case NodeKind.Tab:
+                return collection == "Tabs";
+            case NodeKind.Group:
+                return collection == "Groups";
+            default:
+                if (IsItemEntry(source))
+                {
+                    // Reorder within, or move between, containers of the SAME item type.
+                    return collection == "Items"
+                        && ItemRule(parent) is { } rule
+                        && rule.TypeName == SafeType(source.Item);
+                }
+
+                // A real command control / nested panel: lives in a group's Items or a panel's Children.
+                return (collection == "Items" && SafeType(parent) == "RibbonGroup")
+                    || (collection == "Children" && DesignModel.HasProperty(parent, "Children"));
+        }
+    }
+
+    /// <summary>The (parent, collection) a container node would append the source into, or null.</summary>
+    private static (ModelItem Parent, string Collection)? ContainerAccept(NodeInfo target, NodeInfo source)
+    {
+        (ModelItem Parent, string Collection)? candidate = target.Kind switch
+        {
+            NodeKind.Tab => (target.Item, "Groups"),
+            NodeKind.Group => (target.Item, "Items"),
+            NodeKind.Container => (target.Item, "Children"),
+            NodeKind.Control when ItemRule(target.Item) != null => (target.Item, "Items"),
+            _ => ((ModelItem, string)?)null,
+        };
+
+        return candidate is { } c && Accepts(c.Parent, c.Collection, source) ? c : null;
+    }
+
+    /// <summary>True when <paramref name="ancestor"/> is <paramref name="node"/> or one of its ancestors (blocks dropping a node into itself).</summary>
+    private static bool IsAncestorOrSelf(ModelItem ancestor, ModelItem node)
+    {
+        for (ModelItem cursor = node; cursor != null; cursor = cursor.Parent)
+        {
+            if (ReferenceEquals(cursor, ancestor))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private TreeViewItem ContainerAtPoint(DependencyObject source)
+    {
+        while (source != null && source is not TreeViewItem)
+        {
+            source = source is Visual or System.Windows.Media.Media3D.Visual3D
+                ? VisualTreeHelper.GetParent(source)
+                : null;
+        }
+
+        return source as TreeViewItem;
+    }
+
+    private static NodeInfo NodeAt(TreeViewItem item) => item?.Tag as NodeInfo;
+
+    private static T FindVisualChild<T>(DependencyObject root) where T : DependencyObject
+    {
+        int count = VisualTreeHelper.GetChildrenCount(root);
+        for (int i = 0; i < count; i++)
+        {
+            DependencyObject child = VisualTreeHelper.GetChild(root, i);
+            if (child is T typed)
+            {
+                return typed;
+            }
+
+            if (FindVisualChild<T>(child) is { } nested)
+            {
+                return nested;
+            }
+        }
+
+        return null;
+    }
+
+    private void ShowDropAdorner(TreeViewItem item, DropMode mode)
+    {
+        if (item is null)
+        {
+            ClearDropAdorner();
+            return;
+        }
+
+        AdornerLayer layer = AdornerLayer.GetAdornerLayer(item);
+        if (layer is null)
+        {
+            return;
+        }
+
+        if (_dropAdorner != null && !ReferenceEquals(_dropAdorner.AdornedElement, item))
+        {
+            ClearDropAdorner();
+        }
+
+        if (_dropAdorner is null)
+        {
+            _dropAdorner = new DropAdorner(item);
+            layer.Add(_dropAdorner);
+        }
+
+        _dropAdorner.Update(mode, HeaderHeight(item));
+    }
+
+    private void ClearDropAdorner()
+    {
+        if (_dropAdorner != null)
+        {
+            AdornerLayer.GetAdornerLayer(_dropAdorner.AdornedElement)?.Remove(_dropAdorner);
+            _dropAdorner = null;
+        }
+    }
+
+    private enum DropMode
+    {
+        Before,
+        Into,
+        After,
+    }
+
+    private sealed class DropPlan
+    {
+        public DropPlan(NodeInfo source, TreeViewItem targetItem, DropMode mode, ModelItem targetParent, string collectionProperty, int index)
+        {
+            Source = source;
+            TargetItem = targetItem;
+            Mode = mode;
+            TargetParent = targetParent;
+            CollectionProperty = collectionProperty;
+            Index = index;
+        }
+
+        public NodeInfo Source { get; }
+
+        public TreeViewItem TargetItem { get; }
+
+        public DropMode Mode { get; }
+
+        public ModelItem TargetParent { get; }
+
+        public string CollectionProperty { get; }
+
+        public int Index { get; }
+    }
+
+    /// <summary>Draws the drop hint on a target row: a line above/below for before/after, a rounded box for "into".</summary>
+    private sealed class DropAdorner : Adorner
+    {
+        private static readonly Brush LineBrush = MakeFrozen(new SolidColorBrush(Color.FromRgb(0x0F, 0x6C, 0xBD)));
+        private static readonly Pen LinePen = MakeFrozen(new Pen(LineBrush, 2d));
+        private static readonly Brush IntoFill = MakeFrozen(new SolidColorBrush(Color.FromArgb(0x33, 0x0F, 0x6C, 0xBD)));
+
+        private DropMode _mode;
+        private double _headerHeight;
+
+        public DropAdorner(UIElement adornedElement) : base(adornedElement)
+        {
+            IsHitTestVisible = false;
+        }
+
+        public void Update(DropMode mode, double headerHeight)
+        {
+            _mode = mode;
+            _headerHeight = headerHeight;
+            InvalidateVisual();
+        }
+
+        protected override void OnRender(DrawingContext drawingContext)
+        {
+            double width = AdornedElement.RenderSize.Width;
+            double h = _headerHeight > 0 ? _headerHeight : AdornedElement.RenderSize.Height;
+
+            if (_mode == DropMode.Into)
+            {
+                drawingContext.DrawRoundedRectangle(IntoFill, LinePen, new Rect(1, 1, Math.Max(0, width - 2), Math.Max(0, h - 2)), 3, 3);
+                return;
+            }
+
+            double y = _mode == DropMode.After ? h : 0;
+            drawingContext.DrawLine(LinePen, new Point(0, y), new Point(width, y));
+            // Small end cap so the insertion line reads clearly.
+            drawingContext.DrawEllipse(LineBrush, null, new Point(3, y), 3, 3);
+        }
+
+        private static T MakeFrozen<T>(T freezable) where T : Freezable
+        {
+            freezable.Freeze();
+            return freezable;
+        }
     }
 
     private void OnDelete()
