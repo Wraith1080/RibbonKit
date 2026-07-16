@@ -1059,6 +1059,19 @@ translates `Ribbon.IsBackstageOpen`, and `TabPreviewCoordinator` gained `SetBack
 (+ the invalidation targets `IsBackstageOpen`). Design-only, no XAML/runtime effect; the design-mode
 backstage host from §3.14 renders it. The checkbox enables only when the ribbon has a `Backstage`.
 
+**Backstage page switcher (later pass):** a **Page** combo beside the "Show backstage" checkbox
+previews a specific backstage page on the surface. A second provider, `BackstagePagePreviewProvider`
+(attached to `Backstage` in `Metadata`), translates the backstage's `SelectedIndex` the same design-only
+way; `TabPreviewCoordinator` gained `SetBackstagePage`/`TryGetBackstagePage`. The combo lists nav pages
+only (footer `IsButton` action items excluded, since they don't switch to a page) and maps each entry to
+its true `Items` index; "(default)" clears the override; it's enabled only while the backstage is shown.
+Wrinkle vs the ribbon's own `SelectedIndex`: the backstage's `SelectedIndex` is **inherited from
+`Selector`**, so the property identifier's declaring type could be reported as either `Backstage` or
+`Selector`. Which one the designer uses for an inherited DP is unverified from the sandbox, so the
+provider registers **both** `(Backstage, SelectedIndex)` and `(Selector, SelectedIndex)` and the
+coordinator invalidates under both — whichever the designer actually keys, one matches (a Windows build
+confirms via the `[RibbonKit] Preview Backstage SelectedIndex -> N` debug line).
+
 **Gallery-item content editing — TRIED, then ROLLED BACK (too noisy).** `AddNode` briefly descended
 into a control's rich `Content`, but expanding every backstage page and gallery item into its full
 visual tree (Borders, page bodies, etc.) drowned the structure. Reverted: `AddNode` now recurses only

@@ -87,6 +87,8 @@ internal sealed class RibbonEditorWindow : Window
     private Button _rename;
     private ComboBox _previewCombo;
     private CheckBox _backstageCheck;
+    private ComboBox _backstagePageCombo;
+    private readonly List<int> _backstagePageMap = new List<int>();
     private bool _syncingPreview;
     private readonly StackPanel _propsPanel = new StackPanel { Orientation = Orientation.Vertical };
     private bool _syncingProps;
@@ -282,6 +284,16 @@ internal sealed class RibbonEditorWindow : Window
         };
         _backstageCheck.Click += OnBackstageToggle;
         previewRow.Children.Add(_backstageCheck);
+
+        previewRow.Children.Add(new TextBlock
+        {
+            Text = "Page: ",
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(16, 0, 0, 0),
+        });
+        _backstagePageCombo = new ComboBox { MinWidth = 150 };
+        _backstagePageCombo.SelectionChanged += OnBackstagePageChanged;
+        previewRow.Children.Add(_backstagePageCombo);
         previewArea.Children.Add(previewRow);
 
         previewArea.Children.Add(new TextBlock
@@ -565,15 +577,64 @@ internal sealed class RibbonEditorWindow : Window
             _previewCombo.SelectedIndex = selected;
 
             // Backstage toggle: only meaningful when the ribbon actually has a backstage.
-            bool hasBackstage = DesignModel.FindProperty(_ribbon, "Backstage")?.Value != null;
+            ModelItem backstage = DesignModel.FindProperty(_ribbon, "Backstage")?.Value;
+            bool hasBackstage = backstage != null;
             _backstageCheck.IsEnabled = hasBackstage;
-            _backstageCheck.IsChecked = hasBackstage
+            bool showingBackstage = hasBackstage
                 && TabPreviewCoordinator.TryGetBackstage(_ribbon, out bool open) && open;
+            _backstageCheck.IsChecked = showingBackstage;
+
+            // Backstage page switcher: list the pages (nav items that switch to content, not footer
+            // action buttons) so the surface can preview a specific one. Enabled only while the
+            // backstage is being shown.
+            PopulateBackstagePages(backstage, showingBackstage);
         }
         finally
         {
             _syncingPreview = false;
         }
+    }
+
+    /// <summary>
+    /// Fills the backstage page combo from <paramref name="backstage"/>'s nav items, skipping footer
+    /// action buttons (<c>IsButton</c>) since those don't switch to a page. Entry 0 is "(default)"
+    /// (clears the override); the rest map to their true index in the backstage's Items via
+    /// <see cref="_backstagePageMap"/>. Disabled (and reset to default) when the backstage isn't shown.
+    /// </summary>
+    private void PopulateBackstagePages(ModelItem backstage, bool enabled)
+    {
+        _backstagePageCombo.Items.Clear();
+        _backstagePageMap.Clear();
+        _backstagePageCombo.Items.Add("(default)");
+        _backstagePageCombo.IsEnabled = enabled;
+
+        if (backstage is null)
+        {
+            _backstagePageCombo.SelectedIndex = 0;
+            return;
+        }
+
+        IReadOnlyList<ModelItem> items = SafeChildren(backstage, "Items");
+        int selected = 0;
+        int? current = TabPreviewCoordinator.TryGetBackstagePage(backstage, out int idx) ? idx : (int?)null;
+
+        for (int i = 0; i < items.Count; i++)
+        {
+            if (DesignModel.GetBool(items[i], "IsButton"))
+            {
+                continue; // footer action button, not a page
+            }
+
+            string header = SafeHeader(items[i]);
+            _backstagePageCombo.Items.Add(string.IsNullOrEmpty(header) ? "Page " + (i + 1) : header);
+            _backstagePageMap.Add(i);
+            if (current == i)
+            {
+                selected = _backstagePageMap.Count; // +1 for the "(default)" row at index 0
+            }
+        }
+
+        _backstagePageCombo.SelectedIndex = selected;
     }
 
     private void OnPreviewChanged(object sender, SelectionChangedEventArgs e)
@@ -589,10 +650,40 @@ internal sealed class RibbonEditorWindow : Window
 
     private void OnBackstageToggle(object sender, RoutedEventArgs e)
     {
-        if (!_syncingPreview)
+        if (_syncingPreview)
         {
-            TabPreviewCoordinator.SetBackstage(_ribbon, _backstageCheck.IsChecked == true);
+            return;
         }
+
+        bool show = _backstageCheck.IsChecked == true;
+        TabPreviewCoordinator.SetBackstage(_ribbon, show);
+
+        // Re-sync the page switcher's enabled/populated state to the new show/hide. Guard so the
+        // combo's SelectedIndex reset here doesn't re-enter OnBackstagePageChanged.
+        _syncingPreview = true;
+        try
+        {
+            PopulateBackstagePages(DesignModel.FindProperty(_ribbon, "Backstage")?.Value, show);
+        }
+        finally
+        {
+            _syncingPreview = false;
+        }
+    }
+
+    private void OnBackstagePageChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_syncingPreview)
+        {
+            return;
+        }
+
+        ModelItem backstage = DesignModel.FindProperty(_ribbon, "Backstage")?.Value;
+        int sel = _backstagePageCombo.SelectedIndex;
+        int? pageIndex = sel <= 0 || sel - 1 >= _backstagePageMap.Count
+            ? (int?)null
+            : _backstagePageMap[sel - 1];
+        TabPreviewCoordinator.SetBackstagePage(backstage, pageIndex);
     }
 
     private TreeViewItem MakeTreeItem(NodeInfo info, string text)

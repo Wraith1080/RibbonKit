@@ -20,16 +20,26 @@ namespace RibbonKit.Design;
 internal static class TabPreviewCoordinator
 {
     private const string RibbonType = "RibbonKit.Controls.Ribbon";
+    private const string BackstageType = "RibbonKit.Controls.Backstage";
+    // Backstage.SelectedIndex is INHERITED from Selector, so the property identifier's declaring type
+    // may be reported as Selector rather than Backstage. Which one the designer uses for an inherited
+    // DP is unverified, so we invalidate under both (and BackstagePagePreviewProvider registers both).
+    private const string SelectorType = "System.Windows.Controls.Primitives.Selector";
 
     private static ModelItem _ribbon;
     private static int? _tabIndex;
     private static bool? _backstageOpen;
+    private static ModelItem _backstage;
+    private static int? _backstagePage;
 
     /// <summary>The currently previewed tab index, or null when no tab preview is active.</summary>
     public static int? CurrentIndex => _tabIndex;
 
     /// <summary>The current backstage-open override, or null when not overridden.</summary>
     public static bool? CurrentBackstageOpen => _backstageOpen;
+
+    /// <summary>The currently previewed backstage page index, or null when no page preview is active.</summary>
+    public static int? CurrentBackstagePage => _backstagePage;
 
     /// <summary>Sets (or clears, when null) the previewed tab and repaints the surface. Writes no XAML.</summary>
     public static void SetTab(ModelItem ribbon, int? index)
@@ -73,12 +83,41 @@ internal static class TabPreviewCoordinator
         return false;
     }
 
-    private static void Invalidate(ModelItem ribbon, string propertyName)
+    /// <summary>Sets (or clears, when null) the previewed backstage page and repaints the surface. Writes no XAML.</summary>
+    public static void SetBackstagePage(ModelItem backstage, int? index)
+    {
+        _backstage = backstage;
+        _backstagePage = index;
+        if (backstage != null)
+        {
+            // Invalidate under both possible declaring types (see SelectorType note above).
+            Invalidate(backstage, BackstageType, "SelectedIndex");
+            Invalidate(backstage, SelectorType, "SelectedIndex");
+        }
+    }
+
+    /// <summary>True (with the index) when a backstage-page preview is active for <paramref name="backstage"/>.</summary>
+    public static bool TryGetBackstagePage(ModelItem backstage, out int index)
+    {
+        if (_backstagePage.HasValue && Equals(_backstage, backstage))
+        {
+            index = _backstagePage.Value;
+            return true;
+        }
+
+        index = 0;
+        return false;
+    }
+
+    private static void Invalidate(ModelItem ribbon, string propertyName) =>
+        Invalidate(ribbon, RibbonType, propertyName);
+
+    private static void Invalidate(ModelItem item, string declaringTypeName, string propertyName)
     {
         try
         {
-            var pid = new PropertyIdentifier(new TypeIdentifier(RibbonType), propertyName);
-            ribbon.Context.Services.GetRequiredService<ValueTranslationService>().InvalidateProperty(ribbon, pid);
+            var pid = new PropertyIdentifier(new TypeIdentifier(declaringTypeName), propertyName);
+            item.Context.Services.GetRequiredService<ValueTranslationService>().InvalidateProperty(item, pid);
         }
         catch
         {
@@ -133,6 +172,55 @@ public sealed class SelectedTabPreviewProvider : DesignModeValueProvider
         {
             ModelProperty tabs = ribbon.Properties["Tabs"];
             return tabs?.Collection?.Count ?? 0;
+        }
+        catch
+        {
+            return 0;
+        }
+    }
+}
+
+/// <summary>
+/// Design-time-only translation of the backstage's <c>SelectedIndex</c> so the editor can preview a
+/// specific backstage page on the surface (the equivalent of hand-authored <c>d:SelectedIndex</c> on the
+/// backstage). Same mechanism as <see cref="SelectedTabPreviewProvider"/> but attached to
+/// <c>Backstage</c>; nothing is serialized and the running app is untouched. Registered in
+/// <see cref="Metadata"/>. Registers both the Backstage and Selector declaring types because
+/// <c>SelectedIndex</c> is inherited and which one the designer reports for it is unverified.
+/// </summary>
+public sealed class BackstagePagePreviewProvider : DesignModeValueProvider
+{
+    private const string BackstageType = "RibbonKit.Controls.Backstage";
+    private const string SelectorType = "System.Windows.Controls.Primitives.Selector";
+
+    public BackstagePagePreviewProvider()
+    {
+        Properties.Add(new TypeIdentifier(BackstageType), "SelectedIndex");
+        Properties.Add(new TypeIdentifier(SelectorType), "SelectedIndex");
+    }
+
+    /// <inheritdoc />
+    public override object TranslatePropertyValue(ModelItem item, PropertyIdentifier identifier, object value)
+    {
+        if (identifier.Name == "SelectedIndex" && TabPreviewCoordinator.TryGetBackstagePage(item, out int index))
+        {
+            int count = PageCount(item);
+            if (index >= 0 && index < count)
+            {
+                Debug.WriteLine("[RibbonKit] Preview Backstage SelectedIndex -> " + index);
+                return index;
+            }
+        }
+
+        return base.TranslatePropertyValue(item, identifier, value);
+    }
+
+    private static int PageCount(ModelItem backstage)
+    {
+        try
+        {
+            ModelProperty items = backstage.Properties["Items"];
+            return items?.Collection?.Count ?? 0;
         }
         catch
         {

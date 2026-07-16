@@ -48,10 +48,12 @@ internal sealed class Metadata : IProvideAttributeTable
                 RibbonTabType,
                 new FeatureAttribute(typeof(RibbonTabContextMenuProvider)));
 
-            // Backstage: "Add Nav Item" / "Add Nav Button".
+            // Backstage: "Add Nav Item" / "Add Nav Button", and translate SelectedIndex to the editor's
+            // chosen design-only preview page.
             builder.AddCustomAttributes(
                 BackstageType,
-                new FeatureAttribute(typeof(BackstageContextMenuProvider)));
+                new FeatureAttribute(typeof(BackstageContextMenuProvider)),
+                new FeatureAttribute(typeof(BackstagePagePreviewProvider)));
 
             // Group: "Add Button / Toggle / Split / Drop-Down" + reorder/delete the group.
             builder.AddCustomAttributes(

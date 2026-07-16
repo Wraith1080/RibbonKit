@@ -87,7 +87,13 @@ every page/gallery item's visual tree was too noisy). A combo item's text lives 
 string) and is edited via the **Caption** box. `TextBlock` editors and an "Add Text Block" menu entry
 exist for text added directly into a group's panels. A **Show backstage** checkbox (next to Preview tab)
 opens the backstage on the surface design-only — same `DesignModeValueProvider` path as the tab
-preview, now covering `IsBackstageOpen` too; it enables only when the ribbon has a backstage. It runs in-process on the VS UI thread (only the design
+preview, now covering `IsBackstageOpen` too; it enables only when the ribbon has a backstage. A
+**Page** combo beside it previews a specific backstage page: it lists the nav pages (footer action
+buttons excluded) and drives the backstage's `SelectedIndex` through a second provider
+(`BackstagePagePreviewProvider`, attached to `Backstage`) the same design-only way — enabled only while
+the backstage is shown, "(default)" clears the override. Because `SelectedIndex` is inherited from
+`Selector`, the provider registers (and the coordinator invalidates) under both the `Backstage` and
+`Selector` declaring types, since which one the designer reports for an inherited DP is unverified. It runs in-process on the VS UI thread (only the design
 *surface* is process-isolated, not extension code), so it's a plain code-built WPF `Window`
 (the design assembly can't reference RibbonKit's themes). Every change is applied straight to
 the `ModelItem` tree through `DesignModel`, each as its own single undo — same transaction model
