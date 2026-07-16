@@ -95,6 +95,17 @@ public class RibbonTabControl : TabControl
             return;
         }
 
+        // The sliding underline is an Office-2024 accent. Flat themes (Office 2013/2019) set
+        // RibbonKit.Brushes.Tab.SelectedUnderline to Transparent to hide it. Gate the WHOLE marker on
+        // that token being a visible colour — otherwise a selected contextual tab (which tints the
+        // marker with its own colour below) would leak an underline into themes that don't want one.
+        if (TryFindResource("RibbonKit.Brushes.Tab.SelectedUnderline") is not Brush underline || !IsVisibleBrush(underline))
+        {
+            _marker.Opacity = 0d;
+            _markerPlaced = false;
+            return;
+        }
+
         // Selected tab's top-left in the marker host's coordinate space.
         Point origin;
         try
@@ -144,4 +155,7 @@ public class RibbonTabControl : TabControl
         _marker.Opacity = 1d;
         _markerPlaced = true;
     }
+
+    /// <summary>True when the brush would actually paint something — i.e. it isn't null and isn't a fully transparent solid colour (how flat themes disable the underline).</summary>
+    private static bool IsVisibleBrush(Brush brush) => brush is not SolidColorBrush solid || solid.Color.A != 0;
 }

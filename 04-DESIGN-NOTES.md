@@ -1087,7 +1087,12 @@ go through `FindProperty`.
   an instant visibility flip.
 - **True sliding tab marker**: `RibbonTabControl` now owns `PART_TabMarker` +
   `PART_TabMarkerTranslate` and glides the underline between tabs (`UpdateMarker`,
-  `RibbonAnimationAction.TabMarker`) instead of only sliding the tab content.
+  `RibbonAnimationAction.TabMarker`) instead of only sliding the tab content. The whole marker is
+  **gated on `RibbonKit.Brushes.Tab.SelectedUnderline` being a visible (non-transparent) colour**, so
+  it's effectively Office-2024-only — flat themes (2019/2013) set that token `Transparent`. This gate
+  also covers contextual tabs: `UpdateMarker` tints the marker with the tab's own `ContextualBrush`, but
+  bails before that when the theme's underline token is transparent, so a selected contextual tab no
+  longer leaks an underline into flat themes (`IsVisibleBrush` helper).
 - **Contextual-tab appear**: `RibbonTab.cs` plays `RibbonMotion.PlayOpen(this,
   RibbonAnimationAction.ContextualTab, RibbonSlideFrom.Top)` when a tab's contextual
   coloring turns on.
@@ -1130,14 +1135,31 @@ left/right chevron buttons to scroll the overflow into view. Added the same to R
   **overlay** the content edges (no layout space) so showing/hiding them can't reflow-oscillate; they're
   bound to the host's commands + `CanScroll*` via `BooleanToVisibilityConverter`. `PART_TabScroll` /
   `PART_ContentScroll`. Runtime feature — needs a Windows build to confirm layout + the marker-under-scroll.
-- **Clamp fix (first build: groups clipped but no chevron).** WPF's `Measure` clamps an element's
-  reported `DesiredSize` to the width you pass it — so measuring the groups row at the viewport (to force
-  reduction) also clamped its width to the viewport, hiding the overflow, so `ExtentWidth` never exceeded
-  it. Fix: the scroller now measures the child **unconstrained** (true width, no clamp), and
-  `RibbonGroupsPanel` reduces to the viewport by reading `RibbonScrollContentHost.TargetChildWidth` from
-  its ancestor scroller (`FindScrollHost`) when it's measured at infinite width. Reduce-then-scroll
-  preserved; overflow now actually visible to the scroller. (The tab strip was already measured at
-  infinity, so it wasn't affected.)
+- **Clamp fix — two iterations.** WPF's `Measure` clamps an element's reported `DesiredSize` to the
+  width you pass it, which fights the "measure at viewport to force reduction, but still detect overflow"
+  requirement.
+  - *First attempt (groups clipped but no chevron → then chevron but groups stopped collapsing).*
+    Measuring the groups row at the viewport clamped its reported width to the viewport, so the scroller
+    never saw overflow. Switching to measure the child **unconstrained** made the chevron appear but the
+    groups no longer reduced — reduction then read a viewport width off the ancestor scroller via
+    `FindScrollHost`, and that walk returns **null during an items-host panel's `MeasureOverride`** (the
+    visual parent chain isn't reliably connected mid-measure), so reduction fell back to infinite width
+    and never fired.
+  - *Robust fix (current).* Decouple the two concerns instead of doing both at measure time:
+    `RibbonScrollContentHost` measures the constrained child **at the viewport width** again, so
+    `RibbonGroupsPanel` reduces reliably against its own `availableSize.Width` (no ancestor walk needed).
+    To recover the true width the clamp hides, the panel **pushes** its real (unclamped) total to the
+    scroller via `RibbonScrollContentHost.ReportContentWidth(totalWidth)` at the end of its measure; the
+    scroller uses that reported width as `ExtentWidth` instead of the clamped `child.DesiredSize.Width`.
+    The panel resolves + caches the scroller at `Loaded` (tree fully connected → `FindScrollHost` works),
+    falling back to a lazy resolve. The tab strip stays unconstrained (measured at infinity), so its
+    overflow is visible directly and it needs no reporting. Net: reduce-then-scroll works — groups
+    collapse to the viewport first, and only the leftover overflow scrolls.
+- **Chevron button chrome.** The `RibbonKit.ScrollLeftButton`/`RightButton` styles give each button a
+  1px `Ribbon.Border` outline so the overlaid buttons stand out against the ribbon/tab-strip background
+  instead of blending in. (A `DropShadowEffect` was tried first but read as a heavy dark box against the
+  light content area — dropped in favour of the clean border, which also gives flat themes below 2024 a
+  themed outline with no shadow, for free, since `Ribbon.Border` is a per-theme token.)
 
 ## 4. Workflow / Session Conventions
 

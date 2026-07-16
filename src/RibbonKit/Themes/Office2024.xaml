@@ -14,6 +14,81 @@
          ============================================================ -->
 
     <!-- ============================================================
+         Shared horizontal-scroll chrome (tab strip + groups row).
+         The chevron RepeatButtons overlay the content edges (they take
+         no layout space, so toggling them never reflows) and only show
+         when RibbonScrollContentHost reports something to scroll to.
+         Rounded corners via the shared ControlCornerRadius token.
+         ============================================================ -->
+    <BooleanToVisibilityConverter x:Key="RibbonKit.BoolToVis" />
+
+    <Style x:Key="RibbonKit.ScrollLeftButton" TargetType="{x:Type RepeatButton}">
+        <Setter Property="Width" Value="22" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Delay" Value="300" />
+        <Setter Property="Interval" Value="60" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type RepeatButton}">
+                    <Border x:Name="Chrome"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}"
+                            BorderThickness="1"
+                            CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                            Margin="2"
+                            SnapsToDevicePixels="True">
+                        <Path Data="M4.5,0 L0,4.5 L4.5,9"
+                              Stroke="{DynamicResource RibbonKit.Brushes.Text.Primary}"
+                              StrokeThickness="1.6"
+                              StrokeStartLineCap="Round"
+                              StrokeEndLineCap="Round"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chrome" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.TabStrip.ControlHoverBackground}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="RibbonKit.ScrollRightButton" TargetType="{x:Type RepeatButton}" BasedOn="{StaticResource RibbonKit.ScrollLeftButton}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type RepeatButton}">
+                    <Border x:Name="Chrome"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}"
+                            BorderThickness="1"
+                            CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                            Margin="2"
+                            SnapsToDevicePixels="True">
+                        <Path Data="M0,0 L4.5,4.5 L0,9"
+                              Stroke="{DynamicResource RibbonKit.Brushes.Text.Primary}"
+                              StrokeThickness="1.6"
+                              StrokeStartLineCap="Round"
+                              StrokeEndLineCap="Round"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chrome" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.TabStrip.ControlHoverBackground}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ============================================================
          Ribbon
          ============================================================ -->
     <Style TargetType="{x:Type controls:Ribbon}">
@@ -215,30 +290,48 @@
                                 </ItemsControl.ItemsPanel>
                             </ItemsControl>
                             <Grid Grid.Column="2">
-                                <TabPanel IsItemsHost="True"
-                                          Margin="{DynamicResource RibbonKit.Metrics.TabStripMargin}"
-                                          Background="Transparent" />
-                                <!-- Shared selection underline that GLIDES between tabs
-                                     (RibbonTabControl positions/animates it). Replaces the
-                                     per-tab SelectionIndicator/ContextualSelectionIndicator for
-                                     the accent underline; flat themes (2019/2013) leave
-                                     Tab.SelectedUnderline Transparent, so it's invisible there
-                                     and those themes keep their pill/fill selection. Width +
-                                     TranslateTransform.X are animated (X glide + width) — a lone
-                                     marker in its own cell, so animating Width re-arranges only
-                                     itself and never cascades a ribbon re-layout. -->
-                                <Rectangle x:Name="PART_TabMarker"
-                                           Height="3" Width="0"
-                                           RadiusX="1.5" RadiusY="1.5"
-                                           HorizontalAlignment="Left"
-                                           VerticalAlignment="Top"
-                                           IsHitTestVisible="False"
-                                           Opacity="0"
-                                           Fill="{DynamicResource RibbonKit.Brushes.Tab.SelectedUnderline}">
-                                    <Rectangle.RenderTransform>
-                                        <TranslateTransform x:Name="PART_TabMarkerTranslate" />
-                                    </Rectangle.RenderTransform>
-                                </Rectangle>
+                                <!-- Tab strip in a horizontal scroller: when there are more tabs than
+                                     fit, chevron buttons appear and scroll the strip. The gliding
+                                     PART_TabMarker lives INSIDE the scroller with the TabPanel so it
+                                     scrolls in lockstep and stays under its tab. -->
+                                <layout:RibbonScrollContentHost x:Name="PART_TabScroll" ConstrainChildWidth="False">
+                                    <Grid>
+                                        <TabPanel IsItemsHost="True"
+                                                  Margin="{DynamicResource RibbonKit.Metrics.TabStripMargin}"
+                                                  Background="Transparent" />
+                                        <!-- Shared selection underline that GLIDES between tabs
+                                             (RibbonTabControl positions/animates it). Replaces the
+                                             per-tab SelectionIndicator/ContextualSelectionIndicator for
+                                             the accent underline; flat themes (2019/2013) leave
+                                             Tab.SelectedUnderline Transparent, so it's invisible there
+                                             and those themes keep their pill/fill selection. Width +
+                                             TranslateTransform.X are animated (X glide + width) — a lone
+                                             marker in its own cell, so animating Width re-arranges only
+                                             itself and never cascades a ribbon re-layout. -->
+                                        <Rectangle x:Name="PART_TabMarker"
+                                                   Height="3" Width="0"
+                                                   RadiusX="1.5" RadiusY="1.5"
+                                                   HorizontalAlignment="Left"
+                                                   VerticalAlignment="Top"
+                                                   IsHitTestVisible="False"
+                                                   Opacity="0"
+                                                   Fill="{DynamicResource RibbonKit.Brushes.Tab.SelectedUnderline}">
+                                            <Rectangle.RenderTransform>
+                                                <TranslateTransform x:Name="PART_TabMarkerTranslate" />
+                                            </Rectangle.RenderTransform>
+                                        </Rectangle>
+                                    </Grid>
+                                </layout:RibbonScrollContentHost>
+                                <RepeatButton Style="{StaticResource RibbonKit.ScrollLeftButton}"
+                                              HorizontalAlignment="Left"
+                                              Background="{DynamicResource RibbonKit.Brushes.Ribbon.Background}"
+                                              Command="{Binding ScrollLeftCommand, ElementName=PART_TabScroll}"
+                                              Visibility="{Binding CanScrollLeft, ElementName=PART_TabScroll, Converter={StaticResource RibbonKit.BoolToVis}}" />
+                                <RepeatButton Style="{StaticResource RibbonKit.ScrollRightButton}"
+                                              HorizontalAlignment="Right"
+                                              Background="{DynamicResource RibbonKit.Brushes.Ribbon.Background}"
+                                              Command="{Binding ScrollRightCommand, ElementName=PART_TabScroll}"
+                                              Visibility="{Binding CanScrollRight, ElementName=PART_TabScroll, Converter={StaticResource RibbonKit.BoolToVis}}" />
                             </Grid>
                             <!-- Minimize chevron: toggles Ribbon.IsMinimized -->
                             <ToggleButton x:Name="MinimizeToggle"
@@ -308,7 +401,24 @@
                                 Margin="{DynamicResource RibbonKit.Metrics.ContentMargin}"
                                 Effect="{DynamicResource RibbonKit.Effects.ContentShadow}"
                                 SnapsToDevicePixels="True">
-                            <ContentPresenter ContentSource="SelectedContent" Margin="6,2" />
+                            <!-- Groups row in a horizontal scroller. ConstrainChildWidth lets the
+                                 adaptive panel reduce groups to fit FIRST; only when even the fully
+                                 reduced row overflows do the chevrons appear and scroll it (Office). -->
+                            <Grid>
+                                <layout:RibbonScrollContentHost x:Name="PART_ContentScroll"
+                                                                ConstrainChildWidth="True"
+                                                                Margin="6,2">
+                                    <ContentPresenter ContentSource="SelectedContent" />
+                                </layout:RibbonScrollContentHost>
+                                <RepeatButton Style="{StaticResource RibbonKit.ScrollLeftButton}"
+                                              HorizontalAlignment="Left"
+                                              Command="{Binding ScrollLeftCommand, ElementName=PART_ContentScroll}"
+                                              Visibility="{Binding CanScrollLeft, ElementName=PART_ContentScroll, Converter={StaticResource RibbonKit.BoolToVis}}" />
+                                <RepeatButton Style="{StaticResource RibbonKit.ScrollRightButton}"
+                                              HorizontalAlignment="Right"
+                                              Command="{Binding ScrollRightCommand, ElementName=PART_ContentScroll}"
+                                              Visibility="{Binding CanScrollRight, ElementName=PART_ContentScroll, Converter={StaticResource RibbonKit.BoolToVis}}" />
+                            </Grid>
                         </Border>
                     </Grid>
                     <ControlTemplate.Triggers>
