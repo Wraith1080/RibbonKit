@@ -136,6 +136,31 @@ public class RibbonScrollContentHost : Decorator
     /// <summary>Scrolls one line toward the end; disabled when already at the end.</summary>
     public ICommand ScrollRightCommand { get; }
 
+    /// <summary>
+    /// Forces a full re-evaluation of the overflow state. When the hosted content is swapped without any
+    /// size change — the ribbon replacing the groups row on a tab switch — WPF reuses the cached measure
+    /// of every level, so the constrained child never re-reports its true width and the chevrons keep the
+    /// previous content's state. Invalidating measure across the ENTIRE visual subtree (not just this
+    /// decorator) dirties every level, so the next pass re-measures top-down: the child re-reports and
+    /// this host reads it and recomputes <see cref="CanScrollLeft"/>/<see cref="CanScrollRight"/> — the
+    /// same cascade a manual window resize produces. The owning control calls this after a content swap.
+    /// </summary>
+    public void Refresh() => InvalidateSubtreeMeasure(this);
+
+    private static void InvalidateSubtreeMeasure(DependencyObject root)
+    {
+        if (root is UIElement element)
+        {
+            element.InvalidateMeasure();
+        }
+
+        int count = VisualTreeHelper.GetChildrenCount(root);
+        for (int i = 0; i < count; i++)
+        {
+            InvalidateSubtreeMeasure(VisualTreeHelper.GetChild(root, i));
+        }
+    }
+
     /// <inheritdoc />
     protected override Size MeasureOverride(Size constraint)
     {

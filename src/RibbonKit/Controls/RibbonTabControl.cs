@@ -31,6 +31,7 @@ public class RibbonTabControl : TabControl
     private TranslateTransform? _markerTranslate;
     private Panel? _markerHost;
     private bool _markerPlaced;
+    private RibbonKit.Layout.RibbonScrollContentHost? _contentScroll;
 
     static RibbonTabControl()
     {
@@ -64,6 +65,7 @@ public class RibbonTabControl : TabControl
         _markerTranslate = GetTemplateChild("PART_TabMarkerTranslate") as TranslateTransform;
         _markerHost = _marker?.Parent as Panel;
         _markerPlaced = false;
+        _contentScroll = GetTemplateChild("PART_ContentScroll") as RibbonKit.Layout.RibbonScrollContentHost;
 
         // Selection may already be set before the template applied; place once layout has run.
         Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() => UpdateMarker(animate: false)));
@@ -74,6 +76,12 @@ public class RibbonTabControl : TabControl
     {
         base.OnSelectionChanged(e);
         UpdateMarker(animate: true);
+
+        // Swapping the selected tab replaces the groups row inside the shared content scroller without
+        // changing any size, so WPF reuses each level's cached measure and the scroller keeps the
+        // previous tab's overflow state (the chevrons don't update for the new row). Re-evaluate once the
+        // new content has been realized under the scroller — Loaded priority runs after that layout pass.
+        Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() => _contentScroll?.Refresh()));
     }
 
     /// <summary>

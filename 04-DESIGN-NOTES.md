@@ -1206,6 +1206,30 @@ left/right chevron buttons to scroll the overflow into view. Added the same to R
   instead of blending in. (A `DropShadowEffect` was tried first but read as a heavy dark box against the
   light content area — dropped in favour of the clean border, which also gives flat themes below 2024 a
   themed outline with no shadow, for free, since `Ribbon.Border` is a per-theme token.)
+- **Chevrons must return after visiting a non-overflowing tab.** The groups scroller's `ExtentWidth` is
+  driven by `ReportContentWidth`, which `RibbonGroupsPanel` only calls from its own `MeasureOverride`.
+  Switching tabs disconnects the old groups row from the single shared content scroller and reconnects
+  the new one, but WPF reuses the reconnected panel's cached measure — so `MeasureOverride` (and the
+  report) never runs, and the scroller keeps the previously shown tab's extent. Result: after visiting a
+  tab that fits (chevrons hide), returning to an overflowing tab left the chevrons hidden because the
+  scroller still saw the fitted extent (the fallback `child.DesiredSize.Width` is clamped to the
+  viewport). Two fixes were tried before the one that stuck; the failures pin down the mechanism:
+  - *Panel `InvalidateMeasure()` on `IsVisibleChanged`* — no effect. Re-runs the panel (which re-reports)
+    but leaves every ancestor measure-valid at the same size, so the scroller never re-measures to READ
+    the report or re-arranges to update the chevrons.
+  - *Panel invalidates the whole chain up to the scroller on `IsVisibleChanged`* — also no effect,
+    because `IsVisibleChanged` fires **too early**: at that instant the newly connected panel's parent
+    chain hasn't reached the scroller yet, so the upward `FindScrollHost` walk returns null and only the
+    panel gets invalidated. (Tell: the chevrons returned only after a 1px window nudge — a real size
+    change is what forced the cached chain to re-descend — and minimize→expand always worked, because
+    that toggles the whole content Border's visibility so the entire subtree re-measures.)
+  - *Working fix:* drive it from **`RibbonTabControl.OnSelectionChanged`** (always fires on switch),
+    `Dispatcher.BeginInvoke` at `Loaded` priority so the new groups row is realized under the scroller,
+    then call `RibbonScrollContentHost.Refresh()` on the captured `PART_ContentScroll`. `Refresh()`
+    invalidates measure across its **entire visual subtree** (walking down from the known scroller, so no
+    fragile upward lookup and no timing race), which dirties every level and forces the one top-down
+    re-measure the resize used to: the panel re-reports and the scroller reads it and recomputes
+    `CanScrollLeft/Right`.
 
 ## 4. Workflow / Session Conventions
 

@@ -42,6 +42,10 @@ public class RibbonGroupsPanel : Panel
     {
         // The visual parent chain isn't reliably walkable during an items-host panel's MeasureOverride,
         // so we resolve the scroller at Loaded (tree fully connected) and cache it. See ReportContentWidth.
+        // (Re-evaluating overflow after a tab switch is driven by RibbonTabControl.OnSelectionChanged →
+        // RibbonScrollContentHost.Refresh, which reliably dirties the whole subtree once the new groups
+        // row is realized — an IsVisibleChanged hook here fired too early, before this panel's parent
+        // chain reached the scroller, so it couldn't invalidate the right elements.)
         Loaded += (_, _) => _scrollHost ??= FindScrollHost();
     }
 
