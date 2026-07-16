@@ -693,6 +693,7 @@ internal sealed class RibbonEditorWindow : Window
         Enum,
         IconRef,
         Color,
+        AttachedText,
     }
 
     private sealed class PropSpec
@@ -765,6 +766,12 @@ internal sealed class RibbonEditorWindow : Window
         new PropSpec("Foreground", "Foreground", EditorKind.Color),
     };
 
+    // The Ribbon.CommandId ATTACHED property — a stable identity for customization/persistence. Shown on
+    // tabs, groups, and command controls (not on entries inside a combo/gallery/menu/backstage). Handled
+    // outside the normal spec loop because HasProperty can't see attached members.
+    private static readonly PropSpec CommandIdSpec =
+        new PropSpec("CommandId", "Command Id (persistence)", EditorKind.AttachedText);
+
     private static PropSpec[] SpecsFor(NodeKind kind) => kind switch
     {
         NodeKind.Control => ControlSpecs,
@@ -781,6 +788,28 @@ internal sealed class RibbonEditorWindow : Window
         "TextBlock" => TextBlockSpecs,
         _ => System.Array.Empty<PropSpec>(),
     };
+
+    /// <summary>
+    /// Whether the <c>Ribbon.CommandId</c> row applies: tabs and groups always; a control only when it's
+    /// a real command placed in a group/panel, not an entry inside a combo/gallery/menu/backstage (those
+    /// items don't carry a persistence identity). Uses <see cref="ItemRule"/> on the parent to tell an
+    /// item apart from a command control — both are <see cref="NodeKind.Control"/> in the tree.
+    /// </summary>
+    private static bool ShowsCommandId(NodeInfo node)
+    {
+        if (node?.Item is null)
+        {
+            return false;
+        }
+
+        return node.Kind switch
+        {
+            NodeKind.Tab => true,
+            NodeKind.Group => true,
+            NodeKind.Control => node.Item.Parent is null || ItemRule(node.Item.Parent) == null,
+            _ => false,
+        };
+    }
 
     /// <summary>Type-specific editors first, then the kind's editors, de-duplicated by name.</summary>
     private List<PropSpec> SpecsForNode(NodeInfo node)
@@ -829,6 +858,14 @@ internal sealed class RibbonEditorWindow : Window
                 any = true;
             }
 
+            // The attached Ribbon.CommandId row is added on its own (HasProperty can't detect an
+            // attached member). Shown for tabs, groups, and command controls placed in a group.
+            if (ShowsCommandId(node))
+            {
+                _propsPanel.Children.Add(BuildPropRow(node.Item, CommandIdSpec));
+                any = true;
+            }
+
             if (!any)
             {
                 _propsPanel.Children.Add(new TextBlock { Text = "No editable properties.", Opacity = 0.6 });
@@ -856,6 +893,7 @@ internal sealed class RibbonEditorWindow : Window
             EditorKind.Enum => BuildEnumEditor(item, spec),
             EditorKind.IconRef => BuildIconEditor(item, spec),
             EditorKind.Color => BuildColorEditor(item, spec),
+            EditorKind.AttachedText => BuildAttachedTextEditor(item, spec),
             _ => BuildTextEditor(item, spec),
         };
         Grid.SetColumn(editor, 1);
@@ -877,6 +915,40 @@ internal sealed class RibbonEditorWindow : Window
             if (!_syncingProps)
             {
                 DesignModel.SetProperty(item, spec.Name, box.Text ?? string.Empty);
+            }
+        }
+
+        box.LostFocus += (_, _) => Commit();
+        box.KeyDown += (_, e) =>
+        {
+            if (e.Key == Key.Enter)
+            {
+                Commit();
+                e.Handled = true;
+            }
+        };
+        return box;
+    }
+
+    /// <summary>
+    /// A text editor backed by an ATTACHED property (e.g. <c>Ribbon.CommandId</c>) rather than one of the
+    /// element's own properties, so it reads/writes through <see cref="DesignModel.GetAttachedString"/> /
+    /// <see cref="DesignModel.SetAttached"/> (which resolve the type-qualified member). Clearing the box
+    /// removes the attribute.
+    /// </summary>
+    private UIElement BuildAttachedTextEditor(ModelItem item, PropSpec spec)
+    {
+        var box = new TextBox
+        {
+            Text = DesignModel.GetAttachedString(item, spec.Name),
+            VerticalContentAlignment = VerticalAlignment.Center,
+        };
+
+        void Commit()
+        {
+            if (!_syncingProps)
+            {
+                DesignModel.SetAttached(item, spec.Name, box.Text ?? string.Empty);
             }
         }
 

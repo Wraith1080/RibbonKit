@@ -89,6 +89,30 @@ public partial class MainWindow : RibbonWindow
         }
     }
 
+    // Demo: disable a plain button, a split button, and a whole group together so their disabled
+    // (greyed, non-interactive) states are visible. Disabling a RibbonGroup cascades IsEnabled to
+    // every control inside it — the whole Font group greys out from one flag.
+    private void OnToggleDisableSamples(object sender, RoutedEventArgs e)
+    {
+        bool disabled = (sender as RibbonToggleButton)?.IsChecked == true;
+        bool enabled = !disabled;
+
+        if (DemoButtonTarget is not null)
+        {
+            DemoButtonTarget.IsEnabled = enabled;
+        }
+
+        if (DemoSplitTarget is not null)
+        {
+            DemoSplitTarget.IsEnabled = enabled;
+        }
+
+        if (DemoGroupTarget is not null)
+        {
+            DemoGroupTarget.IsEnabled = enabled;
+        }
+    }
+
     private void OnApplyOffice2024(object sender, RoutedEventArgs e) =>
         ThemeManager.Apply(Application.Current, RibbonTheme.Office2024);
 

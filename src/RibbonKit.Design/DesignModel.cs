@@ -160,6 +160,123 @@ internal static class DesignModel
         }
     }
 
+    // ---- Attached properties (Ribbon.CommandId, …) ------------------------------------
+    //
+    // These live on a DIFFERENT declaring type than the element they're set on, so the plain
+    // Properties[name] indexer can't reach them (it only sees an element's own members and THROWS for
+    // an attached one). They must be resolved by a type-qualified PropertyIdentifier — the same
+    // identifier form TabPreview already uses. The exact ModelPropertyCollection accessor for that in
+    // this SDK build can't be verified from the Linux sandbox (the reference assembly is supplied by VS
+    // at design time), so the accessor is bound by REFLECTION and the working shape is logged — a
+    // Windows build confirms it, and a wrong guess degrades to a no-op instead of breaking the build.
+
+    private const string AttachedOwnerType = "RibbonKit.Controls.Ribbon";
+    private const string AttachedOwnerShort = "Ribbon";
+
+    /// <summary>
+    /// Resolves the <see cref="ModelProperty"/> for an attached property declared on Ribbon (e.g.
+    /// <c>Ribbon.CommandId</c>) on <paramref name="item"/>, whether or not it's currently set. Returns
+    /// null (logged) when the model can't resolve it.
+    /// </summary>
+    public static ModelProperty FindAttached(ModelItem item, string name)
+    {
+        if (item is null)
+        {
+            return null;
+        }
+
+        // Fast path: when the property is already set (e.g. the showcase buttons carry
+        // rk:Ribbon.CommandId), the string indexer resolves it under one of these key forms. Which one
+        // the model uses is unverified, so try each — none throws past FindProperty.
+        ModelProperty existing =
+            FindProperty(item, name)
+            ?? FindProperty(item, AttachedOwnerShort + "." + name)
+            ?? FindProperty(item, AttachedOwnerType + "." + name);
+        if (existing != null)
+        {
+            return existing;
+        }
+
+        // Slow path (property not yet set on this element): resolve the attachable member by a
+        // type-qualified PropertyIdentifier via whichever collection accessor this SDK exposes.
+        try
+        {
+            var pid = new PropertyIdentifier(new TypeIdentifier(AttachedOwnerType), name);
+            return ResolveByIdentifier(item.Properties, pid);
+        }
+        catch (Exception ex)
+        {
+            DesignLog.Error("FindAttached " + name, ex);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Reflectively invokes <c>Find(PropertyIdentifier)</c> or the <c>this[PropertyIdentifier]</c> indexer
+    /// on the property collection — whichever exists — logging which shape resolved the member. Binding by
+    /// reflection avoids a hard compile dependency on an accessor whose exact signature is unverified here.
+    /// </summary>
+    private static ModelProperty ResolveByIdentifier(object properties, PropertyIdentifier pid)
+    {
+        Type type = properties.GetType();
+
+        var find = type.GetMethod("Find", new[] { typeof(PropertyIdentifier) });
+        if (find != null && find.Invoke(properties, new object[] { pid }) is ModelProperty viaFind)
+        {
+            DesignLog.Write("FindAttached: resolved via Find(PropertyIdentifier)");
+            return viaFind;
+        }
+
+        var indexer = type.GetProperty("Item", typeof(ModelProperty), new[] { typeof(PropertyIdentifier) });
+        if (indexer != null && indexer.GetValue(properties, new object[] { pid }) is ModelProperty viaIndexer)
+        {
+            DesignLog.Write("FindAttached: resolved via this[PropertyIdentifier]");
+            return viaIndexer;
+        }
+
+        DesignLog.Write("FindAttached: no PropertyIdentifier accessor on " + type.FullName);
+        return null;
+    }
+
+    /// <summary>The effective value of an attached property as text, or "" when absent/unresolved.</summary>
+    public static string GetAttachedString(ModelItem item, string name) =>
+        FindAttached(item, name)?.ComputedValue?.ToString() ?? string.Empty;
+
+    /// <summary>
+    /// Sets (or, for empty text, clears) an attached property as a single undo. Clearing removes the
+    /// attribute rather than writing an empty string, matching how the icon editor treats a blank value.
+    /// </summary>
+    public static void SetAttached(ModelItem item, string name, string value)
+    {
+        ModelProperty property = FindAttached(item, name);
+        if (property is null)
+        {
+            DesignLog.Error("SetAttached", new Exception("could not resolve attached property " + name));
+            return;
+        }
+
+        try
+        {
+            using (ModelEditingScope scope = item.BeginEdit("Set " + name))
+            {
+                if (string.IsNullOrWhiteSpace(value))
+                {
+                    property.ClearValue();
+                }
+                else
+                {
+                    property.SetValue(value.Trim());
+                }
+
+                scope.Complete();
+            }
+        }
+        catch (Exception ex)
+        {
+            DesignLog.Error("SetAttached " + name + " = '" + value + "'", ex);
+        }
+    }
+
     /// <summary>
     /// The resource key of a <c>{StaticResource …}</c>-valued property (e.g. an icon), or "" when the
     /// property is unset or isn't a static resource. Reading this back is also the key diagnostic: it

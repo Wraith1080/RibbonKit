@@ -946,6 +946,27 @@ trick). `DesignModel.SetProperty` wraps each in a scope and swallows/logs conver
 bad colour) so a typo never crashes the dialog. Each edit = one undo. KeyTip access keys were
 **deferred** (attached property — different model access, unproven; user opted to skip this pass).
 
+**Split / drop-down button menu items (later pass):** `RibbonSplitButton` derives from
+`RibbonDropDownButton`; both are `ItemsControl`s holding their flyout entries as `RibbonMenuItem`s in
+`Items` — structurally identical to the combo/gallery item path. So the editor needed only an
+`ItemRule` entry (`RibbonMenuItem`, caption = `Header`) plus a friendly type name: the existing tree
+recursion into `Items`, the "Add Item" sibling-insert, and the caption/icon editors all flowed from
+that. Menu-item text edits via the Caption box (Header); Icon via the icon picker.
+
+**`Ribbon.CommandId` attached-property editing (unblocks the deferred KeyTip path):** the "different
+model access" the KeyTip note flagged is now solved. Attached members don't surface through
+`Properties[name]` (it only sees an element's own members and throws for an attached one), so
+`DesignModel.FindAttached` resolves `Ribbon.CommandId` by a type-qualified `PropertyIdentifier`
+(`new TypeIdentifier("RibbonKit.Controls.Ribbon")`, the same identifier form `TabPreview` uses). Two
+paths: a fast string-indexer lookup for already-set values (the showcase controls carry
+`rk:Ribbon.CommandId`), and a slow path that binds the collection's `Find(PropertyIdentifier)` /
+`this[PropertyIdentifier]` accessor **by reflection** and logs which shape worked — the accessor's
+exact signature in the shipped SDK couldn't be verified from the Linux sandbox, so reflection keeps a
+wrong guess from breaking the build (same defensive style as the StaticResource icon spike). Exposed as
+a "Command Id (persistence)" `AttachedText` row on tabs, groups, and command controls (hidden on
+combo/gallery/menu/backstage entries, which aren't persistable commands); blank clears the attribute.
+The same `FindAttached`/`SetAttached` helpers are what a future KeyTip-access-key editor would reuse.
+
 **Icon picker (`Icon`/`LargeIcon`) — user wants the full Icons.xaml picker; treated as a spike.**
 Icons are `DrawingImage` resources keyed `Icon.*` in the showcase's `Icons.xaml`, referenced as
 `Icon="{StaticResource Icon.Paste}"`. So the picker needs to (1) enumerate those keys and (2) write
