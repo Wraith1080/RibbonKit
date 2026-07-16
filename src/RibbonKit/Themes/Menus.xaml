@@ -1,0 +1,162 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ============================================================
+         Modern context menu (ribbon-item + QAT right-click). Restyles the stock WPF
+         ContextMenu/MenuItem/Separator to match the RibbonMenuItem dropdown look instead
+         of the dated native menu.
+
+         WHY THIS IS A SEPARATE, CODE-LOADED DICTIONARY (not part of Office2024.xaml):
+         Office2024.xaml is merged only into Generic.xaml (the assembly THEME dictionary).
+         Implicit RibbonKit control styles resolve from there via DefaultStyleKey, but a
+         *keyed* resource in a theme dictionary is NOT reachable by a normal runtime lookup —
+         and a ContextMenu (a PresentationFramework type) looks up its theme resources in
+         PresentationFramework's theme, never RibbonKit's Generic.xaml. So Ribbon.cs loads
+         THIS dictionary by pack URI and assigns the style to its menus directly. Tokens are
+         DynamicResource so they still resolve (and re-theme) from the app-merged token set.
+         ============================================================ -->
+
+    <Style x:Key="RibbonKit.MenuItem" TargetType="{x:Type MenuItem}">
+        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type MenuItem}">
+                    <Border x:Name="Chrome"
+                            Background="Transparent"
+                            CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                            Padding="6,5"
+                            Margin="2,1"
+                            SnapsToDevicePixels="True">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="24" SharedSizeGroup="RK_MenuIcon" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="RK_MenuArrow" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Check glyph (shown when IsChecked) shares the icon gutter -->
+                            <Path x:Name="Check" Grid.Column="0"
+                                  Data="M0,3.4 L2.6,6 L7,0.6"
+                                  Stroke="{DynamicResource RibbonKit.Brushes.Text.Primary}"
+                                  StrokeThickness="1.6"
+                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                                  HorizontalAlignment="Center" VerticalAlignment="Center"
+                                  Visibility="Collapsed" />
+                            <ContentPresenter x:Name="Icon" Grid.Column="0"
+                                              Content="{TemplateBinding Icon}"
+                                              Width="16" Height="16"
+                                              HorizontalAlignment="Center" VerticalAlignment="Center" />
+
+                            <ContentPresenter Grid.Column="1"
+                                              ContentSource="Header"
+                                              RecognizesAccessKey="True"
+                                              VerticalAlignment="Center"
+                                              Margin="2,0,8,0" />
+
+                            <!-- Submenu arrow (only when the item has children) -->
+                            <Path x:Name="Arrow" Grid.Column="2"
+                                  Data="M0,0 L4,4 L0,8"
+                                  Stroke="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
+                                  StrokeThickness="1.3"
+                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                  Margin="8,0,2,0"
+                                  VerticalAlignment="Center"
+                                  Visibility="Collapsed" />
+
+                            <!-- Submenu flyout: same chrome as the dropdown popup -->
+                            <Popup x:Name="PART_Popup"
+                                   Placement="Right"
+                                   HorizontalOffset="-3"
+                                   AllowsTransparency="True"
+                                   Focusable="False"
+                                   PopupAnimation="Fade"
+                                   IsOpen="{TemplateBinding IsSubmenuOpen}">
+                                <Border Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
+                                        BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
+                                        BorderThickness="1"
+                                        CornerRadius="{DynamicResource RibbonKit.Metrics.PopupCornerRadius}"
+                                        Padding="4"
+                                        Margin="4,2,8,8"
+                                        Grid.IsSharedSizeScope="True"
+                                        SnapsToDevicePixels="True">
+                                    <Border.Effect>
+                                        <DropShadowEffect BlurRadius="8" ShadowDepth="2" Opacity="0.25" />
+                                    </Border.Effect>
+                                    <ItemsPresenter />
+                                </Border>
+                            </Popup>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Icon" Value="{x:Null}">
+                            <Setter TargetName="Icon" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Check" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="Icon" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="HasItems" Value="True">
+                            <Setter TargetName="Arrow" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsHighlighted" Value="True">
+                            <Setter TargetName="Chrome" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="RibbonKit.MenuSeparator" TargetType="{x:Type Separator}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Separator}">
+                    <Border Height="1"
+                            Margin="10,4"
+                            Background="{DynamicResource RibbonKit.Brushes.Group.Separator}"
+                            SnapsToDevicePixels="True" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="RibbonKit.ContextMenu" TargetType="{x:Type ContextMenu}">
+        <!-- The per-item styles (RibbonKit.MenuItem for MenuItems, RibbonKit.MenuSeparator for
+             separators via SeparatorStyleKey) are NOT applied here. ItemContainerStyle can't be used —
+             WPF applies it to the Separator items too and throws "a style intended for MenuItem cannot be
+             applied to Separator" — and a keyed Style's Style.Resources doesn't reliably reach the items.
+             Instead Ribbon.ApplyModernMenuStyle injects both implicit styles straight into the menu's own
+             Resources (menu.Resources[typeof(MenuItem)] / [MenuItem.SeparatorStyleKey]), which every item
+             (including submenu items) resolves. -->
+        <!-- HasDropShadow=True keeps the hosting popup's AllowsTransparency on (needed for our rounded
+             corners + soft shadow to render); the system shadow itself isn't drawn because our custom
+             template omits the SystemDropShadowChrome, so we get only the DropShadowEffect below. -->
+        <Setter Property="HasDropShadow" Value="True" />
+        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+        <Setter Property="Grid.IsSharedSizeScope" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type ContextMenu}">
+                    <Border Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
+                            BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
+                            BorderThickness="1"
+                            CornerRadius="{DynamicResource RibbonKit.Metrics.PopupCornerRadius}"
+                            Padding="4"
+                            Margin="4,2,8,8"
+                            SnapsToDevicePixels="True">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="8" ShadowDepth="2" Opacity="0.25" />
+                        </Border.Effect>
+                        <ItemsPresenter />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

@@ -1231,6 +1231,41 @@ left/right chevron buttons to scroll the overflow into view. Added the same to R
     re-measure the resize used to: the panel re-reports and the scroller reads it and recomputes
     `CanScrollLeft/Right`.
 
+### 3.26 Modern context menus (ribbon-item + QAT right-click)
+
+The right-click menus were stock WPF `ContextMenu`/`MenuItem` (created in code in `Ribbon.cs`), so they
+rendered with the dated native menu chrome while the `RibbonMenuItem` dropdowns looked modern. Fixed with
+styles that match the dropdown, in a **dedicated `Themes/Menus.xaml`** dictionary:
+
+- `RibbonKit.ContextMenu` — rounded flyout `Border` (`PopupCornerRadius`, `ScreenTip.Border`,
+  `ContentBackground`) with the same soft `DropShadowEffect` the dropdown popup uses. `HasDropShadow` is
+  left **True** on purpose: that's what keeps the hosting popup's `AllowsTransparency` on (so the rounded
+  corners + soft shadow render); the system shadow itself isn't drawn because the custom template omits
+  `SystemDropShadowChrome`.
+- `RibbonKit.MenuItem` — a `RibbonMenuItem`-style row: 24px icon/check gutter, header, submenu arrow +
+  flyout, `Control.HoverBackground` on `IsHighlighted`, 0.4 opacity when disabled. A **check glyph** shows
+  on `IsChecked` (the QAT placement items use it), sharing the gutter with the optional `Icon`.
+- `RibbonKit.MenuSeparator` — a themed 1px line via `Group.Separator`.
+- Wiring / **why a separate dictionary** (first attempt failed): the styles first lived in
+  `Office2024.xaml` and were applied with `SetResourceReference(StyleProperty, "RibbonKit.ContextMenu")`
+  — and the menu stayed native. `Office2024.xaml` is merged only into `Generic.xaml` (the assembly THEME
+  dictionary); implicit RibbonKit control styles resolve from there via `DefaultStyleKey`, but a **keyed**
+  resource in a theme dictionary is NOT reachable by a normal runtime lookup, and a `ContextMenu` (a
+  PresentationFramework type) resolves its theme resources against PresentationFramework's theme, never
+  RibbonKit's `Generic.xaml`. Fix: the styles live in their own `Themes/Menus.xaml`, which `Ribbon.cs`
+  loads once by pack URI (`pack://application:,,,/RibbonKit;component/Themes/Menus.xaml`, cached static)
+  and assigns the `Style` object directly to each menu (`ApplyModernMenuStyle`). The style's brushes are
+  `DynamicResource`, so they still resolve — and re-theme — from the app-merged token set. Applied only to
+  the ribbon's OWN two menus, not a host app's.
+- Getting the per-item look onto the rows took a second correction. `ItemContainerStyle` throws at
+  runtime — WPF applies it to the `Separator` items too (*"a style intended for MenuItem cannot be
+  applied to Separator"*), so the earlier assumption that separators are skipped was wrong. A keyed
+  `Style.Resources` also isn't a reliable way to reach the items. What works: `ApplyModernMenuStyle`
+  injects the two item styles as IMPLICIT entries straight into the menu's own `Resources` —
+  `menu.Resources[typeof(MenuItem)] = RibbonKit.MenuItem` and
+  `menu.Resources[MenuItem.SeparatorStyleKey] = RibbonKit.MenuSeparator` — which every `MenuItem`
+  (including submenu items) and `Separator` in the menu subtree resolves.
+
 ## 4. Workflow / Session Conventions
 
 - Cloud workspace: `/home/user/ribbonkit/`. The user's machine:
@@ -1267,13 +1302,22 @@ settle from `KeyTipService.AddAdorners`, self-releasing its opacity animation on
 completion so the existing dim/undim-while-typing logic (`KeyTipAdorner.Dimmed`) keeps
 working afterward (hard rule 8).
 
+**Design-time editor — done this arc:** the runtime ribbon horizontal scroll (§3.25, incl. the
+reduce-then-scroll clamp fix and the chevrons-return-on-tab-switch fix), split/drop-down button menu-item
+editing, `Ribbon.CommandId` + `KeyTip.Keys` attached-property editors (attached-property model access
+proven — `Find(PropertyIdentifier)`), the backstage page switcher, and the modern context menus (§3.26).
+Showcase gained a Disable-Samples demo (button/split/group disabled states).
+
 Backlog (rough priority):
 
 1. Import/Export UI: surface the §3.17 `Serialize`/`Apply` as file-picker buttons in the
    customize page (the serializer already supports it; only the buttons + file dialogs are
-   missing). Drag-drop in the tree and moving groups across tabs also remain.
-2. Mica hardening (future): dark-mode-aware translucency. (Maximize-with-glass and the
+   missing).
+2. Design editor: **drag-drop tree reordering** and moving groups across tabs (explicitly
+   deferred by the user in favour of the item-editing work above). Optional: clear-to-default
+   buttons for scalar properties.
+3. Mica hardening (future): dark-mode-aware translucency. (Maximize-with-glass and the
    glass-frame border fix are verified — see §3.12.)
-3. Office2010 / Office2007 themes (roadmap Phase 6).
-4. Dark mode (2019 white-tab note in §3.6 anticipates it).
-5. GitHub publish: repo URL placeholder in csproj (`YOUR-GITHUB-USERNAME`).
+4. Office2010 / Office2007 themes (roadmap Phase 6).
+5. Dark mode (2019 white-tab note in §3.6 anticipates it).
+6. GitHub publish: repo URL placeholder in csproj (`YOUR-GITHUB-USERNAME`).

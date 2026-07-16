@@ -518,12 +518,53 @@ public class Ribbon : Control
         collapseItem.Click += (_, _) => SetCurrentValue(IsMinimizedProperty, !IsMinimized);
 
         var menu = new System.Windows.Controls.ContextMenu { PlacementTarget = target };
+        ApplyModernMenuStyle(menu);
         menu.Items.Add(addItem);
         menu.Items.Add(customizeItem);
         menu.Items.Add(customizeRibbonItem);
         menu.Items.Add(new System.Windows.Controls.Separator());
         menu.Items.Add(collapseItem);
         menu.IsOpen = true;
+    }
+
+    // Cached menu-style dictionary (Themes/Menus.xaml). It lives in its OWN dictionary — NOT the
+    // theme's Office2024.xaml — because a keyed resource in the assembly theme dictionary isn't
+    // reachable by a runtime lookup from a ContextMenu (a PresentationFramework type resolves its
+    // theme resources against PresentationFramework's theme, not RibbonKit's Generic.xaml). Loading
+    // it explicitly and assigning the Style directly sidesteps that; the style's brushes are
+    // DynamicResource, so they still resolve — and re-theme — from the app-merged token set.
+    private static System.Windows.ResourceDictionary? _menuResources;
+
+    private static System.Windows.ResourceDictionary MenuResources =>
+        _menuResources ??= new System.Windows.ResourceDictionary
+        {
+            Source = new Uri("pack://application:,,,/RibbonKit;component/Themes/Menus.xaml", UriKind.Absolute),
+        };
+
+    // Restyles a context menu to the modern RibbonKit look (rounded flyout + RibbonMenuItem-style
+    // rows) instead of the native WPF menu. The flyout chrome comes from the ContextMenu Style; the
+    // per-item look is injected as IMPLICIT styles on the menu's own Resources so every MenuItem (incl.
+    // submenus) and Separator resolves it. ItemContainerStyle can't be used here — WPF would apply the
+    // MenuItem style to Separator items too and throw. If the dictionary can't load, the menu keeps the
+    // system default.
+    private static void ApplyModernMenuStyle(System.Windows.Controls.ContextMenu menu)
+    {
+        System.Windows.ResourceDictionary dictionary = MenuResources;
+
+        if (dictionary["RibbonKit.ContextMenu"] is System.Windows.Style menuStyle)
+        {
+            menu.Style = menuStyle;
+        }
+
+        if (dictionary["RibbonKit.MenuItem"] is System.Windows.Style itemStyle)
+        {
+            menu.Resources[typeof(System.Windows.Controls.MenuItem)] = itemStyle;
+        }
+
+        if (dictionary["RibbonKit.MenuSeparator"] is System.Windows.Style separatorStyle)
+        {
+            menu.Resources[System.Windows.Controls.MenuItem.SeparatorStyleKey] = separatorStyle;
+        }
     }
 
     // Walks up from the right-clicked element (visual parent first, logical as fallback so
@@ -1141,6 +1182,7 @@ public class Ribbon : Control
         _qatRemoveSeparator = new System.Windows.Controls.Separator();
 
         _qatContextMenu = new System.Windows.Controls.ContextMenu();
+        ApplyModernMenuStyle(_qatContextMenu);
         _qatContextMenu.Items.Add(_qatRemoveItem);
         _qatContextMenu.Items.Add(_qatRemoveSeparator);
         _qatContextMenu.Items.Add(_qatTitleBarItem);
