@@ -170,43 +170,43 @@ internal static class DesignModel
     // at design time), so the accessor is bound by REFLECTION and the working shape is logged — a
     // Windows build confirms it, and a wrong guess degrades to a no-op instead of breaking the build.
 
-    private const string AttachedOwnerType = "RibbonKit.Controls.Ribbon";
-    private const string AttachedOwnerShort = "Ribbon";
-
     /// <summary>
-    /// Resolves the <see cref="ModelProperty"/> for an attached property declared on Ribbon (e.g.
-    /// <c>Ribbon.CommandId</c>) on <paramref name="item"/>, whether or not it's currently set. Returns
-    /// null (logged) when the model can't resolve it.
+    /// Resolves the <see cref="ModelProperty"/> for an attached property declared on
+    /// <paramref name="ownerTypeName"/> (e.g. <c>Ribbon.CommandId</c> or <c>KeyTip.Keys</c>) on
+    /// <paramref name="item"/>, whether or not it's currently set. Returns null (logged) when the model
+    /// can't resolve it.
     /// </summary>
-    public static ModelProperty FindAttached(ModelItem item, string name)
+    public static ModelProperty FindAttached(ModelItem item, string ownerTypeName, string name)
     {
         if (item is null)
         {
             return null;
         }
 
-        // Fast path: when the property is already set (e.g. the showcase buttons carry
-        // rk:Ribbon.CommandId), the string indexer resolves it under one of these key forms. Which one
-        // the model uses is unverified, so try each — none throws past FindProperty.
+        // Fast path: when the property is already set (e.g. the showcase buttons carry rk:Ribbon.CommandId
+        // / rk:KeyTip.Keys), the string indexer resolves it under one of these key forms. Which one the
+        // model uses is unverified, so try each — none throws past FindProperty.
+        string ownerShort = ownerTypeName.Substring(ownerTypeName.LastIndexOf('.') + 1);
         ModelProperty existing =
             FindProperty(item, name)
-            ?? FindProperty(item, AttachedOwnerShort + "." + name)
-            ?? FindProperty(item, AttachedOwnerType + "." + name);
+            ?? FindProperty(item, ownerShort + "." + name)
+            ?? FindProperty(item, ownerTypeName + "." + name);
         if (existing != null)
         {
             return existing;
         }
 
         // Slow path (property not yet set on this element): resolve the attachable member by a
-        // type-qualified PropertyIdentifier via whichever collection accessor this SDK exposes.
+        // type-qualified PropertyIdentifier via whichever collection accessor this SDK exposes
+        // (Find(PropertyIdentifier), confirmed on Windows for CommandId).
         try
         {
-            var pid = new PropertyIdentifier(new TypeIdentifier(AttachedOwnerType), name);
+            var pid = new PropertyIdentifier(new TypeIdentifier(ownerTypeName), name);
             return ResolveByIdentifier(item.Properties, pid);
         }
         catch (Exception ex)
         {
-            DesignLog.Error("FindAttached " + name, ex);
+            DesignLog.Error("FindAttached " + ownerTypeName + "." + name, ex);
             return null;
         }
     }
@@ -239,19 +239,19 @@ internal static class DesignModel
     }
 
     /// <summary>The effective value of an attached property as text, or "" when absent/unresolved.</summary>
-    public static string GetAttachedString(ModelItem item, string name) =>
-        FindAttached(item, name)?.ComputedValue?.ToString() ?? string.Empty;
+    public static string GetAttachedString(ModelItem item, string ownerTypeName, string name) =>
+        FindAttached(item, ownerTypeName, name)?.ComputedValue?.ToString() ?? string.Empty;
 
     /// <summary>
     /// Sets (or, for empty text, clears) an attached property as a single undo. Clearing removes the
     /// attribute rather than writing an empty string, matching how the icon editor treats a blank value.
     /// </summary>
-    public static void SetAttached(ModelItem item, string name, string value)
+    public static void SetAttached(ModelItem item, string ownerTypeName, string name, string value)
     {
-        ModelProperty property = FindAttached(item, name);
+        ModelProperty property = FindAttached(item, ownerTypeName, name);
         if (property is null)
         {
-            DesignLog.Error("SetAttached", new Exception("could not resolve attached property " + name));
+            DesignLog.Error("SetAttached", new Exception("could not resolve attached property " + ownerTypeName + "." + name));
             return;
         }
 
@@ -273,7 +273,7 @@ internal static class DesignModel
         }
         catch (Exception ex)
         {
-            DesignLog.Error("SetAttached " + name + " = '" + value + "'", ex);
+            DesignLog.Error("SetAttached " + ownerTypeName + "." + name + " = '" + value + "'", ex);
         }
     }
 

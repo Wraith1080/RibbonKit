@@ -789,12 +789,13 @@ internal sealed class RibbonEditorWindow : Window
 
     private sealed class PropSpec
     {
-        public PropSpec(string name, string label, EditorKind kind, string[] enumValues = null)
+        public PropSpec(string name, string label, EditorKind kind, string[] enumValues = null, string attachedOwner = null)
         {
             Name = name;
             Label = label;
             Kind = kind;
             EnumValues = enumValues;
+            AttachedOwner = attachedOwner;
         }
 
         public string Name { get; }
@@ -804,6 +805,9 @@ internal sealed class RibbonEditorWindow : Window
         public EditorKind Kind { get; }
 
         public string[] EnumValues { get; }
+
+        /// <summary>For <see cref="EditorKind.AttachedText"/>: the full CLR type that DECLARES the attached property (e.g. <c>RibbonKit.Controls.KeyTip</c>).</summary>
+        public string AttachedOwner { get; }
     }
 
     private static readonly PropSpec[] ControlSpecs =
@@ -857,11 +861,14 @@ internal sealed class RibbonEditorWindow : Window
         new PropSpec("Foreground", "Foreground", EditorKind.Color),
     };
 
-    // The Ribbon.CommandId ATTACHED property — a stable identity for customization/persistence. Shown on
-    // tabs, groups, and command controls (not on entries inside a combo/gallery/menu/backstage). Handled
-    // outside the normal spec loop because HasProperty can't see attached members.
+    // ATTACHED-property rows (Ribbon.CommandId persistence identity; KeyTip.Keys Alt-access badge). Shown
+    // on tabs, groups, and command controls (not on entries inside a combo/gallery/menu/backstage).
+    // Handled outside the normal spec loop because HasProperty can't see attached members.
     private static readonly PropSpec CommandIdSpec =
-        new PropSpec("CommandId", "Command Id (persistence)", EditorKind.AttachedText);
+        new PropSpec("CommandId", "Command Id (persistence)", EditorKind.AttachedText, attachedOwner: "RibbonKit.Controls.Ribbon");
+
+    private static readonly PropSpec KeyTipSpec =
+        new PropSpec("Keys", "KeyTip (Alt access key)", EditorKind.AttachedText, attachedOwner: "RibbonKit.Controls.KeyTip");
 
     private static PropSpec[] SpecsFor(NodeKind kind) => kind switch
     {
@@ -881,12 +888,14 @@ internal sealed class RibbonEditorWindow : Window
     };
 
     /// <summary>
-    /// Whether the <c>Ribbon.CommandId</c> row applies: tabs and groups always; a control only when it's
-    /// a real command placed in a group/panel, not an entry inside a combo/gallery/menu/backstage (those
-    /// items don't carry a persistence identity). Uses <see cref="ItemRule"/> on the parent to tell an
-    /// item apart from a command control — both are <see cref="NodeKind.Control"/> in the tree.
+    /// Whether the attached-identity rows (<c>Ribbon.CommandId</c>, <c>KeyTip.Keys</c>) apply: tabs and
+    /// groups always; a control only when it's a real command placed in a group/panel, not an entry inside
+    /// a combo/gallery/menu/backstage (those items carry neither a persistence identity nor a surface
+    /// KeyTip). Uses <see cref="ItemRule"/> on the parent to tell an item apart from a command control —
+    /// both are <see cref="NodeKind.Control"/> in the tree. Both the customization serializer and the
+    /// KeyTip service read these on exactly this set (tab / group / leaf command).
     /// </summary>
-    private static bool ShowsCommandId(NodeInfo node)
+    private static bool ShowsIdentityProps(NodeInfo node)
     {
         if (node?.Item is null)
         {
@@ -949,11 +958,12 @@ internal sealed class RibbonEditorWindow : Window
                 any = true;
             }
 
-            // The attached Ribbon.CommandId row is added on its own (HasProperty can't detect an
-            // attached member). Shown for tabs, groups, and command controls placed in a group.
-            if (ShowsCommandId(node))
+            // The attached rows (Ribbon.CommandId, KeyTip.Keys) are added on their own (HasProperty can't
+            // detect an attached member). Shown for tabs, groups, and command controls placed in a group.
+            if (ShowsIdentityProps(node))
             {
                 _propsPanel.Children.Add(BuildPropRow(node.Item, CommandIdSpec));
+                _propsPanel.Children.Add(BuildPropRow(node.Item, KeyTipSpec));
                 any = true;
             }
 
@@ -1031,7 +1041,7 @@ internal sealed class RibbonEditorWindow : Window
     {
         var box = new TextBox
         {
-            Text = DesignModel.GetAttachedString(item, spec.Name),
+            Text = DesignModel.GetAttachedString(item, spec.AttachedOwner, spec.Name),
             VerticalContentAlignment = VerticalAlignment.Center,
         };
 
@@ -1039,7 +1049,7 @@ internal sealed class RibbonEditorWindow : Window
         {
             if (!_syncingProps)
             {
-                DesignModel.SetAttached(item, spec.Name, box.Text ?? string.Empty);
+                DesignModel.SetAttached(item, spec.AttachedOwner, spec.Name, box.Text ?? string.Empty);
             }
         }
 

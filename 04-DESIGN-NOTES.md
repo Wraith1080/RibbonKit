@@ -944,7 +944,8 @@ the type actually has are shown (leans on the `FindProperty` lesson). Covered th
 programmatic initial set doesn't write), enum combo (values set as strings → type converter, the QAT
 trick). `DesignModel.SetProperty` wraps each in a scope and swallows/logs converter failures (e.g. a
 bad colour) so a typo never crashes the dialog. Each edit = one undo. KeyTip access keys were
-**deferred** (attached property — different model access, unproven; user opted to skip this pass).
+**deferred** here (attached property — different model access, unproven at the time) and later
+implemented once attached-property access was proven — see the CommandId / KeyTip notes below.
 
 **Split / drop-down button menu items (later pass):** `RibbonSplitButton` derives from
 `RibbonDropDownButton`; both are `ItemsControl`s holding their flyout entries as `RibbonMenuItem`s in
@@ -966,6 +967,17 @@ wrong guess from breaking the build (same defensive style as the StaticResource 
 a "Command Id (persistence)" `AttachedText` row on tabs, groups, and command controls (hidden on
 combo/gallery/menu/backstage entries, which aren't persistable commands); blank clears the attribute.
 The same `FindAttached`/`SetAttached` helpers are what a future KeyTip-access-key editor would reuse.
+
+**KeyTip access-key editing (the deferral, now DONE).** With attached-property access proven, the
+parked KeyTip editor was straightforward: `KeyTip.Keys` is another attached string, just declared on
+`RibbonKit.Controls.KeyTip` instead of `Ribbon`. `FindAttached`/`GetAttachedString`/`SetAttached` gained
+an `ownerTypeName` parameter (deriving the short key form from its last segment), so the same reflection
+resolver serves both owners. `PropSpec` gained an `AttachedOwner` field; a **KeyTip (Alt access key)**
+`AttachedText` row now sits beside **Command Id** on the same node set — tabs, groups, and leaf command
+controls (`ShowsCommandId` → `ShowsIdentityProps`). That set is exactly where the KeyTip service reads
+`KeyTip.GetKeys` (tab / collapsed-group flyout / group launcher / leaf command), so the editor never
+offers a KeyTip where the runtime ignores it. Blank clears the attribute, letting the ribbon auto-derive
+a key from the label (Office behaviour); a pinned value overrides it.
 
 **Icon picker (`Icon`/`LargeIcon`) — user wants the full Icons.xaml picker; treated as a spike.**
 Icons are `DrawingImage` resources keyed `Icon.*` in the showcase's `Icons.xaml`, referenced as

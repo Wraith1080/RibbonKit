@@ -72,14 +72,16 @@ nav items. **Add Item** creates the right child for the selected container (a `C
 whichever carries simple text — so it names buttons, tabs, backstage pages, combo items, and gallery
 items (shown by their Tag) alike. Property editors are also type-aware: a backstage page shows
 `IsButton` / `Placement`, a combo box shows `InputWidth` / `IsEditable`, on top of the shared
-control/tab/group editors. Tabs, groups, and command controls also get a **Command Id (persistence)**
-row that edits the `Ribbon.CommandId` **attached** property — the stable identity the customization
-serializer uses to persist/restore layout. Because attached members don't surface through the normal
-`Properties[name]` indexer (it only sees an element's own members), `DesignModel.FindAttached` resolves
-it by a type-qualified `PropertyIdentifier`, binding the collection accessor by reflection and logging
-which shape worked (the accessor's exact signature in the shipped SDK is confirmed at design time, same
-spike style as the StaticResource icon path). The row is hidden on entries inside a
-combo/gallery/menu/backstage (those aren't persistable commands). Color properties (`ContextualColor`, a TextBlock's `Foreground`) use a
+control/tab/group editors. Tabs, groups, and command controls also get two **attached-property** rows —
+**Command Id (persistence)** editing `Ribbon.CommandId` (the stable identity the customization serializer
+uses to persist/restore layout) and **KeyTip (Alt access key)** editing `KeyTip.Keys` (the access-key
+badge shown on `Alt`; blank lets the ribbon auto-derive one from the label, like Office). Because
+attached members don't surface through the normal `Properties[name]` indexer (it only sees an element's
+own members), `DesignModel.FindAttached(item, ownerType, name)` resolves them by a type-qualified
+`PropertyIdentifier`, binding the collection accessor by reflection and logging which shape worked —
+confirmed on Windows as `Find(PropertyIdentifier)` (same spike style as the StaticResource icon path).
+Both rows are hidden on entries inside a combo/gallery/menu/backstage (those carry neither a persistence
+identity nor a surface KeyTip); clearing either box removes the attribute. Color properties (`ContextualColor`, a TextBlock's `Foreground`) use a
 **color editor** — a live swatch + hex/name box + a "…" button opening a palette picker
 (`ColorPickerDialog`, self-contained WPF, no WinForms). The tree recurses into Panels (`Children`) and item
 containers (`Items`, i.e. combos/galleries/split+drop-down menus/backstage) but NOT into a control's `Content` (expanding

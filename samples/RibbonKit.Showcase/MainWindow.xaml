@@ -149,7 +149,7 @@
                                          Icon="{StaticResource Icon.Cut}"
                                          SizeDefinition="Medium, Medium, Small"
                                          ScreenTipTitle="Cut (Ctrl+X)"
-                                         ScreenTipText="Remove the selection and put it on the Clipboard." />
+                                         ScreenTipText="Remove the selection and put it on the Clipboard." rk:KeyTip.Keys="CU" />
                         <rk:RibbonButton Header="Copy" Size="Medium"
                                          rk:Ribbon.CommandId="cmd.copy"
                                          Icon="{StaticResource Icon.Copy}"
