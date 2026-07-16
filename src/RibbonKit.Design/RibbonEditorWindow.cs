@@ -619,6 +619,7 @@ internal sealed class RibbonEditorWindow : Window
         "StackPanel" => "Stack Panel",
         "RibbonGalleryItem" => "Gallery Item",
         "ComboBoxItem" => "Combo Item",
+        "RibbonMenuItem" => "Menu Item",
         "BackstageTabItem" => "Backstage Page",
         "TextBlock" => "Text Block",
         _ => typeName,
@@ -1133,6 +1134,13 @@ internal sealed class RibbonEditorWindow : Window
                 return new ItemTarget { Container = container, TypeName = "RibbonGalleryItem", CaptionProperty = "Content", Label = "Item" };
             case "Backstage":
                 return new ItemTarget { Container = container, TypeName = "BackstageTabItem", CaptionProperty = "Header", Label = "Page" };
+            // Split and drop-down buttons are ItemsControls whose flyout entries are RibbonMenuItems in
+            // Items — same shape as the combos/galleries above (RibbonSplitButton derives from
+            // RibbonDropDownButton). This lets the tree list the menu entries and the "Add Item" button
+            // add/insert siblings, with Header as the editable caption.
+            case "RibbonSplitButton":
+            case "RibbonDropDownButton":
+                return new ItemTarget { Container = container, TypeName = "RibbonMenuItem", CaptionProperty = "Header", Label = "Menu Item" };
             default:
                 return null;
         }
