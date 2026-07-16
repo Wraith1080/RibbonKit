@@ -203,17 +203,17 @@
                                                rk:Ribbon.CommandId="cmd.bold"
                                                Icon="{StaticResource Icon.Bold}"
                                                ScreenTipTitle="Bold (Ctrl+B)"
-                                               ScreenTipText="Make your text bold." />
+                                               ScreenTipText="Make your text bold." Header="Bold" />
                         <rk:RibbonToggleButton Size="Small"
                                                rk:Ribbon.CommandId="cmd.italic"
                                                Icon="{StaticResource Icon.Italic}"
                                                ScreenTipTitle="Italic (Ctrl+I)"
-                                               ScreenTipText="Italicize your text." />
+                                               ScreenTipText="Italicize your text." Header="Italic" />
                         <rk:RibbonToggleButton Size="Small"
                                                rk:Ribbon.CommandId="cmd.underline"
                                                Icon="{StaticResource Icon.Underline}"
                                                ScreenTipTitle="Underline (Ctrl+U)"
-                                               ScreenTipText="Underline your text." />
+                                               ScreenTipText="Underline your text." Header="Underline" />
                         </StackPanel>
                     </StackPanel>
                 </rk:RibbonGroup>
@@ -374,6 +374,30 @@
                                      SizeDefinition="Large, Medium, Small"
                                      ScreenTipTitle="Crop"
                                      ScreenTipText="Crop the picture to remove unwanted areas." />
+                </rk:RibbonGroup>
+                <rk:RibbonGroup Header="Border Style">
+                    <rk:InRibbonGallery x:Name="PictureStylesGallery"
+                                        Width="178"
+                                        SelectedIndex="0"
+                                        ItemPreview="OnStylePreview"
+                                        ItemPreviewCancelled="OnStylePreviewCancelled"
+                                        SelectionChanged="OnStyleCommitted">
+                        <rk:RibbonGalleryItem>
+                            <StackPanel>
+                                <TextBlock>Dotted</TextBlock>
+                            </StackPanel>
+                        </rk:RibbonGalleryItem>
+                        <rk:RibbonGalleryItem>
+                            <StackPanel>
+                                <TextBlock>Solid</TextBlock>
+                            </StackPanel>
+                        </rk:RibbonGalleryItem>
+                        <rk:RibbonGalleryItem>
+                            <StackPanel>
+                                <TextBlock>Dashed</TextBlock>
+                            </StackPanel>
+                        </rk:RibbonGalleryItem>
+                    </rk:InRibbonGallery>
                 </rk:RibbonGroup>
             </rk:RibbonTab>
 
