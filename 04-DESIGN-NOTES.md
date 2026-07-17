@@ -1345,6 +1345,50 @@ white caption text; the gradient strip below stays (2019's strip-coloring specia
   edit) and added to ALL four theme files (66 keys each now): 2024 keeps `14,7,14,9`; 2019 `20,7,20,9`,
   2010 `22,7,22,9`, 2013 `24,7,24,9` (the pre-2024 File tabs read as broader blocks).
 
+**Second feedback pass (reference images provided):**
+
+- **Glass was the 2007 look, not 2010.** The 4-stop hard-crease "gel" was Office 2007's aggressive
+  gloss. Real 2010 is a SMOOTH subtle gradient + a thin **border**. Reworked: 2010's
+  hover/press/checked and File-button gradients are now smooth (no duplicate-offset crease), and a
+  new set of border tokens draws the defining edge — `Control.{Hover,Pressed,Checked}Border` +
+  `ControlHighlightBorderThickness` (gold, 1px in 2010; Transparent/0 elsewhere) on the wash layers,
+  and `ApplicationButton.Border` + `ApplicationButtonBorderThickness` (blue, 1px in 2010) on the File
+  `Chrome`. All four theme files carry the 6 new keys (72 keys each now); the template wires
+  `BorderBrush`/`BorderThickness` onto `HoverWash`/`PressWash`/`CheckWash` and the File Chrome.
+- **Accent no longer flattens 2010.** `ApplyAccentOverrides` used flat `Frozen(Mix(...))` solids,
+  which replaced 2010's gradients when a custom accent was set. Fixes: (1) the toggle/checked
+  highlight is now SKIPPED for 2010 (authentic — 2010's highlight is always amber regardless of the
+  color scheme; the accent recolors chrome, not the hot state), so it keeps its amber gradient; (2)
+  the File button is re-derived as a **gradient** via a new `Gel(Color)` helper (a 3-stop vertical
+  gel: lighter top, base middle, darker bottom) plus a matching border, instead of a flat solid.
+  `ApplicationButton.Border` was added to `AccentOverrideKeys` so it clears on theme switch.
+- **Backstage translucency + blur (new).** `Backstage.Translucent` already existed (Mica reveal);
+  extended it into a frosted-acrylic effect: when a translucent backstage opens, `Ribbon` applies a
+  strong Gaussian `BlurEffect` (radius 34) to the adorned root (the content behind) and restores the
+  prior effect on close (`ApplyBackstageBlur`/`ClearBackstageBlur`). The backstage stays sharp
+  because it lives in the adorner layer (a sibling visual), not under the blurred root. The
+  translucent brushes were made genuinely see-through (`ContentTranslucent` 90%→70%) so the blur
+  reads. Showcase gained a **Translucent Backstage** toggle (`OnToggleBackstageTranslucent` →
+  `ShowcaseBackstage.Translucent`).
+
+**Below-tabs backstage — DROPPED for a third backstage DESIGN instead.** The below-tabs *layout*
+(repositioning the overlay under the tab strip) was judged not worth the structural cost. Instead a
+third `RibbonBackstageDesign` value, **`Classic2010`**, was added: same solid accent nav column as
+`Classic` (white text), but the SELECTED item is a glossy blue "glass" marker
+(`Backstage.ItemSelectedGlass`, a gradient) rather than the flat Classic fill. So there are now three
+backstage looks — Classic (2013 flat accent), Modern (2024 light rail), Classic2010 (blue glass). One
+`MultiTrigger` in the `BackstageTabItem` template (Design=Classic2010 + IsSelected) does it; the
+Backstage template itself is unchanged (Classic2010 inherits Classic's accent column). The glass
+marker tracks a custom accent via `ThemeManager` (`Gel(accent)`). Showcase: the single Modern/Classic
+toggle was replaced with three explicit design buttons (2013 Rail / 2024 Rail / 2010 Glass) →
+`OnSelectBackstageDesign` (reads the button `Tag`).
+
+**Glassy OK button.** The options-dialog primary (OK) button now borrows the File-button glass via new
+theme-aware tokens `Dialog.PrimaryBackground`/`Dialog.PrimaryBorder` (`OptionsDialogPrimaryButtonStyle`
+binds them): a glossy blue gel in Office 2010, a flat accent elsewhere — both tracking a custom accent
+through `ThemeManager` (the shared branch sets flat accent; the Office2010 case swaps in `Gel(accent)`).
+All four theme files carry the 3 new keys (75 keys each).
+
 Still unbuilt in the sandbox (WPF needs Windows) — pending the user's visual check on Windows.
 
 ## 4. Workflow / Session Conventions

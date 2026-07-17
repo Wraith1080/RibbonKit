@@ -625,6 +625,11 @@ public class Ribbon : Control
 
     private BackstageAdorner? _backstageAdorner;
 
+    // While a TRANSLUCENT backstage is open, the content behind it (the adorned root) gets a
+    // strong blur so the backstage reads as a frosted-acrylic panel. Saved/restored here.
+    private UIElement? _blurredRoot;
+    private System.Windows.Media.Effects.Effect? _blurredRootPriorEffect;
+
     // Design-time-only host for the backstage preview (see UpdateDesignTimeBackstage). The
     // runtime adorner path needs a real Window the XAML designer doesn't provide.
     private Border? _designBackstageHost;
@@ -764,6 +769,7 @@ public class Ribbon : Control
                     RibbonMotion.PlayOpen(reopening, RibbonAnimationAction.Backstage, RibbonSlideFrom.Left);
                 }
 
+                ApplyBackstageBlur(_backstageAdorner.AdornedElement);
                 return;
             }
 
@@ -783,6 +789,11 @@ public class Ribbon : Control
 
             _backstageAdorner = new BackstageAdorner(root, content);
             layer.Add(_backstageAdorner);
+
+            // Strong in-app blur of the content behind a translucent backstage. The blur goes on
+            // the adorned root; the backstage lives in the adorner layer (a sibling visual branch),
+            // so it stays sharp on top while everything behind it frosts.
+            ApplyBackstageBlur(root);
 
             if (content is FrameworkElement element)
             {
@@ -818,8 +829,43 @@ public class Ribbon : Control
                     adorner.Detach();
                     _backstageAdorner = null;
                     _backstageClosing = false;
+                    ClearBackstageBlur();
                     RibbonMotion.Rest(content);
                 });
+        }
+    }
+
+    /// <summary>
+    /// Applies a strong Gaussian blur to <paramref name="root"/> (the content behind the backstage)
+    /// when the backstage is <see cref="Controls.Backstage.Translucent"/>, so the translucent
+    /// backstage reads as frosted acrylic. No-op for an opaque backstage. The prior effect (if any)
+    /// is saved so <see cref="ClearBackstageBlur"/> restores it exactly.
+    /// </summary>
+    private void ApplyBackstageBlur(UIElement root)
+    {
+        if (Backstage is not Backstage { Translucent: true })
+        {
+            return;
+        }
+
+        _blurredRoot = root;
+        _blurredRootPriorEffect = root.Effect;
+        root.Effect = new System.Windows.Media.Effects.BlurEffect
+        {
+            Radius = 34,
+            KernelType = System.Windows.Media.Effects.KernelType.Gaussian,
+            RenderingBias = System.Windows.Media.Effects.RenderingBias.Performance,
+        };
+    }
+
+    /// <summary>Removes the backstage blur, restoring whatever effect the root had before.</summary>
+    private void ClearBackstageBlur()
+    {
+        if (_blurredRoot is not null)
+        {
+            _blurredRoot.Effect = _blurredRootPriorEffect;
+            _blurredRoot = null;
+            _blurredRootPriorEffect = null;
         }
     }
 

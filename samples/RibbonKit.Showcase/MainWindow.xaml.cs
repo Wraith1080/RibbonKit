@@ -157,13 +157,25 @@ public partial class MainWindow : RibbonWindow
     private void OnToggleRespectSystemMotion(object sender, RoutedEventArgs e) =>
         RibbonAnimation.RespectSystemReduceMotion = (sender as RibbonToggleButton)?.IsChecked == true;
 
-    private void OnToggleBackstageDesign(object sender, RoutedEventArgs e)
+    // Pick one of the three backstage designs (Classic 2013 / Modern 2024 / Classic2010 glass)
+    // from the button's Tag. Open the File menu to see the change.
+    private void OnSelectBackstageDesign(object sender, RoutedEventArgs e)
+    {
+        if (ShowcaseBackstage is not null
+            && (sender as RibbonButton)?.Tag is string tag
+            && Enum.TryParse(tag, out RibbonBackstageDesign design))
+        {
+            ShowcaseBackstage.Design = design;
+        }
+    }
+
+    // Frosted-acrylic backstage: turn it semi-transparent and let the Ribbon strongly blur the
+    // content behind it. Takes effect the next time the File menu opens.
+    private void OnToggleBackstageTranslucent(object sender, RoutedEventArgs e)
     {
         if (ShowcaseBackstage is not null)
         {
-            ShowcaseBackstage.Design = (sender as RibbonToggleButton)?.IsChecked == true
-                ? RibbonBackstageDesign.Modern
-                : RibbonBackstageDesign.Classic;
+            ShowcaseBackstage.Translucent = (sender as RibbonToggleButton)?.IsChecked == true;
         }
     }
 

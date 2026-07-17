@@ -35,36 +35,35 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Secondary" Color="#5C6B7F" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Accent" Color="#1E5A9C" />
 
-    <!-- The iconic Office 2007/2010 amber highlight, as a glossy "gel": a bright top
-         highlight, then a HARD crease at the midpoint (two stops at 0.5) that splits the
-         button into a light upper half and a richer lower half — the Aero glass look. Hover
-         glows, pressed reads recessed (darker at the top), and the toggled fills are gold. -->
+    <!-- The Office 2010 amber highlight. Unlike Office 2007's aggressive glossy gel (a hard
+         crease splitting the button in two), 2010's highlight is a SMOOTH, subtle warm
+         gradient — a pale-cream top easing to a soft amber bottom — paired with a thin gold
+         BORDER (see Control.*Border below), which is what actually reads as the "hot" state.
+         Hover glows softly, pressed is a touch deeper, and the toggled fills stay gold. -->
     <LinearGradientBrush x:Key="RibbonKit.Brushes.Control.HoverBackground" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Offset="0" Color="#FFFDF0" />
-        <GradientStop Offset="0.5" Color="#FFEFB0" />
-        <GradientStop Offset="0.5" Color="#FFE187" />
-        <GradientStop Offset="1" Color="#FFD866" />
+        <GradientStop Offset="0" Color="#FFFBE3" />
+        <GradientStop Offset="0.55" Color="#FFF2C0" />
+        <GradientStop Offset="1" Color="#FFE39A" />
     </LinearGradientBrush>
-    <!-- Pressed: darker overall and inverted (deeper at the top) so the button reads pushed in. -->
+    <!-- Pressed: a slightly deeper, smoothly graded amber (reads pushed-in with its darker border). -->
     <LinearGradientBrush x:Key="RibbonKit.Brushes.Control.PressedBackground" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Offset="0" Color="#F0B437" />
-        <GradientStop Offset="0.5" Color="#F8C452" />
-        <GradientStop Offset="0.5" Color="#FBD068" />
-        <GradientStop Offset="1" Color="#FEDE8A" />
+        <GradientStop Offset="0" Color="#F9D274" />
+        <GradientStop Offset="1" Color="#FBD97E" />
     </LinearGradientBrush>
-    <!-- Toggled (checked): a richer gold gel that stays visibly "on". -->
+    <!-- Toggled (checked): a soft gold that stays visibly "on". -->
     <LinearGradientBrush x:Key="RibbonKit.Brushes.Control.CheckedBackground" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Offset="0" Color="#FFF3C4" />
-        <GradientStop Offset="0.5" Color="#FFE097" />
-        <GradientStop Offset="0.5" Color="#FFD173" />
-        <GradientStop Offset="1" Color="#FFC556" />
+        <GradientStop Offset="0" Color="#FFF3C2" />
+        <GradientStop Offset="1" Color="#FFDD86" />
     </LinearGradientBrush>
     <LinearGradientBrush x:Key="RibbonKit.Brushes.Control.CheckedHoverBackground" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Offset="0" Color="#FFF7D2" />
-        <GradientStop Offset="0.5" Color="#FFE7A2" />
-        <GradientStop Offset="0.5" Color="#FFD980" />
-        <GradientStop Offset="1" Color="#FFCD64" />
+        <GradientStop Offset="0" Color="#FFEEAC" />
+        <GradientStop Offset="1" Color="#FFD673" />
     </LinearGradientBrush>
+    <!-- Thin gold borders around the highlight — the defining edge of a 2010 hot button. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.HoverBorder" Color="#E9C25E" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.PressedBorder" Color="#CB9A34" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CheckedBorder" Color="#E0B24E" />
+    <Thickness x:Key="RibbonKit.Metrics.ControlHighlightBorderThickness">1</Thickness>
 
     <!-- Contextual-tab band tint (a light blue wash; the per-tab ContextualColor overrides it). -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ContextualBackground" Color="#DCE8F5" />
@@ -118,6 +117,19 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemHoverBackground" Color="#2E6DB4" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemSelectedBackground" Color="#17457E" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ContentBackground" Color="#FFFFFF" />
+    <!-- Classic2010 selected-item "glass" marker (glossy blue) and the dialog primary (OK)
+         button glass, borrowed from the File button. -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Backstage.ItemSelectedGlass" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#5AA0D8" />
+        <GradientStop Offset="0.5" Color="#3A82C4" />
+        <GradientStop Offset="1" Color="#2468A8" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Dialog.PrimaryBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#3E8BC8" />
+        <GradientStop Offset="0.5" Color="#2C77B8" />
+        <GradientStop Offset="1" Color="#1C63A6" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Dialog.PrimaryBorder" Color="#17578F" />
     <!-- Caption buttons sit on the silver-blue glass title bar: blue-tinted glass hover. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.HoverBackground" Color="#C4D8EF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.PressedBackground" Color="#A6C4E6" />
@@ -147,23 +159,24 @@
     </LinearGradientBrush>
     <SolidColorBrush x:Key="RibbonKit.Brushes.TitleBar.Foreground" Color="#1E1E1E" />
 
-    <!-- Office 2010 File button: a glossy blue "gel" block with white text — a bright top
-         highlight, a hard crease at the midpoint, and a deeper blue body (brighter gel on
-         hover), no underline. A custom accent re-tints it (see ThemeManager's Office2010 case). -->
+    <!-- Office 2010 File button: a SMOOTH blue block with white text and a thin blue border
+         (no hard crease — that was the wrong, 2007 look), a brighter blue on hover, no
+         underline. A custom accent re-tints it to a gradient (see ThemeManager's Office2010 case). -->
     <LinearGradientBrush x:Key="RibbonKit.Brushes.ApplicationButton.Background" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Offset="0" Color="#4A93CE" />
-        <GradientStop Offset="0.5" Color="#2A72B4" />
-        <GradientStop Offset="0.5" Color="#1B5D9E" />
-        <GradientStop Offset="1" Color="#134E88" />
+        <GradientStop Offset="0" Color="#3E8BC8" />
+        <GradientStop Offset="0.5" Color="#2C77B8" />
+        <GradientStop Offset="1" Color="#1C63A6" />
     </LinearGradientBrush>
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.Foreground" Color="#FFFFFF" />
     <LinearGradientBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverBackground" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Offset="0" Color="#5EA6DE" />
-        <GradientStop Offset="0.5" Color="#3A85C8" />
-        <GradientStop Offset="0.5" Color="#2870B4" />
-        <GradientStop Offset="1" Color="#1E609E" />
+        <GradientStop Offset="0" Color="#52A0D9" />
+        <GradientStop Offset="0.5" Color="#3A87C9" />
+        <GradientStop Offset="1" Color="#256FB4" />
     </LinearGradientBrush>
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverUnderline" Color="Transparent" />
+    <!-- Thin blue edge around the File button. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.Border" Color="#17578F" />
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonBorderThickness">1</Thickness>
 
     <system:Double x:Key="RibbonKit.Metrics.GroupsRowHeight">104</system:Double>
 

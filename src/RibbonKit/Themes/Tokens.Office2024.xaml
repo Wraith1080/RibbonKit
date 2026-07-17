@@ -20,6 +20,11 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.PressedBackground" Color="#DADADA" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CheckedBackground" Color="#CDE0F3" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CheckedHoverBackground" Color="#BDD5EC" />
+    <!-- No highlight border (Office 2010 uses a gold one; other themes don't). -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.HoverBorder" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.PressedBorder" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CheckedBorder" Color="Transparent" />
+    <Thickness x:Key="RibbonKit.Metrics.ControlHighlightBorderThickness">0</Thickness>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ContextualBackground" Color="#E4F0FB" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ContextualHoverBackground" Color="#D5E7F7" />
     <!-- Tab strip. Office 2024 uses UNDERLINES: the hover/selected FILLS are Transparent,
@@ -56,6 +61,15 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemHoverBackground" Color="#2B7FC7" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemSelectedBackground" Color="#0A5799" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ContentBackground" Color="#FFFFFF" />
+    <!-- Classic2010 selected-item glass marker + dialog primary (OK) button fill. Non-2010
+         themes keep a flat accent OK button (only the 2010 theme swaps in a glass gel). -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Backstage.ItemSelectedGlass" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#3E9AD8" />
+        <GradientStop Offset="0.5" Color="#1A7BC4" />
+        <GradientStop Offset="1" Color="#0C5DA6" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Dialog.PrimaryBackground" Color="#0F6CBD" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Dialog.PrimaryBorder" Color="#0F6CBD" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.HoverBackground" Color="#E5E5E5" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.PressedBackground" Color="#D6D6D6" />
     <!-- Safety-net defaults for the QAT-on-colored-band hover/pressed wash. The Ribbon
@@ -82,6 +96,9 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.Foreground" Color="#1A1A1A" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverBackground" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverUnderline" Color="#B8B8B8" />
+    <!-- No File-button border (Office 2010 uses one). -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.Border" Color="Transparent" />
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonBorderThickness">0</Thickness>
 
     <system:Double x:Key="RibbonKit.Metrics.GroupsRowHeight">104</system:Double>
 

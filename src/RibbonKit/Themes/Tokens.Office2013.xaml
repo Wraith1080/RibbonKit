@@ -21,6 +21,11 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.PressedBackground" Color="#D0E0F5" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CheckedBackground" Color="#D4E4F7" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CheckedHoverBackground" Color="#C4D8F0" />
+    <!-- No highlight border (Office 2010 uses a gold one; other themes don't). -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.HoverBorder" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.PressedBorder" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CheckedBorder" Color="Transparent" />
+    <Thickness x:Key="RibbonKit.Metrics.ControlHighlightBorderThickness">0</Thickness>
     <!-- Flat theme: fills, not underlines. Tabs on the white strip: dark text, light-blue
          hover box, white connected active tab with an accent (blue) label. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ContextualBackground" Color="#E8EEF7" />
@@ -54,6 +59,14 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemHoverBackground" Color="#3D66A8" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemSelectedBackground" Color="#1F3F72" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ContentBackground" Color="#FFFFFF" />
+    <!-- Classic2010 selected-item glass marker + dialog primary (OK) button fill (flat accent). -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Backstage.ItemSelectedGlass" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#4E7CC0" />
+        <GradientStop Offset="0.5" Color="#33619E" />
+        <GradientStop Offset="1" Color="#234C86" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Dialog.PrimaryBackground" Color="#2B579A" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Dialog.PrimaryBorder" Color="#2B579A" />
     <!-- Caption buttons sit on the WHITE title bar: light-gray hover, dark glyphs. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.HoverBackground" Color="#E5E5E5" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.PressedBackground" Color="#D6D6D6" />
@@ -82,6 +95,9 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.Foreground" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverBackground" Color="#1F3F72" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverUnderline" Color="Transparent" />
+    <!-- No File-button border (Office 2010 uses one). -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.Border" Color="Transparent" />
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonBorderThickness">0</Thickness>
 
     <system:Double x:Key="RibbonKit.Metrics.GroupsRowHeight">104</system:Double>
 

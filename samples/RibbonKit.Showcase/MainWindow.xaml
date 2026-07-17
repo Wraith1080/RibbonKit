@@ -514,15 +514,27 @@
                 </rk:RibbonGroup>
                 <!-- Backstage design: modern (2024) light rail vs classic (2013) accent column -->
                 <rk:RibbonGroup Header="Backstage" rk:Ribbon.CommandId="group.view.backstage" Icon="{StaticResource Icon.Backstage}">
-                    <rk:RibbonToggleButton Header="Modern Backstage"
-                                           Size="Large"
-                                           IsChecked="True"
-                                           LargeIcon="{StaticResource Icon.Backstage}"
-                                           Icon="{StaticResource Icon.Backstage}"
-                                           Checked="OnToggleBackstageDesign"
-                                           Unchecked="OnToggleBackstageDesign"
-                                           ScreenTipTitle="Modern backstage (Office 2024)"
-                                           ScreenTipText="Toggle between the modern 2024 light rail and the classic 2013 accent column. Open the File menu to see it." />
+                    <rk:RibbonButton Header="2013 Rail"
+                                     Tag="Classic"
+                                     Size="Medium"
+                                     Icon="{StaticResource Icon.Backstage}"
+                                     Click="OnSelectBackstageDesign"
+                                     ScreenTipTitle="Classic backstage (Office 2013)"
+                                     ScreenTipText="Solid accent nav column with white text (flat selected fill)." />
+                    <rk:RibbonButton Header="2024 Rail"
+                                     Tag="Modern"
+                                     Size="Medium"
+                                     Icon="{StaticResource Icon.Backstage}"
+                                     Click="OnSelectBackstageDesign"
+                                     ScreenTipTitle="Modern backstage (Office 2024)"
+                                     ScreenTipText="Light rail with dark text and an accent selection bar." />
+                    <rk:RibbonButton Header="2010 Glass"
+                                     Tag="Classic2010"
+                                     Size="Medium"
+                                     Icon="{StaticResource Icon.Backstage}"
+                                     Click="OnSelectBackstageDesign"
+                                     ScreenTipTitle="Office 2010 backstage"
+                                     ScreenTipText="Blue accent nav with a glossy blue glass marker on the selected item and white text." />
                     <rk:RibbonToggleButton Header="Mica"
                                            Size="Large"
                                            LargeIcon="{StaticResource Icon.Mica}"
@@ -531,6 +543,14 @@
                                            Unchecked="OnToggleMica"
                                            ScreenTipTitle="Mica backdrop (Windows 11)"
                                            ScreenTipText="Apply the Windows 11 Mica material behind the window and the backstage. Requires Windows 11 22H2+." />
+                    <rk:RibbonToggleButton Header="Translucent Backstage"
+                                           Size="Large"
+                                           LargeIcon="{StaticResource Icon.Mica}"
+                                           Icon="{StaticResource Icon.Mica}"
+                                           Checked="OnToggleBackstageTranslucent"
+                                           Unchecked="OnToggleBackstageTranslucent"
+                                           ScreenTipTitle="Translucent backstage"
+                                           ScreenTipText="Make the backstage a frosted-acrylic panel: it turns semi-transparent and strongly blurs whatever is behind it. Open the File menu to see it." />
                 </rk:RibbonGroup>
                 <rk:RibbonGroup Header="Application" rk:Ribbon.CommandId="group.view.application" Icon="{StaticResource Icon.Gear}">
                     <rk:RibbonButton Header="Options"
