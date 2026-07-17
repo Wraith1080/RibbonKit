@@ -46,6 +46,8 @@
     <system:Double x:Key="RibbonKit.Metrics.ContextualUnderlineHeight">0</system:Double>
     <system:Double x:Key="RibbonKit.Metrics.ContextualUnselectedOpacity">1</system:Double>
     <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonMargin">8,4,2,0</Thickness>
+    <!-- Wider File tab than the 2024 default (a broader tab-like block). -->
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonPadding">20,7,20,9</Thickness>
     <!-- Top inset of the tab headers (matches the File button's top). -->
     <Thickness x:Key="RibbonKit.Metrics.TabStripMargin">2,4,4,0</Thickness>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Group.Separator" Color="#C8C6C4" />

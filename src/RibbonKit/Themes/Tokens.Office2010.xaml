@@ -35,24 +35,35 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Secondary" Color="#5C6B7F" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Accent" Color="#1E5A9C" />
 
-    <!-- The iconic Office 2007/2010 amber highlight: a warm gold gradient on hover, a
-         deeper gold on press, and a gold toggled fill. These read as glossy "hot"
-         states against the cool blue chrome. -->
+    <!-- The iconic Office 2007/2010 amber highlight, as a glossy "gel": a bright top
+         highlight, then a HARD crease at the midpoint (two stops at 0.5) that splits the
+         button into a light upper half and a richer lower half — the Aero glass look. Hover
+         glows, pressed reads recessed (darker at the top), and the toggled fills are gold. -->
     <LinearGradientBrush x:Key="RibbonKit.Brushes.Control.HoverBackground" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Offset="0" Color="#FFF8D8" />
-        <GradientStop Offset="1" Color="#FFDF8C" />
+        <GradientStop Offset="0" Color="#FFFDF0" />
+        <GradientStop Offset="0.5" Color="#FFEFB0" />
+        <GradientStop Offset="0.5" Color="#FFE187" />
+        <GradientStop Offset="1" Color="#FFD866" />
     </LinearGradientBrush>
+    <!-- Pressed: darker overall and inverted (deeper at the top) so the button reads pushed in. -->
     <LinearGradientBrush x:Key="RibbonKit.Brushes.Control.PressedBackground" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Offset="0" Color="#FFDF8F" />
-        <GradientStop Offset="1" Color="#FCC85B" />
+        <GradientStop Offset="0" Color="#F0B437" />
+        <GradientStop Offset="0.5" Color="#F8C452" />
+        <GradientStop Offset="0.5" Color="#FBD068" />
+        <GradientStop Offset="1" Color="#FEDE8A" />
     </LinearGradientBrush>
+    <!-- Toggled (checked): a richer gold gel that stays visibly "on". -->
     <LinearGradientBrush x:Key="RibbonKit.Brushes.Control.CheckedBackground" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Offset="0" Color="#FFE49E" />
-        <GradientStop Offset="1" Color="#FFCF6E" />
+        <GradientStop Offset="0" Color="#FFF3C4" />
+        <GradientStop Offset="0.5" Color="#FFE097" />
+        <GradientStop Offset="0.5" Color="#FFD173" />
+        <GradientStop Offset="1" Color="#FFC556" />
     </LinearGradientBrush>
     <LinearGradientBrush x:Key="RibbonKit.Brushes.Control.CheckedHoverBackground" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Offset="0" Color="#FFDA85" />
-        <GradientStop Offset="1" Color="#FFC556" />
+        <GradientStop Offset="0" Color="#FFF7D2" />
+        <GradientStop Offset="0.5" Color="#FFE7A2" />
+        <GradientStop Offset="0.5" Color="#FFD980" />
+        <GradientStop Offset="1" Color="#FFCD64" />
     </LinearGradientBrush>
 
     <!-- Contextual-tab band tint (a light blue wash; the per-tab ContextualColor overrides it). -->
@@ -75,10 +86,12 @@
     </LinearGradientBrush>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverUnderline" Color="Transparent" />
     <!-- The active tab is a light "connected" tab that merges into the ribbon body top,
-         outlined on top and sides so it reads as one piece with the body below. -->
+         outlined on top and sides so it reads as one piece with the body below. Its bottom
+         stop is the body's own top color (#F6F9FC) so the 1px overlap (TabStripMargin bottom
+         = -1) hides the body's top border seamlessly under the tab. -->
     <LinearGradientBrush x:Key="RibbonKit.Brushes.Tab.SelectedBackground" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Offset="0" Color="#FBFDFF" />
-        <GradientStop Offset="1" Color="#EAF2FB" />
+        <GradientStop Offset="0" Color="#FCFDFF" />
+        <GradientStop Offset="1" Color="#F6F9FC" />
     </LinearGradientBrush>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedUnderline" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedForeground" Color="#15428B" />
@@ -91,7 +104,14 @@
     <system:Double x:Key="RibbonKit.Metrics.ContextualUnselectedOpacity">1</system:Double>
     <!-- The File button is a tab-row button (small inset), aligned with the tab tops. -->
     <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonMargin">2,2,2,0</Thickness>
-    <Thickness x:Key="RibbonKit.Metrics.TabStripMargin">2,2,4,0</Thickness>
+    <!-- Wider than the 2024 default so the blue File tab reads as a broad block. -->
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonPadding">22,7,22,9</Thickness>
+    <!-- Bottom = -1: the tab strip drops 1px so the SELECTED tab overlaps the ribbon body's
+         top border. Its fill then covers that 1px line (connecting the tab into the body),
+         while unselected transparent tabs leave the border showing — the classic connected
+         active tab. (The selected fill's bottom stop matches the body's top color, below,
+         so the merge is seamless.) -->
+    <Thickness x:Key="RibbonKit.Metrics.TabStripMargin">2,2,4,-1</Thickness>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Group.Separator" Color="#B9C8DC" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.Background" Color="#FBFDFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.Border" Color="#8DA5C4" />
@@ -127,17 +147,21 @@
     </LinearGradientBrush>
     <SolidColorBrush x:Key="RibbonKit.Brushes.TitleBar.Foreground" Color="#1E1E1E" />
 
-    <!-- Office 2010 File button: a solid blue gradient block with white text (a brighter
-         blue gradient on hover, no underline). A custom accent re-tints it (see
-         ThemeManager's Office2010 case). -->
+    <!-- Office 2010 File button: a glossy blue "gel" block with white text — a bright top
+         highlight, a hard crease at the midpoint, and a deeper blue body (brighter gel on
+         hover), no underline. A custom accent re-tints it (see ThemeManager's Office2010 case). -->
     <LinearGradientBrush x:Key="RibbonKit.Brushes.ApplicationButton.Background" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Offset="0" Color="#2C74B3" />
-        <GradientStop Offset="1" Color="#1A5490" />
+        <GradientStop Offset="0" Color="#4A93CE" />
+        <GradientStop Offset="0.5" Color="#2A72B4" />
+        <GradientStop Offset="0.5" Color="#1B5D9E" />
+        <GradientStop Offset="1" Color="#134E88" />
     </LinearGradientBrush>
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.Foreground" Color="#FFFFFF" />
     <LinearGradientBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverBackground" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Offset="0" Color="#3D86C6" />
-        <GradientStop Offset="1" Color="#23649E" />
+        <GradientStop Offset="0" Color="#5EA6DE" />
+        <GradientStop Offset="0.5" Color="#3A85C8" />
+        <GradientStop Offset="0.5" Color="#2870B4" />
+        <GradientStop Offset="1" Color="#1E609E" />
     </LinearGradientBrush>
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverUnderline" Color="Transparent" />
 

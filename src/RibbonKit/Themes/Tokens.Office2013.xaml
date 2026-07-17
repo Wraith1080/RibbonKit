@@ -42,6 +42,8 @@
     <system:Double x:Key="RibbonKit.Metrics.ContextualUnselectedOpacity">1</system:Double>
     <!-- The File button hits the window's left edge, flush and full-height. -->
     <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonMargin">0</Thickness>
+    <!-- Wide solid accent block — the prominent 2013 File button. -->
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonPadding">24,7,24,9</Thickness>
     <!-- Tabs sit flush to the top (no top inset) so they line up with the full-height
          File button and meet the title bar's lower edge — the colored title bar then
          connects straight into the tab row. -->

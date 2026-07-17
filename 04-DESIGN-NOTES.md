@@ -1324,6 +1324,27 @@ no custom accent is set (the default), the theme's own blue gradient File button
 fills show. The Colored-Title-Bar toggle uses the generic (non-2019) branch: an accent title bar with
 white caption text; the gradient strip below stays (2019's strip-coloring special-case doesn't apply).
 
+**Post-feedback refinements (first visual pass on Windows):**
+
+- **Glass "gel" gradients.** The first gradients read flat (2-stop, low contrast). The button-state
+  tokens (`Control.HoverBackground`/`PressedBackground`/`CheckedBackground`/`CheckedHoverBackground`) and
+  the File-button tokens (`ApplicationButton.Background`/`HoverBackground`) are now 4-stop Aero gels: a
+  bright top highlight, a **hard crease at the midpoint** (two `GradientStop`s at the same `Offset="0.5"`,
+  giving an instant color step — the glossy split), then a richer lower half. Pressed inverts (darker at
+  top = recessed). The washes already bound these keys (`HoverWash`/`PressWash`/`CheckWash` Backgrounds),
+  so this was a pure token change.
+- **Connected active tab.** The tab strip (`Grid.Row=0`) and body (`Grid.Row=1`) are stacked with no
+  overlap, so the body's 1px top border drew an unbroken line under the selected tab. Fixed token-only:
+  2010's `TabStripMargin` bottom is `-1`, dropping the strip 1px so the selected tab overlaps the body's
+  top border; the selected fill (`Tab.SelectedBackground`, bottom stop = the body's top color `#F6F9FC`)
+  covers that 1px line seamlessly, while unselected (transparent) tabs leave it showing. The tab's
+  top+side border (`SelectedBorderBrush`, `TabSelectedBorderThickness=1,1,1,0`) meets the body border at
+  the corners — the "cut into the body" outline.
+- **File-button width is now a token.** The width was hardcoded `Padding="14,7,14,9"` on the File button's
+  `Chrome` in the shared template. Tokenized as `RibbonKit.Metrics.ApplicationButtonPadding` (one template
+  edit) and added to ALL four theme files (66 keys each now): 2024 keeps `14,7,14,9`; 2019 `20,7,20,9`,
+  2010 `22,7,22,9`, 2013 `24,7,24,9` (the pre-2024 File tabs read as broader blocks).
+
 Still unbuilt in the sandbox (WPF needs Windows) — pending the user's visual check on Windows.
 
 ## 4. Workflow / Session Conventions

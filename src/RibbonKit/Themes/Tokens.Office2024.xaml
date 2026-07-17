@@ -44,6 +44,9 @@
     <system:Double x:Key="RibbonKit.Metrics.ContextualUnselectedOpacity">0.6</system:Double>
     <!-- Small gap before the File button. -->
     <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonMargin">8,4,2,0</Thickness>
+    <!-- Inner padding of the File button (drives its width). 2024 keeps the compact default;
+         the pre-2024 themes widen it (their File tab reads as a broader block). -->
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonPadding">14,7,14,9</Thickness>
     <!-- Top inset of the tab headers. Matches the File button's top so the two align;
          a theme can drop the top to 0 to let the tabs meet the title bar. -->
     <Thickness x:Key="RibbonKit.Metrics.TabStripMargin">2,4,4,0</Thickness>

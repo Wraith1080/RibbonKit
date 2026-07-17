@@ -232,7 +232,7 @@
                                                         <Border x:Name="Chrome"
                                                                 Background="{DynamicResource RibbonKit.Brushes.ApplicationButton.Background}"
                                                                 CornerRadius="{DynamicResource RibbonKit.Metrics.TabCornerRadius}"
-                                                                Padding="14,7,14,9"
+                                                                Padding="{DynamicResource RibbonKit.Metrics.ApplicationButtonPadding}"
                                                                 SnapsToDevicePixels="True">
                                                             <ContentPresenter HorizontalAlignment="Center"
                                                                               VerticalAlignment="Center" />
