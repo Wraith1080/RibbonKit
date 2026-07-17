@@ -275,9 +275,11 @@ public static class ThemeManager
             StartPoint = new Point(0, 0),
             EndPoint = new Point(0, 1),
         };
-        brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.White, 0.34), 0.0));
-        brush.GradientStops.Add(new GradientStop(baseColor, 0.5));
-        brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.Black, 0.18), 1.0));
+        // Light top (inner glow), a slightly darker matte middle, then a LIGHTER bottom — the
+        // small specular reflection of a 2010 glass button.
+        brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.White, 0.38), 0.0));
+        brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.Black, 0.10), 0.5));
+        brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.White, 0.20), 1.0));
         brush.Freeze();
         return brush;
     }

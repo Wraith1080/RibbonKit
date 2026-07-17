@@ -1389,6 +1389,38 @@ binds them): a glossy blue gel in Office 2010, a flat accent elsewhere — both 
 through `ThemeManager` (the shared branch sets flat accent; the Office2010 case swaps in `Gel(accent)`).
 All four theme files carry the 3 new keys (75 keys each).
 
+**Third feedback pass (reference: a real 2010 glass button):**
+
+- **Tab connect (the real fix).** The round-2 `-1` tab overlap never showed because the ribbon body
+  (`ContentHost`, declared after the tab strip) painted OVER the tabs. Fixed two ways: the tab-strip
+  row grid gets `Panel.ZIndex="1"` (paints above the body), and 2010's overlap moved from the tab
+  strip to the body — `ContentMargin`/`ContentMarginQatBelow` top is now `-1`, so the body slides up
+  1px UNDER the tabs (moving the body, not the tabs, avoids the tab scroll-host clipping the overlap).
+  The higher-z selected tab's fill then covers the body's top border → connected.
+- **Tab hover border.** Tabs now get the gold hover border like buttons (hover trigger sets
+  `HeaderChrome` `BorderBrush`=`Control.HoverBorder` + `BorderThickness`=`ControlHighlightBorderThickness`;
+  Transparent/0 in other themes). A selected+hovered tab keeps its connected border (selected trigger
+  wins, later in the template).
+- **Glass rebuilt to match the reference (inner rim + specular).** The reference 2010 button has an
+  inner light rim and a small specular reflection low on the button. Two changes: (1) every 2010 glass
+  gradient is now a smooth "valley" — light top (top inner glow), matte darker middle, then a LIGHTER
+  bottom (the specular) — no hard crease; (2) a new `Control.InnerGlow` token (semi-white `#88FFFFFF`
+  in 2010, Transparent elsewhere) draws a nested inner border, inset by the outer border, on the
+  button/toggle washes and the File/OK chrome. `ThemeManager.Gel()` was updated to the same profile so
+  accent-derived gels match. (76 keys/theme file now.)
+- **2010 backstage nav reworked (Classic2010).** Per feedback: the nav column is the ribbon's blue
+  GRADIENT (`Ribbon.Background`, not a solid accent); item text is DARK, turning white only when
+  selected; the selected item is a glossy accent glass box (`ItemSelectedGlass`) WITH a border
+  (`ApplicationButton.Border`). Hover is a subtle light wash so the dark text stays legible.
+
+**STILL PENDING (fast follow-up) — propagate the glass to dropdown / split / combo / menu items.**
+Those controls (`RibbonDropDownButton`, `RibbonSplitButton`, `RibbonComboBox` + `ComboBoxItem`,
+`RibbonMenuItem`) render hover/press by swapping a `Chrome` border's `Background` only — no border. The
+fix is mechanical (add `BorderBrush`=`Control.{Hover,Pressed}Border` + `BorderThickness`=
+`ControlHighlightBorderThickness` at each hover/press trigger, ~12 sites, all token-based so they inherit
+the confirmed recipe). Deliberately deferred so the glass recipe is confirmed on the prominent buttons
+first rather than stamped across all sites blind.
+
 Still unbuilt in the sandbox (WPF needs Windows) — pending the user's visual check on Windows.
 
 ## 4. Workflow / Session Conventions

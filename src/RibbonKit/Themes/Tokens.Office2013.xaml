@@ -25,6 +25,7 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.HoverBorder" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.PressedBorder" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CheckedBorder" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.InnerGlow" Color="Transparent" />
     <Thickness x:Key="RibbonKit.Metrics.ControlHighlightBorderThickness">0</Thickness>
     <!-- Flat theme: fills, not underlines. Tabs on the white strip: dark text, light-blue
          hover box, white connected active tab with an accent (blue) label. -->

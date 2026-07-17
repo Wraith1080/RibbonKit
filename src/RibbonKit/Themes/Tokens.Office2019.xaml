@@ -26,6 +26,7 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.HoverBorder" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.PressedBorder" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CheckedBorder" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.InnerGlow" Color="Transparent" />
     <Thickness x:Key="RibbonKit.Metrics.ControlHighlightBorderThickness">0</Thickness>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ContextualBackground" Color="#3D66A8" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ContextualHoverBackground" Color="#4E74B4" />
