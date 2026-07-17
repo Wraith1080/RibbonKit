@@ -28,13 +28,36 @@ refers to every control by **string type name** (never `typeof`); all edits go t
 The new designer finds extensions by the **`*.designtools.dll`** name in a **`Design`** subfolder
 next to the control assembly. The csproj `DeployToDesignFolder` target copies the built dll into
 `src/RibbonKit/bin/<Config>/net{8,9}.0-windows/Design/`. For the NuGet package it belongs at
-`lib/<tfm>/Design/` (packaging not wired yet).
+`lib/<tfm>/Design/` — **now wired** (see "NuGet packaging" below).
 
 ## Setup
 
 ```
 dotnet sln add src/RibbonKit.Design/RibbonKit.Design.csproj
 ```
+
+## NuGet packaging (wired)
+
+`RibbonKit.csproj` bundles the design tools into the package automatically:
+
+```
+dotnet pack src/RibbonKit/RibbonKit.csproj -c Release
+```
+
+produces `RibbonKit.<version>.nupkg` containing:
+
+- `lib/net8.0-windows/RibbonKit.dll`, `lib/net9.0-windows/RibbonKit.dll` — the runtime control library.
+- `lib/net8.0-windows/Design/RibbonKit.DesignTools.dll` and the net9 equivalent — the design assembly,
+  in the `Design` subfolder where the new XAML designer discovers it.
+- `tools/VisualStudioToolsManifest.xml` — the Toolbox allowlist.
+
+How it's wired in `RibbonKit.csproj`: a build-only `ProjectReference` to `RibbonKit.Design`
+(`ReferenceOutputAssembly=false`, `SkipGetTargetFrameworkProperties=true`, so RibbonKit builds the
+net472 design dll but never references it at runtime), plus a `TargetsForTfmSpecificContentInPackage`
+target (`_AddDesignToolsToPackage`) that copies `RibbonKit.DesignTools.dll` into `lib/<tfm>/Design/`
+for every target framework. A consumer who installs the RibbonKit package therefore gets the toolbox
+items and the right-click design-time editor with no extra steps. (Set a real `RepositoryUrl` in the
+csproj before publishing — it still has the `YOUR-GITHUB-USERNAME` placeholder.)
 
 Build `RibbonKit.Design`, then **close and reopen the XAML designer** (it caches design assemblies;
 an in-place rebuild won't reload).
@@ -190,4 +213,5 @@ visuals. The context-menu verbs are the delivery surface for these actions. (See
 - `DesignModeValueProvider`-based design-only preview toggles (the one avenue left for a togglable
   tab/backstage preview — design-time *values* render, unlike adorner overlays).
 - `ParentAdapter` (valid-drop rules); design-time "Add to QAT" (QAT items are runtime proxies, not
-  plain XAML); NuGet packaging (`lib/<tfm>/Design/` dll + the toolbox manifest going live).
+  plain XAML). (NuGet packaging of the `lib/<tfm>/Design/` dll + toolbox manifest is now DONE — see
+  "NuGet packaging (wired)" above.)

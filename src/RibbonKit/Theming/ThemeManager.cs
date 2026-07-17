@@ -49,6 +49,7 @@ public static class ThemeManager
     private const string SelectedForegroundKey = "RibbonKit.Brushes.Tab.SelectedForeground";
     private const string AppButtonBackgroundKey = "RibbonKit.Brushes.ApplicationButton.Background";
     private const string AppButtonHoverKey = "RibbonKit.Brushes.ApplicationButton.HoverBackground";
+    private const string AppButtonPressedKey = "RibbonKit.Brushes.ApplicationButton.PressedBackground";
     private const string AppButtonBorderKey = "RibbonKit.Brushes.ApplicationButton.Border";
     private const string BackstageSelectedGlassKey = "RibbonKit.Brushes.Backstage.ItemSelectedGlass";
     private const string DialogPrimaryBackgroundKey = "RibbonKit.Brushes.Dialog.PrimaryBackground";
@@ -72,7 +73,8 @@ public static class ThemeManager
     {
         AccentKey, CheckedKey, CheckedHoverKey, BackstageHoverKey, BackstageSelectedKey,
         SelectedUnderlineKey, SelectedForegroundKey, AppButtonBackgroundKey, AppButtonHoverKey,
-        AppButtonBorderKey, BackstageSelectedGlassKey, DialogPrimaryBackgroundKey, DialogPrimaryBorderKey,
+        AppButtonPressedKey, AppButtonBorderKey, BackstageSelectedGlassKey, DialogPrimaryBackgroundKey,
+        DialogPrimaryBorderKey,
     };
 
     private static readonly Color DefaultAccent = Color.FromRgb(0x0F, 0x6C, 0xBD);
@@ -247,6 +249,7 @@ public static class ThemeManager
                 resources[SelectedForegroundKey] = Frozen(accent);
                 resources[AppButtonBackgroundKey] = Frozen(accent);
                 resources[AppButtonHoverKey] = Frozen(Mix(accent, Colors.Black, 0.22));
+                resources[AppButtonPressedKey] = Frozen(Mix(accent, Colors.Black, 0.38));
                 break;
             case RibbonTheme.Office2010:
                 // The File button tracks the accent — but as a GRADIENT (a smooth blue-style
@@ -255,6 +258,7 @@ public static class ThemeManager
                 // its dark label (SelectedForeground left at the theme default).
                 resources[AppButtonBackgroundKey] = Gel(accent);
                 resources[AppButtonHoverKey] = Gel(Mix(accent, Colors.White, 0.18));
+                resources[AppButtonPressedKey] = Gel(Mix(accent, Colors.Black, 0.22));
                 resources[AppButtonBorderKey] = Frozen(Mix(accent, Colors.Black, 0.30));
                 // The OK button borrows the same glass gel + border in 2010.
                 resources[DialogPrimaryBackgroundKey] = Gel(accent);

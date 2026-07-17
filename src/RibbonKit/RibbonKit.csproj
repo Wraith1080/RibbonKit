@@ -28,4 +28,37 @@
     <None Include="tools\VisualStudioToolsManifest.xml" Pack="true" PackagePath="tools\" />
   </ItemGroup>
 
+  <!-- Build the design-tools assembly (RibbonKit.DesignTools.dll, net472) alongside RibbonKit so
+       `dotnet pack` can bundle it. ReferenceOutputAssembly=false: the XAML designer loads it
+       in-process and isolated, so RibbonKit must NOT reference it at runtime. SkipGetTargetFramework
+       Properties=true avoids a net472-vs-net8/9 TFM-compatibility error on this build-only reference. -->
+  <ItemGroup>
+    <ProjectReference Include="..\RibbonKit.Design\RibbonKit.Design.csproj"
+                      ReferenceOutputAssembly="false"
+                      SkipGetTargetFrameworkProperties="true"
+                      PrivateAssets="all"
+                      Private="false" />
+  </ItemGroup>
+
+  <!-- Pack the design-tools assembly into lib/<tfm>/Design/ for EACH target framework, where the
+       new WPF XAML designer discovers it (a *.designtools.dll in a "Design" subfolder next to
+       RibbonKit.dll). Combined with tools/VisualStudioToolsManifest.xml, a consumer installing the
+       RibbonKit NuGet package gets the toolbox items and the right-click design-time editor. -->
+  <PropertyGroup>
+    <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);_AddDesignToolsToPackage</TargetsForTfmSpecificContentInPackage>
+  </PropertyGroup>
+
+  <Target Name="_AddDesignToolsToPackage">
+    <PropertyGroup>
+      <_DesignToolsDll>$(MSBuildThisFileDirectory)..\RibbonKit.Design\bin\$(Configuration)\net472\RibbonKit.DesignTools.dll</_DesignToolsDll>
+    </PropertyGroup>
+    <Error Condition="!Exists('$(_DesignToolsDll)')"
+           Text="RibbonKit.DesignTools.dll not found at $(_DesignToolsDll). Build RibbonKit.Design (or pack the whole solution) so the design tools can be bundled." />
+    <ItemGroup>
+      <TfmSpecificPackageFile Include="$(_DesignToolsDll)">
+        <PackagePath>lib\$(TargetFramework)\Design\RibbonKit.DesignTools.dll</PackagePath>
+      </TfmSpecificPackageFile>
+    </ItemGroup>
+  </Target>
+
 </Project>

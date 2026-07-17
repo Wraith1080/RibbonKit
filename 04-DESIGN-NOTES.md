@@ -1421,6 +1421,86 @@ fix is mechanical (add `BorderBrush`=`Control.{Hover,Pressed}Border` + `BorderTh
 the confirmed recipe). Deliberately deferred so the glass recipe is confirmed on the prominent buttons
 first rather than stamped across all sites blind.
 
+**Fourth feedback pass ("almost there"):**
+
+- **Tab connect now applies on theme switch (root cause found).** The connect (themed negative body
+  margin + tab-strip `ZIndex`) is correct, but it only re-PAINTED after a layout pass — and the user's
+  clue ("it merges when I hover another tab") pinpointed why: the round-5 tab hover border changes a
+  tab's size, forcing the re-arrange that reveals the overlap. On a theme switch nothing did. Fix:
+  `Ribbon.OnThemeConfigurationChanged` now calls `InvalidateArrange()` + `UpdateLayout()` on the tab
+  control after the swap, so the active tab merges immediately.
+- **Glass propagated to the held-back controls.** The gold glass border (`Control.{Hover,Pressed,
+  Checked}Border` + `ControlHighlightBorderThickness`) is now applied at the hover/press/checked/selected
+  triggers of `RibbonDropDownButton`, `RibbonSplitButton` (primary + chevron), the collapsed-group
+  button, the gallery scroll buttons, `RibbonMenuItem`, `ComboBoxItem`, and the options-dialog nav
+  (`RibbonOptionsPage`) + its reorder buttons. All reuse the same tokens, so they inherit the confirmed
+  recipe (the specular fill was already there via `Control.*Background`). NOTE: the inner-glow *rim* is
+  still only on the wash-based main buttons + File/OK; these Chrome-based controls get the gradient +
+  outer gold border (the border shows on hover via a trigger — a possible 1px content nudge on
+  left-aligned items like menu rows; reserve static border space if it reads as jitter).
+- **Application button mouse-down state.** Added an `IsPressed` trigger to the File button showing a
+  new `ApplicationButton.PressedBackground` (a deeper recessed blue gel in 2010, flat elsewhere,
+  accent-tracked for 2010/2013), so the click registers on press, not only when the backstage opens.
+- **Classic2010 nav hover border.** The 2010 backstage nav hover gained a hairline `#66FFFFFF` border
+  in addition to its light wash.
+
+**Fifth feedback pass — jitter + the REAL connect mechanism (user diagnosed it):**
+
+- **Root cause of both bugs was the trigger-based border.** Setting `BorderThickness` 0→1 on hover
+  changes content layout → the 1px "jitter" the user saw on every hover. AND that jitter is what was
+  accidentally connecting the active tab: hovering any tab re-arranged the strip, which dropped the
+  active tab 1px into the body. So the connect was never my body-overlap — it was the jitter.
+- **Jitter fix — reserve the border space.** Every glass hover `Chrome` now carries a STATIC
+  `BorderThickness="{DynamicResource ControlHighlightBorderThickness}"` (1 in 2010, 0 elsewhere) with
+  no brush at rest; the triggers only swap `BorderBrush`, so hovering never changes size. Applied
+  programmatically to exactly the 9 glass controls (dropdown, split ×2, collapsed button, gallery
+  scroll button, gallery expander, menu item, combo item, options-nav) — identified by their use of
+  `Control.HoverBackground` and the ABSENCE of a wash (wash-based buttons, caption buttons, and the
+  backstage nav item were correctly skipped). The tab's `HeaderChrome` got the same static thickness.
+- **Connect — do what actually works: drop the ACTIVE TAB, not the body.** Reverted the body-up
+  `ContentMargin -1`. New `TabSelectedMargin` token (`0,0,0,-1` in 2010, `0` elsewhere) is applied to
+  the selected `HeaderChrome`, so the active tab permanently extends 1px into the body; the tab-strip
+  `Panel.ZIndex="1"` paints it over the body's top border, and the selected fill (bottom stop = body
+  top color) hides the seam. This is the mechanism the user observed working via the jitter, now made
+  permanent and jitter-free. (78 keys/theme file.)
+
+Note: selecting a tab still changes its border from uniform to `1,1,1,0` (+ the -1 drop) — a 1px
+settle that rides the existing tab-switch slide animation, so it shouldn't read as jitter.
+
+**Sixth feedback pass:**
+
+- **Active tab extended to -2.** `TabSelectedMargin` (2010) is now `0,0,0,-2` so the tab fully overlaps
+  and hides the body's top border (the -1 still left a hairline).
+- **Backstage nav hover jitter fixed.** The `BackstageTabItem` `Chrome` was skipped by the earlier
+  reserve pass (it uses `Backstage.*` brushes, not `Control.HoverBackground`). Gave it a static
+  `BorderThickness="1"` so the Classic2010 hover/selected border triggers only swap the brush — no
+  jitter. (Invisible 1px inset in Classic/Modern, which have no nav border.)
+- **Glass back button (Classic2010).** The backstage back button becomes a filled blue "glass" disc
+  (`Dialog.PrimaryBackground` + `Dialog.PrimaryBorder`, same as the OK/File button, accent-tracked) with
+  a WHITE arrow, via a `controls:Backstage.Design == Classic2010` trigger (the outline-circle look stays
+  for Classic/Modern). Hover lightens the disc (white hover wash).
+
+**Seventh pass — back-button click, NuGet packaging, and a DEFERRED tab-connect bug:**
+
+- **Tab connect DEFERRED — `TabSelectedMargin` has NO effect at all.** The user reports setting it to
+  -1, -2, even -5 changes nothing; they reverted it to 0. So the selected `HeaderChrome` `Margin` setter
+  is not being applied (or is overridden / the tab is size-constrained so the margin doesn't move it).
+  Next session: investigate WHY the IsSelected trigger's `Margin` doesn't move the tab — candidates: the
+  `HeaderChrome` is stretched by its parent Grid so a bottom margin can't extend it; the tab is clipped
+  by `PART_TabScroll`; or the trigger is losing to another setter. A different connect approach may be
+  needed (e.g. a dedicated connector rectangle drawn over the seam, or restructuring the tab/body layout).
+  Bundle this with the Office 2007 theme and dark mode (all three are next-session work).
+- **Back button click.** The backstage back button gained an `IsPressed` trigger (a recessed dark wash,
+  last in the trigger list so it wins over hover and the Classic2010 white wash while held).
+- **NuGet packaging wired (library + designer tools).** `RibbonKit.csproj` now bundles the design
+  assembly: a build-only `ProjectReference` to `RibbonKit.Design` (`ReferenceOutputAssembly=false`,
+  `SkipGetTargetFrameworkProperties=true` — builds the net472 `RibbonKit.DesignTools.dll` without a
+  runtime reference) plus a `TargetsForTfmSpecificContentInPackage` target that packs it into
+  `lib/<tfm>/Design/` for each TFM. With the already-packed `tools/VisualStudioToolsManifest.xml`,
+  `dotnet pack src/RibbonKit/RibbonKit.csproj -c Release` yields a package that gives consumers the
+  toolbox items + right-click design-time editor. (RepositoryUrl still has the `YOUR-GITHUB-USERNAME`
+  placeholder — set it before publishing.) See `RibbonKit.Design/SETUP-DESIGNTOOLS.md` → "NuGet packaging".
+
 Still unbuilt in the sandbox (WPF needs Windows) — pending the user's visual check on Windows.
 
 ## 4. Workflow / Session Conventions

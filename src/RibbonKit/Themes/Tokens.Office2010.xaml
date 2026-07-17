@@ -106,6 +106,9 @@
     <!-- Connected-tab outline (top + sides) that cuts into the ribbon body. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedBorderBrush" Color="#8DA5C4" />
     <Thickness x:Key="RibbonKit.Metrics.TabSelectedBorderThickness">1,1,1,0</Thickness>
+    <!-- The selected tab drops 2px into the body so its fill fully overlaps (hides) the body's
+         top border and merges (with the tab-strip ZIndex painting it over). Other themes keep 0. -->
+    <Thickness x:Key="RibbonKit.Metrics.TabSelectedMargin">0,0,0,0</Thickness>
     <!-- Contextual tabs: like the other pre-2024 themes, only the header text is tinted
          (no selection underline, no mute) — selection stays the connected active tab. -->
     <system:Double x:Key="RibbonKit.Metrics.ContextualUnderlineHeight">0</system:Double>
@@ -177,6 +180,12 @@
         <GradientStop Offset="0.5" Color="#3382C2" />
         <GradientStop Offset="1" Color="#4E96CE" />
     </LinearGradientBrush>
+    <!-- Mouse-DOWN (pressed) glass: a deeper, recessed blue gel shown while the button is held. -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.ApplicationButton.PressedBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#2C71AC" />
+        <GradientStop Offset="0.5" Color="#175792" />
+        <GradientStop Offset="1" Color="#276CA4" />
+    </LinearGradientBrush>
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverUnderline" Color="Transparent" />
     <!-- Thin blue edge around the File button. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.Border" Color="#17578F" />
@@ -192,16 +201,14 @@
     <CornerRadius x:Key="RibbonKit.Metrics.SplitLeftCornerRadius">3,0,0,3</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.SplitRightCornerRadius">0,3,3,0</CornerRadius>
 
-    <!-- Ribbon body: a full outline connecting under the tab strip, square corners. The top
-         margin is -1 so the body slides up 1px UNDER the tab strip (which paints over it via
-         Panel.ZIndex): the selected tab's fill then covers the body's top border to connect
-         into it, while unselected (transparent) tabs leave that border showing. Moving the
-         BODY (not the tabs) avoids the tab scroll-host clipping the overlap. -->
+    <!-- Ribbon body: a full outline, square corners. The connect is done by moving the SELECTED
+         TAB down 1px into the body (TabSelectedMargin, below) — the mechanism that actually works
+         — rather than moving the body up, so ContentMargin stays at 0. -->
     <Thickness x:Key="RibbonKit.Metrics.ContentBorderThickness">1</Thickness>
-    <Thickness x:Key="RibbonKit.Metrics.ContentMargin">0,-1,0,0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.ContentMargin">0</Thickness>
     <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadius">0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadiusTop">0</CornerRadius>
-    <Thickness x:Key="RibbonKit.Metrics.ContentMarginQatBelow">0,-1,0,0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.ContentMarginQatBelow">0</Thickness>
 
     <!-- A faint shadow under the ribbon body, separating it from the document (2010's ribbon
          is connected to the chrome, so this is subtle — not the floating card of 2024). -->

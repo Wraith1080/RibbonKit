@@ -1016,6 +1016,16 @@ public class Ribbon : Control
         UpdateQatButtonContext();
         // Soften a theme/accent swap with a quick opacity settle on the ribbon strip.
         RibbonMotion.PlayThemeCrossfade(_ribbonTabControl, RibbonAnimationAction.ThemeSwitch);
+
+        // A theme whose selected tab connects into the body does so with a themed negative body
+        // margin (+ the tab strip's ZIndex). The margin token updates on the swap, but the overlap
+        // only re-PAINTS after a layout pass — otherwise the active tab stays unmerged until the
+        // next hover happens to re-arrange the strip. Force that pass now so it connects immediately.
+        if (_ribbonTabControl is { } tabControl)
+        {
+            tabControl.InvalidateArrange();
+            tabControl.UpdateLayout();
+        }
     }
 
     /// <summary>
