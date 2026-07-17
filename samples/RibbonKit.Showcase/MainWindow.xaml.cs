@@ -122,6 +122,9 @@ public partial class MainWindow : RibbonWindow
     private void OnApplyOffice2013(object sender, RoutedEventArgs e) =>
         ThemeManager.Apply(Application.Current, RibbonTheme.Office2013);
 
+    private void OnApplyOffice2010(object sender, RoutedEventArgs e) =>
+        ThemeManager.Apply(Application.Current, RibbonTheme.Office2010);
+
     private void OnToggleAccentTitleBar(object sender, RoutedEventArgs e) =>
         ThemeManager.SetAccentedTitleBar(Application.Current, (sender as RibbonToggleButton)?.IsChecked == true);
 

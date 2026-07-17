@@ -27,7 +27,7 @@ src/RibbonKit/
   Controls/        All lookless controls (Ribbon, tabs, buttons, galleries, backstage, KeyTips, QAT)
   Interop/         MicaHelper.cs (DWM system backdrop)
   Layout/          Adaptive sizing engine (RibbonGroupsPanel, ReductionAlgorithm, RibbonSizeDefinition)
-  Themes/          Generic.xaml, Office2024.xaml (ALL templates), Tokens.Office{2024,2019,2013}.xaml
+  Themes/          Generic.xaml, Office2024.xaml (ALL templates), Tokens.Office{2024,2019,2013,2010}.xaml
   Theming/         ThemeManager.cs
 samples/RibbonKit.Showcase/
 ```
@@ -40,9 +40,15 @@ samples/RibbonKit.Showcase/
   every theme. Templates never hardcode colors/metrics — they reference tokens via
   `DynamicResource` (`RibbonKit.Brushes.*`, `RibbonKit.Metrics.*`, `RibbonKit.Effects.*`).
 - **Per-theme values** live in `Tokens.Office2024.xaml`, `Tokens.Office2019.xaml`,
-  `Tokens.Office2013.xaml`. Same keys, different values. A theme "chooses" a visual
-  style by zeroing what it doesn't use (e.g. flat themes set underline brushes to
-  `Transparent`, corner radii to `0`, `ContextualUnderlineHeight` to `0`).
+  `Tokens.Office2013.xaml`, `Tokens.Office2010.xaml`. Same keys, different values. A theme
+  "chooses" a visual style by zeroing what it doesn't use (e.g. flat themes set underline
+  brushes to `Transparent`, corner radii to `0`, `ContextualUnderlineHeight` to `0`).
+- **A token value need not be a `SolidColorBrush`** — any `Brush` works, since templates bind
+  each brush key via `DynamicResource`. Office 2010 exploits this: its background/hover/File-button
+  tokens are `LinearGradientBrush`es (see §3.27). This is safe because nothing animates a token
+  brush's `Color` — every RibbonKit transition targets `UIElement.Opacity` (the hover/press/check
+  washes fade a layer's opacity; the theme-switch cross-fade dips the tab control's opacity), so a
+  gradient brush drops in wherever a solid one did.
 - The app merges one token dictionary into `Application.Resources` (App.xaml), and
   `ThemeManager.Apply` swaps it at runtime.
 
@@ -55,6 +61,10 @@ Theme identities:
   turn accent-colored with white text.
 - **Office2013** ("White"): fully flat/square, white strip, outlined active tab that
   cuts into the body, SOLID accent File button, tabs flush to the title bar.
+- **Office2010** ("Blue"): the first NON-flat theme — gradient silver-blue window/ribbon
+  chrome, dark-blue (`#15428B`) tab labels, the iconic amber/gold glossy highlight on
+  hovered/pressed/toggled controls, a connected (outlined) light active tab, a solid blue
+  gradient File button, and gently rounded (2-3px) corners. See §3.27.
 
 ### 2.2 ThemeManager (`Theming/ThemeManager.cs`)
 
@@ -498,6 +508,13 @@ New Group / Rename under the tree. Implements `IRibbonFillPage`.
 - **Command proxies reused from §3.15**: `CreateQuickAccessProxy` generalized to
   `Ribbon.CreateCommandProxy(source, size)` — Small for the QAT, Medium (icon + label) for
   custom groups. Same invoke/toggle-sync semantics.
+  - **Toggle proxy also raises the source's `Click`** (later fix): the toggle proxy's `IsChecked`
+    is two-way bound to the source, which fires the source's `Checked`/`Unchecked` — but a toggle
+    whose action is wired via `Click` (a valid pattern, e.g. the showcase's disable-samples toggle)
+    never ran when proxied, so the copy only mirrored the checked state. The proxy now also raises
+    `ButtonBase.ClickEvent` on the source, making a proxy click equivalent to a direct click.
+    `RaiseEvent` doesn't re-toggle `IsChecked` (the binding already did), so there's no double-toggle,
+    and it runs after the state has updated so the handler reads the new value.
 - **`RibbonCommandCatalog`** (new, internal): the command discovery/description helpers
   extracted from the QAT page so both pages agree — `CollectControls` (logical-tree walk,
   depth-capped, skips proxies to prevent proxy-of-proxy chains), `CollectAvailable`
@@ -1266,6 +1283,49 @@ styles that match the dropdown, in a **dedicated `Themes/Menus.xaml`** dictionar
   `menu.Resources[MenuItem.SeparatorStyleKey] = RibbonKit.MenuSeparator` — which every `MenuItem`
   (including submenu items) and `Separator` in the menu subtree resolves.
 
+### 3.27 Office 2010 ("Blue") theme — the first gradient theme
+
+A fourth token set, `Themes/Tokens.Office2010.xaml`, added as a pure token dictionary (no new
+templates — same 65 keys as the other themes, verified identical). Wired end-to-end: `RibbonTheme.Office2010`
+enum member, an `Office2010` case in `ThemeManager.ApplyAccentOverrides`, and an "Office 2010" button
+(+`OnApplyOffice2010`) in the showcase Theme group.
+
+**Why it's different from every prior theme:** 2010 is the first NON-flat look, and its identity is
+**gradients**. The three earlier themes use `SolidColorBrush` for every surface; 2010's chrome tokens
+are `LinearGradientBrush`es (vertical, `StartPoint="0,0" EndPoint="0,1"`):
+
+- **Silver-blue window/ribbon chrome** — `TitleBar.Background`, `Ribbon.Background` (tab strip band),
+  and `Ribbon.ContentBackground` (the groups area) are light blue-grey vertical gradients (lighter top,
+  darker bottom — the classic 2010 ribbon shading).
+- **Amber/gold glossy highlights** — the iconic 2007/2010 "hot" states: `Control.HoverBackground` is a
+  warm gold gradient, `PressedBackground` a deeper gold, `Checked*` a gold toggled fill. These read as
+  glossy warm accents against the cool blue chrome. Unselected **tab** hover gets a lighter amber glow.
+- **Dark-blue tab labels** (`TabStrip.Foreground`/`Tab.SelectedForeground` = `#15428B`).
+- **Connected (outlined) active tab** — reuses the 2013 mechanism: `Tab.SelectedBorderBrush` +
+  `TabSelectedBorderThickness=1,1,1,0`, with a light gradient fill that merges into the ribbon body top.
+  Underline tokens are `Transparent` (fills, not underlines).
+- **Solid blue gradient File button** — `ApplicationButton.Background` is a blue gradient with white text
+  (`Foreground=#FFFFFF`), a brighter blue gradient on hover. A tab-row button (small `ApplicationButtonMargin`),
+  not the full-height flush block of 2013.
+- **Gently rounded corners** (2-3px) — softer than the flat themes (0), subtler than 2024 (4-8px). A faint
+  ribbon-body shadow (`Opacity=0.12`) separates it from the document — not the floating card of 2024.
+
+**Key safety property (why gradients "just work"):** no code animates a token brush's `Color`. Every
+transition targets `UIElement.Opacity` — `RibbonMotion.FadeWash` fades a wash *layer*'s opacity (the wash
+layer's `Background` is the token brush, untouched), and `PlayThemeCrossfade` dips the tab control's
+opacity. So a `LinearGradientBrush` behind a wash/at a key is never cast to `SolidColorBrush` or fed to a
+`ColorAnimation`. (Confirmed by grep: `RibbonMotion.cs` only ever calls `BeginAnimation(UIElement.OpacityProperty, …)`.)
+
+**Accent handling:** `ApplyAccentOverrides`' `Office2010` case maps a custom accent onto the File
+button (`ApplicationButton.Background` + hover), like 2013 — a custom accent replaces the blue gradient
+with a solid accent block. `SelectedForeground` is intentionally *left* at the theme's dark blue (a
+custom accent doesn't tint the connected selected-tab label, which reads better on a light tab). When
+no custom accent is set (the default), the theme's own blue gradient File button and amber toggled
+fills show. The Colored-Title-Bar toggle uses the generic (non-2019) branch: an accent title bar with
+white caption text; the gradient strip below stays (2019's strip-coloring special-case doesn't apply).
+
+Still unbuilt in the sandbox (WPF needs Windows) — pending the user's visual check on Windows.
+
 ## 4. Workflow / Session Conventions
 
 - Cloud workspace: `/home/user/ribbonkit/`. The user's machine:
@@ -1337,6 +1397,8 @@ Backlog (rough priority):
    reordering + cross-tab/group moves are now DONE — see §5 "Drag-drop reordering".)
 3. Mica hardening (future): dark-mode-aware translucency. (Maximize-with-glass and the
    glass-frame border fix are verified — see §3.12.)
-4. Office2010 / Office2007 themes (roadmap Phase 6).
-5. Dark mode (2019 white-tab note in §3.6 anticipates it).
+4. Office2007 theme (roadmap Phase 6). **Office2010 is DONE — see §3.27.** 2007 is the last
+   remaining classic theme (round Office orb button + heavier glass gradients).
+5. Dark mode (2019 white-tab note in §3.6 anticipates it). **Still outstanding** — the last
+   item from this theming arc after 2010 and 2007.
 6. GitHub publish: repo URL placeholder in csproj (`YOUR-GITHUB-USERNAME`).

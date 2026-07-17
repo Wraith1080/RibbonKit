@@ -15,7 +15,14 @@ public enum RibbonTheme
     /// <summary>Office 2013 ("White"): flat, white tab strip, blue title bar, solid File button.</summary>
     Office2013,
 
-    // Office2010 and Office2007 arrive in later Phase 6 batches (see docs/03-ROADMAP.md).
+    /// <summary>
+    /// Office 2010 ("Blue"): the first non-flat theme — gradient silver-blue chrome, dark-blue
+    /// tab labels, amber/gold glossy button highlights, a connected (outlined) selected tab, and
+    /// a solid blue gradient File button.
+    /// </summary>
+    Office2010,
+
+    // Office2007 arrives in a later Phase 6 batch (see docs/03-ROADMAP.md).
 }
 
 /// <summary>
@@ -217,6 +224,14 @@ public static class ThemeManager
                 break;
             case RibbonTheme.Office2013:
                 resources[SelectedForegroundKey] = Frozen(accent);
+                resources[AppButtonBackgroundKey] = Frozen(accent);
+                resources[AppButtonHoverKey] = Frozen(Mix(accent, Colors.Black, 0.22));
+                break;
+            case RibbonTheme.Office2010:
+                // The solid blue File button tracks the accent (a custom accent replaces the
+                // theme's blue gradient with a solid accent block). The connected selected tab
+                // keeps its dark-blue label — it reads better than an accent-tinted label on a
+                // light tab — so SelectedForeground is intentionally left at the theme default.
                 resources[AppButtonBackgroundKey] = Frozen(accent);
                 resources[AppButtonHoverKey] = Frozen(Mix(accent, Colors.Black, 0.22));
                 break;

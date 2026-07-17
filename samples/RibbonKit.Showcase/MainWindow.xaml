@@ -426,6 +426,13 @@
                                      Click="OnApplyOffice2013"
                                      ScreenTipTitle="Office 2013 theme"
                                      ScreenTipText="Apply the Office 2013 White theme (flat, white strip, solid File button)." />
+                    <rk:RibbonButton Header="Office 2010"
+                                     LargeIcon="{StaticResource Icon.Palette}"
+                                     Icon="{StaticResource Icon.Palette}"
+                                     SizeDefinition="Large, Medium, Small"
+                                     Click="OnApplyOffice2010"
+                                     ScreenTipTitle="Office 2010 theme"
+                                     ScreenTipText="Apply the Office 2010 Blue theme (gradient silver-blue chrome, amber button highlights, solid blue File button)." />
                 </rk:RibbonGroup>
                 <!-- Accent customization: title-bar accent toggle + swappable accent color -->
                 <rk:RibbonGroup Header="Accent" rk:Ribbon.CommandId="group.view.accent" Icon="{StaticResource Icon.ColorDrop}">
