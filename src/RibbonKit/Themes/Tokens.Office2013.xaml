@@ -42,7 +42,12 @@
     <!-- Metro trait: the active tab is outlined (top + sides) and cuts into the ribbon body. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedBorderBrush" Color="#919191" />
     <Thickness x:Key="RibbonKit.Metrics.TabSelectedBorderThickness">1,1,1,0</Thickness>
+    <!-- Retained for token parity; the connect is now driven render-only by TabConnect (below),
+         not by a layout margin (a negative margin re-measured the strip and jittered on hover). -->
     <Thickness x:Key="RibbonKit.Metrics.TabSelectedMargin">0</Thickness>
+    <!-- Render-only connect: active/hovered tab painted 1px down into the body (tab-strip ZIndex
+         covers the body's top border) so it merges. RenderTransform = no re-measure, no jitter. -->
+    <TranslateTransform x:Key="RibbonKit.Transforms.TabConnect" Y="1" />
     <!-- Contextual tabs: this flat theme only tints the header text (no underline, no
          mute) — selection stays the outlined active tab. -->
     <system:Double x:Key="RibbonKit.Metrics.ContextualUnderlineHeight">0</system:Double>

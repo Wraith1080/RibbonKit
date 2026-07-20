@@ -98,6 +98,10 @@
         <Setter Property="FontSize" Value="12" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
         <Setter Property="UseLayoutRounding" Value="True" />
+        <!-- A ribbon sits at the TOP of its space and never stretches to fill. Without this, a
+             ribbon that becomes a DockPanel's last child (LastChildFill) or lands in a * Grid row
+             stretches vertically and the body drifts down. Consumers can still override. -->
+        <Setter Property="VerticalAlignment" Value="Top" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type controls:Ribbon}">
@@ -569,15 +573,26 @@
                                  is already reserved on HeaderChrome above, so hover never shifts the tab. -->
                             <Setter TargetName="HeaderChrome" Property="BorderBrush"
                                     Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
+                            <!-- Drop the hovered tab 1px into the body so its bottom edge connects
+                                 instead of floating, matching the active tab. RENDER-ONLY: a
+                                 RenderTransform (not Margin) so it never re-measures the TabPanel —
+                                 the negative Margin used here before shrank the tab's measured height,
+                                 which on hover re-arranged the whole strip and shoved the ribbon body
+                                 (2013) / active-tab text (2010). Identity transform in non-connecting
+                                 themes (2019/2024), so they're unaffected. -->
+                            <Setter TargetName="HeaderChrome" Property="RenderTransform"
+                                    Value="{DynamicResource RibbonKit.Transforms.TabConnect}" />
                             <Setter TargetName="HoverIndicator" Property="Visibility" Value="Visible" />
                         </Trigger>
                         <Trigger Property="IsSelected" Value="True">
                             <Setter TargetName="HeaderChrome" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Tab.SelectedBackground}" />
                             <!-- Drop the active tab 1px INTO the body (with the tab-strip ZIndex it
-                                 paints over the body's top border) so it merges. 0 in other themes. -->
-                            <Setter TargetName="HeaderChrome" Property="Margin"
-                                    Value="{DynamicResource RibbonKit.Metrics.TabSelectedMargin}" />
+                                 paints over the body's top border) so it merges. RENDER-ONLY
+                                 RenderTransform, not Margin, so selecting a tab never re-measures the
+                                 strip. Identity transform in non-connecting themes (2019/2024). -->
+                            <Setter TargetName="HeaderChrome" Property="RenderTransform"
+                                    Value="{DynamicResource RibbonKit.Transforms.TabConnect}" />
                             <!-- Office 2013/Metro: the active tab is outlined on top and
                                  sides (no bottom) so it connects into the ribbon body.
                                  Other themes keep this Transparent / zero-thickness. -->

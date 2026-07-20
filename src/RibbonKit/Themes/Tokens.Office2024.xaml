@@ -45,6 +45,8 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedBorderBrush" Color="Transparent" />
     <Thickness x:Key="RibbonKit.Metrics.TabSelectedBorderThickness">0</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.TabSelectedMargin">0</Thickness>
+    <!-- Underline theme: the active tab floats above the body, so the connect transform is identity. -->
+    <TranslateTransform x:Key="RibbonKit.Transforms.TabConnect" Y="0" />
     <!-- Contextual tabs: 2024 tints the header text and shows a tinted selection
          underline (height 3), and mutes the text until the tab is selected. -->
     <system:Double x:Key="RibbonKit.Metrics.ContextualUnderlineHeight">3</system:Double>

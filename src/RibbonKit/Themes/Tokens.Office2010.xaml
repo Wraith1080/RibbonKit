@@ -106,9 +106,13 @@
     <!-- Connected-tab outline (top + sides) that cuts into the ribbon body. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedBorderBrush" Color="#8DA5C4" />
     <Thickness x:Key="RibbonKit.Metrics.TabSelectedBorderThickness">1,1,1,0</Thickness>
-    <!-- The selected tab drops 2px into the body so its fill fully overlaps (hides) the body's
-         top border and merges (with the tab-strip ZIndex painting it over). Other themes keep 0. -->
-    <Thickness x:Key="RibbonKit.Metrics.TabSelectedMargin">0,0,0,0</Thickness>
+    <!-- Retained for token parity; the connect is now driven render-only by TabConnect (below),
+         not by a layout margin (a negative margin re-measured the strip and jittered on hover). -->
+    <Thickness x:Key="RibbonKit.Metrics.TabSelectedMargin">0</Thickness>
+    <!-- Render-only connect: the active/hovered tab is painted 1px down INTO the body (tab-strip
+         ZIndex makes it cover the body's top border) so it merges. A RenderTransform, so it never
+         re-measures the TabPanel — no hover jitter. Non-connecting themes use identity (Y=0). -->
+    <TranslateTransform x:Key="RibbonKit.Transforms.TabConnect" Y="1" />
     <!-- Contextual tabs: like the other pre-2024 themes, only the header text is tinted
          (no selection underline, no mute) — selection stays the connected active tab. -->
     <system:Double x:Key="RibbonKit.Metrics.ContextualUnderlineHeight">0</system:Double>

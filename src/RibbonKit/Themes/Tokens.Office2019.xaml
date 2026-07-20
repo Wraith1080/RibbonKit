@@ -48,6 +48,8 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedBorderBrush" Color="Transparent" />
     <Thickness x:Key="RibbonKit.Metrics.TabSelectedBorderThickness">0</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.TabSelectedMargin">0</Thickness>
+    <!-- Flat theme: tabs don't cut into the body, so the connect transform is identity. -->
+    <TranslateTransform x:Key="RibbonKit.Transforms.TabConnect" Y="0" />
     <!-- Contextual tabs: this flat theme only tints the header text (no underline, no
          mute) — selection stays the fill-based active tab. -->
     <system:Double x:Key="RibbonKit.Metrics.ContextualUnderlineHeight">0</system:Double>
