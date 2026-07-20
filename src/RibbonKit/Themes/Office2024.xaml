@@ -712,15 +712,50 @@
                                     <RowDefinition Height="*" />
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
-                                <ItemsPresenter Grid.Row="0" VerticalAlignment="Center" />
+                                <!-- Center the content block horizontally. The items panel is a
+                                     horizontal StackPanel, which left-packs its children and ignores
+                                     their HorizontalAlignment along the stacking axis — so a consumer
+                                     cannot center content from their own markup. Centering the
+                                     ItemsPresenter here makes the whole row (a lone button, or the
+                                     full control cluster) sit centered whenever the group is wider
+                                     than its content — e.g. when the group NAME is wider than a single
+                                     button — matching Office. When the content is the widest thing in
+                                     the group, centered and stretched arrange identically, so
+                                     multi-control groups are unaffected. -->
+                                <ItemsPresenter Grid.Row="0"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center" />
                                 <Grid Grid.Row="1" Margin="2,3,2,4">
-                                    <ContentPresenter ContentSource="Header"
-                                                      HorizontalAlignment="Center"
-                                                      TextElement.FontSize="11"
-                                                      TextElement.Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
+                                    <!-- Group name centered over the WHOLE group, with the ↘ launcher
+                                         pinned to the right. Three columns: a left spacer that mirrors
+                                         the launcher's width (so the name stays truly centered, not
+                                         biased left), the name in the middle, the launcher on the right.
+                                         The name ellipsizes when the group is narrow instead of sliding
+                                         under the launcher — which is what caused the overlap. The
+                                         spacer + launcher are shown ONLY when ShowDialogLauncher is set
+                                         (trigger below); with no launcher both Auto columns collapse to
+                                         0 and the name centers across the full width, exactly as before. -->
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border x:Name="PART_LauncherSpacer"
+                                            Grid.Column="0"
+                                            Width="18"
+                                            Visibility="Collapsed" />
+                                    <!-- A TextBlock (not a ContentPresenter) so the name can trim to an
+                                         ellipsis. Group headers are strings; a non-string Header falls
+                                         back to its ToString(). -->
+                                    <TextBlock Grid.Column="1"
+                                               Text="{Binding Header, RelativeSource={RelativeSource TemplatedParent}}"
+                                               TextAlignment="Center"
+                                               TextTrimming="CharacterEllipsis"
+                                               FontSize="11"
+                                               Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
                                     <!-- ↘ dialog launcher, shown via ShowDialogLauncher -->
                                     <Button x:Name="PART_DialogLauncher"
-                                            HorizontalAlignment="Right"
+                                            Grid.Column="2"
                                             VerticalAlignment="Center"
                                             Width="18" Height="14"
                                             Visibility="Collapsed"
@@ -864,6 +899,8 @@
                         </Trigger>
                         <Trigger Property="ShowDialogLauncher" Value="True">
                             <Setter TargetName="PART_DialogLauncher" Property="Visibility" Value="Visible" />
+                            <!-- Reserve the mirror-width spacer so the name stays centered over the group. -->
+                            <Setter TargetName="PART_LauncherSpacer" Property="Visibility" Value="Hidden" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

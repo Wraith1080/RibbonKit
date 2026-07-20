@@ -1,8 +1,13 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
+using System.Windows.Documents;
 using System.Windows.Media;
 using RibbonKit.Animation;
 using RibbonKit.Controls;
@@ -314,6 +319,212 @@ public partial class MainWindow : RibbonWindow
         panel.Children.Add(new CheckBox { Content = "Autosave every 10 minutes", IsChecked = true, Margin = new Thickness(0, 0, 0, 6) });
         panel.Children.Add(new CheckBox { Content = "Show formatting marks" });
         return panel;
+    }
+
+    // ---- Font dialog (Font group ↘ launcher) -------------------------------------------
+
+    // Raised by the Font group's ↘ dialog launcher (RibbonGroup.DialogLauncherClick). Opens a
+    // Word-style Font dialog seeded from the editor's current selection and, on OK, applies the
+    // chosen family / style / size back to that selection.
+    private void OnFontDialogLauncher(object sender, RoutedEventArgs e)
+    {
+        TextSelection sel = DocumentEditor.Selection;
+
+        // Seed from the selection's current run properties. A selection that spans mixed values
+        // returns UnsetValue for that property, so fall back to the editor's own value.
+        FontFamily family = sel.GetPropertyValue(TextElement.FontFamilyProperty) as FontFamily ?? DocumentEditor.FontFamily;
+        double sizePx = sel.GetPropertyValue(TextElement.FontSizeProperty) is double sz ? sz : DocumentEditor.FontSize;
+        FontWeight weight = sel.GetPropertyValue(TextElement.FontWeightProperty) is FontWeight fw ? fw : FontWeights.Normal;
+        FontStyle style = sel.GetPropertyValue(TextElement.FontStyleProperty) is FontStyle fs ? fs : FontStyles.Normal;
+
+        // --- Pickers ---------------------------------------------------------------------
+        var families = Fonts.SystemFontFamilies.OrderBy(f => f.Source).ToList();
+        var familyBox = new ComboBox
+        {
+            IsEditable = true,
+            IsTextSearchEnabled = true,
+            DisplayMemberPath = "Source",
+            ItemsSource = families,
+            MaxDropDownHeight = 240,
+        };
+        familyBox.SelectedItem = families.FirstOrDefault(f => f.Source == family.Source);
+        if (familyBox.SelectedItem is null)
+        {
+            familyBox.Text = family.Source;
+        }
+
+        var styleBox = new ComboBox { ItemsSource = new[] { "Regular", "Italic", "Bold", "Bold Italic" } };
+        styleBox.SelectedItem = DescribeFontStyle(weight, style);
+
+        var sizeBox = new ComboBox
+        {
+            IsEditable = true,
+            ItemsSource = new[] { "8", "9", "10", "11", "12", "14", "16", "18", "20", "24", "28", "36", "48", "72" },
+            Text = Math.Round(sizePx * 72.0 / 96.0).ToString(CultureInfo.InvariantCulture),
+        };
+
+        var preview = new TextBlock
+        {
+            Text = "AaBbYyZz  —  The quick brown fox 0123",
+            TextTrimming = TextTrimming.CharacterEllipsis,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        void UpdatePreview()
+        {
+            FontFamily? f = familyBox.SelectedItem as FontFamily ?? SafeFontFamily(familyBox.Text);
+            if (f is not null)
+            {
+                preview.FontFamily = f;
+            }
+
+            (FontWeight w, FontStyle st) = ParseFontStyle(styleBox.SelectedItem as string);
+            preview.FontWeight = w;
+            preview.FontStyle = st;
+
+            if (double.TryParse(sizeBox.Text, NumberStyles.Any, CultureInfo.InvariantCulture, out double pt) && pt > 0)
+            {
+                preview.FontSize = pt * 96.0 / 72.0;
+            }
+        }
+
+        familyBox.SelectionChanged += (_, _) => UpdatePreview();
+        familyBox.AddHandler(TextBoxBase.TextChangedEvent, new TextChangedEventHandler((_, _) => UpdatePreview()));
+        styleBox.SelectionChanged += (_, _) => UpdatePreview();
+        sizeBox.SelectionChanged += (_, _) => UpdatePreview();
+        sizeBox.AddHandler(TextBoxBase.TextChangedEvent, new TextChangedEventHandler((_, _) => UpdatePreview()));
+        UpdatePreview();
+
+        // --- Layout ----------------------------------------------------------------------
+        static StackPanel Labeled(string label, UIElement control)
+        {
+            var sp = new StackPanel { Margin = new Thickness(0, 0, 10, 0) };
+            sp.Children.Add(new TextBlock { Text = label, Margin = new Thickness(0, 0, 0, 4) });
+            sp.Children.Add(control);
+            return sp;
+        }
+
+        var pickers = new Grid();
+        pickers.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        pickers.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(130) });
+        pickers.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(72) });
+        var familyCell = Labeled("Font:", familyBox);
+        var styleCell = Labeled("Font style:", styleBox);
+        var sizeCell = Labeled("Size:", sizeBox);
+        sizeCell.Margin = new Thickness(0);
+        Grid.SetColumn(styleCell, 1);
+        Grid.SetColumn(sizeCell, 2);
+        pickers.Children.Add(familyCell);
+        pickers.Children.Add(styleCell);
+        pickers.Children.Add(sizeCell);
+
+        var previewBox = new Border
+        {
+            BorderBrush = new SolidColorBrush(Color.FromRgb(0xD1, 0xD1, 0xD1)),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(3),
+            Background = new SolidColorBrush(Color.FromRgb(0xFA, 0xFA, 0xFA)),
+            Margin = new Thickness(0, 16, 0, 0),
+            MinHeight = 96,
+            Child = preview,
+        };
+
+        var okButton = new Button { Content = "OK", Width = 84, Height = 26, IsDefault = true, Margin = new Thickness(0, 0, 8, 0) };
+        var cancelButton = new Button { Content = "Cancel", Width = 84, Height = 26, IsCancel = true };
+        var buttons = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            Margin = new Thickness(0, 16, 0, 0),
+        };
+        buttons.Children.Add(okButton);
+        buttons.Children.Add(cancelButton);
+
+        var root = new Grid { Margin = new Thickness(16) };
+        root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        root.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+        root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        Grid.SetRow(previewBox, 1);
+        Grid.SetRow(buttons, 2);
+        root.Children.Add(pickers);
+        root.Children.Add(previewBox);
+        root.Children.Add(buttons);
+
+        var win = new Window
+        {
+            Title = "Font",
+            Owner = this,
+            Width = 460,
+            Height = 340,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            ResizeMode = ResizeMode.NoResize,
+            ShowInTaskbar = false,
+            Background = Brushes.White,
+            Content = root,
+        };
+        okButton.Click += (_, _) => win.DialogResult = true;
+        cancelButton.Click += (_, _) => win.DialogResult = false;
+
+        if (win.ShowDialog() != true)
+        {
+            return;
+        }
+
+        // --- Apply to the selection ------------------------------------------------------
+        FontFamily chosen = familyBox.SelectedItem as FontFamily ?? SafeFontFamily(familyBox.Text) ?? family;
+        (FontWeight cw, FontStyle cs) = ParseFontStyle(styleBox.SelectedItem as string);
+        double chosenPt = double.TryParse(sizeBox.Text, NumberStyles.Any, CultureInfo.InvariantCulture, out double p) && p > 0
+            ? p
+            : sizePx * 72.0 / 96.0;
+
+        sel.ApplyPropertyValue(TextElement.FontFamilyProperty, chosen);
+        sel.ApplyPropertyValue(TextElement.FontWeightProperty, cw);
+        sel.ApplyPropertyValue(TextElement.FontStyleProperty, cs);
+        sel.ApplyPropertyValue(TextElement.FontSizeProperty, chosenPt * 96.0 / 72.0);
+
+        DocumentEditor.Focus();
+        StatusReady.Content = $"Font: {chosen.Source}, {DescribeFontStyle(cw, cs)}, {chosenPt:0.#} pt";
+    }
+
+    // "Bold Italic" / "Bold" / "Italic" / "Regular" from a weight + style pair.
+    private static string DescribeFontStyle(FontWeight weight, FontStyle style)
+    {
+        bool bold = weight.ToOpenTypeWeight() >= FontWeights.Bold.ToOpenTypeWeight();
+        bool italic = style != FontStyles.Normal;
+        return (bold, italic) switch
+        {
+            (true, true) => "Bold Italic",
+            (true, false) => "Bold",
+            (false, true) => "Italic",
+            _ => "Regular",
+        };
+    }
+
+    private static (FontWeight Weight, FontStyle Style) ParseFontStyle(string? name) => name switch
+    {
+        "Bold Italic" => (FontWeights.Bold, FontStyles.Italic),
+        "Bold" => (FontWeights.Bold, FontStyles.Normal),
+        "Italic" => (FontWeights.Normal, FontStyles.Italic),
+        _ => (FontWeights.Normal, FontStyles.Normal),
+    };
+
+    // A typed family name may be blank or invalid; return null rather than throwing.
+    private static FontFamily? SafeFontFamily(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return null;
+        }
+
+        try
+        {
+            return new FontFamily(name);
+        }
+        catch (Exception)
+        {
+            return null;
+        }
     }
 
     private void OnPictureSelected(object sender, RoutedEventArgs e)

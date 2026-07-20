@@ -172,7 +172,8 @@
                                 rk:Ribbon.CommandId="group.home.font"
                                 Icon="{StaticResource Icon.Font}"
                                 CanResize="False"
-                                ShowDialogLauncher="True">
+                                ShowDialogLauncher="True"
+                                DialogLauncherClick="OnFontDialogLauncher">
                     <StackPanel VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                             <rk:RibbonComboBox InputWidth="128"
@@ -202,17 +203,17 @@
                             </rk:RibbonComboBox>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
-                            <rk:RibbonToggleButton Size="Small"
+                        <rk:RibbonToggleButton Size="Small"
                                                rk:Ribbon.CommandId="cmd.bold"
                                                Icon="{StaticResource Icon.Bold}"
                                                ScreenTipTitle="Bold (Ctrl+B)"
                                                ScreenTipText="Make your text bold." />
-                            <rk:RibbonToggleButton Size="Small"
+                        <rk:RibbonToggleButton Size="Small"
                                                rk:Ribbon.CommandId="cmd.italic"
                                                Icon="{StaticResource Icon.Italic}"
                                                ScreenTipTitle="Italic (Ctrl+I)"
                                                ScreenTipText="Italicize your text." />
-                            <rk:RibbonToggleButton Size="Small"
+                        <rk:RibbonToggleButton Size="Small"
                                                rk:Ribbon.CommandId="cmd.underline"
                                                Icon="{StaticResource Icon.Underline}"
                                                ScreenTipTitle="Underline (Ctrl+U)"
@@ -514,14 +515,27 @@
                 </rk:RibbonGroup>
                 <!-- Backstage design: modern (2024) light rail vs classic (2013) accent column -->
                 <rk:RibbonGroup Header="Backstage" rk:Ribbon.CommandId="group.view.backstage" Icon="{StaticResource Icon.Backstage}">
-                    <rk:RibbonToggleButton Header="Translucent Backstage"
-                                           Size="Large"
-                                           LargeIcon="{StaticResource Icon.Mica}"
-                                           Icon="{StaticResource Icon.Mica}"
-                                           Checked="OnToggleBackstageTranslucent"
-                                           Unchecked="OnToggleBackstageTranslucent"
-                                           ScreenTipTitle="Translucent backstage"
-                                           ScreenTipText="Make the backstage a frosted-acrylic panel: it turns semi-transparent and strongly blurs whatever is behind it. Open the File menu to see it." />
+                    <rk:RibbonButton Header="2013 Rail"
+                                     Tag="Classic"
+                                     Size="Medium"
+                                     Icon="{StaticResource Icon.Backstage}"
+                                     Click="OnSelectBackstageDesign"
+                                     ScreenTipTitle="Classic backstage (Office 2013)"
+                                     ScreenTipText="Solid accent nav column with white text (flat selected fill)." />
+                    <rk:RibbonButton Header="2024 Rail"
+                                     Tag="Modern"
+                                     Size="Medium"
+                                     Icon="{StaticResource Icon.Backstage}"
+                                     Click="OnSelectBackstageDesign"
+                                     ScreenTipTitle="Modern backstage (Office 2024)"
+                                     ScreenTipText="Light rail with dark text and an accent selection bar." />
+                    <rk:RibbonButton Header="2010 Glass"
+                                     Tag="Classic2010"
+                                     Size="Medium"
+                                     Icon="{StaticResource Icon.Backstage}"
+                                     Click="OnSelectBackstageDesign"
+                                     ScreenTipTitle="Office 2010 backstage"
+                                     ScreenTipText="Blue accent nav with a glossy blue glass marker on the selected item and white text." />
                     <rk:RibbonToggleButton Header="Mica"
                                            Size="Large"
                                            LargeIcon="{StaticResource Icon.Mica}"
@@ -530,29 +544,14 @@
                                            Unchecked="OnToggleMica"
                                            ScreenTipTitle="Mica backdrop (Windows 11)"
                                            ScreenTipText="Apply the Windows 11 Mica material behind the window and the backstage. Requires Windows 11 22H2+." />
-                    <StackPanel Orientation="Vertical">
-                        <rk:RibbonButton Header="2024 Rail"
-                                     Tag="Modern"
-                                     Size="Medium"
-                                     Icon="{StaticResource Icon.Backstage}"
-                                     Click="OnSelectBackstageDesign"
-                                     ScreenTipTitle="Modern backstage (Office 2024)"
-                                     ScreenTipText="Light rail with dark text and an accent selection bar." />
-                        <rk:RibbonButton Header="2013 Rail"
-                                     Tag="Classic"
-                                     Size="Medium"
-                                     Icon="{StaticResource Icon.Backstage}"
-                                     Click="OnSelectBackstageDesign"
-                                     ScreenTipTitle="Classic backstage (Office 2013)"
-                                     ScreenTipText="Solid accent nav column with white text (flat selected fill)." />
-                        <rk:RibbonButton Header="2010 Glass"
-                                     Tag="Classic2010"
-                                     Size="Medium"
-                                     Icon="{StaticResource Icon.Backstage}"
-                                     Click="OnSelectBackstageDesign"
-                                     ScreenTipTitle="Office 2010 backstage"
-                                     ScreenTipText="Blue accent nav with a glossy blue glass marker on the selected item and white text." />
-                    </StackPanel>
+                    <rk:RibbonToggleButton Header="Translucent Backstage"
+                                           Size="Large"
+                                           LargeIcon="{StaticResource Icon.Mica}"
+                                           Icon="{StaticResource Icon.Mica}"
+                                           Checked="OnToggleBackstageTranslucent"
+                                           Unchecked="OnToggleBackstageTranslucent"
+                                           ScreenTipTitle="Translucent backstage"
+                                           ScreenTipText="Make the backstage a frosted-acrylic panel: it turns semi-transparent and strongly blurs whatever is behind it. Open the File menu to see it." />
                 </rk:RibbonGroup>
                 <rk:RibbonGroup Header="Application" rk:Ribbon.CommandId="group.view.application" Icon="{StaticResource Icon.Gear}">
                     <rk:RibbonButton Header="Options"
@@ -618,9 +617,7 @@
                             <Paragraph FontSize="13" Foreground="#9A9A9A" Margin="0,0,0,6">Click a collapsed group button to open its flyout with the full group content.</Paragraph>
                             <Paragraph FontSize="13" Foreground="#9A9A9A" Margin="0,0,0,6">New: click the File button for the backstage view (Esc or the back arrow returns). Paste is a split button, Select is a dropdown, B/I/U are toggles, Font has combos and a ↘ launcher.</Paragraph>
                             <Paragraph FontSize="13" Foreground="#9A9A9A" Margin="0,0,0,18">Hover any button for its ScreenTip. Hover the Styles gallery for LIVE PREVIEW of the sentence below — click to commit, move away to revert.</Paragraph>
-                            <Paragraph>
-                                <Run x:Name="StylePreviewText" FontSize="14" Text="The quick brown fox jumps over the lazy dog." />
-                            </Paragraph>
+                            <Paragraph><Run x:Name="StylePreviewText" FontSize="14" Text="The quick brown fox jumps over the lazy dog." /></Paragraph>
                         </FlowDocument>
                     </RichTextBox>
                 </Border>
