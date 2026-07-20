@@ -45,9 +45,14 @@
     <!-- Retained for token parity; the connect is now driven render-only by TabConnect (below),
          not by a layout margin (a negative margin re-measured the strip and jittered on hover). -->
     <Thickness x:Key="RibbonKit.Metrics.TabSelectedMargin">0</Thickness>
-    <!-- Render-only connect: active/hovered tab painted 1px down into the body (tab-strip ZIndex
-         covers the body's top border) so it merges. RenderTransform = no re-measure, no jitter. -->
+    <!-- Render-only connect: the 1px ConnectFoot at the tab bottom is shifted 1px into the body
+         (tab-strip ZIndex covers the body's top border) so the tab merges WITHOUT moving the tab,
+         keeping its top edge/label aligned with the File button. RenderTransform = no re-measure. -->
     <TranslateTransform x:Key="RibbonKit.Transforms.TabConnect" Y="1" />
+    <!-- ConnectFoot colours = the tab's bottom fill colour so the 1px sliver continues over the
+         body border. Hover = the flat hover fill; selected = the white body/tab colour. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ConnectFootHover" Color="#E8EEF7" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ConnectFootSelected" Color="#FFFFFF" />
     <!-- Contextual tabs: this flat theme only tints the header text (no underline, no
          mute) — selection stays the outlined active tab. -->
     <system:Double x:Key="RibbonKit.Metrics.ContextualUnderlineHeight">0</system:Double>

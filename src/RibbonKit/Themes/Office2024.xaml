@@ -556,6 +556,24 @@
                                    IsHitTestVisible="False"
                                    Fill="{TemplateBinding ContextualBrush}"
                                    Visibility="Collapsed" />
+                        <!-- Tab-to-body connector. Transparent until the tab is hovered/selected
+                             (the triggers set its Background); a 1px sliver at the tab's bottom,
+                             render-shifted 1px DOWN into the ribbon body by TabConnect (Y=1 in the
+                             connecting themes, 0 elsewhere). With the tab strip's ZIndex it paints
+                             over the body's top border, so the active/hovered tab merges into the
+                             body while its top edge and label stay on the File-button line — the
+                             connect no longer moves the whole tab. Inset 1px each side so the tab's
+                             own side borders still run down to meet the body. RENDER-only: it has a
+                             fixed 1px height and Bottom alignment, so it never affects tab measure. -->
+                        <Border x:Name="ConnectFoot"
+                                Height="1"
+                                VerticalAlignment="Bottom"
+                                Background="Transparent"
+                                BorderBrush="Transparent"
+                                BorderThickness="1,0,1,0"
+                                IsHitTestVisible="False"
+                                SnapsToDevicePixels="True"
+                                RenderTransform="{DynamicResource RibbonKit.Transforms.TabConnect}" />
                     </Grid>
                     <ControlTemplate.Triggers>
                         <!-- Contextual tabs render their header via the tinted presenter. -->
@@ -573,26 +591,36 @@
                                  is already reserved on HeaderChrome above, so hover never shifts the tab. -->
                             <Setter TargetName="HeaderChrome" Property="BorderBrush"
                                     Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
-                            <!-- Drop the hovered tab 1px into the body so its bottom edge connects
-                                 instead of floating, matching the active tab. RENDER-ONLY: a
-                                 RenderTransform (not Margin) so it never re-measures the TabPanel —
-                                 the negative Margin used here before shrank the tab's measured height,
-                                 which on hover re-arranged the whole strip and shoved the ribbon body
-                                 (2013) / active-tab text (2010). Identity transform in non-connecting
-                                 themes (2019/2024), so they're unaffected. -->
-                            <Setter TargetName="HeaderChrome" Property="RenderTransform"
-                                    Value="{DynamicResource RibbonKit.Transforms.TabConnect}" />
+                            <!-- Connect the hovered tab to the body WITHOUT moving the tab. Instead of
+                                 dropping the whole HeaderChrome 1px (which lowered the top edge and the
+                                 label off the File-button line), we color the 1px ConnectFoot at the
+                                 tab's bottom in the hover fill's low colour. The foot is render-shifted
+                                 into the body (TabConnect) and, with the tab-strip ZIndex, paints over
+                                 the body's top border — so the tab's top and label stay put and only the
+                                 bottom merges. Transparent in non-connecting themes. -->
+                            <Setter TargetName="ConnectFoot" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.Tab.ConnectFootHover}" />
+                            <!-- Continue the tab's side borders 1px down through the foot so the
+                                 hovered tab's outline meets the body without a break at the corners. -->
+                            <Setter TargetName="ConnectFoot" Property="BorderBrush"
+                                    Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
                             <Setter TargetName="HoverIndicator" Property="Visibility" Value="Visible" />
                         </Trigger>
                         <Trigger Property="IsSelected" Value="True">
                             <Setter TargetName="HeaderChrome" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Tab.SelectedBackground}" />
-                            <!-- Drop the active tab 1px INTO the body (with the tab-strip ZIndex it
-                                 paints over the body's top border) so it merges. RENDER-ONLY
-                                 RenderTransform, not Margin, so selecting a tab never re-measures the
-                                 strip. Identity transform in non-connecting themes (2019/2024). -->
-                            <Setter TargetName="HeaderChrome" Property="RenderTransform"
-                                    Value="{DynamicResource RibbonKit.Transforms.TabConnect}" />
+                            <!-- Connect the active tab to the body WITHOUT moving the tab: the 1px
+                                 ConnectFoot at the bottom is coloured the body/tab-bottom colour and
+                                 render-shifted into the body (TabConnect), covering the body's top
+                                 border under the tab (tab-strip ZIndex). The tab's top edge and label
+                                 therefore stay aligned with the File button; only the bottom merges.
+                                 Transparent foot in non-connecting themes. -->
+                            <Setter TargetName="ConnectFoot" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.Tab.ConnectFootSelected}" />
+                            <!-- Continue the active tab's side borders 1px down through the foot so its
+                                 outline joins the body seamlessly at the bottom corners. -->
+                            <Setter TargetName="ConnectFoot" Property="BorderBrush"
+                                    Value="{DynamicResource RibbonKit.Brushes.Tab.SelectedBorderBrush}" />
                             <!-- Office 2013/Metro: the active tab is outlined on top and
                                  sides (no bottom) so it connects into the ribbon body.
                                  Other themes keep this Transparent / zero-thickness. -->
