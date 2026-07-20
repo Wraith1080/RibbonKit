@@ -24,6 +24,8 @@
                 <ControlTemplate TargetType="{x:Type MenuItem}">
                     <Border x:Name="Chrome"
                             Background="Transparent"
+                            BorderBrush="Transparent"
+                            BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
                             CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
                             Padding="6,5"
                             Margin="2,1"
@@ -99,9 +101,22 @@
                         <Trigger Property="HasItems" Value="True">
                             <Setter TargetName="Arrow" Property="Visibility" Value="Visible" />
                         </Trigger>
+                        <!-- Hover: fill AND a border (the 2010 theme's amber outline, like a
+                             normal button) — the thickness is reserved above so only the brush
+                             changes and the row never shifts. -->
                         <Trigger Property="IsHighlighted" Value="True">
                             <Setter TargetName="Chrome" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
+                            <Setter TargetName="Chrome" Property="BorderBrush"
+                                    Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
+                        </Trigger>
+                        <!-- Mouse-DOWN press feedback, so clicking a menu item feels responsive.
+                             MenuItem exposes IsPressed; placed after Highlighted so it wins while held. -->
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Chrome" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
+                            <Setter TargetName="Chrome" Property="BorderBrush"
+                                    Value="{DynamicResource RibbonKit.Brushes.Control.PressedBorder}" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.4" />

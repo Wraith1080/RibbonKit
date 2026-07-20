@@ -2021,8 +2021,15 @@
                                           SeparatorBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type controls:Backstage}}}" />
                             </DockPanel>
                         </Border>
+                        <!-- The content area's text foreground is pinned dark, NOT inherited from
+                             the Backstage.Foreground (which is white to drive the accent nav column).
+                             Without this, the Classic 2013 accent design leaks white text into the
+                             page content (invisible on the light content background). The content
+                             background is light in every theme, so dark page text is always correct;
+                             page content that wants its own colour still sets Foreground explicitly. -->
                         <Border x:Name="ContentArea" Grid.Column="1"
                                 Background="{DynamicResource RibbonKit.Brushes.Backstage.ContentBackground}"
+                                TextElement.Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}"
                                 Padding="42,32">
                             <ContentPresenter ContentSource="SelectedContent" />
                         </Border>
