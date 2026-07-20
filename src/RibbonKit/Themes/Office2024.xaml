@@ -479,10 +479,17 @@
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type controls:RibbonTab}">
                     <Grid>
+                        <!-- BorderThickness = the SELECTED tab's geometry (1,1,1,0 in 2010/2013, 0
+                             elsewhere) on EVERY tab, active or not, so all tabs measure to the SAME
+                             height. The active tab colors this border (SelectedBorderBrush); inactive
+                             tabs leave it Transparent. Without this symmetry the active tab's extra top
+                             border made it a different height, so the TabPanel nudged/stretched it and
+                             its text drifted (user-diagnosed). Hover/selected now change only the BRUSH,
+                             never the thickness — no jitter, no shift. -->
                         <Border x:Name="HeaderChrome"
                                 Background="Transparent"
                                 BorderBrush="Transparent"
-                                BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
+                                BorderThickness="{DynamicResource RibbonKit.Metrics.TabSelectedBorderThickness}"
                                 CornerRadius="{DynamicResource RibbonKit.Metrics.TabCornerRadius}"
                                 Padding="12,7,12,9">
                             <Grid>
@@ -558,11 +565,10 @@
                         <Trigger SourceName="HeaderChrome" Property="IsMouseOver" Value="True">
                             <Setter TargetName="HeaderChrome" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Tab.HoverBackground}" />
-                            <!-- Gold hover border like a normal 2010 button (Transparent/0 in other themes). -->
+                            <!-- Gold hover border like a normal 2010 button. Brush only — the thickness
+                                 is already reserved on HeaderChrome above, so hover never shifts the tab. -->
                             <Setter TargetName="HeaderChrome" Property="BorderBrush"
                                     Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
-                            <Setter TargetName="HeaderChrome" Property="BorderThickness"
-                                    Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
                             <Setter TargetName="HoverIndicator" Property="Visibility" Value="Visible" />
                         </Trigger>
                         <Trigger Property="IsSelected" Value="True">
