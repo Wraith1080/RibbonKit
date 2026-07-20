@@ -135,6 +135,14 @@ public class RibbonGroup : HeaderedItemsControl
             typeof(RibbonGroup),
             new FrameworkPropertyMetadata(RibbonGroupLayout.Default, OnGroupLayoutChanged));
 
+    /// <summary>Identifies the <see cref="ContentAlignment"/> dependency property.</summary>
+    public static readonly DependencyProperty ContentAlignmentProperty =
+        DependencyProperty.Register(
+            nameof(ContentAlignment),
+            typeof(HorizontalAlignment),
+            typeof(RibbonGroup),
+            new FrameworkPropertyMetadata(HorizontalAlignment.Center));
+
     private Decorator? _normalHost;
     private Border? _popupHost;
     private Popup? _popup;
@@ -174,6 +182,19 @@ public class RibbonGroup : HeaderedItemsControl
     {
         get => (ICommand?)GetValue(DialogLauncherCommandProperty);
         set => SetValue(DialogLauncherCommandProperty, value);
+    }
+
+    /// <summary>
+    /// How the group's content row is aligned horizontally when the group is wider than its
+    /// content (for example when the group name is wider than a single button). Defaults to
+    /// <see cref="HorizontalAlignment.Center"/>, matching Office; set <see cref="HorizontalAlignment.Left"/>
+    /// to left-pack a specific group instead. Has no visible effect when the content is the
+    /// widest thing in the group.
+    /// </summary>
+    public HorizontalAlignment ContentAlignment
+    {
+        get => (HorizontalAlignment)GetValue(ContentAlignmentProperty);
+        set => SetValue(ContentAlignmentProperty, value);
     }
 
     /// <summary>The 32px icon shown on the collapsed group button.</summary>

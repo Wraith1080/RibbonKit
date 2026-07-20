@@ -712,18 +712,18 @@
                                     <RowDefinition Height="*" />
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
-                                <!-- Center the content block horizontally. The items panel is a
-                                     horizontal StackPanel, which left-packs its children and ignores
-                                     their HorizontalAlignment along the stacking axis — so a consumer
-                                     cannot center content from their own markup. Centering the
-                                     ItemsPresenter here makes the whole row (a lone button, or the
-                                     full control cluster) sit centered whenever the group is wider
-                                     than its content — e.g. when the group NAME is wider than a single
-                                     button — matching Office. When the content is the widest thing in
-                                     the group, centered and stretched arrange identically, so
-                                     multi-control groups are unaffected. -->
+                                <!-- Align the content row via RibbonGroup.ContentAlignment (default
+                                     Center, matching Office). The items panel is a horizontal
+                                     StackPanel, which left-packs its children and ignores their
+                                     HorizontalAlignment along the stacking axis — so a consumer cannot
+                                     center content from their own markup; it must be done here on the
+                                     ItemsPresenter. Centering only shows when the group is wider than
+                                     its content (e.g. the group NAME is wider than a single button);
+                                     when the content is the widest thing in the group, Center and
+                                     Stretch arrange identically, so multi-control groups are unaffected.
+                                     Set ContentAlignment="Left" on a group to left-pack it instead. -->
                                 <ItemsPresenter Grid.Row="0"
-                                                HorizontalAlignment="Center"
+                                                HorizontalAlignment="{TemplateBinding ContentAlignment}"
                                                 VerticalAlignment="Center" />
                                 <Grid Grid.Row="1" Margin="2,3,2,4">
                                     <!-- Group name centered over the WHOLE group, with the ↘ launcher
