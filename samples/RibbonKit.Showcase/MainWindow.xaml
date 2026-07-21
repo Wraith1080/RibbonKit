@@ -612,7 +612,8 @@
                                  Padding="28,22"
                                  FontFamily="Segoe UI"
                                  FontSize="13"
-                                 VerticalScrollBarVisibility="Auto">
+                                 VerticalScrollBarVisibility="Auto"
+                                 IsInactiveSelectionHighlightEnabled="True">
                         <FlowDocument PagePadding="0" TextAlignment="Left">
                             <Paragraph FontSize="18" Foreground="#6B6B6B" Margin="0,0,0,12">RibbonKit — Phase 1: core ribbon skeleton</Paragraph>
                             <Paragraph FontSize="13" Foreground="#9A9A9A" Margin="0,0,0,6">Make the window narrower: groups collapse to flyout buttons by priority — Styles (10) → Editing (5) → Clipboard (default, resizes first) — Font never reduces (CanResize=False).</Paragraph>

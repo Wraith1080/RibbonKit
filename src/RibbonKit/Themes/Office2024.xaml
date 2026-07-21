@@ -2081,7 +2081,16 @@
          BackstageTabItem — nav row in the accent column
          ============================================================ -->
     <Style TargetType="{x:Type controls:BackstageTabItem}">
-        <Setter Property="Foreground" Value="#FFFFFF" />
+        <!-- Container Foreground is the PAGE CONTENT colour, NOT the nav-text colour: the page
+             shown for the selected item inherits this container Foreground. It must be a
+             content-safe (non-white) brush — a white value here leaks white text into the page
+             (invisible on the light content area) for every design whose selected item is white
+             (Classic 2013, Classic2010), which was the original bug. Set to Accent here so the
+             page text reads in the theme accent (a readable colour on the light content area);
+             use Text.Primary instead for plain dark page text. The nav text + icon get their OWN
+             colour via the NavText / NavIcon elements below, driven per design/selection, so this
+             value never affects the nav column. -->
+        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Accent}" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="Template">
             <Setter.Value>
@@ -2100,12 +2109,17 @@
                                 BorderThickness="1"
                                 CornerRadius="0"
                                 Padding="26,11">
-                            <StackPanel Orientation="Horizontal">
+                            <!-- NavText carries the nav-item TEXT colour (independent of the
+                                 container Foreground, which stays dark for content safety). The
+                                 header presenter inherits it; the icon binds to it. Default is the
+                                 accent-column white; design/selection triggers below override it. -->
+                            <StackPanel x:Name="NavText" Orientation="Horizontal"
+                                        TextElement.Foreground="#FFFFFF">
                                 <!-- Reserved icon column: a foreground-tinted silhouette of
                                      the item's Icon. When no Icon is set the mask is empty, so
                                      the 16px slot stays blank and every item stays aligned. -->
                                 <Grid Width="16" Height="16" Margin="0,0,12,0" VerticalAlignment="Center">
-                                    <Rectangle Fill="{TemplateBinding Foreground}">
+                                    <Rectangle x:Name="NavIcon" Fill="#FFFFFF">
                                         <Rectangle.OpacityMask>
                                             <ImageBrush ImageSource="{Binding Icon, RelativeSource={RelativeSource TemplatedParent}}" />
                                         </Rectangle.OpacityMask>
@@ -2132,7 +2146,9 @@
                              accent bar + accent text on the selected item. These come AFTER
                              the classic triggers so they win when the design is Modern. -->
                         <Trigger Property="controls:Backstage.Design" Value="Modern">
-                            <Setter Property="Foreground"
+                            <Setter TargetName="NavText" Property="TextElement.Foreground"
+                                    Value="{StaticResource RibbonKit.Brushes.Backstage.Modern.Foreground}" />
+                            <Setter TargetName="NavIcon" Property="Fill"
                                     Value="{StaticResource RibbonKit.Brushes.Backstage.Modern.Foreground}" />
                             <Setter TargetName="Chrome" Property="CornerRadius" Value="4" />
                             <Setter TargetName="Chrome" Property="Margin" Value="8,1" />
@@ -2154,14 +2170,18 @@
                             <Setter TargetName="Chrome" Property="Background"
                                     Value="{StaticResource RibbonKit.Brushes.Backstage.Modern.ItemSelected}" />
                             <Setter TargetName="SelBar" Property="Visibility" Value="Visible" />
-                            <Setter Property="Foreground"
+                            <Setter TargetName="NavText" Property="TextElement.Foreground"
+                                    Value="{DynamicResource RibbonKit.Brushes.Accent}" />
+                            <Setter TargetName="NavIcon" Property="Fill"
                                     Value="{DynamicResource RibbonKit.Brushes.Accent}" />
                         </MultiTrigger>
 
                         <!-- Classic2010 (Office 2010): the nav is the ribbon's light-blue gradient,
                              so item text is DARK and turns white only when selected. -->
                         <Trigger Property="controls:Backstage.Design" Value="Classic2010">
-                            <Setter Property="Foreground"
+                            <Setter TargetName="NavText" Property="TextElement.Foreground"
+                                    Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+                            <Setter TargetName="NavIcon" Property="Fill"
                                     Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
                         </Trigger>
                         <MultiTrigger>
@@ -2186,7 +2206,8 @@
                             <Setter TargetName="Chrome" Property="BorderBrush"
                                     Value="{DynamicResource RibbonKit.Brushes.ApplicationButton.Border}" />
                             <Setter TargetName="Chrome" Property="BorderThickness" Value="1" />
-                            <Setter Property="Foreground" Value="#FFFFFF" />
+                            <Setter TargetName="NavText" Property="TextElement.Foreground" Value="#FFFFFF" />
+                            <Setter TargetName="NavIcon" Property="Fill" Value="#FFFFFF" />
                         </MultiTrigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.5" />
@@ -3211,15 +3232,22 @@
                                     Content="Reset"
                                     Style="{StaticResource OptionsDialogActionButtonStyle}"
                                     Margin="0,0,6,0" />
+                            <!-- Import/Export are icon-only (compact reorder-button style) so all
+                                 three actions fit Column 0 without widening the dialog; the ToolTip
+                                 carries the meaning. Glyphs: OpenFile (load) and Save (write). -->
                             <Button x:Name="PART_ImportButton"
-                                    Content="Import…"
-                                    Style="{StaticResource OptionsDialogActionButtonStyle}"
-                                    ToolTip="Load a saved ribbon layout from a file"
-                                    Margin="0,0,6,0" />
+                                    Style="{StaticResource OptionsDialogReorderButtonStyle}"
+                                    ToolTip="Import: load a saved ribbon layout from a file"
+                                    AutomationProperties.Name="Import"
+                                    Margin="0,0,6,0">
+                                <TextBlock FontFamily="Segoe MDL2 Assets" FontSize="15" Text="&#xE8E5;" />
+                            </Button>
                             <Button x:Name="PART_ExportButton"
-                                    Content="Export…"
-                                    Style="{StaticResource OptionsDialogActionButtonStyle}"
-                                    ToolTip="Save the current ribbon layout to a file" />
+                                    Style="{StaticResource OptionsDialogReorderButtonStyle}"
+                                    ToolTip="Export: save the current ribbon layout to a file"
+                                    AutomationProperties.Name="Export">
+                                <TextBlock FontFamily="Segoe MDL2 Assets" FontSize="15" Text="&#xE74E;" />
+                            </Button>
                         </StackPanel>
 
                         <!-- Structure tools, under the tree like Office. Edit… opens the
