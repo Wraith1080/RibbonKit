@@ -334,26 +334,42 @@ is kept as a library API, just unused by the sample.)
 
 ### 3.13 UI polish fixes
 
-- **Gallery scroll-to-chosen-item: ATTEMPTED, then REVERTED (known-good restored).** The
-  idea: committing a pick in an `InRibbonGallery`'s expanded popup would close the popup
-  (Office-style) and scroll the single-row strip to the selected tile so you'd see the pick
-  once the popup was gone. It was implemented via `OnSelectionChanged` (deferred close) +
-  a `ScrollSelectedItemIntoView` on close. **It repeatedly broke popup hit-testing** and was
-  backed out — `InRibbonGallery.cs` is now the original pre-feature version.
-  - **Why it's fragile (for whoever retries this):** the strip and the popup share ONE
-    `ScrollViewer` that re-homes between them. Scrolling that scroller for the strip (whose
-    viewport is a single ~54px row) leaves it in a state that corrupts the popup's
-    hit-testing when the same scroller is re-homed there. Symptoms walked through three
-    forms: (1) selecting the tile *below* the clicked one (leftover vertical offset carried
-    into the popup — clicks off by exactly the offset, clamped at the ends); (2) after adding
-    `ScrollToVerticalOffset(0)` on open, a *scale-like* miss where only the top row selected
-    correctly and everything lower clamped to the last item (the scroller's **viewport was
-    stale** right after the re-home — top row hit-tests, everything past the stale viewport
-    clamps to the bottom). Rendering stayed correct throughout, so it *looked* like a DPI
-    scale bug but wasn't (it worked at the same DPI before the feature).
-  - **If retried:** don't scroll the shared re-homed scroller. Give the popup its **own**
-    items presenter (don't re-home), or reset/relayout on the popup's `Opened` event once the
-    content is actually laid out — not synchronously right after the re-home.
+- **Gallery scroll-to-chosen-item: WORKING (2026-07 re-implementation), now animated.** Committing
+  a pick in an `InRibbonGallery`'s expanded popup closes it (Office-style) and glides the single-row
+  strip to the chosen tile. The strip and popup share ONE `ScrollViewer` re-homed between them. Two
+  separate bugs had to be solved before it stuck (a first attempt was reverted for corrupting popup
+  hit-testing):
+  - **First attempt (reverted):** scrolled the shared re-homed scroller for the strip; that left a
+    leftover offset / stale one-row viewport that corrupted the popup's hit-testing (clicks off by a
+    row; or after a naive `ScrollToVerticalOffset(0)`, a scale-like miss clamping everything below the
+    top row to the last item). Looked like a DPI bug, wasn't.
+  - **Open path fix:** invariant — the shared scroller only ever holds a non-zero offset while it lives
+    in the STRIP; it is at offset 0 with a fresh viewport by the time it is the popup's. Done by zeroing
+    the offset BEFORE re-homing into the popup, then on the popup's `Opened` event (deferred one cycle)
+    `ScrollToVerticalOffset(0)` + `InvalidateMeasure()` + `UpdateLayout()`. The clicked tile now selects
+    correctly.
+  - **Close path fix (drag-follow):** with the open path fixed, the pick committed then jumped ONE tile
+    down. Cause: the close re-homed the presenter into the strip and scrolled it **while the mouse
+    button was still down** — the ListBox holds mouse capture during the press, so moving tiles under
+    the captured pointer triggers WPF single-select drag-follow, re-selecting the tile under the cursor
+    (row below). Fix: only mouse picks auto-close (keyboard arrow-nav leaves the popup open), and the
+    close waits for the button-up — caught via a `handledEventsToo` `MouseLeftButtonUp` handler on
+    `PART_PopupHost` (the pick is in the popup's own window, so the gallery never sees its mouse events),
+    then deferred one input cycle so capture is released before the re-home + scroll. **User-verified working.**
+  - **Sliding animation (added):** the strip reveal and the gallery's up/down buttons now glide instead
+    of jumping, via `RibbonMotion.AnimateScrollToVerticalOffset` (a new attached `AnimatedVerticalOffset`
+    helper DP whose changed-callback forwards each tick to `ScrollToVerticalOffset`, since
+    `ScrollViewer.VerticalOffset` is read-only). Timing/easing from the new
+    `RibbonAnimationAction.RibbonScroll`; honors reduced-motion (snaps when disabled). The gallery zeroing
+    on open calls `RibbonMotion.StopScrollAnimation` first so a running glide can't fight the reset.
+- **Ribbon scroller sliding animation (added).** `RibbonScrollContentHost` (groups row + tab strip) now
+  glides its `Offset` to the new position on chevron-button clicks and the mouse wheel instead of jumping,
+  using `RibbonAnimationAction.RibbonScroll`. `ScrollBy` accumulates from the pending target (not the
+  mid-glide value) so rapid clicks/wheel ticks keep advancing; a generation counter keeps a superseded
+  animation's `Completed` from finalizing a stale target; the `Offset` DP is animated directly (it's
+  `AffectsArrange`, so each frame just re-runs the cheap arrange — sets `_translate.X`, recomputes the
+  CanScroll flags — no re-measure of the adaptive groups panel). Snaps when the action is disabled.
+  **Both animations are UNVERIFIED on Windows (Linux build box can't run WPF) — needs a visual check.**
 - **Tab underline hover flicker (2024) fixed.** The hover trigger is scoped to
   `SourceName="HeaderChrome"`, but the three indicator rectangles (`HoverIndicator`,
   `SelectionIndicator`, `ContextualSelectionIndicator`) are *siblings* overlaying it. A

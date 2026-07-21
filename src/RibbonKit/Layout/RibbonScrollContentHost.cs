@@ -3,6 +3,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
+using RibbonKit.Animation;
 
 namespace RibbonKit.Layout;
 
@@ -80,6 +82,12 @@ public class RibbonScrollContentHost : Decorator
 
     private readonly TranslateTransform _translate = new TranslateTransform();
     private double _reportedContentWidth;
+
+    // Animated-scroll state: the offset the current glide is heading toward, and a generation
+    // counter so a superseded animation's Completed callback doesn't finalize a stale target.
+    private double _animTarget;
+    private bool _animActive;
+    private int _animGeneration;
 
     /// <summary>Initializes the host (clips to its bounds; wires the scroll commands).</summary>
     public RibbonScrollContentHost()
@@ -231,7 +239,7 @@ public class RibbonScrollContentHost : Decorator
     {
         if (ExtentWidth > ViewportWidth + 0.5d)
         {
-            Offset -= Math.Sign(e.Delta) * LineSize;
+            ScrollBy(-Math.Sign(e.Delta) * LineSize);
             e.Handled = true;
         }
 
@@ -244,7 +252,60 @@ public class RibbonScrollContentHost : Decorator
         return value < 0d ? 0d : value;
     }
 
-    private void Scroll(int direction) => Offset += direction * LineSize;
+    private void Scroll(int direction) => ScrollBy(direction * LineSize);
+
+    /// <summary>
+    /// Scrolls by <paramref name="delta"/> DIPs, gliding to the new offset with the
+    /// <see cref="RibbonAnimationAction.RibbonScroll"/> timing. Successive calls accumulate from
+    /// the pending target (not the current mid-glide value) so rapid chevron clicks / wheel ticks
+    /// keep advancing instead of snapping back to where the last glide happens to be.
+    /// </summary>
+    private void ScrollBy(double delta)
+    {
+        double basis = _animActive ? _animTarget : Offset;
+        AnimateOffsetTo(basis + delta);
+    }
+
+    private void AnimateOffsetTo(double target)
+    {
+        double max = Math.Max(0d, ExtentWidth - ViewportWidth);
+        target = Math.Max(0d, Math.Min(target, max));
+
+        // No motion wanted, or the move is negligible → set the value directly.
+        if (!RibbonAnimation.IsEnabled(RibbonAnimationAction.RibbonScroll)
+            || Math.Abs(target - Offset) < 0.5d)
+        {
+            BeginAnimation(OffsetProperty, null);
+            _animActive = false;
+            Offset = target;
+            return;
+        }
+
+        int generation = ++_animGeneration;
+        _animTarget = target;
+        _animActive = true;
+
+        var anim = new DoubleAnimation(Offset, target, RibbonAnimation.GetDuration(RibbonAnimationAction.RibbonScroll))
+        {
+            EasingFunction = RibbonAnimation.GetEase(RibbonAnimationAction.RibbonScroll),
+        };
+        anim.Completed += (_, _) =>
+        {
+            // Ignore if a newer glide superseded this one (BeginAnimation replacing an animation
+            // does not fire the old one's Completed, but guard anyway for the finalize race).
+            if (generation != _animGeneration)
+            {
+                return;
+            }
+
+            // Release the animation and write the plain value so Offset settles as a local value
+            // (keeps CanScrollLeft/Right and the clamp logic reading a stable, non-animated offset).
+            BeginAnimation(OffsetProperty, null);
+            _animActive = false;
+            Offset = target;
+        };
+        BeginAnimation(OffsetProperty, anim);
+    }
 
     /// <summary>A minimal command that scrolls the host one line in a fixed direction.</summary>
     private sealed class ScrollCommand : ICommand

@@ -1,5 +1,6 @@
 using System;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 
@@ -385,6 +386,107 @@ public static class RibbonMotion
         TranslateTransform translate = EnsureTranslate(element);
         Slide(translate, TranslateTransform.YProperty, -offset, duration, ease);
     }
+
+    /// <summary>
+    /// Attached helper property used to animate a <see cref="ScrollViewer"/>'s vertical scroll
+    /// position. <see cref="ScrollViewer.VerticalOffset"/> is read-only and can't be animated
+    /// directly, so a <see cref="DoubleAnimation"/> drives THIS property and its changed-callback
+    /// forwards each tick to <see cref="ScrollViewer.ScrollToVerticalOffset"/>. Not intended to be
+    /// set in XAML — use <see cref="AnimateScrollToVerticalOffset"/>.
+    /// </summary>
+    public static readonly DependencyProperty AnimatedVerticalOffsetProperty =
+        DependencyProperty.RegisterAttached(
+            "AnimatedVerticalOffset",
+            typeof(double),
+            typeof(RibbonMotion),
+            new PropertyMetadata(0d, OnAnimatedVerticalOffsetChanged));
+
+    /// <summary>Sets the <see cref="AnimatedVerticalOffsetProperty"/> helper value.</summary>
+    public static void SetAnimatedVerticalOffset(DependencyObject element, double value)
+        => element.SetValue(AnimatedVerticalOffsetProperty, value);
+
+    /// <summary>Gets the <see cref="AnimatedVerticalOffsetProperty"/> helper value.</summary>
+    public static double GetAnimatedVerticalOffset(DependencyObject element)
+        => (double)element.GetValue(AnimatedVerticalOffsetProperty);
+
+    private static void OnAnimatedVerticalOffsetChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is ScrollViewer scrollViewer)
+        {
+            scrollViewer.ScrollToVerticalOffset((double)e.NewValue);
+        }
+    }
+
+    /// <summary>
+    /// Smoothly scrolls <paramref name="scrollViewer"/> to <paramref name="targetOffset"/> (a
+    /// vertical offset in DIPs) using the given action's timing/easing, gliding instead of
+    /// jumping. Callers should clamp <paramref name="targetOffset"/> to the valid range. When the
+    /// action is disabled (or system reduced-motion is on) it snaps instantly. Starting a new
+    /// animation supersedes any in flight, so repeated calls (a held RepeatButton) chain smoothly.
+    /// </summary>
+    /// <param name="fromOffset">
+    /// Explicit start offset for the glide. When omitted the scroller's current
+    /// <see cref="ScrollViewer.VerticalOffset"/> is used. Pass this when the visible offset was
+    /// just reset but the glide should appear to start somewhere else — e.g. the in-ribbon gallery
+    /// strip resuming from where it sat before the popup opened (which was zeroed for hit-testing),
+    /// so picking a higher tile slides UP and a lower tile slides DOWN rather than always down.
+    /// </param>
+    public static void AnimateScrollToVerticalOffset(
+        ScrollViewer? scrollViewer,
+        double targetOffset,
+        RibbonAnimationAction action,
+        double? fromOffset = null)
+    {
+        if (scrollViewer is null)
+        {
+            return;
+        }
+
+        double start = fromOffset ?? scrollViewer.VerticalOffset;
+
+        if (!RibbonAnimation.IsEnabled(action))
+        {
+            scrollViewer.BeginAnimation(AnimatedVerticalOffsetProperty, null);
+            scrollViewer.ScrollToVerticalOffset(targetOffset);
+            return;
+        }
+
+        if (Math.Abs(targetOffset - start) < 0.5d)
+        {
+            scrollViewer.BeginAnimation(AnimatedVerticalOffsetProperty, null);
+            scrollViewer.ScrollToVerticalOffset(targetOffset);
+            return;
+        }
+
+        // Pin the visible position to the start before gliding. This is a no-op when start is the
+        // scroller's own offset, but when an explicit fromOffset was passed it seats the strip at
+        // that row so the very first frame slides FROM there (up or down) instead of from wherever
+        // the offset currently sits.
+        scrollViewer.ScrollToVerticalOffset(start);
+
+        var anim = new DoubleAnimation(start, targetOffset, RibbonAnimation.GetDuration(action))
+        {
+            EasingFunction = RibbonAnimation.GetEase(action),
+        };
+        anim.Completed += (_, _) =>
+        {
+            // Settle as a plain local value FIRST, then release the animation — otherwise clearing
+            // the animation reverts the helper property to its base (0) and fires a spurious
+            // scroll-to-top. A later direct ScrollToVerticalOffset (e.g. the gallery zeroing the
+            // popup on open) is then free to take over.
+            scrollViewer.SetValue(AnimatedVerticalOffsetProperty, targetOffset);
+            scrollViewer.BeginAnimation(AnimatedVerticalOffsetProperty, null);
+            scrollViewer.ScrollToVerticalOffset(targetOffset);
+        };
+        scrollViewer.BeginAnimation(AnimatedVerticalOffsetProperty, anim);
+    }
+
+    /// <summary>
+    /// Cancels any in-flight <see cref="AnimateScrollToVerticalOffset"/> animation on
+    /// <paramref name="scrollViewer"/> so a subsequent direct scroll set isn't fought by it.
+    /// </summary>
+    public static void StopScrollAnimation(ScrollViewer? scrollViewer)
+        => scrollViewer?.BeginAnimation(AnimatedVerticalOffsetProperty, null);
 
     private static void Slide(
         TranslateTransform translate,
