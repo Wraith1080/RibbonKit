@@ -2096,11 +2096,17 @@
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type controls:BackstageTabItem}">
                     <Grid SnapsToDevicePixels="True">
-                        <!-- Accent selection bar on the left edge (Modern only). -->
+                        <!-- Accent selection bar (Modern only). Aligned to the Modern pill's LEFT
+                             edge (Chrome Margin is 8,1) and vertically centred + short, Fluent-style,
+                             so it reads as part of the selected pill rather than floating in the
+                             left gutter. Panel.ZIndex=1 keeps it ABOVE the pill (it's declared before
+                             Chrome, so without this the pill would paint over it). -->
                         <Rectangle x:Name="SelBar"
-                                   Width="3"
+                                   Width="3" Height="16"
                                    HorizontalAlignment="Left"
-                                   Margin="0,5"
+                                   VerticalAlignment="Center"
+                                   Margin="8,0,0,0"
+                                   Panel.ZIndex="1"
                                    RadiusX="1.5" RadiusY="1.5"
                                    Fill="{DynamicResource RibbonKit.Brushes.Accent}"
                                    Visibility="Collapsed" />
