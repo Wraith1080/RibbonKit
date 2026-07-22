@@ -42,6 +42,8 @@ API review and freeze (rename pass, hide internals, `PublicAPI.txt` analyzer), d
 
 Simplified (single-row) ribbon, full ribbon customization dialog (tabs/groups), touch/pen affordances, additional theme variants (colorful/black for 2013+), Office-style status bar, ribbon designer/serializer from XML definitions.
 
+**MDI emulation control** — themed in-window "child windows" (float/resize/cascade/tile/minimize/maximize) plus a switchable tabbed-documents mode, with the maximized child's caption merging into the ribbon. Orchestrates existing subsystems (tab merging, `RibbonState` persistence, token theming, `RibbonWindow` chrome/DPI) rather than adding much new mechanism; can build most of the way without waiting on Phase 7's tab-merging API. Full design in [`docs/05-MDI-EMULATION-PLAN.md`](05-MDI-EMULATION-PLAN.md).
+
 ## Suggested working rhythm
 
 Keep issues per phase in a GitHub Project board; one feature = one PR with tests + showcase page + docs snippet. Tag `0.x` pre-releases at every phase exit so early adopters generate feedback while the API can still change.
