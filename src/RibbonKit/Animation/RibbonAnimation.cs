@@ -64,6 +64,9 @@ public enum RibbonAnimationAction
 
     /// <summary>The whole ribbon cross-fading when the theme or accent changes.</summary>
     ThemeSwitch,
+
+    /// <summary>An MDI child window minimizing, maximizing, or restoring.</summary>
+    MdiWindowState,
 }
 
 /// <summary>
@@ -280,6 +283,7 @@ public static class RibbonAnimation
             RibbonAnimationAction.QuickAccessMove => 150d,
             RibbonAnimationAction.ThemeSwitch => 160d,
             RibbonAnimationAction.RibbonMinimize => 180d,
+            RibbonAnimationAction.MdiWindowState => 200d,
             RibbonAnimationAction.Gallery => 180d,
             RibbonAnimationAction.TabMarker => 180d,
             RibbonAnimationAction.ContextualTab => 200d,

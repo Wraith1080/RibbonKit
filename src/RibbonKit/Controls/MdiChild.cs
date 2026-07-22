@@ -2,6 +2,10 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Animation;
+using System.Windows.Threading;
+using RibbonKit.Animation;
 
 namespace RibbonKit.Controls;
 
@@ -326,7 +330,7 @@ public class MdiChild : ContentControl
 
         // Keep the caption reachable: at least DragKeepVisible of the child inside the
         // container on the sides, and never above the top edge.
-        if (Parent is FrameworkElement panel && panel.ActualWidth > 0)
+        if (VisualTreeHelper.GetParent(this) is FrameworkElement panel && panel.ActualWidth > 0)
         {
             double width = double.IsNaN(ActualWidth) ? 0 : ActualWidth;
             left = Math.Max(left, DragKeepVisible - width);
@@ -422,6 +426,11 @@ public class MdiChild : ContentControl
             return;
         }
 
+        // Where the child sits right now, before any bounds change — the starting frame
+        // of the state-transition animation. TranslatePoint sees an in-flight render
+        // transform too, so re-targeting mid-animation starts from the visual position.
+        Rect? animateFrom = CaptureCurrentRect();
+
         _applyingState = true;
         try
         {
@@ -463,6 +472,94 @@ public class MdiChild : ContentControl
         {
             _applyingState = false;
         }
+
+        if (animateFrom is { } from)
+        {
+            AnimateStateTransition(from);
+        }
+    }
+
+    /// <summary>
+    /// The child's current rect relative to its panel, or <see langword="null"/> when it
+    /// has no meaningful visual yet (not loaded, no parent, zero size).
+    /// </summary>
+    private Rect? CaptureCurrentRect()
+    {
+        // The VISUAL parent (the items panel) — the logical Parent of a generated
+        // item container is not the panel and can be null.
+        if (VisualTreeHelper.GetParent(this) is not UIElement panel
+            || !IsLoaded || ActualWidth <= 0 || ActualHeight <= 0)
+        {
+            return null;
+        }
+
+        Point origin = TranslatePoint(new Point(0, 0), panel);
+        return new Rect(origin, new Size(ActualWidth, ActualHeight));
+    }
+
+    /// <summary>
+    /// Plays the minimize/maximize/restore transition: after the panel snaps the child to
+    /// its new rect, a scale+translate render transform makes it appear to travel from
+    /// <paramref name="oldRect"/> into place. Transform-only (GPU-composited, no layout
+    /// churn), honoring the ribbon's animation level and the OS reduce-motion setting via
+    /// <see cref="RibbonAnimationAction.MdiWindowState"/> — disabled means it just snaps.
+    /// </summary>
+    private void AnimateStateTransition(Rect oldRect)
+    {
+        if (!RibbonAnimation.IsEnabled(RibbonAnimationAction.MdiWindowState))
+        {
+            return;
+        }
+
+        // The new bounds only exist after the layout pass triggered by the state change.
+        Dispatcher.BeginInvoke(DispatcherPriority.Loaded, () =>
+        {
+            // Clear any previous transform first so the new-rect math reads untransformed
+            // coordinates.
+            SetCurrentValue(RenderTransformProperty, null);
+
+            if (CaptureCurrentRect() is not { Width: > 0, Height: > 0 } newRect)
+            {
+                return;
+            }
+
+            double scaleX = oldRect.Width / newRect.Width;
+            double scaleY = oldRect.Height / newRect.Height;
+            double offsetX = oldRect.X - newRect.X;
+            double offsetY = oldRect.Y - newRect.Y;
+
+            const double epsilon = 0.5;
+            if (Math.Abs(offsetX) < epsilon && Math.Abs(offsetY) < epsilon
+                && Math.Abs(oldRect.Width - newRect.Width) < epsilon
+                && Math.Abs(oldRect.Height - newRect.Height) < epsilon)
+            {
+                return;
+            }
+
+            var scale = new ScaleTransform(scaleX, scaleY);
+            var translate = new TranslateTransform(offsetX, offsetY);
+            var group = new TransformGroup();
+            group.Children.Add(scale);
+            group.Children.Add(translate);
+
+            RenderTransformOrigin = new Point(0, 0);
+            SetCurrentValue(RenderTransformProperty, group);
+
+            Duration duration = RibbonAnimation.GetDuration(RibbonAnimationAction.MdiWindowState);
+            IEasingFunction ease = RibbonAnimation.GetEase(RibbonAnimationAction.MdiWindowState);
+
+            var toIdentity = new DoubleAnimation(1d, duration) { EasingFunction = ease };
+            var toZero = new DoubleAnimation(0d, duration) { EasingFunction = ease };
+
+            // Release the transform once settled so the child renders (and hit-tests)
+            // untransformed between transitions.
+            toZero.Completed += (_, _) => SetCurrentValue(RenderTransformProperty, null);
+
+            scale.BeginAnimation(ScaleTransform.ScaleXProperty, toIdentity);
+            scale.BeginAnimation(ScaleTransform.ScaleYProperty, toIdentity);
+            translate.BeginAnimation(TranslateTransform.XProperty, toZero);
+            translate.BeginAnimation(TranslateTransform.YProperty, toZero);
+        });
     }
 
     private readonly record struct ResizeEdges(bool Left, bool Top, bool Right, bool Bottom);

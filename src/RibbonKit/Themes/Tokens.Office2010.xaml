@@ -251,11 +251,12 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.InactiveCaptionForeground" Color="#3B5A82" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.ActiveBorder" Color="#2E5E9E" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.InactiveBorder" Color="#A8BED8" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiClient.Background" Color="#AEC3DE" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.CaptionButtonHoverBackground" Color="#4DFFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.CaptionButtonPressedBackground" Color="#66FFFFFF" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiClient.Background" Color="#AEC3DE" />
     <system:Double x:Key="RibbonKit.Metrics.MdiChild.CaptionHeight">30</system:Double>
     <CornerRadius x:Key="RibbonKit.Metrics.MdiChild.CornerRadius">3</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.MdiChild.CaptionCornerRadius">2,2,0,0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.MdiChild.CloseButtonCornerRadius">0,2,0,0</CornerRadius>
 
 </ResourceDictionary>

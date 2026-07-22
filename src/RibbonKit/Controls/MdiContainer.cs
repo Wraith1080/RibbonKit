@@ -156,7 +156,7 @@ public class MdiContainer : ItemsControl
             child.DataContext = document;
             Bind(child, MdiChild.TitleProperty, nameof(MdiDocument.Title), BindingMode.OneWay);
             Bind(child, MdiChild.IconProperty, nameof(MdiDocument.Icon), BindingMode.OneWay);
-            Bind(child, ContentProperty, nameof(MdiDocument.Content), BindingMode.OneWay);
+            Bind(child, ContentControl.ContentProperty, nameof(MdiDocument.Content), BindingMode.OneWay);
             Bind(child, MdiChild.CanCloseProperty, nameof(MdiDocument.CanClose), BindingMode.OneWay);
             Bind(child, MdiChild.IsModifiedProperty, nameof(MdiDocument.IsModified), BindingMode.OneWay);
             Bind(child, MdiChild.IsActiveProperty, nameof(MdiDocument.IsActive), BindingMode.TwoWay);

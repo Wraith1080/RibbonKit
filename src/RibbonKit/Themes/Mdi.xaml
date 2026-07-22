@@ -31,6 +31,12 @@
         <Setter Property="Width" Value="34" />
         <Setter Property="Focusable" Value="False" />
         <Setter Property="Background" Value="Transparent" />
+        <!-- The stock Button theme style pins Foreground to the system text color,
+             which breaks TextElement.Foreground inheritance from the caption — so the
+             glyphs stroked with the button's Foreground went black on colored captions.
+             Re-tie it to the nearest ancestor Border (the caption bar). -->
+        <Setter Property="Foreground"
+                Value="{Binding Path=(TextElement.Foreground), RelativeSource={RelativeSource AncestorType={x:Type Border}}}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type Button}">
@@ -54,22 +60,29 @@
 
     <!-- Close button: the standard red wash, white glyph while hot. -->
     <Style x:Key="RibbonKit.MdiCloseButton" TargetType="{x:Type Button}" BasedOn="{StaticResource RibbonKit.MdiCaptionButton}">
+        <!-- Tag carries the wash's corner radius (top-right follows the caption's
+             rounding so the hover never clips over the rounded child border; the
+             maximized trigger in the MdiChild template squares it off). -->
+        <Setter Property="Tag" Value="{DynamicResource RibbonKit.Metrics.MdiChild.CloseButtonCornerRadius}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type Button}">
-                    <Border x:Name="Root" Background="{TemplateBinding Background}">
+                    <Border x:Name="Root" Background="{TemplateBinding Background}"
+                            CornerRadius="{TemplateBinding Tag}">
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="Root" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.CaptionButton.CloseHoverBackground}" />
-                            <Setter TargetName="Root" Property="TextElement.Foreground" Value="#FFFFFF" />
+                            <!-- No TargetName: sets the Button's own Foreground, which the
+                                 glyph's stroke follows by inheritance. -->
+                            <Setter Property="Foreground" Value="#FFFFFF" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
                             <Setter TargetName="Root" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.CaptionButton.ClosePressedBackground}" />
-                            <Setter TargetName="Root" Property="TextElement.Foreground" Value="#FFFFFF" />
+                            <Setter Property="Foreground" Value="#FFFFFF" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -103,25 +116,31 @@
                                         <!-- Drag surface: fills the caption; the labels sit over it
                                              hit-test-invisible, the buttons over it hit-testable. -->
                                         <Thumb x:Name="PART_DragThumb" Style="{StaticResource RibbonKit.MdiResizeThumb}" Cursor="Arrow" />
-                                        <StackPanel Orientation="Horizontal"
-                                                    IsHitTestVisible="False"
-                                                    Margin="8,0,104,0"
-                                                    VerticalAlignment="Center">
+                                        <!-- A Grid (not a StackPanel) so the title column has a FINITE
+                                             width and CharacterEllipsis can actually kick in — a
+                                             horizontal StackPanel measures children unbounded, which
+                                             disables trimming. The dirty marker is a Run inside the
+                                             same TextBlock so it hugs the title's end. -->
+                                        <Grid IsHitTestVisible="False"
+                                              Margin="8,0,104,0"
+                                              VerticalAlignment="Center">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
                                             <ContentPresenter x:Name="IconHost"
                                                               Content="{TemplateBinding Icon}"
                                                               Width="16" Height="16"
                                                               Margin="0,0,6,0"
                                                               VerticalAlignment="Center" />
-                                            <TextBlock Text="{TemplateBinding Title}"
+                                            <TextBlock Grid.Column="1"
+                                                       HorizontalAlignment="Left"
                                                        VerticalAlignment="Center"
                                                        FontSize="12"
-                                                       TextTrimming="CharacterEllipsis" />
-                                            <TextBlock x:Name="DirtyMarker"
-                                                       Text=" •"
-                                                       FontSize="12"
-                                                       VerticalAlignment="Center"
-                                                       Visibility="Collapsed" />
-                                        </StackPanel>
+                                                       TextTrimming="CharacterEllipsis"><Run
+                                                       Text="{Binding Title, RelativeSource={RelativeSource TemplatedParent}, Mode=OneWay}" /><Run
+                                                       x:Name="DirtyMarker" Text="" /></TextBlock>
+                                        </Grid>
                                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                                             <Button x:Name="PART_MinimizeButton" Style="{StaticResource RibbonKit.MdiCaptionButton}">
                                                 <Path Data="M 0,0 H 10"
@@ -177,7 +196,7 @@
                                     Value="{DynamicResource RibbonKit.Brushes.MdiChild.ActiveBorder}" />
                         </Trigger>
                         <Trigger Property="IsModified" Value="True">
-                            <Setter TargetName="DirtyMarker" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="DirtyMarker" Property="Text" Value=" •" />
                         </Trigger>
                         <Trigger Property="CanClose" Value="False">
                             <Setter TargetName="PART_CloseButton" Property="Visibility" Value="Collapsed" />
@@ -188,6 +207,11 @@
                             <Setter TargetName="RestoreGlyph" Property="Visibility" Value="Visible" />
                             <Setter TargetName="ChildBorder" Property="CornerRadius" Value="0" />
                             <Setter TargetName="Caption" Property="CornerRadius" Value="0" />
+                            <Setter TargetName="PART_CloseButton" Property="Tag">
+                                <Setter.Value>
+                                    <CornerRadius>0</CornerRadius>
+                                </Setter.Value>
+                            </Setter>
                         </Trigger>
                         <Trigger Property="WindowState" Value="Minimized">
                             <Setter TargetName="ResizeGrid" Property="Visibility" Value="Collapsed" />
@@ -201,7 +225,7 @@
         </Setter>
         <Style.Triggers>
             <!-- A minimized child is caption-only: the style MinHeight must not prop
-                 its height open (a style-trigger setter outranks the style setter). -->
+         its height open (a style-trigger setter outranks the style setter). -->
             <Trigger Property="WindowState" Value="Minimized">
                 <Setter Property="MinHeight" Value="0" />
             </Trigger>
