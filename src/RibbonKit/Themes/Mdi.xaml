@@ -1,0 +1,238 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:RibbonKit.Controls"
+    xmlns:layout="clr-namespace:RibbonKit.Layout">
+
+    <!-- ============================================================
+         MDI emulation chrome (MdiContainer + MdiChild). Merged into
+         Generic.xaml alongside Office2024.xaml, so these implicit
+         styles resolve through DefaultStyleKey like every RibbonKit
+         control. Colors/metrics come from the RibbonKit.*.MdiChild.*
+         token family via {DynamicResource}: one template, all themes.
+         See docs/05-MDI-EMULATION-PLAN.md.
+         ============================================================ -->
+
+    <!-- Invisible resize handle: pure hit-test area with a sizing cursor. -->
+    <Style x:Key="RibbonKit.MdiResizeThumb" TargetType="{x:Type Thumb}">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Thumb}">
+                    <Border Background="Transparent" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Caption buttons (minimize / maximize-restore). Glyphs stroke with the
+         caption's inherited foreground so they flip with active/inactive state. -->
+    <Style x:Key="RibbonKit.MdiCaptionButton" TargetType="{x:Type Button}">
+        <Setter Property="Width" Value="34" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Button}">
+                    <Border x:Name="Root" Background="{TemplateBinding Background}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Root" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.MdiChild.CaptionButtonHoverBackground}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Root" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.MdiChild.CaptionButtonPressedBackground}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Close button: the standard red wash, white glyph while hot. -->
+    <Style x:Key="RibbonKit.MdiCloseButton" TargetType="{x:Type Button}" BasedOn="{StaticResource RibbonKit.MdiCaptionButton}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Button}">
+                    <Border x:Name="Root" Background="{TemplateBinding Background}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Root" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.CaptionButton.CloseHoverBackground}" />
+                            <Setter TargetName="Root" Property="TextElement.Foreground" Value="#FFFFFF" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Root" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.CaptionButton.ClosePressedBackground}" />
+                            <Setter TargetName="Root" Property="TextElement.Foreground" Value="#FFFFFF" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ============================================================
+         MdiChild: caption bar + content host + resize overlay.
+         ============================================================ -->
+    <Style TargetType="{x:Type controls:MdiChild}">
+        <Setter Property="MinWidth" Value="140" />
+        <Setter Property="MinHeight" Value="100" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type controls:MdiChild}">
+                    <Grid>
+                        <Border x:Name="ChildBorder"
+                                Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
+                                BorderBrush="{DynamicResource RibbonKit.Brushes.MdiChild.InactiveBorder}"
+                                BorderThickness="1"
+                                CornerRadius="{DynamicResource RibbonKit.Metrics.MdiChild.CornerRadius}">
+                            <DockPanel>
+                                <Border x:Name="Caption"
+                                        DockPanel.Dock="Top"
+                                        Height="{DynamicResource RibbonKit.Metrics.MdiChild.CaptionHeight}"
+                                        Background="{DynamicResource RibbonKit.Brushes.MdiChild.InactiveCaptionBackground}"
+                                        CornerRadius="{DynamicResource RibbonKit.Metrics.MdiChild.CaptionCornerRadius}"
+                                        TextElement.Foreground="{DynamicResource RibbonKit.Brushes.MdiChild.InactiveCaptionForeground}">
+                                    <Grid>
+                                        <!-- Drag surface: fills the caption; the labels sit over it
+                                             hit-test-invisible, the buttons over it hit-testable. -->
+                                        <Thumb x:Name="PART_DragThumb" Style="{StaticResource RibbonKit.MdiResizeThumb}" Cursor="Arrow" />
+                                        <StackPanel Orientation="Horizontal"
+                                                    IsHitTestVisible="False"
+                                                    Margin="8,0,104,0"
+                                                    VerticalAlignment="Center">
+                                            <ContentPresenter x:Name="IconHost"
+                                                              Content="{TemplateBinding Icon}"
+                                                              Width="16" Height="16"
+                                                              Margin="0,0,6,0"
+                                                              VerticalAlignment="Center" />
+                                            <TextBlock Text="{TemplateBinding Title}"
+                                                       VerticalAlignment="Center"
+                                                       FontSize="12"
+                                                       TextTrimming="CharacterEllipsis" />
+                                            <TextBlock x:Name="DirtyMarker"
+                                                       Text=" •"
+                                                       FontSize="12"
+                                                       VerticalAlignment="Center"
+                                                       Visibility="Collapsed" />
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                            <Button x:Name="PART_MinimizeButton" Style="{StaticResource RibbonKit.MdiCaptionButton}">
+                                                <Path Data="M 0,0 H 10"
+                                                      StrokeThickness="1"
+                                                      VerticalAlignment="Center"
+                                                      Stroke="{Binding Path=(TextElement.Foreground), RelativeSource={RelativeSource Self}}" />
+                                            </Button>
+                                            <Button x:Name="PART_MaximizeRestoreButton" Style="{StaticResource RibbonKit.MdiCaptionButton}">
+                                                <Grid>
+                                                    <Path x:Name="MaximizeGlyph"
+                                                          Data="M 0.5,0.5 H 9.5 V 9.5 H 0.5 Z"
+                                                          StrokeThickness="1"
+                                                          Stroke="{Binding Path=(TextElement.Foreground), RelativeSource={RelativeSource Self}}" />
+                                                    <Path x:Name="RestoreGlyph"
+                                                          Data="M 0.5,2.5 H 7.5 V 9.5 H 0.5 Z M 2.5,2.5 V 0.5 H 9.5 V 7.5 H 7.5"
+                                                          StrokeThickness="1"
+                                                          Visibility="Collapsed"
+                                                          Stroke="{Binding Path=(TextElement.Foreground), RelativeSource={RelativeSource Self}}" />
+                                                </Grid>
+                                            </Button>
+                                            <Button x:Name="PART_CloseButton" Style="{StaticResource RibbonKit.MdiCloseButton}">
+                                                <Path Data="M 0,0 L 8,8 M 8,0 L 0,8"
+                                                      StrokeThickness="1"
+                                                      Stroke="{Binding Path=(TextElement.Foreground), RelativeSource={RelativeSource Self}}" />
+                                            </Button>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                                <Border x:Name="PART_ContentBorder" Padding="1">
+                                    <ContentPresenter x:Name="PART_ContentHost" />
+                                </Border>
+                            </DockPanel>
+                        </Border>
+                        <!-- Resize overlay: invisible thumbs riding the border. -->
+                        <Grid x:Name="ResizeGrid">
+                            <Thumb x:Name="PART_ResizeLeft" Style="{StaticResource RibbonKit.MdiResizeThumb}" HorizontalAlignment="Left" Width="6" Margin="0,8,0,8" Cursor="SizeWE" />
+                            <Thumb x:Name="PART_ResizeRight" Style="{StaticResource RibbonKit.MdiResizeThumb}" HorizontalAlignment="Right" Width="6" Margin="0,8,0,8" Cursor="SizeWE" />
+                            <Thumb x:Name="PART_ResizeTop" Style="{StaticResource RibbonKit.MdiResizeThumb}" VerticalAlignment="Top" Height="6" Margin="8,0,8,0" Cursor="SizeNS" />
+                            <Thumb x:Name="PART_ResizeBottom" Style="{StaticResource RibbonKit.MdiResizeThumb}" VerticalAlignment="Bottom" Height="6" Margin="8,0,8,0" Cursor="SizeNS" />
+                            <Thumb x:Name="PART_ResizeTopLeft" Style="{StaticResource RibbonKit.MdiResizeThumb}" HorizontalAlignment="Left" VerticalAlignment="Top" Width="8" Height="8" Cursor="SizeNWSE" />
+                            <Thumb x:Name="PART_ResizeTopRight" Style="{StaticResource RibbonKit.MdiResizeThumb}" HorizontalAlignment="Right" VerticalAlignment="Top" Width="8" Height="8" Cursor="SizeNESW" />
+                            <Thumb x:Name="PART_ResizeBottomLeft" Style="{StaticResource RibbonKit.MdiResizeThumb}" HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="8" Height="8" Cursor="SizeNESW" />
+                            <Thumb x:Name="PART_ResizeBottomRight" Style="{StaticResource RibbonKit.MdiResizeThumb}" HorizontalAlignment="Right" VerticalAlignment="Bottom" Width="8" Height="8" Cursor="SizeNWSE" />
+                        </Grid>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsActive" Value="True">
+                            <Setter TargetName="Caption" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.MdiChild.ActiveCaptionBackground}" />
+                            <Setter TargetName="Caption" Property="TextElement.Foreground"
+                                    Value="{DynamicResource RibbonKit.Brushes.MdiChild.ActiveCaptionForeground}" />
+                            <Setter TargetName="ChildBorder" Property="BorderBrush"
+                                    Value="{DynamicResource RibbonKit.Brushes.MdiChild.ActiveBorder}" />
+                        </Trigger>
+                        <Trigger Property="IsModified" Value="True">
+                            <Setter TargetName="DirtyMarker" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="CanClose" Value="False">
+                            <Setter TargetName="PART_CloseButton" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="WindowState" Value="Maximized">
+                            <Setter TargetName="ResizeGrid" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="MaximizeGlyph" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="RestoreGlyph" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="ChildBorder" Property="CornerRadius" Value="0" />
+                            <Setter TargetName="Caption" Property="CornerRadius" Value="0" />
+                        </Trigger>
+                        <Trigger Property="WindowState" Value="Minimized">
+                            <Setter TargetName="ResizeGrid" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="PART_ContentBorder" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="MaximizeGlyph" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="RestoreGlyph" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <!-- A minimized child is caption-only: the style MinHeight must not prop
+                 its height open (a style-trigger setter outranks the style setter). -->
+            <Trigger Property="WindowState" Value="Minimized">
+                <Setter Property="MinHeight" Value="0" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- ============================================================
+         MdiContainer: the client area hosting the children.
+         ============================================================ -->
+    <Style TargetType="{x:Type controls:MdiContainer}">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="ClipToBounds" Value="True" />
+        <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.MdiClient.Background}" />
+        <Setter Property="ItemsPanel">
+            <Setter.Value>
+                <ItemsPanelTemplate>
+                    <layout:MdiCanvasPanel />
+                </ItemsPanelTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type controls:MdiContainer}">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}">
+                        <ItemsPresenter />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

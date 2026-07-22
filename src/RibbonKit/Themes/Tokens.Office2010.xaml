@@ -236,4 +236,26 @@
     <Thickness x:Key="RibbonKit.Metrics.QatExtenderBorderThicknessMinimized">0,0,0,1</Thickness>
     <CornerRadius x:Key="RibbonKit.Metrics.QatExtenderCornerRadiusMinimized">0</CornerRadius>
 
+    <!-- MDI child-window chrome. 2010: glass-gradient captions on the blue-grey
+         workspace, gently rounded like the rest of the chrome. -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.MdiChild.ActiveCaptionBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#6B9BD2" />
+        <GradientStop Offset="0.5" Color="#4477B3" />
+        <GradientStop Offset="1" Color="#2E5E9E" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.ActiveCaptionForeground" Color="#FFFFFF" />
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.MdiChild.InactiveCaptionBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#F0F4FA" />
+        <GradientStop Offset="1" Color="#D9E2EF" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.InactiveCaptionForeground" Color="#3B5A82" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.ActiveBorder" Color="#2E5E9E" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.InactiveBorder" Color="#A8BED8" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.CaptionButtonHoverBackground" Color="#4DFFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.CaptionButtonPressedBackground" Color="#66FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiClient.Background" Color="#AEC3DE" />
+    <system:Double x:Key="RibbonKit.Metrics.MdiChild.CaptionHeight">30</system:Double>
+    <CornerRadius x:Key="RibbonKit.Metrics.MdiChild.CornerRadius">3</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.MdiChild.CaptionCornerRadius">2,2,0,0</CornerRadius>
+
 </ResourceDictionary>

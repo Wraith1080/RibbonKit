@@ -556,6 +556,14 @@
                     </StackPanel>
                 </rk:RibbonGroup>
                 <rk:RibbonGroup Header="Application" rk:Ribbon.CommandId="group.view.application" Icon="{StaticResource Icon.Gear}">
+                    <rk:RibbonButton Header="MDI Demo"
+                                     rk:Ribbon.CommandId="cmd.mdidemo"
+                                     Size="Large"
+                                     LargeIcon="{StaticResource Icon.Copy}"
+                                     Icon="{StaticResource Icon.Copy}"
+                                     Click="OnOpenMdiDemo"
+                                     ScreenTipTitle="MDI Demo"
+                                     ScreenTipText="Open the MDI emulation demo: themed child windows floating inside the client area." />
                     <rk:RibbonButton Header="Options"
                                      rk:Ribbon.CommandId="cmd.options"
                                      Size="Large"

@@ -143,4 +143,18 @@
     <Thickness x:Key="RibbonKit.Metrics.QatExtenderBorderThicknessMinimized">0,0,0,1</Thickness>
     <CornerRadius x:Key="RibbonKit.Metrics.QatExtenderCornerRadiusMinimized">0</CornerRadius>
 
+    <!-- MDI child-window chrome. 2019: flat, square, accent active caption. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.ActiveCaptionBackground" Color="#2B579A" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.ActiveCaptionForeground" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.InactiveCaptionBackground" Color="#E6E6E6" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.InactiveCaptionForeground" Color="#201F1E" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.ActiveBorder" Color="#2B579A" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.InactiveBorder" Color="#C8C8C8" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.CaptionButtonHoverBackground" Color="#26000000" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.CaptionButtonPressedBackground" Color="#40000000" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiClient.Background" Color="#DEDEDE" />
+    <system:Double x:Key="RibbonKit.Metrics.MdiChild.CaptionHeight">30</system:Double>
+    <CornerRadius x:Key="RibbonKit.Metrics.MdiChild.CornerRadius">0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.MdiChild.CaptionCornerRadius">0</CornerRadius>
+
 </ResourceDictionary>

@@ -247,6 +247,9 @@ public partial class MainWindow : RibbonWindow
     private void OnOpenOptions(object sender, RoutedEventArgs e) =>
         OpenOptionsDialog(OptionsPageKind.Editor);
 
+    private void OnOpenMdiDemo(object sender, RoutedEventArgs e) =>
+        new MdiDemo { Owner = this }.Show();
+
     // Backstage footer BUTTON items: they run an action instead of switching to a page.
     private void OnBackstageOptions(object sender, RoutedEventArgs e)
     {

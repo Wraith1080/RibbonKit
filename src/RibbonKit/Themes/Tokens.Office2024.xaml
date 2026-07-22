@@ -148,4 +148,23 @@
     <Thickness x:Key="RibbonKit.Metrics.QatExtenderBorderThicknessMinimized">1</Thickness>
     <CornerRadius x:Key="RibbonKit.Metrics.QatExtenderCornerRadiusMinimized">8</CornerRadius>
 
+    <!-- ============================================================
+         MDI child-window chrome (MdiContainer/MdiChild). 2024: accent
+         active caption, rounded corners matching the ribbon card.
+         ============================================================ -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.ActiveCaptionBackground" Color="#0F6CBD" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.ActiveCaptionForeground" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.InactiveCaptionBackground" Color="#F3F3F3" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.InactiveCaptionForeground" Color="#616161" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.ActiveBorder" Color="#0F6CBD" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.InactiveBorder" Color="#D1D1D1" />
+    <!-- Translucent black wash: readable on both the accent (active) and light
+         (inactive) caption. The close button reuses the CaptionButton red pair. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.CaptionButtonHoverBackground" Color="#26000000" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.CaptionButtonPressedBackground" Color="#40000000" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiClient.Background" Color="#E9E9E9" />
+    <system:Double x:Key="RibbonKit.Metrics.MdiChild.CaptionHeight">30</system:Double>
+    <CornerRadius x:Key="RibbonKit.Metrics.MdiChild.CornerRadius">8</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.MdiChild.CaptionCornerRadius">7,7,0,0</CornerRadius>
+
 </ResourceDictionary>

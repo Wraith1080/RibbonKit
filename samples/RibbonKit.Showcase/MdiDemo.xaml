@@ -1,0 +1,57 @@
+<rk:RibbonWindow x:Class="RibbonKit.Showcase.MdiDemo"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:rk="urn:ribbonkit"
+                 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                 mc:Ignorable="d"
+                 Title="RibbonKit MDI Demo"
+                 Width="1100"
+                 Height="720"
+                 MinWidth="480"
+                 WindowStartupLocation="CenterScreen"
+                 UseLayoutRounding="True"
+                 Background="White">
+    <DockPanel>
+        <rk:Ribbon DockPanel.Dock="Top">
+            <rk:RibbonTab Header="Window">
+                <rk:RibbonGroup Header="Documents">
+                    <rk:RibbonButton Header="New Document"
+                                     Size="Large"
+                                     LargeIcon="{StaticResource Icon.Copy}"
+                                     Icon="{StaticResource Icon.Copy}"
+                                     Click="OnNewDocument"
+                                     ScreenTipTitle="New document"
+                                     ScreenTipText="Open a new child window in the MDI area (a UserControl wrapped in themed chrome)." />
+                    <rk:RibbonButton Header="Close Active"
+                                     Size="Large"
+                                     LargeIcon="{StaticResource Icon.Exit}"
+                                     Icon="{StaticResource Icon.Exit}"
+                                     Click="OnCloseActive"
+                                     ScreenTipTitle="Close active document"
+                                     ScreenTipText="Close the currently active child window." />
+                </rk:RibbonGroup>
+                <rk:RibbonGroup Header="State">
+                    <rk:RibbonButton Header="Maximize"
+                                     Click="OnMaximizeActive"
+                                     SizeDefinition="Medium, Medium, Small"
+                                     Icon="{StaticResource Icon.Copy}"
+                                     ScreenTipText="Maximize the active child to fill the MDI area." />
+                    <rk:RibbonButton Header="Minimize"
+                                     Click="OnMinimizeActive"
+                                     SizeDefinition="Medium, Medium, Small"
+                                     Icon="{StaticResource Icon.Copy}"
+                                     ScreenTipText="Minimize the active child to a caption strip along the bottom." />
+                    <rk:RibbonButton Header="Restore"
+                                     Click="OnRestoreActive"
+                                     SizeDefinition="Medium, Medium, Small"
+                                     Icon="{StaticResource Icon.Copy}"
+                                     ScreenTipText="Restore the active child to its normal floating bounds." />
+                </rk:RibbonGroup>
+            </rk:RibbonTab>
+        </rk:Ribbon>
+
+        <rk:MdiContainer x:Name="Mdi"
+                         DocumentClosing="OnDocumentClosing" />
+    </DockPanel>
+</rk:RibbonWindow>
