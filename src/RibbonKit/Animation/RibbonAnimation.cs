@@ -41,6 +41,9 @@ public enum RibbonAnimationAction
     /// <summary>In-ribbon gallery expanding to / collapsing from its drop-down.</summary>
     Gallery,
 
+    /// <summary>Scroll offset gliding instead of jumping: the ribbon's groups row / tab strip (chevron buttons or wheel) and the in-ribbon gallery (strip settling on a picked tile, and its up/down buttons).</summary>
+    RibbonScroll,
+
     /// <summary>Drop-down, split-button, and group flyout menus opening and closing.</summary>
     DropdownMenu,
 
@@ -273,6 +276,7 @@ public static class RibbonAnimation
             RibbonAnimationAction.KeyTip => 120d,
             RibbonAnimationAction.ToggleState => 120d,
             RibbonAnimationAction.TabSwitch => 130d,
+            RibbonAnimationAction.RibbonScroll => 160d,
             RibbonAnimationAction.QuickAccessMove => 150d,
             RibbonAnimationAction.ThemeSwitch => 160d,
             RibbonAnimationAction.RibbonMinimize => 180d,

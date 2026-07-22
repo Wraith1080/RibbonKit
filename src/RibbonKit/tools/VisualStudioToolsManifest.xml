@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Toolbox population for the new WPF/.NET XAML designer. The designer reads this from the NuGet
+  package's tools\ folder and shows ONLY the listed types (an allowlist) under the VSCategory tab
+  — so internal part/host/panel/dialog types are excluded simply by not being listed.
+
+  NOTE: this only takes effect when RibbonKit is consumed as a NuGet PACKAGE. In a project-reference
+  setup (e.g. the showcase referencing the RibbonKit project) the designer falls back to reflecting
+  all public controls, so this manifest has no effect there.
+-->
+<FileList>
+  <File Reference="RibbonKit.dll">
+    <ToolboxItems VSCategory="RibbonKit" BlendCategory="RibbonKit" UIFramework="WPF">
+      <!-- Primary -->
+      <Item Type="RibbonKit.Controls.Ribbon" />
+
+      <!-- Structure -->
+      <Item Type="RibbonKit.Controls.RibbonTab" />
+      <Item Type="RibbonKit.Controls.RibbonGroup" />
+
+      <!-- Command controls -->
+      <Item Type="RibbonKit.Controls.RibbonButton" />
+      <Item Type="RibbonKit.Controls.RibbonToggleButton" />
+      <Item Type="RibbonKit.Controls.RibbonSplitButton" />
+      <Item Type="RibbonKit.Controls.RibbonDropDownButton" />
+      <Item Type="RibbonKit.Controls.RibbonComboBox" />
+      <Item Type="RibbonKit.Controls.RibbonMenuItem" />
+
+      <!-- Galleries -->
+      <Item Type="RibbonKit.Controls.RibbonGallery" />
+      <Item Type="RibbonKit.Controls.InRibbonGallery" />
+      <Item Type="RibbonKit.Controls.RibbonGalleryItem" />
+
+      <!-- Backstage -->
+      <Item Type="RibbonKit.Controls.Backstage" />
+      <Item Type="RibbonKit.Controls.BackstageTabItem" />
+    </ToolboxItems>
+  </File>
+</FileList>

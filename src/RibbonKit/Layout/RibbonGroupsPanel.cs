@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using RibbonKit.Controls;
 
 namespace RibbonKit.Layout;
@@ -34,6 +35,19 @@ public class RibbonGroupsPanel : Panel
     private double[][]? _stateWidths;
     private RibbonGroupSizeState[][]? _stateMaps;
     private bool _isMeasuring;
+    private RibbonScrollContentHost? _scrollHost;
+
+    /// <summary>Initializes the panel and caches the enclosing scroller once the tree is connected.</summary>
+    public RibbonGroupsPanel()
+    {
+        // The visual parent chain isn't reliably walkable during an items-host panel's MeasureOverride,
+        // so we resolve the scroller at Loaded (tree fully connected) and cache it. See ReportContentWidth.
+        // (Re-evaluating overflow after a tab switch is driven by RibbonTabControl.OnSelectionChanged →
+        // RibbonScrollContentHost.Refresh, which reliably dirties the whole subtree once the new groups
+        // row is realized — an IsVisibleChanged hook here fired too early, before this panel's parent
+        // chain reached the scroller, so it couldn't invalidate the right elements.)
+        Loaded += (_, _) => _scrollHost ??= FindScrollHost();
+    }
 
     /// <summary>
     /// Discards the cached per-state group widths so the next measure pass re-probes.
@@ -67,6 +81,10 @@ public class RibbonGroupsPanel : Panel
                 ProbeStateWidths(probeSize);
             }
 
+            // Reduce toward the available width. When we sit inside a RibbonScrollContentHost with
+            // ConstrainChildWidth set (the groups row), the host measures us AT the viewport width, so
+            // availableSize.Width is exactly the visible area: groups reduce to fit the viewport first,
+            // and only the leftover overflow scrolls. See RibbonScrollContentHost.MeasureOverride.
             int[] order = BuildReductionOrder(_stateWidths!);
             int[] states = ReductionAlgorithm.ComputeStates(availableSize.Width, _stateWidths!, order);
 
@@ -90,6 +108,12 @@ public class RibbonGroupsPanel : Panel
                 maxHeight = Math.Max(maxHeight, child.DesiredSize.Height);
             }
 
+            // Report the TRUE (unclamped) content width to the scroller. WPF clamps this method's
+            // returned DesiredSize to availableSize, so once the row is fully reduced but still wider
+            // than the viewport, the host can't see the overflow from our DesiredSize alone — it reads
+            // the reported width instead to decide whether the chevrons should appear.
+            (_scrollHost ??= FindScrollHost())?.ReportContentWidth(totalWidth);
+
             return new Size(totalWidth, maxHeight);
         }
         finally
@@ -110,6 +134,23 @@ public class RibbonGroupsPanel : Panel
         }
 
         return finalSize;
+    }
+
+    /// <summary>Walks up to the enclosing <see cref="RibbonScrollContentHost"/> (the groups scroller), or null.</summary>
+    private RibbonScrollContentHost? FindScrollHost()
+    {
+        DependencyObject? parent = VisualTreeHelper.GetParent(this);
+        while (parent != null)
+        {
+            if (parent is RibbonScrollContentHost host)
+            {
+                return host;
+            }
+
+            parent = VisualTreeHelper.GetParent(parent);
+        }
+
+        return null;
     }
 
     /// <inheritdoc />

@@ -72,6 +72,13 @@ public enum RibbonBackstageDesign
     /// highlights, and an accent selection bar — matching modern Office.
     /// </summary>
     Modern,
+
+    /// <summary>
+    /// The Office 2010 look: the same solid accent-colored navigation column as
+    /// <see cref="Classic"/> (white text), but the SELECTED item is drawn with a glossy blue
+    /// "glass" marker instead of a flat fill. Pairs naturally with the Office 2010 theme.
+    /// </summary>
+    Classic2010,
 }
 
 /// <summary>

@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- The new WPF XAML designer loads design-time extensions INSIDE the Visual Studio
+         process, which runs on .NET Framework. So this design assembly MUST target .NET
+         Framework even though RibbonKit itself targets net8.0/net9.0-windows. It also does
+         NOT reference the RibbonKit project: the designer surface is process-isolated, so
+         all control types are referenced by STRING name, never typeof. -->
+    <TargetFramework>net472</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+
+    <!-- Output name ends in ".DesignTools" so the NEW designer discovers it via the
+         *.designtools.dll convention (the old designer used *.design.dll). The DeployToDesignFolder
+         target below drops it into a "Design" subfolder next to RibbonKit.dll — see
+         SETUP-DESIGNTOOLS.md for the discovery rules and NuGet packaging. -->
+    <AssemblyName>RibbonKit.DesignTools</AssemblyName>
+    <RootNamespace>RibbonKit.Design</RootNamespace>
+
+    <!-- Tooling assembly, not a shipped library: don't pack or publish it on its own. -->
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Provides Microsoft.VisualStudio.DesignTools.Extensibility(.Interaction) — the new
+         designer SDK. These are reference/facade assemblies satisfied by VS at design time,
+         so they are not copied to output. Pin to the VS version you build with if needed. -->
+    <PackageReference Include="Microsoft.VisualStudio.DesignTools.Extensibility" Version="17.10.34916.79" PrivateAssets="all" />
+  </ItemGroup>
+
+  <!-- Deploy the built *.designtools.dll into the control library's per-TFM output under a
+       "Design" subfolder, where the new XAML designer looks for extensions. If RibbonKit's
+       TargetFrameworks change, update this list to match. -->
+  <Target Name="DeployToDesignFolder" AfterTargets="Build">
+    <ItemGroup>
+      <_DesignDest Include="$(MSBuildThisFileDirectory)..\RibbonKit\bin\$(Configuration)\net8.0-windows\Design\" />
+      <_DesignDest Include="$(MSBuildThisFileDirectory)..\RibbonKit\bin\$(Configuration)\net9.0-windows\Design\" />
+    </ItemGroup>
+    <MakeDir Directories="@(_DesignDest)" />
+    <Copy SourceFiles="$(TargetPath)"
+          DestinationFolder="%(_DesignDest.Identity)"
+          SkipUnchangedFiles="true"
+          ContinueOnError="true" />
+    <Copy SourceFiles="$(TargetDir)$(AssemblyName).pdb"
+          DestinationFolder="%(_DesignDest.Identity)"
+          SkipUnchangedFiles="true"
+          ContinueOnError="true" />
+  </Target>
+
+</Project>

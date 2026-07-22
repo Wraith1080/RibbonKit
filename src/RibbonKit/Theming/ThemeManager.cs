@@ -15,7 +15,14 @@ public enum RibbonTheme
     /// <summary>Office 2013 ("White"): flat, white tab strip, blue title bar, solid File button.</summary>
     Office2013,
 
-    // Office2010 and Office2007 arrive in later Phase 6 batches (see docs/03-ROADMAP.md).
+    /// <summary>
+    /// Office 2010 ("Blue"): the first non-flat theme — gradient silver-blue chrome, dark-blue
+    /// tab labels, amber/gold glossy button highlights, a connected (outlined) selected tab, and
+    /// a solid blue gradient File button.
+    /// </summary>
+    Office2010,
+
+    // Office2007 arrives in a later Phase 6 batch (see docs/03-ROADMAP.md).
 }
 
 /// <summary>
@@ -42,6 +49,11 @@ public static class ThemeManager
     private const string SelectedForegroundKey = "RibbonKit.Brushes.Tab.SelectedForeground";
     private const string AppButtonBackgroundKey = "RibbonKit.Brushes.ApplicationButton.Background";
     private const string AppButtonHoverKey = "RibbonKit.Brushes.ApplicationButton.HoverBackground";
+    private const string AppButtonPressedKey = "RibbonKit.Brushes.ApplicationButton.PressedBackground";
+    private const string AppButtonBorderKey = "RibbonKit.Brushes.ApplicationButton.Border";
+    private const string BackstageSelectedGlassKey = "RibbonKit.Brushes.Backstage.ItemSelectedGlass";
+    private const string DialogPrimaryBackgroundKey = "RibbonKit.Brushes.Dialog.PrimaryBackground";
+    private const string DialogPrimaryBorderKey = "RibbonKit.Brushes.Dialog.PrimaryBorder";
     private const string TitleBarBackgroundKey = "RibbonKit.Brushes.TitleBar.Background";
     private const string TitleBarForegroundKey = "RibbonKit.Brushes.TitleBar.Foreground";
     private const string CaptionHoverKey = "RibbonKit.Brushes.CaptionButton.HoverBackground";
@@ -61,6 +73,8 @@ public static class ThemeManager
     {
         AccentKey, CheckedKey, CheckedHoverKey, BackstageHoverKey, BackstageSelectedKey,
         SelectedUnderlineKey, SelectedForegroundKey, AppButtonBackgroundKey, AppButtonHoverKey,
+        AppButtonPressedKey, AppButtonBorderKey, BackstageSelectedGlassKey, DialogPrimaryBackgroundKey,
+        DialogPrimaryBorderKey,
     };
 
     private static readonly Color DefaultAccent = Color.FromRgb(0x0F, 0x6C, 0xBD);
@@ -200,16 +214,32 @@ public static class ThemeManager
             return;
         }
 
+        RibbonTheme theme = CurrentTheme ?? RibbonTheme.Office2024;
+
         // Colors shared by every theme.
         resources[AccentKey] = Frozen(accent);
-        resources[CheckedKey] = Frozen(Mix(accent, Colors.White, 0.82));
-        resources[CheckedHoverKey] = Frozen(Mix(accent, Colors.White, 0.72));
         resources[BackstageHoverKey] = Frozen(Mix(accent, Colors.White, 0.22));
         resources[BackstageSelectedKey] = Frozen(Mix(accent, Colors.Black, 0.28));
+        // The Classic2010 selected "glass" marker tracks the accent as a gel (only visible when
+        // that backstage design is active, harmless otherwise). The dialog primary (OK) button
+        // is flat accent by default; the Office 2010 case below swaps it for a glass gel.
+        resources[BackstageSelectedGlassKey] = Gel(accent);
+        resources[DialogPrimaryBackgroundKey] = Frozen(accent);
+        resources[DialogPrimaryBorderKey] = Frozen(accent);
+
+        // Toggled/checked highlight follows the accent — EXCEPT in Office 2010, where the
+        // hover/press/toggle highlight is always the amber "hot" color regardless of the color
+        // scheme (authentic 2010: the accent recolors the chrome, never the button highlight).
+        // Leaving these unset keeps 2010's amber gradient (they were Removed above).
+        if (theme != RibbonTheme.Office2010)
+        {
+            resources[CheckedKey] = Frozen(Mix(accent, Colors.White, 0.82));
+            resources[CheckedHoverKey] = Frozen(Mix(accent, Colors.White, 0.72));
+        }
 
         // Theme-specific accent tokens: only where that theme actually uses the accent,
         // so the flat themes keep their fill/outline selection untouched.
-        switch (CurrentTheme ?? RibbonTheme.Office2024)
+        switch (theme)
         {
             case RibbonTheme.Office2024:
                 resources[SelectedUnderlineKey] = Frozen(accent);
@@ -219,8 +249,43 @@ public static class ThemeManager
                 resources[SelectedForegroundKey] = Frozen(accent);
                 resources[AppButtonBackgroundKey] = Frozen(accent);
                 resources[AppButtonHoverKey] = Frozen(Mix(accent, Colors.Black, 0.22));
+                resources[AppButtonPressedKey] = Frozen(Mix(accent, Colors.Black, 0.38));
+                break;
+            case RibbonTheme.Office2010:
+                // The File button tracks the accent — but as a GRADIENT (a smooth blue-style
+                // gel in the accent hue) with a matching border, NOT a flat solid, so it keeps
+                // the 2010 glass look when the accent changes. The connected selected tab keeps
+                // its dark label (SelectedForeground left at the theme default).
+                resources[AppButtonBackgroundKey] = Gel(accent);
+                resources[AppButtonHoverKey] = Gel(Mix(accent, Colors.White, 0.18));
+                resources[AppButtonPressedKey] = Gel(Mix(accent, Colors.Black, 0.22));
+                resources[AppButtonBorderKey] = Frozen(Mix(accent, Colors.Black, 0.30));
+                // The OK button borrows the same glass gel + border in 2010.
+                resources[DialogPrimaryBackgroundKey] = Gel(accent);
+                resources[DialogPrimaryBorderKey] = Frozen(Mix(accent, Colors.Black, 0.30));
                 break;
         }
+    }
+
+    /// <summary>
+    /// Builds a smooth 3-stop vertical "gel" gradient centered on <paramref name="baseColor"/>
+    /// (lighter top, base middle, darker bottom) — the Office 2010 glossy-block look, derived so
+    /// a custom accent keeps its gradient instead of flattening to a solid.
+    /// </summary>
+    private static LinearGradientBrush Gel(Color baseColor)
+    {
+        var brush = new LinearGradientBrush
+        {
+            StartPoint = new Point(0, 0),
+            EndPoint = new Point(0, 1),
+        };
+        // Light top (inner glow), a slightly darker matte middle, then a LIGHTER bottom — the
+        // small specular reflection of a 2010 glass button.
+        brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.White, 0.38), 0.0));
+        brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.Black, 0.10), 0.5));
+        brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.White, 0.20), 1.0));
+        brush.Freeze();
+        return brush;
     }
 
     private static void ApplyTitleBarOverride(Application application)

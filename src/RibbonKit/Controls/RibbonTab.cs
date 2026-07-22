@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Markup;
 using System.Windows.Media;
+using RibbonKit.Animation;
 
 namespace RibbonKit.Controls;
 
@@ -71,6 +72,7 @@ public class RibbonTab : TabItem
         // The tab's TabControl content is a host ItemsControl whose panel is the
         // adaptive RibbonGroupsPanel. Users interact only with the Groups collection.
         Content = new RibbonGroupsHost { ItemsSource = groups };
+        IsVisibleChanged += OnIsVisibleChanged;
     }
 
     /// <summary>The groups shown in the ribbon when this tab is selected.</summary>
@@ -131,6 +133,15 @@ public class RibbonTab : TabItem
         }
 
         SetValue(ContextualBrushPropertyKey, brush);
+    }
+
+    private void OnIsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        // A contextual tab appearing (its context activated) fades + slides its header in.
+        if (IsContextual && e.NewValue is true)
+        {
+            RibbonMotion.PlayOpen(this, RibbonAnimationAction.ContextualTab, RibbonSlideFrom.Top);
+        }
     }
 
     /// <summary>

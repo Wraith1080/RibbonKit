@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
+using RibbonKit.Animation;
 
 namespace RibbonKit.Controls;
 
@@ -73,6 +74,8 @@ public class Backstage : TabControl
 
     private ButtonBase? _backButton;
 
+    private FrameworkElement? _contentArea;
+
     static Backstage()
     {
         DefaultStyleKeyProperty.OverrideMetadata(
@@ -141,6 +144,8 @@ public class Backstage : TabControl
 
         base.OnApplyTemplate();
 
+        _contentArea = GetTemplateChild("ContentArea") as FrameworkElement;
+
         _backButton = GetTemplateChild(BackButtonPartName) as ButtonBase;
         if (_backButton is not null)
         {
@@ -184,6 +189,13 @@ public class Backstage : TabControl
         }
 
         base.OnSelectionChanged(e);
+
+        // Slide the newly-selected page in (no fade — it's freshly shown at full opacity, so a fade
+        // would flash it). Skipped while bouncing off a button item.
+        if (!_revertingSelection)
+        {
+            RibbonMotion.PlaySlideIn(_contentArea, RibbonAnimationAction.TabSwitch, RibbonSlideFrom.Bottom);
+        }
     }
 
     private void OnBackButtonClick(object sender, RoutedEventArgs e) => RaiseBackRequested();

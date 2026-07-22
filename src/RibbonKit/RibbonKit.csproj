@@ -24,6 +24,36 @@
 
   <ItemGroup>
     <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <!-- New XAML designer toolbox allowlist (effective only when consumed as a NuGet package). -->
+    <None Include="tools\VisualStudioToolsManifest.xml" Pack="true" PackagePath="tools\" />
+  </ItemGroup>
+
+  <!-- Build the design-tools assembly (RibbonKit.DesignTools.dll, net472) so pack can bundle it.
+       - ReferenceOutputAssembly=false: the XAML designer loads it in-process and isolated, so RibbonKit
+         must NOT reference it at runtime.
+       - UndefineProperties=TargetFramework (+ SkipGetTargetFrameworkProperties): build RibbonKit.Design
+         with ITS OWN net472 target, not RibbonKit's net8/net9. Without this, `dotnet pack` fails with
+         NETSDK1005 ("assets file doesn't have a target for 'net8.0-windows'") because the multi-targeted
+         parent pushes its TFM down onto the single-TFM design project. -->
+  <ItemGroup>
+    <ProjectReference Include="..\RibbonKit.Design\RibbonKit.Design.csproj"
+                      ReferenceOutputAssembly="false"
+                      SkipGetTargetFrameworkProperties="true"
+                      UndefineProperties="TargetFramework"
+                      PrivateAssets="all"
+                      Private="false" />
+  </ItemGroup>
+
+  <!-- Pack the design assembly into a "Design" subfolder INSIDE each runtime lib folder, next to
+       RibbonKit.dll, where the new XAML designer finds it. The lib folder names carry the WPF default
+       Windows platform version (net8.0-windows -> net8.0-windows7.0), so the paths are spelled out
+       explicitly (an earlier attempt with $(NuGetShortFolderName) resolved empty and dumped the dll in
+       lib/Design/). If the TargetFrameworks above change, update these two paths to match. -->
+  <ItemGroup>
+    <None Include="..\RibbonKit.Design\bin\$(Configuration)\net472\RibbonKit.DesignTools.dll"
+          Pack="true"
+          Visible="false"
+          PackagePath="lib\net8.0-windows7.0\Design\;lib\net9.0-windows7.0\Design\" />
   </ItemGroup>
 
 </Project>

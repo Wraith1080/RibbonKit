@@ -371,6 +371,14 @@ public class Ribbon : Control
                         Source = toggle,
                         Mode = System.Windows.Data.BindingMode.TwoWay,
                     });
+
+                // Also raise the source's Click so a Click-wired action runs (the two-way binding above
+                // only fires the source's Checked/Unchecked). This makes clicking the proxy equivalent to
+                // clicking the source. RaiseEvent does NOT re-toggle IsChecked (the binding already did),
+                // so there's no double-toggle; by the time this runs the source's IsChecked is updated.
+                proxyToggle.Click += (_, _) =>
+                    toggle.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent, toggle));
+
                 proxy = proxyToggle;
                 break;
             }
@@ -518,12 +526,53 @@ public class Ribbon : Control
         collapseItem.Click += (_, _) => SetCurrentValue(IsMinimizedProperty, !IsMinimized);
 
         var menu = new System.Windows.Controls.ContextMenu { PlacementTarget = target };
+        ApplyModernMenuStyle(menu);
         menu.Items.Add(addItem);
         menu.Items.Add(customizeItem);
         menu.Items.Add(customizeRibbonItem);
         menu.Items.Add(new System.Windows.Controls.Separator());
         menu.Items.Add(collapseItem);
         menu.IsOpen = true;
+    }
+
+    // Cached menu-style dictionary (Themes/Menus.xaml). It lives in its OWN dictionary — NOT the
+    // theme's Office2024.xaml — because a keyed resource in the assembly theme dictionary isn't
+    // reachable by a runtime lookup from a ContextMenu (a PresentationFramework type resolves its
+    // theme resources against PresentationFramework's theme, not RibbonKit's Generic.xaml). Loading
+    // it explicitly and assigning the Style directly sidesteps that; the style's brushes are
+    // DynamicResource, so they still resolve — and re-theme — from the app-merged token set.
+    private static System.Windows.ResourceDictionary? _menuResources;
+
+    private static System.Windows.ResourceDictionary MenuResources =>
+        _menuResources ??= new System.Windows.ResourceDictionary
+        {
+            Source = new Uri("pack://application:,,,/RibbonKit;component/Themes/Menus.xaml", UriKind.Absolute),
+        };
+
+    // Restyles a context menu to the modern RibbonKit look (rounded flyout + RibbonMenuItem-style
+    // rows) instead of the native WPF menu. The flyout chrome comes from the ContextMenu Style; the
+    // per-item look is injected as IMPLICIT styles on the menu's own Resources so every MenuItem (incl.
+    // submenus) and Separator resolves it. ItemContainerStyle can't be used here — WPF would apply the
+    // MenuItem style to Separator items too and throw. If the dictionary can't load, the menu keeps the
+    // system default.
+    private static void ApplyModernMenuStyle(System.Windows.Controls.ContextMenu menu)
+    {
+        System.Windows.ResourceDictionary dictionary = MenuResources;
+
+        if (dictionary["RibbonKit.ContextMenu"] is System.Windows.Style menuStyle)
+        {
+            menu.Style = menuStyle;
+        }
+
+        if (dictionary["RibbonKit.MenuItem"] is System.Windows.Style itemStyle)
+        {
+            menu.Resources[typeof(System.Windows.Controls.MenuItem)] = itemStyle;
+        }
+
+        if (dictionary["RibbonKit.MenuSeparator"] is System.Windows.Style separatorStyle)
+        {
+            menu.Resources[System.Windows.Controls.MenuItem.SeparatorStyleKey] = separatorStyle;
+        }
     }
 
     // Walks up from the right-clicked element (visual parent first, logical as fallback so
@@ -575,6 +624,11 @@ public class Ribbon : Control
     }
 
     private BackstageAdorner? _backstageAdorner;
+
+    // While a TRANSLUCENT backstage is open, the content behind it (the adorned root) gets a
+    // strong blur so the backstage reads as a frosted-acrylic panel. Saved/restored here.
+    private UIElement? _blurredRoot;
+    private System.Windows.Media.Effects.Effect? _blurredRootPriorEffect;
 
     // Design-time-only host for the backstage preview (see UpdateDesignTimeBackstage). The
     // runtime adorner path needs a real Window the XAML designer doesn't provide.
@@ -715,6 +769,7 @@ public class Ribbon : Control
                     RibbonMotion.PlayOpen(reopening, RibbonAnimationAction.Backstage, RibbonSlideFrom.Left);
                 }
 
+                ApplyBackstageBlur(_backstageAdorner.AdornedElement);
                 return;
             }
 
@@ -734,6 +789,11 @@ public class Ribbon : Control
 
             _backstageAdorner = new BackstageAdorner(root, content);
             layer.Add(_backstageAdorner);
+
+            // Strong in-app blur of the content behind a translucent backstage. The blur goes on
+            // the adorned root; the backstage lives in the adorner layer (a sibling visual branch),
+            // so it stays sharp on top while everything behind it frosts.
+            ApplyBackstageBlur(root);
 
             if (content is FrameworkElement element)
             {
@@ -769,8 +829,43 @@ public class Ribbon : Control
                     adorner.Detach();
                     _backstageAdorner = null;
                     _backstageClosing = false;
+                    ClearBackstageBlur();
                     RibbonMotion.Rest(content);
                 });
+        }
+    }
+
+    /// <summary>
+    /// Applies a strong Gaussian blur to <paramref name="root"/> (the content behind the backstage)
+    /// when the backstage is <see cref="Controls.Backstage.Translucent"/>, so the translucent
+    /// backstage reads as frosted acrylic. No-op for an opaque backstage. The prior effect (if any)
+    /// is saved so <see cref="ClearBackstageBlur"/> restores it exactly.
+    /// </summary>
+    private void ApplyBackstageBlur(UIElement root)
+    {
+        if (Backstage is not Backstage { Translucent: true })
+        {
+            return;
+        }
+
+        _blurredRoot = root;
+        _blurredRootPriorEffect = root.Effect;
+        root.Effect = new System.Windows.Media.Effects.BlurEffect
+        {
+            Radius = 34,
+            KernelType = System.Windows.Media.Effects.KernelType.Gaussian,
+            RenderingBias = System.Windows.Media.Effects.RenderingBias.Performance,
+        };
+    }
+
+    /// <summary>Removes the backstage blur, restoring whatever effect the root had before.</summary>
+    private void ClearBackstageBlur()
+    {
+        if (_blurredRoot is not null)
+        {
+            _blurredRoot.Effect = _blurredRootPriorEffect;
+            _blurredRoot = null;
+            _blurredRootPriorEffect = null;
         }
     }
 
@@ -916,7 +1011,22 @@ public class Ribbon : Control
         RibbonMotion.PlaySlideIn(target, RibbonAnimationAction.TabSwitch, RibbonSlideFrom.Top);
     }
 
-    private void OnThemeConfigurationChanged(object? sender, EventArgs e) => UpdateQatButtonContext();
+    private void OnThemeConfigurationChanged(object? sender, EventArgs e)
+    {
+        UpdateQatButtonContext();
+        // Soften a theme/accent swap with a quick opacity settle on the ribbon strip.
+        RibbonMotion.PlayThemeCrossfade(_ribbonTabControl, RibbonAnimationAction.ThemeSwitch);
+
+        // A theme whose selected tab connects into the body does so with a themed negative body
+        // margin (+ the tab strip's ZIndex). The margin token updates on the swap, but the overlap
+        // only re-PAINTS after a layout pass — otherwise the active tab stays unmerged until the
+        // next hover happens to re-arrange the strip. Force that pass now so it connects immediately.
+        if (_ribbonTabControl is { } tabControl)
+        {
+            tabControl.InvalidateArrange();
+            tabControl.UpdateLayout();
+        }
+    }
 
     /// <summary>
     /// Sets, on each QAT button, whether it currently sits on a colored surface and the
@@ -1136,6 +1246,7 @@ public class Ribbon : Control
         _qatRemoveSeparator = new System.Windows.Controls.Separator();
 
         _qatContextMenu = new System.Windows.Controls.ContextMenu();
+        ApplyModernMenuStyle(_qatContextMenu);
         _qatContextMenu.Items.Add(_qatRemoveItem);
         _qatContextMenu.Items.Add(_qatRemoveSeparator);
         _qatContextMenu.Items.Add(_qatTitleBarItem);

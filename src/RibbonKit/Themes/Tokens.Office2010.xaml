@@ -1,0 +1,239 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:system="clr-namespace:System;assembly=System.Runtime">
+
+    <!-- ============================================================
+         Office 2010 ("Blue") token palette. Same keys as the other
+         themes, but this is the FIRST non-flat theme: its identity is
+         GRADIENTS. Where the flat themes (2013/2019) use solid fills,
+         2010 uses vertical LinearGradientBrushes — a light silver-blue
+         window frame, a subtly graded ribbon body, and the iconic
+         amber/gold glossy highlight on hovered/pressed/toggled controls.
+         The token keys are Brushes, so a gradient brush drops in wherever
+         a solid one did; the shared templates never notice (they bind the
+         key as a Brush via DynamicResource). Defining traits: gradient
+         blue-grey chrome, dark-blue tab labels, a connected (outlined)
+         selected tab, a solid blue gradient File button, amber button
+         highlights, and gently rounded (2-3px) corners.
+         ============================================================ -->
+
+    <!-- Tab-strip band: the light silver-blue window-frame glass the tabs sit on. -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Ribbon.Background" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#E4EDF7" />
+        <GradientStop Offset="1" Color="#CBDAEC" />
+    </LinearGradientBrush>
+    <!-- The ribbon body (groups area): the signature 2010 gradient — lighter at the top,
+         a touch darker blue-grey toward the bottom. -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Ribbon.ContentBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#F6F9FC" />
+        <GradientStop Offset="1" Color="#DAE5F1" />
+    </LinearGradientBrush>
+    <!-- Medium blue-grey outline around the ribbon body and the connected active tab. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Border" Color="#8DA5C4" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Primary" Color="#1E1E1E" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Secondary" Color="#5C6B7F" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Accent" Color="#1E5A9C" />
+
+    <!-- The Office 2010 amber highlight. Unlike Office 2007's aggressive glossy gel (a hard
+         crease splitting the button in two), 2010's highlight is a SMOOTH, subtle warm
+         gradient — a pale-cream top easing to a soft amber bottom — paired with a thin gold
+         BORDER (see Control.*Border below), which is what actually reads as the "hot" state.
+         Hover glows softly, pressed is a touch deeper, and the toggled fills stay gold. -->
+    <!-- Each gradient is a smooth "valley": a light top (the inner top glow), a matte
+         darker middle, then a LIGHTER bottom — the small specular reflection of a real 2010
+         glass button. Paired with the thin gold outer border and the semi-white inner rim
+         (Control.InnerGlow, drawn as a nested border in the templates). -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Control.HoverBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#FFF7CE" />
+        <GradientStop Offset="0.5" Color="#FFDC8C" />
+        <GradientStop Offset="1" Color="#FFEFB6" />
+    </LinearGradientBrush>
+    <!-- Pressed: deeper amber, pushed-in, a subtler specular. -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Control.PressedBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#F3C258" />
+        <GradientStop Offset="0.5" Color="#F8CC6A" />
+        <GradientStop Offset="1" Color="#FCDA86" />
+    </LinearGradientBrush>
+    <!-- Toggled (checked): a soft gold that stays visibly "on", same glass profile. -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Control.CheckedBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#FFEFB2" />
+        <GradientStop Offset="0.5" Color="#FFD880" />
+        <GradientStop Offset="1" Color="#FFE8A4" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Control.CheckedHoverBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#FFEAA2" />
+        <GradientStop Offset="0.5" Color="#FFD074" />
+        <GradientStop Offset="1" Color="#FFE196" />
+    </LinearGradientBrush>
+    <!-- Thin gold OUTER border + a semi-white INNER rim (drawn as a nested border, inset by the
+         outer border) — together the defining beveled edge of a 2010 hot button. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.HoverBorder" Color="#E9C25E" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.PressedBorder" Color="#CB9A34" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CheckedBorder" Color="#E0B24E" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.InnerGlow" Color="#88FFFFFF" />
+    <Thickness x:Key="RibbonKit.Metrics.ControlHighlightBorderThickness">1</Thickness>
+
+    <!-- Contextual-tab band tint (a light blue wash; the per-tab ContextualColor overrides it). -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ContextualBackground" Color="#DCE8F5" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ContextualHoverBackground" Color="#CBDDF0" />
+
+    <!-- Dark-blue tab labels — a strong 2010 identity marker. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.Foreground" Color="#15428B" />
+    <!-- Hover fill for chrome buttons sitting on the tab strip (File button, minimize toggle):
+         a light glass highlight. -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.TabStrip.ControlHoverBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#F0F6FC" />
+        <GradientStop Offset="1" Color="#DDE9F6" />
+    </LinearGradientBrush>
+    <!-- Unselected tab hover: a soft amber glow, like the buttons but lighter. 2010 uses
+         fills (never underlines), so both underline tokens stay Transparent. -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Tab.HoverBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#FFF7DF" />
+        <GradientStop Offset="1" Color="#FBE9B0" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverUnderline" Color="Transparent" />
+    <!-- The active tab is a light "connected" tab that merges into the ribbon body top,
+         outlined on top and sides so it reads as one piece with the body below. Its bottom
+         stop is the body's own top color (#F6F9FC) so the 1px overlap (TabStripMargin bottom
+         = -1) hides the body's top border seamlessly under the tab. -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Tab.SelectedBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#FCFDFF" />
+        <GradientStop Offset="1" Color="#F6F9FC" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedUnderline" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedForeground" Color="#15428B" />
+    <!-- Connected-tab outline (top + sides) that cuts into the ribbon body. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedBorderBrush" Color="#8DA5C4" />
+    <Thickness x:Key="RibbonKit.Metrics.TabSelectedBorderThickness">1,1,1,0</Thickness>
+    <!-- Retained for token parity; the connect is now driven render-only by TabConnect (below),
+         not by a layout margin (a negative margin re-measured the strip and jittered on hover). -->
+    <Thickness x:Key="RibbonKit.Metrics.TabSelectedMargin">0</Thickness>
+    <!-- Render-only connect: the 1px ConnectFoot at the tab bottom is shifted 1px INTO the body
+         (tab-strip ZIndex covers the body's top border) so the tab merges — WITHOUT moving the
+         tab itself, so its top edge and label stay on the File-button line. A RenderTransform, so
+         it never re-measures the TabPanel — no hover jitter. Flat themes use identity (Y=0). -->
+    <TranslateTransform x:Key="RibbonKit.Transforms.TabConnect" Y="1" />
+    <!-- ConnectFoot colours = the tab's bottom fill colour, so the 1px sliver continues the tab
+         over the body border seamlessly. Hover = the amber hover gradient's low stop; selected =
+         the body top colour (which is also the selected tab's bottom stop). -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ConnectFootHover" Color="#FBE9B0" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ConnectFootSelected" Color="#F6F9FC" />
+    <!-- Contextual tabs: like the other pre-2024 themes, only the header text is tinted
+         (no selection underline, no mute) — selection stays the connected active tab. -->
+    <system:Double x:Key="RibbonKit.Metrics.ContextualUnderlineHeight">0</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.ContextualUnselectedOpacity">1</system:Double>
+    <!-- The File button is a tab-row button (small inset), aligned with the tab tops. -->
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonMargin">2,2,2,0</Thickness>
+    <!-- Wider than the 2024 default so the blue File tab reads as a broad block. -->
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonPadding">22,7,22,9</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.TabStripMargin">2,2,4,0</Thickness>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Group.Separator" Color="#B9C8DC" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.Background" Color="#FBFDFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.Border" Color="#8DA5C4" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemHoverBackground" Color="#2E6DB4" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemSelectedBackground" Color="#17457E" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ContentBackground" Color="#FFFFFF" />
+    <!-- Classic2010 selected-item "glass" marker (glossy blue) and the dialog primary (OK)
+         button glass, borrowed from the File button. -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Backstage.ItemSelectedGlass" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#63A8DC" />
+        <GradientStop Offset="0.5" Color="#2E76B8" />
+        <GradientStop Offset="1" Color="#4A8FC8" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Dialog.PrimaryBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#4E97CE" />
+        <GradientStop Offset="0.5" Color="#2470B2" />
+        <GradientStop Offset="1" Color="#3D86C4" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Dialog.PrimaryBorder" Color="#17578F" />
+    <!-- Caption buttons sit on the silver-blue glass title bar: blue-tinted glass hover. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.HoverBackground" Color="#C4D8EF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.PressedBackground" Color="#A6C4E6" />
+    <!-- Safety-net defaults for the QAT-on-colored-band hover/pressed wash. The Ribbon
+         overrides both keys per-button with the live caption/tab band brushes
+         (Ribbon.UpdateQatButtonContext); these only surface if a trigger fires first. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Qat.ColoredHoverBackground" Color="#2EFFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Qat.ColoredPressedBackground" Color="#4DFFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.CloseHoverBackground" Color="#E81123" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.ClosePressedBackground" Color="#F1707A" />
+
+    <!-- KeyTip badges: the small gradient chip of the 2007/2010 era — a light glassy box
+         with a blue-grey border and dark text. -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.KeyTip.Background" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#FDFEFF" />
+        <GradientStop Offset="1" Color="#E1E8F0" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.KeyTip.Border" Color="#8DA5C4" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.KeyTip.Foreground" Color="#1E1E1E" />
+
+    <!-- Title bar: the light silver-blue Aero-style glass gradient of the 2010 Blue scheme.
+         The Colored Title Bar option (ThemeManager.SetAccentedTitleBar) swaps this to a
+         solid accent bar with white caption text. -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.TitleBar.Background" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#EAF1F9" />
+        <GradientStop Offset="1" Color="#CFDEEE" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.TitleBar.Foreground" Color="#1E1E1E" />
+
+    <!-- Office 2010 File button: a SMOOTH blue block with white text and a thin blue border
+         (no hard crease — that was the wrong, 2007 look), a brighter blue on hover, no
+         underline. A custom accent re-tints it to a gradient (see ThemeManager's Office2010 case). -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.ApplicationButton.Background" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#4E97CE" />
+        <GradientStop Offset="0.5" Color="#2470B2" />
+        <GradientStop Offset="1" Color="#3D86C4" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.Foreground" Color="#FFFFFF" />
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#63A9DD" />
+        <GradientStop Offset="0.5" Color="#3382C2" />
+        <GradientStop Offset="1" Color="#4E96CE" />
+    </LinearGradientBrush>
+    <!-- Mouse-DOWN (pressed) glass: a deeper, recessed blue gel shown while the button is held. -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.ApplicationButton.PressedBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#2C71AC" />
+        <GradientStop Offset="0.5" Color="#175792" />
+        <GradientStop Offset="1" Color="#276CA4" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverUnderline" Color="Transparent" />
+    <!-- Thin blue edge around the File button. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.Border" Color="#17578F" />
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonBorderThickness">1</Thickness>
+
+    <system:Double x:Key="RibbonKit.Metrics.GroupsRowHeight">104</system:Double>
+
+    <!-- Gently rounded (2-3px) corners — softer than the flat themes, subtler than 2024. -->
+    <CornerRadius x:Key="RibbonKit.Metrics.ControlCornerRadius">3</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.SmallControlCornerRadius">2</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.PopupCornerRadius">3</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.TabCornerRadius">3,3,0,0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.SplitLeftCornerRadius">3,0,0,3</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.SplitRightCornerRadius">0,3,3,0</CornerRadius>
+
+    <!-- Ribbon body: a full outline, square corners. The connect is done by moving the SELECTED
+         TAB down 1px into the body (TabSelectedMargin, below) — the mechanism that actually works
+         — rather than moving the body up, so ContentMargin stays at 0. -->
+    <Thickness x:Key="RibbonKit.Metrics.ContentBorderThickness">1</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.ContentMargin">0</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadius">0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadiusTop">0</CornerRadius>
+    <Thickness x:Key="RibbonKit.Metrics.ContentMarginQatBelow">0</Thickness>
+
+    <!-- A faint shadow under the ribbon body, separating it from the document (2010's ribbon
+         is connected to the chrome, so this is subtle — not the floating card of 2024). -->
+    <DropShadowEffect x:Key="RibbonKit.Effects.ContentShadow"
+                      BlurRadius="6" ShadowDepth="1" Direction="270"
+                      Opacity="0.12" Color="#000000" RenderingBias="Performance" />
+
+    <!-- Flat below-ribbon QAT: a plain full-width strip with a bottom border. -->
+    <Thickness x:Key="RibbonKit.Metrics.QatExtenderMargin">0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.QatExtenderBorderThickness">0,0,0,1</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.QatExtenderCornerRadius">0</CornerRadius>
+
+    <!-- The minimized QAT keeps the same full-width, bottom-bordered strip (no floating card). -->
+    <Thickness x:Key="RibbonKit.Metrics.QatExtenderMarginMinimized">0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.QatExtenderBorderThicknessMinimized">0,0,0,1</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.QatExtenderCornerRadiusMinimized">0</CornerRadius>
+
+</ResourceDictionary>

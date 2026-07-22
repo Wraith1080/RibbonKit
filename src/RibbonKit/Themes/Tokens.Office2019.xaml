@@ -22,6 +22,12 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.PressedBackground" Color="#CFCDCB" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CheckedBackground" Color="#CEDCF0" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CheckedHoverBackground" Color="#BBCFEA" />
+    <!-- No highlight border (Office 2010 uses a gold one; other themes don't). -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.HoverBorder" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.PressedBorder" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CheckedBorder" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.InnerGlow" Color="Transparent" />
+    <Thickness x:Key="RibbonKit.Metrics.ControlHighlightBorderThickness">0</Thickness>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ContextualBackground" Color="#3D66A8" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ContextualHoverBackground" Color="#4E74B4" />
     <!-- Tabs sit on the blue band. Office 2019 uses FILLS, not underlines: the hover FILL
@@ -41,11 +47,19 @@
     <!-- Active tab connects to the body via its fill; no outline needed. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedBorderBrush" Color="Transparent" />
     <Thickness x:Key="RibbonKit.Metrics.TabSelectedBorderThickness">0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.TabSelectedMargin">0</Thickness>
+    <!-- Flat theme: tabs don't cut into the body, so the connect transform is identity and the
+         connector foot stays invisible. -->
+    <TranslateTransform x:Key="RibbonKit.Transforms.TabConnect" Y="0" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ConnectFootHover" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ConnectFootSelected" Color="Transparent" />
     <!-- Contextual tabs: this flat theme only tints the header text (no underline, no
          mute) — selection stays the fill-based active tab. -->
     <system:Double x:Key="RibbonKit.Metrics.ContextualUnderlineHeight">0</system:Double>
     <system:Double x:Key="RibbonKit.Metrics.ContextualUnselectedOpacity">1</system:Double>
     <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonMargin">8,4,2,0</Thickness>
+    <!-- Wider File tab than the 2024 default (a broader tab-like block). -->
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonPadding">20,7,20,9</Thickness>
     <!-- Top inset of the tab headers (matches the File button's top). -->
     <Thickness x:Key="RibbonKit.Metrics.TabStripMargin">2,4,4,0</Thickness>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Group.Separator" Color="#C8C6C4" />
@@ -54,6 +68,14 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemHoverBackground" Color="#3D66A8" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemSelectedBackground" Color="#1F3F72" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ContentBackground" Color="#FFFFFF" />
+    <!-- Classic2010 selected-item glass marker + dialog primary (OK) button fill (flat accent). -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Backstage.ItemSelectedGlass" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#4E7CC0" />
+        <GradientStop Offset="0.5" Color="#33619E" />
+        <GradientStop Offset="1" Color="#234C86" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Dialog.PrimaryBackground" Color="#2B579A" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Dialog.PrimaryBorder" Color="#2B579A" />
     <!-- Caption buttons sit on the light grey title band: subtle grey hover/pressed. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.HoverBackground" Color="#D8D8D8" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.PressedBackground" Color="#C8C8C8" />
@@ -81,7 +103,12 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.Background" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.Foreground" Color="#201F1E" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverBackground" Color="#EDEDED" />
+    <!-- Mouse-down (pressed) fill for the File button. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.PressedBackground" Color="#CFCDCB" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverUnderline" Color="Transparent" />
+    <!-- No File-button border (Office 2010 uses one). -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.Border" Color="Transparent" />
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonBorderThickness">0</Thickness>
 
     <system:Double x:Key="RibbonKit.Metrics.GroupsRowHeight">104</system:Double>
 

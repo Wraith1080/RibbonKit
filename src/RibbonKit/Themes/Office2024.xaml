@@ -14,6 +14,81 @@
          ============================================================ -->
 
     <!-- ============================================================
+         Shared horizontal-scroll chrome (tab strip + groups row).
+         The chevron RepeatButtons overlay the content edges (they take
+         no layout space, so toggling them never reflows) and only show
+         when RibbonScrollContentHost reports something to scroll to.
+         Rounded corners via the shared ControlCornerRadius token.
+         ============================================================ -->
+    <BooleanToVisibilityConverter x:Key="RibbonKit.BoolToVis" />
+
+    <Style x:Key="RibbonKit.ScrollLeftButton" TargetType="{x:Type RepeatButton}">
+        <Setter Property="Width" Value="22" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Delay" Value="300" />
+        <Setter Property="Interval" Value="60" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type RepeatButton}">
+                    <Border x:Name="Chrome"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}"
+                            BorderThickness="1"
+                            CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                            Margin="2"
+                            SnapsToDevicePixels="True">
+                        <Path Data="M4.5,0 L0,4.5 L4.5,9"
+                              Stroke="{DynamicResource RibbonKit.Brushes.Text.Primary}"
+                              StrokeThickness="1.6"
+                              StrokeStartLineCap="Round"
+                              StrokeEndLineCap="Round"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chrome" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.TabStrip.ControlHoverBackground}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="RibbonKit.ScrollRightButton" TargetType="{x:Type RepeatButton}" BasedOn="{StaticResource RibbonKit.ScrollLeftButton}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type RepeatButton}">
+                    <Border x:Name="Chrome"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}"
+                            BorderThickness="1"
+                            CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                            Margin="2"
+                            SnapsToDevicePixels="True">
+                        <Path Data="M0,0 L4.5,4.5 L0,9"
+                              Stroke="{DynamicResource RibbonKit.Brushes.Text.Primary}"
+                              StrokeThickness="1.6"
+                              StrokeStartLineCap="Round"
+                              StrokeEndLineCap="Round"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chrome" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.TabStrip.ControlHoverBackground}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ============================================================
          Ribbon
          ============================================================ -->
     <Style TargetType="{x:Type controls:Ribbon}">
@@ -23,6 +98,10 @@
         <Setter Property="FontSize" Value="12" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
         <Setter Property="UseLayoutRounding" Value="True" />
+        <!-- A ribbon sits at the TOP of its space and never stretches to fill. Without this, a
+             ribbon that becomes a DockPanel's last child (LastChildFill) or lands in a * Grid row
+             stretches vertically and the body drifts down. Consumers can still override. -->
+        <Setter Property="VerticalAlignment" Value="Top" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type controls:Ribbon}">
@@ -130,7 +209,10 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
-                        <Grid Grid.Row="0">
+                        <!-- ZIndex above the ribbon body (Row 1): where a theme overlaps the
+                             selected tab into the body (Office 2010's TabStripMargin bottom = -1),
+                             the tab must paint OVER the body's top border to connect into it. -->
+                        <Grid Grid.Row="0" Panel.ZIndex="1">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="Auto" />
@@ -156,11 +238,19 @@
                                                     <Grid>
                                                         <Border x:Name="Chrome"
                                                                 Background="{DynamicResource RibbonKit.Brushes.ApplicationButton.Background}"
+                                                                BorderBrush="{DynamicResource RibbonKit.Brushes.ApplicationButton.Border}"
+                                                                BorderThickness="{DynamicResource RibbonKit.Metrics.ApplicationButtonBorderThickness}"
                                                                 CornerRadius="{DynamicResource RibbonKit.Metrics.TabCornerRadius}"
-                                                                Padding="14,7,14,9"
                                                                 SnapsToDevicePixels="True">
-                                                            <ContentPresenter HorizontalAlignment="Center"
-                                                                              VerticalAlignment="Center" />
+                                                            <Grid>
+                                                                <!-- Inner light rim just inside the outer border (2010 glass). -->
+                                                                <Border BorderBrush="{DynamicResource RibbonKit.Brushes.Control.InnerGlow}"
+                                                                        BorderThickness="{DynamicResource RibbonKit.Metrics.ApplicationButtonBorderThickness}"
+                                                                        CornerRadius="{DynamicResource RibbonKit.Metrics.TabCornerRadius}" />
+                                                                <ContentPresenter Margin="{DynamicResource RibbonKit.Metrics.ApplicationButtonPadding}"
+                                                                                  HorizontalAlignment="Center"
+                                                                                  VerticalAlignment="Center" />
+                                                            </Grid>
                                                         </Border>
                                                         <Rectangle x:Name="HoverUnderline"
                                                                    Height="2.5"
@@ -176,6 +266,13 @@
                                                             <Setter TargetName="Chrome" Property="Background"
                                                                     Value="{DynamicResource RibbonKit.Brushes.ApplicationButton.HoverBackground}" />
                                                             <Setter TargetName="HoverUnderline" Property="Visibility" Value="Visible" />
+                                                        </Trigger>
+                                                        <!-- Mouse-DOWN (held, before release): a distinct pressed glass, so
+                                                             the click reads immediately, not only once the backstage opens. -->
+                                                        <Trigger Property="IsPressed" Value="True">
+                                                            <Setter TargetName="Chrome" Property="Background"
+                                                                    Value="{DynamicResource RibbonKit.Brushes.ApplicationButton.PressedBackground}" />
+                                                            <Setter TargetName="HoverUnderline" Property="Visibility" Value="Collapsed" />
                                                         </Trigger>
                                                         <!-- Backstage open: File highlights in accent, like Office -->
                                                         <Trigger Property="IsChecked" Value="True">
@@ -214,10 +311,50 @@
                                     </ItemsPanelTemplate>
                                 </ItemsControl.ItemsPanel>
                             </ItemsControl>
-                            <TabPanel Grid.Column="2"
-                                      IsItemsHost="True"
-                                      Margin="{DynamicResource RibbonKit.Metrics.TabStripMargin}"
-                                      Background="Transparent" />
+                            <Grid Grid.Column="2">
+                                <!-- Tab strip in a horizontal scroller: when there are more tabs than
+                                     fit, chevron buttons appear and scroll the strip. The gliding
+                                     PART_TabMarker lives INSIDE the scroller with the TabPanel so it
+                                     scrolls in lockstep and stays under its tab. -->
+                                <layout:RibbonScrollContentHost x:Name="PART_TabScroll" ConstrainChildWidth="False">
+                                    <Grid>
+                                        <TabPanel IsItemsHost="True"
+                                                  Margin="{DynamicResource RibbonKit.Metrics.TabStripMargin}"
+                                                  Background="Transparent" />
+                                        <!-- Shared selection underline that GLIDES between tabs
+                                             (RibbonTabControl positions/animates it). Replaces the
+                                             per-tab SelectionIndicator/ContextualSelectionIndicator for
+                                             the accent underline; flat themes (2019/2013) leave
+                                             Tab.SelectedUnderline Transparent, so it's invisible there
+                                             and those themes keep their pill/fill selection. Width +
+                                             TranslateTransform.X are animated (X glide + width) — a lone
+                                             marker in its own cell, so animating Width re-arranges only
+                                             itself and never cascades a ribbon re-layout. -->
+                                        <Rectangle x:Name="PART_TabMarker"
+                                                   Height="3" Width="0"
+                                                   RadiusX="1.5" RadiusY="1.5"
+                                                   HorizontalAlignment="Left"
+                                                   VerticalAlignment="Top"
+                                                   IsHitTestVisible="False"
+                                                   Opacity="0"
+                                                   Fill="{DynamicResource RibbonKit.Brushes.Tab.SelectedUnderline}">
+                                            <Rectangle.RenderTransform>
+                                                <TranslateTransform x:Name="PART_TabMarkerTranslate" />
+                                            </Rectangle.RenderTransform>
+                                        </Rectangle>
+                                    </Grid>
+                                </layout:RibbonScrollContentHost>
+                                <RepeatButton Style="{StaticResource RibbonKit.ScrollLeftButton}"
+                                              HorizontalAlignment="Left"
+                                              Background="{DynamicResource RibbonKit.Brushes.Ribbon.Background}"
+                                              Command="{Binding ScrollLeftCommand, ElementName=PART_TabScroll}"
+                                              Visibility="{Binding CanScrollLeft, ElementName=PART_TabScroll, Converter={StaticResource RibbonKit.BoolToVis}}" />
+                                <RepeatButton Style="{StaticResource RibbonKit.ScrollRightButton}"
+                                              HorizontalAlignment="Right"
+                                              Background="{DynamicResource RibbonKit.Brushes.Ribbon.Background}"
+                                              Command="{Binding ScrollRightCommand, ElementName=PART_TabScroll}"
+                                              Visibility="{Binding CanScrollRight, ElementName=PART_TabScroll, Converter={StaticResource RibbonKit.BoolToVis}}" />
+                            </Grid>
                             <!-- Minimize chevron: toggles Ribbon.IsMinimized -->
                             <ToggleButton x:Name="MinimizeToggle"
                                           Grid.Column="3"
@@ -286,7 +423,24 @@
                                 Margin="{DynamicResource RibbonKit.Metrics.ContentMargin}"
                                 Effect="{DynamicResource RibbonKit.Effects.ContentShadow}"
                                 SnapsToDevicePixels="True">
-                            <ContentPresenter ContentSource="SelectedContent" Margin="6,2" />
+                            <!-- Groups row in a horizontal scroller. ConstrainChildWidth lets the
+                                 adaptive panel reduce groups to fit FIRST; only when even the fully
+                                 reduced row overflows do the chevrons appear and scroll it (Office). -->
+                            <Grid>
+                                <layout:RibbonScrollContentHost x:Name="PART_ContentScroll"
+                                                                ConstrainChildWidth="True"
+                                                                Margin="6,2">
+                                    <ContentPresenter ContentSource="SelectedContent" />
+                                </layout:RibbonScrollContentHost>
+                                <RepeatButton Style="{StaticResource RibbonKit.ScrollLeftButton}"
+                                              HorizontalAlignment="Left"
+                                              Command="{Binding ScrollLeftCommand, ElementName=PART_ContentScroll}"
+                                              Visibility="{Binding CanScrollLeft, ElementName=PART_ContentScroll, Converter={StaticResource RibbonKit.BoolToVis}}" />
+                                <RepeatButton Style="{StaticResource RibbonKit.ScrollRightButton}"
+                                              HorizontalAlignment="Right"
+                                              Command="{Binding ScrollRightCommand, ElementName=PART_ContentScroll}"
+                                              Visibility="{Binding CanScrollRight, ElementName=PART_ContentScroll, Converter={StaticResource RibbonKit.BoolToVis}}" />
+                            </Grid>
                         </Border>
                     </Grid>
                     <ControlTemplate.Triggers>
@@ -329,10 +483,17 @@
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type controls:RibbonTab}">
                     <Grid>
+                        <!-- BorderThickness = the SELECTED tab's geometry (1,1,1,0 in 2010/2013, 0
+                             elsewhere) on EVERY tab, active or not, so all tabs measure to the SAME
+                             height. The active tab colors this border (SelectedBorderBrush); inactive
+                             tabs leave it Transparent. Without this symmetry the active tab's extra top
+                             border made it a different height, so the TabPanel nudged/stretched it and
+                             its text drifted (user-diagnosed). Hover/selected now change only the BRUSH,
+                             never the thickness — no jitter, no shift. -->
                         <Border x:Name="HeaderChrome"
                                 Background="Transparent"
                                 BorderBrush="Transparent"
-                                BorderThickness="0"
+                                BorderThickness="{DynamicResource RibbonKit.Metrics.TabSelectedBorderThickness}"
                                 CornerRadius="{DynamicResource RibbonKit.Metrics.TabCornerRadius}"
                                 Padding="12,7,12,9">
                             <Grid>
@@ -395,6 +556,24 @@
                                    IsHitTestVisible="False"
                                    Fill="{TemplateBinding ContextualBrush}"
                                    Visibility="Collapsed" />
+                        <!-- Tab-to-body connector. Transparent until the tab is hovered/selected
+                             (the triggers set its Background); a 1px sliver at the tab's bottom,
+                             render-shifted 1px DOWN into the ribbon body by TabConnect (Y=1 in the
+                             connecting themes, 0 elsewhere). With the tab strip's ZIndex it paints
+                             over the body's top border, so the active/hovered tab merges into the
+                             body while its top edge and label stay on the File-button line — the
+                             connect no longer moves the whole tab. Inset 1px each side so the tab's
+                             own side borders still run down to meet the body. RENDER-only: it has a
+                             fixed 1px height and Bottom alignment, so it never affects tab measure. -->
+                        <Border x:Name="ConnectFoot"
+                                Height="1"
+                                VerticalAlignment="Bottom"
+                                Background="Transparent"
+                                BorderBrush="Transparent"
+                                BorderThickness="1,0,1,0"
+                                IsHitTestVisible="False"
+                                SnapsToDevicePixels="True"
+                                RenderTransform="{DynamicResource RibbonKit.Transforms.TabConnect}" />
                     </Grid>
                     <ControlTemplate.Triggers>
                         <!-- Contextual tabs render their header via the tinted presenter. -->
@@ -408,11 +587,40 @@
                         <Trigger SourceName="HeaderChrome" Property="IsMouseOver" Value="True">
                             <Setter TargetName="HeaderChrome" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Tab.HoverBackground}" />
+                            <!-- Gold hover border like a normal 2010 button. Brush only — the thickness
+                                 is already reserved on HeaderChrome above, so hover never shifts the tab. -->
+                            <Setter TargetName="HeaderChrome" Property="BorderBrush"
+                                    Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
+                            <!-- Connect the hovered tab to the body WITHOUT moving the tab. Instead of
+                                 dropping the whole HeaderChrome 1px (which lowered the top edge and the
+                                 label off the File-button line), we color the 1px ConnectFoot at the
+                                 tab's bottom in the hover fill's low colour. The foot is render-shifted
+                                 into the body (TabConnect) and, with the tab-strip ZIndex, paints over
+                                 the body's top border — so the tab's top and label stay put and only the
+                                 bottom merges. Transparent in non-connecting themes. -->
+                            <Setter TargetName="ConnectFoot" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.Tab.ConnectFootHover}" />
+                            <!-- Continue the tab's side borders 1px down through the foot so the
+                                 hovered tab's outline meets the body without a break at the corners. -->
+                            <Setter TargetName="ConnectFoot" Property="BorderBrush"
+                                    Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
                             <Setter TargetName="HoverIndicator" Property="Visibility" Value="Visible" />
                         </Trigger>
                         <Trigger Property="IsSelected" Value="True">
                             <Setter TargetName="HeaderChrome" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Tab.SelectedBackground}" />
+                            <!-- Connect the active tab to the body WITHOUT moving the tab: the 1px
+                                 ConnectFoot at the bottom is coloured the body/tab-bottom colour and
+                                 render-shifted into the body (TabConnect), covering the body's top
+                                 border under the tab (tab-strip ZIndex). The tab's top edge and label
+                                 therefore stay aligned with the File button; only the bottom merges.
+                                 Transparent foot in non-connecting themes. -->
+                            <Setter TargetName="ConnectFoot" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.Tab.ConnectFootSelected}" />
+                            <!-- Continue the active tab's side borders 1px down through the foot so its
+                                 outline joins the body seamlessly at the bottom corners. -->
+                            <Setter TargetName="ConnectFoot" Property="BorderBrush"
+                                    Value="{DynamicResource RibbonKit.Brushes.Tab.SelectedBorderBrush}" />
                             <!-- Office 2013/Metro: the active tab is outlined on top and
                                  sides (no bottom) so it connects into the ribbon body.
                                  Other themes keep this Transparent / zero-thickness. -->
@@ -420,7 +628,8 @@
                                     Value="{DynamicResource RibbonKit.Brushes.Tab.SelectedBorderBrush}" />
                             <Setter TargetName="HeaderChrome" Property="BorderThickness"
                                     Value="{DynamicResource RibbonKit.Metrics.TabSelectedBorderThickness}" />
-                            <Setter TargetName="SelectionIndicator" Property="Visibility" Value="Visible" />
+                            <!-- Selection underline is now the shared gliding PART_TabMarker
+                                 (in the RibbonTabControl template), not this per-tab rectangle. -->
                             <Setter TargetName="HoverIndicator" Property="Visibility" Value="Collapsed" />
                             <Setter Property="Foreground"
                                     Value="{DynamicResource RibbonKit.Brushes.Tab.SelectedForeground}" />
@@ -433,8 +642,8 @@
                                 <Condition Property="IsSelected" Value="True" />
                             </MultiTrigger.Conditions>
                             <Setter TargetName="ContextualHeaderText" Property="Opacity" Value="1" />
-                            <Setter TargetName="SelectionIndicator" Property="Visibility" Value="Collapsed" />
-                            <Setter TargetName="ContextualSelectionIndicator" Property="Visibility" Value="Visible" />
+                            <!-- The selected contextual tab's tinted underline is now drawn by
+                                 the shared gliding PART_TabMarker (tinted to ContextualBrush). -->
                         </MultiTrigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.4" />
@@ -503,15 +712,50 @@
                                     <RowDefinition Height="*" />
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
-                                <ItemsPresenter Grid.Row="0" VerticalAlignment="Center" />
+                                <!-- Align the content row via RibbonGroup.ContentAlignment (default
+                                     Center, matching Office). The items panel is a horizontal
+                                     StackPanel, which left-packs its children and ignores their
+                                     HorizontalAlignment along the stacking axis — so a consumer cannot
+                                     center content from their own markup; it must be done here on the
+                                     ItemsPresenter. Centering only shows when the group is wider than
+                                     its content (e.g. the group NAME is wider than a single button);
+                                     when the content is the widest thing in the group, Center and
+                                     Stretch arrange identically, so multi-control groups are unaffected.
+                                     Set ContentAlignment="Left" on a group to left-pack it instead. -->
+                                <ItemsPresenter Grid.Row="0"
+                                                HorizontalAlignment="{TemplateBinding ContentAlignment}"
+                                                VerticalAlignment="Center" />
                                 <Grid Grid.Row="1" Margin="2,3,2,4">
-                                    <ContentPresenter ContentSource="Header"
-                                                      HorizontalAlignment="Center"
-                                                      TextElement.FontSize="11"
-                                                      TextElement.Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
+                                    <!-- Group name centered over the WHOLE group, with the ↘ launcher
+                                         pinned to the right. Three columns: a left spacer that mirrors
+                                         the launcher's width (so the name stays truly centered, not
+                                         biased left), the name in the middle, the launcher on the right.
+                                         The name ellipsizes when the group is narrow instead of sliding
+                                         under the launcher — which is what caused the overlap. The
+                                         spacer + launcher are shown ONLY when ShowDialogLauncher is set
+                                         (trigger below); with no launcher both Auto columns collapse to
+                                         0 and the name centers across the full width, exactly as before. -->
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border x:Name="PART_LauncherSpacer"
+                                            Grid.Column="0"
+                                            Width="18"
+                                            Visibility="Collapsed" />
+                                    <!-- A TextBlock (not a ContentPresenter) so the name can trim to an
+                                         ellipsis. Group headers are strings; a non-string Header falls
+                                         back to its ToString(). -->
+                                    <TextBlock Grid.Column="1"
+                                               Text="{Binding Header, RelativeSource={RelativeSource TemplatedParent}}"
+                                               TextAlignment="Center"
+                                               TextTrimming="CharacterEllipsis"
+                                               FontSize="11"
+                                               Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
                                     <!-- ↘ dialog launcher, shown via ShowDialogLauncher -->
                                     <Button x:Name="PART_DialogLauncher"
-                                            HorizontalAlignment="Right"
+                                            Grid.Column="2"
                                             VerticalAlignment="Center"
                                             Width="18" Height="14"
                                             Visibility="Collapsed"
@@ -524,6 +768,7 @@
                                                         <ControlTemplate TargetType="{x:Type Button}">
                                                             <Border x:Name="Chrome"
                                                                     Background="Transparent"
+                                                                    BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
                                                                     CornerRadius="{DynamicResource RibbonKit.Metrics.SmallControlCornerRadius}"
                                                                     SnapsToDevicePixels="True">
                                                                 <Path Data="M1,1 H3.5 M1,1 V3.5 M2.5,2.5 L7,7 M7,7 V4.5 M7,7 H4.5"
@@ -566,6 +811,7 @@
                                             <ControlTemplate TargetType="{x:Type ToggleButton}">
                                                 <Border x:Name="Chrome"
                                                         Background="Transparent"
+                                                        BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
                                                         CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
                                                         SnapsToDevicePixels="True">
                                                     <ContentPresenter HorizontalAlignment="Center"
@@ -575,10 +821,18 @@
                                                     <Trigger Property="IsMouseOver" Value="True">
                                                         <Setter TargetName="Chrome" Property="Background"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
+                                                        <Setter TargetName="Chrome" Property="BorderBrush"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
+                                                        <Setter TargetName="Chrome" Property="BorderThickness"
+                                                                Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
                                                     </Trigger>
                                                     <Trigger Property="IsChecked" Value="True">
                                                         <Setter TargetName="Chrome" Property="Background"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
+                                                        <Setter TargetName="Chrome" Property="BorderBrush"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Control.PressedBorder}" />
+                                                        <Setter TargetName="Chrome" Property="BorderThickness"
+                                                                Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
                                                     </Trigger>
                                                     <Trigger Property="IsPressed" Value="True">
                                                         <Setter TargetName="Chrome" Property="Background"
@@ -645,6 +899,8 @@
                         </Trigger>
                         <Trigger Property="ShowDialogLauncher" Value="True">
                             <Setter TargetName="PART_DialogLauncher" Property="Visibility" Value="Visible" />
+                            <!-- Reserve the mirror-width spacer so the name stays centered over the group. -->
+                            <Setter TargetName="PART_LauncherSpacer" Property="Visibility" Value="Hidden" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -669,6 +925,29 @@
                             Margin="1"
                             SnapsToDevicePixels="True">
                         <Grid>
+                            <!-- Hover/press cross-fade layers: opacity is animated 0<->1 over the
+                                 Hover duration token, so the highlight eases instead of snapping.
+                                 Behind the content, non-hit-testable. -->
+                            <Border x:Name="HoverWash"
+                                    Background="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}"
+                                    BorderBrush="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}"
+                                    BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                    Opacity="0" IsHitTestVisible="False">
+                                <Border BorderBrush="{DynamicResource RibbonKit.Brushes.Control.InnerGlow}"
+                                        BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
+                                        CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}" />
+                            </Border>
+                            <Border x:Name="PressWash"
+                                    Background="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}"
+                                    BorderBrush="{DynamicResource RibbonKit.Brushes.Control.PressedBorder}"
+                                    BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                    Opacity="0" IsHitTestVisible="False">
+                                <Border BorderBrush="{DynamicResource RibbonKit.Brushes.Control.InnerGlow}"
+                                        BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
+                                        CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}" />
+                            </Border>
                             <!-- Large: 32px icon over wrapped label -->
                             <StackPanel x:Name="LargeLayout"
                                         Orientation="Vertical"
@@ -744,14 +1023,12 @@
                             <Setter TargetName="LargeLayout" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="SmallLayout" Property="Visibility" Value="Visible" />
                         </Trigger>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Chrome" Property="Background"
-                                    Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
-                        </Trigger>
-                        <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="Chrome" Property="Background"
-                                    Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
-                        </Trigger>
+                        <!-- Hover/press highlight is a cross-fade of HoverWash/PressWash, driven in
+                             code (RibbonButton.OnPropertyChanged -> RibbonMotion.FadeWash) so it
+                             honors the animation level / reduced-motion — template storyboards can't
+                             read the runtime Duration tokens (a DynamicResource makes the storyboard
+                             un-freezable). Off a colored surface only; the QAT-on-colored variants
+                             below stay instant. -->
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.4" />
                         </Trigger>
@@ -840,6 +1117,40 @@
                             Margin="1"
                             SnapsToDevicePixels="True">
                         <Grid>
+                            <!-- Checked / hover / press cross-fade layers. Checked eases over the
+                                 ToggleState token; hover/press over the Hover token. Checked+hover
+                                 composes (check wash + hover wash) rather than a separate brush.
+                                 Behind the content, non-hit-testable. -->
+                            <Border x:Name="CheckWash"
+                                    Background="{DynamicResource RibbonKit.Brushes.Control.CheckedBackground}"
+                                    BorderBrush="{DynamicResource RibbonKit.Brushes.Control.CheckedBorder}"
+                                    BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                    Opacity="0" IsHitTestVisible="False">
+                                <Border BorderBrush="{DynamicResource RibbonKit.Brushes.Control.InnerGlow}"
+                                        BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
+                                        CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}" />
+                            </Border>
+                            <Border x:Name="HoverWash"
+                                    Background="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}"
+                                    BorderBrush="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}"
+                                    BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                    Opacity="0" IsHitTestVisible="False">
+                                <Border BorderBrush="{DynamicResource RibbonKit.Brushes.Control.InnerGlow}"
+                                        BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
+                                        CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}" />
+                            </Border>
+                            <Border x:Name="PressWash"
+                                    Background="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}"
+                                    BorderBrush="{DynamicResource RibbonKit.Brushes.Control.PressedBorder}"
+                                    BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                    Opacity="0" IsHitTestVisible="False">
+                                <Border BorderBrush="{DynamicResource RibbonKit.Brushes.Control.InnerGlow}"
+                                        BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
+                                        CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}" />
+                            </Border>
                             <StackPanel x:Name="LargeLayout"
                                         Orientation="Vertical"
                                         Margin="6,8,6,0"
@@ -903,26 +1214,11 @@
                             <Setter TargetName="LargeLayout" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="SmallLayout" Property="Visibility" Value="Visible" />
                         </Trigger>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Chrome" Property="Background"
-                                    Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
-                        </Trigger>
-                        <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="Chrome" Property="Background"
-                                    Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
-                        </Trigger>
-                        <Trigger Property="IsChecked" Value="True">
-                            <Setter TargetName="Chrome" Property="Background"
-                                    Value="{DynamicResource RibbonKit.Brushes.Control.CheckedBackground}" />
-                        </Trigger>
-                        <MultiTrigger>
-                            <MultiTrigger.Conditions>
-                                <Condition Property="IsChecked" Value="True" />
-                                <Condition Property="IsMouseOver" Value="True" />
-                            </MultiTrigger.Conditions>
-                            <Setter TargetName="Chrome" Property="Background"
-                                    Value="{DynamicResource RibbonKit.Brushes.Control.CheckedHoverBackground}" />
-                        </MultiTrigger>
+                        <!-- Hover/press/checked highlight is a cross-fade of HoverWash/PressWash/
+                             CheckWash, driven in code (RibbonToggleButton.OnPropertyChanged ->
+                             RibbonMotion.FadeWash) so it honors the animation level / reduced-motion.
+                             Checked+hover composes the check wash under the hover wash. Off a colored
+                             surface only; the QAT-on-colored variants below stay instant. -->
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.4" />
                         </Trigger>
@@ -984,6 +1280,7 @@
                                             <ControlTemplate TargetType="{x:Type ToggleButton}">
                                                 <Border x:Name="Chrome"
                                                         Background="Transparent"
+                                                        BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
                                                         CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
                                                         Margin="1"
                                                         SnapsToDevicePixels="True">
@@ -994,10 +1291,18 @@
                                                     <Trigger Property="IsMouseOver" Value="True">
                                                         <Setter TargetName="Chrome" Property="Background"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
+                                                        <Setter TargetName="Chrome" Property="BorderBrush"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
+                                                        <Setter TargetName="Chrome" Property="BorderThickness"
+                                                                Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
                                                     </Trigger>
                                                     <Trigger Property="IsChecked" Value="True">
                                                         <Setter TargetName="Chrome" Property="Background"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
+                                                        <Setter TargetName="Chrome" Property="BorderBrush"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Control.PressedBorder}" />
+                                                        <Setter TargetName="Chrome" Property="BorderThickness"
+                                                                Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
                                                     </Trigger>
                                                     <!-- On a colored QAT surface, hover with the band's brush (matches
                                                          RibbonButton) instead of the neutral gray. The checked (OPEN)
@@ -1178,6 +1483,7 @@
                                             <ControlTemplate TargetType="{x:Type Button}">
                                                 <Border x:Name="Chrome"
                                                         Background="Transparent"
+                                                        BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
                                                         CornerRadius="{DynamicResource RibbonKit.Metrics.SplitLeftCornerRadius}"
                                                         Margin="1,1,0,1"
                                                         SnapsToDevicePixels="True">
@@ -1188,10 +1494,18 @@
                                                     <Trigger Property="IsMouseOver" Value="True">
                                                         <Setter TargetName="Chrome" Property="Background"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
+                                                        <Setter TargetName="Chrome" Property="BorderBrush"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
+                                                        <Setter TargetName="Chrome" Property="BorderThickness"
+                                                                Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
                                                     </Trigger>
                                                     <Trigger Property="IsPressed" Value="True">
                                                         <Setter TargetName="Chrome" Property="Background"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
+                                                        <Setter TargetName="Chrome" Property="BorderBrush"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Control.PressedBorder}" />
+                                                        <Setter TargetName="Chrome" Property="BorderThickness"
+                                                                Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
                                                     </Trigger>
                                                     <MultiTrigger>
                                                         <MultiTrigger.Conditions>
@@ -1277,6 +1591,7 @@
                                             <ControlTemplate TargetType="{x:Type ToggleButton}">
                                                 <Border x:Name="Chrome"
                                                         Background="Transparent"
+                                                        BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
                                                         CornerRadius="{DynamicResource RibbonKit.Metrics.SplitRightCornerRadius}"
                                                         Margin="0,1,1,1"
                                                         SnapsToDevicePixels="True">
@@ -1293,10 +1608,18 @@
                                                     <Trigger Property="IsMouseOver" Value="True">
                                                         <Setter TargetName="Chrome" Property="Background"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
+                                                        <Setter TargetName="Chrome" Property="BorderBrush"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
+                                                        <Setter TargetName="Chrome" Property="BorderThickness"
+                                                                Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
                                                     </Trigger>
                                                     <Trigger Property="IsChecked" Value="True">
                                                         <Setter TargetName="Chrome" Property="Background"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
+                                                        <Setter TargetName="Chrome" Property="BorderBrush"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Control.PressedBorder}" />
+                                                        <Setter TargetName="Chrome" Property="BorderThickness"
+                                                                Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
                                                     </Trigger>
                                                     <!-- Colored QAT surface: white chevron + band hover/open state. -->
                                                     <Trigger Property="controls:Ribbon.QatOnColoredSurface" Value="True">
@@ -1387,6 +1710,7 @@
                 <ControlTemplate TargetType="{x:Type controls:RibbonMenuItem}">
                     <Border x:Name="Chrome"
                             Background="Transparent"
+                            BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
                             CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
                             Padding="6,5"
                             SnapsToDevicePixels="True">
@@ -1411,10 +1735,18 @@
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="Chrome" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
+                            <Setter TargetName="Chrome" Property="BorderBrush"
+                                    Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
+                            <Setter TargetName="Chrome" Property="BorderThickness"
+                                    Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
                             <Setter TargetName="Chrome" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
+                            <Setter TargetName="Chrome" Property="BorderBrush"
+                                    Value="{DynamicResource RibbonKit.Brushes.Control.PressedBorder}" />
+                            <Setter TargetName="Chrome" Property="BorderThickness"
+                                    Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.4" />
@@ -1442,6 +1774,7 @@
                             <ControlTemplate TargetType="{x:Type ComboBoxItem}">
                                 <Border x:Name="Chrome"
                                         Background="Transparent"
+                                        BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
                                         CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
                                         Padding="7,4"
                                         SnapsToDevicePixels="True">
@@ -1451,10 +1784,18 @@
                                     <Trigger Property="IsHighlighted" Value="True">
                                         <Setter TargetName="Chrome" Property="Background"
                                                 Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
+                                        <Setter TargetName="Chrome" Property="BorderBrush"
+                                                Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
+                                        <Setter TargetName="Chrome" Property="BorderThickness"
+                                                Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
                                     </Trigger>
                                     <Trigger Property="IsSelected" Value="True">
                                         <Setter TargetName="Chrome" Property="Background"
                                                 Value="{DynamicResource RibbonKit.Brushes.Control.CheckedBackground}" />
+                                        <Setter TargetName="Chrome" Property="BorderBrush"
+                                                Value="{DynamicResource RibbonKit.Brushes.Control.CheckedBorder}" />
+                                        <Setter TargetName="Chrome" Property="BorderThickness"
+                                                Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
                                     </Trigger>
                                     <Trigger Property="IsEnabled" Value="False">
                                         <Setter Property="Opacity" Value="0.4" />
@@ -1577,9 +1918,12 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.Foreground" Color="#201F1E" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemHover" Color="#EDEBE9" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemSelected" Color="#E1DFDD" />
-    <!-- Translucent variants used when Backstage.Translucent is on (to reveal Mica). -->
-    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.NavBackgroundTranslucent" Color="#CCF5F4F3" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ContentTranslucent" Color="#E6FFFFFF" />
+    <!-- Translucent variants used when Backstage.Translucent is on. Made genuinely
+         see-through (was 90% opaque) so the strong in-app blur the Ribbon applies to the
+         content behind the backstage reads as a frosted-acrylic panel — and a window Mica
+         backdrop still shows through when one is present. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.NavBackgroundTranslucent" Color="#B8F5F4F3" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ContentTranslucent" Color="#B3FFFFFF" />
 
     <!-- ============================================================
          Backstage — navigation column (back button + tabs) + content.
@@ -1615,16 +1959,26 @@
                                                 <Setter.Value>
                                                     <ControlTemplate TargetType="{x:Type Button}">
                                                         <Grid Background="Transparent">
+                                                            <!-- Classic2010: a filled blue "glass" disc (like the
+                                                                 File/OK button) with a white arrow. Collapsed for the
+                                                                 Classic/Modern outline-circle look. -->
+                                                            <Ellipse x:Name="GlassFill"
+                                                                     Fill="{DynamicResource RibbonKit.Brushes.Dialog.PrimaryBackground}"
+                                                                     Stroke="{DynamicResource RibbonKit.Brushes.Dialog.PrimaryBorder}"
+                                                                     StrokeThickness="1"
+                                                                     Visibility="Collapsed" />
                                                             <!-- Foreground-tinted hover disc: subtle on
                                                                  both the accent column and the light rail. -->
                                                             <Ellipse x:Name="HoverFill"
                                                                      Fill="{TemplateBinding Foreground}"
                                                                      Opacity="0" />
-                                                            <Ellipse Stroke="{TemplateBinding Foreground}"
+                                                            <Ellipse x:Name="Outline"
+                                                                     Stroke="{TemplateBinding Foreground}"
                                                                      StrokeThickness="1.5"
                                                                      Fill="Transparent" />
                                                             <!-- Symmetric bounds so centering is exact -->
-                                                            <Path Data="M12,6 H0 M0,6 L5,1 M0,6 L5,11"
+                                                            <Path x:Name="Arrow"
+                                                                  Data="M12,6 H0 M0,6 L5,1 M0,6 L5,11"
                                                                   Stroke="{TemplateBinding Foreground}"
                                                                   StrokeThickness="2"
                                                                   StrokeStartLineCap="Round"
@@ -1636,6 +1990,19 @@
                                                         <ControlTemplate.Triggers>
                                                             <Trigger Property="IsMouseOver" Value="True">
                                                                 <Setter TargetName="HoverFill" Property="Opacity" Value="0.15" />
+                                                            </Trigger>
+                                                            <!-- Classic2010 (Office 2010): blue glass disc + white arrow. -->
+                                                            <Trigger Property="controls:Backstage.Design" Value="Classic2010">
+                                                                <Setter TargetName="GlassFill" Property="Visibility" Value="Visible" />
+                                                                <Setter TargetName="Outline" Property="Visibility" Value="Collapsed" />
+                                                                <Setter TargetName="Arrow" Property="Stroke" Value="#FFFFFF" />
+                                                                <Setter TargetName="HoverFill" Property="Fill" Value="#FFFFFF" />
+                                                            </Trigger>
+                                                            <!-- Mouse-DOWN (click): a recessed dark press wash. Last, so it
+                                                                 wins over hover and the Classic2010 white wash while held. -->
+                                                            <Trigger Property="IsPressed" Value="True">
+                                                                <Setter TargetName="HoverFill" Property="Fill" Value="#000000" />
+                                                                <Setter TargetName="HoverFill" Property="Opacity" Value="0.22" />
                                                             </Trigger>
                                                         </ControlTemplate.Triggers>
                                                     </ControlTemplate>
@@ -1654,8 +2021,15 @@
                                           SeparatorBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type controls:Backstage}}}" />
                             </DockPanel>
                         </Border>
+                        <!-- The content area's text foreground is pinned dark, NOT inherited from
+                             the Backstage.Foreground (which is white to drive the accent nav column).
+                             Without this, the Classic 2013 accent design leaks white text into the
+                             page content (invisible on the light content background). The content
+                             background is light in every theme, so dark page text is always correct;
+                             page content that wants its own colour still sets Foreground explicitly. -->
                         <Border x:Name="ContentArea" Grid.Column="1"
                                 Background="{DynamicResource RibbonKit.Brushes.Backstage.ContentBackground}"
+                                TextElement.Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}"
                                 Padding="42,32">
                             <ContentPresenter ContentSource="SelectedContent" />
                         </Border>
@@ -1668,6 +2042,17 @@
                             <Setter TargetName="NavColumn" Property="Background"
                                     Value="{StaticResource RibbonKit.Brushes.Backstage.Modern.NavBackground}" />
                             <Setter TargetName="NavColumnDef" Property="Width" Value="200" />
+                        </Trigger>
+
+                        <!-- Classic2010 (Office 2010): the nav column is the ribbon's blue
+                             GRADIENT (not a solid accent), with dark chrome text so the back
+                             arrow and separator read on the light band. Item text is dark and
+                             turns white only when selected (BackstageTabItem triggers). -->
+                        <Trigger Property="controls:Backstage.Design" Value="Classic2010">
+                            <Setter Property="Foreground"
+                                    Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+                            <Setter TargetName="NavColumn" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.Ribbon.Background}" />
                         </Trigger>
 
                         <!-- Translucent (reveal a window Mica/Acrylic backdrop behind the
@@ -1696,30 +2081,51 @@
          BackstageTabItem — nav row in the accent column
          ============================================================ -->
     <Style TargetType="{x:Type controls:BackstageTabItem}">
-        <Setter Property="Foreground" Value="#FFFFFF" />
+        <!-- Container Foreground is the PAGE CONTENT colour, NOT the nav-text colour: the page
+             shown for the selected item inherits this container Foreground. It must be a
+             content-safe (non-white) brush — a white value here leaks white text into the page
+             (invisible on the light content area) for every design whose selected item is white
+             (Classic 2013, Classic2010), which was the original bug. Set to Accent here so the
+             page text reads in the theme accent (a readable colour on the light content area);
+             use Text.Primary instead for plain dark page text. The nav text + icon get their OWN
+             colour via the NavText / NavIcon elements below, driven per design/selection, so this
+             value never affects the nav column. -->
+        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Accent}" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type controls:BackstageTabItem}">
                     <Grid SnapsToDevicePixels="True">
-                        <!-- Accent selection bar on the left edge (Modern only). -->
+                        <!-- Accent selection bar (Modern only). Aligned to the Modern pill's LEFT
+                             edge (Chrome Margin is 8,1) and vertically centred + short, Fluent-style,
+                             so it reads as part of the selected pill rather than floating in the
+                             left gutter. Panel.ZIndex=1 keeps it ABOVE the pill (it's declared before
+                             Chrome, so without this the pill would paint over it). -->
                         <Rectangle x:Name="SelBar"
-                                   Width="3"
+                                   Width="3" Height="16"
                                    HorizontalAlignment="Left"
-                                   Margin="0,5"
+                                   VerticalAlignment="Center"
+                                   Margin="8,0,0,0"
+                                   Panel.ZIndex="1"
                                    RadiusX="1.5" RadiusY="1.5"
                                    Fill="{DynamicResource RibbonKit.Brushes.Accent}"
                                    Visibility="Collapsed" />
                         <Border x:Name="Chrome"
                                 Background="Transparent"
+                                BorderThickness="1"
                                 CornerRadius="0"
                                 Padding="26,11">
-                            <StackPanel Orientation="Horizontal">
+                            <!-- NavText carries the nav-item TEXT colour (independent of the
+                                 container Foreground, which stays dark for content safety). The
+                                 header presenter inherits it; the icon binds to it. Default is the
+                                 accent-column white; design/selection triggers below override it. -->
+                            <StackPanel x:Name="NavText" Orientation="Horizontal"
+                                        TextElement.Foreground="#FFFFFF">
                                 <!-- Reserved icon column: a foreground-tinted silhouette of
                                      the item's Icon. When no Icon is set the mask is empty, so
                                      the 16px slot stays blank and every item stays aligned. -->
                                 <Grid Width="16" Height="16" Margin="0,0,12,0" VerticalAlignment="Center">
-                                    <Rectangle Fill="{TemplateBinding Foreground}">
+                                    <Rectangle x:Name="NavIcon" Fill="#FFFFFF">
                                         <Rectangle.OpacityMask>
                                             <ImageBrush ImageSource="{Binding Icon, RelativeSource={RelativeSource TemplatedParent}}" />
                                         </Rectangle.OpacityMask>
@@ -1746,7 +2152,9 @@
                              accent bar + accent text on the selected item. These come AFTER
                              the classic triggers so they win when the design is Modern. -->
                         <Trigger Property="controls:Backstage.Design" Value="Modern">
-                            <Setter Property="Foreground"
+                            <Setter TargetName="NavText" Property="TextElement.Foreground"
+                                    Value="{StaticResource RibbonKit.Brushes.Backstage.Modern.Foreground}" />
+                            <Setter TargetName="NavIcon" Property="Fill"
                                     Value="{StaticResource RibbonKit.Brushes.Backstage.Modern.Foreground}" />
                             <Setter TargetName="Chrome" Property="CornerRadius" Value="4" />
                             <Setter TargetName="Chrome" Property="Margin" Value="8,1" />
@@ -1768,8 +2176,44 @@
                             <Setter TargetName="Chrome" Property="Background"
                                     Value="{StaticResource RibbonKit.Brushes.Backstage.Modern.ItemSelected}" />
                             <Setter TargetName="SelBar" Property="Visibility" Value="Visible" />
-                            <Setter Property="Foreground"
+                            <Setter TargetName="NavText" Property="TextElement.Foreground"
                                     Value="{DynamicResource RibbonKit.Brushes.Accent}" />
+                            <Setter TargetName="NavIcon" Property="Fill"
+                                    Value="{DynamicResource RibbonKit.Brushes.Accent}" />
+                        </MultiTrigger>
+
+                        <!-- Classic2010 (Office 2010): the nav is the ribbon's light-blue gradient,
+                             so item text is DARK and turns white only when selected. -->
+                        <Trigger Property="controls:Backstage.Design" Value="Classic2010">
+                            <Setter TargetName="NavText" Property="TextElement.Foreground"
+                                    Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+                            <Setter TargetName="NavIcon" Property="Fill"
+                                    Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="controls:Backstage.Design" Value="Classic2010" />
+                                <Condition SourceName="Chrome" Property="IsMouseOver" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <!-- Subtle light wash + hairline border on the blue nav (dark text stays legible). -->
+                            <Setter TargetName="Chrome" Property="Background" Value="#40FFFFFF" />
+                            <Setter TargetName="Chrome" Property="BorderBrush" Value="#66FFFFFF" />
+                            <Setter TargetName="Chrome" Property="BorderThickness" Value="1" />
+                        </MultiTrigger>
+                        <!-- SELECTED: a glossy blue "glass" box (accent-tracked gradient) with a
+                             border and white text. Placed last so it wins for this design. -->
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="controls:Backstage.Design" Value="Classic2010" />
+                                <Condition Property="IsSelected" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="Chrome" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.Backstage.ItemSelectedGlass}" />
+                            <Setter TargetName="Chrome" Property="BorderBrush"
+                                    Value="{DynamicResource RibbonKit.Brushes.ApplicationButton.Border}" />
+                            <Setter TargetName="Chrome" Property="BorderThickness" Value="1" />
+                            <Setter TargetName="NavText" Property="TextElement.Foreground" Value="#FFFFFF" />
+                            <Setter TargetName="NavIcon" Property="Fill" Value="#FFFFFF" />
                         </MultiTrigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.5" />
@@ -1906,6 +2350,7 @@
                                             <ControlTemplate TargetType="{x:Type ButtonBase}">
                                                 <Border x:Name="Chrome"
                                                         Background="Transparent"
+                                                        BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
                                                         CornerRadius="{DynamicResource RibbonKit.Metrics.SmallControlCornerRadius}"
                                                         Margin="1,0,2,0"
                                                         SnapsToDevicePixels="True">
@@ -1916,10 +2361,18 @@
                                                     <Trigger Property="IsMouseOver" Value="True">
                                                         <Setter TargetName="Chrome" Property="Background"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
+                                                        <Setter TargetName="Chrome" Property="BorderBrush"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
+                                                        <Setter TargetName="Chrome" Property="BorderThickness"
+                                                                Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
                                                     </Trigger>
                                                     <Trigger Property="IsPressed" Value="True">
                                                         <Setter TargetName="Chrome" Property="Background"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
+                                                        <Setter TargetName="Chrome" Property="BorderBrush"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Control.PressedBorder}" />
+                                                        <Setter TargetName="Chrome" Property="BorderThickness"
+                                                                Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
                                                     </Trigger>
                                                 </ControlTemplate.Triggers>
                                             </ControlTemplate>
@@ -2237,8 +2690,11 @@
     <Style x:Key="OptionsDialogPrimaryButtonStyle"
            TargetType="{x:Type Button}"
            BasedOn="{StaticResource OptionsDialogActionButtonStyle}">
-        <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Accent}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Accent}" />
+        <!-- The primary (OK) button borrows the File-button glass: a theme-aware brush that is a
+             glossy blue gel in Office 2010 and a flat accent elsewhere (both track a custom accent
+             via ThemeManager). -->
+        <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Dialog.PrimaryBackground}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Dialog.PrimaryBorder}" />
         <Setter Property="Foreground" Value="#FFFFFF" />
         <Setter Property="Template">
             <Setter.Value>
@@ -2253,6 +2709,10 @@
                             CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
                             SnapsToDevicePixels="True">
                         <Grid>
+                            <!-- Inner light rim just inside the outer border (glass look; 2010 only). -->
+                            <Border BorderBrush="{DynamicResource RibbonKit.Brushes.Control.InnerGlow}"
+                                    BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}" />
                             <!-- Wash fills the Chrome, over the accent fill, under the label. -->
                             <Border x:Name="Wash"
                                     CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
@@ -2300,6 +2760,7 @@
                     <Grid Background="Transparent">
                         <Border x:Name="Chrome"
                                 Background="Transparent"
+                                BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
                                 CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
                                 Padding="14,8"
                                 Margin="8,1"
@@ -2321,11 +2782,19 @@
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="Chrome" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
+                            <Setter TargetName="Chrome" Property="BorderBrush"
+                                    Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
+                            <Setter TargetName="Chrome" Property="BorderThickness"
+                                    Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
                         </Trigger>
                         <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType={x:Type ListBoxItem}}}"
                                      Value="True">
                             <Setter TargetName="Chrome" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Control.CheckedBackground}" />
+                            <Setter TargetName="Chrome" Property="BorderBrush"
+                                    Value="{DynamicResource RibbonKit.Brushes.Control.CheckedBorder}" />
+                            <Setter TargetName="Chrome" Property="BorderThickness"
+                                    Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
                             <Setter TargetName="SelectedBar" Property="Visibility" Value="Visible" />
                             <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Accent}" />
                         </DataTrigger>
@@ -2759,13 +3228,33 @@
                         </StackPanel>
 
                         <!-- Reset restores the host-supplied baseline (factory ribbon),
-                             discarding all customizations. Bottom-left, like Office. -->
-                        <Button x:Name="PART_ResetButton"
-                                Grid.Column="0" Grid.Row="2"
-                                HorizontalAlignment="Left"
-                                Content="Reset"
-                                Style="{StaticResource OptionsDialogActionButtonStyle}"
-                                Margin="0,8,0,0" />
+                             discarding all customizations. Import/Export round-trip the current
+                             layout to a JSON file. Bottom-left, like Office. -->
+                        <StackPanel Grid.Column="0" Grid.Row="2"
+                                    Orientation="Horizontal"
+                                    HorizontalAlignment="Left"
+                                    Margin="0,8,0,0">
+                            <Button x:Name="PART_ResetButton"
+                                    Content="Reset"
+                                    Style="{StaticResource OptionsDialogActionButtonStyle}"
+                                    Margin="0,0,6,0" />
+                            <!-- Import/Export are icon-only (compact reorder-button style) so all
+                                 three actions fit Column 0 without widening the dialog; the ToolTip
+                                 carries the meaning. Glyphs: OpenFile (load) and Save (write). -->
+                            <Button x:Name="PART_ImportButton"
+                                    Style="{StaticResource OptionsDialogReorderButtonStyle}"
+                                    ToolTip="Import: load a saved ribbon layout from a file"
+                                    AutomationProperties.Name="Import"
+                                    Margin="0,0,6,0">
+                                <TextBlock FontFamily="Segoe MDL2 Assets" FontSize="15" Text="&#xE8E5;" />
+                            </Button>
+                            <Button x:Name="PART_ExportButton"
+                                    Style="{StaticResource OptionsDialogReorderButtonStyle}"
+                                    ToolTip="Export: save the current ribbon layout to a file"
+                                    AutomationProperties.Name="Export">
+                                <TextBlock FontFamily="Segoe MDL2 Assets" FontSize="15" Text="&#xE74E;" />
+                            </Button>
+                        </StackPanel>
 
                         <!-- Structure tools, under the tree like Office. Edit… opens the
                              per-target dialog (name / icon / layout / size). -->

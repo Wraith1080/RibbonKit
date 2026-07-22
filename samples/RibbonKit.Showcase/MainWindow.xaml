@@ -22,7 +22,7 @@
                    QuickAccessPosition="BelowRibbon"
                    QuickAccessCustomizeRequested="OnCustomizeQuickAccess"
                    RibbonCustomizeRequested="OnCustomizeRibbon"
-                   d:IsBackstageOpen="True">
+                   d:IsBackstageOpen="false">
             <rk:Ribbon.Backstage>
                 <!-- d:SelectedIndex previews a specific backstage page on the XAML designer
                      surface (paired with d:IsBackstageOpen above). Runtime is unaffected. -->
@@ -131,6 +131,7 @@
                                 Icon="{StaticResource Icon.Paste}"
                                 ReductionMode="ResizeThenCollapse">
                     <rk:RibbonSplitButton Header="Paste"
+                                          x:Name="DemoSplitTarget"
                                           rk:Ribbon.CommandId="cmd.paste"
                                           LargeIcon="{StaticResource Icon.Paste}"
                                           Icon="{StaticResource Icon.Paste}"
@@ -143,11 +144,12 @@
                     </rk:RibbonSplitButton>
                     <StackPanel VerticalAlignment="Center">
                         <rk:RibbonButton Header="Cut" Size="Medium"
+                                         x:Name="DemoButtonTarget"
                                          rk:Ribbon.CommandId="cmd.cut"
                                          Icon="{StaticResource Icon.Cut}"
                                          SizeDefinition="Medium, Medium, Small"
                                          ScreenTipTitle="Cut (Ctrl+X)"
-                                         ScreenTipText="Remove the selection and put it on the Clipboard." />
+                                         ScreenTipText="Remove the selection and put it on the Clipboard." rk:KeyTip.Keys="CU" />
                         <rk:RibbonButton Header="Copy" Size="Medium"
                                          rk:Ribbon.CommandId="cmd.copy"
                                          Icon="{StaticResource Icon.Copy}"
@@ -166,10 +168,12 @@
 
                 <!-- CanResize=False: this group never shrinks, no matter how narrow -->
                 <rk:RibbonGroup Header="Font"
+                                x:Name="DemoGroupTarget"
                                 rk:Ribbon.CommandId="group.home.font"
                                 Icon="{StaticResource Icon.Font}"
                                 CanResize="False"
-                                ShowDialogLauncher="True">
+                                ShowDialogLauncher="True"
+                                DialogLauncherClick="OnFontDialogLauncher">
                     <StackPanel VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                             <rk:RibbonComboBox InputWidth="128"
@@ -307,6 +311,19 @@
                         </rk:RibbonDropDownButton>
                     </StackPanel>
                 </rk:RibbonGroup>
+
+                <!-- Demo: toggling this disables a plain button (Cut), a split button (Paste),
+                     and a whole group (Font) at once, so the disabled/greyed states are visible. -->
+                <rk:RibbonGroup Header="Demo" rk:Ribbon.CommandId="group.home.demo" Icon="{StaticResource Icon.Gear}" CanResize="False">
+                    <rk:RibbonToggleButton Header="Disable Samples"
+                                           x:Name="DisableSamplesToggle"
+                                           LargeIcon="{StaticResource Icon.Gear}"
+                                           Icon="{StaticResource Icon.Gear}"
+                                           SizeDefinition="Large, Large, Medium"
+                                           Click="OnToggleDisableSamples"
+                                           ScreenTipTitle="Disable Samples"
+                                           ScreenTipText="Toggle to disable the Cut button, the Paste split button, and the Font group — showing how disabled ribbon controls look." />
+                </rk:RibbonGroup>
             </rk:RibbonTab>
 
             <rk:RibbonTab Header="Insert" rk:Ribbon.CommandId="tab.insert">
@@ -410,6 +427,13 @@
                                      Click="OnApplyOffice2013"
                                      ScreenTipTitle="Office 2013 theme"
                                      ScreenTipText="Apply the Office 2013 White theme (flat, white strip, solid File button)." />
+                    <rk:RibbonButton Header="Office 2010"
+                                     LargeIcon="{StaticResource Icon.Palette}"
+                                     Icon="{StaticResource Icon.Palette}"
+                                     SizeDefinition="Large, Medium, Small"
+                                     Click="OnApplyOffice2010"
+                                     ScreenTipTitle="Office 2010 theme"
+                                     ScreenTipText="Apply the Office 2010 Blue theme (gradient silver-blue chrome, amber button highlights, solid blue File button)." />
                 </rk:RibbonGroup>
                 <!-- Accent customization: title-bar accent toggle + swappable accent color -->
                 <rk:RibbonGroup Header="Accent" rk:Ribbon.CommandId="group.view.accent" Icon="{StaticResource Icon.ColorDrop}">
@@ -491,15 +515,6 @@
                 </rk:RibbonGroup>
                 <!-- Backstage design: modern (2024) light rail vs classic (2013) accent column -->
                 <rk:RibbonGroup Header="Backstage" rk:Ribbon.CommandId="group.view.backstage" Icon="{StaticResource Icon.Backstage}">
-                    <rk:RibbonToggleButton Header="Modern Backstage"
-                                           Size="Large"
-                                           IsChecked="True"
-                                           LargeIcon="{StaticResource Icon.Backstage}"
-                                           Icon="{StaticResource Icon.Backstage}"
-                                           Checked="OnToggleBackstageDesign"
-                                           Unchecked="OnToggleBackstageDesign"
-                                           ScreenTipTitle="Modern backstage (Office 2024)"
-                                           ScreenTipText="Toggle between the modern 2024 light rail and the classic 2013 accent column. Open the File menu to see it." />
                     <rk:RibbonToggleButton Header="Mica"
                                            Size="Large"
                                            LargeIcon="{StaticResource Icon.Mica}"
@@ -508,6 +523,37 @@
                                            Unchecked="OnToggleMica"
                                            ScreenTipTitle="Mica backdrop (Windows 11)"
                                            ScreenTipText="Apply the Windows 11 Mica material behind the window and the backstage. Requires Windows 11 22H2+." />
+                    <rk:RibbonToggleButton Header="Translucent Backstage"
+                                           Size="Large"
+                                           LargeIcon="{StaticResource Icon.Mica}"
+                                           Icon="{StaticResource Icon.Mica}"
+                                           Checked="OnToggleBackstageTranslucent"
+                                           Unchecked="OnToggleBackstageTranslucent"
+                                           ScreenTipTitle="Translucent backstage"
+                                           ScreenTipText="Make the backstage a frosted-acrylic panel: it turns semi-transparent and strongly blurs whatever is behind it. Open the File menu to see it." />
+                    <StackPanel VerticalAlignment="Center">
+                        <rk:RibbonButton Header="2013 Rail"
+                            Tag="Classic"
+                            Size="Medium"
+                            Icon="{StaticResource Icon.Backstage}"
+                            Click="OnSelectBackstageDesign"
+                            ScreenTipTitle="Classic backstage (Office 2013)"
+                            ScreenTipText="Solid accent nav column with white text (flat selected fill)." />
+                        <rk:RibbonButton Header="2024 Rail"
+                            Tag="Modern"
+                            Size="Medium"
+                            Icon="{StaticResource Icon.Backstage}"
+                            Click="OnSelectBackstageDesign"
+                            ScreenTipTitle="Modern backstage (Office 2024)"
+                            ScreenTipText="Light rail with dark text and an accent selection bar." />
+                        <rk:RibbonButton Header="2010 Glass"
+                            Tag="Classic2010"
+                            Size="Medium"
+                            Icon="{StaticResource Icon.Backstage}"
+                            Click="OnSelectBackstageDesign"
+                            ScreenTipTitle="Office 2010 backstage"
+                            ScreenTipText="Blue accent nav with a glossy blue glass marker on the selected item and white text." />
+                    </StackPanel>
                 </rk:RibbonGroup>
                 <rk:RibbonGroup Header="Application" rk:Ribbon.CommandId="group.view.application" Icon="{StaticResource Icon.Gear}">
                     <rk:RibbonButton Header="Options"
@@ -566,7 +612,8 @@
                                  Padding="28,22"
                                  FontFamily="Segoe UI"
                                  FontSize="13"
-                                 VerticalScrollBarVisibility="Auto">
+                                 VerticalScrollBarVisibility="Auto"
+                                 IsInactiveSelectionHighlightEnabled="True">
                         <FlowDocument PagePadding="0" TextAlignment="Left">
                             <Paragraph FontSize="18" Foreground="#6B6B6B" Margin="0,0,0,12">RibbonKit — Phase 1: core ribbon skeleton</Paragraph>
                             <Paragraph FontSize="13" Foreground="#9A9A9A" Margin="0,0,0,6">Make the window narrower: groups collapse to flyout buttons by priority — Styles (10) → Editing (5) → Clipboard (default, resizes first) — Font never reduces (CanResize=False).</Paragraph>

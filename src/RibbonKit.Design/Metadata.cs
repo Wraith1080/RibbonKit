@@ -1,0 +1,77 @@
+using Microsoft.VisualStudio.DesignTools.Extensibility.Features;
+using Microsoft.VisualStudio.DesignTools.Extensibility.Metadata;
+using RibbonKit.Design;
+
+// Tells the designer this assembly carries design-time metadata for RibbonKit.
+[assembly: ProvideMetadata(typeof(Metadata))]
+
+namespace RibbonKit.Design;
+
+/// <summary>
+/// Design-time metadata table for RibbonKit. Attaches the design-time feature providers
+/// (default initializer + context-menu verbs) to the ribbon control types.
+/// </summary>
+/// <remarks>
+/// Control types are referenced by their full CLR name as STRINGS, never <c>typeof</c>:
+/// the new XAML designer runs this assembly in the Visual Studio (.NET Framework) process,
+/// isolated from the running .NET 8/9 control instances, so it cannot load the real types.
+/// </remarks>
+internal sealed class Metadata : IProvideAttributeTable
+{
+    // Full CLR type names of the runtime controls (in RibbonKit.dll).
+    private const string RibbonType = "RibbonKit.Controls.Ribbon";
+    private const string RibbonTabType = "RibbonKit.Controls.RibbonTab";
+    private const string RibbonGroupType = "RibbonKit.Controls.RibbonGroup";
+    private const string BackstageType = "RibbonKit.Controls.Backstage";
+    private const string RibbonButtonType = "RibbonKit.Controls.RibbonButton";
+    private const string RibbonToggleButtonType = "RibbonKit.Controls.RibbonToggleButton";
+    private const string RibbonSplitButtonType = "RibbonKit.Controls.RibbonSplitButton";
+    private const string RibbonDropDownButtonType = "RibbonKit.Controls.RibbonDropDownButton";
+
+    /// <inheritdoc />
+    public AttributeTable AttributeTable
+    {
+        get
+        {
+            var builder = new AttributeTableBuilder();
+
+            // Ribbon: seed a starter tab/group when dropped, offer "Add Tab" / "Edit Ribbon…" on
+            // right-click, and translate SelectedIndex to the editor's chosen design-only preview tab.
+            builder.AddCustomAttributes(
+                RibbonType,
+                new FeatureAttribute(typeof(RibbonDefaultInitializer)),
+                new FeatureAttribute(typeof(RibbonContextMenuProvider)),
+                new FeatureAttribute(typeof(SelectedTabPreviewProvider)));
+
+            // Tab: "Add Group".
+            builder.AddCustomAttributes(
+                RibbonTabType,
+                new FeatureAttribute(typeof(RibbonTabContextMenuProvider)));
+
+            // Backstage: "Add Nav Item" / "Add Nav Button", and translate SelectedIndex to the editor's
+            // chosen design-only preview page.
+            builder.AddCustomAttributes(
+                BackstageType,
+                new FeatureAttribute(typeof(BackstageContextMenuProvider)),
+                new FeatureAttribute(typeof(BackstagePagePreviewProvider)));
+
+            // Group: "Add Button / Toggle / Split / Drop-Down" + reorder/delete the group.
+            builder.AddCustomAttributes(
+                RibbonGroupType,
+                new FeatureAttribute(typeof(RibbonGroupContextMenuProvider)));
+
+            // Leaf controls: reorder/delete within their group. One provider serves all four
+            // button types (it acts on the current selection).
+            var controlProvider = new FeatureAttribute(typeof(RibbonControlContextMenuProvider));
+            builder.AddCustomAttributes(RibbonButtonType, controlProvider);
+            builder.AddCustomAttributes(RibbonToggleButtonType, controlProvider);
+            builder.AddCustomAttributes(RibbonSplitButtonType, controlProvider);
+            builder.AddCustomAttributes(RibbonDropDownButtonType, controlProvider);
+
+            // Properties-window categories + descriptions for the main controls.
+            PropertyMetadata.Register(builder);
+
+            return builder.CreateTable();
+        }
+    }
+}

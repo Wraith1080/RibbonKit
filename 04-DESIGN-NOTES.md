@@ -27,7 +27,7 @@ src/RibbonKit/
   Controls/        All lookless controls (Ribbon, tabs, buttons, galleries, backstage, KeyTips, QAT)
   Interop/         MicaHelper.cs (DWM system backdrop)
   Layout/          Adaptive sizing engine (RibbonGroupsPanel, ReductionAlgorithm, RibbonSizeDefinition)
-  Themes/          Generic.xaml, Office2024.xaml (ALL templates), Tokens.Office{2024,2019,2013}.xaml
+  Themes/          Generic.xaml, Office2024.xaml (ALL templates), Tokens.Office{2024,2019,2013,2010}.xaml
   Theming/         ThemeManager.cs
 samples/RibbonKit.Showcase/
 ```
@@ -40,9 +40,15 @@ samples/RibbonKit.Showcase/
   every theme. Templates never hardcode colors/metrics — they reference tokens via
   `DynamicResource` (`RibbonKit.Brushes.*`, `RibbonKit.Metrics.*`, `RibbonKit.Effects.*`).
 - **Per-theme values** live in `Tokens.Office2024.xaml`, `Tokens.Office2019.xaml`,
-  `Tokens.Office2013.xaml`. Same keys, different values. A theme "chooses" a visual
-  style by zeroing what it doesn't use (e.g. flat themes set underline brushes to
-  `Transparent`, corner radii to `0`, `ContextualUnderlineHeight` to `0`).
+  `Tokens.Office2013.xaml`, `Tokens.Office2010.xaml`. Same keys, different values. A theme
+  "chooses" a visual style by zeroing what it doesn't use (e.g. flat themes set underline
+  brushes to `Transparent`, corner radii to `0`, `ContextualUnderlineHeight` to `0`).
+- **A token value need not be a `SolidColorBrush`** — any `Brush` works, since templates bind
+  each brush key via `DynamicResource`. Office 2010 exploits this: its background/hover/File-button
+  tokens are `LinearGradientBrush`es (see §3.27). This is safe because nothing animates a token
+  brush's `Color` — every RibbonKit transition targets `UIElement.Opacity` (the hover/press/check
+  washes fade a layer's opacity; the theme-switch cross-fade dips the tab control's opacity), so a
+  gradient brush drops in wherever a solid one did.
 - The app merges one token dictionary into `Application.Resources` (App.xaml), and
   `ThemeManager.Apply` swaps it at runtime.
 
@@ -55,6 +61,10 @@ Theme identities:
   turn accent-colored with white text.
 - **Office2013** ("White"): fully flat/square, white strip, outlined active tab that
   cuts into the body, SOLID accent File button, tabs flush to the title bar.
+- **Office2010** ("Blue"): the first NON-flat theme — gradient silver-blue window/ribbon
+  chrome, dark-blue (`#15428B`) tab labels, the iconic amber/gold glossy highlight on
+  hovered/pressed/toggled controls, a connected (outlined) light active tab, a solid blue
+  gradient File button, and gently rounded (2-3px) corners. See §3.27.
 
 ### 2.2 ThemeManager (`Theming/ThemeManager.cs`)
 
@@ -193,7 +203,13 @@ Subtle.**
   `RibbonKit.Animation.Duration.*` Duration tokens for template storyboards.
 - `Animation/RibbonMotion.cs`: `PlayOpen` (fade+slide from an edge), `PlayClose`
   (fade+slide out, with completion callback), `PlaySlideIn` (slide WITHOUT opacity),
-  `PlayFadeIn`, `AnimateTranslateY` (translate-only glide), `Rest`.
+  `PlayFadeIn`, `AnimateTranslateY` (translate-only glide), `FadeWash` (cross-fades a
+  hover/press/checked highlight layer's opacity — used by buttons/toggles since a
+  templated storyboard can't animate a `DynamicResource` duration), `PlayThemeCrossfade`
+  (85%→100% opacity dip on theme/accent change — not a full fade, which would flash an
+  already-opaque element to transparent), `PlayKeyTipPop` (KeyTip badge fade+short
+  downward settle; releases its own opacity animation on completion — see hard rule 8),
+  `Rest`.
 
 **Hard rules learned:**
 
@@ -215,11 +231,21 @@ Subtle.**
    reuses the existing adorner — a UIElement can't have two).
 7. Tab switch: slide from **Top** (content drops down away from the tab strip — user
    preference).
+8. **An opacity animation's default `FillBehavior.HoldEnd` swallows later plain
+   property sets.** `KeyTipAdorner.Dimmed` sets `Opacity` directly to dim/undim a badge
+   as the user types; if the pop-in animation were left holding the property, those
+   sets would silently do nothing. `PlayKeyTipPop` clears its own animation
+   (`BeginAnimation(OpacityProperty, null)`) and sets a plain `Opacity = 1d` in its
+   `Completed` handler so the property is a normal local value again afterward.
 
-Wired so far: dropdown/split/flyout menus, gallery expand, backstage open/close, ribbon
-minimize/restore (+QAT glide), tab-switch slide. **Not yet wired**: hover cross-fade,
-true sliding tab marker (current = content slide; the underline doesn't glide between
-tabs yet), contextual-tab appear, KeyTip pop, toggle-state, theme-switch fade.
+**All planned transitions are now wired:** dropdown/split/flyout menus, gallery expand,
+backstage open/close, ribbon minimize/restore (+QAT glide), tab-switch slide, hover/press
+cross-fade (`RibbonButton`/`RibbonToggleButton` via `FadeWash`), the sliding tab marker
+(`RibbonTabControl` — a real underline glide between tabs, not just content slide),
+contextual-tab appear (`RibbonTab.cs`, `PlayOpen` with `ContextualTab`), toggle-state
+cross-fade (`RibbonToggleButton`'s check wash), theme-switch cross-fade (`Ribbon.cs` calls
+`PlayThemeCrossfade` on the tab control), and KeyTip badge pop-in (`KeyTipService.AddAdorners`
+calls `PlayKeyTipPop` once per badge, the same run it first shows it — see hard rule 8).
 Showcase: View → Motion group (None/Subtle/Expressive + Respect System toggle);
 `App.xaml.cs` calls `RibbonAnimation.Initialize(this)`.
 
@@ -482,6 +508,13 @@ New Group / Rename under the tree. Implements `IRibbonFillPage`.
 - **Command proxies reused from §3.15**: `CreateQuickAccessProxy` generalized to
   `Ribbon.CreateCommandProxy(source, size)` — Small for the QAT, Medium (icon + label) for
   custom groups. Same invoke/toggle-sync semantics.
+  - **Toggle proxy also raises the source's `Click`** (later fix): the toggle proxy's `IsChecked`
+    is two-way bound to the source, which fires the source's `Checked`/`Unchecked` — but a toggle
+    whose action is wired via `Click` (a valid pattern, e.g. the showcase's disable-samples toggle)
+    never ran when proxied, so the copy only mirrored the checked state. The proxy now also raises
+    `ButtonBase.ClickEvent` on the source, making a proxy click equivalent to a direct click.
+    `RaiseEvent` doesn't re-toggle `IsChecked` (the binding already did), so there's no double-toggle,
+    and it runs after the state has updated so the handler reads the new value.
 - **`RibbonCommandCatalog`** (new, internal): the command discovery/description helpers
   extracted from the QAT page so both pages agree — `CollectControls` (logical-tree walk,
   depth-capped, skips proxies to prevent proxy-of-proxy chains), `CollectAvailable`
@@ -754,6 +787,753 @@ source's menu items while open:
   it's self-contained on the control and needs no open/close state on the ribbon. Only plain Tab was
   trapped (`ControlTabNavigation` left alone so the TabControl's Ctrl+Tab page switching is unchanged).
 
+### 3.22 Design-time smart tags / quick actions (XAML designer) — VERIFIED IN VS
+
+New `src/RibbonKit.Design/` project: **design-time only** tooling for the VS/Blend XAML
+designer (toolbox defaults + right-click verbs for building a ribbon on the surface). Runtime is
+untouched — the demo app owns any runtime contextual UI. **All of the below is user-confirmed
+working in VS.**
+
+**The architecture (the part that dictated everything):**
+
+- **Targets the NEW (surface-isolation) WPF designer**, not the legacy one. So the design assembly
+  targets **net472** (VS runs on .NET Framework), outputs **`RibbonKit.DesignTools.dll`** (the new
+  `*.designtools.dll` discovery convention — the old one was `*.design.dll`), and is discovered from
+  a **`Design` subfolder next to `RibbonKit.dll`** (csproj `DeployToDesignFolder` target copies into
+  both TFM output folders; NuGet path is `lib/<tfm>/Design/`). **`RibbonKit.Design` is NOT added to
+  the .sln** by default — build it once, then **close/reopen the designer** (it caches design assemblies).
+- **Process-isolated from the runtime controls**: the extension can't reference RibbonKit or use
+  `typeof` on control types. Everything is by **string type name** and edits go through the **Model API**.
+- SDK: `Microsoft.VisualStudio.DesignTools.Extensibility` (namespaces
+  `...Extensibility.{Metadata,Features,Model,Interaction}`). Registration = `[assembly: ProvideMetadata]`
+  + `IProvideAttributeTable` / `AttributeTableBuilder.AddCustomAttributes(typeName, new FeatureAttribute(...))`.
+
+**Hard-won specifics (all verified — don't re-derive):**
+
+- **`TypeIdentifier` is in `...Extensibility.Metadata`** (not `.Model`), and its 2-arg ctor takes the
+  **XAML namespace**, NOT the CLR namespace. RibbonKit declares `[assembly: XmlnsDefinition("urn:ribbonkit",
+  "RibbonKit.Controls")]`, so `new TypeIdentifier("urn:ribbonkit", "RibbonTab")` + `ModelFactory.CreateItem(
+  item.Context, id)`. Passing the CLR namespace made `CreateItem` silently fail (see next point) — this
+  was THE bug that made "menus show but nothing happens".
+- **The designer swallows exceptions thrown inside providers** — a failed edit just looks like nothing
+  happened. `Diagnostics.cs` (`DesignLog`) wraps every action and logs start/ok/FAILED+exception to
+  `%TEMP%\RibbonKit.DesignTools.log`. Keep it while iterating; strip before shipping.
+- Adds use explicit collection property names, not `.Content`: `DesignModel.Add(parent, "Tabs"/"Groups"/"Items", child)`
+  (avoids `.Content` ambiguity for the group's `HeaderedItemsControl.Items`). Button/nav caption = `Header`.
+- **Enums are set by NAME STRING** — `props["QuickAccessPosition"].SetValue("BelowRibbon")`,
+  `props["Placement"].SetValue("Bottom")` — because the design assembly can't reference the enum type;
+  the property's type converter resolves it. Verified working.
+- Singleton / checked state via `ContextMenuProvider.UpdateItemStatus`: `MenuAction.Enabled` /
+  `.Checkable` / `.Checked`; read current values with `ModelProperty.Value` (is it set? → null when not)
+  and `ModelProperty.ComputedValue` (effective value incl. defaults).
+
+**Verbs shipped (all working):**
+
+- Toolbox: `RibbonDefaultInitializer` seeds a dropped Ribbon with a "Home" tab + "Group".
+- Ribbon: Add Tab; **Add Backstage** (once — disabled after one exists via `UpdateItemStatus`; also
+  surfaces the File button, which is hidden while `Backstage` is null; seeds one "Info" nav item);
+  **Quick Access Toolbar** submenu (`MenuGroup`, HasDropDown) — Title Bar / Tab Row / Below Ribbon,
+  radio-checked on the current `QuickAccessPosition`.
+- RibbonTab: Add Group + Move Tab Left/Right + Delete Tab.
+- RibbonGroup: Add Button/Toggle/Split/Drop-Down + Move Group Left/Right + Delete Group.
+- Leaf controls (button/toggle/split/drop-down): one provider on all four types — Move Control Left/Right + Delete Control.
+- Backstage: **Add Nav Item** (a page) + **Add Nav Button** (a footer action: `IsButton=true`, `Placement="Bottom"`).
+- Reorder = `ModelItemCollection` IndexOf/Remove/Insert via `item.Parent`; Delete = `.Remove`. All single-undo.
+
+**Toolbox + Properties-window polish — DONE (Properties verified; toolbox is package-only):**
+
+- Properties window: `PropertyMetadata.cs` puts the main controls' key properties under a "RibbonKit"
+  category with descriptions, via the design attribute table (`AddCustomAttributes(type, prop,
+  new CategoryAttribute(...), new DescriptionAttribute(...))`). **Verified showing in VS.** `IsBackstageOpen`
+  is `[Browsable(false)]` (grid footgun — it'd persist to runtime; preview via `d:` instead); `SelectedIndex`
+  kept visible with a runtime-vs-preview warning.
+- Toolbox: the NEW designer does **NOT** use `ToolboxBrowsableAttribute`. Toolbox is populated from a
+  NuGet-package **`tools\VisualStudioToolsManifest.xml`** allowlist (`<FileList><File Reference="RibbonKit.dll">
+  <ToolboxItems VSCategory="RibbonKit" UIFramework="WPF"><Item Type="..."/>`). Created + wired into the
+  package (`None Include ... Pack`). **Only takes effect when RibbonKit is consumed as a NuGet package** —
+  a project-reference setup still reflects all public controls, so it does nothing in the current showcase.
+
+**Smart-tag adorner panel — ATTEMPTED, DOESN'T RENDER in the new designer (don't retry blindly):**
+
+- Empirically tested (`PrimarySelectionAdornerProvider`): the types all **exist and compile**
+  (`PrimarySelectionAdornerProvider`, `AdornerPanel`, `AdornerPlacementCollection` in
+  `...Extensibility.Interaction`), the provider **activates** on ribbon selection (logged
+  `Activate`/`Deactivate`), and `Adorners.Add` succeeds (count = 1) — **but the custom WPF adorner UI
+  never paints on the surface.** Explicit-size + on-surface placement didn't help. Conclusion: the new
+  **surface-isolation** designer renders the surface in a separate process from where the extension runs,
+  so custom adorner *visuals* aren't hosted (matches Microsoft's unresolved 2025 Q&A). Adorner *activation
+  + model editing* work; adorner *rendering* does not. **The glyph/flyout smart tag is not achievable in
+  the new designer with this API.** Spike file kept out of the committed project.
+- Consequence: the **context-menu verbs are the delivery surface** for quick actions (they already cover
+  every action the flyout would have). **Design-only preview** of a tab / backstage uses the idiomatic
+  `d:SelectedIndex` / `d:IsBackstageOpen` in XAML (works today). A `DesignModeValueProvider` (design-time
+  value that renders but isn't serialized) is the only remaining avenue to a togglable preview and is
+  unexplored — note it changes *values*, which DO render, unlike adorner overlays.
+
+**Still deferred:**
+
+- **Design-time "Add to QAT"**: held — QAT items are runtime-generated proxies of a source command, not
+  plain XAML, so there's nothing clean to write into markup. Needs a dedicated approach.
+- `ParentAdapter` parenting rules; NuGet `Design/` packaging target (also carries the toolbox manifest).
+  "Add Application Button" was **dropped** — no such element; the File button is intrinsic and appears with
+  `Backstage` (only its text, `ApplicationButtonHeader`, is settable).
+- `Diagnostics.cs` (`DesignLog`) is still wired into every verb — strip before shipping.
+
+### 3.23 Ribbon Editor dialog (design-time) + tab-preview feasibility
+
+Loop back to design-time tooling: a launchable **structure editor** dialog, plus settling
+whether a `d:`-driven tab-preview toggle is achievable.
+
+**Feasibility findings (verified against the current designer API, July 2026):**
+
+- **Dialogs from verbs — YES.** The design assembly loads INSIDE the VS process (net472);
+  only the *surface* is process-isolated. So a `MenuAction.Execute` handler can `new
+  Window(...).ShowDialog()` — a plain code-built WPF window works (the runtime dialogs' themed
+  templates aren't available here since the design assembly can't reference RibbonKit). This is
+  unlike the adorner wall (§3.22): adorner *visuals* need the surface's process; a dialog does not.
+- **Writing a literal `d:SelectedIndex` from an extension — NO.** The new ModelItem API has no
+  design-namespace write path; `Properties["SelectedIndex"].SetValue(n)` writes the REAL attribute
+  (persists to runtime). Confirmed against the ModelItem members list and the MS migration doc.
+  Hand-authored `d:SelectedIndex` still works (the XAML *parser* honors it — §3.14) but can't be
+  emitted programmatically.
+- **Design-only preview toggle — YES, via `DesignModeValueProvider`** (supported in the new
+  designer; the avenue §3.22 flagged as the one left). It returns a design-time render value for a
+  property without serializing it, and re-runs on `InvalidateProperty`. Registration pattern
+  (from Microsoft's own sample): `Properties.Add(new TypeIdentifier("RibbonKit.Controls.Ribbon"),
+  "SelectedIndex")` + override `TranslatePropertyValue(ModelItem, PropertyIdentifier, object)`.
+  The shipping toggle stores a chosen preview index (design-only backing the dialog writes) and
+  returns it here; a literal `d:` write is neither needed nor possible.
+- Aside: `SuggestedActionProvider` (the selected-element quick-actions flyout) is a newer
+  extensibility point that renders in a POPUP (not on the surface) — a possible nicer launcher than
+  the context menu later. Noted, not built.
+
+**Built this session:**
+
+- `RibbonEditorWindow.cs` — code-only WPF modal: a Tabs → Groups → Controls tree, a toolbar
+  (Add Tab / Add Group / Add Control ▾ / Move Up / Move Down / Delete) and a Header rename box.
+  Owned to the VS main window via `WindowInteropHelper` + `Process…MainWindowHandle` (best-effort).
+  Edits go straight to the `ModelItem` tree through `DesignModel`; each op is its own undo (no
+  OK/Cancel transaction — surface updates live, matching the verb model). Chose per-op scopes over
+  a session-long `ModelEditingScope`/reconcile for lowest risk and to preserve unmodeled props.
+- `DesignModel.cs` — added read helpers (`Children`, `Header`, `TypeName`, `IndexInParent`,
+  `SiblingCount`) and scoped create/rename helpers (`AddTab`, `AddGroup`, `AddControl`, `Rename`).
+- `ContextMenuProviders.cs` — "Edit Ribbon…" launcher verb on `RibbonContextMenuProvider`.
+**Spike result (confirmed on Windows):** the dialog shows cleanly and modally from the verb —
+so dialogs-from-verbs is proven. But a load-time-only `DesignModeValueProvider` did **nothing**:
+the new designer calls `TranslatePropertyValue` **lazily** — only on
+`ValueTranslationService.InvalidateProperty` or when the property is edited in the designer, never
+on initial parse (the migration doc's fine print, now verified). The load-time spike never called
+`InvalidateProperty`, so it never fired.
+
+**Real preview toggle — built on the correct trigger (`TabPreview.cs`):**
+
+- `SelectedTabPreviewProvider : DesignModeValueProvider` on `Ribbon.SelectedIndex` returns the
+  editor's chosen preview index from `TranslatePropertyValue`; nothing is serialized and the
+  running app is untouched (provider isn't invoked for run-time code).
+- The trigger is the piece the spike missed: any feature holding the ModelItem can force
+  re-evaluation via
+  `ribbon.Context.Services.GetRequiredService<ValueTranslationService>().InvalidateProperty(ribbon, selectedIndexId)`
+  (pattern lifted from Microsoft's CustomComboBox sample, where an AdornerProvider does it — we
+  don't need the adorner, just the service call). `TabPreviewCoordinator.Set(ribbon, index)` stores
+  the index in design-session state and fires that invalidation; the editor's **Preview tab** combo
+  ("(no preview)" + one entry per tab) calls it. This is the supported equivalent of hand-authored
+  `d:SelectedIndex` — which can't be written programmatically (no design-namespace write path in the
+  model API). Preview is session state, so it resets on designer reload; that's fine for a live toggle.
+- Replaced the throwaway `SelectedTabPreviewProviderSpike.cs`; `Metadata.cs` now registers the real
+  `SelectedTabPreviewProvider`.
+
+**Confirmed working on Windows (user-verified):** changing the editor's **Preview tab** combo
+repaints the design surface to the chosen tab, with nothing written to the XAML and no runtime
+effect. So the full chain — `TabPreviewCoordinator.Set` → `ValueTranslationService.InvalidateProperty`
+→ `SelectedTabPreviewProvider.TranslatePropertyValue` → the ribbon's selection visual — works end
+to end; the §3.14 `EnsureSelection` fallback was not needed. The dialog-from-verb path is likewise
+confirmed. Design-time component work (editor + design-only preview) is done.
+
+Cleanup: delete the retired `SelectedTabPreviewProviderSpike.cs` (unregistered/inert, replaced by
+`TabPreview.cs`).
+
+**Property editors added (per-item panel in the dialog):** the editor now shows a property panel
+for the selected node, driven by a small spec table + `DesignModel.HasProperty` so only properties
+the type actually has are shown (leans on the `FindProperty` lesson). Covered this pass: controls —
+`Size` (enum), `SizeDefinition`, `ScreenTipTitle`, `ScreenTipText`; tab — `IsContextual` (bool),
+`ContextualColor` (string via brush converter); group — `ShowDialogLauncher` (bool), `ReductionMode`
+(enum), `CanResize` (bool). Editors: text (commit on Enter/lost-focus), checkbox (Click, so a
+programmatic initial set doesn't write), enum combo (values set as strings → type converter, the QAT
+trick). `DesignModel.SetProperty` wraps each in a scope and swallows/logs converter failures (e.g. a
+bad colour) so a typo never crashes the dialog. Each edit = one undo. KeyTip access keys were
+**deferred** here (attached property — different model access, unproven at the time) and later
+implemented once attached-property access was proven — see the CommandId / KeyTip notes below.
+
+**Split / drop-down button menu items (later pass):** `RibbonSplitButton` derives from
+`RibbonDropDownButton`; both are `ItemsControl`s holding their flyout entries as `RibbonMenuItem`s in
+`Items` — structurally identical to the combo/gallery item path. So the editor needed only an
+`ItemRule` entry (`RibbonMenuItem`, caption = `Header`) plus a friendly type name: the existing tree
+recursion into `Items`, the "Add Item" sibling-insert, and the caption/icon editors all flowed from
+that. Menu-item text edits via the Caption box (Header); Icon via the icon picker.
+
+**`Ribbon.CommandId` attached-property editing (unblocks the deferred KeyTip path):** the "different
+model access" the KeyTip note flagged is now solved. Attached members don't surface through
+`Properties[name]` (it only sees an element's own members and throws for an attached one), so
+`DesignModel.FindAttached` resolves `Ribbon.CommandId` by a type-qualified `PropertyIdentifier`
+(`new TypeIdentifier("RibbonKit.Controls.Ribbon")`, the same identifier form `TabPreview` uses). Two
+paths: a fast string-indexer lookup for already-set values (the showcase controls carry
+`rk:Ribbon.CommandId`), and a slow path that binds the collection's `Find(PropertyIdentifier)` /
+`this[PropertyIdentifier]` accessor **by reflection** and logs which shape worked — the accessor's
+exact signature in the shipped SDK couldn't be verified from the Linux sandbox, so reflection keeps a
+wrong guess from breaking the build (same defensive style as the StaticResource icon spike). Exposed as
+a "Command Id (persistence)" `AttachedText` row on tabs, groups, and command controls (hidden on
+combo/gallery/menu/backstage entries, which aren't persistable commands); blank clears the attribute.
+The same `FindAttached`/`SetAttached` helpers are what a future KeyTip-access-key editor would reuse.
+
+**KeyTip access-key editing (the deferral, now DONE).** With attached-property access proven, the
+parked KeyTip editor was straightforward: `KeyTip.Keys` is another attached string, just declared on
+`RibbonKit.Controls.KeyTip` instead of `Ribbon`. `FindAttached`/`GetAttachedString`/`SetAttached` gained
+an `ownerTypeName` parameter (deriving the short key form from its last segment), so the same reflection
+resolver serves both owners. `PropSpec` gained an `AttachedOwner` field; a **KeyTip (Alt access key)**
+`AttachedText` row now sits beside **Command Id** on the same node set — tabs, groups, and leaf command
+controls (`ShowsCommandId` → `ShowsIdentityProps`). That set is exactly where the KeyTip service reads
+`KeyTip.GetKeys` (tab / collapsed-group flyout / group launcher / leaf command), so the editor never
+offers a KeyTip where the runtime ignores it. Blank clears the attribute, letting the ribbon auto-derive
+a key from the label (Office behaviour); a pinned value overrides it.
+
+**Icon picker (`Icon`/`LargeIcon`) — user wants the full Icons.xaml picker; treated as a spike.**
+Icons are `DrawingImage` resources keyed `Icon.*` in the showcase's `Icons.xaml`, referenced as
+`Icon="{StaticResource Icon.Paste}"`. So the picker needs to (1) enumerate those keys and (2) write
+a **StaticResource reference** to the property — NOT a plain value or a URI (the icons are inline
+vector resources, no file/URI form exists). Both halves use under-documented APIs (`ModelResource`
+in `…Extensibility.Services`; no clear StaticResource-write on `ModelProperty`/`ModelFactory`) and
+can't be tested from the Linux box, so — consistent with how the `d:` preview and the smart-tag
+adorner were handled — it gets a probe before a full build.
+
+**Write-spike round 1 (raw extension) — FAILED, informatively (user-confirmed):**
+`property.SetValue(new StaticResourceExtension(key))` wrote `Icon="{StaticResource}"` with the **key
+dropped**. Lesson: the model serializes the model TREE, not a raw CLR object's internals — a live
+markup-extension object's `ResourceKey` is invisible to it. (Also confirmed `ModelFactory.CreateItem`
+in the new API has NO `params object[] arguments` overload, so the key can't be passed as a ctor arg.)
+
+**Round 2 (shipped): build the extension as a ModelItem + set `ResourceKey` in the model.**
+`CreateStaticResourceItem` does `ModelFactory.CreateItem(ctx, <StaticResource TypeIdentifier>)` then
+`ext.Properties["ResourceKey"].SetValue(key)`, and `SetStaticResource` assigns that ModelItem to the
+target property. The exact `TypeIdentifier` form is unverified, so it tries three in order —
+`(presentationNs,"StaticResourceExtension")`, `(presentationNs,"StaticResource")`, and CLR
+`"System.Windows.StaticResourceExtension"` — logging which one creates successfully.
+`SetStaticResource` then reads the key back and logs `read-back key = '…' (expected '…')`.
+
+**Read-back added (`GetStaticResourceKey`).** The icon fields show the current key for buttons that
+already have an icon, and read-back is what let round 2's write be verified.
+
+**CONFIRMED WORKING on Windows (user):** setting an icon on a blank button, reading an existing
+button's icon key, and copying it to another all work; the log is clean with correct read-back and no
+errors. Icon read+write via a StaticResource model item is fully proven.
+
+**Visual picker shipped (`IconPickerDialog` + `IconCatalog`).** Enumeration was the last constraint:
+no reliable resource-enumeration API, `ModelItem.Source` is not a file path, and resources live in the
+isolated surface process the extension can't read — so the extension can't auto-discover Icons.xaml.
+Design that needs zero uncertain APIs: a "…" button on each icon row opens a picker that (1) always
+lists the icon keys **already used elsewhere in this ribbon** (a pure model walk, `CollectUsedIconKeys`),
+and (2) has **"Load Icons.xaml…"** — an `OpenFileDialog` that parses the file with `XamlReader.Load`
+in the extension's own WPF context, so the `DrawingImage` values render as real **thumbnails**; the
+loaded dictionary is cached for the session (`IconCatalog`). A filter box narrows the grid, the current
+key is highlighted, and clicking a tile writes via the proven `SetStaticResource`. Graceful: useful
+with no file loaded (used-keys), and it can't hit an undocumented API. Trimmed the now-proven spike
+logging (read-back / create-attempt / model-type lines). Later polish: remember the Icons.xaml path
+across sessions; a "(none)" tile to clear an icon (needs a verified `ClearValue`).
+
+**Nested containers (StackPanels) in the editor — DONE.** Real ribbons put a `StackPanel` (often a
+vertical column of horizontal icon rows) inside a group's `Items`, not just leaf controls. The editor
+now models that: `NodeKind` gained `Container`, `NodeInfo` stores its parent collection explicitly
+(the same kind can live in a group's `Items` or a container's `Children`), and `AddItemNodes` recurses
+into any node that has a `Children` collection (`HasProperty(child,"Children")` — Panels have it,
+ribbon controls don't). New verbs: **Add Stack** (`DesignModel.AddStackPanel` via `CreateFramework`,
+which creates the WPF `StackPanel` through the presentation xmlns / CLR-name fallback) — vertical in a
+group, horizontal inside another stack; **Add Control** now targets the selection's child collection
+(`ResolveChildTarget`: group→`Items`, container→`Children`, control→sibling) and defaults stacked
+buttons to `Size="Small"`. Container nodes get an `Orientation` editor; `ResolveTab` now walks
+ancestors by type so Add-Group works from any depth; `CollectUsedIconKeys` recurses into containers.
+`DesignModel.AddControl` generalized to `(parent, collection, type, label, size)`.
+
+**More control types in Add Control (DONE).** The menu now also offers Combo Box (`RibbonComboBox`),
+Gallery in-ribbon (`InRibbonGallery`), Gallery drop-down (`RibbonGallery`), and `Separator`. `AddControl`
+made `header` optional (only buttons get a caption + the Small-in-stack default; combos/galleries/
+separators get neither) and now creates via `CreateAny` — tries the RibbonKit xmlns, then the framework
+namespaces — so `Separator` (a `System.Windows.Controls` type) works alongside the RibbonKit controls.
+Galleries/combos are leaf nodes (no `Children`), so the tree shows them without descending into their
+items; editing gallery/combo items is a possible later step.
+
+**Item editing (combo / gallery / backstage) + backstage toggle — DONE.** The tree now descends into
+item containers too: a combo/gallery (`ItemRule` matches `RibbonComboBox` / `RibbonGallery` /
+`InRibbonGallery`) expands via its `Items`, and the **Backstage** — a scalar `ribbon.Backstage`
+property, not part of `Tabs` — is surfaced as its own root node whose nav items (`BackstageTabItem`)
+are editable. New **Add Item** verb creates the right child per container (`ComboBoxItem` /
+`RibbonGalleryItem` / `BackstageTabItem`) via `DesignModel.AddItem`, resolved by `ResolveItemTarget`
+(the container itself, or the container of a selected item → sibling). Caption editing generalized:
+the box is now **Caption** and edits `Header` OR `Content` (`DesignModel.CaptionProperty`/`GetCaption`/
+`SetCaption`) — combo/gallery items caption via `Content`, everything else via `Header` — so the same
+box renames buttons, tabs, backstage pages, and combo/gallery items. Item creation reuses `CreateAny`
+(so framework `ComboBoxItem` and RibbonKit `RibbonGalleryItem`/`BackstageTabItem` both work).
+
+**Gallery-item caption fix + type-specific props (DONE).** A `RibbonGalleryItem`'s `Content` is a
+`StackPanel` (a visual), so stringifying it showed garbage like `Handle=103 … (StackPanel)`.
+`CaptionProperty` now skips **complex** values (`ModelProperty.Value != null` / non-primitive
+`ComputedValue`) and falls back to `Tag` for gallery items (their idiomatic identity — "Normal",
+"Heading 1", …). So the tree shows gallery items by Tag, combo items by their string Content, and
+buttons/tabs/backstage pages by Header — and the Caption box edits whichever applies. Added
+type-specific property editors (shown ahead of the kind-based ones, deduped by name): `BackstageTabItem`
+→ `IsButton`, `Placement` (Top/Bottom) [+ its `Icon` via the control specs]; `RibbonComboBox` →
+`InputWidth`, `IsEditable` [+ ScreenTip]. Wired via `TypeSpecs(typeName)` + `SpecsForNode`.
+
+**Show-backstage toggle:** a "Show backstage" checkbox next to the preview-tab combo, driven by the
+same `DesignModeValueProvider` mechanism as the tab preview — `SelectedTabPreviewProvider` now also
+translates `Ribbon.IsBackstageOpen`, and `TabPreviewCoordinator` gained `SetBackstage`/`TryGetBackstage`
+(+ the invalidation targets `IsBackstageOpen`). Design-only, no XAML/runtime effect; the design-mode
+backstage host from §3.14 renders it. The checkbox enables only when the ribbon has a `Backstage`.
+
+**Backstage page switcher (later pass):** a **Page** combo beside the "Show backstage" checkbox
+previews a specific backstage page on the surface. A second provider, `BackstagePagePreviewProvider`
+(attached to `Backstage` in `Metadata`), translates the backstage's `SelectedIndex` the same design-only
+way; `TabPreviewCoordinator` gained `SetBackstagePage`/`TryGetBackstagePage`. The combo lists nav pages
+only (footer `IsButton` action items excluded, since they don't switch to a page) and maps each entry to
+its true `Items` index; "(default)" clears the override; it's enabled only while the backstage is shown.
+Wrinkle vs the ribbon's own `SelectedIndex`: the backstage's `SelectedIndex` is **inherited from
+`Selector`**, so the property identifier's declaring type could be reported as either `Backstage` or
+`Selector`. Which one the designer uses for an inherited DP is unverified from the sandbox, so the
+provider registers **both** `(Backstage, SelectedIndex)` and `(Selector, SelectedIndex)` and the
+coordinator invalidates under both — whichever the designer actually keys, one matches (a Windows build
+confirms via the `[RibbonKit] Preview Backstage SelectedIndex -> N` debug line).
+
+**Gallery-item content editing — TRIED, then ROLLED BACK (too noisy).** `AddNode` briefly descended
+into a control's rich `Content`, but expanding every backstage page and gallery item into its full
+visual tree (Borders, page bodies, etc.) drowned the structure. Reverted: `AddNode` now recurses only
+into Panels (`Children`) and item containers (`Items`), never a control's Content. (`TextBlock` editors
++ "Add Text Block" + `ContentElement` are kept — inert unless a TextBlock is added to a group panel.)
+
+**Color swatch picker (DONE).** `ContextualColor` and `TextBlock.Foreground` are now a `Color`
+editor kind (`BuildColorEditor`): a live swatch + hex/name box + a "…" button that opens a
+self-contained WPF `ColorPickerDialog` (a palette of standard/Office swatches plus a hex box with
+preview — no WinForms dependency). Picking or typing still writes the value as a string through the
+type converter (so it round-trips as a brush); `ColorPickerDialog.ParseBrush` renders the swatch and
+is tolerant of invalid input (falls back to transparent).
+
+**Scalar-value fix (the real bug behind the noise).** This designer wraps even a plain **string** value
+in a child `ModelItem`, so `ModelProperty.Value != null` is NOT a reliable "is complex?" test — it
+wrongly flagged string Header/Content as complex. Symptoms: items showed only their type (empty caption,
+couldn't edit the header), and a combo item's string Content expanded into a bogus "String" child.
+`IsScalarValue` now keys off `ComputedValue`'s TYPE (string / primitive / decimal → scalar) instead of
+`Value`. Result: items display "caption [type]" again and the Caption box edits Header; a combo item's
+**Content** is a scalar string, so it's shown/edited via the Caption box (no "String" child) — which is
+how combo-item content editing is now done; and a gallery item's complex Content is correctly skipped,
+so its caption falls back to `Tag`.
+
+**Diagnostics added (`DesignLog.cs`):** the editor opened fine on a barebones ribbon but failed to
+open on the full MainWindow.xaml ribbon — a hard throw during construction, which the designer
+swallows so the dialog just never appears. Added a file-based log
+(`%LOCALAPPDATA%\RibbonKit\DesignTools.log`), wrapped the "Edit Ribbon…" verb in try/catch (logs +
+MessageBox with the log path), and made the dialog's tree reads defensive via
+`SafeChildren`/`SafeHeader`/`SafeType`.
+
+**Root cause found + fixed (user log, confirmed):** `ModelItem.Properties["Header"]` **throws
+`ArgumentException` when the type has no such property — it does NOT return null** (my original
+assumption). The full ribbon has controls in groups without a `Header` (combo boxes, galleries, …),
+so reading them threw and aborted construction; the barebones ribbon had only headered buttons, so
+it never hit it. Fix: `DesignModel.FindProperty(item, name)` wraps the throwing indexer and returns
+null for an absent property; `Children`/`Header`/`HasHeader`/`IndexInParent`/`SiblingCount`/`Rename`
+all route through it. The editor now walks mixed control types cleanly (no logged errors), labels a
+header-less control by its type, and **disables Rename/​the header box for header-less items while
+keeping Move/Delete** (those are structural, not header-dependent). This is a general lesson for all
+future design-model access: never assume `Properties[name]` returns null for a missing property —
+go through `FindProperty`.
+
+### 3.24 Animation polish batch — all six remaining transitions wired
+
+- **Hover/press cross-fade**: `RibbonButton`/`RibbonToggleButton` call `RibbonMotion.FadeWash`
+  on their `_hoverWash`/`_pressWash` (and, for the toggle, `_checkWash`) layers instead of
+  an instant visibility flip.
+- **True sliding tab marker**: `RibbonTabControl` now owns `PART_TabMarker` +
+  `PART_TabMarkerTranslate` and glides the underline between tabs (`UpdateMarker`,
+  `RibbonAnimationAction.TabMarker`) instead of only sliding the tab content. The whole marker is
+  **gated on `RibbonKit.Brushes.Tab.SelectedUnderline` being a visible (non-transparent) colour**, so
+  it's effectively Office-2024-only — flat themes (2019/2013) set that token `Transparent`. This gate
+  also covers contextual tabs: `UpdateMarker` tints the marker with the tab's own `ContextualBrush`, but
+  bails before that when the theme's underline token is transparent, so a selected contextual tab no
+  longer leaks an underline into flat themes (`IsVisibleBrush` helper).
+- **Contextual-tab appear**: `RibbonTab.cs` plays `RibbonMotion.PlayOpen(this,
+  RibbonAnimationAction.ContextualTab, RibbonSlideFrom.Top)` when a tab's contextual
+  coloring turns on.
+- **Toggle-state cross-fade**: covered by the hover/press item above — same `FadeWash`
+  call, `ToggleState` action, `_checkWash` layer.
+- **Theme-switch cross-fade**: `Ribbon.cs` calls `RibbonMotion.PlayThemeCrossfade` on the
+  tab control when the active theme/accent changes (85%→100% opacity dip, not a full
+  fade — a full fade would flash the already-opaque ribbon to transparent first).
+- **KeyTip badge pop** (the last of the six, added this session): `RibbonMotion` gained a
+  new `PlayKeyTipPop` method (fade + short downward settle, `RibbonAnimationAction.KeyTip`
+  timing), called once from `KeyTipService.AddAdorners` right where a badge is first shown
+  (that call site already guards on `item.Shown`, so it fires once per badge, not on every
+  keystroke while typing a KeyTip). **Gotcha discovered and fixed**: a `DoubleAnimation`'s
+  default `FillBehavior.HoldEnd` keeps holding the `Opacity` property after it finishes,
+  which would have silently broken `KeyTipAdorner.Dimmed` (a plain property setter used to
+  dim/undim a badge as the user types a multi-character KeyTip). `PlayKeyTipPop` clears its
+  own animation and sets a plain `Opacity = 1d` in the fade's `Completed` handler so the
+  property is back to a normal local value by the time `Dimmed` needs to touch it. See
+  hard rule 8 in §3.10.
+
+With this batch, animation polish (backlog item 2 as of the prior session) is complete —
+no unwired transitions remain.
+
+### 3.25 Ribbon horizontal scroll (tab strip + groups row)
+
+When the window is too narrow for even the fully-collapsed groups — or for all the tabs — Office shows
+left/right chevron buttons to scroll the overflow into view. Added the same to RibbonKit.
+
+- **`Layout/RibbonScrollContentHost.cs`** — a `Decorator` that shows its single child clipped to the
+  viewport and offset by a `TranslateTransform`, exposing `ExtentWidth`/`ViewportWidth`/`CanScrollLeft`/
+  `CanScrollRight` (readonly DPs) and `ScrollLeft`/`ScrollRightCommand`. Key trick vs a stock
+  `ScrollViewer`: `ConstrainChildWidth=true` measures the child at the **viewport** width (not
+  infinity), so the adaptive `RibbonGroupsPanel` still reduces groups to fit FIRST; scrolling engages
+  only when the fully-reduced row is *still* wider than the viewport. The tab strip leaves it off
+  (`false`) so tabs keep natural size and scroll when too many. Mouse-wheel scrolls horizontally.
+- **`Office2024.xaml`** — the `RibbonTabControl` template now wraps both the `TabPanel` (with the
+  gliding `PART_TabMarker` INSIDE the scroller, so the marker scrolls in lockstep with its tab) and the
+  `SelectedContent` groups presenter in a `RibbonScrollContentHost`, each with two rounded chevron
+  `RepeatButton`s (`RibbonKit.ScrollLeftButton`/`RightButton`, `ControlCornerRadius` token). The buttons
+  **overlay** the content edges (no layout space) so showing/hiding them can't reflow-oscillate; they're
+  bound to the host's commands + `CanScroll*` via `BooleanToVisibilityConverter`. `PART_TabScroll` /
+  `PART_ContentScroll`. Runtime feature — needs a Windows build to confirm layout + the marker-under-scroll.
+- **Clamp fix — two iterations.** WPF's `Measure` clamps an element's reported `DesiredSize` to the
+  width you pass it, which fights the "measure at viewport to force reduction, but still detect overflow"
+  requirement.
+  - *First attempt (groups clipped but no chevron → then chevron but groups stopped collapsing).*
+    Measuring the groups row at the viewport clamped its reported width to the viewport, so the scroller
+    never saw overflow. Switching to measure the child **unconstrained** made the chevron appear but the
+    groups no longer reduced — reduction then read a viewport width off the ancestor scroller via
+    `FindScrollHost`, and that walk returns **null during an items-host panel's `MeasureOverride`** (the
+    visual parent chain isn't reliably connected mid-measure), so reduction fell back to infinite width
+    and never fired.
+  - *Robust fix (current).* Decouple the two concerns instead of doing both at measure time:
+    `RibbonScrollContentHost` measures the constrained child **at the viewport width** again, so
+    `RibbonGroupsPanel` reduces reliably against its own `availableSize.Width` (no ancestor walk needed).
+    To recover the true width the clamp hides, the panel **pushes** its real (unclamped) total to the
+    scroller via `RibbonScrollContentHost.ReportContentWidth(totalWidth)` at the end of its measure; the
+    scroller uses that reported width as `ExtentWidth` instead of the clamped `child.DesiredSize.Width`.
+    The panel resolves + caches the scroller at `Loaded` (tree fully connected → `FindScrollHost` works),
+    falling back to a lazy resolve. The tab strip stays unconstrained (measured at infinity), so its
+    overflow is visible directly and it needs no reporting. Net: reduce-then-scroll works — groups
+    collapse to the viewport first, and only the leftover overflow scrolls.
+- **Chevron button chrome.** The `RibbonKit.ScrollLeftButton`/`RightButton` styles give each button a
+  1px `Ribbon.Border` outline so the overlaid buttons stand out against the ribbon/tab-strip background
+  instead of blending in. (A `DropShadowEffect` was tried first but read as a heavy dark box against the
+  light content area — dropped in favour of the clean border, which also gives flat themes below 2024 a
+  themed outline with no shadow, for free, since `Ribbon.Border` is a per-theme token.)
+- **Chevrons must return after visiting a non-overflowing tab.** The groups scroller's `ExtentWidth` is
+  driven by `ReportContentWidth`, which `RibbonGroupsPanel` only calls from its own `MeasureOverride`.
+  Switching tabs disconnects the old groups row from the single shared content scroller and reconnects
+  the new one, but WPF reuses the reconnected panel's cached measure — so `MeasureOverride` (and the
+  report) never runs, and the scroller keeps the previously shown tab's extent. Result: after visiting a
+  tab that fits (chevrons hide), returning to an overflowing tab left the chevrons hidden because the
+  scroller still saw the fitted extent (the fallback `child.DesiredSize.Width` is clamped to the
+  viewport). Two fixes were tried before the one that stuck; the failures pin down the mechanism:
+  - *Panel `InvalidateMeasure()` on `IsVisibleChanged`* — no effect. Re-runs the panel (which re-reports)
+    but leaves every ancestor measure-valid at the same size, so the scroller never re-measures to READ
+    the report or re-arranges to update the chevrons.
+  - *Panel invalidates the whole chain up to the scroller on `IsVisibleChanged`* — also no effect,
+    because `IsVisibleChanged` fires **too early**: at that instant the newly connected panel's parent
+    chain hasn't reached the scroller yet, so the upward `FindScrollHost` walk returns null and only the
+    panel gets invalidated. (Tell: the chevrons returned only after a 1px window nudge — a real size
+    change is what forced the cached chain to re-descend — and minimize→expand always worked, because
+    that toggles the whole content Border's visibility so the entire subtree re-measures.)
+  - *Working fix:* drive it from **`RibbonTabControl.OnSelectionChanged`** (always fires on switch),
+    `Dispatcher.BeginInvoke` at `Loaded` priority so the new groups row is realized under the scroller,
+    then call `RibbonScrollContentHost.Refresh()` on the captured `PART_ContentScroll`. `Refresh()`
+    invalidates measure across its **entire visual subtree** (walking down from the known scroller, so no
+    fragile upward lookup and no timing race), which dirties every level and forces the one top-down
+    re-measure the resize used to: the panel re-reports and the scroller reads it and recomputes
+    `CanScrollLeft/Right`.
+
+### 3.26 Modern context menus (ribbon-item + QAT right-click)
+
+The right-click menus were stock WPF `ContextMenu`/`MenuItem` (created in code in `Ribbon.cs`), so they
+rendered with the dated native menu chrome while the `RibbonMenuItem` dropdowns looked modern. Fixed with
+styles that match the dropdown, in a **dedicated `Themes/Menus.xaml`** dictionary:
+
+- `RibbonKit.ContextMenu` — rounded flyout `Border` (`PopupCornerRadius`, `ScreenTip.Border`,
+  `ContentBackground`) with the same soft `DropShadowEffect` the dropdown popup uses. `HasDropShadow` is
+  left **True** on purpose: that's what keeps the hosting popup's `AllowsTransparency` on (so the rounded
+  corners + soft shadow render); the system shadow itself isn't drawn because the custom template omits
+  `SystemDropShadowChrome`.
+- `RibbonKit.MenuItem` — a `RibbonMenuItem`-style row: 24px icon/check gutter, header, submenu arrow +
+  flyout, `Control.HoverBackground` on `IsHighlighted`, 0.4 opacity when disabled. A **check glyph** shows
+  on `IsChecked` (the QAT placement items use it), sharing the gutter with the optional `Icon`.
+- `RibbonKit.MenuSeparator` — a themed 1px line via `Group.Separator`.
+- Wiring / **why a separate dictionary** (first attempt failed): the styles first lived in
+  `Office2024.xaml` and were applied with `SetResourceReference(StyleProperty, "RibbonKit.ContextMenu")`
+  — and the menu stayed native. `Office2024.xaml` is merged only into `Generic.xaml` (the assembly THEME
+  dictionary); implicit RibbonKit control styles resolve from there via `DefaultStyleKey`, but a **keyed**
+  resource in a theme dictionary is NOT reachable by a normal runtime lookup, and a `ContextMenu` (a
+  PresentationFramework type) resolves its theme resources against PresentationFramework's theme, never
+  RibbonKit's `Generic.xaml`. Fix: the styles live in their own `Themes/Menus.xaml`, which `Ribbon.cs`
+  loads once by pack URI (`pack://application:,,,/RibbonKit;component/Themes/Menus.xaml`, cached static)
+  and assigns the `Style` object directly to each menu (`ApplyModernMenuStyle`). The style's brushes are
+  `DynamicResource`, so they still resolve — and re-theme — from the app-merged token set. Applied only to
+  the ribbon's OWN two menus, not a host app's.
+- Getting the per-item look onto the rows took a second correction. `ItemContainerStyle` throws at
+  runtime — WPF applies it to the `Separator` items too (*"a style intended for MenuItem cannot be
+  applied to Separator"*), so the earlier assumption that separators are skipped was wrong. A keyed
+  `Style.Resources` also isn't a reliable way to reach the items. What works: `ApplyModernMenuStyle`
+  injects the two item styles as IMPLICIT entries straight into the menu's own `Resources` —
+  `menu.Resources[typeof(MenuItem)] = RibbonKit.MenuItem` and
+  `menu.Resources[MenuItem.SeparatorStyleKey] = RibbonKit.MenuSeparator` — which every `MenuItem`
+  (including submenu items) and `Separator` in the menu subtree resolves.
+
+### 3.27 Office 2010 ("Blue") theme — the first gradient theme
+
+A fourth token set, `Themes/Tokens.Office2010.xaml`, added as a pure token dictionary (no new
+templates — same 65 keys as the other themes, verified identical). Wired end-to-end: `RibbonTheme.Office2010`
+enum member, an `Office2010` case in `ThemeManager.ApplyAccentOverrides`, and an "Office 2010" button
+(+`OnApplyOffice2010`) in the showcase Theme group.
+
+**Why it's different from every prior theme:** 2010 is the first NON-flat look, and its identity is
+**gradients**. The three earlier themes use `SolidColorBrush` for every surface; 2010's chrome tokens
+are `LinearGradientBrush`es (vertical, `StartPoint="0,0" EndPoint="0,1"`):
+
+- **Silver-blue window/ribbon chrome** — `TitleBar.Background`, `Ribbon.Background` (tab strip band),
+  and `Ribbon.ContentBackground` (the groups area) are light blue-grey vertical gradients (lighter top,
+  darker bottom — the classic 2010 ribbon shading).
+- **Amber/gold glossy highlights** — the iconic 2007/2010 "hot" states: `Control.HoverBackground` is a
+  warm gold gradient, `PressedBackground` a deeper gold, `Checked*` a gold toggled fill. These read as
+  glossy warm accents against the cool blue chrome. Unselected **tab** hover gets a lighter amber glow.
+- **Dark-blue tab labels** (`TabStrip.Foreground`/`Tab.SelectedForeground` = `#15428B`).
+- **Connected (outlined) active tab** — reuses the 2013 mechanism: `Tab.SelectedBorderBrush` +
+  `TabSelectedBorderThickness=1,1,1,0`, with a light gradient fill that merges into the ribbon body top.
+  Underline tokens are `Transparent` (fills, not underlines).
+- **Solid blue gradient File button** — `ApplicationButton.Background` is a blue gradient with white text
+  (`Foreground=#FFFFFF`), a brighter blue gradient on hover. A tab-row button (small `ApplicationButtonMargin`),
+  not the full-height flush block of 2013.
+- **Gently rounded corners** (2-3px) — softer than the flat themes (0), subtler than 2024 (4-8px). A faint
+  ribbon-body shadow (`Opacity=0.12`) separates it from the document — not the floating card of 2024.
+
+**Key safety property (why gradients "just work"):** no code animates a token brush's `Color`. Every
+transition targets `UIElement.Opacity` — `RibbonMotion.FadeWash` fades a wash *layer*'s opacity (the wash
+layer's `Background` is the token brush, untouched), and `PlayThemeCrossfade` dips the tab control's
+opacity. So a `LinearGradientBrush` behind a wash/at a key is never cast to `SolidColorBrush` or fed to a
+`ColorAnimation`. (Confirmed by grep: `RibbonMotion.cs` only ever calls `BeginAnimation(UIElement.OpacityProperty, …)`.)
+
+**Accent handling:** `ApplyAccentOverrides`' `Office2010` case maps a custom accent onto the File
+button (`ApplicationButton.Background` + hover), like 2013 — a custom accent replaces the blue gradient
+with a solid accent block. `SelectedForeground` is intentionally *left* at the theme's dark blue (a
+custom accent doesn't tint the connected selected-tab label, which reads better on a light tab). When
+no custom accent is set (the default), the theme's own blue gradient File button and amber toggled
+fills show. The Colored-Title-Bar toggle uses the generic (non-2019) branch: an accent title bar with
+white caption text; the gradient strip below stays (2019's strip-coloring special-case doesn't apply).
+
+**Post-feedback refinements (first visual pass on Windows):**
+
+- **Glass "gel" gradients.** The first gradients read flat (2-stop, low contrast). The button-state
+  tokens (`Control.HoverBackground`/`PressedBackground`/`CheckedBackground`/`CheckedHoverBackground`) and
+  the File-button tokens (`ApplicationButton.Background`/`HoverBackground`) are now 4-stop Aero gels: a
+  bright top highlight, a **hard crease at the midpoint** (two `GradientStop`s at the same `Offset="0.5"`,
+  giving an instant color step — the glossy split), then a richer lower half. Pressed inverts (darker at
+  top = recessed). The washes already bound these keys (`HoverWash`/`PressWash`/`CheckWash` Backgrounds),
+  so this was a pure token change.
+- **Connected active tab.** The tab strip (`Grid.Row=0`) and body (`Grid.Row=1`) are stacked with no
+  overlap, so the body's 1px top border drew an unbroken line under the selected tab. Fixed token-only:
+  2010's `TabStripMargin` bottom is `-1`, dropping the strip 1px so the selected tab overlaps the body's
+  top border; the selected fill (`Tab.SelectedBackground`, bottom stop = the body's top color `#F6F9FC`)
+  covers that 1px line seamlessly, while unselected (transparent) tabs leave it showing. The tab's
+  top+side border (`SelectedBorderBrush`, `TabSelectedBorderThickness=1,1,1,0`) meets the body border at
+  the corners — the "cut into the body" outline.
+- **File-button width is now a token.** The width was hardcoded `Padding="14,7,14,9"` on the File button's
+  `Chrome` in the shared template. Tokenized as `RibbonKit.Metrics.ApplicationButtonPadding` (one template
+  edit) and added to ALL four theme files (66 keys each now): 2024 keeps `14,7,14,9`; 2019 `20,7,20,9`,
+  2010 `22,7,22,9`, 2013 `24,7,24,9` (the pre-2024 File tabs read as broader blocks).
+
+**Second feedback pass (reference images provided):**
+
+- **Glass was the 2007 look, not 2010.** The 4-stop hard-crease "gel" was Office 2007's aggressive
+  gloss. Real 2010 is a SMOOTH subtle gradient + a thin **border**. Reworked: 2010's
+  hover/press/checked and File-button gradients are now smooth (no duplicate-offset crease), and a
+  new set of border tokens draws the defining edge — `Control.{Hover,Pressed,Checked}Border` +
+  `ControlHighlightBorderThickness` (gold, 1px in 2010; Transparent/0 elsewhere) on the wash layers,
+  and `ApplicationButton.Border` + `ApplicationButtonBorderThickness` (blue, 1px in 2010) on the File
+  `Chrome`. All four theme files carry the 6 new keys (72 keys each now); the template wires
+  `BorderBrush`/`BorderThickness` onto `HoverWash`/`PressWash`/`CheckWash` and the File Chrome.
+- **Accent no longer flattens 2010.** `ApplyAccentOverrides` used flat `Frozen(Mix(...))` solids,
+  which replaced 2010's gradients when a custom accent was set. Fixes: (1) the toggle/checked
+  highlight is now SKIPPED for 2010 (authentic — 2010's highlight is always amber regardless of the
+  color scheme; the accent recolors chrome, not the hot state), so it keeps its amber gradient; (2)
+  the File button is re-derived as a **gradient** via a new `Gel(Color)` helper (a 3-stop vertical
+  gel: lighter top, base middle, darker bottom) plus a matching border, instead of a flat solid.
+  `ApplicationButton.Border` was added to `AccentOverrideKeys` so it clears on theme switch.
+- **Backstage translucency + blur (new).** `Backstage.Translucent` already existed (Mica reveal);
+  extended it into a frosted-acrylic effect: when a translucent backstage opens, `Ribbon` applies a
+  strong Gaussian `BlurEffect` (radius 34) to the adorned root (the content behind) and restores the
+  prior effect on close (`ApplyBackstageBlur`/`ClearBackstageBlur`). The backstage stays sharp
+  because it lives in the adorner layer (a sibling visual), not under the blurred root. The
+  translucent brushes were made genuinely see-through (`ContentTranslucent` 90%→70%) so the blur
+  reads. Showcase gained a **Translucent Backstage** toggle (`OnToggleBackstageTranslucent` →
+  `ShowcaseBackstage.Translucent`).
+
+**Below-tabs backstage — DROPPED for a third backstage DESIGN instead.** The below-tabs *layout*
+(repositioning the overlay under the tab strip) was judged not worth the structural cost. Instead a
+third `RibbonBackstageDesign` value, **`Classic2010`**, was added: same solid accent nav column as
+`Classic` (white text), but the SELECTED item is a glossy blue "glass" marker
+(`Backstage.ItemSelectedGlass`, a gradient) rather than the flat Classic fill. So there are now three
+backstage looks — Classic (2013 flat accent), Modern (2024 light rail), Classic2010 (blue glass). One
+`MultiTrigger` in the `BackstageTabItem` template (Design=Classic2010 + IsSelected) does it; the
+Backstage template itself is unchanged (Classic2010 inherits Classic's accent column). The glass
+marker tracks a custom accent via `ThemeManager` (`Gel(accent)`). Showcase: the single Modern/Classic
+toggle was replaced with three explicit design buttons (2013 Rail / 2024 Rail / 2010 Glass) →
+`OnSelectBackstageDesign` (reads the button `Tag`).
+
+**Glassy OK button.** The options-dialog primary (OK) button now borrows the File-button glass via new
+theme-aware tokens `Dialog.PrimaryBackground`/`Dialog.PrimaryBorder` (`OptionsDialogPrimaryButtonStyle`
+binds them): a glossy blue gel in Office 2010, a flat accent elsewhere — both tracking a custom accent
+through `ThemeManager` (the shared branch sets flat accent; the Office2010 case swaps in `Gel(accent)`).
+All four theme files carry the 3 new keys (75 keys each).
+
+**Third feedback pass (reference: a real 2010 glass button):**
+
+- **Tab connect (the real fix).** The round-2 `-1` tab overlap never showed because the ribbon body
+  (`ContentHost`, declared after the tab strip) painted OVER the tabs. Fixed two ways: the tab-strip
+  row grid gets `Panel.ZIndex="1"` (paints above the body), and 2010's overlap moved from the tab
+  strip to the body — `ContentMargin`/`ContentMarginQatBelow` top is now `-1`, so the body slides up
+  1px UNDER the tabs (moving the body, not the tabs, avoids the tab scroll-host clipping the overlap).
+  The higher-z selected tab's fill then covers the body's top border → connected.
+- **Tab hover border.** Tabs now get the gold hover border like buttons (hover trigger sets
+  `HeaderChrome` `BorderBrush`=`Control.HoverBorder` + `BorderThickness`=`ControlHighlightBorderThickness`;
+  Transparent/0 in other themes). A selected+hovered tab keeps its connected border (selected trigger
+  wins, later in the template).
+- **Glass rebuilt to match the reference (inner rim + specular).** The reference 2010 button has an
+  inner light rim and a small specular reflection low on the button. Two changes: (1) every 2010 glass
+  gradient is now a smooth "valley" — light top (top inner glow), matte darker middle, then a LIGHTER
+  bottom (the specular) — no hard crease; (2) a new `Control.InnerGlow` token (semi-white `#88FFFFFF`
+  in 2010, Transparent elsewhere) draws a nested inner border, inset by the outer border, on the
+  button/toggle washes and the File/OK chrome. `ThemeManager.Gel()` was updated to the same profile so
+  accent-derived gels match. (76 keys/theme file now.)
+- **2010 backstage nav reworked (Classic2010).** Per feedback: the nav column is the ribbon's blue
+  GRADIENT (`Ribbon.Background`, not a solid accent); item text is DARK, turning white only when
+  selected; the selected item is a glossy accent glass box (`ItemSelectedGlass`) WITH a border
+  (`ApplicationButton.Border`). Hover is a subtle light wash so the dark text stays legible.
+
+**STILL PENDING (fast follow-up) — propagate the glass to dropdown / split / combo / menu items.**
+Those controls (`RibbonDropDownButton`, `RibbonSplitButton`, `RibbonComboBox` + `ComboBoxItem`,
+`RibbonMenuItem`) render hover/press by swapping a `Chrome` border's `Background` only — no border. The
+fix is mechanical (add `BorderBrush`=`Control.{Hover,Pressed}Border` + `BorderThickness`=
+`ControlHighlightBorderThickness` at each hover/press trigger, ~12 sites, all token-based so they inherit
+the confirmed recipe). Deliberately deferred so the glass recipe is confirmed on the prominent buttons
+first rather than stamped across all sites blind.
+
+**Fourth feedback pass ("almost there"):**
+
+- **Tab connect now applies on theme switch (root cause found).** The connect (themed negative body
+  margin + tab-strip `ZIndex`) is correct, but it only re-PAINTED after a layout pass — and the user's
+  clue ("it merges when I hover another tab") pinpointed why: the round-5 tab hover border changes a
+  tab's size, forcing the re-arrange that reveals the overlap. On a theme switch nothing did. Fix:
+  `Ribbon.OnThemeConfigurationChanged` now calls `InvalidateArrange()` + `UpdateLayout()` on the tab
+  control after the swap, so the active tab merges immediately.
+- **Glass propagated to the held-back controls.** The gold glass border (`Control.{Hover,Pressed,
+  Checked}Border` + `ControlHighlightBorderThickness`) is now applied at the hover/press/checked/selected
+  triggers of `RibbonDropDownButton`, `RibbonSplitButton` (primary + chevron), the collapsed-group
+  button, the gallery scroll buttons, `RibbonMenuItem`, `ComboBoxItem`, and the options-dialog nav
+  (`RibbonOptionsPage`) + its reorder buttons. All reuse the same tokens, so they inherit the confirmed
+  recipe (the specular fill was already there via `Control.*Background`). NOTE: the inner-glow *rim* is
+  still only on the wash-based main buttons + File/OK; these Chrome-based controls get the gradient +
+  outer gold border (the border shows on hover via a trigger — a possible 1px content nudge on
+  left-aligned items like menu rows; reserve static border space if it reads as jitter).
+- **Application button mouse-down state.** Added an `IsPressed` trigger to the File button showing a
+  new `ApplicationButton.PressedBackground` (a deeper recessed blue gel in 2010, flat elsewhere,
+  accent-tracked for 2010/2013), so the click registers on press, not only when the backstage opens.
+- **Classic2010 nav hover border.** The 2010 backstage nav hover gained a hairline `#66FFFFFF` border
+  in addition to its light wash.
+
+**Fifth feedback pass — jitter + the REAL connect mechanism (user diagnosed it):**
+
+- **Root cause of both bugs was the trigger-based border.** Setting `BorderThickness` 0→1 on hover
+  changes content layout → the 1px "jitter" the user saw on every hover. AND that jitter is what was
+  accidentally connecting the active tab: hovering any tab re-arranged the strip, which dropped the
+  active tab 1px into the body. So the connect was never my body-overlap — it was the jitter.
+- **Jitter fix — reserve the border space.** Every glass hover `Chrome` now carries a STATIC
+  `BorderThickness="{DynamicResource ControlHighlightBorderThickness}"` (1 in 2010, 0 elsewhere) with
+  no brush at rest; the triggers only swap `BorderBrush`, so hovering never changes size. Applied
+  programmatically to exactly the 9 glass controls (dropdown, split ×2, collapsed button, gallery
+  scroll button, gallery expander, menu item, combo item, options-nav) — identified by their use of
+  `Control.HoverBackground` and the ABSENCE of a wash (wash-based buttons, caption buttons, and the
+  backstage nav item were correctly skipped). The tab's `HeaderChrome` got the same static thickness.
+- **Connect — do what actually works: drop the ACTIVE TAB, not the body.** Reverted the body-up
+  `ContentMargin -1`. New `TabSelectedMargin` token (`0,0,0,-1` in 2010, `0` elsewhere) is applied to
+  the selected `HeaderChrome`, so the active tab permanently extends 1px into the body; the tab-strip
+  `Panel.ZIndex="1"` paints it over the body's top border, and the selected fill (bottom stop = body
+  top color) hides the seam. This is the mechanism the user observed working via the jitter, now made
+  permanent and jitter-free. (78 keys/theme file.)
+
+Note: selecting a tab still changes its border from uniform to `1,1,1,0` (+ the -1 drop) — a 1px
+settle that rides the existing tab-switch slide animation, so it shouldn't read as jitter.
+
+**Sixth feedback pass:**
+
+- **Active tab extended to -2.** `TabSelectedMargin` (2010) is now `0,0,0,-2` so the tab fully overlaps
+  and hides the body's top border (the -1 still left a hairline).
+- **Backstage nav hover jitter fixed.** The `BackstageTabItem` `Chrome` was skipped by the earlier
+  reserve pass (it uses `Backstage.*` brushes, not `Control.HoverBackground`). Gave it a static
+  `BorderThickness="1"` so the Classic2010 hover/selected border triggers only swap the brush — no
+  jitter. (Invisible 1px inset in Classic/Modern, which have no nav border.)
+- **Glass back button (Classic2010).** The backstage back button becomes a filled blue "glass" disc
+  (`Dialog.PrimaryBackground` + `Dialog.PrimaryBorder`, same as the OK/File button, accent-tracked) with
+  a WHITE arrow, via a `controls:Backstage.Design == Classic2010` trigger (the outline-circle look stays
+  for Classic/Modern). Hover lightens the disc (white hover wash).
+
+**Seventh pass — back-button click, NuGet packaging, and a DEFERRED tab-connect bug:**
+
+- **Tab connect DEFERRED — `TabSelectedMargin` has NO effect at all.** The user reports setting it to
+  -1, -2, even -5 changes nothing; they reverted it to 0. So the selected `HeaderChrome` `Margin` setter
+  is not being applied (or is overridden / the tab is size-constrained so the margin doesn't move it).
+  Next session: investigate WHY the IsSelected trigger's `Margin` doesn't move the tab — candidates: the
+  `HeaderChrome` is stretched by its parent Grid so a bottom margin can't extend it; the tab is clipped
+  by `PART_TabScroll`; or the trigger is losing to another setter. A different connect approach may be
+  needed (e.g. a dedicated connector rectangle drawn over the seam, or restructuring the tab/body layout).
+  Bundle this with the Office 2007 theme and dark mode (all three are next-session work).
+- **Back button click.** The backstage back button gained an `IsPressed` trigger (a recessed dark wash,
+  last in the trigger list so it wins over hover and the Classic2010 white wash while held).
+- **NuGet packaging wired (library + designer tools).** `RibbonKit.csproj` now bundles the design
+  assembly: a build-only `ProjectReference` to `RibbonKit.Design` (`ReferenceOutputAssembly=false`,
+  `SkipGetTargetFrameworkProperties=true` — builds the net472 `RibbonKit.DesignTools.dll` without a
+  runtime reference) plus a `TargetsForTfmSpecificContentInPackage` target that packs it into
+  `lib/<tfm>/Design/` for each TFM. With the already-packed `tools/VisualStudioToolsManifest.xml`,
+  `dotnet pack src/RibbonKit/RibbonKit.csproj -c Release` yields a package that gives consumers the
+  toolbox items + right-click design-time editor. (RepositoryUrl still has the `YOUR-GITHUB-USERNAME`
+  placeholder — set it before publishing.) See `RibbonKit.Design/SETUP-DESIGNTOOLS.md` → "NuGet packaging".
+
+Still unbuilt in the sandbox (WPF needs Windows) — pending the user's visual check on Windows.
+
+### 3.28 Backstage page-text colour + ribbon focus (RichTextBox) — 2026-07-21
+
+Two fixes in `Themes/Office2024.xaml` (the shared template dict for all themes).
+
+- **Backstage page content was white/invisible on Office 2010 & 2013 (now working).** The page
+  content shown for the selected tab inherits the SELECTED `BackstageTabItem`'s `Foreground`, which
+  was `#FFFFFF` for the Classic (2013) and Classic2010 (2010) selected states → white text on the
+  light content area. A `TextElement.Foreground` pin on the content area did NOT win (content follows
+  the item, not the content area). Modern (2024) hid the bug because its selected-item foreground is
+  the accent, not white. **Fix — decoupling:** the nav item's text + icon now come from named
+  template elements — `NavText` (a StackPanel carrying `TextElement.Foreground`) and `NavIcon`
+  (Rectangle `Fill`) — driven per design/selection by the triggers; the container `Foreground` no
+  longer colours the nav, so it's free to be the content colour the page inherits. Template triggers
+  still override the `#FFFFFF` defaults on NavText/NavIcon (template triggers outrank template
+  attribute values). **The container `Foreground` is set to `RibbonKit.Brushes.Accent`** (user's
+  choice — page text reads in the theme accent, matching how 2024 looked originally); swap to
+  `Text.Primary` for plain dark page text.
+- **Ribbon was stealing keyboard focus from the document (e.g. a RichTextBox).** Office keeps focus
+  in the document when a ribbon command is clicked, so the command applies to the live selection.
+  `RibbonDropDownButton`/`RibbonSplitButton` were already `Focusable=False`; these were `True` and
+  stole focus — now `False`: **`RibbonButton`, `RibbonToggleButton`, the collapsed-group
+  `PART_CollapsedButton` toggle, `RibbonTab`, and the `ApplicationButton` (File)**. Invocation is by
+  click / KeyTip (automation Invoke) — neither needs focus; keyboard ribbon access is Alt/KeyTips,
+  not the focus tab-order, so nothing is lost. **Left focusable by design** (they legitimately need
+  focus): `RibbonComboBox`'s editable box, the galleries, and `RibbonMenuItem` popups. For those the
+  app should set `RichTextBox.IsInactiveSelectionHighlightEnabled="True"` (keeps the selection visible
+  if focus does move) and/or restore focus to the document after the action; galleries can be made
+  non-focusable too but that risks the popup/hit-testing work — do it as a separate tested change.
+
+Both unbuilt in the sandbox — pending the user's visual check on Windows.
+
 ## 4. Workflow / Session Conventions
 
 - Cloud workspace: `/home/user/ribbonkit/`. The user's machine:
@@ -781,16 +1561,52 @@ items. The §3.14 XAML **design-time** preview (active tab + backstage on the VS
 is also user-confirmed. The §3.21 #4 **backstage Tab-focus leak is now fixed** (focus trap;
 see §3.21). Nothing in §3 remains in the "needs verification" state.
 
+**Animation polish is now complete.** All six items formerly tracked here — hover
+cross-fade, the true sliding tab marker (shared animated underline), contextual-tab
+appear, toggle-state cross-fade, theme-switch cross-fade, and KeyTip badge pop — are
+wired and confirmed; see §3/"Wired so far" list above for the code sites. KeyTip badge
+pop was the last of the six: `RibbonMotion.PlayKeyTipPop` plays a fade + short downward
+settle from `KeyTipService.AddAdorners`, self-releasing its opacity animation on
+completion so the existing dim/undim-while-typing logic (`KeyTipAdorner.Dimmed`) keeps
+working afterward (hard rule 8).
+
+**Import / Export (customize page) — DONE.** `RibbonCustomizePage` now has **Import…** / **Export…**
+buttons beside **Reset** (bottom-left, `PART_ImportButton` / `PART_ExportButton` in the Office2024
+template). Export writes `RibbonCustomizationSerializer.Serialize(ribbon)` to a `.json` the user picks
+(`Microsoft.Win32.SaveFileDialog`, no WinForms); Import reads one back (`OpenFileDialog`) and
+`Apply`s it, then `RebuildAll`. File IO is guarded (IO/access/security exceptions → a `MessageBox`),
+and `Apply` already tolerates a foreign/corrupt string, so a bad file can't corrupt the ribbon. Import
+mutates the live ribbon immediately (same as Reset); the host persists it when the options dialog's
+Apply fires. The serializer already round-tripped (§3.17) — this was just the missing UI.
+
+**Design-time editor — done this arc:** the runtime ribbon horizontal scroll (§3.25, incl. the
+reduce-then-scroll clamp fix and the chevrons-return-on-tab-switch fix), split/drop-down button menu-item
+editing, `Ribbon.CommandId` + `KeyTip.Keys` attached-property editors (attached-property model access
+proven — `Find(PropertyIdentifier)`), the backstage page switcher, the modern context menus (§3.26), and
+**drag-drop tree reordering** (see below). Showcase gained a Disable-Samples demo (button/split/group
+disabled states).
+
+**Drag-drop reordering (RibbonEditorWindow):** drag a tree node onto another to reorder or reparent.
+`PreviewMouseLeftButtonDown` records the candidate + start point; `PreviewMouseMove` starts
+`DragDrop.DoDragDrop` once past the system drag threshold (so a plain click still selects). `DragOver`
+builds a `DropPlan` and shows a `DropAdorner` (a blue insertion line above/below the target row, or a
+rounded box for an "into"/append drop, chosen by where the pointer sits in the row's header height);
+`Drop` applies it via `DesignModel.MoveInto` (remove-from + insert-into as one undo, with the insert
+index adjusted for the removal shift when it's a same-collection reorder). Compatibility (`Accepts`)
+mirrors the verbs: tabs↔Tabs, groups↔Groups (any tab), real controls/panels↔a group's `Items` or a
+panel's `Children` (any group/panel), and item entries↔`Items` of a container of the SAME item type
+(so a `RibbonMenuItem` can move between dropdowns/splits, a `ComboBoxItem` between combos, etc.).
+`IsAncestorOrSelf` blocks dropping a node into itself or its own subtree. The drag payload is the
+`NodeInfo` itself (in-process WPF drag-drop keeps the managed reference, so an internal type is fine).
+
 Backlog (rough priority):
 
-1. Import/Export UI: surface the §3.17 `Serialize`/`Apply` as file-picker buttons in the
-   customize page (the serializer already supports it; only the buttons + file dialogs are
-   missing). Drag-drop in the tree and moving groups across tabs also remain.
-2. Remaining animations: hover cross-fade, true sliding tab marker (shared animated
-   underline on the tab strip), contextual-tab appear, KeyTip badge pop, toggle-state,
-   theme-switch cross-fade.
+1. Design editor: optional clear-to-default buttons for scalar properties. (Drag-drop tree
+   reordering + cross-tab/group moves are now DONE — see §5 "Drag-drop reordering".)
 3. Mica hardening (future): dark-mode-aware translucency. (Maximize-with-glass and the
    glass-frame border fix are verified — see §3.12.)
-4. Office2010 / Office2007 themes (roadmap Phase 6).
-5. Dark mode (2019 white-tab note in §3.6 anticipates it).
+4. Office2007 theme (roadmap Phase 6). **Office2010 is DONE — see §3.27.** 2007 is the last
+   remaining classic theme (round Office orb button + heavier glass gradients).
+5. Dark mode (2019 white-tab note in §3.6 anticipates it). **Still outstanding** — the last
+   item from this theming arc after 2010 and 2007.
 6. GitHub publish: repo URL placeholder in csproj (`YOUR-GITHUB-USERNAME`).

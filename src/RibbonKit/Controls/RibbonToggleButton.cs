@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Automation.Peers;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
+using RibbonKit.Animation;
 using RibbonKit.Layout;
 // Alias: WPF's legacy Microsoft ribbon declares identically-named peers in
 // System.Windows.Automation.Peers, so the reference must be disambiguated.
@@ -135,6 +136,44 @@ public class RibbonToggleButton : ToggleButton, IRibbonSizeAware
 
     /// <inheritdoc />
     protected override AutomationPeer OnCreateAutomationPeer() => new RibbonToggleButtonAutomationPeer(this);
+
+    // ── Hover / press / checked cross-fade (drives the template's Hover/Press/CheckWash layers) ──
+    private FrameworkElement? _hoverWash;
+    private FrameworkElement? _pressWash;
+    private FrameworkElement? _checkWash;
+
+    /// <inheritdoc />
+    public override void OnApplyTemplate()
+    {
+        base.OnApplyTemplate();
+        _hoverWash = GetTemplateChild("HoverWash") as FrameworkElement;
+        _pressWash = GetTemplateChild("PressWash") as FrameworkElement;
+        _checkWash = GetTemplateChild("CheckWash") as FrameworkElement;
+        UpdateWashes();
+    }
+
+    /// <inheritdoc />
+    protected override void OnPropertyChanged(DependencyPropertyChangedEventArgs e)
+    {
+        base.OnPropertyChanged(e);
+        if (e.Property == IsMouseOverProperty
+            || e.Property == IsPressedProperty
+            || e.Property == IsCheckedProperty
+            || e.Property == Ribbon.QatOnColoredSurfaceProperty)
+        {
+            UpdateWashes();
+        }
+    }
+
+    // Neutral hover/press/checked are wash cross-fades; on a colored surface the template's instant
+    // band brushes win, so the washes stay hidden there. Checked+hover composes (both washes shown).
+    private void UpdateWashes()
+    {
+        bool neutral = !Ribbon.GetQatOnColoredSurface(this);
+        RibbonMotion.FadeWash(_hoverWash, neutral && IsMouseOver, RibbonAnimationAction.Hover);
+        RibbonMotion.FadeWash(_pressWash, neutral && IsPressed, RibbonAnimationAction.Hover);
+        RibbonMotion.FadeWash(_checkWash, neutral && IsChecked == true, RibbonAnimationAction.ToggleState);
+    }
 
     void IRibbonSizeAware.ApplySizeState(RibbonGroupSizeState state)
     {
