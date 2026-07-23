@@ -515,7 +515,8 @@
                 </rk:RibbonGroup>
                 <!-- Backstage design: modern (2024) light rail vs classic (2013) accent column -->
                 <rk:RibbonGroup Header="Backstage" rk:Ribbon.CommandId="group.view.backstage" Icon="{StaticResource Icon.Backstage}">
-                    <rk:RibbonToggleButton Header="Mica"
+                    <rk:RibbonToggleButton x:Name="MicaToggle"
+                                           Header="Mica"
                                            Size="Large"
                                            LargeIcon="{StaticResource Icon.Mica}"
                                            Icon="{StaticResource Icon.Mica}"
@@ -523,6 +524,15 @@
                                            Unchecked="OnToggleMica"
                                            ScreenTipTitle="Mica backdrop (Windows 11)"
                                            ScreenTipText="Apply the Windows 11 Mica material behind the window and the backstage. Requires Windows 11 22H2+." />
+                    <rk:RibbonToggleButton x:Name="AcrylicToggle"
+                                           Header="Acrylic"
+                                           Size="Large"
+                                           LargeIcon="{StaticResource Icon.Acrylic}"
+                                           Icon="{StaticResource Icon.Acrylic}"
+                                           Checked="OnToggleAcrylic"
+                                           Unchecked="OnToggleAcrylic"
+                                           ScreenTipTitle="Acrylic backdrop (Windows 11)"
+                                           ScreenTipText="Apply the Windows 11 Acrylic material — a translucent blur of whatever is behind the window. Replaces Mica when both are toggled. Requires Windows 11 22H2+." />
                     <rk:RibbonToggleButton Header="Translucent Backstage"
                                            Size="Large"
                                            LargeIcon="{StaticResource Icon.Mica}"

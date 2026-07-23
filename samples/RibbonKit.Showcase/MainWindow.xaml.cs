@@ -186,17 +186,46 @@ public partial class MainWindow : RibbonWindow
 
     private Brush? _opaqueWindowBackground;
 
-    private void OnToggleMica(object sender, RoutedEventArgs e)
-    {
-        var toggle = sender as RibbonToggleButton;
+    // True while THIS code is flipping a backdrop toggle (undoing a rejected check, or
+    // unchecking the other material). The Checked/Unchecked handlers bail out during a
+    // programmatic flip so it never cascades into a second apply/teardown.
+    private bool _backdropSync;
 
-        if (toggle?.IsChecked == true)
+    private void OnToggleMica(object sender, RoutedEventArgs e) =>
+        ToggleBackdrop(sender as RibbonToggleButton, RibbonBackdrop.Mica, AcrylicToggle);
+
+    private void OnToggleAcrylic(object sender, RoutedEventArgs e) =>
+        ToggleBackdrop(sender as RibbonToggleButton, RibbonBackdrop.Acrylic, MicaToggle);
+
+    // Shared Mica/Acrylic plumbing: both are DWM system backdrops applied the same way, and a
+    // window has exactly ONE — so checking one material overwrites the DWM attribute and
+    // silently unchecks the other toggle (the transparent-window setup below is shared and stays).
+    private void ToggleBackdrop(RibbonToggleButton? toggle, RibbonBackdrop backdrop, RibbonToggleButton? other)
+    {
+        if (_backdropSync || toggle is null)
         {
-            // Mica needs Windows 11 22H2+. If the DWM rejects it, undo the toggle and stop.
-            if (!MicaHelper.TrySetBackdrop(this, RibbonBackdrop.Mica))
+            return;
+        }
+
+        if (toggle.IsChecked == true)
+        {
+            // System backdrops need Windows 11 22H2+. If the DWM rejects it, undo the toggle
+            // (guarded, so the Unchecked event doesn't run a pointless teardown) and stop.
+            if (!MicaHelper.TrySetBackdrop(this, backdrop))
             {
+                _backdropSync = true;
                 toggle.IsChecked = false;
+                _backdropSync = false;
                 return;
+            }
+
+            // One backdrop per window: the TrySetBackdrop above already replaced the other
+            // material at the DWM level, so just sync the other toggle's visual state.
+            if (other?.IsChecked == true)
+            {
+                _backdropSync = true;
+                other.IsChecked = false;
+                _backdropSync = false;
             }
 
             // The backdrop only composites where the DWM glass reaches: without extending
@@ -211,14 +240,14 @@ public partial class MainWindow : RibbonWindow
             Background = Brushes.Transparent;
             MainContentArea.Background = Brushes.Transparent;
 
-            // Let the title bar go transparent so Mica shows through it — but only for the 2024
-            // look with a non-colored title bar (ThemeManager enforces that rule and re-derives
-            // it across theme/accent changes, so switching themes no longer reverts it).
+            // Let the title bar go transparent so the material shows through it — but only for
+            // the 2024 look with a non-colored title bar (ThemeManager enforces that rule and
+            // re-derives it across theme/accent changes, so switching themes no longer reverts it).
             ThemeManager.SetTitleBarBackdrop(Application.Current, true);
 
             // Backstage stays opaque (Translucent left false): it fully covers the content
-            // behind it, so Mica shows in the title bar / ribbon chrome but does not bleed
-            // through the backstage page.
+            // behind it, so the material shows in the title bar / ribbon chrome but does not
+            // bleed through the backstage page.
         }
         else
         {

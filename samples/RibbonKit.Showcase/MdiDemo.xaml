@@ -34,19 +34,19 @@
                 <rk:RibbonGroup Header="State">
                     <rk:RibbonButton Header="Maximize"
                                      Click="OnMaximizeActive"
-                                     SizeDefinition="Medium, Medium, Small"
+                                     SizeDefinition="Large, Medium, Small"
                                      Icon="{StaticResource Icon.Copy}"
-                                     ScreenTipText="Maximize the active child to fill the MDI area." />
+                                     ScreenTipText="Maximize the active child to fill the MDI area." Size="Large" />
                     <rk:RibbonButton Header="Minimize"
                                      Click="OnMinimizeActive"
-                                     SizeDefinition="Medium, Medium, Small"
+                                     SizeDefinition="Large, Medium, Small"
                                      Icon="{StaticResource Icon.Copy}"
-                                     ScreenTipText="Minimize the active child to a caption strip along the bottom." />
+                                     ScreenTipText="Minimize the active child to a caption strip along the bottom." Size="Large" />
                     <rk:RibbonButton Header="Restore"
                                      Click="OnRestoreActive"
-                                     SizeDefinition="Medium, Medium, Small"
+                                     SizeDefinition="Large, Medium, Small"
                                      Icon="{StaticResource Icon.Copy}"
-                                     ScreenTipText="Restore the active child to its normal floating bounds." />
+                                     ScreenTipText="Restore the active child to its normal floating bounds." Size="Large" />
                 </rk:RibbonGroup>
             </rk:RibbonTab>
         </rk:Ribbon>
