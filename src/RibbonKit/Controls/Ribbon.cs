@@ -1025,6 +1025,12 @@ public class Ribbon : Control
         {
             tabControl.InvalidateArrange();
             tabControl.UpdateLayout();
+
+            // The selection marker and the body-border notch are gated on theme tokens
+            // (Tab.SelectedUnderline / Tab.ConnectNotch) that just changed, but a theme swap
+            // fires no selection or size event — re-place them explicitly so e.g. switching
+            // 2024 → 2010 cuts the border under the active tab immediately.
+            tabControl.RefreshSelectionVisuals();
         }
     }
 

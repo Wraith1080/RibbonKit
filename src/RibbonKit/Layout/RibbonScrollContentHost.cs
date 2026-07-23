@@ -38,7 +38,7 @@ public class RibbonScrollContentHost : Decorator
             nameof(Offset),
             typeof(double),
             typeof(RibbonScrollContentHost),
-            new FrameworkPropertyMetadata(0d, FrameworkPropertyMetadataOptions.AffectsArrange, null, CoerceOffset));
+            new FrameworkPropertyMetadata(0d, FrameworkPropertyMetadataOptions.AffectsArrange, OnOffsetPropertyChanged, CoerceOffset));
 
     /// <summary>Identifies the <see cref="ConstrainChildWidth"/> dependency property.</summary>
     public static readonly DependencyProperty ConstrainChildWidthProperty =
@@ -96,6 +96,18 @@ public class RibbonScrollContentHost : Decorator
         ScrollLeftCommand = new ScrollCommand(this, -1);
         ScrollRightCommand = new ScrollCommand(this, +1);
     }
+
+    /// <summary>
+    /// Raised whenever <see cref="Offset"/> changes — including every frame of an animated scroll
+    /// glide — so an outside observer that mirrors content INSIDE the (clipped, scrolled) viewport
+    /// from OUTSIDE it can track the content moving. The tab strip's body-border notch
+    /// (RibbonTabControl.UpdateConnectNotch) is such an observer: it lives in the ribbon body row
+    /// but must stay aligned under the selected tab while the strip scrolls beneath it.
+    /// </summary>
+    public event EventHandler? OffsetChanged;
+
+    private static void OnOffsetPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        => ((RibbonScrollContentHost)d).OffsetChanged?.Invoke(d, EventArgs.Empty);
 
     /// <summary>How far the child is scrolled to the left, in DIPs (0 = start). Clamped to the scrollable range.</summary>
     public double Offset

@@ -1534,6 +1534,55 @@ Two fixes in `Themes/Office2024.xaml` (the shared template dict for all themes).
 
 Both unbuilt in the sandbox — pending the user's visual check on Windows.
 
+### 3.29 Connected-tab body-border cut (2010/2013) — the "notch" — 2026-07-23
+
+Completes the tab-connect work (§3.27 deferred item): the selected tab now cuts a tab-wide gap
+into the ribbon BODY's top border, so it opens seamlessly into the body like real Office 2010/2013.
+The ConnectFoot alone couldn't do it, and neither could any ZIndex — two hard WPF constraints:
+
+- **`PART_TabScroll` clips its subtree** (`RibbonScrollContentHost` sets `ClipToBounds=true` — it
+  must, it's a scroller). Anything inside the tab strip (ConnectFoot included) is cut off at the
+  strip's bottom edge and can NEVER paint onto the body's border below it.
+- **`Panel.ZIndex` only orders siblings of the same panel.** The strip (row 0 of the
+  RibbonTabControl template) and the body (`ContentHost`, row 1) are separate branches, so no
+  ZIndex placed anywhere inside either subtree can reorder one against the other. (Setting ZIndex
+  on the body "did nothing" for exactly this reason — the strip already painted above via row 0's
+  `Panel.ZIndex=1`; there was no sibling relationship left to reorder.)
+
+**Mechanism — draw the cut body-side instead** (`PART_ConnectNotch`, in `Themes/Office2024.xaml`):
+a 1px-tall Border in ROW 1 of the RibbonTabControl template, declared AFTER `ContentHost` so plain
+declaration order paints it over the body's top border. Top-aligned (ContentMargin is 0 in both
+connecting themes, incl. QAT-below variants), `Width=0` at rest, `IsHitTestVisible=False` — pure
+render, never affects layout. Its Background is the new token `RibbonKit.Brushes.Tab.ConnectNotch`
+(2010 `#F6F9FC` = body gradient's top stop; 2013 `#FFFFFF`; Transparent in 2019/2024 — the code
+gates on the brush being a visible colour, same pattern as the marker's underline gate). Its
+`BorderThickness=1,0,1,0` with `Tab.SelectedBorderBrush` continues the active tab's outline down
+through the cut, closing the corners.
+
+**Positioning** (`RibbonTabControl.UpdateConnectNotch`): `TransformToVisual` (NOT
+TransformToAncestor — the notch's parent is a sibling branch of the tab, not an ancestor) maps the
+selected tab into the notch parent's space, scroll transform included; sets `Width` +
+`PART_ConnectNotchTranslate.X`. Clamped to `PART_TabScroll`'s viewport so a selected tab scrolled
+out of view doesn't cut an orphan gap (hidden under ~2px). Deliberately NOT animated — the
+connecting themes' tab chrome snaps on selection, so a gliding gap would read as a detached slit.
+Update sites: ctor SizeChanged/Loaded, OnApplyTemplate (dispatcher, Loaded priority),
+OnSelectionChanged, and a new `RibbonScrollContentHost.OffsetChanged` event (raised per frame of a
+scroll glide; handler updates immediately — 1-frame lag, transform applies next arrange — plus a
+Loaded-priority re-run to correct the final resting position). Theme swaps fire no
+selection/size event, so `Ribbon.OnThemeConfigurationChanged` now calls
+`tabControl.RefreshSelectionVisuals()` (internal: re-places marker + notch, no animation).
+Minimize: notch `Visibility` is BOUND to `ContentHost.Visibility`, so it collapses with the body
+(during the ~150ms minimize slide the 1px sliver lingers until the collapse callback — accepted).
+
+Files: `Themes/Office2024.xaml` (notch element + corrected ConnectFoot comments), all four
+`Tokens.*.xaml` (ConnectNotch brush), `Controls/RibbonTabControl.cs` (UpdateConnectNotch +
+RefreshSelectionVisuals + wiring), `Controls/Ribbon.cs` (theme-swap refresh),
+`Layout/RibbonScrollContentHost.cs` (OffsetChanged event).
+
+Unbuilt in the sandbox — pending the user's visual check on Windows (watch: 1px alignment at
+125%/150% DPI, tab-strip scroll with a selected tab at the viewport edge, theme switching
+2024↔2010↔2013, minimize/restore).
+
 ## 4. Workflow / Session Conventions
 
 - Cloud workspace: `/home/user/ribbonkit/`. The user's machine:

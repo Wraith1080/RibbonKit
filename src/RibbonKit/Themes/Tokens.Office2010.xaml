@@ -119,6 +119,12 @@
          the body top colour (which is also the selected tab's bottom stop). -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ConnectFootHover" Color="#FBE9B0" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ConnectFootSelected" Color="#F6F9FC" />
+    <!-- Body-border notch (PART_ConnectNotch, in the tab control's BODY row): the ConnectFoot
+         is clipped at the strip's bottom edge by PART_TabScroll, so cutting the body's #8DA5C4
+         top border under the active tab is done body-side by this notch. Its colour = the body
+         gradient's TOP stop (also the selected tab's bottom stop), so foot → notch → body read
+         as one continuous surface. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ConnectNotch" Color="#F6F9FC" />
     <!-- Contextual tabs: like the other pre-2024 themes, only the header text is tinted
          (no selection underline, no mute) — selection stays the connected active tab. -->
     <system:Double x:Key="RibbonKit.Metrics.ContextualUnderlineHeight">0</system:Double>

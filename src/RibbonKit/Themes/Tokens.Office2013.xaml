@@ -53,6 +53,11 @@
          body border. Hover = the flat hover fill; selected = the white body/tab colour. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ConnectFootHover" Color="#E8EEF7" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ConnectFootSelected" Color="#FFFFFF" />
+    <!-- Body-border notch (PART_ConnectNotch, in the tab control's BODY row): the ConnectFoot
+         is clipped at the strip's bottom edge by PART_TabScroll, so cutting the body's #919191
+         top border under the active tab is done body-side by this notch — white, matching the
+         body and the selected tab, so the outlined tab opens straight into the body (Metro). -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ConnectNotch" Color="#FFFFFF" />
     <!-- Contextual tabs: this flat theme only tints the header text (no underline, no
          mute) — selection stays the outlined active tab. -->
     <system:Double x:Key="RibbonKit.Metrics.ContextualUnderlineHeight">0</system:Double>

@@ -50,6 +50,9 @@
     <TranslateTransform x:Key="RibbonKit.Transforms.TabConnect" Y="0" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ConnectFootHover" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ConnectFootSelected" Color="Transparent" />
+    <!-- No connected tab: the body-border notch (PART_ConnectNotch) stays disabled — the code
+         gates on this brush being a visible colour. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ConnectNotch" Color="Transparent" />
     <!-- Contextual tabs: 2024 tints the header text and shows a tinted selection
          underline (height 3), and mutes the text until the tab is selected. -->
     <system:Double x:Key="RibbonKit.Metrics.ContextualUnderlineHeight">3</system:Double>

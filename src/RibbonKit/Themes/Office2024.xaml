@@ -442,6 +442,41 @@
                                               Visibility="{Binding CanScrollRight, ElementName=PART_ContentScroll, Converter={StaticResource RibbonKit.BoolToVis}}" />
                             </Grid>
                         </Border>
+                        <!-- Body-border NOTCH: a 1px body-coloured sliver lying OVER the body's
+                             top border, directly under the selected tab, cutting a tab-wide gap
+                             into the border so the active tab opens seamlessly into the body
+                             (the Office 2010/2013 connected-tab look). It must live HERE in the
+                             body row: nothing inside the tab strip can paint over the body's
+                             border because PART_TabScroll clips its subtree (ClipToBounds), and
+                             ZIndex can't reorder across the strip/body branch boundary — ZIndex
+                             only orders SIBLINGS of the same panel. As a sibling of ContentHost,
+                             declared after it, the notch paints above the border by plain
+                             declaration order. RibbonTabControl.UpdateConnectNotch drives
+                             Width + PART_ConnectNotchTranslate.X to track the selected tab
+                             (clamped to the strip's viewport when the strip scrolls). The 1px
+                             side borders continue the selected tab's outline down through the
+                             cut, closing the corners (SelectedBorderBrush — Transparent in
+                             non-connecting themes). Themes without a connected tab (2019/2024)
+                             set Tab.ConnectNotch Transparent and the code keeps Width at 0.
+                             Visibility mirrors ContentHost so the notch vanishes with the body
+                             when the ribbon is minimized. Render-only: hit-transparent, fixed
+                             1px height, top-aligned — it never affects layout. -->
+                        <Border x:Name="PART_ConnectNotch"
+                                Grid.Row="1"
+                                Width="0"
+                                Height="1"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Top"
+                                Background="{DynamicResource RibbonKit.Brushes.Tab.ConnectNotch}"
+                                BorderBrush="{DynamicResource RibbonKit.Brushes.Tab.SelectedBorderBrush}"
+                                BorderThickness="1,0,1,0"
+                                IsHitTestVisible="False"
+                                SnapsToDevicePixels="True"
+                                Visibility="{Binding Visibility, ElementName=ContentHost}">
+                            <Border.RenderTransform>
+                                <TranslateTransform x:Name="PART_ConnectNotchTranslate" />
+                            </Border.RenderTransform>
+                        </Border>
                     </Grid>
                     <ControlTemplate.Triggers>
                         <!-- The ribbon body's Visibility while minimized is managed in code
@@ -556,15 +591,19 @@
                                    IsHitTestVisible="False"
                                    Fill="{TemplateBinding ContextualBrush}"
                                    Visibility="Collapsed" />
-                        <!-- Tab-to-body connector. Transparent until the tab is hovered/selected
-                             (the triggers set its Background); a 1px sliver at the tab's bottom,
-                             render-shifted 1px DOWN into the ribbon body by TabConnect (Y=1 in the
-                             connecting themes, 0 elsewhere). With the tab strip's ZIndex it paints
-                             over the body's top border, so the active/hovered tab merges into the
-                             body while its top edge and label stay on the File-button line — the
-                             connect no longer moves the whole tab. Inset 1px each side so the tab's
-                             own side borders still run down to meet the body. RENDER-only: it has a
-                             fixed 1px height and Bottom alignment, so it never affects tab measure. -->
+                        <!-- Tab-to-body connector, STRIP side. Transparent until the tab is
+                             hovered/selected (the triggers set its Background); a 1px sliver at
+                             the tab's bottom, render-shifted 1px DOWN by TabConnect (Y=1 in the
+                             connecting themes, 0 elsewhere) so it fills the seam at the strip's
+                             bottom edge while the tab's top edge and label stay on the
+                             File-button line — the connect never moves the whole tab. NOTE its
+                             limit: PART_TabScroll clips its subtree (ClipToBounds), so the foot
+                             can never paint past the strip onto the ribbon BODY's top border —
+                             and no ZIndex can fix that, because the strip and the body are
+                             separate branches, not siblings. The border cut that completes the
+                             seamless connect is therefore drawn by PART_ConnectNotch, which
+                             lives in the body row of the RibbonTabControl template. RENDER-only:
+                             fixed 1px height and Bottom alignment, never affects tab measure. -->
                         <Border x:Name="ConnectFoot"
                                 Height="1"
                                 VerticalAlignment="Bottom"
@@ -591,13 +630,13 @@
                                  is already reserved on HeaderChrome above, so hover never shifts the tab. -->
                             <Setter TargetName="HeaderChrome" Property="BorderBrush"
                                     Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
-                            <!-- Connect the hovered tab to the body WITHOUT moving the tab. Instead of
-                                 dropping the whole HeaderChrome 1px (which lowered the top edge and the
-                                 label off the File-button line), we color the 1px ConnectFoot at the
-                                 tab's bottom in the hover fill's low colour. The foot is render-shifted
-                                 into the body (TabConnect) and, with the tab-strip ZIndex, paints over
-                                 the body's top border — so the tab's top and label stay put and only the
-                                 bottom merges. Transparent in non-connecting themes. -->
+                            <!-- Connect the hovered tab toward the body WITHOUT moving the tab. Instead
+                                 of dropping the whole HeaderChrome 1px (which lowered the top edge and
+                                 the label off the File-button line), we color the 1px ConnectFoot at the
+                                 tab's bottom in the hover fill's low colour, filling the seam at the
+                                 strip's bottom edge (the body's top BORDER stays intact on hover — only
+                                 the SELECTED tab cuts it, via PART_ConnectNotch in the body row).
+                                 Transparent in non-connecting themes. -->
                             <Setter TargetName="ConnectFoot" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Tab.ConnectFootHover}" />
                             <!-- Continue the tab's side borders 1px down through the foot so the
@@ -610,11 +649,12 @@
                             <Setter TargetName="HeaderChrome" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Tab.SelectedBackground}" />
                             <!-- Connect the active tab to the body WITHOUT moving the tab: the 1px
-                                 ConnectFoot at the bottom is coloured the body/tab-bottom colour and
-                                 render-shifted into the body (TabConnect), covering the body's top
-                                 border under the tab (tab-strip ZIndex). The tab's top edge and label
-                                 therefore stay aligned with the File button; only the bottom merges.
-                                 Transparent foot in non-connecting themes. -->
+                                 ConnectFoot at the bottom is coloured the body/tab-bottom colour,
+                                 filling the seam at the strip's bottom edge; PART_ConnectNotch (in
+                                 the body row, positioned by RibbonTabControl) then cuts the body's
+                                 top border directly beneath, completing the merge. The tab's top edge
+                                 and label therefore stay aligned with the File button; only the
+                                 bottom merges. Transparent foot in non-connecting themes. -->
                             <Setter TargetName="ConnectFoot" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Tab.ConnectFootSelected}" />
                             <!-- Continue the active tab's side borders 1px down through the foot so its
