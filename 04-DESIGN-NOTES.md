@@ -1625,6 +1625,34 @@ Unbuilt in the sandbox — pending the user's visual check on Windows (watch: op
 — content fade-out on open, instant reveal on close; reopen mid-close; Esc; clicking during the
 exit slide; Translucent+Mica vs Translucent-only).
 
+**Addendum (same day, after user verification — Mica pass-through WORKS):** the user zeroed the
+rail's alpha (`NavBackgroundTranslucent` → `#00F5F4F3`, pure Mica rail, Office look) and two
+follow-ups landed: (1) **Translucent nav item states** — the opaque grey `Modern.ItemHover`/
+`ItemSelected` fills read as solid cards over raw Mica, so the translucent Modern rail now uses
+black ALPHA washes instead: new brushes `Modern.ItemHoverTranslucent` (#12000000, ~7%) and
+`Modern.ItemSelectedTranslucent` (#1F000000, ~12%), applied by two MultiDataTriggers in the
+BackstageTabItem template (conditions: attached `Backstage.Design`=Modern via RelativeSource Self
+— in template triggers Self is the templated control — + ancestor `Backstage.Translucent` +
+Chrome IsMouseOver / Self IsSelected). They override ONLY Chrome.Background; the opaque triggers'
+SelBar/accent-text setters still apply. Placed after the opaque Modern triggers so they win.
+(2) **2024 default accent aligned with the older themes** — see §3.31.
+
+### 3.31 Office 2024 default (Auto) accent aligned to #2B579A — 2026-07-23
+
+2024's token palette defaulted to Fluent blue #0F6CBD while 2019/2013 default to Office blue
+#2B579A (2010 uses #1E5A9C), so switching generations jumped the accent. Per user request 2024
+now defaults to **#2B579A** everywhere the old value appeared in `Tokens.Office2024.xaml`:
+`Accent`, `Tab.SelectedUnderline`, `Tab.SelectedForeground`, `Dialog.PrimaryBackground/Border`,
+`MdiChild.ActiveCaptionBackground/ActiveBorder` — plus the toggled washes recomputed with the
+SAME formula ThemeManager uses for custom accents (Mix(accent, White, 0.82/0.72)):
+`Control.CheckedBackground` #CDE0F3→#D9E1ED, `Control.CheckedHoverBackground` #BDD5EC→#C4D0E3,
+so the default and an explicitly-set #2B579A accent render identically.
+`ThemeManager.DefaultAccent` (last-resort fallback in `EffectiveAccent`) matched to #2B579A too.
+NOT changed: the contextual-tab tints (`Tab.Contextual*`, decorative), the showcase's accent
+gallery "Blue" swatch (#0F6CBD — still a valid pick, just no longer the default), and other
+themes' tokens. Unbuilt in the sandbox — pending the user's Windows check (watch: 2024 tab
+underline/File-button/OK-button hue, toggled button washes, MDI active caption).
+
 **Session gotcha (tooling):** re-staging an already-staged device file can silently serve the
 STALE cached copy at `/mnt/user-data/uploads/...` (old mtime/content) while the tool response
 reports the CURRENT device size/mtime. If a freshly re-staged file looks reverted, compare the

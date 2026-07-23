@@ -77,7 +77,11 @@ public static class ThemeManager
         DialogPrimaryBorderKey,
     };
 
-    private static readonly Color DefaultAccent = Color.FromRgb(0x0F, 0x6C, 0xBD);
+    // Last-resort fallback when no theme Accent brush is resolvable. Office blue #2B579A —
+    // the shared default of the 2024/2019/2013 token palettes (2024 was Fluent #0F6CBD until
+    // its default was aligned with the older generations; keep this constant in step with
+    // the token files if the default ever changes again).
+    private static readonly Color DefaultAccent = Color.FromRgb(0x2B, 0x57, 0x9A);
 
     private static ResourceDictionary? _current;
     private static Color? _accent;

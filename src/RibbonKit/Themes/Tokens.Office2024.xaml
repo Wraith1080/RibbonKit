@@ -15,11 +15,17 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Border" Color="#E0E0E0" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Primary" Color="#1A1A1A" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Secondary" Color="#616161" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.Accent" Color="#0F6CBD" />
+    <!-- Default (Auto) accent: Office blue #2B579A, the SAME default as 2019/2013, so switching
+         theme generations doesn't jump the accent (was Fluent #0F6CBD, which only 2024 used).
+         Every #2B579A below tracks this; a runtime accent via ThemeManager overrides them all. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Accent" Color="#2B579A" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.HoverBackground" Color="#E6E6E6" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.PressedBackground" Color="#DADADA" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CheckedBackground" Color="#CDE0F3" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CheckedHoverBackground" Color="#BDD5EC" />
+    <!-- Toggled washes = the SAME tint formula ThemeManager applies for a custom accent
+         (Mix(accent, White, 0.82 / 0.72)) evaluated at the #2B579A default, so the default and
+         an explicitly-set #2B579A accent look identical. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CheckedBackground" Color="#D9E1ED" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CheckedHoverBackground" Color="#C4D0E3" />
     <!-- No highlight border (Office 2010 uses a gold one; other themes don't). -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.HoverBorder" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.PressedBorder" Color="Transparent" />
@@ -39,8 +45,8 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverBackground" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverUnderline" Color="#B8B8B8" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedBackground" Color="Transparent" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedUnderline" Color="#0F6CBD" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedForeground" Color="#0F6CBD" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedUnderline" Color="#2B579A" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedForeground" Color="#2B579A" />
     <!-- Active-tab outline is off in 2024 (the accent underline marks selection). -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedBorderBrush" Color="Transparent" />
     <Thickness x:Key="RibbonKit.Metrics.TabSelectedBorderThickness">0</Thickness>
@@ -78,8 +84,8 @@
         <GradientStop Offset="0.5" Color="#1A7BC4" />
         <GradientStop Offset="1" Color="#0C5DA6" />
     </LinearGradientBrush>
-    <SolidColorBrush x:Key="RibbonKit.Brushes.Dialog.PrimaryBackground" Color="#0F6CBD" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.Dialog.PrimaryBorder" Color="#0F6CBD" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Dialog.PrimaryBackground" Color="#2B579A" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Dialog.PrimaryBorder" Color="#2B579A" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.HoverBackground" Color="#E5E5E5" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.PressedBackground" Color="#D6D6D6" />
     <!-- Safety-net defaults for the QAT-on-colored-band hover/pressed wash. The Ribbon
@@ -155,11 +161,11 @@
          MDI child-window chrome (MdiContainer/MdiChild). 2024: accent
          active caption, rounded corners matching the ribbon card.
          ============================================================ -->
-    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.ActiveCaptionBackground" Color="#0F6CBD" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.ActiveCaptionBackground" Color="#2B579A" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.ActiveCaptionForeground" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.InactiveCaptionBackground" Color="#F3F3F3" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.InactiveCaptionForeground" Color="#616161" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.ActiveBorder" Color="#0F6CBD" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.ActiveBorder" Color="#2B579A" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.InactiveBorder" Color="#D1D1D1" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.MdiClient.Background" Color="#E9E9E9" />
 
