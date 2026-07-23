@@ -1583,6 +1583,54 @@ Unbuilt in the sandbox — pending the user's visual check on Windows (watch: 1p
 125%/150% DPI, tab-strip scroll with a selected tab at the viewport edge, theme switching
 2024↔2010↔2013, minimize/restore).
 
+### 3.30 Backstage Mica pass-through (Modern/2024) — hide, don't blur — 2026-07-23
+
+The translucent Modern backstage never showed Mica — only a blur of the app content behind it.
+Root cause (fundamental, not tunable): **the DWM composites Mica BENEATH the window and only
+through pixels the window never painted.** The old approach kept the ribbon/document rendering
+under a BlurEffect; a blurred pixel is still a painted pixel, so it occluded the material no
+matter the backstage's alpha. User-proposed fix (correct): stop rendering the content behind the
+backstage entirely, let the nav rail be a plain alpha wash over raw Mica, keep the page content
+solid.
+
+Mechanism:
+
+- `Ribbon.HideContentBehindBackstage` (replaces `ApplyBackstageBlur`): when a `Translucent`
+  backstage opens, the adorned root fades to **Opacity 0** (Backstage animation timing; snap when
+  animations off) and gets `IsHitTestVisible=false` (zero-opacity elements still receive input —
+  WPF hit-testing ignores opacity; the old blur never disabled it). Opacity, not Visibility: it's
+  animatable and cannot disturb the adorner layer — the backstage lives in the AdornerDecorator's
+  adorner layer, a SIBLING branch of the root, so the root's opacity doesn't touch it.
+- `RestoreContentBehindBackstage` runs at the START of the exit slide (old blur cleared on
+  completion): the backstage slides out to the LEFT and must reveal live content, not bare
+  backdrop. A reopen-while-closing simply re-hides; saved state (opacity/hit-test) is captured
+  only on the first hide so a mid-fade reopen can't corrupt it.
+- Template: the `Translucent` trigger now only clears `RootGrid`'s fill; the
+  **`ContentTranslucent` brush + its ContentArea setter are REMOVED** — the page area stays
+  solid (crisp text), only the nav rail (`NavBackgroundTranslucent` #B8F5F4F3, unchanged)
+  reveals the material. No blur anywhere: Mica itself provides the softness.
+- Behind the overlay everything is already transparent in backdrop mode (showcase Mica toggle:
+  `Window.Background`/`MainContentArea` transparent + `SetTitleBarBackdrop`), so hiding the root
+  is sufficient — no window-template changes.
+- No-backdrop case (Win10 / Mica off) intentionally simple (user's call): Translucent still
+  hides the content; the rail sits on plain window white. The frosted-blur fallback was
+  deliberately dropped.
+- App side: turn on BOTH the window backdrop (MicaHelper) and `Backstage.Translucent` — the
+  showcase currently treats them as independent toggles (its Mica handler comment still says
+  "Backstage stays opaque"); flip both to see the effect. Classic/Classic2010 designs are
+  unaffected in practice (their nav is an opaque accent/gradient and the content is solid, so
+  nothing reveals the material — by design, those generations predate Mica).
+
+Unbuilt in the sandbox — pending the user's visual check on Windows (watch: open/close animation
+— content fade-out on open, instant reveal on close; reopen mid-close; Esc; clicking during the
+exit slide; Translucent+Mica vs Translucent-only).
+
+**Session gotcha (tooling):** re-staging an already-staged device file can silently serve the
+STALE cached copy at `/mnt/user-data/uploads/...` (old mtime/content) while the tool response
+reports the CURRENT device size/mtime. If a freshly re-staged file looks reverted, compare the
+response's byte size against the expected committed size before concluding anything — this
+session nearly misdiagnosed a full working-tree revert that way.
+
 ## 4. Workflow / Session Conventions
 
 - Cloud workspace: `/home/user/ribbonkit/`. The user's machine:

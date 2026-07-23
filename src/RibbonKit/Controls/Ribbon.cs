@@ -625,10 +625,15 @@ public class Ribbon : Control
 
     private BackstageAdorner? _backstageAdorner;
 
-    // While a TRANSLUCENT backstage is open, the content behind it (the adorned root) gets a
-    // strong blur so the backstage reads as a frosted-acrylic panel. Saved/restored here.
-    private UIElement? _blurredRoot;
-    private System.Windows.Media.Effects.Effect? _blurredRootPriorEffect;
+    // While a TRANSLUCENT backstage is open, the content behind it (the adorned root) is fully
+    // hidden — Opacity 0 + hit-testing off — so a window system backdrop (Mica/Acrylic)
+    // composites directly behind the backstage. The DWM draws the material only through pixels
+    // the window never painted, so ANY in-app rendering of the content (even blurred, as the
+    // earlier frosted-acrylic approach did) is opaque to the compositor and blocks the material
+    // entirely. Prior state is saved here and restored when the backstage closes.
+    private UIElement? _backstageHiddenRoot;
+    private double _backstageHiddenRootOpacity = 1d;
+    private bool _backstageHiddenRootHitTestVisible = true;
 
     // Design-time-only host for the backstage preview (see UpdateDesignTimeBackstage). The
     // runtime adorner path needs a real Window the XAML designer doesn't provide.
@@ -769,7 +774,7 @@ public class Ribbon : Control
                     RibbonMotion.PlayOpen(reopening, RibbonAnimationAction.Backstage, RibbonSlideFrom.Left);
                 }
 
-                ApplyBackstageBlur(_backstageAdorner.AdornedElement);
+                HideContentBehindBackstage(_backstageAdorner.AdornedElement);
                 return;
             }
 
@@ -790,10 +795,11 @@ public class Ribbon : Control
             _backstageAdorner = new BackstageAdorner(root, content);
             layer.Add(_backstageAdorner);
 
-            // Strong in-app blur of the content behind a translucent backstage. The blur goes on
-            // the adorned root; the backstage lives in the adorner layer (a sibling visual branch),
-            // so it stays sharp on top while everything behind it frosts.
-            ApplyBackstageBlur(root);
+            // Hide the content behind a translucent backstage entirely so a window system
+            // backdrop (Mica) composites raw behind it. The hide targets the adorned root; the
+            // backstage lives in the adorner layer (a SIBLING visual branch inside the
+            // AdornerDecorator, not a child of the root), so it stays fully visible on top.
+            HideContentBehindBackstage(root);
 
             if (content is FrameworkElement element)
             {
@@ -812,6 +818,13 @@ public class Ribbon : Control
             BackstageAdorner adorner = _backstageAdorner;
             FrameworkElement? content = Backstage as FrameworkElement;
 
+            // Restore the hidden content at the START of the exit (not on completion): the
+            // backstage slides out to the left, and the ribbon/document must already be there
+            // for the slide to reveal — restoring at the end would leave the bare backdrop
+            // showing during the whole exit animation. If a re-open cancels this close
+            // mid-flight, the open path simply hides the content again.
+            RestoreContentBehindBackstage();
+
             RibbonMotion.PlayClose(
                 content,
                 RibbonAnimationAction.Backstage,
@@ -829,43 +842,77 @@ public class Ribbon : Control
                     adorner.Detach();
                     _backstageAdorner = null;
                     _backstageClosing = false;
-                    ClearBackstageBlur();
                     RibbonMotion.Rest(content);
                 });
         }
     }
 
     /// <summary>
-    /// Applies a strong Gaussian blur to <paramref name="root"/> (the content behind the backstage)
-    /// when the backstage is <see cref="Controls.Backstage.Translucent"/>, so the translucent
-    /// backstage reads as frosted acrylic. No-op for an opaque backstage. The prior effect (if any)
-    /// is saved so <see cref="ClearBackstageBlur"/> restores it exactly.
+    /// Hides <paramref name="root"/> (the window content behind the backstage) when the backstage
+    /// is <see cref="Controls.Backstage.Translucent"/>: a fast fade to Opacity 0 (synced to the
+    /// backstage slide-in) plus hit-testing off. No-op for an opaque backstage.
     /// </summary>
-    private void ApplyBackstageBlur(UIElement root)
+    /// <remarks>
+    /// Hiding — not blurring — is what lets a window system backdrop (Mica/Acrylic) reach the
+    /// backstage. The DWM composites the material BENEATH the window and only through pixels the
+    /// window never painted; a blurred pixel is still a painted pixel, so the previous in-app
+    /// BlurEffect approach could never reveal it. With the content not rendering at all, the only
+    /// layers behind the backstage overlay are the window root and title-bar band — both already
+    /// transparent in backdrop mode — so the translucent nav rail composites over the raw
+    /// material, exactly like Office on Windows 11. Without a backdrop (Windows 10, or Mica off)
+    /// the rail sits on the plain window background instead. Opacity-zero is used rather than
+    /// Visibility so the hide is animatable and cannot disturb the adorner layer hosting the
+    /// backstage (a sibling branch, unaffected by the root's opacity). Hit-testing is disabled
+    /// because a zero-opacity element still receives input (WPF hit-testing ignores opacity).
+    /// Prior values are saved so <see cref="RestoreContentBehindBackstage"/> restores exactly.
+    /// </summary>
+    private void HideContentBehindBackstage(UIElement root)
     {
         if (Backstage is not Backstage { Translucent: true })
         {
             return;
         }
 
-        _blurredRoot = root;
-        _blurredRootPriorEffect = root.Effect;
-        root.Effect = new System.Windows.Media.Effects.BlurEffect
+        // Save state only on the first hide of this open (a reopen-while-closing re-hides the
+        // same root; overwriting the saved state then would capture the mid-fade values).
+        if (_backstageHiddenRoot is null)
         {
-            Radius = 34,
-            KernelType = System.Windows.Media.Effects.KernelType.Gaussian,
-            RenderingBias = System.Windows.Media.Effects.RenderingBias.Performance,
-        };
+            _backstageHiddenRoot = root;
+            _backstageHiddenRootOpacity = root.Opacity;
+            _backstageHiddenRootHitTestVisible = root.IsHitTestVisible;
+        }
+
+        root.IsHitTestVisible = false;
+
+        if (RibbonAnimation.IsEnabled(RibbonAnimationAction.Backstage))
+        {
+            var fade = new System.Windows.Media.Animation.DoubleAnimation(
+                0d, RibbonAnimation.GetDuration(RibbonAnimationAction.Backstage))
+            {
+                EasingFunction = RibbonAnimation.GetEase(RibbonAnimationAction.Backstage),
+            };
+            root.BeginAnimation(UIElement.OpacityProperty, fade);
+        }
+        else
+        {
+            root.BeginAnimation(UIElement.OpacityProperty, null);
+            root.Opacity = 0d;
+        }
     }
 
-    /// <summary>Removes the backstage blur, restoring whatever effect the root had before.</summary>
-    private void ClearBackstageBlur()
+    /// <summary>
+    /// Restores the content hidden by <see cref="HideContentBehindBackstage"/> — instantly, no
+    /// fade: it runs at the START of the backstage's exit slide, so the ribbon/document must
+    /// already be fully present underneath for the slide-out to reveal. Idempotent.
+    /// </summary>
+    private void RestoreContentBehindBackstage()
     {
-        if (_blurredRoot is not null)
+        if (_backstageHiddenRoot is { } root)
         {
-            _blurredRoot.Effect = _blurredRootPriorEffect;
-            _blurredRoot = null;
-            _blurredRootPriorEffect = null;
+            root.BeginAnimation(UIElement.OpacityProperty, null);
+            root.Opacity = _backstageHiddenRootOpacity;
+            root.IsHitTestVisible = _backstageHiddenRootHitTestVisible;
+            _backstageHiddenRoot = null;
         }
     }
 

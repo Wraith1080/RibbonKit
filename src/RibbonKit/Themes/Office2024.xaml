@@ -1958,12 +1958,16 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.Foreground" Color="#201F1E" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemHover" Color="#EDEBE9" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemSelected" Color="#E1DFDD" />
-    <!-- Translucent variants used when Backstage.Translucent is on. Made genuinely
-         see-through (was 90% opaque) so the strong in-app blur the Ribbon applies to the
-         content behind the backstage reads as a frosted-acrylic panel — and a window Mica
-         backdrop still shows through when one is present. -->
-    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.NavBackgroundTranslucent" Color="#B8F5F4F3" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ContentTranslucent" Color="#B3FFFFFF" />
+    <!-- Translucent nav rail used when Backstage.Translucent is on. It composites over the RAW
+         window backdrop (Mica/Acrylic): while a translucent backstage is open the Ribbon fully
+         hides the content behind it (Opacity 0 — see Ribbon.HideContentBehindBackstage), because
+         the DWM draws the material only through pixels the window never painted — the earlier
+         in-app blur of the content could therefore never reveal it (a blurred pixel is still a
+         painted pixel). No blur needed here either: Mica itself provides the softness, so this
+         plain alpha wash reads as Office's tinted-mica rail. The CONTENT area intentionally has
+         no translucent variant — it stays solid (Backstage.ContentBackground) so page text is
+         crisp; only the nav rail reveals the material, matching Office on Windows 11. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.NavBackgroundTranslucent" Color="#00F5F4F3" />
 
     <!-- ============================================================
          Backstage — navigation column (back button + tabs) + content.
@@ -2096,12 +2100,17 @@
                         </Trigger>
 
                         <!-- Translucent (reveal a window Mica/Acrylic backdrop behind the
-                             backstage): clear the root fill and soften the content panel. Placed
-                             AFTER the Modern trigger so the translucent nav brush wins. -->
+                             backstage): clear the root fill so the material shows in the nav
+                             column, where the Modern MultiTrigger below lays its translucent
+                             rail wash over it. The Ribbon completes the effect by hiding the
+                             window content behind the backstage (Opacity 0) — the DWM only
+                             composites the material through pixels the window never painted.
+                             ContentArea is deliberately NOT softened: the page keeps its solid
+                             background so text stays crisp; only the rail reveals the material
+                             (Office on Windows 11). Placed AFTER the Modern trigger so the
+                             translucent nav brush wins. -->
                         <Trigger Property="Translucent" Value="True">
                             <Setter TargetName="RootGrid" Property="Background" Value="Transparent" />
-                            <Setter TargetName="ContentArea" Property="Background"
-                                    Value="{StaticResource RibbonKit.Brushes.Backstage.ContentTranslucent}" />
                         </Trigger>
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
