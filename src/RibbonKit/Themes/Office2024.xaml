@@ -54,6 +54,115 @@
         </Setter>
     </Style>
 
+    <!-- ============================================================
+         RibbonQuickAccessToolBar — the QAT strip, with overflow.
+
+         DockPanel, not StackPanel, and that is the whole trick: a horizontal
+         StackPanel measures children with INFINITE width, so the items panel
+         could never tell that it had run out of room. Docking the overflow
+         button first means the presenter is measured with whatever width is
+         left, which is exactly the signal RibbonQuickAccessPanel needs.
+
+         The toolbar only overflows if something constrains its width. Below
+         the ribbon nothing does (it owns a full-width row); in the tab row and
+         the title bar the ribbon caps it at Ribbon.QuickAccessMaxWidth.
+         ============================================================ -->
+    <Style TargetType="{x:Type controls:RibbonQuickAccessToolBar}">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="ItemsPanel">
+            <Setter.Value>
+                <ItemsPanelTemplate>
+                    <layout:RibbonQuickAccessPanel />
+                </ItemsPanelTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type controls:RibbonQuickAccessToolBar}">
+                    <Grid>
+                        <DockPanel LastChildFill="True">
+                            <ToggleButton x:Name="PART_OverflowButton"
+                                          DockPanel.Dock="Right"
+                                          Width="20"
+                                          Height="22"
+                                          Focusable="False"
+                                          VerticalAlignment="Center"
+                                          ToolTip="More quick access commands"
+                                          Visibility="{Binding HasOverflow, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource RibbonKit.BoolToVis}}">
+                                <ToggleButton.Style>
+                                    <Style TargetType="{x:Type ToggleButton}">
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="{x:Type ToggleButton}">
+                                                    <Border x:Name="Chrome"
+                                                            Background="Transparent"
+                                                            CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                                            SnapsToDevicePixels="True">
+                                                        <!-- Chevrons + a baseline bar: Office's
+                                                             "more commands" mark. -->
+                                                        <Grid Width="10" Height="10"
+                                                              HorizontalAlignment="Center"
+                                                              VerticalAlignment="Center">
+                                                            <Path Data="M0.5,1 L4,4.5 L0.5,8 M4.5,1 L8,4.5 L4.5,8"
+                                                                  Stroke="{DynamicResource RibbonKit.Brushes.TabStrip.Foreground}"
+                                                                  StrokeThickness="1.2"
+                                                                  StrokeStartLineCap="Round"
+                                                                  StrokeEndLineCap="Round"
+                                                                  VerticalAlignment="Top" />
+                                                        </Grid>
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="Chrome" Property="Background"
+                                                                    Value="{DynamicResource RibbonKit.Brushes.TabStrip.ControlHoverBackground}" />
+                                                        </Trigger>
+                                                        <Trigger Property="IsChecked" Value="True">
+                                                            <Setter TargetName="Chrome" Property="Background"
+                                                                    Value="{DynamicResource RibbonKit.Brushes.TabStrip.ControlHoverBackground}" />
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </ToggleButton.Style>
+                            </ToggleButton>
+                            <ItemsPresenter />
+                        </DockPanel>
+                        <!-- A Popup has no layout footprint, so it can sit in the same cell. -->
+                        <Popup x:Name="PART_OverflowPopup"
+                               AllowsTransparency="True"
+                               StaysOpen="False"
+                               Placement="Bottom"
+                               HorizontalOffset="-4"
+                               PlacementTarget="{Binding ElementName=PART_OverflowButton}"
+                               IsOpen="{Binding IsChecked, ElementName=PART_OverflowButton, Mode=TwoWay}">
+                            <Border Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
+                                    BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
+                                    BorderThickness="1"
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.PopupCornerRadius}"
+                                    Padding="4"
+                                    Margin="4,2,8,8"
+                                    MinWidth="160">
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="8" ShadowDepth="2" Opacity="0.25" />
+                                </Border.Effect>
+                                <ItemsControl x:Name="PART_OverflowHost" Focusable="False">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Vertical" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                </ItemsControl>
+                            </Border>
+                        </Popup>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <Style x:Key="RibbonKit.ScrollLeftButton" TargetType="{x:Type RepeatButton}">
         <Setter Property="Width" Value="22" />
         <Setter Property="Focusable" Value="False" />
@@ -353,18 +462,13 @@
                                  by default — the same live QAT UIElements can have only one
                                  parent, so exactly one host (tab-row or below-ribbon) may
                                  bind at a time. -->
-                            <ItemsControl x:Name="QatTabRowHost"
-                                          Grid.Column="1"
-                                          Focusable="False"
-                                          VerticalAlignment="Center"
-                                          Visibility="Collapsed"
-                                          Margin="2,4,4,0">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <StackPanel Orientation="Horizontal" />
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                            </ItemsControl>
+                            <controls:RibbonQuickAccessToolBar
+                                x:Name="QatTabRowHost"
+                                Grid.Column="1"
+                                VerticalAlignment="Center"
+                                Visibility="Collapsed"
+                                Margin="2,4,4,0"
+                                MaxWidth="{Binding QuickAccessMaxWidth, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}" />
                             <Grid Grid.Column="2">
                                 <!-- Tab strip in a horizontal scroller: when there are more tabs than
                                      fit, chevron buttons appear and scroll the strip. The gliding

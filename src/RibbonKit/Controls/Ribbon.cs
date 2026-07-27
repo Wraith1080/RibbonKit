@@ -55,6 +55,14 @@ public class Ribbon : Control
                 RibbonQuickAccessPosition.TabRow,
                 OnQuickAccessPositionChanged));
 
+    /// <summary>Identifies the <see cref="QuickAccessMaxWidth"/> dependency property.</summary>
+    public static readonly DependencyProperty QuickAccessMaxWidthProperty =
+        DependencyProperty.Register(
+            nameof(QuickAccessMaxWidth),
+            typeof(double),
+            typeof(Ribbon),
+            new FrameworkPropertyMetadata(240d));
+
     /// <summary>Identifies the <see cref="IsMinimized"/> dependency property.</summary>
     public static readonly DependencyProperty IsMinimizedProperty =
         DependencyProperty.Register(
@@ -234,6 +242,23 @@ public class Ribbon : Control
     {
         get => (RibbonQuickAccessPosition)GetValue(QuickAccessPositionProperty);
         set => SetValue(QuickAccessPositionProperty, value);
+    }
+
+    /// <summary>
+    /// How wide the quick access strip may grow in the placements that share their row —
+    /// <see cref="RibbonQuickAccessPosition.TabRow"/> (competing with the tabs) and
+    /// <see cref="RibbonQuickAccessPosition.TitleBar"/> (competing with the window title).
+    /// Items past the cap move into the strip's overflow flyout. Default 240 DIPs, roughly eight
+    /// small buttons.
+    /// <para>
+    /// Ignored for <see cref="RibbonQuickAccessPosition.BelowRibbon"/>: that placement owns a
+    /// full-width row of its own, so it stretches instead of overflowing.
+    /// </para>
+    /// </summary>
+    public double QuickAccessMaxWidth
+    {
+        get => (double)GetValue(QuickAccessMaxWidthProperty);
+        set => SetValue(QuickAccessMaxWidthProperty, value);
     }
 
     /// <summary>
@@ -1165,7 +1190,7 @@ public class Ribbon : Control
     // Quick-access-toolbar placement plumbing. When QuickAccessPosition is TitleBar the
     // items are projected into the host RibbonWindow's TitleBarContent via this host; the
     // shared context menu lets the user move the QAT between placements (like Office).
-    private System.Windows.Controls.ItemsControl? _titleBarQatHost;
+    private RibbonQuickAccessToolBar? _titleBarQatHost;
     private object? _savedTitleBarContent;
     private System.Windows.Controls.ContextMenu? _qatContextMenu;
     private System.Windows.Controls.MenuItem? _qatTitleBarItem;
@@ -1809,18 +1834,20 @@ public class Ribbon : Control
         UpdateQatButtonContext();
     }
 
-    private System.Windows.Controls.ItemsControl CreateTitleBarQatHost()
+    private RibbonQuickAccessToolBar CreateTitleBarQatHost()
     {
-        var panel = new FrameworkElementFactory(typeof(System.Windows.Controls.StackPanel));
-        panel.SetValue(System.Windows.Controls.StackPanel.OrientationProperty, System.Windows.Controls.Orientation.Horizontal);
-
-        var host = new System.Windows.Controls.ItemsControl
+        var host = new RibbonQuickAccessToolBar
         {
-            Focusable = false,
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(2, 0, 6, 0),
-            ItemsPanel = new ItemsPanelTemplate(panel),
         };
+
+        // Bound, not assigned: the cap can be retuned at runtime, and the title bar is the
+        // placement most likely to need it (the window title has to keep its room).
+        host.SetBinding(
+            MaxWidthProperty,
+            new System.Windows.Data.Binding(nameof(QuickAccessMaxWidth)) { Source = this });
+
         AttachQatContextMenu(host);
         return host;
     }
@@ -1884,6 +1911,14 @@ public class Ribbon : Control
         host.ContextMenu = EnsureQatContextMenu();
         host.ContextMenuOpening -= OnQatHostContextMenuOpening;
         host.ContextMenuOpening += OnQatHostContextMenuOpening;
+
+        // Every quick-access host passes through here, which makes it the one place that can hand
+        // the toolbar its owning ribbon. It can't find us by walking up: in the TitleBar placement
+        // the toolbar lives in the window's title bar, outside the ribbon's visual tree.
+        if (host is RibbonQuickAccessToolBar toolBar)
+        {
+            toolBar.Owner = this;
+        }
     }
 
     private void OnQatHostContextMenuOpening(object sender, System.Windows.Controls.ContextMenuEventArgs e)
