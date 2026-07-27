@@ -10,7 +10,7 @@
 
   <PropertyGroup Label="Packaging">
     <PackageId>RibbonKit</PackageId>
-    <Version>0.1.0-alpha.1</Version>
+    <Version>1.0.0-dev-$([System.DateTime]::Now.ToString("yyyyMMddHHmm"))</Version>
     <Authors>Irfan Rahmat</Authors>
     <Description>Open-source Office Fluent UI-style Ribbon control library for WPF on modern .NET: adaptive button sizing, galleries, backstage, contextual tabs, quick access toolbar, KeyTips, and Office 2007-2024 themes.</Description>
     <PackageTags>wpf;ribbon;fluent;office;ui;controls</PackageTags>
@@ -20,6 +20,7 @@
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+	<PackageOutputPath>E:\NuGet</PackageOutputPath>
   </PropertyGroup>
 
   <ItemGroup>

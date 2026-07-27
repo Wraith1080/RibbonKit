@@ -6,6 +6,7 @@
          runtime via RibbonKit.Theming.ThemeManager. -->
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/RibbonKit;component/Themes/Office2024.xaml" />
+        <ResourceDictionary Source="/RibbonKit;component/Themes/Mdi.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
 </ResourceDictionary>

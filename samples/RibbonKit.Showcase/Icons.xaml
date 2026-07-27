@@ -527,6 +527,33 @@
         </DrawingImage.Drawing>
     </DrawingImage>
 
+    <!-- Acrylic: a frosted pane blurring a colour spot behind it, with a diagonal shine. -->
+    <DrawingImage x:Key="Icon.Acrylic">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Brush="Transparent" Geometry="M0,0 H24 V24 H0 Z" />
+                <!-- The colour behind the glass, peeking out at the top-left. -->
+                <GeometryDrawing Brush="#0F6CBD">
+                    <GeometryDrawing.Geometry>
+                        <EllipseGeometry Center="8.5,8.5" RadiusX="4.5" RadiusY="4.5" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <!-- The frosted pane: translucent white so the colour reads as blurred through it. -->
+                <GeometryDrawing Brush="#B8FFFFFF">
+                    <GeometryDrawing.Geometry>
+                        <RectangleGeometry Rect="6,6,14,14" RadiusX="2.5" RadiusY="2.5" />
+                    </GeometryDrawing.Geometry>
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="#5A6270" Thickness="1.2" />
+                    </GeometryDrawing.Pen>
+                </GeometryDrawing>
+                <!-- Diagonal glass shine across the pane. -->
+                <GeometryDrawing Brush="#407AA7D9" Geometry="M10,20 L20,10 V13.5 L13.5,20 Z" />
+                <GeometryDrawing Brush="#557AA7D9" Geometry="M6,17 L17,6 H13.5 L6,13.5 Z" />
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
     <!-- Font: a large 'A' and a small 'a' — the type / font metaphor. -->
     <DrawingImage x:Key="Icon.Font">
         <DrawingImage.Drawing>

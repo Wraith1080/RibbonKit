@@ -32,7 +32,7 @@ Office 2019 (+dark/accents), 2013, 2010, 2007 themes on the token layer; visual 
 
 ## Phase 7 — Power features
 
-KeyTips subsystem (full Alt-chain), tab merging API, modal tabs, customize dialog (QAT reordering v1). **Exit criteria:** Alt-H-F-S style chains work end-to-end; merge/modal demos in showcase.
+KeyTips subsystem (full Alt-chain), tab merging API, modal tabs, customize dialog (QAT reordering v1). **KeyTips and the customize dialog are DONE** — they shipped early, alongside Phases 2–5. Tab merging and modal tabs are the remaining work and the next item in flight; full design in [`docs/06-MERGE-AND-MODAL-PLAN.md`](06-MERGE-AND-MODAL-PLAN.md). **Exit criteria:** Alt-H-F-S style chains work end-to-end; merge/modal demos in showcase.
 
 ## Phase 8 — v1.0 release engineering
 
@@ -41,6 +41,8 @@ API review and freeze (rename pass, hide internals, `PublicAPI.txt` analyzer), d
 ## Post-v1 candidates
 
 Simplified (single-row) ribbon, full ribbon customization dialog (tabs/groups), touch/pen affordances, additional theme variants (colorful/black for 2013+), Office-style status bar, ribbon designer/serializer from XML definitions.
+
+**MDI emulation control** — themed in-window "child windows" (float/resize/cascade/tile/minimize/maximize) plus a switchable tabbed-documents mode, with the maximized child's caption merging into the ribbon. Orchestrates existing subsystems (tab merging, `RibbonState` persistence, token theming, `RibbonWindow` chrome/DPI) rather than adding much new mechanism; can build most of the way without waiting on Phase 7's tab-merging API. Full design in [`docs/05-MDI-EMULATION-PLAN.md`](05-MDI-EMULATION-PLAN.md).
 
 ## Suggested working rhythm
 
