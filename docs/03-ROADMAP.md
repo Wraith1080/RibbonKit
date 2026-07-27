@@ -32,7 +32,7 @@ Office 2019 (+dark/accents), 2013, 2010, 2007 themes on the token layer; visual 
 
 ## Phase 7 — Power features
 
-KeyTips subsystem (full Alt-chain), tab merging API, modal tabs, customize dialog (QAT reordering v1). **Exit criteria:** Alt-H-F-S style chains work end-to-end; merge/modal demos in showcase.
+KeyTips subsystem (full Alt-chain), tab merging API, modal tabs, customize dialog (QAT reordering v1). **KeyTips and the customize dialog are DONE** — they shipped early, alongside Phases 2–5. Tab merging and modal tabs are the remaining work and the next item in flight; full design in [`docs/06-MERGE-AND-MODAL-PLAN.md`](06-MERGE-AND-MODAL-PLAN.md). **Exit criteria:** Alt-H-F-S style chains work end-to-end; merge/modal demos in showcase.
 
 ## Phase 8 — v1.0 release engineering
 
