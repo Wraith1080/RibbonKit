@@ -8,12 +8,9 @@ An open-source, Office Fluent UI–style **Ribbon control library for WPF** on m
 
 > **Status: alpha (`0.1.0-alpha.1`).** The control set is feature-complete for most real applications — ribbon, backstage, galleries, QAT with overflow, contextual tabs, KeyTips, tab merging, modal tabs, a runtime customization dialog with persistence, four Office themes, and a full design-time experience in Visual Studio. Roadmap phases 1–5 and 7 are done. The public API is **not frozen yet**; expect renames before `1.0`. See the [roadmap](docs/03-ROADMAP.md).
 
-<!-- Screenshots: drop PNGs in docs/images/ and swap these in.
-![Office 2024 theme](docs/images/theme-2024.png)
-![Office 2010 theme](docs/images/theme-2010.png)
-![Backstage with Mica](docs/images/backstage-mica.png)
-![Ribbon Editor (design-time)](docs/images/ribbon-editor.png)
--->
+![RibbonKit's showcase app in the default Office 2024 theme](docs/images/theme-2024.png)
+
+*The showcase app in the default Office 2024 theme — adaptive group sizing, an in-ribbon Styles gallery with live preview, a split button, and the quick access toolbar in the title bar with its overflow flyout.*
 
 ## Why RibbonKit
 
@@ -67,6 +64,10 @@ Legend: ✅ done · 🚧 in progress · 📋 planned
 | Tab merging — `RibbonMergeSource`, whole tabs + groups into host tabs | ✅ |
 | Modal tabs (Print-Preview style) | ✅ |
 
+![The backstage view rendered over a Windows 11 Mica backdrop](docs/images/backstage-mica.png)
+
+*The backstage over a Windows 11 Mica backdrop. The material shows through because the content behind is HIDDEN rather than blurred — the DWM only composites Mica through pixels the window never painted.*
+
 ### Input & accessibility
 
 | Feature | Status |
@@ -93,6 +94,10 @@ Legend: ✅ done · 🚧 in progress · 📋 planned
 | Animation system — tab slide, hover cross-fade, sliding underline, KeyTip pop, scroll glide, with a reduced-motion switch | ✅ |
 | Dark mode | 📋 |
 
+![The same window in the Office 2010 theme](docs/images/theme-2010.png)
+
+*The same window in the Office 2010 theme — gradient chrome, the connected selected tab, and 2010's signature amber highlight on toggled buttons. Generations swap at runtime and no template is duplicated: themes supply token values, not templates.*
+
 ### Developer experience
 
 | Feature | Status |
@@ -105,6 +110,10 @@ Legend: ✅ done · 🚧 in progress · 📋 planned
 | Showcase / demo app | ✅ |
 | Visual regression snapshot suite per theme × DPI | 📋 |
 | Documentation site | 📋 |
+
+![The design-time Ribbon Editor dialog](docs/images/ribbon-editor.png)
+
+*The design-time Ribbon Editor: the full structure tree with drag-drop reordering, property editing, and a tab preview rendered on the XAML design surface without touching your XAML or the running app.*
 
 ### Preview: MDI emulation
 
