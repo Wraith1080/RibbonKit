@@ -2258,6 +2258,11 @@ a pattern already solved here.
 cap at `Ribbon.QuickAccessMaxWidth` and move the rest into a » flyout; below-ribbon is unconstrained
 and unchanged.
 
+**The overflow flyout's second stranding bug is fixed (§3.39)** — dismissing the flyout while one of
+its drop-down/split entries had its menu open used to leave the ORIGINAL ribbon button opening onto
+an empty menu for the rest of the session. Covered by tests rather than by clicking, so the manual
+repro in §3.39 is still worth one pass.
+
 **Cross-cutting rule worth reading before touching the tab strip: §3.36.** The sliding underline and
 the 2010/2013 connect notch do not update themselves, and neither `SizeChanged` on the tab control
 nor `SizeChanged` on a sibling whose `Visibility` toggles will tell you. Both variants shipped broken
@@ -2267,22 +2272,29 @@ Backlog (rough priority):
 
 1. Design editor: optional clear-to-default buttons for scalar properties. (Drag-drop tree
    reordering + cross-tab/group moves are now DONE — see §5 "Drag-drop reordering".)
-2. **Office 2007 theme** (roadmap Phase 6). 2010 is DONE (§3.27); 2007 is the last remaining classic
-   theme (round Office orb button + heavier glass gradients).
+2. **Office 2007 leftovers** — the two pieces §3.38 deliberately deferred: the 2007 WINDOW FRAME
+   (glass caption + orb overhang), and the real two-pane APPLICATION MENU (command column + Recent
+   Documents + Options/Exit bar). The second is a new control, not a theme, and is a genuine feature
+   gap — `README.md` used to claim it existed. Also owed: the 2007 DPI matrix pass (100–200%).
 3. **Dark mode** (the 2019 white-tab note in §3.6 anticipates it) — the last item of the theming arc,
    and the one that also covers Mica's dark-aware translucency.
 4. RTL + localization resources, then the visual-regression snapshot suite (theme × DPI) — the rest
    of roadmap Phase 6.
-5. **MDI M1–M3**: cascade/tile/arrange commands + Ctrl+Tab (M1), the MVVM `ItemsSource` demo and a
+5. **The rest of the unit tests** — merge/modal invariants (`docs/06-MERGE-AND-MODAL-PLAN.md` §7),
+   customization serializer round-trips, KeyTip resolution, reduction-algorithm gaps. The harness
+   and the house style for headless WPF tests are in place (§3.39), so these are now writing, not
+   inventing.
+6. **MDI M1–M3**: cascade/tile/arrange commands + Ctrl+Tab (M1), the MVVM `ItemsSource` demo and a
    per-theme pass (M2), tabbed-documents mode + `RibbonState` layout persistence (M3). M0 and M4 are
    done, so the feature currently has a hole in its middle.
-6. Roadmap Phase 8 release engineering: API review and freeze (`PublicAPI.txt` — Phase 7 added a lot
+7. Roadmap Phase 8 release engineering: API review and freeze (`PublicAPI.txt` — Phase 7 added a lot
    of public surface), docs site, NuGet polish, performance pass.
-7. GitHub publish: repo URL placeholder in csproj (`YOUR-GITHUB-USERNAME`).
+8. GitHub publish: repo URL placeholder in csproj (`YOUR-GITHUB-USERNAME`).
 
-**Unit tests have started.** The QAT/proxy suite landed with §3.39 (STA harness + borrow protocol +
-overflow measure rules); everything else is still unwritten. `docs/06-MERGE-AND-MODAL-PLAN.md` §7
-lists the invariants worth
-asserting — merge ordering across permutations, merge/unmerge round-trips, group restore with two
-sources in one tab, capture-while-modal, modal enter/exit selection. All of Phase 7 was verified by
-clicking, and those invariants are the kind that break silently.
+**Unit tests have started — 47 green (2026-07-27).** The QAT/proxy suite landed with §3.39: the STA
+harness, the borrow protocol, and the overflow strip's measure/arrange rules, alongside the existing
+reduction/size-definition/theme-scope tests. Everything else is still unwritten.
+`docs/06-MERGE-AND-MODAL-PLAN.md` §7 lists the invariants worth asserting next — merge ordering
+across permutations, merge/unmerge round-trips, group restore with two sources in one tab,
+capture-while-modal, modal enter/exit selection. All of Phase 7 was verified by clicking, and those
+invariants are the kind that break silently.
