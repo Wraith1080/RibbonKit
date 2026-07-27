@@ -69,9 +69,24 @@ public static class RibbonCustomizationSerializer
             return; // Corrupt/foreign string — leave the ribbon as-is.
         }
 
-        if (layout is not null)
+        if (layout is null)
+        {
+            return;
+        }
+
+        // ApplyLayout clears and rebuilds Ribbon.Tabs, which would strand merged tabs at the end
+        // with stale merge records. Take every merge source out first and put it back after —
+        // simpler than re-asserting positions inside a collection that was cleared underneath the
+        // merge service, and customization is a rare, user-initiated operation
+        // (docs/06-MERGE-AND-MODAL-PLAN.md §5.3).
+        List<RibbonMergeSource> merged = ribbon.UnmergeAllForRebuild();
+        try
         {
             ApplyLayout(ribbon, layout);
+        }
+        finally
+        {
+            ribbon.RemergeAfterRebuild(merged);
         }
     }
 
@@ -87,6 +102,15 @@ public static class RibbonCustomizationSerializer
             if (tab.IsContextual)
             {
                 continue; // App-driven visibility; never persisted.
+            }
+
+            // Merged tabs belong to a transient child (an MDI document, a plug-in). Persisting
+            // their order or visibility would restore stale state into a ribbon whose source is
+            // gone — and a group a source contributed into a HOST tab would come back as a user
+            // customization, which is worse. Skip both (plan §5.2).
+            if (Ribbon.GetIsMerged(tab))
+            {
+                continue;
             }
 
             string? tabId = Ribbon.GetCommandId(tab);

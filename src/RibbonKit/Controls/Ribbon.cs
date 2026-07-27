@@ -198,6 +198,7 @@ public class Ribbon : Control
         // callbacks that can run as soon as the object is initialized from XAML.
         _modalScope = new RibbonModalScope(this);
         _exitModalCommand = new ModalCloseCommand(this);
+        _mergeService = new RibbonMergeService(this);
 
         var tabs = new ObservableCollection<RibbonTab>();
         tabs.CollectionChanged += OnTabsCollectionChanged;
@@ -262,6 +263,117 @@ public class Ribbon : Control
     {
         get => (int)GetValue(SelectedIndexProperty);
         set => SetValue(SelectedIndexProperty, value);
+    }
+
+    // ==========================================================================
+    // Tab merging. A child context (embedded editor, MDI child, plug-in) hands the
+    // host ribbon a RibbonMergeSource; its tabs join the strip while the child is
+    // active and leave when it isn't. Bookkeeping lives in RibbonMergeService.
+    // ==========================================================================
+
+    private readonly RibbonMergeService _mergeService;
+
+    private static readonly DependencyPropertyKey IsMergedPropertyKey =
+        DependencyProperty.RegisterAttachedReadOnly(
+            "IsMerged",
+            typeof(bool),
+            typeof(Ribbon),
+            new FrameworkPropertyMetadata(false));
+
+    /// <summary>
+    /// Identifies the read-only <c>IsMerged</c> attached property: whether a tab reached this
+    /// ribbon through <see cref="Merge"/> rather than being declared on it. Merged content is
+    /// excluded from ribbon customization — see <see cref="RibbonMergeSource"/>.
+    /// </summary>
+    public static readonly DependencyProperty IsMergedProperty = IsMergedPropertyKey.DependencyProperty;
+
+    /// <summary>Whether the element was contributed by a <see cref="RibbonMergeSource"/>.</summary>
+    public static bool GetIsMerged(DependencyObject element) =>
+        (bool)element.GetValue(IsMergedProperty);
+
+    internal static void SetIsMergedInternal(DependencyObject element, bool value) =>
+        element.SetValue(IsMergedPropertyKey, value);
+
+    private static readonly DependencyPropertyKey MergeSourcePropertyKey =
+        DependencyProperty.RegisterAttachedReadOnly(
+            "MergeSource",
+            typeof(RibbonMergeSource),
+            typeof(Ribbon),
+            new FrameworkPropertyMetadata(null));
+
+    /// <summary>
+    /// Identifies the read-only <c>MergeSource</c> attached property: the source that contributed
+    /// this element, or <see langword="null"/> for host-declared content.
+    /// </summary>
+    public static readonly DependencyProperty MergeSourceProperty = MergeSourcePropertyKey.DependencyProperty;
+
+    /// <summary>The source that contributed this element, or <see langword="null"/>.</summary>
+    public static RibbonMergeSource? GetMergeSource(DependencyObject element) =>
+        (RibbonMergeSource?)element.GetValue(MergeSourceProperty);
+
+    internal static void SetMergeSourceInternal(DependencyObject element, RibbonMergeSource? value) =>
+        element.SetValue(MergeSourcePropertyKey, value);
+
+    /// <summary>The merge sources currently contributing to this ribbon, in merge order.</summary>
+    public IReadOnlyList<RibbonMergeSource> MergedSources => _mergeService.Sources;
+
+    /// <summary>
+    /// Inserts <paramref name="source"/>'s tabs into this ribbon. Position follows
+    /// <see cref="RibbonMergeSource.Order"/> — host-declared tabs come first, then merged sources
+    /// by order and then by when they first merged, so repeated merge/unmerge cycles are stable.
+    /// </summary>
+    /// <returns><see langword="false"/> when the source is already merged into this ribbon.</returns>
+    /// <exception cref="InvalidOperationException">The source is merged into a different ribbon.</exception>
+    public bool Merge(RibbonMergeSource source)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        return _mergeService.Merge(source);
+    }
+
+    /// <summary>
+    /// Removes the tabs <paramref name="source"/> contributed, restoring the ribbon to its
+    /// host-declared state. Unmerging the tab currently held modal also ends modal mode.
+    /// </summary>
+    /// <returns><see langword="false"/> when the source is not merged into this ribbon.</returns>
+    public bool Unmerge(RibbonMergeSource source)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        return _mergeService.Unmerge(source);
+    }
+
+    /// <summary>Whether <paramref name="source"/> is currently merged into this ribbon.</summary>
+    public bool IsMerged(RibbonMergeSource source)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        return _mergeService.IsMerged(source);
+    }
+
+    // Used by RibbonCustomizationSerializer.Apply, which rebuilds Tabs wholesale: merged tabs step
+    // out for the rebuild and step back in afterwards, rather than the service trying to re-assert
+    // positions inside a collection that was cleared underneath it.
+    internal List<RibbonMergeSource> UnmergeAllForRebuild() => _mergeService.UnmergeAll();
+
+    internal void RemergeAfterRebuild(List<RibbonMergeSource> sources) => _mergeService.Remerge(sources);
+
+    /// <summary>
+    /// Called after any merge or unmerge. Keeps the selection valid and re-places the selection
+    /// visuals: the sliding underline and the 2010/2013 body-border notch are positioned from the
+    /// selected tab's transform, and adding or removing tabs raises no selection or size event —
+    /// the same reason a theme swap and a modal transition re-place them explicitly (§3.29).
+    /// </summary>
+    internal void OnMergeChanged()
+    {
+        if (SelectedTab is null || !Tabs.Contains(SelectedTab) || SelectedTab.Visibility != Visibility.Visible)
+        {
+            SelectedTab = FindFirstVisibleTab();
+        }
+
+        if (_ribbonTabControl is { } tabControl)
+        {
+            tabControl.InvalidateArrange();
+            tabControl.UpdateLayout();
+            tabControl.RefreshSelectionVisuals();
+        }
     }
 
     // ==========================================================================
@@ -1673,6 +1785,10 @@ public class Ribbon : Control
                 // Removing the modal tab ends modal mode; removing any other drops its
                 // recorded pre-modal visibility.
                 _modalScope.OnTabRemoved(tab);
+
+                // A merged tab removed by some other path (the customize page, an app editing
+                // Tabs directly) must leave its merge record too, or unmerge chases a ghost.
+                _mergeService.OnTabRemoved(tab);
             }
         }
 

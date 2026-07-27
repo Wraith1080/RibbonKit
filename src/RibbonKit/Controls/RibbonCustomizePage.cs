@@ -90,9 +90,13 @@ public sealed class RibbonCustomizeNode : INotifyPropertyChanged
                 return;
             }
 
+            // Merged tabs don't count towards "at least one tab must stay visible": they belong to
+            // a transient child, so leaning on them would let the user hide every OWN tab and be
+            // left with an empty strip the moment the child deactivates.
             if (!value && !_ribbon.Tabs.Any(other =>
                     !ReferenceEquals(other, tab)
                     && !other.IsContextual
+                    && !Controls.Ribbon.GetIsMerged(other)
                     && other.Visibility == Visibility.Visible))
             {
                 // Refused: notify AFTER the binding transfer completes, so the re-read snaps
@@ -356,8 +360,10 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
             {
                 // Contextual tabs are excluded: the APPLICATION drives their visibility
                 // (e.g. "Picture Format" appears when a picture is selected), so a manual
-                // visibility checkbox would fight it.
-                if (tab.IsContextual)
+                // visibility checkbox would fight it. MERGED tabs are excluded for that reason
+                // and one more — they belong to a transient child, so any edit here would be lost
+                // the moment the child deactivates, and none of it is persisted anyway.
+                if (tab.IsContextual || Controls.Ribbon.GetIsMerged(tab))
                 {
                     continue;
                 }

@@ -309,6 +309,32 @@ public partial class MainWindow : RibbonWindow
         }
     }
 
+    // ---- Tab merging ---------------------------------------------------------------
+    // A real host would drive this from whatever "the child is active now" means to it — an MDI
+    // container's ActiveDocument, a selected chart, a focused editor. The toggle stands in for
+    // that signal so the merge and unmerge paths are both one click away.
+    //
+    // Merge inserts the source's tabs by its Order; Unmerge takes exactly those tabs back out.
+    // Repeat the toggle and they return to the same slot — the merge service remembers each
+    // source's first-merge sequence, so ordering doesn't drift over cycles.
+    private void OnToggleChartToolsMerge(object sender, RoutedEventArgs e)
+    {
+        if (MergeToggle.IsChecked == true)
+        {
+            MainRibbon.Merge(ChartToolsSource);
+
+            // Office jumps to a tool tab when its context appears; do the same so the merge is
+            // immediately visible rather than hiding at the end of the strip.
+            MainRibbon.SelectedTab = ChartToolsSource.Tabs.FirstOrDefault();
+            StatusReady.Content = "Chart Tools merged";
+        }
+        else
+        {
+            MainRibbon.Unmerge(ChartToolsSource);
+            StatusReady.Content = "Ready";
+        }
+    }
+
     // Backstage footer BUTTON items: they run an action instead of switching to a page.
     private void OnBackstageOptions(object sender, RoutedEventArgs e)
     {
