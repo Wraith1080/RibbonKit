@@ -1965,14 +1965,17 @@ each fail exactly one fact; a commented-out `{StaticResource}` correctly does no
   against the split; treat the guard as part of the split, not an optional extra.
 - **No help for cross-cutting edits.** Renaming a token or auditing every template still
   touches ten files instead of one, and costs slightly more than the monolith did.
-- **Design-time load.** The XAML designer now walks an eleven-dictionary graph. Watch whether
-  designer preview (§3.22, §3.23) gets slower or flakier; that feature is a headline one.
+- ~~**Design-time load.**~~ The XAML designer now walks an eleven-dictionary graph, so designer
+  preview (§3.22, §3.23) was the remaining worry. **Checked 2026-07-27 on a laptop — no
+  measurable slowdown or flakiness in either the XAML editor or the Ribbon Editor.** A laptop
+  is the weaker case, so this is a reasonably strong negative result.
 - **Discoverability.** "Where is X?" is one grep away, but it *is* an extra step, and the
   aggregator's merge order now carries meaning that a casual reader will not guess.
 
 #### Exit criteria — revisit when any of these is true
 
-- Designer preview or the Ribbon Editor becomes measurably slower or less reliable.
+- Designer preview or the Ribbon Editor becomes measurably slower or less reliable (checked
+  once on 2026-07-27 and clean; re-check on a large multi-tab document).
 - A cross-part resource bug reaches runtime *despite* the guard test (i.e. the guard has a
   hole — note it only tracks keys per file, not per nested resource scope).
 - Sessions are observed reading three or more parts for a typical single-control change,
