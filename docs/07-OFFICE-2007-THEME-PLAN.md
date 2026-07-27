@@ -217,13 +217,66 @@ Two implications for RibbonKit:
    Tools, and so on) and RibbonKit already binds contextual colouring to app state — so ship yellow
    as the default and keep the hue consumer-settable rather than baking it into the tokens alone.
 
-### 4.5 Groups
+### 4.5 Groups and the body border — ⚠ REVISED after the S1 visual check
 
-- `Group.Separator` `#9EBED9`, with a `#ECF4FA` light companion line beside it (a classic etched
-  separator). RibbonKit has one separator token, so either accept the single line or add a
-  `Group.SeparatorHighlight` key — **decide in S4, and if a key is added it goes into all five
-  theme files**.
-- Group label text `#15428B`, centred at the bottom of the body. No separate strip or fill.
+The S1 build was reviewed on Windows on 2026-07-27 and the user flagged two structural gaps. Both
+are real, and measuring them **corrected an earlier misreading in this document**.
+
+#### ❌ Correction: 2007 has no group separator at all
+
+An earlier revision recorded "`Group.Separator` `#9EBED9` with a `#ECF4FA` light companion (a
+classic etched separator)". **That was wrong.** Sampling horizontally across a group boundary shows
+this repeating run:
+
+```
+… #CCDCEE  #A8BFD4  #E4ECF5  #CCDCEE  #A8BFD4  #E4ECF5  #CCDCEE …
+   body     border   inner     gap      border   inner     body
+                     highlight                   highlight
+```
+
+That is **two adjacent group boxes**, not one separator. Every 2007 group is a bordered box with its
+own inner highlight; what reads as a divider is simply where two boxes meet. So in 2007
+`Group.Separator` should be **`Transparent`** and the boxes carry the visual weight.
+
+#### Measured group box
+
+| Element | Value |
+|---|---|
+| Group border | `#A8BFD4` (`#9CBEDA` alongside the label strip) |
+| Inner highlight, 1px inside the border | `#E4ECF5` (`#EDF5FB` alongside the label) |
+| Group body fill | `0.00 #DEE8F5` → `0.16 #C7D8ED` → `1.00 #D9E8F6` — the valley again |
+| **Group label strip** | flat **`#C1D9F1`**, a clear step darker than the body above it |
+| Label strip height | ~19px of the ~107px box |
+| Corner radius | ~3px |
+
+The label strip is the part the S1 build misses most visibly: right now the label sits on the same
+surface as the group content, where 2007 gives it its own shaded band at the foot of the box.
+
+#### The ribbon body border does loop
+
+Confirmed: the body's left edge carries the same `#8DB2E3` border as its top, with a `#CEF2FA` inner
+highlight just inside it, and the bottom-left corner rounds over ~3px. `ContentBorderThickness` is
+already `1`, so the loop should draw — what is missing is **`ContentCornerRadius`, currently `0`;
+set it to `3`**.
+
+On the connect-foot worry: the radius only affects the four far corners, while the notch paints over
+the top border wherever the selected tab sits. Those do not overlap unless the first tab is flush
+against the body's top-left corner — worth one look during S4, but it is not the collision it
+sounds like.
+
+#### What this costs — the predicted template change, now arrived
+
+This is the moment §1 warned about: 2007 is the generation that forces a shared-template change.
+RibbonKit has exactly **one** group token today (`Group.Separator`). Delivering the box needs
+**six new keys** —
+
+`Group.Background`, `Group.Border`, `Group.InnerHighlight`, `Group.LabelBackground`,
+`Metrics.GroupBorderThickness`, `Metrics.GroupCornerRadius`
+
+— which means: all **five** theme files gain six keys each (95 → 101), the `RibbonGroup` template in
+`Themes/Controls.Groups.xaml` gains a bordered box plus a label band, and `ThemeDictionaryScopeTests`
+must pass afterwards. Flat themes zero the new keys (`Transparent` / `0`), exactly as they already do
+for underlines and radii, so no other theme changes appearance.
 
 ---
 
@@ -358,10 +411,10 @@ partly because too much changed between looks.
 | # | Stage | Contents | Exit criteria |
 |---|---|---|---|
 | ~~S0~~ | ~~Audit~~ | ✅ **Done 2026-07-27.** Application menu confirmed absent → `Classic2007`. Full palette measured incl. the contextual band. DPI scaling verified at 125%. Git recovery dropped as unnecessary. | — |
-| **S1** | Palette | `Office2007` enum member; `Tokens.Office2007.xaml` cloned from 2010, re-tinted to §4.1/§4.2. **Colours only — no glass, no orb.** | Theme switches cleanly; nothing untemplated; parity check passes. |
+| ~~S1~~ | ~~Palette~~ | ✅ **Done 2026-07-27**, reviewed on Windows. `Office2007` enum member, `Tokens.Office2007.xaml` (95/95 parity), showcase button. The §4.3 glass shipped early with it, so S2 is refinement rather than construction. Review found the two §4.5 gaps. | — |
 | **S2** | Glass | The §4.3 hard-crease gels plus the border/rim/highlight keys. | Hover and press read as 2007 gloss; no 1px jitter (static `BorderThickness`, per §3.27 pass 5). |
 | **S3** | Orb | Overhang prototype **first**, then `RibbonApplicationButtonShape`, template trigger, designer metadata. | Orb renders at 37px, overhangs into the title bar uncliped, opens the backstage; other themes visually unchanged. |
-| **S4** | Geometry + frame | Domed tabs, connect mechanism, group separators, the §6 window frame, maximize re-check. | Side-by-side with `noaero.png` is convincing at 100% DPI. |
+| **S4** | Geometry + frame | **Group boxes (6 new tokens + the `Controls.Groups.xaml` template — see §4.5)**, `ContentCornerRadius` 0→3, domed tabs, the §6 window frame, maximize re-check. | Side-by-side with `noaero.png` is convincing at 100% DPI; `dotnet test` green. |
 | **S5** | Accent + backstage | `ApplyAccentOverrides` case, `Glass()` helper, `AccentOverrideKeys`, `Classic2007` backstage design. | Custom accent and colored title bar behave; no leakage on theme switch. |
 | **S6** | Wiring + verify | Showcase button (`OnApplyOffice2007`, following `OnApplyOffice2010`), DPI matrix 100/125/150/175/200%, **fix the README application-menu row**, design notes §3.38, roadmap update. | DPI matrix clean; docs updated. |
 
@@ -374,6 +427,7 @@ partly because too much changed between looks.
 | Orb overhang clipped by the tab scroll host | **High** — 22px of overhang, and this class of failure already happened in §3.27 | Prototype the overhang in S3 before styling. Fallback: `RibbonWindow` title-bar layer. |
 | The 5px window frame perturbs the measured-margin maximize fix (§2.3) | Medium | Re-check maximize at S4 on a multi-monitor, mixed-DPI setup. |
 | The contextual band wants a gradient + edge line, but the tokens are solid brushes | Medium | Gradients drop in free at a token key; the `#FDE41B` edge line may need a new key (§4.4). Decide in S4; a new key goes into all five files. |
+| **The group-box template change is the largest single edit in this theme** | **Confirmed, not a risk any more** | Six new keys across five theme files plus the `RibbonGroup` template (§4.5). Do it as its own commit, run `dotnet test` immediately after, and keep the flat themes zeroed. |
 | A new resource breaks the split-dictionary scope rule | Medium | `dotnet test` after every dictionary edit. |
 | Design-time preview degrades | Medium | The split is still ⚗ experimental (§3.37) with "designer gets slower/flakier" as an explicit exit criterion. 2007 is its first real load test — **if the designer degrades, that is a signal about the split, not about 2007.** Note it rather than working around it. |
 | Adding public API right before the freeze | Low but permanent | Name the enums and DP as final in S3. |
