@@ -1,5 +1,9 @@
 # Office 2007 Theme — Implementation Plan
 
+> **Status: COMPLETE 2026-07-27**, bar two deliberate deferrals (§9). The as-built record is
+> `04-DESIGN-NOTES.md` §3.38 — read that first; this plan stays useful for the measured palette in §4.
+> Original header follows.
+>
 > **Status:** S0 complete, S1 not started. Written 2026-07-27; revised the same day after the user
 > supplied eleven reference screenshots and the S0 audit ran. This is the last remaining item that
 > can still force a change to the token layer or the shared templates — everything else left before
@@ -443,11 +447,11 @@ partly because too much changed between looks.
 |---|---|---|---|
 | ~~S0~~ | ~~Audit~~ | ✅ **Done 2026-07-27.** Application menu confirmed absent → `Classic2007`. Full palette measured incl. the contextual band. DPI scaling verified at 125%. Git recovery dropped as unnecessary. | — |
 | ~~S1~~ | ~~Palette~~ | ✅ **Done 2026-07-27**, reviewed on Windows. `Office2007` enum member, `Tokens.Office2007.xaml` (95/95 parity), showcase button. The §4.3 glass shipped early with it, so S2 is refinement rather than construction. Review found the two §4.5 gaps. | — |
-| **S2** | Glass | The §4.3 hard-crease gels plus the border/rim/highlight keys. | Hover and press read as 2007 gloss; no 1px jitter (static `BorderThickness`, per §3.27 pass 5). |
-| **S3** | Orb | Overhang prototype **first**, then `RibbonApplicationButtonShape`, template trigger, designer metadata. | Orb renders at 37px, overhangs into the title bar uncliped, opens the backstage; other themes visually unchanged. |
+| ~~S2~~ | ~~Glass~~ | ✅ **Shipped with S1** — the measured crease values were already in hand, so splitting them out would have meant reviewing a flat 2007 that told us nothing. S2 became refinement. | — |
+| ~~S3~~ | ~~Orb~~ | ✅ **Done.** Overhang works. Needed `WindowChrome.IsHitTestVisibleInChrome` (only the bottom half was clickable), a backstage-hide trigger, size 37→46, and a shadow instead of a border. | — |
 | **S4** | Geometry + frame | ✅ Group boxes + `ContentCornerRadius` 0→3 **built 2026-07-27** (§4.5), awaiting `dotnet test` and a Windows look. Remaining: domed tabs, the §6 window frame, maximize re-check. | Side-by-side with `noaero.png` is convincing at 100% DPI; `dotnet test` green. |
-| **S5** | Accent + backstage | `ApplyAccentOverrides` case, `Glass()` helper, `AccentOverrideKeys`, `Classic2007` backstage design. | Custom accent and colored title bar behave; no leakage on theme switch. |
-| **S6** | Wiring + verify | Showcase button (`OnApplyOffice2007`, following `OnApplyOffice2010`), DPI matrix 100/125/150/175/200%, **fix the README application-menu row**, design notes §3.38, roadmap update. | DPI matrix clean; docs updated. |
+| ~~S5~~ | ~~Accent + backstage~~ | ✅ **Done.** `Glass()` helper beside `Gel()`, `Office2007` case, hot-state guard widened. `Classic2007` deliberately NOT added — `Classic2010` already is the 2007 look and a near-duplicate enum member before the freeze was not worth it. | — |
+| ~~S6~~ | ~~Wiring + verify~~ | ✅ **Done.** Showcase button + `ApplyTheme` helper, README application-menu row corrected and the 2007 row marked ✅, design notes §3.38, roadmap and features updated. **Still owed: the DPI matrix run at 100/125/150/175/200%.** | DPI matrix clean. |
 
 ---
 

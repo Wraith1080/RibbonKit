@@ -170,7 +170,15 @@
                                    Visibility="{Binding HasMergedCaption, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}, Converter={StaticResource RibbonKit.BoolToVis}}" />
                             <!-- Application (File) button: opens the backstage; hidden
                                  when the hosting Ribbon has no Backstage assigned -->
+                            <!-- WindowChrome.IsHitTestVisibleInChrome: the orb overhangs UP into the
+                                 caption region, and the caption swallows input as a window drag, so
+                                 only the part below the caption line was clickable. This opts the
+                                 button back into normal hit testing. No-op for the rectangular File
+                                 tab, which never reaches the caption. -->
                             <ToggleButton x:Name="ApplicationButton"
+                                          WindowChrome.IsHitTestVisibleInChrome="True"
+                                          AutomationProperties.Name="{Binding ApplicationButtonHeader, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
+                                          ToolTip="{Binding ApplicationButtonHeader, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
                                           Margin="{DynamicResource RibbonKit.Metrics.ApplicationButtonMargin}"
                                           Content="{Binding ApplicationButtonHeader, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
                                           IsChecked="{Binding IsBackstageOpen, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}, Mode=TwoWay}">
@@ -208,6 +216,44 @@
                                                                    VerticalAlignment="Bottom"
                                                                    Fill="{DynamicResource RibbonKit.Brushes.ApplicationButton.HoverUnderline}"
                                                                    Visibility="Collapsed" />
+                                                        <!-- Office 2007 ORB, shown instead of Chrome when
+                                                             Ribbon.ApplicationButtonShape is Orb. Top-aligned
+                                                             with a negative top margin so it straddles the
+                                                             tab-strip / title-bar boundary like the real one.
+                                                             The glyph is built in because
+                                                             ApplicationButtonHeader is a string and cannot
+                                                             render inside a 37px circle; the header becomes
+                                                             the accessible name instead. -->
+                                                        <Grid x:Name="Orb"
+                                                              Visibility="Collapsed"
+                                                              VerticalAlignment="Top"
+                                                              Width="{DynamicResource RibbonKit.Metrics.ApplicationOrbSize}"
+                                                              Height="{DynamicResource RibbonKit.Metrics.ApplicationOrbSize}"
+                                                              Margin="{DynamicResource RibbonKit.Metrics.ApplicationOrbMargin}">
+                                                            <!-- The dark edge of a real orb is a soft
+                                                                 SHADOW plus a light rim, not a dark
+                                                                 stroke. No inset highlight ring: a full
+                                                                 circle reads as a hard band, and the
+                                                                 sphere gradient already carries the
+                                                                 top-arc highlight. -->
+                                                            <Ellipse x:Name="OrbFill"
+                                                                     Fill="{DynamicResource RibbonKit.Brushes.ApplicationOrb.Background}"
+                                                                     Stroke="{DynamicResource RibbonKit.Brushes.ApplicationOrb.Ring}"
+                                                                     StrokeThickness="1.5"
+                                                                     Effect="{DynamicResource RibbonKit.Effects.ApplicationOrbShadow}" />
+                                                            <Viewbox Margin="13" Stretch="Uniform">
+                                                                <Grid Width="16" Height="16">
+                                                                    <Rectangle Width="7" Height="7" RadiusX="1.5" RadiusY="1.5"
+                                                                               HorizontalAlignment="Left" VerticalAlignment="Top" Fill="#E8762C" />
+                                                                    <Rectangle Width="7" Height="7" RadiusX="1.5" RadiusY="1.5"
+                                                                               HorizontalAlignment="Right" VerticalAlignment="Top" Fill="#5FA92C" />
+                                                                    <Rectangle Width="7" Height="7" RadiusX="1.5" RadiusY="1.5"
+                                                                               HorizontalAlignment="Left" VerticalAlignment="Bottom" Fill="#2C7FD1" />
+                                                                    <Rectangle Width="7" Height="7" RadiusX="1.5" RadiusY="1.5"
+                                                                               HorizontalAlignment="Right" VerticalAlignment="Bottom" Fill="#F2B705" />
+                                                                </Grid>
+                                                            </Viewbox>
+                                                        </Grid>
                                                     </Grid>
                                                     <ControlTemplate.Triggers>
                                                         <Trigger Property="IsMouseOver" Value="True">
@@ -229,6 +275,49 @@
                                                             <Setter TargetName="HoverUnderline" Property="Visibility" Value="Collapsed" />
                                                             <Setter Property="Foreground" Value="#FFFFFF" />
                                                         </Trigger>
+                                                        <!-- Orb mode. LAST in the list on purpose: the
+                                                             hover/pressed/checked triggers above re-show
+                                                             HoverUnderline, and the last matching setter for
+                                                             a property wins, so this must follow them. -->
+                                                        <DataTrigger Binding="{Binding ApplicationButtonShape, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
+                                                                     Value="Orb">
+                                                            <Setter TargetName="Chrome" Property="Visibility" Value="Collapsed" />
+                                                            <Setter TargetName="HoverUnderline" Property="Visibility" Value="Collapsed" />
+                                                            <Setter TargetName="Orb" Property="Visibility" Value="Visible" />
+                                                        </DataTrigger>
+                                                        <MultiDataTrigger>
+                                                            <MultiDataTrigger.Conditions>
+                                                                <Condition Binding="{Binding ApplicationButtonShape, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}" Value="Orb" />
+                                                                <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True" />
+                                                            </MultiDataTrigger.Conditions>
+                                                            <Setter TargetName="OrbFill" Property="Fill"
+                                                                    Value="{DynamicResource RibbonKit.Brushes.ApplicationOrb.HoverBackground}" />
+                                                            <Setter TargetName="OrbFill" Property="Stroke"
+                                                                    Value="{DynamicResource RibbonKit.Brushes.ApplicationOrb.HoverRing}" />
+                                                        </MultiDataTrigger>
+                                                        <MultiDataTrigger>
+                                                            <MultiDataTrigger.Conditions>
+                                                                <Condition Binding="{Binding ApplicationButtonShape, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}" Value="Orb" />
+                                                                <Condition Binding="{Binding IsPressed, RelativeSource={RelativeSource Self}}" Value="True" />
+                                                            </MultiDataTrigger.Conditions>
+                                                            <Setter TargetName="OrbFill" Property="Fill"
+                                                                    Value="{DynamicResource RibbonKit.Brushes.ApplicationOrb.PressedBackground}" />
+                                                            <Setter TargetName="OrbFill" Property="Stroke"
+                                                                    Value="{DynamicResource RibbonKit.Brushes.ApplicationOrb.HoverRing}" />
+                                                        </MultiDataTrigger>
+                                                        <!-- Backstage open. The orb is drawn with a
+                                                             negative margin above its row, which puts it
+                                                             over the backstage adorner as well, so it has
+                                                             to hide itself. IsChecked is bound TwoWay to
+                                                             Ribbon.IsBackstageOpen. Must stay LAST so it
+                                                             beats the shape trigger that shows the orb. -->
+                                                        <MultiDataTrigger>
+                                                            <MultiDataTrigger.Conditions>
+                                                                <Condition Binding="{Binding ApplicationButtonShape, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}" Value="Orb" />
+                                                                <Condition Binding="{Binding IsChecked, RelativeSource={RelativeSource Self}}" Value="True" />
+                                                            </MultiDataTrigger.Conditions>
+                                                            <Setter TargetName="Orb" Property="Visibility" Value="Collapsed" />
+                                                        </MultiDataTrigger>
                                                     </ControlTemplate.Triggers>
                                                 </ControlTemplate>
                                             </Setter.Value>

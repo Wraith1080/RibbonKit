@@ -1983,6 +1983,146 @@ each fail exactly one fact; a commented-out `{StaticResource}` correctly does no
 
 If it survives a few sessions, promote it out of EXPERIMENTAL and drop the caveat in §2.1.
 
+### 3.38 Office 2007 theme — the last generation, and the one that changed the templates — 2026-07-27
+
+The fifth and oldest theme. Planned in `docs/07-OFFICE-2007-THEME-PLAN.md`, which stays the
+reference for the measured palette; this section records what was actually built and what it cost.
+
+**Why it was scheduled before Phase 8:** every other remaining item is additive, but 2007 was the
+only generation left that could still force a change to the token layer or the shared templates. It
+did — twice (the group box and the orb). Doing it after an API freeze would have been painful.
+
+#### Method: measured, not guessed
+
+The user supplied 13 real Office 2007 screenshots and every colour in `Tokens.Office2007.xaml` was
+sampled from them pixel by pixel rather than eyeballed. That single change of method is why 2007
+took roughly four visual passes against 2010's seven (§3.27). It also **corrected two things this
+document previously stated wrongly**:
+
+- §3.27 recorded that 2007's pressed state "inverts (darker at top = recessed)". It does not.
+  Pressed keeps the same light-top / dark-waist / light-foot valley as hover and simply shifts from
+  gold to saturated orange.
+- An early pass here recorded an "etched group separator, `#9EBED9` with a `#ECF4FA` companion".
+  **Office 2007 has no group separator at all.** Sampling across a group boundary gives
+  `body / border / inner-highlight / gap / border / inner-highlight / body` — that is two adjacent
+  group BOXES meeting, not one divider.
+
+#### The two signatures
+
+- **The valley.** Both the title bar and the ribbon body run light at the top, dip to a darker waist
+  high up (17–28% down), then lighten to the foot. No other RibbonKit theme does this, and it is the
+  strongest 2007 cue — the theme reads as 2007 before any glass is applied.
+- **The crease.** Every hot state is a 4–5 stop gel with **two `GradientStop`s at the same offset**,
+  painting an instant colour step (hover crease at 0.38, pressed at 0.40). Hover is gold, pressed is
+  saturated orange. 2010 explicitly softened this into a smooth ramp, which is why the derived-accent
+  helpers must stay separate (below).
+
+The tab strip is a **flat `SolidColorBrush`** (`#BFDBFF`), identical under Aero and non-Aero — the
+one place 2007 is flatter than 2010.
+
+#### Token growth: 95 → 118 keys per theme file
+
+| Batch | Keys | What forced it |
+|---|---|---|
+| Group box | 7 | `Group.Background/Border/InnerHighlight/LabelBackground`, `GroupBorderThickness`, `GroupCornerRadius`, `GroupLabelCornerRadius` |
+| Group spacing | 4 | `GroupMargin`, `GroupPadding`, `GroupsRowMargin`, `GroupCollapsedMargin` — see below |
+| Separator suppression | 1 | `GroupSeparatorOpacity` |
+| Orb | 6 | `ApplicationOrb.Background/HoverBackground/PressedBackground/Ring/HoverRing`, `ApplicationOrbSize`, `ApplicationOrbMargin`, `Effects.ApplicationOrbShadow` |
+| Title-bar QAT + backstage | 3 | `TitleBarQatMargin`, `Backstage.NavBackground`, `BackstageBackButtonSize` |
+
+Every non-2007 value reproduces a previously hard-coded literal exactly, so the other four themes are
+unchanged. **Five hard-coded literals became tokens in the process** — that is the real story of this
+theme: 2007 is different enough that anything the templates had baked in had to become themable.
+
+#### Group boxes (`Themes/Controls.Groups.xaml`)
+
+Each 2007 group is a bordered rounded box with a light inner rim and a shaded label band at its foot
+(`#A8BFD4` border, `#E4ECF5` rim, `#C1D9F1` band, ~3px radius). The flat themes zero the new keys, so
+one visual tree serves both looks. The collapsed-group button gets the same box so a mixed row reads
+uniformly — but its `Chrome` keeps its own `ControlHighlightBorderThickness`, because that thickness
+is statically reserved (§3.27 fifth pass) and swapping it would bring 2010's 1px hover jitter back.
+
+⚠ **Two placement rules were learned the hard way:**
+
+1. **The box goes OUTSIDE `PART_NormalHost`.** `RibbonGroup` re-homes `_normalHost.Child` into the
+   flyout when a collapsed group opens, so a box inside the Decorator travelled into the popup and
+   drew a box inside a popup that already had chrome. Correct order is
+   `Border GroupBox → Border rim → Decorator PART_NormalHost → content`; only bare content moves.
+   The `SizeState=Collapsed` trigger therefore hides `GroupBox`, not the host.
+2. **`GroupPadding` belongs on the `ItemsPresenter`, not the rim Border.** On the rim it insets the
+   label band too, and the band floats free of the border instead of spanning it.
+
+Splitting the old hard-coded `Margin="4,2,4,0"` into an outer `GroupMargin` and an inner
+`GroupPadding` fixed two bugs at once: content had lost its inset (combo boxes and galleries hugged
+the border) and box-to-box gaps had grown to ~11px.
+
+#### The orb (`RibbonApplicationButtonShape`)
+
+The only new public API: an enum (`Tab` | `Orb`) in `RibbonControlSize.cs` plus
+`Ribbon.ApplicationButtonShape`, defaulted to `Tab` and registered for the designer. **Shape is an
+application choice, not a theme one** — RibbonKit themes recolour through tokens and never reshape
+controls, so the showcase opts in explicitly when it switches to 2007.
+
+The glyph is built into the template because `ApplicationButtonHeader` is typed `string` — a consumer
+literally cannot put an image in it. The header became the orb's `AutomationProperties.Name` and
+`ToolTip` instead.
+
+⚠ **Three findings worth keeping:**
+
+1. **`WindowChrome.IsHitTestVisibleInChrome="True"` is mandatory.** The orb overhangs upward into the
+   caption region via a negative top margin, and the caption swallows input as a window drag — only
+   the bottom half was clickable without it. Any element overhanging into the caption needs this.
+2. **The orb must hide when the backstage opens.** The same negative margin puts it above the
+   backstage adorner.
+3. **The dark edge is a SHADOW, not a border.** A 2px dark stroke read as a hard ring; a real orb is
+   a soft drop shadow plus a near-white rim over a spherical gradient. And **hover recolours the
+   whole sphere amber**, not just the rim — the same class of mistake as 2010's first gradient pass.
+
+An inset white highlight ring was tried and removed: real glass highlights the top arc, so a full
+circle reads as a hard band at any opacity.
+
+The overhang is `ApplicationOrbMargin`'s negative top. **If it is ever clipped, set that top to 0** —
+the orb then sits wholly inside the tab strip and everything else still works.
+
+#### Accent: `Glass()` beside `Gel()`
+
+`ThemeManager` now derives two gradient profiles. `Gel` is 2010's smooth 3-stop ramp; `Glass` is
+2007's 4 stops with two sharing offset 0.45. **They must not be merged** — that crease is the entire
+difference between the generations. The `Office2007` case mirrors the 2010 case with `Glass()`
+throughout, and the toggled-highlight skip was widened to cover both themes (both keep a gold hot
+state regardless of accent). The orb is deliberately excluded from accent derivation: it carries a
+logo, not a themeable surface.
+
+**`Classic2007` was NOT added to `RibbonBackstageDesign`.** `Classic2010` already is the 2007 look,
+and its glass marker binds `Dialog.PrimaryBackground`, so it picks up whichever profile the active
+theme derives. A near-duplicate enum member right before the API freeze was not worth it; the
+existing value's doc comment was widened instead. The name reads narrow now — worth one thought at
+the Phase 8 review, but renaming is breaking and it has shipped.
+
+#### Two bugs found on the way
+
+- **`Group.Separator` was doing triple duty.** Setting it `Transparent` to suppress 2007's group
+  separator also deleted the **menu separator** (`Menus.xaml`) and the **gallery item hover border**
+  (`Controls.Galleries.xaml`). Resolution: a `GroupSeparatorOpacity` metric hides the ribbon
+  separator only, and the brush keeps a real colour. Opacity rather than width, so group spacing is
+  unchanged. **Grep `Themes/` for a key before neutralising it — names lie about scope.**
+- **The body-border notch was left stranded by the backstage.** Repro: unmaximized → open backstage
+  → maximize → close. While the overlay is up the ribbon is hidden, so the strip widening never
+  reached the notch. `OnIsBackstageOpenChanged` now calls `RefreshSelectionVisuals()` on close, at
+  `DispatcherPriority.Loaded`. Same family as the theme-switch case in §3.27's fourth pass; §5's
+  refresh rule now lists overlay-close as a caller.
+
+#### Deferred, deliberately
+
+- **The 2007 window frame** (`#3B5A82` over a 5–7px `#9BBBE3` band). Windows 11 has no Aero and draws
+  its own border; the frame is also the change most likely to perturb the measured-margin maximize
+  fix (§2.3). Left until it can be done alone and tested properly.
+- **The real two-pane application menu** — command column, Recent Documents pane, Options/Exit bar.
+  That is a NEW CONTROL, not a theme, and it is a genuine feature gap: `README.md` claimed an
+  application menu existed when it only had the application button plus the backstage. The README row
+  is now corrected.
+- **Silver and Black schemes.** Pure token clones now that the geometry is proven.
+
 ## 4. Workflow / Session Conventions
 
 - Cloud workspace: `/home/user/ribbonkit/`. The user's machine:
@@ -2001,9 +2141,11 @@ If it survives a few sessions, promote it out of EXPERIMENTAL and drop the cavea
 ## 5. Current State & Next Steps
 
 > **Status as of 2026-07-27: everything in §3 is implemented AND user-verified on Windows.**
-> Roadmap Phases 1–5 and 7 are complete; Phase 6 still owes the Office 2007 theme, dark mode, RTL +
-> localization and the visual-regression suite; Phase 8 (API freeze, docs site, perf, launch) is
-> untouched. Nothing is awaiting verification.
+> Roadmap Phases 1–5 and 7 are complete. **Phase 6 now also has the Office 2007 theme (§3.38)**, so
+> all five generations ship; Phase 6 still owes dark mode, RTL + localization and the
+> visual-regression suite. Phase 8 (API freeze, docs site, perf, launch) is untouched. Two items are
+> deliberately deferred out of §3.38: the 2007 window frame, and the real two-pane 2007 application
+> menu (a new control, and a genuine feature gap). Nothing is awaiting verification.
 
 **Working and confirmed by user: everything through §3.21** — including the QAT
 customization + merged options dialog with all its refinements (custom close-only title

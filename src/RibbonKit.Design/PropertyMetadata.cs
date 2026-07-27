@@ -23,6 +23,9 @@ internal static class PropertyMetadata
             "The File-button content (typically a Backstage). The File button is hidden while this is null.");
         Describe(b, "RibbonKit.Controls.Ribbon", "ApplicationButtonHeader",
             "Text of the application (File) button. Default: \"File\".");
+        Describe(b, "RibbonKit.Controls.Ribbon", "ApplicationButtonShape",
+            "Shape of the application (File) button: a rectangular tab (default), or the round "
+            + "Office 2007 orb that overhangs into the title bar.");
         // IsBackstageOpen and SelectedIndex are RUNTIME properties: editing them in the Properties
         // grid changes runtime behavior (the grid can't write the design-time-only "d:" namespace).
         // Hide IsBackstageOpen from the grid — an app launching with the backstage open is ~always a

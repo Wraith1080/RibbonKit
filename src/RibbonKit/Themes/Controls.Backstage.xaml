@@ -55,7 +55,8 @@
                             <DockPanel LastChildFill="True">
                                 <Button x:Name="PART_BackButton"
                                         DockPanel.Dock="Top"
-                                        Width="36" Height="36"
+                                        Width="{DynamicResource RibbonKit.Metrics.BackstageBackButtonSize}"
+                                        Height="{DynamicResource RibbonKit.Metrics.BackstageBackButtonSize}"
                                         Margin="20,20,20,24"
                                         HorizontalAlignment="Left"
                                         Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type controls:Backstage}}}"
@@ -69,10 +70,20 @@
                                                             <!-- Classic2010: a filled blue "glass" disc (like the
                                                                  File/OK button) with a white arrow. Collapsed for the
                                                                  Classic/Modern outline-circle look. -->
+                                                            <!-- Same treatment as the application orb:
+                                                                 a soft drop shadow gives the disc its
+                                                                 depth, so the border only has to be a
+                                                                 thin edge. The fill is
+                                                                 Dialog.PrimaryBackground, which the
+                                                                 accent system derives per theme (a
+                                                                 smooth gel in 2010, a hard-crease glass
+                                                                 in 2007), so the disc tracks the accent
+                                                                 and the generation automatically. -->
                                                             <Ellipse x:Name="GlassFill"
                                                                      Fill="{DynamicResource RibbonKit.Brushes.Dialog.PrimaryBackground}"
                                                                      Stroke="{DynamicResource RibbonKit.Brushes.Dialog.PrimaryBorder}"
                                                                      StrokeThickness="1"
+                                                                     Effect="{DynamicResource RibbonKit.Effects.ApplicationOrbShadow}"
                                                                      Visibility="Collapsed" />
                                                             <!-- Foreground-tinted hover disc: subtle on
                                                                  both the accent column and the light rail. -->
@@ -158,8 +169,12 @@
                         <Trigger Property="controls:Backstage.Design" Value="Classic2010">
                             <Setter Property="Foreground"
                                     Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+                            <!-- Backstage.NavBackground, NOT Ribbon.Background. Office 2007's tab
+                                 strip is deliberately a FLAT solid, so borrowing it left the nav a
+                                 flat slab; each theme now states what its nav should look like. The
+                                 pre-2007 themes set it to their own strip value, so nothing moves. -->
                             <Setter TargetName="NavColumn" Property="Background"
-                                    Value="{DynamicResource RibbonKit.Brushes.Ribbon.Background}" />
+                                    Value="{DynamicResource RibbonKit.Brushes.Backstage.NavBackground}" />
                         </Trigger>
 
                         <!-- Translucent (reveal a window Mica/Acrylic backdrop behind the

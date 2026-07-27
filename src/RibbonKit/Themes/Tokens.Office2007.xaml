@@ -202,6 +202,15 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.Border" Color="#8DB2E3" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemHoverBackground" Color="#2E6DB4" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemSelectedBackground" Color="#17457E" />
+    <!-- Backstage nav column for the glass (Classic2010) design. NOT Ribbon.Background: 2007's tab
+         strip is deliberately a FLAT solid, and reusing it left the nav a flat blue slab. The nav
+         wants the gradient the strip does not have. -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Backstage.NavBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#DCEAFB" />
+        <GradientStop Offset="0.45" Color="#BFDBFF" />
+        <GradientStop Offset="1" Color="#A3C6F0" />
+    </LinearGradientBrush>
+    <system:Double x:Key="RibbonKit.Metrics.BackstageBackButtonSize">46</system:Double>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ContentBackground" Color="#FFFFFF" />
     <!-- Glass markers for the backstage selection and the dialog primary (OK) button. The
          dedicated Classic2007 backstage design lands in S5; these carry the crease profile so
@@ -271,6 +280,48 @@
     </LinearGradientBrush>
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverUnderline" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.Border" Color="#17578F" />
+    <!-- Office 2007 ORB. Only used when Ribbon.ApplicationButtonShape is Orb. The negative TOP in
+         ApplicationOrbMargin is what lifts the orb out of the tab-strip row and into the title bar,
+         the way the real 2007 orb straddles that boundary. If it turns out to be clipped by an
+         ancestor, set the top back to 0: the orb then sits wholly inside the strip and everything
+         else still works. -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.ApplicationOrb.Background" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#FBFCFD" />
+        <GradientStop Offset="0.18" Color="#F5F7F9" />
+        <GradientStop Offset="0.5" Color="#DDE4EC" />
+        <GradientStop Offset="0.82" Color="#EFF3F7" />
+        <GradientStop Offset="1" Color="#FFFFFF" />
+    </LinearGradientBrush>
+    <!-- Hover turns the WHOLE SPHERE amber, not just the rim: cream at the top, saturated gold
+         through the middle, pale specular at the foot. Measured off a hovered 2007 orb. -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.ApplicationOrb.HoverBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#FFFEFC" />
+        <GradientStop Offset="0.18" Color="#FFF8D4" />
+        <GradientStop Offset="0.5" Color="#F7C93E" />
+        <GradientStop Offset="0.82" Color="#F7D96F" />
+        <GradientStop Offset="1" Color="#FDFAB7" />
+    </LinearGradientBrush>
+    <!-- Mouse-down: a deeper, darker amber than hover, so the click registers before the
+         backstage opens. -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.ApplicationOrb.PressedBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#F5D98A" />
+        <GradientStop Offset="0.18" Color="#EFBE4A" />
+        <GradientStop Offset="0.5" Color="#D8931A" />
+        <GradientStop Offset="0.82" Color="#E8A82A" />
+        <GradientStop Offset="1" Color="#F7D06A" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationOrb.Ring" Color="#F0F4F9" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationOrb.HoverRing" Color="#FFEA37" />
+    <!-- The dark edge of a real orb is a SHADOW, not a border. -->
+    <DropShadowEffect x:Key="RibbonKit.Effects.ApplicationOrbShadow"
+                      BlurRadius="5" ShadowDepth="1" Direction="270"
+                      Opacity="0.5" Color="#2E4257" RenderingBias="Quality" />
+    <!-- Left inset of the title-bar QAT. Office 2007 reserves room so the QAT clears the orb,
+         which overhangs up into the caption. -->
+    <Thickness x:Key="RibbonKit.Metrics.TitleBarQatMargin">56,0,6,0</Thickness>
+    <system:Double x:Key="RibbonKit.Metrics.ApplicationOrbSize">46</system:Double>
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationOrbMargin">6,-18,6,0</Thickness>
+
     <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonBorderThickness">1</Thickness>
 
     <!-- Real 2007 measures ~86 DIP of ribbon body. Held at the shared 104 for S1 so the palette

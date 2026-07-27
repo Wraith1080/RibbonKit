@@ -53,7 +53,8 @@ Legend: ✅ done · 🚧 in progress · 📋 planned
 
 | Feature | Status |
 |---|---|
-| Application button + application menu | ✅ |
+| Application button (rectangular tab, or the Office 2007 orb) | ✅ |
+| Application menu (2007-style two-pane dropdown) | 📋 |
 | Backstage view (Modern 2024, Classic 2013, Classic 2010 designs) | ✅ |
 | Backstage footer items, button items, recent-items pattern | ✅ |
 | Quick Access Toolbar — 3 placements, overflow flyout, right-click add/remove | ✅ |
@@ -87,7 +88,7 @@ Legend: ✅ done · 🚧 in progress · 📋 planned
 | Office 2019 theme | ✅ |
 | Office 2013 theme | ✅ |
 | Office 2010 theme ("Blue" — gradients, glass buttons, connected tabs) | ✅ |
-| Office 2007 theme (Office orb, heavy glass) | 📋 |
+| Office 2007 theme (Office orb, heavy glass) | ✅ |
 | Runtime theme switching + custom accent colors | ✅ |
 | Per-monitor v2 High DPI (verified 100 / 125 / 150 / 175 / 200%) | ✅ |
 | Mica and Acrylic system backdrops (Windows 11) | ✅ |
@@ -204,7 +205,7 @@ Design-time tooling setup is documented in [`src/RibbonKit.Design/SETUP-DESIGNTO
 
 ## Roadmap to v1.0
 
-Remaining before the API freeze: the Office 2007 theme, dark mode, RTL and localization, and the visual regression suite (all Phase 6), plus unit tests for the Phase 7 invariants. Then release engineering — API review and freeze, docs site, SourceLink, and a performance pass.
+Remaining before the API freeze: dark mode, RTL and localization, and the visual regression suite (all Phase 6), plus unit tests for the Phase 7 invariants. Two items were deliberately deferred out of the Office 2007 work — the 2007 window frame, and the two-pane 2007 application menu (a new control). Then release engineering — API review and freeze, docs site, SourceLink, and a performance pass.
 
 ## Contributing
 

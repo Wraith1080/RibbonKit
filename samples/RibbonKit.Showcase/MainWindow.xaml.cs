@@ -118,20 +118,27 @@ public partial class MainWindow : RibbonWindow
         }
     }
 
-    private void OnApplyOffice2024(object sender, RoutedEventArgs e) =>
-        ThemeManager.Apply(Application.Current, RibbonTheme.Office2024);
+    private void OnApplyOffice2024(object sender, RoutedEventArgs e) => ApplyTheme(RibbonTheme.Office2024);
 
-    private void OnApplyOffice2019(object sender, RoutedEventArgs e) =>
-        ThemeManager.Apply(Application.Current, RibbonTheme.Office2019);
+    private void OnApplyOffice2019(object sender, RoutedEventArgs e) => ApplyTheme(RibbonTheme.Office2019);
 
-    private void OnApplyOffice2013(object sender, RoutedEventArgs e) =>
-        ThemeManager.Apply(Application.Current, RibbonTheme.Office2013);
+    private void OnApplyOffice2013(object sender, RoutedEventArgs e) => ApplyTheme(RibbonTheme.Office2013);
 
-    private void OnApplyOffice2010(object sender, RoutedEventArgs e) =>
-        ThemeManager.Apply(Application.Current, RibbonTheme.Office2010);
+    private void OnApplyOffice2010(object sender, RoutedEventArgs e) => ApplyTheme(RibbonTheme.Office2010);
 
-    private void OnApplyOffice2007(object sender, RoutedEventArgs e) =>
-        ThemeManager.Apply(Application.Current, RibbonTheme.Office2007);
+    private void OnApplyOffice2007(object sender, RoutedEventArgs e) => ApplyTheme(RibbonTheme.Office2007);
+
+    // The orb is an APPLICATION choice, not a theme one (RibbonKit themes recolor, they never
+    // reshape), so the showcase opts into it whenever it switches to Office 2007 and back out again
+    // for every other theme. A real app that only ever ships 2007 would just set the property once
+    // in XAML.
+    private void ApplyTheme(RibbonTheme theme)
+    {
+        ThemeManager.Apply(Application.Current, theme);
+        MainRibbon.ApplicationButtonShape = theme == RibbonTheme.Office2007
+            ? RibbonApplicationButtonShape.Orb
+            : RibbonApplicationButtonShape.Tab;
+    }
 
     private void OnToggleAccentTitleBar(object sender, RoutedEventArgs e) =>
         ThemeManager.SetAccentedTitleBar(Application.Current, (sender as RibbonToggleButton)?.IsChecked == true);

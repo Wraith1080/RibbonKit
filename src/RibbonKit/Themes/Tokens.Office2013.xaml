@@ -98,6 +98,8 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.Border" Color="#D4D4D4" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemHoverBackground" Color="#3D66A8" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemSelectedBackground" Color="#1F3F72" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.NavBackground" Color="#FFFFFF" />
+    <system:Double x:Key="RibbonKit.Metrics.BackstageBackButtonSize">36</system:Double>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ContentBackground" Color="#FFFFFF" />
     <!-- Classic2010 selected-item glass marker + dialog primary (OK) button fill (flat accent). -->
     <LinearGradientBrush x:Key="RibbonKit.Brushes.Backstage.ItemSelectedGlass" StartPoint="0,0" EndPoint="0,1">
@@ -139,6 +141,34 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverUnderline" Color="Transparent" />
     <!-- No File-button border (Office 2010 uses one). -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.Border" Color="Transparent" />
+    <!-- Orb tokens. This theme uses the rectangular File tab, so these only matter if an app opts
+         into Ribbon.ApplicationButtonShape = Orb anyway. Kept at the 2007 geometry minus the
+         overhang, so an orb here sits neatly inside the tab strip. -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.ApplicationOrb.Background" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#FBFCFD" />
+        <GradientStop Offset="0.5" Color="#DDE4EC" />
+        <GradientStop Offset="1" Color="#FFFFFF" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.ApplicationOrb.HoverBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#FFFEFC" />
+        <GradientStop Offset="0.5" Color="#F7C93E" />
+        <GradientStop Offset="1" Color="#FDFAB7" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.ApplicationOrb.PressedBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#F5D98A" />
+        <GradientStop Offset="0.5" Color="#D8931A" />
+        <GradientStop Offset="1" Color="#F7D06A" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationOrb.Ring" Color="#F0F4F9" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationOrb.HoverRing" Color="#FFEA37" />
+    <DropShadowEffect x:Key="RibbonKit.Effects.ApplicationOrbShadow"
+                      BlurRadius="5" ShadowDepth="1" Direction="270"
+                      Opacity="0.5" Color="#2E4257" RenderingBias="Quality" />
+    <!-- Left inset of the title-bar QAT; reproduces the previous hard-coded 2,0,6,0. -->
+    <Thickness x:Key="RibbonKit.Metrics.TitleBarQatMargin">2,0,6,0</Thickness>
+    <system:Double x:Key="RibbonKit.Metrics.ApplicationOrbSize">46</system:Double>
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationOrbMargin">2,0,6,0</Thickness>
+
     <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonBorderThickness">0</Thickness>
 
     <system:Double x:Key="RibbonKit.Metrics.GroupsRowHeight">104</system:Double>
