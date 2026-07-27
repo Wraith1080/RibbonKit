@@ -199,6 +199,7 @@ public class Ribbon : Control
         _modalScope = new RibbonModalScope(this);
         _exitModalCommand = new ModalCloseCommand(this);
         _mergeService = new RibbonMergeService(this);
+        _mergedCaptionCommand = new CaptionActionCommand(this);
 
         var tabs = new ObservableCollection<RibbonTab>();
         tabs.CollectionChanged += OnTabsCollectionChanged;
@@ -368,11 +369,174 @@ public class Ribbon : Control
             SelectedTab = FindFirstVisibleTab();
         }
 
+        RefreshSelectionVisuals();
+    }
+
+    /// <summary>
+    /// Re-places the sliding selection underline and the 2010/2013 body-border notch.
+    /// </summary>
+    /// <remarks>
+    /// Both are positioned from the SELECTED TAB'S TRANSFORM, so anything that moves the tab strip
+    /// without raising a selection change or a size change on the tab control leaves them stranded.
+    /// The tab control's own <c>SizeChanged</c> does NOT cover this: the strip lives in a star-width
+    /// column, so a sibling in the same row growing or shrinking (the merged-caption icon appearing,
+    /// the File button hiding for a modal tab) re-lays-out the strip while the tab control's size is
+    /// unchanged. Every such caller must land here — layout is forced first so the transform is
+    /// current when the marker and notch are measured (see design notes §3.29).
+    /// </remarks>
+    private void RefreshSelectionVisuals()
+    {
         if (_ribbonTabControl is { } tabControl)
         {
             tabControl.InvalidateArrange();
             tabControl.UpdateLayout();
             tabControl.RefreshSelectionVisuals();
+        }
+    }
+
+    // ==========================================================================
+    // Merged caption. Classic MDI, when a child is maximized, moves the child's
+    // system icon to the far left of the ribbon row and its window buttons to the
+    // far right, and hides the child's own title bar. The ribbon just offers the
+    // PLACEMENT and reports button presses; it deliberately knows nothing about
+    // MDI (docs/05-MDI-EMULATION-PLAN.md §4 — caption merge and tab merge are
+    // separate features and must stay that way).
+    // ==========================================================================
+
+    private static readonly DependencyPropertyKey HasMergedCaptionPropertyKey =
+        DependencyProperty.RegisterReadOnly(
+            nameof(HasMergedCaption),
+            typeof(bool),
+            typeof(Ribbon),
+            new FrameworkPropertyMetadata(false));
+
+    /// <summary>Identifies the read-only <see cref="HasMergedCaption"/> dependency property.</summary>
+    public static readonly DependencyProperty HasMergedCaptionProperty = HasMergedCaptionPropertyKey.DependencyProperty;
+
+    private static readonly DependencyPropertyKey MergedCaptionIconPropertyKey =
+        DependencyProperty.RegisterReadOnly(
+            nameof(MergedCaptionIcon),
+            typeof(System.Windows.Media.ImageSource),
+            typeof(Ribbon),
+            new FrameworkPropertyMetadata(null));
+
+    /// <summary>Identifies the read-only <see cref="MergedCaptionIcon"/> dependency property.</summary>
+    public static readonly DependencyProperty MergedCaptionIconProperty = MergedCaptionIconPropertyKey.DependencyProperty;
+
+    private static readonly DependencyPropertyKey MergedCaptionTitlePropertyKey =
+        DependencyProperty.RegisterReadOnly(
+            nameof(MergedCaptionTitle),
+            typeof(string),
+            typeof(Ribbon),
+            new FrameworkPropertyMetadata(null));
+
+    /// <summary>Identifies the read-only <see cref="MergedCaptionTitle"/> dependency property.</summary>
+    public static readonly DependencyProperty MergedCaptionTitleProperty = MergedCaptionTitlePropertyKey.DependencyProperty;
+
+    private static readonly DependencyPropertyKey MergedCaptionCanClosePropertyKey =
+        DependencyProperty.RegisterReadOnly(
+            nameof(MergedCaptionCanClose),
+            typeof(bool),
+            typeof(Ribbon),
+            new FrameworkPropertyMetadata(false));
+
+    /// <summary>Identifies the read-only <see cref="MergedCaptionCanClose"/> dependency property.</summary>
+    public static readonly DependencyProperty MergedCaptionCanCloseProperty = MergedCaptionCanClosePropertyKey.DependencyProperty;
+
+    private readonly CaptionActionCommand _mergedCaptionCommand;
+
+    /// <summary>Whether a caption is currently merged into the ribbon row.</summary>
+    public bool HasMergedCaption => (bool)GetValue(HasMergedCaptionProperty);
+
+    /// <summary>The merged caption's icon, or <see langword="null"/>.</summary>
+    public System.Windows.Media.ImageSource? MergedCaptionIcon =>
+        (System.Windows.Media.ImageSource?)GetValue(MergedCaptionIconProperty);
+
+    /// <summary>
+    /// The merged caption's title. Deliberately NOT drawn in the tab strip — classic MDI puts it
+    /// in the host window's own title bar ("Document1 - MyApp"), and a second title in the strip
+    /// would eat tab space. Exposed so a host can bind its window title to it.
+    /// </summary>
+    public string? MergedCaptionTitle => (string?)GetValue(MergedCaptionTitleProperty);
+
+    /// <summary>
+    /// Whether a merged caption is present AND offers a close button — the close button's
+    /// visibility binds to this alone, so it is <see langword="false"/> when no caption is docked.
+    /// </summary>
+    public bool MergedCaptionCanClose => (bool)GetValue(MergedCaptionCanCloseProperty);
+
+    /// <summary>
+    /// Command the merged caption's buttons invoke, with a
+    /// <see cref="RibbonMergedCaptionAction"/> as parameter. Raises
+    /// <see cref="MergedCaptionActionRequested"/>; also usable from an app's own chrome.
+    /// </summary>
+    public System.Windows.Input.ICommand MergedCaptionCommand => _mergedCaptionCommand;
+
+    /// <summary>
+    /// Raised when the user presses a button on the merged caption. The host that called
+    /// <see cref="ShowMergedCaption"/> decides what minimize / restore / close mean.
+    /// </summary>
+    public event EventHandler<RibbonMergedCaptionEventArgs>? MergedCaptionActionRequested;
+
+    /// <summary>
+    /// Docks a caption into the ribbon row: <paramref name="icon"/> at the far left, before the
+    /// application button, and minimize / restore / close buttons at the far right. The caller is
+    /// responsible for hiding whatever chrome the caption replaces, and for the title (see
+    /// <see cref="MergedCaptionTitle"/>).
+    /// </summary>
+    /// <param name="icon">The system icon to show, or <see langword="null"/> for none. An
+    /// <c>ImageSource</c> rather than an element: the same icon is typically already displayed
+    /// elsewhere, and a UIElement cannot have two visual parents.</param>
+    /// <param name="title">The caption text, published on <see cref="MergedCaptionTitle"/>.</param>
+    /// <param name="canClose">Whether to offer a close button.</param>
+    public void ShowMergedCaption(System.Windows.Media.ImageSource? icon, string? title, bool canClose = true)
+    {
+        SetValue(MergedCaptionIconPropertyKey, icon);
+        SetValue(MergedCaptionTitlePropertyKey, title);
+        SetValue(MergedCaptionCanClosePropertyKey, canClose);
+        SetValue(HasMergedCaptionPropertyKey, true);
+
+        // The icon appearing at the left of the row shifts the whole tab strip sideways, and the
+        // buttons at the right narrow it — but the tab control itself doesn't change size, so
+        // nothing re-places the underline or the connect notch on its own.
+        RefreshSelectionVisuals();
+    }
+
+    /// <summary>Removes a caption previously docked by <see cref="ShowMergedCaption"/>.</summary>
+    public void ClearMergedCaption()
+    {
+        SetValue(HasMergedCaptionPropertyKey, false);
+        SetValue(MergedCaptionIconPropertyKey, null);
+        SetValue(MergedCaptionTitlePropertyKey, null);
+        SetValue(MergedCaptionCanClosePropertyKey, false);
+
+        // Same shift in reverse — the strip widens back out as the icon and buttons go away.
+        RefreshSelectionVisuals();
+    }
+
+    // One command taking the action as its parameter, rather than three commands and three
+    // events: the buttons differ only in which action they name.
+    private sealed class CaptionActionCommand : System.Windows.Input.ICommand
+    {
+        private readonly Ribbon _ribbon;
+
+        internal CaptionActionCommand(Ribbon ribbon) => _ribbon = ribbon;
+
+        public event EventHandler? CanExecuteChanged
+        {
+            add { }
+            remove { }
+        }
+
+        public bool CanExecute(object? parameter) => parameter is RibbonMergedCaptionAction;
+
+        public void Execute(object? parameter)
+        {
+            if (parameter is RibbonMergedCaptionAction action)
+            {
+                _ribbon.MergedCaptionActionRequested?.Invoke(
+                    _ribbon, new RibbonMergedCaptionEventArgs(action));
+            }
         }
     }
 
@@ -548,12 +712,7 @@ public class Ribbon : Control
             SetCurrentValue(IsMinimizedProperty, false);
         }
 
-        if (_ribbonTabControl is { } tabControl)
-        {
-            tabControl.InvalidateArrange();
-            tabControl.UpdateLayout();
-            tabControl.RefreshSelectionVisuals();
-        }
+        RefreshSelectionVisuals();
     }
 
     // Bound by the tab strip's modal close affordance. A tiny ICommand rather than a

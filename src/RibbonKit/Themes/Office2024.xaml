@@ -22,6 +22,38 @@
          ============================================================ -->
     <BooleanToVisibilityConverter x:Key="RibbonKit.BoolToVis" />
 
+    <!-- Window buttons for a caption merged into the ribbon row (classic MDI's maximized child).
+         Chrome matches the minimize chevron beside them — same TabStrip tokens — so the cluster
+         reads as one control group and themes across all four generations with no new tokens.
+         The glyph is supplied per button as Content. -->
+    <Style x:Key="RibbonKit.MergedCaptionButton" TargetType="{x:Type Button}">
+        <Setter Property="Width" Value="24" />
+        <Setter Property="Height" Value="22" />
+        <Setter Property="Margin" Value="0,6,0,0" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Command"
+                Value="{Binding MergedCaptionCommand, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Button}">
+                    <Border x:Name="Chrome"
+                            Background="Transparent"
+                            CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                            SnapsToDevicePixels="True">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chrome" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.TabStrip.ControlHoverBackground}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <Style x:Key="RibbonKit.ScrollLeftButton" TargetType="{x:Type RepeatButton}">
         <Setter Property="Width" Value="22" />
         <Setter Property="Focusable" Value="False" />
@@ -219,10 +251,24 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
+                            <!-- Left end of the tab strip row: the merged-caption icon (only while
+                                 a caption is docked — classic MDI puts a maximized child's system
+                                 icon here) followed by the application button. Grouped in a stack
+                                 so the icon needs no column of its own. -->
+                            <StackPanel Grid.Column="0"
+                                        Orientation="Horizontal"
+                                        VerticalAlignment="Center">
+                            <Image x:Name="PART_MergedCaptionIcon"
+                                   Width="16"
+                                   Height="16"
+                                   Margin="8,4,2,0"
+                                   VerticalAlignment="Center"
+                                   Stretch="Uniform"
+                                   Source="{Binding MergedCaptionIcon, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
+                                   Visibility="{Binding HasMergedCaption, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}, Converter={StaticResource RibbonKit.BoolToVis}}" />
                             <!-- Application (File) button: opens the backstage; hidden
                                  when the hosting Ribbon has no Backstage assigned -->
                             <ToggleButton x:Name="ApplicationButton"
-                                          Grid.Column="0"
                                           Margin="{DynamicResource RibbonKit.Metrics.ApplicationButtonMargin}"
                                           Content="{Binding ApplicationButtonHeader, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
                                           IsChecked="{Binding IsBackstageOpen, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}, Mode=TwoWay}">
@@ -301,6 +347,7 @@
                                     </Style>
                                 </ToggleButton.Style>
                             </ToggleButton>
+                            </StackPanel>
                             <!-- Quick access strip in the tab row (QuickAccessPosition=TabRow).
                                  ItemsSource is bound ONLY by the TabRow trigger below, never
                                  by default — the same live QAT UIElements can have only one
@@ -487,6 +534,49 @@
                                     </Style>
                                 </ToggleButton.Style>
                             </ToggleButton>
+                            <!-- Merged-caption window buttons (classic MDI's maximized child).
+                                 Visible only while a caption is docked; the ribbon reports the
+                                 press and the host decides what it means. Placed AFTER the
+                                 minimize chevron so they sit at the very end of the row, where
+                                 window buttons belong. -->
+                            <Button x:Name="PART_MergedCaptionMinimize"
+                                    Style="{StaticResource RibbonKit.MergedCaptionButton}"
+                                    ToolTip="Minimize Window"
+                                    CommandParameter="{x:Static controls:RibbonMergedCaptionAction.Minimize}"
+                                    Visibility="{Binding HasMergedCaption, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}, Converter={StaticResource RibbonKit.BoolToVis}}">
+                                <Rectangle Width="9" Height="1"
+                                           Fill="{DynamicResource RibbonKit.Brushes.TabStrip.Foreground}" />
+                            </Button>
+                            <Button x:Name="PART_MergedCaptionRestore"
+                                    Style="{StaticResource RibbonKit.MergedCaptionButton}"
+                                    ToolTip="Restore Window"
+                                    CommandParameter="{x:Static controls:RibbonMergedCaptionAction.Restore}"
+                                    Visibility="{Binding HasMergedCaption, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}, Converter={StaticResource RibbonKit.BoolToVis}}">
+                                <!-- Two offset outlines: the classic "restore down" glyph. -->
+                                <Grid Width="10" Height="10">
+                                    <Rectangle Width="7" Height="7"
+                                               HorizontalAlignment="Right" VerticalAlignment="Top"
+                                               Stroke="{DynamicResource RibbonKit.Brushes.TabStrip.Foreground}"
+                                               StrokeThickness="1" />
+                                    <Rectangle Width="7" Height="7"
+                                               HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                                               Fill="{DynamicResource RibbonKit.Brushes.Ribbon.Background}"
+                                               Stroke="{DynamicResource RibbonKit.Brushes.TabStrip.Foreground}"
+                                               StrokeThickness="1" />
+                                </Grid>
+                            </Button>
+                            <Button x:Name="PART_MergedCaptionClose"
+                                    Style="{StaticResource RibbonKit.MergedCaptionButton}"
+                                    Margin="0,6,8,0"
+                                    ToolTip="Close Window"
+                                    CommandParameter="{x:Static controls:RibbonMergedCaptionAction.Close}"
+                                    Visibility="{Binding MergedCaptionCanClose, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}, Converter={StaticResource RibbonKit.BoolToVis}}">
+                                <Path Data="M0,0 L8,8 M8,0 L0,8"
+                                      Stroke="{DynamicResource RibbonKit.Brushes.TabStrip.Foreground}"
+                                      StrokeThickness="1.4"
+                                      StrokeStartLineCap="Round"
+                                      StrokeEndLineCap="Round" />
+                            </Button>
                             </StackPanel>
                         </Grid>
                         <!-- Ribbon body. Office 2024/365 renders it as a floating rounded

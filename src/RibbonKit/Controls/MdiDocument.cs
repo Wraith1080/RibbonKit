@@ -26,6 +26,7 @@ public class MdiDocument : INotifyPropertyChanged
     private bool _canClose = true;
     private bool _isModified;
     private bool _isActive;
+    private RibbonMergeSource? _mergeSource;
 
     /// <summary>Initializes an empty document.</summary>
     public MdiDocument()
@@ -64,6 +65,20 @@ public class MdiDocument : INotifyPropertyChanged
     {
         get => _icon;
         set => Set(ref _icon, value);
+    }
+
+    /// <summary>
+    /// Ribbon tabs and groups this document contributes to the host ribbon while it is the ACTIVE
+    /// document — the MDI case ribbon tab merging was designed for
+    /// (<c>docs/01-ARCHITECTURE.md</c> §8 names it as the motivating scenario). Point
+    /// <see cref="MdiContainer.Ribbon"/> at a ribbon and the container merges and unmerges this
+    /// automatically as documents activate. Leave <see langword="null"/> for a document that
+    /// contributes nothing.
+    /// </summary>
+    public RibbonMergeSource? MergeSource
+    {
+        get => _mergeSource;
+        set => Set(ref _mergeSource, value);
     }
 
     /// <summary>

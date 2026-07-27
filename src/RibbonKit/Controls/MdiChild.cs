@@ -79,6 +79,14 @@ public class MdiChild : ContentControl
             typeof(MdiChild),
             new FrameworkPropertyMetadata(true));
 
+    /// <summary>Identifies the <see cref="IsCaptionMerged"/> dependency property.</summary>
+    public static readonly DependencyProperty IsCaptionMergedProperty =
+        DependencyProperty.Register(
+            nameof(IsCaptionMerged),
+            typeof(bool),
+            typeof(MdiChild),
+            new FrameworkPropertyMetadata(false));
+
     /// <summary>Identifies the <see cref="IsModified"/> dependency property.</summary>
     public static readonly DependencyProperty IsModifiedProperty =
         DependencyProperty.Register(
@@ -131,6 +139,19 @@ public class MdiChild : ContentControl
             typeof(RoutedEventHandler),
             typeof(MdiChild));
 
+    /// <summary>
+    /// Raised (bubbling) after <see cref="WindowState"/> changes. The container listens so it can
+    /// merge the caption into the host ribbon when the active child maximizes, and take it back
+    /// when it restores — the same pattern as the other two child→container signals, rather than
+    /// the container having to watch a dependency property on whichever child is active.
+    /// </summary>
+    public static readonly RoutedEvent WindowStateChangedEvent =
+        EventManager.RegisterRoutedEvent(
+            nameof(WindowStateChanged),
+            RoutingStrategy.Bubble,
+            typeof(RoutedEventHandler),
+            typeof(MdiChild));
+
     private Thumb? _dragThumb;
     private ButtonBase? _minimizeButton;
     private ButtonBase? _maximizeRestoreButton;
@@ -158,6 +179,13 @@ public class MdiChild : ContentControl
     {
         add => AddHandler(CloseRequestedEvent, value);
         remove => RemoveHandler(CloseRequestedEvent, value);
+    }
+
+    /// <summary>Occurs after <see cref="WindowState"/> changes (bubbles to the container).</summary>
+    public event RoutedEventHandler WindowStateChanged
+    {
+        add => AddHandler(WindowStateChangedEvent, value);
+        remove => RemoveHandler(WindowStateChangedEvent, value);
     }
 
     /// <summary>The caption title.</summary>
@@ -203,6 +231,18 @@ public class MdiChild : ContentControl
     {
         get => (bool)GetValue(IsModifiedProperty);
         set => SetValue(IsModifiedProperty, value);
+    }
+
+    /// <summary>
+    /// Whether this child's own caption has been merged into the host ribbon — classic MDI's
+    /// maximized-child look, where the icon and window buttons move to the ribbon row and the
+    /// child's title bar disappears. Set by <see cref="MdiContainer"/> when caption merging is
+    /// enabled; the template collapses the caption in response.
+    /// </summary>
+    public bool IsCaptionMerged
+    {
+        get => (bool)GetValue(IsCaptionMergedProperty);
+        set => SetValue(IsCaptionMergedProperty, value);
     }
 
     /// <summary>Left edge in DIPs relative to the container (NaN until placed).</summary>
@@ -409,8 +449,15 @@ public class MdiChild : ContentControl
     private void OnCloseClick(object sender, RoutedEventArgs e) =>
         RaiseEvent(new RoutedEventArgs(CloseRequestedEvent, this));
 
-    private static void OnWindowStateChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
-        ((MdiChild)d).ApplyWindowState((WindowState)e.OldValue, (WindowState)e.NewValue);
+    private static void OnWindowStateChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        var child = (MdiChild)d;
+        child.ApplyWindowState((WindowState)e.OldValue, (WindowState)e.NewValue);
+
+        // Announced AFTER the layout properties settle, so a container reacting to it (caption
+        // merge) sees the child in its new state.
+        child.RaiseEvent(new RoutedEventArgs(WindowStateChangedEvent, child));
+    }
 
     /// <summary>
     /// Applies a state transition to the layout properties. Leaving Normal saves the
