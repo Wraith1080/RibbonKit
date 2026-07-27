@@ -1,7 +1,30 @@
 # Tab Merging & Modal Tabs — Design Plan (Phase 7)
 
-> Status: planned · Written 2026-07-27 · Companion to [`03-ROADMAP.md`](03-ROADMAP.md) Phase 7
+> **Status: BUILT and user-verified (2026-07-27).** All four steps of §6 shipped — P7.1 modal tabs,
+> P7.2 tab merging, P7.3 group contributions + activation + QAT parking, P7.4 MDI wiring (which also
+> closed MDI M4). This document is kept as the design record; the **as-built** account, including
+> where reality diverged from the plan, is [`../04-DESIGN-NOTES.md`](../04-DESIGN-NOTES.md)
+> §3.32–§3.34. The one part not delivered is §7's unit tests.
+>
+> Written 2026-07-27 · Companion to [`03-ROADMAP.md`](03-ROADMAP.md) Phase 7
 > and [`01-ARCHITECTURE.md`](01-ARCHITECTURE.md) §8.
+>
+> **Where the build diverged from this plan:**
+> - **§5.5 (restoring host-tab group order) was a non-issue.** Unmerge removes groups by
+>   *reference*, so the host's own groups close back up correctly and two sources can unmerge in
+>   any order. No index bookkeeping was needed.
+> - **No `ModalClose.*` tokens were added.** The close affordance reuses `TabStrip.Foreground` /
+>   `TabStrip.ControlHoverBackground` / `ControlCornerRadius` and themes across all four
+>   generations for free. The merged-caption buttons do the same.
+> - **The activation trigger is `Target` + `IsActive` on the source**, not an attached property on
+>   an arbitrary element — that left "which ribbon?" ambiguous. An attached
+>   `RibbonMergeSource.Source` exists as well, so a child can *carry* its source for a host that
+>   tracks activation; that is what `MdiContainer` uses.
+> - **Minimize and the backstage are blocked by reverting, not coercing** (§3.32) — coercion leaves
+>   a stale base value that springs back on exit.
+> - **Two things the plan didn't anticipate:** the tab-strip-row reflow rule (§3.36), which broke
+>   twice; and that the QAT overflow flyout must reuse its proxies or it strands borrowed
+>   drop-down menus (§3.35).
 
 The last two power features before the v1.0 API freeze, and the last genuinely new mechanism in
 the library — every other remaining item (Office 2007, dark mode, RTL, localization, the visual

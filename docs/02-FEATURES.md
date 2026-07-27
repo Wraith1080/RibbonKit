@@ -2,6 +2,8 @@
 
 Priority key: **P0** = core skeleton (Milestone 1) · **P1** = required for a credible ribbon · **P2** = full Office parity · **P3** = differentiators / post-v1 polish
 
+> **This is the planning inventory, not a status board** — the priorities below are the original sequencing decisions and are left as written. For what is actually built, see the ✅/📋 tables in the [README](../README.md). As of 2026-07-27 everything here is implemented except: the Office 2007 theme, dark mode, RTL, localization, ribbon-styled TextBox/CheckBox/RadioButton, the simplified single-row ribbon, and the visual-regression snapshot suite.
+
 ## Structure & layout
 
 | Feature | Priority | Notes |
