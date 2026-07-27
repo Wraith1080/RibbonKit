@@ -777,6 +777,28 @@ public class Ribbon : Control
     public static FrameworkElement? GetQuickAccessSource(DependencyObject element) =>
         (FrameworkElement?)element.GetValue(QuickAccessSourceProperty);
 
+    private static readonly DependencyPropertyKey QuickAccessOverflowItemPropertyKey =
+        DependencyProperty.RegisterAttachedReadOnly(
+            "QuickAccessOverflowItem",
+            typeof(FrameworkElement),
+            typeof(Ribbon),
+            new FrameworkPropertyMetadata(null));
+
+    /// <summary>
+    /// Identifies the read-only <c>QuickAccessOverflowItem</c> attached property: on a proxy shown
+    /// in the quick access toolbar's OVERFLOW flyout, the real <see cref="QuickAccessItems"/> entry
+    /// it stands for. Lets a right-click inside the flyout act on the real item.
+    /// </summary>
+    public static readonly DependencyProperty QuickAccessOverflowItemProperty =
+        QuickAccessOverflowItemPropertyKey.DependencyProperty;
+
+    /// <summary>The quick-access item an overflow-flyout proxy represents, or <see langword="null"/>.</summary>
+    public static FrameworkElement? GetQuickAccessOverflowItem(DependencyObject element) =>
+        (FrameworkElement?)element.GetValue(QuickAccessOverflowItemProperty);
+
+    internal static void SetQuickAccessOverflowItemInternal(DependencyObject element, FrameworkElement? value) =>
+        element.SetValue(QuickAccessOverflowItemPropertyKey, value);
+
     /// <summary>
     /// Raised when the user picks "Customize Quick Access Toolbar…" from a right-click menu.
     /// The application typically responds by opening a <see cref="RibbonOptionsDialog"/>
@@ -1993,9 +2015,22 @@ public class Ribbon : Control
     {
         while (node is not null)
         {
-            if (node is FrameworkElement element && QuickAccessItems.Contains(element))
+            if (node is FrameworkElement element)
             {
-                return element;
+                if (QuickAccessItems.Contains(element))
+                {
+                    return element;
+                }
+
+                // Inside the overflow flyout the clicked control is a PROXY, not a member of
+                // QuickAccessItems — so without this, "Remove from Quick Access Toolbar" was
+                // hidden for exactly the items the user most wants to remove. Map it back to the
+                // real entry the proxy stands for.
+                if (GetQuickAccessOverflowItem(element) is { } represented
+                    && QuickAccessItems.Contains(represented))
+                {
+                    return represented;
+                }
             }
 
             DependencyObject? next = node is System.Windows.Media.Visual or System.Windows.Media.Media3D.Visual3D

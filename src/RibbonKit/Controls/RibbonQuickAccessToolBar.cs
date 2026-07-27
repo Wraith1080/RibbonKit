@@ -1,3 +1,4 @@
+using System.Collections.Specialized;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -45,6 +46,10 @@ public class RibbonQuickAccessToolBar : ItemsControl
     private PopupDismissHelper? _dismiss;
     private bool _overflowUpdatePending;
 
+    // Flyout proxy per quick-access item, kept for the toolbar's lifetime. See GetOrCreateEntry:
+    // rebuilding these per open strands borrowed drop-down menus.
+    private readonly Dictionary<FrameworkElement, FrameworkElement> _entries = new();
+
     static RibbonQuickAccessToolBar()
     {
         DefaultStyleKeyProperty.OverrideMetadata(
@@ -90,6 +95,26 @@ public class RibbonQuickAccessToolBar : ItemsControl
         {
             _overflowPopup.Opened += OnOverflowOpened;
             _overflowPopup.Closed += OnOverflowClosed;
+        }
+    }
+
+    /// <inheritdoc />
+    protected override void OnItemsChanged(NotifyCollectionChangedEventArgs e)
+    {
+        base.OnItemsChanged(e);
+
+        // The flyout's contents are a SNAPSHOT taken when it opened, so any change to the toolbar
+        // makes it stale. That matters most for "Remove from Quick Access Toolbar" invoked on an
+        // entry inside the flyout: the command would otherwise stay listed and still clickable,
+        // and the strip behind it wouldn't reflow until the flyout was dismissed. Closing is the
+        // honest answer — reopening shows the real state.
+        //
+        // Deferred to Background so the collection change finishes dispatching first: closing can
+        // make a drop-down entry return its borrowed menu items, and §3.19's rule is never to
+        // reparent a menu item mid-dispatch.
+        if (_overflowPopup is { IsOpen: true })
+        {
+            Dispatcher.BeginInvoke(DispatcherPriority.Background, (Action)CloseOverflow);
         }
     }
 
@@ -144,51 +169,116 @@ public class RibbonQuickAccessToolBar : ItemsControl
         {
             foreach (UIElement child in _panel.OverflowedChildren)
             {
-                if (child is not FrameworkElement element)
+                if (child is FrameworkElement element)
                 {
-                    continue;
+                    entries.Add(GetOrCreateEntry(ribbon, element));
                 }
-
-                // Proxy the ORIGINAL command where there is one — a proxy of a QAT proxy would
-                // mirror the mirror, and the catalog deliberately refuses to build those.
-                FrameworkElement source = Ribbon.GetQuickAccessSource(element) ?? element;
-                FrameworkElement entry = ribbon.CreateCommandProxy(source, RibbonControlSize.Medium);
-                entry.HorizontalAlignment = HorizontalAlignment.Stretch;
-
-                // Picking a command closes the flyout, like a menu.
-                if (entry is ButtonBase button)
-                {
-                    button.Click += OnOverflowEntryInvoked;
-                }
-
-                entries.Add(entry);
             }
         }
 
+        // Anything no longer in the toolbar at all can go; anything merely back in the strip is
+        // kept, because it will very likely overflow again on the next resize.
+        PruneEntries();
+
         _overflowHost.ItemsSource = entries;
+    }
+
+    /// <summary>
+    /// Returns the flyout proxy for a quick-access item, creating it on first use and REUSING it
+    /// forever after.
+    /// </summary>
+    /// <remarks>
+    /// Reuse is not an optimisation, it is a correctness requirement. A drop-down or split proxy
+    /// BORROWS its source's menu items while its flyout is open and returns them when that flyout
+    /// closes (design notes §3.19 — a <c>RibbonMenuItem</c> is a single-parent element, so borrowing
+    /// is the only option). Rebuilding the proxies on every open meant a proxy could be discarded
+    /// while it still held the borrowed items: they were never returned, the SOURCE menu was left
+    /// permanently empty, and every later open showed an empty popup — a bare rounded panel. That
+    /// is exactly the symptom, and it only appeared after a few opens because the first borrow is
+    /// what strands the items.
+    /// </remarks>
+    private FrameworkElement GetOrCreateEntry(Ribbon ribbon, FrameworkElement item)
+    {
+        if (_entries.TryGetValue(item, out FrameworkElement? existing))
+        {
+            return existing;
+        }
+
+        // Proxy the ORIGINAL command where there is one — a proxy of a QAT proxy would mirror the
+        // mirror, and the catalog deliberately refuses to build those.
+        FrameworkElement source = Ribbon.GetQuickAccessSource(item) ?? item;
+        FrameworkElement entry = ribbon.CreateCommandProxy(source, RibbonControlSize.Medium);
+
+        entry.HorizontalAlignment = HorizontalAlignment.Stretch;
+
+        // Stretched so the hover highlight spans the flyout like a menu row, but the CONTENT is
+        // left-aligned — a drop-down or split otherwise centres its icon+label and reads as a
+        // different kind of thing from the plain buttons beside it.
+        entry.SetValue(HorizontalContentAlignmentProperty, HorizontalAlignment.Left);
+
+        // Remember which quick-access item this stands for, so a right-click inside the flyout can
+        // offer "Remove from Quick Access Toolbar" for the REAL item rather than for this proxy.
+        Ribbon.SetQuickAccessOverflowItemInternal(entry, item);
+
+        // Picking a command closes the flyout, like a menu. A split button isn't a ButtonBase — its
+        // primary part raises RibbonSplitButton.Click — and a drop-down opener must NOT close it,
+        // since opening its menu is the whole point.
+        switch (entry)
+        {
+            case RibbonSplitButton split:
+                split.Click += OnOverflowEntryInvoked;
+                break;
+            case RibbonDropDownButton:
+                break;
+            case ButtonBase button:
+                button.Click += OnOverflowEntryInvoked;
+                break;
+        }
+
+        _entries[item] = entry;
+        return entry;
+    }
+
+    private void PruneEntries()
+    {
+        if (Owner is not { } ribbon)
+        {
+            return;
+        }
+
+        foreach (FrameworkElement item in _entries.Keys.ToList())
+        {
+            if (ribbon.QuickAccessItems.Contains(item))
+            {
+                continue;
+            }
+
+            if (_entries[item] is RibbonDropDownButton { IsDropDownOpen: true } stale)
+            {
+                // Never drop a proxy still holding a borrowed menu — close it so the items go home.
+                stale.SetCurrentValue(RibbonDropDownButton.IsDropDownOpenProperty, false);
+            }
+
+            _entries.Remove(item);
+        }
     }
 
     private void OnOverflowClosed(object? sender, EventArgs e)
     {
         _dismiss?.OnClosed();
 
-        // Proxies are rebuilt per open: they're cheap, and holding them would keep handlers alive
-        // on commands whose source may have been removed from the toolbar in the meantime.
-        if (_overflowHost?.ItemsSource is IEnumerable<object> entries)
+        // Close any entry menu still open. Its items are BORROWED from the source and are only
+        // returned by the drop-down's own close path, so letting the flyout disappear around an
+        // open menu would strand them (see GetOrCreateEntry).
+        foreach (FrameworkElement entry in _entries.Values)
         {
-            foreach (object entry in entries)
+            if (entry is RibbonDropDownButton { IsDropDownOpen: true } dropDown)
             {
-                if (entry is ButtonBase button)
-                {
-                    button.Click -= OnOverflowEntryInvoked;
-                }
+                dropDown.SetCurrentValue(RibbonDropDownButton.IsDropDownOpenProperty, false);
             }
         }
 
-        if (_overflowHost is not null)
-        {
-            _overflowHost.ItemsSource = null;
-        }
+        // The entries themselves are kept — see GetOrCreateEntry for why rebuilding is unsafe.
     }
 
     private void OnOverflowEntryInvoked(object sender, RoutedEventArgs e) => CloseOverflow();

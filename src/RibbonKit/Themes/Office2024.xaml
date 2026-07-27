@@ -1594,7 +1594,13 @@
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type controls:RibbonDropDownButton}">
                     <Grid>
+                        <!-- HorizontalContentAlignment forwarded from the drop-down so a host can
+                             left-align the icon+label instead of centring it. Default stays Center
+                             (Control's own default), so nothing in the ribbon changes; the quick
+                             access OVERFLOW flyout opts in, where a centred drop-down looked like a
+                             different kind of control from the plain buttons stacked beside it. -->
                         <ToggleButton x:Name="PART_Toggle"
+                                      HorizontalContentAlignment="{Binding HorizontalContentAlignment, RelativeSource={RelativeSource TemplatedParent}}"
                                       IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
                             <ToggleButton.Style>
                                 <Style TargetType="{x:Type ToggleButton}">
@@ -1607,7 +1613,7 @@
                                                         CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
                                                         Margin="1"
                                                         SnapsToDevicePixels="True">
-                                                    <ContentPresenter HorizontalAlignment="Center"
+                                                    <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                                                       VerticalAlignment="Center" />
                                                 </Border>
                                                 <ControlTemplate.Triggers>
@@ -1795,8 +1801,11 @@
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
+                        <!-- Same forwarding as the drop-down's PART_Toggle: lets the overflow
+                             flyout left-align a split button's icon+label. Default unchanged. -->
                         <Button x:Name="PART_Primary"
                                 Grid.Column="0"
+                                HorizontalContentAlignment="{Binding HorizontalContentAlignment, RelativeSource={RelativeSource TemplatedParent}}"
                                 Command="{TemplateBinding Command}"
                                 CommandParameter="{TemplateBinding CommandParameter}">
                             <Button.Style>
@@ -1810,7 +1819,7 @@
                                                         CornerRadius="{DynamicResource RibbonKit.Metrics.SplitLeftCornerRadius}"
                                                         Margin="1,1,0,1"
                                                         SnapsToDevicePixels="True">
-                                                    <ContentPresenter HorizontalAlignment="Center"
+                                                    <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                                                       VerticalAlignment="Center" />
                                                 </Border>
                                                 <ControlTemplate.Triggers>
