@@ -220,7 +220,7 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
     /// own; instead it BORROWS the source's menu items while open (moved in on open, returned on
     /// close by <see cref="OnIsDropDownOpenChanged"/>). Borrowing (not sharing) avoids the
     /// single-parent conflict — a <see cref="RibbonMenuItem"/> can only live in one dropdown — and
-    /// works even when the source's own tab isn't currently realized, since <see cref="Items"/> is
+    /// works even when the source's own tab isn't currently realized, since <see cref="ItemsControl.Items"/> is
     /// a logical collection independent of visual realization.
     /// </summary>
     internal void BorrowMenuFrom(RibbonDropDownButton source) => _borrowSource = source;

@@ -37,6 +37,8 @@
     <!-- Hover fill for chrome buttons on the tab strip (File button, minimize toggle),
          matching the tab hover. Becomes accent-tinted when the title bar is colored. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.ControlHoverBackground" Color="#EDEDED" />
+    <!-- Held (mouse-down) fill for those same buttons, one step darker than the hover. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.ControlPressedBackground" Color="#D8D8D8" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverBackground" Color="#EDEDED" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverUnderline" Color="Transparent" />
     <!-- Selected tab is true white (matches the white ribbon body), standing out from the
@@ -173,6 +175,8 @@
     <CornerRadius x:Key="RibbonKit.Metrics.SmallControlCornerRadius">0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.PopupCornerRadius">0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.TabCornerRadius">0</CornerRadius>
+    <!-- Square, like everything else in this generation. -->
+    <CornerRadius x:Key="RibbonKit.Metrics.ApplicationButtonCornerRadius">0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.SplitLeftCornerRadius">0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.SplitRightCornerRadius">0</CornerRadius>
 

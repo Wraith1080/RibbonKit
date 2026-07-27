@@ -17,7 +17,7 @@ namespace RibbonKit.Design;
 internal static class DesignLog
 {
     private static readonly object Gate = new object();
-    private static string _path;
+    private static string? _path;
 
     /// <summary>Set to false to silence logging without removing the call sites.</summary>
     public static bool Enabled { get; set; } = true;
@@ -32,20 +32,22 @@ internal static class DesignLog
                 return _path;
             }
 
+            string resolved;
             try
             {
                 string dir = System.IO.Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                     "RibbonKit");
                 Directory.CreateDirectory(dir);
-                _path = System.IO.Path.Combine(dir, "DesignTools.log");
+                resolved = System.IO.Path.Combine(dir, "DesignTools.log");
             }
             catch
             {
-                _path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "RibbonKit.DesignTools.log");
+                resolved = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "RibbonKit.DesignTools.log");
             }
 
-            return _path;
+            _path = resolved;
+            return resolved;
         }
     }
 

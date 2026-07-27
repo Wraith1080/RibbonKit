@@ -116,6 +116,14 @@
         <GradientStop Offset="0" Color="#F0F8FF" />
         <GradientStop Offset="1" Color="#D5E8FF" />
     </LinearGradientBrush>
+    <!-- Held (mouse-down): inverted glass WITH the hard crease (two stops sharing one offset)
+         that separates 2007 from 2010's smooth ramp — dark top face, specular foot. -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.TabStrip.ControlPressedBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#B7D2F0" />
+        <GradientStop Offset="0.45" Color="#A6C6EB" />
+        <GradientStop Offset="0.45" Color="#C3DCF7" />
+        <GradientStop Offset="1" Color="#E4F0FD" />
+    </LinearGradientBrush>
     <!-- Unselected tab hover: the same glass recipe as the buttons, lightened so the tab does
          not shout louder than a hot button. 2007 uses fills, never underlines. -->
     <LinearGradientBrush x:Key="RibbonKit.Brushes.Tab.HoverBackground" StartPoint="0,0" EndPoint="0,1">
@@ -228,15 +236,42 @@
         <GradientStop Offset="1" Color="#4C93CD" />
     </LinearGradientBrush>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Dialog.PrimaryBorder" Color="#17578F" />
-    <!-- Caption buttons sit on the light valley title bar: blue-tinted glass hover. -->
-    <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.HoverBackground" Color="#C4D8EF" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.PressedBackground" Color="#A6C4E6" />
+    <!-- Caption buttons sit on the light valley title bar, which is glass — a flat wash under
+         them read as a sticker stuck on it. Both states carry the 2007 HARD CREASE (two stops
+         sharing one offset); pressed inverts the lighting. An accented title bar
+         (ThemeManager.SetAccentedTitleBar) overrides both keys with flat accent mixes, which is
+         correct: that mode paints a solid caption with no glass to match. -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.CaptionButton.HoverBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#EAF3FD" />
+        <GradientStop Offset="0.45" Color="#CFE2F7" />
+        <GradientStop Offset="0.45" Color="#AFCDEE" />
+        <GradientStop Offset="1" Color="#D7E7F9" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.CaptionButton.PressedBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#9CBDE2" />
+        <GradientStop Offset="0.45" Color="#8FB3DC" />
+        <GradientStop Offset="0.45" Color="#AECBEB" />
+        <GradientStop Offset="1" Color="#D2E4F8" />
+    </LinearGradientBrush>
     <!-- Safety-net defaults for the QAT-on-colored-band wash; the Ribbon overrides both keys
          per-button with the live caption/tab band brushes. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Qat.ColoredHoverBackground" Color="#2EFFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Qat.ColoredPressedBackground" Color="#4DFFFFFF" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.CloseHoverBackground" Color="#E81123" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.ClosePressedBackground" Color="#F1707A" />
+    <!-- Close: the same creased glass in red, so it belongs to the same family as its
+         neighbours. Pressed stays LIGHTER than hover, the convention the other generations
+         follow. (Shared with the MDI child close button, which wants the identical look.) -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.CaptionButton.CloseHoverBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#F58089" />
+        <GradientStop Offset="0.45" Color="#E9333F" />
+        <GradientStop Offset="0.45" Color="#C60E1B" />
+        <GradientStop Offset="1" Color="#E85560" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.CaptionButton.ClosePressedBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#FAB4BA" />
+        <GradientStop Offset="0.45" Color="#F27A84" />
+        <GradientStop Offset="0.45" Color="#E2505C" />
+        <GradientStop Offset="1" Color="#F59AA2" />
+    </LinearGradientBrush>
 
     <!-- KeyTip badges: the small glassy chip of the 2007 era, blue-bordered with dark text. -->
     <LinearGradientBrush x:Key="RibbonKit.Brushes.KeyTip.Background" StartPoint="0,0" EndPoint="0,1">
@@ -334,6 +369,9 @@
     <CornerRadius x:Key="RibbonKit.Metrics.SmallControlCornerRadius">2</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.PopupCornerRadius">3</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.TabCornerRadius">3,3,0,0</CornerRadius>
+    <!-- Top-only, same as a tab. Only reached when ApplicationButtonShape is Tab; the
+         default 2007 Orb is an Ellipse and ignores this. -->
+    <CornerRadius x:Key="RibbonKit.Metrics.ApplicationButtonCornerRadius">3,3,0,0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.SplitLeftCornerRadius">3,0,0,3</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.SplitRightCornerRadius">0,3,3,0</CornerRadius>
 

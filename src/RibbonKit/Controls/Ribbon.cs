@@ -1517,7 +1517,7 @@ public class Ribbon : Control
     /// backstage (a sibling branch, unaffected by the root's opacity). Hit-testing is disabled
     /// because a zero-opacity element still receives input (WPF hit-testing ignores opacity).
     /// Prior values are saved so <see cref="RestoreContentBehindBackstage"/> restores exactly.
-    /// </summary>
+    /// </remarks>
     private void HideContentBehindBackstage(UIElement root)
     {
         if (Backstage is not Backstage { Translucent: true })

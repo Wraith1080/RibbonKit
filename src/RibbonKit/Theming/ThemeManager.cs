@@ -76,6 +76,16 @@ public static class ThemeManager
     private const string AppButtonForegroundKey = "RibbonKit.Brushes.ApplicationButton.Foreground";
     private const string TabHoverKey = "RibbonKit.Brushes.Tab.HoverBackground";
     private const string TabStripControlHoverKey = "RibbonKit.Brushes.TabStrip.ControlHoverBackground";
+    private const string TabStripControlPressedKey = "RibbonKit.Brushes.TabStrip.ControlPressedBackground";
+
+    // Hover/press washes for the small chrome buttons (minimize chevron, modal-tab close, merged
+    // caption buttons, QAT overflow, scroll chevrons, caption buttons, the pressed File button)
+    // while a DWM backdrop is showing through. They must be TRANSLUCENT, not solid: Mica and
+    // Acrylic composite beneath the window, so a solid #E6E6E6 chip reads as an opaque sticker
+    // floating on the material. Black at low alpha darkens whatever the backdrop is showing,
+    // which is what a real Fluent surface does.
+    private static readonly SolidColorBrush BackdropControlHover = Frozen(Color.FromArgb(0x1F, 0, 0, 0));
+    private static readonly SolidColorBrush BackdropControlPressed = Frozen(Color.FromArgb(0x33, 0, 0, 0));
 
     // Every key the accent system may override, so a theme switch can clear the previous
     // theme's accent overrides before re-deriving for the new one.
@@ -199,7 +209,10 @@ public static class ThemeManager
     /// it. The transparency is applied <b>only</b> for the Office 2024 look with a non-colored
     /// title bar; other themes keep their light band, and a colored title bar
     /// (<see cref="SetAccentedTitleBar"/>) keeps its accent — matching where a solid title bar is
-    /// expected. Persists across <see cref="Apply"/>, so switching themes re-derives it correctly
+    /// expected. In that transparent mode the hover/press washes of the caption buttons, the
+    /// tab-strip chrome buttons and the File button also go translucent, so they tint the
+    /// backdrop instead of covering it. Persists across <see cref="Apply"/>, so switching themes
+    /// re-derives it correctly
     /// (a non-2024 theme reverts to its solid band instead of leaking the transparent override).
     /// The caller is still responsible for the actual DWM backdrop and glass frame (see
     /// <see cref="RibbonKit.Interop.MicaHelper"/>).
@@ -208,6 +221,10 @@ public static class ThemeManager
     {
         ArgumentNullException.ThrowIfNull(application);
         _titleBarBackdrop = enabled;
+        // Re-establish the accent baseline first, exactly as SetAccentedTitleBar does: the
+        // backdrop branch layers onto ApplicationButton.PressedBackground, a key the accent
+        // system also writes, so the two passes must always run in that order.
+        ApplyAccentOverrides(application);
         ApplyTitleBarOverride(application);
         Changed?.Invoke(null, EventArgs.Empty);
     }
@@ -394,9 +411,16 @@ public static class ThemeManager
         resources.Remove(AppButtonForegroundKey);
         resources.Remove(TabHoverKey);
         resources.Remove(TabStripControlHoverKey);
-        // Note: ApplicationButton.HoverBackground is NOT cleared here — it is owned by the
-        // accent system (which runs first and re-establishes its baseline); we only layer
-        // an override onto it in the colored-strip branch below.
+        resources.Remove(TabStripControlPressedKey);
+        // Note: the ApplicationButton hover/pressed keys are NOT cleared wholesale — they are
+        // owned by the accent system (which runs first and re-establishes its baseline: 2013
+        // gets flat mixes, 2010/2007 a gel), and a blind Remove here would delete the value it
+        // just derived. The backdrop branch below is the only other writer of PressedBackground,
+        // so clear it ONLY when the live value is that override, identified by reference.
+        if (ReferenceEquals(resources[AppButtonPressedKey], BackdropControlPressed))
+        {
+            resources.Remove(AppButtonPressedKey);
+        }
 
         // Transparent title bar so a window backdrop (Mica) shows through — but ONLY for the
         // Office 2024 look with a NON-colored title bar. A colored title bar falls through to
@@ -409,6 +433,16 @@ public static class ThemeManager
             && (CurrentTheme ?? RibbonTheme.Office2024) == RibbonTheme.Office2024)
         {
             resources[TitleBarBackgroundKey] = Brushes.Transparent;
+            // Every hover/press chip that sits on a surface the backdrop shows through has to
+            // go translucent with it. The caption buttons sit directly on the now-transparent
+            // title bar; the tab-strip chrome buttons and the pressed File button sit on the
+            // strip, which is transparent too under Mica. Leaving them solid was the "ugly
+            // opaque square on the material" case.
+            resources[CaptionHoverKey] = BackdropControlHover;
+            resources[CaptionPressedKey] = BackdropControlPressed;
+            resources[TabStripControlHoverKey] = BackdropControlHover;
+            resources[TabStripControlPressedKey] = BackdropControlPressed;
+            resources[AppButtonPressedKey] = BackdropControlPressed;
             return;
         }
 

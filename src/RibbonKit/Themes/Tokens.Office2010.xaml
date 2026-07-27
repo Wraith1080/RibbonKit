@@ -86,6 +86,12 @@
         <GradientStop Offset="0" Color="#F0F6FC" />
         <GradientStop Offset="1" Color="#DDE9F6" />
     </LinearGradientBrush>
+    <!-- Held (mouse-down): the same glass INVERTED — dark at the top, light at the foot — which
+         is how 2010 draws a pressed surface (the light stops hitting the top face). -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.TabStrip.ControlPressedBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#BFD6EF" />
+        <GradientStop Offset="1" Color="#DCE9F7" />
+    </LinearGradientBrush>
     <!-- Unselected tab hover: a soft amber glow, like the buttons but lighter. 2010 uses
          fills (never underlines), so both underline tokens stay Transparent. -->
     <LinearGradientBrush x:Key="RibbonKit.Brushes.Tab.HoverBackground" StartPoint="0,0" EndPoint="0,1">
@@ -183,16 +189,38 @@
         <GradientStop Offset="1" Color="#3D86C4" />
     </LinearGradientBrush>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Dialog.PrimaryBorder" Color="#17578F" />
-    <!-- Caption buttons sit on the silver-blue glass title bar: blue-tinted glass hover. -->
-    <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.HoverBackground" Color="#C4D8EF" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.PressedBackground" Color="#A6C4E6" />
+    <!-- Caption buttons sit on the silver-blue GLASS title bar, so a flat wash under them read
+         as a sticker on glass. Both states are gradients now, matching the band: hover is lit
+         from above, pressed inverts (dark top face, specular foot) exactly like the tab-strip
+         chrome buttons. An accented title bar (ThemeManager.SetAccentedTitleBar) overrides both
+         keys with flat accent mixes — that mode paints a solid caption, so glass is wrong there. -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.CaptionButton.HoverBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#E4EFFA" />
+        <GradientStop Offset="1" Color="#B9D2EE" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.CaptionButton.PressedBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#96B8DF" />
+        <GradientStop Offset="1" Color="#C3D9F0" />
+    </LinearGradientBrush>
     <!-- Safety-net defaults for the QAT-on-colored-band hover/pressed wash. The Ribbon
          overrides both keys per-button with the live caption/tab band brushes
          (Ribbon.UpdateQatButtonContext); these only surface if a trigger fires first. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Qat.ColoredHoverBackground" Color="#2EFFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Qat.ColoredPressedBackground" Color="#4DFFFFFF" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.CloseHoverBackground" Color="#E81123" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.ClosePressedBackground" Color="#F1707A" />
+    <!-- Close: the same glass treatment in red, so it reads as one family with its neighbours
+         instead of a flat modern block dropped onto a glossy caption. Pressed stays LIGHTER
+         than hover — the convention every other generation here follows. (Also used by the MDI
+         child close button, which wants the identical look.) -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.CaptionButton.CloseHoverBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#F06A74" />
+        <GradientStop Offset="0.5" Color="#DA1526" />
+        <GradientStop Offset="1" Color="#EC4C58" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.CaptionButton.ClosePressedBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#F79FA6" />
+        <GradientStop Offset="0.5" Color="#EE5F6B" />
+        <GradientStop Offset="1" Color="#F58A93" />
+    </LinearGradientBrush>
 
     <!-- KeyTip badges: the small gradient chip of the 2007/2010 era — a light glassy box
          with a blue-grey border and dark text. -->
@@ -272,6 +300,9 @@
     <CornerRadius x:Key="RibbonKit.Metrics.SmallControlCornerRadius">2</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.PopupCornerRadius">3</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.TabCornerRadius">3,3,0,0</CornerRadius>
+    <!-- Top-only, same as a tab: the 2010 File button is physically connected to the
+         ribbon body, so a rounded foot would open a gap under it. -->
+    <CornerRadius x:Key="RibbonKit.Metrics.ApplicationButtonCornerRadius">3,3,0,0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.SplitLeftCornerRadius">3,0,0,3</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.SplitRightCornerRadius">0,3,3,0</CornerRadius>
 

@@ -42,6 +42,9 @@
          toggle), so they highlight like the tabs. Tracks the accent when the title bar
          is colored. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.ControlHoverBackground" Color="#E6E6E6" />
+    <!-- Held (mouse-down) fill for those same buttons, one step darker than the hover so the
+         click reads. ThemeManager swaps both for low-alpha washes under a Mica/Acrylic backdrop. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.ControlPressedBackground" Color="#D6D6D6" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverBackground" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverUnderline" Color="#B8B8B8" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedBackground" Color="Transparent" />
@@ -179,6 +182,10 @@
     <CornerRadius x:Key="RibbonKit.Metrics.SmallControlCornerRadius">2</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.PopupCornerRadius">6</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.TabCornerRadius">4,4,0,0</CornerRadius>
+    <!-- The File button rounds on ALL FOUR corners here: 2024 floats it above the ribbon card
+         rather than connecting it, so the tab's top-only radius left the pressed and
+         backstage-open fills with square bottom corners. -->
+    <CornerRadius x:Key="RibbonKit.Metrics.ApplicationButtonCornerRadius">4</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.SplitLeftCornerRadius">4,0,0,4</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.SplitRightCornerRadius">0,4,4,0</CornerRadius>
 

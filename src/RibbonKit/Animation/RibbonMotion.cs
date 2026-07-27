@@ -424,6 +424,9 @@ public static class RibbonMotion
     /// action is disabled (or system reduced-motion is on) it snaps instantly. Starting a new
     /// animation supersedes any in flight, so repeated calls (a held RepeatButton) chain smoothly.
     /// </summary>
+    /// <param name="scrollViewer">The scroller to glide; a null reference is a no-op.</param>
+    /// <param name="targetOffset">The vertical offset, in DIPs, to land on.</param>
+    /// <param name="action">The animation action supplying duration, easing and the disabled check.</param>
     /// <param name="fromOffset">
     /// Explicit start offset for the glide. When omitted the scroller's current
     /// <see cref="ScrollViewer.VerticalOffset"/> is used. Pass this when the visible offset was

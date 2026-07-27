@@ -192,17 +192,23 @@
                                                          same Tab.HoverBackground + Tab.HoverUnderline tokens,
                                                          so its hover style tracks the theme automatically. -->
                                                     <Grid>
+                                                        <!-- Its OWN corner radius, not TabCornerRadius: 2010/2007/2013
+                                                             keep the tab's top-only rounding because their File button
+                                                             is physically connected to the ribbon, but 2024's is a
+                                                             free-standing pill sitting ABOVE the card — reusing the
+                                                             tab radius there left the pressed/backstage-open fill with
+                                                             square bottom corners. -->
                                                         <Border x:Name="Chrome"
                                                                 Background="{DynamicResource RibbonKit.Brushes.ApplicationButton.Background}"
                                                                 BorderBrush="{DynamicResource RibbonKit.Brushes.ApplicationButton.Border}"
                                                                 BorderThickness="{DynamicResource RibbonKit.Metrics.ApplicationButtonBorderThickness}"
-                                                                CornerRadius="{DynamicResource RibbonKit.Metrics.TabCornerRadius}"
+                                                                CornerRadius="{DynamicResource RibbonKit.Metrics.ApplicationButtonCornerRadius}"
                                                                 SnapsToDevicePixels="True">
                                                             <Grid>
                                                                 <!-- Inner light rim just inside the outer border (2010 glass). -->
                                                                 <Border BorderBrush="{DynamicResource RibbonKit.Brushes.Control.InnerGlow}"
                                                                         BorderThickness="{DynamicResource RibbonKit.Metrics.ApplicationButtonBorderThickness}"
-                                                                        CornerRadius="{DynamicResource RibbonKit.Metrics.TabCornerRadius}" />
+                                                                        CornerRadius="{DynamicResource RibbonKit.Metrics.ApplicationButtonCornerRadius}" />
                                                                 <ContentPresenter Margin="{DynamicResource RibbonKit.Metrics.ApplicationButtonPadding}"
                                                                                   HorizontalAlignment="Center"
                                                                                   VerticalAlignment="Center" />
@@ -405,10 +411,13 @@
                                  ribbon's ExitModalCommand. Shows the tab's CloseButtonText when
                                  set ("Close Print Preview"), otherwise a bare × glyph. Chrome
                                  deliberately reuses the minimize chevron's TabStrip tokens, so
-                                 it themes correctly in 2024/2019/2013/2010 with no new tokens. -->
+                                 it themes correctly across every generation for free. -->
+                            <!-- Right margin matches the minimize chevron's: the two are mutually
+                                 exclusive (the chevron hides in modal mode), so without it the
+                                 close button would sit flush against the window edge. -->
                             <Button x:Name="PART_ModalClose"
                                     Height="22"
-                                    Margin="0,6,2,0"
+                                    Margin="0,6,8,0"
                                     Padding="6,0"
                                     VerticalAlignment="Center"
                                     ToolTip="Close"
@@ -445,6 +454,14 @@
                                                         <Trigger Property="IsMouseOver" Value="True">
                                                             <Setter TargetName="Chrome" Property="Background"
                                                                     Value="{DynamicResource RibbonKit.Brushes.TabStrip.ControlHoverBackground}" />
+                                                        </Trigger>
+                                                        <!-- Pressed comes AFTER hover on purpose: the
+                                                             pointer is always over the button while it
+                                                             is held, so the later trigger must be the
+                                                             darker one or the press would never show. -->
+                                                        <Trigger Property="IsPressed" Value="True">
+                                                            <Setter TargetName="Chrome" Property="Background"
+                                                                    Value="{DynamicResource RibbonKit.Brushes.TabStrip.ControlPressedBackground}" />
                                                         </Trigger>
                                                         <!-- No CloseButtonText: icon-only, so the
                                                              label must not reserve its margin. -->
@@ -502,6 +519,12 @@
                                                         <Trigger Property="IsChecked" Value="True">
                                                             <Setter TargetName="ChevronUp" Property="Visibility" Value="Collapsed" />
                                                             <Setter TargetName="ChevronDown" Property="Visibility" Value="Visible" />
+                                                        </Trigger>
+                                                        <!-- LAST so it outranks hover: the pointer is
+                                                             always over the button while it is held. -->
+                                                        <Trigger Property="IsPressed" Value="True">
+                                                            <Setter TargetName="Chrome" Property="Background"
+                                                                    Value="{DynamicResource RibbonKit.Brushes.TabStrip.ControlPressedBackground}" />
                                                         </Trigger>
                                                     </ControlTemplate.Triggers>
                                                 </ControlTemplate>

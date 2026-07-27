@@ -33,7 +33,7 @@ internal enum NodeKind
 /// </summary>
 internal sealed class NodeInfo
 {
-    public NodeInfo(ModelItem item, NodeKind kind, string parentCollection)
+    public NodeInfo(ModelItem item, NodeKind kind, string? parentCollection)
     {
         Item = item;
         Kind = kind;
@@ -45,7 +45,7 @@ internal sealed class NodeInfo
     public NodeKind Kind { get; }
 
     /// <summary>The collection property this node lives in on its parent (null for the ribbon root).</summary>
-    public string ParentCollection { get; }
+    public string? ParentCollection { get; }
 }
 
 /// <summary>
@@ -78,17 +78,21 @@ internal sealed class RibbonEditorWindow : Window
     private readonly TextBlock _typeText = new TextBlock { Opacity = 0.75, VerticalAlignment = VerticalAlignment.Center };
     private readonly Dictionary<ModelItem, TreeViewItem> _map = new Dictionary<ModelItem, TreeViewItem>();
 
-    private Button _addGroup;
-    private Button _addControl;
-    private Button _addStack;
-    private Button _addItem;
-    private Button _moveUp;
-    private Button _moveDown;
-    private Button _delete;
-    private Button _rename;
-    private ComboBox _previewCombo;
-    private CheckBox _backstageCheck;
-    private ComboBox _backstagePageCombo;
+    // Built by BuildToolbar/BuildBody/BuildFooter, every one of which runs from the constructor
+    // before it returns, so none of these is ever observed null. `= null!` states that. Declaring
+    // them nullable instead would put a `?.` on every use site to describe a state that cannot
+    // happen, which reads as "this might not exist" and is simply untrue.
+    private Button _addGroup = null!;
+    private Button _addControl = null!;
+    private Button _addStack = null!;
+    private Button _addItem = null!;
+    private Button _moveUp = null!;
+    private Button _moveDown = null!;
+    private Button _delete = null!;
+    private Button _rename = null!;
+    private ComboBox _previewCombo = null!;
+    private CheckBox _backstageCheck = null!;
+    private ComboBox _backstagePageCombo = null!;
     private readonly List<int> _backstagePageMap = new List<int>();
     private bool _syncingPreview;
     private readonly StackPanel _propsPanel = new StackPanel { Orientation = Orientation.Vertical };
@@ -96,8 +100,10 @@ internal sealed class RibbonEditorWindow : Window
 
     // Drag-drop reorder state.
     private Point _dragStart;
-    private NodeInfo _dragSource;
-    private DropAdorner _dropAdorner;
+    // Genuinely transient, unlike the widgets above: null between drags, and cleared back to null
+    // when a drag is consumed or the adorner removed.
+    private NodeInfo? _dragSource;
+    private DropAdorner? _dropAdorner;
 
     /// <summary>Creates the editor over <paramref name="ribbon"/> (the selected Ribbon's design model item).</summary>
     public RibbonEditorWindow(ModelItem ribbon)
@@ -199,8 +205,8 @@ internal sealed class RibbonEditorWindow : Window
         return _toolbar;
     }
 
-    private WrapPanel _toolbar;
-    private ContextMenu _addControlMenu;
+    private WrapPanel _toolbar = null!;
+    private ContextMenu _addControlMenu = null!;
 
     private UIElement BuildBody()
     {
@@ -369,7 +375,7 @@ internal sealed class RibbonEditorWindow : Window
 
     // ---- Tree building ----------------------------------------------------------------
 
-    private void RebuildTree(ModelItem select = null)
+    private void RebuildTree(ModelItem? select = null)
     {
         _map.Clear();
         _tree.Items.Clear();
@@ -381,7 +387,7 @@ internal sealed class RibbonEditorWindow : Window
         // Backstage (the File menu) is a scalar property of the ribbon, not part of Tabs — surface it
         // as its own node so its nav items can be edited. ParentCollection stays null (it's not in a
         // collection, so Move/Delete don't apply).
-        ModelItem backstage = DesignModel.FindProperty(_ribbon, "Backstage")?.Value;
+        ModelItem? backstage = DesignModel.FindProperty(_ribbon, "Backstage")?.Value;
         if (backstage != null)
         {
             try
@@ -589,7 +595,7 @@ internal sealed class RibbonEditorWindow : Window
             _previewCombo.SelectedIndex = selected;
 
             // Backstage toggle: only meaningful when the ribbon actually has a backstage.
-            ModelItem backstage = DesignModel.FindProperty(_ribbon, "Backstage")?.Value;
+            ModelItem? backstage = DesignModel.FindProperty(_ribbon, "Backstage")?.Value;
             bool hasBackstage = backstage != null;
             _backstageCheck.IsEnabled = hasBackstage;
             bool showingBackstage = hasBackstage
@@ -613,7 +619,7 @@ internal sealed class RibbonEditorWindow : Window
     /// (clears the override); the rest map to their true index in the backstage's Items via
     /// <see cref="_backstagePageMap"/>. Disabled (and reset to default) when the backstage isn't shown.
     /// </summary>
-    private void PopulateBackstagePages(ModelItem backstage, bool enabled)
+    private void PopulateBackstagePages(ModelItem? backstage, bool enabled)
     {
         _backstagePageCombo.Items.Clear();
         _backstagePageMap.Clear();
@@ -690,7 +696,7 @@ internal sealed class RibbonEditorWindow : Window
             return;
         }
 
-        ModelItem backstage = DesignModel.FindProperty(_ribbon, "Backstage")?.Value;
+        ModelItem? backstage = DesignModel.FindProperty(_ribbon, "Backstage")?.Value;
         int sel = _backstagePageCombo.SelectedIndex;
         int? pageIndex = sel <= 0 || sel - 1 >= _backstagePageMap.Count
             ? (int?)null
@@ -730,11 +736,11 @@ internal sealed class RibbonEditorWindow : Window
 
     // ---- Selection / command state ----------------------------------------------------
 
-    private NodeInfo Selected => (_tree.SelectedItem as TreeViewItem)?.Tag as NodeInfo;
+    private NodeInfo? Selected => (_tree.SelectedItem as TreeViewItem)?.Tag as NodeInfo;
 
     private void UpdateDetails()
     {
-        NodeInfo node = Selected;
+        NodeInfo? node = Selected;
 
         if (node is null)
         {
@@ -768,12 +774,14 @@ internal sealed class RibbonEditorWindow : Window
         // Move enabled only when there is somewhere to move to.
         int index = -1;
         int count = 0;
-        if (structural)
+        // Pattern-matched rather than reused from `structural`: a bool cannot carry the not-null it
+        // proved, so both arguments below would read as possibly-null through it.
+        if (node?.ParentCollection is { } parentCollection)
         {
             try
             {
-                index = DesignModel.IndexInParent(node.Item, node.ParentCollection);
-                count = DesignModel.SiblingCount(node.Item, node.ParentCollection);
+                index = DesignModel.IndexInParent(node.Item, parentCollection);
+                count = DesignModel.SiblingCount(node.Item, parentCollection);
             }
             catch (Exception ex)
             {
@@ -801,7 +809,7 @@ internal sealed class RibbonEditorWindow : Window
 
     private sealed class PropSpec
     {
-        public PropSpec(string name, string label, EditorKind kind, string[] enumValues = null, string attachedOwner = null)
+        public PropSpec(string name, string label, EditorKind kind, string[]? enumValues = null, string? attachedOwner = null)
         {
             Name = name;
             Label = label;
@@ -816,10 +824,10 @@ internal sealed class RibbonEditorWindow : Window
 
         public EditorKind Kind { get; }
 
-        public string[] EnumValues { get; }
+        public string[]? EnumValues { get; }
 
         /// <summary>For <see cref="EditorKind.AttachedText"/>: the full CLR type that DECLARES the attached property (e.g. <c>RibbonKit.Controls.KeyTip</c>).</summary>
-        public string AttachedOwner { get; }
+        public string? AttachedOwner { get; }
     }
 
     private static readonly PropSpec[] ControlSpecs =
@@ -946,7 +954,7 @@ internal sealed class RibbonEditorWindow : Window
     }
 
     /// <summary>Rebuilds the property editors for the selected item, skipping any property it doesn't have.</summary>
-    private void BuildProps(NodeInfo node)
+    private void BuildProps(NodeInfo? node)
     {
         _syncingProps = true;
         try
@@ -1053,7 +1061,7 @@ internal sealed class RibbonEditorWindow : Window
     {
         var box = new TextBox
         {
-            Text = DesignModel.GetAttachedString(item, spec.AttachedOwner, spec.Name),
+            Text = DesignModel.GetAttachedString(item, spec.AttachedOwner!, spec.Name),
             VerticalContentAlignment = VerticalAlignment.Center,
         };
 
@@ -1061,7 +1069,7 @@ internal sealed class RibbonEditorWindow : Window
         {
             if (!_syncingProps)
             {
-                DesignModel.SetAttached(item, spec.AttachedOwner, spec.Name, box.Text ?? string.Empty);
+                DesignModel.SetAttached(item, spec.AttachedOwner!, spec.Name, box.Text ?? string.Empty);
             }
         }
 
@@ -1132,10 +1140,10 @@ internal sealed class RibbonEditorWindow : Window
         browse.Click += (_, _) =>
         {
             var picker = new IconPickerDialog(CollectUsedIconKeys(), box.Text) { Owner = this };
-            if (picker.ShowDialog() == true && !string.IsNullOrEmpty(picker.SelectedKey))
+            if (picker.ShowDialog() == true && picker.SelectedKey is { Length: > 0 } key)
             {
-                box.Text = picker.SelectedKey;
-                DesignModel.SetStaticResource(item, spec.Name, picker.SelectedKey);
+                box.Text = key;
+                DesignModel.SetStaticResource(item, spec.Name, key);
             }
         };
         return dock;
@@ -1231,9 +1239,9 @@ internal sealed class RibbonEditorWindow : Window
         pick.Click += (_, _) =>
         {
             var dialog = new ColorPickerDialog(box.Text) { Owner = this };
-            if (dialog.ShowDialog() == true && !string.IsNullOrEmpty(dialog.SelectedColor))
+            if (dialog.ShowDialog() == true && dialog.SelectedColor is { Length: > 0 } color)
             {
-                box.Text = dialog.SelectedColor;
+                box.Text = color;
                 Commit();
             }
         };
@@ -1243,7 +1251,7 @@ internal sealed class RibbonEditorWindow : Window
     private UIElement BuildEnumEditor(ModelItem item, PropSpec spec)
     {
         var combo = new ComboBox();
-        foreach (string value in spec.EnumValues)
+        foreach (string value in spec.EnumValues!)
         {
             combo.Items.Add(value);
         }
@@ -1262,9 +1270,9 @@ internal sealed class RibbonEditorWindow : Window
     }
 
     /// <summary>The nearest <c>RibbonTab</c> ancestor of the selection (walks up through any nesting), or null.</summary>
-    private ModelItem ResolveTab(NodeInfo node)
+    private ModelItem? ResolveTab(NodeInfo? node)
     {
-        ModelItem current = node?.Item;
+        ModelItem? current = node?.Item;
         while (current != null)
         {
             if (SafeType(current) == "RibbonTab")
@@ -1283,7 +1291,7 @@ internal sealed class RibbonEditorWindow : Window
     /// <c>Items</c>, into a container's <c>Children</c>, or as a sibling of the selected control.
     /// Null when the selection can't host a child (ribbon/tab).
     /// </summary>
-    private (ModelItem Parent, string Collection)? ResolveChildTarget(NodeInfo node)
+    private (ModelItem Parent, string Collection)? ResolveChildTarget(NodeInfo? node)
     {
         switch (node?.Kind)
         {
@@ -1335,7 +1343,7 @@ internal sealed class RibbonEditorWindow : Window
     /// Resolves an "Add Item" target from the selection: the combo/gallery/backstage itself, or the
     /// container of the selected item (so you can add a sibling). Null when neither applies.
     /// </summary>
-    private ItemTarget? ResolveItemTarget(NodeInfo node)
+    private ItemTarget? ResolveItemTarget(NodeInfo? node)
     {
         if (node?.Item is null)
         {
@@ -1361,7 +1369,7 @@ internal sealed class RibbonEditorWindow : Window
 
     private void OnAddGroup()
     {
-        ModelItem tab = ResolveTab(Selected);
+        ModelItem? tab = ResolveTab(Selected);
         if (tab != null)
         {
             ModelItem group = DesignModel.AddGroup(tab);
@@ -1384,9 +1392,9 @@ internal sealed class RibbonEditorWindow : Window
         {
             // Only buttons get a Header caption; buttons stacked inside a container default to
             // Small (the icon-row form). Combos/galleries/separators get neither.
-            string header = isButton ? caption : null;
-            string size = isButton && target.Value.Collection == "Children" ? "Small" : null;
-            ModelItem control = DesignModel.AddControl(target.Value.Parent, target.Value.Collection, typeName, header, size);
+            string? header = isButton ? caption : null;
+            string? size = isButton && target.Value.Collection == "Children" ? "Small" : null;
+            ModelItem? control = DesignModel.AddControl(target.Value.Parent, target.Value.Collection, typeName, header, size);
             if (control != null)
             {
                 RebuildTree(control);
@@ -1402,7 +1410,7 @@ internal sealed class RibbonEditorWindow : Window
             // A stack in a group is the outer vertical column; a stack inside another stack is a
             // horizontal row (matching the Office pattern of rows-of-icons within a column).
             string orientation = target.Value.Collection == "Children" ? "Horizontal" : "Vertical";
-            ModelItem stack = DesignModel.AddStackPanel(target.Value.Parent, target.Value.Collection, orientation);
+            ModelItem? stack = DesignModel.AddStackPanel(target.Value.Parent, target.Value.Collection, orientation);
             if (stack != null)
             {
                 RebuildTree(stack);
@@ -1412,13 +1420,13 @@ internal sealed class RibbonEditorWindow : Window
 
     private void OnMove(int delta)
     {
-        NodeInfo node = Selected;
-        if (node?.ParentCollection is null)
+        NodeInfo? node = Selected;
+        if (node?.ParentCollection is not { } parentCollection)
         {
             return;
         }
 
-        DesignModel.Move(node.Item, node.ParentCollection, delta);
+        DesignModel.Move(node.Item, parentCollection, delta);
         RebuildTree(node.Item);
     }
 
@@ -1503,9 +1511,11 @@ internal sealed class RibbonEditorWindow : Window
             return null;
         }
 
-        TreeViewItem targetItem = ContainerAtPoint(e.OriginalSource as DependencyObject);
-        NodeInfo target = NodeAt(targetItem);
-        if (target is null || target.Item is null || ReferenceEquals(target.Item, source.Item))
+        TreeViewItem? targetItem = ContainerAtPoint(e.OriginalSource as DependencyObject);
+        NodeInfo? target = NodeAt(targetItem);
+        // targetItem is tested explicitly even though a null one could only yield a null target:
+        // the two are related by the call, not by anything flow analysis can see.
+        if (targetItem is null || target is null || target.Item is null || ReferenceEquals(target.Item, source.Item))
         {
             return null;
         }
@@ -1629,7 +1639,7 @@ internal sealed class RibbonEditorWindow : Window
         return false;
     }
 
-    private TreeViewItem ContainerAtPoint(DependencyObject source)
+    private TreeViewItem? ContainerAtPoint(DependencyObject? source)
     {
         while (source != null && source is not TreeViewItem)
         {
@@ -1641,9 +1651,9 @@ internal sealed class RibbonEditorWindow : Window
         return source as TreeViewItem;
     }
 
-    private static NodeInfo NodeAt(TreeViewItem item) => item?.Tag as NodeInfo;
+    private static NodeInfo? NodeAt(TreeViewItem? item) => item?.Tag as NodeInfo;
 
-    private static T FindVisualChild<T>(DependencyObject root) where T : DependencyObject
+    private static T? FindVisualChild<T>(DependencyObject root) where T : DependencyObject
     {
         int count = VisualTreeHelper.GetChildrenCount(root);
         for (int i = 0; i < count; i++)
@@ -1780,20 +1790,20 @@ internal sealed class RibbonEditorWindow : Window
 
     private void OnDelete()
     {
-        NodeInfo node = Selected;
-        if (node?.ParentCollection is null)
+        NodeInfo? node = Selected;
+        if (node?.ParentCollection is not { } parentCollection)
         {
             return;
         }
 
         ModelItem parent = node.Item.Parent;
-        DesignModel.Delete(node.Item, node.ParentCollection);
+        DesignModel.Delete(node.Item, parentCollection);
         RebuildTree(parent);
     }
 
     private void OnRename()
     {
-        NodeInfo node = Selected;
+        NodeInfo? node = Selected;
         if (node is null || node.Kind == NodeKind.Ribbon)
         {
             return;
@@ -1808,7 +1818,7 @@ internal sealed class RibbonEditorWindow : Window
         ItemTarget? target = ResolveItemTarget(Selected);
         if (target != null)
         {
-            ModelItem item = DesignModel.AddItem(target.Value.Container, target.Value.TypeName, target.Value.CaptionProperty, target.Value.Label);
+            ModelItem? item = DesignModel.AddItem(target.Value.Container, target.Value.TypeName, target.Value.CaptionProperty, target.Value.Label);
             if (item != null)
             {
                 RebuildTree(item);

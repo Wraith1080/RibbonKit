@@ -52,6 +52,13 @@
                             <Setter TargetName="Chrome" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.TabStrip.ControlHoverBackground}" />
                         </Trigger>
+                        <!-- Pressed AFTER hover, always: the pointer is over the button for the
+                             whole time it is held, so an earlier pressed trigger would be
+                             overwritten by hover and the click would read as dead. -->
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Chrome" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.TabStrip.ControlPressedBackground}" />
+                        </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
@@ -124,6 +131,12 @@
                                                         <Trigger Property="IsChecked" Value="True">
                                                             <Setter TargetName="Chrome" Property="Background"
                                                                     Value="{DynamicResource RibbonKit.Brushes.TabStrip.ControlHoverBackground}" />
+                                                        </Trigger>
+                                                        <!-- LAST: outranks both hover and the open
+                                                             state, so the press always registers. -->
+                                                        <Trigger Property="IsPressed" Value="True">
+                                                            <Setter TargetName="Chrome" Property="Background"
+                                                                    Value="{DynamicResource RibbonKit.Brushes.TabStrip.ControlPressedBackground}" />
                                                         </Trigger>
                                                     </ControlTemplate.Triggers>
                                                 </ControlTemplate>
@@ -201,6 +214,11 @@
                             <Setter TargetName="Chrome" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.TabStrip.ControlHoverBackground}" />
                         </Trigger>
+                        <!-- Pressed after hover, so the held state wins. -->
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Chrome" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.TabStrip.ControlPressedBackground}" />
+                        </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
@@ -230,6 +248,11 @@
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="Chrome" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.TabStrip.ControlHoverBackground}" />
+                        </Trigger>
+                        <!-- Pressed after hover, so the held state wins. -->
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Chrome" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.TabStrip.ControlPressedBackground}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

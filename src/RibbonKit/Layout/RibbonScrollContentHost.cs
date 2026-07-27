@@ -331,11 +331,13 @@ public class RibbonScrollContentHost : Decorator
             _direction = direction;
         }
 
-        public event EventHandler CanExecuteChanged;
+        // Nullability here is ICommand's, not ours: the interface declares an EventHandler? event
+        // and object? parameters, and matching it exactly is what keeps CS8612/CS8767 quiet.
+        public event EventHandler? CanExecuteChanged;
 
-        public bool CanExecute(object parameter) => _direction < 0 ? _host.CanScrollLeft : _host.CanScrollRight;
+        public bool CanExecute(object? parameter) => _direction < 0 ? _host.CanScrollLeft : _host.CanScrollRight;
 
-        public void Execute(object parameter) => _host.Scroll(_direction);
+        public void Execute(object? parameter) => _host.Scroll(_direction);
 
         public void RaiseCanExecuteChanged() => CanExecuteChanged?.Invoke(this, EventArgs.Empty);
     }
