@@ -71,6 +71,29 @@
          connects straight into the tab row. -->
     <Thickness x:Key="RibbonKit.Metrics.TabStripMargin">2,0,4,0</Thickness>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Group.Separator" Color="#D4D4D4" />
+    <!-- 1 = the separator is drawn, as it always has been in this theme. -->
+    <system:Double x:Key="RibbonKit.Metrics.GroupSeparatorOpacity">1</system:Double>
+
+    <!-- Group box (Office 2007 only). This generation draws each group as a bordered, rounded box
+         with a light inner rim and a shaded label band; every later generation uses a bare surface
+         with a 1px separator between groups. The shared template carries both, so the flat themes
+         zero these keys and the box collapses to nothing. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Group.Background" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Group.Border" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Group.InnerHighlight" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Group.LabelBackground" Color="Transparent" />
+    <Thickness x:Key="RibbonKit.Metrics.GroupBorderThickness">0</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.GroupCornerRadius">0</CornerRadius>
+        <!-- Group outer gap / inner content inset. These reproduce the historic hard-coded
+         Margin="4,2,4,0" exactly, so this theme is unchanged. -->
+    <!-- Groups-row inset / collapsed-group button margin. These reproduce the previous
+         hard-coded values (Margin="6,2" on the content scroller, Margin="1" on the collapsed
+         button) exactly, so this theme is unchanged. -->
+    <Thickness x:Key="RibbonKit.Metrics.GroupsRowMargin">6,2</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.GroupCollapsedMargin">1</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.GroupMargin">4,2,4,0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.GroupPadding">0</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.GroupLabelCornerRadius">0</CornerRadius>
     <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.Background" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.Border" Color="#D4D4D4" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemHoverBackground" Color="#3D66A8" />

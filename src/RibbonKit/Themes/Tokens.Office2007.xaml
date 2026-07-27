@@ -159,9 +159,45 @@
     <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonMargin">2,2,2,0</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonPadding">18,7,18,9</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.TabStripMargin">2,2,4,0</Thickness>
-    <!-- Etched group separator. Real 2007 pairs this dark line with a #ECF4FA light companion;
-         there is one separator token, so the light line is an S4 decision. -->
+    <!-- ⚠ TRIPLE DUTY. Despite the name this brush also paints the MENU SEPARATOR
+         (Menus.xaml, RibbonKit.MenuSeparator) and the GALLERY ITEM HOVER BORDER
+         (Controls.Galleries.xaml). Setting it Transparent to suppress 2007's ribbon group
+         separator silently deleted both of those. The ribbon separator is suppressed by
+         GroupSeparatorOpacity below instead; this keeps a real colour. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Group.Separator" Color="#9EBED9" />
+    <!-- 0 hides the RIBBON group separator without resizing anything: Office 2007 has no
+         separator (adjacent group BOXES do that job), but the brush above is still needed by the
+         menu separator and the gallery hover border, so it must NOT be made Transparent. Opacity
+         rather than Width so the 1px column stays and group spacing is unchanged. -->
+    <system:Double x:Key="RibbonKit.Metrics.GroupSeparatorOpacity">0</system:Double>
+
+    <!-- Group box. Measured off a real Office 2007 window: each group is a bordered rounded box
+         with a 1px light rim inside the border, and the label sits in its own shaded band at the
+         foot of the box (a clear step darker than the group body above it). This is why
+         Group.Separator is Transparent here: what looks like a divider in 2007 is simply two
+         adjacent box borders meeting. -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Group.Background" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#DEE8F5" />
+        <GradientStop Offset="0.16" Color="#C7D8ED" />
+        <GradientStop Offset="1" Color="#D9E8F6" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Group.Border" Color="#A8BFD4" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Group.InnerHighlight" Color="#E4ECF5" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Group.LabelBackground" Color="#C1D9F1" />
+    <Thickness x:Key="RibbonKit.Metrics.GroupBorderThickness">1</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.GroupCornerRadius">3</CornerRadius>
+    <!-- Bottom corners only, and 1px tighter than the box so the band tucks inside the rim. -->
+        <!-- Outer gap between neighbouring groups, and the inset from the box edge to the group's
+         content. 2007 packs its boxes almost edge to edge and takes its breathing room INSIDE the
+         box instead; the older generations keep the historic 4px outer inset and no padding. -->
+    <!-- Inset of the whole groups row inside the ribbon body, and the collapsed-group button's
+         own margin. 2007 packs the first group almost against the body border and needs its
+         collapsed button to line up exactly with the expanded group boxes beside it. -->
+    <Thickness x:Key="RibbonKit.Metrics.GroupsRowMargin">3,2</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.GroupCollapsedMargin">0,2,0,0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.GroupMargin">0,2,0,0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.GroupPadding">3,0,3,0</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.GroupLabelCornerRadius">0,0,2,2</CornerRadius>
     <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.Background" Color="#FBFDFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.Border" Color="#8DB2E3" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemHoverBackground" Color="#2E6DB4" />
@@ -252,10 +288,12 @@
 
     <!-- Ribbon body: a full outline with square corners, connected to the chrome above. -->
     <Thickness x:Key="RibbonKit.Metrics.ContentBorderThickness">1</Thickness>
-    <Thickness x:Key="RibbonKit.Metrics.ContentMargin">0</Thickness>
-    <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadius">0</CornerRadius>
-    <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadiusTop">0</CornerRadius>
-    <Thickness x:Key="RibbonKit.Metrics.ContentMarginQatBelow">0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.ContentMargin">2,0,2,0</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadius">3</CornerRadius>
+    <!-- Used INSTEAD of ContentCornerRadius when the QAT sits below the ribbon: the body rounds
+         only its top corners and the QAT strip below completes the shape with the bottom pair. -->
+    <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadiusTop">3,3,0,0</CornerRadius>
+    <Thickness x:Key="RibbonKit.Metrics.ContentMarginQatBelow">2,0,2,0</Thickness>
 
     <!-- 2007's ribbon is welded to the window chrome, so the separation from the document is a
          hairline rather than the floating card of 2024. -->
@@ -263,14 +301,19 @@
                       BlurRadius="5" ShadowDepth="1" Direction="270"
                       Opacity="0.10" Color="#000000" RenderingBias="Performance" />
 
-    <!-- Flat below-ribbon QAT: a plain full-width strip with a bottom border. -->
-    <Thickness x:Key="RibbonKit.Metrics.QatExtenderMargin">0</Thickness>
-    <Thickness x:Key="RibbonKit.Metrics.QatExtenderBorderThickness">0,0,0,1</Thickness>
-    <CornerRadius x:Key="RibbonKit.Metrics.QatExtenderCornerRadius">0</CornerRadius>
+    <!-- Below-ribbon QAT. It continues the ribbon body rather than sitting under it as a separate
+         bar, so it takes the SAME side inset as ContentMarginQatBelow, carries side borders, and
+         rounds the bottom corners the body gave up to ContentCornerRadiusTop. No top border: the
+         body's own bottom edge is directly above it. -->
+    <Thickness x:Key="RibbonKit.Metrics.QatExtenderMargin">2,0,2,0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.QatExtenderBorderThickness">1,0,1,1</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.QatExtenderCornerRadius">0,0,3,3</CornerRadius>
 
-    <Thickness x:Key="RibbonKit.Metrics.QatExtenderMarginMinimized">0</Thickness>
-    <Thickness x:Key="RibbonKit.Metrics.QatExtenderBorderThicknessMinimized">0,0,0,1</Thickness>
-    <CornerRadius x:Key="RibbonKit.Metrics.QatExtenderCornerRadiusMinimized">0</CornerRadius>
+    <!-- Minimized: the ribbon body is gone, so the strip is the whole chrome and closes on all
+         four sides instead of continuing something above it. -->
+    <Thickness x:Key="RibbonKit.Metrics.QatExtenderMarginMinimized">2,0,2,0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.QatExtenderBorderThicknessMinimized">1</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.QatExtenderCornerRadiusMinimized">3</CornerRadius>
 
     <!-- MDI child-window chrome. The client colour is the measured 2007 document background. -->
     <LinearGradientBrush x:Key="RibbonKit.Brushes.MdiChild.ActiveCaptionBackground" StartPoint="0,0" EndPoint="0,1">

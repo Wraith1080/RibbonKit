@@ -264,19 +264,50 @@ the top border wherever the selected tab sits. Those do not overlap unless the f
 against the body's top-left corner — worth one look during S4, but it is not the collision it
 sounds like.
 
-#### What this costs — the predicted template change, now arrived
+#### ✅ BUILT 2026-07-27 — the predicted template change, now landed
 
-This is the moment §1 warned about: 2007 is the generation that forces a shared-template change.
-RibbonKit has exactly **one** group token today (`Group.Separator`). Delivering the box needs
-**six new keys** —
+This was the moment §1 warned about: 2007 is the generation that forces a shared-template change.
+RibbonKit had exactly **one** group token (`Group.Separator`). Delivered:
 
-`Group.Background`, `Group.Border`, `Group.InnerHighlight`, `Group.LabelBackground`,
-`Metrics.GroupBorderThickness`, `Metrics.GroupCornerRadius`
+**Seven new keys** (one more than the six first scoped — see the note below), in all five theme
+files, taking each from 95 to **102 keys**:
 
-— which means: all **five** theme files gain six keys each (95 → 101), the `RibbonGroup` template in
-`Themes/Controls.Groups.xaml` gains a bordered box plus a label band, and `ThemeDictionaryScopeTests`
-must pass afterwards. Flat themes zero the new keys (`Transparent` / `0`), exactly as they already do
-for underlines and radii, so no other theme changes appearance.
+| Key | 2007 | Every other theme |
+|---|---|---|
+| `Brushes.Group.Background` | gradient `#DEE8F5` → `#C7D8ED` @0.16 → `#D9E8F6` | `Transparent` |
+| `Brushes.Group.Border` | `#A8BFD4` | `Transparent` |
+| `Brushes.Group.InnerHighlight` | `#E4ECF5` | `Transparent` |
+| `Brushes.Group.LabelBackground` | `#C1D9F1` | `Transparent` |
+| `Metrics.GroupBorderThickness` | `1` | `0` |
+| `Metrics.GroupCornerRadius` | `3` | `0` |
+| `Metrics.GroupLabelCornerRadius` | `0,0,2,2` | `0` |
+
+**Why seven, not six.** The label band sits at the foot of a box with a 3px radius, so a
+square-cornered band pokes past the rounded corners by about a pixel. `GroupLabelCornerRadius`
+rounds only its bottom corners, one pixel tighter than the box so it tucks inside the rim. Cheaper
+than clipping.
+
+**Template** (`Themes/Controls.Groups.xaml`, the `RibbonGroup` `ControlTemplate`): the content grid
+is now wrapped in a `GroupBox` `Border` carrying background, border, thickness and radius, then a
+nested rim `Border` bound to `Group.InnerHighlight` — the same construction the button glass already
+uses via `Control.InnerGlow` — and the label row is wrapped in a `Border` bound to
+`Group.LabelBackground`. The `Margin="4,2,4,0"` moved from the grid onto the outer border so the box
+takes the inset.
+
+**Also changed for 2007 only:** `Group.Separator` → `Transparent` (per the correction above), and
+`ContentCornerRadius` `0` → `3` for the looped body border.
+
+**Safe because:** `PART_NormalHost` is a `Decorator` and `RibbonGroup` re-homes `_normalHost.Child`
+as an untyped `UIElement` (`RibbonGroup.cs:430`), never casting to `Grid`, so the wrapper is
+invisible to the flyout move. `Controls.Groups.xaml` contains **no** `StaticResource` references at
+all, so the §3.37 sibling-scope rule cannot be violated by this edit.
+
+**Verified:** all five token files at 102/102 identical keys; every file XML-valid, CRLF-clean and
+free of `--` inside comments; every `DynamicResource` the template names is defined in the theme
+files. Still needs `dotnet test` and a Windows look.
+
+**Watch on first run:** the group box now also renders inside the collapsed-group flyout, since the
+flyout receives the same subtree. That is arguably correct but was not designed for — check it.
 
 ---
 
@@ -414,7 +445,7 @@ partly because too much changed between looks.
 | ~~S1~~ | ~~Palette~~ | ✅ **Done 2026-07-27**, reviewed on Windows. `Office2007` enum member, `Tokens.Office2007.xaml` (95/95 parity), showcase button. The §4.3 glass shipped early with it, so S2 is refinement rather than construction. Review found the two §4.5 gaps. | — |
 | **S2** | Glass | The §4.3 hard-crease gels plus the border/rim/highlight keys. | Hover and press read as 2007 gloss; no 1px jitter (static `BorderThickness`, per §3.27 pass 5). |
 | **S3** | Orb | Overhang prototype **first**, then `RibbonApplicationButtonShape`, template trigger, designer metadata. | Orb renders at 37px, overhangs into the title bar uncliped, opens the backstage; other themes visually unchanged. |
-| **S4** | Geometry + frame | **Group boxes (6 new tokens + the `Controls.Groups.xaml` template — see §4.5)**, `ContentCornerRadius` 0→3, domed tabs, the §6 window frame, maximize re-check. | Side-by-side with `noaero.png` is convincing at 100% DPI; `dotnet test` green. |
+| **S4** | Geometry + frame | ✅ Group boxes + `ContentCornerRadius` 0→3 **built 2026-07-27** (§4.5), awaiting `dotnet test` and a Windows look. Remaining: domed tabs, the §6 window frame, maximize re-check. | Side-by-side with `noaero.png` is convincing at 100% DPI; `dotnet test` green. |
 | **S5** | Accent + backstage | `ApplyAccentOverrides` case, `Glass()` helper, `AccentOverrideKeys`, `Classic2007` backstage design. | Custom accent and colored title bar behave; no leakage on theme switch. |
 | **S6** | Wiring + verify | Showcase button (`OnApplyOffice2007`, following `OnApplyOffice2010`), DPI matrix 100/125/150/175/200%, **fix the README application-menu row**, design notes §3.38, roadmap update. | DPI matrix clean; docs updated. |
 

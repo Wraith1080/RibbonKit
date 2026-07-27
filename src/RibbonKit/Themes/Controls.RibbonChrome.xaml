@@ -496,7 +496,7 @@
                             <Grid>
                                 <layout:RibbonScrollContentHost x:Name="PART_ContentScroll"
                                                                 ConstrainChildWidth="True"
-                                                                Margin="6,2">
+                                                                Margin="{DynamicResource RibbonKit.Metrics.GroupsRowMargin}">
                                     <ContentPresenter ContentSource="SelectedContent" />
                                 </layout:RibbonScrollContentHost>
                                 <RepeatButton Style="{StaticResource RibbonKit.ScrollLeftButton}"
