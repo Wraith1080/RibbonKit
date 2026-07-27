@@ -290,6 +290,13 @@
                                                          Value="{x:Null}">
                                                 <Setter Property="Visibility" Value="Collapsed" />
                                             </DataTrigger>
+                                            <!-- A modal tab (Print Preview) hides File entirely, like
+                                                 Word: the backstage is blocked in that mode, so leaving
+                                                 the button visible would offer a dead affordance. -->
+                                            <DataTrigger Binding="{Binding IsModal, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
+                                                         Value="True">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
                                 </ToggleButton.Style>
@@ -355,9 +362,71 @@
                                               Command="{Binding ScrollRightCommand, ElementName=PART_TabScroll}"
                                               Visibility="{Binding CanScrollRight, ElementName=PART_TabScroll, Converter={StaticResource RibbonKit.BoolToVis}}" />
                             </Grid>
+                            <!-- Right end of the tab strip row: the modal-tab close affordance
+                                 (only while a modal tab is active) followed by the minimize
+                                 chevron. Grouped in a stack so neither needs its own column. -->
+                            <StackPanel Grid.Column="3"
+                                        Orientation="Horizontal"
+                                        VerticalAlignment="Center">
+                            <!-- Modal tab (Print Preview) close: leaves modal mode via the
+                                 ribbon's ExitModalCommand. Shows the tab's CloseButtonText when
+                                 set ("Close Print Preview"), otherwise a bare × glyph. Chrome
+                                 deliberately reuses the minimize chevron's TabStrip tokens, so
+                                 it themes correctly in 2024/2019/2013/2010 with no new tokens. -->
+                            <Button x:Name="PART_ModalClose"
+                                    Height="22"
+                                    Margin="0,6,2,0"
+                                    Padding="6,0"
+                                    VerticalAlignment="Center"
+                                    ToolTip="Close"
+                                    Content="{Binding ModalTab.CloseButtonText, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
+                                    Command="{Binding ExitModalCommand, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
+                                    Visibility="{Binding CanCloseModal, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}, Converter={StaticResource RibbonKit.BoolToVis}}">
+                                <Button.Style>
+                                    <Style TargetType="{x:Type Button}">
+                                        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.TabStrip.Foreground}" />
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="{x:Type Button}">
+                                                    <Border x:Name="Chrome"
+                                                            Background="Transparent"
+                                                            CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                                            SnapsToDevicePixels="True">
+                                                        <StackPanel Orientation="Horizontal"
+                                                                    VerticalAlignment="Center"
+                                                                    Margin="{TemplateBinding Padding}">
+                                                            <Path x:Name="Glyph"
+                                                                  Data="M0,0 L8,8 M8,0 L0,8"
+                                                                  Stroke="{TemplateBinding Foreground}"
+                                                                  StrokeThickness="1.4"
+                                                                  StrokeStartLineCap="Round"
+                                                                  StrokeEndLineCap="Round"
+                                                                  VerticalAlignment="Center" />
+                                                            <ContentPresenter x:Name="Label"
+                                                                              Margin="6,0,0,0"
+                                                                              VerticalAlignment="Center"
+                                                                              TextElement.Foreground="{TemplateBinding Foreground}" />
+                                                        </StackPanel>
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="Chrome" Property="Background"
+                                                                    Value="{DynamicResource RibbonKit.Brushes.TabStrip.ControlHoverBackground}" />
+                                                        </Trigger>
+                                                        <!-- No CloseButtonText: icon-only, so the
+                                                             label must not reserve its margin. -->
+                                                        <Trigger Property="Content" Value="{x:Null}">
+                                                            <Setter TargetName="Label" Property="Visibility" Value="Collapsed" />
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
                             <!-- Minimize chevron: toggles Ribbon.IsMinimized -->
                             <ToggleButton x:Name="MinimizeToggle"
-                                          Grid.Column="3"
                                           Width="24" Height="22"
                                           Margin="0,6,8,0"
                                           VerticalAlignment="Center"
@@ -405,9 +474,20 @@
                                                 </ControlTemplate>
                                             </Setter.Value>
                                         </Setter>
+                                        <!-- Triggers come AFTER every setter: a Style.Triggers
+                                             block sitting between setters is a MC3088 build error. -->
+                                        <Style.Triggers>
+                                            <!-- Minimizing is blocked while a modal tab owns the
+                                                 ribbon, so the chevron goes away with it. -->
+                                            <DataTrigger Binding="{Binding IsModal, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
+                                                         Value="True">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
                                     </Style>
                                 </ToggleButton.Style>
                             </ToggleButton>
+                            </StackPanel>
                         </Grid>
                         <!-- Ribbon body. Office 2024/365 renders it as a floating rounded
                              "card" (inset margin, rounded on all corners, bordered all

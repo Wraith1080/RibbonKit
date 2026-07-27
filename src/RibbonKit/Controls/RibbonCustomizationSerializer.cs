@@ -101,7 +101,11 @@ public static class RibbonCustomizationSerializer
                 Id = tabId,
                 IsCustom = tabCustom,
                 Header = tab.Header?.ToString(),
-                Visible = tab.Visibility == Visibility.Visible,
+                // NOT tab.Visibility: a modal tab hides every other tab with Visibility, so
+                // capturing the live value while Print Preview is open would persist the whole
+                // ribbon as hidden and restore a one-tab ribbon on the next run. The ribbon
+                // reports the pre-modal ("authored") value here.
+                Visible = ribbon.GetAuthoredVisibility(tab) == Visibility.Visible,
             };
 
             foreach (RibbonGroup group in tab.Groups)

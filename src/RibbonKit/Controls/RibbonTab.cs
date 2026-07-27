@@ -46,6 +46,30 @@ public class RibbonTab : TabItem
             typeof(RibbonTab),
             new FrameworkPropertyMetadata(null, OnContextualAppearanceChanged));
 
+    /// <summary>Identifies the <see cref="IsModal"/> dependency property.</summary>
+    public static readonly DependencyProperty IsModalProperty =
+        DependencyProperty.Register(
+            nameof(IsModal),
+            typeof(bool),
+            typeof(RibbonTab),
+            new FrameworkPropertyMetadata(false));
+
+    /// <summary>Identifies the <see cref="CanClose"/> dependency property.</summary>
+    public static readonly DependencyProperty CanCloseProperty =
+        DependencyProperty.Register(
+            nameof(CanClose),
+            typeof(bool),
+            typeof(RibbonTab),
+            new FrameworkPropertyMetadata(true));
+
+    /// <summary>Identifies the <see cref="CloseButtonText"/> dependency property.</summary>
+    public static readonly DependencyProperty CloseButtonTextProperty =
+        DependencyProperty.Register(
+            nameof(CloseButtonText),
+            typeof(string),
+            typeof(RibbonTab),
+            new FrameworkPropertyMetadata(null));
+
     private static readonly DependencyPropertyKey ContextualBrushPropertyKey =
         DependencyProperty.RegisterReadOnly(
             nameof(ContextualBrush),
@@ -112,6 +136,41 @@ public class RibbonTab : TabItem
     /// </summary>
     public Brush? ContextualBrush => (Brush?)GetValue(ContextualBrushProperty);
 
+    /// <summary>
+    /// Marks this as a <b>modal</b> tab — a Print-Preview-style mode that, while active, hides
+    /// every other tab and the application (File) button, and blocks minimizing the ribbon and
+    /// opening the backstage. Setting this property only declares the tab as eligible; the
+    /// application enters and leaves the mode with <see cref="Ribbon.EnterModal"/> and
+    /// <see cref="Ribbon.ExitModal()"/>.
+    /// </summary>
+    public bool IsModal
+    {
+        get => (bool)GetValue(IsModalProperty);
+        set => SetValue(IsModalProperty, value);
+    }
+
+    /// <summary>
+    /// Whether a close affordance appears at the end of the tab strip while this tab is modal,
+    /// letting the user leave the mode. Default <see langword="true"/>. Set to
+    /// <see langword="false"/> for a mode only the application can end.
+    /// Ignored unless <see cref="IsModal"/> is <see langword="true"/>.
+    /// </summary>
+    public bool CanClose
+    {
+        get => (bool)GetValue(CanCloseProperty);
+        set => SetValue(CanCloseProperty, value);
+    }
+
+    /// <summary>
+    /// Optional label for the modal close affordance (Word's Print Preview reads
+    /// "Close Print Preview"). When <see langword="null"/> the button shows a bare × glyph.
+    /// </summary>
+    public string? CloseButtonText
+    {
+        get => (string?)GetValue(CloseButtonTextProperty);
+        set => SetValue(CloseButtonTextProperty, value);
+    }
+
     /// <inheritdoc />
     public override void OnApplyTemplate()
     {
@@ -151,7 +210,9 @@ public class RibbonTab : TabItem
     {
         base.OnMouseDoubleClick(e);
 
-        if (e.ChangedButton == MouseButton.Left && FindAncestorRibbon() is { } ribbon)
+        // A modal tab owns the whole ribbon, so double-click must not minimize it away. The
+        // ribbon reverts the change anyway; stopping here keeps the gesture from flickering.
+        if (e.ChangedButton == MouseButton.Left && FindAncestorRibbon() is { IsModal: false } ribbon)
         {
             ribbon.IsMinimized = !ribbon.IsMinimized;
             e.Handled = true;

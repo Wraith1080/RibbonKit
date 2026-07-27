@@ -279,6 +279,36 @@ public partial class MainWindow : RibbonWindow
     private void OnOpenMdiDemo(object sender, RoutedEventArgs e) =>
         new MdiDemo { Owner = this }.Show();
 
+    // ---- Modal tab (Print Preview) -------------------------------------------------
+    // EnterModal hides every other tab plus the File button, blocks minimize and the
+    // backstage, and leaves the QAT alone. It returns false when a ModalEntering handler
+    // cancels — worth checking only in an app that has a reason to refuse (nothing to
+    // print, a job already spooling).
+    private void OnEnterPrintPreview(object sender, RoutedEventArgs e) =>
+        MainRibbon.EnterModal(PrintPreviewTab);
+
+    // The mode is the ribbon's business; swapping the document for the preview page is the
+    // app's. Driving it from ModalEntered/ModalExited rather than from the button means the
+    // "Close Print Preview" button — or any future exit path — restores the document with no
+    // extra wiring.
+    private void OnRibbonModalEntered(object sender, RibbonModalEventArgs e)
+    {
+        if (ReferenceEquals(e.Tab, PrintPreviewTab))
+        {
+            PrintPreviewSurface.Visibility = Visibility.Visible;
+            StatusReady.Content = "Print Preview";
+        }
+    }
+
+    private void OnRibbonModalExited(object sender, RibbonModalEventArgs e)
+    {
+        if (ReferenceEquals(e.Tab, PrintPreviewTab))
+        {
+            PrintPreviewSurface.Visibility = Visibility.Collapsed;
+            StatusReady.Content = "Ready";
+        }
+    }
+
     // Backstage footer BUTTON items: they run an action instead of switching to a page.
     private void OnBackstageOptions(object sender, RoutedEventArgs e)
     {

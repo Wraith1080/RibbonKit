@@ -154,6 +154,36 @@ public class Ribbon : Control
                 FrameworkPropertyMetadataOptions.BindsTwoWayByDefault,
                 OnSelectedIndexChanged));
 
+    private static readonly DependencyPropertyKey ModalTabPropertyKey =
+        DependencyProperty.RegisterReadOnly(
+            nameof(ModalTab),
+            typeof(RibbonTab),
+            typeof(Ribbon),
+            new FrameworkPropertyMetadata(null));
+
+    /// <summary>Identifies the read-only <see cref="ModalTab"/> dependency property.</summary>
+    public static readonly DependencyProperty ModalTabProperty = ModalTabPropertyKey.DependencyProperty;
+
+    private static readonly DependencyPropertyKey IsModalPropertyKey =
+        DependencyProperty.RegisterReadOnly(
+            nameof(IsModal),
+            typeof(bool),
+            typeof(Ribbon),
+            new FrameworkPropertyMetadata(false));
+
+    /// <summary>Identifies the read-only <see cref="IsModal"/> dependency property.</summary>
+    public static readonly DependencyProperty IsModalProperty = IsModalPropertyKey.DependencyProperty;
+
+    private static readonly DependencyPropertyKey CanCloseModalPropertyKey =
+        DependencyProperty.RegisterReadOnly(
+            nameof(CanCloseModal),
+            typeof(bool),
+            typeof(Ribbon),
+            new FrameworkPropertyMetadata(false));
+
+    /// <summary>Identifies the read-only <see cref="CanCloseModal"/> dependency property.</summary>
+    public static readonly DependencyProperty CanCloseModalProperty = CanCloseModalPropertyKey.DependencyProperty;
+
     static Ribbon()
     {
         DefaultStyleKeyProperty.OverrideMetadata(
@@ -164,6 +194,11 @@ public class Ribbon : Control
     /// <summary>Initializes a new ribbon with an empty <see cref="Tabs"/> collection.</summary>
     public Ribbon()
     {
+        // Created first: the minimize/backstage guards consult the scope from property-changed
+        // callbacks that can run as soon as the object is initialized from XAML.
+        _modalScope = new RibbonModalScope(this);
+        _exitModalCommand = new ModalCloseCommand(this);
+
         var tabs = new ObservableCollection<RibbonTab>();
         tabs.CollectionChanged += OnTabsCollectionChanged;
         SetValue(TabsPropertyKey, tabs);
@@ -227,6 +262,204 @@ public class Ribbon : Control
     {
         get => (int)GetValue(SelectedIndexProperty);
         set => SetValue(SelectedIndexProperty, value);
+    }
+
+    // ==========================================================================
+    // Modal tabs (Print-Preview-style exclusive mode). State machine lives in
+    // RibbonModalScope; this region is the public surface plus the guards that
+    // keep minimize and the backstage out of reach while modal.
+    // ==========================================================================
+
+    private readonly RibbonModalScope _modalScope;
+    private readonly ModalCloseCommand _exitModalCommand;
+
+    // Set while a guard is reverting an attempt to minimize / open the backstage during modal
+    // mode, so the revert's own property-changed notification doesn't run the normal path.
+    private bool _suppressMinimizeChange;
+    private bool _suppressBackstageChange;
+
+    /// <summary>
+    /// The tab currently held modal, or <see langword="null"/> when the ribbon is in its normal
+    /// state. See <see cref="EnterModal"/>.
+    /// </summary>
+    public RibbonTab? ModalTab => (RibbonTab?)GetValue(ModalTabProperty);
+
+    /// <summary>Whether a modal tab is active (a convenience over <see cref="ModalTab"/>).</summary>
+    public bool IsModal => (bool)GetValue(IsModalProperty);
+
+    /// <summary>
+    /// Whether the modal tab currently active offers a close affordance
+    /// (<see cref="RibbonTab.CanClose"/>). The tab strip binds its close button's visibility here.
+    /// </summary>
+    public bool CanCloseModal => (bool)GetValue(CanCloseModalProperty);
+
+    /// <summary>
+    /// Command that leaves modal mode with <see cref="RibbonModalReason.CloseButton"/>. Bound by
+    /// the tab strip's close affordance; also usable from an app's own "Close Preview" button.
+    /// </summary>
+    public System.Windows.Input.ICommand ExitModalCommand => _exitModalCommand;
+
+    /// <summary>
+    /// Raised before a tab enters modal mode. Set <see cref="RibbonModalEventArgs.Cancel"/> to
+    /// refuse (for example, when there is nothing to preview).
+    /// </summary>
+    public event EventHandler<RibbonModalEventArgs>? ModalEntering;
+
+    /// <summary>Raised after a tab has entered modal mode.</summary>
+    public event EventHandler<RibbonModalEventArgs>? ModalEntered;
+
+    /// <summary>
+    /// Raised before modal mode ends. Set <see cref="RibbonModalEventArgs.Cancel"/> to refuse —
+    /// except when <see cref="RibbonModalEventArgs.Reason"/> is
+    /// <see cref="RibbonModalReason.TabRemoved"/>, where the tab is already gone.
+    /// </summary>
+    public event EventHandler<RibbonModalEventArgs>? ModalExiting;
+
+    /// <summary>Raised after modal mode has ended.</summary>
+    public event EventHandler<RibbonModalEventArgs>? ModalExited;
+
+    /// <summary>
+    /// Enters modal mode on <paramref name="tab"/>: every other tab and the application (File)
+    /// button hide, minimizing the ribbon and opening the backstage are blocked, and the quick
+    /// access toolbar stays — Word's Print Preview behaviour. The tab must belong to this ribbon
+    /// and have <see cref="RibbonTab.IsModal"/> set.
+    /// </summary>
+    /// <returns>
+    /// <see langword="false"/> when a <see cref="ModalEntering"/> handler cancelled, or when an
+    /// already-modal tab refused to leave first.
+    /// </returns>
+    public bool EnterModal(RibbonTab tab)
+    {
+        ArgumentNullException.ThrowIfNull(tab);
+
+        if (!Tabs.Contains(tab))
+        {
+            throw new ArgumentException("The tab does not belong to this ribbon.", nameof(tab));
+        }
+
+        if (!tab.IsModal)
+        {
+            throw new ArgumentException(
+                $"The tab '{tab.Header}' is not marked {nameof(RibbonTab.IsModal)}.", nameof(tab));
+        }
+
+        return _modalScope.Enter(tab, RibbonModalReason.Application);
+    }
+
+    /// <summary>
+    /// Leaves modal mode, restoring every tab's pre-modal visibility and the previously selected
+    /// tab. No-op when not modal.
+    /// </summary>
+    /// <returns><see langword="false"/> when a <see cref="ModalExiting"/> handler cancelled.</returns>
+    public bool ExitModal() => ExitModal(RibbonModalReason.Application);
+
+    /// <summary>
+    /// Leaves modal mode, attributing the transition to <paramref name="reason"/> so handlers can
+    /// tell a user-initiated close from an application-driven one.
+    /// </summary>
+    /// <returns><see langword="false"/> when a <see cref="ModalExiting"/> handler cancelled.</returns>
+    public bool ExitModal(RibbonModalReason reason) => _modalScope.Exit(reason, force: false);
+
+    /// <summary>
+    /// The visibility <paramref name="tab"/> would have if modal mode were not active. Modal mode
+    /// hides the other tabs with <see cref="UIElement.Visibility"/>, so anything that PERSISTS
+    /// visibility must read it through here — otherwise state saved during Print Preview restores
+    /// a ribbon with every tab hidden. <see cref="RibbonCustomizationSerializer"/> uses it.
+    /// </summary>
+    public Visibility GetAuthoredVisibility(RibbonTab tab)
+    {
+        ArgumentNullException.ThrowIfNull(tab);
+        return _modalScope.GetAuthoredVisibility(tab);
+    }
+
+    /// <summary>
+    /// Sets the visibility <paramref name="tab"/> should have once modal mode ends. While the tab
+    /// is held hidden by a modal tab the change is deferred to the exit; otherwise it applies
+    /// immediately. Use this instead of setting <see cref="UIElement.Visibility"/> directly when
+    /// application state (a contextual tab's context) changes during modal mode.
+    /// </summary>
+    public void SetAuthoredVisibility(RibbonTab tab, Visibility value)
+    {
+        ArgumentNullException.ThrowIfNull(tab);
+        _modalScope.SetAuthoredVisibility(tab, value);
+    }
+
+    internal bool RaiseModalEntering(RibbonTab tab, RibbonModalReason reason)
+    {
+        if (ModalEntering is null)
+        {
+            return true;
+        }
+
+        var args = new RibbonModalEventArgs(tab, reason);
+        ModalEntering(this, args);
+        return !args.Cancel;
+    }
+
+    internal void RaiseModalEntered(RibbonTab tab, RibbonModalReason reason) =>
+        ModalEntered?.Invoke(this, new RibbonModalEventArgs(tab, reason));
+
+    internal bool RaiseModalExiting(RibbonTab tab, RibbonModalReason reason)
+    {
+        if (ModalExiting is null)
+        {
+            return true;
+        }
+
+        var args = new RibbonModalEventArgs(tab, reason);
+        ModalExiting(this, args);
+        return !args.Cancel;
+    }
+
+    internal void RaiseModalExited(RibbonTab tab, RibbonModalReason reason) =>
+        ModalExited?.Invoke(this, new RibbonModalEventArgs(tab, reason));
+
+    /// <summary>
+    /// Publishes the scope's state onto the read-only DPs the templates bind to, then re-places the
+    /// selection visuals. The sliding underline and the 2010/2013 body-border notch are positioned
+    /// from the selected tab's transform, and a modal transition changes which tabs are laid out
+    /// without raising a selection or size event — so they must be re-placed explicitly, exactly as
+    /// a theme swap does (see design notes §3.29).
+    /// </summary>
+    internal void OnModalStateChanged()
+    {
+        RibbonTab? modal = _modalScope.ModalTab;
+        SetValue(ModalTabPropertyKey, modal);
+        SetValue(IsModalPropertyKey, modal is not null);
+        SetValue(CanCloseModalPropertyKey, modal is { CanClose: true });
+        _exitModalCommand.RaiseCanExecuteChanged();
+
+        if (modal is not null)
+        {
+            // Entering: leave any state the mode forbids, through the normal (animated) paths.
+            SetCurrentValue(IsBackstageOpenProperty, false);
+            SetCurrentValue(IsMinimizedProperty, false);
+        }
+
+        if (_ribbonTabControl is { } tabControl)
+        {
+            tabControl.InvalidateArrange();
+            tabControl.UpdateLayout();
+            tabControl.RefreshSelectionVisuals();
+        }
+    }
+
+    // Bound by the tab strip's modal close affordance. A tiny ICommand rather than a
+    // RoutedUICommand: the target is unambiguous (the ribbon that owns the template), so command
+    // routing would only add a way to get it wrong.
+    private sealed class ModalCloseCommand : System.Windows.Input.ICommand
+    {
+        private readonly Ribbon _ribbon;
+
+        internal ModalCloseCommand(Ribbon ribbon) => _ribbon = ribbon;
+
+        public event EventHandler? CanExecuteChanged;
+
+        public bool CanExecute(object? parameter) => _ribbon.CanCloseModal;
+
+        public void Execute(object? parameter) => _ribbon.ExitModal(RibbonModalReason.CloseButton);
+
+        internal void RaiseCanExecuteChanged() => CanExecuteChanged?.Invoke(this, EventArgs.Empty);
     }
 
     private static readonly DependencyPropertyKey QuickAccessSourcePropertyKey =
@@ -680,7 +913,32 @@ public class Ribbon : Control
 
     private static void OnIsBackstageOpenChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        ((Ribbon)d).UpdateBackstageOverlay((bool)e.NewValue);
+        var ribbon = (Ribbon)d;
+
+        // A modal tab blocks the backstage (Word's Print Preview hides File entirely). The
+        // application button is hidden by a template trigger, so this only catches programmatic
+        // attempts — revert rather than coerce, so no stale "true" springs back on exit.
+        if (ribbon._modalScope.IsActive && (bool)e.NewValue && !ribbon._suppressBackstageChange)
+        {
+            ribbon._suppressBackstageChange = true;
+            try
+            {
+                ribbon.SetCurrentValue(IsBackstageOpenProperty, false);
+            }
+            finally
+            {
+                ribbon._suppressBackstageChange = false;
+            }
+
+            return;
+        }
+
+        if (ribbon._suppressBackstageChange)
+        {
+            return;
+        }
+
+        ribbon.UpdateBackstageOverlay((bool)e.NewValue);
     }
 
     private static void OnIsMinimizedChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -690,6 +948,29 @@ public class Ribbon : Control
         // reappears. Only transform/opacity animate — the row height is never animated, so
         // the window's layout still snaps cleanly once the body is hidden/shown.
         var ribbon = (Ribbon)d;
+
+        // Minimizing is blocked while a modal tab is active: the mode owns the whole ribbon.
+        // Same revert-not-coerce reasoning as the backstage guard above.
+        if (ribbon._modalScope.IsActive && (bool)e.NewValue && !ribbon._suppressMinimizeChange)
+        {
+            ribbon._suppressMinimizeChange = true;
+            try
+            {
+                ribbon.SetCurrentValue(IsMinimizedProperty, false);
+            }
+            finally
+            {
+                ribbon._suppressMinimizeChange = false;
+            }
+
+            return;
+        }
+
+        if (ribbon._suppressMinimizeChange)
+        {
+            return;
+        }
+
         ribbon._ribbonContentHost ??= FindDescendantByName(ribbon, "ContentHost");
         if (ribbon._ribbonContentHost is not { } host)
         {
@@ -1388,6 +1669,10 @@ public class Ribbon : Control
             foreach (RibbonTab tab in e.OldItems)
             {
                 tab.IsVisibleChanged -= OnTabIsVisibleChanged;
+
+                // Removing the modal tab ends modal mode; removing any other drops its
+                // recorded pre-modal visibility.
+                _modalScope.OnTabRemoved(tab);
             }
         }
 
@@ -1396,7 +1681,18 @@ public class Ribbon : Control
             foreach (RibbonTab tab in e.NewItems)
             {
                 tab.IsVisibleChanged += OnTabIsVisibleChanged;
+
+                // A tab arriving during modal mode is hidden immediately and recorded, so
+                // exiting reveals it correctly.
+                _modalScope.OnTabAdded(tab);
             }
+        }
+
+        // Tabs.Clear() reports a Reset with no OldItems — the customization serializer rebuilds
+        // the collection that way, so reconcile modal state against the new contents.
+        if (e.Action == NotifyCollectionChangedAction.Reset)
+        {
+            _modalScope.OnCollectionReset();
         }
 
         // Keep the selection valid as tabs come and go.
