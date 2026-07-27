@@ -36,9 +36,11 @@ samples/RibbonKit.Showcase/
 
 ### 2.1 One template set, token-driven themes
 
-- **All control templates live in `Themes/Office2024.xaml`** (~1900 lines), shared by
-  every theme. Templates never hardcode colors/metrics — they reference tokens via
-  `DynamicResource` (`RibbonKit.Brushes.*`, `RibbonKit.Metrics.*`, `RibbonKit.Effects.*`).
+- **All control templates live in `Themes/Office2024.xaml`**, shared by every theme.
+  Templates never hardcode colors/metrics — they reference tokens via `DynamicResource`
+  (`RibbonKit.Brushes.*`, `RibbonKit.Metrics.*`, `RibbonKit.Effects.*`).
+  Since 2026-07-27 that file is a 35-line aggregator merging ten `Controls.*.xaml`
+  parts — see §3.37, which is EXPERIMENTAL and may be reverted.
 - **Per-theme values** live in `Tokens.Office2024.xaml`, `Tokens.Office2019.xaml`,
   `Tokens.Office2013.xaml`, `Tokens.Office2010.xaml`. Same keys, different values. A theme
   "chooses" a visual style by zeroing what it doesn't use (e.g. flat themes set underline
@@ -1874,6 +1876,109 @@ and `OnThemeConfigurationChanged`.
 `RequestSelectionVisualsRefresh()` defers it to `DispatcherPriority.Loaded` behind a coalescing flag,
 because `SizeChanged` fires *during* layout and quick-access placement re-parents asynchronously.
 `Loaded` sits below `Render`, which is what makes it "after layout".
+
+### 3.37 Splitting Office2024.xaml into Controls.*.xaml parts — 2026-07-27 — ⚗ EXPERIMENTAL
+
+> **Status: on trial.** Adopted to cut assistant token cost per edit. Keep for now, but
+> re-evaluate against the exit criteria at the end of this section. Reverting is cheap:
+> `git revert` the split commit, or concatenate the ten parts back in aggregator order.
+
+**Problem.** `Themes/Office2024.xaml` had grown to 3,814 lines / 281 KB. Reading it once
+costs roughly 85k tokens, so any assistant session that touched a template burned a large
+share of the usage budget before making a single edit.
+
+**Change.** The file is now a 35-line aggregator whose entire body is
+`ResourceDictionary.MergedDictionaries`, listing ten parts split on control-family lines:
+
+| Part (`Themes/Controls.*.xaml`) | ~Lines | Contains |
+|---|---|---|
+| `Controls.Shared.xaml`         | 240 | `RibbonKit.BoolToVis`, `MergedCaptionButton`, `RibbonQuickAccessToolBar`, scroll buttons |
+| `Controls.RibbonChrome.xaml`   | 578 | `Ribbon`, `RibbonTabControl` |
+| `Controls.Groups.xaml`         | 451 | `RibbonTab`, `RibbonGroupsHost`, `RibbonGroup` |
+| `Controls.Buttons.xaml`        | 362 | `RibbonButton`, `RibbonScreenTip`, `RibbonToggleButton` |
+| `Controls.DropDowns.xaml`      | 673 | `RibbonDropDownButton`, `RibbonSplitButton`, `RibbonMenuItem`, `RibbonComboBox` |
+| `Controls.Backstage.xaml`      | 367 | Modern backstage brushes, `Backstage`, `BackstageTabItem` |
+| `Controls.Galleries.xaml`      | 231 | `RibbonGalleryItem`, `RibbonGallery`, `InRibbonGallery` |
+| `Controls.Window.xaml`         | 189 | `RibbonWindow` |
+| `Controls.OptionsDialog.xaml`  | 382 | Rail brush, Options button styles, `RibbonOptionsPage`, `RibbonOptionsDialog` |
+| `Controls.Customize.xaml`      | 463 | `RibbonQuickAccessPage`, `RibbonCustomizePage`, `RibbonCustomizeEditDialog` |
+
+Nothing was retyped: the split was done by slicing byte ranges in binary mode, so CRLF
+survived and the `x:Key` / `TargetType` / `DynamicResource` / `StaticResource` inventories are
+identical before and after. `Generic.xaml` is unchanged — it still merges `Office2024.xaml`.
+The csproj is SDK-style with implicit globbing, so new parts need no csproj entry.
+
+#### The pitfall this cost us: StaticResource does not cross siblings
+
+The first attempt threw at runtime, with no useful location:
+
+```
+Cannot find resource named 'RibbonKit.BoolToVis'. Resource names are case sensitive.
+```
+
+**A `StaticResource` inside a merged dictionary resolves only against that dictionary and the
+dictionaries IT merges — never against sibling dictionaries merged by the same parent.**
+Listing `Controls.Shared.xaml` first in the aggregator does nothing; merge order is irrelevant
+to this lookup. The exception surfaces when the *template* is realized, far from the `x:Key`,
+which is why it is so hard to locate.
+
+Fix: the depending part merges its dependency locally, at the top of its own file.
+
+```xml
+<ResourceDictionary.MergedDictionaries>
+    <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.Shared.xaml" />
+</ResourceDictionary.MergedDictionaries>
+```
+
+Exactly two parts need this — `RibbonChrome`→`Shared` and `Customize`→`OptionsDialog`. Both
+dependencies stay listed in the aggregator too; WPF caches dictionaries by `Source` URI, and the
+duplicated implicit styles are identical, so last-merged-wins is a no-op.
+
+`DynamicResource` is **not** an escape hatch: ten of the sixteen cross-boundary references are
+`Converter={StaticResource RibbonKit.BoolToVis}` inside a `Binding`, and `Binding.Converter` is a
+plain CLR property, not a dependency property, so it cannot take a dynamic reference.
+
+#### Rules for living with the split
+
+1. Before moving a resource between parts, check every `{StaticResource K}` still resolves:
+   K must be defined in the same file **above** its use, or in a file that part merges.
+   Forward references inside one file fail too. This is a runtime failure, not a build error.
+2. Keep `BasedOn` chains inside a single part. All three are: ScrollRight→ScrollLeft (Shared),
+   Primary→Action and Reorder→Action (OptionsDialog).
+3. A new part must be added to `Office2024.xaml`'s merge list. Forgetting is silent — the
+   control simply renders untemplated, with no error.
+4. Never define the same implicit `TargetType` style in two parts. Last-merged silently wins,
+   and the conflict is invisible because the two definitions are in different files.
+
+**All four rules are enforced at build time** by `tests/RibbonKit.Tests/ThemeDictionaryScopeTests.cs`
+(four xunit facts, pure XML analysis — no WPF types, so it runs headless in CI via the existing
+`dotnet test` step). It reports the offending file and line, which WPF itself does not. Verified
+by mutation: removing RibbonChrome's local merge of Shared, introducing a forward reference,
+adding an unregistered part, duplicating an implicit style, and pointing a `BasedOn` across files
+each fail exactly one fact; a commented-out `{StaticResource}` correctly does not.
+
+#### Known downsides (the reason this is experimental)
+
+- ~~**Runtime-only failure modes.**~~ Rules 1, 3 and 4 would fail at runtime or not at all;
+  the monolith made these mistakes impossible or obvious. **Mitigated 2026-07-27** by the
+  guard test above, which turns all four into build failures. This was the main argument
+  against the split; treat the guard as part of the split, not an optional extra.
+- **No help for cross-cutting edits.** Renaming a token or auditing every template still
+  touches ten files instead of one, and costs slightly more than the monolith did.
+- **Design-time load.** The XAML designer now walks an eleven-dictionary graph. Watch whether
+  designer preview (§3.22, §3.23) gets slower or flakier; that feature is a headline one.
+- **Discoverability.** "Where is X?" is one grep away, but it *is* an extra step, and the
+  aggregator's merge order now carries meaning that a casual reader will not guess.
+
+#### Exit criteria — revisit when any of these is true
+
+- Designer preview or the Ribbon Editor becomes measurably slower or less reliable.
+- A cross-part resource bug reaches runtime *despite* the guard test (i.e. the guard has a
+  hole — note it only tracks keys per file, not per nested resource scope).
+- Sessions are observed reading three or more parts for a typical single-control change,
+  which would mean the split boundaries are wrong (fix the boundaries, not the idea).
+
+If it survives a few sessions, promote it out of EXPERIMENTAL and drop the caveat in §2.1.
 
 ## 4. Workflow / Session Conventions
 

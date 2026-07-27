@@ -1,0 +1,240 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:RibbonKit.Controls"
+    xmlns:layout="clr-namespace:RibbonKit.Layout">
+
+    <!-- Part of the shared RibbonKit control-template dictionary; merged by Office2024.xaml.
+         Shared helpers: bool-to-visibility converter, merged-caption button, QAT, scroll chrome.
+         Colours/metrics come from Tokens.Office20XX.xaml via {DynamicResource}. -->
+
+    <!-- ============================================================
+         Shared control templates. Colors and metrics come from the
+         token layer via {DynamicResource}: a theme (Themes/Tokens.*.xaml)
+         supplies those tokens in Application.Resources, so switching the
+         token dictionary re-colors every control at runtime WITHOUT
+         duplicating a single template. Merge a token dictionary in
+         App.xaml (default: Themes/Tokens.Office2024.xaml).
+         ============================================================ -->
+
+    <!-- ============================================================
+         Shared horizontal-scroll chrome (tab strip + groups row).
+         The chevron RepeatButtons overlay the content edges (they take
+         no layout space, so toggling them never reflows) and only show
+         when RibbonScrollContentHost reports something to scroll to.
+         Rounded corners via the shared ControlCornerRadius token.
+         ============================================================ -->
+    <BooleanToVisibilityConverter x:Key="RibbonKit.BoolToVis" />
+
+    <!-- Window buttons for a caption merged into the ribbon row (classic MDI's maximized child).
+         Chrome matches the minimize chevron beside them — same TabStrip tokens — so the cluster
+         reads as one control group and themes across all four generations with no new tokens.
+         The glyph is supplied per button as Content. -->
+    <Style x:Key="RibbonKit.MergedCaptionButton" TargetType="{x:Type Button}">
+        <Setter Property="Width" Value="24" />
+        <Setter Property="Height" Value="22" />
+        <Setter Property="Margin" Value="0,6,0,0" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Command"
+                Value="{Binding MergedCaptionCommand, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Button}">
+                    <Border x:Name="Chrome"
+                            Background="Transparent"
+                            CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                            SnapsToDevicePixels="True">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chrome" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.TabStrip.ControlHoverBackground}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ============================================================
+         RibbonQuickAccessToolBar — the QAT strip, with overflow.
+
+         DockPanel, not StackPanel, and that is the whole trick: a horizontal
+         StackPanel measures children with INFINITE width, so the items panel
+         could never tell that it had run out of room. Docking the overflow
+         button first means the presenter is measured with whatever width is
+         left, which is exactly the signal RibbonQuickAccessPanel needs.
+
+         The toolbar only overflows if something constrains its width. Below
+         the ribbon nothing does (it owns a full-width row); in the tab row and
+         the title bar the ribbon caps it at Ribbon.QuickAccessMaxWidth.
+         ============================================================ -->
+    <Style TargetType="{x:Type controls:RibbonQuickAccessToolBar}">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="ItemsPanel">
+            <Setter.Value>
+                <ItemsPanelTemplate>
+                    <layout:RibbonQuickAccessPanel />
+                </ItemsPanelTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type controls:RibbonQuickAccessToolBar}">
+                    <Grid>
+                        <DockPanel LastChildFill="True">
+                            <ToggleButton x:Name="PART_OverflowButton"
+                                          DockPanel.Dock="Right"
+                                          Width="20"
+                                          Height="22"
+                                          Focusable="False"
+                                          VerticalAlignment="Center"
+                                          ToolTip="More quick access commands"
+                                          Visibility="{Binding HasOverflow, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource RibbonKit.BoolToVis}}">
+                                <ToggleButton.Style>
+                                    <Style TargetType="{x:Type ToggleButton}">
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="{x:Type ToggleButton}">
+                                                    <Border x:Name="Chrome"
+                                                            Background="Transparent"
+                                                            CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                                            SnapsToDevicePixels="True">
+                                                        <!-- Chevrons + a baseline bar: Office's
+                                                             "more commands" mark. -->
+                                                        <Grid Width="10" Height="10"
+                                                              HorizontalAlignment="Center"
+                                                              VerticalAlignment="Center">
+                                                            <Path Data="M0.5,1 L4,4.5 L0.5,8 M4.5,1 L8,4.5 L4.5,8"
+                                                                  Stroke="{DynamicResource RibbonKit.Brushes.TabStrip.Foreground}"
+                                                                  StrokeThickness="1.2"
+                                                                  StrokeStartLineCap="Round"
+                                                                  StrokeEndLineCap="Round"
+                                                                  VerticalAlignment="Top" />
+                                                        </Grid>
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="Chrome" Property="Background"
+                                                                    Value="{DynamicResource RibbonKit.Brushes.TabStrip.ControlHoverBackground}" />
+                                                        </Trigger>
+                                                        <Trigger Property="IsChecked" Value="True">
+                                                            <Setter TargetName="Chrome" Property="Background"
+                                                                    Value="{DynamicResource RibbonKit.Brushes.TabStrip.ControlHoverBackground}" />
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </ToggleButton.Style>
+                            </ToggleButton>
+                            <ItemsPresenter />
+                        </DockPanel>
+                        <!-- A Popup has no layout footprint, so it can sit in the same cell. -->
+                        <!-- StaysOpen=True + explicit dismissal (PopupDismissHelper), the house
+                             rule for every RibbonKit flyout: WPF's own light-dismiss captures the
+                             mouse and races the opener button, so a second click on » would close
+                             and immediately reopen the flyout. -->
+                        <Popup x:Name="PART_OverflowPopup"
+                               AllowsTransparency="True"
+                               StaysOpen="True"
+                               Placement="Bottom"
+                               HorizontalOffset="-4"
+                               PlacementTarget="{Binding ElementName=PART_OverflowButton}"
+                               IsOpen="{Binding IsChecked, ElementName=PART_OverflowButton, Mode=TwoWay}">
+                            <Border Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
+                                    BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
+                                    BorderThickness="1"
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.PopupCornerRadius}"
+                                    Padding="4"
+                                    Margin="4,2,8,8"
+                                    MinWidth="160">
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="8" ShadowDepth="2" Opacity="0.25" />
+                                </Border.Effect>
+                                <ItemsControl x:Name="PART_OverflowHost" Focusable="False">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Vertical" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                </ItemsControl>
+                            </Border>
+                        </Popup>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="RibbonKit.ScrollLeftButton" TargetType="{x:Type RepeatButton}">
+        <Setter Property="Width" Value="22" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Delay" Value="300" />
+        <Setter Property="Interval" Value="60" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type RepeatButton}">
+                    <Border x:Name="Chrome"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}"
+                            BorderThickness="1"
+                            CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                            Margin="2"
+                            SnapsToDevicePixels="True">
+                        <Path Data="M4.5,0 L0,4.5 L4.5,9"
+                              Stroke="{DynamicResource RibbonKit.Brushes.Text.Primary}"
+                              StrokeThickness="1.6"
+                              StrokeStartLineCap="Round"
+                              StrokeEndLineCap="Round"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chrome" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.TabStrip.ControlHoverBackground}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="RibbonKit.ScrollRightButton" TargetType="{x:Type RepeatButton}" BasedOn="{StaticResource RibbonKit.ScrollLeftButton}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type RepeatButton}">
+                    <Border x:Name="Chrome"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}"
+                            BorderThickness="1"
+                            CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                            Margin="2"
+                            SnapsToDevicePixels="True">
+                        <Path Data="M0,0 L4.5,4.5 L0,9"
+                              Stroke="{DynamicResource RibbonKit.Brushes.Text.Primary}"
+                              StrokeThickness="1.6"
+                              StrokeStartLineCap="Round"
+                              StrokeEndLineCap="Round"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chrome" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.TabStrip.ControlHoverBackground}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

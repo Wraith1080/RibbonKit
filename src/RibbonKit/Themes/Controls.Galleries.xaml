@@ -1,0 +1,231 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:RibbonKit.Controls"
+    xmlns:layout="clr-namespace:RibbonKit.Layout">
+
+    <!-- Part of the shared RibbonKit control-template dictionary; merged by Office2024.xaml.
+         RibbonGalleryItem, RibbonGallery, InRibbonGallery.
+         Colours/metrics come from Tokens.Office20XX.xaml via {DynamicResource}. -->
+
+    <!-- ============================================================
+         RibbonGalleryItem — selectable tile with hover/selected chrome
+         ============================================================ -->
+    <Style TargetType="{x:Type controls:RibbonGalleryItem}">
+        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type controls:RibbonGalleryItem}">
+                    <!-- MinHeight sets the tile row height; the presenter centers the
+                         (naturally-sized) content inside it. -->
+                    <Border x:Name="Chrome"
+                            Background="Transparent"
+                            BorderBrush="Transparent"
+                            BorderThickness="1"
+                            CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                            Margin="1"
+                            Padding="5,3"
+                            MinHeight="48"
+                            SnapsToDevicePixels="True">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chrome" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
+                            <Setter TargetName="Chrome" Property="BorderBrush"
+                                    Value="{DynamicResource RibbonKit.Brushes.Group.Separator}" />
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Chrome" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.Control.CheckedBackground}" />
+                            <Setter TargetName="Chrome" Property="BorderBrush"
+                                    Value="{DynamicResource RibbonKit.Brushes.Accent}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ============================================================
+         RibbonGallery — wrapped tiles (for use inside flyouts)
+         ============================================================ -->
+    <Style TargetType="{x:Type controls:RibbonGallery}">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="ItemsPanel">
+            <Setter.Value>
+                <ItemsPanelTemplate>
+                    <WrapPanel />
+                </ItemsPanelTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type controls:RibbonGallery}">
+                    <Border Background="{TemplateBinding Background}">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Disabled"
+                                      MaxHeight="340">
+                            <ItemsPresenter />
+                        </ScrollViewer>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ============================================================
+         InRibbonGallery — strip + scroll/expand buttons + overlay popup
+         ============================================================ -->
+    <Style TargetType="{x:Type controls:InRibbonGallery}">
+        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <!-- Height = exactly one tile row (48 min-height incl. border + 2 margin = 50)
+             + the 4px strip margins. The viewport equals the row height EXACTLY, so
+             no second-row sliver is visible or hoverable in the strip. -->
+        <Setter Property="Height" Value="54" />
+        <Setter Property="ItemsPanel">
+            <Setter.Value>
+                <ItemsPanelTemplate>
+                    <WrapPanel />
+                </ItemsPanelTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type controls:InRibbonGallery}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="17" />
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.ColumnSpan="2"
+                                Background="#FFFFFF"
+                                BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
+                                BorderThickness="1"
+                                CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                SnapsToDevicePixels="True" />
+                        <Decorator x:Name="PART_ContentHost" Grid.Column="0" Margin="2">
+                            <Grid>
+                                <ScrollViewer x:Name="PART_ScrollViewer"
+                                              VerticalScrollBarVisibility="Hidden"
+                                              HorizontalScrollBarVisibility="Disabled"
+                                              Focusable="False">
+                                    <!-- MaxWidth caps wrapping at the strip's width even when
+                                         re-homed into the (unconstrained) popup, so the
+                                         expanded gallery wraps into rows instead of one line -->
+                                    <ItemsPresenter MaxWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}" />
+                                </ScrollViewer>
+                            </Grid>
+                        </Decorator>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <StackPanel.Resources>
+                                <!-- Shared chrome for the three side buttons -->
+                                <Style x:Key="SideButtonStyle" TargetType="{x:Type ButtonBase}">
+                                    <Setter Property="Height" Value="17" />
+                                    <Setter Property="Focusable" Value="False" />
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="{x:Type ButtonBase}">
+                                                <Border x:Name="Chrome"
+                                                        Background="Transparent"
+                                                        BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
+                                                        CornerRadius="{DynamicResource RibbonKit.Metrics.SmallControlCornerRadius}"
+                                                        Margin="1,0,2,0"
+                                                        SnapsToDevicePixels="True">
+                                                    <ContentPresenter HorizontalAlignment="Center"
+                                                                      VerticalAlignment="Center" />
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="Chrome" Property="Background"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
+                                                        <Setter TargetName="Chrome" Property="BorderBrush"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
+                                                        <Setter TargetName="Chrome" Property="BorderThickness"
+                                                                Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
+                                                    </Trigger>
+                                                    <Trigger Property="IsPressed" Value="True">
+                                                        <Setter TargetName="Chrome" Property="Background"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
+                                                        <Setter TargetName="Chrome" Property="BorderBrush"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Control.PressedBorder}" />
+                                                        <Setter TargetName="Chrome" Property="BorderThickness"
+                                                                Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </StackPanel.Resources>
+                            <RepeatButton x:Name="PART_LineUp"
+                                          Style="{StaticResource SideButtonStyle}">
+                                <Path Data="M0,3.5 L3.5,0 L7,3.5"
+                                      Stroke="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
+                                      StrokeThickness="1.5"
+                                      StrokeStartLineCap="Round"
+                                      StrokeEndLineCap="Round" />
+                            </RepeatButton>
+                            <RepeatButton x:Name="PART_LineDown"
+                                          Style="{StaticResource SideButtonStyle}">
+                                <Path Data="M0,0 L3.5,3.5 L7,0"
+                                      Stroke="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
+                                      StrokeThickness="1.5"
+                                      StrokeStartLineCap="Round"
+                                      StrokeEndLineCap="Round" />
+                            </RepeatButton>
+                            <ToggleButton x:Name="PART_ExpandToggle"
+                                          Style="{StaticResource SideButtonStyle}"
+                                          IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+                                <StackPanel>
+                                    <Rectangle Height="1.5" Width="8"
+                                               Fill="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
+                                               Margin="0,0,0,2" />
+                                    <Path Data="M0,0 L3.5,3.5 L7,0"
+                                          Stroke="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
+                                          StrokeThickness="1.5"
+                                          StrokeStartLineCap="Round"
+                                          StrokeEndLineCap="Round"
+                                          HorizontalAlignment="Center" />
+                                </StackPanel>
+                            </ToggleButton>
+                        </StackPanel>
+                        <!-- Expanded gallery: overlays the strip, like Office -->
+                        <Popup x:Name="PART_Popup"
+                               AllowsTransparency="True"
+                               StaysOpen="True"
+                               Placement="Relative"
+                               HorizontalOffset="-4"
+                               VerticalOffset="-4"
+                               IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+                            <Border x:Name="PART_PopupHost"
+                                    Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
+                                    BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
+                                    BorderThickness="1"
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.PopupCornerRadius}"
+                                    Padding="5"
+                                    Margin="4,4,8,8"
+                                    MaxHeight="340">
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="8" ShadowDepth="2" Opacity="0.25" />
+                                </Border.Effect>
+                            </Border>
+                        </Popup>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

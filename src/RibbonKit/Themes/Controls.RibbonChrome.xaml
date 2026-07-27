@@ -1,0 +1,578 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:RibbonKit.Controls"
+    xmlns:layout="clr-namespace:RibbonKit.Layout">
+
+    <!-- Part of the shared RibbonKit control-template dictionary; merged by Office2024.xaml.
+         Ribbon root + RibbonTabControl.
+         Colours/metrics come from Tokens.Office20XX.xaml via {DynamicResource}. -->
+
+    <!-- MUST merge Controls.Shared.xaml locally: a StaticResource inside a merged
+         dictionary does NOT resolve against SIBLING dictionaries merged by the same
+         parent, only against this dictionary and the ones IT merges. RibbonKit.BoolToVis, RibbonKit.ScrollLeftButton/ScrollRightButton and
+         RibbonKit.MergedCaptionButton are used by StaticResource below.
+         (Also listed in Office2024.xaml; WPF caches dictionaries by Source URI.) -->
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.Shared.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <!-- ============================================================
+         Ribbon
+         ============================================================ -->
+    <Style TargetType="{x:Type controls:Ribbon}">
+        <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Ribbon.Background}" />
+        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+        <Setter Property="FontFamily" Value="Segoe UI" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="UseLayoutRounding" Value="True" />
+        <!-- A ribbon sits at the TOP of its space and never stretches to fill. Without this, a
+             ribbon that becomes a DockPanel's last child (LastChildFill) or lands in a * Grid row
+             stretches vertically and the body drifts down. Consumers can still override. -->
+        <Setter Property="VerticalAlignment" Value="Top" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type controls:Ribbon}">
+                    <!-- The backstage overlay is hosted in the window's adorner layer
+                         by the Ribbon class itself (see BackstageAdorner), not here. -->
+                    <Border Background="{TemplateBinding Background}">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <controls:RibbonTabControl
+                                Grid.Row="0"
+                                ItemsSource="{TemplateBinding Tabs}"
+                                SelectedItem="{Binding SelectedTab, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}" />
+                            <!-- Quick access row shown when QuickAccessPosition=BelowRibbon.
+                                 Styled as an extender chip that tucks under the ribbon
+                                 card (Office 2024); flat themes render a plain strip. -->
+                            <Border x:Name="QatBelowHost"
+                                    Grid.Row="1"
+                                    HorizontalAlignment="Stretch"
+                                    Margin="{DynamicResource RibbonKit.Metrics.QatExtenderMargin}"
+                                    Padding="8,2"
+                                    Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
+                                    BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}"
+                                    BorderThickness="{DynamicResource RibbonKit.Metrics.QatExtenderBorderThickness}"
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.QatExtenderCornerRadius}"
+                                    Effect="{DynamicResource RibbonKit.Effects.ContentShadow}"
+                                    Visibility="Collapsed">
+                                <!-- ItemsSource bound only by the BelowRibbon trigger. -->
+                                <ItemsControl x:Name="QatBelowItems"
+                                              Focusable="False"
+                                              Margin="4,0">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Horizontal" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                </ItemsControl>
+                            </Border>
+
+                            <!-- Design-time-only backstage preview surface. At runtime the
+                                 backstage is hosted in the WINDOW's adorner layer (see
+                                 Ribbon.UpdateBackstageOverlay); that path needs a real Window,
+                                 which the XAML designer doesn't provide, so the Ribbon routes the
+                                 backstage into this in-template host instead while in design mode.
+                                 Stays Collapsed and empty at runtime — the code only fills it under
+                                 DesignerProperties.GetIsInDesignMode. MinHeight just gives the
+                                 preview room on the surface; it has no effect while Collapsed. -->
+                            <Border x:Name="PART_DesignBackstageHost"
+                                    Grid.Row="0"
+                                    Grid.RowSpan="2"
+                                    Visibility="Collapsed"
+                                    MinHeight="440"
+                                    Background="{DynamicResource RibbonKit.Brushes.Backstage.ContentBackground}" />
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="QuickAccessPosition" Value="BelowRibbon">
+                            <Setter TargetName="QatBelowHost" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="QatBelowItems" Property="ItemsSource">
+                                <Setter.Value>
+                                    <Binding Path="QuickAccessItems"
+                                             RelativeSource="{RelativeSource AncestorType={x:Type controls:Ribbon}}" />
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+                        <!-- Minimized + QAT below: the ribbon body card is collapsed, so the
+                             QAT bar is left standing alone under the tab strip. Make it a
+                             self-contained floating card — round ALL corners (not just the
+                             bottom), border it all the way around, and give it the small top
+                             gap the card used to occupy — matching Office. It reverts to the
+                             flush-connected strip automatically when the ribbon is restored.
+                             Flat themes (2019/2013) point these tokens at their strip values,
+                             so nothing changes shape for them. -->
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="QuickAccessPosition" Value="BelowRibbon" />
+                                <Condition Property="IsMinimized" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="QatBelowHost" Property="CornerRadius"
+                                    Value="{DynamicResource RibbonKit.Metrics.QatExtenderCornerRadiusMinimized}" />
+                            <Setter TargetName="QatBelowHost" Property="BorderThickness"
+                                    Value="{DynamicResource RibbonKit.Metrics.QatExtenderBorderThicknessMinimized}" />
+                            <Setter TargetName="QatBelowHost" Property="Margin"
+                                    Value="{DynamicResource RibbonKit.Metrics.QatExtenderMarginMinimized}" />
+                        </MultiTrigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ============================================================
+         RibbonTabControl — tab strip on top, groups row below
+         ============================================================ -->
+    <Style TargetType="{x:Type controls:RibbonTabControl}">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type controls:RibbonTabControl}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <!-- ZIndex above the ribbon body (Row 1): where a theme overlaps the
+                             selected tab into the body (Office 2010's TabStripMargin bottom = -1),
+                             the tab must paint OVER the body's top border to connect into it. -->
+                        <Grid Grid.Row="0" Panel.ZIndex="1">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <!-- Left end of the tab strip row: the merged-caption icon (only while
+                                 a caption is docked — classic MDI puts a maximized child's system
+                                 icon here) followed by the application button. Grouped in a stack
+                                 so the icon needs no column of its own. -->
+                            <!-- Stretch, NOT Center: the application button has no VerticalAlignment
+                                 of its own, so it fills whatever height its parent gives it. Office
+                                 2013 draws it as a solid accent block that must run to the bottom
+                                 edge of the row to meet the body — centering this stack left a thin
+                                 gap under it. The caption icon inside centres itself explicitly. -->
+                            <StackPanel Grid.Column="0"
+                                        Orientation="Horizontal"
+                                        VerticalAlignment="Stretch">
+                            <Image x:Name="PART_MergedCaptionIcon"
+                                   Width="16"
+                                   Height="16"
+                                   Margin="8,4,2,0"
+                                   VerticalAlignment="Center"
+                                   Stretch="Uniform"
+                                   Source="{Binding MergedCaptionIcon, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
+                                   Visibility="{Binding HasMergedCaption, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}, Converter={StaticResource RibbonKit.BoolToVis}}" />
+                            <!-- Application (File) button: opens the backstage; hidden
+                                 when the hosting Ribbon has no Backstage assigned -->
+                            <ToggleButton x:Name="ApplicationButton"
+                                          Margin="{DynamicResource RibbonKit.Metrics.ApplicationButtonMargin}"
+                                          Content="{Binding ApplicationButtonHeader, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
+                                          IsChecked="{Binding IsBackstageOpen, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}, Mode=TwoWay}">
+                                <ToggleButton.Style>
+                                    <Style TargetType="{x:Type ToggleButton}">
+                                        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.ApplicationButton.Foreground}" />
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="{x:Type ToggleButton}">
+                                                    <!-- The File tab hovers exactly like the other tabs:
+                                                         same Tab.HoverBackground + Tab.HoverUnderline tokens,
+                                                         so its hover style tracks the theme automatically. -->
+                                                    <Grid>
+                                                        <Border x:Name="Chrome"
+                                                                Background="{DynamicResource RibbonKit.Brushes.ApplicationButton.Background}"
+                                                                BorderBrush="{DynamicResource RibbonKit.Brushes.ApplicationButton.Border}"
+                                                                BorderThickness="{DynamicResource RibbonKit.Metrics.ApplicationButtonBorderThickness}"
+                                                                CornerRadius="{DynamicResource RibbonKit.Metrics.TabCornerRadius}"
+                                                                SnapsToDevicePixels="True">
+                                                            <Grid>
+                                                                <!-- Inner light rim just inside the outer border (2010 glass). -->
+                                                                <Border BorderBrush="{DynamicResource RibbonKit.Brushes.Control.InnerGlow}"
+                                                                        BorderThickness="{DynamicResource RibbonKit.Metrics.ApplicationButtonBorderThickness}"
+                                                                        CornerRadius="{DynamicResource RibbonKit.Metrics.TabCornerRadius}" />
+                                                                <ContentPresenter Margin="{DynamicResource RibbonKit.Metrics.ApplicationButtonPadding}"
+                                                                                  HorizontalAlignment="Center"
+                                                                                  VerticalAlignment="Center" />
+                                                            </Grid>
+                                                        </Border>
+                                                        <Rectangle x:Name="HoverUnderline"
+                                                                   Height="2.5"
+                                                                   RadiusX="1.25"
+                                                                   RadiusY="1.25"
+                                                                   Margin="10,0"
+                                                                   VerticalAlignment="Bottom"
+                                                                   Fill="{DynamicResource RibbonKit.Brushes.ApplicationButton.HoverUnderline}"
+                                                                   Visibility="Collapsed" />
+                                                    </Grid>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="Chrome" Property="Background"
+                                                                    Value="{DynamicResource RibbonKit.Brushes.ApplicationButton.HoverBackground}" />
+                                                            <Setter TargetName="HoverUnderline" Property="Visibility" Value="Visible" />
+                                                        </Trigger>
+                                                        <!-- Mouse-DOWN (held, before release): a distinct pressed glass, so
+                                                             the click reads immediately, not only once the backstage opens. -->
+                                                        <Trigger Property="IsPressed" Value="True">
+                                                            <Setter TargetName="Chrome" Property="Background"
+                                                                    Value="{DynamicResource RibbonKit.Brushes.ApplicationButton.PressedBackground}" />
+                                                            <Setter TargetName="HoverUnderline" Property="Visibility" Value="Collapsed" />
+                                                        </Trigger>
+                                                        <!-- Backstage open: File highlights in accent, like Office -->
+                                                        <Trigger Property="IsChecked" Value="True">
+                                                            <Setter TargetName="Chrome" Property="Background"
+                                                                    Value="{DynamicResource RibbonKit.Brushes.Accent}" />
+                                                            <Setter TargetName="HoverUnderline" Property="Visibility" Value="Collapsed" />
+                                                            <Setter Property="Foreground" Value="#FFFFFF" />
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Backstage, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
+                                                         Value="{x:Null}">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                            <!-- A modal tab (Print Preview) hides File entirely, like
+                                                 Word: the backstage is blocked in that mode, so leaving
+                                                 the button visible would offer a dead affordance. -->
+                                            <DataTrigger Binding="{Binding IsModal, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
+                                                         Value="True">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ToggleButton.Style>
+                            </ToggleButton>
+                            </StackPanel>
+                            <!-- Quick access strip in the tab row (QuickAccessPosition=TabRow).
+                                 ItemsSource is bound ONLY by the TabRow trigger below, never
+                                 by default — the same live QAT UIElements can have only one
+                                 parent, so exactly one host (tab-row or below-ribbon) may
+                                 bind at a time. -->
+                            <controls:RibbonQuickAccessToolBar
+                                x:Name="QatTabRowHost"
+                                Grid.Column="1"
+                                VerticalAlignment="Center"
+                                Visibility="Collapsed"
+                                Margin="2,4,4,0"
+                                MaxWidth="{Binding QuickAccessMaxWidth, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}" />
+                            <Grid Grid.Column="2">
+                                <!-- Tab strip in a horizontal scroller: when there are more tabs than
+                                     fit, chevron buttons appear and scroll the strip. The gliding
+                                     PART_TabMarker lives INSIDE the scroller with the TabPanel so it
+                                     scrolls in lockstep and stays under its tab. -->
+                                <layout:RibbonScrollContentHost x:Name="PART_TabScroll" ConstrainChildWidth="False">
+                                    <Grid>
+                                        <TabPanel IsItemsHost="True"
+                                                  Margin="{DynamicResource RibbonKit.Metrics.TabStripMargin}"
+                                                  Background="Transparent" />
+                                        <!-- Shared selection underline that GLIDES between tabs
+                                             (RibbonTabControl positions/animates it). Replaces the
+                                             per-tab SelectionIndicator/ContextualSelectionIndicator for
+                                             the accent underline; flat themes (2019/2013) leave
+                                             Tab.SelectedUnderline Transparent, so it's invisible there
+                                             and those themes keep their pill/fill selection. Width +
+                                             TranslateTransform.X are animated (X glide + width) — a lone
+                                             marker in its own cell, so animating Width re-arranges only
+                                             itself and never cascades a ribbon re-layout. -->
+                                        <Rectangle x:Name="PART_TabMarker"
+                                                   Height="3" Width="0"
+                                                   RadiusX="1.5" RadiusY="1.5"
+                                                   HorizontalAlignment="Left"
+                                                   VerticalAlignment="Top"
+                                                   IsHitTestVisible="False"
+                                                   Opacity="0"
+                                                   Fill="{DynamicResource RibbonKit.Brushes.Tab.SelectedUnderline}">
+                                            <Rectangle.RenderTransform>
+                                                <TranslateTransform x:Name="PART_TabMarkerTranslate" />
+                                            </Rectangle.RenderTransform>
+                                        </Rectangle>
+                                    </Grid>
+                                </layout:RibbonScrollContentHost>
+                                <RepeatButton Style="{StaticResource RibbonKit.ScrollLeftButton}"
+                                              HorizontalAlignment="Left"
+                                              Background="{DynamicResource RibbonKit.Brushes.Ribbon.Background}"
+                                              Command="{Binding ScrollLeftCommand, ElementName=PART_TabScroll}"
+                                              Visibility="{Binding CanScrollLeft, ElementName=PART_TabScroll, Converter={StaticResource RibbonKit.BoolToVis}}" />
+                                <RepeatButton Style="{StaticResource RibbonKit.ScrollRightButton}"
+                                              HorizontalAlignment="Right"
+                                              Background="{DynamicResource RibbonKit.Brushes.Ribbon.Background}"
+                                              Command="{Binding ScrollRightCommand, ElementName=PART_TabScroll}"
+                                              Visibility="{Binding CanScrollRight, ElementName=PART_TabScroll, Converter={StaticResource RibbonKit.BoolToVis}}" />
+                            </Grid>
+                            <!-- Right end of the tab strip row: the modal-tab close affordance
+                                 (only while a modal tab is active) followed by the minimize
+                                 chevron. Grouped in a stack so neither needs its own column. -->
+                            <StackPanel Grid.Column="3"
+                                        Orientation="Horizontal"
+                                        VerticalAlignment="Center">
+                            <!-- Modal tab (Print Preview) close: leaves modal mode via the
+                                 ribbon's ExitModalCommand. Shows the tab's CloseButtonText when
+                                 set ("Close Print Preview"), otherwise a bare × glyph. Chrome
+                                 deliberately reuses the minimize chevron's TabStrip tokens, so
+                                 it themes correctly in 2024/2019/2013/2010 with no new tokens. -->
+                            <Button x:Name="PART_ModalClose"
+                                    Height="22"
+                                    Margin="0,6,2,0"
+                                    Padding="6,0"
+                                    VerticalAlignment="Center"
+                                    ToolTip="Close"
+                                    Content="{Binding ModalTab.CloseButtonText, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
+                                    Command="{Binding ExitModalCommand, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
+                                    Visibility="{Binding CanCloseModal, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}, Converter={StaticResource RibbonKit.BoolToVis}}">
+                                <Button.Style>
+                                    <Style TargetType="{x:Type Button}">
+                                        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.TabStrip.Foreground}" />
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="{x:Type Button}">
+                                                    <Border x:Name="Chrome"
+                                                            Background="Transparent"
+                                                            CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                                            SnapsToDevicePixels="True">
+                                                        <StackPanel Orientation="Horizontal"
+                                                                    VerticalAlignment="Center"
+                                                                    Margin="{TemplateBinding Padding}">
+                                                            <Path x:Name="Glyph"
+                                                                  Data="M0,0 L8,8 M8,0 L0,8"
+                                                                  Stroke="{TemplateBinding Foreground}"
+                                                                  StrokeThickness="1.4"
+                                                                  StrokeStartLineCap="Round"
+                                                                  StrokeEndLineCap="Round"
+                                                                  VerticalAlignment="Center" />
+                                                            <ContentPresenter x:Name="Label"
+                                                                              Margin="6,0,0,0"
+                                                                              VerticalAlignment="Center"
+                                                                              TextElement.Foreground="{TemplateBinding Foreground}" />
+                                                        </StackPanel>
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="Chrome" Property="Background"
+                                                                    Value="{DynamicResource RibbonKit.Brushes.TabStrip.ControlHoverBackground}" />
+                                                        </Trigger>
+                                                        <!-- No CloseButtonText: icon-only, so the
+                                                             label must not reserve its margin. -->
+                                                        <Trigger Property="Content" Value="{x:Null}">
+                                                            <Setter TargetName="Label" Property="Visibility" Value="Collapsed" />
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                            <!-- Minimize chevron: toggles Ribbon.IsMinimized -->
+                            <ToggleButton x:Name="MinimizeToggle"
+                                          Width="24" Height="22"
+                                          Margin="0,6,8,0"
+                                          VerticalAlignment="Center"
+                                          ToolTip="Minimize the Ribbon"
+                                          IsChecked="{Binding IsMinimized, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}, Mode=TwoWay}">
+                                <ToggleButton.Style>
+                                    <Style TargetType="{x:Type ToggleButton}">
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="{x:Type ToggleButton}">
+                                                    <Border x:Name="Chrome"
+                                                            Background="Transparent"
+                                                            CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                                            SnapsToDevicePixels="True">
+                                                        <Grid>
+                                                            <Path x:Name="ChevronUp"
+                                                                  Data="M0,3.5 L3.5,0 L7,3.5"
+                                                                  Stroke="{DynamicResource RibbonKit.Brushes.TabStrip.Foreground}"
+                                                                  StrokeThickness="1.5"
+                                                                  StrokeStartLineCap="Round"
+                                                                  StrokeEndLineCap="Round"
+                                                                  HorizontalAlignment="Center"
+                                                                  VerticalAlignment="Center" />
+                                                            <Path x:Name="ChevronDown"
+                                                                  Data="M0,0 L3.5,3.5 L7,0"
+                                                                  Stroke="{DynamicResource RibbonKit.Brushes.TabStrip.Foreground}"
+                                                                  StrokeThickness="1.5"
+                                                                  StrokeStartLineCap="Round"
+                                                                  StrokeEndLineCap="Round"
+                                                                  HorizontalAlignment="Center"
+                                                                  VerticalAlignment="Center"
+                                                                  Visibility="Collapsed" />
+                                                        </Grid>
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="Chrome" Property="Background"
+                                                                    Value="{DynamicResource RibbonKit.Brushes.TabStrip.ControlHoverBackground}" />
+                                                        </Trigger>
+                                                        <Trigger Property="IsChecked" Value="True">
+                                                            <Setter TargetName="ChevronUp" Property="Visibility" Value="Collapsed" />
+                                                            <Setter TargetName="ChevronDown" Property="Visibility" Value="Visible" />
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                        <!-- Triggers come AFTER every setter: a Style.Triggers
+                                             block sitting between setters is a MC3088 build error. -->
+                                        <Style.Triggers>
+                                            <!-- Minimizing is blocked while a modal tab owns the
+                                                 ribbon, so the chevron goes away with it. -->
+                                            <DataTrigger Binding="{Binding IsModal, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
+                                                         Value="True">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ToggleButton.Style>
+                            </ToggleButton>
+                            <!-- Merged-caption window buttons (classic MDI's maximized child).
+                                 Visible only while a caption is docked; the ribbon reports the
+                                 press and the host decides what it means. Placed AFTER the
+                                 minimize chevron so they sit at the very end of the row, where
+                                 window buttons belong. -->
+                            <Button x:Name="PART_MergedCaptionMinimize"
+                                    Style="{StaticResource RibbonKit.MergedCaptionButton}"
+                                    ToolTip="Minimize Window"
+                                    CommandParameter="{x:Static controls:RibbonMergedCaptionAction.Minimize}"
+                                    Visibility="{Binding HasMergedCaption, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}, Converter={StaticResource RibbonKit.BoolToVis}}">
+                                <Rectangle Width="9" Height="1"
+                                           Fill="{DynamicResource RibbonKit.Brushes.TabStrip.Foreground}" />
+                            </Button>
+                            <Button x:Name="PART_MergedCaptionRestore"
+                                    Style="{StaticResource RibbonKit.MergedCaptionButton}"
+                                    ToolTip="Restore Window"
+                                    CommandParameter="{x:Static controls:RibbonMergedCaptionAction.Restore}"
+                                    Visibility="{Binding HasMergedCaption, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}, Converter={StaticResource RibbonKit.BoolToVis}}">
+                                <!-- Two offset outlines: the classic "restore down" glyph. -->
+                                <Grid Width="10" Height="10">
+                                    <Rectangle Width="7" Height="7"
+                                               HorizontalAlignment="Right" VerticalAlignment="Top"
+                                               Stroke="{DynamicResource RibbonKit.Brushes.TabStrip.Foreground}"
+                                               StrokeThickness="1" />
+                                    <Rectangle Width="7" Height="7"
+                                               HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                                               Fill="{DynamicResource RibbonKit.Brushes.Ribbon.Background}"
+                                               Stroke="{DynamicResource RibbonKit.Brushes.TabStrip.Foreground}"
+                                               StrokeThickness="1" />
+                                </Grid>
+                            </Button>
+                            <Button x:Name="PART_MergedCaptionClose"
+                                    Style="{StaticResource RibbonKit.MergedCaptionButton}"
+                                    Margin="0,6,8,0"
+                                    ToolTip="Close Window"
+                                    CommandParameter="{x:Static controls:RibbonMergedCaptionAction.Close}"
+                                    Visibility="{Binding MergedCaptionCanClose, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}, Converter={StaticResource RibbonKit.BoolToVis}}">
+                                <Path Data="M0,0 L8,8 M8,0 L0,8"
+                                      Stroke="{DynamicResource RibbonKit.Brushes.TabStrip.Foreground}"
+                                      StrokeThickness="1.4"
+                                      StrokeStartLineCap="Round"
+                                      StrokeEndLineCap="Round" />
+                            </Button>
+                            </StackPanel>
+                        </Grid>
+                        <!-- Ribbon body. Office 2024/365 renders it as a floating rounded
+                             "card" (inset margin, rounded on all corners, bordered all
+                             around) over the light ribbon band. Flat themes (2019/2013)
+                             zero the margin and radius and use a top/bottom-only border,
+                             collapsing it back to a full-width strip — all via tokens. -->
+                        <Border x:Name="ContentHost"
+                                Grid.Row="1"
+                                Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
+                                BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}"
+                                BorderThickness="{DynamicResource RibbonKit.Metrics.ContentBorderThickness}"
+                                CornerRadius="{DynamicResource RibbonKit.Metrics.ContentCornerRadius}"
+                                Margin="{DynamicResource RibbonKit.Metrics.ContentMargin}"
+                                Effect="{DynamicResource RibbonKit.Effects.ContentShadow}"
+                                SnapsToDevicePixels="True">
+                            <!-- Groups row in a horizontal scroller. ConstrainChildWidth lets the
+                                 adaptive panel reduce groups to fit FIRST; only when even the fully
+                                 reduced row overflows do the chevrons appear and scroll it (Office). -->
+                            <Grid>
+                                <layout:RibbonScrollContentHost x:Name="PART_ContentScroll"
+                                                                ConstrainChildWidth="True"
+                                                                Margin="6,2">
+                                    <ContentPresenter ContentSource="SelectedContent" />
+                                </layout:RibbonScrollContentHost>
+                                <RepeatButton Style="{StaticResource RibbonKit.ScrollLeftButton}"
+                                              HorizontalAlignment="Left"
+                                              Command="{Binding ScrollLeftCommand, ElementName=PART_ContentScroll}"
+                                              Visibility="{Binding CanScrollLeft, ElementName=PART_ContentScroll, Converter={StaticResource RibbonKit.BoolToVis}}" />
+                                <RepeatButton Style="{StaticResource RibbonKit.ScrollRightButton}"
+                                              HorizontalAlignment="Right"
+                                              Command="{Binding ScrollRightCommand, ElementName=PART_ContentScroll}"
+                                              Visibility="{Binding CanScrollRight, ElementName=PART_ContentScroll, Converter={StaticResource RibbonKit.BoolToVis}}" />
+                            </Grid>
+                        </Border>
+                        <!-- Body-border NOTCH: a 1px body-coloured sliver lying OVER the body's
+                             top border, directly under the selected tab, cutting a tab-wide gap
+                             into the border so the active tab opens seamlessly into the body
+                             (the Office 2010/2013 connected-tab look). It must live HERE in the
+                             body row: nothing inside the tab strip can paint over the body's
+                             border because PART_TabScroll clips its subtree (ClipToBounds), and
+                             ZIndex can't reorder across the strip/body branch boundary — ZIndex
+                             only orders SIBLINGS of the same panel. As a sibling of ContentHost,
+                             declared after it, the notch paints above the border by plain
+                             declaration order. RibbonTabControl.UpdateConnectNotch drives
+                             Width + PART_ConnectNotchTranslate.X to track the selected tab
+                             (clamped to the strip's viewport when the strip scrolls). The 1px
+                             side borders continue the selected tab's outline down through the
+                             cut, closing the corners (SelectedBorderBrush — Transparent in
+                             non-connecting themes). Themes without a connected tab (2019/2024)
+                             set Tab.ConnectNotch Transparent and the code keeps Width at 0.
+                             Visibility mirrors ContentHost so the notch vanishes with the body
+                             when the ribbon is minimized. Render-only: hit-transparent, fixed
+                             1px height, top-aligned — it never affects layout. -->
+                        <Border x:Name="PART_ConnectNotch"
+                                Grid.Row="1"
+                                Width="0"
+                                Height="1"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Top"
+                                Background="{DynamicResource RibbonKit.Brushes.Tab.ConnectNotch}"
+                                BorderBrush="{DynamicResource RibbonKit.Brushes.Tab.SelectedBorderBrush}"
+                                BorderThickness="1,0,1,0"
+                                IsHitTestVisible="False"
+                                SnapsToDevicePixels="True"
+                                Visibility="{Binding Visibility, ElementName=ContentHost}">
+                            <Border.RenderTransform>
+                                <TranslateTransform x:Name="PART_ConnectNotchTranslate" />
+                            </Border.RenderTransform>
+                        </Border>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <!-- The ribbon body's Visibility while minimized is managed in code
+                             (Ribbon.OnIsMinimizedChanged) so it can slide up + fade out before
+                             collapsing, and slide back in on restore. -->
+                        <DataTrigger Binding="{Binding QuickAccessPosition, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
+                                     Value="TabRow">
+                            <Setter TargetName="QatTabRowHost" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="QatTabRowHost" Property="ItemsSource">
+                                <Setter.Value>
+                                    <Binding Path="QuickAccessItems"
+                                             RelativeSource="{RelativeSource AncestorType={x:Type controls:Ribbon}}" />
+                                </Setter.Value>
+                            </Setter>
+                        </DataTrigger>
+                        <!-- When the QAT sits below the ribbon, the card squares its bottom
+                             corners and drops its bottom margin so the full-width QAT bar
+                             connects flush underneath. -->
+                        <DataTrigger Binding="{Binding QuickAccessPosition, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
+                                     Value="BelowRibbon">
+                            <Setter TargetName="ContentHost" Property="CornerRadius"
+                                    Value="{DynamicResource RibbonKit.Metrics.ContentCornerRadiusTop}" />
+                            <Setter TargetName="ContentHost" Property="Margin"
+                                    Value="{DynamicResource RibbonKit.Metrics.ContentMarginQatBelow}" />
+                        </DataTrigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

@@ -1,0 +1,451 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:RibbonKit.Controls"
+    xmlns:layout="clr-namespace:RibbonKit.Layout">
+
+    <!-- Part of the shared RibbonKit control-template dictionary; merged by Office2024.xaml.
+         RibbonTab, RibbonGroupsHost, RibbonGroup.
+         Colours/metrics come from Tokens.Office20XX.xaml via {DynamicResource}. -->
+
+    <!-- ============================================================
+         RibbonTab — header in the strip; selected tab gets the
+         Office 2024 accent underline
+         ============================================================ -->
+    <Style TargetType="{x:Type controls:RibbonTab}">
+        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.TabStrip.Foreground}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type controls:RibbonTab}">
+                    <Grid>
+                        <!-- BorderThickness = the SELECTED tab's geometry (1,1,1,0 in 2010/2013, 0
+                             elsewhere) on EVERY tab, active or not, so all tabs measure to the SAME
+                             height. The active tab colors this border (SelectedBorderBrush); inactive
+                             tabs leave it Transparent. Without this symmetry the active tab's extra top
+                             border made it a different height, so the TabPanel nudged/stretched it and
+                             its text drifted (user-diagnosed). Hover/selected now change only the BRUSH,
+                             never the thickness — no jitter, no shift. -->
+                        <Border x:Name="HeaderChrome"
+                                Background="Transparent"
+                                BorderBrush="Transparent"
+                                BorderThickness="{DynamicResource RibbonKit.Metrics.TabSelectedBorderThickness}"
+                                CornerRadius="{DynamicResource RibbonKit.Metrics.TabCornerRadius}"
+                                Padding="12,7,12,9">
+                            <Grid>
+                                <!-- Normal header text: theme foreground (and selected
+                                     foreground while selected). -->
+                                <ContentPresenter x:Name="HeaderText"
+                                                  ContentSource="Header"
+                                                  HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center"
+                                                  RecognizesAccessKey="True" />
+                                <!-- Contextual header text: tinted by the tab's ContextualBrush,
+                                     muted until selected. Only shown for contextual tabs. -->
+                                <ContentPresenter x:Name="ContextualHeaderText"
+                                                  ContentSource="Header"
+                                                  HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center"
+                                                  RecognizesAccessKey="True"
+                                                  TextElement.Foreground="{TemplateBinding ContextualBrush}"
+                                                  Opacity="{DynamicResource RibbonKit.Metrics.ContextualUnselectedOpacity}"
+                                                  Visibility="Collapsed" />
+                            </Grid>
+                        </Border>
+                        <!-- The template carries BOTH an underline and a fill for hover and
+                             for selection; a theme picks its style by making the unwanted
+                             token Transparent (2024 = underlines; 2019 = fills/pills).
+                             IsHitTestVisible="False" on all three indicators: they overlay
+                             HeaderChrome (the hover trigger's SourceName). If they were
+                             hit-testable, hovering directly on the underline would steal the
+                             hit from HeaderChrome — dropping its IsMouseOver, hiding the
+                             underline, which hands the hit back to HeaderChrome, and so on:
+                             an endless flicker. Transparent-to-mouse indicators keep the hit
+                             on HeaderChrome underneath. -->
+                        <Rectangle x:Name="HoverIndicator"
+                                   Height="2.5"
+                                   RadiusX="1.25"
+                                   RadiusY="1.25"
+                                   Margin="10,0"
+                                   VerticalAlignment="Bottom"
+                                   IsHitTestVisible="False"
+                                   Fill="{DynamicResource RibbonKit.Brushes.Tab.HoverUnderline}"
+                                   Visibility="Collapsed" />
+                        <Rectangle x:Name="SelectionIndicator"
+                                   Height="3"
+                                   RadiusX="1.5"
+                                   RadiusY="1.5"
+                                   Margin="10,0"
+                                   VerticalAlignment="Bottom"
+                                   IsHitTestVisible="False"
+                                   Fill="{DynamicResource RibbonKit.Brushes.Tab.SelectedUnderline}"
+                                   Visibility="Collapsed" />
+                        <!-- Selected contextual tab's underline, tinted the same as its
+                             header text. Height is a theme token (2024 = 3, flat themes = 0)
+                             so only underline themes show it. -->
+                        <Rectangle x:Name="ContextualSelectionIndicator"
+                                   Height="{DynamicResource RibbonKit.Metrics.ContextualUnderlineHeight}"
+                                   RadiusX="1.5"
+                                   RadiusY="1.5"
+                                   Margin="10,0"
+                                   VerticalAlignment="Bottom"
+                                   IsHitTestVisible="False"
+                                   Fill="{TemplateBinding ContextualBrush}"
+                                   Visibility="Collapsed" />
+                        <!-- Tab-to-body connector, STRIP side. Transparent until the tab is
+                             hovered/selected (the triggers set its Background); a 1px sliver at
+                             the tab's bottom, render-shifted 1px DOWN by TabConnect (Y=1 in the
+                             connecting themes, 0 elsewhere) so it fills the seam at the strip's
+                             bottom edge while the tab's top edge and label stay on the
+                             File-button line — the connect never moves the whole tab. NOTE its
+                             limit: PART_TabScroll clips its subtree (ClipToBounds), so the foot
+                             can never paint past the strip onto the ribbon BODY's top border —
+                             and no ZIndex can fix that, because the strip and the body are
+                             separate branches, not siblings. The border cut that completes the
+                             seamless connect is therefore drawn by PART_ConnectNotch, which
+                             lives in the body row of the RibbonTabControl template. RENDER-only:
+                             fixed 1px height and Bottom alignment, never affects tab measure. -->
+                        <Border x:Name="ConnectFoot"
+                                Height="1"
+                                VerticalAlignment="Bottom"
+                                Background="Transparent"
+                                BorderBrush="Transparent"
+                                BorderThickness="1,0,1,0"
+                                IsHitTestVisible="False"
+                                SnapsToDevicePixels="True"
+                                RenderTransform="{DynamicResource RibbonKit.Transforms.TabConnect}" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <!-- Contextual tabs render their header via the tinted presenter. -->
+                        <Trigger Property="IsContextual" Value="True">
+                            <Setter TargetName="HeaderText" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="ContextualHeaderText" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <!-- Hover shows the fill AND the underline; each theme zeroes the
+                             one it doesn't use. SourceName scoping matters — TabItem.IsMouseOver
+                             is also true over the tab CONTENT, which would flicker the header. -->
+                        <Trigger SourceName="HeaderChrome" Property="IsMouseOver" Value="True">
+                            <Setter TargetName="HeaderChrome" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.Tab.HoverBackground}" />
+                            <!-- Gold hover border like a normal 2010 button. Brush only — the thickness
+                                 is already reserved on HeaderChrome above, so hover never shifts the tab. -->
+                            <Setter TargetName="HeaderChrome" Property="BorderBrush"
+                                    Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
+                            <!-- Connect the hovered tab toward the body WITHOUT moving the tab. Instead
+                                 of dropping the whole HeaderChrome 1px (which lowered the top edge and
+                                 the label off the File-button line), we color the 1px ConnectFoot at the
+                                 tab's bottom in the hover fill's low colour, filling the seam at the
+                                 strip's bottom edge (the body's top BORDER stays intact on hover — only
+                                 the SELECTED tab cuts it, via PART_ConnectNotch in the body row).
+                                 Transparent in non-connecting themes. -->
+                            <Setter TargetName="ConnectFoot" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.Tab.ConnectFootHover}" />
+                            <!-- Continue the tab's side borders 1px down through the foot so the
+                                 hovered tab's outline meets the body without a break at the corners. -->
+                            <Setter TargetName="ConnectFoot" Property="BorderBrush"
+                                    Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
+                            <Setter TargetName="HoverIndicator" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="HeaderChrome" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.Tab.SelectedBackground}" />
+                            <!-- Connect the active tab to the body WITHOUT moving the tab: the 1px
+                                 ConnectFoot at the bottom is coloured the body/tab-bottom colour,
+                                 filling the seam at the strip's bottom edge; PART_ConnectNotch (in
+                                 the body row, positioned by RibbonTabControl) then cuts the body's
+                                 top border directly beneath, completing the merge. The tab's top edge
+                                 and label therefore stay aligned with the File button; only the
+                                 bottom merges. Transparent foot in non-connecting themes. -->
+                            <Setter TargetName="ConnectFoot" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.Tab.ConnectFootSelected}" />
+                            <!-- Continue the active tab's side borders 1px down through the foot so its
+                                 outline joins the body seamlessly at the bottom corners. -->
+                            <Setter TargetName="ConnectFoot" Property="BorderBrush"
+                                    Value="{DynamicResource RibbonKit.Brushes.Tab.SelectedBorderBrush}" />
+                            <!-- Office 2013/Metro: the active tab is outlined on top and
+                                 sides (no bottom) so it connects into the ribbon body.
+                                 Other themes keep this Transparent / zero-thickness. -->
+                            <Setter TargetName="HeaderChrome" Property="BorderBrush"
+                                    Value="{DynamicResource RibbonKit.Brushes.Tab.SelectedBorderBrush}" />
+                            <Setter TargetName="HeaderChrome" Property="BorderThickness"
+                                    Value="{DynamicResource RibbonKit.Metrics.TabSelectedBorderThickness}" />
+                            <!-- Selection underline is now the shared gliding PART_TabMarker
+                                 (in the RibbonTabControl template), not this per-tab rectangle. -->
+                            <Setter TargetName="HoverIndicator" Property="Visibility" Value="Collapsed" />
+                            <Setter Property="Foreground"
+                                    Value="{DynamicResource RibbonKit.Brushes.Tab.SelectedForeground}" />
+                        </Trigger>
+                        <!-- Selected contextual tab: full-strength tint, tinted underline,
+                             and the normal accent underline hidden in its favor. -->
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsContextual" Value="True" />
+                                <Condition Property="IsSelected" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="ContextualHeaderText" Property="Opacity" Value="1" />
+                            <!-- The selected contextual tab's tinted underline is now drawn by
+                                 the shared gliding PART_TabMarker (tinted to ContextualBrush). -->
+                        </MultiTrigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ============================================================
+         RibbonGroupsHost — hosts groups on the adaptive panel
+         ============================================================ -->
+    <Style TargetType="{x:Type controls:RibbonGroupsHost}">
+        <Setter Property="Focusable" Value="False" />
+        <!-- StaticResource: resolved at parse time from this dictionary, so the fixed
+             row height can never fail to apply. ClipToBounds stops any over-tall group
+             content from painting over the document area. -->
+        <Setter Property="Height" Value="{DynamicResource RibbonKit.Metrics.GroupsRowHeight}" />
+        <Setter Property="ClipToBounds" Value="True" />
+        <Setter Property="KeyboardNavigation.DirectionalNavigation" Value="Continue" />
+        <Setter Property="ItemsPanel">
+            <Setter.Value>
+                <ItemsPanelTemplate>
+                    <layout:RibbonGroupsPanel />
+                </ItemsPanelTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type controls:RibbonGroupsHost}">
+                    <ItemsPresenter />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ============================================================
+         RibbonGroup — items row + group name; collapses to a single
+         flyout button (Office 2024 behavior) when width runs out
+         ============================================================ -->
+    <Style TargetType="{x:Type controls:RibbonGroup}">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="KeyboardNavigation.DirectionalNavigation" Value="Continue" />
+        <Setter Property="ItemsPanel">
+            <Setter.Value>
+                <ItemsPanelTemplate>
+                    <StackPanel Orientation="Horizontal" />
+                </ItemsPanelTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type controls:RibbonGroup}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Normal (expanded) content. The inner grid is re-homed into
+                             the flyout by RibbonGroup while the popup is open. -->
+                        <Decorator x:Name="PART_NormalHost" Grid.Column="0">
+                            <Grid Margin="4,2,4,0">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <!-- Align the content row via RibbonGroup.ContentAlignment (default
+                                     Center, matching Office). The items panel is a horizontal
+                                     StackPanel, which left-packs its children and ignores their
+                                     HorizontalAlignment along the stacking axis — so a consumer cannot
+                                     center content from their own markup; it must be done here on the
+                                     ItemsPresenter. Centering only shows when the group is wider than
+                                     its content (e.g. the group NAME is wider than a single button);
+                                     when the content is the widest thing in the group, Center and
+                                     Stretch arrange identically, so multi-control groups are unaffected.
+                                     Set ContentAlignment="Left" on a group to left-pack it instead. -->
+                                <ItemsPresenter Grid.Row="0"
+                                                HorizontalAlignment="{TemplateBinding ContentAlignment}"
+                                                VerticalAlignment="Center" />
+                                <Grid Grid.Row="1" Margin="2,3,2,4">
+                                    <!-- Group name centered over the WHOLE group, with the ↘ launcher
+                                         pinned to the right. Three columns: a left spacer that mirrors
+                                         the launcher's width (so the name stays truly centered, not
+                                         biased left), the name in the middle, the launcher on the right.
+                                         The name ellipsizes when the group is narrow instead of sliding
+                                         under the launcher — which is what caused the overlap. The
+                                         spacer + launcher are shown ONLY when ShowDialogLauncher is set
+                                         (trigger below); with no launcher both Auto columns collapse to
+                                         0 and the name centers across the full width, exactly as before. -->
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border x:Name="PART_LauncherSpacer"
+                                            Grid.Column="0"
+                                            Width="18"
+                                            Visibility="Collapsed" />
+                                    <!-- A TextBlock (not a ContentPresenter) so the name can trim to an
+                                         ellipsis. Group headers are strings; a non-string Header falls
+                                         back to its ToString(). -->
+                                    <TextBlock Grid.Column="1"
+                                               Text="{Binding Header, RelativeSource={RelativeSource TemplatedParent}}"
+                                               TextAlignment="Center"
+                                               TextTrimming="CharacterEllipsis"
+                                               FontSize="11"
+                                               Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
+                                    <!-- ↘ dialog launcher, shown via ShowDialogLauncher -->
+                                    <Button x:Name="PART_DialogLauncher"
+                                            Grid.Column="2"
+                                            VerticalAlignment="Center"
+                                            Width="18" Height="14"
+                                            Visibility="Collapsed"
+                                            ToolTip="More options"
+                                            Command="{TemplateBinding DialogLauncherCommand}">
+                                        <Button.Style>
+                                            <Style TargetType="{x:Type Button}">
+                                                <Setter Property="Template">
+                                                    <Setter.Value>
+                                                        <ControlTemplate TargetType="{x:Type Button}">
+                                                            <Border x:Name="Chrome"
+                                                                    Background="Transparent"
+                                                                    BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
+                                                                    CornerRadius="{DynamicResource RibbonKit.Metrics.SmallControlCornerRadius}"
+                                                                    SnapsToDevicePixels="True">
+                                                                <Path Data="M1,1 H3.5 M1,1 V3.5 M2.5,2.5 L7,7 M7,7 V4.5 M7,7 H4.5"
+                                                                      Stroke="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
+                                                                      StrokeThickness="1.2"
+                                                                      StrokeStartLineCap="Round"
+                                                                      StrokeEndLineCap="Round"
+                                                                      HorizontalAlignment="Center"
+                                                                      VerticalAlignment="Center" />
+                                                            </Border>
+                                                            <ControlTemplate.Triggers>
+                                                                <Trigger Property="IsMouseOver" Value="True">
+                                                                    <Setter TargetName="Chrome" Property="Background"
+                                                                            Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
+                                                                </Trigger>
+                                                            </ControlTemplate.Triggers>
+                                                        </ControlTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                </Grid>
+                            </Grid>
+                        </Decorator>
+
+                        <!-- Collapsed representation: one button with icon, name, chevron.
+                             The style is inlined so it can never miss a resource lookup. -->
+                        <ToggleButton x:Name="PART_CollapsedButton"
+                                      Grid.Column="0"
+                                      Margin="1"
+                                      Visibility="Collapsed">
+                            <ToggleButton.Style>
+                                <Style TargetType="{x:Type ToggleButton}">
+                                    <Setter Property="Focusable" Value="True" />
+                                    <Setter Property="Foreground"
+                                            Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="{x:Type ToggleButton}">
+                                                <Border x:Name="Chrome"
+                                                        Background="Transparent"
+                                                        BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
+                                                        CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                                        SnapsToDevicePixels="True">
+                                                    <ContentPresenter HorizontalAlignment="Center"
+                                                                      VerticalAlignment="Center" />
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="Chrome" Property="Background"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
+                                                        <Setter TargetName="Chrome" Property="BorderBrush"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
+                                                        <Setter TargetName="Chrome" Property="BorderThickness"
+                                                                Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
+                                                    </Trigger>
+                                                    <Trigger Property="IsChecked" Value="True">
+                                                        <Setter TargetName="Chrome" Property="Background"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
+                                                        <Setter TargetName="Chrome" Property="BorderBrush"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Control.PressedBorder}" />
+                                                        <Setter TargetName="Chrome" Property="BorderThickness"
+                                                                Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
+                                                    </Trigger>
+                                                    <Trigger Property="IsPressed" Value="True">
+                                                        <Setter TargetName="Chrome" Property="Background"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ToggleButton.Style>
+                            <StackPanel Orientation="Vertical" Margin="8,4">
+                                <Image Source="{TemplateBinding Icon}"
+                                       Width="32" Height="32"
+                                       Stretch="Uniform"
+                                       HorizontalAlignment="Center" />
+                                <TextBlock Text="{Binding Header, RelativeSource={RelativeSource TemplatedParent}}"
+                                           TextAlignment="Center"
+                                           Margin="0,4,0,0" />
+                                <Path Data="M0,0 L3.5,3.5 L7,0"
+                                      Stroke="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
+                                      StrokeThickness="1.5"
+                                      StrokeStartLineCap="Round"
+                                      StrokeEndLineCap="Round"
+                                      HorizontalAlignment="Center"
+                                      Margin="0,3,0,1" />
+                            </StackPanel>
+                        </ToggleButton>
+
+                        <!-- Flyout that hosts the group's full content while collapsed -->
+                        <Popup x:Name="PART_Popup"
+                               AllowsTransparency="True"
+                               StaysOpen="True"
+                               Placement="Bottom"
+                               PlacementTarget="{Binding ElementName=PART_CollapsedButton}"
+                               IsOpen="{Binding IsChecked, ElementName=PART_CollapsedButton, Mode=TwoWay}">
+                            <!-- AdornerDecorator wraps the host so the re-homed flyout content
+                                 (set as PART_PopupHost.Child at runtime) has an adorner layer
+                                 for KeyTip badges. -->
+                            <AdornerDecorator>
+                                <Border x:Name="PART_PopupHost"
+                                        Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
+                                        BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
+                                        BorderThickness="1"
+                                        CornerRadius="{DynamicResource RibbonKit.Metrics.PopupCornerRadius}"
+                                        Padding="6,4"
+                                        Margin="4,2,8,8">
+                                    <Border.Effect>
+                                        <DropShadowEffect BlurRadius="8" ShadowDepth="2" Opacity="0.25" />
+                                    </Border.Effect>
+                                </Border>
+                            </AdornerDecorator>
+                        </Popup>
+
+                        <Rectangle Grid.Column="1"
+                                   Width="1"
+                                   Margin="1,10"
+                                   Fill="{DynamicResource RibbonKit.Brushes.Group.Separator}" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="SizeState" Value="Collapsed">
+                            <Setter TargetName="PART_NormalHost" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="PART_CollapsedButton" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="ShowDialogLauncher" Value="True">
+                            <Setter TargetName="PART_DialogLauncher" Property="Visibility" Value="Visible" />
+                            <!-- Reserve the mirror-width spacer so the name stays centered over the group. -->
+                            <Setter TargetName="PART_LauncherSpacer" Property="Visibility" Value="Hidden" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

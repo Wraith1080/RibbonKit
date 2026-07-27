@@ -1,0 +1,673 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:RibbonKit.Controls"
+    xmlns:layout="clr-namespace:RibbonKit.Layout">
+
+    <!-- Part of the shared RibbonKit control-template dictionary; merged by Office2024.xaml.
+         RibbonDropDownButton, RibbonSplitButton, RibbonMenuItem, RibbonComboBox.
+         Colours/metrics come from Tokens.Office20XX.xaml via {DynamicResource}. -->
+
+    <!-- ============================================================
+         RibbonDropDownButton — button that opens a menu flyout
+         ============================================================ -->
+    <Style TargetType="{x:Type controls:RibbonDropDownButton}">
+        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
+        <Setter Property="VerticalAlignment" Value="Stretch" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type controls:RibbonDropDownButton}">
+                    <Grid>
+                        <!-- HorizontalContentAlignment forwarded from the drop-down so a host can
+                             left-align the icon+label instead of centring it. Default stays Center
+                             (Control's own default), so nothing in the ribbon changes; the quick
+                             access OVERFLOW flyout opts in, where a centred drop-down looked like a
+                             different kind of control from the plain buttons stacked beside it. -->
+                        <ToggleButton x:Name="PART_Toggle"
+                                      HorizontalContentAlignment="{Binding HorizontalContentAlignment, RelativeSource={RelativeSource TemplatedParent}}"
+                                      IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+                            <ToggleButton.Style>
+                                <Style TargetType="{x:Type ToggleButton}">
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="{x:Type ToggleButton}">
+                                                <Border x:Name="Chrome"
+                                                        Background="Transparent"
+                                                        BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
+                                                        CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                                        Margin="1"
+                                                        SnapsToDevicePixels="True">
+                                                    <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                                      VerticalAlignment="Center" />
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="Chrome" Property="Background"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
+                                                        <Setter TargetName="Chrome" Property="BorderBrush"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
+                                                        <Setter TargetName="Chrome" Property="BorderThickness"
+                                                                Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
+                                                    </Trigger>
+                                                    <Trigger Property="IsChecked" Value="True">
+                                                        <Setter TargetName="Chrome" Property="Background"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
+                                                        <Setter TargetName="Chrome" Property="BorderBrush"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Control.PressedBorder}" />
+                                                        <Setter TargetName="Chrome" Property="BorderThickness"
+                                                                Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
+                                                    </Trigger>
+                                                    <!-- On a colored QAT surface, hover with the band's brush (matches
+                                                         RibbonButton) instead of the neutral gray. The checked (OPEN)
+                                                         state comes AFTER hover and uses the pressed brush, so the open
+                                                         dropdown holds ONE stable background regardless of IsMouseOver —
+                                                         which is what was flickering. -->
+                                                    <MultiTrigger>
+                                                        <MultiTrigger.Conditions>
+                                                            <Condition Property="IsMouseOver" Value="True" />
+                                                            <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
+                                                        </MultiTrigger.Conditions>
+                                                        <Setter TargetName="Chrome" Property="Background"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Qat.ColoredHoverBackground}" />
+                                                    </MultiTrigger>
+                                                    <MultiTrigger>
+                                                        <MultiTrigger.Conditions>
+                                                            <Condition Property="IsChecked" Value="True" />
+                                                            <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
+                                                        </MultiTrigger.Conditions>
+                                                        <Setter TargetName="Chrome" Property="Background"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Qat.ColoredPressedBackground}" />
+                                                    </MultiTrigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ToggleButton.Style>
+                            <Grid>
+                                <StackPanel x:Name="LargeLayout"
+                                            Orientation="Vertical"
+                                            Margin="6,8,6,0"
+                                            VerticalAlignment="Center">
+                                    <Image x:Name="LargeImage"
+                                           Source="{TemplateBinding LargeIcon}"
+                                           Width="32" Height="32"
+                                           Stretch="Uniform"
+                                           HorizontalAlignment="Center" />
+                                    <!-- The dropdown chevron is INLINE at the end of the label (like
+                                         Word) after whitespace, so it wraps with the last word and
+                                         adds NO extra row — the button then matches a plain large
+                                         button's height instead of being taller. -->
+                                    <TextBlock TextAlignment="Center"
+                                               TextWrapping="Wrap"
+                                               TextTrimming="CharacterEllipsis"
+                                               MaxWidth="76"
+                                               MinHeight="32"
+                                               MaxHeight="48"
+                                               Margin="0,4,0,0"><Run Text="{Binding Header, RelativeSource={RelativeSource TemplatedParent}}" /><Run FontFamily="Segoe MDL2 Assets" FontSize="9" Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" Text="  &#xE70D;" /></TextBlock>
+                                </StackPanel>
+                                <StackPanel x:Name="MediumLayout"
+                                            Orientation="Horizontal"
+                                            Margin="4,2"
+                                            VerticalAlignment="Center"
+                                            Visibility="Collapsed">
+                                    <Image Source="{TemplateBinding Icon}"
+                                           Width="16" Height="16"
+                                           Stretch="Uniform"
+                                           VerticalAlignment="Center" />
+                                    <TextBlock Text="{TemplateBinding Header}"
+                                               Margin="5,0,2,0"
+                                               VerticalAlignment="Center" />
+                                    <Path Data="M0,0 L3.5,3.5 L7,0"
+                                          Stroke="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
+                                          StrokeThickness="1.5"
+                                          StrokeStartLineCap="Round"
+                                          StrokeEndLineCap="Round"
+                                          VerticalAlignment="Center"
+                                          Margin="2,2,1,0" />
+                                </StackPanel>
+                                <StackPanel x:Name="SmallLayout"
+                                            Orientation="Horizontal"
+                                            Margin="3,0"
+                                            VerticalAlignment="Center"
+                                            Visibility="Collapsed">
+                                    <!-- Two renderings: the normal colour icon, and a flat white
+                                         silhouette shown when the QAT sits on a colored surface
+                                         (accent title bar / strip) — matches RibbonButton. -->
+                                    <Grid Width="16" Height="16" Margin="2,3" VerticalAlignment="Center">
+                                        <Image x:Name="SmallImage"
+                                               Source="{TemplateBinding Icon}"
+                                               Width="16" Height="16"
+                                               Stretch="Uniform" />
+                                        <Rectangle x:Name="SmallImageTint" Width="16" Height="16"
+                                                   Fill="#FFFFFF"
+                                                   Visibility="Collapsed">
+                                            <Rectangle.OpacityMask>
+                                                <ImageBrush ImageSource="{Binding Icon, RelativeSource={RelativeSource TemplatedParent}}" />
+                                            </Rectangle.OpacityMask>
+                                        </Rectangle>
+                                    </Grid>
+                                    <Path x:Name="SmallChevron"
+                                          Data="M0,0 L3.5,3.5 L7,0"
+                                          Stroke="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
+                                          StrokeThickness="1.5"
+                                          StrokeStartLineCap="Round"
+                                          StrokeEndLineCap="Round"
+                                          VerticalAlignment="Center"
+                                          Margin="1,2,1,0" />
+                                </StackPanel>
+                            </Grid>
+                        </ToggleButton>
+                        <Popup x:Name="PART_Popup"
+                               AllowsTransparency="True"
+                               StaysOpen="True"
+                               Placement="Bottom"
+                               IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+                            <Border x:Name="PART_MenuHost"
+                                    Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
+                                    BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
+                                    BorderThickness="1"
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.PopupCornerRadius}"
+                                    Padding="4"
+                                    Margin="4,2,8,8">
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="8" ShadowDepth="2" Opacity="0.25" />
+                                </Border.Effect>
+                                <!-- AdornerDecorator gives the popup its own adorner layer so
+                                     KeyTip badges can render over the menu items. -->
+                                <AdornerDecorator>
+                                    <ItemsPresenter />
+                                </AdornerDecorator>
+                            </Border>
+                        </Popup>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="LargeIcon" Value="{x:Null}">
+                            <Setter TargetName="LargeImage" Property="Source"
+                                    Value="{Binding Icon, RelativeSource={RelativeSource TemplatedParent}}" />
+                        </Trigger>
+                        <Trigger Property="Size" Value="Medium">
+                            <Setter TargetName="LargeLayout" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="MediumLayout" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="Size" Value="Small">
+                            <Setter TargetName="LargeLayout" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="SmallLayout" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <!-- QAT on a colored surface: white silhouette icon + white chevron. -->
+                        <Trigger Property="controls:Ribbon.QatOnColoredSurface" Value="True">
+                            <Setter TargetName="SmallImage" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="SmallImageTint" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="SmallChevron" Property="Stroke" Value="#FFFFFF" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ============================================================
+         RibbonSplitButton — command part + chevron dropdown part
+         ============================================================ -->
+    <Style TargetType="{x:Type controls:RibbonSplitButton}">
+        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
+        <Setter Property="VerticalAlignment" Value="Stretch" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type controls:RibbonSplitButton}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <!-- Same forwarding as the drop-down's PART_Toggle: lets the overflow
+                             flyout left-align a split button's icon+label. Default unchanged. -->
+                        <Button x:Name="PART_Primary"
+                                Grid.Column="0"
+                                HorizontalContentAlignment="{Binding HorizontalContentAlignment, RelativeSource={RelativeSource TemplatedParent}}"
+                                Command="{TemplateBinding Command}"
+                                CommandParameter="{TemplateBinding CommandParameter}">
+                            <Button.Style>
+                                <Style TargetType="{x:Type Button}">
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="{x:Type Button}">
+                                                <Border x:Name="Chrome"
+                                                        Background="Transparent"
+                                                        BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
+                                                        CornerRadius="{DynamicResource RibbonKit.Metrics.SplitLeftCornerRadius}"
+                                                        Margin="1,1,0,1"
+                                                        SnapsToDevicePixels="True">
+                                                    <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                                      VerticalAlignment="Center" />
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="Chrome" Property="Background"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
+                                                        <Setter TargetName="Chrome" Property="BorderBrush"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
+                                                        <Setter TargetName="Chrome" Property="BorderThickness"
+                                                                Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
+                                                    </Trigger>
+                                                    <Trigger Property="IsPressed" Value="True">
+                                                        <Setter TargetName="Chrome" Property="Background"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
+                                                        <Setter TargetName="Chrome" Property="BorderBrush"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Control.PressedBorder}" />
+                                                        <Setter TargetName="Chrome" Property="BorderThickness"
+                                                                Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
+                                                    </Trigger>
+                                                    <MultiTrigger>
+                                                        <MultiTrigger.Conditions>
+                                                            <Condition Property="IsMouseOver" Value="True" />
+                                                            <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
+                                                        </MultiTrigger.Conditions>
+                                                        <Setter TargetName="Chrome" Property="Background"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Qat.ColoredHoverBackground}" />
+                                                    </MultiTrigger>
+                                                    <MultiTrigger>
+                                                        <MultiTrigger.Conditions>
+                                                            <Condition Property="IsPressed" Value="True" />
+                                                            <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
+                                                        </MultiTrigger.Conditions>
+                                                        <Setter TargetName="Chrome" Property="Background"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Qat.ColoredPressedBackground}" />
+                                                    </MultiTrigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </Button.Style>
+                            <Grid>
+                                <StackPanel x:Name="LargeLayout"
+                                            Orientation="Vertical"
+                                            Margin="6,8,6,0"
+                                            VerticalAlignment="Center">
+                                    <Image x:Name="LargeImage"
+                                           Source="{TemplateBinding LargeIcon}"
+                                           Width="32" Height="32"
+                                           Stretch="Uniform"
+                                           HorizontalAlignment="Center" />
+                                    <TextBlock Text="{TemplateBinding Header}"
+                                               TextAlignment="Center"
+                                               TextWrapping="Wrap"
+                                               TextTrimming="CharacterEllipsis"
+                                               MaxWidth="76"
+                                               MinHeight="32"
+                                               MaxHeight="48"
+                                               Margin="0,4,0,0" />
+                                </StackPanel>
+                                <StackPanel x:Name="MediumLayout"
+                                            Orientation="Horizontal"
+                                            Margin="4,2"
+                                            VerticalAlignment="Center"
+                                            Visibility="Collapsed">
+                                    <Image Source="{TemplateBinding Icon}"
+                                           Width="16" Height="16"
+                                           Stretch="Uniform"
+                                           VerticalAlignment="Center" />
+                                    <TextBlock Text="{TemplateBinding Header}"
+                                               Margin="5,0,2,0"
+                                               VerticalAlignment="Center" />
+                                </StackPanel>
+                                <Grid x:Name="SmallLayout"
+                                      Width="16" Height="16"
+                                      Margin="5,3"
+                                      VerticalAlignment="Center"
+                                      Visibility="Collapsed">
+                                    <Image x:Name="SmallImage"
+                                           Source="{TemplateBinding Icon}"
+                                           Width="16" Height="16"
+                                           Stretch="Uniform" />
+                                    <Rectangle x:Name="SmallImageTint" Width="16" Height="16"
+                                               Fill="#FFFFFF"
+                                               Visibility="Collapsed">
+                                        <Rectangle.OpacityMask>
+                                            <ImageBrush ImageSource="{Binding Icon, RelativeSource={RelativeSource TemplatedParent}}" />
+                                        </Rectangle.OpacityMask>
+                                    </Rectangle>
+                                </Grid>
+                            </Grid>
+                        </Button>
+                        <ToggleButton x:Name="PART_Toggle"
+                                      Grid.Column="1"
+                                      Width="15"
+                                      IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+                            <ToggleButton.Style>
+                                <Style TargetType="{x:Type ToggleButton}">
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="{x:Type ToggleButton}">
+                                                <Border x:Name="Chrome"
+                                                        Background="Transparent"
+                                                        BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
+                                                        CornerRadius="{DynamicResource RibbonKit.Metrics.SplitRightCornerRadius}"
+                                                        Margin="0,1,1,1"
+                                                        SnapsToDevicePixels="True">
+                                                    <Path x:Name="ToggleChevron"
+                                                          Data="M0,0 L3.5,3.5 L7,0"
+                                                          Stroke="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
+                                                          StrokeThickness="1.5"
+                                                          StrokeStartLineCap="Round"
+                                                          StrokeEndLineCap="Round"
+                                                          HorizontalAlignment="Center"
+                                                          VerticalAlignment="Center" />
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="Chrome" Property="Background"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
+                                                        <Setter TargetName="Chrome" Property="BorderBrush"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
+                                                        <Setter TargetName="Chrome" Property="BorderThickness"
+                                                                Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
+                                                    </Trigger>
+                                                    <Trigger Property="IsChecked" Value="True">
+                                                        <Setter TargetName="Chrome" Property="Background"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
+                                                        <Setter TargetName="Chrome" Property="BorderBrush"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Control.PressedBorder}" />
+                                                        <Setter TargetName="Chrome" Property="BorderThickness"
+                                                                Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
+                                                    </Trigger>
+                                                    <!-- Colored QAT surface: white chevron + band hover/open state. -->
+                                                    <Trigger Property="controls:Ribbon.QatOnColoredSurface" Value="True">
+                                                        <Setter TargetName="ToggleChevron" Property="Stroke" Value="#FFFFFF" />
+                                                    </Trigger>
+                                                    <MultiTrigger>
+                                                        <MultiTrigger.Conditions>
+                                                            <Condition Property="IsMouseOver" Value="True" />
+                                                            <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
+                                                        </MultiTrigger.Conditions>
+                                                        <Setter TargetName="Chrome" Property="Background"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Qat.ColoredHoverBackground}" />
+                                                    </MultiTrigger>
+                                                    <MultiTrigger>
+                                                        <MultiTrigger.Conditions>
+                                                            <Condition Property="IsChecked" Value="True" />
+                                                            <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
+                                                        </MultiTrigger.Conditions>
+                                                        <Setter TargetName="Chrome" Property="Background"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Qat.ColoredPressedBackground}" />
+                                                    </MultiTrigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ToggleButton.Style>
+                        </ToggleButton>
+                        <Popup x:Name="PART_Popup"
+                               AllowsTransparency="True"
+                               StaysOpen="True"
+                               Placement="Bottom"
+                               IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+                            <Border x:Name="PART_MenuHost"
+                                    Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
+                                    BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
+                                    BorderThickness="1"
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.PopupCornerRadius}"
+                                    Padding="4"
+                                    Margin="4,2,8,8">
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="8" ShadowDepth="2" Opacity="0.25" />
+                                </Border.Effect>
+                                <!-- AdornerDecorator gives the popup its own adorner layer so
+                                     KeyTip badges can render over the menu items. -->
+                                <AdornerDecorator>
+                                    <ItemsPresenter />
+                                </AdornerDecorator>
+                            </Border>
+                        </Popup>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="LargeIcon" Value="{x:Null}">
+                            <Setter TargetName="LargeImage" Property="Source"
+                                    Value="{Binding Icon, RelativeSource={RelativeSource TemplatedParent}}" />
+                        </Trigger>
+                        <Trigger Property="Size" Value="Medium">
+                            <Setter TargetName="LargeLayout" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="MediumLayout" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="Size" Value="Small">
+                            <Setter TargetName="LargeLayout" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="SmallLayout" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <!-- QAT on a colored surface: white silhouette primary icon (chevron is
+                             whitened in the toggle's own template). -->
+                        <Trigger Property="controls:Ribbon.QatOnColoredSurface" Value="True">
+                            <Setter TargetName="SmallImage" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="SmallImageTint" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ============================================================
+         RibbonMenuItem — row inside dropdown flyouts
+         ============================================================ -->
+    <Style TargetType="{x:Type controls:RibbonMenuItem}">
+        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+        <Setter Property="MinWidth" Value="160" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type controls:RibbonMenuItem}">
+                    <Border x:Name="Chrome"
+                            Background="Transparent"
+                            BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
+                            CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                            Padding="6,5"
+                            SnapsToDevicePixels="True">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="24" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Image Grid.Column="0"
+                                   Source="{TemplateBinding Icon}"
+                                   Width="16" Height="16"
+                                   Stretch="Uniform"
+                                   HorizontalAlignment="Left"
+                                   VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="1"
+                                       Text="{TemplateBinding Header}"
+                                       VerticalAlignment="Center"
+                                       Margin="2,0,8,0" />
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chrome" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
+                            <Setter TargetName="Chrome" Property="BorderBrush"
+                                    Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
+                            <Setter TargetName="Chrome" Property="BorderThickness"
+                                    Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Chrome" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
+                            <Setter TargetName="Chrome" Property="BorderBrush"
+                                    Value="{DynamicResource RibbonKit.Brushes.Control.PressedBorder}" />
+                            <Setter TargetName="Chrome" Property="BorderThickness"
+                                    Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ============================================================
+         RibbonComboBox — optional label + compact selection box
+         (the Office font-family / font-size pattern)
+         ============================================================ -->
+    <Style TargetType="{x:Type controls:RibbonComboBox}">
+        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
+        <Setter Property="ItemContainerStyle">
+            <Setter.Value>
+                <Style TargetType="{x:Type ComboBoxItem}">
+                    <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="{x:Type ComboBoxItem}">
+                                <Border x:Name="Chrome"
+                                        Background="Transparent"
+                                        BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
+                                        CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                        Padding="7,4"
+                                        SnapsToDevicePixels="True">
+                                    <ContentPresenter VerticalAlignment="Center" />
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsHighlighted" Value="True">
+                                        <Setter TargetName="Chrome" Property="Background"
+                                                Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
+                                        <Setter TargetName="Chrome" Property="BorderBrush"
+                                                Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
+                                        <Setter TargetName="Chrome" Property="BorderThickness"
+                                                Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
+                                    </Trigger>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter TargetName="Chrome" Property="Background"
+                                                Value="{DynamicResource RibbonKit.Brushes.Control.CheckedBackground}" />
+                                        <Setter TargetName="Chrome" Property="BorderBrush"
+                                                Value="{DynamicResource RibbonKit.Brushes.Control.CheckedBorder}" />
+                                        <Setter TargetName="Chrome" Property="BorderThickness"
+                                                Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
+                                    </Trigger>
+                                    <Trigger Property="IsEnabled" Value="False">
+                                        <Setter Property="Opacity" Value="0.4" />
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type controls:RibbonComboBox}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock x:Name="HeaderText"
+                                   Text="{TemplateBinding Header}"
+                                   VerticalAlignment="Center"
+                                   Margin="2,0,6,0" />
+                        <!-- MinHeight gives the input box vertical breathing room: without it
+                             the box collapses to the text height and reads as cramped. -->
+                        <Grid Width="{TemplateBinding InputWidth}" MinHeight="24">
+                            <Border x:Name="Chrome"
+                                    Background="#FFFFFF"
+                                    BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
+                                    BorderThickness="1"
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                    SnapsToDevicePixels="True" />
+                            <ToggleButton x:Name="DropToggle"
+                                          ClickMode="Press"
+                                          Focusable="False"
+                                          IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+                                <ToggleButton.Style>
+                                    <Style TargetType="{x:Type ToggleButton}">
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="{x:Type ToggleButton}">
+                                                    <Border Background="Transparent">
+                                                        <Path Data="M0,0 L3.5,3.5 L7,0"
+                                                              Stroke="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
+                                                              StrokeThickness="1.5"
+                                                              StrokeStartLineCap="Round"
+                                                              StrokeEndLineCap="Round"
+                                                              HorizontalAlignment="Right"
+                                                              VerticalAlignment="Center"
+                                                              Margin="0,0,7,0" />
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </ToggleButton.Style>
+                            </ToggleButton>
+                            <ContentPresenter x:Name="ContentSite"
+                                              IsHitTestVisible="False"
+                                              Margin="8,0,22,0"
+                                              VerticalAlignment="Center"
+                                              Content="{TemplateBinding SelectionBoxItem}"
+                                              ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                              ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}" />
+                            <TextBox x:Name="PART_EditableTextBox"
+                                     Visibility="Hidden"
+                                     Margin="5,1,21,1"
+                                     Padding="0"
+                                     Background="Transparent"
+                                     BorderThickness="0"
+                                     VerticalContentAlignment="Center"
+                                     Focusable="True" />
+                            <Popup x:Name="PART_Popup"
+                                   AllowsTransparency="True"
+                                   Placement="Bottom"
+                                   IsOpen="{TemplateBinding IsDropDownOpen}">
+                                <Border Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
+                                        BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
+                                        BorderThickness="1"
+                                        CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                        Padding="3"
+                                        Margin="4,2,8,8"
+                                        MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
+                                        MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                                    <Border.Effect>
+                                        <DropShadowEffect BlurRadius="8" ShadowDepth="2" Opacity="0.25" />
+                                    </Border.Effect>
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                                  HorizontalScrollBarVisibility="Disabled">
+                                        <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained" />
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                    </StackPanel>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Header" Value="{x:Null}">
+                            <Setter TargetName="HeaderText" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="IsEditable" Value="True">
+                            <Setter TargetName="PART_EditableTextBox" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="ContentSite" Property="Visibility" Value="Hidden" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chrome" Property="BorderBrush"
+                                    Value="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                            <Setter TargetName="Chrome" Property="BorderBrush"
+                                    Value="{DynamicResource RibbonKit.Brushes.Accent}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>
