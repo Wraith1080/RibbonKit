@@ -2123,6 +2123,59 @@ the Phase 8 review, but renaming is breaking and it has shipped.
   is now corrected.
 - **Silver and Black schemes.** Pure token clones now that the geometry is proven.
 
+### 3.39 Stranded menus, take two: the borrow must not hang off `Popup.Closed` — 2026-07-27
+
+§3.35 fixed proxy REBUILDING as the cause of empty source menus. Caching the entries was necessary
+but not sufficient — a second, independent path stranded the same items, with the same
+who-would-guess symptom: open the QAT overflow flyout, open a drop-down or split entry's menu inside
+it, then dismiss everything with one click somewhere else in the window. From then on the ORIGINAL
+button back in the ribbon opens onto an empty menu, which reads to the user as "the popup won't show
+up at all". Nothing is wrong at the place they clicked.
+
+**The mechanism.** WPF coerces `Popup.IsOpen` to false while a popup is not loaded. Closing the
+overflow flyout unloads everything inside it, so the entry's own popup is coerced shut — and a
+coerced value never travels back through the template's `IsOpen` binding. The entry is left with
+`IsDropDownOpen == true` describing a popup that is already gone. Every consequence follows from
+that one desync:
+
+- The old return path was `Popup.Closed` → `BeginInvoke(Background)` → `if (!IsDropDownOpen) return
+  the items`. The guard exists for a fast close→reopen, but here it read the STALE true and skipped.
+- `OnOverflowClosed`'s `IsDropDownOpen: true` → `SetCurrentValue(false)` rescue was a no-op that the
+  popup could never see (its effective value was already false), so no second `Closed` was raised and
+  there was no second chance to return.
+- The items stayed in a proxy that is only reachable through a flyout that rebuilds its list on every
+  open. Nothing ever asked that proxy to close again, so the source menu stayed empty for the rest of
+  the session.
+
+**The fix is to make the PROPERTY the contract and the popup an implementation detail.**
+`OnIsDropDownOpenChanged` now schedules the return on the false transition (it already borrowed on
+the true one), so the round trip is symmetric and does not care whether a popup exists at all.
+`OnPopupClosed` first SYNCS `IsDropDownOpen` when it finds it still true — that is the moment we
+learn the popup was shut behind our back, and correcting it there both frees the return and stops
+the entry from looking pressed (and from auto-popping its menu the next time the flyout opens, since
+the stale local `IsOpen=true` would otherwise re-assert on load). `EnsureBorrowedItemsReturned()` is
+the explicit hook for hosts: it closes the dropdown if needed and drives the return itself.
+`RibbonQuickAccessToolBar` calls it for EVERY cached entry on close and before pruning one, instead
+of testing `IsDropDownOpen` — the property it cannot trust. A final `Unloaded` net covers a host that
+disappears without the popup raising `Closed` at all; it only fires when the popup is genuinely not
+open, so a theme swap re-templating under an open menu is left alone. All four paths are idempotent
+and re-guarded at Background priority, so overlapping requests move the menu exactly once.
+
+**Rule of thumb:** `Popup.Closed` tells you the popup closed, not that the control agreed to it. Any
+state a RibbonKit flyout owns must be reconciled on the CONTROL's property, and any popup that can
+be nested inside another popup will one day be closed by its host rather than by itself.
+
+**First unit tests.** This is also where the test project stopped being a smoke test.
+`tests/RibbonKit.Tests/Sta.cs` runs a body on an STA thread with a live dispatcher plus a `Drain()`
+that pumps queued Background work — no `Application`, no window, so it runs on a CI agent.
+`DropDownBorrowTests` pins the whole borrow protocol (including this regression, which fails against
+the old code) and `QuickAccessOverflowTests` pins the panel's measure/arrange rules and the command
+proxy factory. `[assembly: InternalsVisibleTo("RibbonKit.Tests")]` was added for this: the contracts
+worth testing here — `BorrowMenuFrom`, `EnsureBorrowedItemsReturned`, `OverflowedChildren`,
+`CreateCommandProxy` — are deliberately not public API, and widening the surface to test them would
+be the wrong trade. Testing without popups is not a compromise either; it is the point, since the
+bug was caused by trusting the popup in the first place.
+
 ## 4. Workflow / Session Conventions
 
 - Cloud workspace: `/home/user/ribbonkit/`. The user's machine:
@@ -2227,7 +2280,9 @@ Backlog (rough priority):
    of public surface), docs site, NuGet polish, performance pass.
 7. GitHub publish: repo URL placeholder in csproj (`YOUR-GITHUB-USERNAME`).
 
-**Unit tests remain unwritten.** `docs/06-MERGE-AND-MODAL-PLAN.md` §7 lists the invariants worth
+**Unit tests have started.** The QAT/proxy suite landed with §3.39 (STA harness + borrow protocol +
+overflow measure rules); everything else is still unwritten. `docs/06-MERGE-AND-MODAL-PLAN.md` §7
+lists the invariants worth
 asserting — merge ordering across permutations, merge/unmerge round-trips, group restore with two
 sources in one tab, capture-while-modal, modal enter/exit selection. All of Phase 7 was verified by
 clicking, and those invariants are the kind that break silently.

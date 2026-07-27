@@ -1,5 +1,12 @@
+using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Markup;
+
+// The unit tests exercise contracts that are deliberately not public API — the menu-borrowing
+// protocol between a dropdown and its proxy, the quick access panel's overflow bookkeeping, the
+// command-proxy factory. Testing them through the public surface would mean either widening that
+// surface or driving real popups, and neither is worth it.
+[assembly: InternalsVisibleTo("RibbonKit.Tests")]
 
 [assembly: ThemeInfo(
     // Where theme-specific resource dictionaries are located

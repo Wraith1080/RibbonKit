@@ -253,10 +253,11 @@ public class RibbonQuickAccessToolBar : ItemsControl
                 continue;
             }
 
-            if (_entries[item] is RibbonDropDownButton { IsDropDownOpen: true } stale)
+            if (_entries[item] is RibbonDropDownButton stale)
             {
-                // Never drop a proxy still holding a borrowed menu — close it so the items go home.
-                stale.SetCurrentValue(RibbonDropDownButton.IsDropDownOpenProperty, false);
+                // Never drop a proxy still holding a borrowed menu — send the items home first,
+                // closing the proxy's dropdown if it is (or still thinks it is) open.
+                stale.EnsureBorrowedItemsReturned();
             }
 
             _entries.Remove(item);
@@ -267,14 +268,19 @@ public class RibbonQuickAccessToolBar : ItemsControl
     {
         _dismiss?.OnClosed();
 
-        // Close any entry menu still open. Its items are BORROWED from the source and are only
-        // returned by the drop-down's own close path, so letting the flyout disappear around an
-        // open menu would strand them (see GetOrCreateEntry).
+        // Close any entry menu still open AND make sure its BORROWED items go home. Testing
+        // IsDropDownOpen here is not enough: the flyout closing UNLOADS the entries, and WPF then
+        // coerces the entry's own popup shut without that travelling back to IsDropDownOpen — so a
+        // dropdown or split entry the user had just opened would read as "still open", the close we
+        // asked for would be a no-op the popup never sees, and the items borrowed from the source
+        // would be stranded in the proxy. The source menu then stays EMPTY for the rest of the
+        // session, which is why clicking the ORIGINAL button in the ribbon opened onto nothing.
+        // EnsureBorrowedItemsReturned drives the return itself instead of hoping for a Closed.
         foreach (FrameworkElement entry in _entries.Values)
         {
-            if (entry is RibbonDropDownButton { IsDropDownOpen: true } dropDown)
+            if (entry is RibbonDropDownButton dropDown)
             {
-                dropDown.SetCurrentValue(RibbonDropDownButton.IsDropDownOpenProperty, false);
+                dropDown.EnsureBorrowedItemsReturned();
             }
         }
 
