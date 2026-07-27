@@ -22,7 +22,15 @@ public enum RibbonTheme
     /// </summary>
     Office2010,
 
-    // Office2007 arrives in a later Phase 6 batch (see docs/03-ROADMAP.md).
+    /// <summary>
+    /// Office 2007 ("Blue"): the glossiest generation — hard-crease glass gels on every hot
+    /// state (gold on hover, saturated orange when pressed), a "valley" gradient on both the
+    /// title bar and the ribbon body, a flat light-blue tab strip, dark-blue tab labels, and a
+    /// connected selected tab. The round Office orb is opt-in via
+    /// <see cref="RibbonKit.Controls.Ribbon"/>'s application-button shape; see
+    /// docs/07-OFFICE-2007-THEME-PLAN.md.
+    /// </summary>
+    Office2007,
 }
 
 /// <summary>
