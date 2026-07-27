@@ -1659,6 +1659,222 @@ reports the CURRENT device size/mtime. If a freshly re-staged file looks reverte
 response's byte size against the expected committed size before concluding anything — this
 session nearly misdiagnosed a full working-tree revert that way.
 
+### 3.32 Modal tabs (Print-Preview mode) — Phase 7 P7.1 — 2026-07-27
+
+`RibbonTab.IsModal` marks a tab as *eligible*; the app enters and leaves the mode with
+`Ribbon.EnterModal(tab)` / `ExitModal()`. Entering hides every other tab and the application (File)
+button, blocks minimize and the backstage, and leaves the QAT alone — Word's Print Preview
+behaviour. `CanClose` (default true) puts a close affordance at the end of the tab strip, labelled
+with `CloseButtonText` when set, bound to `Ribbon.ExitModalCommand`. Enter and exit each raise a
+cancellable `-ing` event plus an `-ed` event, carrying a `RibbonModalReason`
+(Application / CloseButton / TabRemoved).
+
+State lives in `Controls/RibbonModalScope.cs`. It hides the other tabs with plain `Visibility`,
+which is what makes the feature cheap: the ribbon's existing selection guard
+(`OnTabIsVisibleChanged` → `FindFirstVisibleTab`) and `KeyTipService`'s visible-tab filter then do
+the right thing with no special-casing, honouring architecture §8's rule that core layout must never
+know about modal tabs. Order matters on entry — select the modal tab BEFORE collapsing the others,
+or the selection guard briefly promotes the wrong one.
+
+**Pitfall 1 — visibility is also PERSISTED.** `RibbonCustomizationSerializer` captured
+`tab.Visibility` per tab, so saving ribbon state while modal wrote every other tab as hidden and
+restored a one-tab ribbon on the next run. The scope records each tab's pre-modal value and
+publishes it through `Ribbon.GetAuthoredVisibility`, which the serializer now reads instead of the
+live property. `SetAuthoredVisibility` is the matching setter for app state (a contextual tab's
+context) changing mid-mode.
+
+**Pitfall 2 — block by REVERTING, not by coercing.** Minimize and the backstage are blocked inside
+their property-changed callbacks with `SetCurrentValue(..., false)` behind `_suppressMinimizeChange`
+/ `_suppressBackstageChange` guards. A `CoerceValueCallback` looks tidier but leaves a stale `true`
+*base* value that springs back the moment modal mode ends.
+
+**Pitfall 3 — `Tabs.Clear()` reports a Reset with no `OldItems`**, which is exactly how the
+serializer rebuilds the collection; `OnCollectionReset` reconciles modal state against the new
+contents.
+
+Template: the right end of the tab-strip row is now a horizontal `StackPanel` holding
+`PART_ModalClose` and the existing MinimizeToggle (no new Grid column). **No new tokens** — the
+close button reuses `TabStrip.Foreground` / `TabStrip.ControlHoverBackground` /
+`ControlCornerRadius`, so it themes across all four generations for free. DataTriggers on
+`Ribbon.IsModal` collapse the ApplicationButton and the MinimizeToggle; `Style.Triggers` sits after
+every setter (MC3088).
+
+**Build gotcha (hit twice this arc):** a private nested `ICommand` class must not share its name
+with the property that exposes it — `public ICommand FooCommand => _foo;` beside
+`private sealed class FooCommand` is **CS0102**, since a nested type and a member share one
+declaration space. Named `ModalCloseCommand` and `CaptionActionCommand` instead.
+
+### 3.33 Tab merging + group contributions — Phase 7 P7.2/P7.3 — 2026-07-27
+
+A `RibbonMergeSource` (public `FrameworkElement`, `Tabs` as content property) is a declarative bag
+of ribbon content belonging to a child context — an embedded editor, an MDI document, a plug-in.
+`Ribbon.Merge(source)` / `Unmerge(source)` insert and remove it; `RibbonGroupContribution` injects a
+single group into an existing HOST tab addressed by that tab's `Ribbon.CommandId` (unmatched target
+= silently skipped, so a source can't break a host that lacks the tab it hoped for).
+
+**Activation is declarative and is NOT WPF focus.** `Target` + `IsActive` on the source drive
+merge/unmerge, so the showcase merges with zero code-behind
+(`IsActive="{Binding IsChecked, ElementName=MergeToggle}"`). Focus lands on ribbon buttons
+constantly and would thrash the merge — the same lesson as §3.28. An attached
+`RibbonMergeSource.Source` lets a child element *carry* its source, which is the hook `MdiContainer`
+uses (§3.34).
+
+**Ordering — a sort key, not index arithmetic.** Index maths at merge time isn't stable across
+repeated cycles, so every tab in the strip (and every group in a target tab) gets a key and inserts
+land at the first position whose key is greater. Host-declared content is `(0, -1)`; merged content
+is `(order, firstMergeSequence)`, where the sequence is assigned the FIRST time a source merges and
+reused forever. That buys three properties at once: same-`Order` sources keep their first-merge
+relative order, a source that unmerges and re-merges returns to the same slot, and a **negative**
+`Order` sorts before the host's own content — which is why the host sequence is `-1` rather than `0`.
+
+**Unmerge is removal by reference**, never by remembered index, so two sources contributing into one
+host tab can unmerge in any order and the host's own groups close back up correctly. The plan had
+flagged index restoration as a risk; it dissolved on contact.
+
+**DataContext, but not visual inheritance.** A merged tab's `DataContext` is *bound* to the source's
+(only when the app hasn't pinned one on the tab), so an MVVM child's bindings resolve against the
+CHILD's view model. Inherited *visual* properties still come from the host ribbon, so a merged tab
+looks native. One mechanism can't give both; this splits them the useful way.
+
+**Merged content is invisible to customization.** Merged tabs, contributed groups and their command
+controls all carry the read-only attached `Ribbon.IsMerged` (set via
+`RibbonCommandCatalog.CollectControls`, so "what counts as a command" stays defined in one place).
+`RibbonCustomizationSerializer` and `RibbonCustomizePage` skip them — otherwise a group contributed
+into a host tab would be captured as part of that tab's layout and re-created as a *user
+customization* belonging to a child that may not even be loaded. Merged tabs also don't count
+towards the customize page's "at least one tab must stay visible" rule.
+
+`Apply` does **unmerge-all → ApplyLayout → re-merge** in a `try/finally`, because `ApplyLayout`
+clears and rebuilds `Ribbon.Tabs` wholesale and would otherwise strand merged tabs at the end with
+stale records.
+
+**QAT proxies are PARKED, not orphaned.** `AddToQuickAccess` copies the command's `MergeSource` onto
+the new proxy. Unmerging disables those proxies (greyed, like Office treats an unavailable command)
+and keeps the marker; merging re-enables them; the serializer skips any QAT entry carrying one, so a
+proxy of a transient child's command never restores pointing at nothing. It's a flag sweep rather
+than a tree walk — an unmerged tab is in no tree to walk.
+
+### 3.34 MDI ⇄ ribbon integration: tab merge + caption merge — MDI M4 — 2026-07-27
+
+`docs/05-MDI-EMULATION-PLAN.md` §4 insists these are two features and must stay apart, and they do:
+
+- **Tab merge** is not MDI-specific. `MdiContainer` sets `Ribbon` and the active document's
+  `MdiDocument.MergeSource` is merged in, swapped as documents activate, removed when the last one
+  closes. Wiring only — the mechanism is §3.33's.
+- **Caption merge** is MDI-specific and goes through a deliberately thin contract on the ribbon:
+  `ShowMergedCaption(icon, title, canClose)` / `ClearMergedCaption()`, four read-only properties,
+  ONE `MergedCaptionCommand` taking a `RibbonMergedCaptionAction` parameter, and one
+  `MergedCaptionActionRequested` event. **The ribbon knows nothing about MDI** — it offers placement
+  and reports presses; the container decides what minimize/restore/close mean.
+
+`MdiChild.IsCaptionMerged` collapses the child's own caption (trigger declared AFTER the
+WindowState triggers so it outranks them) and a new bubbling `WindowStateChangedEvent` — raised
+after `ApplyWindowState`, so the container sees the settled state — tells the container when to
+merge. `MdiContainer.UpdateRibbonIntegration()` is written as **"make reality match state"** rather
+than as transitions, so activation, close, maximize, restore, retarget and unload all converge
+through one path.
+
+**The icon is an `ImageSource`, not an element.** The child's caption and the ribbon would both want
+to display it and a `UIElement` has one visual parent; `IconSourceOf` unwraps an `Image` to its
+`Source`. **`MergedCaptionTitle` is deliberately not drawn in the strip** — classic MDI puts it in
+the host window's title bar, and a second title would eat tab space; it's exposed so a host can bind
+its window title to it.
+
+Template: `PART_MergedCaptionIcon` (an `Image`) joins the ApplicationButton in a left-hand
+`StackPanel`, and `PART_MergedCaptionMinimize/Restore/Close` join the right-hand one after the
+minimize chevron, styled by `RibbonKit.MergedCaptionButton` — again reusing `TabStrip.*` tokens, so
+still no new tokens.
+
+**Regression this caused:** wrapping the ApplicationButton in that StackPanel with
+`VerticalAlignment="Center"` stole the Stretch it had been inheriting from its Grid cell, and Office
+2013 — whose File button is a solid accent block that must reach the row's bottom edge — grew a thin
+gap. Wrapper is `Stretch`; the icon centres itself. General rule: when wrapping an existing template
+element, give the wrapper the alignment the old parent provided and set explicit alignment on the new
+siblings. Connected-edge themes (2013's block, 2010's tab) expose seams that flat 2024 hides.
+
+**MDI child captions now track the accent.** `MdiChild.ActiveCaptionBackground` / `ActiveBorder`
+were baked per theme and absent from `ThemeManager.AccentOverrideKeys`, so a custom accent left child
+windows blue inside an otherwise recoloured ribbon. Both are now derived in `ApplyAccentOverrides`:
+flat accent for 2024/2019/2013, and for Office 2010 a new **`CaptionRamp(accent)`** — light → base →
+darker. Deliberately not `Gel()`: a gel ends *lighter* at the bottom (a glossy button's specular
+highlight), while a title bar is a lit surface receding downwards, and reusing it made child windows
+look like giant buttons. **Rule of thumb: any token whose default is the theme's accent must be in
+`AccentOverrideKeys` AND derived in `ApplyAccentOverrides`, or it silently stops tracking.**
+
+### 3.35 Quick access toolbar overflow — 2026-07-27
+
+The QAT needed a length limit and an overflow flyout in the two placements that SHARE a row —
+TabRow (competing with the tabs) and TitleBar (competing with the window title). BelowRibbon owns a
+full-width row, so it stretches and never overflows and was left untouched.
+
+New `Controls/RibbonQuickAccessToolBar.cs` (lookless `ItemsControl`) and
+`Layout/RibbonQuickAccessPanel.cs`. `Ribbon.QuickAccessMaxWidth` (default 240 DIPs, ~8 small
+buttons) caps the two shared placements.
+
+- **A horizontal `StackPanel` can never detect overflow** — it measures children with INFINITE width
+  in the stacking direction. The new panel honours the finite width it's given; children past that
+  point are arranged to a zero rect (NOT collapsed — `Visibility` belongs to the app).
+- **The template is a `DockPanel`, not a StackPanel.** The overflow button docks Right so DockPanel
+  measures it first and hands the `ItemsPresenter` the remaining width — that IS the overflow
+  signal. The panel must therefore not also reserve button width. Overflow only triggers when
+  something CONSTRAINS the toolbar (`MaxWidth`); an Auto grid column measures with infinity.
+- **`StaysOpen=True` + `PopupDismissHelper`**, the house rule for every RibbonKit flyout (§3.19).
+  With WPF's own light-dismiss, a second click on » closes the popup on mouse-DOWN and the button's
+  click reopens it. Always close through the BUTTON's `IsChecked`, never the popup's `IsOpen` — they
+  are bound two-way and driving the popup leaves the button stuck looking pressed.
+
+**⚠ The flyout must REUSE its proxies, never rebuild them.** A drop-down or split proxy *borrows*
+its source's menu items while open and returns them when its own flyout closes (§3.19). Rebuilding
+the entries per open discarded a proxy that still held borrowed items: they were never returned, the
+SOURCE menu stayed permanently empty, and later opens showed a bare rounded panel. The symptom is
+distinctive — it only hits borrowers (split/drop-down, never plain buttons) and only after a few
+opens, because only the FIRST borrow strands the items. `_entries` now caches one proxy per QAT item
+for the toolbar's lifetime; closing the flyout force-closes any entry whose menu is still open so
+the borrow goes home. **Any change that recreates those proxies reintroduces this bug.**
+
+Two more flyout rules: entries carry `Ribbon.QuickAccessOverflowItem` pointing at the real QAT item,
+so a right-click inside the flyout can offer "Remove from Quick Access Toolbar" for the *item*
+rather than the proxy; and the flyout is a SNAPSHOT taken at open, so `OnItemsChanged` closes it on
+any toolbar change (deferred to Background priority, so the collection change finishes dispatching
+before a borrow is returned).
+
+Alignment: the drop-down and split templates hardcoded `HorizontalAlignment="Center"` on their inner
+`ContentPresenter`, so a stretched entry centred its icon+label while plain buttons left-aligned.
+`PART_Toggle` and `PART_Primary` now forward `HorizontalContentAlignment` from the templated parent
+and the presenter binds to it; the default stays Control's own `Center`, so nothing in the ribbon
+changed and the flyout opts in with `Left`.
+
+### 3.36 Selection visuals: the tab-strip-row reflow rule
+
+The sliding underline (`PART_TabMarker`) and the 2010/2013 body-border notch (`PART_ConnectNotch`)
+are positioned from the **selected tab's transform**, computed on demand. Nothing recomputes them
+automatically, and there are two independent reasons a size event won't tell you:
+
+1. **`SizeChanged` on the tab control doesn't fire.** The strip lives in the star-width column of the
+   row, so a SIBLING growing or shrinking re-lays-out the strip while the `RibbonTabControl` keeps
+   its own size.
+2. **`SizeChanged` on the sibling doesn't fire either, when its `Visibility` toggles.** A `Collapsed`
+   element is skipped by layout entirely — never measured, keeps its stale `RenderSize`, raises
+   nothing going Collapsed or coming back.
+
+Both shipped broken during this arc (the merged-caption icon for #1; the QAT moving in and out of
+the tab row for #2 — where adding and removing *items* updated the notch, because that is a real
+size change, while moving the whole toolbar did not).
+
+**The rule:** anything that changes what is laid out in the tab-strip row must reach
+`Ribbon.RequestSelectionVisualsRefresh()`, and a Visibility toggle or an async re-parent needs an
+EXPLICIT call. Hazardous siblings: the merged-caption icon and window buttons, the quick access strip
+(placement, item count, overflow button), the File button hiding for a modal tab, the modal close
+button, tabs merging in or out. Current callers: `OnMergeChanged`, `OnModalStateChanged`,
+`ShowMergedCaption`, `ClearMergedCaption`, `OnTabRowQatSizeChanged`, `ApplyQuickAccessPlacement`,
+and `OnThemeConfigurationChanged`.
+
+`RefreshSelectionVisuals()` is InvalidateArrange → UpdateLayout → `RibbonTabControl.RefreshSelectionVisuals()`
+— layout must be forced FIRST or the transform read is stale.
+`RequestSelectionVisualsRefresh()` defers it to `DispatcherPriority.Loaded` behind a coalescing flag,
+because `SizeChanged` fires *during* layout and quick-access placement re-parents asynchronously.
+`Loaded` sits below `Render`, which is what makes it "after layout".
+
 ## 4. Workflow / Session Conventions
 
 - Cloud workspace: `/home/user/ribbonkit/`. The user's machine:
@@ -1675,6 +1891,11 @@ session nearly misdiagnosed a full working-tree revert that way.
   the ribbon card's inner edge: 7px card margin + 1px border).
 
 ## 5. Current State & Next Steps
+
+> **Status as of 2026-07-27: everything in §3 is implemented AND user-verified on Windows.**
+> Roadmap Phases 1–5 and 7 are complete; Phase 6 still owes the Office 2007 theme, dark mode, RTL +
+> localization and the visual-regression suite; Phase 8 (API freeze, docs site, perf, launch) is
+> untouched. Nothing is awaiting verification.
 
 **Working and confirmed by user: everything through §3.21** — including the QAT
 customization + merged options dialog with all its refinements (custom close-only title
@@ -1724,14 +1945,39 @@ panel's `Children` (any group/panel), and item entries↔`Items` of a container 
 `IsAncestorOrSelf` blocks dropping a node into itself or its own subtree. The drag payload is the
 `NodeInfo` itself (in-process WPF drag-drop keeps the managed reference, so an internal type is fine).
 
+**Phase 7 is COMPLETE and user-verified on Windows (2026-07-27).** All four steps landed in one
+arc: modal tabs (§3.32), tab merging (§3.33), group contributions + the declarative activation path
++ QAT proxy parking (§3.33), and the MDI tab/caption merge that also closes **MDI milestone M4**
+(§3.34). Design doc: `docs/06-MERGE-AND-MODAL-PLAN.md`. Every remaining v1.0 item is now a repeat of
+a pattern already solved here.
+
+**Quick access toolbar overflow — DONE and verified (§3.35).** The tab-row and title-bar placements
+cap at `Ribbon.QuickAccessMaxWidth` and move the rest into a » flyout; below-ribbon is unconstrained
+and unchanged.
+
+**Cross-cutting rule worth reading before touching the tab strip: §3.36.** The sliding underline and
+the 2010/2013 connect notch do not update themselves, and neither `SizeChanged` on the tab control
+nor `SizeChanged` on a sibling whose `Visibility` toggles will tell you. Both variants shipped broken
+during this arc.
+
 Backlog (rough priority):
 
 1. Design editor: optional clear-to-default buttons for scalar properties. (Drag-drop tree
    reordering + cross-tab/group moves are now DONE — see §5 "Drag-drop reordering".)
-3. Mica hardening (future): dark-mode-aware translucency. (Maximize-with-glass and the
-   glass-frame border fix are verified — see §3.12.)
-4. Office2007 theme (roadmap Phase 6). **Office2010 is DONE — see §3.27.** 2007 is the last
-   remaining classic theme (round Office orb button + heavier glass gradients).
-5. Dark mode (2019 white-tab note in §3.6 anticipates it). **Still outstanding** — the last
-   item from this theming arc after 2010 and 2007.
-6. GitHub publish: repo URL placeholder in csproj (`YOUR-GITHUB-USERNAME`).
+2. **Office 2007 theme** (roadmap Phase 6). 2010 is DONE (§3.27); 2007 is the last remaining classic
+   theme (round Office orb button + heavier glass gradients).
+3. **Dark mode** (the 2019 white-tab note in §3.6 anticipates it) — the last item of the theming arc,
+   and the one that also covers Mica's dark-aware translucency.
+4. RTL + localization resources, then the visual-regression snapshot suite (theme × DPI) — the rest
+   of roadmap Phase 6.
+5. **MDI M1–M3**: cascade/tile/arrange commands + Ctrl+Tab (M1), the MVVM `ItemsSource` demo and a
+   per-theme pass (M2), tabbed-documents mode + `RibbonState` layout persistence (M3). M0 and M4 are
+   done, so the feature currently has a hole in its middle.
+6. Roadmap Phase 8 release engineering: API review and freeze (`PublicAPI.txt` — Phase 7 added a lot
+   of public surface), docs site, NuGet polish, performance pass.
+7. GitHub publish: repo URL placeholder in csproj (`YOUR-GITHUB-USERNAME`).
+
+**Unit tests remain unwritten.** `docs/06-MERGE-AND-MODAL-PLAN.md` §7 lists the invariants worth
+asserting — merge ordering across permutations, merge/unmerge round-trips, group restore with two
+sources in one tab, capture-while-modal, modal enter/exit selection. All of Phase 7 was verified by
+clicking, and those invariants are the kind that break silently.

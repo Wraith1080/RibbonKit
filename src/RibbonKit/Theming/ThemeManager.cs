@@ -54,6 +54,8 @@ public static class ThemeManager
     private const string BackstageSelectedGlassKey = "RibbonKit.Brushes.Backstage.ItemSelectedGlass";
     private const string DialogPrimaryBackgroundKey = "RibbonKit.Brushes.Dialog.PrimaryBackground";
     private const string DialogPrimaryBorderKey = "RibbonKit.Brushes.Dialog.PrimaryBorder";
+    private const string MdiActiveCaptionKey = "RibbonKit.Brushes.MdiChild.ActiveCaptionBackground";
+    private const string MdiActiveBorderKey = "RibbonKit.Brushes.MdiChild.ActiveBorder";
     private const string TitleBarBackgroundKey = "RibbonKit.Brushes.TitleBar.Background";
     private const string TitleBarForegroundKey = "RibbonKit.Brushes.TitleBar.Foreground";
     private const string CaptionHoverKey = "RibbonKit.Brushes.CaptionButton.HoverBackground";
@@ -74,7 +76,7 @@ public static class ThemeManager
         AccentKey, CheckedKey, CheckedHoverKey, BackstageHoverKey, BackstageSelectedKey,
         SelectedUnderlineKey, SelectedForegroundKey, AppButtonBackgroundKey, AppButtonHoverKey,
         AppButtonPressedKey, AppButtonBorderKey, BackstageSelectedGlassKey, DialogPrimaryBackgroundKey,
-        DialogPrimaryBorderKey,
+        DialogPrimaryBorderKey, MdiActiveCaptionKey, MdiActiveBorderKey,
     };
 
     // Last-resort fallback when no theme Accent brush is resolvable. Office blue #2B579A —
@@ -231,6 +233,14 @@ public static class ThemeManager
         resources[DialogPrimaryBackgroundKey] = Frozen(accent);
         resources[DialogPrimaryBorderKey] = Frozen(accent);
 
+        // An MDI child's ACTIVE caption and border are the accent, like a real window's title bar —
+        // without this they stay at the theme's baked-in blue and an app with a custom accent gets
+        // blue child windows inside an otherwise recolored ribbon. Office 2010 overrides both below
+        // with its gradient treatment. (The caption FOREGROUND stays the theme's white: the accent
+        // system assumes a reasonably dark accent throughout, as the dialog primary button does.)
+        resources[MdiActiveCaptionKey] = Frozen(accent);
+        resources[MdiActiveBorderKey] = Frozen(accent);
+
         // Toggled/checked highlight follows the accent — EXCEPT in Office 2010, where the
         // hover/press/toggle highlight is always the amber "hot" color regardless of the color
         // scheme (authentic 2010: the accent recolors the chrome, never the button highlight).
@@ -267,6 +277,10 @@ public static class ThemeManager
                 // The OK button borrows the same glass gel + border in 2010.
                 resources[DialogPrimaryBackgroundKey] = Gel(accent);
                 resources[DialogPrimaryBorderKey] = Frozen(Mix(accent, Colors.Black, 0.30));
+                // MDI child captions in 2010 are a title-bar RAMP, not a button gel — see
+                // CaptionRamp for why the two gradients differ.
+                resources[MdiActiveCaptionKey] = CaptionRamp(accent);
+                resources[MdiActiveBorderKey] = Frozen(Mix(accent, Colors.Black, 0.30));
                 break;
         }
     }
@@ -288,6 +302,29 @@ public static class ThemeManager
         brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.White, 0.38), 0.0));
         brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.Black, 0.10), 0.5));
         brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.White, 0.20), 1.0));
+        brush.Freeze();
+        return brush;
+    }
+
+    /// <summary>
+    /// Builds the Office 2010 title-bar ramp for <paramref name="baseColor"/>: light at the top,
+    /// base in the middle, DARKER at the bottom.
+    /// </summary>
+    /// <remarks>
+    /// Deliberately not <see cref="Gel"/>: a gel ends lighter at the bottom, which reads as the
+    /// specular highlight of a glossy button. A caption is a lit surface receding downwards, so
+    /// reusing the button gradient here made child windows look like giant buttons.
+    /// </remarks>
+    private static LinearGradientBrush CaptionRamp(Color baseColor)
+    {
+        var brush = new LinearGradientBrush
+        {
+            StartPoint = new Point(0, 0),
+            EndPoint = new Point(0, 1),
+        };
+        brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.White, 0.30), 0.0));
+        brush.GradientStops.Add(new GradientStop(baseColor, 0.5));
+        brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.Black, 0.18), 1.0));
         brush.Freeze();
         return brush;
     }

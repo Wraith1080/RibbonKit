@@ -6,14 +6,11 @@ An open-source, Office Fluent UI–style **Ribbon control library for WPF** on m
 [![Target](https://img.shields.io/badge/.NET-8.0%20%7C%209.0-512BD4)](https://dotnet.microsoft.com/)
 [![NuGet](https://img.shields.io/badge/NuGet-0.1.0--alpha.1-orange)](https://www.nuget.org/)
 
-> **Status: alpha (`0.1.0-alpha.1`).** The control set is feature-complete for most real applications — ribbon, backstage, galleries, QAT, contextual tabs, KeyTips, a runtime customization dialog with persistence, four Office themes, and a full design-time experience in Visual Studio. The public API is **not frozen yet**; expect renames before `1.0`. See the [roadmap](docs/03-ROADMAP.md).
+> **Status: alpha (`0.1.0-alpha.1`).** The control set is feature-complete for most real applications — ribbon, backstage, galleries, QAT with overflow, contextual tabs, KeyTips, tab merging, modal tabs, a runtime customization dialog with persistence, four Office themes, and a full design-time experience in Visual Studio. Roadmap phases 1–5 and 7 are done. The public API is **not frozen yet**; expect renames before `1.0`. See the [roadmap](docs/03-ROADMAP.md).
 
-<!-- Screenshots: drop PNGs in docs/images/ and swap these in.
-![Office 2024 theme](docs/images/theme-2024.png)
-![Office 2010 theme](docs/images/theme-2010.png)
-![Backstage with Mica](docs/images/backstage-mica.png)
-![Ribbon Editor (design-time)](docs/images/ribbon-editor.png)
--->
+![RibbonKit's showcase app in the default Office 2024 theme](docs/images/theme-2024.png)
+
+*The showcase app in the default Office 2024 theme — adaptive group sizing, an in-ribbon Styles gallery with live preview, a split button, and the quick access toolbar in the title bar with its overflow flyout.*
 
 ## Why RibbonKit
 
@@ -59,13 +56,17 @@ Legend: ✅ done · 🚧 in progress · 📋 planned
 | Application button + application menu | ✅ |
 | Backstage view (Modern 2024, Classic 2013, Classic 2010 designs) | ✅ |
 | Backstage footer items, button items, recent-items pattern | ✅ |
-| Quick Access Toolbar — 3 placements, overflow, right-click add/remove | ✅ |
+| Quick Access Toolbar — 3 placements, overflow flyout, right-click add/remove | ✅ |
 | Contextual tabs with colored tab groups | ✅ |
 | "Customize the Ribbon" + QAT customization dialog (Word-Options style) | ✅ |
 | Customization persistence — JSON serialize / restore / reset | ✅ |
 | Import / export customization to a file | ✅ |
-| Tab merging (`RibbonMergeSource`) | 🚧 next |
-| Modal tabs (Print-Preview style) | 🚧 next |
+| Tab merging — `RibbonMergeSource`, whole tabs + groups into host tabs | ✅ |
+| Modal tabs (Print-Preview style) | ✅ |
+
+![The backstage view rendered over a Windows 11 Mica backdrop](docs/images/backstage-mica.png)
+
+*The backstage over a Windows 11 Mica backdrop. The material shows through because the content behind is HIDDEN rather than blurred — the DWM only composites Mica through pixels the window never painted.*
 
 ### Input & accessibility
 
@@ -93,6 +94,10 @@ Legend: ✅ done · 🚧 in progress · 📋 planned
 | Animation system — tab slide, hover cross-fade, sliding underline, KeyTip pop, scroll glide, with a reduced-motion switch | ✅ |
 | Dark mode | 📋 |
 
+![The same window in the Office 2010 theme](docs/images/theme-2010.png)
+
+*The same window in the Office 2010 theme — gradient chrome, the connected selected tab, and 2010's signature amber highlight on toggled buttons. Generations swap at runtime and no template is duplicated: themes supply token values, not templates.*
+
 ### Developer experience
 
 | Feature | Status |
@@ -106,9 +111,17 @@ Legend: ✅ done · 🚧 in progress · 📋 planned
 | Visual regression snapshot suite per theme × DPI | 📋 |
 | Documentation site | 📋 |
 
+![The design-time Ribbon Editor dialog](docs/images/ribbon-editor.png)
+
+*The design-time Ribbon Editor: the full structure tree with drag-drop reordering, property editing, and a tab preview rendered on the XAML design surface without touching your XAML or the running app.*
+
 ### Preview: MDI emulation
 
-WPF has no native MDI. RibbonKit ships an in-window emulation — themed floating child windows with drag, resize, minimize, maximize, close, cascade placement and state animations, driven by an MVVM-friendly document model (`MdiDocument` / `MdiContainer` / `MdiChild`). Milestone M0 is working across all four themes; window-management commands, a switchable tabbed-documents mode, and caption-merge-into-the-ribbon are planned. Design: [`docs/05-MDI-EMULATION-PLAN.md`](docs/05-MDI-EMULATION-PLAN.md).
+WPF has no native MDI. RibbonKit ships an in-window emulation — themed floating child windows with drag, resize, minimize, maximize, close, cascade placement and state animations, driven by an MVVM-friendly document model (`MdiDocument` / `MdiContainer` / `MdiChild`), working across all four themes.
+
+Point `MdiContainer.Ribbon` at a ribbon and it integrates the classic-MDI way: the active document's tabs merge into the host ribbon and swap as documents activate, and a **maximized** child moves its icon and window buttons into the ribbon row while its own title bar disappears. Set `IsCaptionMergeEnabled="False"` for tab merging without the caption move, or leave `Ribbon` unset and maximize simply fills the client area.
+
+Still planned: cascade/tile/arrange commands with `Ctrl+Tab` cycling, a switchable tabbed-documents mode, and layout persistence. Design: [`docs/05-MDI-EMULATION-PLAN.md`](docs/05-MDI-EMULATION-PLAN.md).
 
 ## Getting started
 
@@ -187,11 +200,11 @@ Design-time tooling setup is documented in [`src/RibbonKit.Design/SETUP-DESIGNTO
 | [Roadmap](docs/03-ROADMAP.md) | Phased milestones to v1.0 |
 | [Design notes](04-DESIGN-NOTES.md) | Living record of every implemented feature, decision and pitfall |
 | [MDI emulation plan](docs/05-MDI-EMULATION-PLAN.md) | Design for the in-window MDI control |
-| [Merge & modal plan](docs/06-MERGE-AND-MODAL-PLAN.md) | Design for tab merging and modal tabs (Phase 7, in flight) |
+| [Merge & modal plan](docs/06-MERGE-AND-MODAL-PLAN.md) | Design record for tab merging and modal tabs (Phase 7, complete) |
 
 ## Roadmap to v1.0
 
-Remaining before the API freeze: tab merging and modal tabs (Phase 7), the Office 2007 theme and dark mode, RTL and localization, the visual regression suite, then release engineering — API review, docs site, SourceLink, and a performance pass.
+Remaining before the API freeze: the Office 2007 theme, dark mode, RTL and localization, and the visual regression suite (all Phase 6), plus unit tests for the Phase 7 invariants. Then release engineering — API review and freeze, docs site, SourceLink, and a performance pass.
 
 ## Contributing
 

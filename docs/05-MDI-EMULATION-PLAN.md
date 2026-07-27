@@ -10,10 +10,13 @@ did. Consumers inject arbitrary content (a `UserControl`, or a view-model +
 WPF has no native MDI (it left with WinForms' `Form.IsMdiContainer`), so this is
 an emulation over an in-visual-tree host, not a wrapper over OS child windows.
 
-> **Status:** design only. This is a *post-v1 power feature* — it depends on the
-> tab-merging API (roadmap Phase 7), `RibbonState` persistence (Phase 5), the
-> token theme layer, and `RibbonWindow`'s `WindowChrome`/DPI work already in
-> the plan. Nothing here should land before those subsystems exist.
+> **Status (2026-07-27): M0 and M4 are BUILT and user-verified; M1–M3 are not started.**
+> The feature therefore has a hole in its middle — floating child windows work and the
+> maximized child merges its tabs and caption into the ribbon, but there are still no
+> cascade/tile/arrange commands, no `Ctrl+Tab` cycling, no tabbed-documents mode and no
+> layout persistence. M4 landed early because Phase 7's tab-merging API arrived first and
+> caption merge was the natural place to prove it; see §7 for what each milestone covers and
+> [`../04-DESIGN-NOTES.md`](../04-DESIGN-NOTES.md) §3.34 for the implementation.
 
 ## 0. Scope decisions (locked)
 
@@ -230,22 +233,28 @@ the versioning story already designed for QAT/customization state.
 
 Each phase ends with a showcase page and tests green, matching the house rhythm.
 
-- **M0 — Model + floating host.** `MdiDocument`, `MdiContainer`, `MdiCanvasPanel`,
+- **M0 — Model + floating host.** ✅ **DONE.** `MdiDocument`, `MdiContainer`, `MdiCanvasPanel`,
   `MdiChild` chrome with drag/resize/activate/close and normal-state placement.
-  One theme (2024). *Exit:* open/move/resize/close several injected `UserControl`s.
-- **M1 — Window management.** Minimize (to bottom strip), maximize-fills-client,
-  cascade/tile/arrange commands, `Ctrl+Tab` cycling, min/max sizes. *Exit:* the
-  "Window" ribbon group drives everything; keyboard cycles documents.
-- **M2 — Theming + MVVM.** `MdiChild.*` token family across all shipped themes;
-  `ItemsSource` + `DataTemplate` injection path proven alongside the imperative
-  one. *Exit:* theme switch re-skins children live; MVVM demo in showcase.
-- **M3 — Tabbed mode + persistence.** `DocumentMode` switch with `MdiTabStrip`;
-  `MdiLayoutState` through `RibbonState`. *Exit:* flip Mdi⇄Tabbed with no data
-  loss; layout survives app restart.
-- **M4 — Caption merge (needs Phase 7).** Wire `Ribbon.Merge` for tabs and the
-  caption-merge site for the maximized child's icon + buttons; modal-tab
-  interaction test. *Exit:* maximizing a child reproduces authentic Office MDI —
-  child caption in the ribbon row, its tabs merged.
+  Shipped with state animations and the `MdiChild.*` token family across **all four**
+  themes, so most of M2's theming arrived early too.
+- **M1 — Window management.** *Not started.* Minimize (to bottom strip) and
+  maximize-fills-client are done; still owed are cascade/tile/arrange commands,
+  `Ctrl+Tab` cycling and min/max sizes. *Exit:* the "Window" ribbon group drives
+  everything; keyboard cycles documents.
+- **M2 — Theming + MVVM.** *Partly done.* Tokens exist for all shipped themes and
+  captions now track the accent; still owed is the `ItemsSource` + `DataTemplate`
+  injection path proven in the showcase alongside the imperative one.
+- **M3 — Tabbed mode + persistence.** *Not started.* `DocumentMode` switch with
+  `MdiTabStrip`; `MdiLayoutState` through `RibbonState`. *Exit:* flip Mdi⇄Tabbed with
+  no data loss; layout survives app restart.
+- **M4 — Caption merge.** ✅ **DONE (2026-07-27), out of order** — Phase 7's tab-merging
+  API landed first and this was the natural place to prove it. `MdiContainer.Ribbon`
+  drives both halves: the active document's `MdiDocument.MergeSource` merges its tabs,
+  and a maximized active child's icon and window buttons move into the ribbon row via
+  `Ribbon.ShowMergedCaption` / `ClearMergedCaption` while `MdiChild.IsCaptionMerged`
+  hides its own title bar. `IsCaptionMergeEnabled="False"` keeps the child's caption and
+  gives tab merge only. Implementation and pitfalls:
+  [`../04-DESIGN-NOTES.md`](../04-DESIGN-NOTES.md) §3.34.
 
 ## 8. Open questions to settle before M0
 

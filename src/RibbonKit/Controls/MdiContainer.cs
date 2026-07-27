@@ -40,8 +40,30 @@ public class MdiContainer : ItemsControl
     public static readonly DependencyProperty ActiveDocumentProperty =
         ActiveDocumentPropertyKey.DependencyProperty;
 
+    /// <summary>Identifies the <see cref="Ribbon"/> dependency property.</summary>
+    public static readonly DependencyProperty RibbonProperty =
+        DependencyProperty.Register(
+            nameof(Ribbon),
+            typeof(Ribbon),
+            typeof(MdiContainer),
+            new FrameworkPropertyMetadata(null, OnRibbonIntegrationChanged));
+
+    /// <summary>Identifies the <see cref="IsCaptionMergeEnabled"/> dependency property.</summary>
+    public static readonly DependencyProperty IsCaptionMergeEnabledProperty =
+        DependencyProperty.Register(
+            nameof(IsCaptionMergeEnabled),
+            typeof(bool),
+            typeof(MdiContainer),
+            new FrameworkPropertyMetadata(true, OnRibbonIntegrationChanged));
+
     private int _zCounter;
     private int _cascadeIndex;
+
+    // Exactly what THIS container put into the ribbon, so deactivation takes back its own
+    // contribution rather than "whatever happens to be merged" — which may belong to someone else.
+    private RibbonMergeSource? _mergedSource;
+    private MdiChild? _captionMergedChild;
+    private Ribbon? _hookedRibbon;
 
     static MdiContainer()
     {
@@ -55,6 +77,39 @@ public class MdiContainer : ItemsControl
     {
         AddHandler(MdiChild.ActivationRequestedEvent, new RoutedEventHandler(OnChildActivationRequested));
         AddHandler(MdiChild.CloseRequestedEvent, new RoutedEventHandler(OnChildCloseRequested));
+        AddHandler(MdiChild.WindowStateChangedEvent, new RoutedEventHandler(OnChildWindowStateChanged));
+
+        // Leaving a merged caption or merged tabs behind on a ribbon that outlives this container
+        // would be a visible ghost, so the integration is torn down with the container.
+        Unloaded += (_, _) => DetachRibbonIntegration();
+        Loaded += (_, _) => UpdateRibbonIntegration();
+    }
+
+    /// <summary>
+    /// The host ribbon this container integrates with. When set, the active document's
+    /// <see cref="MdiDocument.MergeSource"/> is merged into it (and unmerged as documents switch),
+    /// and — unless <see cref="IsCaptionMergeEnabled"/> is off — a maximized active child's icon
+    /// and window buttons move into the ribbon row, classic-MDI style.
+    /// <para>
+    /// Optional: leave it <see langword="null"/> and the container behaves exactly as before,
+    /// with maximize simply filling the client area.
+    /// </para>
+    /// </summary>
+    public Ribbon? Ribbon
+    {
+        get => (Ribbon?)GetValue(RibbonProperty);
+        set => SetValue(RibbonProperty, value);
+    }
+
+    /// <summary>
+    /// Whether a maximized active child's caption merges into <see cref="Ribbon"/> (default
+    /// <see langword="true"/>). Turn it off to keep the child's own title bar while still getting
+    /// tab merging. Has no effect when <see cref="Ribbon"/> is <see langword="null"/>.
+    /// </summary>
+    public bool IsCaptionMergeEnabled
+    {
+        get => (bool)GetValue(IsCaptionMergeEnabledProperty);
+        set => SetValue(IsCaptionMergeEnabledProperty, value);
     }
 
     /// <summary>
@@ -245,6 +300,173 @@ public class MdiContainer : ItemsControl
     private static void Bind(FrameworkElement target, DependencyProperty property, string path, BindingMode mode) =>
         target.SetBinding(property, new Binding(path) { Mode = mode });
 
+    // ---- Ribbon integration ---------------------------------------------------------
+    // Two DISTINCT features, deliberately kept apart (docs/05-MDI-EMULATION-PLAN.md §4):
+    //   1. Tab merge   — the active document contributes ribbon content. Not MDI-specific: this
+    //                    is Phase 7's RibbonMergeSource, and this container only wires it.
+    //   2. Caption merge — a MAXIMIZED active child's icon and window buttons move into the
+    //                    ribbon row and its own title bar disappears. MDI-specific, driven
+    //                    through the ribbon's small ShowMergedCaption/ClearMergedCaption contract.
+
+    private static void OnRibbonIntegrationChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        var container = (MdiContainer)d;
+
+        // Retargeting must leave the OLD ribbon clean before touching the new one.
+        container.DetachRibbonIntegration();
+        container.UpdateRibbonIntegration();
+    }
+
+    private void OnChildWindowStateChanged(object sender, RoutedEventArgs e) => UpdateRibbonIntegration();
+
+    /// <summary>
+    /// Reconciles the ribbon with the current active document: merges the right source, and shows
+    /// or clears the merged caption. Written as "make reality match state" rather than as a set of
+    /// transitions, so any path into it (activation, close, maximize, restore, retarget) converges.
+    /// </summary>
+    private void UpdateRibbonIntegration()
+    {
+        if (Ribbon is not { } ribbon)
+        {
+            return;
+        }
+
+        if (!ReferenceEquals(_hookedRibbon, ribbon))
+        {
+            if (_hookedRibbon is not null)
+            {
+                _hookedRibbon.MergedCaptionActionRequested -= OnMergedCaptionAction;
+            }
+
+            ribbon.MergedCaptionActionRequested += OnMergedCaptionAction;
+            _hookedRibbon = ribbon;
+        }
+
+        object? active = ActiveDocument;
+        MdiChild? activeChild = active is null
+            ? null
+            : ItemContainerGenerator.ContainerFromItem(active) as MdiChild ?? active as MdiChild;
+
+        // --- Tab merge -------------------------------------------------------------
+        RibbonMergeSource? desired = ResolveMergeSource(active, activeChild);
+        if (!ReferenceEquals(desired, _mergedSource))
+        {
+            if (_mergedSource is not null)
+            {
+                ribbon.Unmerge(_mergedSource);
+            }
+
+            _mergedSource = desired;
+            if (desired is not null)
+            {
+                ribbon.Merge(desired);
+            }
+        }
+
+        // --- Caption merge ---------------------------------------------------------
+        MdiChild? captionChild = IsCaptionMergeEnabled
+            && activeChild is { WindowState: WindowState.Maximized }
+                ? activeChild
+                : null;
+
+        if (ReferenceEquals(captionChild, _captionMergedChild))
+        {
+            return;
+        }
+
+        if (_captionMergedChild is not null)
+        {
+            _captionMergedChild.SetCurrentValue(MdiChild.IsCaptionMergedProperty, false);
+        }
+
+        _captionMergedChild = captionChild;
+
+        if (captionChild is null)
+        {
+            ribbon.ClearMergedCaption();
+        }
+        else
+        {
+            captionChild.SetCurrentValue(MdiChild.IsCaptionMergedProperty, true);
+            ribbon.ShowMergedCaption(IconSourceOf(captionChild.Icon), captionChild.Title, captionChild.CanClose);
+        }
+    }
+
+    /// <summary>
+    /// Reduces a child's icon to an <c>ImageSource</c> the ribbon can render. Handing the ribbon
+    /// the child's actual icon ELEMENT would try to give one UIElement two visual parents, so an
+    /// <see cref="System.Windows.Controls.Image"/> is unwrapped to its source instead.
+    /// </summary>
+    private static System.Windows.Media.ImageSource? IconSourceOf(object? icon) => icon switch
+    {
+        System.Windows.Media.ImageSource source => source,
+        Image image => image.Source,
+        _ => null,
+    };
+
+    /// <summary>
+    /// Finds the merge source for the active item, trying the document model first, then the item
+    /// itself, then its container — so an <see cref="MdiDocument"/>, a view-model carrying
+    /// <see cref="RibbonMergeSource.SourceProperty"/>, and a raw child all work.
+    /// </summary>
+    private static RibbonMergeSource? ResolveMergeSource(object? item, MdiChild? child) =>
+        (item as MdiDocument)?.MergeSource
+        ?? (item is DependencyObject d ? RibbonMergeSource.GetSource(d) : null)
+        ?? (child is not null ? RibbonMergeSource.GetSource(child) : null);
+
+    private void DetachRibbonIntegration()
+    {
+        if (_hookedRibbon is not { } ribbon)
+        {
+            return;
+        }
+
+        ribbon.MergedCaptionActionRequested -= OnMergedCaptionAction;
+
+        if (_mergedSource is not null)
+        {
+            ribbon.Unmerge(_mergedSource);
+            _mergedSource = null;
+        }
+
+        if (_captionMergedChild is not null)
+        {
+            _captionMergedChild.SetCurrentValue(MdiChild.IsCaptionMergedProperty, false);
+            _captionMergedChild = null;
+            ribbon.ClearMergedCaption();
+        }
+
+        _hookedRibbon = null;
+    }
+
+    // The ribbon reports which caption button was pressed; deciding what that means is this
+    // container's job, which is what keeps the ribbon free of any MDI knowledge.
+    private void OnMergedCaptionAction(object? sender, RibbonMergedCaptionEventArgs e)
+    {
+        if (_captionMergedChild is not { } child)
+        {
+            return;
+        }
+
+        switch (e.Action)
+        {
+            case RibbonMergedCaptionAction.Minimize:
+                child.SetCurrentValue(MdiChild.WindowStateProperty, WindowState.Minimized);
+                break;
+            case RibbonMergedCaptionAction.Restore:
+                child.SetCurrentValue(MdiChild.WindowStateProperty, WindowState.Normal);
+                break;
+            case RibbonMergedCaptionAction.Close:
+                if (child.CanClose)
+                {
+                    object item = ItemContainerGenerator.ItemFromContainer(child);
+                    CloseDocument(item == DependencyProperty.UnsetValue ? child : item);
+                }
+
+                break;
+        }
+    }
+
     private void OnChildActivationRequested(object sender, RoutedEventArgs e)
     {
         if (e.OriginalSource is MdiChild child)
@@ -285,6 +507,7 @@ public class MdiContainer : ItemsControl
         child.SetCurrentValue(MdiChild.IsActiveProperty, true);
         SetValue(ActiveDocumentPropertyKey, newActive);
         ActiveDocumentChanged?.Invoke(this, EventArgs.Empty);
+        UpdateRibbonIntegration();
     }
 
     private void ActivateTopmost()
@@ -307,6 +530,9 @@ public class MdiContainer : ItemsControl
         {
             SetValue(ActiveDocumentPropertyKey, null);
             ActiveDocumentChanged?.Invoke(this, EventArgs.Empty);
+
+            // Last document gone: the ribbon must lose the merged tabs and caption with it.
+            UpdateRibbonIntegration();
         }
     }
 }

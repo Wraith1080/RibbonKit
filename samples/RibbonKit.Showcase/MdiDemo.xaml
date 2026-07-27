@@ -13,8 +13,8 @@
                  UseLayoutRounding="True"
                  Background="White">
     <DockPanel>
-        <rk:Ribbon DockPanel.Dock="Top">
-            <rk:RibbonTab Header="Window">
+        <rk:Ribbon x:Name="DemoRibbon" DockPanel.Dock="Top">
+            <rk:RibbonTab Header="Window" rk:Ribbon.CommandId="tab.window">
                 <rk:RibbonGroup Header="Documents">
                     <rk:RibbonButton Header="New Document"
                                      Size="Large"
@@ -51,7 +51,17 @@
             </rk:RibbonTab>
         </rk:Ribbon>
 
+        <!-- Ribbon integration (MDI M4). Pointing the container at the ribbon turns on BOTH
+             halves of classic MDI's ribbon behaviour:
+               • tab merge — the active document's MergeSource joins the ribbon and leaves when
+                 another document takes over (this is Phase 7's feature, wired here, not
+                 reimplemented);
+               • caption merge — a MAXIMIZED active child's icon and window buttons move into the
+                 ribbon row and its own title bar disappears.
+             Set IsCaptionMergeEnabled="False" to keep the child's title bar and get tab merge
+             only; leave Ribbon unset and the container behaves as it did before. -->
         <rk:MdiContainer x:Name="Mdi"
+                         Ribbon="{Binding ElementName=DemoRibbon}"
                          DocumentClosing="OnDocumentClosing" />
     </DockPanel>
 </rk:RibbonWindow>

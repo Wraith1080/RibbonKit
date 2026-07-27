@@ -2,6 +2,8 @@
 
 Each phase ends with the showcase app demonstrating everything built so far, tests green, and a tagged pre-release. Phases are sequential but small overlaps are fine.
 
+> **Progress (2026-07-27):** Phases 0–5 and **7 are complete**. Phase 6 is partly done — the 2024, 2019, 2013 and 2010 themes ship and per-monitor DPI is verified at 100/125/150/175/200%; still owed are the Office 2007 theme, dark mode, RTL, localization and the visual-regression suite. Phase 8 has not started. Post-v1 MDI emulation is unusually shaped: M0 and M4 are done, M1–M3 are not.
+
 ## Phase 0 — Foundation (before any control code)
 
 Library name: **RibbonKit** (chosen 2026-07-02; NuGet ID verified free — reserve it and the GitHub repo early; note an unrelated Swift/iOS library shares the name). Root namespace `RibbonKit`, controls named `Ribbon`, `RibbonTab`, etc. within it. Add MIT license, README, CONTRIBUTING, issue templates. Create the solution: library project (`net8.0-windows;net9.0-windows`, `UseWPF`), showcase app, unit-test project. Set up GitHub Actions CI (build + test + pack on every PR) and `Directory.Build.props` with analyzers, nullable enabled, and XML-doc enforcement. **Exit criteria:** empty ribbon control renders "Hello Ribbon" in the showcase app via CI-built package.
@@ -30,9 +32,9 @@ RibbonWindow with title-bar integration, Quick Access Toolbar (placement, overfl
 
 Office 2019 (+dark/accents), 2013, 2010, 2007 themes on the token layer; visual regression snapshot suite per theme; DPI matrix testing (100/125/150/200%, mixed monitors, per-monitor v2); RTL verification; localization resources. **Exit criteria:** snapshot suite green across 5 themes × 4 DPI levels.
 
-## Phase 7 — Power features
+## Phase 7 — Power features ✅ COMPLETE (2026-07-27)
 
-KeyTips subsystem (full Alt-chain), tab merging API, modal tabs, customize dialog (QAT reordering v1). **KeyTips and the customize dialog are DONE** — they shipped early, alongside Phases 2–5. Tab merging and modal tabs are the remaining work and the next item in flight; full design in [`docs/06-MERGE-AND-MODAL-PLAN.md`](06-MERGE-AND-MODAL-PLAN.md). **Exit criteria:** Alt-H-F-S style chains work end-to-end; merge/modal demos in showcase.
+KeyTips subsystem (full Alt-chain), tab merging API, modal tabs, customize dialog (QAT reordering v1). KeyTips and the customize dialog shipped early, alongside Phases 2–5; tab merging and modal tabs landed in one arc — modal tabs, whole-tab merging, group contributions into host tabs with a declarative activation path, and the MDI tab/caption merge (which also closed MDI milestone M4). Design in [`06-MERGE-AND-MODAL-PLAN.md`](06-MERGE-AND-MODAL-PLAN.md); implementation notes and pitfalls in [`04-DESIGN-NOTES.md`](../04-DESIGN-NOTES.md) §3.32–§3.34. **Exit criteria met:** Alt-H-F-S chains work end-to-end; merge and modal demos are in the showcase. *Still owed from this phase: the unit tests listed in the plan's §7 — everything was verified interactively.*
 
 ## Phase 8 — v1.0 release engineering
 

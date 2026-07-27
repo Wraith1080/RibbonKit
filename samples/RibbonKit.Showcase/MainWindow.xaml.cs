@@ -279,6 +279,60 @@ public partial class MainWindow : RibbonWindow
     private void OnOpenMdiDemo(object sender, RoutedEventArgs e) =>
         new MdiDemo { Owner = this }.Show();
 
+    // ---- Modal tab (Print Preview) -------------------------------------------------
+    // EnterModal hides every other tab plus the File button, blocks minimize and the
+    // backstage, and leaves the QAT alone. It returns false when a ModalEntering handler
+    // cancels — worth checking only in an app that has a reason to refuse (nothing to
+    // print, a job already spooling).
+    private void OnEnterPrintPreview(object sender, RoutedEventArgs e) =>
+        MainRibbon.EnterModal(PrintPreviewTab);
+
+    // The mode is the ribbon's business; swapping the document for the preview page is the
+    // app's. Driving it from ModalEntered/ModalExited rather than from the button means the
+    // "Close Print Preview" button — or any future exit path — restores the document with no
+    // extra wiring.
+    private void OnRibbonModalEntered(object sender, RibbonModalEventArgs e)
+    {
+        if (ReferenceEquals(e.Tab, PrintPreviewTab))
+        {
+            PrintPreviewSurface.Visibility = Visibility.Visible;
+            StatusReady.Content = "Print Preview";
+        }
+    }
+
+    private void OnRibbonModalExited(object sender, RibbonModalEventArgs e)
+    {
+        if (ReferenceEquals(e.Tab, PrintPreviewTab))
+        {
+            PrintPreviewSurface.Visibility = Visibility.Collapsed;
+            StatusReady.Content = "Ready";
+        }
+    }
+
+    // ---- Tab merging ---------------------------------------------------------------
+    // The merge itself is DECLARATIVE and needs no code: in XAML the source's Target points at the
+    // ribbon and its IsActive is bound to this toggle, so checking it merges and unchecking
+    // unmerges. A real host binds IsActive to whatever "my child is active" means to it — an MDI
+    // container's ActiveDocument, a selected chart, a view model flag. Deliberately NOT keyboard
+    // focus: focus lands on ribbon buttons constantly and would thrash the merge.
+    //
+    // Ribbon.Merge / Ribbon.Unmerge remain available for hosts that would rather drive it
+    // imperatively. All this handler does is the app-level polish around the merge.
+    private void OnToggleChartToolsMerge(object sender, RoutedEventArgs e)
+    {
+        if (MainRibbon.IsMerged(ChartToolsSource))
+        {
+            // Office jumps to a tool tab when its context appears; do the same so the merge is
+            // immediately visible rather than hiding at the end of the strip.
+            MainRibbon.SelectedTab = ChartToolsSource.Tabs.FirstOrDefault();
+            StatusReady.Content = "Chart Tools merged";
+        }
+        else
+        {
+            StatusReady.Content = "Ready";
+        }
+    }
+
     // Backstage footer BUTTON items: they run an action instead of switching to a page.
     private void OnBackstageOptions(object sender, RoutedEventArgs e)
     {

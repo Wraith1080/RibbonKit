@@ -55,6 +55,14 @@ public class Ribbon : Control
                 RibbonQuickAccessPosition.TabRow,
                 OnQuickAccessPositionChanged));
 
+    /// <summary>Identifies the <see cref="QuickAccessMaxWidth"/> dependency property.</summary>
+    public static readonly DependencyProperty QuickAccessMaxWidthProperty =
+        DependencyProperty.Register(
+            nameof(QuickAccessMaxWidth),
+            typeof(double),
+            typeof(Ribbon),
+            new FrameworkPropertyMetadata(240d));
+
     /// <summary>Identifies the <see cref="IsMinimized"/> dependency property.</summary>
     public static readonly DependencyProperty IsMinimizedProperty =
         DependencyProperty.Register(
@@ -154,6 +162,36 @@ public class Ribbon : Control
                 FrameworkPropertyMetadataOptions.BindsTwoWayByDefault,
                 OnSelectedIndexChanged));
 
+    private static readonly DependencyPropertyKey ModalTabPropertyKey =
+        DependencyProperty.RegisterReadOnly(
+            nameof(ModalTab),
+            typeof(RibbonTab),
+            typeof(Ribbon),
+            new FrameworkPropertyMetadata(null));
+
+    /// <summary>Identifies the read-only <see cref="ModalTab"/> dependency property.</summary>
+    public static readonly DependencyProperty ModalTabProperty = ModalTabPropertyKey.DependencyProperty;
+
+    private static readonly DependencyPropertyKey IsModalPropertyKey =
+        DependencyProperty.RegisterReadOnly(
+            nameof(IsModal),
+            typeof(bool),
+            typeof(Ribbon),
+            new FrameworkPropertyMetadata(false));
+
+    /// <summary>Identifies the read-only <see cref="IsModal"/> dependency property.</summary>
+    public static readonly DependencyProperty IsModalProperty = IsModalPropertyKey.DependencyProperty;
+
+    private static readonly DependencyPropertyKey CanCloseModalPropertyKey =
+        DependencyProperty.RegisterReadOnly(
+            nameof(CanCloseModal),
+            typeof(bool),
+            typeof(Ribbon),
+            new FrameworkPropertyMetadata(false));
+
+    /// <summary>Identifies the read-only <see cref="CanCloseModal"/> dependency property.</summary>
+    public static readonly DependencyProperty CanCloseModalProperty = CanCloseModalPropertyKey.DependencyProperty;
+
     static Ribbon()
     {
         DefaultStyleKeyProperty.OverrideMetadata(
@@ -164,6 +202,13 @@ public class Ribbon : Control
     /// <summary>Initializes a new ribbon with an empty <see cref="Tabs"/> collection.</summary>
     public Ribbon()
     {
+        // Created first: the minimize/backstage guards consult the scope from property-changed
+        // callbacks that can run as soon as the object is initialized from XAML.
+        _modalScope = new RibbonModalScope(this);
+        _exitModalCommand = new ModalCloseCommand(this);
+        _mergeService = new RibbonMergeService(this);
+        _mergedCaptionCommand = new CaptionActionCommand(this);
+
         var tabs = new ObservableCollection<RibbonTab>();
         tabs.CollectionChanged += OnTabsCollectionChanged;
         SetValue(TabsPropertyKey, tabs);
@@ -200,6 +245,23 @@ public class Ribbon : Control
     }
 
     /// <summary>
+    /// How wide the quick access strip may grow in the placements that share their row —
+    /// <see cref="RibbonQuickAccessPosition.TabRow"/> (competing with the tabs) and
+    /// <see cref="RibbonQuickAccessPosition.TitleBar"/> (competing with the window title).
+    /// Items past the cap move into the strip's overflow flyout. Default 240 DIPs, roughly eight
+    /// small buttons.
+    /// <para>
+    /// Ignored for <see cref="RibbonQuickAccessPosition.BelowRibbon"/>: that placement owns a
+    /// full-width row of its own, so it stretches instead of overflowing.
+    /// </para>
+    /// </summary>
+    public double QuickAccessMaxWidth
+    {
+        get => (double)GetValue(QuickAccessMaxWidthProperty);
+        set => SetValue(QuickAccessMaxWidthProperty, value);
+    }
+
+    /// <summary>
     /// Whether the ribbon is minimized to just its tab strip. Toggled by double-clicking
     /// a tab header or the chevron button at the right end of the tab strip.
     /// </summary>
@@ -229,6 +291,473 @@ public class Ribbon : Control
         set => SetValue(SelectedIndexProperty, value);
     }
 
+    // ==========================================================================
+    // Tab merging. A child context (embedded editor, MDI child, plug-in) hands the
+    // host ribbon a RibbonMergeSource; its tabs join the strip while the child is
+    // active and leave when it isn't. Bookkeeping lives in RibbonMergeService.
+    // ==========================================================================
+
+    private readonly RibbonMergeService _mergeService;
+
+    private static readonly DependencyPropertyKey IsMergedPropertyKey =
+        DependencyProperty.RegisterAttachedReadOnly(
+            "IsMerged",
+            typeof(bool),
+            typeof(Ribbon),
+            new FrameworkPropertyMetadata(false));
+
+    /// <summary>
+    /// Identifies the read-only <c>IsMerged</c> attached property: whether a tab reached this
+    /// ribbon through <see cref="Merge"/> rather than being declared on it. Merged content is
+    /// excluded from ribbon customization — see <see cref="RibbonMergeSource"/>.
+    /// </summary>
+    public static readonly DependencyProperty IsMergedProperty = IsMergedPropertyKey.DependencyProperty;
+
+    /// <summary>Whether the element was contributed by a <see cref="RibbonMergeSource"/>.</summary>
+    public static bool GetIsMerged(DependencyObject element) =>
+        (bool)element.GetValue(IsMergedProperty);
+
+    internal static void SetIsMergedInternal(DependencyObject element, bool value) =>
+        element.SetValue(IsMergedPropertyKey, value);
+
+    private static readonly DependencyPropertyKey MergeSourcePropertyKey =
+        DependencyProperty.RegisterAttachedReadOnly(
+            "MergeSource",
+            typeof(RibbonMergeSource),
+            typeof(Ribbon),
+            new FrameworkPropertyMetadata(null));
+
+    /// <summary>
+    /// Identifies the read-only <c>MergeSource</c> attached property: the source that contributed
+    /// this element, or <see langword="null"/> for host-declared content.
+    /// </summary>
+    public static readonly DependencyProperty MergeSourceProperty = MergeSourcePropertyKey.DependencyProperty;
+
+    /// <summary>The source that contributed this element, or <see langword="null"/>.</summary>
+    public static RibbonMergeSource? GetMergeSource(DependencyObject element) =>
+        (RibbonMergeSource?)element.GetValue(MergeSourceProperty);
+
+    internal static void SetMergeSourceInternal(DependencyObject element, RibbonMergeSource? value) =>
+        element.SetValue(MergeSourcePropertyKey, value);
+
+    /// <summary>The merge sources currently contributing to this ribbon, in merge order.</summary>
+    public IReadOnlyList<RibbonMergeSource> MergedSources => _mergeService.Sources;
+
+    /// <summary>
+    /// Inserts <paramref name="source"/>'s tabs into this ribbon. Position follows
+    /// <see cref="RibbonMergeSource.Order"/> — host-declared tabs come first, then merged sources
+    /// by order and then by when they first merged, so repeated merge/unmerge cycles are stable.
+    /// </summary>
+    /// <returns><see langword="false"/> when the source is already merged into this ribbon.</returns>
+    /// <exception cref="InvalidOperationException">The source is merged into a different ribbon.</exception>
+    public bool Merge(RibbonMergeSource source)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        return _mergeService.Merge(source);
+    }
+
+    /// <summary>
+    /// Removes the tabs <paramref name="source"/> contributed, restoring the ribbon to its
+    /// host-declared state. Unmerging the tab currently held modal also ends modal mode.
+    /// </summary>
+    /// <returns><see langword="false"/> when the source is not merged into this ribbon.</returns>
+    public bool Unmerge(RibbonMergeSource source)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        return _mergeService.Unmerge(source);
+    }
+
+    /// <summary>Whether <paramref name="source"/> is currently merged into this ribbon.</summary>
+    public bool IsMerged(RibbonMergeSource source)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        return _mergeService.IsMerged(source);
+    }
+
+    // Used by RibbonCustomizationSerializer.Apply, which rebuilds Tabs wholesale: merged tabs step
+    // out for the rebuild and step back in afterwards, rather than the service trying to re-assert
+    // positions inside a collection that was cleared underneath it.
+    internal List<RibbonMergeSource> UnmergeAllForRebuild() => _mergeService.UnmergeAll();
+
+    internal void RemergeAfterRebuild(List<RibbonMergeSource> sources) => _mergeService.Remerge(sources);
+
+    /// <summary>
+    /// Called after any merge or unmerge. Keeps the selection valid and re-places the selection
+    /// visuals: the sliding underline and the 2010/2013 body-border notch are positioned from the
+    /// selected tab's transform, and adding or removing tabs raises no selection or size event —
+    /// the same reason a theme swap and a modal transition re-place them explicitly (§3.29).
+    /// </summary>
+    internal void OnMergeChanged()
+    {
+        if (SelectedTab is null || !Tabs.Contains(SelectedTab) || SelectedTab.Visibility != Visibility.Visible)
+        {
+            SelectedTab = FindFirstVisibleTab();
+        }
+
+        RefreshSelectionVisuals();
+    }
+
+    /// <summary>
+    /// Re-places the sliding selection underline and the 2010/2013 body-border notch.
+    /// </summary>
+    /// <remarks>
+    /// Both are positioned from the SELECTED TAB'S TRANSFORM, so anything that moves the tab strip
+    /// without raising a selection change or a size change on the tab control leaves them stranded.
+    /// The tab control's own <c>SizeChanged</c> does NOT cover this: the strip lives in a star-width
+    /// column, so a sibling in the same row growing or shrinking (the merged-caption icon appearing,
+    /// the File button hiding for a modal tab) re-lays-out the strip while the tab control's size is
+    /// unchanged. Every such caller must land here — layout is forced first so the transform is
+    /// current when the marker and notch are measured (see design notes §3.29).
+    /// </remarks>
+    private void RefreshSelectionVisuals()
+    {
+        if (_ribbonTabControl is { } tabControl)
+        {
+            tabControl.InvalidateArrange();
+            tabControl.UpdateLayout();
+            tabControl.RefreshSelectionVisuals();
+        }
+    }
+
+    // ==========================================================================
+    // Merged caption. Classic MDI, when a child is maximized, moves the child's
+    // system icon to the far left of the ribbon row and its window buttons to the
+    // far right, and hides the child's own title bar. The ribbon just offers the
+    // PLACEMENT and reports button presses; it deliberately knows nothing about
+    // MDI (docs/05-MDI-EMULATION-PLAN.md §4 — caption merge and tab merge are
+    // separate features and must stay that way).
+    // ==========================================================================
+
+    private static readonly DependencyPropertyKey HasMergedCaptionPropertyKey =
+        DependencyProperty.RegisterReadOnly(
+            nameof(HasMergedCaption),
+            typeof(bool),
+            typeof(Ribbon),
+            new FrameworkPropertyMetadata(false));
+
+    /// <summary>Identifies the read-only <see cref="HasMergedCaption"/> dependency property.</summary>
+    public static readonly DependencyProperty HasMergedCaptionProperty = HasMergedCaptionPropertyKey.DependencyProperty;
+
+    private static readonly DependencyPropertyKey MergedCaptionIconPropertyKey =
+        DependencyProperty.RegisterReadOnly(
+            nameof(MergedCaptionIcon),
+            typeof(System.Windows.Media.ImageSource),
+            typeof(Ribbon),
+            new FrameworkPropertyMetadata(null));
+
+    /// <summary>Identifies the read-only <see cref="MergedCaptionIcon"/> dependency property.</summary>
+    public static readonly DependencyProperty MergedCaptionIconProperty = MergedCaptionIconPropertyKey.DependencyProperty;
+
+    private static readonly DependencyPropertyKey MergedCaptionTitlePropertyKey =
+        DependencyProperty.RegisterReadOnly(
+            nameof(MergedCaptionTitle),
+            typeof(string),
+            typeof(Ribbon),
+            new FrameworkPropertyMetadata(null));
+
+    /// <summary>Identifies the read-only <see cref="MergedCaptionTitle"/> dependency property.</summary>
+    public static readonly DependencyProperty MergedCaptionTitleProperty = MergedCaptionTitlePropertyKey.DependencyProperty;
+
+    private static readonly DependencyPropertyKey MergedCaptionCanClosePropertyKey =
+        DependencyProperty.RegisterReadOnly(
+            nameof(MergedCaptionCanClose),
+            typeof(bool),
+            typeof(Ribbon),
+            new FrameworkPropertyMetadata(false));
+
+    /// <summary>Identifies the read-only <see cref="MergedCaptionCanClose"/> dependency property.</summary>
+    public static readonly DependencyProperty MergedCaptionCanCloseProperty = MergedCaptionCanClosePropertyKey.DependencyProperty;
+
+    private readonly CaptionActionCommand _mergedCaptionCommand;
+
+    /// <summary>Whether a caption is currently merged into the ribbon row.</summary>
+    public bool HasMergedCaption => (bool)GetValue(HasMergedCaptionProperty);
+
+    /// <summary>The merged caption's icon, or <see langword="null"/>.</summary>
+    public System.Windows.Media.ImageSource? MergedCaptionIcon =>
+        (System.Windows.Media.ImageSource?)GetValue(MergedCaptionIconProperty);
+
+    /// <summary>
+    /// The merged caption's title. Deliberately NOT drawn in the tab strip — classic MDI puts it
+    /// in the host window's own title bar ("Document1 - MyApp"), and a second title in the strip
+    /// would eat tab space. Exposed so a host can bind its window title to it.
+    /// </summary>
+    public string? MergedCaptionTitle => (string?)GetValue(MergedCaptionTitleProperty);
+
+    /// <summary>
+    /// Whether a merged caption is present AND offers a close button — the close button's
+    /// visibility binds to this alone, so it is <see langword="false"/> when no caption is docked.
+    /// </summary>
+    public bool MergedCaptionCanClose => (bool)GetValue(MergedCaptionCanCloseProperty);
+
+    /// <summary>
+    /// Command the merged caption's buttons invoke, with a
+    /// <see cref="RibbonMergedCaptionAction"/> as parameter. Raises
+    /// <see cref="MergedCaptionActionRequested"/>; also usable from an app's own chrome.
+    /// </summary>
+    public System.Windows.Input.ICommand MergedCaptionCommand => _mergedCaptionCommand;
+
+    /// <summary>
+    /// Raised when the user presses a button on the merged caption. The host that called
+    /// <see cref="ShowMergedCaption"/> decides what minimize / restore / close mean.
+    /// </summary>
+    public event EventHandler<RibbonMergedCaptionEventArgs>? MergedCaptionActionRequested;
+
+    /// <summary>
+    /// Docks a caption into the ribbon row: <paramref name="icon"/> at the far left, before the
+    /// application button, and minimize / restore / close buttons at the far right. The caller is
+    /// responsible for hiding whatever chrome the caption replaces, and for the title (see
+    /// <see cref="MergedCaptionTitle"/>).
+    /// </summary>
+    /// <param name="icon">The system icon to show, or <see langword="null"/> for none. An
+    /// <c>ImageSource</c> rather than an element: the same icon is typically already displayed
+    /// elsewhere, and a UIElement cannot have two visual parents.</param>
+    /// <param name="title">The caption text, published on <see cref="MergedCaptionTitle"/>.</param>
+    /// <param name="canClose">Whether to offer a close button.</param>
+    public void ShowMergedCaption(System.Windows.Media.ImageSource? icon, string? title, bool canClose = true)
+    {
+        SetValue(MergedCaptionIconPropertyKey, icon);
+        SetValue(MergedCaptionTitlePropertyKey, title);
+        SetValue(MergedCaptionCanClosePropertyKey, canClose);
+        SetValue(HasMergedCaptionPropertyKey, true);
+
+        // The icon appearing at the left of the row shifts the whole tab strip sideways, and the
+        // buttons at the right narrow it — but the tab control itself doesn't change size, so
+        // nothing re-places the underline or the connect notch on its own.
+        RefreshSelectionVisuals();
+    }
+
+    /// <summary>Removes a caption previously docked by <see cref="ShowMergedCaption"/>.</summary>
+    public void ClearMergedCaption()
+    {
+        SetValue(HasMergedCaptionPropertyKey, false);
+        SetValue(MergedCaptionIconPropertyKey, null);
+        SetValue(MergedCaptionTitlePropertyKey, null);
+        SetValue(MergedCaptionCanClosePropertyKey, false);
+
+        // Same shift in reverse — the strip widens back out as the icon and buttons go away.
+        RefreshSelectionVisuals();
+    }
+
+    // One command taking the action as its parameter, rather than three commands and three
+    // events: the buttons differ only in which action they name.
+    private sealed class CaptionActionCommand : System.Windows.Input.ICommand
+    {
+        private readonly Ribbon _ribbon;
+
+        internal CaptionActionCommand(Ribbon ribbon) => _ribbon = ribbon;
+
+        public event EventHandler? CanExecuteChanged
+        {
+            add { }
+            remove { }
+        }
+
+        public bool CanExecute(object? parameter) => parameter is RibbonMergedCaptionAction;
+
+        public void Execute(object? parameter)
+        {
+            if (parameter is RibbonMergedCaptionAction action)
+            {
+                _ribbon.MergedCaptionActionRequested?.Invoke(
+                    _ribbon, new RibbonMergedCaptionEventArgs(action));
+            }
+        }
+    }
+
+    // ==========================================================================
+    // Modal tabs (Print-Preview-style exclusive mode). State machine lives in
+    // RibbonModalScope; this region is the public surface plus the guards that
+    // keep minimize and the backstage out of reach while modal.
+    // ==========================================================================
+
+    private readonly RibbonModalScope _modalScope;
+    private readonly ModalCloseCommand _exitModalCommand;
+
+    // Set while a guard is reverting an attempt to minimize / open the backstage during modal
+    // mode, so the revert's own property-changed notification doesn't run the normal path.
+    private bool _suppressMinimizeChange;
+    private bool _suppressBackstageChange;
+
+    /// <summary>
+    /// The tab currently held modal, or <see langword="null"/> when the ribbon is in its normal
+    /// state. See <see cref="EnterModal"/>.
+    /// </summary>
+    public RibbonTab? ModalTab => (RibbonTab?)GetValue(ModalTabProperty);
+
+    /// <summary>Whether a modal tab is active (a convenience over <see cref="ModalTab"/>).</summary>
+    public bool IsModal => (bool)GetValue(IsModalProperty);
+
+    /// <summary>
+    /// Whether the modal tab currently active offers a close affordance
+    /// (<see cref="RibbonTab.CanClose"/>). The tab strip binds its close button's visibility here.
+    /// </summary>
+    public bool CanCloseModal => (bool)GetValue(CanCloseModalProperty);
+
+    /// <summary>
+    /// Command that leaves modal mode with <see cref="RibbonModalReason.CloseButton"/>. Bound by
+    /// the tab strip's close affordance; also usable from an app's own "Close Preview" button.
+    /// </summary>
+    public System.Windows.Input.ICommand ExitModalCommand => _exitModalCommand;
+
+    /// <summary>
+    /// Raised before a tab enters modal mode. Set <see cref="RibbonModalEventArgs.Cancel"/> to
+    /// refuse (for example, when there is nothing to preview).
+    /// </summary>
+    public event EventHandler<RibbonModalEventArgs>? ModalEntering;
+
+    /// <summary>Raised after a tab has entered modal mode.</summary>
+    public event EventHandler<RibbonModalEventArgs>? ModalEntered;
+
+    /// <summary>
+    /// Raised before modal mode ends. Set <see cref="RibbonModalEventArgs.Cancel"/> to refuse —
+    /// except when <see cref="RibbonModalEventArgs.Reason"/> is
+    /// <see cref="RibbonModalReason.TabRemoved"/>, where the tab is already gone.
+    /// </summary>
+    public event EventHandler<RibbonModalEventArgs>? ModalExiting;
+
+    /// <summary>Raised after modal mode has ended.</summary>
+    public event EventHandler<RibbonModalEventArgs>? ModalExited;
+
+    /// <summary>
+    /// Enters modal mode on <paramref name="tab"/>: every other tab and the application (File)
+    /// button hide, minimizing the ribbon and opening the backstage are blocked, and the quick
+    /// access toolbar stays — Word's Print Preview behaviour. The tab must belong to this ribbon
+    /// and have <see cref="RibbonTab.IsModal"/> set.
+    /// </summary>
+    /// <returns>
+    /// <see langword="false"/> when a <see cref="ModalEntering"/> handler cancelled, or when an
+    /// already-modal tab refused to leave first.
+    /// </returns>
+    public bool EnterModal(RibbonTab tab)
+    {
+        ArgumentNullException.ThrowIfNull(tab);
+
+        if (!Tabs.Contains(tab))
+        {
+            throw new ArgumentException("The tab does not belong to this ribbon.", nameof(tab));
+        }
+
+        if (!tab.IsModal)
+        {
+            throw new ArgumentException(
+                $"The tab '{tab.Header}' is not marked {nameof(RibbonTab.IsModal)}.", nameof(tab));
+        }
+
+        return _modalScope.Enter(tab, RibbonModalReason.Application);
+    }
+
+    /// <summary>
+    /// Leaves modal mode, restoring every tab's pre-modal visibility and the previously selected
+    /// tab. No-op when not modal.
+    /// </summary>
+    /// <returns><see langword="false"/> when a <see cref="ModalExiting"/> handler cancelled.</returns>
+    public bool ExitModal() => ExitModal(RibbonModalReason.Application);
+
+    /// <summary>
+    /// Leaves modal mode, attributing the transition to <paramref name="reason"/> so handlers can
+    /// tell a user-initiated close from an application-driven one.
+    /// </summary>
+    /// <returns><see langword="false"/> when a <see cref="ModalExiting"/> handler cancelled.</returns>
+    public bool ExitModal(RibbonModalReason reason) => _modalScope.Exit(reason, force: false);
+
+    /// <summary>
+    /// The visibility <paramref name="tab"/> would have if modal mode were not active. Modal mode
+    /// hides the other tabs with <see cref="UIElement.Visibility"/>, so anything that PERSISTS
+    /// visibility must read it through here — otherwise state saved during Print Preview restores
+    /// a ribbon with every tab hidden. <see cref="RibbonCustomizationSerializer"/> uses it.
+    /// </summary>
+    public Visibility GetAuthoredVisibility(RibbonTab tab)
+    {
+        ArgumentNullException.ThrowIfNull(tab);
+        return _modalScope.GetAuthoredVisibility(tab);
+    }
+
+    /// <summary>
+    /// Sets the visibility <paramref name="tab"/> should have once modal mode ends. While the tab
+    /// is held hidden by a modal tab the change is deferred to the exit; otherwise it applies
+    /// immediately. Use this instead of setting <see cref="UIElement.Visibility"/> directly when
+    /// application state (a contextual tab's context) changes during modal mode.
+    /// </summary>
+    public void SetAuthoredVisibility(RibbonTab tab, Visibility value)
+    {
+        ArgumentNullException.ThrowIfNull(tab);
+        _modalScope.SetAuthoredVisibility(tab, value);
+    }
+
+    internal bool RaiseModalEntering(RibbonTab tab, RibbonModalReason reason)
+    {
+        if (ModalEntering is null)
+        {
+            return true;
+        }
+
+        var args = new RibbonModalEventArgs(tab, reason);
+        ModalEntering(this, args);
+        return !args.Cancel;
+    }
+
+    internal void RaiseModalEntered(RibbonTab tab, RibbonModalReason reason) =>
+        ModalEntered?.Invoke(this, new RibbonModalEventArgs(tab, reason));
+
+    internal bool RaiseModalExiting(RibbonTab tab, RibbonModalReason reason)
+    {
+        if (ModalExiting is null)
+        {
+            return true;
+        }
+
+        var args = new RibbonModalEventArgs(tab, reason);
+        ModalExiting(this, args);
+        return !args.Cancel;
+    }
+
+    internal void RaiseModalExited(RibbonTab tab, RibbonModalReason reason) =>
+        ModalExited?.Invoke(this, new RibbonModalEventArgs(tab, reason));
+
+    /// <summary>
+    /// Publishes the scope's state onto the read-only DPs the templates bind to, then re-places the
+    /// selection visuals. The sliding underline and the 2010/2013 body-border notch are positioned
+    /// from the selected tab's transform, and a modal transition changes which tabs are laid out
+    /// without raising a selection or size event — so they must be re-placed explicitly, exactly as
+    /// a theme swap does (see design notes §3.29).
+    /// </summary>
+    internal void OnModalStateChanged()
+    {
+        RibbonTab? modal = _modalScope.ModalTab;
+        SetValue(ModalTabPropertyKey, modal);
+        SetValue(IsModalPropertyKey, modal is not null);
+        SetValue(CanCloseModalPropertyKey, modal is { CanClose: true });
+        _exitModalCommand.RaiseCanExecuteChanged();
+
+        if (modal is not null)
+        {
+            // Entering: leave any state the mode forbids, through the normal (animated) paths.
+            SetCurrentValue(IsBackstageOpenProperty, false);
+            SetCurrentValue(IsMinimizedProperty, false);
+        }
+
+        RefreshSelectionVisuals();
+    }
+
+    // Bound by the tab strip's modal close affordance. A tiny ICommand rather than a
+    // RoutedUICommand: the target is unambiguous (the ribbon that owns the template), so command
+    // routing would only add a way to get it wrong.
+    private sealed class ModalCloseCommand : System.Windows.Input.ICommand
+    {
+        private readonly Ribbon _ribbon;
+
+        internal ModalCloseCommand(Ribbon ribbon) => _ribbon = ribbon;
+
+        public event EventHandler? CanExecuteChanged;
+
+        public bool CanExecute(object? parameter) => _ribbon.CanCloseModal;
+
+        public void Execute(object? parameter) => _ribbon.ExitModal(RibbonModalReason.CloseButton);
+
+        internal void RaiseCanExecuteChanged() => CanExecuteChanged?.Invoke(this, EventArgs.Empty);
+    }
+
     private static readonly DependencyPropertyKey QuickAccessSourcePropertyKey =
         DependencyProperty.RegisterAttachedReadOnly(
             "QuickAccessSource",
@@ -247,6 +776,28 @@ public class Ribbon : Control
     /// for hand-declared quick-access items.</summary>
     public static FrameworkElement? GetQuickAccessSource(DependencyObject element) =>
         (FrameworkElement?)element.GetValue(QuickAccessSourceProperty);
+
+    private static readonly DependencyPropertyKey QuickAccessOverflowItemPropertyKey =
+        DependencyProperty.RegisterAttachedReadOnly(
+            "QuickAccessOverflowItem",
+            typeof(FrameworkElement),
+            typeof(Ribbon),
+            new FrameworkPropertyMetadata(null));
+
+    /// <summary>
+    /// Identifies the read-only <c>QuickAccessOverflowItem</c> attached property: on a proxy shown
+    /// in the quick access toolbar's OVERFLOW flyout, the real <see cref="QuickAccessItems"/> entry
+    /// it stands for. Lets a right-click inside the flyout act on the real item.
+    /// </summary>
+    public static readonly DependencyProperty QuickAccessOverflowItemProperty =
+        QuickAccessOverflowItemPropertyKey.DependencyProperty;
+
+    /// <summary>The quick-access item an overflow-flyout proxy represents, or <see langword="null"/>.</summary>
+    public static FrameworkElement? GetQuickAccessOverflowItem(DependencyObject element) =>
+        (FrameworkElement?)element.GetValue(QuickAccessOverflowItemProperty);
+
+    internal static void SetQuickAccessOverflowItemInternal(DependencyObject element, FrameworkElement? value) =>
+        element.SetValue(QuickAccessOverflowItemPropertyKey, value);
 
     /// <summary>
     /// Raised when the user picks "Customize Quick Access Toolbar…" from a right-click menu.
@@ -327,7 +878,18 @@ public class Ribbon : Control
             return false;
         }
 
-        QuickAccessItems.Add(CreateCommandProxy(source, RibbonControlSize.Small));
+        FrameworkElement proxy = CreateCommandProxy(source, RibbonControlSize.Small);
+
+        // Carry the command's merge provenance onto the proxy. That's what lets the proxy be
+        // PARKED (disabled, like Office greys an unavailable command) instead of orphaned when
+        // the source unmerges, and keeps it out of persisted state — a proxy of a transient
+        // child's command must not come back on the next run pointing at nothing.
+        if (GetMergeSource(source) is { } mergeSource)
+        {
+            SetMergeSourceInternal(proxy, mergeSource);
+        }
+
+        QuickAccessItems.Add(proxy);
         return true;
     }
 
@@ -650,9 +1212,12 @@ public class Ribbon : Control
     // Quick-access-toolbar placement plumbing. When QuickAccessPosition is TitleBar the
     // items are projected into the host RibbonWindow's TitleBarContent via this host; the
     // shared context menu lets the user move the QAT between placements (like Office).
-    private System.Windows.Controls.ItemsControl? _titleBarQatHost;
+    private RibbonQuickAccessToolBar? _titleBarQatHost;
     private object? _savedTitleBarContent;
     private System.Windows.Controls.ContextMenu? _qatContextMenu;
+
+    // Coalesces the deferred selection-visual refresh triggered by the tab-row QAT resizing.
+    private bool _selectionVisualsPending;
     private System.Windows.Controls.MenuItem? _qatTitleBarItem;
     private System.Windows.Controls.MenuItem? _qatAboveItem;
     private System.Windows.Controls.MenuItem? _qatBelowItem;
@@ -680,7 +1245,32 @@ public class Ribbon : Control
 
     private static void OnIsBackstageOpenChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        ((Ribbon)d).UpdateBackstageOverlay((bool)e.NewValue);
+        var ribbon = (Ribbon)d;
+
+        // A modal tab blocks the backstage (Word's Print Preview hides File entirely). The
+        // application button is hidden by a template trigger, so this only catches programmatic
+        // attempts — revert rather than coerce, so no stale "true" springs back on exit.
+        if (ribbon._modalScope.IsActive && (bool)e.NewValue && !ribbon._suppressBackstageChange)
+        {
+            ribbon._suppressBackstageChange = true;
+            try
+            {
+                ribbon.SetCurrentValue(IsBackstageOpenProperty, false);
+            }
+            finally
+            {
+                ribbon._suppressBackstageChange = false;
+            }
+
+            return;
+        }
+
+        if (ribbon._suppressBackstageChange)
+        {
+            return;
+        }
+
+        ribbon.UpdateBackstageOverlay((bool)e.NewValue);
     }
 
     private static void OnIsMinimizedChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -690,6 +1280,29 @@ public class Ribbon : Control
         // reappears. Only transform/opacity animate — the row height is never animated, so
         // the window's layout still snaps cleanly once the body is hidden/shown.
         var ribbon = (Ribbon)d;
+
+        // Minimizing is blocked while a modal tab is active: the mode owns the whole ribbon.
+        // Same revert-not-coerce reasoning as the backstage guard above.
+        if (ribbon._modalScope.IsActive && (bool)e.NewValue && !ribbon._suppressMinimizeChange)
+        {
+            ribbon._suppressMinimizeChange = true;
+            try
+            {
+                ribbon.SetCurrentValue(IsMinimizedProperty, false);
+            }
+            finally
+            {
+                ribbon._suppressMinimizeChange = false;
+            }
+
+            return;
+        }
+
+        if (ribbon._suppressMinimizeChange)
+        {
+            return;
+        }
+
         ribbon._ribbonContentHost ??= FindDescendantByName(ribbon, "ContentHost");
         if (ribbon._ribbonContentHost is not { } host)
         {
@@ -973,6 +1586,7 @@ public class Ribbon : Control
         if (GetTemplateChild("QatTabRowHost") is FrameworkElement tabRowHost)
         {
             AttachQatContextMenu(tabRowHost);
+            TrackTabRowQatSize(tabRowHost);
         }
 
         if (GetTemplateChild("QatBelowHost") is FrameworkElement belowHost)
@@ -1004,6 +1618,7 @@ public class Ribbon : Control
         if (FindDescendantByName(this, "QatTabRowHost") is { ContextMenu: null } tabRowHost)
         {
             AttachQatContextMenu(tabRowHost);
+            TrackTabRowQatSize(tabRowHost);
         }
 
         // React to accent / colored-title-bar / theme changes so the QAT icons + hover keep
@@ -1244,20 +1859,31 @@ public class Ribbon : Control
         }
 
         UpdateQatButtonContext();
+
+        // The quick access strip entering or leaving the TAB ROW slides every tab header, so the
+        // sliding underline and the 2010/2013 connect notch have to be re-placed.
+        //
+        // SizeChanged does NOT cover this, which is why it needs its own call: the placement
+        // triggers toggle the tab-row host's VISIBILITY, and a Collapsed element is skipped by
+        // layout entirely — it is never measured, keeps its stale RenderSize, and raises no
+        // SizeChanged going either way.
+        RequestSelectionVisualsRefresh();
     }
 
-    private System.Windows.Controls.ItemsControl CreateTitleBarQatHost()
+    private RibbonQuickAccessToolBar CreateTitleBarQatHost()
     {
-        var panel = new FrameworkElementFactory(typeof(System.Windows.Controls.StackPanel));
-        panel.SetValue(System.Windows.Controls.StackPanel.OrientationProperty, System.Windows.Controls.Orientation.Horizontal);
-
-        var host = new System.Windows.Controls.ItemsControl
+        var host = new RibbonQuickAccessToolBar
         {
-            Focusable = false,
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(2, 0, 6, 0),
-            ItemsPanel = new ItemsPanelTemplate(panel),
         };
+
+        // Bound, not assigned: the cap can be retuned at runtime, and the title bar is the
+        // placement most likely to need it (the window title has to keep its room).
+        host.SetBinding(
+            MaxWidthProperty,
+            new System.Windows.Data.Binding(nameof(QuickAccessMaxWidth)) { Source = this });
+
         AttachQatContextMenu(host);
         return host;
     }
@@ -1316,11 +1942,65 @@ public class Ribbon : Control
     /// which quick-access item (if any) was under the cursor — the menu itself is shared,
     /// so the target must be captured per-open.
     /// </summary>
+    /// <summary>
+    /// Watches the tab-row quick access strip's size so the selection visuals follow it.
+    /// </summary>
+    /// <remarks>
+    /// The strip is a SIBLING of the tab strip in the same row, so anything that changes its width
+    /// slides every tab header sideways: the QAT moving into or out of the tab row, items being
+    /// added or removed, the overflow button appearing. None of that changes the tab control's own
+    /// size, so nothing re-places the sliding underline or the 2010/2013 connect notch — see
+    /// <see cref="RefreshSelectionVisuals"/>. Handling it here covers every cause at once.
+    /// </remarks>
+    private void TrackTabRowQatSize(FrameworkElement tabRowHost)
+    {
+        tabRowHost.SizeChanged -= OnTabRowQatSizeChanged;
+        tabRowHost.SizeChanged += OnTabRowQatSizeChanged;
+    }
+
+    private void OnTabRowQatSizeChanged(object sender, SizeChangedEventArgs e) =>
+        RequestSelectionVisualsRefresh();
+
+    /// <summary>
+    /// Queues a selection-visual refresh for after the next layout pass, coalescing repeats.
+    /// </summary>
+    /// <remarks>
+    /// Deferred rather than immediate for two reasons: <c>SizeChanged</c> fires DURING layout and
+    /// <see cref="RefreshSelectionVisuals"/> forces a layout pass, so running it inline would
+    /// re-enter layout from inside layout; and quick-access placement re-parents its items
+    /// asynchronously, so the strip's final width isn't known until that settles.
+    /// <c>Loaded</c> priority is below <c>Render</c>, which is what makes it "after layout".
+    /// </remarks>
+    private void RequestSelectionVisualsRefresh()
+    {
+        if (_selectionVisualsPending)
+        {
+            return;
+        }
+
+        _selectionVisualsPending = true;
+        Dispatcher.BeginInvoke(
+            System.Windows.Threading.DispatcherPriority.Loaded,
+            (Action)(() =>
+            {
+                _selectionVisualsPending = false;
+                RefreshSelectionVisuals();
+            }));
+    }
+
     private void AttachQatContextMenu(FrameworkElement host)
     {
         host.ContextMenu = EnsureQatContextMenu();
         host.ContextMenuOpening -= OnQatHostContextMenuOpening;
         host.ContextMenuOpening += OnQatHostContextMenuOpening;
+
+        // Every quick-access host passes through here, which makes it the one place that can hand
+        // the toolbar its owning ribbon. It can't find us by walking up: in the TitleBar placement
+        // the toolbar lives in the window's title bar, outside the ribbon's visual tree.
+        if (host is RibbonQuickAccessToolBar toolBar)
+        {
+            toolBar.Owner = this;
+        }
     }
 
     private void OnQatHostContextMenuOpening(object sender, System.Windows.Controls.ContextMenuEventArgs e)
@@ -1335,9 +2015,22 @@ public class Ribbon : Control
     {
         while (node is not null)
         {
-            if (node is FrameworkElement element && QuickAccessItems.Contains(element))
+            if (node is FrameworkElement element)
             {
-                return element;
+                if (QuickAccessItems.Contains(element))
+                {
+                    return element;
+                }
+
+                // Inside the overflow flyout the clicked control is a PROXY, not a member of
+                // QuickAccessItems — so without this, "Remove from Quick Access Toolbar" was
+                // hidden for exactly the items the user most wants to remove. Map it back to the
+                // real entry the proxy stands for.
+                if (GetQuickAccessOverflowItem(element) is { } represented
+                    && QuickAccessItems.Contains(represented))
+                {
+                    return represented;
+                }
             }
 
             DependencyObject? next = node is System.Windows.Media.Visual or System.Windows.Media.Media3D.Visual3D
@@ -1388,6 +2081,14 @@ public class Ribbon : Control
             foreach (RibbonTab tab in e.OldItems)
             {
                 tab.IsVisibleChanged -= OnTabIsVisibleChanged;
+
+                // Removing the modal tab ends modal mode; removing any other drops its
+                // recorded pre-modal visibility.
+                _modalScope.OnTabRemoved(tab);
+
+                // A merged tab removed by some other path (the customize page, an app editing
+                // Tabs directly) must leave its merge record too, or unmerge chases a ghost.
+                _mergeService.OnTabRemoved(tab);
             }
         }
 
@@ -1396,7 +2097,18 @@ public class Ribbon : Control
             foreach (RibbonTab tab in e.NewItems)
             {
                 tab.IsVisibleChanged += OnTabIsVisibleChanged;
+
+                // A tab arriving during modal mode is hidden immediately and recorded, so
+                // exiting reveals it correctly.
+                _modalScope.OnTabAdded(tab);
             }
+        }
+
+        // Tabs.Clear() reports a Reset with no OldItems — the customization serializer rebuilds
+        // the collection that way, so reconcile modal state against the new contents.
+        if (e.Action == NotifyCollectionChangedAction.Reset)
+        {
+            _modalScope.OnCollectionReset();
         }
 
         // Keep the selection valid as tabs come and go.

@@ -22,6 +22,8 @@
                    QuickAccessPosition="BelowRibbon"
                    QuickAccessCustomizeRequested="OnCustomizeQuickAccess"
                    RibbonCustomizeRequested="OnCustomizeRibbon"
+                   ModalEntered="OnRibbonModalEntered"
+                   ModalExited="OnRibbonModalExited"
                    d:IsBackstageOpen="false">
             <rk:Ribbon.Backstage>
                 <!-- d:SelectedIndex previews a specific backstage page on the XAML designer
@@ -574,6 +576,24 @@
                                      Click="OnOpenMdiDemo"
                                      ScreenTipTitle="MDI Demo"
                                      ScreenTipText="Open the MDI emulation demo: themed child windows floating inside the client area." />
+                    <rk:RibbonButton Header="Print Preview"
+                                     rk:Ribbon.CommandId="cmd.printpreview"
+                                     Size="Large"
+                                     LargeIcon="{StaticResource Icon.Print}"
+                                     Icon="{StaticResource Icon.Print}"
+                                     Click="OnEnterPrintPreview"
+                                     ScreenTipTitle="Print Preview (modal tab)"
+                                     ScreenTipText="Enter the Print Preview MODAL tab: all other tabs and the File button hide, minimize and the backstage are blocked, and a Close Print Preview button appears at the end of the tab strip." />
+                    <rk:RibbonToggleButton x:Name="MergeToggle"
+                                           Header="Chart Tools"
+                                           rk:Ribbon.CommandId="cmd.mergechart"
+                                           Size="Large"
+                                           LargeIcon="{StaticResource Icon.Style}"
+                                           Icon="{StaticResource Icon.Style}"
+                                           Checked="OnToggleChartToolsMerge"
+                                           Unchecked="OnToggleChartToolsMerge"
+                                           ScreenTipTitle="Merge Chart Tools (tab merging)"
+                                           ScreenTipText="Activate a RibbonMergeSource, the way an embedded editor or MDI child contributes ribbon content while it is active. Two tabs appear after the host's, and a Chart Data group joins the Home tab. Merged content never appears in Customize the Ribbon and is never persisted." />
                     <rk:RibbonButton Header="Options"
                                      rk:Ribbon.CommandId="cmd.options"
                                      Size="Large"
@@ -585,9 +605,118 @@
                 </rk:RibbonGroup>
             </rk:RibbonTab>
 
+            <!-- MODAL TAB (Print Preview). IsModal only declares eligibility — the app enters the
+                 mode with Ribbon.EnterModal(tab). CanClose puts a "Close Print Preview" button at
+                 the end of the tab strip, bound to Ribbon.ExitModalCommand. Collapsed by default
+                 so it doesn't sit in the strip while the ribbon is in its normal state. -->
+            <rk:RibbonTab x:Name="PrintPreviewTab"
+                          Header="Print Preview"
+                          rk:Ribbon.CommandId="tab.printpreview"
+                          IsModal="True"
+                          CanClose="True"
+                          CloseButtonText="Close Print Preview"
+                          Visibility="Collapsed">
+                <rk:RibbonGroup Header="Print" Icon="{StaticResource Icon.Print}">
+                    <rk:RibbonButton Header="Print"
+                                     Size="Large"
+                                     LargeIcon="{StaticResource Icon.Print}"
+                                     Icon="{StaticResource Icon.Print}"
+                                     ScreenTipTitle="Print"
+                                     ScreenTipText="Send the document to the printer." />
+                </rk:RibbonGroup>
+                <rk:RibbonGroup Header="Page Setup" Icon="{StaticResource Icon.Crop}">
+                    <rk:RibbonButton Header="Margins"
+                                     Size="Large"
+                                     Icon="{StaticResource Icon.Crop}"
+                                     ScreenTipTitle="Margins"
+                                     ScreenTipText="Choose the margin sizes for the whole document." />
+                    <rk:RibbonButton Header="Orientation"
+                                     Size="Large"
+                                     Icon="{StaticResource Icon.Picture}"
+                                     ScreenTipTitle="Orientation"
+                                     ScreenTipText="Switch between portrait and landscape." />
+                </rk:RibbonGroup>
+                <rk:RibbonGroup Header="Zoom" Icon="{StaticResource Icon.Zoom}">
+                    <rk:RibbonButton Header="Zoom"
+                                     Size="Large"
+                                     LargeIcon="{StaticResource Icon.Zoom}"
+                                     Icon="{StaticResource Icon.Zoom}"
+                                     ScreenTipTitle="Zoom"
+                                     ScreenTipText="Change the preview magnification." />
+                    <rk:RibbonButton Header="One Page"
+                                     Size="Large"
+                                     Icon="{StaticResource Icon.Picture}"
+                                     ScreenTipTitle="One Page"
+                                     ScreenTipText="Fit a single page in the window." />
+                </rk:RibbonGroup>
+            </rk:RibbonTab>
+
         </rk:Ribbon>
 
         <Grid x:Name="MainContentArea" Background="White">
+            <!-- TAB MERGING demo. A RibbonMergeSource is a declarative bag of tabs belonging to
+                 some child context — an embedded editor, an MDI document, a plug-in. It is not
+                 part of the ribbon until the app calls Ribbon.Merge(source), and the tabs go away
+                 again on Unmerge. It renders nothing itself (Collapsed), so it can sit anywhere in
+                 the tree; living here means its DataContext comes from the window, and each merged
+                 tab's DataContext is bound to it — which is what keeps an MVVM child's bindings
+                 resolving against the CHILD's view model rather than the host's.
+                 Order="0" places these after the host's own tabs; a negative Order would put them
+                 before. -->
+            <rk:RibbonMergeSource x:Name="ChartToolsSource"
+                                  Order="0"
+                                  Target="{Binding ElementName=MainRibbon}"
+                                  IsActive="{Binding IsChecked, ElementName=MergeToggle}">
+                <!-- Groups injected into the HOST's own tabs, addressed by the host tab's
+                     CommandId — Office's other merge shape, where a tool context adds a group to
+                     Home rather than contributing a whole tab. Order 0 appends after Home's own
+                     groups; a negative Order would put it first. -->
+                <rk:RibbonMergeSource.Groups>
+                    <rk:RibbonGroupContribution TargetTabId="tab.home" Order="0">
+                        <rk:RibbonGroup Header="Chart Data" Icon="{StaticResource Icon.Table}">
+                            <rk:RibbonButton Header="Refresh"
+                                             Size="Large"
+                                             LargeIcon="{StaticResource Icon.Redo}"
+                                             Icon="{StaticResource Icon.Redo}"
+                                             ScreenTipTitle="Refresh Chart Data"
+                                             ScreenTipText="Re-read the chart's source range. This group is injected into the HOST's Home tab by the merge source — right-click it to add it to the Quick Access Toolbar, then unmerge and watch the proxy grey out instead of vanishing." />
+                        </rk:RibbonGroup>
+                    </rk:RibbonGroupContribution>
+                </rk:RibbonMergeSource.Groups>
+                <rk:RibbonTab Header="Chart Design"
+                              IsContextual="True"
+                              ContextualColor="#1F7A4D">
+                    <rk:RibbonGroup Header="Type" Icon="{StaticResource Icon.Style}">
+                        <rk:RibbonButton Header="Change Type"
+                                         Size="Large"
+                                         LargeIcon="{StaticResource Icon.Style}"
+                                         Icon="{StaticResource Icon.Style}"
+                                         ScreenTipTitle="Change Chart Type"
+                                         ScreenTipText="Switch between column, line, pie and the rest." />
+                    </rk:RibbonGroup>
+                    <rk:RibbonGroup Header="Data" Icon="{StaticResource Icon.Table}">
+                        <rk:RibbonButton Header="Select Data"
+                                         Size="Large"
+                                         LargeIcon="{StaticResource Icon.Table}"
+                                         Icon="{StaticResource Icon.Table}"
+                                         ScreenTipTitle="Select Data"
+                                         ScreenTipText="Choose the range the chart plots." />
+                    </rk:RibbonGroup>
+                </rk:RibbonTab>
+                <rk:RibbonTab Header="Chart Format"
+                              IsContextual="True"
+                              ContextualColor="#1F7A4D">
+                    <rk:RibbonGroup Header="Shape Styles" Icon="{StaticResource Icon.Palette}">
+                        <rk:RibbonButton Header="Fill"
+                                         Size="Large"
+                                         LargeIcon="{StaticResource Icon.ColorDrop}"
+                                         Icon="{StaticResource Icon.ColorDrop}"
+                                         ScreenTipTitle="Shape Fill"
+                                         ScreenTipText="Fill the selected series with a colour or gradient." />
+                    </rk:RibbonGroup>
+                </rk:RibbonTab>
+            </rk:RibbonMergeSource>
+
             <DockPanel>
                 <!-- Word-like status bar, docked at the very bottom. A DockPanel items panel
                      lets the left cluster and the right (zoom) cluster split to the edges. -->
@@ -619,6 +748,9 @@
                      the surrounding margin, not through the document. -->
                 <!-- Margin 8 (user-tuned): aligns the panel's edges with the ribbon card's
                      inner edge (7px card margin + 1px border). -->
+                <!-- Document and the Print Preview surface share one cell, so the preview covers
+                     the document but leaves the status bar alone. -->
+                <Grid>
                 <Border Margin="8,8,8,0"
                         Background="White"
                         BorderBrush="#E0E0E0"
@@ -642,6 +774,33 @@
                         </FlowDocument>
                     </RichTextBox>
                 </Border>
+
+                <!-- Print Preview surface. Shown only while the Print Preview MODAL TAB is active
+                     (the ribbon's ModalEntered / ModalExited handlers toggle it), so the demo shows
+                     a real mode change rather than just another tab. -->
+                <Border x:Name="PrintPreviewSurface"
+                        Margin="8,8,8,0"
+                        Background="#6E6E6E"
+                        Visibility="Collapsed">
+                    <Border Width="420"
+                            Margin="0,24"
+                            VerticalAlignment="Stretch"
+                            Background="White"
+                            BorderBrush="#3F3F3F"
+                            BorderThickness="1">
+                        <StackPanel Margin="36,44" VerticalAlignment="Top">
+                            <TextBlock Text="RibbonKit"
+                                       FontSize="22"
+                                       Foreground="#3F3F3F"
+                                       Margin="0,0,0,14" />
+                            <TextBlock TextWrapping="Wrap"
+                                       FontSize="12"
+                                       Foreground="#6B6B6B"
+                                       Text="Page 1 of 1 — this is a modal tab. Every other tab and the File button are hidden, the ribbon cannot be minimized (try double-clicking a tab header, or Ctrl+F1), and the backstage is blocked. The Quick Access Toolbar stays, exactly like Word's Print Preview." />
+                        </StackPanel>
+                    </Border>
+                </Border>
+                </Grid>
             </DockPanel>
         </Grid>
     </DockPanel>

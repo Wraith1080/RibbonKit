@@ -219,6 +219,15 @@
                             <Setter TargetName="MaximizeGlyph" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="RestoreGlyph" Property="Visibility" Value="Visible" />
                         </Trigger>
+                        <!-- Caption merged into the ribbon (classic MDI, maximized child): the
+                             child's own title bar goes away — its icon and window buttons are
+                             drawn in the ribbon row instead, and the child becomes the client
+                             area. Declared AFTER the WindowState triggers so it outranks their
+                             caption setters. -->
+                        <Trigger Property="IsCaptionMerged" Value="True">
+                            <Setter TargetName="Caption" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="ChildBorder" Property="BorderThickness" Value="0" />
+                        </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>

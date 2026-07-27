@@ -22,6 +22,151 @@
          ============================================================ -->
     <BooleanToVisibilityConverter x:Key="RibbonKit.BoolToVis" />
 
+    <!-- Window buttons for a caption merged into the ribbon row (classic MDI's maximized child).
+         Chrome matches the minimize chevron beside them — same TabStrip tokens — so the cluster
+         reads as one control group and themes across all four generations with no new tokens.
+         The glyph is supplied per button as Content. -->
+    <Style x:Key="RibbonKit.MergedCaptionButton" TargetType="{x:Type Button}">
+        <Setter Property="Width" Value="24" />
+        <Setter Property="Height" Value="22" />
+        <Setter Property="Margin" Value="0,6,0,0" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Command"
+                Value="{Binding MergedCaptionCommand, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Button}">
+                    <Border x:Name="Chrome"
+                            Background="Transparent"
+                            CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                            SnapsToDevicePixels="True">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chrome" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.TabStrip.ControlHoverBackground}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ============================================================
+         RibbonQuickAccessToolBar — the QAT strip, with overflow.
+
+         DockPanel, not StackPanel, and that is the whole trick: a horizontal
+         StackPanel measures children with INFINITE width, so the items panel
+         could never tell that it had run out of room. Docking the overflow
+         button first means the presenter is measured with whatever width is
+         left, which is exactly the signal RibbonQuickAccessPanel needs.
+
+         The toolbar only overflows if something constrains its width. Below
+         the ribbon nothing does (it owns a full-width row); in the tab row and
+         the title bar the ribbon caps it at Ribbon.QuickAccessMaxWidth.
+         ============================================================ -->
+    <Style TargetType="{x:Type controls:RibbonQuickAccessToolBar}">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="ItemsPanel">
+            <Setter.Value>
+                <ItemsPanelTemplate>
+                    <layout:RibbonQuickAccessPanel />
+                </ItemsPanelTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type controls:RibbonQuickAccessToolBar}">
+                    <Grid>
+                        <DockPanel LastChildFill="True">
+                            <ToggleButton x:Name="PART_OverflowButton"
+                                          DockPanel.Dock="Right"
+                                          Width="20"
+                                          Height="22"
+                                          Focusable="False"
+                                          VerticalAlignment="Center"
+                                          ToolTip="More quick access commands"
+                                          Visibility="{Binding HasOverflow, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource RibbonKit.BoolToVis}}">
+                                <ToggleButton.Style>
+                                    <Style TargetType="{x:Type ToggleButton}">
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="{x:Type ToggleButton}">
+                                                    <Border x:Name="Chrome"
+                                                            Background="Transparent"
+                                                            CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                                            SnapsToDevicePixels="True">
+                                                        <!-- Chevrons + a baseline bar: Office's
+                                                             "more commands" mark. -->
+                                                        <Grid Width="10" Height="10"
+                                                              HorizontalAlignment="Center"
+                                                              VerticalAlignment="Center">
+                                                            <Path Data="M0.5,1 L4,4.5 L0.5,8 M4.5,1 L8,4.5 L4.5,8"
+                                                                  Stroke="{DynamicResource RibbonKit.Brushes.TabStrip.Foreground}"
+                                                                  StrokeThickness="1.2"
+                                                                  StrokeStartLineCap="Round"
+                                                                  StrokeEndLineCap="Round"
+                                                                  VerticalAlignment="Top" />
+                                                        </Grid>
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="Chrome" Property="Background"
+                                                                    Value="{DynamicResource RibbonKit.Brushes.TabStrip.ControlHoverBackground}" />
+                                                        </Trigger>
+                                                        <Trigger Property="IsChecked" Value="True">
+                                                            <Setter TargetName="Chrome" Property="Background"
+                                                                    Value="{DynamicResource RibbonKit.Brushes.TabStrip.ControlHoverBackground}" />
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </ToggleButton.Style>
+                            </ToggleButton>
+                            <ItemsPresenter />
+                        </DockPanel>
+                        <!-- A Popup has no layout footprint, so it can sit in the same cell. -->
+                        <!-- StaysOpen=True + explicit dismissal (PopupDismissHelper), the house
+                             rule for every RibbonKit flyout: WPF's own light-dismiss captures the
+                             mouse and races the opener button, so a second click on » would close
+                             and immediately reopen the flyout. -->
+                        <Popup x:Name="PART_OverflowPopup"
+                               AllowsTransparency="True"
+                               StaysOpen="True"
+                               Placement="Bottom"
+                               HorizontalOffset="-4"
+                               PlacementTarget="{Binding ElementName=PART_OverflowButton}"
+                               IsOpen="{Binding IsChecked, ElementName=PART_OverflowButton, Mode=TwoWay}">
+                            <Border Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
+                                    BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
+                                    BorderThickness="1"
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.PopupCornerRadius}"
+                                    Padding="4"
+                                    Margin="4,2,8,8"
+                                    MinWidth="160">
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="8" ShadowDepth="2" Opacity="0.25" />
+                                </Border.Effect>
+                                <ItemsControl x:Name="PART_OverflowHost" Focusable="False">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Vertical" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                </ItemsControl>
+                            </Border>
+                        </Popup>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <Style x:Key="RibbonKit.ScrollLeftButton" TargetType="{x:Type RepeatButton}">
         <Setter Property="Width" Value="22" />
         <Setter Property="Focusable" Value="False" />
@@ -219,10 +364,29 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
+                            <!-- Left end of the tab strip row: the merged-caption icon (only while
+                                 a caption is docked — classic MDI puts a maximized child's system
+                                 icon here) followed by the application button. Grouped in a stack
+                                 so the icon needs no column of its own. -->
+                            <!-- Stretch, NOT Center: the application button has no VerticalAlignment
+                                 of its own, so it fills whatever height its parent gives it. Office
+                                 2013 draws it as a solid accent block that must run to the bottom
+                                 edge of the row to meet the body — centering this stack left a thin
+                                 gap under it. The caption icon inside centres itself explicitly. -->
+                            <StackPanel Grid.Column="0"
+                                        Orientation="Horizontal"
+                                        VerticalAlignment="Stretch">
+                            <Image x:Name="PART_MergedCaptionIcon"
+                                   Width="16"
+                                   Height="16"
+                                   Margin="8,4,2,0"
+                                   VerticalAlignment="Center"
+                                   Stretch="Uniform"
+                                   Source="{Binding MergedCaptionIcon, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
+                                   Visibility="{Binding HasMergedCaption, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}, Converter={StaticResource RibbonKit.BoolToVis}}" />
                             <!-- Application (File) button: opens the backstage; hidden
                                  when the hosting Ribbon has no Backstage assigned -->
                             <ToggleButton x:Name="ApplicationButton"
-                                          Grid.Column="0"
                                           Margin="{DynamicResource RibbonKit.Metrics.ApplicationButtonMargin}"
                                           Content="{Binding ApplicationButtonHeader, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
                                           IsChecked="{Binding IsBackstageOpen, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}, Mode=TwoWay}">
@@ -290,27 +454,30 @@
                                                          Value="{x:Null}">
                                                 <Setter Property="Visibility" Value="Collapsed" />
                                             </DataTrigger>
+                                            <!-- A modal tab (Print Preview) hides File entirely, like
+                                                 Word: the backstage is blocked in that mode, so leaving
+                                                 the button visible would offer a dead affordance. -->
+                                            <DataTrigger Binding="{Binding IsModal, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
+                                                         Value="True">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
                                 </ToggleButton.Style>
                             </ToggleButton>
+                            </StackPanel>
                             <!-- Quick access strip in the tab row (QuickAccessPosition=TabRow).
                                  ItemsSource is bound ONLY by the TabRow trigger below, never
                                  by default — the same live QAT UIElements can have only one
                                  parent, so exactly one host (tab-row or below-ribbon) may
                                  bind at a time. -->
-                            <ItemsControl x:Name="QatTabRowHost"
-                                          Grid.Column="1"
-                                          Focusable="False"
-                                          VerticalAlignment="Center"
-                                          Visibility="Collapsed"
-                                          Margin="2,4,4,0">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <StackPanel Orientation="Horizontal" />
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                            </ItemsControl>
+                            <controls:RibbonQuickAccessToolBar
+                                x:Name="QatTabRowHost"
+                                Grid.Column="1"
+                                VerticalAlignment="Center"
+                                Visibility="Collapsed"
+                                Margin="2,4,4,0"
+                                MaxWidth="{Binding QuickAccessMaxWidth, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}" />
                             <Grid Grid.Column="2">
                                 <!-- Tab strip in a horizontal scroller: when there are more tabs than
                                      fit, chevron buttons appear and scroll the strip. The gliding
@@ -355,9 +522,71 @@
                                               Command="{Binding ScrollRightCommand, ElementName=PART_TabScroll}"
                                               Visibility="{Binding CanScrollRight, ElementName=PART_TabScroll, Converter={StaticResource RibbonKit.BoolToVis}}" />
                             </Grid>
+                            <!-- Right end of the tab strip row: the modal-tab close affordance
+                                 (only while a modal tab is active) followed by the minimize
+                                 chevron. Grouped in a stack so neither needs its own column. -->
+                            <StackPanel Grid.Column="3"
+                                        Orientation="Horizontal"
+                                        VerticalAlignment="Center">
+                            <!-- Modal tab (Print Preview) close: leaves modal mode via the
+                                 ribbon's ExitModalCommand. Shows the tab's CloseButtonText when
+                                 set ("Close Print Preview"), otherwise a bare × glyph. Chrome
+                                 deliberately reuses the minimize chevron's TabStrip tokens, so
+                                 it themes correctly in 2024/2019/2013/2010 with no new tokens. -->
+                            <Button x:Name="PART_ModalClose"
+                                    Height="22"
+                                    Margin="0,6,2,0"
+                                    Padding="6,0"
+                                    VerticalAlignment="Center"
+                                    ToolTip="Close"
+                                    Content="{Binding ModalTab.CloseButtonText, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
+                                    Command="{Binding ExitModalCommand, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
+                                    Visibility="{Binding CanCloseModal, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}, Converter={StaticResource RibbonKit.BoolToVis}}">
+                                <Button.Style>
+                                    <Style TargetType="{x:Type Button}">
+                                        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.TabStrip.Foreground}" />
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="{x:Type Button}">
+                                                    <Border x:Name="Chrome"
+                                                            Background="Transparent"
+                                                            CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                                            SnapsToDevicePixels="True">
+                                                        <StackPanel Orientation="Horizontal"
+                                                                    VerticalAlignment="Center"
+                                                                    Margin="{TemplateBinding Padding}">
+                                                            <Path x:Name="Glyph"
+                                                                  Data="M0,0 L8,8 M8,0 L0,8"
+                                                                  Stroke="{TemplateBinding Foreground}"
+                                                                  StrokeThickness="1.4"
+                                                                  StrokeStartLineCap="Round"
+                                                                  StrokeEndLineCap="Round"
+                                                                  VerticalAlignment="Center" />
+                                                            <ContentPresenter x:Name="Label"
+                                                                              Margin="6,0,0,0"
+                                                                              VerticalAlignment="Center"
+                                                                              TextElement.Foreground="{TemplateBinding Foreground}" />
+                                                        </StackPanel>
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="Chrome" Property="Background"
+                                                                    Value="{DynamicResource RibbonKit.Brushes.TabStrip.ControlHoverBackground}" />
+                                                        </Trigger>
+                                                        <!-- No CloseButtonText: icon-only, so the
+                                                             label must not reserve its margin. -->
+                                                        <Trigger Property="Content" Value="{x:Null}">
+                                                            <Setter TargetName="Label" Property="Visibility" Value="Collapsed" />
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
                             <!-- Minimize chevron: toggles Ribbon.IsMinimized -->
                             <ToggleButton x:Name="MinimizeToggle"
-                                          Grid.Column="3"
                                           Width="24" Height="22"
                                           Margin="0,6,8,0"
                                           VerticalAlignment="Center"
@@ -405,9 +634,63 @@
                                                 </ControlTemplate>
                                             </Setter.Value>
                                         </Setter>
+                                        <!-- Triggers come AFTER every setter: a Style.Triggers
+                                             block sitting between setters is a MC3088 build error. -->
+                                        <Style.Triggers>
+                                            <!-- Minimizing is blocked while a modal tab owns the
+                                                 ribbon, so the chevron goes away with it. -->
+                                            <DataTrigger Binding="{Binding IsModal, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
+                                                         Value="True">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
                                     </Style>
                                 </ToggleButton.Style>
                             </ToggleButton>
+                            <!-- Merged-caption window buttons (classic MDI's maximized child).
+                                 Visible only while a caption is docked; the ribbon reports the
+                                 press and the host decides what it means. Placed AFTER the
+                                 minimize chevron so they sit at the very end of the row, where
+                                 window buttons belong. -->
+                            <Button x:Name="PART_MergedCaptionMinimize"
+                                    Style="{StaticResource RibbonKit.MergedCaptionButton}"
+                                    ToolTip="Minimize Window"
+                                    CommandParameter="{x:Static controls:RibbonMergedCaptionAction.Minimize}"
+                                    Visibility="{Binding HasMergedCaption, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}, Converter={StaticResource RibbonKit.BoolToVis}}">
+                                <Rectangle Width="9" Height="1"
+                                           Fill="{DynamicResource RibbonKit.Brushes.TabStrip.Foreground}" />
+                            </Button>
+                            <Button x:Name="PART_MergedCaptionRestore"
+                                    Style="{StaticResource RibbonKit.MergedCaptionButton}"
+                                    ToolTip="Restore Window"
+                                    CommandParameter="{x:Static controls:RibbonMergedCaptionAction.Restore}"
+                                    Visibility="{Binding HasMergedCaption, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}, Converter={StaticResource RibbonKit.BoolToVis}}">
+                                <!-- Two offset outlines: the classic "restore down" glyph. -->
+                                <Grid Width="10" Height="10">
+                                    <Rectangle Width="7" Height="7"
+                                               HorizontalAlignment="Right" VerticalAlignment="Top"
+                                               Stroke="{DynamicResource RibbonKit.Brushes.TabStrip.Foreground}"
+                                               StrokeThickness="1" />
+                                    <Rectangle Width="7" Height="7"
+                                               HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                                               Fill="{DynamicResource RibbonKit.Brushes.Ribbon.Background}"
+                                               Stroke="{DynamicResource RibbonKit.Brushes.TabStrip.Foreground}"
+                                               StrokeThickness="1" />
+                                </Grid>
+                            </Button>
+                            <Button x:Name="PART_MergedCaptionClose"
+                                    Style="{StaticResource RibbonKit.MergedCaptionButton}"
+                                    Margin="0,6,8,0"
+                                    ToolTip="Close Window"
+                                    CommandParameter="{x:Static controls:RibbonMergedCaptionAction.Close}"
+                                    Visibility="{Binding MergedCaptionCanClose, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}, Converter={StaticResource RibbonKit.BoolToVis}}">
+                                <Path Data="M0,0 L8,8 M8,0 L0,8"
+                                      Stroke="{DynamicResource RibbonKit.Brushes.TabStrip.Foreground}"
+                                      StrokeThickness="1.4"
+                                      StrokeStartLineCap="Round"
+                                      StrokeEndLineCap="Round" />
+                            </Button>
+                            </StackPanel>
                         </Grid>
                         <!-- Ribbon body. Office 2024/365 renders it as a floating rounded
                              "card" (inset margin, rounded on all corners, bordered all
@@ -1311,7 +1594,13 @@
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type controls:RibbonDropDownButton}">
                     <Grid>
+                        <!-- HorizontalContentAlignment forwarded from the drop-down so a host can
+                             left-align the icon+label instead of centring it. Default stays Center
+                             (Control's own default), so nothing in the ribbon changes; the quick
+                             access OVERFLOW flyout opts in, where a centred drop-down looked like a
+                             different kind of control from the plain buttons stacked beside it. -->
                         <ToggleButton x:Name="PART_Toggle"
+                                      HorizontalContentAlignment="{Binding HorizontalContentAlignment, RelativeSource={RelativeSource TemplatedParent}}"
                                       IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
                             <ToggleButton.Style>
                                 <Style TargetType="{x:Type ToggleButton}">
@@ -1324,7 +1613,7 @@
                                                         CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
                                                         Margin="1"
                                                         SnapsToDevicePixels="True">
-                                                    <ContentPresenter HorizontalAlignment="Center"
+                                                    <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                                                       VerticalAlignment="Center" />
                                                 </Border>
                                                 <ControlTemplate.Triggers>
@@ -1512,8 +1801,11 @@
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
+                        <!-- Same forwarding as the drop-down's PART_Toggle: lets the overflow
+                             flyout left-align a split button's icon+label. Default unchanged. -->
                         <Button x:Name="PART_Primary"
                                 Grid.Column="0"
+                                HorizontalContentAlignment="{Binding HorizontalContentAlignment, RelativeSource={RelativeSource TemplatedParent}}"
                                 Command="{TemplateBinding Command}"
                                 CommandParameter="{TemplateBinding CommandParameter}">
                             <Button.Style>
@@ -1527,7 +1819,7 @@
                                                         CornerRadius="{DynamicResource RibbonKit.Metrics.SplitLeftCornerRadius}"
                                                         Margin="1,1,0,1"
                                                         SnapsToDevicePixels="True">
-                                                    <ContentPresenter HorizontalAlignment="Center"
+                                                    <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                                                       VerticalAlignment="Center" />
                                                 </Border>
                                                 <ControlTemplate.Triggers>

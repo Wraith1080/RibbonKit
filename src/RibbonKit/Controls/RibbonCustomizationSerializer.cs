@@ -69,9 +69,24 @@ public static class RibbonCustomizationSerializer
             return; // Corrupt/foreign string — leave the ribbon as-is.
         }
 
-        if (layout is not null)
+        if (layout is null)
+        {
+            return;
+        }
+
+        // ApplyLayout clears and rebuilds Ribbon.Tabs, which would strand merged tabs at the end
+        // with stale merge records. Take every merge source out first and put it back after —
+        // simpler than re-asserting positions inside a collection that was cleared underneath the
+        // merge service, and customization is a rare, user-initiated operation
+        // (docs/06-MERGE-AND-MODAL-PLAN.md §5.3).
+        List<RibbonMergeSource> merged = ribbon.UnmergeAllForRebuild();
+        try
         {
             ApplyLayout(ribbon, layout);
+        }
+        finally
+        {
+            ribbon.RemergeAfterRebuild(merged);
         }
     }
 
@@ -89,6 +104,15 @@ public static class RibbonCustomizationSerializer
                 continue; // App-driven visibility; never persisted.
             }
 
+            // Merged tabs belong to a transient child (an MDI document, a plug-in). Persisting
+            // their order or visibility would restore stale state into a ribbon whose source is
+            // gone — and a group a source contributed into a HOST tab would come back as a user
+            // customization, which is worse. Skip both (plan §5.2).
+            if (Ribbon.GetIsMerged(tab))
+            {
+                continue;
+            }
+
             string? tabId = Ribbon.GetCommandId(tab);
             bool tabCustom = Ribbon.GetIsCustom(tab);
             if (!tabCustom && tabId is null)
@@ -101,11 +125,23 @@ public static class RibbonCustomizationSerializer
                 Id = tabId,
                 IsCustom = tabCustom,
                 Header = tab.Header?.ToString(),
-                Visible = tab.Visibility == Visibility.Visible,
+                // NOT tab.Visibility: a modal tab hides every other tab with Visibility, so
+                // capturing the live value while Print Preview is open would persist the whole
+                // ribbon as hidden and restore a one-tab ribbon on the next run. The ribbon
+                // reports the pre-modal ("authored") value here.
+                Visible = ribbon.GetAuthoredVisibility(tab) == Visibility.Visible,
             };
 
             foreach (RibbonGroup group in tab.Groups)
             {
+                // A group a merge source injected into this HOST tab must not be captured as part
+                // of the tab's layout — on restore it would be re-created as a user customization
+                // belonging to a child that may not even be loaded (plan §5.2).
+                if (Ribbon.GetIsMerged(group))
+                {
+                    continue;
+                }
+
                 string? groupId = Ribbon.GetCommandId(group);
                 bool groupCustom = Ribbon.GetIsCustom(group);
                 if (!groupCustom && groupId is null)
@@ -155,6 +191,14 @@ public static class RibbonCustomizationSerializer
         foreach (object item in ribbon.QuickAccessItems)
         {
             if (item is not FrameworkElement element)
+            {
+                continue;
+            }
+
+            // Proxies of a merge source's commands are never persisted: the source may not be
+            // present on the next run, and the proxy would restore pointing at nothing. They are
+            // parked (disabled) rather than deleted while the source is away — plan §5.4.
+            if (Ribbon.GetMergeSource(element) is not null)
             {
                 continue;
             }
