@@ -42,6 +42,7 @@ public class RibbonQuickAccessToolBar : ItemsControl
     private ToggleButton? _overflowButton;
     private Popup? _overflowPopup;
     private ItemsControl? _overflowHost;
+    private PopupDismissHelper? _dismiss;
     private bool _overflowUpdatePending;
 
     static RibbonQuickAccessToolBar()
@@ -75,6 +76,15 @@ public class RibbonQuickAccessToolBar : ItemsControl
         _overflowButton = GetTemplateChild("PART_OverflowButton") as ToggleButton;
         _overflowPopup = GetTemplateChild("PART_OverflowPopup") as Popup;
         _overflowHost = GetTemplateChild("PART_OverflowHost") as ItemsControl;
+
+        // The flyout is StaysOpen=True and dismissed explicitly, like every other RibbonKit popup.
+        // With WPF's own light-dismiss, clicking the » button a SECOND time does nothing visible:
+        // the popup's mouse capture closes it on mouse-DOWN (clearing IsChecked), then the button's
+        // click sets IsChecked back to true and it reopens. Excluding the button from the dismiss
+        // walk leaves its own toggle as the single owner of open/close.
+        _dismiss = _overflowButton is null
+            ? null
+            : new PopupDismissHelper(_overflowButton, () => _overflowPopup, CloseOverflow);
 
         if (_overflowPopup is not null)
         {
@@ -121,6 +131,8 @@ public class RibbonQuickAccessToolBar : ItemsControl
 
     private void OnOverflowOpened(object? sender, EventArgs e)
     {
+        _dismiss?.OnOpened();
+
         if (_overflowHost is null)
         {
             return;
@@ -158,6 +170,8 @@ public class RibbonQuickAccessToolBar : ItemsControl
 
     private void OnOverflowClosed(object? sender, EventArgs e)
     {
+        _dismiss?.OnClosed();
+
         // Proxies are rebuilt per open: they're cheap, and holding them would keep handlers alive
         // on commands whose source may have been removed from the toolbar in the meantime.
         if (_overflowHost?.ItemsSource is IEnumerable<object> entries)
@@ -177,7 +191,11 @@ public class RibbonQuickAccessToolBar : ItemsControl
         }
     }
 
-    private void OnOverflowEntryInvoked(object sender, RoutedEventArgs e)
+    private void OnOverflowEntryInvoked(object sender, RoutedEventArgs e) => CloseOverflow();
+
+    // Always closes through the BUTTON's IsChecked, never the popup's IsOpen: the two are bound
+    // two-way, and driving the popup directly would leave the button stuck looking pressed.
+    private void CloseOverflow()
     {
         if (_overflowButton is not null)
         {
@@ -185,7 +203,7 @@ public class RibbonQuickAccessToolBar : ItemsControl
         }
         else if (_overflowPopup is not null)
         {
-            _overflowPopup.IsOpen = false;
+            _overflowPopup.SetCurrentValue(Popup.IsOpenProperty, false);
         }
     }
 }

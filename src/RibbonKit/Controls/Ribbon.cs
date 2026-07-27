@@ -1193,6 +1193,9 @@ public class Ribbon : Control
     private RibbonQuickAccessToolBar? _titleBarQatHost;
     private object? _savedTitleBarContent;
     private System.Windows.Controls.ContextMenu? _qatContextMenu;
+
+    // Coalesces the deferred selection-visual refresh triggered by the tab-row QAT resizing.
+    private bool _selectionVisualsPending;
     private System.Windows.Controls.MenuItem? _qatTitleBarItem;
     private System.Windows.Controls.MenuItem? _qatAboveItem;
     private System.Windows.Controls.MenuItem? _qatBelowItem;
@@ -1561,6 +1564,7 @@ public class Ribbon : Control
         if (GetTemplateChild("QatTabRowHost") is FrameworkElement tabRowHost)
         {
             AttachQatContextMenu(tabRowHost);
+            TrackTabRowQatSize(tabRowHost);
         }
 
         if (GetTemplateChild("QatBelowHost") is FrameworkElement belowHost)
@@ -1592,6 +1596,7 @@ public class Ribbon : Control
         if (FindDescendantByName(this, "QatTabRowHost") is { ContextMenu: null } tabRowHost)
         {
             AttachQatContextMenu(tabRowHost);
+            TrackTabRowQatSize(tabRowHost);
         }
 
         // React to accent / colored-title-bar / theme changes so the QAT icons + hover keep
@@ -1832,6 +1837,15 @@ public class Ribbon : Control
         }
 
         UpdateQatButtonContext();
+
+        // The quick access strip entering or leaving the TAB ROW slides every tab header, so the
+        // sliding underline and the 2010/2013 connect notch have to be re-placed.
+        //
+        // SizeChanged does NOT cover this, which is why it needs its own call: the placement
+        // triggers toggle the tab-row host's VISIBILITY, and a Collapsed element is skipped by
+        // layout entirely — it is never measured, keeps its stale RenderSize, and raises no
+        // SizeChanged going either way.
+        RequestSelectionVisualsRefresh();
     }
 
     private RibbonQuickAccessToolBar CreateTitleBarQatHost()
@@ -1906,6 +1920,52 @@ public class Ribbon : Control
     /// which quick-access item (if any) was under the cursor — the menu itself is shared,
     /// so the target must be captured per-open.
     /// </summary>
+    /// <summary>
+    /// Watches the tab-row quick access strip's size so the selection visuals follow it.
+    /// </summary>
+    /// <remarks>
+    /// The strip is a SIBLING of the tab strip in the same row, so anything that changes its width
+    /// slides every tab header sideways: the QAT moving into or out of the tab row, items being
+    /// added or removed, the overflow button appearing. None of that changes the tab control's own
+    /// size, so nothing re-places the sliding underline or the 2010/2013 connect notch — see
+    /// <see cref="RefreshSelectionVisuals"/>. Handling it here covers every cause at once.
+    /// </remarks>
+    private void TrackTabRowQatSize(FrameworkElement tabRowHost)
+    {
+        tabRowHost.SizeChanged -= OnTabRowQatSizeChanged;
+        tabRowHost.SizeChanged += OnTabRowQatSizeChanged;
+    }
+
+    private void OnTabRowQatSizeChanged(object sender, SizeChangedEventArgs e) =>
+        RequestSelectionVisualsRefresh();
+
+    /// <summary>
+    /// Queues a selection-visual refresh for after the next layout pass, coalescing repeats.
+    /// </summary>
+    /// <remarks>
+    /// Deferred rather than immediate for two reasons: <c>SizeChanged</c> fires DURING layout and
+    /// <see cref="RefreshSelectionVisuals"/> forces a layout pass, so running it inline would
+    /// re-enter layout from inside layout; and quick-access placement re-parents its items
+    /// asynchronously, so the strip's final width isn't known until that settles.
+    /// <c>Loaded</c> priority is below <c>Render</c>, which is what makes it "after layout".
+    /// </remarks>
+    private void RequestSelectionVisualsRefresh()
+    {
+        if (_selectionVisualsPending)
+        {
+            return;
+        }
+
+        _selectionVisualsPending = true;
+        Dispatcher.BeginInvoke(
+            System.Windows.Threading.DispatcherPriority.Loaded,
+            (Action)(() =>
+            {
+                _selectionVisualsPending = false;
+                RefreshSelectionVisuals();
+            }));
+    }
+
     private void AttachQatContextMenu(FrameworkElement host)
     {
         host.ContextMenu = EnsureQatContextMenu();

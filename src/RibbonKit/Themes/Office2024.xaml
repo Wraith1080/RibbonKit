@@ -131,9 +131,13 @@
                             <ItemsPresenter />
                         </DockPanel>
                         <!-- A Popup has no layout footprint, so it can sit in the same cell. -->
+                        <!-- StaysOpen=True + explicit dismissal (PopupDismissHelper), the house
+                             rule for every RibbonKit flyout: WPF's own light-dismiss captures the
+                             mouse and races the opener button, so a second click on » would close
+                             and immediately reopen the flyout. -->
                         <Popup x:Name="PART_OverflowPopup"
                                AllowsTransparency="True"
-                               StaysOpen="False"
+                               StaysOpen="True"
                                Placement="Bottom"
                                HorizontalOffset="-4"
                                PlacementTarget="{Binding ElementName=PART_OverflowButton}"
