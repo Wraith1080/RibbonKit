@@ -368,9 +368,14 @@
                                  a caption is docked — classic MDI puts a maximized child's system
                                  icon here) followed by the application button. Grouped in a stack
                                  so the icon needs no column of its own. -->
+                            <!-- Stretch, NOT Center: the application button has no VerticalAlignment
+                                 of its own, so it fills whatever height its parent gives it. Office
+                                 2013 draws it as a solid accent block that must run to the bottom
+                                 edge of the row to meet the body — centering this stack left a thin
+                                 gap under it. The caption icon inside centres itself explicitly. -->
                             <StackPanel Grid.Column="0"
                                         Orientation="Horizontal"
-                                        VerticalAlignment="Center">
+                                        VerticalAlignment="Stretch">
                             <Image x:Name="PART_MergedCaptionIcon"
                                    Width="16"
                                    Height="16"
