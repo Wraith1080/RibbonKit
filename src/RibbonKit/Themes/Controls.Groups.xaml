@@ -244,10 +244,35 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
 
-                        <!-- Normal (expanded) content. The inner grid is re-homed into
-                             the flyout by RibbonGroup while the popup is open. -->
-                        <Decorator x:Name="PART_NormalHost" Grid.Column="0">
-                            <Grid Margin="4,2,4,0">
+                        <!-- GROUP BOX. Office 2007 draws every group as a bordered, rounded box
+                             with a light rim just inside the border and a shaded label band at its
+                             foot; every later generation uses a bare surface with a 1px separator
+                             between groups instead. Both looks are this one tree: the flat themes
+                             set Group.Background/Border/InnerHighlight/LabelBackground to
+                             Transparent and the metrics to 0, so the borders collapse and nothing
+                             but 2007 shows a box.
+
+                             The box sits OUTSIDE PART_NormalHost on purpose. RibbonGroup re-homes
+                             the host's Child into the flyout while a collapsed group is open, so
+                             keeping the box out here means the flyout receives bare content and
+                             never draws a box inside a popup that already has its own chrome. -->
+                        <Border x:Name="GroupBox"
+                                Grid.Column="0"
+                                Margin="{DynamicResource RibbonKit.Metrics.GroupMargin}"
+                                Background="{DynamicResource RibbonKit.Brushes.Group.Background}"
+                                BorderBrush="{DynamicResource RibbonKit.Brushes.Group.Border}"
+                                BorderThickness="{DynamicResource RibbonKit.Metrics.GroupBorderThickness}"
+                                CornerRadius="{DynamicResource RibbonKit.Metrics.GroupCornerRadius}"
+                                SnapsToDevicePixels="True">
+                            <!-- Light rim nested just inside the outer border — the same trick the
+                                 button glass uses via Control.InnerGlow. Its Padding is the inset
+                                 from the box edge to the content; the flat themes leave it 0 and
+                                 keep their spacing in GroupMargin, exactly as before. -->
+                            <Border BorderBrush="{DynamicResource RibbonKit.Brushes.Group.InnerHighlight}"
+                                    BorderThickness="{DynamicResource RibbonKit.Metrics.GroupBorderThickness}"
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.GroupCornerRadius}">
+                            <Decorator x:Name="PART_NormalHost">
+                            <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="*" />
                                     <RowDefinition Height="Auto" />
@@ -262,10 +287,19 @@
                                      when the content is the widest thing in the group, Center and
                                      Stretch arrange identically, so multi-control groups are unaffected.
                                      Set ContentAlignment="Left" on a group to left-pack it instead. -->
+                                <!-- GroupPadding insets the CONTENT only, never the label band:
+                                     the band has to run the full width of the box or it reads as a
+                                     floating stripe. Flat themes leave it 0. -->
                                 <ItemsPresenter Grid.Row="0"
+                                                Margin="{DynamicResource RibbonKit.Metrics.GroupPadding}"
                                                 HorizontalAlignment="{TemplateBinding ContentAlignment}"
                                                 VerticalAlignment="Center" />
-                                <Grid Grid.Row="1" Margin="2,3,2,4">
+                                <!-- Label band. Transparent in every theme but 2007, where it is a
+                                     shaded strip across the foot of the box. -->
+                                <Border Grid.Row="1"
+                                        Background="{DynamicResource RibbonKit.Brushes.Group.LabelBackground}"
+                                        CornerRadius="{DynamicResource RibbonKit.Metrics.GroupLabelCornerRadius}">
+                                <Grid Margin="2,3,2,4">
                                     <!-- Group name centered over the WHOLE group, with the ↘ launcher
                                          pinned to the right. Three columns: a left spacer that mirrors
                                          the launcher's width (so the name stays truly centered, not
@@ -332,14 +366,21 @@
                                         </Button.Style>
                                     </Button>
                                 </Grid>
+                                </Border>
                             </Grid>
-                        </Decorator>
+                            </Decorator>
+                            </Border>
+                        </Border>
 
                         <!-- Collapsed representation: one button with icon, name, chevron.
                              The style is inlined so it can never miss a resource lookup. -->
+                        <!-- Margin is tokenised so the collapsed button can line up EXACTLY with the
+                             expanded group boxes on either side. It has its own key rather than
+                             reusing GroupMargin because the collapsed button's width feeds the
+                             reduction algorithm, so the older themes must keep their historic 1px. -->
                         <ToggleButton x:Name="PART_CollapsedButton"
                                       Grid.Column="0"
-                                      Margin="1"
+                                      Margin="{DynamicResource RibbonKit.Metrics.GroupCollapsedMargin}"
                                       Visibility="Collapsed">
                             <ToggleButton.Style>
                                 <Style TargetType="{x:Type ToggleButton}">
@@ -349,6 +390,22 @@
                                     <Setter Property="Template">
                                         <Setter.Value>
                                             <ControlTemplate TargetType="{x:Type ToggleButton}">
+                                                <!-- Same group box as an expanded group, so collapsed
+                                                     and expanded groups read as one row. Chrome keeps
+                                                     its own hover/press border untouched: that border
+                                                     thickness is statically reserved (see 04-DESIGN-
+                                                     NOTES §3.27, fifth pass) and swapping it for the
+                                                     group metric would bring the 1px hover jitter back
+                                                     in Office 2010. -->
+                                                <Border x:Name="CollapsedGroupBox"
+                                                        Background="{DynamicResource RibbonKit.Brushes.Group.Background}"
+                                                        BorderBrush="{DynamicResource RibbonKit.Brushes.Group.Border}"
+                                                        BorderThickness="{DynamicResource RibbonKit.Metrics.GroupBorderThickness}"
+                                                        CornerRadius="{DynamicResource RibbonKit.Metrics.GroupCornerRadius}"
+                                                        SnapsToDevicePixels="True">
+                                                <Border BorderBrush="{DynamicResource RibbonKit.Brushes.Group.InnerHighlight}"
+                                                        BorderThickness="{DynamicResource RibbonKit.Metrics.GroupBorderThickness}"
+                                                        CornerRadius="{DynamicResource RibbonKit.Metrics.GroupCornerRadius}">
                                                 <Border x:Name="Chrome"
                                                         Background="Transparent"
                                                         BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
@@ -356,6 +413,8 @@
                                                         SnapsToDevicePixels="True">
                                                     <ContentPresenter HorizontalAlignment="Center"
                                                                       VerticalAlignment="Center" />
+                                                </Border>
+                                                </Border>
                                                 </Border>
                                                 <ControlTemplate.Triggers>
                                                     <Trigger Property="IsMouseOver" Value="True">
@@ -427,13 +486,21 @@
                             </AdornerDecorator>
                         </Popup>
 
+                        <!-- Opacity, not Width or a Transparent brush: the brush is shared with the
+                             menu separator and the gallery hover border, and zeroing the Width would
+                             shift group spacing. Office 2007 sets the opacity to 0. -->
                         <Rectangle Grid.Column="1"
                                    Width="1"
                                    Margin="1,10"
+                                   Opacity="{DynamicResource RibbonKit.Metrics.GroupSeparatorOpacity}"
                                    Fill="{DynamicResource RibbonKit.Brushes.Group.Separator}" />
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="SizeState" Value="Collapsed">
+                            <!-- Hide the BOX, not just the host inside it: the box is now the outer
+                                 element, so hiding only the host would leave an empty box drawn
+                                 behind the collapsed button. -->
+                            <Setter TargetName="GroupBox" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="PART_NormalHost" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="PART_CollapsedButton" Property="Visibility" Value="Visible" />
                         </Trigger>

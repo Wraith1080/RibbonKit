@@ -72,10 +72,35 @@
          a theme can drop the top to 0 to let the tabs meet the title bar. -->
     <Thickness x:Key="RibbonKit.Metrics.TabStripMargin">2,4,4,0</Thickness>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Group.Separator" Color="#E0E0E0" />
+    <!-- 1 = the separator is drawn, as it always has been in this theme. -->
+    <system:Double x:Key="RibbonKit.Metrics.GroupSeparatorOpacity">1</system:Double>
+
+    <!-- Group box (Office 2007 only). This generation draws each group as a bordered, rounded box
+         with a light inner rim and a shaded label band; every later generation uses a bare surface
+         with a 1px separator between groups. The shared template carries both, so the flat themes
+         zero these keys and the box collapses to nothing. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Group.Background" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Group.Border" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Group.InnerHighlight" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Group.LabelBackground" Color="Transparent" />
+    <Thickness x:Key="RibbonKit.Metrics.GroupBorderThickness">0</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.GroupCornerRadius">0</CornerRadius>
+        <!-- Group outer gap / inner content inset. These reproduce the historic hard-coded
+         Margin="4,2,4,0" exactly, so this theme is unchanged. -->
+    <!-- Groups-row inset / collapsed-group button margin. These reproduce the previous
+         hard-coded values (Margin="6,2" on the content scroller, Margin="1" on the collapsed
+         button) exactly, so this theme is unchanged. -->
+    <Thickness x:Key="RibbonKit.Metrics.GroupsRowMargin">6,2</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.GroupCollapsedMargin">1</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.GroupMargin">4,2,4,0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.GroupPadding">0</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.GroupLabelCornerRadius">0</CornerRadius>
     <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.Background" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.Border" Color="#D1D1D1" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemHoverBackground" Color="#2B7FC7" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemSelectedBackground" Color="#0A5799" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.NavBackground" Color="Transparent" />
+    <system:Double x:Key="RibbonKit.Metrics.BackstageBackButtonSize">36</system:Double>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ContentBackground" Color="#FFFFFF" />
     <!-- Classic2010 selected-item glass marker + dialog primary (OK) button fill. Non-2010
          themes keep a flat accent OK button (only the 2010 theme swaps in a glass gel). -->
@@ -116,6 +141,34 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverUnderline" Color="#B8B8B8" />
     <!-- No File-button border (Office 2010 uses one). -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.Border" Color="Transparent" />
+    <!-- Orb tokens. This theme uses the rectangular File tab, so these only matter if an app opts
+         into Ribbon.ApplicationButtonShape = Orb anyway. Kept at the 2007 geometry minus the
+         overhang, so an orb here sits neatly inside the tab strip. -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.ApplicationOrb.Background" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#FBFCFD" />
+        <GradientStop Offset="0.5" Color="#DDE4EC" />
+        <GradientStop Offset="1" Color="#FFFFFF" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.ApplicationOrb.HoverBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#FFFEFC" />
+        <GradientStop Offset="0.5" Color="#F7C93E" />
+        <GradientStop Offset="1" Color="#FDFAB7" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.ApplicationOrb.PressedBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#F5D98A" />
+        <GradientStop Offset="0.5" Color="#D8931A" />
+        <GradientStop Offset="1" Color="#F7D06A" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationOrb.Ring" Color="#F0F4F9" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationOrb.HoverRing" Color="#FFEA37" />
+    <DropShadowEffect x:Key="RibbonKit.Effects.ApplicationOrbShadow"
+                      BlurRadius="5" ShadowDepth="1" Direction="270"
+                      Opacity="0.5" Color="#2E4257" RenderingBias="Quality" />
+    <!-- Left inset of the title-bar QAT; reproduces the previous hard-coded 2,0,6,0. -->
+    <Thickness x:Key="RibbonKit.Metrics.TitleBarQatMargin">2,0,6,0</Thickness>
+    <system:Double x:Key="RibbonKit.Metrics.ApplicationOrbSize">46</system:Double>
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationOrbMargin">2,0,6,0</Thickness>
+
     <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonBorderThickness">0</Thickness>
 
     <system:Double x:Key="RibbonKit.Metrics.GroupsRowHeight">104</system:Double>

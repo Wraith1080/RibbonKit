@@ -1,0 +1,393 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:system="clr-namespace:System;assembly=System.Runtime">
+
+    <!-- ============================================================
+         Office 2007 ("Blue") token palette. Same 95 keys as the other
+         themes. This is the OLDEST generation RibbonKit ships and the
+         glossiest: where 2010 softened its highlights into smooth
+         gradients, 2007 is aggressive GLASS — every hot state is a
+         four-stop gel with a HARD CREASE (two GradientStops at the same
+         Offset, giving an instant colour step).
+
+         Two traits separate it from 2010, and both come from measuring
+         real Office 2007 screenshots (see docs/07-OFFICE-2007-THEME-PLAN.md):
+
+         1. THE VALLEY. The title bar and the ribbon body both run
+            light at the top, dip to a darker waist high up (17-28% down),
+            then lighten again toward the bottom. No other RibbonKit theme
+            does this, and it is the single strongest 2007 signal.
+         2. THE CREASE. Hover is gold, pressed is saturated orange, and
+            BOTH keep the same light/dark/light valley profile. Pressed
+            does NOT invert.
+
+         The tab strip is a FLAT solid (#BFDBFF), not a gradient, which is
+         confirmed identical in Aero and non-Aero captures. Token keys are
+         Brushes, so a solid drops in wherever a gradient did.
+         ============================================================ -->
+
+    <!-- Tab-strip band: flat, opaque, and identical under Aero and non-Aero. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Background" Color="#BFDBFF" />
+    <!-- The ribbon body (groups area): the signature 2007 VALLEY. Light at the top,
+         darkest at 17% down, then lightening all the way to the bottom edge. -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Ribbon.ContentBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#DBE6F4" />
+        <GradientStop Offset="0.17" Color="#C8D9ED" />
+        <GradientStop Offset="1" Color="#E3F4FF" />
+    </LinearGradientBrush>
+    <!-- Medium blue outline around the ribbon body and the connected active tab. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Border" Color="#8DB2E3" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Primary" Color="#1E1E1E" />
+    <!-- 2007 group labels are BLUE, not grey (unlike every later generation). -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Secondary" Color="#15428B" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Accent" Color="#1E5A9C" />
+
+    <!-- ============================================================
+         THE GLASS. Measured off an 82px-tall large button.
+         Each gel is: pale top, HARD CREASE at the duplicated offset,
+         darkest band just below it, then lightening to a specular bottom.
+         ============================================================ -->
+    <!-- Hover: gold. Crease at 0.38. -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Control.HoverBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#FFFFF7" />
+        <GradientStop Offset="0.38" Color="#FFE798" />
+        <GradientStop Offset="0.38" Color="#FFD758" />
+        <GradientStop Offset="0.48" Color="#FFD350" />
+        <GradientStop Offset="1" Color="#FFE89F" />
+    </LinearGradientBrush>
+    <!-- Pressed: saturated ORANGE. Same valley shape, more saturated from the top down.
+         NOTE: this does not invert. The 2010 write-up claimed 2007 pressed was recessed
+         (dark at top); measurement says otherwise. Crease at 0.40. -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Control.PressedBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#FEB96C" />
+        <GradientStop Offset="0.40" Color="#FDA461" />
+        <GradientStop Offset="0.40" Color="#FC8F3D" />
+        <GradientStop Offset="0.63" Color="#FC973D" />
+        <GradientStop Offset="1" Color="#FEBE63" />
+    </LinearGradientBrush>
+    <!-- Toggled (checked): sits between hover and pressed, a steady saturated gold. -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Control.CheckedBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#FFF3D2" />
+        <GradientStop Offset="0.38" Color="#FFDE84" />
+        <GradientStop Offset="0.38" Color="#FFCB43" />
+        <GradientStop Offset="0.48" Color="#FFC739" />
+        <GradientStop Offset="1" Color="#FFDC8A" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Control.CheckedHoverBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#FFEEC0" />
+        <GradientStop Offset="0.38" Color="#FFD670" />
+        <GradientStop Offset="0.38" Color="#FFC12E" />
+        <GradientStop Offset="0.48" Color="#FFBD26" />
+        <GradientStop Offset="1" Color="#FFD478" />
+    </LinearGradientBrush>
+    <!-- Outer glass borders, measured at the sides of each hot state. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.HoverBorder" Color="#C1A877" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.PressedBorder" Color="#B6A892" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CheckedBorder" Color="#C19A4B" />
+    <!-- Inner rim, drawn as a nested border inset by the outer one. Measured opaque per state
+         (#FFF2C7 on hover, #FDAD10 on pressed); a single semi-white token generalises to both,
+         reading cream over gold and light orange over orange. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.InnerGlow" Color="#AAFFFFFF" />
+    <Thickness x:Key="RibbonKit.Metrics.ControlHighlightBorderThickness">1</Thickness>
+
+    <!-- Contextual-tab band. In 2007 this is NOT a flat tint: it begins as the ordinary title
+         bar and fades into the group hue as it descends (yellow here, the Table Tools default).
+         Real 2007 also draws a 1px saturated edge line at the band's foot (#FDE41B); there is no
+         token for that yet, so it is deferred to S4 of the plan. The per-tab ContextualColor
+         still overrides this brush. -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Tab.ContextualBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#E3EBF6" />
+        <GradientStop Offset="0.3" Color="#CEDFED" />
+        <GradientStop Offset="0.7" Color="#E7EBD4" />
+        <GradientStop Offset="1" Color="#EEE583" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Tab.ContextualHoverBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#E8EFF8" />
+        <GradientStop Offset="0.3" Color="#D6E5F2" />
+        <GradientStop Offset="0.7" Color="#EDF0DA" />
+        <GradientStop Offset="1" Color="#F4EFA0" />
+    </LinearGradientBrush>
+
+    <!-- Dark-blue tab labels, shared with 2010. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.Foreground" Color="#15428B" />
+    <!-- Hover fill for chrome buttons sitting on the tab strip. -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.TabStrip.ControlHoverBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#F0F8FF" />
+        <GradientStop Offset="1" Color="#D5E8FF" />
+    </LinearGradientBrush>
+    <!-- Unselected tab hover: the same glass recipe as the buttons, lightened so the tab does
+         not shout louder than a hot button. 2007 uses fills, never underlines. -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Tab.HoverBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#FFFDF0" />
+        <GradientStop Offset="0.38" Color="#FFF0BC" />
+        <GradientStop Offset="0.38" Color="#FFE388" />
+        <GradientStop Offset="1" Color="#FFF0BE" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverUnderline" Color="Transparent" />
+    <!-- The active tab merges into the ribbon body. Its bottom stop (#DBE6F5) is the body's own
+         top colour (#DBE6F4) to within rounding, measured directly off a real 2007 window, so
+         the seam disappears where the tab covers the body's top border. -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Tab.SelectedBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#F0F6FF" />
+        <GradientStop Offset="0.08" Color="#F6FAFF" />
+        <GradientStop Offset="0.15" Color="#EBF3FE" />
+        <GradientStop Offset="1" Color="#DBE6F5" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedUnderline" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedForeground" Color="#15428B" />
+    <!-- Matches Ribbon.Border so the tab outline and the body outline read as one piece. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedBorderBrush" Color="#8DB2E3" />
+    <Thickness x:Key="RibbonKit.Metrics.TabSelectedBorderThickness">1,1,1,0</Thickness>
+    <!-- Retained for token parity; the connect is render-only via TabConnect, as in 2010. -->
+    <Thickness x:Key="RibbonKit.Metrics.TabSelectedMargin">0</Thickness>
+    <!-- Same render-only connect mechanism 2010 uses and that is already DPI-verified. -->
+    <TranslateTransform x:Key="RibbonKit.Transforms.TabConnect" Y="1" />
+    <!-- ConnectFoot colours = each tab state's bottom fill colour, so the 1px sliver continues
+         the tab over the body border seamlessly. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ConnectFootHover" Color="#FFF0BE" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ConnectFootSelected" Color="#DBE6F5" />
+    <!-- Body-border notch: the body gradient's TOP stop, so foot, notch and body read as one
+         continuous surface under the active tab. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ConnectNotch" Color="#DBE6F4" />
+    <!-- Contextual tabs: header tint only, no selection underline, no mute. -->
+    <system:Double x:Key="RibbonKit.Metrics.ContextualUnderlineHeight">0</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.ContextualUnselectedOpacity">1</system:Double>
+    <!-- File button metrics. These describe the RECTANGULAR fallback only: the real 2007 orb is
+         a round button that overhangs upward into the title bar, and it arrives in S3 with the
+         ApplicationButtonShape property. Until then the File tab renders as a compact blue block. -->
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonMargin">2,2,2,0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonPadding">18,7,18,9</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.TabStripMargin">2,2,4,0</Thickness>
+    <!-- ⚠ TRIPLE DUTY. Despite the name this brush also paints the MENU SEPARATOR
+         (Menus.xaml, RibbonKit.MenuSeparator) and the GALLERY ITEM HOVER BORDER
+         (Controls.Galleries.xaml). Setting it Transparent to suppress 2007's ribbon group
+         separator silently deleted both of those. The ribbon separator is suppressed by
+         GroupSeparatorOpacity below instead; this keeps a real colour. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Group.Separator" Color="#9EBED9" />
+    <!-- 0 hides the RIBBON group separator without resizing anything: Office 2007 has no
+         separator (adjacent group BOXES do that job), but the brush above is still needed by the
+         menu separator and the gallery hover border, so it must NOT be made Transparent. Opacity
+         rather than Width so the 1px column stays and group spacing is unchanged. -->
+    <system:Double x:Key="RibbonKit.Metrics.GroupSeparatorOpacity">0</system:Double>
+
+    <!-- Group box. Measured off a real Office 2007 window: each group is a bordered rounded box
+         with a 1px light rim inside the border, and the label sits in its own shaded band at the
+         foot of the box (a clear step darker than the group body above it). This is why
+         Group.Separator is Transparent here: what looks like a divider in 2007 is simply two
+         adjacent box borders meeting. -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Group.Background" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#DEE8F5" />
+        <GradientStop Offset="0.16" Color="#C7D8ED" />
+        <GradientStop Offset="1" Color="#D9E8F6" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Group.Border" Color="#A8BFD4" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Group.InnerHighlight" Color="#E4ECF5" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Group.LabelBackground" Color="#C1D9F1" />
+    <Thickness x:Key="RibbonKit.Metrics.GroupBorderThickness">1</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.GroupCornerRadius">3</CornerRadius>
+    <!-- Bottom corners only, and 1px tighter than the box so the band tucks inside the rim. -->
+        <!-- Outer gap between neighbouring groups, and the inset from the box edge to the group's
+         content. 2007 packs its boxes almost edge to edge and takes its breathing room INSIDE the
+         box instead; the older generations keep the historic 4px outer inset and no padding. -->
+    <!-- Inset of the whole groups row inside the ribbon body, and the collapsed-group button's
+         own margin. 2007 packs the first group almost against the body border and needs its
+         collapsed button to line up exactly with the expanded group boxes beside it. -->
+    <Thickness x:Key="RibbonKit.Metrics.GroupsRowMargin">3,2</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.GroupCollapsedMargin">0,2,0,0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.GroupMargin">0,2,0,0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.GroupPadding">3,0,3,0</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.GroupLabelCornerRadius">0,0,2,2</CornerRadius>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.Background" Color="#FBFDFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.Border" Color="#8DB2E3" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemHoverBackground" Color="#2E6DB4" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemSelectedBackground" Color="#17457E" />
+    <!-- Backstage nav column for the glass (Classic2010) design. NOT Ribbon.Background: 2007's tab
+         strip is deliberately a FLAT solid, and reusing it left the nav a flat blue slab. The nav
+         wants the gradient the strip does not have. -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Backstage.NavBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#DCEAFB" />
+        <GradientStop Offset="0.45" Color="#BFDBFF" />
+        <GradientStop Offset="1" Color="#A3C6F0" />
+    </LinearGradientBrush>
+    <system:Double x:Key="RibbonKit.Metrics.BackstageBackButtonSize">46</system:Double>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ContentBackground" Color="#FFFFFF" />
+    <!-- Glass markers for the backstage selection and the dialog primary (OK) button. The
+         dedicated Classic2007 backstage design lands in S5; these carry the crease profile so
+         they already read as 2007 rather than 2010. -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Backstage.ItemSelectedGlass" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#6FB4E4" />
+        <GradientStop Offset="0.45" Color="#3585C6" />
+        <GradientStop Offset="0.45" Color="#1F5F9E" />
+        <GradientStop Offset="1" Color="#4A8FC8" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Dialog.PrimaryBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#6FB4E4" />
+        <GradientStop Offset="0.45" Color="#3585C6" />
+        <GradientStop Offset="0.45" Color="#1F63A6" />
+        <GradientStop Offset="1" Color="#4C93CD" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Dialog.PrimaryBorder" Color="#17578F" />
+    <!-- Caption buttons sit on the light valley title bar: blue-tinted glass hover. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.HoverBackground" Color="#C4D8EF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.PressedBackground" Color="#A6C4E6" />
+    <!-- Safety-net defaults for the QAT-on-colored-band wash; the Ribbon overrides both keys
+         per-button with the live caption/tab band brushes. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Qat.ColoredHoverBackground" Color="#2EFFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Qat.ColoredPressedBackground" Color="#4DFFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.CloseHoverBackground" Color="#E81123" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.ClosePressedBackground" Color="#F1707A" />
+
+    <!-- KeyTip badges: the small glassy chip of the 2007 era, blue-bordered with dark text. -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.KeyTip.Background" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#FDFEFF" />
+        <GradientStop Offset="1" Color="#DDE9F8" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.KeyTip.Border" Color="#8DB2E3" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.KeyTip.Foreground" Color="#1E1E1E" />
+
+    <!-- Title bar: the second VALLEY. Measured from a non-Aero capture, which is what Windows 11
+         will actually render; do NOT pair this theme with the Mica/Acrylic backdrop, which is a
+         2024-era feature and produces a hybrid that matches no real Office. -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.TitleBar.Background" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#E4EBF6" />
+        <GradientStop Offset="0.14" Color="#D5E5FA" />
+        <GradientStop Offset="0.28" Color="#CADEF7" />
+        <GradientStop Offset="1" Color="#E4EFFD" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.TitleBar.Foreground" Color="#15428B" />
+
+    <!-- File button glass. Placeholder shape (see ApplicationButtonMargin above): the crease
+         profile is already 2007, so S3 only has to change the geometry, not the colours. -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.ApplicationButton.Background" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#6FB4E4" />
+        <GradientStop Offset="0.45" Color="#3585C6" />
+        <GradientStop Offset="0.45" Color="#1F63A6" />
+        <GradientStop Offset="1" Color="#4C93CD" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.Foreground" Color="#FFFFFF" />
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#8ACBF2" />
+        <GradientStop Offset="0.45" Color="#4A9AD6" />
+        <GradientStop Offset="0.45" Color="#2C77BA" />
+        <GradientStop Offset="1" Color="#63A9DD" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.ApplicationButton.PressedBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#3D86C4" />
+        <GradientStop Offset="0.45" Color="#1F63A6" />
+        <GradientStop Offset="0.45" Color="#14487E" />
+        <GradientStop Offset="1" Color="#2C71AC" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverUnderline" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.Border" Color="#17578F" />
+    <!-- Office 2007 ORB. Only used when Ribbon.ApplicationButtonShape is Orb. The negative TOP in
+         ApplicationOrbMargin is what lifts the orb out of the tab-strip row and into the title bar,
+         the way the real 2007 orb straddles that boundary. If it turns out to be clipped by an
+         ancestor, set the top back to 0: the orb then sits wholly inside the strip and everything
+         else still works. -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.ApplicationOrb.Background" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#FBFCFD" />
+        <GradientStop Offset="0.18" Color="#F5F7F9" />
+        <GradientStop Offset="0.5" Color="#DDE4EC" />
+        <GradientStop Offset="0.82" Color="#EFF3F7" />
+        <GradientStop Offset="1" Color="#FFFFFF" />
+    </LinearGradientBrush>
+    <!-- Hover turns the WHOLE SPHERE amber, not just the rim: cream at the top, saturated gold
+         through the middle, pale specular at the foot. Measured off a hovered 2007 orb. -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.ApplicationOrb.HoverBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#FFFEFC" />
+        <GradientStop Offset="0.18" Color="#FFF8D4" />
+        <GradientStop Offset="0.5" Color="#F7C93E" />
+        <GradientStop Offset="0.82" Color="#F7D96F" />
+        <GradientStop Offset="1" Color="#FDFAB7" />
+    </LinearGradientBrush>
+    <!-- Mouse-down: a deeper, darker amber than hover, so the click registers before the
+         backstage opens. -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.ApplicationOrb.PressedBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#F5D98A" />
+        <GradientStop Offset="0.18" Color="#EFBE4A" />
+        <GradientStop Offset="0.5" Color="#D8931A" />
+        <GradientStop Offset="0.82" Color="#E8A82A" />
+        <GradientStop Offset="1" Color="#F7D06A" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationOrb.Ring" Color="#F0F4F9" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationOrb.HoverRing" Color="#FFEA37" />
+    <!-- The dark edge of a real orb is a SHADOW, not a border. -->
+    <DropShadowEffect x:Key="RibbonKit.Effects.ApplicationOrbShadow"
+                      BlurRadius="5" ShadowDepth="1" Direction="270"
+                      Opacity="0.5" Color="#2E4257" RenderingBias="Quality" />
+    <!-- Left inset of the title-bar QAT. Office 2007 reserves room so the QAT clears the orb,
+         which overhangs up into the caption. -->
+    <Thickness x:Key="RibbonKit.Metrics.TitleBarQatMargin">56,0,6,0</Thickness>
+    <system:Double x:Key="RibbonKit.Metrics.ApplicationOrbSize">46</system:Double>
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationOrbMargin">6,-18,6,0</Thickness>
+
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonBorderThickness">1</Thickness>
+
+    <!-- Real 2007 measures ~86 DIP of ribbon body. Held at the shared 104 for S1 so the palette
+         lands without disturbing layout; reducing it is an S4 decision, taken together with the
+         group chrome. -->
+    <system:Double x:Key="RibbonKit.Metrics.GroupsRowHeight">104</system:Double>
+
+    <!-- Gently rounded corners, and domed tab tops. -->
+    <CornerRadius x:Key="RibbonKit.Metrics.ControlCornerRadius">3</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.SmallControlCornerRadius">2</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.PopupCornerRadius">3</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.TabCornerRadius">3,3,0,0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.SplitLeftCornerRadius">3,0,0,3</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.SplitRightCornerRadius">0,3,3,0</CornerRadius>
+
+    <!-- Ribbon body: a full outline with square corners, connected to the chrome above. -->
+    <Thickness x:Key="RibbonKit.Metrics.ContentBorderThickness">1</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.ContentMargin">2,0,2,0</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadius">3</CornerRadius>
+    <!-- Used INSTEAD of ContentCornerRadius when the QAT sits below the ribbon: the body rounds
+         only its top corners and the QAT strip below completes the shape with the bottom pair. -->
+    <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadiusTop">3,3,0,0</CornerRadius>
+    <Thickness x:Key="RibbonKit.Metrics.ContentMarginQatBelow">2,0,2,0</Thickness>
+
+    <!-- 2007's ribbon is welded to the window chrome, so the separation from the document is a
+         hairline rather than the floating card of 2024. -->
+    <DropShadowEffect x:Key="RibbonKit.Effects.ContentShadow"
+                      BlurRadius="5" ShadowDepth="1" Direction="270"
+                      Opacity="0.10" Color="#000000" RenderingBias="Performance" />
+
+    <!-- Below-ribbon QAT. It continues the ribbon body rather than sitting under it as a separate
+         bar, so it takes the SAME side inset as ContentMarginQatBelow, carries side borders, and
+         rounds the bottom corners the body gave up to ContentCornerRadiusTop. No top border: the
+         body's own bottom edge is directly above it. -->
+    <Thickness x:Key="RibbonKit.Metrics.QatExtenderMargin">2,0,2,0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.QatExtenderBorderThickness">1,0,1,1</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.QatExtenderCornerRadius">0,0,3,3</CornerRadius>
+
+    <!-- Minimized: the ribbon body is gone, so the strip is the whole chrome and closes on all
+         four sides instead of continuing something above it. -->
+    <Thickness x:Key="RibbonKit.Metrics.QatExtenderMarginMinimized">2,0,2,0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.QatExtenderBorderThicknessMinimized">1</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.QatExtenderCornerRadiusMinimized">3</CornerRadius>
+
+    <!-- MDI child-window chrome. The client colour is the measured 2007 document background. -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.MdiChild.ActiveCaptionBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#7FB6E6" />
+        <GradientStop Offset="0.45" Color="#3F82C2" />
+        <GradientStop Offset="0.45" Color="#22609E" />
+        <GradientStop Offset="1" Color="#4E93CE" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.ActiveCaptionForeground" Color="#FFFFFF" />
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.MdiChild.InactiveCaptionBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#EFF5FD" />
+        <GradientStop Offset="0.28" Color="#D9E7F8" />
+        <GradientStop Offset="1" Color="#E8F2FE" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.InactiveCaptionForeground" Color="#3B5A82" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.ActiveBorder" Color="#22609E" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.InactiveBorder" Color="#A8C4E4" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiClient.Background" Color="#A3C2EA" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.CaptionButtonHoverBackground" Color="#4DFFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.CaptionButtonPressedBackground" Color="#66FFFFFF" />
+    <system:Double x:Key="RibbonKit.Metrics.MdiChild.CaptionHeight">30</system:Double>
+    <CornerRadius x:Key="RibbonKit.Metrics.MdiChild.CornerRadius">3</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.MdiChild.CaptionCornerRadius">2,2,0,0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.MdiChild.CloseButtonCornerRadius">0,2,0,0</CornerRadius>
+
+</ResourceDictionary>

@@ -101,6 +101,14 @@ public class Ribbon : Control
             typeof(Ribbon),
             new FrameworkPropertyMetadata("File"));
 
+    /// <summary>Identifies the <see cref="ApplicationButtonShape"/> dependency property.</summary>
+    public static readonly DependencyProperty ApplicationButtonShapeProperty =
+        DependencyProperty.Register(
+            nameof(ApplicationButtonShape),
+            typeof(RibbonApplicationButtonShape),
+            typeof(Ribbon),
+            new FrameworkPropertyMetadata(RibbonApplicationButtonShape.Tab));
+
     /// <summary>
     /// Attached flag the ribbon sets on a QAT button while it sits on a colored surface
     /// (an accent title bar, or the colored Office 2019 tab strip). The button template
@@ -1185,6 +1193,18 @@ public class Ribbon : Control
         set => SetValue(ApplicationButtonHeaderProperty, value);
     }
 
+    /// <summary>
+    /// Whether the application button renders as a rectangular File tab (default) or as the round
+    /// Office 2007 orb. This is an application choice, not a theme one: the theme system colors
+    /// controls through tokens and never changes their shape, so an app pairing the Office 2007
+    /// theme with the orb sets this explicitly.
+    /// </summary>
+    public RibbonApplicationButtonShape ApplicationButtonShape
+    {
+        get => (RibbonApplicationButtonShape)GetValue(ApplicationButtonShapeProperty);
+        set => SetValue(ApplicationButtonShapeProperty, value);
+    }
+
     private BackstageAdorner? _backstageAdorner;
 
     // While a TRANSLUCENT backstage is open, the content behind it (the adorned root) is fully
@@ -1271,6 +1291,25 @@ public class Ribbon : Control
         }
 
         ribbon.UpdateBackstageOverlay((bool)e.NewValue);
+
+        // CLOSING: re-place the selection marker and the body-border notch.
+        //
+        // Both are positioned from the SELECTED TAB'S TRANSFORM, and while the backstage overlay is
+        // up the ribbon underneath is hidden — so anything that re-lays-out the tab strip during
+        // that time never reaches them. Maximizing the window with the backstage open is the easy
+        // repro: the strip gets wider, but the tab control raises no size or selection change that
+        // the notch listens to, so on close the notch stays parked under wherever the old selected
+        // tab used to be until the selection changes. Same class of bug as §3.29 and the
+        // theme-switch case in §3.27's fourth pass.
+        //
+        // Dispatched at Loaded priority so the overlay is actually gone and layout has settled
+        // before the transform is measured.
+        if (!(bool)e.NewValue)
+        {
+            ribbon.Dispatcher.BeginInvoke(
+                System.Windows.Threading.DispatcherPriority.Loaded,
+                new Action(ribbon.RefreshSelectionVisuals));
+        }
     }
 
     private static void OnIsMinimizedChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -1875,8 +1914,12 @@ public class Ribbon : Control
         var host = new RibbonQuickAccessToolBar
         {
             VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(2, 0, 6, 0),
         };
+
+        // Themed, not hard-coded: the Office 2007 orb overhangs up into the caption, so that theme
+        // reserves enough left inset here for the QAT to clear it. Every theme defines the key, and
+        // the non-2007 values reproduce the previous hard-coded Thickness(2, 0, 6, 0).
+        host.SetResourceReference(MarginProperty, "RibbonKit.Metrics.TitleBarQatMargin");
 
         // Bound, not assigned: the cap can be retuned at runtime, and the title bar is the
         // placement most likely to need it (the window title has to keep its room).

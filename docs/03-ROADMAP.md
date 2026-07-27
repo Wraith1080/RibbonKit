@@ -2,7 +2,9 @@
 
 Each phase ends with the showcase app demonstrating everything built so far, tests green, and a tagged pre-release. Phases are sequential but small overlaps are fine.
 
-> **Progress (2026-07-27):** Phases 0–5 and **7 are complete**. Phase 6 is partly done — the 2024, 2019, 2013 and 2010 themes ship and per-monitor DPI is verified at 100/125/150/175/200%; still owed are the Office 2007 theme, dark mode, RTL, localization and the visual-regression suite. Phase 8 has not started. Post-v1 MDI emulation is unusually shaped: M0 and M4 are done, M1–M3 are not.
+> **Progress (2026-07-27):** Phases 0–5 and **7 are complete**. Phase 6 is mostly done — **all five themes now ship** (2024, 2019, 2013, 2010 and, as of today, 2007 — see [`04-DESIGN-NOTES.md`](../04-DESIGN-NOTES.md) §3.38 and [`07-OFFICE-2007-THEME-PLAN.md`](07-OFFICE-2007-THEME-PLAN.md)) and per-monitor DPI is verified at 100/125/150/175/200%; still owed are dark mode, RTL, localization and the visual-regression suite. Phase 8 has not started. Post-v1 MDI emulation is unusually shaped: M0 and M4 are done, M1–M3 are not.
+>
+> Deferred out of the 2007 work on purpose: the 2007 window frame (Windows 11 draws its own border, and the frame is the change most likely to perturb the measured-margin maximize fix), and the real two-pane 2007 application menu — that is a new control, not a theme, and a genuine feature gap the README used to claim was already built.
 
 ## Phase 0 — Foundation (before any control code)
 
@@ -30,7 +32,7 @@ RibbonWindow with title-bar integration, Quick Access Toolbar (placement, overfl
 
 ## Phase 6 — Full theme range & DPI hardening
 
-Office 2019 (+dark/accents), 2013, 2010, 2007 themes on the token layer; visual regression snapshot suite per theme; DPI matrix testing (100/125/150/200%, mixed monitors, per-monitor v2); RTL verification; localization resources. **Exit criteria:** snapshot suite green across 5 themes × 4 DPI levels.
+Office 2019 (+dark/accents), 2013, 2010, 2007 themes on the token layer; visual regression snapshot suite per theme; DPI matrix testing (100/125/150/200%, mixed monitors, per-monitor v2); RTL verification; localization resources. **Exit criteria:** snapshot suite green across 5 themes × 4 DPI levels. *All five themes now ship (2007 landed 2026-07-27, §3.38); dark mode, RTL, localization and the snapshot suite are what remain.*
 
 ## Phase 7 — Power features ✅ COMPLETE (2026-07-27)
 

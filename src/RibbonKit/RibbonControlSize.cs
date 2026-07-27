@@ -74,9 +74,11 @@ public enum RibbonBackstageDesign
     Modern,
 
     /// <summary>
-    /// The Office 2010 look: the same solid accent-colored navigation column as
-    /// <see cref="Classic"/> (white text), but the SELECTED item is drawn with a glossy blue
-    /// "glass" marker instead of a flat fill. Pairs naturally with the Office 2010 theme.
+    /// The glossy pre-2013 look: the same solid accent-colored navigation column as
+    /// <see cref="Classic"/> (white text), but the SELECTED item is drawn with a glossy
+    /// "glass" marker instead of a flat fill. Pairs with the Office 2010 <b>and</b> Office 2007
+    /// themes — both are glass generations, and the marker picks up whichever gradient profile the
+    /// active theme derives (2010 a smooth gel, 2007 a hard-crease glass), so one value serves both.
     /// </summary>
     Classic2010,
 }
@@ -103,4 +105,23 @@ public enum RibbonGroupReductionMode
     /// Controls shrink in place only; the group never collapses to a button.
     /// </summary>
     Resize,
+}
+
+/// <summary>
+/// The shape of the ribbon's application (File) button.
+/// </summary>
+public enum RibbonApplicationButtonShape
+{
+    /// <summary>
+    /// A rectangular File tab, as in Office 2010 / 2013 / 2019 / 2024. Default.
+    /// </summary>
+    Tab,
+
+    /// <summary>
+    /// The round Office 2007 orb, which overhangs upward into the title bar and shows a built-in
+    /// vector glyph instead of <see cref="RibbonKit.Controls.Ribbon.ApplicationButtonHeader"/>
+    /// (that header is a string, so it cannot render inside the circle; it becomes the orb's
+    /// accessible name and tooltip instead). Pair it with the Office 2007 theme.
+    /// </summary>
+    Orb,
 }

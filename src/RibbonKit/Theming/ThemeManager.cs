@@ -22,7 +22,15 @@ public enum RibbonTheme
     /// </summary>
     Office2010,
 
-    // Office2007 arrives in a later Phase 6 batch (see docs/03-ROADMAP.md).
+    /// <summary>
+    /// Office 2007 ("Blue"): the glossiest generation — hard-crease glass gels on every hot
+    /// state (gold on hover, saturated orange when pressed), a "valley" gradient on both the
+    /// title bar and the ribbon body, a flat light-blue tab strip, dark-blue tab labels, and a
+    /// connected selected tab. The round Office orb is opt-in via
+    /// <see cref="RibbonKit.Controls.Ribbon"/>'s application-button shape; see
+    /// docs/07-OFFICE-2007-THEME-PLAN.md.
+    /// </summary>
+    Office2007,
 }
 
 /// <summary>
@@ -241,11 +249,11 @@ public static class ThemeManager
         resources[MdiActiveCaptionKey] = Frozen(accent);
         resources[MdiActiveBorderKey] = Frozen(accent);
 
-        // Toggled/checked highlight follows the accent — EXCEPT in Office 2010, where the
-        // hover/press/toggle highlight is always the amber "hot" color regardless of the color
-        // scheme (authentic 2010: the accent recolors the chrome, never the button highlight).
-        // Leaving these unset keeps 2010's amber gradient (they were Removed above).
-        if (theme != RibbonTheme.Office2010)
+        // Toggled/checked highlight follows the accent — EXCEPT in Office 2010 and 2007, where the
+        // hover/press/toggle highlight is always the gold/amber "hot" color regardless of the color
+        // scheme (authentic for both: the accent recolors the chrome, never the button highlight).
+        // Leaving these unset keeps each theme's own gradient (they were Removed above).
+        if (theme is not (RibbonTheme.Office2010 or RibbonTheme.Office2007))
         {
             resources[CheckedKey] = Frozen(Mix(accent, Colors.White, 0.82));
             resources[CheckedHoverKey] = Frozen(Mix(accent, Colors.White, 0.72));
@@ -282,7 +290,49 @@ public static class ThemeManager
                 resources[MdiActiveCaptionKey] = CaptionRamp(accent);
                 resources[MdiActiveBorderKey] = Frozen(Mix(accent, Colors.Black, 0.30));
                 break;
+            case RibbonTheme.Office2007:
+                // Same shape as the 2010 case, but every derived gradient is a hard-crease GLASS
+                // gel rather than 2010's smooth one — that crease is the whole difference between
+                // the two generations, so an accent that flattened it would stop reading as 2007.
+                // The ORB is deliberately untouched: it carries a logo, not a themeable surface.
+                resources[AppButtonBackgroundKey] = Glass(accent);
+                resources[AppButtonHoverKey] = Glass(Mix(accent, Colors.White, 0.18));
+                resources[AppButtonPressedKey] = Glass(Mix(accent, Colors.Black, 0.22));
+                resources[AppButtonBorderKey] = Frozen(Mix(accent, Colors.Black, 0.30));
+                resources[DialogPrimaryBackgroundKey] = Glass(accent);
+                resources[DialogPrimaryBorderKey] = Frozen(Mix(accent, Colors.Black, 0.30));
+                resources[BackstageSelectedGlassKey] = Glass(accent);
+                resources[MdiActiveCaptionKey] = CaptionRamp(accent);
+                resources[MdiActiveBorderKey] = Frozen(Mix(accent, Colors.Black, 0.30));
+                // SelectedForeground stays the theme's dark blue, as in 2010: a custom accent
+                // should not tint the label on a light connected tab.
+                break;
         }
+    }
+
+    /// <summary>
+    /// Builds the Office 2007 "glass" gradient for <paramref name="baseColor"/>: a pale top half,
+    /// a HARD CREASE at the midpoint, then a richer lower half easing to a specular foot.
+    /// </summary>
+    /// <remarks>
+    /// Deliberately not <see cref="Gel"/>. The crease is two <see cref="GradientStop"/>s sharing one
+    /// offset, which paints an instant colour step — the aggressive gloss of Office 2007. Office
+    /// 2010 softened exactly this into a smooth ramp, so the two helpers must stay separate: reusing
+    /// one for both would erase the difference between the generations.
+    /// </remarks>
+    private static LinearGradientBrush Glass(Color baseColor)
+    {
+        var brush = new LinearGradientBrush
+        {
+            StartPoint = new Point(0, 0),
+            EndPoint = new Point(0, 1),
+        };
+        brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.White, 0.45), 0.0));
+        brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.White, 0.10), 0.45));
+        brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.Black, 0.15), 0.45));
+        brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.White, 0.22), 1.0));
+        brush.Freeze();
+        return brush;
     }
 
     /// <summary>
