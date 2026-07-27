@@ -134,6 +134,14 @@ public static class RibbonCustomizationSerializer
 
             foreach (RibbonGroup group in tab.Groups)
             {
+                // A group a merge source injected into this HOST tab must not be captured as part
+                // of the tab's layout — on restore it would be re-created as a user customization
+                // belonging to a child that may not even be loaded (plan §5.2).
+                if (Ribbon.GetIsMerged(group))
+                {
+                    continue;
+                }
+
                 string? groupId = Ribbon.GetCommandId(group);
                 bool groupCustom = Ribbon.GetIsCustom(group);
                 if (!groupCustom && groupId is null)
@@ -183,6 +191,14 @@ public static class RibbonCustomizationSerializer
         foreach (object item in ribbon.QuickAccessItems)
         {
             if (item is not FrameworkElement element)
+            {
+                continue;
+            }
+
+            // Proxies of a merge source's commands are never persisted: the source may not be
+            // present on the next run, and the proxy would restore pointing at nothing. They are
+            // parked (disabled) rather than deleted while the source is away — plan §5.4.
+            if (Ribbon.GetMergeSource(element) is not null)
             {
                 continue;
             }

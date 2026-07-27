@@ -672,7 +672,18 @@ public class Ribbon : Control
             return false;
         }
 
-        QuickAccessItems.Add(CreateCommandProxy(source, RibbonControlSize.Small));
+        FrameworkElement proxy = CreateCommandProxy(source, RibbonControlSize.Small);
+
+        // Carry the command's merge provenance onto the proxy. That's what lets the proxy be
+        // PARKED (disabled, like Office greys an unavailable command) instead of orphaned when
+        // the source unmerges, and keeps it out of persisted state — a proxy of a transient
+        // child's command must not come back on the next run pointing at nothing.
+        if (GetMergeSource(source) is { } mergeSource)
+        {
+            SetMergeSourceInternal(proxy, mergeSource);
+        }
+
+        QuickAccessItems.Add(proxy);
         return true;
     }
 

@@ -52,6 +52,52 @@ public class RibbonMergeSource : FrameworkElement
     /// <summary>Identifies the read-only <see cref="Tabs"/> dependency property.</summary>
     public static readonly DependencyProperty TabsProperty = TabsPropertyKey.DependencyProperty;
 
+    private static readonly DependencyPropertyKey GroupsPropertyKey =
+        DependencyProperty.RegisterReadOnly(
+            nameof(Groups),
+            typeof(ObservableCollection<RibbonGroupContribution>),
+            typeof(RibbonMergeSource),
+            new FrameworkPropertyMetadata(null));
+
+    /// <summary>Identifies the read-only <see cref="Groups"/> dependency property.</summary>
+    public static readonly DependencyProperty GroupsProperty = GroupsPropertyKey.DependencyProperty;
+
+    /// <summary>Identifies the <see cref="Target"/> dependency property.</summary>
+    public static readonly DependencyProperty TargetProperty =
+        DependencyProperty.Register(
+            nameof(Target),
+            typeof(Ribbon),
+            typeof(RibbonMergeSource),
+            new FrameworkPropertyMetadata(null, OnActivationChanged));
+
+    /// <summary>Identifies the <see cref="IsActive"/> dependency property.</summary>
+    public static readonly DependencyProperty IsActiveProperty =
+        DependencyProperty.Register(
+            nameof(IsActive),
+            typeof(bool),
+            typeof(RibbonMergeSource),
+            new FrameworkPropertyMetadata(false, OnActivationChanged));
+
+    /// <summary>
+    /// Identifies the <c>Source</c> attached property: the merge source a child element carries,
+    /// so a host that tracks activation (an <see cref="MdiContainer"/>'s active document, a
+    /// selection manager) can find the source to merge without knowing the child's type.
+    /// </summary>
+    public static readonly DependencyProperty SourceProperty =
+        DependencyProperty.RegisterAttached(
+            "Source",
+            typeof(RibbonMergeSource),
+            typeof(RibbonMergeSource),
+            new FrameworkPropertyMetadata(null));
+
+    /// <summary>Attaches a merge source to a child element (see <see cref="SourceProperty"/>).</summary>
+    public static void SetSource(DependencyObject element, RibbonMergeSource? value) =>
+        element.SetValue(SourceProperty, value);
+
+    /// <summary>The merge source attached to a child element, or <see langword="null"/>.</summary>
+    public static RibbonMergeSource? GetSource(DependencyObject element) =>
+        (RibbonMergeSource?)element.GetValue(SourceProperty);
+
     /// <summary>Identifies the <see cref="Order"/> dependency property.</summary>
     public static readonly DependencyProperty OrderProperty =
         DependencyProperty.Register(
@@ -74,6 +120,7 @@ public class RibbonMergeSource : FrameworkElement
     public RibbonMergeSource()
     {
         SetValue(TabsPropertyKey, new ObservableCollection<RibbonTab>());
+        SetValue(GroupsPropertyKey, new ObservableCollection<RibbonGroupContribution>());
 
         // Nothing to render: a merge source is a declarative container, never laid out itself.
         Visibility = Visibility.Collapsed;
@@ -85,6 +132,41 @@ public class RibbonMergeSource : FrameworkElement
     /// </summary>
     public ObservableCollection<RibbonTab> Tabs =>
         (ObservableCollection<RibbonTab>)GetValue(TabsProperty);
+
+    /// <summary>
+    /// Groups this source injects into the host's OWN tabs, addressed by the host tab's
+    /// <c>Ribbon.CommandId</c>. Independent of <see cref="Tabs"/> — a source can do either or both.
+    /// </summary>
+    public ObservableCollection<RibbonGroupContribution> Groups =>
+        (ObservableCollection<RibbonGroupContribution>)GetValue(GroupsProperty);
+
+    /// <summary>
+    /// The ribbon this source merges into when <see cref="IsActive"/> becomes
+    /// <see langword="true"/>. Leave unset when driving merges imperatively with
+    /// <see cref="Ribbon.Merge"/>.
+    /// </summary>
+    public Ribbon? Target
+    {
+        get => (Ribbon?)GetValue(TargetProperty);
+        set => SetValue(TargetProperty, value);
+    }
+
+    /// <summary>
+    /// The activation signal: setting it <see langword="true"/> merges this source into
+    /// <see cref="Target"/>, setting it <see langword="false"/> unmerges. Bind it to whatever
+    /// "my child is active" means in the app — a selection flag, an MDI container's active
+    /// document, a view model property.
+    /// </summary>
+    /// <remarks>
+    /// Deliberately <b>not</b> driven by WPF keyboard focus: focus moves to ribbon buttons on
+    /// every click, which would thrash the merge (see design notes §3.28 for the equivalent
+    /// lesson with a RichTextBox). Activation is the app's concept, not the framework's.
+    /// </remarks>
+    public bool IsActive
+    {
+        get => (bool)GetValue(IsActiveProperty);
+        set => SetValue(IsActiveProperty, value);
+    }
 
     /// <summary>
     /// Where this source's tabs sit relative to other merged sources. Sources sort by
@@ -112,4 +194,22 @@ public class RibbonMergeSource : FrameworkElement
     public bool IsMerged => MergedInto is not null;
 
     internal void SetMergedInto(Ribbon? ribbon) => SetValue(MergedIntoPropertyKey, ribbon);
+
+    // Target or IsActive moved: reconcile with wherever this source currently is. Written so any
+    // combination converges — including Target being retargeted while active, which has to leave
+    // the old ribbon before joining the new one.
+    private static void OnActivationChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        var source = (RibbonMergeSource)d;
+        Ribbon? desired = source.IsActive ? source.Target : null;
+        Ribbon? current = source.MergedInto;
+
+        if (ReferenceEquals(desired, current))
+        {
+            return;
+        }
+
+        current?.Unmerge(source);
+        desired?.Merge(source);
+    }
 }

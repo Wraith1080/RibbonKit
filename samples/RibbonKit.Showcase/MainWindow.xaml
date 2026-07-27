@@ -593,7 +593,7 @@
                                            Checked="OnToggleChartToolsMerge"
                                            Unchecked="OnToggleChartToolsMerge"
                                            ScreenTipTitle="Merge Chart Tools (tab merging)"
-                                           ScreenTipText="Merge a RibbonMergeSource into this ribbon, the way an embedded editor or MDI child contributes its own tabs. Its two tabs appear after the host's; unchecking takes them away again. Merged tabs never appear in Customize the Ribbon and are never persisted." />
+                                           ScreenTipText="Activate a RibbonMergeSource, the way an embedded editor or MDI child contributes ribbon content while it is active. Two tabs appear after the host's, and a Chart Data group joins the Home tab. Merged content never appears in Customize the Ribbon and is never persisted." />
                     <rk:RibbonButton Header="Options"
                                      rk:Ribbon.CommandId="cmd.options"
                                      Size="Large"
@@ -663,7 +663,26 @@
                  resolving against the CHILD's view model rather than the host's.
                  Order="0" places these after the host's own tabs; a negative Order would put them
                  before. -->
-            <rk:RibbonMergeSource x:Name="ChartToolsSource" Order="0">
+            <rk:RibbonMergeSource x:Name="ChartToolsSource"
+                                  Order="0"
+                                  Target="{Binding ElementName=MainRibbon}"
+                                  IsActive="{Binding IsChecked, ElementName=MergeToggle}">
+                <!-- Groups injected into the HOST's own tabs, addressed by the host tab's
+                     CommandId — Office's other merge shape, where a tool context adds a group to
+                     Home rather than contributing a whole tab. Order 0 appends after Home's own
+                     groups; a negative Order would put it first. -->
+                <rk:RibbonMergeSource.Groups>
+                    <rk:RibbonGroupContribution TargetTabId="tab.home" Order="0">
+                        <rk:RibbonGroup Header="Chart Data" Icon="{StaticResource Icon.Table}">
+                            <rk:RibbonButton Header="Refresh"
+                                             Size="Large"
+                                             LargeIcon="{StaticResource Icon.Redo}"
+                                             Icon="{StaticResource Icon.Redo}"
+                                             ScreenTipTitle="Refresh Chart Data"
+                                             ScreenTipText="Re-read the chart's source range. This group is injected into the HOST's Home tab by the merge source — right-click it to add it to the Quick Access Toolbar, then unmerge and watch the proxy grey out instead of vanishing." />
+                        </rk:RibbonGroup>
+                    </rk:RibbonGroupContribution>
+                </rk:RibbonMergeSource.Groups>
                 <rk:RibbonTab Header="Chart Design"
                               IsContextual="True"
                               ContextualColor="#1F7A4D">

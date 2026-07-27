@@ -310,19 +310,18 @@ public partial class MainWindow : RibbonWindow
     }
 
     // ---- Tab merging ---------------------------------------------------------------
-    // A real host would drive this from whatever "the child is active now" means to it — an MDI
-    // container's ActiveDocument, a selected chart, a focused editor. The toggle stands in for
-    // that signal so the merge and unmerge paths are both one click away.
+    // The merge itself is DECLARATIVE and needs no code: in XAML the source's Target points at the
+    // ribbon and its IsActive is bound to this toggle, so checking it merges and unchecking
+    // unmerges. A real host binds IsActive to whatever "my child is active" means to it — an MDI
+    // container's ActiveDocument, a selected chart, a view model flag. Deliberately NOT keyboard
+    // focus: focus lands on ribbon buttons constantly and would thrash the merge.
     //
-    // Merge inserts the source's tabs by its Order; Unmerge takes exactly those tabs back out.
-    // Repeat the toggle and they return to the same slot — the merge service remembers each
-    // source's first-merge sequence, so ordering doesn't drift over cycles.
+    // Ribbon.Merge / Ribbon.Unmerge remain available for hosts that would rather drive it
+    // imperatively. All this handler does is the app-level polish around the merge.
     private void OnToggleChartToolsMerge(object sender, RoutedEventArgs e)
     {
-        if (MergeToggle.IsChecked == true)
+        if (MainRibbon.IsMerged(ChartToolsSource))
         {
-            MainRibbon.Merge(ChartToolsSource);
-
             // Office jumps to a tool tab when its context appears; do the same so the merge is
             // immediately visible rather than hiding at the end of the strip.
             MainRibbon.SelectedTab = ChartToolsSource.Tabs.FirstOrDefault();
@@ -330,7 +329,6 @@ public partial class MainWindow : RibbonWindow
         }
         else
         {
-            MainRibbon.Unmerge(ChartToolsSource);
             StatusReady.Content = "Ready";
         }
     }
