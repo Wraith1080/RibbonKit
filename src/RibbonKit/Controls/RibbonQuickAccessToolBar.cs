@@ -228,6 +228,19 @@ public class RibbonQuickAccessToolBar : ItemsControl
         // offer "Remove from Quick Access Toolbar" for the REAL item rather than for this proxy.
         Ribbon.SetQuickAccessOverflowItemInternal(entry, item);
 
+        // ⚠ Enabled state comes from the STRIP ITEM, not from the source. CreateCommandProxy wires a
+        // fresh proxy to its SOURCE (§3.45), which is right for a strip proxy but one hop short
+        // here: the strip item can also be disabled by PARKING (Ribbon.IsCommandParked, for a merged
+        // command that has stepped out), and the merge service only ever sets that flag on elements
+        // in QuickAccessItems — this entry is not one of them, so it stayed enabled while its twin
+        // in the strip greyed. Binding to the item this entry STANDS FOR picks up both reasons at
+        // once, and any future third reason for free. It replaces the binding CreateCommandProxy
+        // installed, deliberately: content and behaviour still come from the source, only the
+        // enabled state is delegated.
+        entry.SetBinding(
+            IsEnabledProperty,
+            new System.Windows.Data.Binding(nameof(IsEnabled)) { Source = item });
+
         // Picking a command closes the flyout, like a menu. A split button isn't a ButtonBase — its
         // primary part raises RibbonSplitButton.Click — and a drop-down opener must NOT close it,
         // since opening its menu is the whole point.

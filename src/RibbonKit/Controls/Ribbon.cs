@@ -785,6 +785,32 @@ public class Ribbon : Control
     public static FrameworkElement? GetQuickAccessSource(DependencyObject element) =>
         (FrameworkElement?)element.GetValue(QuickAccessSourceProperty);
 
+    private static readonly DependencyPropertyKey IsCommandParkedPropertyKey =
+        DependencyProperty.RegisterAttachedReadOnly(
+            "IsCommandParked",
+            typeof(bool),
+            typeof(Ribbon),
+            new FrameworkPropertyMetadata(false));
+
+    /// <summary>
+    /// Identifies the read-only <c>IsCommandParked</c> attached property: set on a proxy whose
+    /// merged source has stepped out, so it greys like Office instead of disappearing.
+    /// </summary>
+    public static readonly DependencyProperty IsCommandParkedProperty =
+        IsCommandParkedPropertyKey.DependencyProperty;
+
+    /// <summary>Whether a proxy is parked because the merged source it mirrors is not present.</summary>
+    public static bool GetIsCommandParked(DependencyObject element) =>
+        (bool)element.GetValue(IsCommandParkedProperty);
+
+    /// <summary>
+    /// Parks or revives a proxy. Feeds the proxy's enabled state through the same MultiBinding as
+    /// the source's own <see cref="UIElement.IsEnabled"/> — see <see cref="CreateCommandProxy"/> for
+    /// why the two must not be separate writes to the same property.
+    /// </summary>
+    internal static void SetIsCommandParkedInternal(DependencyObject element, bool value) =>
+        element.SetValue(IsCommandParkedPropertyKey, value);
+
     private static readonly DependencyPropertyKey QuickAccessOverflowItemPropertyKey =
         DependencyProperty.RegisterAttachedReadOnly(
             "QuickAccessOverflowItem",
@@ -1011,7 +1037,53 @@ public class Ribbon : Control
         }
 
         proxy.SetValue(QuickAccessSourcePropertyKey, source);
+        MirrorEnabledState(proxy, source);
         return proxy;
+    }
+
+    /// <summary>
+    /// Makes a proxy follow its source's enabled state, so disabling a ribbon command in code greys
+    /// its quick-access, overflow and custom-group copies too.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Binding to the source's <see cref="UIElement.IsEnabled"/> picks up the COERCED value, which
+    /// is what we want: a button inside a group the app disabled reports false even though its own
+    /// property was never touched, and its proxies grey with it.
+    /// </para>
+    /// <para>
+    /// ⚠ A <see cref="MultiBinding"/> rather than a plain one because there are TWO independent
+    /// reasons a proxy is disabled — the source, and <see cref="IsCommandParkedProperty"/> for a
+    /// merged source that has stepped out. They cannot be separate writes to the same property:
+    /// assigning a value to a property carrying a ONE-WAY binding clears that binding, so the merge
+    /// service's <c>proxy.IsEnabled = false</c> would silently sever the source mirror on the first
+    /// park and never restore it. Combining both inputs into one expression removes the ordering
+    /// question entirely.
+    /// </para>
+    /// </remarks>
+    private static void MirrorEnabledState(FrameworkElement proxy, FrameworkElement source)
+    {
+        var enabled = new System.Windows.Data.MultiBinding { Converter = ProxyEnabledConverter.Instance };
+        enabled.Bindings.Add(new System.Windows.Data.Binding(nameof(IsEnabled)) { Source = source });
+        enabled.Bindings.Add(new System.Windows.Data.Binding
+        {
+            Source = proxy,
+            Path = new PropertyPath("(0)", IsCommandParkedProperty),
+        });
+
+        proxy.SetBinding(IsEnabledProperty, enabled);
+    }
+
+    /// <summary>Enabled = the source is enabled AND this proxy is not parked.</summary>
+    private sealed class ProxyEnabledConverter : System.Windows.Data.IMultiValueConverter
+    {
+        internal static readonly ProxyEnabledConverter Instance = new();
+
+        public object Convert(object[] values, Type targetType, object parameter, System.Globalization.CultureInfo culture) =>
+            values is { Length: 2 } && values[0] is true && values[1] is false;
+
+        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, System.Globalization.CultureInfo culture) =>
+            throw new NotSupportedException("A proxy's enabled state is derived, never pushed back.");
     }
 
     private static RibbonButton MakeProxyButton(

@@ -2641,6 +2641,53 @@ is not null. The helper was type-switching (`null` / `TranslateTransform` at 0,0
 `transform is null || transform.Value.IsIdentity` — which is both shorter and correct for every
 transform type, including the identity one WPF hands out by default.
 
+### 3.45 Proxies never mirrored their source's enabled state — 2026-07-28
+
+Disabling a ribbon command in code left every COPY of it live: the quick-access proxy, its overflow
+entry, and any custom-group proxy stayed enabled and still invoked the command the app had just
+switched off. The ribbon button greyed exactly as intended, which is what made it easy to miss —
+nothing looks broken until someone uses the copy.
+
+`Ribbon.CreateCommandProxy` copies icon/header/ScreenTip values and wires behaviour, but nothing ever
+linked `IsEnabled`. One fix there covers all three surfaces: the QAT (`AddToQuickAccess`), the
+overflow flyout (`RibbonQuickAccessToolBar.GetOrCreateEntry`) and custom groups
+(`RibbonCustomizePage`) all build their copies through that one factory.
+
+**Binding to the source's `IsEnabled` picks up the COERCED value, which is what we want.** A button
+inside a group the app disabled reports `false` even though its own property was never touched, so
+its proxies grey with it — the case an `IsEnabledCore`-style check on the source's local value would
+have missed.
+
+**⚠ It is a `MultiBinding`, and that is the whole design.** Two independent things disable a proxy:
+its source, and `IsCommandParkedProperty` — the flag for a merged source that has stepped out and
+should grey like Office rather than vanish (§3.33). They cannot be separate writes to the same
+property, because **assigning a value to a property that carries a one-way binding CLEARS that
+binding**. The merge service's old `proxy.IsEnabled = false` would have severed the source mirror on
+the first park and never restored it — a bug that only appears after an unrelated feature is used
+once. Combining both inputs into a single expression removes the ordering question entirely;
+`SetProxiesEnabled` now sets the park flag and lets the binding recompute.
+
+**⚠ And parking still missed the overflow flyout, one hop further out.** An overflow entry is a proxy
+of the ORIGINAL command (a proxy of a QAT proxy would mirror the mirror), so the fix above gave it
+the source's enabled state correctly — but the merge service only ever sets the park flag on
+elements in `QuickAccessItems`, and an overflow entry is not one. Its twin in the strip greyed while
+it stayed live.
+
+Fixed by delegating one level: `RibbonQuickAccessToolBar.GetOrCreateEntry` re-binds the entry's
+`IsEnabled` to the **strip item it stands for**, replacing the source binding
+`CreateCommandProxy` installed. The strip item already combines both reasons, so the entry inherits
+source-disable AND parking together — and any future third reason for free. Content and behaviour
+still come from the source; only the enabled state is delegated. The general shape worth keeping:
+**when B is a stand-in for A, derive B's state from A, not from what A derived its own state from.**
+
+New public API: read-only attached `Ribbon.IsCommandParked` (+ `GetIsCommandParked`), with an
+internal setter. `ProxyMirrorTests` covers source-disable, restore, park/revive, the
+already-disabled-at-creation case, and — the one that guards the design —
+`Parking_does_not_sever_the_source_mirror`, which fails if anyone splits the two inputs back into
+two writes while the other four still pass. The overflow hop is NOT unit-tested: entries are only
+built inside `OnOverflowOpened`, which needs the popup and panel template parts, and the harness
+deliberately never opens a real popup. It is on the manual checklist instead.
+
 ## 4. Workflow / Session Conventions
 
 - Cloud workspace: `/home/user/ribbonkit/`. The user's machine:
@@ -2687,6 +2734,11 @@ C. **The corners still meet** — top/bottom rounding in vertical, left/right in
 D. **Ribbon Editor**: select a split button — "Split layout" shows for a Large one (or one whose
    SizeDefinition names Large) and is absent otherwise. Set Size to Medium on a Large+Vertical
    button: the row should vanish and the XAML drop back to Horizontal in one undo step.
+E. **§3.45 proxies (manual — not unit-testable):** disable a command from code and confirm its QAT
+   proxy, its entry in the » overflow flyout, and any custom-group copy all grey together. Repeat
+   with a whole GROUP disabled (that path goes through coercion, not a property set). Then unmerge a
+   merged source and confirm its parked proxy greys in BOTH the strip and the overflow flyout —
+   the flyout was the half that stayed live.
 
 
 

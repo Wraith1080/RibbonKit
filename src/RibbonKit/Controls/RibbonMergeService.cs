@@ -334,7 +334,11 @@ internal sealed class RibbonMergeService
             if (item is FrameworkElement element
                 && ReferenceEquals(Ribbon.GetMergeSource(element), source))
             {
-                element.IsEnabled = enabled;
+                // ⚠ Sets the PARK FLAG, never IsEnabled directly. The proxy's IsEnabled carries a
+                // MultiBinding over (source enabled, not parked) — see Ribbon.MirrorEnabledState —
+                // and assigning to a property with a one-way binding clears that binding, which
+                // would sever the source mirror on the first park.
+                Ribbon.SetIsCommandParkedInternal(element, !enabled);
             }
         }
     }
