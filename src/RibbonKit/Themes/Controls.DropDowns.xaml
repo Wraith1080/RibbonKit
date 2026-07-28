@@ -622,16 +622,28 @@
                                      BorderThickness="0"
                                      VerticalContentAlignment="Center"
                                      Focusable="True" />
+                            <!-- VerticalOffset and the child's top margin are a matched pair, and
+                                 exist only so the drop-down can slide DOWN into place without
+                                 being sliced: a Popup's window is sized to its child's LAYOUT
+                                 size, and a RenderTransform does not grow that, so animating the
+                                 border up from -8 would clip its top 8px against the window edge.
+                                 The margin adds 10px of headroom above the border and the negative
+                                 offset lifts the popup by the same 10, leaving the resting
+                                 position pixel-identical while giving the slide room to run.
+                                 10 > RibbonAnimation.GetSlideOffset(DropdownMenu), currently 8 —
+                                 keep that inequality if the offset is ever raised. -->
                             <Popup x:Name="PART_Popup"
                                    AllowsTransparency="True"
                                    Placement="Bottom"
+                                   VerticalOffset="-10"
                                    IsOpen="{TemplateBinding IsDropDownOpen}">
-                                <Border Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
+                                <Border x:Name="PART_PopupRoot"
+                                        Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
                                         BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
                                         BorderThickness="1"
                                         CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
                                         Padding="3"
-                                        Margin="4,2,8,8"
+                                        Margin="4,12,8,8"
                                         MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
                                         MaxHeight="{TemplateBinding MaxDropDownHeight}">
                                     <Border.Effect>

@@ -3,6 +3,7 @@ using System.Windows.Automation.Peers;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
+using System.Windows.Threading;
 using RibbonKit.Animation;
 using RibbonKit.Layout;
 // Alias: WPF's legacy Microsoft ribbon declares identically-named peers in
@@ -121,6 +122,8 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
             this,
             () => _popup,
             () => SetCurrentValue(IsDropDownOpenProperty, false));
+
+        Unloaded += OnDropDownUnloaded;
     }
 
     /// <summary>The button's label text.</summary>
@@ -217,22 +220,75 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
     /// own; instead it BORROWS the source's menu items while open (moved in on open, returned on
     /// close by <see cref="OnIsDropDownOpenChanged"/>). Borrowing (not sharing) avoids the
     /// single-parent conflict — a <see cref="RibbonMenuItem"/> can only live in one dropdown — and
-    /// works even when the source's own tab isn't currently realized, since <see cref="Items"/> is
+    /// works even when the source's own tab isn't currently realized, since <see cref="ItemsControl.Items"/> is
     /// a logical collection independent of visual realization.
     /// </summary>
     internal void BorrowMenuFrom(RibbonDropDownButton source) => _borrowSource = source;
+
+    /// <summary>Whether this dropdown is currently holding menu items borrowed from its source.</summary>
+    internal bool HasBorrowedItems => _borrowed;
+
+    /// <summary>
+    /// Makes sure any menu items this dropdown BORROWED from its source go home, closing the
+    /// dropdown first if the property still claims to be open. Safe to call at any time and on any
+    /// dropdown — one that never borrowed anything does nothing.
+    /// </summary>
+    /// <remarks>
+    /// A host that can disappear around an OPEN proxy menu — the quick access overflow flyout is
+    /// the one that bites — has to drive the return explicitly, because the proxy's own popup close
+    /// path cannot be trusted there. See <see cref="OnPopupClosed"/>.
+    /// </remarks>
+    internal void EnsureBorrowedItemsReturned()
+    {
+        if (_borrowSource is null || !_borrowed)
+        {
+            return;
+        }
+
+        if (IsDropDownOpen)
+        {
+            SetCurrentValue(IsDropDownOpenProperty, false);
+        }
+
+        ScheduleReturnBorrowedItems();
+    }
+
+    private void OnDropDownUnloaded(object sender, RoutedEventArgs e)
+    {
+        // Last line of defence for hosts that tear a proxy down without its popup ever raising
+        // Closed — a closing host popup takes the child popup's window with it, and the child can
+        // be gone before anything on this object hears about it. If the popup is not actually open
+        // any more, the borrow goes home whatever IsDropDownOpen still claims. A dropdown whose
+        // menu is genuinely still open (the ribbon re-templating under it on a theme swap) is left
+        // alone — its own close path is intact.
+        if (_borrowed && _popup is not { IsOpen: true })
+        {
+            EnsureBorrowedItemsReturned();
+        }
+    }
 
     private static void OnIsDropDownOpenChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         var button = (RibbonDropDownButton)d;
 
-        // Borrow the source's items as the proxy OPENS — before the popup lays out, so it sizes to
-        // the real menu. (Returning them happens in OnPopupClosed, deferred, to avoid reparenting
-        // a menu item mid-click.) The _borrowed guard makes a quick close→reopen a no-op.
-        if ((bool)e.NewValue && button._borrowSource is { } source && !button._borrowed)
+        if ((bool)e.NewValue)
         {
-            MoveItems(source, button);
-            button._borrowed = true;
+            // Borrow the source's items as the proxy OPENS — before the popup lays out, so it sizes
+            // to the real menu. The _borrowed guard makes a quick close→reopen a no-op.
+            if (button._borrowSource is { } source && !button._borrowed)
+            {
+                MoveItems(source, button);
+                button._borrowed = true;
+            }
+        }
+        else if (button._borrowed)
+        {
+            // Return on the PROPERTY, not on the popup's Closed event. This property is the
+            // contract; the popup is an implementation detail that can be shut out from under us
+            // (see OnPopupClosed), and a proxy that was never templated has no popup at all. The
+            // return itself is deferred and re-guarded, so a fast close→reopen still keeps the
+            // items here.
+            button.ScheduleReturnBorrowedItems();
         }
     }
 
@@ -295,22 +351,38 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
     {
         _dismissHelper.OnClosed();
 
-        // Return borrowed items AFTER the popup has closed and the UI thread is idle, so we never
-        // reparent a menu item while its click is still being dispatched. Deferred + guarded, so a
-        // fast close→reopen keeps the items in the proxy (the reopen re-checks IsDropDownOpen).
+        // A popup can close BEHIND this property's back. WPF coerces Popup.IsOpen to false while
+        // the popup is not loaded, which is exactly what a HOST popup closing does to a proxy that
+        // lives inside it (the QAT overflow flyout). That coerced value never travels back through
+        // the template's binding, so IsDropDownOpen is STILL TRUE here — and setting it false
+        // afterwards changes nothing the popup can see, so no second Closed is ever raised.
+        // Syncing it now is what keeps the return below reachable: without it the borrowed items
+        // stay stranded in a proxy nobody will reopen and the SOURCE menu is left permanently
+        // empty, so the original ribbon button opens onto nothing.
+        if (IsDropDownOpen)
+        {
+            SetCurrentValue(IsDropDownOpenProperty, false);
+        }
+
         if (_borrowSource is not null && _borrowed)
         {
-            Dispatcher.BeginInvoke(
-                System.Windows.Threading.DispatcherPriority.Background,
-                new Action(() =>
-                {
-                    if (!IsDropDownOpen)
-                    {
-                        ReturnBorrowedItems();
-                    }
-                }));
+            ScheduleReturnBorrowedItems();
         }
     }
+
+    // Return borrowed items AFTER the popup has closed and the UI thread is idle, so we never
+    // reparent a menu item while its click is still being dispatched. Deferred + guarded, so a
+    // fast close→reopen keeps the items in the proxy (the arriving action re-checks IsDropDownOpen).
+    private void ScheduleReturnBorrowedItems() =>
+        Dispatcher.BeginInvoke(
+            DispatcherPriority.Background,
+            new Action(() =>
+            {
+                if (!IsDropDownOpen)
+                {
+                    ReturnBorrowedItems();
+                }
+            }));
 
     private void OnMenuItemClicked(object sender, RoutedEventArgs e)
     {

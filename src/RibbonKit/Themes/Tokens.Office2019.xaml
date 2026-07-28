@@ -37,6 +37,13 @@
     <!-- Hover fill for chrome buttons on the tab strip (File button, minimize toggle),
          matching the tab hover. Becomes accent-tinted when the title bar is colored. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.ControlHoverBackground" Color="#EDEDED" />
+    <!-- Held (mouse-down) fill for those same buttons, one step darker than the hover. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.ControlPressedBackground" Color="#D8D8D8" />
+    <!-- Fill of the tab-strip scroll chevrons: the SELECTED TAB's white, not the strip's grey, so
+         the chevron reads as a tab. Deliberately NOT Ribbon.Background — with a coloured title bar
+         ThemeManager repaints that key with the accent, which turned the chevron into an accent
+         block carrying a dark glyph. White keeps it legible on both strip colours. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.ScrollButtonBackground" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverBackground" Color="#EDEDED" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverUnderline" Color="Transparent" />
     <!-- Selected tab is true white (matches the white ribbon body), standing out from the
@@ -173,6 +180,8 @@
     <CornerRadius x:Key="RibbonKit.Metrics.SmallControlCornerRadius">0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.PopupCornerRadius">0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.TabCornerRadius">0</CornerRadius>
+    <!-- Square, like everything else in this generation. -->
+    <CornerRadius x:Key="RibbonKit.Metrics.ApplicationButtonCornerRadius">0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.SplitLeftCornerRadius">0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.SplitRightCornerRadius">0</CornerRadius>
 
@@ -180,6 +189,10 @@
          seamlessly under the blue tab strip and the active (light) tab merges into it. -->
     <Thickness x:Key="RibbonKit.Metrics.ContentBorderThickness">0,0,0,1</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.ContentMargin">0</Thickness>
+    <!-- No minimized divider: this strip is a tinted band (and the full accent colour when the
+         title bar is coloured), so it already separates itself from the white content below.
+         0 means the divider takes no layout height either — set it to 1 if one is ever wanted. -->
+    <system:Double x:Key="RibbonKit.Metrics.MinimizedDividerHeight">0</system:Double>
     <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadius">0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadiusTop">0</CornerRadius>
     <Thickness x:Key="RibbonKit.Metrics.ContentMarginQatBelow">0</Thickness>

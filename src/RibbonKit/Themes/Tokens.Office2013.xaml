@@ -34,6 +34,14 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.Foreground" Color="#444444" />
     <!-- Hover fill for chrome buttons on the tab strip (File button, minimize toggle). -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.ControlHoverBackground" Color="#E5E5E5" />
+    <!-- Held (mouse-down) fill for those same buttons, one step darker than the hover. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.ControlPressedBackground" Color="#D6D6D6" />
+    <!-- Fill of the tab-strip scroll chevrons. Its own token rather than Ribbon.Background so it
+         survives the two things that broke it there: 2024 makes that Transparent for Mica, and an
+         accented 2019 strip repaints it with the accent. Matching Tab.SelectedBackground makes the
+         chevron read as a tab sitting on the strip, which is what it is. Same value this theme
+         already used, so nothing changes here. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.ScrollButtonBackground" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverBackground" Color="#E8EEF7" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverUnderline" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedBackground" Color="#FFFFFF" />
@@ -178,12 +186,16 @@
     <CornerRadius x:Key="RibbonKit.Metrics.SmallControlCornerRadius">0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.PopupCornerRadius">0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.TabCornerRadius">0</CornerRadius>
+    <!-- Square: the 2013 File button is a flat accent block flush with the strip. -->
+    <CornerRadius x:Key="RibbonKit.Metrics.ApplicationButtonCornerRadius">0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.SplitLeftCornerRadius">0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.SplitRightCornerRadius">0</CornerRadius>
 
     <!-- Prominent outline all around the ribbon body (Metro look). -->
     <Thickness x:Key="RibbonKit.Metrics.ContentBorderThickness">1</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.ContentMargin">0</Thickness>
+    <!-- Minimized: stands in for the vanished body outline's top edge — see the 2007 token. -->
+    <system:Double x:Key="RibbonKit.Metrics.MinimizedDividerHeight">1</system:Double>
     <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadius">0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadiusTop">0</CornerRadius>
     <Thickness x:Key="RibbonKit.Metrics.ContentMarginQatBelow">0</Thickness>

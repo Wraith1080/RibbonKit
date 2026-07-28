@@ -18,13 +18,13 @@ namespace RibbonKit.Design;
 internal static class IconCatalog
 {
     /// <summary>The loaded dictionary, or null until the user loads one this session.</summary>
-    public static ResourceDictionary Loaded { get; private set; }
+    public static ResourceDictionary? Loaded { get; private set; }
 
     /// <summary>The path the current <see cref="Loaded"/> dictionary came from (for display).</summary>
-    public static string LoadedPath { get; private set; }
+    public static string? LoadedPath { get; private set; }
 
     /// <summary>Loads a ResourceDictionary XAML file (e.g. Icons.xaml). Returns false with a message on failure.</summary>
-    public static bool TryLoad(string path, out string error)
+    public static bool TryLoad(string path, out string? error)
     {
         error = null;
         try
@@ -68,7 +68,7 @@ internal static class IconCatalog
     }
 
     /// <summary>The <see cref="ImageSource"/> for a key, or null if it isn't an image.</summary>
-    public static ImageSource Preview(string key)
+    public static ImageSource? Preview(string key)
     {
         if (Loaded is null)
         {
@@ -123,7 +123,7 @@ internal sealed class IconPickerDialog : Window
     }
 
     /// <summary>The chosen resource key, or null when the dialog was cancelled.</summary>
-    public string SelectedKey { get; private set; }
+    public string? SelectedKey { get; private set; }
 
     private UIElement BuildLayout()
     {
@@ -185,7 +185,7 @@ internal sealed class IconPickerDialog : Window
 
         if (dialog.ShowDialog(this) == true)
         {
-            if (IconCatalog.TryLoad(dialog.FileName, out string error))
+            if (IconCatalog.TryLoad(dialog.FileName, out string? error))
             {
                 _filter.Clear();
                 RebuildTiles();
@@ -230,7 +230,7 @@ internal sealed class IconPickerDialog : Window
         }
     }
 
-    private Button MakeTile(string key, ImageSource preview)
+    private Button MakeTile(string key, ImageSource? preview)
     {
         var content = new StackPanel { Width = 96, Margin = new Thickness(4) };
 

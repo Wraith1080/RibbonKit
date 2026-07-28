@@ -76,6 +76,16 @@ public static class ThemeManager
     private const string AppButtonForegroundKey = "RibbonKit.Brushes.ApplicationButton.Foreground";
     private const string TabHoverKey = "RibbonKit.Brushes.Tab.HoverBackground";
     private const string TabStripControlHoverKey = "RibbonKit.Brushes.TabStrip.ControlHoverBackground";
+    private const string TabStripControlPressedKey = "RibbonKit.Brushes.TabStrip.ControlPressedBackground";
+
+    // Hover/press washes for the small chrome buttons (minimize chevron, modal-tab close, merged
+    // caption buttons, QAT overflow, scroll chevrons, caption buttons, the pressed File button)
+    // while a DWM backdrop is showing through. They must be TRANSLUCENT, not solid: Mica and
+    // Acrylic composite beneath the window, so a solid #E6E6E6 chip reads as an opaque sticker
+    // floating on the material. Black at low alpha darkens whatever the backdrop is showing,
+    // which is what a real Fluent surface does.
+    private static readonly SolidColorBrush BackdropControlHover = Frozen(Color.FromArgb(0x1F, 0, 0, 0));
+    private static readonly SolidColorBrush BackdropControlPressed = Frozen(Color.FromArgb(0x33, 0, 0, 0));
 
     // Every key the accent system may override, so a theme switch can clear the previous
     // theme's accent overrides before re-deriving for the new one.
@@ -199,7 +209,10 @@ public static class ThemeManager
     /// it. The transparency is applied <b>only</b> for the Office 2024 look with a non-colored
     /// title bar; other themes keep their light band, and a colored title bar
     /// (<see cref="SetAccentedTitleBar"/>) keeps its accent — matching where a solid title bar is
-    /// expected. Persists across <see cref="Apply"/>, so switching themes re-derives it correctly
+    /// expected. In that transparent mode the hover/press washes of the caption buttons, the
+    /// tab-strip chrome buttons and the File button also go translucent, so they tint the
+    /// backdrop instead of covering it. Persists across <see cref="Apply"/>, so switching themes
+    /// re-derives it correctly
     /// (a non-2024 theme reverts to its solid band instead of leaking the transparent override).
     /// The caller is still responsible for the actual DWM backdrop and glass frame (see
     /// <see cref="RibbonKit.Interop.MicaHelper"/>).
@@ -208,6 +221,10 @@ public static class ThemeManager
     {
         ArgumentNullException.ThrowIfNull(application);
         _titleBarBackdrop = enabled;
+        // Re-establish the accent baseline first, exactly as SetAccentedTitleBar does: the
+        // backdrop branch layers onto ApplicationButton.PressedBackground, a key the accent
+        // system also writes, so the two passes must always run in that order.
+        ApplyAccentOverrides(application);
         ApplyTitleBarOverride(application);
         Changed?.Invoke(null, EventArgs.Empty);
     }
@@ -379,6 +396,33 @@ public static class ThemeManager
         return brush;
     }
 
+    /// <summary>
+    /// Builds the Office 2007 title-bar "valley" for <paramref name="baseColor"/>: a light lip at
+    /// the very top, deepening to the base colour about a third of the way down, then brightening
+    /// again to a specular foot.
+    /// </summary>
+    /// <remarks>
+    /// Deliberately neither <see cref="CaptionRamp"/> nor <see cref="Glass"/>. A ramp ends dark, so
+    /// it loses 2007's bright bottom edge; <see cref="Glass"/> carries the hard crease that belongs
+    /// on a BUTTON, not on a caption spanning the window. The white mixes stay modest (≤ 0.30) on
+    /// purpose: the accented caption draws white text and glyphs over this, and a lighter band
+    /// would swallow them.
+    /// </remarks>
+    private static LinearGradientBrush CaptionValley(Color baseColor)
+    {
+        var brush = new LinearGradientBrush
+        {
+            StartPoint = new Point(0, 0),
+            EndPoint = new Point(0, 1),
+        };
+        brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.White, 0.26), 0.0));
+        brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.White, 0.10), 0.14));
+        brush.GradientStops.Add(new GradientStop(baseColor, 0.28));
+        brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.White, 0.22), 1.0));
+        brush.Freeze();
+        return brush;
+    }
+
     private static void ApplyTitleBarOverride(Application application)
     {
         ResourceDictionary resources = application.Resources;
@@ -394,9 +438,16 @@ public static class ThemeManager
         resources.Remove(AppButtonForegroundKey);
         resources.Remove(TabHoverKey);
         resources.Remove(TabStripControlHoverKey);
-        // Note: ApplicationButton.HoverBackground is NOT cleared here — it is owned by the
-        // accent system (which runs first and re-establishes its baseline); we only layer
-        // an override onto it in the colored-strip branch below.
+        resources.Remove(TabStripControlPressedKey);
+        // Note: the ApplicationButton hover/pressed keys are NOT cleared wholesale — they are
+        // owned by the accent system (which runs first and re-establishes its baseline: 2013
+        // gets flat mixes, 2010/2007 a gel), and a blind Remove here would delete the value it
+        // just derived. The backdrop branch below is the only other writer of PressedBackground,
+        // so clear it ONLY when the live value is that override, identified by reference.
+        if (ReferenceEquals(resources[AppButtonPressedKey], BackdropControlPressed))
+        {
+            resources.Remove(AppButtonPressedKey);
+        }
 
         // Transparent title bar so a window backdrop (Mica) shows through — but ONLY for the
         // Office 2024 look with a NON-colored title bar. A colored title bar falls through to
@@ -409,6 +460,16 @@ public static class ThemeManager
             && (CurrentTheme ?? RibbonTheme.Office2024) == RibbonTheme.Office2024)
         {
             resources[TitleBarBackgroundKey] = Brushes.Transparent;
+            // Every hover/press chip that sits on a surface the backdrop shows through has to
+            // go translucent with it. The caption buttons sit directly on the now-transparent
+            // title bar; the tab-strip chrome buttons and the pressed File button sit on the
+            // strip, which is transparent too under Mica. Leaving them solid was the "ugly
+            // opaque square on the material" case.
+            resources[CaptionHoverKey] = BackdropControlHover;
+            resources[CaptionPressedKey] = BackdropControlPressed;
+            resources[TabStripControlHoverKey] = BackdropControlHover;
+            resources[TabStripControlPressedKey] = BackdropControlPressed;
+            resources[AppButtonPressedKey] = BackdropControlPressed;
             return;
         }
 
@@ -418,10 +479,47 @@ public static class ThemeManager
         }
 
         Color accent = EffectiveAccent(application);
-        resources[TitleBarBackgroundKey] = Frozen(accent);
+
+        // A flat accent band is right for 2024/2019/2013 — those generations paint a flat caption
+        // to begin with. It is WRONG for 2010 and 2007, whose uncolored title bars are glass:
+        // colouring them flat turned the top 34px into 2013 and broke the illusion for the whole
+        // window. Each therefore keeps its own gradient SHAPE, re-hued to the accent — 2010 a
+        // two-stop ramp receding downwards (CaptionRamp), 2007 the "valley": a light lip, a
+        // deeper band about a third of the way down, then a bright specular foot.
+        //
+        // Typed as Brush deliberately: the arms return LinearGradientBrush and SolidColorBrush,
+        // which have no common type between them, so an untyped switch expression would only
+        // compile by target-typing to object through the resource indexer. Spelling it out keeps
+        // the intent obvious and the compiler honest.
+        Brush titleBar = CurrentTheme switch
+        {
+            RibbonTheme.Office2010 => CaptionRamp(accent),
+            RibbonTheme.Office2007 => CaptionValley(accent),
+            _ => Frozen(accent),
+        };
+        resources[TitleBarBackgroundKey] = titleBar;
         resources[TitleBarForegroundKey] = Frozen(Colors.White);
-        resources[CaptionHoverKey] = Frozen(Mix(accent, Colors.White, 0.20));
-        resources[CaptionPressedKey] = Frozen(Mix(accent, Colors.Black, 0.15));
+
+        // The caption buttons follow the band they sit on: flat chips on a glass caption were
+        // exactly the mismatch the glass treatment was added to remove. Gel for 2010, the
+        // hard-creased Glass for 2007 — the same split the File button and the dialog primary
+        // button already make between those two generations.
+        Color captionHover = Mix(accent, Colors.White, 0.20);
+        Color captionPressed = Mix(accent, Colors.Black, 0.15);
+        Brush captionHoverBrush = CurrentTheme switch
+        {
+            RibbonTheme.Office2010 => Gel(captionHover),
+            RibbonTheme.Office2007 => Glass(captionHover),
+            _ => Frozen(captionHover),
+        };
+        Brush captionPressedBrush = CurrentTheme switch
+        {
+            RibbonTheme.Office2010 => Gel(captionPressed),
+            RibbonTheme.Office2007 => Glass(captionPressed),
+            _ => Frozen(captionPressed),
+        };
+        resources[CaptionHoverKey] = captionHoverBrush;
+        resources[CaptionPressedKey] = captionPressedBrush;
 
         // Office 2019's tab-strip band tracks the title bar: color it (and its text) too,
         // so the whole top reads as one accent band. The chrome buttons that sit on the

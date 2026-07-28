@@ -44,7 +44,7 @@ internal sealed class ColorPickerDialog : Window
     }
 
     /// <summary>The chosen color string, or null when cancelled.</summary>
-    public string SelectedColor { get; private set; }
+    public string? SelectedColor { get; private set; }
 
     private UIElement BuildLayout()
     {
@@ -69,7 +69,7 @@ internal sealed class ColorPickerDialog : Window
         var ok = new Button { Content = "OK", MinWidth = 76, Margin = new Thickness(0, 0, 6, 0), Padding = new Thickness(10, 4, 10, 4), IsDefault = true };
         ok.Click += (_, _) =>
         {
-            string value = _hex.Text?.Trim();
+            string? value = _hex.Text?.Trim();
             if (!string.IsNullOrEmpty(value))
             {
                 SelectedColor = value;
@@ -107,7 +107,7 @@ internal sealed class ColorPickerDialog : Window
     private void UpdatePreview() => _preview.Background = ParseBrush(_hex.Text);
 
     /// <summary>Parses a color string ("#RRGGBB" or a named color) to a brush, or transparent when invalid.</summary>
-    internal static Brush ParseBrush(string text)
+    internal static Brush ParseBrush(string? text)
     {
         if (string.IsNullOrWhiteSpace(text))
         {

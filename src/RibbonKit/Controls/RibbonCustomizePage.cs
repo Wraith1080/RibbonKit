@@ -90,13 +90,13 @@ public sealed class RibbonCustomizeNode : INotifyPropertyChanged
                 return;
             }
 
-            // Merged tabs don't count towards "at least one tab must stay visible": they belong to
-            // a transient child, so leaning on them would let the user hide every OWN tab and be
-            // left with an empty strip the moment the child deactivates.
+            // Only customizable tabs count towards "at least one tab must stay visible" — the
+            // same set the tree lists. Merged tabs belong to a transient child, so leaning on one
+            // would let the user hide every OWN tab and be left with an empty strip the moment
+            // the child deactivates; a modal tab is visible only inside its own mode.
             if (!value && !_ribbon.Tabs.Any(other =>
                     !ReferenceEquals(other, tab)
-                    && !other.IsContextual
-                    && !Controls.Ribbon.GetIsMerged(other)
+                    && RibbonCustomizePage.IsCustomizableTab(other)
                     && other.Visibility == Visibility.Visible))
             {
                 // Refused: notify AFTER the binding transfer completes, so the re-read snaps
@@ -345,6 +345,29 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
     }
 
     /// <summary>
+    /// Whether customization may list and reorder <paramref name="tab"/>. Three kinds are out:
+    /// <list type="bullet">
+    /// <item>CONTEXTUAL — the APPLICATION drives their visibility (e.g. "Picture Format" appears
+    /// when a picture is selected), so a manual visibility checkbox would fight it.</item>
+    /// <item>MERGED — same reason, plus they belong to a transient child, so any edit would be
+    /// lost the moment the child deactivates, and none of it is persisted anyway.</item>
+    /// <item>MODAL — a tab the app swaps the whole ribbon into via <see cref="Ribbon.EnterModal"/>
+    /// (Print Preview). It is Collapsed the rest of the time and unreachable by normal
+    /// navigation, so listing it invited the user to "show" a tab the ribbon would immediately
+    /// hide again, and to reorder a strip position it never occupies.</item>
+    /// </list>
+    /// </summary>
+    internal static bool IsCustomizableTab(RibbonTab tab) =>
+        !tab.IsContextual && !tab.IsModal && !Controls.Ribbon.GetIsMerged(tab);
+
+    /// <summary>
+    /// The ribbon's tabs in order, minus the ones customization ignores — the list the tree
+    /// shows, and therefore the list reordering must count positions in.
+    /// </summary>
+    private static List<RibbonTab> CustomizableTabs(Ribbon ribbon) =>
+        ribbon.Tabs.Where(IsCustomizableTab).ToList();
+
+    /// <summary>
     /// Rebuilds the whole tree from the live ribbon structure (small trees; rebuilding after
     /// each edit is simpler and safer than incremental sync), then re-selects the node for
     /// <paramref name="selectItem"/> so repeated Up/Down clicks keep walking the same entry.
@@ -358,12 +381,7 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
         {
             foreach (RibbonTab tab in ribbon.Tabs)
             {
-                // Contextual tabs are excluded: the APPLICATION drives their visibility
-                // (e.g. "Picture Format" appears when a picture is selected), so a manual
-                // visibility checkbox would fight it. MERGED tabs are excluded for that reason
-                // and one more — they belong to a transient child, so any edit here would be lost
-                // the moment the child deactivates, and none of it is persisted anyway.
-                if (tab.IsContextual || Controls.Ribbon.GetIsMerged(tab))
+                if (!IsCustomizableTab(tab))
                 {
                     continue;
                 }
@@ -507,10 +525,20 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
             return false;
         }
 
+        // Tabs are bounded by their position among the CUSTOMIZABLE ones, not by the raw
+        // collection: with excluded tabs (contextual / merged / modal) interleaved, counting raw
+        // positions would enable an Up/Down that swaps the selection past an entry the tree never
+        // shows — nothing would appear to move and the button would read as dead.
+        if (node.Kind == RibbonCustomizeNodeKind.Tab && node.Item is RibbonTab movingTab)
+        {
+            List<RibbonTab> tabs = CustomizableTabs(ribbon);
+            int tabIndex = tabs.IndexOf(movingTab);
+            int tabTarget = tabIndex + delta;
+            return tabIndex >= 0 && tabTarget >= 0 && tabTarget < tabs.Count;
+        }
+
         (int index, int count) = node.Kind switch
         {
-            RibbonCustomizeNodeKind.Tab when node.Item is RibbonTab tab =>
-                (ribbon.Tabs.IndexOf(tab), ribbon.Tabs.Count),
             RibbonCustomizeNodeKind.Group when node.Item is RibbonGroup group && node.Parent?.Item is RibbonTab tab =>
                 (tab.Groups.IndexOf(group), tab.Groups.Count),
             // Commands reorder only within CUSTOM groups (built-in groups host arbitrary
@@ -628,8 +656,13 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
         {
             case RibbonCustomizeNodeKind.Tab when node.Item is RibbonTab tab:
             {
-                int index = ribbon.Tabs.IndexOf(tab);
-                ribbon.Tabs.Move(index, index + delta);
+                // Step over any excluded tabs in between by moving to the NEIGHBOUR'S raw index
+                // rather than ±1: ObservableCollection.Move removes then re-inserts, so the tab
+                // lands exactly where the next customizable tab was and everything in between
+                // shuffles along. A raw ±1 would silently trade places with a hidden tab.
+                List<RibbonTab> tabs = CustomizableTabs(ribbon);
+                RibbonTab neighbour = tabs[tabs.IndexOf(tab) + delta];
+                ribbon.Tabs.Move(ribbon.Tabs.IndexOf(tab), ribbon.Tabs.IndexOf(neighbour));
                 break;
             }
 

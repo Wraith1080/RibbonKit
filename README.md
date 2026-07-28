@@ -92,7 +92,7 @@ Legend: ✅ done · 🚧 in progress · 📋 planned
 | Runtime theme switching + custom accent colors | ✅ |
 | Per-monitor v2 High DPI (verified 100 / 125 / 150 / 175 / 200%) | ✅ |
 | Mica and Acrylic system backdrops (Windows 11) | ✅ |
-| Animation system — tab slide, hover cross-fade, sliding underline, KeyTip pop, scroll glide, with a reduced-motion switch | ✅ |
+| Animation system — tab slide, hover cross-fade, sliding underline, KeyTip pop, scroll glide, combo-box drop-down slide, title glide, with a reduced-motion switch | ✅ |
 | Dark mode | 📋 |
 
 ![The same window in the Office 2010 theme](docs/images/theme-2010.png)
@@ -118,7 +118,7 @@ Legend: ✅ done · 🚧 in progress · 📋 planned
 
 ### Preview: MDI emulation
 
-WPF has no native MDI. RibbonKit ships an in-window emulation — themed floating child windows with drag, resize, minimize, maximize, close, cascade placement and state animations, driven by an MVVM-friendly document model (`MdiDocument` / `MdiContainer` / `MdiChild`), working across all four themes.
+WPF has no native MDI. RibbonKit ships an in-window emulation — themed floating child windows with drag, resize, minimize, maximize, close, cascade placement and state animations, driven by an MVVM-friendly document model (`MdiDocument` / `MdiContainer` / `MdiChild`), working across all five themes.
 
 Point `MdiContainer.Ribbon` at a ribbon and it integrates the classic-MDI way: the active document's tabs merge into the host ribbon and swap as documents activate, and a **maximized** child moves its icon and window buttons into the ribbon row while its own title bar disappears. Set `IsCaptionMergeEnabled="False"` for tab merging without the caption move, or leave `Ribbon` unset and maximize simply fills the client area.
 

@@ -2123,6 +2123,237 @@ the Phase 8 review, but renaming is breaking and it has shipped.
   is now corrected.
 - **Silver and Black schemes.** Pure token clones now that the geometry is proven.
 
+### 3.39 Stranded menus, take two: the borrow must not hang off `Popup.Closed` — 2026-07-27
+
+§3.35 fixed proxy REBUILDING as the cause of empty source menus. Caching the entries was necessary
+but not sufficient — a second, independent path stranded the same items, with the same
+who-would-guess symptom: open the QAT overflow flyout, open a drop-down or split entry's menu inside
+it, then dismiss everything with one click somewhere else in the window. From then on the ORIGINAL
+button back in the ribbon opens onto an empty menu, which reads to the user as "the popup won't show
+up at all". Nothing is wrong at the place they clicked.
+
+**The mechanism.** WPF coerces `Popup.IsOpen` to false while a popup is not loaded. Closing the
+overflow flyout unloads everything inside it, so the entry's own popup is coerced shut — and a
+coerced value never travels back through the template's `IsOpen` binding. The entry is left with
+`IsDropDownOpen == true` describing a popup that is already gone. Every consequence follows from
+that one desync:
+
+- The old return path was `Popup.Closed` → `BeginInvoke(Background)` → `if (!IsDropDownOpen) return
+  the items`. The guard exists for a fast close→reopen, but here it read the STALE true and skipped.
+- `OnOverflowClosed`'s `IsDropDownOpen: true` → `SetCurrentValue(false)` rescue was a no-op that the
+  popup could never see (its effective value was already false), so no second `Closed` was raised and
+  there was no second chance to return.
+- The items stayed in a proxy that is only reachable through a flyout that rebuilds its list on every
+  open. Nothing ever asked that proxy to close again, so the source menu stayed empty for the rest of
+  the session.
+
+**The fix is to make the PROPERTY the contract and the popup an implementation detail.**
+`OnIsDropDownOpenChanged` now schedules the return on the false transition (it already borrowed on
+the true one), so the round trip is symmetric and does not care whether a popup exists at all.
+`OnPopupClosed` first SYNCS `IsDropDownOpen` when it finds it still true — that is the moment we
+learn the popup was shut behind our back, and correcting it there both frees the return and stops
+the entry from looking pressed (and from auto-popping its menu the next time the flyout opens, since
+the stale local `IsOpen=true` would otherwise re-assert on load). `EnsureBorrowedItemsReturned()` is
+the explicit hook for hosts: it closes the dropdown if needed and drives the return itself.
+`RibbonQuickAccessToolBar` calls it for EVERY cached entry on close and before pruning one, instead
+of testing `IsDropDownOpen` — the property it cannot trust. A final `Unloaded` net covers a host that
+disappears without the popup raising `Closed` at all; it only fires when the popup is genuinely not
+open, so a theme swap re-templating under an open menu is left alone. All four paths are idempotent
+and re-guarded at Background priority, so overlapping requests move the menu exactly once.
+
+**Rule of thumb:** `Popup.Closed` tells you the popup closed, not that the control agreed to it. Any
+state a RibbonKit flyout owns must be reconciled on the CONTROL's property, and any popup that can
+be nested inside another popup will one day be closed by its host rather than by itself.
+
+**First unit tests.** This is also where the test project stopped being a smoke test.
+`tests/RibbonKit.Tests/Sta.cs` runs a body on an STA thread with a live dispatcher plus a `Drain()`
+that pumps queued Background work — no `Application`, no window, so it runs on a CI agent.
+`DropDownBorrowTests` pins the whole borrow protocol (including this regression, which fails against
+the old code) and `QuickAccessOverflowTests` pins the panel's measure/arrange rules and the command
+proxy factory. `[assembly: InternalsVisibleTo("RibbonKit.Tests")]` was added for this: the contracts
+worth testing here — `BorrowMenuFrom`, `EnsureBorrowedItemsReturned`, `OverflowedChildren`,
+`CreateCommandProxy` — are deliberately not public API, and widening the surface to test them would
+be the wrong trade. Testing without popups is not a compromise either; it is the point, since the
+bug was caused by trusting the popup in the first place.
+
+### 3.40 Chrome polish batch — pressed states, caption glass, and four hijacked tokens — 2026-07-28
+
+Nine user-reported defects in one arc. They look unrelated in a screenshot and mostly are not: four
+of them are the same mistake, which is worth naming before the list.
+
+**The pattern: chrome that borrows a token another system owns.** A brush like
+`Ribbon.Background` reads like "the strip's colour", so small chrome bound to it directly. But two
+subsystems rewrite that key out from under a consumer — `ThemeManager` repaints it with the accent
+on a coloured 2019 strip, and 2024 sets it `Transparent` so a Mica/Acrylic backdrop can show through
+the band. Anything that borrowed it inherited both. **Chrome gets its own token whenever its intent
+differs from the surface it sits on**, even when the two happen to share a value today.
+
+**1 — No pressed state anywhere on the tab-strip chrome.** Six buttons (modal-tab close, minimize
+chevron, the three merged-caption window buttons, the QAT overflow ») had hover and nothing else, so
+a click never registered. New `RibbonKit.Brushes.TabStrip.ControlPressedBackground` in all five
+generations: a step darker for the flat themes, the hover glass INVERTED (dark top face, specular
+foot) for 2010, and the same inverted with 2007's hard crease. ⚠ **The `IsPressed` trigger must be
+LAST in the block** — the pointer is over the button for the whole time it is held, so a trigger
+placed before `IsMouseOver` (or before `IsChecked` on the overflow toggle) is immediately overwritten
+and the press never shows.
+
+**2 — Solid hover/press chips floating on Mica.** DWM composites a backdrop *beneath* the window, so
+a solid `#E6E6E6` wash reads as an opaque sticker on the material. `ApplyTitleBarOverride`'s backdrop
+branch now also swaps the caption buttons, the tab-strip chrome and the File button's pressed fill
+for low-alpha black (`#1F000000` / `#33000000`), which tints the backdrop instead of covering it.
+⚠ `ApplicationButton.PressedBackground` is **owned by the accent system** (2013 flat mixes, 2010 a
+gel, 2007 glass), which runs first — clearing it unconditionally deletes the value that pass just
+derived. The clear is guarded by `ReferenceEquals(resources[key], BackdropControlPressed)` so only
+our own override is removed.
+
+**3 — The 2024 File button's pressed fill had square bottom corners.** It was reusing
+`TabCornerRadius`, right for 2010/2007/2013 whose File button is physically connected to the ribbon,
+wrong for 2024 where it floats above the card. Split out as
+`RibbonKit.Metrics.ApplicationButtonCornerRadius`; only 2024's value changes.
+
+**4 — "Close Print Preview" sat flush against the window edge.** `PART_ModalClose` margin
+`0,6,2,0` → `0,6,8,0`, matching the minimize chevron. Safe because the two are mutually exclusive —
+the chevron collapses via the `IsModal` DataTrigger.
+
+**5 — 2007/2010 caption buttons were flat chips on a glass caption.** All four
+`CaptionButton.*Background` keys became gradients: hover lit from above, pressed INVERTED, close the
+same recipe in red, with 2007 carrying the hard crease and 2010 a smooth ramp — the same
+`Glass()`/`Gel()` split the code already makes. Close pressed stays LIGHTER than close hover, the
+convention the other generations follow. Shared with `RibbonKit.MdiCloseButton`, which wants the
+identical look.
+
+**6 — A colored title bar flattened 2007 and 2010.** `SetAccentedTitleBar` wrote `Frozen(accent)`
+for every theme; right for the flat generations, wrong for the two whose uncolored caption is glass —
+it turned the top 34px into 2013. Each now keeps its own gradient SHAPE re-hued to the accent: 2010
+reuses `CaptionRamp`, 2007 gets a new `CaptionValley` helper matching its own token (light lip,
+deeper band at 0.28, bright specular foot). Not `CaptionRamp` (ends dark, loses 2007's bright bottom
+edge) and not `Glass` (the hard crease belongs on a button, not a window-wide caption). Caption
+buttons follow with `Gel`/`Glass` in the accent hue. ⚠ Every white mix here stays ≤ 0.30: the accented
+caption draws white text and glyphs over it.
+
+**7 — The QAT overflow chevron stayed dark on an accent title bar, in every theme but 2019.**
+`UpdateQatButtonContext` only walked `QuickAccessItems`; the » lives in
+`RibbonQuickAccessToolBar`'s own TEMPLATE and is not an item, so it never received
+`Ribbon.QatOnColoredSurface` or the band brushes. 2019 hid the bug — its colored strip repaints
+`TabStrip.Foreground` white app-wide, which the chevron's stroke happens to use. New
+`ApplyQatSurfaceContext(host, colored, hoverKey, pressedKey)` does for a HOST what the loop does for
+an item; because the attached property **inherits**, setting it on the host carries it into the
+template. Called per host with its own flag (`_titleBarQatHost` → `titleBarColored`, the new cached
+`_qatTabRowHost` → `tabRowColored`, `_qatBelowHost` → always false). ⚠ Resolve the brushes via
+`TryFindResource` on the RIBBON, not the host — a title-bar host lives outside the ribbon's visual
+tree — and never store null: a `Border` whose `Background` trigger sets null drops out of hit-testing
+and the click falls through to the WindowChrome caption.
+
+**8 — A minimized ribbon had no bottom edge in 2007/2010/2013.** Collapsing the body takes its
+outline with it, and in the bordered generations the tab strip then butts straight into the app's
+content. New `MinimizedDivider` Border in the tab control's **body row** (so the hairline lands
+exactly where the body's top border was), painted in `Ribbon.Border`. Per-theme opt-out is a height
+token — `MinimizedDividerHeight` is 1 for the three, **0** for 2019 (tinted band) and 2024 (floating
+card), and zero costs them no layout height either, the same idiom as a zeroed
+`ContextualUnderlineHeight`. ⚠ It triggers on `Ribbon.IsMinimized`, **not** on
+`ContentHost.Visibility`: the collapse is animated in code (slide, fade, *then* Collapsed), so keying
+off Visibility would pop the line several frames late.
+
+**9 — The tab-strip scroll chevrons: wrong fill, and floating above the tabs.** The fill was
+`Ribbon.Background`, so 2024 rendered a bare outline with tabs sliding under it and an accented 2019
+strip produced an accent block still carrying a dark glyph. New
+`RibbonKit.Brushes.TabStrip.ScrollButtonBackground`: 2007/2010/2013 restate what they already
+rendered, 2019 and 2024 become white so the chip reads as the selected tab. The vertical offset had a
+real cause rather than needing a nudge — the tabs live inside `PART_TabScroll` and are inset by
+`TabStripMargin`, while the chevrons are its SIBLINGS and stretch to the full row, so they floated
+above the tabs by exactly that top inset (2007/2010: 2, 2019/2024: 4, **2013: 0**). The user
+independently reported "too high in every theme except 2013" — the one theme with a top of 0, which
+is what confirmed the diagnosis. Binding their `Margin` to the same `TabStripMargin` token makes them
+track the strip everywhere, and keeps them correct if a margin is ever retuned.
+
+**Also: modal tabs no longer appear in Customize Ribbon.** `RebuildTree` excluded contextual and
+merged tabs and had no modal case, so Print Preview sat in the list offering a visibility checkbox
+for a tab the ribbon re-hides. `RibbonTab.IsModal` already existed, so the filter needed no new API —
+the three inline copies of the predicate collapsed into `IsCustomizableTab`. ⚠ **The one-line filter
+alone would have created a worse bug.** `CanMove`/`MoveSelected` counted positions in the RAW
+`ribbon.Tabs`; hiding a tab from the tree while still counting it for reordering means Up/Down can
+swap the selection with an entry the user cannot see. That was live in the showcase (Print Preview is
+declared last, so "move Favorite down" traded places with it). Both now work in the filtered list and
+the move targets the NEIGHBOUR'S raw index instead of ±1, so `ObservableCollection.Move` lands the
+tab where the neighbour was and anything excluded in between shuffles along. The flaw already existed
+for contextual and merged tabs; the modal filter merely made it reachable by default.
+
+**Rule of thumb from this batch:** when a fix hides something from a list, check every OTHER
+operation that indexes the same collection. Filtering a view is half a change.
+
+### 3.41 Two ordering bugs: an Effect painted over, and a FLIP that flashed — 2026-07-28
+
+Both are about *when* WPF draws, not what. They were reported as unrelated cosmetic glitches and
+share no code, but the debugging lesson is the same, so they are recorded together.
+
+**The ribbon's drop shadow only appeared under Mica.** The 2007/2010/2024 bodies carry a real
+`DropShadowEffect` (`Effects.ContentShadow`), and an **Effect renders outside the element's layout
+bounds** — straight into whatever sits below. Panel siblings paint in declaration order, and a host's
+content area is declared after the ribbon, so its opaque background covered the shadow. Mica hid the
+bug rather than enabling the feature: the showcase sets `MainContentArea.Background = Transparent`
+while a backdrop is on and back to `White` when off, so the shadow only ever survived in backdrop
+mode — which made a paint-order bug look like a backdrop feature. Confirmed from the screenshot
+pixels: directly under the body border, Mica ON gave `dbe3e6 → e0e8eb → e5ecf0 → e8f0f4 → eaf2f6`
+(a shadow fading downward) and Mica OFF gave five rows of flat `ffffff`.
+
+Fixed with `<Setter Property="Panel.ZIndex" Value="1" />` in the `Ribbon` implicit style — the ribbon
+paints last among its siblings. Nothing was clipping the shadow; it only needed to be drawn later.
+Library-side rather than showcase-side on purpose: every consumer that puts content below a ribbon
+hits this, and an app author would sooner conclude the theme has no shadow. It sits beside the
+existing `VerticalAlignment="Top"` setter — the same kind of defensive layout default, and a local
+value still beats it.
+
+**The window title now glides when the backstage hides the QAT.** `Ribbon` sets
+`IsTitleBarContentVisible = false` while the backstage is open, the template collapses the
+quick-access slot, and the title — which lives in the `*` column between that slot and the caption
+buttons — teleported sideways by half the slot's width. `PART_Title` is now a declared template part
+and `RibbonWindow` animates the difference via the new `RibbonMotion.AnimateTranslateX` (the
+horizontal twin of `AnimateTranslateY`), on `RibbonAnimationAction.Backstage` timing so it moves with
+the backstage rather than on its own clock.
+
+It measures rather than computes: the shift involves an Auto column, a themed margin (2007 insets the
+slot to clear the overhanging orb) and a trimmed `TextBlock`, so hand-computed geometry would drift
+from what renders. ⚠ **The two measurements are deliberately asymmetric** — BEFORE *includes* any
+transform still running from a previous toggle (that is where the title visually is), AFTER
+*subtracts* it (that transform is about to be replaced; we want the resting position). Reading both
+the same way makes a fast open-close-open sequence jump.
+
+**And then it flickered, intermittently — two independent one-frame bugs, both needed fixing.**
+The symptom was the title snapping to its destination for a frame before animating properly.
+
+1. **`DispatcherPriority.Loaded` runs AFTER `Render`.** The first version took its second measurement
+   on a dispatcher hop, so layout and rendering both completed before any offset was set and the
+   composition thread could present a frame with the title already home. Replaced with a one-shot
+   `LayoutUpdated` handler, which fires at the end of the arrange pass, inside the frame that is
+   about to be presented. **Never use a dispatcher hop for a FLIP in WPF.**
+2. **The animation clock had not ticked.** WPF ticks the timing manager at the START of a render
+   frame, before layout — so an animation begun during that frame's layout is first ticked on the
+   NEXT frame, and until then the property falls back to its BASE value, which was 0: the
+   destination. `AnimateTranslateX` now seeds `translate.X = fromX` immediately before
+   `BeginAnimation`; the animation outranks the base value as soon as the clock catches up.
+
+Intermittency was the tell — whether a frame is presented in either gap depends on render-thread
+timing. Fixing only one would have left a shorter flash.
+
+Bookkeeping worth keeping: `_titleShiftPending` stops a double subscription when a toggle arrives
+before the layout pass (the newest BEFORE reading wins, since nothing has moved yet), and
+`OnApplyTemplate` unsubscribes while the OLD part is still in hand or the handler pins a discarded
+element.
+
+**Also shipped here: the combo box drop-down fades and slides down.**
+`RibbonAnimationAction.DropdownMenu` (130ms, 8px) had been declared with timings and **zero
+consumers** — every flyout opened instantly. `RibbonComboBox.OnDropDownOpened` now calls
+`RibbonMotion.PlayOpen(_popupRoot, DropdownMenu, RibbonSlideFrom.Top)`;
+`RibbonDropDownButton`, `RibbonSplitButton` and `RibbonMenuItem` are the same three lines each if
+they should follow. ⚠ **A `Popup` clips its child's `RenderTransform`**: the popup's window is sized
+to the child's LAYOUT size and a transform does not grow it, so sliding the border up from -8 sliced
+its top 8px against the window edge. Fixed with a matched pair — `Popup.VerticalOffset="-10"` plus a
+10px larger top margin on the child — which leaves the resting position pixel-identical while giving
+the slide room. Keep 10 > the slide offset if that is ever raised, and expect to repeat the trick for
+any other flyout given a slide. Open only: a close animation would mean holding the popup alive past
+the close, and `ComboBox`'s built-in mouse-capture management assumes the popup closes when it says
+so.
+
 ## 4. Workflow / Session Conventions
 
 - Cloud workspace: `/home/user/ribbonkit/`. The user's machine:
@@ -2140,12 +2371,39 @@ the Phase 8 review, but renaming is breaking and it has shipped.
 
 ## 5. Current State & Next Steps
 
-> **Status as of 2026-07-27: everything in §3 is implemented AND user-verified on Windows.**
+> **Status as of 2026-07-28: everything through §3.39 is implemented AND user-verified on Windows.
+> §3.40 and §3.41 shipped unbuilt today and are NOT yet verified** — checklist below.
 > Roadmap Phases 1–5 and 7 are complete. **Phase 6 now also has the Office 2007 theme (§3.38)**, so
 > all five generations ship; Phase 6 still owes dark mode, RTL + localization and the
 > visual-regression suite. Phase 8 (API freeze, docs site, perf, launch) is untouched. Two items are
 > deliberately deferred out of §3.38: the 2007 window frame, and the real two-pane 2007 application
-> menu (a new control, and a genuine feature gap). Nothing is awaiting verification.
+> menu (a new control, and a genuine feature gap).
+
+**Awaiting verification (§3.40 / §3.41).** All of it is chrome, so it is checked by looking rather
+than by clicking — but several states hide in corners:
+
+1. **Pressed states** on the six tab-strip chrome buttons, in all five themes.
+2. **Mica/Acrylic on, 2024** — caption, tab-strip and File-button hover/press should tint the
+   material, not sit on it as opaque chips.
+3. **A custom accent on 2013/2010/2007** — the File button's pressed fill must still be the
+   accent-derived gel/glass, not the backdrop wash (this is what the `ReferenceEquals` guard
+   protects).
+4. **Accented title bar in 2007 and 2010** — glass caption, glass caption buttons. Try a LIGHT
+   accent too: white text over these gradients is the assumption most likely to break.
+5. **The QAT » chevron** on an accent title bar in 2024/2013/2010/2007 (2019 always looked right).
+6. **Minimized ribbon** in 2007/2010/2013 (hairline present) and 2019/2024 (absent, and no 1px
+   layout shift).
+7. **The ribbon's drop shadow with Mica OFF** in 2007/2010/2024 — the whole point of the ZIndex fix.
+8. **The title glide**, including mashing the File button open/close/open: that path exercises both
+   the re-entrancy guard and the asymmetric before/after measurement, and it is where a flicker
+   would come back.
+9. **The combo box drop-down** — the slide must not slice the popup's top edge.
+10. **Customize Ribbon** — Print Preview absent, and Up/Down on the LAST visible tab still reorders
+    (it used to trade places with the hidden modal tab).
+
+One interaction could not be judged from screenshots: on an accented 2019 strip the scroll chevron's
+hover still uses the accent-tinted `TabStrip.ControlHoverBackground`, now over a white chip. It
+should read as a pale tint.
 
 **Working and confirmed by user: everything through §3.21** — including the QAT
 customization + merged options dialog with all its refinements (custom close-only title
@@ -2205,6 +2463,11 @@ a pattern already solved here.
 cap at `Ribbon.QuickAccessMaxWidth` and move the rest into a » flyout; below-ribbon is unconstrained
 and unchanged.
 
+**The overflow flyout's second stranding bug is fixed (§3.39)** — dismissing the flyout while one of
+its drop-down/split entries had its menu open used to leave the ORIGINAL ribbon button opening onto
+an empty menu for the rest of the session. Covered by tests rather than by clicking, so the manual
+repro in §3.39 is still worth one pass.
+
 **Cross-cutting rule worth reading before touching the tab strip: §3.36.** The sliding underline and
 the 2010/2013 connect notch do not update themselves, and neither `SizeChanged` on the tab control
 nor `SizeChanged` on a sibling whose `Visibility` toggles will tell you. Both variants shipped broken
@@ -2214,20 +2477,32 @@ Backlog (rough priority):
 
 1. Design editor: optional clear-to-default buttons for scalar properties. (Drag-drop tree
    reordering + cross-tab/group moves are now DONE — see §5 "Drag-drop reordering".)
-2. **Office 2007 theme** (roadmap Phase 6). 2010 is DONE (§3.27); 2007 is the last remaining classic
-   theme (round Office orb button + heavier glass gradients).
+1b. **Finish the `DropdownMenu` animation.** §3.41 gave the combo box the open slide and left
+   `RibbonDropDownButton`, `RibbonSplitButton` and `RibbonMenuItem` opening instantly. Three lines
+   each, plus the popup-clipping headroom trick — do them together so the flyouts stay consistent.
+2. **Office 2007 leftovers** — the two pieces §3.38 deliberately deferred: the 2007 WINDOW FRAME
+   (glass caption + orb overhang), and the real two-pane APPLICATION MENU (command column + Recent
+   Documents + Options/Exit bar). The second is a new control, not a theme, and is a genuine feature
+   gap — `README.md` used to claim it existed. Also owed: the 2007 DPI matrix pass (100–200%).
 3. **Dark mode** (the 2019 white-tab note in §3.6 anticipates it) — the last item of the theming arc,
    and the one that also covers Mica's dark-aware translucency.
 4. RTL + localization resources, then the visual-regression snapshot suite (theme × DPI) — the rest
    of roadmap Phase 6.
-5. **MDI M1–M3**: cascade/tile/arrange commands + Ctrl+Tab (M1), the MVVM `ItemsSource` demo and a
+5. **The rest of the unit tests** — merge/modal invariants (`docs/06-MERGE-AND-MODAL-PLAN.md` §7),
+   customization serializer round-trips, KeyTip resolution, reduction-algorithm gaps. The harness
+   and the house style for headless WPF tests are in place (§3.39), so these are now writing, not
+   inventing.
+6. **MDI M1–M3**: cascade/tile/arrange commands + Ctrl+Tab (M1), the MVVM `ItemsSource` demo and a
    per-theme pass (M2), tabbed-documents mode + `RibbonState` layout persistence (M3). M0 and M4 are
    done, so the feature currently has a hole in its middle.
-6. Roadmap Phase 8 release engineering: API review and freeze (`PublicAPI.txt` — Phase 7 added a lot
+7. Roadmap Phase 8 release engineering: API review and freeze (`PublicAPI.txt` — Phase 7 added a lot
    of public surface), docs site, NuGet polish, performance pass.
-7. GitHub publish: repo URL placeholder in csproj (`YOUR-GITHUB-USERNAME`).
+8. GitHub publish: repo URL placeholder in csproj (`YOUR-GITHUB-USERNAME`).
 
-**Unit tests remain unwritten.** `docs/06-MERGE-AND-MODAL-PLAN.md` §7 lists the invariants worth
-asserting — merge ordering across permutations, merge/unmerge round-trips, group restore with two
-sources in one tab, capture-while-modal, modal enter/exit selection. All of Phase 7 was verified by
-clicking, and those invariants are the kind that break silently.
+**Unit tests have started — 47 green (2026-07-27).** The QAT/proxy suite landed with §3.39: the STA
+harness, the borrow protocol, and the overflow strip's measure/arrange rules, alongside the existing
+reduction/size-definition/theme-scope tests. Everything else is still unwritten.
+`docs/06-MERGE-AND-MODAL-PLAN.md` §7 lists the invariants worth asserting next — merge ordering
+across permutations, merge/unmerge round-trips, group restore with two sources in one tab,
+capture-while-modal, modal enter/exit selection. All of Phase 7 was verified by clicking, and those
+invariants are the kind that break silently.

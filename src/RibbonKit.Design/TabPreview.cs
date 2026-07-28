@@ -26,10 +26,10 @@ internal static class TabPreviewCoordinator
     // DP is unverified, so we invalidate under both (and BackstagePagePreviewProvider registers both).
     private const string SelectorType = "System.Windows.Controls.Primitives.Selector";
 
-    private static ModelItem _ribbon;
+    private static ModelItem? _ribbon;
     private static int? _tabIndex;
     private static bool? _backstageOpen;
-    private static ModelItem _backstage;
+    private static ModelItem? _backstage;
     private static int? _backstagePage;
 
     /// <summary>The currently previewed tab index, or null when no tab preview is active.</summary>
@@ -84,7 +84,7 @@ internal static class TabPreviewCoordinator
     }
 
     /// <summary>Sets (or clears, when null) the previewed backstage page and repaints the surface. Writes no XAML.</summary>
-    public static void SetBackstagePage(ModelItem backstage, int? index)
+    public static void SetBackstagePage(ModelItem? backstage, int? index)
     {
         _backstage = backstage;
         _backstagePage = index;
