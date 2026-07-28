@@ -31,6 +31,15 @@
              ribbon that becomes a DockPanel's last child (LastChildFill) or lands in a * Grid row
              stretches vertically and the body drifts down. Consumers can still override. -->
         <Setter Property="VerticalAlignment" Value="Top" />
+        <!-- Paint ABOVE the app's content. The 2007/2010/2024 bodies cast a downward drop shadow
+             (Effects.ContentShadow), and an Effect renders OUTSIDE the element's layout bounds —
+             straight into whatever sits below. Panel siblings paint in declaration order, and the
+             content area is declared after the ribbon, so its opaque background covered the shadow
+             and erased it. Nothing clips the shadow; it only ever needed to be drawn last.
+             (The bug hid itself under Mica/Acrylic, where hosts make that background transparent
+             and the shadow reappears — which made it look like a backdrop feature rather than a
+             paint-order bug.) Consumers can still override. -->
+        <Setter Property="Panel.ZIndex" Value="1" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type controls:Ribbon}">
@@ -621,6 +630,29 @@
                                               Visibility="{Binding CanScrollRight, ElementName=PART_ContentScroll, Converter={StaticResource RibbonKit.BoolToVis}}" />
                             </Grid>
                         </Border>
+                        <!-- MINIMIZED divider. With the body collapsed its outline goes with it,
+                             and in the bordered generations (2007/2010/2013) the tab strip then
+                             butts straight into the app's content with no boundary at all. This
+                             hairline stands in for the outline's top edge, in the same
+                             Ribbon.Border colour, so a minimized ribbon still terminates.
+
+                             Height is a per-theme token rather than a trigger: 2019 (tinted band)
+                             and 2024 (floating card) set it to 0, which also costs them no layout
+                             height, exactly as ContextualUnderlineHeight is zeroed to switch off
+                             the contextual underline. Full width by design, including 2007, whose
+                             body is inset 2px a side — a rule that stops short of the window edge
+                             reads as a mistake rather than a boundary.
+
+                             Never visible at the same time as PART_ConnectNotch below (that one
+                             mirrors ContentHost), so their declaration order does not matter. -->
+                        <Border x:Name="MinimizedDivider"
+                                Grid.Row="1"
+                                Height="{DynamicResource RibbonKit.Metrics.MinimizedDividerHeight}"
+                                VerticalAlignment="Top"
+                                Background="{DynamicResource RibbonKit.Brushes.Ribbon.Border}"
+                                Visibility="Collapsed"
+                                IsHitTestVisible="False"
+                                SnapsToDevicePixels="True" />
                         <!-- Body-border NOTCH: a 1px body-coloured sliver lying OVER the body's
                              top border, directly under the selected tab, cutting a tab-wide gap
                              into the border so the active tab opens seamlessly into the body
@@ -660,7 +692,14 @@
                     <ControlTemplate.Triggers>
                         <!-- The ribbon body's Visibility while minimized is managed in code
                              (Ribbon.OnIsMinimizedChanged) so it can slide up + fade out before
-                             collapsing, and slide back in on restore. -->
+                             collapsing, and slide back in on restore. The divider keys off
+                             IsMinimized rather than the body's Visibility, so it is already in
+                             place under the body as that slides up and away — appearing only
+                             after the collapse would pop a line in a frame late. -->
+                        <DataTrigger Binding="{Binding IsMinimized, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
+                                     Value="True">
+                            <Setter TargetName="MinimizedDivider" Property="Visibility" Value="Visible" />
+                        </DataTrigger>
                         <DataTrigger Binding="{Binding QuickAccessPosition, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
                                      Value="TabRow">
                             <Setter TargetName="QatTabRowHost" Property="Visibility" Value="Visible" />

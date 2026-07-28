@@ -295,6 +295,15 @@ public static class RibbonMotion
         translate.BeginAnimation(TranslateTransform.YProperty, null);
         translate.SetValue(TranslateTransform.YProperty, 0d);
 
+        // Seed the BASE value with the start offset before starting the clock. WPF ticks the
+        // timing manager at the START of a render frame, before layout, so an animation begun
+        // during that same frame's layout is not ticked until the NEXT one — and for that first
+        // frame the property falls back to its base value. Leaving the base at 0 therefore
+        // renders one frame at the DESTINATION before the motion begins, which reads as a flicker
+        // (the element snaps to its end position, then jumps back and animates properly).
+        // Once the clock does tick, the animation outranks this value entirely.
+        translate.SetValue(TranslateTransform.XProperty, fromX);
+
         var anim = new DoubleAnimation(fromX, toX, RibbonAnimation.GetDuration(action))
         {
             EasingFunction = RibbonAnimation.GetEase(action),

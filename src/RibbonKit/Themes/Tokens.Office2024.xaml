@@ -193,6 +193,9 @@
          inset margin, all-around border, rounded corners. -->
     <Thickness x:Key="RibbonKit.Metrics.ContentBorderThickness">1</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.ContentMargin">7,1,7,7</Thickness>
+    <!-- No minimized divider: a full-width rule would contradict the floating-card language,
+         where the ribbon deliberately does not span the window. 0 costs no layout height. -->
+    <system:Double x:Key="RibbonKit.Metrics.MinimizedDividerHeight">0</system:Double>
     <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadius">8</CornerRadius>
     <!-- Card geometry when the QAT sits below the ribbon: top corners rounded, bottom
          square, and no bottom margin so the QAT bar connects flush. -->

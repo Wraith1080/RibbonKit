@@ -378,6 +378,10 @@
     <!-- Ribbon body: a full outline with square corners, connected to the chrome above. -->
     <Thickness x:Key="RibbonKit.Metrics.ContentBorderThickness">1</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.ContentMargin">2,0,2,0</Thickness>
+    <!-- Minimized: the body (and its outline) is gone, so a hairline stands in for the outline's
+         top edge — otherwise the tab strip and the app's content butt together with no boundary.
+         0 in the themes that don't want one; the divider then takes no layout height either. -->
+    <system:Double x:Key="RibbonKit.Metrics.MinimizedDividerHeight">1</system:Double>
     <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadius">3</CornerRadius>
     <!-- Used INSTEAD of ContentCornerRadius when the QAT sits below the ribbon: the body rounds
          only its top corners and the QAT strip below completes the shape with the bottom pair. -->

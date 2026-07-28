@@ -311,6 +311,8 @@
          — rather than moving the body up, so ContentMargin stays at 0. -->
     <Thickness x:Key="RibbonKit.Metrics.ContentBorderThickness">1</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.ContentMargin">0</Thickness>
+    <!-- Minimized: stands in for the vanished body outline's top edge — see the 2007 token. -->
+    <system:Double x:Key="RibbonKit.Metrics.MinimizedDividerHeight">1</system:Double>
     <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadius">0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadiusTop">0</CornerRadius>
     <Thickness x:Key="RibbonKit.Metrics.ContentMarginQatBelow">0</Thickness>

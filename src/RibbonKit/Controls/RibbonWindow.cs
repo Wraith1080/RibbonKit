@@ -45,6 +45,11 @@ public class RibbonWindow : Window
     private FrameworkElement? _windowRoot;
     private FrameworkElement? _title;
 
+    // Pending title-shift capture: where the title was BEFORE the layout change, and whether the
+    // one-shot LayoutUpdated handler that consumes it is currently subscribed.
+    private double _titleShiftFrom;
+    private bool _titleShiftPending;
+
     static RibbonWindow()
     {
         DefaultStyleKeyProperty.OverrideMetadata(
@@ -100,6 +105,16 @@ public class RibbonWindow : Window
     public override void OnApplyTemplate()
     {
         base.OnApplyTemplate();
+
+        // Drop any pending title-shift subscription while the OLD part is still in hand — after
+        // the reassignment below there is no way to unhook it, and it would keep the discarded
+        // element alive.
+        if (_titleShiftPending && _title is not null)
+        {
+            _title.LayoutUpdated -= OnTitleLayoutUpdated;
+            _titleShiftPending = false;
+        }
+
         _windowRoot = GetTemplateChild(WindowRootPartName) as FrameworkElement;
         _title = GetTemplateChild(TitlePartName) as FrameworkElement;
         UpdateMaximizeInset();
@@ -122,11 +137,17 @@ public class RibbonWindow : Window
     /// Measure-then-remeasure ("FLIP"), not arithmetic on the slot's width: the layout that
     /// produces the shift involves an Auto column, a themed margin (Office 2007 insets the slot to
     /// clear the overhanging orb) and a trimmed TextBlock, so anything computed by hand would
-    /// drift from what actually renders. The second measurement is taken at
-    /// <see cref="System.Windows.Threading.DispatcherPriority.Loaded"/>, which runs AFTER the
-    /// layout pass that the visibility change queues at Render priority. The first is safe to
-    /// take inline regardless of whether the template trigger has already collapsed the slot:
-    /// hit-test geometry still reflects the last COMPLETED layout until that pass runs.
+    /// drift from what actually renders. The first measurement is safe to take inline regardless
+    /// of whether the template trigger has already collapsed the slot: hit-test geometry still
+    /// reflects the last COMPLETED layout until the next pass runs.
+    /// </para>
+    /// <para>
+    /// The second is taken in a one-shot <see cref="FrameworkElement.LayoutUpdated"/> handler,
+    /// NOT on a dispatcher hop. <c>LayoutUpdated</c> fires at the end of the arrange pass, still
+    /// inside the frame that is about to be presented, so the start offset is in place before
+    /// anything reaches the screen. A <c>DispatcherPriority.Loaded</c> callback runs AFTER Render
+    /// priority, which let the composition thread present one frame with the title already at its
+    /// destination — the intermittent "snaps to the end, then animates properly" flicker.
     /// </para>
     /// <para>
     /// The two measurements are deliberately asymmetric. The BEFORE value includes any transform
@@ -149,31 +170,48 @@ public class RibbonWindow : Window
             return;
         }
 
-        Dispatcher.BeginInvoke(
-            System.Windows.Threading.DispatcherPriority.Loaded,
-            new Action(() =>
-            {
-                double after = GetTitleOffset(includeTransform: false);
-                if (double.IsNaN(after))
-                {
-                    return;
-                }
+        // A toggle arriving while a capture is still pending has not moved anything yet (no
+        // layout pass has run in between), so the newest reading is the right one to keep —
+        // but the handler must not be subscribed twice.
+        _titleShiftFrom = before;
+        if (_titleShiftPending)
+        {
+            return;
+        }
 
-                double delta = before - after;
+        _titleShiftPending = true;
+        _title.LayoutUpdated += OnTitleLayoutUpdated;
+    }
 
-                // Sub-pixel shifts aren't worth a storyboard, and animating one would only
-                // add a frame of jitter.
-                if (Math.Abs(delta) < 0.5)
-                {
-                    return;
-                }
+    private void OnTitleLayoutUpdated(object? sender, EventArgs e)
+    {
+        if (_title is not null)
+        {
+            _title.LayoutUpdated -= OnTitleLayoutUpdated;
+        }
 
-                Animation.RibbonMotion.AnimateTranslateX(
-                    _title,
-                    Animation.RibbonAnimationAction.Backstage,
-                    delta,
-                    0d);
-            }));
+        _titleShiftPending = false;
+
+        double after = GetTitleOffset(includeTransform: false);
+        if (double.IsNaN(after))
+        {
+            return;
+        }
+
+        double delta = _titleShiftFrom - after;
+
+        // Sub-pixel shifts aren't worth a storyboard, and animating one would only add a
+        // frame of jitter.
+        if (Math.Abs(delta) < 0.5)
+        {
+            return;
+        }
+
+        Animation.RibbonMotion.AnimateTranslateX(
+            _title,
+            Animation.RibbonAnimationAction.Backstage,
+            delta,
+            0d);
     }
 
     /// <summary>

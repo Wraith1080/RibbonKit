@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Automation.Peers;
 using System.Windows.Controls;
+using RibbonKit.Animation;
 // Alias: WPF's legacy Microsoft ribbon declares identically-named peers in
 // System.Windows.Automation.Peers, so the reference must be disambiguated.
 using RibbonComboBoxAutomationPeer = RibbonKit.Automation.RibbonComboBoxAutomationPeer;
@@ -16,8 +17,11 @@ namespace RibbonKit.Controls;
 /// The dropdown relies on <see cref="ComboBox"/>'s own built-in mouse-capture
 /// management, which correctly handles open/close on the chevron.
 /// </remarks>
+[TemplatePart(Name = PopupRootPartName, Type = typeof(FrameworkElement))]
 public class RibbonComboBox : ComboBox
 {
+    private const string PopupRootPartName = "PART_PopupRoot";
+
     /// <summary>Identifies the <see cref="Header"/> dependency property.</summary>
     public static readonly DependencyProperty HeaderProperty =
         DependencyProperty.Register(
@@ -49,6 +53,8 @@ public class RibbonComboBox : ComboBox
             typeof(string),
             typeof(RibbonComboBox),
             new FrameworkPropertyMetadata(null, OnScreenTipChanged));
+
+    private FrameworkElement? _popupRoot;
 
     static RibbonComboBox()
     {
@@ -86,7 +92,32 @@ public class RibbonComboBox : ComboBox
     }
 
     /// <inheritdoc />
+    public override void OnApplyTemplate()
+    {
+        base.OnApplyTemplate();
+        _popupRoot = GetTemplateChild(PopupRootPartName) as FrameworkElement;
+    }
+
+    /// <inheritdoc />
     protected override AutomationPeer OnCreateAutomationPeer() => new RibbonComboBoxAutomationPeer(this);
+
+    /// <inheritdoc />
+    protected override void OnDropDownOpened(EventArgs e)
+    {
+        base.OnDropDownOpened(e);
+
+        // Fade + short slide down on the DropdownMenu timing (130ms, 8px). That action was
+        // declared for exactly this and had NO consumers until now — RibbonDropDownButton,
+        // RibbonSplitButton and RibbonMenuItem still open instantly and can be wired up the same
+        // way. Driven from code rather than a template storyboard because the duration comes from
+        // RibbonAnimation via DynamicResource, and a templated storyboard referencing one cannot
+        // be frozen.
+        //
+        // Open only, deliberately: closing would have to hold the popup alive for the length of
+        // the fade-out, and ComboBox's built-in mouse-capture handling (see the class remarks)
+        // assumes the popup closes when it says so. Not worth destabilising for an exit frame.
+        RibbonMotion.PlayOpen(_popupRoot, RibbonAnimationAction.DropdownMenu, RibbonSlideFrom.Top);
+    }
 
     private static void OnScreenTipChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
