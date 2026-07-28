@@ -36,6 +36,12 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.ControlHoverBackground" Color="#E5E5E5" />
     <!-- Held (mouse-down) fill for those same buttons, one step darker than the hover. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.ControlPressedBackground" Color="#D6D6D6" />
+    <!-- Fill of the tab-strip scroll chevrons. Its own token rather than Ribbon.Background so it
+         survives the two things that broke it there: 2024 makes that Transparent for Mica, and an
+         accented 2019 strip repaints it with the accent. Matching Tab.SelectedBackground makes the
+         chevron read as a tab sitting on the strip, which is what it is. Same value this theme
+         already used, so nothing changes here. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.ScrollButtonBackground" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverBackground" Color="#E8EEF7" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverUnderline" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedBackground" Color="#FFFFFF" />

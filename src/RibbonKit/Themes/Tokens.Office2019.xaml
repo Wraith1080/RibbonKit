@@ -39,6 +39,11 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.ControlHoverBackground" Color="#EDEDED" />
     <!-- Held (mouse-down) fill for those same buttons, one step darker than the hover. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.ControlPressedBackground" Color="#D8D8D8" />
+    <!-- Fill of the tab-strip scroll chevrons: the SELECTED TAB's white, not the strip's grey, so
+         the chevron reads as a tab. Deliberately NOT Ribbon.Background — with a coloured title bar
+         ThemeManager repaints that key with the accent, which turned the chevron into an accent
+         block carrying a dark glyph. White keeps it legible on both strip colours. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.ScrollButtonBackground" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverBackground" Color="#EDEDED" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverUnderline" Color="Transparent" />
     <!-- Selected tab is true white (matches the white ribbon body), standing out from the

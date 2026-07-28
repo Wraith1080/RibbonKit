@@ -399,14 +399,30 @@
                                         </Rectangle>
                                     </Grid>
                                 </layout:RibbonScrollContentHost>
+                                <!-- These two overlay the strip's edges, so they need the SAME top
+                                     inset as the strip itself: the tabs live inside PART_TabScroll
+                                     and are pushed down by TabStripMargin, while the chevrons are
+                                     its siblings and stretch to the full row. Binding the margin
+                                     to the very same token makes them sit level with the tabs in
+                                     every generation instead of floating above them — and it
+                                     explains why only 2013 ever looked right, its TabStripMargin
+                                     being the one with a top of 0.
+
+                                     Background is its OWN token, not Ribbon.Background: that one
+                                     is Transparent in 2024 (for Mica), which left the chevron a
+                                     bare outline, and ThemeManager repaints it with the accent on
+                                     a coloured 2019 strip, which turned the chevron accent-on-dark
+                                     instead of reading like the selected tab. -->
                                 <RepeatButton Style="{StaticResource RibbonKit.ScrollLeftButton}"
                                               HorizontalAlignment="Left"
-                                              Background="{DynamicResource RibbonKit.Brushes.Ribbon.Background}"
+                                              Margin="{DynamicResource RibbonKit.Metrics.TabStripMargin}"
+                                              Background="{DynamicResource RibbonKit.Brushes.TabStrip.ScrollButtonBackground}"
                                               Command="{Binding ScrollLeftCommand, ElementName=PART_TabScroll}"
                                               Visibility="{Binding CanScrollLeft, ElementName=PART_TabScroll, Converter={StaticResource RibbonKit.BoolToVis}}" />
                                 <RepeatButton Style="{StaticResource RibbonKit.ScrollRightButton}"
                                               HorizontalAlignment="Right"
-                                              Background="{DynamicResource RibbonKit.Brushes.Ribbon.Background}"
+                                              Margin="{DynamicResource RibbonKit.Metrics.TabStripMargin}"
+                                              Background="{DynamicResource RibbonKit.Brushes.TabStrip.ScrollButtonBackground}"
                                               Command="{Binding ScrollRightCommand, ElementName=PART_TabScroll}"
                                               Visibility="{Binding CanScrollRight, ElementName=PART_TabScroll, Converter={StaticResource RibbonKit.BoolToVis}}" />
                             </Grid>

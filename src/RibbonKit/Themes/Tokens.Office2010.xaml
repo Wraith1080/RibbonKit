@@ -92,6 +92,15 @@
         <GradientStop Offset="0" Color="#BFD6EF" />
         <GradientStop Offset="1" Color="#DCE9F7" />
     </LinearGradientBrush>
+    <!-- Fill of the tab-strip scroll chevrons. The same glass the strip itself uses, restated as
+         its own token: the chevrons used to read Ribbon.Background directly, which 2024 sets
+         Transparent for Mica and ThemeManager repaints with the accent on a coloured 2019 strip.
+         Keep in step with Ribbon.Background above — the 2010 chevron is meant to sink into the
+         band and be found by its outline. -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.TabStrip.ScrollButtonBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#E4EDF7" />
+        <GradientStop Offset="1" Color="#CBDAEC" />
+    </LinearGradientBrush>
     <!-- Unselected tab hover: a soft amber glow, like the buttons but lighter. 2010 uses
          fills (never underlines), so both underline tokens stay Transparent. -->
     <LinearGradientBrush x:Key="RibbonKit.Brushes.Tab.HoverBackground" StartPoint="0,0" EndPoint="0,1">

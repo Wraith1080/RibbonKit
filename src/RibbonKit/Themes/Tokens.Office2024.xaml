@@ -45,6 +45,12 @@
     <!-- Held (mouse-down) fill for those same buttons, one step darker than the hover so the
          click reads. ThemeManager swaps both for low-alpha washes under a Mica/Acrylic backdrop. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.ControlPressedBackground" Color="#D6D6D6" />
+    <!-- Fill of the tab-strip scroll chevrons. NOT Ribbon.Background, which is Transparent here so
+         a Mica/Acrylic backdrop can show through the strip — the chevron inherited that and
+         rendered as a bare outline with tabs sliding visibly beneath it. This theme's selected tab
+         has no fill either (it marks itself with an underline), so the chip takes the ribbon
+         card's white: opaque, and the same surface the tabs open into. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.ScrollButtonBackground" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverBackground" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverUnderline" Color="#B8B8B8" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedBackground" Color="Transparent" />
