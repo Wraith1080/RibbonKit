@@ -2603,6 +2603,44 @@ VS Properties window: `Layout` is described under the RibbonKit category with th
 spelled out, and the computed `IsVerticalLayout` is `Browsable(false)` — it exists for templates and
 triggers, not for authoring.
 
+### 3.44 The shared easing function was never frozen — 2026-07-28
+
+`dotnet test` failed 9 of 59, every one of them in `PopupMotionTests`, with
+
+> System.InvalidOperationException : The calling thread cannot access this object because a different
+> thread owns it
+
+thrown from `Clock.AllocateClock` → `Timeline.GetCurrentValueAsFrozenCore` → `Freezable.CloneCoreCommon`.
+Nothing in that stack names the culprit, which is what made it worth writing down.
+
+**Cause.** `RibbonAnimation.SharedCubicOut` — the single `CubicEase` every transition reuses — was
+constructed but never frozen. An `IEasingFunction` is a `Freezable`, so an unfrozen one takes thread
+affinity from whichever thread first touched the class. Starting an animation **clones the timeline
+and everything hanging off it**, so any LATER thread that builds a clock trips `VerifyAccess` on the
+easing function. `Sta.Run` gives each test its own STA thread, so test #1 claimed the ease and every
+test after it failed.
+
+**This was not a test-only bug.** WPF supports a second window on its own dispatcher thread, and
+every RibbonKit control in such a window would have thrown on its first hover. The suite found a real
+defect in code that had shipped since the animation system was built.
+
+**Fix:** freeze it (`Frozen(new CubicEase { ... })`, with a tiny generic helper — the same idiom
+`RibbonEditorWindow.DropAdorner` already uses for its pens and brushes). A frozen `Freezable` has no
+dispatcher affinity at all. ⚠ **Any shared `Freezable` added to the animation layer needs the same
+treatment**, and the failure will point somewhere else when it doesn't.
+
+`PopupMotionTests.A_transition_starts_on_any_thread` runs a transition on two successive STA threads.
+Every other test in the file already crossed threads — they all failed together — so that one exists
+purely so the NAME says what broke.
+
+**Separately, two of the nine were the test's own fault.** `The_surface_is_never_transformed` reported
+"carries a MatrixTransform" for a Border nobody had touched, because
+⚠ **`UIElement.RenderTransform` defaults to `Transform.Identity`, which IS a `MatrixTransform`** — it
+is not null. The helper was type-switching (`null` / `TranslateTransform` at 0,0 / `ScaleTransform` at
+1,1) and treating everything else as transformed. Now it tests the MATRIX —
+`transform is null || transform.Value.IsIdentity` — which is both shorter and correct for every
+transform type, including the identity one WPF hands out by default.
+
 ## 4. Workflow / Session Conventions
 
 - Cloud workspace: `/home/user/ribbonkit/`. The user's machine:

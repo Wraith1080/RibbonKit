@@ -262,7 +262,28 @@ public static class RibbonAnimation
         return level == RibbonAnimationLevel.Expressive ? baseOffset * 1.8d : baseOffset;
     }
 
-    private static readonly CubicEase SharedCubicOut = new() { EasingMode = EasingMode.EaseOut };
+    /// <summary>
+    /// The one easing function every RibbonKit transition shares.
+    /// </summary>
+    /// <remarks>
+    /// ⚠ <b>FROZEN, and it has to be.</b> An <see cref="IEasingFunction"/> is a
+    /// <see cref="Freezable"/>, so an unfrozen one takes thread affinity from whichever thread first
+    /// touched this class. Building an animation clock CLONES the timeline and everything hanging
+    /// off it, so any OTHER thread starting a transition hits
+    /// "The calling thread cannot access this object because a different thread owns it" from deep
+    /// inside <c>Clock.AllocateClock</c> — with nothing in the stack pointing at a shared static.
+    /// That is not a test-only concern: WPF supports a second window on its own dispatcher thread,
+    /// and every RibbonKit control in it would have thrown. Freezing drops the affinity entirely.
+    /// Any shared <see cref="Freezable"/> added here needs the same treatment.
+    /// </remarks>
+    private static readonly CubicEase SharedCubicOut = Frozen(new CubicEase { EasingMode = EasingMode.EaseOut });
+
+    private static T Frozen<T>(T freezable)
+        where T : Freezable
+    {
+        freezable.Freeze();
+        return freezable;
+    }
 
     private static double GetDurationMs(RibbonAnimationAction action)
     {

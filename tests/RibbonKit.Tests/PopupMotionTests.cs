@@ -194,6 +194,35 @@ public class PopupMotionTests
         Assert.False(content.HasAnimatedProperties);
     });
 
+    /// <summary>
+    /// ⚠ Every transition must survive being started from a thread that did not initialise
+    /// <see cref="RibbonAnimation"/>. Its shared easing function is a <see cref="Freezable"/>, and
+    /// an unfrozen one would take affinity from the FIRST thread to touch the class — after which
+    /// building a clock on any other thread throws from deep inside <c>Clock.AllocateClock</c>, with
+    /// nothing in the stack naming the shared static. Real apps hit this the moment a second window
+    /// runs on its own dispatcher.
+    /// </summary>
+    /// <remarks>
+    /// Every other test here already crosses threads (<see cref="Sta.Run"/> makes a new one each
+    /// time) and they all failed together when this regressed. This one exists so the NAME says why.
+    /// </remarks>
+    [Fact]
+    public void A_transition_starts_on_any_thread()
+    {
+        for (int pass = 0; pass < 2; pass++)
+        {
+            Sta.Run(() =>
+            {
+                using var motion = new ForcedMotion();
+                var surface = new Border { Child = new Border() };
+
+                RibbonMotion.PlayFlyoutOpen(surface, RibbonAnimationAction.DropdownMenu);
+
+                Assert.Equal(0d, surface.Opacity);
+            });
+        }
+    }
+
     [Fact]
     public void Attaching_to_something_that_is_not_a_flyout_is_a_no_op() => Sta.Run(() =>
     {
@@ -224,13 +253,14 @@ public class PopupMotionTests
     private static void RaiseOpened(ContextMenu menu) =>
         menu.RaiseEvent(new RoutedEventArgs(ContextMenu.OpenedEvent, menu));
 
-    private static bool IsIdentity(Transform? transform) => transform switch
-    {
-        null => true,
-        TranslateTransform translate => translate.X == 0d && translate.Y == 0d,
-        ScaleTransform scale => scale.ScaleX == 1d && scale.ScaleY == 1d,
-        _ => false,
-    };
+    /// <summary>
+    /// Whether a transform is a no-op. ⚠ Test the MATRIX, not the type: an element that has never
+    /// been transformed does NOT report null here — <see cref="UIElement.RenderTransform"/> defaults
+    /// to <see cref="Transform.Identity"/>, which is a <see cref="MatrixTransform"/>. A type switch
+    /// therefore reports "carries a MatrixTransform" for a completely untouched Border, which is how
+    /// the first version of this helper failed on every level including None.
+    /// </summary>
+    private static bool IsIdentity(Transform? transform) => transform is null || transform.Value.IsIdentity;
 
     private static double OffsetY(UIElement element) =>
         element.RenderTransform is TranslateTransform translate ? translate.Y : 0d;
