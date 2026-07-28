@@ -57,7 +57,13 @@
                                                   Margin="10,0,6,0"
                                                   WindowChrome.IsHitTestVisibleInChrome="True" />
 
-                                <TextBlock Grid.Column="1"
+                                <!-- Named part: the title sits in the star column between the
+                                     quick-access slot and the caption buttons, so collapsing that
+                                     slot moves its centre by half the slot's width. RibbonWindow
+                                     measures the position either side of the change and glides
+                                     the difference away instead of letting it teleport. -->
+                                <TextBlock x:Name="PART_Title"
+                                           Grid.Column="1"
                                            Text="{TemplateBinding Title}"
                                            FontSize="12"
                                            Foreground="{DynamicResource RibbonKit.Brushes.TitleBar.Foreground}"

@@ -20,9 +20,11 @@ namespace RibbonKit.Controls;
 /// </code>
 /// </summary>
 [TemplatePart(Name = WindowRootPartName, Type = typeof(FrameworkElement))]
+[TemplatePart(Name = TitlePartName, Type = typeof(FrameworkElement))]
 public class RibbonWindow : Window
 {
     private const string WindowRootPartName = "PART_WindowRoot";
+    private const string TitlePartName = "PART_Title";
 
     /// <summary>Identifies the <see cref="TitleBarContent"/> dependency property.</summary>
     public static readonly DependencyProperty TitleBarContentProperty =
@@ -38,9 +40,10 @@ public class RibbonWindow : Window
             nameof(IsTitleBarContentVisible),
             typeof(bool),
             typeof(RibbonWindow),
-            new FrameworkPropertyMetadata(true));
+            new FrameworkPropertyMetadata(true, OnIsTitleBarContentVisibleChanged));
 
     private FrameworkElement? _windowRoot;
+    private FrameworkElement? _title;
 
     static RibbonWindow()
     {
@@ -98,7 +101,107 @@ public class RibbonWindow : Window
     {
         base.OnApplyTemplate();
         _windowRoot = GetTemplateChild(WindowRootPartName) as FrameworkElement;
+        _title = GetTemplateChild(TitlePartName) as FrameworkElement;
         UpdateMaximizeInset();
+    }
+
+    private static void OnIsTitleBarContentVisibleChanged(
+        DependencyObject d,
+        DependencyPropertyChangedEventArgs e)
+        => ((RibbonWindow)d).AnimateTitleShift();
+
+    /// <summary>
+    /// Glides the centered title to its new position when <see cref="TitleBarContent"/> appears
+    /// or disappears, instead of letting it jump.
+    /// </summary>
+    /// <remarks>
+    /// The title lives in the star column between the quick-access slot and the caption buttons,
+    /// so collapsing that slot moves the column's centre by half the slot's width — a visible
+    /// teleport every time the backstage opens or closes.
+    /// <para>
+    /// Measure-then-remeasure ("FLIP"), not arithmetic on the slot's width: the layout that
+    /// produces the shift involves an Auto column, a themed margin (Office 2007 insets the slot to
+    /// clear the overhanging orb) and a trimmed TextBlock, so anything computed by hand would
+    /// drift from what actually renders. The second measurement is taken at
+    /// <see cref="System.Windows.Threading.DispatcherPriority.Loaded"/>, which runs AFTER the
+    /// layout pass that the visibility change queues at Render priority. The first is safe to
+    /// take inline regardless of whether the template trigger has already collapsed the slot:
+    /// hit-test geometry still reflects the last COMPLETED layout until that pass runs.
+    /// </para>
+    /// <para>
+    /// The two measurements are deliberately asymmetric. The BEFORE value includes any transform
+    /// still running from a previous toggle, because that is where the title visually is right
+    /// now; the AFTER value subtracts it, because that transform is about to be replaced and what
+    /// is wanted is the resting position. Reading both the same way would make a fast
+    /// open-close-open sequence jump.
+    /// </para>
+    /// </remarks>
+    private void AnimateTitleShift()
+    {
+        if (_title is null || !IsLoaded)
+        {
+            return;
+        }
+
+        double before = GetTitleOffset(includeTransform: true);
+        if (double.IsNaN(before))
+        {
+            return;
+        }
+
+        Dispatcher.BeginInvoke(
+            System.Windows.Threading.DispatcherPriority.Loaded,
+            new Action(() =>
+            {
+                double after = GetTitleOffset(includeTransform: false);
+                if (double.IsNaN(after))
+                {
+                    return;
+                }
+
+                double delta = before - after;
+
+                // Sub-pixel shifts aren't worth a storyboard, and animating one would only
+                // add a frame of jitter.
+                if (Math.Abs(delta) < 0.5)
+                {
+                    return;
+                }
+
+                Animation.RibbonMotion.AnimateTranslateX(
+                    _title,
+                    Animation.RibbonAnimationAction.Backstage,
+                    delta,
+                    0d);
+            }));
+    }
+
+    /// <summary>
+    /// The title's horizontal offset within this window, or <see cref="double.NaN"/> when it
+    /// cannot be measured (no template, collapsed, or not yet connected).
+    /// </summary>
+    private double GetTitleOffset(bool includeTransform)
+    {
+        if (_title is null || !_title.IsVisible)
+        {
+            return double.NaN;
+        }
+
+        try
+        {
+            double x = _title.TransformToAncestor(this).Transform(default).X;
+            if (!includeTransform && _title.RenderTransform is TranslateTransform translate)
+            {
+                x -= translate.X;
+            }
+
+            return x;
+        }
+        catch (InvalidOperationException)
+        {
+            // Not a descendant yet (template swap mid-flight) — skip the animation.
+            return double.NaN;
+        }
     }
 
     /// <inheritdoc />

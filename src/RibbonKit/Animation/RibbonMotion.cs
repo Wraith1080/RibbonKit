@@ -266,6 +266,42 @@ public static class RibbonMotion
         translate.BeginAnimation(TranslateTransform.YProperty, anim);
     }
 
+    /// <summary>
+    /// Animates <paramref name="element"/>'s horizontal <see cref="TranslateTransform"/> from
+    /// <paramref name="fromX"/> to <paramref name="toX"/> (in DIPs) WITHOUT touching opacity —
+    /// the horizontal twin of <see cref="AnimateTranslateY"/>. Used to glide the window title
+    /// across when the quick-access strip beside it appears or disappears (the backstage hides
+    /// it), so the centred title slides to its new centre instead of jumping. Snaps to rest (0)
+    /// when the action is disabled.
+    /// </summary>
+    public static void AnimateTranslateX(
+        FrameworkElement? element,
+        RibbonAnimationAction action,
+        double fromX,
+        double toX)
+    {
+        if (element is null)
+        {
+            return;
+        }
+
+        if (!RibbonAnimation.IsEnabled(action))
+        {
+            Rest(element);
+            return;
+        }
+
+        TranslateTransform translate = EnsureTranslate(element);
+        translate.BeginAnimation(TranslateTransform.YProperty, null);
+        translate.SetValue(TranslateTransform.YProperty, 0d);
+
+        var anim = new DoubleAnimation(fromX, toX, RibbonAnimation.GetDuration(action))
+        {
+            EasingFunction = RibbonAnimation.GetEase(action),
+        };
+        translate.BeginAnimation(TranslateTransform.XProperty, anim);
+    }
+
     /// <summary>Clears any running transition and returns the element to its resting state.</summary>
     public static void Rest(FrameworkElement? element)
     {

@@ -1259,6 +1259,11 @@ public class Ribbon : Control
     private FrameworkElement? _qatBelowHost;
     private double _lastRibbonBodyHeight;
 
+    // Tab-row quick-access host. Cached because UpdateQatButtonContext has to reach it on every
+    // theme/accent change and it lives in the NESTED RibbonTabControl's template — GetTemplateChild
+    // on this control cannot see it, so the only alternative is a full visual-tree walk each time.
+    private FrameworkElement? _qatTabRowHost;
+
     // Backstage close is animated (slide out), so the adorner is removed only after the
     // exit animation; this guards against a re-open racing the pending removal.
     private bool _backstageClosing;
@@ -1624,6 +1629,7 @@ public class Ribbon : Control
         // offers Remove-from-QAT when the click lands on an item).
         if (GetTemplateChild("QatTabRowHost") is FrameworkElement tabRowHost)
         {
+            _qatTabRowHost = tabRowHost;
             AttachQatContextMenu(tabRowHost);
             TrackTabRowQatSize(tabRowHost);
         }
@@ -1656,6 +1662,7 @@ public class Ribbon : Control
         // tree (available by Loaded) and give it the same placement menu.
         if (FindDescendantByName(this, "QatTabRowHost") is { ContextMenu: null } tabRowHost)
         {
+            _qatTabRowHost = tabRowHost;
             AttachQatContextMenu(tabRowHost);
             TrackTabRowQatSize(tabRowHost);
         }
@@ -1795,6 +1802,54 @@ public class Ribbon : Control
                 element.Resources.Remove(QatColoredHoverBackgroundKey);
                 element.Resources.Remove(QatColoredPressedBackgroundKey);
             }
+        }
+
+        // The HOSTS need the same treatment, not just the items. The overflow chevron (»)
+        // lives in RibbonQuickAccessToolBar's own TEMPLATE, so it is not a QuickAccessItems
+        // entry and the loop above never reaches it — which is why it kept a dark stroke and a
+        // grey hover chip on an accent title bar in every theme except 2019 (2019 got away with
+        // it only because its colored strip also repaints TabStrip.Foreground white).
+        // QatOnColoredSurface inherits, so setting it on the host carries it into the template.
+        // Per-host, not one shared flag: only the host in the active placement is on the band.
+        ApplyQatSurfaceContext(_titleBarQatHost, titleBarColored, hoverKey, pressedKey);
+        ApplyQatSurfaceContext(_qatTabRowHost, tabRowColored, hoverKey, pressedKey);
+        ApplyQatSurfaceContext(_qatBelowHost, false, hoverKey, pressedKey);
+    }
+
+    /// <summary>
+    /// Marks a quick-access host as sitting (or not) on a colored band and publishes the band's
+    /// hover/pressed brushes in its resource scope, so chrome inside the host's template can pick
+    /// them up by <c>{DynamicResource}</c> exactly as the item buttons do.
+    /// </summary>
+    private void ApplyQatSurfaceContext(
+        FrameworkElement? host,
+        bool colored,
+        string? hoverKey,
+        string? pressedKey)
+    {
+        if (host is null)
+        {
+            return;
+        }
+
+        SetQatOnColoredSurface(host, colored);
+
+        if (colored && hoverKey is not null && pressedKey is not null)
+        {
+            // Resolved against the RIBBON, not the host: a title-bar host lives outside this
+            // control's visual tree and may not reach the theme scope. Never store null — a
+            // Border whose Background trigger sets null drops out of hit-testing.
+            host.Resources[QatColoredHoverBackgroundKey] =
+                TryFindResource(hoverKey) as System.Windows.Media.Brush
+                ?? System.Windows.Media.Brushes.Transparent;
+            host.Resources[QatColoredPressedBackgroundKey] =
+                TryFindResource(pressedKey) as System.Windows.Media.Brush
+                ?? System.Windows.Media.Brushes.Transparent;
+        }
+        else
+        {
+            host.Resources.Remove(QatColoredHoverBackgroundKey);
+            host.Resources.Remove(QatColoredPressedBackgroundKey);
         }
     }
 

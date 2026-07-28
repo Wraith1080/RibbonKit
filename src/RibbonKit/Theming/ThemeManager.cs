@@ -396,6 +396,33 @@ public static class ThemeManager
         return brush;
     }
 
+    /// <summary>
+    /// Builds the Office 2007 title-bar "valley" for <paramref name="baseColor"/>: a light lip at
+    /// the very top, deepening to the base colour about a third of the way down, then brightening
+    /// again to a specular foot.
+    /// </summary>
+    /// <remarks>
+    /// Deliberately neither <see cref="CaptionRamp"/> nor <see cref="Glass"/>. A ramp ends dark, so
+    /// it loses 2007's bright bottom edge; <see cref="Glass"/> carries the hard crease that belongs
+    /// on a BUTTON, not on a caption spanning the window. The white mixes stay modest (≤ 0.30) on
+    /// purpose: the accented caption draws white text and glyphs over this, and a lighter band
+    /// would swallow them.
+    /// </remarks>
+    private static LinearGradientBrush CaptionValley(Color baseColor)
+    {
+        var brush = new LinearGradientBrush
+        {
+            StartPoint = new Point(0, 0),
+            EndPoint = new Point(0, 1),
+        };
+        brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.White, 0.26), 0.0));
+        brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.White, 0.10), 0.14));
+        brush.GradientStops.Add(new GradientStop(baseColor, 0.28));
+        brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.White, 0.22), 1.0));
+        brush.Freeze();
+        return brush;
+    }
+
     private static void ApplyTitleBarOverride(Application application)
     {
         ResourceDictionary resources = application.Resources;
@@ -452,10 +479,47 @@ public static class ThemeManager
         }
 
         Color accent = EffectiveAccent(application);
-        resources[TitleBarBackgroundKey] = Frozen(accent);
+
+        // A flat accent band is right for 2024/2019/2013 — those generations paint a flat caption
+        // to begin with. It is WRONG for 2010 and 2007, whose uncolored title bars are glass:
+        // colouring them flat turned the top 34px into 2013 and broke the illusion for the whole
+        // window. Each therefore keeps its own gradient SHAPE, re-hued to the accent — 2010 a
+        // two-stop ramp receding downwards (CaptionRamp), 2007 the "valley": a light lip, a
+        // deeper band about a third of the way down, then a bright specular foot.
+        //
+        // Typed as Brush deliberately: the arms return LinearGradientBrush and SolidColorBrush,
+        // which have no common type between them, so an untyped switch expression would only
+        // compile by target-typing to object through the resource indexer. Spelling it out keeps
+        // the intent obvious and the compiler honest.
+        Brush titleBar = CurrentTheme switch
+        {
+            RibbonTheme.Office2010 => CaptionRamp(accent),
+            RibbonTheme.Office2007 => CaptionValley(accent),
+            _ => Frozen(accent),
+        };
+        resources[TitleBarBackgroundKey] = titleBar;
         resources[TitleBarForegroundKey] = Frozen(Colors.White);
-        resources[CaptionHoverKey] = Frozen(Mix(accent, Colors.White, 0.20));
-        resources[CaptionPressedKey] = Frozen(Mix(accent, Colors.Black, 0.15));
+
+        // The caption buttons follow the band they sit on: flat chips on a glass caption were
+        // exactly the mismatch the glass treatment was added to remove. Gel for 2010, the
+        // hard-creased Glass for 2007 — the same split the File button and the dialog primary
+        // button already make between those two generations.
+        Color captionHover = Mix(accent, Colors.White, 0.20);
+        Color captionPressed = Mix(accent, Colors.Black, 0.15);
+        Brush captionHoverBrush = CurrentTheme switch
+        {
+            RibbonTheme.Office2010 => Gel(captionHover),
+            RibbonTheme.Office2007 => Glass(captionHover),
+            _ => Frozen(captionHover),
+        };
+        Brush captionPressedBrush = CurrentTheme switch
+        {
+            RibbonTheme.Office2010 => Gel(captionPressed),
+            RibbonTheme.Office2007 => Glass(captionPressed),
+            _ => Frozen(captionPressed),
+        };
+        resources[CaptionHoverKey] = captionHoverBrush;
+        resources[CaptionPressedKey] = captionPressedBrush;
 
         // Office 2019's tab-strip band tracks the title bar: color it (and its text) too,
         // so the whole top reads as one accent band. The chrome buttons that sit on the

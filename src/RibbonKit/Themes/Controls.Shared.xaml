@@ -115,7 +115,8 @@
                                                         <Grid Width="10" Height="10"
                                                               HorizontalAlignment="Center"
                                                               VerticalAlignment="Center">
-                                                            <Path Data="M0.5,1 L4,4.5 L0.5,8 M4.5,1 L8,4.5 L4.5,8"
+                                                            <Path x:Name="Chevron"
+                                                                  Data="M0.5,1 L4,4.5 L0.5,8 M4.5,1 L8,4.5 L4.5,8"
                                                                   Stroke="{DynamicResource RibbonKit.Brushes.TabStrip.Foreground}"
                                                                   StrokeThickness="1.2"
                                                                   StrokeStartLineCap="Round"
@@ -138,6 +139,47 @@
                                                             <Setter TargetName="Chrome" Property="Background"
                                                                     Value="{DynamicResource RibbonKit.Brushes.TabStrip.ControlPressedBackground}" />
                                                         </Trigger>
+                                                        <!-- On a colored band (accent title bar, or
+                                                             2019's colored strip) the chevron and its
+                                                             hover have to follow the band, exactly as
+                                                             the QAT item buttons do. Without this the
+                                                             stroke stayed TabStrip.Foreground — dark
+                                                             on an accent caption in every theme but
+                                                             2019, which only looked right because its
+                                                             colored strip repaints that token white.
+                                                             The ribbon publishes both brushes into the
+                                                             host's resource scope; the flag inherits
+                                                             from the host into this template. -->
+                                                        <Trigger Property="controls:Ribbon.QatOnColoredSurface" Value="True">
+                                                            <Setter TargetName="Chevron" Property="Stroke" Value="#FFFFFF" />
+                                                        </Trigger>
+                                                        <!-- These three stay LAST, and in this order:
+                                                             colored beats plain, pressed beats open
+                                                             beats hover. -->
+                                                        <MultiTrigger>
+                                                            <MultiTrigger.Conditions>
+                                                                <Condition Property="IsMouseOver" Value="True" />
+                                                                <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
+                                                            </MultiTrigger.Conditions>
+                                                            <Setter TargetName="Chrome" Property="Background"
+                                                                    Value="{DynamicResource RibbonKit.Brushes.Qat.ColoredHoverBackground}" />
+                                                        </MultiTrigger>
+                                                        <MultiTrigger>
+                                                            <MultiTrigger.Conditions>
+                                                                <Condition Property="IsChecked" Value="True" />
+                                                                <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
+                                                            </MultiTrigger.Conditions>
+                                                            <Setter TargetName="Chrome" Property="Background"
+                                                                    Value="{DynamicResource RibbonKit.Brushes.Qat.ColoredPressedBackground}" />
+                                                        </MultiTrigger>
+                                                        <MultiTrigger>
+                                                            <MultiTrigger.Conditions>
+                                                                <Condition Property="IsPressed" Value="True" />
+                                                                <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
+                                                            </MultiTrigger.Conditions>
+                                                            <Setter TargetName="Chrome" Property="Background"
+                                                                    Value="{DynamicResource RibbonKit.Brushes.Qat.ColoredPressedBackground}" />
+                                                        </MultiTrigger>
                                                     </ControlTemplate.Triggers>
                                                 </ControlTemplate>
                                             </Setter.Value>
