@@ -197,19 +197,12 @@
                             </ToggleButton>
                         </StackPanel>
                         <!-- Expanded gallery: overlays the strip, like Office -->
-                        <!-- VerticalOffset and PART_PopupHost's top margin are a MATCHED PAIR — the
-                             flyout's whole bordered surface slides down on open, and a Popup's window
-                             is sized to its child's LAYOUT size, which a RenderTransform does not
-                             grow. The margin adds 20px of headroom above the border, the offset lifts
-                             the popup by the same 20, so the resting position is unchanged (-4) while
-                             the slide has room. 20 > the largest Gallery slide offset (10 x 1.8 = 18
-                             at Expressive) — keep that inequality. See 04-DESIGN-NOTES §3.42. -->
                         <Popup x:Name="PART_Popup"
                                AllowsTransparency="True"
                                StaysOpen="True"
                                Placement="Relative"
                                HorizontalOffset="-4"
-                               VerticalOffset="-24"
+                               VerticalOffset="-4"
                                IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
                             <Border x:Name="PART_PopupHost"
                                     Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
@@ -217,7 +210,7 @@
                                     BorderThickness="1"
                                     CornerRadius="{DynamicResource RibbonKit.Metrics.PopupCornerRadius}"
                                     Padding="5"
-                                    Margin="4,24,8,8"
+                                    Margin="4,4,8,8"
                                     MaxHeight="340">
                                 <Border.Effect>
                                     <DropShadowEffect BlurRadius="8" ShadowDepth="2" Opacity="0.25" />

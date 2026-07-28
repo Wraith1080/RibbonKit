@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Threading;
+using RibbonKit.Animation;
 using RibbonKit.Layout;
 
 namespace RibbonKit.Controls;
@@ -181,6 +182,13 @@ public class RibbonQuickAccessToolBar : ItemsControl
         PruneEntries();
 
         _overflowHost.ItemsSource = entries;
+
+        // Unfold the whole flyout surface, like every other RibbonKit popup (§3.42). Done here
+        // rather than through RibbonPopupMotion because this control already owns the popup's
+        // Opened handler — the attached behaviour exists only for flyouts that have no such hook.
+        // Order does not matter: the transition runs on the Border, independent of the items just
+        // assigned above.
+        RibbonMotion.PlayFlyoutOpen(_overflowPopup?.Child as FrameworkElement, RibbonAnimationAction.DropdownMenu);
     }
 
     /// <summary>

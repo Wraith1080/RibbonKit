@@ -201,7 +201,16 @@
                                HorizontalOffset="-4"
                                PlacementTarget="{Binding ElementName=PART_OverflowButton}"
                                IsOpen="{Binding IsChecked, ElementName=PART_OverflowButton, Mode=TwoWay}">
-                            <Border Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
+                            <!-- ⚠ Ribbon.QatOnColoredSurface INHERITS, and the ribbon sets it on this
+                                 toolbar's HOST so the » chevron in the template can see it. Property
+                                 inheritance crosses into a Popup's child, so without this reset the
+                                 whole FLYOUT thought it was sitting on the accent band: entries drew
+                                 accent-derived hover/pressed washes and white silhouette glyphs
+                                 (a split button's chevron vanished into the white popup). The flyout
+                                 is an ordinary popup surface, never part of the band. A local value
+                                 beats the inherited one and re-propagates False to the subtree. -->
+                            <Border controls:Ribbon.QatOnColoredSurface="False"
+                                    Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
                                     BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
                                     BorderThickness="1"
                                     CornerRadius="{DynamicResource RibbonKit.Metrics.PopupCornerRadius}"

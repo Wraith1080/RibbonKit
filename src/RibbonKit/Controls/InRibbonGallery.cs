@@ -282,13 +282,13 @@ public class InRibbonGallery : RibbonGallery
 
             _scrollViewer?.SetCurrentValue(ScrollViewer.VerticalScrollBarVisibilityProperty, ScrollBarVisibility.Auto);
 
-            // Fade + slide the WHOLE flyout surface in — border, shadow and tiles together
-            // (honors the global animation level). This used to animate only _popupHost.Child,
-            // on the theory that transforming the border would drop the transparent popup's
-            // resting position; it does not — a RenderTransform never moves the popup window.
-            // What it does do is get SLICED against that window's top edge, which the template's
-            // matched headroom margin + negative VerticalOffset now prevent. See §3.42.
-            RibbonMotion.PlayOpen(_popupHost, RibbonAnimationAction.Gallery);
+            // Unfold the WHOLE flyout surface — border, shadow and tiles together (honors the
+            // global animation level). This used to animate only _popupHost.Child, on the theory
+            // that transforming the border would drop the transparent popup's resting position;
+            // it does not — a RenderTransform never moves the popup window. What a TRANSLATE does
+            // is get sliced against that window's top edge, which is why this is a scale: it never
+            // leaves its resting bounds, so the overlay's -4 placement is untouched. See §3.42.
+            RibbonMotion.PlayFlyoutOpen(_popupHost, RibbonAnimationAction.Gallery);
         }
         else
         {

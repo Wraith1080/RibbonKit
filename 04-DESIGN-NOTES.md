@@ -2370,24 +2370,74 @@ is that the transformed border is **CLIPPED** against the window's edge, which l
 surface being cut off, and is easy to misread as displacement. §3.41 had already found the real
 mechanism and the fix while doing the combo box; the two older call sites simply predated it.
 
-**All five flyouts now animate the surface itself**, on `RibbonAnimationAction.DropdownMenu`
-(gallery: `Gallery`), each with the matched pair:
+**Every flyout now animates the surface itself**, through one method —
+`RibbonMotion.PlayFlyoutOpen` — on `RibbonAnimationAction.DropdownMenu` (gallery: `Gallery`):
+drop-down button, split button, combo box, context menu, menu-item submenu, in-ribbon gallery, QAT
+overflow » flyout, collapsed-group flyout. **No template geometry changed.** That sentence is the
+entire point of the section below.
 
-| flyout | file | headroom |
-| --- | --- | --- |
-| drop-down button, split button | `Controls.DropDowns.xaml` | `Margin` top 2 → 18, `VerticalOffset` 0 → −16 |
-| combo box | `Controls.DropDowns.xaml` | 12 → 18, −10 → −16 |
-| context menu | `Menus.xaml` (`ContextMenu` style) | 2 → 18, `ContextMenu.VerticalOffset` 0 → −16 |
-| menu-item submenu | `Menus.xaml` (`MenuItem` template) | 2 → 18, −0 → −16 |
-| in-ribbon gallery | `Controls.Galleries.xaml` | 4 → 24, −4 → −24 |
+The rule for **where** the call goes: a control that already owns its popup's `Opened` handler plays
+the transition there (`RibbonDropDownButton`, `InRibbonGallery`, `RibbonQuickAccessToolBar`,
+`RibbonComboBox` via `OnDropDownOpened`); `RibbonPopupMotion` exists only for the flyouts with no
+such hook. Do not do both on one popup.
 
-**⚠ The headroom must clear the EXPRESSIVE offset, not the Subtle one.**
-`RibbonAnimation.GetSlideOffset` multiplies by **1.8** at `Expressive`, so `DropdownMenu` travels
-14.4px and `Gallery` 18px there. The combo box's original 10px of headroom was only ever enough at
-`Subtle` — it clipped at `Expressive`, shipped and unnoticed. Hence 16 and 20, and hence
-`PopupMotionTests.Headroom_exceeds_the_slide_at_every_animation_level`, which sweeps every level and
-fails the moment someone raises an offset. The margin and the offset are a **matched pair**: change
-one without the other and the flyout's resting position moves.
+**⚠⚠ The SURFACE only fades. The CONTENT slides. That split is a correctness decision, not a taste
+one, and it took three attempts to land on it.**
+
+A moving surface has to start OUTSIDE its resting bounds, and a popup's window is sized to its
+child's **layout** size, which a transform does not grow — so it is sliced against the window's top
+edge. The obvious remedy is extra top margin on the child. The trap is what that margin does to
+POSITION, and the answer is **not the same for every popup**:
+
+- a plain `Popup` (drop-down button, split button, QAT overflow, collapsed group) **compensates** for
+  the child's margin — the surface stays on its anchor, so no offset is wanted;
+- a `ComboBox`'s managed `PART_Popup`, a `ContextMenu`'s internally-built popup, and the gallery's
+  overlay popup **do not** — the margin displaces them, so an offset IS wanted.
+
+Attempt one assumed the second rule for all seven: a negative `VerticalOffset` everywhere, which
+lifted the four compensating popups off their anchors (menus 16px, gallery 20px). Attempt two
+assumed the first rule for all seven: no offsets, which dropped the other three by the same amounts.
+The symptom flipped; the model was wrong either way. Attempt three scaled the surface from 0.92
+instead — geometrically safe, since a scale under 1 never leaves its bounds, but it distorts text
+for the length of the transition and simply looked cheap.
+
+**Moving the content is what the ORIGINAL code did**, before any of this — and it was right, for a
+reason it had not written down. The content lives inside the surface's padding, so its travel never
+approaches the popup window's edge, and the surface keeps whatever geometry the template always had.
+No headroom margin, no placement offset, nothing that depends on which kind of popup this is. The
+only thing genuinely wrong with the original was the bordered card snapping into existence around
+moving items, and a fade on the surface fixes exactly that and nothing else.
+
+Every template is back to the exact geometry it shipped with before §3.41 — including the combo box,
+which had been sitting 10px high since §3.41 paired a `-10` offset with a 10px margin and passed a
+verification round anyway, because an error that small just reads as design.
+
+**And the fade flickered until it was seeded — the §3.41 rule again, this time on opacity.** WPF
+ticks the timing manager at the START of a render frame, so an animation begun during that frame
+first ticks on the NEXT one, and until then the property falls back to its BASE value. With the base
+left at 1 the surface was presented fully opaque for one frame and only then faded in from 0: a
+flicker, not a fade. `PlayFlyoutOpen` now seeds `Opacity = 0` before `BeginAnimation` — the same
+thing the slide already did for its transform, missed on the fade because opacity does not *feel*
+like a FLIP.
+
+Seeding alone would have been a worse bug, though. A base of 0 means anything that drops the
+animation without calling `Rest` leaves an **invisible flyout**, and that was the stated reason
+§3.41 deliberately did not seed opacity in shared code. So the fade **releases itself**: on
+`Completed` the base goes back to 1 and the animation is cleared, leaving the surface with no
+animation and a resting value of 1. Order matters inside that handler — set the base first, then
+clear, or the property momentarily falls back to 0. Same shape as `PlayKeyTipPop`.
+
+`PopupMotionTests.The_surface_is_never_transformed` sweeps every animation level and fails if a
+transform ever lands on a flyout surface — the one edit that would reintroduce the displacement on
+all seven at once. `The_surface_starts_transparent` guards the seeding. `PlayFlyoutOpen` also clears
+any transform it finds on the surface, so a stale one from a previous revision cannot survive.
+
+**The process lesson, since it repeated three times:** the first fix reasoned from a layout model,
+the second from a corrected model, the third from avoiding the model — and only the fourth asked
+what the code already did and why. When a previous implementation looks naive, the cheapest move is
+to work out what it was defending against before replacing it. Also: measuring the screenshots (~16px
+and ~20px, matching the two margin values exactly) settled in one pass what two rounds of reasoning
+could not.
 
 **Two flyouts had no control of their own to hook**, so they get an attached behaviour —
 `Animation/RibbonPopupMotion.cs`, `AnimateOpen` + `OpenAction`. On a `Popup` it animates
@@ -2398,11 +2448,47 @@ more than once (theme switch), and a duplicated handler would start the transiti
 submenu's `PopupAnimation="Fade"` is now `None`, so the entrance comes from themed timing rather
 than from WPF's fixed one.
 
-Known edge, not fixed: when a flyout lands near a screen edge WPF FLIPS it, and the compensating
-offset then points the wrong way, so a flipped popup sits ~16px off. Rare (it needs the opener
-within a menu's height of the bottom of the display), and the alternative — a scale-up entrance,
-which can never overflow its resting bounds and would need no compensation at all — was considered
-and set aside to keep all five flyouts consistent with the combo box that already shipped.
+The screen-edge flip worry from the first version of this section is also gone: a surface that never
+moves is unaffected by which edge WPF anchors the popup to.
+
+**The collapsed-group flyout also needed menu semantics.** Clicking a command inside it left it
+open — you had to click away. It now closes on `ButtonBase.Click`, deferred to
+`DispatcherPriority.Background` because closing re-homes the entire content grid (including the
+element whose click is still being dispatched) back into the ribbon; reparenting mid-dispatch is the
+shape of the bug §3.19 and §3.39 each spent a round unpicking.
+
+Openers are exempt, and the exemption is decided by **`TemplatedParent`, not by walking the tree**.
+Openers are template parts — `PART_Toggle`, the gallery's expand/scroll buttons, the combo's chevron
+— so they always carry the owning control as their templated parent, while the things a user
+actually invokes (a `RibbonButton`, a `RibbonMenuItem`, a split button's `PART_Primary`) either live
+in application markup with no templated parent, or are the primary part itself. A tree walk would
+have had to hop the popup boundary between a menu item and its drop-down button, and that is exactly
+the case it would get backwards — the menu item's nearest interesting ancestor IS a
+`RibbonDropDownButton`, which is the one thing that must not close the flyout.
+
+Right-click needs no special case: a context menu raises no `ButtonBase.Click`, and its rows are
+`MenuItem`s, which raise `MenuItem.Click` — a different routed event. **Galleries and combo boxes
+deliberately do NOT close it**: they commit through selection, and selection also changes when the
+user merely arrows through the list, so closing there would be worse than not closing. Revisit only
+with a real "committed" signal to hang it on. `CloseNestedGalleryPopups` also became
+`CloseNestedFlyouts` and now shuts nested drop-downs as well as galleries, so dismissing the group
+cannot leave a menu floating over a button that has moved back into the ribbon.
+
+**⚠ And the overflow flyout thought it was sitting on the accent band.** Reported alongside the
+animation gap: with the QAT in the tab-strip row or the title bar, entries inside the » flyout drew
+accent-derived hover and pressed washes, and a split button's chevron came out white — invisible
+against the white popup. `Ribbon.QatOnColoredSurface` is declared `Inherits` (§3.21 / the chevron
+fix), the ribbon sets it on the toolbar HOST so the template's own chrome can read it, and
+**property inheritance crosses into a `Popup`'s child** — so the whole flyout inherited it. The
+flyout is an ordinary popup surface and never part of the band. Fixed by resetting the flag to
+`False` on the popup's content border in `Controls.Shared.xaml`: a local value beats the inherited
+one and re-propagates `False` down the subtree, which covers the entries, their nested
+primary/chevron parts, and anything added there later.
+
+The general shape is worth remembering: **an inheriting attached flag set on a host reaches every
+popup that host's template opens.** Any flyout whose surface is NOT the thing the flag describes has
+to opt out explicitly, and nothing warns you — the leak only shows up in whichever theme makes the
+band's brushes visibly wrong.
 
 **Separately: the showcase now declares PerMonitorV2 DPI awareness.** Changing the Windows display
 scale with the app running left it the same size and blurry until a restart — the signature of
@@ -2447,12 +2533,24 @@ for its host, so consumers need the same manifest** — `README.md` now says so.
 
 1. **Every flyout opens as ONE surface** — border, shadow and contents together, no card snapping
    in around sliding items: drop-down button, split button, combo box, right-click menu, a
-   right-click **submenu**, and the in-ribbon gallery.
-2. **No sliced top edge** on any of them — that is the headroom pair doing its job.
-3. **Nothing moved at rest.** Each flyout must land exactly where it did before; the context menu
-   in particular must still sit on the cursor.
-4. **`RibbonAnimation.GlobalLevel = Expressive`** — the level the old 10px headroom clipped at.
-   Worth one pass on its own.
+   right-click **submenu**, the in-ribbon gallery, and the QAT » overflow flyout.
+1a. **POSITION, on every one of them** — this is the item that failed twice. Every template is back
+   to its pre-§3.41 geometry, so each flyout should sit exactly where it did before any of this
+   work: menus flush under their openers, the context menu on the cursor, the gallery flyout over
+   the strip it replaces. The combo box is the reference case: it had been 10px high since §3.41
+   and should now be flush for the first time.
+1c. **A collapsed group's flyout** (narrow the window until a group collapses): clicking a plain
+   button or a menu row inside it CLOSES it; clicking a drop-down/split chevron, a gallery's expand
+   or scroll buttons, or a combo's chevron does NOT; right-clicking does not; and a split button's
+   left half both runs the command and closes.
+1b. **The » flyout with the QAT in the tab row AND in an accent title bar** — entries must use the
+   NORMAL hover/pressed colours, and a split entry's chevron must be dark and visible. Check the
+   chevron on the strip itself is still white-on-band; that is the behaviour the reset must not undo.
+2. **No sliced top edge, and no flicker** — the card should fade up cleanly rather than blinking in
+   at full strength first, and the contents should settle without any edge being cut.
+3. **Nothing moved at rest** — see 1a; this is the item that failed the first time.
+4. **`RibbonAnimation.GlobalLevel = Expressive`** — the level that used to clip. The content should
+   simply travel further, with no edge sliced and the card itself still not moving.
 5. **Change the Windows display scale with the app running.** It should relayout live and stay
    crisp; no restart, and the maximized window must still sit flush against the work area
    afterwards. (Try it maximized, and on a second monitor at a different scale if there is one.)

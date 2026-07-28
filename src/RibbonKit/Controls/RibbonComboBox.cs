@@ -106,17 +106,16 @@ public class RibbonComboBox : ComboBox
     {
         base.OnDropDownOpened(e);
 
-        // Fade + short slide down on the DropdownMenu timing (130ms, 8px). That action was
-        // declared for exactly this and had NO consumers until now — RibbonDropDownButton,
-        // RibbonSplitButton and RibbonMenuItem still open instantly and can be wired up the same
-        // way. Driven from code rather than a template storyboard because the duration comes from
-        // RibbonAnimation via DynamicResource, and a templated storyboard referencing one cannot
-        // be frozen.
+        // Fade + unfold on the DropdownMenu timing (130ms). Driven from code rather than a
+        // template storyboard because the duration comes from RibbonAnimation via DynamicResource,
+        // and a templated storyboard referencing one cannot be frozen.
         //
-        // Open only, deliberately: closing would have to hold the popup alive for the length of
-        // the fade-out, and ComboBox's built-in mouse-capture handling (see the class remarks)
-        // assumes the popup closes when it says so. Not worth destabilising for an exit frame.
-        RibbonMotion.PlayOpen(_popupRoot, RibbonAnimationAction.DropdownMenu, RibbonSlideFrom.Top);
+        // ⚠ This popup is why PlayFlyoutOpen scales instead of sliding. ComboBox MANAGES its own
+        // PART_Popup, and unlike a plain Popup it does not compensate for the child's margin — so
+        // the headroom a slide needs displaced the drop-down here while leaving the drop-down
+        // BUTTON's flyout correct, and no single margin/offset pair fitted both. A scale from
+        // below 1 never leaves its resting bounds, so the template's geometry is untouched. §3.42.
+        RibbonMotion.PlayFlyoutOpen(_popupRoot, RibbonAnimationAction.DropdownMenu);
     }
 
     private static void OnScreenTipChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)

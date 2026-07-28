@@ -311,6 +311,155 @@ public static class RibbonMotion
         translate.BeginAnimation(TranslateTransform.XProperty, anim);
     }
 
+    /// <summary>
+    /// Plays a flyout's open transition: the bordered SURFACE fades in while its CONTENT slides
+    /// down into place inside it. Used by every RibbonKit popup — drop-down and split buttons, the
+    /// combo box, the context menu and its submenus, the in-ribbon gallery, the QAT overflow flyout
+    /// and the collapsed-group flyout. Pass the surface; the content is found from it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠ <b>The surface is only ever faded, never transformed. Keep it that way.</b> A
+    /// <see cref="System.Windows.Controls.Primitives.Popup"/>'s window is sized to its child's
+    /// LAYOUT size and a <see cref="Transform"/> is not layout, so a surface that translates into
+    /// place from above is sliced against the window's top edge. The obvious remedy — extra top
+    /// margin on the child — is where this got expensive: whether that margin also DISPLACES the
+    /// surface differs between popup kinds. A plain <c>Popup</c> compensates for it; a
+    /// <see cref="System.Windows.Controls.ComboBox"/>'s managed popup, a
+    /// <see cref="System.Windows.Controls.ContextMenu"/>'s internal popup and the gallery's overlay
+    /// popup do not. No single margin/offset pair was correct everywhere, and two rounds of fixes
+    /// moved flyouts off their anchors in one direction and then the other (§3.42).
+    /// </para>
+    /// <para>
+    /// Moving the CONTENT instead settles it. The content lives inside the surface's padding, so
+    /// its travel never reaches the popup window's edge, and the surface itself keeps the exact
+    /// geometry the template always had — no headroom margin, no placement offset, nothing to get
+    /// wrong per popup kind. This is what the original code did, for reasons it had not written
+    /// down; the only thing actually wrong with it was that the bordered card snapped into
+    /// existence around moving items, which the fade fixes.
+    /// </para>
+    /// <para>
+    /// Open only, deliberately — a close transition would mean holding the popup alive past its
+    /// close, and <c>ComboBox</c>'s built-in mouse-capture management assumes the popup closes when
+    /// it says so.
+    /// </para>
+    /// </remarks>
+    public static void PlayFlyoutOpen(FrameworkElement? surface, RibbonAnimationAction action)
+    {
+        if (surface is null)
+        {
+            return;
+        }
+
+        FrameworkElement? content = FlyoutContentOf(surface);
+
+        if (!RibbonAnimation.IsEnabled(action))
+        {
+            Rest(surface);
+            Rest(content);
+            return;
+        }
+
+        Duration duration = RibbonAnimation.GetDuration(action);
+        IEasingFunction ease = RibbonAnimation.GetEase(action);
+
+        var fade = new DoubleAnimation(0d, 1d, duration) { EasingFunction = ease };
+
+        // ⚠ The fade must RELEASE itself, and it must be SEEDED. Both halves matter:
+        //
+        // Seeding — WPF ticks the timing manager at the START of a render frame, so an animation
+        // begun during that frame first ticks on the NEXT one, and until then the property falls
+        // back to its BASE value. With the base left at 1 the surface is presented fully opaque for
+        // one frame and only then fades in from 0, which reads as a FLICKER rather than a fade.
+        // (§3.41 found the same rule for the title glide; it applies to opacity just as much as to
+        // a transform.)
+        //
+        // Releasing — a seeded base of 0 is dangerous on its own: anything that drops the animation
+        // without calling Rest leaves an INVISIBLE flyout, which is far worse than a flicker. So on
+        // completion the base goes back to 1 and the animation is cleared, leaving the surface with
+        // no animation and a resting value of 1. Order matters inside the handler: set the base
+        // first, THEN clear, or the property momentarily falls back to 0. Same self-releasing shape
+        // as PlayKeyTipPop.
+        fade.Completed += (_, _) =>
+        {
+            surface.SetValue(UIElement.OpacityProperty, 1d);
+            surface.BeginAnimation(UIElement.OpacityProperty, null);
+        };
+
+        surface.SetValue(UIElement.OpacityProperty, 0d);
+        surface.BeginAnimation(UIElement.OpacityProperty, fade);
+
+        // Defensive: an earlier revision of this method scaled the surface. If anything ever leaves
+        // a transform on it the flyout renders displaced for the rest of the session, and that is
+        // exactly the failure this design exists to rule out.
+        ClearTransform(surface);
+
+        double offset = RibbonAnimation.GetSlideOffset(action);
+        if (content is null || offset <= 0d)
+        {
+            return;
+        }
+
+        TranslateTransform translate = EnsureTranslate(content);
+        translate.BeginAnimation(TranslateTransform.XProperty, null);
+        translate.SetValue(TranslateTransform.XProperty, 0d);
+
+        // Seed before BeginAnimation: WPF ticks the timing manager at the START of a render frame,
+        // so an animation begun during that frame's layout first ticks on the NEXT one and until
+        // then the property falls back to its base value. See AnimateTranslateX and §3.41.
+        translate.SetValue(TranslateTransform.YProperty, -offset);
+
+        var slide = new DoubleAnimation(-offset, 0d, duration) { EasingFunction = ease };
+        translate.BeginAnimation(TranslateTransform.YProperty, slide);
+    }
+
+    /// <summary>
+    /// The element a flyout's open slide is applied to: the single child sitting inside the
+    /// surface's border. A <see cref="System.Windows.Controls.ContextMenu"/> is handled specially
+    /// because it IS its popup's child, so its surface is one template level further in.
+    /// </summary>
+    private static FrameworkElement? FlyoutContentOf(FrameworkElement surface)
+    {
+        switch (surface)
+        {
+            case Border border:
+                return border.Child as FrameworkElement;
+
+            case Decorator decorator:
+                return decorator.Child as FrameworkElement;
+
+            case ContextMenu menu:
+                menu.ApplyTemplate();
+                return VisualTreeHelper.GetChildrenCount(menu) > 0
+                    && VisualTreeHelper.GetChild(menu, 0) is Border root
+                    ? root.Child as FrameworkElement
+                    : null;
+
+            default:
+                return null;
+        }
+    }
+
+    private static void ClearTransform(FrameworkElement element)
+    {
+        switch (element.RenderTransform)
+        {
+            case TranslateTransform translate:
+                translate.BeginAnimation(TranslateTransform.XProperty, null);
+                translate.BeginAnimation(TranslateTransform.YProperty, null);
+                translate.X = 0d;
+                translate.Y = 0d;
+                break;
+
+            case ScaleTransform scale:
+                scale.BeginAnimation(ScaleTransform.ScaleXProperty, null);
+                scale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
+                scale.ScaleX = 1d;
+                scale.ScaleY = 1d;
+                break;
+        }
+    }
+
     /// <summary>Clears any running transition and returns the element to its resting state.</summary>
     public static void Rest(FrameworkElement? element)
     {
@@ -321,14 +470,7 @@ public static class RibbonMotion
 
         element.BeginAnimation(UIElement.OpacityProperty, null);
         element.Opacity = 1d;
-
-        if (element.RenderTransform is TranslateTransform translate)
-        {
-            translate.BeginAnimation(TranslateTransform.XProperty, null);
-            translate.BeginAnimation(TranslateTransform.YProperty, null);
-            translate.X = 0d;
-            translate.Y = 0d;
-        }
+        ClearTransform(element);
     }
 
     /// <summary>

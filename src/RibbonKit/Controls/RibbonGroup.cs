@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 using RibbonKit.Animation;
 using RibbonKit.Layout;
 // Alias: WPF's legacy Microsoft ribbon declares identically-named peers in
@@ -347,6 +348,11 @@ public class RibbonGroup : HeaderedItemsControl
             _popup.Closed -= OnPopupClosed;
         }
 
+        if (_popupHost is not null)
+        {
+            _popupHost.RemoveHandler(ButtonBase.ClickEvent, new RoutedEventHandler(OnFlyoutInvoked));
+        }
+
         if (_dialogLauncher is not null)
         {
             _dialogLauncher.Click -= OnDialogLauncherClick;
@@ -364,6 +370,11 @@ public class RibbonGroup : HeaderedItemsControl
         {
             _popup.Opened += OnPopupOpened;
             _popup.Closed += OnPopupClosed;
+        }
+
+        if (_popupHost is not null)
+        {
+            _popupHost.AddHandler(ButtonBase.ClickEvent, new RoutedEventHandler(OnFlyoutInvoked));
         }
 
         if (_dialogLauncher is not null)
@@ -433,10 +444,70 @@ public class RibbonGroup : HeaderedItemsControl
             _popupHost.Child = content;
         }
 
-        // Fade + slide the collapsed-group flyout in (honors the global animation level).
-        // Animate the inner content, not the popup's own child border (see InRibbonGallery).
-        RibbonMotion.PlayOpen(_popupHost?.Child as FrameworkElement, RibbonAnimationAction.DropdownMenu);
+        // Unfold the WHOLE flyout surface — border, shadow and the re-homed content together
+        // (§3.42). Animating _popupHost rather than its Child is also the more stable target
+        // here: the Child is swapped in and out on every open and close.
+        RibbonMotion.PlayFlyoutOpen(_popupHost, RibbonAnimationAction.DropdownMenu);
     }
+
+    /// <summary>
+    /// Menu semantics for the collapsed flyout: invoking a command inside it closes it, the way
+    /// Office does. Openers are exempt — clicking a drop-down or split button's chevron, a gallery's
+    /// expand or scroll buttons, or a combo box's chevron is the START of an interaction, not the
+    /// end of one.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Right-clicking is exempt for free: a context menu raises no <see cref="ButtonBase.Click"/>,
+    /// and its own rows are <see cref="System.Windows.Controls.MenuItem"/>s, which raise
+    /// <c>MenuItem.Click</c> — a different routed event this handler never sees.
+    /// </para>
+    /// <para>
+    /// Galleries and combo boxes commit through selection, not a click, so picking a tile or a list
+    /// entry does NOT close the flyout yet. That is deliberate rather than forgotten: their
+    /// selection also changes when the user merely ARROWS through the list, and closing the flyout
+    /// mid-navigation would be worse than leaving it open.
+    /// </para>
+    /// </remarks>
+    private void OnFlyoutInvoked(object sender, RoutedEventArgs e)
+    {
+        if (KeepsFlyoutOpen(e.OriginalSource))
+        {
+            return;
+        }
+
+        // Deferred, and this is not optional: closing re-homes the ENTIRE content grid — including
+        // the element whose click is still being dispatched — back into the ribbon. Reparenting
+        // mid-dispatch is the shape of bug §3.19/§3.39 spent two rounds unpicking. Background
+        // priority also lets a nested drop-down finish closing itself first.
+        Dispatcher.BeginInvoke(
+            DispatcherPriority.Background,
+            new Action(() => _collapsedButton?.SetCurrentValue(ToggleButton.IsCheckedProperty, false)));
+    }
+
+    /// <summary>
+    /// Whether a click came from a control's own opener chrome rather than from a command.
+    /// </summary>
+    /// <remarks>
+    /// Decided by <see cref="FrameworkElement.TemplatedParent"/>, not by walking the tree: openers
+    /// are template parts (<c>PART_Toggle</c>, the gallery's expand/scroll buttons, the combo's
+    /// chevron) so they always carry the owning control as their templated parent, while the things
+    /// a user actually invokes — a <see cref="RibbonButton"/>, a <see cref="RibbonMenuItem"/>, a
+    /// split button's <c>PART_Primary</c> — either sit in application markup (no templated parent)
+    /// or are the primary part itself. A tree walk would have to hop the popup boundary between a
+    /// menu item and its drop-down button, which is exactly where it would get this backwards.
+    /// </remarks>
+    private static bool KeepsFlyoutOpen(object? originalSource) =>
+        originalSource is FrameworkElement element
+        && element.TemplatedParent switch
+        {
+            // The primary half of a split button IS the command; only its chevron is an opener.
+            RibbonSplitButton split => !ReferenceEquals(element, split.PrimaryPart),
+            RibbonDropDownButton => true,
+            InRibbonGallery => true,
+            RibbonComboBox => true,
+            _ => false,
+        };
 
     private void OnPopupClosed(object? sender, EventArgs e)
     {
@@ -448,7 +519,7 @@ public class RibbonGroup : HeaderedItemsControl
         // and the gallery renders empty back in the ribbon.
         if (_popupHost?.Child is { } flyoutContent)
         {
-            CloseNestedGalleryPopups(flyoutContent);
+            CloseNestedFlyouts(flyoutContent);
         }
 
         // Move the content back into the ribbon so it is ready when the group expands.
@@ -459,17 +530,25 @@ public class RibbonGroup : HeaderedItemsControl
         }
     }
 
-    private static void CloseNestedGalleryPopups(DependencyObject node)
+    private static void CloseNestedFlyouts(DependencyObject node)
     {
-        if (node is InRibbonGallery { IsDropDownOpen: true } gallery)
+        switch (node)
         {
-            gallery.SetCurrentValue(InRibbonGallery.IsDropDownOpenProperty, false);
+            case InRibbonGallery { IsDropDownOpen: true } gallery:
+                gallery.SetCurrentValue(InRibbonGallery.IsDropDownOpenProperty, false);
+                break;
+
+            // A drop-down or split button left open when the group flyout closes would otherwise
+            // keep a popup alive over a button that is no longer where the user left it.
+            case RibbonDropDownButton { IsDropDownOpen: true } dropDown:
+                dropDown.SetCurrentValue(RibbonDropDownButton.IsDropDownOpenProperty, false);
+                break;
         }
 
         int count = VisualTreeHelper.GetChildrenCount(node);
         for (int i = 0; i < count; i++)
         {
-            CloseNestedGalleryPopups(VisualTreeHelper.GetChild(node, i));
+            CloseNestedFlyouts(VisualTreeHelper.GetChild(node, i));
         }
     }
 

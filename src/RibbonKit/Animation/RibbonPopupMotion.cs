@@ -18,10 +18,9 @@ namespace RibbonKit.Animation;
 /// animated — it <em>is</em> the hosting popup's child). Anything else is ignored.
 /// </para>
 /// <para>
-/// ⚠ A popup's window is sized to its child's LAYOUT size and a <c>RenderTransform</c> does
-/// not grow it, so a surface that slides in from above is sliced against the window's top
-/// edge unless the child carries extra top margin and the popup is lifted by the same amount.
-/// Every consumer of this behaviour must ship that matched pair; see 04-DESIGN-NOTES §3.42.
+/// The transition itself is <see cref="RibbonMotion.PlayFlyoutOpen"/>, which scales rather than
+/// slides precisely so that attaching this behaviour needs NO template geometry changes at all —
+/// no headroom margin, no placement offset. See its remarks and 04-DESIGN-NOTES §3.42.
 /// </para>
 /// </remarks>
 public static class RibbonPopupMotion
@@ -111,14 +110,14 @@ public static class RibbonPopupMotion
         // includes the template border's headroom margin, which is what keeps the slide from
         // being clipped.
         var menu = (ContextMenu)sender;
-        RibbonMotion.PlayOpen(menu, GetOpenAction(menu));
+        RibbonMotion.PlayFlyoutOpen(menu, GetOpenAction(menu));
     }
 
     private static void OnPopupOpened(object? sender, EventArgs e)
     {
         if (sender is Popup { Child: FrameworkElement child } popup)
         {
-            RibbonMotion.PlayOpen(child, GetOpenAction(popup));
+            RibbonMotion.PlayFlyoutOpen(child, GetOpenAction(popup));
         }
     }
 }
