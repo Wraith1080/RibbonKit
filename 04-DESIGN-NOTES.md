@@ -2354,6 +2354,66 @@ any other flyout given a slide. Open only: a close animation would mean holding 
 the close, and `ComboBox`'s built-in mouse-capture management assumes the popup closes when it says
 so.
 
+### 3.42 Every flyout now opens as a whole surface — and the DPI manifest — 2026-07-28
+
+**The complaint was that only the *contents* moved.** §3.41 gave `RibbonComboBox` a proper
+fade-and-slide, but the drop-down button, the split button and the in-ribbon gallery animated
+`_menuHost.Child` / `_popupHost.Child` instead — so the bordered card and its shadow snapped into
+existence around a set of items that then slid down inside it. Read as a glitch rather than as
+motion. The context menu had no entrance at all.
+
+That inner-content choice was made deliberately, on a diagnosis that turns out to be wrong. Both
+call sites carried a comment saying a transform on the popup's own child border would "shift the
+transparent popup's resting position". It does not: a `Popup` positions its window from its child's
+LAYOUT size, and a `RenderTransform` is not layout — the window never moves. What actually happens
+is that the transformed border is **CLIPPED** against the window's edge, which looks like the
+surface being cut off, and is easy to misread as displacement. §3.41 had already found the real
+mechanism and the fix while doing the combo box; the two older call sites simply predated it.
+
+**All five flyouts now animate the surface itself**, on `RibbonAnimationAction.DropdownMenu`
+(gallery: `Gallery`), each with the matched pair:
+
+| flyout | file | headroom |
+| --- | --- | --- |
+| drop-down button, split button | `Controls.DropDowns.xaml` | `Margin` top 2 → 18, `VerticalOffset` 0 → −16 |
+| combo box | `Controls.DropDowns.xaml` | 12 → 18, −10 → −16 |
+| context menu | `Menus.xaml` (`ContextMenu` style) | 2 → 18, `ContextMenu.VerticalOffset` 0 → −16 |
+| menu-item submenu | `Menus.xaml` (`MenuItem` template) | 2 → 18, −0 → −16 |
+| in-ribbon gallery | `Controls.Galleries.xaml` | 4 → 24, −4 → −24 |
+
+**⚠ The headroom must clear the EXPRESSIVE offset, not the Subtle one.**
+`RibbonAnimation.GetSlideOffset` multiplies by **1.8** at `Expressive`, so `DropdownMenu` travels
+14.4px and `Gallery` 18px there. The combo box's original 10px of headroom was only ever enough at
+`Subtle` — it clipped at `Expressive`, shipped and unnoticed. Hence 16 and 20, and hence
+`PopupMotionTests.Headroom_exceeds_the_slide_at_every_animation_level`, which sweeps every level and
+fails the moment someone raises an offset. The margin and the offset are a **matched pair**: change
+one without the other and the flyout's resting position moves.
+
+**Two flyouts had no control of their own to hook**, so they get an attached behaviour —
+`Animation/RibbonPopupMotion.cs`, `AnimateOpen` + `OpenAction`. On a `Popup` it animates
+`Popup.Child`; on a `ContextMenu` it animates **the menu itself**, because WPF builds a
+`ContextMenu`'s hosting popup internally and never exposes it — the menu *is* that popup's child.
+The property-changed callback always unsubscribes before subscribing: a template can be applied
+more than once (theme switch), and a duplicated handler would start the transition twice. The
+submenu's `PopupAnimation="Fade"` is now `None`, so the entrance comes from themed timing rather
+than from WPF's fixed one.
+
+Known edge, not fixed: when a flyout lands near a screen edge WPF FLIPS it, and the compensating
+offset then points the wrong way, so a flipped popup sits ~16px off. Rare (it needs the opener
+within a menu's height of the bottom of the display), and the alternative — a scale-up entrance,
+which can never overflow its resting bounds and would need no compensation at all — was considered
+and set aside to keep all five flyouts consistent with the combo box that already shipped.
+
+**Separately: the showcase now declares PerMonitorV2 DPI awareness.** Changing the Windows display
+scale with the app running left it the same size and blurry until a restart — the signature of
+bitmap stretching, i.e. of a process that is only System-DPI aware. WPF on .NET does **not** opt in
+by default. `samples/RibbonKit.Showcase/app.manifest` (+ `<ApplicationManifest>` in the csproj) now
+declares `dpiAware=true/pm` *and* `dpiAwareness=PerMonitorV2` — both, since down-level Windows reads
+the 2005 element and Windows 10 1703+ reads the 2016 one — plus the `supportedOS` block, without
+which Windows will not honour PerMonitorV2 at all. `RibbonWindow.OnDpiChanged` already re-measured
+the maximize inset; it had simply never been reached. **A library cannot set process DPI awareness
+for its host, so consumers need the same manifest** — `README.md` now says so.
+
 ## 4. Workflow / Session Conventions
 
 - Cloud workspace: `/home/user/ribbonkit/`. The user's machine:
@@ -2371,39 +2431,31 @@ so.
 
 ## 5. Current State & Next Steps
 
-> **Status as of 2026-07-28: everything through §3.39 is implemented AND user-verified on Windows.
-> §3.40 and §3.41 shipped unbuilt today and are NOT yet verified** — checklist below.
+> **Status as of 2026-07-28: everything through §3.41 is implemented AND user-verified on Windows.**
+> The ten-point §3.40/§3.41 checklist that stood here has been walked and passed in full, and the
+> **2007 DPI matrix is clean at 100/125/150/175/200%** — which closes the last S6 exit criterion the
+> 2007 arc left open. §3.42 (whole-surface flyout animation + the DPI-awareness manifest) shipped
+> after that pass and is NOT yet verified; its checklist is below.
+>
 > Roadmap Phases 1–5 and 7 are complete. **Phase 6 now also has the Office 2007 theme (§3.38)**, so
 > all five generations ship; Phase 6 still owes dark mode, RTL + localization and the
 > visual-regression suite. Phase 8 (API freeze, docs site, perf, launch) is untouched. Two items are
 > deliberately deferred out of §3.38: the 2007 window frame, and the real two-pane 2007 application
 > menu (a new control, and a genuine feature gap).
 
-**Awaiting verification (§3.40 / §3.41).** All of it is chrome, so it is checked by looking rather
-than by clicking — but several states hide in corners:
+**Awaiting verification (§3.42).** All motion, so it is checked by opening things:
 
-1. **Pressed states** on the six tab-strip chrome buttons, in all five themes.
-2. **Mica/Acrylic on, 2024** — caption, tab-strip and File-button hover/press should tint the
-   material, not sit on it as opaque chips.
-3. **A custom accent on 2013/2010/2007** — the File button's pressed fill must still be the
-   accent-derived gel/glass, not the backdrop wash (this is what the `ReferenceEquals` guard
-   protects).
-4. **Accented title bar in 2007 and 2010** — glass caption, glass caption buttons. Try a LIGHT
-   accent too: white text over these gradients is the assumption most likely to break.
-5. **The QAT » chevron** on an accent title bar in 2024/2013/2010/2007 (2019 always looked right).
-6. **Minimized ribbon** in 2007/2010/2013 (hairline present) and 2019/2024 (absent, and no 1px
-   layout shift).
-7. **The ribbon's drop shadow with Mica OFF** in 2007/2010/2024 — the whole point of the ZIndex fix.
-8. **The title glide**, including mashing the File button open/close/open: that path exercises both
-   the re-entrancy guard and the asymmetric before/after measurement, and it is where a flicker
-   would come back.
-9. **The combo box drop-down** — the slide must not slice the popup's top edge.
-10. **Customize Ribbon** — Print Preview absent, and Up/Down on the LAST visible tab still reorders
-    (it used to trade places with the hidden modal tab).
-
-One interaction could not be judged from screenshots: on an accented 2019 strip the scroll chevron's
-hover still uses the accent-tinted `TabStrip.ControlHoverBackground`, now over a white chip. It
-should read as a pale tint.
+1. **Every flyout opens as ONE surface** — border, shadow and contents together, no card snapping
+   in around sliding items: drop-down button, split button, combo box, right-click menu, a
+   right-click **submenu**, and the in-ribbon gallery.
+2. **No sliced top edge** on any of them — that is the headroom pair doing its job.
+3. **Nothing moved at rest.** Each flyout must land exactly where it did before; the context menu
+   in particular must still sit on the cursor.
+4. **`RibbonAnimation.GlobalLevel = Expressive`** — the level the old 10px headroom clipped at.
+   Worth one pass on its own.
+5. **Change the Windows display scale with the app running.** It should relayout live and stay
+   crisp; no restart, and the maximized window must still sit flush against the work area
+   afterwards. (Try it maximized, and on a second monitor at a different scale if there is one.)
 
 **Working and confirmed by user: everything through §3.21** — including the QAT
 customization + merged options dialog with all its refinements (custom close-only title
@@ -2477,13 +2529,13 @@ Backlog (rough priority):
 
 1. Design editor: optional clear-to-default buttons for scalar properties. (Drag-drop tree
    reordering + cross-tab/group moves are now DONE — see §5 "Drag-drop reordering".)
-1b. **Finish the `DropdownMenu` animation.** §3.41 gave the combo box the open slide and left
-   `RibbonDropDownButton`, `RibbonSplitButton` and `RibbonMenuItem` opening instantly. Three lines
-   each, plus the popup-clipping headroom trick — do them together so the flyouts stay consistent.
+1b. ~~Finish the `DropdownMenu` animation.~~ **DONE (§3.42)** — all five flyouts plus the context
+   menu and its submenus now animate the whole surface.
 2. **Office 2007 leftovers** — the two pieces §3.38 deliberately deferred: the 2007 WINDOW FRAME
    (glass caption + orb overhang), and the real two-pane APPLICATION MENU (command column + Recent
    Documents + Options/Exit bar). The second is a new control, not a theme, and is a genuine feature
-   gap — `README.md` used to claim it existed. Also owed: the 2007 DPI matrix pass (100–200%).
+   gap — `README.md` used to claim it existed. (The 2007 DPI matrix pass is DONE — clean at
+   100/125/150/175/200%.)
 3. **Dark mode** (the 2019 white-tab note in §3.6 anticipates it) — the last item of the theming arc,
    and the one that also covers Mica's dark-aware translucency.
 4. RTL + localization resources, then the visual-regression snapshot suite (theme × DPI) — the rest
@@ -2491,7 +2543,8 @@ Backlog (rough priority):
 5. **The rest of the unit tests** — merge/modal invariants (`docs/06-MERGE-AND-MODAL-PLAN.md` §7),
    customization serializer round-trips, KeyTip resolution, reduction-algorithm gaps. The harness
    and the house style for headless WPF tests are in place (§3.39), so these are now writing, not
-   inventing.
+   inventing. `PopupMotionTests` (§3.42) is the newest example of the style: raise the routed event
+   rather than open a real popup.
 6. **MDI M1–M3**: cascade/tile/arrange commands + Ctrl+Tab (M1), the MVVM `ItemsSource` demo and a
    per-theme pass (M2), tabbed-documents mode + `RibbonState` layout persistence (M3). M0 and M4 are
    done, so the feature currently has a hole in its middle.

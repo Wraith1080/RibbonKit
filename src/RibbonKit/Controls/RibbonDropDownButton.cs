@@ -341,10 +341,14 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
     private void OnPopupOpened(object? sender, EventArgs e)
     {
         _dismissHelper.OnOpened();
-        // Animate the menu's inner content, not the popup's own child border — transforming
-        // that border would shift the transparent popup's resting position (see InRibbonGallery).
-        FrameworkElement? content = (_menuHost as Border)?.Child as FrameworkElement ?? _menuHost as FrameworkElement;
-        RibbonMotion.PlayOpen(content, RibbonAnimationAction.DropdownMenu);
+
+        // Fade + slide the WHOLE menu surface — border, shadow and items together. Animating
+        // only the inner content (what this used to do) left the bordered card snapping in
+        // around moving items. Transforming the border does NOT shift the popup's resting
+        // position — a RenderTransform never moves the popup window — but it IS clipped at that
+        // window's top edge, which the template's headroom margin + negative VerticalOffset
+        // cancel out. See §3.42; RibbonSplitButton inherits this unchanged.
+        RibbonMotion.PlayOpen(_menuHost as FrameworkElement, RibbonAnimationAction.DropdownMenu);
     }
 
     private void OnPopupClosed(object? sender, EventArgs e)

@@ -164,6 +164,23 @@ Still planned: cascade/tile/arrange commands with `Ctrl+Tab` cycling, a switchab
 
 `RibbonWindow` is optional — the ribbon renders self-contained inside a plain `Window`, you just lose the title-bar integration.
 
+### One thing to add to your app: a DPI manifest
+
+RibbonKit draws from vector geometry at any scale, but a library cannot set **process** DPI awareness on its host's behalf — and WPF on .NET does not opt in by default. Without the manifest below your app is System-DPI aware, so Windows bitmap-stretches the window when the display scale changes and everything stays soft until you restart it.
+
+Add an `app.manifest` (there is one to copy in `samples/RibbonKit.Showcase/`) and point the project at it with `<ApplicationManifest>app.manifest</ApplicationManifest>`:
+
+```xml
+<application xmlns="urn:schemas-microsoft-com:asm.v3">
+  <windowsSettings>
+    <dpiAware xmlns="http://schemas.microsoft.com/SMI/2005/WindowsSettings">true/pm</dpiAware>
+    <dpiAwareness xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">PerMonitorV2</dpiAwareness>
+  </windowsSettings>
+</application>
+```
+
+Both elements are needed — older Windows reads the first, Windows 10 1703+ reads the second — and the manifest must also declare Windows 10 support in a `<compatibility>` block, or Windows ignores `PerMonitorV2` entirely.
+
 Switch themes and accents at runtime — the shared templates read tokens through `DynamicResource`, so swapping the token dictionary re-colors every control instantly:
 
 ```csharp

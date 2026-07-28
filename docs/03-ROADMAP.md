@@ -2,7 +2,9 @@
 
 Each phase ends with the showcase app demonstrating everything built so far, tests green, and a tagged pre-release. Phases are sequential but small overlaps are fine.
 
-> **Progress (2026-07-27):** Phases 0–5 and **7 are complete**. Phase 6 is mostly done — **all five themes now ship** (2024, 2019, 2013, 2010 and, as of today, 2007 — see [`04-DESIGN-NOTES.md`](../04-DESIGN-NOTES.md) §3.38 and [`07-OFFICE-2007-THEME-PLAN.md`](07-OFFICE-2007-THEME-PLAN.md)) and per-monitor DPI is verified at 100/125/150/175/200%; still owed are dark mode, RTL, localization and the visual-regression suite. Phase 8 has not started. Post-v1 MDI emulation is unusually shaped: M0 and M4 are done, M1–M3 are not.
+> **Progress (2026-07-28):** Phases 0–5 and **7 are complete**. Phase 6 is mostly done — **all five themes now ship** (2024, 2019, 2013, 2010 and 2007 — see [`04-DESIGN-NOTES.md`](../04-DESIGN-NOTES.md) §3.38 and [`07-OFFICE-2007-THEME-PLAN.md`](07-OFFICE-2007-THEME-PLAN.md)) and per-monitor DPI is verified at 100/125/150/175/200% **on all five, 2007 included**; still owed are dark mode, RTL, localization and the visual-regression suite. Phase 8 has not started. Post-v1 MDI emulation is unusually shaped: M0 and M4 are done, M1–M3 are not.
+>
+> Live DPI switching needed a fix outside the library: an app must declare **PerMonitorV2** in its own manifest or Windows bitmap-stretches it until restart. The showcase now does, and the README tells consumers to (§3.42).
 >
 > Deferred out of the 2007 work on purpose: the 2007 window frame (Windows 11 draws its own border, and the frame is the change most likely to perturb the measured-margin maximize fix), and the real two-pane 2007 application menu — that is a new control, not a theme, and a genuine feature gap the README used to claim was already built.
 

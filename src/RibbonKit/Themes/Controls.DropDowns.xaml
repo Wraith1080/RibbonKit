@@ -160,10 +160,18 @@
                                 </StackPanel>
                             </Grid>
                         </ToggleButton>
+                        <!-- VerticalOffset and the menu host's top margin are a MATCHED PAIR: the whole
+                             bordered surface slides down into place, and a Popup's window is sized to
+                             its child's LAYOUT size, which a RenderTransform does not grow. The margin
+                             adds 16px of headroom above the border and the negative offset lifts the
+                             popup by the same 16, so the resting position is pixel-identical while the
+                             slide has room. 16 > the largest DropdownMenu slide offset (8 x 1.8 = 14.4
+                             at Expressive) — keep that inequality. See 04-DESIGN-NOTES §3.42. -->
                         <Popup x:Name="PART_Popup"
                                AllowsTransparency="True"
                                StaysOpen="True"
                                Placement="Bottom"
+                               VerticalOffset="-16"
                                IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
                             <Border x:Name="PART_MenuHost"
                                     Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
@@ -171,7 +179,7 @@
                                     BorderThickness="1"
                                     CornerRadius="{DynamicResource RibbonKit.Metrics.PopupCornerRadius}"
                                     Padding="4"
-                                    Margin="4,2,8,8">
+                                    Margin="4,18,8,8">
                                 <Border.Effect>
                                     <DropShadowEffect BlurRadius="8" ShadowDepth="2" Opacity="0.25" />
                                 </Border.Effect>
@@ -406,10 +414,18 @@
                                 </Style>
                             </ToggleButton.Style>
                         </ToggleButton>
+                        <!-- VerticalOffset and the menu host's top margin are a MATCHED PAIR: the whole
+                             bordered surface slides down into place, and a Popup's window is sized to
+                             its child's LAYOUT size, which a RenderTransform does not grow. The margin
+                             adds 16px of headroom above the border and the negative offset lifts the
+                             popup by the same 16, so the resting position is pixel-identical while the
+                             slide has room. 16 > the largest DropdownMenu slide offset (8 x 1.8 = 14.4
+                             at Expressive) — keep that inequality. See 04-DESIGN-NOTES §3.42. -->
                         <Popup x:Name="PART_Popup"
                                AllowsTransparency="True"
                                StaysOpen="True"
                                Placement="Bottom"
+                               VerticalOffset="-16"
                                IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
                             <Border x:Name="PART_MenuHost"
                                     Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
@@ -417,7 +433,7 @@
                                     BorderThickness="1"
                                     CornerRadius="{DynamicResource RibbonKit.Metrics.PopupCornerRadius}"
                                     Padding="4"
-                                    Margin="4,2,8,8">
+                                    Margin="4,18,8,8">
                                 <Border.Effect>
                                     <DropShadowEffect BlurRadius="8" ShadowDepth="2" Opacity="0.25" />
                                 </Border.Effect>
@@ -627,15 +643,16 @@
                                  being sliced: a Popup's window is sized to its child's LAYOUT
                                  size, and a RenderTransform does not grow that, so animating the
                                  border up from -8 would clip its top 8px against the window edge.
-                                 The margin adds 10px of headroom above the border and the negative
-                                 offset lifts the popup by the same 10, leaving the resting
+                                 The margin adds 16px of headroom above the border and the negative
+                                 offset lifts the popup by the same 16, leaving the resting
                                  position pixel-identical while giving the slide room to run.
-                                 10 > RibbonAnimation.GetSlideOffset(DropdownMenu), currently 8 —
-                                 keep that inequality if the offset is ever raised. -->
+                                 16 > the LARGEST DropdownMenu offset: GetSlideOffset returns 8 at
+                                 Subtle but 8 x 1.8 = 14.4 at Expressive, and the original 10 clipped
+                                 there. Keep the inequality against the Expressive value. -->
                             <Popup x:Name="PART_Popup"
                                    AllowsTransparency="True"
                                    Placement="Bottom"
-                                   VerticalOffset="-10"
+                                   VerticalOffset="-16"
                                    IsOpen="{TemplateBinding IsDropDownOpen}">
                                 <Border x:Name="PART_PopupRoot"
                                         Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
@@ -643,7 +660,7 @@
                                         BorderThickness="1"
                                         CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
                                         Padding="3"
-                                        Margin="4,12,8,8"
+                                        Margin="4,18,8,8"
                                         MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
                                         MaxHeight="{TemplateBinding MaxDropDownHeight}">
                                     <Border.Effect>

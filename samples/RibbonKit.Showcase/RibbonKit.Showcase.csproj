@@ -6,6 +6,10 @@
     <UseWPF>true</UseWPF>
     <RootNamespace>RibbonKit.Showcase</RootNamespace>
     <IsPackable>false</IsPackable>
+    <!-- Opts the process into PerMonitorV2 DPI awareness. Without it WPF is System-DPI
+         aware and Windows bitmap-stretches the window (blurry until restart) when the
+         display scale changes. See app.manifest. -->
+    <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
 
   <ItemGroup>
