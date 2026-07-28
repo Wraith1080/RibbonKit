@@ -36,9 +36,20 @@ public partial class MainWindow : RibbonWindow
     // the customize page's Reset button restores.
     private string? _baselineLayout;
 
+    // The Office 2007 application menu, declared in XAML so the designer renders it, then parked
+    // here. Ribbon.ApplicationMenu WINS over Ribbon.Backstage whenever it is set, and this app
+    // wants the backstage by default — so it is detached at startup and handed back by the
+    // "2007 Menu" toggle or by switching to the Office 2007 theme. A real app that only ever ships
+    // one File surface just leaves the one it wants assigned in XAML and never touches this.
+    private readonly RibbonApplicationMenu _applicationMenu;
+
     public MainWindow()
     {
         InitializeComponent();
+
+        _applicationMenu = ShowcaseApplicationMenu;
+        MainRibbon.ApplicationMenu = null;
+
         Loaded += OnWindowLoaded;
     }
 
@@ -135,9 +146,42 @@ public partial class MainWindow : RibbonWindow
     private void ApplyTheme(RibbonTheme theme)
     {
         ThemeManager.Apply(Application.Current, theme);
-        MainRibbon.ApplicationButtonShape = theme == RibbonTheme.Office2007
+
+        bool is2007 = theme == RibbonTheme.Office2007;
+        MainRibbon.ApplicationButtonShape = is2007
             ? RibbonApplicationButtonShape.Orb
             : RibbonApplicationButtonShape.Tab;
+
+        // Same reasoning as the orb: the two-pane application menu is what the ORB opened in 2007,
+        // and every generation after it opened a backstage instead. Setting the toggle rather than
+        // the ribbon property keeps the two in sync — the Checked handler does the actual swap.
+        ApplicationMenuToggle.IsChecked = is2007;
+    }
+
+    // Swap which surface the File button opens. Assigning ApplicationMenu is all it takes: the
+    // ribbon routes IsBackstageOpen to whichever surface is set, and the button, the orb's
+    // stay-visible rule and the title-bar QAT all follow from there.
+    private void OnToggleApplicationMenu(object sender, RoutedEventArgs e)
+    {
+        bool useMenu = (sender as RibbonToggleButton)?.IsChecked == true;
+
+        MainRibbon.IsBackstageOpen = false; // Never leave one surface up while swapping to the other.
+        MainRibbon.ApplicationMenu = useMenu ? _applicationMenu : null;
+    }
+
+    // Every command inside the application menu — nav rows, pane rows, recent documents. The menu
+    // closes itself on any click it does not deliberately swallow, so there is nothing to do here
+    // but the app's own work.
+    private void OnApplicationMenuCommand(object sender, RoutedEventArgs e)
+    {
+        string label = sender switch
+        {
+            RibbonApplicationMenuItem item => item.Header?.ToString() ?? "?",
+            ContentControl content => content.Content?.ToString() ?? "?",
+            _ => "?",
+        };
+
+        StatusReady.Content = $"Application menu: {label}";
     }
 
     private void OnToggleAccentTitleBar(object sender, RoutedEventArgs e) =>

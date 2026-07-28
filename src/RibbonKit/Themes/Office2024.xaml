@@ -26,6 +26,7 @@
         <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.Buttons.xaml" />
         <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.DropDowns.xaml" />
         <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.Backstage.xaml" />
+        <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.ApplicationMenu.xaml" />
         <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.Galleries.xaml" />
         <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.Window.xaml" />
         <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.OptionsDialog.xaml" />

@@ -6,7 +6,7 @@ Each phase ends with the showcase app demonstrating everything built so far, tes
 >
 > Live DPI switching needed a fix outside the library: an app must declare **PerMonitorV2** in its own manifest or Windows bitmap-stretches it until restart. The showcase now does, and the README tells consumers to (§3.42).
 >
-> Deferred out of the 2007 work on purpose: the 2007 window frame (Windows 11 draws its own border, and the frame is the change most likely to perturb the measured-margin maximize fix), and the real two-pane 2007 application menu — that is a new control, not a theme, and a genuine feature gap the README used to claim was already built.
+> Deferred out of the 2007 work on purpose: the 2007 window frame (Windows 11 draws its own border, and the frame is the change most likely to perturb the measured-margin maximize fix). The other deferral — the real two-pane 2007 application menu — **shipped on 2026-07-28** as `RibbonApplicationMenu`, a new control rather than a theme (§3.46).
 
 ## Phase 0 — Foundation (before any control code)
 

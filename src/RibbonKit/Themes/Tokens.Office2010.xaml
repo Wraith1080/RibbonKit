@@ -381,4 +381,51 @@
     <CornerRadius x:Key="RibbonKit.Metrics.MdiChild.CaptionCornerRadius">2,2,0,0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.MdiChild.CloseButtonCornerRadius">0,2,0,0</CornerRadius>
 
+    <!-- ============================================================
+         APPLICATION MENU (Office 2007's two-pane orb drop-down).
+         2010 has no application menu of its own (it shipped the backstage), so these are a
+         soft-glass translation of the 2007 geometry into this generation's blue-grey palette —
+         there if an app asks for the menu under this theme, invisible otherwise.
+         ============================================================ -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.FrameBorder" Color="#8DA5C4" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.FrameRim" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.FrameBand" Color="#D6E2F0" />
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.ApplicationMenu.TopBandBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#EDF3FA" />
+        <GradientStop Offset="1" Color="#D9E5F2" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.ApplicationMenu.FooterBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#E4EDF7" />
+        <GradientStop Offset="1" Color="#CBDAEC" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.NavBackground" Color="#FAFAFA" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.PaneBackground" Color="#ECEFF4" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.PaneSurface" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.PaneBorder" Color="#A7B8CE" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.HeaderBackground" Color="#DCE6F2" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.Separator" Color="#C3CFDF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.SeparatorHighlight" Color="#F5F8FC" />
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.ApplicationMenu.ButtonBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#F6FAFE" />
+        <GradientStop Offset="1" Color="#DCE9F8" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.ButtonBorder" Color="#8DA5C4" />
+
+    <DropShadowEffect x:Key="RibbonKit.Effects.ApplicationMenuShadow"
+                      BlurRadius="10"
+                      ShadowDepth="3"
+                      Direction="270"
+                      Opacity="0.3"
+                      Color="#000000" />
+
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuMargin">2,4,0,0</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.ApplicationMenuCornerRadius">3</CornerRadius>
+    <system:Double x:Key="RibbonKit.Metrics.ApplicationMenuNavWidth">140</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.ApplicationMenuPaneWidth">330</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.ApplicationMenuItemHeight">48</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.ApplicationMenuArrowWidth">28</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.ApplicationMenuTopBandHeight">10</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.ApplicationMenuFooterHeight">32</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.ApplicationMenuDimOpacity">0.35</system:Double>
+
 </ResourceDictionary>

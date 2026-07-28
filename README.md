@@ -54,7 +54,7 @@ Legend: ✅ done · 🚧 in progress · 📋 planned
 | Feature | Status |
 |---|---|
 | Application button (rectangular tab, or the Office 2007 orb) | ✅ |
-| Application menu (2007-style two-pane dropdown) | 📋 |
+| Application menu (2007-style two-pane dropdown) | ✅ |
 | Backstage view (Modern 2024, Classic 2013, Classic 2010 designs) | ✅ |
 | Backstage footer items, button items, recent-items pattern | ✅ |
 | Quick Access Toolbar — 3 placements, overflow flyout, right-click add/remove | ✅ |
@@ -222,7 +222,7 @@ Design-time tooling setup is documented in [`src/RibbonKit.Design/SETUP-DESIGNTO
 
 ## Roadmap to v1.0
 
-Remaining before the API freeze: dark mode, RTL and localization, and the visual regression suite (all Phase 6), plus unit tests for the Phase 7 invariants. Two items were deliberately deferred out of the Office 2007 work — the 2007 window frame, and the two-pane 2007 application menu (a new control). Then release engineering — API review and freeze, docs site, SourceLink, and a performance pass.
+Remaining before the API freeze: dark mode, RTL and localization, and the visual regression suite (all Phase 6), plus unit tests for the Phase 7 invariants. One item is still deferred out of the Office 2007 work: the 2007 window frame. (The two-pane 2007 application menu, the other deferral, shipped as `RibbonApplicationMenu`.) Then release engineering — API review and freeze, docs site, SourceLink, and a performance pass.
 
 ## Contributing
 

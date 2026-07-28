@@ -93,6 +93,25 @@ public class Ribbon : Control
             typeof(Ribbon),
             new FrameworkPropertyMetadata(null, OnBackstageChanged));
 
+    /// <summary>Identifies the <see cref="ApplicationMenu"/> dependency property.</summary>
+    public static readonly DependencyProperty ApplicationMenuProperty =
+        DependencyProperty.Register(
+            nameof(ApplicationMenu),
+            typeof(object),
+            typeof(Ribbon),
+            new FrameworkPropertyMetadata(null, OnApplicationMenuChanged));
+
+    private static readonly DependencyPropertyKey IsApplicationMenuOpenPropertyKey =
+        DependencyProperty.RegisterReadOnly(
+            nameof(IsApplicationMenuOpen),
+            typeof(bool),
+            typeof(Ribbon),
+            new FrameworkPropertyMetadata(false));
+
+    /// <summary>Identifies the read-only <see cref="IsApplicationMenuOpen"/> dependency property.</summary>
+    public static readonly DependencyProperty IsApplicationMenuOpenProperty =
+        IsApplicationMenuOpenPropertyKey.DependencyProperty;
+
     /// <summary>Identifies the <see cref="ApplicationButtonHeader"/> dependency property.</summary>
     public static readonly DependencyProperty ApplicationButtonHeaderProperty =
         DependencyProperty.Register(
@@ -147,6 +166,13 @@ public class Ribbon : Control
     /// so pressing/toggling shows a stable "active" state (matches the caption buttons).
     /// </summary>
     public const string QatColoredPressedBackgroundKey = "RibbonKit.Brushes.Qat.ColoredPressedBackground";
+
+    // Name of the application (File/orb) ToggleButton inside the RibbonTabControl template. The
+    // application menu's click-outside dismissal has to recognise it and stand down, or closing on
+    // mouse-DOWN would race the toggle's own click on mouse-UP and the orb would re-open the menu
+    // it just closed. Matching by NAME rather than by a cached reference is deliberate: the button
+    // lives in the NESTED tab control's template, which Ribbon.GetTemplateChild cannot reach.
+    internal const string ApplicationButtonPartName = "PART_ApplicationButton";
 
     /// <summary>Identifies the <see cref="SelectedTab"/> dependency property.</summary>
     public static readonly DependencyProperty SelectedTabProperty =
@@ -1240,7 +1266,14 @@ public class Ribbon : Control
         return null;
     }
 
-    /// <summary>Whether the backstage overlay is open.</summary>
+    /// <summary>
+    /// Whether the application (File) button's surface is open. Which surface that is depends on
+    /// what is assigned: the <see cref="ApplicationMenu"/> drop-down when one is set, otherwise the
+    /// <see cref="Backstage"/> overlay. It stays named for the backstage because that is the case
+    /// it has always driven, and because a single flag is what makes the File button a plain
+    /// two-state toggle regardless of which surface is behind it — see
+    /// <see cref="IsApplicationMenuOpen"/> for the discriminator a template needs.
+    /// </summary>
     public bool IsBackstageOpen
     {
         get => (bool)GetValue(IsBackstageOpenProperty);
@@ -1248,14 +1281,45 @@ public class Ribbon : Control
     }
 
     /// <summary>
+    /// <see langword="true"/> while <see cref="IsBackstageOpen"/> is showing the
+    /// <see cref="ApplicationMenu"/> rather than the <see cref="Backstage"/>. Templates key the
+    /// differences off this: the orb stays VISIBLE over an application menu (it is drawn on top of
+    /// it, as in Office 2007) but hides under a backstage, and the title-bar quick access strip is
+    /// only hidden by the backstage.
+    /// </summary>
+    public bool IsApplicationMenuOpen
+    {
+        get => (bool)GetValue(IsApplicationMenuOpenProperty);
+        private set => SetValue(IsApplicationMenuOpenPropertyKey, value);
+    }
+
+    /// <summary>
     /// The backstage content opened by the application (File) button — typically a
-    /// <see cref="Controls.Backstage"/>. When <see langword="null"/>, the File button
-    /// is hidden.
+    /// <see cref="Controls.Backstage"/>. When this and <see cref="ApplicationMenu"/> are both
+    /// <see langword="null"/>, the File button is hidden.
     /// </summary>
     public object? Backstage
     {
         get => GetValue(BackstageProperty);
         set => SetValue(BackstageProperty, value);
+    }
+
+    /// <summary>
+    /// The Office 2007 two-pane application menu — typically a
+    /// <see cref="Controls.RibbonApplicationMenu"/>. <b>When this is set it wins:</b> the File
+    /// button opens the menu and the <see cref="Backstage"/> is left alone, so an app can keep both
+    /// assigned and switch generations at runtime by nulling one out.
+    /// <para>
+    /// Unlike the backstage, the menu is NOT an overlay in the window's adorner layer — it is
+    /// rendered inside the ribbon's own tab-strip row, underneath the application button, so the
+    /// orb keeps sitting on top of it. Pair it with
+    /// <see cref="RibbonApplicationButtonShape.Orb"/> and the Office 2007 theme.
+    /// </para>
+    /// </summary>
+    public object? ApplicationMenu
+    {
+        get => GetValue(ApplicationMenuProperty);
+        set => SetValue(ApplicationMenuProperty, value);
     }
 
     /// <summary>Text of the application button. Default: "File".</summary>
@@ -1367,6 +1431,7 @@ public class Ribbon : Control
             return;
         }
 
+        ribbon.UpdateApplicationMenuState();
         ribbon.UpdateBackstageOverlay((bool)e.NewValue);
 
         // CLOSING: re-place the selection marker and the body-border notch.
@@ -1471,6 +1536,16 @@ public class Ribbon : Control
 
     private void UpdateBackstageOverlay(bool open)
     {
+        // AN APPLICATION MENU TAKES THE WHOLE PATH OVER. It is not an overlay at all: the template
+        // renders it inside the tab-strip row, gated purely on IsApplicationMenuOpen, so there is no
+        // adorner to add, nothing to hide behind, and — crucially — no title-bar QAT to hide either
+        // (Office 2007 keeps the quick access strip visible under the menu). Everything below this
+        // point is backstage-only.
+        if (ApplicationMenu is not null)
+        {
+            return;
+        }
+
         // The XAML designer doesn't host the ribbon in a real Window, so the runtime adorner
         // path below (which needs Window.GetWindow) can't run — it would silently no-op and the
         // backstage would never appear on the surface. In design mode, route the backstage into
@@ -1688,6 +1763,30 @@ public class Ribbon : Control
 
     private void OnBackstageBackRequested(object? sender, EventArgs e) =>
         SetCurrentValue(IsBackstageOpenProperty, false);
+
+    private static void OnApplicationMenuChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        var ribbon = (Ribbon)d;
+        if (e.OldValue is RibbonApplicationMenu oldMenu)
+        {
+            oldMenu.CloseRequested -= ribbon.OnApplicationMenuCloseRequested;
+        }
+
+        if (e.NewValue is RibbonApplicationMenu newMenu)
+        {
+            newMenu.CloseRequested += ribbon.OnApplicationMenuCloseRequested;
+        }
+
+        // Assigning or clearing a menu changes WHICH surface IsBackstageOpen means, so the
+        // discriminator has to be recomputed even though the open flag itself did not move.
+        ribbon.UpdateApplicationMenuState();
+    }
+
+    private void OnApplicationMenuCloseRequested(object? sender, EventArgs e) =>
+        SetCurrentValue(IsBackstageOpenProperty, false);
+
+    private void UpdateApplicationMenuState() =>
+        IsApplicationMenuOpen = IsBackstageOpen && ApplicationMenu is not null;
 
     /// <inheritdoc />
     protected override AutomationPeer OnCreateAutomationPeer() => new RibbonAutomationPeer(this);

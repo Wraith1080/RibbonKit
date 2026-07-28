@@ -2688,6 +2688,205 @@ two writes while the other four still pass. The overflow hop is NOT unit-tested:
 built inside `OnOverflowOpened`, which needs the popup and panel template parts, and the harness
 deliberately never opens a real popup. It is on the manual checklist instead.
 
+### 3.46 The real Office 2007 application menu — a control that had to sit BEHIND the orb — 2026-07-28
+
+The second of the two things §3.38 deferred. `README.md` claimed for a long time that RibbonKit had
+an "application menu"; it had the application *button* and the backstage, and the two-pane drop-down
+Word 2007 actually opens did not exist. It does now: `RibbonApplicationMenu` plus three companions,
+`Themes/Controls.ApplicationMenu.xaml`, 24 new tokens per theme, and one new `Ribbon` property.
+
+#### The z-order requirement drove the whole architecture
+
+In Office 2007 the orb sits **on top of** the menu it opened — the menu's rounded top-left corner
+disappears under it. That one sentence rules out both of the obvious hosts:
+
+| Host | Why not |
+|---|---|
+| `Popup` | Its own top-level HWND. It is above *everything* in the owner window by construction, and nothing in that window can ever paint over it. |
+| Adorner layer (what `Backstage` uses) | A sibling visual branch inside the `AdornerDecorator` that paints above all window content — including the ribbon, including the orb. |
+
+So the menu is hosted **inside the ribbon's own tab-strip row**, declared *before* the application
+button in `Controls.RibbonChrome.xaml` so the orb paints over it, and carried by a **zero-sized
+`Canvas`**:
+
+```xml
+<Canvas Grid.Column="0" Grid.ColumnSpan="4" Panel.ZIndex="0"
+        Width="0" Height="0" HorizontalAlignment="Left" VerticalAlignment="Top">
+    <ContentPresenter Content="{Binding ApplicationMenu, …}"
+                      Margin="{DynamicResource RibbonKit.Metrics.ApplicationMenuMargin}"
+                      Visibility="{Binding IsApplicationMenuOpen, …, Converter={StaticResource RibbonKit.BoolToVis}}" />
+</Canvas>
+```
+
+Two properties of `Canvas` are doing real work here, and both are the reason it is a `Canvas` and
+not a `Grid` cell:
+
+1. **A `Canvas` child contributes nothing to its parent's measure**, so a 500px-tall menu cannot
+   inflate the tab strip. The `Canvas` itself is pinned to `0×0`.
+2. **`Canvas` does not clip.** WPF hit-tests and renders children outside a parent's bounds as long
+   as no ancestor sets `ClipToBounds`, so the menu is free to hang down over the ribbon body and the
+   document. §3.41 already proved this path works — that is the same reason the ribbon's drop shadow
+   needed `Panel.ZIndex="1"` on the `Ribbon` style rather than more room.
+
+Placement is one `Thickness` token, `ApplicationMenuMargin`, measured against the top-left of the
+tab-strip row. The orb overhangs *upward* out of that row (its own margin has a negative top), which
+is why the menu's `2,10,0,0` puts its top edge below the row origin, tucked under the orb's lower
+half.
+
+#### One open flag, two surfaces
+
+`Ribbon.ApplicationMenu` is new; `Ribbon.IsBackstageOpen` was NOT split in two. It now means "the
+File button's surface is open", and `UpdateBackstageOverlay` returns immediately when an application
+menu is assigned — no adorner, nothing hidden behind, and critically **no hiding of the title-bar
+quick access strip**, which Office 2007 keeps visible under the menu. Everything the flag already
+carried comes along free: the modal-tab block, the design-time route, the notch/marker re-placement
+on close.
+
+The discriminator templates need is the new read-only `Ribbon.IsApplicationMenuOpen`
+(`IsBackstageOpen && ApplicationMenu is not null`). It buys exactly two trigger changes, and the
+first is the one that matters:
+
+- The orb's "hide me, the backstage is covering me" `MultiDataTrigger` gained a third condition,
+  `IsApplicationMenuOpen = False`. Without it the orb would delete itself over the menu — over the
+  one surface the whole layering exists to sit beneath.
+- A new trigger holds the orb's pressed gel while the menu is up, so it reads as the thing the menu
+  belongs to.
+
+The File button's "hidden when there is nothing to open" `DataTrigger` became a `MultiDataTrigger`
+over *both* `Backstage` and `ApplicationMenu` being null. A ribbon may legitimately carry either
+one alone.
+
+**When both are set, the menu wins.** That is deliberate: an app can keep both assigned and switch
+generations at runtime by nulling one out, which is exactly what the showcase's "2007 Menu" toggle
+and its `ApplyTheme` do.
+
+#### The hover model, and why it is derived rather than remembered
+
+This is the part with real behaviour in it. Word 2007's rules, as specified by the user and
+confirmed against the captures:
+
+- The pane shows the default page (Recent Documents) until the pointer enters a nav row that has a
+  pane of its own.
+- Leaving that row **without** landing on another row or on the pane reverts to the default page.
+- Entering a row with **no** pane (New, Save, Close) *also* reverts — passing over them clears the
+  pane rather than leaving a stale one up.
+- Once the pointer is in the pane the active row is **latched**: dragging off the right edge of the
+  menu entirely leaves it showing, until another nav row claims it.
+
+The first implementation of the leave path was a `bool _revertPending` flipped by enter and leave.
+It was wrong, and wrong in a way that only shows up as an occasional flicker: **moving from a nav
+row straight into the pane raises a leave and an enter in the same input pass, and WPF does not
+promise their order.** A flag set by whichever fired last is right about half the time.
+
+The fix is to record *who* is hovered and re-derive the answer from live state:
+
+```csharp
+private void EvaluateActive()
+{
+    if (_hoveredItem is { } hovered) { SetActive(hovered.HasPane ? hovered : null); return; }
+    if (_pane is { IsMouseOver: true }) return;   // LATCH
+    SetActive(null);
+}
+```
+
+Enter calls it immediately (the pane must swap under the pointer with no lag); leave schedules it at
+`DispatcherPriority.Background`, one pass later, by which time every enter belonging to the same
+pointer move has been raised and `IsMouseOver` on the pane has settled. The latch clause is also
+what implements "dragged off the right edge and it stays" for free — by then there is no hovered
+item and no further leave event to re-check, so nothing runs at all.
+
+**The general rule worth carrying forward: when two input events race, do not let either one decide.
+Record, defer one pass, and read the world.**
+
+#### The half-lit split row — measured, then reduced to one number
+
+The user's spec: on a SPLIT nav row whose pane is being used, the arrow half stays fully lit while
+the command half drops to "half intensity"; a plain drop-down row (no default action) stays fully
+lit throughout. Sampling `application_menunavhover.png` against
+`application_menuactivenavtabnothovered.png` gave the two fills at the same y:
+
+| | command half | arrow half |
+|---|---|---|
+| hovered | `#FFE694` | `#FFE588` |
+| pane in use | `#FFF8E3` | `#FFE282` |
+
+`#FFF2CD` (the half-lit crease) is `#FFD758` — the hover gold's crease — composited over the nav
+column at ~0.32 alpha. **The dim state is not a second gradient. It is the same brush at
+`ApplicationMenuDimOpacity`**, so the whole thing costs one `Double` per theme instead of a five-stop
+gel per theme. The outline and the hairline do NOT dim: measured identical in both states
+(`#CAB583` vs `#C9B382`), so they sit outside the dimmed element.
+
+The template therefore paints two independently-dimmable fills sharing
+`Control.HoverBackground`, an outline spanning both, and the hairline; then trigger ORDER does the
+rest — `IsActive` first, the `IsActive AND IsSplitPresentation` `MultiTrigger` second (dims the
+command half), `IsMouseOver` third so pointing at the row always restores full gold, `IsPressed`
+last. Same last-setter-wins discipline the application button's own triggers depend on (§3.40).
+
+`IsSplitPresentation` is a read-only DP = `HasPane && IsSplit`, exactly so the two halves cannot
+disagree about which shape the row is — the same one-flag trick §3.43 used for the vertical split
+button.
+
+#### Three findings that cost a rewrite each
+
+**1. `FrameworkElement.Resources` is not a `DependencyProperty`.** The group dividers were going to
+be stock `Separator`s styled from a `<Setter Property="Resources">` on the menu's Style — scoped to
+the menu so a theme dictionary would not restyle every separator in the consuming app. That Setter
+cannot exist: `Resources` is a plain CLR property. There is no scope that works (an implicit
+file-level style leaks; `ControlTemplate.Resources` is not on an inline item's lookup path; the
+theme dictionary is not in the app's lookup chain at all), so the divider became its own control,
+`RibbonApplicationMenuSeparator`, which gets its style from `Generic.xaml` with no lookup involved.
+
+**2. The pane must never fall back to `DefaultContent`.** `ActivePaneContent` returns `null` when no
+row is active, and the default page has its own presenter in the template. Routing the same object
+through both presenters throws the moment the pane switches back — a `UIElement` has exactly one
+visual parent. (The active row's `Content` is fine to present: the row is its *logical* parent and
+never presents it itself, which is precisely the split `TabControl` uses for a `TabItem`'s content.)
+
+**3. Click-outside dismissal has to know the application button.** The menu closes on
+`PreviewMouseDown` anywhere outside itself. Clicking the orb is outside itself — so the menu would
+close on mouse-DOWN, leaving the two-way-bound `ToggleButton` unchecked, and the toggle's own click
+on mouse-UP would re-open the menu it had just closed. The orb would look dead. The button is
+therefore exempt, matched by name (`Ribbon.ApplicationButtonPartName` = `PART_ApplicationButton`,
+renamed from `ApplicationButton` for this) because it lives in the NESTED `RibbonTabControl`
+template, which `Ribbon.GetTemplateChild` cannot reach. Same exemption `PopupDismissHelper` gives a
+flyout's opener, for the same reason.
+
+Dismissal is otherwise the house pattern: Esc (at the window as well as the menu, since focus may
+still be on the button), window deactivate/move/resize, and any `ButtonBase.Click` that bubbles to
+the menu unhandled. **The two cases that must not dismiss mark the click handled themselves** — a
+row's arrow half, and a pane-less drop-down row — so the menu never has to reason about where a
+click came from. §3.40's collapsed-group flyout learned that lesson the expensive way: a visual-tree
+walk gets menu items backwards.
+
+#### The frame
+
+Sampled across a scan line, the border is a five-band sandwich — `#9BAFCA` / `#FFFFFF` / band /
+`#FFFFFF` / `#9BAFCA` — where the band is flat 3px down the sides, an **18px gradient across the
+top** (the strip the orb sits half inside, which is why the top is thicker than the sides), and the
+**footer bar itself** along the bottom. Hence three nested `Border`s around a three-row `Grid`
+rather than one `Border` with a fat `BorderThickness`. Both band gradients carry the 2007 valley
+with its hard crease, same as the ribbon body.
+
+Two more measured details worth keeping: the default page renders **bare** — no frame, no header
+band, its heading is part of the content — while a nav row's page is **framed and gets the shaded
+`#DDE7EE` band**. And `PART_Frame` deliberately carries no chrome: `RibbonMotion.PlayFlyoutOpen`
+fades the surface it is handed and slides that surface's *child*, so making the invisible wrapper
+the surface lets the whole visible menu glide in. Painting the border on `PART_Frame` would have
+slid the menu's insides against their own frame — the third time §3.42's margin/offset headroom rule
+has bitten.
+
+#### What shipped
+
+New public types: `RibbonApplicationMenu`, `RibbonApplicationMenuItem`,
+`RibbonApplicationMenuPaneItem`, `RibbonApplicationMenuButton`, `RibbonApplicationMenuSeparator`.
+New `Ribbon` members: `ApplicationMenu`, read-only `IsApplicationMenuOpen`. Tokens went **127 → 151
+keys** per theme (14 brushes, 9 metrics, 1 effect). 2007's values are measured; 2010 gets a
+soft-glass translation and 2013/2019/2024 flat on-palette equivalents, so assigning an application
+menu under any generation is legal and looks deliberate.
+
+**Not done, on purpose:** KeyTips for the menu, arrow-key navigation down the column, and a
+scrolling pane. All three are additive and none of them changes the geometry.
+
 ## 4. Workflow / Session Conventions
 
 - Cloud workspace: `/home/user/ribbonkit/`. The user's machine:
@@ -2713,9 +2912,9 @@ deliberately never opens a real popup. It is on the manual checklist instead.
 >
 > Roadmap Phases 1–5 and 7 are complete. **Phase 6 now also has the Office 2007 theme (§3.38)**, so
 > all five generations ship; Phase 6 still owes dark mode, RTL + localization and the
-> visual-regression suite. Phase 8 (API freeze, docs site, perf, launch) is untouched. Two items are
-> deliberately deferred out of §3.38: the 2007 window frame, and the real two-pane 2007 application
-> menu (a new control, and a genuine feature gap).
+> visual-regression suite. Phase 8 (API freeze, docs site, perf, launch) is untouched. Of the two items
+> deferred out of §3.38, the two-pane 2007 application menu shipped in §3.46; only the 2007 window
+> frame is still owed.
 
 **Awaiting verification (§3.42 motion, §3.43 split button).** §3.42 is motion, checked by opening
 things; §3.43 is the split button's vertical arrangement and companion highlight:
@@ -2739,6 +2938,31 @@ E. **§3.45 proxies (manual — not unit-testable):** disable a command from cod
    with a whole GROUP disabled (that path goes through coercion, not a property set). Then unmerge a
    merged source and confirm its parked proxy greys in BOTH the strip and the overflow flyout —
    the flyout was the half that stayed live.
+
+F. **§3.46 application menu.** Switch to the Office 2007 theme (which turns the "2007 Menu" toggle
+   on for you) and click the orb.
+   1. **The orb is ON TOP of the menu** and stays lit while it is open. This is the whole point of
+      hosting the menu in the tab-strip row; if it is behind, the `Canvas`/`ZIndex` ordering in
+      `Controls.RibbonChrome.xaml` is wrong. Check the title-bar QAT is still visible too — only the
+      backstage hides it.
+   2. **Position.** Tune `Metrics.ApplicationMenuMargin` (2007: `2,10,0,0`) until the menu's
+      top-left tucks under the orb's lower half. It was placed from a screenshot, not from a run.
+   3. **Hover, the reverting half:** slide down New → Open → Save → Save As. The pane should follow,
+      showing the default page over the pane-less rows and "Save a copy of the document" over Save
+      As, with **no flicker in between** — a flicker means the deferred `EvaluateActive` is racing.
+      Then move off the column entirely: back to Recent Documents.
+   4. **Hover, the latching half:** hover Save As, move right INTO the pane. The row must stay
+      active, its command half dropping to about a third while the **arrow half stays fully lit** and
+      the outline stays full. Now drag off the RIGHT edge of the menu — the pane must stay put.
+   5. **Publish is `IsSplit="False"`** — do the same to it and the WHOLE row should stay fully lit.
+      That is the contrast the two shapes exist to show.
+   6. **Clicks:** a pane row or a plain nav row closes the menu (status bar shows what was picked);
+      the arrow half of a split row does NOT; clicking Publish anywhere does NOT. Esc closes;
+      clicking the document closes; **clicking the orb again closes and does not immediately
+      re-open** (that is the dismissal exemption).
+   7. **Every other generation:** flip the toggle on under 2013/2019/2024 and confirm the flat token
+      set renders a sane menu rather than 2007 glass in the wrong palette.
+   8. **DPI 125/150/200%** on the frame bands and the 52px rows.
 
 
 
@@ -2840,10 +3064,9 @@ Backlog (rough priority):
    reordering + cross-tab/group moves are now DONE — see §5 "Drag-drop reordering".)
 1b. ~~Finish the `DropdownMenu` animation.~~ **DONE (§3.42)** — all five flyouts plus the context
    menu and its submenus now animate the whole surface.
-2. **Office 2007 leftovers** — the two pieces §3.38 deliberately deferred: the 2007 WINDOW FRAME
-   (glass caption + orb overhang), and the real two-pane APPLICATION MENU (command column + Recent
-   Documents + Options/Exit bar). The second is a new control, not a theme, and is a genuine feature
-   gap — `README.md` used to claim it existed. (The 2007 DPI matrix pass is DONE — clean at
+2. **Office 2007 leftover** — the one piece §3.38 deferred that is still open: the 2007 WINDOW
+   FRAME (glass caption + orb overhang). The other deferral, the real two-pane APPLICATION MENU,
+   **shipped 2026-07-28 (§3.46)**. (The 2007 DPI matrix pass is DONE — clean at
    100/125/150/175/200%.)
 3. **Dark mode** (the 2019 white-tab note in §3.6 anticipates it) — the last item of the theming arc,
    and the one that also covers Mica's dark-aware translucency.
