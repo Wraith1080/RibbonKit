@@ -2500,6 +2500,109 @@ which Windows will not honour PerMonitorV2 at all. `RibbonWindow.OnDpiChanged` a
 the maximize inset; it had simply never been reached. **A library cannot set process DPI awareness
 for its host, so consumers need the same manifest** — `README.md` now says so.
 
+### 3.43 Split button: a vertical arrangement, and halves that acknowledge each other — 2026-07-28
+
+Two changes to `RibbonSplitButton`, both about it reading as ONE control rather than two buttons
+that happen to touch.
+
+**Vertical arrangement (Large only).** Icon on top — the command half — with the caption and chevron
+stacked beneath it on the drop-down half, which is Office's large Paste button. New public API:
+`RibbonSplitButtonLayout` (`Horizontal` default / `Vertical`) and `RibbonSplitButton.Layout`, plus a
+read-only `IsVerticalLayout`.
+
+`IsVerticalLayout` is the piece worth keeping. `Layout` alone is not enough, because vertical is only
+honoured at `Large` and the sizing engine steps a button down to `Medium` as its group narrows — so
+the real condition is `Layout == Vertical && Size == Large`, and it has to be re-evaluated whenever
+EITHER changes. `Size` is declared by `RibbonDropDownButton`, so the derived class re-registers it:
+
+```csharp
+SizeProperty.OverrideMetadata(typeof(RibbonSplitButton),
+    new FrameworkPropertyMetadata(RibbonControlSize.Large, FrameworkPropertyMetadataOptions.AffectsMeasure, OnLayoutInputChanged));
+```
+
+⚠ `OverrideMetadata` **replaces** the base metadata rather than merging it, so the default and
+`AffectsMeasure` are re-stated there deliberately — dropping either would break the sizing engine in
+a way that only shows up on resize.
+
+Publishing one flag instead of testing the pair in the template is not a convenience. The
+vertical-only differences live in **three separate namescopes** — the outer template and the nested
+template of each half — so the alternative was the same two-condition `MultiDataTrigger` written six
+times, with six chances for the halves to disagree about which way round the button is.
+
+**One grid, re-spanned; not two panels.** The halves stay put and the vertical trigger moves them
+from `Column 0 | Column 1` to `Row 0 / Row 1`, with `ChevronColumn` pinned to 0 and the chevron
+half's `Width` set to `Auto` (= `NaN`) so it stretches instead of staying a 15px sliver. A second
+panel would have needed a second `PART_Primary` / `PART_Toggle`, and a template part may only be
+named once per namescope.
+
+The nested half templates read `IsVerticalLayout` through an **AncestorType** binding, not a
+`TemplateBinding` — inside the `Button`'s own `ControlTemplate` the templated parent is the *button*,
+not the split button. Same reason the vertical caption binds `Header` that way.
+
+The caption is `TextWrapping="NoWrap"` + `CharacterEllipsis` at `MaxWidth="76"`. One line is the
+contract, not a limitation: a second line here would make the two halves different heights whenever
+the text was long, and 76 is `RibbonButton`'s Large width, so a vertical split button lines up with
+the plain large buttons beside it.
+
+**Companion highlight.** Hovering or pressing either half now marks the other one. Three tokens per
+theme carry the whole difference:
+
+| generation | `CompanionBackground` | `CompanionBorder` | `CompanionGlow` |
+| --- | --- | --- | --- |
+| 2007 | `Transparent` | `#C1A877` | `#CCFFEDC2` |
+| 2010 | `Transparent` | `#E9C25E` | `#CCFFF0CB` |
+| 2013 | `#F4F7FC` | `Transparent` | `Transparent` |
+| 2019 | `#EFEEED` | `Transparent` | `Transparent` |
+| 2024 | `#F2F2F2` | `Transparent` | `Transparent` |
+
+The two treatments are genuinely different, not scaled versions of each other. The gradient
+generations draw the amber outline plus a **1px glow rim just inside it, and no fill at all** — the
+first cut washed the whole half in pale amber and the result was that a merely-adjacent button read
+as almost as hot as the hovered one, which defeats the point of distinguishing them. The flat
+generations have no highlight border to glow inside, so they take a lighter version of their own
+hover fill and leave both border and glow `Transparent`.
+
+Because the *theme* decides what companion means, the template needs three setters and four
+triggers — identical across all five generations — instead of per-theme branching.
+
+⚠ The glow is an **overlay in the same grid cell, not a nested container**. A real inner border would
+inset the content by 1px in every state, so the icon would visibly shift the moment the other half
+was hovered. `CompanionRim` draws only its 1px edge, is `IsHitTestVisible="False"`, and binds
+`CornerRadius` to `Chrome` by `ElementName` so it tracks the horizontal/vertical switch for free.
+
+⚠ The mark is carried on `Tag`. An outer `TargetName` cannot reach a half's `Chrome`, which lives in
+that half's own namescope, so the outer triggers set `Tag="Companion"` on the sibling and each half's
+template reacts. `Tag` is free on these two template-private buttons and costs no public API before
+the Phase 8 freeze. The companion trigger is declared FIRST in each half so the half's own
+hover/press always wins when both apply — press the command half, then drag onto the chevron.
+
+New tokens: `Control.CompanionBackground`, `Control.CompanionBorder`,
+`Metrics.SplitTopCornerRadius`, `Metrics.SplitBottomCornerRadius` — four per file, all five files.
+The showcase's Paste button now ships `Layout="Vertical"`, which also demonstrates the fallback:
+narrow the window and it returns to horizontal as it reduces to Medium.
+
+**Design-time.** The Ribbon Editor's property panel gained a **gated** row: `PropSpec` now takes an
+optional `AppliesTo` predicate and `BuildProps` skips rows that fail it, so "Split layout" appears
+only when the selected button could actually render Large. Offering `Vertical` on a button that
+can never be Large would write a property with no visible effect, and the author would have no way
+to tell that apart from a bug in the control.
+
+⚠ The gate is `CanRenderLarge`, which tests `Size == Large` **OR** `SizeDefinition` mentioning
+Large — not `Size` alone. The sizing engine owns `Size` whenever a definition is present, so a
+`Size`-only test would hide the row on exactly the buttons most likely to want it.
+
+`AfterPropertyCommitted` runs after a `Size` / `SizeDefinition` edit: if the button can no longer be
+Large it resets a `Vertical` layout to `Horizontal` and rebuilds the panel, so the row appears and
+disappears as you edit rather than only on reselect. Two deliberate limits on that: it is driven by
+an explicit EDIT, never by selection (silently rewriting a property because someone clicked a node
+would put a surprise entry on the undo stack), and **the runtime control never coerces `Layout` at
+all** — it falls back to horizontal while remembering the author's choice, so a button that reduces
+to Medium and back is unchanged.
+
+VS Properties window: `Layout` is described under the RibbonKit category with the Large-only rule
+spelled out, and the computed `IsVerticalLayout` is `Browsable(false)` — it exists for templates and
+triggers, not for authoring.
+
 ## 4. Workflow / Session Conventions
 
 - Cloud workspace: `/home/user/ribbonkit/`. The user's machine:
@@ -2529,7 +2632,25 @@ for its host, so consumers need the same manifest** — `README.md` now says so.
 > deliberately deferred out of §3.38: the 2007 window frame, and the real two-pane 2007 application
 > menu (a new control, and a genuine feature gap).
 
-**Awaiting verification (§3.42).** All motion, so it is checked by opening things:
+**Awaiting verification (§3.42 motion, §3.43 split button).** §3.42 is motion, checked by opening
+things; §3.43 is the split button's vertical arrangement and companion highlight:
+
+A. **A vertical split button** (the showcase's Paste): icon on top, ONE line of caption with an
+   ellipsis if it is long, chevron beneath it. Narrow the window until the group reduces — it must
+   fall back to the horizontal arrangement at Medium and Small, and come back on widening.
+B. **Companion highlight, all five themes**: hover the icon half and the chevron half should also
+   light; hover the chevron half and the icon half should. 2007/2010 draw an amber border with a
+   thin glow rim just inside it and NO fill — the companion must stay clearly cooler than the half
+   under the pointer; 2013/2019/2024 draw a lighter version of their hover fill and no border.
+   Check the open (checked) chevron state too, and both arrangements. The icon must not shift by a
+   pixel when the rim appears.
+C. **The corners still meet** — top/bottom rounding in vertical, left/right in horizontal, with no
+   gap or double border down the seam.
+D. **Ribbon Editor**: select a split button — "Split layout" shows for a Large one (or one whose
+   SizeDefinition names Large) and is absent otherwise. Set Size to Medium on a Large+Vertical
+   button: the row should vanish and the XAML drop back to Horizontal in one undo step.
+
+
 
 1. **Every flyout opens as ONE surface** — border, shadow and contents together, no card snapping
    in around sliding items: drop-down button, split button, combo box, right-click menu, a

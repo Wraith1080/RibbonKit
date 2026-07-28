@@ -9,6 +9,27 @@ using RibbonSplitButtonAutomationPeer = RibbonKit.Automation.RibbonSplitButtonAu
 namespace RibbonKit.Controls;
 
 /// <summary>
+/// How a <see cref="RibbonSplitButton"/> arranges its two halves.
+/// </summary>
+public enum RibbonSplitButtonLayout
+{
+    /// <summary>
+    /// Command part on the left, chevron on the right. The default, and the only arrangement
+    /// available below <see cref="RibbonControlSize.Large"/>.
+    /// </summary>
+    Horizontal,
+
+    /// <summary>
+    /// Icon on top (the command part), caption and chevron stacked beneath it (the drop-down
+    /// part) — Office's large Paste button. Only honoured at
+    /// <see cref="RibbonControlSize.Large"/>; the button falls back to
+    /// <see cref="Horizontal"/> at every smaller size, which is what the sizing engine reduces
+    /// it to as its group narrows.
+    /// </summary>
+    Vertical,
+}
+
+/// <summary>
 /// A ribbon split button: a primary command part (icon + label) plus a chevron part
 /// that opens a dropdown of <see cref="RibbonMenuItem"/>s — like Office's Paste.
 /// </summary>
@@ -41,6 +62,28 @@ public class RibbonSplitButton : RibbonDropDownButton
             typeof(RibbonSplitButton),
             new FrameworkPropertyMetadata(null));
 
+    /// <summary>Identifies the <see cref="Layout"/> dependency property.</summary>
+    public static readonly DependencyProperty LayoutProperty =
+        DependencyProperty.Register(
+            nameof(Layout),
+            typeof(RibbonSplitButtonLayout),
+            typeof(RibbonSplitButton),
+            new FrameworkPropertyMetadata(
+                RibbonSplitButtonLayout.Horizontal,
+                FrameworkPropertyMetadataOptions.AffectsMeasure,
+                OnLayoutInputChanged));
+
+    private static readonly DependencyPropertyKey IsVerticalLayoutPropertyKey =
+        DependencyProperty.RegisterReadOnly(
+            nameof(IsVerticalLayout),
+            typeof(bool),
+            typeof(RibbonSplitButton),
+            new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsMeasure));
+
+    /// <summary>Identifies the read-only <see cref="IsVerticalLayout"/> dependency property.</summary>
+    public static readonly DependencyProperty IsVerticalLayoutProperty =
+        IsVerticalLayoutPropertyKey.DependencyProperty;
+
     private ButtonBase? _primary;
     private ToggleButton? _toggle;
 
@@ -49,6 +92,18 @@ public class RibbonSplitButton : RibbonDropDownButton
         DefaultStyleKeyProperty.OverrideMetadata(
             typeof(RibbonSplitButton),
             new FrameworkPropertyMetadata(typeof(RibbonSplitButton)));
+
+        // Size is declared by RibbonDropDownButton and driven by the sizing engine, so the
+        // vertical/horizontal decision has to re-run whenever it changes — a Large button that
+        // reduces to Medium must drop back to the horizontal arrangement on the same pass.
+        // The base metadata is re-stated here (default Large, AffectsMeasure) because
+        // OverrideMetadata REPLACES it rather than merging.
+        SizeProperty.OverrideMetadata(
+            typeof(RibbonSplitButton),
+            new FrameworkPropertyMetadata(
+                RibbonControlSize.Large,
+                FrameworkPropertyMetadataOptions.AffectsMeasure,
+                OnLayoutInputChanged));
     }
 
     /// <summary>Raised when the primary (command) part is clicked.</summary>
@@ -71,6 +126,31 @@ public class RibbonSplitButton : RibbonDropDownButton
         get => GetValue(CommandParameterProperty);
         set => SetValue(CommandParameterProperty, value);
     }
+
+    /// <summary>
+    /// How the two halves are arranged. <see cref="RibbonSplitButtonLayout.Vertical"/> is only
+    /// honoured at <see cref="RibbonControlSize.Large"/> — read <see cref="IsVerticalLayout"/>
+    /// for what is actually being rendered.
+    /// </summary>
+    public RibbonSplitButtonLayout Layout
+    {
+        get => (RibbonSplitButtonLayout)GetValue(LayoutProperty);
+        set => SetValue(LayoutProperty, value);
+    }
+
+    /// <summary>
+    /// Whether the vertical arrangement is in effect right now — i.e. <see cref="Layout"/> is
+    /// <see cref="RibbonSplitButtonLayout.Vertical"/> AND <see cref="RibbonDropDownButton.Size"/>
+    /// is <see cref="RibbonControlSize.Large"/>.
+    /// </summary>
+    /// <remarks>
+    /// The template keys every vertical-only difference off this ONE flag rather than re-testing
+    /// the pair. That matters because those differences live in three separate namescopes — the
+    /// outer template and the nested template of each half — so the alternative was the same
+    /// two-condition MultiDataTrigger repeated six times, with six chances to let the two halves
+    /// disagree about which way round the button is.
+    /// </remarks>
+    public bool IsVerticalLayout => (bool)GetValue(IsVerticalLayoutProperty);
 
     /// <inheritdoc />
     public override void OnApplyTemplate()
@@ -112,6 +192,14 @@ public class RibbonSplitButton : RibbonDropDownButton
             command.Execute(CommandParameter);
         }
     }
+
+    private static void OnLayoutInputChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
+        ((RibbonSplitButton)d).UpdateVerticalLayout();
+
+    private void UpdateVerticalLayout() =>
+        SetValue(
+            IsVerticalLayoutPropertyKey,
+            Layout == RibbonSplitButtonLayout.Vertical && Size == RibbonControlSize.Large);
 
     private void OnPrimaryClick(object sender, RoutedEventArgs e)
     {

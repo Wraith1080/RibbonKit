@@ -6,21 +6,22 @@ using System.Windows.Controls.Primitives;
 namespace RibbonKit.Animation;
 
 /// <summary>
-/// Attached behaviour that plays <see cref="RibbonMotion.PlayOpen"/> on a flyout's
-/// bordered surface as it opens, for the flyouts whose opener is not a RibbonKit control
-/// with an <c>Opened</c> override to hook — the stock <see cref="ContextMenu"/> and the
-/// <see cref="MenuItem"/> submenu <see cref="Popup"/> inside <c>Menus.xaml</c>.
+/// Attached behaviour that plays <see cref="RibbonMotion.PlayFlyoutOpen"/> on a flyout as it
+/// opens, for the flyouts whose opener is not a RibbonKit control with an <c>Opened</c>
+/// override to hook — the stock <see cref="ContextMenu"/> and the <see cref="MenuItem"/>
+/// submenu <see cref="Popup"/> inside <c>Menus.xaml</c>.
 /// </summary>
 /// <remarks>
 /// <para>
 /// Set <see cref="AnimateOpenProperty"/> on either a <see cref="Popup"/> (its
-/// <see cref="Popup.Child"/> is animated) or a <see cref="ContextMenu"/> (the menu itself is
-/// animated — it <em>is</em> the hosting popup's child). Anything else is ignored.
+/// <see cref="Popup.Child"/> becomes the surface) or a <see cref="ContextMenu"/> (the menu itself
+/// is the surface — it <em>is</em> the hosting popup's child). Anything else is ignored.
 /// </para>
 /// <para>
-/// The transition itself is <see cref="RibbonMotion.PlayFlyoutOpen"/>, which scales rather than
-/// slides precisely so that attaching this behaviour needs NO template geometry changes at all —
-/// no headroom margin, no placement offset. See its remarks and 04-DESIGN-NOTES §3.42.
+/// The transition fades the surface and slides its CONTENT, never the surface itself, precisely so
+/// that attaching this behaviour needs NO template geometry changes — no headroom margin, no
+/// placement offset. See <see cref="RibbonMotion.PlayFlyoutOpen"/>'s remarks and
+/// 04-DESIGN-NOTES §3.42.
 /// </para>
 /// </remarks>
 public static class RibbonPopupMotion
@@ -106,9 +107,8 @@ public static class RibbonPopupMotion
     private static void OnContextMenuOpened(object sender, RoutedEventArgs e)
     {
         // The ContextMenu IS the hosting popup's child (WPF builds that popup internally and
-        // never exposes it), so the menu itself is the surface to move. Its DesiredSize
-        // includes the template border's headroom margin, which is what keeps the slide from
-        // being clipped.
+        // never exposes it), so the menu itself is the surface: it fades, and PlayFlyoutOpen digs
+        // one template level in to find the content that slides.
         var menu = (ContextMenu)sender;
         RibbonMotion.PlayFlyoutOpen(menu, GetOpenAction(menu));
     }

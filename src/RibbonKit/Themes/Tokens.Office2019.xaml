@@ -22,6 +22,17 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.PressedBackground" Color="#CFCDCB" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CheckedBackground" Color="#CEDCF0" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CheckedHoverBackground" Color="#BBCFEA" />
+    <!-- Split button "companion" state: hovering or pressing ONE half also marks the OTHER, so
+         the two read as a single control rather than as two buttons that happen to touch.
+         A flat theme has no highlight border, so it shows a LIGHTER version of its hover fill
+         and leaves the companion border Transparent; the gradient themes (2007/2010) draw the
+         amber outline plus a pale wash inside it. One pair of tokens, one pair of setters in
+         Controls.DropDowns.xaml, every generation. See 04-DESIGN-NOTES §3.43. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionBackground" Color="#EFEEED" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionBorder" Color="Transparent" />
+    <!-- No border to glow just inside of, so nothing to draw. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionGlow" Color="Transparent" />
+
     <!-- No highlight border (Office 2010 uses a gold one; other themes don't). -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.HoverBorder" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.PressedBorder" Color="Transparent" />
@@ -184,6 +195,9 @@
     <CornerRadius x:Key="RibbonKit.Metrics.ApplicationButtonCornerRadius">0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.SplitLeftCornerRadius">0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.SplitRightCornerRadius">0</CornerRadius>
+    <!-- Vertical split button (Large only). Square, like everything else in 2019. -->
+    <CornerRadius x:Key="RibbonKit.Metrics.SplitTopCornerRadius">0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.SplitBottomCornerRadius">0</CornerRadius>
 
     <!-- Office 2019: no floating card. Bottom border only, so the light body connects
          seamlessly under the blue tab strip and the active (light) tab merges into it. -->

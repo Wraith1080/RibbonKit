@@ -68,6 +68,19 @@
     </LinearGradientBrush>
     <!-- Thin gold OUTER border + a semi-white INNER rim (drawn as a nested border, inset by the
          outer border) — together the defining beveled edge of a 2010 hot button. -->
+    <!-- Split button "companion" state: hovering or pressing ONE half also marks the OTHER, so
+         the two read as a single control rather than as two buttons that happen to touch.
+         A flat theme has no highlight border, so it shows a LIGHTER version of its hover fill
+         and leaves the companion border Transparent; the gradient themes (2007/2010) draw the
+         amber outline plus a pale wash inside it. One pair of tokens, one pair of setters in
+         Controls.DropDowns.xaml, every generation. See 04-DESIGN-NOTES §3.43. -->
+    <!-- Transparent on purpose: a companion half is NOT filled. Washing the whole button made a
+         merely-adjacent half look almost as hot as the hovered one. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionBackground" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionBorder" Color="#E9C25E" />
+    <!-- The glow: a 1px rim drawn just inside the outline, the same trick as InnerGlow. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionGlow" Color="#CCFFF0CB" />
+
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.HoverBorder" Color="#E9C25E" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.PressedBorder" Color="#CB9A34" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CheckedBorder" Color="#E0B24E" />
@@ -314,6 +327,9 @@
     <CornerRadius x:Key="RibbonKit.Metrics.ApplicationButtonCornerRadius">3,3,0,0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.SplitLeftCornerRadius">3,0,0,3</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.SplitRightCornerRadius">0,3,3,0</CornerRadius>
+    <!-- Vertical split button (Large only): the same rounding rotated a quarter turn. -->
+    <CornerRadius x:Key="RibbonKit.Metrics.SplitTopCornerRadius">3,3,0,0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.SplitBottomCornerRadius">0,0,3,3</CornerRadius>
 
     <!-- Ribbon body: a full outline, square corners. The connect is done by moving the SELECTED
          TAB down 1px into the body (TabSelectedMargin, below) — the mechanism that actually works

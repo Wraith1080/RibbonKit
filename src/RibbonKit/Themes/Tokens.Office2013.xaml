@@ -21,6 +21,17 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.PressedBackground" Color="#D0E0F5" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CheckedBackground" Color="#D4E4F7" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CheckedHoverBackground" Color="#C4D8F0" />
+    <!-- Split button "companion" state: hovering or pressing ONE half also marks the OTHER, so
+         the two read as a single control rather than as two buttons that happen to touch.
+         A flat theme has no highlight border, so it shows a LIGHTER version of its hover fill
+         and leaves the companion border Transparent; the gradient themes (2007/2010) draw the
+         amber outline plus a pale wash inside it. One pair of tokens, one pair of setters in
+         Controls.DropDowns.xaml, every generation. See 04-DESIGN-NOTES §3.43. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionBackground" Color="#F4F7FC" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionBorder" Color="Transparent" />
+    <!-- No border to glow just inside of, so nothing to draw. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionGlow" Color="Transparent" />
+
     <!-- No highlight border (Office 2010 uses a gold one; other themes don't). -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.HoverBorder" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.PressedBorder" Color="Transparent" />
@@ -190,6 +201,9 @@
     <CornerRadius x:Key="RibbonKit.Metrics.ApplicationButtonCornerRadius">0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.SplitLeftCornerRadius">0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.SplitRightCornerRadius">0</CornerRadius>
+    <!-- Vertical split button (Large only). Square, like everything else in 2013. -->
+    <CornerRadius x:Key="RibbonKit.Metrics.SplitTopCornerRadius">0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.SplitBottomCornerRadius">0</CornerRadius>
 
     <!-- Prominent outline all around the ribbon body (Metro look). -->
     <Thickness x:Key="RibbonKit.Metrics.ContentBorderThickness">1</Thickness>

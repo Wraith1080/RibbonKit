@@ -132,9 +132,14 @@
                                 rk:Ribbon.CommandId="group.home.clipboard"
                                 Icon="{StaticResource Icon.Paste}"
                                 ReductionMode="ResizeThenCollapse">
+                    <!-- Layout="Vertical" is Office's large Paste button: icon on top, caption
+                         and chevron beneath. It is honoured only at Large, so as this group
+                         narrows and the sizing engine steps it to Medium the button falls back to
+                         the horizontal arrangement on its own. -->
                     <rk:RibbonSplitButton Header="Paste"
                                           x:Name="DemoSplitTarget"
                                           rk:Ribbon.CommandId="cmd.paste"
+                                          Layout="Vertical"
                                           LargeIcon="{StaticResource Icon.Paste}"
                                           Icon="{StaticResource Icon.Paste}"
                                           SizeDefinition="Large, Medium, Small"

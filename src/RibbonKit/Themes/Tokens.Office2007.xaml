@@ -82,6 +82,21 @@
         <GradientStop Offset="1" Color="#FFD478" />
     </LinearGradientBrush>
     <!-- Outer glass borders, measured at the sides of each hot state. -->
+    <!-- Split button "companion" state: hovering or pressing ONE half also marks the OTHER, so
+         the two read as a single control rather than as two buttons that happen to touch.
+         A flat theme has no highlight border, so it shows a LIGHTER version of its hover fill
+         and leaves the companion border Transparent; the gradient themes (2007/2010) draw the
+         amber outline plus a pale wash inside it. One pair of tokens, one pair of setters in
+         Controls.DropDowns.xaml, every generation. See 04-DESIGN-NOTES §3.43. -->
+    <!-- Transparent on purpose: a companion half is NOT filled. Washing the whole button made a
+         merely-adjacent half look almost as hot as the hovered one. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionBackground" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionBorder" Color="#C1A877" />
+    <!-- The glow: a 1px rim drawn just inside the outline, same idea as the hover state's measured
+         inner rim (#FFF2C7). Semi-transparent so it warms whatever the group is sitting on rather
+         than punching a flat colour over it. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionGlow" Color="#CCFFEDC2" />
+
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.HoverBorder" Color="#C1A877" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.PressedBorder" Color="#B6A892" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CheckedBorder" Color="#C19A4B" />
@@ -380,6 +395,9 @@
     <CornerRadius x:Key="RibbonKit.Metrics.ApplicationButtonCornerRadius">3,3,0,0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.SplitLeftCornerRadius">3,0,0,3</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.SplitRightCornerRadius">0,3,3,0</CornerRadius>
+    <!-- Vertical split button (Large only): the same rounding rotated a quarter turn. -->
+    <CornerRadius x:Key="RibbonKit.Metrics.SplitTopCornerRadius">3,3,0,0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.SplitBottomCornerRadius">0,0,3,3</CornerRadius>
 
     <!-- Ribbon body: a full outline with square corners, connected to the chrome above. -->
     <Thickness x:Key="RibbonKit.Metrics.ContentBorderThickness">1</Thickness>

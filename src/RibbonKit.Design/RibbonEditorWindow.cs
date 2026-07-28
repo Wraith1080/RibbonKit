@@ -98,6 +98,9 @@ internal sealed class RibbonEditorWindow : Window
     private readonly StackPanel _propsPanel = new StackPanel { Orientation = Orientation.Vertical };
     private bool _syncingProps;
 
+    /// <summary>The node whose editors are currently shown, so a commit can rebuild them in place.</summary>
+    private NodeInfo? _propsNode;
+
     // Drag-drop reorder state.
     private Point _dragStart;
     // Genuinely transient, unlike the widgets above: null between drags, and cleared back to null
@@ -809,13 +812,20 @@ internal sealed class RibbonEditorWindow : Window
 
     private sealed class PropSpec
     {
-        public PropSpec(string name, string label, EditorKind kind, string[]? enumValues = null, string? attachedOwner = null)
+        public PropSpec(
+            string name,
+            string label,
+            EditorKind kind,
+            string[]? enumValues = null,
+            string? attachedOwner = null,
+            System.Func<ModelItem, bool>? appliesTo = null)
         {
             Name = name;
             Label = label;
             Kind = kind;
             EnumValues = enumValues;
             AttachedOwner = attachedOwner;
+            AppliesTo = appliesTo;
         }
 
         public string Name { get; }
@@ -828,6 +838,13 @@ internal sealed class RibbonEditorWindow : Window
 
         /// <summary>For <see cref="EditorKind.AttachedText"/>: the full CLR type that DECLARES the attached property (e.g. <c>RibbonKit.Controls.KeyTip</c>).</summary>
         public string? AttachedOwner { get; }
+
+        /// <summary>
+        /// Optional gate: when set and it returns false for the selected item, the row is not shown
+        /// at all. For properties the control only HONOURS in some states, so the editor never
+        /// offers a setting that would silently do nothing.
+        /// </summary>
+        public System.Func<ModelItem, bool>? AppliesTo { get; }
     }
 
     private static readonly PropSpec[] ControlSpecs =
@@ -871,6 +888,19 @@ internal sealed class RibbonEditorWindow : Window
         new PropSpec("IsEditable", "Editable", EditorKind.Bool),
     };
 
+    // Split layout is Large-only (§3.43), so the row is GATED rather than always shown: offering
+    // "Vertical" on a button that can never render Large would set a property with no visible
+    // effect, and the author would have no way to tell that from a bug in the control.
+    private static readonly PropSpec[] SplitButtonSpecs =
+    {
+        new PropSpec(
+            "Layout",
+            "Split layout",
+            EditorKind.Enum,
+            new[] { "Horizontal", "Vertical" },
+            appliesTo: CanRenderLarge),
+    };
+
     // For editing a gallery item's content visually (its TextBlocks): text and basic appearance.
     private static readonly PropSpec[] TextBlockSpecs =
     {
@@ -903,6 +933,7 @@ internal sealed class RibbonEditorWindow : Window
     {
         "BackstageTabItem" => BackstageItemSpecs,
         "RibbonComboBox" => ComboSpecs,
+        "RibbonSplitButton" => SplitButtonSpecs,
         "TextBlock" => TextBlockSpecs,
         _ => System.Array.Empty<PropSpec>(),
     };
@@ -956,6 +987,7 @@ internal sealed class RibbonEditorWindow : Window
     /// <summary>Rebuilds the property editors for the selected item, skipping any property it doesn't have.</summary>
     private void BuildProps(NodeInfo? node)
     {
+        _propsNode = node;
         _syncingProps = true;
         try
         {
@@ -970,6 +1002,14 @@ internal sealed class RibbonEditorWindow : Window
             foreach (PropSpec spec in SpecsForNode(node))
             {
                 if (!DesignModel.HasProperty(node.Item, spec.Name))
+                {
+                    continue;
+                }
+
+                // A gated row (currently: a split button's Large-only Layout) disappears when the
+                // state it depends on changes — AfterPropertyCommitted rebuilds the panel so it
+                // appears and vanishes as the author edits Size, not only on reselect.
+                if (spec.AppliesTo is { } gate && !gate(node.Item))
                 {
                     continue;
                 }
@@ -1036,6 +1076,7 @@ internal sealed class RibbonEditorWindow : Window
             if (!_syncingProps)
             {
                 DesignModel.SetProperty(item, spec.Name, box.Text ?? string.Empty);
+                AfterPropertyCommitted(item, spec.Name);
             }
         }
 
@@ -1264,9 +1305,62 @@ internal sealed class RibbonEditorWindow : Window
             if (!_syncingProps && combo.SelectedItem is string chosen)
             {
                 DesignModel.SetProperty(item, spec.Name, chosen);
+                AfterPropertyCommitted(item, spec.Name);
             }
         };
         return combo;
+    }
+
+    /// <summary>
+    /// Whether this control could ever render at Large — either it IS Large, or its
+    /// <c>SizeDefinition</c> names Large for one of the group states. The sizing engine owns
+    /// <c>Size</c> whenever a definition is present, so testing <c>Size</c> alone would hide the
+    /// split-layout row on exactly the buttons most likely to want it.
+    /// </summary>
+    private static bool CanRenderLarge(ModelItem item)
+    {
+        if (string.Equals(DesignModel.GetString(item, "Size"), "Large", System.StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        // GetString never returns null (DesignModel normalises to string.Empty).
+        return DesignModel.GetString(item, "SizeDefinition")
+            .IndexOf("Large", System.StringComparison.OrdinalIgnoreCase) >= 0;
+    }
+
+    /// <summary>
+    /// Follow-up for edits that change which OTHER editors make sense. Today that is only the split
+    /// button: a vertical layout it can no longer reach is reset to Horizontal, so the XAML never
+    /// carries a setting the control will ignore, and the panel is rebuilt so the row disappears.
+    /// </summary>
+    /// <remarks>
+    /// Deliberately driven by an explicit edit rather than by selection: silently rewriting a
+    /// property just because the author clicked a node would put a surprise entry on the undo stack.
+    /// The RUNTIME control never coerces <c>Layout</c> either — it falls back to horizontal while
+    /// remembering the author's choice, so a button that reduces to Medium and back is unchanged.
+    /// </remarks>
+    private void AfterPropertyCommitted(ModelItem item, string propertyName)
+    {
+        if (propertyName is not ("Size" or "SizeDefinition")
+            || SafeType(item) != "RibbonSplitButton"
+            || CanRenderLarge(item))
+        {
+            return;
+        }
+
+        if (string.Equals(DesignModel.GetString(item, "Layout"), "Vertical", System.StringComparison.OrdinalIgnoreCase))
+        {
+            DesignModel.SetProperty(item, "Layout", "Horizontal");
+        }
+
+        // The row that raised this belongs to the panel currently on screen, so rebuilding that
+        // node is always the right target — no ModelItem identity comparison needed (the designer
+        // hands out wrappers, and reference equality across calls is not something to rely on).
+        if (_propsNode is not null)
+        {
+            BuildProps(_propsNode);
+        }
     }
 
     /// <summary>The nearest <c>RibbonTab</c> ancestor of the selection (walks up through any nesting), or null.</summary>

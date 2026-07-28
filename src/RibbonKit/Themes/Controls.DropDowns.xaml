@@ -213,6 +213,21 @@
 
     <!-- ============================================================
          RibbonSplitButton — command part + chevron dropdown part
+
+         Two arrangements, ONE set of template parts (§3.43):
+
+           Horizontal (default, every size) — icon+caption on the left, chevron on the right.
+           Vertical (Large only)            — icon on top, caption + chevron stacked beneath it,
+                                              Office's large Paste button.
+
+         Everything vertical keys off RibbonSplitButton.IsVerticalLayout, a read-only flag the
+         control computes from Layout AND Size, so the two halves can never disagree about which
+         way round the button is. The halves are re-SPANNED across one grid rather than swapped
+         for a second panel: a second panel would need a second PART_Primary / PART_Toggle, and a
+         part may only be named once per namescope.
+
+         The nested half templates reach that flag with an AncestorType binding, not a
+         TemplateBinding — inside the Button's own ControlTemplate, TemplatedParent is the BUTTON.
          ============================================================ -->
     <Style TargetType="{x:Type controls:RibbonSplitButton}">
         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
@@ -225,12 +240,19 @@
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition x:Name="ChevronColumn" Width="Auto" />
                         </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <!-- Empty (0 tall) while horizontal; holds the chevron half when vertical. -->
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
                         <!-- Same forwarding as the drop-down's PART_Toggle: lets the overflow
                              flyout left-align a split button's icon+label. Default unchanged. -->
                         <Button x:Name="PART_Primary"
                                 Grid.Column="0"
+                                Grid.Row="0"
+                                Grid.RowSpan="2"
                                 HorizontalContentAlignment="{Binding HorizontalContentAlignment, RelativeSource={RelativeSource TemplatedParent}}"
                                 Command="{TemplateBinding Command}"
                                 CommandParameter="{TemplateBinding CommandParameter}">
@@ -245,10 +267,47 @@
                                                         CornerRadius="{DynamicResource RibbonKit.Metrics.SplitLeftCornerRadius}"
                                                         Margin="1,1,0,1"
                                                         SnapsToDevicePixels="True">
-                                                    <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                                                      VerticalAlignment="Center" />
+                                                    <Grid>
+                                                        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                                          VerticalAlignment="Center" />
+                                                        <!-- The companion GLOW. An overlay, not a
+                                                             nested container: a real inner border
+                                                             would inset the content by 1px in every
+                                                             state, so the icon would shift the
+                                                             moment the other half was hovered. This
+                                                             sits in the same grid cell, draws only
+                                                             its 1px edge, and is hit-test invisible.
+                                                             CornerRadius follows Chrome by
+                                                             ElementName binding so it tracks the
+                                                             horizontal/vertical switch for free. -->
+                                                        <Border x:Name="CompanionRim"
+                                                                BorderThickness="1"
+                                                                BorderBrush="Transparent"
+                                                                CornerRadius="{Binding CornerRadius, ElementName=Chrome}"
+                                                                IsHitTestVisible="False" />
+                                                    </Grid>
                                                 </Border>
                                                 <ControlTemplate.Triggers>
+                                                    <!-- Vertical: this half becomes the TOP one, so it
+                                                         rounds along the top and gives up its bottom
+                                                         margin to the chevron half below. -->
+                                                    <DataTrigger Binding="{Binding IsVerticalLayout, RelativeSource={RelativeSource AncestorType={x:Type controls:RibbonSplitButton}}}" Value="True">
+                                                        <Setter TargetName="Chrome" Property="Margin" Value="1,1,1,0" />
+                                                        <Setter TargetName="Chrome" Property="CornerRadius"
+                                                                Value="{DynamicResource RibbonKit.Metrics.SplitTopCornerRadius}" />
+                                                    </DataTrigger>
+                                                    <!-- COMPANION state, set by the outer template when the
+                                                         OTHER half is hot. Declared FIRST so this half's own
+                                                         hover/press always wins if both somehow apply (press
+                                                         here, then drag onto the chevron). -->
+                                                    <Trigger Property="Tag" Value="Companion">
+                                                        <Setter TargetName="Chrome" Property="Background"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Control.CompanionBackground}" />
+                                                        <Setter TargetName="Chrome" Property="BorderBrush"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Control.CompanionBorder}" />
+                                                        <Setter TargetName="CompanionRim" Property="BorderBrush"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Control.CompanionGlow}" />
+                                                    </Trigger>
                                                     <Trigger Property="IsMouseOver" Value="True">
                                                         <Setter TargetName="Chrome" Property="Background"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
@@ -297,7 +356,8 @@
                                            Width="32" Height="32"
                                            Stretch="Uniform"
                                            HorizontalAlignment="Center" />
-                                    <TextBlock Text="{TemplateBinding Header}"
+                                    <TextBlock x:Name="LargeCaption"
+                                               Text="{TemplateBinding Header}"
                                                TextAlignment="Center"
                                                TextWrapping="Wrap"
                                                TextTrimming="CharacterEllipsis"
@@ -340,6 +400,8 @@
                         </Button>
                         <ToggleButton x:Name="PART_Toggle"
                                       Grid.Column="1"
+                                      Grid.Row="0"
+                                      Grid.RowSpan="2"
                                       Width="15"
                                       IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
                             <ToggleButton.Style>
@@ -353,16 +415,79 @@
                                                         CornerRadius="{DynamicResource RibbonKit.Metrics.SplitRightCornerRadius}"
                                                         Margin="0,1,1,1"
                                                         SnapsToDevicePixels="True">
-                                                    <Path x:Name="ToggleChevron"
-                                                          Data="M0,0 L3.5,3.5 L7,0"
-                                                          Stroke="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
-                                                          StrokeThickness="1.5"
-                                                          StrokeStartLineCap="Round"
-                                                          StrokeEndLineCap="Round"
-                                                          HorizontalAlignment="Center"
-                                                          VerticalAlignment="Center" />
+                                                    <Grid>
+                                                        <Path x:Name="ToggleChevron"
+                                                              Data="M0,0 L3.5,3.5 L7,0"
+                                                              Stroke="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
+                                                              StrokeThickness="1.5"
+                                                              StrokeStartLineCap="Round"
+                                                              StrokeEndLineCap="Round"
+                                                              HorizontalAlignment="Center"
+                                                              VerticalAlignment="Center" />
+                                                        <!-- Vertical arrangement: the CAPTION lives on this
+                                                             half, above the chevron, exactly as Office does
+                                                             it. Deliberately NoWrap + ellipsis — a second
+                                                             caption line here would make the two halves
+                                                             different heights every time the text was long,
+                                                             so one line is the contract. MaxWidth matches
+                                                             RibbonButton's Large layout so a vertical split
+                                                             button lines up with the plain large buttons
+                                                             beside it. -->
+                                                        <StackPanel x:Name="VerticalContent"
+                                                                    Margin="4,0,4,3"
+                                                                    VerticalAlignment="Center"
+                                                                    Visibility="Collapsed">
+                                                            <TextBlock x:Name="VerticalCaption"
+                                                                       Text="{Binding Header, RelativeSource={RelativeSource AncestorType={x:Type controls:RibbonSplitButton}}}"
+                                                                       TextAlignment="Center"
+                                                                       TextWrapping="NoWrap"
+                                                                       TextTrimming="CharacterEllipsis"
+                                                                       MaxWidth="76"
+                                                                       HorizontalAlignment="Center" />
+                                                            <Path x:Name="VerticalChevron"
+                                                                  Data="M0,0 L3.5,3.5 L7,0"
+                                                                  Stroke="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
+                                                                  StrokeThickness="1.5"
+                                                                  StrokeStartLineCap="Round"
+                                                                  StrokeEndLineCap="Round"
+                                                                  HorizontalAlignment="Center"
+                                                                  Margin="0,3,0,0" />
+                                                        </StackPanel>
+                                                        <!-- The companion GLOW. An overlay, not a
+                                                             nested container: a real inner border
+                                                             would inset the content by 1px in every
+                                                             state, so the icon would shift the
+                                                             moment the other half was hovered. This
+                                                             sits in the same grid cell, draws only
+                                                             its 1px edge, and is hit-test invisible.
+                                                             CornerRadius follows Chrome by
+                                                             ElementName binding so it tracks the
+                                                             horizontal/vertical switch for free. -->
+                                                        <Border x:Name="CompanionRim"
+                                                                BorderThickness="1"
+                                                                BorderBrush="Transparent"
+                                                                CornerRadius="{Binding CornerRadius, ElementName=Chrome}"
+                                                                IsHitTestVisible="False" />
+                                                    </Grid>
                                                 </Border>
                                                 <ControlTemplate.Triggers>
+                                                    <!-- Vertical: this half becomes the BOTTOM one. -->
+                                                    <DataTrigger Binding="{Binding IsVerticalLayout, RelativeSource={RelativeSource AncestorType={x:Type controls:RibbonSplitButton}}}" Value="True">
+                                                        <Setter TargetName="Chrome" Property="Margin" Value="1,0,1,1" />
+                                                        <Setter TargetName="Chrome" Property="CornerRadius"
+                                                                Value="{DynamicResource RibbonKit.Metrics.SplitBottomCornerRadius}" />
+                                                        <Setter TargetName="ToggleChevron" Property="Visibility" Value="Collapsed" />
+                                                        <Setter TargetName="VerticalContent" Property="Visibility" Value="Visible" />
+                                                    </DataTrigger>
+                                                    <!-- COMPANION state — see the primary half's copy. -->
+                                                    <Trigger Property="Tag" Value="Companion">
+                                                        <Setter TargetName="Chrome" Property="Background"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Control.CompanionBackground}" />
+                                                        <Setter TargetName="Chrome" Property="BorderBrush"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Control.CompanionBorder}" />
+                                                        <Setter TargetName="CompanionRim" Property="BorderBrush"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Control.CompanionGlow}" />
+                                                    </Trigger>
                                                     <Trigger Property="IsMouseOver" Value="True">
                                                         <Setter TargetName="Chrome" Property="Background"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
@@ -382,6 +507,8 @@
                                                     <!-- Colored QAT surface: white chevron + band hover/open state. -->
                                                     <Trigger Property="controls:Ribbon.QatOnColoredSurface" Value="True">
                                                         <Setter TargetName="ToggleChevron" Property="Stroke" Value="#FFFFFF" />
+                                                        <Setter TargetName="VerticalChevron" Property="Stroke" Value="#FFFFFF" />
+                                                        <Setter TargetName="VerticalCaption" Property="Foreground" Value="#FFFFFF" />
                                                     </Trigger>
                                                     <MultiTrigger>
                                                         <MultiTrigger.Conditions>
@@ -406,7 +533,7 @@
                                 </Style>
                             </ToggleButton.Style>
                         </ToggleButton>
-                                                <Popup x:Name="PART_Popup"
+                        <Popup x:Name="PART_Popup"
                                AllowsTransparency="True"
                                StaysOpen="True"
                                Placement="Bottom"
@@ -441,6 +568,52 @@
                         <Trigger Property="Size" Value="Small">
                             <Setter TargetName="LargeLayout" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="SmallLayout" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <!-- VERTICAL: re-span the two halves down the grid instead of across it.
+                             The caption moves to the chevron half (see its template), so the
+                             command half keeps only its 32px icon. IsVerticalLayout is already
+                             false at every size below Large, so this needs no Size condition. -->
+                        <Trigger Property="IsVerticalLayout" Value="True">
+                            <Setter TargetName="PART_Primary" Property="Grid.Column" Value="0" />
+                            <Setter TargetName="PART_Primary" Property="Grid.ColumnSpan" Value="2" />
+                            <Setter TargetName="PART_Primary" Property="Grid.Row" Value="0" />
+                            <Setter TargetName="PART_Primary" Property="Grid.RowSpan" Value="1" />
+                            <Setter TargetName="PART_Toggle" Property="Grid.Column" Value="0" />
+                            <Setter TargetName="PART_Toggle" Property="Grid.ColumnSpan" Value="2" />
+                            <Setter TargetName="PART_Toggle" Property="Grid.Row" Value="1" />
+                            <Setter TargetName="PART_Toggle" Property="Grid.RowSpan" Value="1" />
+                            <!-- "Auto" is NaN for Width: the chevron half stretches the full width
+                                 instead of staying the 15px sliver it is when it sits on the right. -->
+                            <Setter TargetName="PART_Toggle" Property="Width" Value="Auto" />
+                            <!-- Both halves span both columns now, so the Auto column has nothing of
+                                 its own to size to. Pinned to 0 so it cannot claim stray width. -->
+                            <Setter TargetName="ChevronColumn" Property="Width" Value="0" />
+                            <Setter TargetName="LargeCaption" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="LargeLayout" Property="Margin" Value="6,6,6,2" />
+                        </Trigger>
+                        <!-- COMPANION highlight: whichever half is hot marks the OTHER one, so the
+                             two read as a single control instead of two buttons that happen to
+                             touch. Set through Tag because the half's Chrome lives in that half's
+                             own namescope, which an outer TargetName cannot reach; Tag is free on
+                             these two template-private buttons and needs no new public API before
+                             the Phase 8 freeze. What it LOOKS like is entirely the theme's call, so
+                             these four triggers are identical across all five generations:
+                             2007/2010 publish an amber CompanionBorder + a CompanionGlow rim and
+                             leave CompanionBackground TRANSPARENT (filling the whole half made a
+                             merely-adjacent button look almost as hot as the hovered one); the flat
+                             themes have no border to glow inside, so they publish a lighter hover
+                             fill and leave the border and glow Transparent. -->
+                        <Trigger SourceName="PART_Toggle" Property="IsMouseOver" Value="True">
+                            <Setter TargetName="PART_Primary" Property="Tag" Value="Companion" />
+                        </Trigger>
+                        <Trigger SourceName="PART_Toggle" Property="IsChecked" Value="True">
+                            <Setter TargetName="PART_Primary" Property="Tag" Value="Companion" />
+                        </Trigger>
+                        <Trigger SourceName="PART_Primary" Property="IsMouseOver" Value="True">
+                            <Setter TargetName="PART_Toggle" Property="Tag" Value="Companion" />
+                        </Trigger>
+                        <Trigger SourceName="PART_Primary" Property="IsPressed" Value="True">
+                            <Setter TargetName="PART_Toggle" Property="Tag" Value="Companion" />
                         </Trigger>
                         <!-- QAT on a colored surface: white silhouette primary icon (chevron is
                              whitened in the toggle's own template). -->

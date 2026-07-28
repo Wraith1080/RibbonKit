@@ -60,6 +60,15 @@ internal static class PropertyMetadata
             Describe(b, type, "ScreenTipText", "Descriptive body of the ScreenTip tooltip.");
         }
 
+        Describe(b, "RibbonKit.Controls.RibbonSplitButton", "Layout",
+            "How the two halves are arranged: Horizontal (command left, chevron right) or Vertical "
+            + "(icon on top, caption and chevron beneath). Vertical is honoured ONLY at Size=Large; "
+            + "the button falls back to horizontal at Medium and Small without losing the setting.");
+        // IsVerticalLayout is a read-only computed flag for templates and triggers, not something to
+        // author — hiding it keeps the grid to properties that can actually be set.
+        b.AddCustomAttributes("RibbonKit.Controls.RibbonSplitButton", "IsVerticalLayout",
+            new BrowsableAttribute(false));
+
         // ── Group / Tab ──────────────────────────────────────────────────────────────────
         Describe(b, "RibbonKit.Controls.RibbonGroup", "Header", "The group's title, shown under its content.");
         Describe(b, "RibbonKit.Controls.RibbonGroup", "Layout",
