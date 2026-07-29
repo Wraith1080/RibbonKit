@@ -173,7 +173,7 @@
                                  orb. -->
                             <Canvas Grid.Column="0"
                                     Grid.ColumnSpan="4"
-                                    Panel.ZIndex="0"
+                                    Panel.ZIndex="1"
                                     Width="0"
                                     Height="0"
                                     HorizontalAlignment="Left"
@@ -216,6 +216,7 @@
                                  see Ribbon.ApplicationButtonPartName. Renaming it here breaks the
                                  orb's close-on-second-click. -->
                             <ToggleButton x:Name="PART_ApplicationButton"
+                                          Panel.ZIndex="2"
                                           WindowChrome.IsHitTestVisibleInChrome="True"
                                           AutomationProperties.Name="{Binding ApplicationButtonHeader, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
                                           ToolTip="{Binding ApplicationButtonHeader, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"

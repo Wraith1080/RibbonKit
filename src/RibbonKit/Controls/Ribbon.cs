@@ -1018,6 +1018,7 @@ public class Ribbon : Control
                     Header = split.Header ?? StripShortcutSuffix(split.ScreenTipTitle),
                     ScreenTipTitle = split.ScreenTipTitle ?? split.Header,
                     ScreenTipText = split.ScreenTipText,
+                    Layout= split.Layout,
                 };
                 proxySplit.Click += (_, _) => KeyTipService.InvokeControl(split);
                 proxySplit.BorrowMenuFrom(split);
