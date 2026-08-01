@@ -24,19 +24,27 @@ public sealed class VisualSnapshotTests
 {
     private const int Width = 760;
     private const int Height = 170;
-    private const double Dpi = 96d;
+    private const double BaseDpi = 96d;
 
-    private static readonly (RibbonTheme Theme, string SnapshotName)[] ThemeSnapshots =
+    private static readonly (RibbonTheme Theme, string Name)[] Themes =
     {
-        (RibbonTheme.Office2007, "office2007-default-100"),
-        (RibbonTheme.Office2010, "office2010-default-100"),
-        (RibbonTheme.Office2013, "office2013-default-100"),
-        (RibbonTheme.Office2019, "office2019-default-100"),
-        (RibbonTheme.Office2024, "office2024-default-100"),
+        (RibbonTheme.Office2007, "office2007-default"),
+        (RibbonTheme.Office2010, "office2010-default"),
+        (RibbonTheme.Office2013, "office2013-default"),
+        (RibbonTheme.Office2019, "office2019-default"),
+        (RibbonTheme.Office2024, "office2024-default"),
+    };
+
+    private static readonly (int Percent, double Scale)[] DpiScales =
+    {
+        (100, 1d),
+        (125, 1.25d),
+        (150, 1.5d),
+        (200, 2d),
     };
 
     [Fact]
-    public void Every_theme_at_100_percent_matches_its_approved_snapshot() =>
+    public void Every_theme_and_dpi_matches_its_approved_snapshot() =>
         SnapshotThread.Run(() =>
         {
             CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
@@ -49,10 +57,14 @@ public sealed class VisualSnapshotTests
 
             try
             {
-                foreach ((RibbonTheme theme, string snapshotName) in ThemeSnapshots)
+                foreach ((RibbonTheme theme, string name) in Themes)
                 {
                     ThemeManager.Apply(application, theme);
-                    AssertSnapshot(snapshotName);
+
+                    foreach ((int percent, double scale) in DpiScales)
+                    {
+                        AssertSnapshot($"{name}-{percent}", scale);
+                    }
                 }
             }
             finally
@@ -61,10 +73,10 @@ public sealed class VisualSnapshotTests
             }
         });
 
-    private static void AssertSnapshot(string snapshotName)
+    private static void AssertSnapshot(string snapshotName, double dpiScale)
     {
-        BitmapSource actual = RenderScene();
-        BitmapSource repeated = RenderScene();
+        BitmapSource actual = RenderScene(dpiScale);
+        BitmapSource repeated = RenderScene(dpiScale);
 
         if (!Pixels(actual).AsSpan().SequenceEqual(Pixels(repeated)))
         {
@@ -122,18 +134,19 @@ public sealed class VisualSnapshotTests
             "If this change is intentional, review those images and regenerate the approved PNG.");
     }
 
-    private static BitmapSource RenderScene()
+    private static BitmapSource RenderScene(double dpiScale)
     {
         FrameworkElement scene = CreateScene();
+        var requestedDpi = new DpiScale(dpiScale, dpiScale);
+        VisualTreeHelper.SetRootDpi(scene, requestedDpi);
         DpiScale effectiveDpi = VisualTreeHelper.GetDpi(scene);
-        if (Math.Abs(effectiveDpi.DpiScaleX - 1d) > 0.001
-            || Math.Abs(effectiveDpi.DpiScaleY - 1d) > 0.001)
+        if (Math.Abs(effectiveDpi.DpiScaleX - dpiScale) > 0.001
+            || Math.Abs(effectiveDpi.DpiScaleY - dpiScale) > 0.001)
         {
             throw new XunitException(
-                "The 100% snapshot row requires WPF's effective display scale to be 100% " +
-                $"(96 DPI), but this process reports {effectiveDpi.PixelsPerInchX:F0}×" +
-                $"{effectiveDpi.PixelsPerInchY:F0} DPI. Move the test process to a 100% display " +
-                "or use the future explicit-DPI harness for higher-scale baselines.");
+                $"The snapshot requested {BaseDpi * dpiScale:F0} DPI, but WPF assigned " +
+                $"{effectiveDpi.PixelsPerInchX:F0}×{effectiveDpi.PixelsPerInchY:F0} DPI " +
+                "to its visual root.");
         }
 
         var size = new Size(Width, Height);
@@ -146,7 +159,10 @@ public sealed class VisualSnapshotTests
         scene.Arrange(new Rect(size));
         scene.UpdateLayout();
 
-        var bitmap = new RenderTargetBitmap(Width, Height, Dpi, Dpi, PixelFormats.Pbgra32);
+        int pixelWidth = checked((int)Math.Round(Width * dpiScale, MidpointRounding.AwayFromZero));
+        int pixelHeight = checked((int)Math.Round(Height * dpiScale, MidpointRounding.AwayFromZero));
+        double dpi = BaseDpi * dpiScale;
+        var bitmap = new RenderTargetBitmap(pixelWidth, pixelHeight, dpi, dpi, PixelFormats.Pbgra32);
         bitmap.Render(scene);
         bitmap.Freeze();
         return bitmap;
@@ -309,8 +325,8 @@ public sealed class VisualSnapshotTests
         BitmapSource bitmap = BitmapSource.Create(
             expected.PixelWidth,
             expected.PixelHeight,
-            Dpi,
-            Dpi,
+            expected.DpiX,
+            expected.DpiY,
             PixelFormats.Bgra32,
             null,
             difference,
