@@ -5,9 +5,12 @@ using Xunit;
 
 namespace RibbonKit.Tests;
 
-/// <summary>Guards foreground paths that standard nested WPF controls otherwise reset to black.</summary>
+/// <summary>Guards dark-aware foreground paths and solid nested-control surfaces.</summary>
 public sealed class DarkModeTemplateContractTests
 {
+    private const string ControlSurfaceBackground =
+        "{DynamicResource RibbonKit.Brushes.Control.SurfaceBackground}";
+
     private static readonly XNamespace Presentation =
         "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
 
@@ -85,6 +88,49 @@ public sealed class DarkModeTemplateContractTests
         Assert.Equal(
             "{DynamicResource RibbonKit.Brushes.Text.Primary}",
             (string?)setter.Attribute("Value"));
+    }
+
+    [Fact]
+    public void Combo_and_in_ribbon_gallery_use_the_control_surface_background()
+    {
+        XDocument dropdowns = XDocument.Load(ThemePart("Controls.DropDowns.xaml"));
+        XElement combo = Template(dropdowns, "RibbonComboBox");
+        Assert.Equal(
+            ControlSurfaceBackground,
+            (string?)Named(combo, "Border", "Chrome").Attribute("Background"));
+
+        XDocument galleries = XDocument.Load(ThemePart("Controls.Galleries.xaml"));
+        XElement gallery = Template(galleries, "InRibbonGallery");
+        XElement surface = Assert.Single(
+            gallery.Descendants(Presentation + "Border"),
+            element => (string?)element.Attribute("Grid.ColumnSpan") == "2");
+        Assert.Equal(ControlSurfaceBackground, (string?)surface.Attribute("Background"));
+    }
+
+    [Fact]
+    public void Control_surface_background_is_solid_in_every_theme_variant()
+    {
+        string[] themeFiles =
+        {
+            "Tokens.Office2007.xaml",
+            "Tokens.Office2010.xaml",
+            "Tokens.Office2013.xaml",
+            "Tokens.Office2019.xaml",
+            "Tokens.Office2024.xaml",
+            "Tokens.Office2019.Dark.xaml",
+            "Tokens.Office2024.Dark.xaml",
+        };
+
+        foreach (string themeFile in themeFiles)
+        {
+            XDocument document = XDocument.Load(ThemePart(themeFile));
+            XElement resource = Assert.Single(
+                document.Root!.Elements(),
+                element => (string?)element.Attribute(Xaml + "Key")
+                    == "RibbonKit.Brushes.Control.SurfaceBackground");
+
+            Assert.Equal(Presentation + "SolidColorBrush", resource.Name);
+        }
     }
 
     [Fact]

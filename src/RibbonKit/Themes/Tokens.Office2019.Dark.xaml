@@ -7,6 +7,7 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Window.Background" Color="#171717" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Background" Color="#252525" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.ContentBackground" Color="#1E1E1E" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.SurfaceBackground" Color="#1E1E1E" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Border" Color="#454545" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Primary" Color="#F2F2F2" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Secondary" Color="#B8B8B8" />

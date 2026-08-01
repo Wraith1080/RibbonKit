@@ -753,7 +753,7 @@
                              the box collapses to the text height and reads as cramped. -->
                         <Grid Width="{TemplateBinding InputWidth}" MinHeight="24">
                             <Border x:Name="Chrome"
-                                    Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
+                                    Background="{DynamicResource RibbonKit.Brushes.Control.SurfaceBackground}"
                                     BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
                                     BorderThickness="1"
                                     CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"

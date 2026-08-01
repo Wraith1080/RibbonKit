@@ -3069,6 +3069,15 @@ content: `RibbonGalleryItem.Foreground` already supplies the primary theme token
 inheritance, while a local Foreground remains the natural opt-out for semantic colors. The showcase's
 neutral style labels now use `Text.Secondary`; its intentional blue heading previews stay blue.
 
+**2007/2010 control-surface regression corrected (2026-08-02).** Dark-mode preparation had replaced
+the combo input and in-ribbon gallery's hardcoded white fill with `Ribbon.ContentBackground`. That
+token is intentionally the large ribbon-body gradient in Office 2007/2010, so both small wells
+acquired an inappropriate button-like gradient. They now consume the dedicated solid
+`RibbonKit.Brushes.Control.SurfaceBackground` token. Every light theme supplies white; the 2019/2024
+dark overlays supply their existing dark content colors. Popup surfaces continue using
+`Ribbon.ContentBackground` as before. Contract tests require both template bindings and require the
+new resource to remain a `SolidColorBrush` in every theme variant.
+
 ### 3.51 First deterministic RTL snapshot slice — 2026-08-01
 
 The visual suite now renders one additional Office 2024 light scene at 100% with
@@ -3304,7 +3313,7 @@ Possible post-v1 polish: an optional `MonochromeIcon` on QAT-capable command but
 purpose-authored alpha mask on accent-colored title/tab surfaces. This is an API idea, not scheduled
 work; a separate `DarkIcon` property remains intentionally unplanned.
 
-**Unit tests: 120 green (verified 2026-08-01).** Coverage now includes the STA harness, the borrow
+**Unit tests: 122 green (verified 2026-08-02).** Coverage now includes the STA harness, the borrow
 protocol, overflow strip measure/arrange rules, popup motion and dismissal, proxy mirroring,
 application-menu layering/hover/KeyTips, and the existing reduction/size-definition/theme-scope tests.
 `RibbonMergeModalTests` adds the Phase 7 automated invariants: merge ordering across later

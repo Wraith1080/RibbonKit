@@ -12,6 +12,7 @@
          the ribbon body floats as a white card over it. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Background" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.ContentBackground" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.SurfaceBackground" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Window.Background" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Border" Color="#E0E0E0" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Primary" Color="#1A1A1A" />

@@ -36,6 +36,8 @@
         <GradientStop Offset="0.17" Color="#C8D9ED" />
         <GradientStop Offset="1" Color="#E3F4FF" />
     </LinearGradientBrush>
+    <!-- Solid well used by inputs and the in-ribbon gallery; do not reuse the body gradient. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.SurfaceBackground" Color="#FFFFFF" />
     <!-- Medium blue outline around the ribbon body and the connected active tab. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Window.Background" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Border" Color="#8DB2E3" />

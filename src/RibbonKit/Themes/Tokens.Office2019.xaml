@@ -14,6 +14,7 @@
          option). A light grey — not white — so the near-white selected tab stands out. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Background" Color="#E6E6E6" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.ContentBackground" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.SurfaceBackground" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Window.Background" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Border" Color="#C8C6C4" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Primary" Color="#201F1E" />

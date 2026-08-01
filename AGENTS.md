@@ -28,7 +28,7 @@ Last consolidated: 2026-08-01 from the repository Markdown files.
 - The Office 2007 two-pane application menu has shipped as `RibbonApplicationMenu`; the 2007 window frame remains deferred.
 - MDI milestones M0 and M4 are complete: floating children plus tab/caption merge work. M1-M3 remain: arrange commands and keyboard cycling, full MVVM proof, tabbed-document mode, and persistence.
 - Windows verification is complete through design-notes §3.46, including whole-surface/reduced-motion flyouts, the Ribbon Editor's Large-only split-layout behavior, runtime split-button/companion states, proxy enabled-state propagation, and the application-menu theme/DPI matrix.
-- The test suite has 120 green logic tests plus one visual test covering 29 approved images as of 2026-08-01. Phase 7 merge/modal invariants, nested dark-foreground template contracts, and a first RTL layout smoke scene are covered; important remaining gaps include broader customization round trips, KeyTip resolution, and remaining reduction-algorithm cases.
+- The test suite has 122 green logic tests plus one visual test covering 29 approved images as of 2026-08-02. Phase 7 merge/modal invariants, nested dark-foreground/control-surface template contracts, and a first RTL layout smoke scene are covered; important remaining gaps include broader customization round trips, KeyTip resolution, and remaining reduction-algorithm cases.
 
 ### Working conventions
 
