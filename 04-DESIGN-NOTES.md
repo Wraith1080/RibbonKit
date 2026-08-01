@@ -290,9 +290,9 @@ because backstage items are direct logical children — unlike the QAT case in �
 - `BackstageTabItem.Icon` (ImageSource): rendered as a **foreground-tinted silhouette**
   (Rectangle + OpacityMask) in an always-reserved 16px column → icon-less items stay
   aligned. Selected item's icon goes accent automatically.
-- **Modern.* brushes use `StaticResource`** — they're defined inside Office2024.xaml
-  itself; DynamicResource lookup from a template can't reliably find theme-dictionary
-  locals (only app-scope tokens). Accent-driven parts stay DynamicResource.
+- **Modern.* brushes are app-scope `DynamicResource` tokens** (promoted from template-local
+  statics in §3.49), so the rail follows the active light/dark palette. Do not move them back
+  into the shared template dictionary or a live variant switch cannot replace them.
 - Trigger order matters: Modern trigger first, then Translucent triggers (later wins).
 - Showcase: `Design="Modern"` default, Home/Info/New/Open items (Info deliberately has
   no icon to demo alignment), View → Backstage group toggle.
@@ -3005,14 +3005,72 @@ All 20 images were inspected at native resolution and the complete matrix passed
 fresh test processes plus the normal project run. The existing Windows CI step will provide the
 remaining cross-machine portability check; no workflow change was needed.
 
+### 3.49 Dark variants for Office 2019/2024 — 2026-08-01
+
+Dark mode is a **palette variant**, not a sixth Office generation. `ThemeManager.SetDarkMode(app,
+bool)` merges `Tokens.Office2019.Dark.xaml` or `Tokens.Office2024.Dark.xaml` after that generation's
+base dictionary, so geometry and the single shared template set stay untouched. The preference
+survives theme switches: Office 2007/2010/2013 keep their historical light palettes, and returning
+to 2019/2024 reactivates dark mode. `SupportsDarkMode` lets hosts explain or disable unsupported
+choices without duplicating the generation rule.
+
+The few remaining light-only local resources were promoted into the token contract: window
+background, Modern-backstage rail/interaction brushes, and the options-dialog rail. Every light
+theme supplies the same new keys, preserving its pixels, while the two dark overlays replace them.
+This was necessary for a live switch: `StaticResource` values captured inside the shared template
+dictionary cannot be recolored by a later application-scope overlay; the promoted brushes now use
+`DynamicResource` like the rest of the control surface.
+
+Custom accents still layer after the dark overlay. Checked-state derivation mixes a custom accent
+toward black in dark mode rather than toward white, avoiding pale toggled cards. Office 2024's
+transparent Mica title bar uses low-alpha white hover/press washes in dark mode (the light variant
+keeps its black washes). `MicaHelper.TrySetDarkMode` also sets
+`DWMWA_USE_IMMERSIVE_DARK_MODE`, so the DWM backdrop and native frame choose the matching material.
+The showcase exposes the variant under View → Accent and keeps the document page deliberately
+white while switching the surrounding window, status bar, ribbon, backstage, menus, MDI chrome,
+ScreenTips, KeyTips and options dialog.
+
+The existing PNG format, checked-in `Snapshots/approved` storage policy, opt-in update variable,
+and Windows CI strategy remain unchanged. The matrix adds 2019-dark and 2024-dark at all four
+synthetic DPIs, growing from 20 to **28 approved images**. The original 20 light approvals passed
+unchanged before the eight dark images were generated; both dark 100% images were inspected at
+native resolution, and the full matrix is deterministic in-process.
+
+### 3.50 Dark live-switch corrections from the 100% showcase pass — 2026-08-01
+
+The first real-window pass found five surfaces the minimal ribbon snapshot did not exercise.
+Office 2024 dark now gives `Ribbon.Background` an opaque `#181818` resting value; the Mica branch
+temporarily overrides that token to Transparent and removes the override on teardown. This keeps
+the non-Mica tab band dark without sacrificing the backdrop material.
+
+The showcase must restore its window and content backgrounds with `SetResourceReference`, not by
+assigning a previously resolved Brush. A direct Brush assignment replaces the original dynamic
+resource expression; the sequence Mica on → dark on → Mica off → dark off therefore left a stale
+dark local value until the operations were reversed. Reattaching the `Window.Background` token on
+teardown makes every operation order converge on the current palette.
+
+Nested standard WPF controls can also interrupt foreground inheritance because Button, ToggleButton,
+TextBox, ListBox and TreeView bring their own default Foreground. The drop-down/split hit controls now
+bind their Foreground to the outer Ribbon control; the editable combo TextBox uses TemplateBinding;
+customization lists/trees forward their page foreground; and application-menu hit buttons bind to
+their owning nav item. The popup surfaces were already correct. Three XML contract tests guard these
+otherwise easy-to-miss nested paths, and the visual test now explicitly exercises the dark 2024
+Ribbon-background → Mica-transparent → dark-background round trip.
+
+Follow-up from the same pass: setting Foreground on the TreeView itself is insufficient because
+generated TreeViewItem containers carry the platform's black default. The item-container style now
+binds back to its ancestor TreeView. Galleries deliberately do **not** force-recolor arbitrary item
+content: `RibbonGalleryItem.Foreground` already supplies the primary theme token for normal WPF
+inheritance, while a local Foreground remains the natural opt-out for semantic colors. The showcase's
+neutral style labels now use `Text.Secondary`; its intentional blue heading previews stay blue.
+
 ## 4. Workflow / Session Conventions
 
 - Cloud workspace: `/home/user/ribbonkit/`. The user's machine:
   `C:\Users\LENOVO\Claude\Projects\Professional Ribbon Custom Control for WPF\`
   (device `brin-mm-2026-0004`).
-- **No WPF build available in the Linux sandbox** — every change ships unbuilt; the
-  user builds/tests on Windows and reports back. Deliver files via SendUserFile when
-  the device bridge is offline (it has been, lately); push directly when connected.
+- This Windows workspace builds and runs the WPF solution locally. Use `dotnet build RibbonKit.sln`
+  and `dotnet test RibbonKit.sln`; do not carry forward the older Linux-sandbox limitation.
 - The user prefers: concise explanations, minimal-formatting replies, files delivered
   immediately, and "just update your side + reply 'Got it'" for their own edits.
 - User's own edits so far: `UseLayoutRounding="True"` on the showcase RibbonWindow
@@ -3029,8 +3087,8 @@ remaining cross-machine portability check; no workflow change was needed.
 > DPI-awareness manifest have now also passed their Windows verification.
 >
 > Roadmap Phases 1–5 and 7 are complete. **Phase 6 now also has the Office 2007 theme (§3.38)**, so
-> all five generations ship and the complete 20-image visual-regression matrix is in §3.48.
-> Phase 6 still owes dark mode and RTL + localization. Phase 8 (API freeze,
+> all five generations ship, dark variants for 2019/2024 are in §3.49, and the complete 28-image
+> visual-regression matrix covers the light and dark palettes. Phase 6 still owes RTL + localization. Phase 8 (API freeze,
 > docs site, perf, launch) is untouched. Of the two items
 > deferred out of §3.38, the two-pane 2007 application menu shipped in §3.46; only the 2007 window
 > frame is still owed.
@@ -3210,23 +3268,21 @@ Backlog (rough priority):
    FRAME (glass caption + orb overhang). The other deferral, the real two-pane APPLICATION MENU,
    **shipped 2026-07-28 (§3.46)**. (The 2007 DPI matrix pass is DONE — clean at
    100/125/150/175/200%.)
-3. **Dark mode** (the 2019 white-tab note in §3.6 anticipates it) — the last item of the theming arc,
-   and the one that also covers Mica's dark-aware translucency.
-4. RTL + localization resources — the remaining non-dark-mode work in roadmap Phase 6. The §3.48
+3. RTL + localization resources — the remaining work in roadmap Phase 6. The §§3.48–3.49
    visual-regression matrix is complete.
-5. **The remaining unit tests** — broader customization serializer round-trips, KeyTip resolution,
+4. **The remaining unit tests** — broader customization serializer round-trips, KeyTip resolution,
    and reduction-algorithm gaps. The Phase 7 merge/modal invariants are now DONE: 13 tests cover
    stable ordering, repeated merge/unmerge, two-source group restoration, modal transitions and
    cancellation, serialization exclusion, rebuild/remerge and declarative activation. The harness
    and house style for headless WPF tests are in place (§3.39).
-6. **MDI M1–M3**: cascade/tile/arrange commands + Ctrl+Tab (M1), the MVVM `ItemsSource` demo and a
+5. **MDI M1–M3**: cascade/tile/arrange commands + Ctrl+Tab (M1), the MVVM `ItemsSource` demo and a
    per-theme pass (M2), tabbed-documents mode + `RibbonState` layout persistence (M3). M0 and M4 are
    done, so the feature currently has a hole in its middle.
-7. Roadmap Phase 8 release engineering: API review and freeze (`PublicAPI.txt` — Phase 7 added a lot
+6. Roadmap Phase 8 release engineering: API review and freeze (`PublicAPI.txt` — Phase 7 added a lot
    of public surface), docs site, NuGet polish, performance pass.
-8. GitHub publish: repo URL placeholder in csproj (`YOUR-GITHUB-USERNAME`).
+7. GitHub publish: repo URL placeholder in csproj (`YOUR-GITHUB-USERNAME`).
 
-**Unit tests: 116 green (verified 2026-08-01).** Coverage now includes the STA harness, the borrow
+**Unit tests: 120 green (verified 2026-08-01).** Coverage now includes the STA harness, the borrow
 protocol, overflow strip measure/arrange rules, popup motion and dismissal, proxy mirroring,
 application-menu layering/hover/KeyTips, and the existing reduction/size-definition/theme-scope tests.
 `RibbonMergeModalTests` adds the Phase 7 automated invariants: merge ordering across later
@@ -3234,7 +3290,7 @@ permutations, merge/unmerge round-trips, group restore with two sources in one t
 modal, modal enter/exit selection and cancellation, forced exit when a merged modal tab leaves,
 customization rebuild/remerge, and declarative activation. The broader coverage gaps listed above remain.
 
-**Visual tests: 1 green locally (2026-08-01), covering all 20 approved images.** The §3.48 matrix
-spans five themes × 100/125/150/200%; its separate project keeps rendering policy out of the
+**Visual tests: 1 green locally (2026-08-01), covering all 28 approved images.** The §§3.48–3.49 matrix
+spans five light themes plus two dark variants × 100/125/150/200%; its separate project keeps rendering policy out of the
 headless logic-test harness. It passed three successive fresh-process stability runs in addition to
 the normal project and solution runs.

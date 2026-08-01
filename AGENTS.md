@@ -24,11 +24,11 @@ Last consolidated: 2026-08-01 from the repository Markdown files.
 
 ### Status at consolidation
 
-- Roadmap phases 0-5 and 7 are complete. All five themes (Office 2007, 2010, 2013, 2019, and 2024) ship, and DPI was verified at 100/125/150/175/200%. Phase 6's deterministic visual-regression matrix covers all five themes at 100/125/150/200%; dark mode, RTL, and localization remain. Phase 8/API freeze has not started.
+- Roadmap phases 0-5 and 7 are complete. All five themes (Office 2007, 2010, 2013, 2019, and 2024) ship, dark variants ship for Office 2019/2024, and DPI was verified at 100/125/150/175/200%. The deterministic 28-image snapshot matrix covers every light theme plus both dark variants at 100/125/150/200%. Phase 6 still owes RTL and localization. Phase 8/API freeze has not started.
 - The Office 2007 two-pane application menu has shipped as `RibbonApplicationMenu`; the 2007 window frame remains deferred.
 - MDI milestones M0 and M4 are complete: floating children plus tab/caption merge work. M1-M3 remain: arrange commands and keyboard cycling, full MVVM proof, tabbed-document mode, and persistence.
 - Windows verification is complete through design-notes §3.46, including whole-surface/reduced-motion flyouts, the Ribbon Editor's Large-only split-layout behavior, runtime split-button/companion states, proxy enabled-state propagation, and the application-menu theme/DPI matrix.
-- The test suite has 116 green logic tests plus one visual test covering 20 approved images as of 2026-08-01. Phase 7 merge/modal invariants are covered; important remaining gaps include broader customization round trips, KeyTip resolution, and remaining reduction-algorithm cases.
+- The test suite has 120 green logic tests plus one visual test covering 28 approved images as of 2026-08-01. Phase 7 merge/modal invariants and nested dark-foreground template contracts are covered; important remaining gaps include broader customization round trips, KeyTip resolution, and remaining reduction-algorithm cases.
 
 ### Working conventions
 

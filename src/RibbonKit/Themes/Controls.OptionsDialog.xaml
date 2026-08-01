@@ -11,10 +11,8 @@
     <!-- ============================================================
          RibbonOptionsDialog — Word-Options-style dialog: page rail on
          the left, selected page content on the right, OK/Cancel below.
-         Rail brushes are LOCAL statics (same precedent as the Modern
-         backstage brushes); everything else rides the theme tokens.
+         The rail and every other surface ride the theme tokens.
          ============================================================ -->
-    <SolidColorBrush x:Key="OptionsDialog.RailBackground" Color="#F5F4F3" />
 
     <Style x:Key="OptionsDialogActionButtonStyle" TargetType="{x:Type Button}">
         <Setter Property="MinWidth" Value="88" />
@@ -226,7 +224,7 @@
         <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}" />
         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
         <!-- Custom chrome: WindowStyle=None (set in code) + WindowChrome, so the dialog draws
-             its own white title bar with a single Close button. CaptionHeight matches the
+             its own themed title bar with a single Close button. CaptionHeight matches the
              title bar height so it's draggable; ResizeBorderThickness makes the edges
              resize-grabbable. Corners are rounded by the DWM (MicaHelper.SetRoundedCorners in
              OnSourceInitialized), which also draws the border — hence no WindowChrome corner
@@ -255,7 +253,7 @@
                                     <RowDefinition Height="*" />
                                 </Grid.RowDefinitions>
 
-                                <!-- Custom white title bar: Title on the left (no icon),
+                                <!-- Custom title bar: Title on the left (no icon),
                                      Close on the right (no minimize/maximize). -->
                                 <Grid Grid.Row="0" Background="Transparent">
                                     <Grid.ColumnDefinitions>
@@ -293,7 +291,7 @@
 
                                         <!-- Page rail -->
                                         <Border Grid.Column="0"
-                                                Background="{StaticResource OptionsDialog.RailBackground}"
+                                                Background="{DynamicResource RibbonKit.Brushes.OptionsDialog.RailBackground}"
                                                 BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}"
                                                 BorderThickness="0,0,1,0">
                                             <ListBox x:Name="PART_PageList"

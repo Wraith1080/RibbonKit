@@ -146,6 +146,7 @@ public partial class MainWindow : RibbonWindow
     private void ApplyTheme(RibbonTheme theme)
     {
         ThemeManager.Apply(Application.Current, theme);
+        DarkModeToggle.IsEnabled = ThemeManager.SupportsDarkMode(theme);
 
         bool is2007 = theme == RibbonTheme.Office2007;
         MainRibbon.ApplicationButtonShape = is2007
@@ -156,6 +157,12 @@ public partial class MainWindow : RibbonWindow
         // and every generation after it opened a backstage instead. Setting the toggle rather than
         // the ribbon property keeps the two in sync — the Checked handler does the actual swap.
         ApplicationMenuToggle.IsChecked = is2007;
+    }
+
+    private void OnToggleDarkMode(object sender, RoutedEventArgs e)
+    {
+        bool enabled = (sender as RibbonToggleButton)?.IsChecked == true;
+        ThemeManager.SetDarkMode(Application.Current, enabled);
     }
 
     // Swap which surface the File button opens. Assigning ApplicationMenu is all it takes: the
@@ -238,8 +245,6 @@ public partial class MainWindow : RibbonWindow
         }
     }
 
-    private Brush? _opaqueWindowBackground;
-
     // True while THIS code is flipping a backdrop toggle (undoing a rejected check, or
     // unchecking the other material). The Checked/Unchecked handlers bail out during a
     // programmatic flip so it never cascades into a second apply/teardown.
@@ -290,7 +295,6 @@ public partial class MainWindow : RibbonWindow
             // transparent title bar and overlap our custom caption buttons.
             MicaHelper.ShowNativeCaptionButtons(this, false);
 
-            _opaqueWindowBackground ??= Background;
             Background = Brushes.Transparent;
             MainContentArea.Background = Brushes.Transparent;
 
@@ -315,8 +319,12 @@ public partial class MainWindow : RibbonWindow
             // risk to avoid, because the visible content is opaque white again below.
             MicaHelper.ShowNativeCaptionButtons(this, true);
             ThemeManager.SetTitleBarBackdrop(Application.Current, false);
-            Background = _opaqueWindowBackground ?? Brushes.White;
-            MainContentArea.Background = Brushes.White;
+            SetResourceReference(
+                Control.BackgroundProperty,
+                "RibbonKit.Brushes.Window.Background");
+            MainContentArea.SetResourceReference(
+                Panel.BackgroundProperty,
+                "RibbonKit.Brushes.Window.Background");
         }
     }
 

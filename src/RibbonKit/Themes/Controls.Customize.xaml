@@ -70,6 +70,7 @@
 
                         <ListBox x:Name="PART_AvailableList"
                                  Grid.Column="0" Grid.Row="1"
+                                 Foreground="{TemplateBinding Foreground}"
                                  Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
                                  BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
                                  BorderThickness="1"
@@ -91,6 +92,7 @@
 
                         <ListBox x:Name="PART_CurrentList"
                                  Grid.Column="2" Grid.Row="1"
+                                 Foreground="{TemplateBinding Foreground}"
                                  Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
                                  BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
                                  BorderThickness="1"
@@ -203,6 +205,7 @@
 
                         <ListBox x:Name="PART_AvailableList"
                                  Grid.Column="0" Grid.Row="1"
+                                 Foreground="{TemplateBinding Foreground}"
                                  Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
                                  BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
                                  BorderThickness="1"
@@ -223,6 +226,7 @@
 
                         <TreeView x:Name="PART_Tree"
                                   Grid.Column="2" Grid.Row="1"
+                                  Foreground="{TemplateBinding Foreground}"
                                   Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
                                   BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
                                   BorderThickness="1"
@@ -232,6 +236,13 @@
                                 <!-- Mirror tree state into the node view-model so the page can
                                      re-select/re-expand programmatically after each rebuild. -->
                                 <Style TargetType="{x:Type TreeViewItem}">
+                                    <!-- TreeViewItem's platform style supplies its own black
+                                         Foreground, so forwarding only the TreeView value is not
+                                         enough for dark mode. Bind every generated container back
+                                         to the page-level themed foreground; explicit content
+                                         colors can still override this normally. -->
+                                    <Setter Property="Foreground"
+                                            Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type TreeView}}}" />
                                     <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
                                     <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
                                 </Style>
@@ -385,6 +396,7 @@
                                                    Style="{StaticResource EditDialogLabelStyle}" />
                                         <ListBox x:Name="PART_IconList"
                                                  MaxHeight="150"
+                                                 Foreground="{TemplateBinding Foreground}"
                                                  Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
                                                  BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
                                                  BorderThickness="1"

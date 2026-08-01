@@ -12,6 +12,7 @@
          the ribbon body floats as a white card over it. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Background" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.ContentBackground" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Window.Background" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Border" Color="#E0E0E0" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Primary" Color="#1A1A1A" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Secondary" Color="#616161" />
@@ -122,6 +123,14 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.NavBackground" Color="Transparent" />
     <system:Double x:Key="RibbonKit.Metrics.BackstageBackButtonSize">36</system:Double>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ContentBackground" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.NavBackground" Color="#F5F4F3" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.Foreground" Color="#201F1E" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemHover" Color="#EDEBE9" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemSelected" Color="#E1DFDD" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemHoverTranslucent" Color="#12000000" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemSelectedTranslucent" Color="#1F000000" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.NavBackgroundTranslucent" Color="#00F5F4F3" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.OptionsDialog.RailBackground" Color="#F5F4F3" />
     <!-- Classic2010 selected-item glass marker + dialog primary (OK) button fill. Non-2010
          themes keep a flat accent OK button (only the 2010 theme swaps in a glass gel). -->
     <LinearGradientBrush x:Key="RibbonKit.Brushes.Backstage.ItemSelectedGlass" StartPoint="0,0" EndPoint="0,1">

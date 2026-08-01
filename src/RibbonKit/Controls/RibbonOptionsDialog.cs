@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Markup;
 using RibbonKit.Interop;
+using RibbonKit.Theming;
 
 namespace RibbonKit.Controls;
 
@@ -89,7 +90,7 @@ public class RibbonOptionsDialog : Window
         ShowInTaskbar = false;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
 
-        // Custom chrome: the template draws a white title bar with a single Close button
+        // Custom chrome: the template draws a themed title bar with a single Close button
         // (no icon, no minimize/maximize — a modal dialog needs none). WindowChrome (in the
         // theme style) makes that title bar draggable and the borders resize-grabbable.
         WindowStyle = WindowStyle.None;
@@ -121,9 +122,13 @@ public class RibbonOptionsDialog : Window
     {
         base.OnSourceInitialized(e);
 
+        bool dark = ThemeManager.IsDarkMode
+            && ThemeManager.SupportsDarkMode(ThemeManager.CurrentTheme ?? RibbonTheme.Office2024);
+        MicaHelper.TrySetDarkMode(this, dark);
+
         // WindowStyle=None windows don't get Windows 11 rounded corners for free — ask the DWM
-        // to round them (with a light border so the white dialog reads against a white backdrop).
-        MicaHelper.SetRoundedCorners(this, borderColor: 0x00E0E0E0);
+        // to round them with a border that reads against the active light/dark surface.
+        MicaHelper.SetRoundedCorners(this, borderColor: dark ? 0x00454545 : 0x00E0E0E0);
     }
 
     /// <summary>

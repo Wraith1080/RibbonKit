@@ -2,6 +2,8 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media;
+using RibbonKit.Interop;
+using RibbonKit.Theming;
 
 namespace RibbonKit.Controls;
 
@@ -78,6 +80,8 @@ public class RibbonWindow : Window
         // compensation inset current if the window is dragged to a monitor of a different
         // resolution/DPI while maximized.
         SizeChanged += (_, _) => UpdateMaximizeInset();
+        ThemeManager.Changed += OnThemeManagerChanged;
+        Closed += (_, _) => ThemeManager.Changed -= OnThemeManagerChanged;
     }
 
     /// <summary>
@@ -246,6 +250,7 @@ public class RibbonWindow : Window
     protected override void OnSourceInitialized(EventArgs e)
     {
         base.OnSourceInitialized(e);
+        ApplyNativeDarkMode();
 
         // First line of defence: ask Windows to keep the maximized window inside the
         // monitor's WORK AREA (so it respects the taskbar and doesn't overhang). This is
@@ -258,6 +263,21 @@ public class RibbonWindow : Window
         IntPtr handle = new WindowInteropHelper(this).EnsureHandle();
         HwndSource.FromHwnd(handle)?.AddHook(WindowHook);
         UpdateMaximizeInset();
+    }
+
+    private void OnThemeManagerChanged(object? sender, EventArgs e)
+    {
+        if (new WindowInteropHelper(this).Handle != IntPtr.Zero)
+        {
+            ApplyNativeDarkMode();
+        }
+    }
+
+    private void ApplyNativeDarkMode()
+    {
+        RibbonTheme theme = ThemeManager.CurrentTheme ?? RibbonTheme.Office2024;
+        bool dark = ThemeManager.IsDarkMode && ThemeManager.SupportsDarkMode(theme);
+        MicaHelper.TrySetDarkMode(this, dark);
     }
 
     /// <inheritdoc />

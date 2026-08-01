@@ -14,7 +14,7 @@
          drag/resize/maximize via WindowChrome
          ============================================================ -->
     <Style TargetType="{x:Type controls:RibbonWindow}">
-        <Setter Property="Background" Value="#FFFFFF" />
+        <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Window.Background}" />
         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
         <Setter Property="WindowChrome.WindowChrome">
             <Setter.Value>

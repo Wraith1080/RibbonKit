@@ -30,6 +30,7 @@
         <GradientStop Offset="1" Color="#DAE5F1" />
     </LinearGradientBrush>
     <!-- Medium blue-grey outline around the ribbon body and the connected active tab. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Window.Background" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Border" Color="#8DA5C4" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Primary" Color="#1E1E1E" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Secondary" Color="#5C6B7F" />
@@ -198,6 +199,14 @@
     </LinearGradientBrush>
     <system:Double x:Key="RibbonKit.Metrics.BackstageBackButtonSize">36</system:Double>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ContentBackground" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.NavBackground" Color="#F5F4F3" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.Foreground" Color="#201F1E" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemHover" Color="#EDEBE9" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemSelected" Color="#E1DFDD" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemHoverTranslucent" Color="#12000000" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemSelectedTranslucent" Color="#1F000000" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.NavBackgroundTranslucent" Color="#00F5F4F3" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.OptionsDialog.RailBackground" Color="#F5F4F3" />
     <!-- Classic2010 selected-item "glass" marker (glossy blue) and the dialog primary (OK)
          button glass, borrowed from the File button. -->
     <LinearGradientBrush x:Key="RibbonKit.Brushes.Backstage.ItemSelectedGlass" StartPoint="0,0" EndPoint="0,1">

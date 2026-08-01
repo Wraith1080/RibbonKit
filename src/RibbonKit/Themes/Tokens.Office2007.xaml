@@ -37,6 +37,7 @@
         <GradientStop Offset="1" Color="#E3F4FF" />
     </LinearGradientBrush>
     <!-- Medium blue outline around the ribbon body and the connected active tab. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Window.Background" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Border" Color="#8DB2E3" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Primary" Color="#1E1E1E" />
     <!-- 2007 group labels are BLUE, not grey (unlike every later generation). -->
@@ -241,6 +242,14 @@
     </LinearGradientBrush>
     <system:Double x:Key="RibbonKit.Metrics.BackstageBackButtonSize">46</system:Double>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ContentBackground" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.NavBackground" Color="#F5F4F3" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.Foreground" Color="#201F1E" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemHover" Color="#EDEBE9" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemSelected" Color="#E1DFDD" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemHoverTranslucent" Color="#12000000" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemSelectedTranslucent" Color="#1F000000" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.NavBackgroundTranslucent" Color="#00F5F4F3" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.OptionsDialog.RailBackground" Color="#F5F4F3" />
     <!-- Glass markers for the backstage selection and the dialog primary (OK) button. The
          dedicated Classic2007 backstage design lands in S5; these carry the crease profile so
          they already read as 2007 rather than 2010. -->

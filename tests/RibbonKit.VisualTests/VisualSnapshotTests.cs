@@ -26,13 +26,15 @@ public sealed class VisualSnapshotTests
     private const int Height = 170;
     private const double BaseDpi = 96d;
 
-    private static readonly (RibbonTheme Theme, string Name)[] Themes =
+    private static readonly (RibbonTheme Theme, bool Dark, string Name)[] Themes =
     {
-        (RibbonTheme.Office2007, "office2007-default"),
-        (RibbonTheme.Office2010, "office2010-default"),
-        (RibbonTheme.Office2013, "office2013-default"),
-        (RibbonTheme.Office2019, "office2019-default"),
-        (RibbonTheme.Office2024, "office2024-default"),
+        (RibbonTheme.Office2007, false, "office2007-default"),
+        (RibbonTheme.Office2010, false, "office2010-default"),
+        (RibbonTheme.Office2013, false, "office2013-default"),
+        (RibbonTheme.Office2019, false, "office2019-default"),
+        (RibbonTheme.Office2024, false, "office2024-default"),
+        (RibbonTheme.Office2019, true, "office2019-dark"),
+        (RibbonTheme.Office2024, true, "office2024-dark"),
     };
 
     private static readonly (int Percent, double Scale)[] DpiScales =
@@ -44,7 +46,7 @@ public sealed class VisualSnapshotTests
     };
 
     [Fact]
-    public void Every_theme_and_dpi_matches_its_approved_snapshot() =>
+    public void Every_theme_variant_and_dpi_matches_its_approved_snapshot() =>
         SnapshotThread.Run(() =>
         {
             CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
@@ -57,9 +59,15 @@ public sealed class VisualSnapshotTests
 
             try
             {
-                foreach ((RibbonTheme theme, string name) in Themes)
+                Assert.True(ThemeManager.SupportsDarkMode(RibbonTheme.Office2019));
+                Assert.True(ThemeManager.SupportsDarkMode(RibbonTheme.Office2024));
+                Assert.False(ThemeManager.SupportsDarkMode(RibbonTheme.Office2013));
+                AssertDarkBackdropRoundTrip(application);
+
+                foreach ((RibbonTheme theme, bool dark, string name) in Themes)
                 {
                     ThemeManager.Apply(application, theme);
+                    ThemeManager.SetDarkMode(application, dark);
 
                     foreach ((int percent, double scale) in DpiScales)
                     {
@@ -69,9 +77,28 @@ public sealed class VisualSnapshotTests
             }
             finally
             {
+                ThemeManager.SetDarkMode(application, false);
                 application.Shutdown();
             }
         });
+
+    private static void AssertDarkBackdropRoundTrip(Application application)
+    {
+        ThemeManager.Apply(application, RibbonTheme.Office2024);
+        ThemeManager.SetDarkMode(application, true);
+        Assert.Equal(Color.FromRgb(0x18, 0x18, 0x18), ResourceColor(application, "RibbonKit.Brushes.Ribbon.Background"));
+
+        ThemeManager.SetTitleBarBackdrop(application, true);
+        Assert.Equal(Colors.Transparent, ResourceColor(application, "RibbonKit.Brushes.Ribbon.Background"));
+
+        ThemeManager.SetTitleBarBackdrop(application, false);
+        Assert.Equal(Color.FromRgb(0x18, 0x18, 0x18), ResourceColor(application, "RibbonKit.Brushes.Ribbon.Background"));
+
+        ThemeManager.SetDarkMode(application, false);
+    }
+
+    private static Color ResourceColor(Application application, string key) =>
+        Assert.IsType<SolidColorBrush>(application.TryFindResource(key)).Color;
 
     private static void AssertSnapshot(string snapshotName, double dpiScale)
     {
@@ -174,7 +201,6 @@ public sealed class VisualSnapshotTests
         {
             Width = Width,
             Height = Height,
-            Background = Brushes.White,
             UseLayoutRounding = true,
             SnapsToDevicePixels = true,
             Language = XmlLanguage.GetLanguage("en-US"),
@@ -182,6 +208,9 @@ public sealed class VisualSnapshotTests
         TextOptions.SetTextFormattingMode(root, TextFormattingMode.Display);
         TextOptions.SetTextHintingMode(root, TextHintingMode.Fixed);
         TextOptions.SetTextRenderingMode(root, TextRenderingMode.Grayscale);
+        root.SetResourceReference(
+            Panel.BackgroundProperty,
+            "RibbonKit.Brushes.Window.Background");
 
         var ribbon = new Ribbon
         {
@@ -247,7 +276,12 @@ public sealed class VisualSnapshotTests
     private static ImageSource Icon(string geometryData)
     {
         var geometry = Geometry.Parse(geometryData);
-        var pen = new Pen(new SolidColorBrush(Color.FromRgb(0x44, 0x54, 0x6A)), 1.35)
+        bool dark = ThemeManager.IsDarkMode
+            && ThemeManager.SupportsDarkMode(ThemeManager.CurrentTheme ?? RibbonTheme.Office2024);
+        Color foreground = dark
+            ? Color.FromRgb(0xD0, 0xD0, 0xD0)
+            : Color.FromRgb(0x44, 0x54, 0x6A);
+        var pen = new Pen(new SolidColorBrush(foreground), 1.35)
         {
             StartLineCap = PenLineCap.Round,
             EndLineCap = PenLineCap.Round,

@@ -409,49 +409,49 @@
                         <rk:RibbonGalleryItem Tag="Normal">
                             <StackPanel Width="64">
                                 <TextBlock Text="AaBbCc" FontSize="14" HorizontalAlignment="Center" />
-                                <TextBlock Text="Normal" FontSize="10" Foreground="#616161" HorizontalAlignment="Center" />
+                                <TextBlock Text="Normal" FontSize="10" Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" HorizontalAlignment="Center" />
                             </StackPanel>
                         </rk:RibbonGalleryItem>
                         <rk:RibbonGalleryItem Tag="Heading 1">
                             <StackPanel Width="64">
                                 <TextBlock Text="AaBbCc" FontSize="15" FontWeight="SemiBold" Foreground="#0F6CBD" HorizontalAlignment="Center" />
-                                <TextBlock Text="Heading 1" FontSize="10" Foreground="#616161" HorizontalAlignment="Center" />
+                                <TextBlock Text="Heading 1" FontSize="10" Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" HorizontalAlignment="Center" />
                             </StackPanel>
                         </rk:RibbonGalleryItem>
                         <rk:RibbonGalleryItem Tag="Heading 2">
                             <StackPanel Width="64">
                                 <TextBlock Text="AaBbCc" FontSize="14" FontWeight="SemiBold" Foreground="#2B7FC7" HorizontalAlignment="Center" />
-                                <TextBlock Text="Heading 2" FontSize="10" Foreground="#616161" HorizontalAlignment="Center" />
+                                <TextBlock Text="Heading 2" FontSize="10" Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" HorizontalAlignment="Center" />
                             </StackPanel>
                         </rk:RibbonGalleryItem>
                         <rk:RibbonGalleryItem Tag="Title">
                             <StackPanel Width="64">
                                 <TextBlock Text="AaBbCc" FontSize="17" FontWeight="Light" HorizontalAlignment="Center" />
-                                <TextBlock Text="Title" FontSize="10" Foreground="#616161" HorizontalAlignment="Center" />
+                                <TextBlock Text="Title" FontSize="10" Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" HorizontalAlignment="Center" />
                             </StackPanel>
                         </rk:RibbonGalleryItem>
                         <rk:RibbonGalleryItem Tag="Subtitle">
                             <StackPanel Width="64">
-                                <TextBlock Text="AaBbCc" FontSize="13" Foreground="#616161" HorizontalAlignment="Center" />
-                                <TextBlock Text="Subtitle" FontSize="10" Foreground="#616161" HorizontalAlignment="Center" />
+                                <TextBlock Text="AaBbCc" FontSize="13" Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" HorizontalAlignment="Center" />
+                                <TextBlock Text="Subtitle" FontSize="10" Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" HorizontalAlignment="Center" />
                             </StackPanel>
                         </rk:RibbonGalleryItem>
                         <rk:RibbonGalleryItem Tag="Quote">
                             <StackPanel Width="64">
-                                <TextBlock Text="AaBbCc" FontSize="13" FontStyle="Italic" Foreground="#616161" HorizontalAlignment="Center" />
-                                <TextBlock Text="Quote" FontSize="10" Foreground="#616161" HorizontalAlignment="Center" />
+                                <TextBlock Text="AaBbCc" FontSize="13" FontStyle="Italic" Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" HorizontalAlignment="Center" />
+                                <TextBlock Text="Quote" FontSize="10" Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" HorizontalAlignment="Center" />
                             </StackPanel>
                         </rk:RibbonGalleryItem>
                         <rk:RibbonGalleryItem Tag="Strong">
                             <StackPanel Width="64">
                                 <TextBlock Text="AaBbCc" FontSize="13" FontWeight="Bold" HorizontalAlignment="Center" />
-                                <TextBlock Text="Strong" FontSize="10" Foreground="#616161" HorizontalAlignment="Center" />
+                                <TextBlock Text="Strong" FontSize="10" Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" HorizontalAlignment="Center" />
                             </StackPanel>
                         </rk:RibbonGalleryItem>
                         <rk:RibbonGalleryItem Tag="Emphasis">
                             <StackPanel Width="64">
                                 <TextBlock Text="AaBbCc" FontSize="13" FontStyle="Italic" HorizontalAlignment="Center" />
-                                <TextBlock Text="Emphasis" FontSize="10" Foreground="#616161" HorizontalAlignment="Center" />
+                                <TextBlock Text="Emphasis" FontSize="10" Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" HorizontalAlignment="Center" />
                             </StackPanel>
                         </rk:RibbonGalleryItem>
                     </rk:InRibbonGallery>
@@ -617,6 +617,15 @@
                 </rk:RibbonGroup>
                 <!-- Accent customization: title-bar accent toggle + swappable accent color -->
                 <rk:RibbonGroup Header="Accent" rk:Ribbon.CommandId="group.view.accent" Icon="{StaticResource Icon.ColorDrop}">
+                    <rk:RibbonToggleButton x:Name="DarkModeToggle"
+                                           Header="Dark Mode"
+                                           Size="Large"
+                                           LargeIcon="{StaticResource Icon.Mica}"
+                                           Icon="{StaticResource Icon.Mica}"
+                                           Checked="OnToggleDarkMode"
+                                           Unchecked="OnToggleDarkMode"
+                                           ScreenTipTitle="Dark mode"
+                                           ScreenTipText="Use the dark palette for Office 2019 and Office 2024. Older themes keep their historical palette." />
                     <rk:RibbonToggleButton Header="Colored Title Bar"
                                            Size="Large"
                                            LargeIcon="{StaticResource Icon.ColorDrop}"
@@ -744,7 +753,7 @@
                             Icon="{StaticResource Icon.Backstage}"
                             Click="OnSelectBackstageDesign"
                             ScreenTipTitle="Modern backstage (Office 2024)"
-                            ScreenTipText="Light rail with dark text and an accent selection bar." />
+                            ScreenTipText="Neutral rail with an accent selection bar; it follows light or dark mode." />
                         <rk:RibbonButton Header="2010 Glass"
                             Tag="Classic2010"
                             Size="Medium"
@@ -840,7 +849,8 @@
 
         </rk:Ribbon>
 
-        <Grid x:Name="MainContentArea" Background="White">
+        <Grid x:Name="MainContentArea"
+              Background="{DynamicResource RibbonKit.Brushes.Window.Background}">
             <!-- TAB MERGING demo. A RibbonMergeSource is a declarative bag of tabs belonging to
                  some child context — an embedded editor, an MDI document, a plug-in. It is not
                  part of the ribbon until the app calls Ribbon.Merge(source), and the tabs go away
@@ -908,10 +918,10 @@
                 <!-- Word-like status bar, docked at the very bottom. A DockPanel items panel
                      lets the left cluster and the right (zoom) cluster split to the edges. -->
                 <StatusBar DockPanel.Dock="Bottom"
-                           Background="#F3F3F3"
-                           BorderBrush="#E0E0E0"
+                           Background="{DynamicResource RibbonKit.Brushes.Window.Background}"
+                           BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}"
                            BorderThickness="0,1,0,0"
-                           Foreground="#444444"
+                           Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
                            FontSize="12">
                     <StatusBar.ItemsPanel>
                         <ItemsPanelTemplate>
