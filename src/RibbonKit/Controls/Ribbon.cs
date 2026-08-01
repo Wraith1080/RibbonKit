@@ -1372,6 +1372,19 @@ public class Ribbon : Control
     private object? _savedTitleBarContent;
     private System.Windows.Controls.ContextMenu? _qatContextMenu;
 
+    /// <summary>
+    /// The constrained QAT host currently on screen, if this placement can overflow. The title-bar
+    /// host lives outside this ribbon's visual tree, so KeyTips cannot discover it by walking from
+    /// the ribbon; this is the deliberate bridge back to the owning service.
+    /// </summary>
+    internal RibbonQuickAccessToolBar? ActiveQuickAccessToolBar => QuickAccessPosition switch
+    {
+        RibbonQuickAccessPosition.TitleBar => _titleBarQatHost,
+        RibbonQuickAccessPosition.TabRow => _qatTabRowHost as RibbonQuickAccessToolBar
+            ?? FindDescendantByType<RibbonQuickAccessToolBar>(this),
+        _ => null,
+    };
+
     // Coalesces the deferred selection-visual refresh triggered by the tab-row QAT resizing.
     private bool _selectionVisualsPending;
     private System.Windows.Controls.MenuItem? _qatTitleBarItem;

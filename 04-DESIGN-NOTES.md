@@ -130,6 +130,26 @@ point both at the same values so nothing changes shape.
 - **Bug fixed**: pressing Alt while the backstage was open showed ribbon KeyTips —
   `Enter()` now builds a backstage-level when `_ribbon.IsBackstageOpen` (and doesn't
   close a mouse-opened backstage on exit).
+- **Application-button lookup invariant**: the File button lives in the nested tab-control
+  template and is found by `Ribbon.ApplicationButtonPartName` (`PART_ApplicationButton`). The
+  application-menu addition renamed that part for light-dismiss but left KeyTips searching for
+  `ApplicationButton`, which removed the badge from both the rectangular button and the orb. Both
+  consumers now use the shared constant. When both application surfaces are assigned, the menu
+  also wins in KeyTip activation just as it does in `Ribbon` (so File opens the menu rather than
+  descending into the covered backstage).
+- **The application menu is now a real KeyTip level.** Pressing Alt while it is mouse-open badges
+  its nav commands, whichever pane is currently visible (including Recent Documents), and its
+  footer buttons. Activating File/Orb by KeyTip opens the same terminal level. Nav rows anchor their
+  badge to `PART_Primary` so invocation follows the exact click path; pane and footer commands are
+  collected from the realized visual tree because both are arbitrary content properties.
+- **QAT overflow is a KeyTip level, not a pile of hidden root items.** Overflowed QAT elements keep
+  `Visibility=Visible` and are arranged into a zero-sized slot, so filtering root badges by
+  `IsVisible` stacked their number badges at the strip origin. The active
+  `RibbonQuickAccessToolBar` now exposes the panel's overflow membership: root badges include only
+  strip items, then the `»` button takes the next number and opens a level built from the flyout's
+  command proxies. The overflow popup carries its own `AdornerDecorator`, as every popup KeyTip
+  scope must. The title-bar row also has a separate decorator because it sits outside the window's
+  content-row adorner layer; without it title-bar QAT targets had no layer and showed no badges.
 - Invocation goes through UIA patterns (Invoke/Toggle) so it works for every control.
 
 ### 3.4 Contextual tabs = custom coloring (no marker line)
@@ -2892,8 +2912,9 @@ keys** per theme (14 brushes, 9 metrics, 1 effect). 2007's values are measured; 
 soft-glass translation and 2013/2019/2024 flat on-palette equivalents, so assigning an application
 menu under any generation is legal and looks deliberate.
 
-**Not done, on purpose:** KeyTips for the menu, arrow-key navigation down the column, and a
-scrolling pane. All three are additive and none of them changes the geometry.
+**Originally deferred:** KeyTips for the menu, arrow-key navigation down the column, and a
+scrolling pane. KeyTips shipped with the later QAT/application-menu keyboard-access fix; arrow-key
+navigation and a scrolling pane remain additive work and neither changes the geometry.
 
 ## 4. Workflow / Session Conventions
 

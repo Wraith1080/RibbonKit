@@ -196,6 +196,20 @@ public class QuickAccessOverflowTests
         Assert.Null(Ribbon.GetQuickAccessOverflowItem(toolbarItem));
     });
 
+    [Fact]
+    public void Overflow_membership_is_available_to_KeyTip_filtering() => Sta.Run(() =>
+    {
+        var toolbar = new RibbonQuickAccessToolBar();
+        RibbonQuickAccessPanel panel = Strip(100, 100, 100);
+
+        panel.Measure(new Size(150, 22));
+        toolbar.OnOverflowChanged(panel, hasOverflow: true);
+
+        Assert.False(toolbar.IsOverflowed(panel.Children[0]));
+        Assert.True(toolbar.IsOverflowed(panel.Children[1]));
+        Assert.True(toolbar.IsOverflowed(panel.Children[2]));
+    });
+
     private static RibbonQuickAccessPanel Strip(params double[] widths)
     {
         var panel = new RibbonQuickAccessPanel();

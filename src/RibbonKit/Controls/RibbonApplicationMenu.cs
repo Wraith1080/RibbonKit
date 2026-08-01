@@ -565,6 +565,9 @@ public class RibbonApplicationMenuItem : HeaderedContentControl
 
     private ButtonBase? _arrow;
 
+    /// <summary>The command half used as this row's KeyTip target.</summary>
+    internal ButtonBase? PrimaryPart => _primary;
+
     static RibbonApplicationMenuItem()
     {
         DefaultStyleKeyProperty.OverrideMetadata(

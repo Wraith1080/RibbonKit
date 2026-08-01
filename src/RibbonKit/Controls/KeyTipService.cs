@@ -16,7 +16,8 @@ namespace RibbonKit.Controls;
 /// Drives the Office-style KeyTip experience for one <see cref="Ribbon"/>: pressing
 /// <c>Alt</c> (or <c>F10</c>) shows access-key badges over the File button, tabs, and
 /// quick-access items; typing a key selects a tab (descending into its groups' badges),
-/// opens the File backstage (descending into its page badges), opens a dropdown or
+/// opens the File surface (descending into backstage page badges when the backstage is
+/// the assigned surface), opens a dropdown or
 /// collapsed-group flyout (descending into their badges), or invokes a control.
 /// <c>Backspace</c> climbs back a level; <c>Esc</c>/<c>Alt</c>/a mouse click exits.
 /// </summary>
@@ -158,7 +159,15 @@ internal sealed class KeyTipService
         }
 
         KeyTipLevel level;
-        if (_ribbon.IsBackstageOpen)
+        if (_ribbon.IsApplicationMenuOpen)
+        {
+            // The two-pane menu was opened by mouse. Badge its live visual contents, and do not
+            // close it merely because the user leaves KeyTip mode.
+            level = BuildApplicationMenuLevel();
+            level.PersistOnActivate = true;
+            level.IsTerminal = true;
+        }
+        else if (_ribbon.IsBackstageOpen)
         {
             // The backstage is already open (opened by mouse) — badge only its pages, not
             // the covered-up ribbon. Since KeyTips didn't open it, leaving KeyTip mode
@@ -301,6 +310,14 @@ internal sealed class KeyTipService
                 DescendIntoGroupFlyout(group);
                 break;
 
+            case KeyTipKind.QuickAccessOverflow when item.Payload is RibbonQuickAccessToolBar toolBar:
+                DescendIntoQuickAccessOverflow(toolBar);
+                break;
+
+            case KeyTipKind.ApplicationMenu:
+                DescendIntoApplicationMenu();
+                break;
+
             case KeyTipKind.Backstage:
                 DescendIntoBackstage();
                 break;
@@ -404,6 +421,38 @@ internal sealed class KeyTipService
         }));
     }
 
+    private void DescendIntoQuickAccessOverflow(RibbonQuickAccessToolBar toolBar)
+    {
+        KeyTipLevel parent = _levels.Peek();
+        RemoveAdorners(parent);
+        _transitioning = true;
+        toolBar.OpenOverflow();
+
+        // Opening the popup realizes a separate visual tree and its proxy controls. Wait for that
+        // layout before asking each proxy for an adorner layer, exactly as dropdown levels do.
+        _ribbon.Dispatcher.BeginInvoke(DispatcherPriority.Loaded, (Action)(() =>
+        {
+            _transitioning = false;
+            if (!_active)
+            {
+                return;
+            }
+
+            KeyTipLevel level = BuildQuickAccessOverflowLevel(toolBar);
+            level.OnExit = toolBar.CloseOverflow;
+
+            if (level.Items.Count == 0)
+            {
+                level.OnExit();
+                AddAdorners(parent);
+                return;
+            }
+
+            _levels.Push(level);
+            AddAdorners(level);
+        }));
+    }
+
     private void DescendIntoBackstage()
     {
         KeyTipLevel parent = _levels.Peek();
@@ -436,17 +485,53 @@ internal sealed class KeyTipService
         }));
     }
 
+    private void DescendIntoApplicationMenu()
+    {
+        KeyTipLevel parent = _levels.Peek();
+        RemoveAdorners(parent);
+        _transitioning = true;
+        _ribbon.SetCurrentValue(Ribbon.IsBackstageOpenProperty, true);
+
+        _ribbon.Dispatcher.BeginInvoke(DispatcherPriority.Loaded, (Action)(() =>
+        {
+            _transitioning = false;
+            if (!_active)
+            {
+                return;
+            }
+
+            KeyTipLevel level = BuildApplicationMenuLevel();
+            level.OnExit = () => _ribbon.SetCurrentValue(Ribbon.IsBackstageOpenProperty, false);
+            level.PersistOnActivate = true;
+            level.IsTerminal = true;
+
+            if (level.Items.Count == 0)
+            {
+                level.OnExit();
+                Exit();
+                return;
+            }
+
+            _levels.Push(level);
+            AddAdorners(level);
+        }));
+    }
+
     // ---- Level builders -----------------------------------------------------------
 
     private KeyTipLevel BuildRootLevel()
     {
         var items = new List<KeyTipItem>();
 
-        if (FindApplicationButton() is { IsVisible: true } appButton)
+        if (FindApplicationButton(_ribbon) is { IsVisible: true } appButton)
         {
-            // With a backstage assigned, the File key opens it and descends; otherwise
-            // it is just a normal invoke.
-            KeyTipKind kind = _ribbon.Backstage is not null ? KeyTipKind.Backstage : KeyTipKind.Leaf;
+            // The application menu wins over the backstage everywhere else in Ribbon, so it must
+            // win here too. Both application surfaces descend into their own command level.
+            KeyTipKind kind = ApplicationButtonOpensApplicationMenu(_ribbon)
+                ? KeyTipKind.ApplicationMenu
+                : ApplicationButtonOpensBackstage(_ribbon)
+                    ? KeyTipKind.Backstage
+                    : KeyTipKind.Leaf;
             items.Add(new KeyTipItem(appButton, kind, "File", KeyTip.GetKeys(appButton)));
         }
 
@@ -461,11 +546,16 @@ internal sealed class KeyTipService
             }
         }
 
-        // Quick-access items get numbers (1..9) like Office, unless pinned explicitly.
+        // Quick-access items get numbers (1..9) like Office, unless pinned explicitly. Elements
+        // moved to overflow remain Visibility=Visible but receive a zero-sized layout slot, so
+        // IsVisible alone is insufficient — badge only the entries the active panel kept.
+        RibbonQuickAccessToolBar? quickAccessToolBar = _ribbon.ActiveQuickAccessToolBar;
         int digit = 1;
         foreach (object entry in _ribbon.QuickAccessItems)
         {
-            if (entry is not UIElement element || !element.IsVisible)
+            if (entry is not UIElement element
+                || !element.IsVisible
+                || quickAccessToolBar?.IsOverflowed(element) == true)
             {
                 continue;
             }
@@ -473,6 +563,23 @@ internal sealed class KeyTipService
             string? keys = KeyTip.GetKeys(element) ?? (digit <= 9 ? digit.ToString() : null);
             digit++;
             items.Add(new KeyTipItem(element, KeyTipKind.Leaf, null, keys));
+        }
+
+        // The chevron represents every zero-slotted item as one root action. It takes the next QAT
+        // digit and descends into the proxy entries in the popup, rather than letting the hidden
+        // originals stack their badges at the strip's (0,0) origin.
+        if (quickAccessToolBar is { HasOverflow: true, OverflowButton.IsVisible: true } toolBar)
+        {
+            ToggleButton overflowButton = toolBar.OverflowButton!;
+            string? keys = KeyTip.GetKeys(overflowButton) ?? (digit <= 9 ? digit.ToString() : null);
+            items.Add(new KeyTipItem(
+                overflowButton,
+                KeyTipKind.QuickAccessOverflow,
+                "More quick access commands",
+                keys)
+            {
+                Payload = toolBar,
+            });
         }
 
         AutoAssign(items);
@@ -559,6 +666,22 @@ internal sealed class KeyTipService
         return new KeyTipLevel(items);
     }
 
+    private static KeyTipLevel BuildQuickAccessOverflowLevel(RibbonQuickAccessToolBar toolBar)
+    {
+        var items = new List<KeyTipItem>();
+
+        foreach (FrameworkElement entry in toolBar.OverflowEntries)
+        {
+            if (entry.IsVisible)
+            {
+                AddControlItems(entry, items);
+            }
+        }
+
+        AutoAssign(items);
+        return new KeyTipLevel(items);
+    }
+
     private KeyTipLevel BuildBackstageLevel()
     {
         var items = new List<KeyTipItem>();
@@ -572,6 +695,55 @@ internal sealed class KeyTipService
                     items.Add(new KeyTipItem(element, KeyTipKind.Leaf, GetLabel(element), KeyTip.GetKeys(element)));
                 }
             }
+        }
+
+        AutoAssign(items);
+        return new KeyTipLevel(items);
+    }
+
+    private KeyTipLevel BuildApplicationMenuLevel()
+    {
+        var items = new List<KeyTipItem>();
+
+        if (_ribbon.ApplicationMenu is not RibbonApplicationMenu menu)
+        {
+            return new KeyTipLevel(items);
+        }
+
+        // Nav rows are HeaderedContentControls, while their actionable surface is the template's
+        // primary Button. Target that part so both the badge anchor and UIA invocation are correct,
+        // but read the label/explicit keys from the public row control.
+        foreach (object? entry in menu.Items)
+        {
+            RibbonApplicationMenuItem? item = entry as RibbonApplicationMenuItem
+                ?? menu.ItemContainerGenerator.ContainerFromItem(entry) as RibbonApplicationMenuItem;
+            if (item is not { IsVisible: true })
+            {
+                continue;
+            }
+
+            item.ApplyTemplate();
+            if (item.PrimaryPart is { IsVisible: true } primary)
+            {
+                items.Add(new KeyTipItem(
+                    primary,
+                    KeyTipKind.Leaf,
+                    item.Header?.ToString(),
+                    KeyTip.GetKeys(item)));
+            }
+        }
+
+        // The currently visible pane (default Recent Documents or a claimed nav pane) and footer
+        // are arbitrary content, so walk the realized visual tree for the two public command types.
+        var commands = new List<UIElement>();
+        CollectApplicationMenuControls(menu, commands);
+        foreach (UIElement command in commands)
+        {
+            items.Add(new KeyTipItem(
+                command,
+                KeyTipKind.Leaf,
+                GetLabel(command),
+                KeyTip.GetKeys(command)));
         }
 
         AutoAssign(items);
@@ -632,6 +804,26 @@ internal sealed class KeyTipService
             }
 
             CollectKeyTipControls(child, results);
+        }
+    }
+
+    private static void CollectApplicationMenuControls(DependencyObject root, List<UIElement> results)
+    {
+        int count = VisualTreeHelper.GetChildrenCount(root);
+        for (int i = 0; i < count; i++)
+        {
+            DependencyObject child = VisualTreeHelper.GetChild(root, i);
+            if (child is RibbonApplicationMenuPaneItem or RibbonApplicationMenuButton)
+            {
+                if (child is UIElement { IsVisible: true } command)
+                {
+                    results.Add(command);
+                }
+
+                continue;
+            }
+
+            CollectApplicationMenuControls(child, results);
         }
     }
 
@@ -717,8 +909,24 @@ internal sealed class KeyTipService
         }
     }
 
-    private ToggleButton? FindApplicationButton() =>
-        FindDescendant<ToggleButton>(_ribbon, b => b.Name == "ApplicationButton");
+    /// <summary>
+    /// Finds the application toggle inside the nested <see cref="RibbonTabControl"/> template.
+    /// The shared part-name constant is also used by application-menu light-dismiss; keeping both
+    /// consumers on it prevents a template rename from silently breaking only keyboard access.
+    /// </summary>
+    internal static ToggleButton? FindApplicationButton(DependencyObject root) =>
+        FindDescendant<ToggleButton>(root, button => button.Name == Ribbon.ApplicationButtonPartName);
+
+    /// <summary>
+    /// Whether activating the root File KeyTip should descend into a backstage level. An assigned
+    /// application menu wins over the backstage, matching <see cref="Ribbon.IsApplicationMenuOpen"/>.
+    /// </summary>
+    internal static bool ApplicationButtonOpensBackstage(Ribbon ribbon) =>
+        ribbon.ApplicationMenu is null && ribbon.Backstage is not null;
+
+    /// <summary>Whether activating the root File KeyTip should enter the two-pane menu level.</summary>
+    internal static bool ApplicationButtonOpensApplicationMenu(Ribbon ribbon) =>
+        ribbon.ApplicationMenu is not null;
 
     private static T? FindDescendant<T>(DependencyObject root, Func<T, bool> match)
         where T : DependencyObject
@@ -841,6 +1049,8 @@ internal sealed class KeyTipService
         Tab,
         MenuOpener,
         GroupFlyout,
+        QuickAccessOverflow,
+        ApplicationMenu,
         Backstage,
     }
 

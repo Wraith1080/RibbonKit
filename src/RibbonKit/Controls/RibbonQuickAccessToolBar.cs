@@ -2,6 +2,7 @@ using System.Collections.Specialized;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Documents;
 using System.Windows.Threading;
 using RibbonKit.Animation;
 using RibbonKit.Layout;
@@ -30,6 +31,10 @@ namespace RibbonKit.Controls;
 /// </remarks>
 public class RibbonQuickAccessToolBar : ItemsControl
 {
+    internal const string OverflowButtonPartName = "PART_OverflowButton";
+    internal const string OverflowPopupPartName = "PART_OverflowPopup";
+    internal const string OverflowHostPartName = "PART_OverflowHost";
+
     private static readonly DependencyPropertyKey HasOverflowPropertyKey =
         DependencyProperty.RegisterReadOnly(
             nameof(HasOverflow),
@@ -68,6 +73,17 @@ public class RibbonQuickAccessToolBar : ItemsControl
     /// </summary>
     internal Ribbon? Owner { get; set; }
 
+    /// <summary>The chevron that opens the overflow flyout, exposed for the KeyTip service.</summary>
+    internal ToggleButton? OverflowButton => _overflowButton;
+
+    /// <summary>The currently-realized proxy entries inside the open overflow flyout.</summary>
+    internal IEnumerable<FrameworkElement> OverflowEntries =>
+        _overflowHost?.Items.OfType<FrameworkElement>() ?? Enumerable.Empty<FrameworkElement>();
+
+    /// <summary>Whether <paramref name="element"/> currently has a zero-sized strip slot.</summary>
+    internal bool IsOverflowed(UIElement element) =>
+        _panel?.OverflowedChildren.Contains(element) == true;
+
     /// <inheritdoc />
     public override void OnApplyTemplate()
     {
@@ -79,9 +95,9 @@ public class RibbonQuickAccessToolBar : ItemsControl
             _overflowPopup.Closed -= OnOverflowClosed;
         }
 
-        _overflowButton = GetTemplateChild("PART_OverflowButton") as ToggleButton;
-        _overflowPopup = GetTemplateChild("PART_OverflowPopup") as Popup;
-        _overflowHost = GetTemplateChild("PART_OverflowHost") as ItemsControl;
+        _overflowButton = GetTemplateChild(OverflowButtonPartName) as ToggleButton;
+        _overflowPopup = GetTemplateChild(OverflowPopupPartName) as Popup;
+        _overflowHost = GetTemplateChild(OverflowHostPartName) as ItemsControl;
 
         // The flyout is StaysOpen=True and dismissed explicitly, like every other RibbonKit popup.
         // With WPF's own light-dismiss, clicking the » button a SECOND time does nothing visible:
@@ -188,7 +204,13 @@ public class RibbonQuickAccessToolBar : ItemsControl
         // Opened handler — the attached behaviour exists only for flyouts that have no such hook.
         // Order does not matter: the transition runs on the Border, independent of the items just
         // assigned above.
-        RibbonMotion.PlayFlyoutOpen(_overflowPopup?.Child as FrameworkElement, RibbonAnimationAction.DropdownMenu);
+        // The AdornerDecorator is infrastructure for KeyTips, not the visible flyout surface.
+        // Keep motion targeted at its Border child so PlayFlyoutOpen fades the chrome and slides
+        // the padded content, preserving §3.42's no-clipping invariant.
+        FrameworkElement? surface = _overflowPopup?.Child is AdornerDecorator decorator
+            ? decorator.Child as FrameworkElement
+            : _overflowPopup?.Child as FrameworkElement;
+        RibbonMotion.PlayFlyoutOpen(surface, RibbonAnimationAction.DropdownMenu);
     }
 
     /// <summary>
@@ -312,7 +334,21 @@ public class RibbonQuickAccessToolBar : ItemsControl
 
     // Always closes through the BUTTON's IsChecked, never the popup's IsOpen: the two are bound
     // two-way, and driving the popup directly would leave the button stuck looking pressed.
-    private void CloseOverflow()
+    /// <summary>Opens the overflow through its toggle, keeping button and popup state synchronized.</summary>
+    internal void OpenOverflow()
+    {
+        if (_overflowButton is not null)
+        {
+            _overflowButton.SetCurrentValue(ToggleButton.IsCheckedProperty, true);
+        }
+        else if (_overflowPopup is not null)
+        {
+            _overflowPopup.SetCurrentValue(Popup.IsOpenProperty, true);
+        }
+    }
+
+    /// <summary>Closes the overflow through its toggle, keeping button and popup state synchronized.</summary>
+    internal void CloseOverflow()
     {
         if (_overflowButton is not null)
         {
