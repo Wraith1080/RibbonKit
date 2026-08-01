@@ -1529,7 +1529,8 @@ settle that rides the existing tab-switch slide animation, so it shouldn't read 
   toolbox items + right-click design-time editor. (RepositoryUrl still has the `YOUR-GITHUB-USERNAME`
   placeholder — set it before publishing.) See `RibbonKit.Design/SETUP-DESIGNTOOLS.md` → "NuGet packaging".
 
-Still unbuilt in the sandbox (WPF needs Windows) — pending the user's visual check on Windows.
+At that point this batch had not yet been built or visually checked on Windows; the later verification
+record in §5 supersedes that historical status.
 
 ### 3.28 Backstage page-text colour + ribbon focus (RichTextBox) — 2026-07-21
 
@@ -2988,8 +2989,9 @@ Mouse light-dismiss and window deactivate/move/resize retain their close-all beh
 > deferred out of §3.38, the two-pane 2007 application menu shipped in §3.46; only the 2007 window
 > frame is still owed.
 
-**Awaiting verification (§3.42 motion, §3.43 split button).** §3.42 is motion, checked by opening
-things; §3.43 is the split button's vertical arrangement and companion highlight:
+**Awaiting manual verification (§3.42, §3.43, §3.45 and §3.46).** §3.42 is motion, checked by opening
+things; §3.43 is the split button's vertical arrangement and companion highlight; §3.45 covers proxy
+enabled-state propagation; and §3.46 covers the application menu. §3.44 is covered by automated tests.
 
 A. **A vertical split button** (the showcase's Paste): icon on top, ONE line of caption with an
    ellipsis if it is long, chevron beneath it. Narrow the window until the group reduces — it must
@@ -3075,7 +3077,8 @@ corrupt-JSON-starts-clean), the §3.18 QAT/dialog polish batch, the §3.19 dropd
 proxies, the §3.20 large-label chevron/ellipsis work, and the §3.21 backstage footer/button
 items. The §3.14 XAML **design-time** preview (active tab + backstage on the VS/Blend surface)
 is also user-confirmed. The §3.21 #4 **backstage Tab-focus leak is now fixed** (focus trap;
-see §3.21). Nothing in §3 remains in the "needs verification" state.
+see §3.21). Nothing through §3.21 remains in the "needs verification" state; the later manual checks
+listed above are still outstanding.
 
 **Animation polish is now complete.** All six items formerly tracked here — hover
 cross-fade, the true sliding tab marker (shared animated underline), contextual-tab
@@ -3161,9 +3164,10 @@ Backlog (rough priority):
    of public surface), docs site, NuGet polish, performance pass.
 8. GitHub publish: repo URL placeholder in csproj (`YOUR-GITHUB-USERNAME`).
 
-**Unit tests have started — 47 green (2026-07-27).** The QAT/proxy suite landed with §3.39: the STA
-harness, the borrow protocol, and the overflow strip's measure/arrange rules, alongside the existing
-reduction/size-definition/theme-scope tests. Everything else is still unwritten.
+**Unit tests: 96 green (verified 2026-08-01).** Coverage now includes the STA harness, the borrow
+protocol, overflow strip measure/arrange rules, popup motion and dismissal, proxy mirroring,
+application-menu layering/hover/KeyTips, and the existing reduction/size-definition/theme-scope tests.
+The broader coverage gaps listed above remain.
 `docs/06-MERGE-AND-MODAL-PLAN.md` §7 lists the invariants worth asserting next — merge ordering
 across permutations, merge/unmerge round-trips, group restore with two sources in one tab,
 capture-while-modal, modal enter/exit selection. All of Phase 7 was verified by clicking, and those

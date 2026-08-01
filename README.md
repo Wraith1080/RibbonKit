@@ -6,7 +6,7 @@ An open-source, Office Fluent UI–style **Ribbon control library for WPF** on m
 [![Target](https://img.shields.io/badge/.NET-8.0%20%7C%209.0-512BD4)](https://dotnet.microsoft.com/)
 [![NuGet](https://img.shields.io/badge/NuGet-0.1.0--alpha.1-orange)](https://www.nuget.org/)
 
-> **Status: alpha (`0.1.0-alpha.1`).** The control set is feature-complete for most real applications — ribbon, backstage, galleries, QAT with overflow, contextual tabs, KeyTips, tab merging, modal tabs, a runtime customization dialog with persistence, four Office themes, and a full design-time experience in Visual Studio. Roadmap phases 1–5 and 7 are done. The public API is **not frozen yet**; expect renames before `1.0`. See the [roadmap](docs/03-ROADMAP.md).
+> **Status: alpha (`0.1.0-alpha.1`).** The control set is feature-complete for most real applications — ribbon, backstage, galleries, QAT with overflow, contextual tabs, KeyTips, tab merging, modal tabs, a runtime customization dialog with persistence, five Office themes, and a full design-time experience in Visual Studio. Roadmap phases 1–5 and 7 are done. The public API is **not frozen yet**; expect renames before `1.0`. See the [roadmap](docs/03-ROADMAP.md).
 
 ![RibbonKit's showcase app in the default Office 2024 theme](docs/images/theme-2024.png)
 

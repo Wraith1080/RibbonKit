@@ -335,7 +335,7 @@ Each phase ends with a showcase page and tests green, matching the house rhythm.
 
 ## 7. Testing
 
-Unit-testable without WPF rendering (the sandbox can't build WPF, so this matters):
+Unit-testable without opening rendered windows, keeping the suite deterministic and CI-friendly:
 
 - Ordering: merge A(0), B(0), C(-1) in every permutation → same final tab order.
 - Merge/unmerge round-trip: tab collection identical to the starting state after N cycles.
@@ -346,7 +346,7 @@ Unit-testable without WPF rendering (the sandbox can't build WPF, so this matter
 
 Visual, on Windows: notch and underline position after merge/unmerge and modal transitions in 2010
 and 2013 at 100–200% DPI; strip scroll when merging past the available width; close-button hover
-in all four themes.
+in all five themes.
 
 ---
 

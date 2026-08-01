@@ -1,6 +1,7 @@
 # Office 2007 Theme — Implementation Plan
 
-> **Status: COMPLETE 2026-07-27**, bar two deliberate deferrals (§9). The as-built record is
+> **Status: COMPLETE 2026-07-27**, bar one deliberate deferral (§9): the 2007 window frame. The
+> other original deferral, the two-pane application menu, shipped on 2026-07-28. The as-built record is
 > `04-DESIGN-NOTES.md` §3.38 — read that first; this plan stays useful for the measured palette in §4.
 > Original header follows.
 >
@@ -108,7 +109,7 @@ closest precedent and it catalogues the traps 2007 will re-set. The single bigge
 getting reference images early, and **that has now happened**, which is why this plan carries a real
 palette instead of a recipe. Budget **2–3 visual passes**, down from the 3–4 originally estimated.
 
-The gradients still cannot be verified in the sandbox — WPF needs Windows.
+At planning time the gradients still needed a Windows visual pass; that verification later completed.
 
 ---
 
@@ -417,8 +418,8 @@ These are recorded failures, not general advice:
       print(f, len(k), 'missing:', sorted(base - k), 'extra:', sorted(k - base))
   ```
 
-- **The sandbox cannot build WPF.** Every visual claim needs a Windows check before it is recorded
-  as verified.
+- **Build and test in the current Windows workspace.** Visual claims still need a Windows look before
+  they are recorded as verified.
 
 ---
 
@@ -449,9 +450,9 @@ partly because too much changed between looks.
 | ~~S1~~ | ~~Palette~~ | ✅ **Done 2026-07-27**, reviewed on Windows. `Office2007` enum member, `Tokens.Office2007.xaml` (95/95 parity), showcase button. The §4.3 glass shipped early with it, so S2 is refinement rather than construction. Review found the two §4.5 gaps. | — |
 | ~~S2~~ | ~~Glass~~ | ✅ **Shipped with S1** — the measured crease values were already in hand, so splitting them out would have meant reviewing a flat 2007 that told us nothing. S2 became refinement. | — |
 | ~~S3~~ | ~~Orb~~ | ✅ **Done.** Overhang works. Needed `WindowChrome.IsHitTestVisibleInChrome` (only the bottom half was clickable), a backstage-hide trigger, size 37→46, and a shadow instead of a border. | — |
-| **S4** | Geometry + frame | ✅ Group boxes + `ContentCornerRadius` 0→3 **built 2026-07-27** (§4.5), awaiting `dotnet test` and a Windows look. Remaining: domed tabs, the §6 window frame, maximize re-check. | Side-by-side with `noaero.png` is convincing at 100% DPI; `dotnet test` green. |
+| ~~S4~~ | ~~Geometry~~ | ✅ Group boxes + `ContentCornerRadius` 0→3 **built and verified 2026-07-27** (§4.5). The original domed-tab idea was rejected in favor of the measured flat 2007 tab strip (§3.38). The §6 window frame was split out as the plan's one remaining deliberate deferral so it can be implemented and maximize-tested independently. | — |
 | ~~S5~~ | ~~Accent + backstage~~ | ✅ **Done.** `Glass()` helper beside `Gel()`, `Office2007` case, hot-state guard widened. `Classic2007` deliberately NOT added — `Classic2010` already is the 2007 look and a near-duplicate enum member before the freeze was not worth it. | — |
-| ~~S6~~ | ~~Wiring + verify~~ | ✅ **Done.** Showcase button + `ApplyTheme` helper, README application-menu row corrected and the 2007 row marked ✅, design notes §3.38, roadmap and features updated. **Still owed: the DPI matrix run at 100/125/150/175/200%.** | DPI matrix clean. |
+| ~~S6~~ | ~~Wiring + verify~~ | ✅ **Done.** Showcase button + `ApplyTheme` helper, README application-menu row corrected and the 2007 row marked ✅, design notes §3.38, roadmap and features updated. DPI matrix verified clean at 100/125/150/175/200%. | — |
 
 ---
 
@@ -471,14 +472,14 @@ partly because too much changed between looks.
 
 ## 11. What this unblocks
 
-With 2007 done, all five generations ship and the token layer is proven against the widest visual
-range it will ever face. Everything remaining before v1.0 is additive and safe to build on a frozen
-API:
+With the main 2007 theme done, all five generations ship and the token layer is proven against the
+widest visual range it will ever face. The remaining v1 blockers and later additive work are:
 
 1. **Phase 7 unit tests** — `06-MERGE-AND-MODAL-PLAN.md` §7. A hard gate on Phase 8; the merge and
    modal invariants have only ever been verified by clicking.
-2. **The 2007 application menu** — a real two-pane dropdown control (§2.1). A genuine feature gap
-   surfaced by this plan, and the README currently claims it already exists.
-3. **Dark mode** — the last theming item.
-4. **MDI M1–M3** — cascade/tile/Ctrl+Tab, MVVM demo, tabbed mode + persistence.
-5. **Phase 8** — API freeze, `YOUR-GITHUB-USERNAME` still in the csproj, README screenshots, NuGet.
+2. **The 2007 window frame** — the theme's one remaining deliberate deferral; implement and
+   maximize-test it independently.
+3. **Dark mode, RTL, localization and visual-regression snapshots** — the rest of Phase 6.
+4. **Phase 8** — API freeze, `YOUR-GITHUB-USERNAME` still in the csproj, README screenshots, NuGet.
+5. **MDI M1–M3 (post-v1)** — cascade/tile/Ctrl+Tab, MVVM demo, tabbed mode + persistence.
+6. **Application-menu enhancements (additive)** — arrow-key navigation and a scrolling pane (§3.46).

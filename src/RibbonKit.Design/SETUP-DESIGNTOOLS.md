@@ -215,8 +215,9 @@ visuals. The context-menu verbs are the delivery surface for these actions. (See
 
 ## Deferred
 
-- `DesignModeValueProvider`-based design-only preview toggles (the one avenue left for a togglable
-  tab/backstage preview — design-time *values* render, unlike adorner overlays).
+- A `DesignModeValueProvider`-based **backstage** preview toggle. Tab preview is implemented above;
+  backstage preview currently uses a hand-authored `d:IsBackstageOpen="True"` value because the model
+  API cannot write design-namespace attributes.
 - `ParentAdapter` (valid-drop rules); design-time "Add to QAT" (QAT items are runtime proxies, not
   plain XAML). (NuGet packaging of the `lib/<tfm>/Design/` dll + toolbox manifest is now DONE — see
   "NuGet packaging (wired)" above.)
