@@ -318,6 +318,10 @@ internal sealed class KeyTipService
                 DescendIntoApplicationMenu();
                 break;
 
+            case KeyTipKind.ApplicationMenuPaneOpener:
+                RefreshApplicationMenuPane(item);
+                break;
+
             case KeyTipKind.Backstage:
                 DescendIntoBackstage();
                 break;
@@ -517,6 +521,47 @@ internal sealed class KeyTipService
         }));
     }
 
+    private void RefreshApplicationMenuPane(KeyTipItem opener)
+    {
+        KeyTipLevel current = _levels.Peek();
+        RemoveAdorners(current);
+        _transitioning = true;
+
+        // Invoke the same template part as a mouse click. For a true split row this is the arrow;
+        // for a merged drop-down row it is the primary hit area. Both paths claim the pane without
+        // executing the split row's default command or dismissing the application menu.
+        if (opener.Target is ButtonBase button)
+        {
+            // Raise the routed click synchronously. UIA's Button invocation may defer its click;
+            // rebuilding at Loaded priority could otherwise inspect the old pane first.
+            button.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));
+        }
+
+        _ribbon.Dispatcher.BeginInvoke(DispatcherPriority.Loaded, (Action)(() =>
+        {
+            _transitioning = false;
+            if (!_active || _levels.Count == 0 || !ReferenceEquals(_levels.Peek(), current))
+            {
+                return;
+            }
+
+            KeyTipLevel refreshed = BuildApplicationMenuLevel();
+            refreshed.OnExit = current.OnExit;
+            refreshed.PersistOnActivate = current.PersistOnActivate;
+            refreshed.IsTerminal = current.IsTerminal;
+
+            if (refreshed.Items.Count == 0)
+            {
+                AddAdorners(current);
+                return;
+            }
+
+            _levels.Pop();
+            _levels.Push(refreshed);
+            AddAdorners(refreshed);
+        }));
+    }
+
     // ---- Level builders -----------------------------------------------------------
 
     private KeyTipLevel BuildRootLevel()
@@ -710,9 +755,10 @@ internal sealed class KeyTipService
             return new KeyTipLevel(items);
         }
 
-        // Nav rows are HeaderedContentControls, while their actionable surface is the template's
-        // primary Button. Target that part so both the badge anchor and UIA invocation are correct,
-        // but read the label/explicit keys from the public row control.
+        // A split nav row has two actions, just like RibbonSplitButton: its primary command and its
+        // pane-opening arrow. A merged drop-down has only one visual action, so its primary hit area
+        // is registered as the pane opener and the implementation-only arrow gets no duplicate tip.
+        // Explicit row keys belong to the first/primary target; a true split arrow auto-derives.
         foreach (object? entry in menu.Items)
         {
             RibbonApplicationMenuItem? item = entry as RibbonApplicationMenuItem
@@ -722,14 +768,20 @@ internal sealed class KeyTipService
                 continue;
             }
 
-            item.ApplyTemplate();
-            if (item.PrimaryPart is { IsVisible: true } primary)
+            IReadOnlyList<ApplicationMenuNavTarget> targets = GetApplicationMenuNavTargets(item);
+            for (int index = 0; index < targets.Count; index++)
             {
+                ApplicationMenuNavTarget target = targets[index];
+                if (!target.Target.IsVisible)
+                {
+                    continue;
+                }
+
                 items.Add(new KeyTipItem(
-                    primary,
-                    KeyTipKind.Leaf,
+                    target.Target,
+                    target.OpensPane ? KeyTipKind.ApplicationMenuPaneOpener : KeyTipKind.Leaf,
                     item.Header?.ToString(),
-                    KeyTip.GetKeys(item)));
+                    index == 0 ? KeyTip.GetKeys(item) : null));
             }
         }
 
@@ -748,6 +800,37 @@ internal sealed class KeyTipService
 
         AutoAssign(items);
         return new KeyTipLevel(items);
+    }
+
+    /// <summary>
+    /// Returns the distinct keyboard actions exposed by an application-menu nav row. Kept as one
+    /// shape decision so the KeyTip service cannot drift from the control's split/drop-down model.
+    /// </summary>
+    internal static IReadOnlyList<ApplicationMenuNavTarget> GetApplicationMenuNavTargets(
+        RibbonApplicationMenuItem item)
+    {
+        item.ApplyTemplate();
+        if (item.PrimaryPart is not { } primary)
+        {
+            return Array.Empty<ApplicationMenuNavTarget>();
+        }
+
+        if (!item.HasPane)
+        {
+            return [new ApplicationMenuNavTarget(primary, OpensPane: false)];
+        }
+
+        if (!item.IsSplitPresentation)
+        {
+            return [new ApplicationMenuNavTarget(primary, OpensPane: true)];
+        }
+
+        return item.ArrowPart is { } arrow
+            ? [
+                new ApplicationMenuNavTarget(primary, OpensPane: false),
+                new ApplicationMenuNavTarget(arrow, OpensPane: true),
+            ]
+            : [new ApplicationMenuNavTarget(primary, OpensPane: false)];
     }
 
     private static void AddControlItems(UIElement control, List<KeyTipItem> items)
@@ -1051,8 +1134,11 @@ internal sealed class KeyTipService
         GroupFlyout,
         QuickAccessOverflow,
         ApplicationMenu,
+        ApplicationMenuPaneOpener,
         Backstage,
     }
+
+    internal readonly record struct ApplicationMenuNavTarget(ButtonBase Target, bool OpensPane);
 
     private sealed class KeyTipItem(UIElement target, KeyTipKind kind, string? label, string? keys)
     {

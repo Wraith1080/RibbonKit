@@ -83,9 +83,9 @@
                                     BorderThickness="0,1,1,1" />
                         </Border>
 
-                        <!-- The hairline identifies the two click targets, so it appears only while
-                             the pointer is physically over a split row. At rest — including while
-                             the pane is being used — the row stays visually quiet. -->
+                        <!-- The hairline identifies the two click targets, so it appears while a
+                             split row is physically hovered or its pane is active. It is hidden
+                             only in the fully neutral resting state. -->
                         <StackPanel x:Name="SplitLine"
                                     Grid.Column="1"
                                     Orientation="Horizontal"

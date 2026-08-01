@@ -503,8 +503,11 @@ public class RibbonApplicationMenuItem : HeaderedContentControl
 
     private ButtonBase? _arrow;
 
-    /// <summary>The command half used as this row's KeyTip target.</summary>
+    /// <summary>The command half used as this row's primary KeyTip target.</summary>
     internal ButtonBase? PrimaryPart => _primary;
+
+    /// <summary>The pane-opener half used as a split row's secondary KeyTip target.</summary>
+    internal ButtonBase? ArrowPart => _arrow;
 
     static RibbonApplicationMenuItem()
     {

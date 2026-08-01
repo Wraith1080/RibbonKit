@@ -33,14 +33,18 @@ public class QuickAccessKeyTipTests
     }
 
     [Fact]
-    public void Title_bar_QAT_is_inside_a_KeyTip_adorner_layer()
+    public void Title_bar_QAT_uses_a_window_wide_KeyTip_adorner_layer()
     {
         var document = XDocument.Load(ThemePath("Controls.Window.xaml"));
         var titleBarContent = Named(document, "TitleBarContentHost");
+        var windowHost = Named(document, "WindowAdornerHost");
+        var contentHost = Named(document, "ContentAdornerHost");
 
-        Assert.Contains(
-            titleBarContent.Ancestors(),
-            ancestor => ancestor.Name == Presentation + "AdornerDecorator");
+        Assert.Equal("AdornerDecorator", windowHost.Name.LocalName);
+        Assert.Same(
+            windowHost,
+            titleBarContent.Ancestors(Presentation + "AdornerDecorator").First());
+        Assert.Contains(contentHost, windowHost.Descendants());
     }
 
     private static XElement Named(XDocument document, string name) =>

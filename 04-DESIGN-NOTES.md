@@ -139,17 +139,23 @@ point both at the same values so nothing changes shape.
   descending into the covered backstage).
 - **The application menu is now a real KeyTip level.** Pressing Alt while it is mouse-open badges
   its nav commands, whichever pane is currently visible (including Recent Documents), and its
-  footer buttons. Activating File/Orb by KeyTip opens the same terminal level. Nav rows anchor their
-  badge to `PART_Primary` so invocation follows the exact click path; pane and footer commands are
-  collected from the realized visual tree because both are arbitrary content properties.
+  footer buttons. Activating File/Orb by KeyTip opens the same terminal level. Plain nav commands
+  anchor one badge to `PART_Primary`; true split rows add an auto-derived second badge on
+  `PART_Arrow`, while merged drop-down rows keep one opener badge. Activating either kind of opener
+  refreshes the same terminal level after the pane changes, exposing the newly visible pane items
+  without executing the split command. Pane and footer commands are collected from the realized
+  visual tree because both are arbitrary content properties.
 - **QAT overflow is a KeyTip level, not a pile of hidden root items.** Overflowed QAT elements keep
   `Visibility=Visible` and are arranged into a zero-sized slot, so filtering root badges by
   `IsVisible` stacked their number badges at the strip origin. The active
   `RibbonQuickAccessToolBar` now exposes the panel's overflow membership: root badges include only
   strip items, then the `»` button takes the next number and opens a level built from the flyout's
   command proxies. The overflow popup carries its own `AdornerDecorator`, as every popup KeyTip
-  scope must. The title-bar row also has a separate decorator because it sits outside the window's
-  content-row adorner layer; without it title-bar QAT targets had no layer and showed no badges.
+  scope must. The window also has an outer, window-wide decorator because the title-bar QAT sits
+  outside the content-row adorner layer. A title-row-only layer did show its badges, but its adorner
+  still painted below the later content row, so legacy themes' opaque tab strips covered the badge
+  bottoms. The outer layer paints QAT KeyTips above both rows without lifting the title background
+  over the Office 2007 orb; the content row retains its inner decorator for backstage overlays.
 - Invocation goes through UIA patterns (Invoke/Toggle) so it works for every control.
 
 ### 3.4 Contextual tabs = custom coloring (no marker line)

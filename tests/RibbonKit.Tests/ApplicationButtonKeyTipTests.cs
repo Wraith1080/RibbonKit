@@ -70,6 +70,79 @@ public class ApplicationButtonKeyTipTests
         Assert.True(clicked);
     });
 
+    [Fact]
+    public void Application_menu_split_nav_exposes_command_and_arrow_KeyTip_targets() => Sta.Run(() =>
+    {
+        RibbonApplicationMenuItem item = NavItem(hasPane: true, isSplit: true);
+
+        var targets = RibbonKeyTipService.GetApplicationMenuNavTargets(item);
+
+        Assert.Collection(
+            targets,
+            target =>
+            {
+                Assert.Same(item.PrimaryPart, target.Target);
+                Assert.False(target.OpensPane);
+            },
+            target =>
+            {
+                Assert.Same(item.ArrowPart, target.Target);
+                Assert.True(target.OpensPane);
+            });
+    });
+
+    [Fact]
+    public void Application_menu_split_arrow_claims_pane_without_running_primary_command() => Sta.Run(() =>
+    {
+        var menu = new RibbonApplicationMenu();
+        RibbonApplicationMenuItem item = NavItem(hasPane: true, isSplit: true);
+        bool primaryInvoked = false;
+        item.Click += (_, _) => primaryInvoked = true;
+        menu.Items.Add(item);
+
+        item.ApplyTemplate();
+        Assert.NotNull(item.ArrowPart);
+        item.ArrowPart!.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));
+
+        Assert.Same(item, menu.ActiveItem);
+        Assert.True(item.IsActive);
+        Assert.False(primaryInvoked);
+    });
+
+    [Theory]
+    [InlineData(false, true, false)]
+    [InlineData(true, false, true)]
+    public void Application_menu_non_split_nav_exposes_one_KeyTip_target(
+        bool hasPane,
+        bool isSplit,
+        bool opensPane) => Sta.Run(() =>
+    {
+        RibbonApplicationMenuItem item = NavItem(hasPane, isSplit);
+
+        var target = Assert.Single(RibbonKeyTipService.GetApplicationMenuNavTargets(item));
+
+        Assert.Same(item.PrimaryPart, target.Target);
+        Assert.Equal(opensPane, target.OpensPane);
+    });
+
+    private static RibbonApplicationMenuItem NavItem(bool hasPane, bool isSplit)
+    {
+        var root = new FrameworkElementFactory(typeof(Grid));
+        root.AppendChild(new FrameworkElementFactory(typeof(Button), "PART_Primary"));
+        root.AppendChild(new FrameworkElementFactory(typeof(Button), "PART_Arrow"));
+
+        return new RibbonApplicationMenuItem
+        {
+            Header = "Print",
+            Content = hasPane ? new Border() : null,
+            IsSplit = isSplit,
+            Template = new ControlTemplate(typeof(RibbonApplicationMenuItem))
+            {
+                VisualTree = root,
+            },
+        };
+    }
+
     private static string RibbonChromePath()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);

@@ -33,20 +33,21 @@
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type controls:RibbonWindow}">
                     <Border x:Name="PART_WindowRoot" Background="{TemplateBinding Background}">
+                        <!-- Window-wide layer for overlays anchored outside the content row. In
+                             particular, title-bar QAT KeyTips can extend into the tab strip and
+                             must paint above it. Keeping the title visuals inside the decorated
+                             child preserves the Office 2007 orb's intentional upward overlap. -->
+                        <AdornerDecorator x:Name="WindowAdornerHost">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="34" />
                                 <RowDefinition Height="*" />
                             </Grid.RowDefinitions>
 
-                            <!-- The title bar needs its own adorner layer: a title-bar QAT lives
-                                 outside the content-row AdornerDecorator, so its KeyTips otherwise
-                                 have nowhere to render. This wrapper has identical measure/arrange
-                                 behaviour to the Grid it contains. -->
-                            <AdornerDecorator Grid.Row="0">
                             <!-- Title bar (its own band token, separate from the tab strip:
                                  Office 2019/2013 use a colored title bar over a light strip) -->
-                            <Grid Background="{DynamicResource RibbonKit.Brushes.TitleBar.Background}">
+                            <Grid Grid.Row="0"
+                                  Background="{DynamicResource RibbonKit.Brushes.TitleBar.Background}">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
@@ -168,14 +169,14 @@
                                             ToolTip="Close" />
                                 </StackPanel>
                             </Grid>
-                            </AdornerDecorator>
 
                             <!-- Window content. The AdornerDecorator is REQUIRED: without
                                  it adorner-hosted overlays (the backstage) cannot render. -->
-                            <AdornerDecorator Grid.Row="1">
+                            <AdornerDecorator x:Name="ContentAdornerHost" Grid.Row="1">
                                 <ContentPresenter />
                             </AdornerDecorator>
                         </Grid>
+                        </AdornerDecorator>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="WindowState" Value="Maximized">
