@@ -2705,18 +2705,26 @@ disappears under it. That one sentence rules out both of the obvious hosts:
 | `Popup` | Its own top-level HWND. It is above *everything* in the owner window by construction, and nothing in that window can ever paint over it. |
 | Adorner layer (what `Backstage` uses) | A sibling visual branch inside the `AdornerDecorator` that paints above all window content — including the ribbon, including the orb. |
 
-So the menu is hosted **inside the ribbon's own tab-strip row**, declared *before* the application
-button in `Controls.RibbonChrome.xaml` so the orb paints over it, and carried by a **zero-sized
-`Canvas`**:
+So the menu is hosted **inside the ribbon's own tab-strip row**, carried by a **zero-sized
+`Canvas`**, and placed on an explicit layer between the ordinary tab-row content and the
+application-button/orb layer:
 
 ```xml
-<Canvas Grid.Column="0" Grid.ColumnSpan="4" Panel.ZIndex="0"
+<Canvas Grid.Column="0" Grid.ColumnSpan="4" Panel.ZIndex="1"
         Width="0" Height="0" HorizontalAlignment="Left" VerticalAlignment="Top">
     <ContentPresenter Content="{Binding ApplicationMenu, …}"
                       Margin="{DynamicResource RibbonKit.Metrics.ApplicationMenuMargin}"
                       Visibility="{Binding IsApplicationMenuOpen, …, Converter={StaticResource RibbonKit.BoolToVis}}" />
 </Canvas>
 ```
+
+The explicit ordering is important: ordinary tab-row content (tab labels, the shared active-tab
+marker, and the tab-row QAT) stays at z=0, the application menu is z=1, and the application-button
+stack is z=2 so only the orb paints above the menu. Declaration order alone is insufficient because
+the later-declared tab strip otherwise paints its labels and marker over the menu. One level higher,
+the `RibbonTabControl` branch is conditionally promoted while `IsApplicationMenuOpen` is true so
+the separately hosted, later-declared below-ribbon QAT cannot cover the menu either; keeping that
+promotion conditional preserves the normal closed-ribbon card/QAT overlap.
 
 Two properties of `Canvas` are doing real work here, and both are the reason it is a `Canvas` and
 not a `Grid` cell:

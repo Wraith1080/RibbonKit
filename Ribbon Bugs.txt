@@ -1,0 +1,11 @@
+Ribbon Bugs : 
+1. Application menu behind the tab header text and active tab header and also QAT panel when the QAT is located under the ribbon
+2. Application button no longer has keytips
+3. QAT inside the overflow has keytips visible on the start of QAT panel (only for qat located in header bar, qat in title bar doesn't have any keytips at all
+4. Application menu for non 2007 should be under application button
+5. 2024 menu and all visual needs to have corner radius
+6. escape key no longer works globally after tryng to close a dropdown button pop up
+7. application menu nav will reset randomly when trying to go to split button sub menu slowly. make it so that only hovering other nav will reset it.
+8. application menu nav split button doesn't need to show split lines when not hovered
+9. application menu nav split button's main button will light up like normal hover when its dropdown menu's item is hovered/clicked
+10. application menu nav dropdown button's has 2 separate click effect as if it was a split button when it shouldn't has any click effect

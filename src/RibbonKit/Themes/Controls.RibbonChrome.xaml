@@ -52,6 +52,7 @@
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
                             <controls:RibbonTabControl
+                                x:Name="TabControlHost"
                                 Grid.Row="0"
                                 ItemsSource="{TemplateBinding Tabs}"
                                 SelectedItem="{Binding SelectedTab, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}" />
@@ -106,6 +107,14 @@
                                              RelativeSource="{RelativeSource AncestorType={x:Type controls:Ribbon}}" />
                                 </Setter.Value>
                             </Setter>
+                        </Trigger>
+                        <!-- The application menu is allowed to escape the nested tab-control
+                             template. Promote that whole branch while it is open so the later-
+                             declared below-ribbon QAT cannot paint over it. This is deliberately
+                             conditional: when the menu is closed, the QAT/card overlap keeps its
+                             established declaration-order rendering. -->
+                        <Trigger Property="IsApplicationMenuOpen" Value="True">
+                            <Setter TargetName="TabControlHost" Property="Panel.ZIndex" Value="1" />
                         </Trigger>
                         <!-- Minimized + QAT below: the ribbon body card is collapsed, so the
                              QAT bar is left standing alone under the tab strip. Make it a
@@ -171,9 +180,10 @@
                                  outside its parent's bounds. Positioning comes from the child's
                                  Margin (ApplicationMenuMargin), tuned per theme to land under the
                                  orb. -->
-                            <Canvas Grid.Column="0"
+                            <Canvas x:Name="ApplicationMenuLayer"
+                                    Grid.Column="0"
                                     Grid.ColumnSpan="4"
-                                    Panel.ZIndex="0"
+                                    Panel.ZIndex="1"
                                     Width="0"
                                     Height="0"
                                     HorizontalAlignment="Left"
@@ -192,8 +202,9 @@
                                  2013 draws it as a solid accent block that must run to the bottom
                                  edge of the row to meet the body — centering this stack left a thin
                                  gap under it. The caption icon inside centres itself explicitly. -->
-                            <StackPanel Grid.Column="0"
-                                        Panel.ZIndex="1"
+                            <StackPanel x:Name="ApplicationButtonLayer"
+                                        Grid.Column="0"
+                                        Panel.ZIndex="2"
                                         Orientation="Horizontal"
                                         VerticalAlignment="Stretch">
                             <Image x:Name="PART_MergedCaptionIcon"
