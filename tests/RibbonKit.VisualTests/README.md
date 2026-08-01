@@ -9,6 +9,10 @@ text rendering, layout rounding, and software rendering, and disables RibbonKit 
 taking each snapshot. Every scene is rendered twice and must produce identical pixels before it is
 compared with the approved image.
 
+One additional Office 2024 snapshot at 100% applies `FlowDirection.RightToLeft` to the same scene.
+It is an RTL layout smoke test kept separate from localization so a mirrored-layout regression is
+not confused with translated text or font fallback.
+
 `RenderTargetBitmap`'s 96-DPI setting does not override the DPI WPF assigns to a disconnected visual
 tree. The harness explicitly assigns each scene's root DPI with `VisualTreeHelper.SetRootDpi` before
 layout, verifies that WPF reports the requested value, and scales both bitmap dimensions and DPI

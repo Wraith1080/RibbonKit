@@ -74,6 +74,12 @@ public sealed class VisualSnapshotTests
                         AssertSnapshot($"{name}-{percent}", scale);
                     }
                 }
+
+                // Smallest deterministic RTL slice: isolate FlowDirection from localization and
+                // DPI variables while exercising the same real tokens/templates as the matrix.
+                ThemeManager.Apply(application, RibbonTheme.Office2024);
+                ThemeManager.SetDarkMode(application, false);
+                AssertSnapshot("office2024-rtl-100", 1d, FlowDirection.RightToLeft);
             }
             finally
             {
@@ -100,10 +106,13 @@ public sealed class VisualSnapshotTests
     private static Color ResourceColor(Application application, string key) =>
         Assert.IsType<SolidColorBrush>(application.TryFindResource(key)).Color;
 
-    private static void AssertSnapshot(string snapshotName, double dpiScale)
+    private static void AssertSnapshot(
+        string snapshotName,
+        double dpiScale,
+        FlowDirection flowDirection = FlowDirection.LeftToRight)
     {
-        BitmapSource actual = RenderScene(dpiScale);
-        BitmapSource repeated = RenderScene(dpiScale);
+        BitmapSource actual = RenderScene(dpiScale, flowDirection);
+        BitmapSource repeated = RenderScene(dpiScale, flowDirection);
 
         if (!Pixels(actual).AsSpan().SequenceEqual(Pixels(repeated)))
         {
@@ -161,9 +170,9 @@ public sealed class VisualSnapshotTests
             "If this change is intentional, review those images and regenerate the approved PNG.");
     }
 
-    private static BitmapSource RenderScene(double dpiScale)
+    private static BitmapSource RenderScene(double dpiScale, FlowDirection flowDirection)
     {
-        FrameworkElement scene = CreateScene();
+        FrameworkElement scene = CreateScene(flowDirection);
         var requestedDpi = new DpiScale(dpiScale, dpiScale);
         VisualTreeHelper.SetRootDpi(scene, requestedDpi);
         DpiScale effectiveDpi = VisualTreeHelper.GetDpi(scene);
@@ -195,7 +204,7 @@ public sealed class VisualSnapshotTests
         return bitmap;
     }
 
-    private static FrameworkElement CreateScene()
+    private static FrameworkElement CreateScene(FlowDirection flowDirection)
     {
         var root = new Grid
         {
@@ -204,6 +213,7 @@ public sealed class VisualSnapshotTests
             UseLayoutRounding = true,
             SnapsToDevicePixels = true,
             Language = XmlLanguage.GetLanguage("en-US"),
+            FlowDirection = flowDirection,
         };
         TextOptions.SetTextFormattingMode(root, TextFormattingMode.Display);
         TextOptions.SetTextHintingMode(root, TextHintingMode.Fixed);

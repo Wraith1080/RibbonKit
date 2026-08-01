@@ -2,7 +2,7 @@
 
 Each phase ends with the showcase app demonstrating everything built so far, tests green, and a tagged pre-release. Phases are sequential but small overlaps are fine.
 
-> **Progress (2026-08-01):** Phases 0–5 and **7 are complete**. Phase 6 is mostly done — **all five themes now ship** (2024, 2019, 2013, 2010 and 2007 — see [`04-DESIGN-NOTES.md`](../04-DESIGN-NOTES.md) §3.38 and [`07-OFFICE-2007-THEME-PLAN.md`](07-OFFICE-2007-THEME-PLAN.md)), per-monitor DPI is verified at 100/125/150/175/200% **on all five, 2007 included**, and dark variants ship for Office 2019/2024. The deterministic 28-image visual-regression suite covers all five light themes plus both dark variants at 100/125/150/200% (§§3.48–3.49). RTL and localization are still owed. Phase 8 has not started. Post-v1 MDI emulation is unusually shaped: M0 and M4 are done, M1–M3 are not.
+> **Progress (2026-08-01):** Phases 0–5 and **7 are complete**. Phase 6 is mostly done — **all five themes now ship** (2024, 2019, 2013, 2010 and 2007 — see [`04-DESIGN-NOTES.md`](../04-DESIGN-NOTES.md) §3.38 and [`07-OFFICE-2007-THEME-PLAN.md`](07-OFFICE-2007-THEME-PLAN.md)), per-monitor DPI is verified at 100/125/150/175/200% **on all five, 2007 included**, and dark variants ship for Office 2019/2024. The deterministic 28-image visual-regression suite covers all five light themes plus both dark variants at 100/125/150/200% (§§3.48–3.49), with one additional Office 2024 RTL smoke image (§3.51). Full RTL verification and localization are still owed. Phase 8 has not started. Post-v1 MDI emulation is unusually shaped: M0 and M4 are done, M1–M3 are not.
 >
 > Live DPI switching needed a fix outside the library: an app must declare **PerMonitorV2** in its own manifest or Windows bitmap-stretches it until restart. The showcase now does, and the README tells consumers to (§3.42).
 >
@@ -34,7 +34,7 @@ RibbonWindow with title-bar integration, Quick Access Toolbar (placement, overfl
 
 ## Phase 6 — Full theme range & DPI hardening
 
-Office 2019 (+dark/accents), 2013, 2010, 2007 themes on the token layer; visual regression snapshot suite per theme; DPI matrix testing (100/125/150/200%, mixed monitors, per-monitor v2); RTL verification; localization resources. **Exit criteria:** snapshot suite green across 5 themes × 4 DPI levels. *All five themes ship (2007 landed 2026-07-27, §3.38), dark variants ship for 2019/2024 (§3.49), and the deterministic 28-image light/dark snapshot matrix is green locally. RTL and localization are still owed.*
+Office 2019 (+dark/accents), 2013, 2010, 2007 themes on the token layer; visual regression snapshot suite per theme; DPI matrix testing (100/125/150/200%, mixed monitors, per-monitor v2); RTL verification; localization resources. **Exit criteria:** snapshot suite green across 5 themes × 4 DPI levels. *All five themes ship (2007 landed 2026-07-27, §3.38), dark variants ship for 2019/2024 (§3.49), and the deterministic 28-image light/dark snapshot matrix is green locally. One Office 2024 RTL smoke snapshot is also approved (§3.51); full RTL verification and localization are still owed.*
 
 ## Phase 7 — Power features ✅ COMPLETE (2026-07-27)
 
@@ -46,7 +46,7 @@ API review and freeze (rename pass, hide internals, `PublicAPI.txt` analyzer), d
 
 ## Post-v1 candidates
 
-Simplified (single-row) ribbon, full ribbon customization dialog (tabs/groups), touch/pen affordances, additional theme variants (colorful/black for 2013+), Office-style status bar, ribbon designer/serializer from XML definitions.
+Simplified (single-row) ribbon, full ribbon customization dialog (tabs/groups), touch/pen affordances, additional theme variants (colorful/black for 2013+), Office-style status bar, ribbon designer/serializer from XML definitions. Possible visual polish: an optional purpose-authored `MonochromeIcon` for QAT-capable commands on accent-colored title/tab surfaces; this is not a committed API, and no separate dark-icon property is currently planned.
 
 **MDI emulation control** — themed in-window "child windows" (float/resize/cascade/tile/minimize/maximize) plus a switchable tabbed-documents mode, with the maximized child's caption merging into the ribbon. Orchestrates existing subsystems (tab merging, `RibbonState` persistence, token theming, `RibbonWindow` chrome/DPI) rather than adding much new mechanism; can build most of the way without waiting on Phase 7's tab-merging API. Full design in [`docs/05-MDI-EMULATION-PLAN.md`](05-MDI-EMULATION-PLAN.md).
 

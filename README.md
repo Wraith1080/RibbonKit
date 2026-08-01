@@ -225,7 +225,7 @@ Design-time tooling setup is documented in [`src/RibbonKit.Design/SETUP-DESIGNTO
 
 ## Roadmap to v1.0
 
-Remaining before the API freeze: RTL and localization (the final Phase 6 items). Dark mode and the 28-image light/dark visual-regression matrix are complete. The Phase 7 merge/modal invariant tests are complete. One item is still deferred out of the Office 2007 work: the 2007 window frame. (The two-pane 2007 application menu, the other deferral, shipped as `RibbonApplicationMenu`.) Then release engineering — API review and freeze, docs site, SourceLink, and a performance pass.
+Remaining before the API freeze: full RTL verification and localization (the final Phase 6 items). Dark mode and the 28-image light/dark visual-regression matrix are complete, and a 29th Office 2024 RTL smoke image now guards basic mirroring. The Phase 7 merge/modal invariant tests are complete. One item is still deferred out of the Office 2007 work: the 2007 window frame. (The two-pane 2007 application menu, the other deferral, shipped as `RibbonApplicationMenu`.) Then release engineering — API review and freeze, docs site, SourceLink, and a performance pass.
 
 ## Contributing
 

@@ -215,6 +215,11 @@ tab row with colored band), icons turn white silhouettes and hover matches the b
   Re-run on `ThemeManager.Changed`, collection changes, and placement changes.
 - White icon = `Rectangle Fill=#FFFFFF` with `OpacityMask=ImageBrush(Icon)`; the small
   layout has `SmallImage` + hidden `SmallImageTint`, swapped by template trigger.
+- **Possible later API, not committed:** an optional per-command `MonochromeIcon` could provide a
+  purpose-authored alpha mask for colored QAT surfaces. That would preserve holes and internal
+  strokes that the automatic mask loses when a full-color icon contains several opaque regions.
+  Keep the existing automatic mask as the compatibility fallback; do not add a separate dark-mode
+  icon matrix unless real application icons demonstrate that theme-aware resources are insufficient.
 
 ### 3.10 Animation system (global + per-action)
 **Configuration model chosen by user: global level + per-action overrides, default
@@ -3064,6 +3069,18 @@ content: `RibbonGalleryItem.Foreground` already supplies the primary theme token
 inheritance, while a local Foreground remains the natural opt-out for semantic colors. The showcase's
 neutral style labels now use `Text.Secondary`; its intentional blue heading previews stay blue.
 
+### 3.51 First deterministic RTL snapshot slice — 2026-08-01
+
+The visual suite now renders one additional Office 2024 light scene at 100% with
+`FlowDirection.RightToLeft`, bringing the approved total to **29 images**. It deliberately keeps
+invariant culture and `en-US` language metadata: this isolates WPF mirroring from translation, font
+fallback and shaping. The approved result is a clean geometric mirror of the LTR scene—QAT, tabs,
+groups, separators and directional glyphs move together while the English labels remain readable.
+
+This is an RTL smoke slice, not completion of the roadmap item. Full RTL verification still needs
+the showcase's popup/window surfaces and representative bidirectional text; localization resources
+and their public override point remain separate Phase 6 work.
+
 ## 4. Workflow / Session Conventions
 
 - Cloud workspace: `/home/user/ribbonkit/`. The user's machine:
@@ -3088,7 +3105,8 @@ neutral style labels now use `Text.Secondary`; its intentional blue heading prev
 >
 > Roadmap Phases 1–5 and 7 are complete. **Phase 6 now also has the Office 2007 theme (§3.38)**, so
 > all five generations ship, dark variants for 2019/2024 are in §3.49, and the complete 28-image
-> visual-regression matrix covers the light and dark palettes. Phase 6 still owes RTL + localization. Phase 8 (API freeze,
+> theme/DPI matrix plus one deterministic RTL smoke image are covered by 29 approvals. Phase 6 still
+> owes full RTL verification + localization. Phase 8 (API freeze,
 > docs site, perf, launch) is untouched. Of the two items
 > deferred out of §3.38, the two-pane 2007 application menu shipped in §3.46; only the 2007 window
 > frame is still owed.
@@ -3268,8 +3286,8 @@ Backlog (rough priority):
    FRAME (glass caption + orb overhang). The other deferral, the real two-pane APPLICATION MENU,
    **shipped 2026-07-28 (§3.46)**. (The 2007 DPI matrix pass is DONE — clean at
    100/125/150/175/200%.)
-3. RTL + localization resources — the remaining work in roadmap Phase 6. The §§3.48–3.49
-   visual-regression matrix is complete.
+3. Full RTL verification + localization resources — the remaining work in roadmap Phase 6. The
+   §§3.48–3.49 visual-regression matrix is complete, and §3.51 adds the first RTL smoke snapshot.
 4. **The remaining unit tests** — broader customization serializer round-trips, KeyTip resolution,
    and reduction-algorithm gaps. The Phase 7 merge/modal invariants are now DONE: 13 tests cover
    stable ordering, repeated merge/unmerge, two-source group restoration, modal transitions and
@@ -3281,6 +3299,10 @@ Backlog (rough priority):
 6. Roadmap Phase 8 release engineering: API review and freeze (`PublicAPI.txt` — Phase 7 added a lot
    of public surface), docs site, NuGet polish, performance pass.
 7. GitHub publish: repo URL placeholder in csproj (`YOUR-GITHUB-USERNAME`).
+
+Possible post-v1 polish: an optional `MonochromeIcon` on QAT-capable command buttons, used as a
+purpose-authored alpha mask on accent-colored title/tab surfaces. This is an API idea, not scheduled
+work; a separate `DarkIcon` property remains intentionally unplanned.
 
 **Unit tests: 120 green (verified 2026-08-01).** Coverage now includes the STA harness, the borrow
 protocol, overflow strip measure/arrange rules, popup motion and dismissal, proxy mirroring,
