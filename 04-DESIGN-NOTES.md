@@ -2517,6 +2517,17 @@ popup that host's template opens.** Any flyout whose surface is NOT the thing th
 to opt out explicitly, and nothing warns you — the leak only shows up in whichever theme makes the
 band's brushes visibly wrong.
 
+**No Motion also has to suppress WPF's private context-menu popup.** The manual Windows pass found
+that command and QAT context menus still faded after `DropdownMenu` correctly rested at `None`.
+`ContextMenu` creates a private parent `Popup` and binds that host directly to
+`SystemParameters.MenuPopupAnimationKey`; a resource placed on the child menu cannot reliably reach
+its parent. RibbonKit now leases an application-level `PopupAnimation.None` override immediately
+before either RibbonKit menu opens, keeps it only for that menu's lifetime, and restores the host
+application's previous value on close. RibbonKit's own `RibbonPopupMotion` is therefore the sole
+entrance at Subtle/Expressive, while No Motion is genuinely instant. The scope is reference-counted
+so overlapping RibbonKit menus cannot restore the resource out of order. Covered by
+`PopupMotionTests` and user-verified on Windows 2026-08-01.
+
 **Separately: the showcase now declares PerMonitorV2 DPI awareness.** Changing the Windows display
 scale with the app running left it the same size and blurry until a restart — the signature of
 bitmap stretching, i.e. of a process that is only System-DPI aware. WPF on .NET does **not** opt in
@@ -2927,8 +2938,9 @@ has bitten.
 
 New public types: `RibbonApplicationMenu`, `RibbonApplicationMenuItem`,
 `RibbonApplicationMenuPaneItem`, `RibbonApplicationMenuButton`, `RibbonApplicationMenuSeparator`.
-New `Ribbon` members: `ApplicationMenu`, read-only `IsApplicationMenuOpen`. Tokens went **127 → 156
-keys** per theme (the original 24 plus the later cross-generation placement/corner/shadow profile).
+New `Ribbon` members: `ApplicationMenu`, read-only `IsApplicationMenuOpen`. Tokens went **127 → 158
+keys** per theme (the original 24, the later cross-generation placement/corner/shadow profile, and
+the separate application-menu-open File-button surface pair).
 2007's values are measured; 2010 gets a
 soft-glass translation and 2013/2019/2024 flat on-palette equivalents, so assigning an application
 menu under any generation is legal and looks deliberate.
@@ -2977,11 +2989,11 @@ Mouse light-dismiss and window deactivate/move/resize retain their close-all beh
 
 ## 5. Current State & Next Steps
 
-> **Status as of 2026-07-28: everything through §3.41 is implemented AND user-verified on Windows.**
+> **Status as of 2026-08-01: everything through §3.46 is implemented AND user-verified on Windows.**
 > The ten-point §3.40/§3.41 checklist that stood here has been walked and passed in full, and the
 > **2007 DPI matrix is clean at 100/125/150/175/200%** — which closes the last S6 exit criterion the
-> 2007 arc left open. §3.42 (whole-surface flyout animation + the DPI-awareness manifest) shipped
-> after that pass and is NOT yet verified; its checklist is below.
+> 2007 arc left open. §3.42's whole-surface flyout animation, reduced-motion behavior, and the
+> DPI-awareness manifest have now also passed their Windows verification.
 >
 > Roadmap Phases 1–5 and 7 are complete. **Phase 6 now also has the Office 2007 theme (§3.38)**, so
 > all five generations ship; Phase 6 still owes dark mode, RTL + localization and the
@@ -2989,10 +3001,10 @@ Mouse light-dismiss and window deactivate/move/resize retain their close-all beh
 > deferred out of §3.38, the two-pane 2007 application menu shipped in §3.46; only the 2007 window
 > frame is still owed.
 
-**Awaiting manual verification (§3.42, §3.43/D and §3.46).** The §3.43 runtime split-button checks
-(A–C) and all §3.45 proxy checks (E) passed on Windows on 2026-08-01; §3.43/D still needs its Visual
-Studio Ribbon Editor pass. §3.42 is motion, checked by opening things; §3.46 covers the application
-menu. §3.44 is covered by automated tests.
+**Manual verification complete through §3.46 (Windows 2026-08-01).** The whole-surface flyout and
+No Motion pass (§3.42), complete split-button matrix including the Visual Studio Ribbon Editor
+gate/reset/single-Undo behavior (§3.43), proxy enabled-state propagation (§3.45), and complete
+application-menu theme/DPI matrix (§3.46) all pass. §3.44 is covered by automated tests.
 
 A. **A vertical split button** (the showcase's Paste): icon on top, ONE line of caption with an
    ellipsis if it is long, chevron beneath it. Narrow the window until the group reduces — it must
@@ -3008,6 +3020,8 @@ C. **The corners still meet** — top/bottom rounding in vertical, left/right in
 D. **Ribbon Editor**: select a split button — "Split layout" shows for a Large one (or one whose
    SizeDefinition names Large) and is absent otherwise. Set Size to Medium on a Large+Vertical
    button: the row should vanish and the XAML drop back to Horizontal in one undo step.
+   **Verified in Visual Studio on Windows 2026-08-01**, including the SizeDefinition gate and one
+   Undo restoring both the Large-capable definition and Vertical layout.
 E. **§3.45 proxies (manual — not unit-testable):** disable a command from code and confirm its QAT
    proxy, its entry in the » overflow flyout, and any custom-group copy all grey together. Repeat
    with a whole GROUP disabled (that path goes through coercion, not a property set). Then unmerge a
@@ -3044,7 +3058,12 @@ F. **§3.46 application menu.** Switch to the Office 2007 theme (which turns the
       the menu's top border must touch the File button's bottom edge and their left edges must align;
       the open button gets a compact shadow. In 2024 there is a 6 DIP gap, both surfaces have a soft
       shadow, and every menu corner is visibly rounded. No theme may cover its application button.
-   8. **DPI 125/150/200%** on the frame bands and the 52px rows.
+   8. **DPI 125/150/200%** on the frame bands and the 52px rows. **Steps 7–8 verified on Windows
+      2026-08-01 across all five themes at 100/125/150/175/200/225%.** The pass exposed one Office
+      2019 colored-title-bar issue: the File button disappeared into the accent band while open and
+      flashed a neutral grey on mouse-down. The fix gives application-menu-open its own background /
+      foreground tokens (separate from Backstage), connects the open File tab to the neutral menu
+      frame, and derives mouse-down from the accent band. The corrected states were user-verified.
 
 
 
@@ -3173,7 +3192,7 @@ Backlog (rough priority):
    of public surface), docs site, NuGet polish, performance pass.
 8. GitHub publish: repo URL placeholder in csproj (`YOUR-GITHUB-USERNAME`).
 
-**Unit tests: 109 green (verified 2026-08-01).** Coverage now includes the STA harness, the borrow
+**Unit tests: 116 green (verified 2026-08-01).** Coverage now includes the STA harness, the borrow
 protocol, overflow strip measure/arrange rules, popup motion and dismissal, proxy mirroring,
 application-menu layering/hover/KeyTips, and the existing reduction/size-definition/theme-scope tests.
 `RibbonMergeModalTests` adds the Phase 7 automated invariants: merge ordering across later

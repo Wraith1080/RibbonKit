@@ -27,8 +27,8 @@ Last consolidated: 2026-08-01 from the repository Markdown files.
 - Roadmap phases 0-5 and 7 are complete. All five themes (Office 2007, 2010, 2013, 2019, and 2024) ship, and DPI was verified at 100/125/150/175/200%. Phase 6 still owes dark mode, RTL, localization, and visual-regression snapshots. Phase 8/API freeze has not started.
 - The Office 2007 two-pane application menu has shipped as `RibbonApplicationMenu`; the 2007 window frame remains deferred.
 - MDI milestones M0 and M4 are complete: floating children plus tab/caption merge work. M1-M3 remain: arrange commands and keyboard cycling, full MVVM proof, tabbed-document mode, and persistence.
-- The latest design notes still request Windows verification for sections 3.42-3.46, notably whole-surface flyout animation, vertical split-button/companion states, proxy enabled-state propagation, and the Office 2007 application menu.
-- The test suite has 109 green tests as of 2026-08-01. Phase 7 merge/modal invariants are covered; important remaining gaps include broader customization round trips, KeyTip resolution, and remaining reduction-algorithm cases.
+- Windows verification is complete through design-notes §3.46, including whole-surface/reduced-motion flyouts, the Ribbon Editor's Large-only split-layout behavior, runtime split-button/companion states, proxy enabled-state propagation, and the application-menu theme/DPI matrix.
+- The test suite has 116 green tests as of 2026-08-01. Phase 7 merge/modal invariants are covered; important remaining gaps include broader customization round trips, KeyTip resolution, and remaining reduction-algorithm cases.
 
 ### Working conventions
 

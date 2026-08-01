@@ -1200,6 +1200,7 @@ public class Ribbon : Control
         menu.Items.Add(customizeRibbonItem);
         menu.Items.Add(new System.Windows.Controls.Separator());
         menu.Items.Add(collapseItem);
+        RibbonPopupMotion.SuppressNativeContextMenuAnimationForOpen(menu);
         menu.IsOpen = true;
     }
 
@@ -1223,7 +1224,7 @@ public class Ribbon : Control
     // submenus) and Separator resolves it. ItemContainerStyle can't be used here — WPF would apply the
     // MenuItem style to Separator items too and throw. If the dictionary can't load, the menu keeps the
     // system default.
-    private static void ApplyModernMenuStyle(System.Windows.Controls.ContextMenu menu)
+    internal static void ApplyModernMenuStyle(System.Windows.Controls.ContextMenu menu)
     {
         System.Windows.ResourceDictionary dictionary = MenuResources;
 
@@ -2288,6 +2289,10 @@ public class Ribbon : Control
     private void OnQatHostContextMenuOpening(object sender, System.Windows.Controls.ContextMenuEventArgs e)
     {
         _qatMenuTarget = ResolveQuickAccessItem(e.OriginalSource as DependencyObject);
+        if (sender is FrameworkElement { ContextMenu: { } menu })
+        {
+            RibbonPopupMotion.SuppressNativeContextMenuAnimationForOpen(menu);
+        }
     }
 
     // Walks up from the right-clicked element to the element that is itself a member of

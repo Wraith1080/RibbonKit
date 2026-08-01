@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using RibbonKit.Animation;
 using Xunit;
@@ -175,6 +176,28 @@ public class PopupMotionTests
         {
             RibbonAnimation.ClearActionLevel(RibbonAnimationAction.DropdownMenu);
         }
+    });
+
+    [Fact]
+    public void Ribbon_context_menus_scope_and_restore_the_native_wpf_popup_animation() => Sta.Run(() =>
+    {
+        var resources = new ResourceDictionary
+        {
+            [SystemParameters.MenuPopupAnimationKey] = PopupAnimation.Fade,
+        };
+        var menu = new ContextMenu();
+
+        RibbonPopupMotion.SuppressNativeContextMenuAnimationForOpen(menu, resources);
+
+        Assert.Equal(
+            PopupAnimation.None,
+            Assert.IsType<PopupAnimation>(resources[SystemParameters.MenuPopupAnimationKey]));
+
+        menu.RaiseEvent(new RoutedEventArgs(ContextMenu.ClosedEvent, menu));
+
+        Assert.Equal(
+            PopupAnimation.Fade,
+            Assert.IsType<PopupAnimation>(resources[SystemParameters.MenuPopupAnimationKey]));
     });
 
     [Fact]
