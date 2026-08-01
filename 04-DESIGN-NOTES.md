@@ -3140,7 +3140,13 @@ during this arc.
 
 Backlog (rough priority):
 
-1. Design editor: optional clear-to-default buttons for scalar properties. (Drag-drop tree
+1. **XAML Designer Ribbon Editor: application-menu authoring parity with backstage.** Add a singleton
+   **Add Application Menu** action; surface `Ribbon.ApplicationMenu` as an editable root node; support
+   adding, deleting and reordering its command items, separators, default/command pane items and
+   footer buttons; and provide design-only menu/active-pane preview without changing runtime XAML
+   state. Follow the existing
+   backstage editor and preview patterns rather than creating a second design-tool architecture.
+1a. Design editor: optional clear-to-default buttons for scalar properties. (Drag-drop tree
    reordering + cross-tab/group moves are now DONE — see §5 "Drag-drop reordering".)
 1b. ~~Finish the `DropdownMenu` animation.~~ **DONE (§3.42)** — all five flyouts plus the context
    menu and its submenus now animate the whole surface.
