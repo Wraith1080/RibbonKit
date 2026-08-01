@@ -64,12 +64,9 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
 
-                        <!-- THE TWO FILLS. Same brush, driven independently through Opacity — which
-                             is the whole trick behind the half-lit state: Office 2007 dims the
-                             command half to roughly a third while the pane is being used, and a
-                             measured sample of that state is the hover gold composited over the nav
-                             column at ~0.32 alpha. One brush, one number, no second gradient per
-                             theme. -->
+                        <!-- THE TWO FILLS. They are independent because a split row whose pane is
+                             being used keeps its command half dimmed and its arrow fully active. A
+                             non-split dropdown uses both together and reads as one merged surface. -->
                         <Border x:Name="MainFill"
                                 Grid.Column="0"
                                 Opacity="0"
@@ -86,10 +83,9 @@
                                     BorderThickness="0,1,1,1" />
                         </Border>
 
-                        <!-- The hairline between the halves: a light line then a dark one, in that
-                             order left-to-right (sampled #FFF2C8 then #DBC17A). It sits INSIDE the
-                             dimmable main fill's neighbour, so it dims with the arrow half staying
-                             lit — matching the capture. -->
+                        <!-- The hairline identifies the two click targets, so it appears only while
+                             the pointer is physically over a split row. At rest — including while
+                             the pane is being used — the row stays visually quiet. -->
                         <StackPanel x:Name="SplitLine"
                                     Grid.Column="1"
                                     Orientation="Horizontal"
@@ -100,8 +96,7 @@
                             <Rectangle Width="1" Fill="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
                         </StackPanel>
 
-                        <!-- The outline spans both halves and NEVER dims — measured identical in the
-                             fully-hovered and the half-lit states. -->
+                        <!-- Full-row outline for ordinary hover and merged dropdown states. -->
                         <Border x:Name="Outline"
                                 Grid.ColumnSpan="2"
                                 Opacity="0"
@@ -151,19 +146,15 @@
                             <Setter TargetName="ArrowFill" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="PART_Arrow" Property="Visibility" Value="Collapsed" />
                         </Trigger>
-                        <Trigger Property="IsSplitPresentation" Value="True">
-                            <Setter TargetName="SplitLine" Property="Visibility" Value="Visible" />
-                        </Trigger>
-
-                        <!-- ACTIVE (this row's pane is on show). Everything lights up... -->
+                        <!-- ACTIVE dropdown: both halves are one opener and remain merged. -->
                         <Trigger Property="IsActive" Value="True">
                             <Setter TargetName="Outline" Property="Opacity" Value="1" />
                             <Setter TargetName="MainFill" Property="Opacity" Value="1" />
                             <Setter TargetName="ArrowFill" Property="Opacity" Value="1" />
                         </Trigger>
-                        <!-- ...except on a SPLIT row, where the command half drops to a third while
-                             the arrow half stays fully lit. A plain drop-down row keeps both lit,
-                             because it has no separate command to look inactive. -->
+                        <!-- ACTIVE split: the command half is a separate action and drops to the
+                             theme's subdued level while the arrow stays fully lit. Physical hover
+                             below restores both halves to full intensity. -->
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
                                 <Condition Property="IsActive" Value="True" />
@@ -171,16 +162,37 @@
                             </MultiTrigger.Conditions>
                             <Setter TargetName="MainFill" Property="Opacity"
                                     Value="{DynamicResource RibbonKit.Metrics.ApplicationMenuDimOpacity}" />
+                            <Setter TargetName="SplitLine" Property="Visibility" Value="Visible" />
                         </MultiTrigger>
 
-                        <!-- HOVER goes AFTER active so it wins: pointing at the row always shows the
-                             full gold on both halves, whatever the pane is doing. Same last-setter-
-                             wins ordering rule the application button's triggers depend on. -->
-                        <Trigger Property="IsMouseOver" Value="True">
+                        <!-- Use the ACTUAL template buttons, not the nav item's IsMouseOver. Pane
+                             content is the item's logical child even though it is presented in the
+                             right column, so hovering a submenu reverse-inherits IsMouseOver to the
+                             nav item and used to light its command half incorrectly. -->
+                        <Trigger SourceName="PART_Primary" Property="IsMouseOver" Value="True">
                             <Setter TargetName="Outline" Property="Opacity" Value="1" />
                             <Setter TargetName="MainFill" Property="Opacity" Value="1" />
                             <Setter TargetName="ArrowFill" Property="Opacity" Value="1" />
                         </Trigger>
+                        <Trigger SourceName="PART_Arrow" Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Outline" Property="Opacity" Value="1" />
+                            <Setter TargetName="MainFill" Property="Opacity" Value="1" />
+                            <Setter TargetName="ArrowFill" Property="Opacity" Value="1" />
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsSplitPresentation" Value="True" />
+                                <Condition SourceName="PART_Primary" Property="IsMouseOver" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="SplitLine" Property="Visibility" Value="Visible" />
+                        </MultiTrigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsSplitPresentation" Value="True" />
+                                <Condition SourceName="PART_Arrow" Property="IsMouseOver" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="SplitLine" Property="Visibility" Value="Visible" />
+                        </MultiTrigger>
 
                         <!-- PRESSED last of all, for the same reason. -->
                         <Trigger SourceName="PART_Primary" Property="IsPressed" Value="True">
@@ -199,6 +211,38 @@
                             <Setter TargetName="Outline" Property="BorderBrush"
                                     Value="{DynamicResource RibbonKit.Brushes.Control.PressedBorder}" />
                         </Trigger>
+                        <!-- A non-split dropdown has two hit areas only as an implementation detail.
+                             Pressing either must paint the same merged, full-row surface. -->
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsSplitPresentation" Value="False" />
+                                <Condition SourceName="PART_Primary" Property="IsPressed" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="MainFill" Property="Opacity" Value="1" />
+                            <Setter TargetName="MainFill" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
+                            <Setter TargetName="ArrowFill" Property="Opacity" Value="1" />
+                            <Setter TargetName="ArrowFill" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
+                            <Setter TargetName="Outline" Property="Opacity" Value="1" />
+                            <Setter TargetName="Outline" Property="BorderBrush"
+                                    Value="{DynamicResource RibbonKit.Brushes.Control.PressedBorder}" />
+                        </MultiTrigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsSplitPresentation" Value="False" />
+                                <Condition SourceName="PART_Arrow" Property="IsPressed" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="MainFill" Property="Opacity" Value="1" />
+                            <Setter TargetName="MainFill" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
+                            <Setter TargetName="ArrowFill" Property="Opacity" Value="1" />
+                            <Setter TargetName="ArrowFill" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
+                            <Setter TargetName="Outline" Property="Opacity" Value="1" />
+                            <Setter TargetName="Outline" Property="BorderBrush"
+                                    Value="{DynamicResource RibbonKit.Brushes.Control.PressedBorder}" />
+                        </MultiTrigger>
 
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter TargetName="Root" Property="Opacity" Value="0.4" />
@@ -438,10 +482,10 @@
                                                                Fill="{DynamicResource RibbonKit.Brushes.ApplicationMenu.SeparatorHighlight}" />
                                                 </StackPanel>
 
-                                                <!-- PART_Pane. The control reads IsMouseOver off this
-                                                     element to decide whether to LATCH the active
-                                                     item, so the name matters to the code, not just
-                                                     to the eye. -->
+                                                <!-- PART_Pane remains a stable template contract,
+                                                     but pane ownership no longer reads hover from
+                                                     it: the separator gap and this surface are
+                                                     neutral territory once a nav row claims them. -->
                                                 <Border x:Name="PART_Pane"
                                                         Grid.Column="2"
                                                         Width="{DynamicResource RibbonKit.Metrics.ApplicationMenuPaneWidth}"

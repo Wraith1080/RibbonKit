@@ -2809,67 +2809,59 @@ one alone.
 generations at runtime by nulling one out, which is exactly what the showcase's "2007 Menu" toggle
 and its `ApplyTheme` do.
 
-#### The hover model, and why it is derived rather than remembered
+#### The hover model: nav-row entry claims, empty space is neutral
 
 This is the part with real behaviour in it. Word 2007's rules, as specified by the user and
 confirmed against the captures:
 
 - The pane shows the default page (Recent Documents) until the pointer enters a nav row that has a
   pane of its own.
-- Leaving that row **without** landing on another row or on the pane reverts to the default page.
-- Entering a row with **no** pane (New, Save, Close) *also* reverts — passing over them clears the
-  pane rather than leaving a stale one up.
-- Once the pointer is in the pane the active row is **latched**: dragging off the right edge of the
-  menu entirely leaves it showing, until another nav row claims it.
+- Entering a pane-bearing row claims that pane immediately.
+- Leaving the row does **nothing**. The pane remains active across the separator chrome, the tiny
+  nav-to-pane gap, the pane itself, and empty menu space.
+- Entering another pane-bearing main row replaces it; entering a row with **no** pane (New, Save,
+  Close) restores the default page.
+- Closing and reopening the application menu always starts on the default page.
 
-The first implementation of the leave path was a `bool _revertPending` flipped by enter and leave.
-It was wrong, and wrong in a way that only shows up as an occasional flicker: **moving from a nav
-row straight into the pane raises a leave and an enter in the same input pass, and WPF does not
-promise their order.** A flag set by whichever fired last is right about half the time.
+The original implementation deferred row-leave to `DispatcherPriority.Background`, then restored
+the default unless either another row or `PART_Pane.IsMouseOver` had become true. It solved a fast
+leave/enter ordering race, but made correctness depend on pointer speed: crossing the one- or
+two-DIP separator gap slowly enough let the deferred evaluation run while neither surface reported
+hover, collapsing the pane immediately before the pointer reached it.
 
-The fix is to record *who* is hovered and re-derive the answer from live state:
+There is no useful user intent in hovering separator chrome. The state machine is now smaller and
+deterministic: **only main-nav `MouseEnter` mutates pane ownership**. Hover logic no longer depends
+on `PART_Pane` or a dispatcher timer; the named part remains in the template contract for backward
+compatibility. `ApplicationMenuHoverTests` pumps the dispatcher after row-leave to preserve the
+slow-crossing reproduction and verifies the pane remains active.
 
-```csharp
-private void EvaluateActive()
-{
-    if (_hoveredItem is { } hovered) { SetActive(hovered.HasPane ? hovered : null); return; }
-    if (_pane is { IsMouseOver: true }) return;   // LATCH
-    SetActive(null);
-}
-```
+**The general rule worth carrying forward: absence of hover is not an action. Treat transit space
+as neutral and change selection only when the pointer enters another actionable target.**
 
-Enter calls it immediately (the pane must swap under the pointer with no lag); leave schedules it at
-`DispatcherPriority.Background`, one pass later, by which time every enter belonging to the same
-pointer move has been raised and `IsMouseOver` on the pane has settled. The latch clause is also
-what implements "dragged off the right edge and it stays" for free — by then there is no hovered
-item and no further leave event to re-check, so nothing runs at all.
+#### Split and dropdown rows: physical hover, not logical hover
 
-**The general rule worth carrying forward: when two input events race, do not let either one decide.
-Record, defer one pass, and read the world.**
+The verified visual contract is:
 
-#### The half-lit split row — measured, then reduced to one number
+- A true **split** row is neutral at rest. While the pointer is physically over the row, both halves
+  light and the divider appears. While its pane is being used, the arrow stays fully active and the
+  separate command half stays at its theme's subdued, half-lit level; the full active outline
+  remains and the divider defines the boundary between those two intensities.
+- A **non-split dropdown** has two template buttons only for hit testing. Visually they are one
+  opener: its active state spans the whole row, and pressing either half paints the same full-row
+  pressed surface.
 
-The user's spec: on a SPLIT nav row whose pane is being used, the arrow half stays fully lit while
-the command half drops to "half intensity"; a plain drop-down row (no default action) stays fully
-lit throughout. Sampling `application_menunavhover.png` against
-`application_menuactivenavtabnothovered.png` gave the two fills at the same y:
+The original template used a control-level `IsMouseOver` trigger. That property is reverse-inherited,
+and a nav item's pane content remains its **logical child** even while a separate presenter displays
+it in the right column. Hovering a submenu item therefore made the left nav row report
+`IsMouseOver=True`, lighting the split command half as if the pointer had returned to it.
 
-| | command half | arrow half |
-|---|---|---|
-| hovered | `#FFE694` | `#FFE588` |
-| pane in use | `#FFF8E3` | `#FFE282` |
-
-`#FFF2CD` (the half-lit crease) is `#FFD758` — the hover gold's crease — composited over the nav
-column at ~0.32 alpha. **The dim state is not a second gradient. It is the same brush at
-`ApplicationMenuDimOpacity`**, so the whole thing costs one `Double` per theme instead of a five-stop
-gel per theme. The outline and the hairline do NOT dim: measured identical in both states
-(`#CAB583` vs `#C9B382`), so they sit outside the dimmed element.
-
-The template therefore paints two independently-dimmable fills sharing
-`Control.HoverBackground`, an outline spanning both, and the hairline; then trigger ORDER does the
-rest — `IsActive` first, the `IsActive AND IsSplitPresentation` `MultiTrigger` second (dims the
-command half), `IsMouseOver` third so pointing at the row always restores full gold, `IsPressed`
-last. Same last-setter-wins discipline the application button's own triggers depend on (§3.40).
+The template now keys hover from `PART_Primary.IsMouseOver` and `PART_Arrow.IsMouseOver` — the two
+actual visual hit areas. This preserves the original active split rendering
+(`ApplicationMenuDimOpacity`: 0.32 in 2007, 0.35 in 2010, 0.4 in the flat themes) while preventing
+submenu hover from escalating it to full intensity. Two non-split pressed `MultiTrigger`s
+deliberately set **both** fills, regardless of which implementation button received the press. The
+divider is shown for a physically hovered split row or its active half-lit state, never at neutral
+rest.
 
 `IsSplitPresentation` is a read-only DP = `HasPane && IsSplit`, exactly so the two halves cannot
 disagree about which shape the row is — the same one-flag trick §3.43 used for the vertical split
@@ -2928,14 +2920,38 @@ has bitten.
 
 New public types: `RibbonApplicationMenu`, `RibbonApplicationMenuItem`,
 `RibbonApplicationMenuPaneItem`, `RibbonApplicationMenuButton`, `RibbonApplicationMenuSeparator`.
-New `Ribbon` members: `ApplicationMenu`, read-only `IsApplicationMenuOpen`. Tokens went **127 → 151
-keys** per theme (14 brushes, 9 metrics, 1 effect). 2007's values are measured; 2010 gets a
+New `Ribbon` members: `ApplicationMenu`, read-only `IsApplicationMenuOpen`. Tokens went **127 → 156
+keys** per theme (the original 24 plus the later cross-generation placement/corner/shadow profile).
+2007's values are measured; 2010 gets a
 soft-glass translation and 2013/2019/2024 flat on-palette equivalents, so assigning an application
 menu under any generation is legal and looks deliberate.
 
 **Originally deferred:** KeyTips for the menu, arrow-key navigation down the column, and a
 scrolling pane. KeyTips shipped with the later QAT/application-menu keyboard-access fix; arrow-key
 navigation and a scrolling pane remain additive work and neither changes the geometry.
+
+### 3.47 Nested popup Escape is a stack, not five independent window handlers — 2026-08-01
+
+Repro: open the QAT overflow, open a drop-down entry inside it, then press Esc. The overflow closed
+instead of the nested menu; the nested `StaysOpen=True` popup could remain visible, and from then on
+Esc stopped dismissing every RibbonKit popup until application restart. A split entry happened to
+tear down cleanly after the overflow closed, which made the two controls appear to have different
+keyboard logic even though they inherit the same dropdown implementation.
+
+The actual difference was timing. Every `PopupDismissHelper` subscribed independently to the same
+owner window's `PreviewKeyDown`. The overflow opened first, so its older handler ran first, closed
+the host and marked Esc handled before the newer nested-menu handler could see it. Unloading the
+proxy could then strand the nested helper's window subscription if WPF coerced the child popup shut
+without raising its normal `Closed` path. That stale handler swallowed every later Esc.
+
+`PopupDismissHelper` now keeps a weak per-window stack in open order. An older helper leaves Esc
+unhandled unless it is the stack top, allowing the newest visible flyout to close first. The result
+is ordinary nested-menu semantics: first Esc closes the entry menu, second Esc closes overflow.
+`OnClosed` removes the helper from the stack, and owner `Unloaded` performs a close plus unconditional
+unregistration in `finally`, sealing the coerced-close path even when `Popup.Closed` never arrives.
+Mouse light-dismiss and window deactivate/move/resize retain their close-all behaviour.
+
+`PopupDismissHelperTests` covers inside-out ordering and the unloaded-owner/no-Closed cleanup path.
 
 ## 4. Workflow / Session Conventions
 
@@ -2995,17 +3011,20 @@ F. **§3.46 application menu.** Switch to the Office 2007 theme (which turns the
       hosting the menu in the tab-strip row; if it is behind, the `Canvas`/`ZIndex` ordering in
       `Controls.RibbonChrome.xaml` is wrong. Check the title-bar QAT is still visible too — only the
       backstage hides it.
-   2. **Position.** Tune `Metrics.ApplicationMenuMargin` (2007: `2,10,0,0`) until the menu's
-      top-left tucks under the orb's lower half. It was placed from a screenshot, not from a run.
-   3. **Hover, the reverting half:** slide down New → Open → Save → Save As. The pane should follow,
-      showing the default page over the pane-less rows and "Save a copy of the document" over Save
-      As, with **no flicker in between** — a flicker means the deferred `EvaluateActive` is racing.
-      Then move off the column entirely: back to Recent Documents.
-   4. **Hover, the latching half:** hover Save As, move right INTO the pane. The row must stay
-      active, its command half dropping to about a third while the **arrow half stays fully lit** and
-      the outline stays full. Now drag off the RIGHT edge of the menu — the pane must stay put.
-   5. **Publish is `IsSplit="False"`** — do the same to it and the WHOLE row should stay fully lit.
-      That is the contrast the two shapes exist to show.
+   2. **Position.** The menu is anchored to the measured application-button bounds. The 2007
+      `Metrics.ApplicationMenuMargin` (`0,8,0,0`) then tucks its top-left under the orb's lower half.
+   3. **Hover ownership:** slide down New → Open → Save → Save As. Pane-less rows show Recent
+      Documents; Save As claims "Save a copy of the document" immediately, with no flicker.
+   4. **Slow gap crossing:** hover Save As, then move right INTO the pane as slowly as possible over
+      the narrow separator gap. The pane must not reset. Once the pointer leaves the nav row, its
+      command half drops to the theme's subdued level while **the arrow half stays fully lit** and
+      the full outline and divider remain. Hover individual items inside the pane:
+      the command half must stay subdued, never jump back to full intensity. Drag off any empty edge
+      of the menu — the pane must still stay put until another nav row is entered or the menu closes.
+      Return to the row: both halves light fully while the divider remains visible.
+   5. **Publish is `IsSplit="False"`** — its active state spans the whole row. Press the body and
+      then the arrow: both must show the same merged full-row pressed visual, never two independent
+      halves. That is the contrast the two shapes exist to show.
    6. **Clicks:** a pane row or a plain nav row closes the menu (status bar shows what was picked);
       the arrow half of a split row does NOT; clicking Publish anywhere does NOT. Esc closes;
       clicking the document closes; **clicking the orb again closes and does not immediately

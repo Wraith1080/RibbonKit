@@ -3,7 +3,6 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Threading;
 using RibbonKit.Animation;
 
 namespace RibbonKit.Controls;
@@ -35,10 +34,10 @@ namespace RibbonKit.Controls;
 /// </para>
 /// <para>
 /// <b>The hover model</b> (matching Office 2007, see 04-DESIGN-NOTES §3.46). The pane shows
-/// <see cref="DefaultContent"/> until the pointer enters a nav item that has one of its own;
-/// leaving that item without landing on another item or on the pane reverts to the default page.
-/// Once the pointer is over the pane the active item is <i>latched</i>: it stays shown even when the
-/// pointer leaves the menu entirely, until another nav item claims it.
+/// <see cref="DefaultContent"/> until the pointer enters a nav item that has one of its own. That
+/// item remains active across the separator gap and while the pointer uses its pane; only entering
+/// another main nav item changes the pane. A pane-less nav item restores the default page, and
+/// closing/reopening the menu resets it.
 /// </para>
 /// </summary>
 [TemplatePart(Name = FramePartName, Type = typeof(FrameworkElement))]
@@ -113,12 +112,6 @@ public class RibbonApplicationMenu : ItemsControl
     public static readonly DependencyProperty HasActivePaneProperty = HasActivePanePropertyKey.DependencyProperty;
 
     private FrameworkElement? _frame;
-
-    private FrameworkElement? _pane;
-
-    private RibbonApplicationMenuItem? _hoveredItem;
-
-    private bool _revertScheduled;
 
     private Window? _dismissWindow;
 
@@ -230,7 +223,6 @@ public class RibbonApplicationMenu : ItemsControl
         base.OnApplyTemplate();
 
         _frame = GetTemplateChild(FramePartName) as FrameworkElement;
-        _pane = GetTemplateChild(PanePartName) as FrameworkElement;
     }
 
     /// <inheritdoc />
@@ -255,79 +247,26 @@ public class RibbonApplicationMenu : ItemsControl
     // ------------------------------------------------------------------ nav hover state machine
 
     /// <summary>
-    /// Called by a nav item as the pointer enters or leaves it. The menu never decides anything
-    /// from the event itself — it records who is hovered and then re-derives the answer in
-    /// <see cref="EvaluateActive"/> from LIVE state. That matters because moving from a nav item
-    /// straight into the pane raises a leave and an enter in the same input pass and WPF does not
-    /// promise their order; a flag set by whichever fired last would be wrong half the time.
+    /// Called by a nav item as the pointer enters or leaves it. Entering a main-nav row is the only
+    /// hover action that changes pane ownership; leaving into separator chrome, the small gap before
+    /// the pane, or empty menu space is deliberately neutral.
     /// </summary>
     internal void NotifyItemHoverChanged(RibbonApplicationMenuItem item, bool isOver)
     {
-        if (isOver)
+        if (!isOver)
         {
-            _hoveredItem = item;
-
-            // Entering is immediate: the pane must swap under the pointer with no perceptible lag.
-            EvaluateActive();
             return;
         }
 
-        if (ReferenceEquals(_hoveredItem, item))
-        {
-            _hoveredItem = null;
-        }
-
-        // Leaving is DEFERRED to Background priority, one dispatcher pass later, by which time any
-        // enter that belongs to the same pointer move has been raised and IsMouseOver on the pane
-        // has settled. Without the delay, sliding from one nav item to the next flickers the pane
-        // back to the default page in between.
-        ScheduleEvaluate();
+        // A pane-less command intentionally restores the default page. A pane-bearing row claims
+        // its pane immediately and stays active until another row (or menu close) replaces it.
+        SetActive(item.HasPane ? item : null);
     }
 
     /// <summary>Called by a nav item when it is clicked in a way that should keep the menu up.</summary>
     internal void NotifyItemClaimed(RibbonApplicationMenuItem item)
     {
-        _hoveredItem = item;
-        EvaluateActive();
-    }
-
-    private void ScheduleEvaluate()
-    {
-        if (_revertScheduled)
-        {
-            return;
-        }
-
-        _revertScheduled = true;
-        Dispatcher.BeginInvoke(
-            DispatcherPriority.Background,
-            new Action(() =>
-            {
-                _revertScheduled = false;
-                EvaluateActive();
-            }));
-    }
-
-    private void EvaluateActive()
-    {
-        // 1. A hovered nav item always wins. One with no pane of its own (New, Save, Close …)
-        //    deliberately resolves to NULL, so passing over it drops back to the default page.
-        if (_hoveredItem is { } hovered)
-        {
-            SetActive(hovered.HasPane ? hovered : null);
-            return;
-        }
-
-        // 2. Pointer inside the pane: LATCH. Nothing changes, which is also what keeps the pane
-        //    showing after the pointer has been dragged off the right edge of the menu entirely —
-        //    by then there is no hovered item and no further leave event to re-check.
-        if (_pane is { IsMouseOver: true })
-        {
-            return;
-        }
-
-        // 3. Nothing claims the pane — back to the default page.
-        SetActive(null);
+        SetActive(item.HasPane ? item : null);
     }
 
     private void SetActive(RibbonApplicationMenuItem? item)
@@ -356,7 +295,6 @@ public class RibbonApplicationMenu : ItemsControl
         if (e.NewValue is true)
         {
             // Always open on the default page, whatever was showing when it last closed.
-            _hoveredItem = null;
             SetActive(null);
 
             HookDismissal();
