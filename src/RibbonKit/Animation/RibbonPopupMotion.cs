@@ -1,7 +1,10 @@
 using System;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Threading;
 
 namespace RibbonKit.Animation;
 
@@ -26,6 +29,9 @@ namespace RibbonKit.Animation;
 /// </remarks>
 public static class RibbonPopupMotion
 {
+    private static readonly ConditionalWeakTable<ResourceDictionary, NativeMenuAnimationState>
+        NativeMenuAnimationStates = new();
+
     /// <summary>
     /// Identifies the AnimateOpen attached property: whether the flyout's surface plays an
     /// open transition. Default <see langword="false"/>.
@@ -76,6 +82,90 @@ public static class RibbonPopupMotion
         element.SetValue(OpenActionProperty, value);
     }
 
+    /// <summary>
+    /// Temporarily disables WPF's native animation for a RibbonKit-owned <see cref="ContextMenu"/>.
+    /// Call during the placement target's <c>ContextMenuOpening</c> event, before WPF creates the
+    /// menu's private parent <see cref="Popup"/>. RibbonKit's attached transition remains the sole
+    /// entrance and therefore follows <see cref="RibbonAnimation.GlobalLevel"/> and reduced motion.
+    /// </summary>
+    internal static void SuppressNativeContextMenuAnimationForOpen(ContextMenu menu)
+    {
+        ArgumentNullException.ThrowIfNull(menu);
+        if (Application.Current is { } application)
+        {
+            SuppressNativeContextMenuAnimationForOpen(menu, application.Resources);
+        }
+    }
+
+    /// <summary>Resource-dictionary overload used by the headless regression tests.</summary>
+    internal static void SuppressNativeContextMenuAnimationForOpen(
+        ContextMenu menu,
+        ResourceDictionary applicationResources)
+    {
+        ArgumentNullException.ThrowIfNull(menu);
+        ArgumentNullException.ThrowIfNull(applicationResources);
+
+        NativeMenuAnimationState state = NativeMenuAnimationStates.GetOrCreateValue(applicationResources);
+        if (state.CloseHandlers.ContainsKey(menu))
+        {
+            return;
+        }
+
+        if (state.CloseHandlers.Count == 0)
+        {
+            state.HadLocalValue = applicationResources.Contains(SystemParameters.MenuPopupAnimationKey);
+            state.PreviousValue = state.HadLocalValue
+                ? applicationResources[SystemParameters.MenuPopupAnimationKey]
+                : null;
+            applicationResources[SystemParameters.MenuPopupAnimationKey] = PopupAnimation.None;
+        }
+
+        RoutedEventHandler? closeHandler = null;
+        closeHandler = (_, _) => EndNativeContextMenuSuppression(menu, applicationResources);
+        state.CloseHandlers.Add(menu, closeHandler);
+        menu.Closed += closeHandler;
+
+        // ContextMenuOpening can still be cancelled by another handler. Do not leave the host
+        // application's resource overridden if WPF never actually opened this menu.
+        menu.Dispatcher.BeginInvoke(
+            DispatcherPriority.ApplicationIdle,
+            (Action)(() =>
+            {
+                if (!menu.IsOpen)
+                {
+                    EndNativeContextMenuSuppression(menu, applicationResources);
+                }
+            }));
+    }
+
+    private static void EndNativeContextMenuSuppression(
+        ContextMenu menu,
+        ResourceDictionary applicationResources)
+    {
+        if (!NativeMenuAnimationStates.TryGetValue(applicationResources, out NativeMenuAnimationState? state)
+            || !state.CloseHandlers.Remove(menu, out RoutedEventHandler? closeHandler))
+        {
+            return;
+        }
+
+        menu.Closed -= closeHandler;
+        if (state.CloseHandlers.Count != 0)
+        {
+            return;
+        }
+
+        if (state.HadLocalValue)
+        {
+            applicationResources[SystemParameters.MenuPopupAnimationKey] = state.PreviousValue!;
+        }
+        else
+        {
+            applicationResources.Remove(SystemParameters.MenuPopupAnimationKey);
+        }
+
+        state.PreviousValue = null;
+    }
+
     private static void OnAnimateOpenChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         bool enable = e.NewValue is true;
@@ -119,5 +209,14 @@ public static class RibbonPopupMotion
         {
             RibbonMotion.PlayFlyoutOpen(child, GetOpenAction(popup));
         }
+    }
+
+    private sealed class NativeMenuAnimationState
+    {
+        internal Dictionary<ContextMenu, RoutedEventHandler> CloseHandlers { get; } = new();
+
+        internal bool HadLocalValue { get; set; }
+
+        internal object? PreviousValue { get; set; }
     }
 }

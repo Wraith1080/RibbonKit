@@ -59,6 +59,10 @@ public static class ThemeManager
     private const string AppButtonHoverKey = "RibbonKit.Brushes.ApplicationButton.HoverBackground";
     private const string AppButtonPressedKey = "RibbonKit.Brushes.ApplicationButton.PressedBackground";
     private const string AppButtonBorderKey = "RibbonKit.Brushes.ApplicationButton.Border";
+    private const string AppButtonMenuOpenBackgroundKey = "RibbonKit.Brushes.ApplicationButton.MenuOpenBackground";
+    private const string AppButtonMenuOpenForegroundKey = "RibbonKit.Brushes.ApplicationButton.MenuOpenForeground";
+    private const string ApplicationMenuFrameBandKey = "RibbonKit.Brushes.ApplicationMenu.FrameBand";
+    private const string TextPrimaryKey = "RibbonKit.Brushes.Text.Primary";
     private const string BackstageSelectedGlassKey = "RibbonKit.Brushes.Backstage.ItemSelectedGlass";
     private const string DialogPrimaryBackgroundKey = "RibbonKit.Brushes.Dialog.PrimaryBackground";
     private const string DialogPrimaryBorderKey = "RibbonKit.Brushes.Dialog.PrimaryBorder";
@@ -439,6 +443,16 @@ public static class ThemeManager
         resources.Remove(TabHoverKey);
         resources.Remove(TabStripControlHoverKey);
         resources.Remove(TabStripControlPressedKey);
+        resources.Remove(AppButtonMenuOpenBackgroundKey);
+        resources.Remove(AppButtonMenuOpenForegroundKey);
+        // Menu-open tokens normally preserve the old checked-state contract: accent fill and
+        // white text, including when a custom accent is active. The Office 2019 colored-band
+        // branch below replaces that baseline with the menu's neutral frame surface.
+        if (_accent is Color customAccent)
+        {
+            resources[AppButtonMenuOpenBackgroundKey] = Frozen(customAccent);
+            resources[AppButtonMenuOpenForegroundKey] = Frozen(Colors.White);
+        }
         // Note: the ApplicationButton hover/pressed keys are NOT cleared wholesale — they are
         // owned by the accent system (which runs first and re-establishes its baseline: 2013
         // gets flat mixes, 2010/2007 a gel), and a blind Remove here would delete the value it
@@ -528,12 +542,28 @@ public static class ThemeManager
         if (CurrentTheme == RibbonTheme.Office2019)
         {
             Color stripHover = Mix(accent, Colors.White, 0.18);
+            Color stripPressed = Mix(accent, Colors.Black, 0.15);
             resources[RibbonBackgroundKey] = Frozen(accent);
             resources[TabStripForegroundKey] = Frozen(Colors.White);
             resources[AppButtonForegroundKey] = Frozen(Colors.White);
             resources[TabHoverKey] = Frozen(stripHover);
             resources[TabStripControlHoverKey] = Frozen(stripHover);
             resources[AppButtonHoverKey] = Frozen(stripHover);
+            resources[AppButtonPressedKey] = Frozen(stripPressed);
+
+            // The application menu is a neutral surface, unlike Backstage. Once it opens, make
+            // the File tab its visual continuation instead of leaving an accent-on-accent patch
+            // that disappears into the colored strip. Resolve the theme brushes themselves so
+            // custom accents still change only the band, not the menu palette.
+            if (application.TryFindResource(ApplicationMenuFrameBandKey) is Brush menuFrameBand)
+            {
+                resources[AppButtonMenuOpenBackgroundKey] = menuFrameBand;
+            }
+
+            if (application.TryFindResource(TextPrimaryKey) is Brush menuForeground)
+            {
+                resources[AppButtonMenuOpenForegroundKey] = menuForeground;
+            }
         }
     }
 

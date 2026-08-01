@@ -113,6 +113,172 @@
                 </rk:Backstage>
             </rk:Ribbon.Backstage>
 
+            <!-- ============================================================
+                 OFFICE 2007 APPLICATION MENU — the other File-button surface.
+
+                 Declared here so the XAML designer shows it, then DETACHED in the constructor:
+                 Ribbon.ApplicationMenu wins over Ribbon.Backstage whenever it is set, and the
+                 showcase wants the backstage by default. Switching to the Office 2007 theme (or
+                 the "2007 Menu" toggle in the Backstage group) hands it back.
+
+                 The row shapes on show here are all three:
+                   New / Open / Save / Close  — plain commands, no arrow, click closes the menu.
+                   Save As / Print / Prepare / Send — SPLIT. Hover shows the pane; clicking the
+                       command half runs the default action. While the pointer is in the pane the
+                       command half dims and the arrow half stays lit.
+                   Publish — IsSplit="False", a plain DROP-DOWN: no default action, so the whole
+                       row stays fully lit while its pane is in use.
+                 ============================================================ -->
+            <rk:Ribbon.ApplicationMenu>
+                <rk:RibbonApplicationMenu x:Name="ShowcaseApplicationMenu">
+                    <!-- The default page renders BARE — no frame, no header band — so its heading
+                         and rule are part of the content, exactly as Word 2007 draws Recent
+                         Documents. -->
+                    <rk:RibbonApplicationMenu.DefaultContent>
+                        <StackPanel>
+                            <TextBlock Text="Recent Documents"
+                                       FontWeight="Bold"
+                                       Foreground="#15428B"
+                                       Margin="2,0,0,4" />
+                            <Rectangle Height="1" Fill="#D8D8D8" />
+                            <Rectangle Height="1" Fill="#F5F5F5" Margin="0,0,0,4" />
+                            <rk:RibbonApplicationMenuPaneItem Content="1  Quarterly report.docx"
+                                                              Click="OnApplicationMenuCommand" />
+                            <rk:RibbonApplicationMenuPaneItem Content="2  Meeting notes.docx"
+                                                              Click="OnApplicationMenuCommand" />
+                            <rk:RibbonApplicationMenuPaneItem Content="3  RibbonKit roadmap.docx"
+                                                              Click="OnApplicationMenuCommand" />
+                            <rk:RibbonApplicationMenuPaneItem Content="4  Office 2007 theme plan.docx"
+                                                              Click="OnApplicationMenuCommand" />
+                        </StackPanel>
+                    </rk:RibbonApplicationMenu.DefaultContent>
+
+                    <rk:RibbonApplicationMenuItem Header="New"
+                                                  Icon="{StaticResource Icon.Style}"
+                                                  Click="OnApplicationMenuCommand" />
+                    <rk:RibbonApplicationMenuItem Header="Open"
+                                                  Icon="{StaticResource Icon.Table}"
+                                                  Click="OnApplicationMenuCommand" />
+                    <rk:RibbonApplicationMenuItem Header="Save"
+                                                  Icon="{StaticResource Icon.Save}"
+                                                  Click="OnApplicationMenuCommand" />
+                    <rk:RibbonApplicationMenuItem Header="Save As"
+                                                  Icon="{StaticResource Icon.Save}"
+                                                  PaneHeader="Save a copy of the document"
+                                                  Click="OnApplicationMenuCommand">
+                        <StackPanel>
+                            <rk:RibbonApplicationMenuPaneItem Content="Word Document"
+                                                              Description="Save the document in the default file format."
+                                                              Icon="{StaticResource Icon.Save}"
+                                                              Click="OnApplicationMenuCommand" />
+                            <rk:RibbonApplicationMenuPaneItem Content="Word Template"
+                                                              Description="Save the document as a template that can be used to format future documents."
+                                                              Icon="{StaticResource Icon.Style}"
+                                                              Click="OnApplicationMenuCommand" />
+                            <rk:RibbonApplicationMenuPaneItem Content="Word 97-2003 Document"
+                                                              Description="Save a copy of the document that is fully compatible with Word 97-2003."
+                                                              Icon="{StaticResource Icon.Save}"
+                                                              Click="OnApplicationMenuCommand" />
+                            <rk:RibbonApplicationMenuPaneItem Content="Other Formats"
+                                                              Description="Open the Save As dialog box to select from all possible file types."
+                                                              Icon="{StaticResource Icon.Sliders}"
+                                                              Click="OnApplicationMenuCommand" />
+                        </StackPanel>
+                    </rk:RibbonApplicationMenuItem>
+
+                    <rk:RibbonApplicationMenuSeparator />
+
+                    <rk:RibbonApplicationMenuItem Header="Print"
+                                                  Icon="{StaticResource Icon.Print}"
+                                                  PaneHeader="Preview and print the document"
+                                                  Click="OnApplicationMenuCommand">
+                        <StackPanel>
+                            <rk:RibbonApplicationMenuPaneItem Content="Print"
+                                                              Description="Select a printer, number of copies and other printing options before printing."
+                                                              Icon="{StaticResource Icon.Print}"
+                                                              Click="OnApplicationMenuCommand" />
+                            <rk:RibbonApplicationMenuPaneItem Content="Quick Print"
+                                                              Description="Send the document directly to the default printer without making changes."
+                                                              Icon="{StaticResource Icon.Print}"
+                                                              Click="OnApplicationMenuCommand" />
+                            <rk:RibbonApplicationMenuPaneItem Content="Print Preview"
+                                                              Description="Preview and make changes to pages before printing."
+                                                              Icon="{StaticResource Icon.Zoom}"
+                                                              Click="OnEnterPrintPreview" />
+                        </StackPanel>
+                    </rk:RibbonApplicationMenuItem>
+                    <rk:RibbonApplicationMenuItem Header="Prepare"
+                                                  Icon="{StaticResource Icon.Sliders}"
+                                                  PaneHeader="Prepare the document for distribution"
+                                                  Click="OnApplicationMenuCommand">
+                        <StackPanel>
+                            <rk:RibbonApplicationMenuPaneItem Content="Properties"
+                                                              Description="View and edit document properties, such as Title, Author and Keywords."
+                                                              Icon="{StaticResource Icon.Sliders}"
+                                                              Click="OnApplicationMenuCommand" />
+                            <rk:RibbonApplicationMenuPaneItem Content="Inspect Document"
+                                                              Description="Check the document for hidden metadata or personal information."
+                                                              Icon="{StaticResource Icon.Find}"
+                                                              Click="OnApplicationMenuCommand" />
+                            <rk:RibbonApplicationMenuPaneItem Content="Mark as Final"
+                                                              Description="Let readers know the document is final and make it read-only."
+                                                              Icon="{StaticResource Icon.Select}"
+                                                              Click="OnApplicationMenuCommand" />
+                        </StackPanel>
+                    </rk:RibbonApplicationMenuItem>
+                    <rk:RibbonApplicationMenuItem Header="Send"
+                                                  Icon="{StaticResource Icon.Link}"
+                                                  PaneHeader="Send a copy of the document to other people"
+                                                  Click="OnApplicationMenuCommand">
+                        <StackPanel>
+                            <rk:RibbonApplicationMenuPaneItem Content="E-mail"
+                                                              Description="Send a copy of the document in an e-mail message as an attachment."
+                                                              Icon="{StaticResource Icon.Link}"
+                                                              Click="OnApplicationMenuCommand" />
+                            <rk:RibbonApplicationMenuPaneItem Content="Internet Fax"
+                                                              Description="Use an Internet fax service to fax the document."
+                                                              Icon="{StaticResource Icon.Print}"
+                                                              Click="OnApplicationMenuCommand" />
+                        </StackPanel>
+                    </rk:RibbonApplicationMenuItem>
+                    <!-- IsSplit="False" — a plain drop-down row. It has no default action, so
+                         clicking anywhere on it just shows the pane, and the WHOLE row stays lit
+                         while the pane is in use instead of half-dimming. -->
+                    <rk:RibbonApplicationMenuItem Header="Publish"
+                                                  Icon="{StaticResource Icon.Backstage}"
+                                                  IsSplit="False"
+                                                  PaneHeader="Distribute the document to other people">
+                        <StackPanel>
+                            <rk:RibbonApplicationMenuPaneItem Content="Blog"
+                                                              Description="Create a new blog post from the document."
+                                                              Icon="{StaticResource Icon.Backstage}"
+                                                              Click="OnApplicationMenuCommand" />
+                            <rk:RibbonApplicationMenuPaneItem Content="Document Management Server"
+                                                              Description="Share the document by saving it to a document management server."
+                                                              Icon="{StaticResource Icon.Table}"
+                                                              Click="OnApplicationMenuCommand" />
+                        </StackPanel>
+                    </rk:RibbonApplicationMenuItem>
+
+                    <rk:RibbonApplicationMenuSeparator />
+
+                    <rk:RibbonApplicationMenuItem Header="Close"
+                                                  Icon="{StaticResource Icon.Exit}"
+                                                  Click="OnApplicationMenuCommand" />
+
+                    <rk:RibbonApplicationMenu.FooterContent>
+                        <StackPanel Orientation="Horizontal">
+                            <rk:RibbonApplicationMenuButton Content="RibbonKit Options"
+                                                            Icon="{StaticResource Icon.Gear}"
+                                                            Click="OnBackstageOptions" />
+                            <rk:RibbonApplicationMenuButton Content="Exit RibbonKit"
+                                                            Icon="{StaticResource Icon.Exit}"
+                                                            Click="OnBackstageExit" />
+                        </StackPanel>
+                    </rk:RibbonApplicationMenu.FooterContent>
+                </rk:RibbonApplicationMenu>
+            </rk:Ribbon.ApplicationMenu>
+
             <rk:Ribbon.QuickAccessItems>
                 <rk:RibbonButton Size="Small" Icon="{StaticResource Icon.Save}"
                                  rk:Ribbon.CommandId="cmd.save"
@@ -547,6 +713,15 @@
                                            Unchecked="OnToggleAcrylic"
                                            ScreenTipTitle="Acrylic backdrop (Windows 11)"
                                            ScreenTipText="Apply the Windows 11 Acrylic material — a translucent blur of whatever is behind the window. Replaces Mica when both are toggled. Requires Windows 11 22H2+." />
+                    <rk:RibbonToggleButton x:Name="ApplicationMenuToggle"
+                                           Header="2007 Menu"
+                                           Size="Large"
+                                           LargeIcon="{StaticResource Icon.Backstage}"
+                                           Icon="{StaticResource Icon.Backstage}"
+                                           Checked="OnToggleApplicationMenu"
+                                           Unchecked="OnToggleApplicationMenu"
+                                           ScreenTipTitle="Office 2007 application menu"
+                                           ScreenTipText="Swap the File button's surface from the backstage overlay to the Office 2007 two-pane application menu — a drop-down rendered behind the orb. Switching to the Office 2007 theme turns this on for you." />
                     <rk:RibbonToggleButton Header="Translucent Backstage"
                                            Size="Large"
                                            LargeIcon="{StaticResource Icon.Mica}"

@@ -69,8 +69,8 @@
 
                             <!-- Submenu flyout: same chrome as the dropdown popup -->
                             <!-- PopupAnimation is None because RibbonPopupMotion drives the
-                                 entrance on themed timing instead (§3.42). That transition SCALES
-                                 rather than slides, so this popup needs no headroom margin and no
+                                 entrance on themed timing instead (§3.42). The surface fades while
+                                 its content slides, so this popup needs no headroom margin or
                                  placement offset — the geometry below is the original. -->
                             <Popup x:Name="PART_Popup"
                                    Placement="Right"
@@ -158,10 +158,12 @@
              corners + soft shadow to render); the system shadow itself isn't drawn because our custom
              template omits the SystemDropShadowChrome, so we get only the DropShadowEffect below. -->
         <Setter Property="HasDropShadow" Value="True" />
-        <!-- The entrance: RibbonPopupMotion unfolds the MENU ITSELF (it is the child of the popup
-             WPF builds internally for a ContextMenu, which is never exposed). It SCALES rather than
-             slides, so nothing here needs a headroom margin or a placement offset — §3.42 tried both
-             and only succeeded in lifting the menu off the cursor. See 04-DESIGN-NOTES §3.42. -->
+        <!-- The entrance: RibbonPopupMotion fades the MENU ITSELF (it is the child of the popup WPF
+             builds internally and never exposes) while sliding only its content. Ribbon also
+             temporarily overrides SystemParameters.MenuPopupAnimationKey at application scope
+             while this menu opens, because that private parent cannot see a child menu's local
+             resources. WPF's native animation therefore cannot double-run or survive No Motion.
+             Nothing here needs headroom margin or a placement offset. See §3.42. -->
         <Setter Property="animation:RibbonPopupMotion.AnimateOpen" Value="True" />
         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
         <Setter Property="Grid.IsSharedSizeScope" Value="True" />

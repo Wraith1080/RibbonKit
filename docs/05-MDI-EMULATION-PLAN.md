@@ -10,11 +10,12 @@ did. Consumers inject arbitrary content (a `UserControl`, or a view-model +
 WPF has no native MDI (it left with WinForms' `Form.IsMdiContainer`), so this is
 an emulation over an in-visual-tree host, not a wrapper over OS child windows.
 
-> **Status (2026-07-27): M0 and M4 are BUILT and user-verified; M1–M3 are not started.**
+> **Status (2026-07-27): M0 and M4 are BUILT and user-verified; M2 is partly complete; M1 and M3 are not started.**
 > The feature therefore has a hole in its middle — floating child windows work and the
 > maximized child merges its tabs and caption into the ribbon, but there are still no
 > cascade/tile/arrange commands, no `Ctrl+Tab` cycling, no tabbed-documents mode and no
-> layout persistence. M4 landed early because Phase 7's tab-merging API arrived first and
+> layout persistence, and the MVVM `ItemsSource` path is not yet proven in the showcase. M4 landed
+> early because Phase 7's tab-merging API arrived first and
 > caption merge was the natural place to prove it; see §7 for what each milestone covers and
 > [`../04-DESIGN-NOTES.md`](../04-DESIGN-NOTES.md) §3.34 for the implementation.
 
@@ -235,7 +236,7 @@ Each phase ends with a showcase page and tests green, matching the house rhythm.
 
 - **M0 — Model + floating host.** ✅ **DONE.** `MdiDocument`, `MdiContainer`, `MdiCanvasPanel`,
   `MdiChild` chrome with drag/resize/activate/close and normal-state placement.
-  Shipped with state animations and the `MdiChild.*` token family across **all four**
+  Shipped with state animations and the `MdiChild.*` token family across **all five**
   themes, so most of M2's theming arrived early too.
 - **M1 — Window management.** *Not started.* Minimize (to bottom strip) and
   maximize-fills-client are done; still owed are cascade/tile/arrange commands,

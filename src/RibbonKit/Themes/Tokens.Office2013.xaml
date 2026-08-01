@@ -157,6 +157,10 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverBackground" Color="#1F3F72" />
     <!-- Mouse-down (pressed) fill for the File button (deeper than the hover). -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.PressedBackground" Color="#16305A" />
+    <!-- Application-menu open defaults to the historical checked File-tab treatment. Colored
+         tab bands may override these independently without changing Backstage. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.MenuOpenBackground" Color="#2B579A" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.MenuOpenForeground" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverUnderline" Color="Transparent" />
     <!-- No File-button border (Office 2010 uses one). -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.Border" Color="Transparent" />
@@ -244,5 +248,54 @@
     <CornerRadius x:Key="RibbonKit.Metrics.MdiChild.CornerRadius">0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.MdiChild.CaptionCornerRadius">0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.MdiChild.CloseButtonCornerRadius">0</CornerRadius>
+
+    <!-- ============================================================
+         APPLICATION MENU (Office 2007's two-pane orb drop-down).
+         A flat translation for a generation that never shipped this control — assigning
+         Ribbon.ApplicationMenu under this theme is legal and gets a sane, on-palette menu rather
+         than 2007's glass. The top band is nearly nothing here because there is no orb to tuck
+         under it.
+         ============================================================ -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.FrameBorder" Color="#919191" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.FrameRim" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.FrameBand" Color="#F3F3F3" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.TopBandBackground" Color="#F3F3F3" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.FooterBackground" Color="#F3F3F3" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.NavBackground" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.PaneBackground" Color="#F3F3F3" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.PaneSurface" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.PaneBorder" Color="#D4D4D4" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.HeaderBackground" Color="#EAEAEA" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.Separator" Color="#D4D4D4" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.SeparatorHighlight" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.ButtonBackground" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.ButtonBorder" Color="#ACACAC" />
+
+    <DropShadowEffect x:Key="RibbonKit.Effects.ApplicationMenuShadow"
+                      BlurRadius="8"
+                      ShadowDepth="2"
+                      Direction="270"
+                      Opacity="0.22"
+                      Color="#000000" />
+    <DropShadowEffect x:Key="RibbonKit.Effects.ApplicationButtonMenuOpenShadow"
+                      BlurRadius="8"
+                      ShadowDepth="2"
+                      Direction="270"
+                      Opacity="0.2"
+                      Color="#000000" />
+
+    <system:Boolean x:Key="RibbonKit.Behaviors.ApplicationMenuAnchorBelowButton">True</system:Boolean>
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuMargin">0</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.ApplicationMenuCornerRadius">0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.ApplicationMenuInnerCornerRadius">0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.ApplicationMenuTopBandCornerRadius">0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.ApplicationMenuFooterCornerRadius">0</CornerRadius>
+    <system:Double x:Key="RibbonKit.Metrics.ApplicationMenuNavWidth">150</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.ApplicationMenuPaneWidth">340</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.ApplicationMenuItemHeight">40</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.ApplicationMenuArrowWidth">26</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.ApplicationMenuTopBandHeight">4</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.ApplicationMenuFooterHeight">34</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.ApplicationMenuDimOpacity">0.4</system:Double>
 
 </ResourceDictionary>

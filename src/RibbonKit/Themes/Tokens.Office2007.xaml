@@ -334,6 +334,10 @@
         <GradientStop Offset="0.45" Color="#14487E" />
         <GradientStop Offset="1" Color="#2C71AC" />
     </LinearGradientBrush>
+    <!-- Application-menu open defaults to the historical checked File-tab treatment. Colored
+         tab bands may override these independently without changing Backstage. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.MenuOpenBackground" Color="#1E5A9C" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.MenuOpenForeground" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverUnderline" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.Border" Color="#17578F" />
     <!-- Office 2007 ORB. Only used when Ribbon.ApplicationButtonShape is Orb. The negative TOP in
@@ -455,5 +459,81 @@
     <CornerRadius x:Key="RibbonKit.Metrics.MdiChild.CornerRadius">3</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.MdiChild.CaptionCornerRadius">2,2,0,0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.MdiChild.CloseButtonCornerRadius">0,2,0,0</CornerRadius>
+
+    <!-- ============================================================
+         APPLICATION MENU (Office 2007's two-pane orb drop-down).
+         Every colour here is SAMPLED from a real Word 2007 capture, not derived.
+         The frame is a five-band sandwich — #9BAFCA / #FFFFFF / band / #FFFFFF / #9BAFCA — where
+         the band is flat 3px down the sides, an 18px gradient across the top (the strip the orb
+         sits half inside), and the footer bar itself along the bottom. Both gradients carry the
+         2007 VALLEY with its hard crease, same as the ribbon body.
+         ============================================================ -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.FrameBorder" Color="#9BAFCA" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.FrameRim" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.FrameBand" Color="#BED3EC" />
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.ApplicationMenu.TopBandBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#D7E5F7" />
+        <GradientStop Offset="0.44" Color="#D5E2F3" />
+        <GradientStop Offset="0.44" Color="#C6D7EE" />
+        <GradientStop Offset="1" Color="#B7CBE6" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.ApplicationMenu.FooterBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#BDD3EF" />
+        <GradientStop Offset="0.47" Color="#BFD5F1" />
+        <GradientStop Offset="0.47" Color="#B1CAEA" />
+        <GradientStop Offset="0.96" Color="#CFE0F6" />
+        <GradientStop Offset="1" Color="#C9EEFF" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.NavBackground" Color="#FAFAFA" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.PaneBackground" Color="#E9EAEE" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.PaneSurface" Color="#FAFAFA" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.PaneBorder" Color="#9F9F9F" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.HeaderBackground" Color="#DDE7EE" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.Separator" Color="#C5C5C5" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.SeparatorHighlight" Color="#F5F5F5" />
+    <!-- Footer buttons (Word Options / Exit Word): the 2007 dialog-button gel, measured face
+         #DFEAF9 over a #7793B9 rim. -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.ApplicationMenu.ButtonBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#F4F9FE" />
+        <GradientStop Offset="0.45" Color="#E2EDFB" />
+        <GradientStop Offset="0.45" Color="#D3E4F8" />
+        <GradientStop Offset="1" Color="#E8F2FD" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.ButtonBorder" Color="#7793B9" />
+
+    <DropShadowEffect x:Key="RibbonKit.Effects.ApplicationMenuShadow"
+                      BlurRadius="10"
+                      ShadowDepth="3"
+                      Direction="270"
+                      Opacity="0.35"
+                      Color="#000000" />
+    <DropShadowEffect x:Key="RibbonKit.Effects.ApplicationButtonMenuOpenShadow"
+                      BlurRadius="8"
+                      ShadowDepth="2"
+                      Direction="270"
+                      Opacity="0.25"
+                      Color="#000000" />
+
+    <!-- Where the menu lands relative to the top-left of the tab-strip row. The orb overhangs
+         UPWARD out of that row (ApplicationOrbMargin's negative top), so the menu's own top edge
+         sits BELOW the row's origin, tucked under the orb's lower half. -->
+    <!-- 2007 is the exceptional overlay: anchor at the button's top-left, then move down
+         eight DIPs so the orb remains above the menu frame. -->
+    <system:Boolean x:Key="RibbonKit.Behaviors.ApplicationMenuAnchorBelowButton">False</system:Boolean>
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuMargin">0,8,0,0</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.ApplicationMenuCornerRadius">3</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.ApplicationMenuInnerCornerRadius">2</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.ApplicationMenuTopBandCornerRadius">1,1,0,0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.ApplicationMenuFooterCornerRadius">0,0,1,1</CornerRadius>
+    <system:Double x:Key="RibbonKit.Metrics.ApplicationMenuNavWidth">135</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.ApplicationMenuPaneWidth">326</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.ApplicationMenuItemHeight">52</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.ApplicationMenuArrowWidth">30</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.ApplicationMenuTopBandHeight">18</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.ApplicationMenuFooterHeight">33</system:Double>
+    <!-- How far the command half of a SPLIT nav row dims while its pane is being used. 0.32 is
+         measured: the half-lit fill is exactly the hover gold composited over the nav column at
+         about a third alpha, which is why one brush plus this number replaces a second gradient. -->
+    <system:Double x:Key="RibbonKit.Metrics.ApplicationMenuDimOpacity">0.32</system:Double>
 
 </ResourceDictionary>

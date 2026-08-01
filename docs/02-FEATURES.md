@@ -2,7 +2,7 @@
 
 Priority key: **P0** = core skeleton (Milestone 1) · **P1** = required for a credible ribbon · **P2** = full Office parity · **P3** = differentiators / post-v1 polish
 
-> **This is the planning inventory, not a status board** — the priorities below are the original sequencing decisions and are left as written. For what is actually built, see the ✅/📋 tables in the [README](../README.md). As of 2026-07-27 everything here is implemented except: dark mode, RTL, localization, ribbon-styled TextBox/CheckBox/RadioButton, the simplified single-row ribbon, and the visual-regression snapshot suite. The "Application menu (2007/2010 dropdown style)" row below is **not** built — the application *button* and the backstage are; the two-pane dropdown is a separate control (see §3.38).
+> **This is the planning inventory, not a status board** — the priorities below are the original sequencing decisions and are left as written. For what is actually built, see the ✅/📋 tables in the [README](../README.md). As of 2026-07-27 everything here is implemented except: dark mode, RTL, localization, ribbon-styled TextBox/CheckBox/RadioButton, the simplified single-row ribbon, and the visual-regression snapshot suite. The "Application menu (2007/2010 dropdown style)" row below **is** built as of 2026-07-28 — `RibbonApplicationMenu`, a separate control from the application *button* and the backstage (see §3.46).
 
 ## Structure & layout
 

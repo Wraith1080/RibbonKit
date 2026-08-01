@@ -52,6 +52,7 @@
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
                             <controls:RibbonTabControl
+                                x:Name="TabControlHost"
                                 Grid.Row="0"
                                 ItemsSource="{TemplateBinding Tabs}"
                                 SelectedItem="{Binding SelectedTab, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}" />
@@ -107,6 +108,14 @@
                                 </Setter.Value>
                             </Setter>
                         </Trigger>
+                        <!-- The application menu is allowed to escape the nested tab-control
+                             template. Promote that whole branch while it is open so the later-
+                             declared below-ribbon QAT cannot paint over it. This is deliberately
+                             conditional: when the menu is closed, the QAT/card overlap keeps its
+                             established declaration-order rendering. -->
+                        <Trigger Property="IsApplicationMenuOpen" Value="True">
+                            <Setter TargetName="TabControlHost" Property="Panel.ZIndex" Value="1" />
+                        </Trigger>
                         <!-- Minimized + QAT below: the ribbon body card is collapsed, so the
                              QAT bar is left standing alone under the tab strip. Make it a
                              self-contained floating card — round ALL corners (not just the
@@ -157,6 +166,34 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
+
+                            <!-- OFFICE 2007 APPLICATION MENU. Hosted HERE, in the tab-strip row,
+                                 rather than in the window's adorner layer like the backstage — and
+                                 declared BEFORE the application button so the orb paints on top of
+                                 it, which is the whole point: in Office 2007 the orb sits over the
+                                 menu's top-left corner, and a Popup (its own top-level window) or an
+                                 adorner (a sibling branch that paints above all window content)
+                                 would both put the menu in front of it instead.
+                                 A zero-sized Canvas is the carrier: its child contributes NOTHING to
+                                 the row's measure, so a 500px menu cannot inflate the tab strip, and
+                                 Canvas does not clip, so the menu is free to paint and hit-test far
+                                 outside its parent's bounds. Positioning comes from the child's
+                                 Margin (ApplicationMenuMargin), tuned per theme to land under the
+                                 orb. -->
+                            <Canvas x:Name="ApplicationMenuLayer"
+                                    Grid.Column="0"
+                                    Grid.ColumnSpan="4"
+                                    Panel.ZIndex="1"
+                                    Width="0"
+                                    Height="0"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Top">
+                                <ContentPresenter x:Name="PART_ApplicationMenuPresenter"
+                                                  Content="{Binding ApplicationMenu, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
+                                                  Margin="{DynamicResource RibbonKit.Metrics.ApplicationMenuMargin}"
+                                                  Visibility="{Binding IsApplicationMenuOpen, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}, Converter={StaticResource RibbonKit.BoolToVis}}" />
+                            </Canvas>
+
                             <!-- Left end of the tab strip row: the merged-caption icon (only while
                                  a caption is docked — classic MDI puts a maximized child's system
                                  icon here) followed by the application button. Grouped in a stack
@@ -166,7 +203,9 @@
                                  2013 draws it as a solid accent block that must run to the bottom
                                  edge of the row to meet the body — centering this stack left a thin
                                  gap under it. The caption icon inside centres itself explicitly. -->
-                            <StackPanel Grid.Column="0"
+                            <StackPanel x:Name="ApplicationButtonLayer"
+                                        Grid.Column="0"
+                                        Panel.ZIndex="2"
                                         Orientation="Horizontal"
                                         VerticalAlignment="Stretch">
                             <Image x:Name="PART_MergedCaptionIcon"
@@ -177,14 +216,18 @@
                                    Stretch="Uniform"
                                    Source="{Binding MergedCaptionIcon, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
                                    Visibility="{Binding HasMergedCaption, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}, Converter={StaticResource RibbonKit.BoolToVis}}" />
-                            <!-- Application (File) button: opens the backstage; hidden
-                                 when the hosting Ribbon has no Backstage assigned -->
+                            <!-- Application (File) button: opens the backstage, or the application
+                                 menu when the ribbon has one; hidden when it has neither. -->
                             <!-- WindowChrome.IsHitTestVisibleInChrome: the orb overhangs UP into the
                                  caption region, and the caption swallows input as a window drag, so
                                  only the part below the caption line was clickable. This opts the
                                  button back into normal hit testing. No-op for the rectangular File
                                  tab, which never reaches the caption. -->
-                            <ToggleButton x:Name="ApplicationButton"
+                            <!-- PART_ prefixed because RibbonApplicationMenu's click-outside
+                                 dismissal recognises this button BY NAME and stands down for it —
+                                 see Ribbon.ApplicationButtonPartName. Renaming it here breaks the
+                                 orb's close-on-second-click. -->
+                            <ToggleButton x:Name="PART_ApplicationButton"
                                           WindowChrome.IsHitTestVisibleInChrome="True"
                                           AutomationProperties.Name="{Binding ApplicationButtonHeader, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
                                           ToolTip="{Binding ApplicationButtonHeader, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
@@ -290,6 +333,23 @@
                                                             <Setter TargetName="HoverUnderline" Property="Visibility" Value="Collapsed" />
                                                             <Setter Property="Foreground" Value="#FFFFFF" />
                                                         </Trigger>
+                                                        <!-- A menu-open File tab is the visual anchor for a
+                                                             floating surface. Its fill/foreground get their own
+                                                             tokens so a colored tab band can connect the button
+                                                             to the neutral menu without changing the backstage's
+                                                             accent-open state. The effect is independently tokenized
+                                                             from the menu shadow: connected themes use a compact
+                                                             downward lift, while 2024 lets it breathe across the gap.
+                                                             The hidden orb ignores all three setters. -->
+                                                        <DataTrigger Binding="{Binding IsApplicationMenuOpen, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
+                                                                     Value="True">
+                                                            <Setter TargetName="Chrome" Property="Background"
+                                                                    Value="{DynamicResource RibbonKit.Brushes.ApplicationButton.MenuOpenBackground}" />
+                                                            <Setter Property="Foreground"
+                                                                    Value="{DynamicResource RibbonKit.Brushes.ApplicationButton.MenuOpenForeground}" />
+                                                            <Setter TargetName="Chrome" Property="Effect"
+                                                                    Value="{DynamicResource RibbonKit.Effects.ApplicationButtonMenuOpenShadow}" />
+                                                        </DataTrigger>
                                                         <!-- Orb mode. LAST in the list on purpose: the
                                                              hover/pressed/checked triggers above re-show
                                                              HoverUnderline, and the last matching setter for
@@ -325,23 +385,50 @@
                                                              over the backstage adorner as well, so it has
                                                              to hide itself. IsChecked is bound TwoWay to
                                                              Ribbon.IsBackstageOpen. Must stay LAST so it
-                                                             beats the shape trigger that shows the orb. -->
+                                                             beats the shape trigger that shows the orb.
+                                                             ⚠ The third condition is what keeps the
+                                                             APPLICATION MENU case working: that menu is
+                                                             drawn BEHIND the orb on purpose, so hiding
+                                                             the orb over it would delete the one piece
+                                                             of chrome the whole layering exists for. -->
                                                         <MultiDataTrigger>
                                                             <MultiDataTrigger.Conditions>
                                                                 <Condition Binding="{Binding ApplicationButtonShape, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}" Value="Orb" />
                                                                 <Condition Binding="{Binding IsChecked, RelativeSource={RelativeSource Self}}" Value="True" />
+                                                                <Condition Binding="{Binding IsApplicationMenuOpen, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}" Value="False" />
                                                             </MultiDataTrigger.Conditions>
                                                             <Setter TargetName="Orb" Property="Visibility" Value="Collapsed" />
+                                                        </MultiDataTrigger>
+                                                        <!-- Application menu open: the orb stays put and
+                                                             holds a lit "pressed" gel, so it reads as the
+                                                             thing the open menu belongs to. -->
+                                                        <MultiDataTrigger>
+                                                            <MultiDataTrigger.Conditions>
+                                                                <Condition Binding="{Binding ApplicationButtonShape, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}" Value="Orb" />
+                                                                <Condition Binding="{Binding IsApplicationMenuOpen, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}" Value="True" />
+                                                            </MultiDataTrigger.Conditions>
+                                                            <Setter TargetName="Orb" Property="Visibility" Value="Visible" />
+                                                            <Setter TargetName="OrbFill" Property="Fill"
+                                                                    Value="{DynamicResource RibbonKit.Brushes.ApplicationOrb.PressedBackground}" />
+                                                            <Setter TargetName="OrbFill" Property="Stroke"
+                                                                    Value="{DynamicResource RibbonKit.Brushes.ApplicationOrb.HoverRing}" />
                                                         </MultiDataTrigger>
                                                     </ControlTemplate.Triggers>
                                                 </ControlTemplate>
                                             </Setter.Value>
                                         </Setter>
                                         <Style.Triggers>
-                                            <DataTrigger Binding="{Binding Backstage, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
-                                                         Value="{x:Null}">
+                                            <!-- Hidden only when there is NOTHING to open. A ribbon
+                                                 may carry an application menu without a backstage
+                                                 (Office 2007) or the other way round, and either one
+                                                 is reason enough to show the button. -->
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding Backstage, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}" Value="{x:Null}" />
+                                                    <Condition Binding="{Binding ApplicationMenu, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}" Value="{x:Null}" />
+                                                </MultiDataTrigger.Conditions>
                                                 <Setter Property="Visibility" Value="Collapsed" />
-                                            </DataTrigger>
+                                            </MultiDataTrigger>
                                             <!-- A modal tab (Print Preview) hides File entirely, like
                                                  Word: the backstage is blocked in that mode, so leaving
                                                  the button visible would offer a dead affordance. -->

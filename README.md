@@ -6,7 +6,7 @@ An open-source, Office Fluent UI–style **Ribbon control library for WPF** on m
 [![Target](https://img.shields.io/badge/.NET-8.0%20%7C%209.0-512BD4)](https://dotnet.microsoft.com/)
 [![NuGet](https://img.shields.io/badge/NuGet-0.1.0--alpha.1-orange)](https://www.nuget.org/)
 
-> **Status: alpha (`0.1.0-alpha.1`).** The control set is feature-complete for most real applications — ribbon, backstage, galleries, QAT with overflow, contextual tabs, KeyTips, tab merging, modal tabs, a runtime customization dialog with persistence, four Office themes, and a full design-time experience in Visual Studio. Roadmap phases 1–5 and 7 are done. The public API is **not frozen yet**; expect renames before `1.0`. See the [roadmap](docs/03-ROADMAP.md).
+> **Status: alpha (`0.1.0-alpha.1`).** The control set is feature-complete for most real applications — ribbon, backstage, galleries, QAT with overflow, contextual tabs, KeyTips, tab merging, modal tabs, a runtime customization dialog with persistence, five Office themes, and a full design-time experience in Visual Studio. Roadmap phases 1–5 and 7 are done. The public API is **not frozen yet**; expect renames before `1.0`. See the [roadmap](docs/03-ROADMAP.md).
 
 ![RibbonKit's showcase app in the default Office 2024 theme](docs/images/theme-2024.png)
 
@@ -54,7 +54,7 @@ Legend: ✅ done · 🚧 in progress · 📋 planned
 | Feature | Status |
 |---|---|
 | Application button (rectangular tab, or the Office 2007 orb) | ✅ |
-| Application menu (2007-style two-pane dropdown) | 📋 |
+| Application menu (2007-style two-pane dropdown) | ✅ |
 | Backstage view (Modern 2024, Classic 2013, Classic 2010 designs) | ✅ |
 | Backstage footer items, button items, recent-items pattern | ✅ |
 | Quick Access Toolbar — 3 placements, overflow flyout, right-click add/remove | ✅ |
@@ -222,7 +222,7 @@ Design-time tooling setup is documented in [`src/RibbonKit.Design/SETUP-DESIGNTO
 
 ## Roadmap to v1.0
 
-Remaining before the API freeze: dark mode, RTL and localization, and the visual regression suite (all Phase 6), plus unit tests for the Phase 7 invariants. Two items were deliberately deferred out of the Office 2007 work — the 2007 window frame, and the two-pane 2007 application menu (a new control). Then release engineering — API review and freeze, docs site, SourceLink, and a performance pass.
+Remaining before the API freeze: dark mode, RTL and localization, and the visual regression suite (all Phase 6). The Phase 7 merge/modal invariant tests are complete. One item is still deferred out of the Office 2007 work: the 2007 window frame. (The two-pane 2007 application menu, the other deferral, shipped as `RibbonApplicationMenu`.) Then release engineering — API review and freeze, docs site, SourceLink, and a performance pass.
 
 ## Contributing
 

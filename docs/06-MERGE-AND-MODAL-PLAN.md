@@ -4,7 +4,8 @@
 > P7.2 tab merging, P7.3 group contributions + activation + QAT parking, P7.4 MDI wiring (which also
 > closed MDI M4). This document is kept as the design record; the **as-built** account, including
 > where reality diverged from the plan, is [`../04-DESIGN-NOTES.md`](../04-DESIGN-NOTES.md)
-> §3.32–§3.34. The one part not delivered is §7's unit tests.
+> §3.32–§3.34. Section 7's automated invariant suite shipped on 2026-08-01; its rendered Windows
+> checks remain part of the manual verification matrix.
 >
 > Written 2026-07-27 · Companion to [`03-ROADMAP.md`](03-ROADMAP.md) Phase 7
 > and [`01-ARCHITECTURE.md`](01-ARCHITECTURE.md) §8.
@@ -14,7 +15,7 @@
 >   *reference*, so the host's own groups close back up correctly and two sources can unmerge in
 >   any order. No index bookkeeping was needed.
 > - **No `ModalClose.*` tokens were added.** The close affordance reuses `TabStrip.Foreground` /
->   `TabStrip.ControlHoverBackground` / `ControlCornerRadius` and themes across all four
+>   `TabStrip.ControlHoverBackground` / `ControlCornerRadius` and themes across all five
 >   generations for free. The merged-caption buttons do the same.
 > - **The activation trigger is `Target` + `IsActive` on the source**, not an attached property on
 >   an arbitrary element — that left "which ribbon?" ambiguous. An attached
@@ -335,18 +336,23 @@ Each phase ends with a showcase page and tests green, matching the house rhythm.
 
 ## 7. Testing
 
-Unit-testable without WPF rendering (the sandbox can't build WPF, so this matters):
+> **Automated status: COMPLETE 2026-08-01.** `RibbonMergeModalTests` adds 13 passing tests for the
+> invariants below, plus customization rebuild/remerge and declarative activation. Rendered visual
+> checks remain manual.
 
-- Ordering: merge A(0), B(0), C(-1) in every permutation → same final tab order.
-- Merge/unmerge round-trip: tab collection identical to the starting state after N cycles.
-- Group contribution restore with two sources into one host tab, unmerged both ways.
-- Serializer: capture-while-modal round-trips to the pre-modal visibility; merged tabs and their
+Unit-testable without opening rendered windows, keeping the suite deterministic and CI-friendly:
+
+- ✅ Ordering: after the first-merge tie-break sequence is established, re-merge A(0), B(0), C(-1)
+  in every permutation → same final tab order.
+- ✅ Merge/unmerge round-trip: tab collection identical to the starting state after N cycles.
+- ✅ Group contribution restore with two sources into one host tab, unmerged both ways.
+- ✅ Serializer: capture-while-modal round-trips to the pre-modal visibility; merged tabs and their
   groups never appear in the JSON.
-- Modal: enter/exit selection restoration, cancellation honoured, unmerge-of-modal-tab forces exit.
+- ✅ Modal: enter/exit selection restoration, cancellation honoured, unmerge-of-modal-tab forces exit.
 
 Visual, on Windows: notch and underline position after merge/unmerge and modal transitions in 2010
 and 2013 at 100–200% DPI; strip scroll when merging past the available width; close-button hover
-in all four themes.
+in all five themes.
 
 ---
 

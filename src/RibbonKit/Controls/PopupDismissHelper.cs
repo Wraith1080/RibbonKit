@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
@@ -15,6 +16,14 @@ namespace RibbonKit.Controls;
 /// </summary>
 internal sealed class PopupDismissHelper
 {
+    // Several StaysOpen flyouts can be nested on the same owner window (most visibly a
+    // drop-down inside the QAT overflow). Routed-event handler order follows subscription order,
+    // so without an explicit stack the older OUTER helper sees Escape first, closes its host and
+    // marks the event handled before the newer INNER helper can close its own popup. The inner
+    // StaysOpen popup may then outlive its unloaded owner and leave this handler subscribed,
+    // swallowing Escape for every later flyout until the process exits.
+    private static readonly ConditionalWeakTable<Window, List<PopupDismissHelper>> OpenStackByWindow = new();
+
     private readonly FrameworkElement _owner;
     private readonly Func<Popup?> _getPopup;
     private readonly Action _close;
@@ -25,6 +34,7 @@ internal sealed class PopupDismissHelper
         _owner = owner;
         _getPopup = getPopup;
         _close = close;
+        _owner.Unloaded += OnOwnerUnloaded;
     }
 
     /// <summary>Call from the popup's Opened event.</summary>
@@ -43,6 +53,10 @@ internal sealed class PopupDismissHelper
         _window.Deactivated += OnWindowDeactivated;
         _window.LocationChanged += OnWindowLocationChanged;
         _window.SizeChanged += OnWindowSizeChanged;
+
+        List<PopupDismissHelper> stack = OpenStackByWindow.GetOrCreateValue(_window);
+        stack.Remove(this);
+        stack.Add(this);
     }
 
     /// <summary>Call from the popup's Closed event.</summary>
@@ -53,11 +67,18 @@ internal sealed class PopupDismissHelper
             return;
         }
 
-        _window.PreviewMouseDown -= OnWindowPreviewMouseDown;
-        _window.PreviewKeyDown -= OnWindowPreviewKeyDown;
-        _window.Deactivated -= OnWindowDeactivated;
-        _window.LocationChanged -= OnWindowLocationChanged;
-        _window.SizeChanged -= OnWindowSizeChanged;
+        Window window = _window;
+        window.PreviewMouseDown -= OnWindowPreviewMouseDown;
+        window.PreviewKeyDown -= OnWindowPreviewKeyDown;
+        window.Deactivated -= OnWindowDeactivated;
+        window.LocationChanged -= OnWindowLocationChanged;
+        window.SizeChanged -= OnWindowSizeChanged;
+
+        if (OpenStackByWindow.TryGetValue(window, out List<PopupDismissHelper>? stack))
+        {
+            stack.Remove(this);
+        }
+
         _window = null;
     }
 
@@ -74,11 +95,29 @@ internal sealed class PopupDismissHelper
 
     private void OnWindowPreviewKeyDown(object sender, KeyEventArgs e)
     {
-        if (e.Key == Key.Escape)
+        if (e.Key == Key.Escape && TryDismissTopmostForEscape())
         {
-            _close();
             e.Handled = true;
         }
+    }
+
+    /// <summary>
+    /// Closes this flyout only when it is the newest open flyout on its owner window.
+    /// Older helpers deliberately leave Escape unhandled so the routed event can reach the
+    /// nested helper that belongs to the visually topmost popup.
+    /// </summary>
+    internal bool TryDismissTopmostForEscape()
+    {
+        if (_window is null
+            || !OpenStackByWindow.TryGetValue(_window, out List<PopupDismissHelper>? stack)
+            || stack.Count == 0
+            || !ReferenceEquals(stack[^1], this))
+        {
+            return false;
+        }
+
+        _close();
+        return true;
     }
 
     private void OnWindowDeactivated(object? sender, EventArgs e) => _close();
@@ -86,6 +125,26 @@ internal sealed class PopupDismissHelper
     private void OnWindowLocationChanged(object? sender, EventArgs e) => _close();
 
     private void OnWindowSizeChanged(object sender, SizeChangedEventArgs e) => _close();
+
+    private void OnOwnerUnloaded(object sender, RoutedEventArgs e)
+    {
+        if (_window is null)
+        {
+            return;
+        }
+
+        // A host popup can unload this owner before the nested Popup raises Closed. Ask the
+        // surface to close, but unregister in finally so even a coerced/no-op close cannot leave
+        // a PreviewKeyDown handler swallowing Escape for the rest of the application lifetime.
+        try
+        {
+            _close();
+        }
+        finally
+        {
+            OnClosed();
+        }
+    }
 
     private bool IsInsideOwnerOrPopup(DependencyObject start)
     {

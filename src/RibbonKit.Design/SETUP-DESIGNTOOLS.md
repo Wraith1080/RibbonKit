@@ -215,8 +215,11 @@ visuals. The context-menu verbs are the delivery surface for these actions. (See
 
 ## Deferred
 
-- `DesignModeValueProvider`-based design-only preview toggles (the one avenue left for a togglable
-  tab/backstage preview — design-time *values* render, unlike adorner overlays).
+- **Application-menu authoring parity with backstage:** a singleton **Add Application Menu** action;
+  an application-menu root in the Ribbon Editor; add/delete/reorder support for command items,
+  separators, default/command pane items and footer buttons; property editing; and design-only
+  menu/active-pane preview.
+  Reuse the existing backstage tree, item-editor and `DesignModeValueProvider` preview patterns.
 - `ParentAdapter` (valid-drop rules); design-time "Add to QAT" (QAT items are runtime proxies, not
   plain XAML). (NuGet packaging of the `lib/<tfm>/Design/` dll + toolbox manifest is now DONE — see
   "NuGet packaging (wired)" above.)
