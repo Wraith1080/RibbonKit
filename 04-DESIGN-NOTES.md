@@ -2989,9 +2989,10 @@ Mouse light-dismiss and window deactivate/move/resize retain their close-all beh
 > deferred out of §3.38, the two-pane 2007 application menu shipped in §3.46; only the 2007 window
 > frame is still owed.
 
-**Awaiting manual verification (§3.42, §3.43, §3.45 and §3.46).** §3.42 is motion, checked by opening
-things; §3.43 is the split button's vertical arrangement and companion highlight; §3.45 covers proxy
-enabled-state propagation; and §3.46 covers the application menu. §3.44 is covered by automated tests.
+**Awaiting manual verification (§3.42, §3.43/D and §3.46).** The §3.43 runtime split-button checks
+(A–C) and all §3.45 proxy checks (E) passed on Windows on 2026-08-01; §3.43/D still needs its Visual
+Studio Ribbon Editor pass. §3.42 is motion, checked by opening things; §3.46 covers the application
+menu. §3.44 is covered by automated tests.
 
 A. **A vertical split button** (the showcase's Paste): icon on top, ONE line of caption with an
    ellipsis if it is long, chevron beneath it. Narrow the window until the group reduces — it must
@@ -3011,7 +3012,9 @@ E. **§3.45 proxies (manual — not unit-testable):** disable a command from cod
    proxy, its entry in the » overflow flyout, and any custom-group copy all grey together. Repeat
    with a whole GROUP disabled (that path goes through coercion, not a property set). Then unmerge a
    merged source and confirm its parked proxy greys in BOTH the strip and the overflow flyout —
-   the flyout was the half that stayed live.
+   the flyout was the half that stayed live. **Verified 2026-08-01.** To trigger overflow, add enough
+   items to cross `QuickAccessMaxWidth`; narrowing the window alone is not expected to do it because
+   the tab header scrolls and the title text ellipsizes first. That is intentional QAT behavior.
 
 F. **§3.46 application menu.** Switch to the Office 2007 theme (which turns the "2007 Menu" toggle
    on for you) and click the orb.
@@ -3036,7 +3039,7 @@ F. **§3.46 application menu.** Switch to the Office 2007 theme (which turns the
    6. **Clicks:** a pane row or a plain nav row closes the menu (status bar shows what was picked);
       the arrow half of a split row does NOT; clicking Publish anywhere does NOT. Esc closes;
       clicking the document closes; **clicking the orb again closes and does not immediately
-      re-open** (that is the dismissal exemption).
+      re-open** (that is the dismissal exemption). **Steps 1–6 verified on Windows 2026-08-01.**
    7. **Every other generation:** flip the toggle on under 2010/2013/2019/2024. In 2010/2013/2019,
       the menu's top border must touch the File button's bottom edge and their left edges must align;
       the open button gets a compact shadow. In 2024 there is a 6 DIP gap, both surfaces have a soft
@@ -3158,11 +3161,11 @@ Backlog (rough priority):
    and the one that also covers Mica's dark-aware translucency.
 4. RTL + localization resources, then the visual-regression snapshot suite (theme × DPI) — the rest
    of roadmap Phase 6.
-5. **The rest of the unit tests** — merge/modal invariants (`docs/06-MERGE-AND-MODAL-PLAN.md` §7),
-   customization serializer round-trips, KeyTip resolution, reduction-algorithm gaps. The harness
-   and the house style for headless WPF tests are in place (§3.39), so these are now writing, not
-   inventing. `PopupMotionTests` (§3.42) is the newest example of the style: raise the routed event
-   rather than open a real popup.
+5. **The remaining unit tests** — broader customization serializer round-trips, KeyTip resolution,
+   and reduction-algorithm gaps. The Phase 7 merge/modal invariants are now DONE: 13 tests cover
+   stable ordering, repeated merge/unmerge, two-source group restoration, modal transitions and
+   cancellation, serialization exclusion, rebuild/remerge and declarative activation. The harness
+   and house style for headless WPF tests are in place (§3.39).
 6. **MDI M1–M3**: cascade/tile/arrange commands + Ctrl+Tab (M1), the MVVM `ItemsSource` demo and a
    per-theme pass (M2), tabbed-documents mode + `RibbonState` layout persistence (M3). M0 and M4 are
    done, so the feature currently has a hole in its middle.
@@ -3170,11 +3173,10 @@ Backlog (rough priority):
    of public surface), docs site, NuGet polish, performance pass.
 8. GitHub publish: repo URL placeholder in csproj (`YOUR-GITHUB-USERNAME`).
 
-**Unit tests: 96 green (verified 2026-08-01).** Coverage now includes the STA harness, the borrow
+**Unit tests: 109 green (verified 2026-08-01).** Coverage now includes the STA harness, the borrow
 protocol, overflow strip measure/arrange rules, popup motion and dismissal, proxy mirroring,
 application-menu layering/hover/KeyTips, and the existing reduction/size-definition/theme-scope tests.
-The broader coverage gaps listed above remain.
-`docs/06-MERGE-AND-MODAL-PLAN.md` §7 lists the invariants worth asserting next — merge ordering
-across permutations, merge/unmerge round-trips, group restore with two sources in one tab,
-capture-while-modal, modal enter/exit selection. All of Phase 7 was verified by clicking, and those
-invariants are the kind that break silently.
+`RibbonMergeModalTests` adds the Phase 7 automated invariants: merge ordering across later
+permutations, merge/unmerge round-trips, group restore with two sources in one tab, capture while
+modal, modal enter/exit selection and cancellation, forced exit when a merged modal tab leaves,
+customization rebuild/remerge, and declarative activation. The broader coverage gaps listed above remain.

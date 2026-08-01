@@ -38,7 +38,7 @@ Office 2019 (+dark/accents), 2013, 2010, 2007 themes on the token layer; visual 
 
 ## Phase 7 — Power features ✅ COMPLETE (2026-07-27)
 
-KeyTips subsystem (full Alt-chain), tab merging API, modal tabs, customize dialog (QAT reordering v1). KeyTips and the customize dialog shipped early, alongside Phases 2–5; tab merging and modal tabs landed in one arc — modal tabs, whole-tab merging, group contributions into host tabs with a declarative activation path, and the MDI tab/caption merge (which also closed MDI milestone M4). Design in [`06-MERGE-AND-MODAL-PLAN.md`](06-MERGE-AND-MODAL-PLAN.md); implementation notes and pitfalls in [`04-DESIGN-NOTES.md`](../04-DESIGN-NOTES.md) §3.32–§3.34. **Exit criteria met:** Alt-H-F-S chains work end-to-end; merge and modal demos are in the showcase. *Still owed from this phase: the unit tests listed in the plan's §7 — everything was verified interactively.*
+KeyTips subsystem (full Alt-chain), tab merging API, modal tabs, customize dialog (QAT reordering v1). KeyTips and the customize dialog shipped early, alongside Phases 2–5; tab merging and modal tabs landed in one arc — modal tabs, whole-tab merging, group contributions into host tabs with a declarative activation path, and the MDI tab/caption merge (which also closed MDI milestone M4). Design in [`06-MERGE-AND-MODAL-PLAN.md`](06-MERGE-AND-MODAL-PLAN.md); implementation notes and pitfalls in [`04-DESIGN-NOTES.md`](../04-DESIGN-NOTES.md) §3.32–§3.34. **Exit criteria met:** Alt-H-F-S chains work end-to-end; merge and modal demos are in the showcase; the plan's §7 automated invariants landed on 2026-08-01.
 
 ## Phase 8 — v1.0 release engineering
 

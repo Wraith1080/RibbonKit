@@ -475,8 +475,8 @@ partly because too much changed between looks.
 With the main 2007 theme done, all five generations ship and the token layer is proven against the
 widest visual range it will ever face. The remaining v1 blockers and later additive work are:
 
-1. **Phase 7 unit tests** — `06-MERGE-AND-MODAL-PLAN.md` §7. A hard gate on Phase 8; the merge and
-   modal invariants have only ever been verified by clicking.
+1. ~~**Phase 7 unit tests**~~ — **completed 2026-08-01**; `RibbonMergeModalTests` covers the
+   automated invariants from `06-MERGE-AND-MODAL-PLAN.md` §7.
 2. **The 2007 window frame** — the theme's one remaining deliberate deferral; implement and
    maximize-test it independently.
 3. **Dark mode, RTL, localization and visual-regression snapshots** — the rest of Phase 6.

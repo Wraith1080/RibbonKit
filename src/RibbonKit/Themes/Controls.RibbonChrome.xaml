@@ -334,12 +334,19 @@
                                                             <Setter Property="Foreground" Value="#FFFFFF" />
                                                         </Trigger>
                                                         <!-- A menu-open File tab is the visual anchor for a
-                                                             floating surface. The effect is independently
-                                                             tokenized from the menu shadow: connected themes
-                                                             use a compact downward lift, while 2024 lets it
-                                                             breathe across the gap. The hidden orb ignores it. -->
+                                                             floating surface. Its fill/foreground get their own
+                                                             tokens so a colored tab band can connect the button
+                                                             to the neutral menu without changing the backstage's
+                                                             accent-open state. The effect is independently tokenized
+                                                             from the menu shadow: connected themes use a compact
+                                                             downward lift, while 2024 lets it breathe across the gap.
+                                                             The hidden orb ignores all three setters. -->
                                                         <DataTrigger Binding="{Binding IsApplicationMenuOpen, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
                                                                      Value="True">
+                                                            <Setter TargetName="Chrome" Property="Background"
+                                                                    Value="{DynamicResource RibbonKit.Brushes.ApplicationButton.MenuOpenBackground}" />
+                                                            <Setter Property="Foreground"
+                                                                    Value="{DynamicResource RibbonKit.Brushes.ApplicationButton.MenuOpenForeground}" />
                                                             <Setter TargetName="Chrome" Property="Effect"
                                                                     Value="{DynamicResource RibbonKit.Effects.ApplicationButtonMenuOpenShadow}" />
                                                         </DataTrigger>

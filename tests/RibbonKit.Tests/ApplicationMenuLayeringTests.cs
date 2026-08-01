@@ -84,6 +84,48 @@ public class ApplicationMenuLayeringTests
     }
 
     [Fact]
+    public void Menu_open_file_button_uses_surface_tokens_separate_from_backstage()
+    {
+        var document = XDocument.Load(RibbonChromePath());
+
+        var trigger = document
+            .Descendants(Presentation + "DataTrigger")
+            .Single(element =>
+                ((string?)element.Attribute("Binding"))?.Contains("IsApplicationMenuOpen", StringComparison.Ordinal) == true
+                && element.Elements(Presentation + "Setter").Any(setter =>
+                    (string?)setter.Attribute("Property") == "Background"));
+
+        var setters = trigger.Elements(Presentation + "Setter").ToArray();
+        Assert.Contains(setters, setter =>
+            (string?)setter.Attribute("TargetName") == "Chrome"
+            && (string?)setter.Attribute("Property") == "Background"
+            && (string?)setter.Attribute("Value") ==
+                "{DynamicResource RibbonKit.Brushes.ApplicationButton.MenuOpenBackground}");
+        Assert.Contains(setters, setter =>
+            (string?)setter.Attribute("Property") == "Foreground"
+            && (string?)setter.Attribute("Value") ==
+                "{DynamicResource RibbonKit.Brushes.ApplicationButton.MenuOpenForeground}");
+    }
+
+    [Theory]
+    [InlineData("Office2007")]
+    [InlineData("Office2010")]
+    [InlineData("Office2013")]
+    [InlineData("Office2019")]
+    [InlineData("Office2024")]
+    public void Every_theme_defines_application_menu_open_file_button_tokens(string theme)
+    {
+        var document = XDocument.Load(ThemePath(theme));
+
+        Assert.Equal(
+            "SolidColorBrush",
+            Resource(document, "RibbonKit.Brushes.ApplicationButton.MenuOpenBackground").Name.LocalName);
+        Assert.Equal(
+            "SolidColorBrush",
+            Resource(document, "RibbonKit.Brushes.ApplicationButton.MenuOpenForeground").Name.LocalName);
+    }
+
+    [Fact]
     public void Open_menu_promotes_tab_control_above_below_ribbon_qat()
     {
         var document = XDocument.Load(RibbonChromePath());

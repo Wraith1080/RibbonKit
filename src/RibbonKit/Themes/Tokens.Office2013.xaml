@@ -157,6 +157,10 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverBackground" Color="#1F3F72" />
     <!-- Mouse-down (pressed) fill for the File button (deeper than the hover). -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.PressedBackground" Color="#16305A" />
+    <!-- Application-menu open defaults to the historical checked File-tab treatment. Colored
+         tab bands may override these independently without changing Backstage. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.MenuOpenBackground" Color="#2B579A" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.MenuOpenForeground" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverUnderline" Color="Transparent" />
     <!-- No File-button border (Office 2010 uses one). -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.Border" Color="Transparent" />

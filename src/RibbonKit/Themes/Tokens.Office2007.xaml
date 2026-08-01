@@ -334,6 +334,10 @@
         <GradientStop Offset="0.45" Color="#14487E" />
         <GradientStop Offset="1" Color="#2C71AC" />
     </LinearGradientBrush>
+    <!-- Application-menu open defaults to the historical checked File-tab treatment. Colored
+         tab bands may override these independently without changing Backstage. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.MenuOpenBackground" Color="#1E5A9C" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.MenuOpenForeground" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverUnderline" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.Border" Color="#17578F" />
     <!-- Office 2007 ORB. Only used when Ribbon.ApplicationButtonShape is Orb. The negative TOP in
