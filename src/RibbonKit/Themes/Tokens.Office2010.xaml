@@ -417,9 +417,19 @@
                       Direction="270"
                       Opacity="0.3"
                       Color="#000000" />
+    <DropShadowEffect x:Key="RibbonKit.Effects.ApplicationButtonMenuOpenShadow"
+                      BlurRadius="8"
+                      ShadowDepth="2"
+                      Direction="270"
+                      Opacity="0.24"
+                      Color="#000000" />
 
-    <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuMargin">2,4,0,0</Thickness>
+    <system:Boolean x:Key="RibbonKit.Behaviors.ApplicationMenuAnchorBelowButton">True</system:Boolean>
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuMargin">0</Thickness>
     <CornerRadius x:Key="RibbonKit.Metrics.ApplicationMenuCornerRadius">3</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.ApplicationMenuInnerCornerRadius">2</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.ApplicationMenuTopBandCornerRadius">1,1,0,0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.ApplicationMenuFooterCornerRadius">0,0,1,1</CornerRadius>
     <system:Double x:Key="RibbonKit.Metrics.ApplicationMenuNavWidth">140</system:Double>
     <system:Double x:Key="RibbonKit.Metrics.ApplicationMenuPaneWidth">330</system:Double>
     <system:Double x:Key="RibbonKit.Metrics.ApplicationMenuItemHeight">48</system:Double>

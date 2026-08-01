@@ -2756,10 +2756,31 @@ not a `Grid` cell:
    document. §3.41 already proved this path works — that is the same reason the ribbon's drop shadow
    needed `Panel.ZIndex="1"` on the `Ribbon` style rather than more room.
 
-Placement is one `Thickness` token, `ApplicationMenuMargin`, measured against the top-left of the
-tab-strip row. The orb overhangs *upward* out of that row (its own margin has a negative top), which
-is why the menu's `2,10,0,0` puts its top edge below the row origin, tucked under the orb's lower
-half.
+The original 2007 placement was one `Thickness` token, `ApplicationMenuMargin`, measured against
+the top-left of the tab-strip row. The orb overhangs *upward* out of that row (its own margin has a
+negative top), which is why the old `2,10,0,0` position put the menu's top edge below the row origin,
+tucked under the orb's lower half. The cross-generation pass below keeps the same visual result but
+anchors the offset to the button itself.
+
+#### Cross-generation placement — 2026-08-01
+
+The first implementation merely gave the non-2007 themes flatter colours; it still placed the menu
+from the tab-row origin, so their rectangular File buttons sat **under** the surface. Placement is
+now anchored to the measured `PART_ApplicationButton` bounds by `RibbonTabControl`, which avoids
+duplicating the button's theme-specific height in another token and remains correct when font,
+padding, DPI, or a merged-caption icon changes.
+
+- 2007 sets `ApplicationMenuAnchorBelowButton=False` and keeps an `ApplicationMenuMargin` overlay
+  offset, preserving the orb-over-frame composition.
+- 2010/2013/2019 anchor directly below the button with zero margin: the button's bottom edge and
+  menu's top edge meet, and an open-only button shadow makes the ownership clear.
+- 2024 uses the same measured anchor plus a 6 DIP gap. Its 8 DIP outer corner is carried through the
+  inner frame, top band, and footer tokens so square child fills cannot visually erase the rounding.
+  Both button and menu cast restrained, independent shadows.
+
+The menu remains in the original z=1 canvas and the button in z=2; only its coordinates changed.
+Moving the presenter into the button branch would align it conveniently but would also promote the
+whole menu above tab labels and reintroduce the layering bug this section originally solved.
 
 #### One open flag, two surfaces
 
@@ -2989,8 +3010,10 @@ F. **§3.46 application menu.** Switch to the Office 2007 theme (which turns the
       the arrow half of a split row does NOT; clicking Publish anywhere does NOT. Esc closes;
       clicking the document closes; **clicking the orb again closes and does not immediately
       re-open** (that is the dismissal exemption).
-   7. **Every other generation:** flip the toggle on under 2013/2019/2024 and confirm the flat token
-      set renders a sane menu rather than 2007 glass in the wrong palette.
+   7. **Every other generation:** flip the toggle on under 2010/2013/2019/2024. In 2010/2013/2019,
+      the menu's top border must touch the File button's bottom edge and their left edges must align;
+      the open button gets a compact shadow. In 2024 there is a 6 DIP gap, both surfaces have a soft
+      shadow, and every menu corner is visibly rounded. No theme may cover its application button.
    8. **DPI 125/150/200%** on the frame bands and the 52px rows.
 
 

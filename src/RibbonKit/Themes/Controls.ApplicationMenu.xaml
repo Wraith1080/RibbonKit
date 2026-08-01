@@ -388,6 +388,7 @@
                          menu's insides against their own frame. (§3.42.) -->
                     <Border x:Name="PART_Frame" Background="Transparent">
                         <Border x:Name="Frame"
+                                Background="{DynamicResource RibbonKit.Brushes.ApplicationMenu.FrameBand}"
                                 BorderBrush="{DynamicResource RibbonKit.Brushes.ApplicationMenu.FrameBorder}"
                                 BorderThickness="1"
                                 CornerRadius="{DynamicResource RibbonKit.Metrics.ApplicationMenuCornerRadius}"
@@ -395,7 +396,7 @@
                                 SnapsToDevicePixels="True">
                             <Border BorderBrush="{DynamicResource RibbonKit.Brushes.ApplicationMenu.FrameRim}"
                                     BorderThickness="1"
-                                    Background="{DynamicResource RibbonKit.Brushes.ApplicationMenu.FrameBand}">
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.ApplicationMenuInnerCornerRadius}">
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto" />
@@ -405,8 +406,10 @@
 
                                     <!-- Top glass band. Taller than the 3px sides because the orb
                                          sits half inside it — that is what it is FOR. -->
-                                    <Border Grid.Row="0"
+                                    <Border x:Name="TopBand"
+                                            Grid.Row="0"
                                             Height="{DynamicResource RibbonKit.Metrics.ApplicationMenuTopBandHeight}"
+                                            CornerRadius="{DynamicResource RibbonKit.Metrics.ApplicationMenuTopBandCornerRadius}"
                                             Background="{DynamicResource RibbonKit.Brushes.ApplicationMenu.TopBandBackground}" />
 
                                     <Border Grid.Row="1"
@@ -497,8 +500,10 @@
                                     <!-- Footer bar. It IS the frame's bottom band — there is no
                                          separate border between the two, which is why it is a row of
                                          this grid and not a child of the content frame. -->
-                                    <Border Grid.Row="2"
+                                    <Border x:Name="FooterBand"
+                                            Grid.Row="2"
                                             Height="{DynamicResource RibbonKit.Metrics.ApplicationMenuFooterHeight}"
+                                            CornerRadius="{DynamicResource RibbonKit.Metrics.ApplicationMenuFooterCornerRadius}"
                                             Background="{DynamicResource RibbonKit.Brushes.ApplicationMenu.FooterBackground}">
                                         <ContentPresenter Content="{TemplateBinding FooterContent}"
                                                           HorizontalAlignment="Right"

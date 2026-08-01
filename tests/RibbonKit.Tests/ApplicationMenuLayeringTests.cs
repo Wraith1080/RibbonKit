@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
+using RibbonKit.Controls;
 using Xunit;
 
 namespace RibbonKit.Tests;
@@ -28,6 +29,58 @@ public class ApplicationMenuLayeringTests
         Assert.True(ZIndex(menuLayer) > ZIndex(tabRowQat));
         Assert.True(ZIndex(menuLayer) > ZIndex(tabScroll.Parent!));
         Assert.True(ZIndex(applicationButtonLayer) > ZIndex(menuLayer));
+    }
+
+    [Fact]
+    public void Menu_presenter_is_a_named_child_of_the_placement_layer()
+    {
+        var document = XDocument.Load(RibbonChromePath());
+
+        var menuLayer = Named(document, RibbonTabControl.ApplicationMenuLayerPartName);
+        var presenter = Named(document, RibbonTabControl.ApplicationMenuPresenterPartName);
+
+        Assert.Same(menuLayer, presenter.Parent);
+        Assert.Equal(
+            "{DynamicResource RibbonKit.Metrics.ApplicationMenuMargin}",
+            (string?)presenter.Attribute("Margin"));
+    }
+
+    [Theory]
+    [InlineData("Office2007", "False", "0,8,0,0", "3")]
+    [InlineData("Office2010", "True", "0", "3")]
+    [InlineData("Office2013", "True", "0", "0")]
+    [InlineData("Office2019", "True", "0", "0")]
+    [InlineData("Office2024", "True", "0,6,0,0", "8")]
+    public void Theme_selects_overlay_connected_or_floating_menu_geometry(
+        string theme,
+        string anchorsBelow,
+        string margin,
+        string cornerRadius)
+    {
+        var document = XDocument.Load(ThemePath(theme));
+
+        Assert.Equal(
+            anchorsBelow,
+            Resource(document, "RibbonKit.Behaviors.ApplicationMenuAnchorBelowButton").Value.Trim());
+        Assert.Equal(
+            margin,
+            Resource(document, "RibbonKit.Metrics.ApplicationMenuMargin").Value.Trim());
+        Assert.Equal(
+            cornerRadius,
+            Resource(document, "RibbonKit.Metrics.ApplicationMenuCornerRadius").Value.Trim());
+        Assert.Equal(
+            "DropShadowEffect",
+            Resource(document, "RibbonKit.Effects.ApplicationButtonMenuOpenShadow").Name.LocalName);
+    }
+
+    [Fact]
+    public void Office2024_rounds_the_visible_inner_surfaces_as_well_as_the_outer_frame()
+    {
+        var document = XDocument.Load(ThemePath("Office2024"));
+
+        Assert.Equal("7", Resource(document, "RibbonKit.Metrics.ApplicationMenuInnerCornerRadius").Value.Trim());
+        Assert.Equal("6,6,0,0", Resource(document, "RibbonKit.Metrics.ApplicationMenuTopBandCornerRadius").Value.Trim());
+        Assert.Equal("0,0,6,6", Resource(document, "RibbonKit.Metrics.ApplicationMenuFooterCornerRadius").Value.Trim());
     }
 
     [Fact]
@@ -59,6 +112,11 @@ public class ApplicationMenuLayeringTests
     private static int ZIndex(XElement element) =>
         int.TryParse((string?)element.Attribute("Panel.ZIndex"), out int value) ? value : 0;
 
+    private static XElement Resource(XDocument document, string key) =>
+        Assert.Single(
+            document.Root!.Elements(),
+            element => (string?)element.Attribute(Xaml + "Key") == key);
+
     private static string RibbonChromePath()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);
@@ -76,5 +134,11 @@ public class ApplicationMenuLayeringTests
             "RibbonKit",
             "Themes",
             "Controls.RibbonChrome.xaml");
+    }
+
+    private static string ThemePath(string theme)
+    {
+        string chrome = RibbonChromePath();
+        return Path.Combine(Path.GetDirectoryName(chrome)!, $"Tokens.{theme}.xaml");
     }
 }

@@ -28,8 +28,16 @@ namespace RibbonKit.Controls;
 /// <see cref="UpdateConnectNotch"/> for why it cannot live inside the tab strip.
 /// </para>
 /// </remarks>
+[TemplatePart(Name = ApplicationMenuLayerPartName, Type = typeof(Canvas))]
+[TemplatePart(Name = ApplicationMenuPresenterPartName, Type = typeof(ContentPresenter))]
 public class RibbonTabControl : TabControl
 {
+    internal const string ApplicationMenuLayerPartName = "ApplicationMenuLayer";
+    internal const string ApplicationMenuPresenterPartName = "PART_ApplicationMenuPresenter";
+
+    private const string ApplicationMenuAnchorBelowButtonResourceKey =
+        "RibbonKit.Behaviors.ApplicationMenuAnchorBelowButton";
+
     /// <summary>Horizontal inset of the underline from each edge of the tab (matches the old per-tab underline's <c>Margin="10,0"</c>).</summary>
     private const double UnderlineInset = 10d;
 
@@ -41,6 +49,9 @@ public class RibbonTabControl : TabControl
     private RibbonKit.Layout.RibbonScrollContentHost? _tabScroll;
     private Border? _connectNotch;
     private TranslateTransform? _connectNotchTranslate;
+    private Canvas? _applicationMenuLayer;
+    private FrameworkElement? _applicationButton;
+    private FrameworkElement? _applicationMenuPresenter;
 
     static RibbonTabControl()
     {
@@ -57,6 +68,7 @@ public class RibbonTabControl : TabControl
         // unchanged), so they never race the selection glide.
         SizeChanged += (_, _) => { UpdateMarker(animate: false); UpdateConnectNotch(); };
         Loaded += (_, _) => { UpdateMarker(animate: false); UpdateConnectNotch(); };
+        LayoutUpdated += (_, _) => UpdateApplicationMenuPlacement();
     }
 
     /// <inheritdoc />
@@ -92,9 +104,17 @@ public class RibbonTabControl : TabControl
 
         _connectNotch = GetTemplateChild("PART_ConnectNotch") as Border;
         _connectNotchTranslate = GetTemplateChild("PART_ConnectNotchTranslate") as TranslateTransform;
+        _applicationMenuLayer = GetTemplateChild(ApplicationMenuLayerPartName) as Canvas;
+        _applicationButton = GetTemplateChild(Ribbon.ApplicationButtonPartName) as FrameworkElement;
+        _applicationMenuPresenter = GetTemplateChild(ApplicationMenuPresenterPartName) as FrameworkElement;
 
         // Selection may already be set before the template applied; place once layout has run.
-        Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() => { UpdateMarker(animate: false); UpdateConnectNotch(); }));
+        Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() =>
+        {
+            UpdateMarker(animate: false);
+            UpdateConnectNotch();
+            UpdateApplicationMenuPlacement();
+        }));
     }
 
     /// <inheritdoc />
@@ -200,6 +220,40 @@ public class RibbonTabControl : TabControl
     {
         UpdateMarker(animate: false);
         UpdateConnectNotch();
+        UpdateApplicationMenuPlacement();
+    }
+
+    /// <summary>
+    /// Anchors the application menu to the measured application-button bounds. Office 2007 keeps
+    /// its historical overlay position so the orb can cover the frame; later themes place the menu
+    /// below the button, with the presenter's theme margin supplying either a flush edge or a gap.
+    /// </summary>
+    private void UpdateApplicationMenuPlacement()
+    {
+        if (_applicationMenuLayer is null
+            || _applicationButton is null
+            || _applicationMenuPresenter is null
+            || _applicationButton.ActualHeight <= 0d)
+        {
+            return;
+        }
+
+        try
+        {
+            Point origin = _applicationButton
+                .TransformToVisual(_applicationMenuLayer)
+                .Transform(new Point(0d, 0d));
+
+            bool anchorBelow = TryFindResource(ApplicationMenuAnchorBelowButtonResourceKey) is true;
+            Canvas.SetLeft(_applicationMenuPresenter, origin.X);
+            Canvas.SetTop(
+                _applicationMenuPresenter,
+                origin.Y + (anchorBelow ? _applicationButton.ActualHeight : 0d));
+        }
+        catch (InvalidOperationException)
+        {
+            // Template branches are not yet connected. The next LayoutUpdated pass retries.
+        }
     }
 
     private void OnTabScrollOffsetChanged(object? sender, EventArgs e)

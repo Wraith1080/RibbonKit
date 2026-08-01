@@ -188,7 +188,8 @@
                                     Height="0"
                                     HorizontalAlignment="Left"
                                     VerticalAlignment="Top">
-                                <ContentPresenter Content="{Binding ApplicationMenu, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
+                                <ContentPresenter x:Name="PART_ApplicationMenuPresenter"
+                                                  Content="{Binding ApplicationMenu, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
                                                   Margin="{DynamicResource RibbonKit.Metrics.ApplicationMenuMargin}"
                                                   Visibility="{Binding IsApplicationMenuOpen, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}, Converter={StaticResource RibbonKit.BoolToVis}}" />
                             </Canvas>
@@ -332,6 +333,16 @@
                                                             <Setter TargetName="HoverUnderline" Property="Visibility" Value="Collapsed" />
                                                             <Setter Property="Foreground" Value="#FFFFFF" />
                                                         </Trigger>
+                                                        <!-- A menu-open File tab is the visual anchor for a
+                                                             floating surface. The effect is independently
+                                                             tokenized from the menu shadow: connected themes
+                                                             use a compact downward lift, while 2024 lets it
+                                                             breathe across the gap. The hidden orb ignores it. -->
+                                                        <DataTrigger Binding="{Binding IsApplicationMenuOpen, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
+                                                                     Value="True">
+                                                            <Setter TargetName="Chrome" Property="Effect"
+                                                                    Value="{DynamicResource RibbonKit.Effects.ApplicationButtonMenuOpenShadow}" />
+                                                        </DataTrigger>
                                                         <!-- Orb mode. LAST in the list on purpose: the
                                                              hover/pressed/checked triggers above re-show
                                                              HoverUnderline, and the last matching setter for
