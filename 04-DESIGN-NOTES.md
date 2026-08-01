@@ -2972,13 +2972,13 @@ Mouse light-dismiss and window deactivate/move/resize retain their close-all beh
 
 `PopupDismissHelperTests` covers inside-out ordering and the unloaded-owner/no-Closed cleanup path.
 
-### 3.48 Visual-regression snapshots: the first deterministic end-to-end slice — 2026-08-01
+### 3.48 Visual-regression snapshots: the deterministic 100% theme row — 2026-08-01
 
 Phase 6's snapshot work now has a deliberately small vertical slice in
-`tests/RibbonKit.VisualTests`: one fixed 760×170 DIP ribbon scene rendered off-screen under
-Office 2024 at 96 DPI (100%). It exercises the real application-scoped token dictionary, the
-shared control templates, selected-tab/group layout, three button sizes and the tab-row QAT, then
-compares the result with a committed lossless PNG.
+`tests/RibbonKit.VisualTests`: one fixed 760×170 DIP ribbon scene rendered off-screen under all
+five themes at 96 DPI (100%). It exercises the real application-scoped token dictionary, the shared
+control templates, selected-tab/group layout, three button sizes and the tab-row QAT, then compares
+each result with a committed lossless PNG.
 
 Determinism is part of the test rather than an assumption. The harness fixes invariant culture,
 English language metadata, display-mode/grayscale/fixed-hint text, layout rounding, software
@@ -2987,14 +2987,23 @@ and requires those raw pixels to be identical before consulting the approved ima
 comparison ignores only tiny antialiasing noise: at most 0.1% of pixels may differ by more than
 eight channel levels, and the mean channel difference must remain at or below 0.05.
 
+⚠ **`RenderTargetBitmap(..., 96, 96, ...)` does not force a disconnected WPF visual to 96 DPI.**
+The first Office 2024 baseline changed after the host monitor moved from a higher scale to 100%,
+despite the bitmap constructor still saying 96. WPF had already assigned system DPI to layout/text
+before the final render target sampled it. The 100% row now guards `VisualTreeHelper.GetDpi(scene)`
+and fails unless both axes are exactly scale 1.0, so a developer cannot silently approve a
+higher-scale render into a filename ending in `-100`. Explicit higher-DPI hosting remains a later
+slice rather than being guessed here.
+
 Approved PNGs live under `Snapshots/approved`. Updating them is an explicit opt-in via
 `RIBBONKIT_UPDATE_SNAPSHOTS=1`; a normal mismatch writes the actual and a magnified diff beneath
 the already-ignored `TestResults/visual` directory. The project is in `RibbonKit.sln`, so the
 existing Windows `dotnet test` CI step runs it without a separate workflow or runner policy.
 
-This proves the render → approve → compare → diagnose path without pretending the Phase 6 matrix
-is complete. Next expansion is the other four themes at 100%, followed by the four planned DPI
-levels once the first cross-machine CI result confirms that the current tolerance is portable.
+This proves the render → approve → compare → diagnose path across the complete five-theme 100% row
+without pretending the Phase 6 matrix is complete. Next expansion is the four planned DPI levels,
+after the first cross-machine CI result confirms that the current tolerance and 100% environment
+guard are portable.
 
 ## 4. Workflow / Session Conventions
 
@@ -3021,7 +3030,7 @@ levels once the first cross-machine CI result confirms that the current toleranc
 >
 > Roadmap Phases 1–5 and 7 are complete. **Phase 6 now also has the Office 2007 theme (§3.38)**, so
 > all five generations ship; Phase 6 still owes dark mode, RTL + localization and the
-> visual-regression matrix (the first Office 2024/100% slice is in §3.48). Phase 8 (API freeze,
+> visual-regression matrix (the five-theme 100% row is in §3.48). Phase 8 (API freeze,
 > docs site, perf, launch) is untouched. Of the two items
 > deferred out of §3.38, the two-pane 2007 application menu shipped in §3.46; only the 2007 window
 > frame is still owed.
@@ -3225,6 +3234,6 @@ permutations, merge/unmerge round-trips, group restore with two sources in one t
 modal, modal enter/exit selection and cancellation, forced exit when a merged modal tab leaves,
 customization rebuild/remerge, and declarative activation. The broader coverage gaps listed above remain.
 
-**Visual tests: 1 green locally (2026-08-01).** The §3.48 Office 2024/100% scene is the first of the
-planned 20 theme × DPI baselines; its separate project keeps rendering policy out of the headless
-logic-test harness.
+**Visual tests: 1 green locally (2026-08-01), covering 5 approved images.** The §3.48 100% row is
+the first five of the planned 20 theme × DPI baselines; its separate project keeps rendering policy
+out of the headless logic-test harness.

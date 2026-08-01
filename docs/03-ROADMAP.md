@@ -2,7 +2,7 @@
 
 Each phase ends with the showcase app demonstrating everything built so far, tests green, and a tagged pre-release. Phases are sequential but small overlaps are fine.
 
-> **Progress (2026-08-01):** Phases 0–5 and **7 are complete**. Phase 6 is mostly done — **all five themes now ship** (2024, 2019, 2013, 2010 and 2007 — see [`04-DESIGN-NOTES.md`](../04-DESIGN-NOTES.md) §3.38 and [`07-OFFICE-2007-THEME-PLAN.md`](07-OFFICE-2007-THEME-PLAN.md)) and per-monitor DPI is verified at 100/125/150/175/200% **on all five, 2007 included**. The visual-regression suite has its first deterministic Office 2024/100% end-to-end slice (§3.48); the remaining theme × DPI baselines, dark mode, RTL and localization are still owed. Phase 8 has not started. Post-v1 MDI emulation is unusually shaped: M0 and M4 are done, M1–M3 are not.
+> **Progress (2026-08-01):** Phases 0–5 and **7 are complete**. Phase 6 is mostly done — **all five themes now ship** (2024, 2019, 2013, 2010 and 2007 — see [`04-DESIGN-NOTES.md`](../04-DESIGN-NOTES.md) §3.38 and [`07-OFFICE-2007-THEME-PLAN.md`](07-OFFICE-2007-THEME-PLAN.md)) and per-monitor DPI is verified at 100/125/150/175/200% **on all five, 2007 included**. The visual-regression suite now covers the deterministic five-theme row at 100% (§3.48); the remaining DPI baselines, dark mode, RTL and localization are still owed. Phase 8 has not started. Post-v1 MDI emulation is unusually shaped: M0 and M4 are done, M1–M3 are not.
 >
 > Live DPI switching needed a fix outside the library: an app must declare **PerMonitorV2** in its own manifest or Windows bitmap-stretches it until restart. The showcase now does, and the README tells consumers to (§3.42).
 >
@@ -34,7 +34,7 @@ RibbonWindow with title-bar integration, Quick Access Toolbar (placement, overfl
 
 ## Phase 6 — Full theme range & DPI hardening
 
-Office 2019 (+dark/accents), 2013, 2010, 2007 themes on the token layer; visual regression snapshot suite per theme; DPI matrix testing (100/125/150/200%, mixed monitors, per-monitor v2); RTL verification; localization resources. **Exit criteria:** snapshot suite green across 5 themes × 4 DPI levels. *All five themes now ship (2007 landed 2026-07-27, §3.38), and the deterministic Office 2024/100% snapshot slice now proves the end-to-end harness (§3.48); the remaining baselines, dark mode, RTL and localization are still owed.*
+Office 2019 (+dark/accents), 2013, 2010, 2007 themes on the token layer; visual regression snapshot suite per theme; DPI matrix testing (100/125/150/200%, mixed monitors, per-monitor v2); RTL verification; localization resources. **Exit criteria:** snapshot suite green across 5 themes × 4 DPI levels. *All five themes now ship (2007 landed 2026-07-27, §3.38), and the deterministic five-theme 100% snapshot row now proves the end-to-end harness (§3.48); the remaining DPI baselines, dark mode, RTL and localization are still owed.*
 
 ## Phase 7 — Power features ✅ COMPLETE (2026-07-27)
 

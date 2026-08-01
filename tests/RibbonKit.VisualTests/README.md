@@ -4,10 +4,15 @@ This project renders fixed RibbonKit scenes off-screen and compares them with ap
 It complements the logic-focused `RibbonKit.Tests` project; it does not open a window or depend on
 the showcase's persisted state.
 
-The first slice covers Office 2024 at 100% DPI. It fixes culture, dimensions, text rendering,
-layout rounding, and software rendering, and disables RibbonKit animation before taking a snapshot.
-Each scene is rendered twice and must produce identical pixels before it is compared with the
-approved image.
+The first completed matrix row covers all five themes at 100% DPI. It fixes culture, dimensions,
+text rendering, layout rounding, and software rendering, and disables RibbonKit animation before
+taking each snapshot. Every scene is rendered twice and must produce identical pixels before it is
+compared with the approved image.
+
+`RenderTargetBitmap`'s 96-DPI setting does not override the DPI WPF assigns to a disconnected visual
+tree. The test therefore checks that WPF's effective display scale is genuinely 100% and fails with
+a clear environment message otherwise; this prevents a higher-scale machine from silently replacing
+a baseline whose filename says `100`.
 
 Approved images live in `Snapshots/approved` and are reviewed like source changes. To intentionally
 replace them after reviewing a visual change, run:

@@ -22,13 +22,21 @@ namespace RibbonKit.VisualTests;
 /// </summary>
 public sealed class VisualSnapshotTests
 {
-    private const string SnapshotName = "office2024-default-100";
     private const int Width = 760;
     private const int Height = 170;
     private const double Dpi = 96d;
 
+    private static readonly (RibbonTheme Theme, string SnapshotName)[] ThemeSnapshots =
+    {
+        (RibbonTheme.Office2007, "office2007-default-100"),
+        (RibbonTheme.Office2010, "office2010-default-100"),
+        (RibbonTheme.Office2013, "office2013-default-100"),
+        (RibbonTheme.Office2019, "office2019-default-100"),
+        (RibbonTheme.Office2024, "office2024-default-100"),
+    };
+
     [Fact]
-    public void Office2024_default_ribbon_at_100_percent_matches_approved_snapshot() =>
+    public void Every_theme_at_100_percent_matches_its_approved_snapshot() =>
         SnapshotThread.Run(() =>
         {
             CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
@@ -38,67 +46,14 @@ public sealed class VisualSnapshotTests
             var application = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
             RibbonAnimation.GlobalLevel = RibbonAnimationLevel.None;
             RibbonAnimation.RespectSystemReduceMotion = false;
-            ThemeManager.Apply(application, RibbonTheme.Office2024);
 
             try
             {
-                BitmapSource actual = RenderScene();
-                BitmapSource repeated = RenderScene();
-
-                if (!Pixels(actual).AsSpan().SequenceEqual(Pixels(repeated)))
+                foreach ((RibbonTheme theme, string snapshotName) in ThemeSnapshots)
                 {
-                    throw new XunitException(
-                        "The same visual scene produced different pixels twice in one process. " +
-                        "The fixture must be deterministic before its approved image can be trusted.");
+                    ThemeManager.Apply(application, theme);
+                    AssertSnapshot(snapshotName);
                 }
-
-                string repositoryRoot = FindRepositoryRoot();
-                string sourceBaseline = Path.Combine(
-                    repositoryRoot,
-                    "tests",
-                    "RibbonKit.VisualTests",
-                    "Snapshots",
-                    "approved",
-                    SnapshotName + ".png");
-
-                if (ShouldUpdateSnapshots())
-                {
-                    SavePng(actual, sourceBaseline);
-                    return;
-                }
-
-                string outputBaseline = Path.Combine(
-                    AppContext.BaseDirectory,
-                    "Snapshots",
-                    "approved",
-                    SnapshotName + ".png");
-                string baseline = File.Exists(outputBaseline) ? outputBaseline : sourceBaseline;
-
-                if (!File.Exists(baseline))
-                {
-                    throw new XunitException(
-                        $"Approved snapshot not found: {sourceBaseline}{Environment.NewLine}" +
-                        "Set RIBBONKIT_UPDATE_SNAPSHOTS=1 and rerun this project to create it.");
-                }
-
-                BitmapSource expected = LoadPng(baseline);
-                SnapshotComparison comparison = Compare(expected, actual);
-                if (comparison.Passed)
-                {
-                    return;
-                }
-
-                string failureDirectory = Path.Combine(repositoryRoot, "TestResults", "visual");
-                string actualPath = Path.Combine(failureDirectory, SnapshotName + ".actual.png");
-                string differencePath = Path.Combine(failureDirectory, SnapshotName + ".diff.png");
-                SavePng(actual, actualPath);
-                SavePng(CreateDifference(expected, actual), differencePath);
-
-                throw new XunitException(
-                    $"Visual snapshot '{SnapshotName}' changed: {comparison.Message}{Environment.NewLine}" +
-                    $"Actual: {actualPath}{Environment.NewLine}" +
-                    $"Diff:   {differencePath}{Environment.NewLine}" +
-                    "If this change is intentional, review those images and regenerate the approved PNG.");
             }
             finally
             {
@@ -106,9 +61,81 @@ public sealed class VisualSnapshotTests
             }
         });
 
+    private static void AssertSnapshot(string snapshotName)
+    {
+        BitmapSource actual = RenderScene();
+        BitmapSource repeated = RenderScene();
+
+        if (!Pixels(actual).AsSpan().SequenceEqual(Pixels(repeated)))
+        {
+            throw new XunitException(
+                $"The visual scene '{snapshotName}' produced different pixels twice in one process. " +
+                "The fixture must be deterministic before its approved image can be trusted.");
+        }
+
+        string repositoryRoot = FindRepositoryRoot();
+        string sourceBaseline = Path.Combine(
+            repositoryRoot,
+            "tests",
+            "RibbonKit.VisualTests",
+            "Snapshots",
+            "approved",
+            snapshotName + ".png");
+
+        if (ShouldUpdateSnapshots())
+        {
+            SavePng(actual, sourceBaseline);
+            return;
+        }
+
+        string outputBaseline = Path.Combine(
+            AppContext.BaseDirectory,
+            "Snapshots",
+            "approved",
+            snapshotName + ".png");
+        string baseline = File.Exists(outputBaseline) ? outputBaseline : sourceBaseline;
+
+        if (!File.Exists(baseline))
+        {
+            throw new XunitException(
+                $"Approved snapshot not found: {sourceBaseline}{Environment.NewLine}" +
+                "Set RIBBONKIT_UPDATE_SNAPSHOTS=1 and rerun this project to create it.");
+        }
+
+        BitmapSource expected = LoadPng(baseline);
+        SnapshotComparison comparison = Compare(expected, actual);
+        if (comparison.Passed)
+        {
+            return;
+        }
+
+        string failureDirectory = Path.Combine(repositoryRoot, "TestResults", "visual");
+        string actualPath = Path.Combine(failureDirectory, snapshotName + ".actual.png");
+        string differencePath = Path.Combine(failureDirectory, snapshotName + ".diff.png");
+        SavePng(actual, actualPath);
+        SavePng(CreateDifference(expected, actual), differencePath);
+
+        throw new XunitException(
+            $"Visual snapshot '{snapshotName}' changed: {comparison.Message}{Environment.NewLine}" +
+            $"Actual: {actualPath}{Environment.NewLine}" +
+            $"Diff:   {differencePath}{Environment.NewLine}" +
+            "If this change is intentional, review those images and regenerate the approved PNG.");
+    }
+
     private static BitmapSource RenderScene()
     {
         FrameworkElement scene = CreateScene();
+        DpiScale effectiveDpi = VisualTreeHelper.GetDpi(scene);
+        if (Math.Abs(effectiveDpi.DpiScaleX - 1d) > 0.001
+            || Math.Abs(effectiveDpi.DpiScaleY - 1d) > 0.001)
+        {
+            throw new XunitException(
+                "The 100% snapshot row requires WPF's effective display scale to be 100% " +
+                $"(96 DPI), but this process reports {effectiveDpi.PixelsPerInchX:F0}×" +
+                $"{effectiveDpi.PixelsPerInchY:F0} DPI. Move the test process to a 100% display " +
+                "or use the future explicit-DPI harness for higher-scale baselines.");
+        }
+
         var size = new Size(Width, Height);
 
         scene.Measure(size);
