@@ -244,6 +244,8 @@
     </LinearGradientBrush>
     <system:Double x:Key="RibbonKit.Metrics.BackstageBackButtonSize">46</system:Double>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ContentBackground" Color="#FFFFFF" />
+    <DropShadowEffect x:Key="RibbonKit.Effects.Backstage.ContentShadow"
+                      Opacity="0" BlurRadius="0" ShadowDepth="0" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.NavBackground" Color="#F5F4F3" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.Foreground" Color="#201F1E" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemHover" Color="#EDEBE9" />
@@ -351,6 +353,7 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.MenuOpenForeground" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverUnderline" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.Border" Color="#17578F" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.InnerGlow" Color="Transparent" />
     <!-- Office 2007 ORB. Only used when Ribbon.ApplicationButtonShape is Orb. The negative TOP in
          ApplicationOrbMargin is what lifts the orb out of the tab-strip row and into the title bar,
          the way the real 2007 orb straddles that boundary. If it turns out to be clipped by an
@@ -479,6 +482,9 @@
          sits half inside), and the footer bar itself along the bottom. Both gradients carry the
          2007 VALLEY with its hard crease, same as the ribbon body.
          ============================================================ -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.Foreground" Color="#202020" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.SecondaryForeground" Color="#444444" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.HeadingForeground" Color="#15428B" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.FrameBorder" Color="#9BAFCA" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.FrameRim" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.FrameBand" Color="#BED3EC" />

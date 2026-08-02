@@ -18,9 +18,11 @@
          highlights, and gently rounded (2-3px) corners.
          ============================================================ -->
 
-    <!-- Tab-strip band: the light silver-blue window-frame glass the tabs sit on. -->
+    <!-- Tab-strip band: the light silver-blue window-frame glass the tabs sit on.
+         Its TOP stop exactly matches TitleBar.Background's BOTTOM stop so the two
+         separately templated bands read as one continuous ramp. -->
     <LinearGradientBrush x:Key="RibbonKit.Brushes.Ribbon.Background" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Offset="0" Color="#E4EDF7" />
+        <GradientStop Offset="0" Color="#D8E5F3" />
         <GradientStop Offset="1" Color="#CBDAEC" />
     </LinearGradientBrush>
     <!-- The ribbon body (groups area): the signature 2010 gradient — lighter at the top,
@@ -50,7 +52,8 @@
     <LinearGradientBrush x:Key="RibbonKit.Brushes.Control.HoverBackground" StartPoint="0,0" EndPoint="0,1">
         <GradientStop Offset="0" Color="#FFF7CE" />
         <GradientStop Offset="0.5" Color="#FFDC8C" />
-        <GradientStop Offset="1" Color="#FFEFB6" />
+        <GradientStop Offset="0.9" Color="#FFEFB6" />
+        <GradientStop Offset="1" Color="#FFFFFB" />
     </LinearGradientBrush>
     <!-- Pressed: deeper amber, pushed-in, a subtler specular. -->
     <LinearGradientBrush x:Key="RibbonKit.Brushes.Control.PressedBackground" StartPoint="0,0" EndPoint="0,1">
@@ -62,12 +65,14 @@
     <LinearGradientBrush x:Key="RibbonKit.Brushes.Control.CheckedBackground" StartPoint="0,0" EndPoint="0,1">
         <GradientStop Offset="0" Color="#FFEFB2" />
         <GradientStop Offset="0.5" Color="#FFD880" />
-        <GradientStop Offset="1" Color="#FFE8A4" />
+        <GradientStop Offset="0.9" Color="#FFE8A4" />
+        <GradientStop Offset="1" Color="#FFF7D8" />
     </LinearGradientBrush>
     <LinearGradientBrush x:Key="RibbonKit.Brushes.Control.CheckedHoverBackground" StartPoint="0,0" EndPoint="0,1">
         <GradientStop Offset="0" Color="#FFEAA2" />
         <GradientStop Offset="0.5" Color="#FFD074" />
-        <GradientStop Offset="1" Color="#FFE196" />
+        <GradientStop Offset="0.9" Color="#FFE196" />
+        <GradientStop Offset="1" Color="#FFF2C6" />
     </LinearGradientBrush>
     <!-- Thin gold OUTER border + a semi-white INNER rim (drawn as a nested border, inset by the
          outer border) — together the defining beveled edge of a 2010 hot button. -->
@@ -114,7 +119,7 @@
          Keep in step with Ribbon.Background above — the 2010 chevron is meant to sink into the
          band and be found by its outline. -->
     <LinearGradientBrush x:Key="RibbonKit.Brushes.TabStrip.ScrollButtonBackground" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Offset="0" Color="#E4EDF7" />
+        <GradientStop Offset="0" Color="#D8E5F3" />
         <GradientStop Offset="1" Color="#CBDAEC" />
     </LinearGradientBrush>
     <!-- Unselected tab hover: a soft amber glow, like the buttons but lighter. 2010 uses
@@ -201,6 +206,9 @@
     </LinearGradientBrush>
     <system:Double x:Key="RibbonKit.Metrics.BackstageBackButtonSize">36</system:Double>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ContentBackground" Color="#FFFFFF" />
+    <DropShadowEffect x:Key="RibbonKit.Effects.Backstage.ContentShadow"
+                      BlurRadius="9" ShadowDepth="3" Direction="180"
+                      Opacity="0.24" Color="#000000" RenderingBias="Performance" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.NavBackground" Color="#F5F4F3" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.Foreground" Color="#201F1E" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemHover" Color="#EDEBE9" />
@@ -211,11 +219,16 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.OptionsDialog.RailBackground" Color="#F5F4F3" />
     <!-- Classic2010 selected-item "glass" marker (glossy blue) and the dialog primary (OK)
          button glass, borrowed from the File button. -->
-    <LinearGradientBrush x:Key="RibbonKit.Brushes.Backstage.ItemSelectedGlass" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Offset="0" Color="#63A8DC" />
-        <GradientStop Offset="0.5" Color="#2E76B8" />
-        <GradientStop Offset="1" Color="#4A8FC8" />
-    </LinearGradientBrush>
+    <RadialGradientBrush x:Key="RibbonKit.Brushes.Backstage.ItemSelectedGlass"
+                         Center="0.43,0.78"
+                         GradientOrigin="0.43,0.78"
+                         RadiusX="0.78"
+                         RadiusY="1.05">
+        <GradientStop Offset="0" Color="#62A9F6" />
+        <GradientStop Offset="0.45" Color="#3D86E5" />
+        <GradientStop Offset="0.78" Color="#1C6ACA" />
+        <GradientStop Offset="1" Color="#0F58AA" />
+    </RadialGradientBrush>
     <LinearGradientBrush x:Key="RibbonKit.Brushes.Dialog.PrimaryBackground" StartPoint="0,0" EndPoint="0,1">
         <GradientStop Offset="0" Color="#4E97CE" />
         <GradientStop Offset="0.5" Color="#2470B2" />
@@ -265,11 +278,12 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.KeyTip.Foreground" Color="#1E1E1E" />
 
     <!-- Title bar: the light silver-blue Aero-style glass gradient of the 2010 Blue scheme.
-         The Colored Title Bar option (ThemeManager.SetAccentedTitleBar) swaps this to a
-         solid accent bar with white caption text. -->
+         Its bottom stop is the tab-strip band's top stop, avoiding a bright reset at the seam.
+         The Colored Title Bar option (ThemeManager.SetAccentedTitleBar) swaps this to an
+         accent-derived caption ramp with white text. -->
     <LinearGradientBrush x:Key="RibbonKit.Brushes.TitleBar.Background" StartPoint="0,0" EndPoint="0,1">
         <GradientStop Offset="0" Color="#EAF1F9" />
-        <GradientStop Offset="1" Color="#CFDEEE" />
+        <GradientStop Offset="1" Color="#D8E5F3" />
     </LinearGradientBrush>
     <SolidColorBrush x:Key="RibbonKit.Brushes.TitleBar.Foreground" Color="#1E1E1E" />
 
@@ -293,13 +307,28 @@
         <GradientStop Offset="0.5" Color="#175792" />
         <GradientStop Offset="1" Color="#276CA4" />
     </LinearGradientBrush>
-    <!-- Application-menu open defaults to the historical checked File-tab treatment. Colored
-         tab bands may override these independently without changing Backstage. -->
-    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.MenuOpenBackground" Color="#1E5A9C" />
+    <!-- Open Backstage: retain the same dimensional blue glass as the other File states instead
+         of flattening to a solid block. The scoped radial rim below supplies the lower bloom. -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.ApplicationButton.MenuOpenBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#3E8BC5" />
+        <GradientStop Offset="0.5" Color="#1E62A1" />
+        <GradientStop Offset="1" Color="#3277B4" />
+    </LinearGradientBrush>
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.MenuOpenForeground" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverUnderline" Color="Transparent" />
     <!-- Thin blue edge around the File button. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.Border" Color="#17578F" />
+    <!-- A faint inner rim whose strongest point sits below the lower center. This avoids the
+         uniform white foot that made the File button look fluorescent instead of glassy. -->
+    <RadialGradientBrush x:Key="RibbonKit.Brushes.ApplicationButton.InnerGlow"
+                         Center="0.5,1.12"
+                         GradientOrigin="0.5,1.12"
+                         RadiusX="0.78"
+                         RadiusY="1.12">
+        <GradientStop Offset="0" Color="#58FFFFFF" />
+        <GradientStop Offset="0.55" Color="#2CFFFFFF" />
+        <GradientStop Offset="1" Color="#14FFFFFF" />
+    </RadialGradientBrush>
     <!-- Orb tokens. This theme uses the rectangular File tab, so these only matter if an app opts
          into Ribbon.ApplicationButtonShape = Orb anyway. Kept at the 2007 geometry minus the
          overhang, so an orb here sits neatly inside the tab strip. -->
@@ -402,6 +431,9 @@
          soft-glass translation of the 2007 geometry into this generation's blue-grey palette —
          there if an app asks for the menu under this theme, invisible otherwise.
          ============================================================ -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.Foreground" Color="#202020" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.SecondaryForeground" Color="#474747" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.HeadingForeground" Color="#174F90" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.FrameBorder" Color="#8DA5C4" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.FrameRim" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.FrameBand" Color="#D6E2F0" />

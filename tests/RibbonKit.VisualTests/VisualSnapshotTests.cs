@@ -78,6 +78,40 @@ public sealed class VisualSnapshotTests
                     }
                 }
 
+                // Office 2010 has generation-specific glass states that the neutral matrix scene
+                // cannot expose: its File button is hidden without Backstage/ApplicationMenu, and
+                // an ordinary RibbonButton cannot be forced into the read-only IsMouseOver state
+                // in this disconnected visual tree. An open File button plus a checked toggle
+                // exercise the same state gradients deterministically at the smallest useful DPI.
+                ThemeManager.Apply(application, RibbonTheme.Office2010);
+                ThemeManager.SetDarkMode(application, false);
+                AssertSnapshot(
+                    "office2010-button-states-100",
+                    1d,
+                    FlowDirection.LeftToRight,
+                    CreateOffice2010ButtonStateScene);
+                AssertSnapshot(
+                    "office2010-backstage-shell-100",
+                    1d,
+                    FlowDirection.LeftToRight,
+                    CreateOffice2010BackstageShellScene);
+
+                ThemeManager.Apply(application, RibbonTheme.Office2007);
+                ThemeManager.SetDarkMode(application, true);
+                AssertSnapshot(
+                    "office2007-dark-application-menu-100",
+                    1d,
+                    FlowDirection.LeftToRight,
+                    CreateApplicationMenuScene);
+
+                ThemeManager.Apply(application, RibbonTheme.Office2010);
+                ThemeManager.SetDarkMode(application, true);
+                AssertSnapshot(
+                    "office2010-dark-application-menu-100",
+                    1d,
+                    FlowDirection.LeftToRight,
+                    CreateApplicationMenuScene);
+
                 // Smallest deterministic RTL slice: isolate FlowDirection from localization and
                 // DPI variables while exercising the same real tokens/templates as the matrix.
                 ThemeManager.Apply(application, RibbonTheme.Office2024);
@@ -112,10 +146,11 @@ public sealed class VisualSnapshotTests
     private static void AssertSnapshot(
         string snapshotName,
         double dpiScale,
-        FlowDirection flowDirection = FlowDirection.LeftToRight)
+        FlowDirection flowDirection = FlowDirection.LeftToRight,
+        Func<FlowDirection, FrameworkElement>? sceneFactory = null)
     {
-        BitmapSource actual = RenderScene(dpiScale, flowDirection);
-        BitmapSource repeated = RenderScene(dpiScale, flowDirection);
+        BitmapSource actual = RenderScene(dpiScale, flowDirection, sceneFactory);
+        BitmapSource repeated = RenderScene(dpiScale, flowDirection, sceneFactory);
 
         if (!Pixels(actual).AsSpan().SequenceEqual(Pixels(repeated)))
         {
@@ -173,9 +208,12 @@ public sealed class VisualSnapshotTests
             "If this change is intentional, review those images and regenerate the approved PNG.");
     }
 
-    private static BitmapSource RenderScene(double dpiScale, FlowDirection flowDirection)
+    private static BitmapSource RenderScene(
+        double dpiScale,
+        FlowDirection flowDirection,
+        Func<FlowDirection, FrameworkElement>? sceneFactory)
     {
-        FrameworkElement scene = CreateScene(flowDirection);
+        FrameworkElement scene = (sceneFactory ?? CreateScene)(flowDirection);
         var requestedDpi = new DpiScale(dpiScale, dpiScale);
         VisualTreeHelper.SetRootDpi(scene, requestedDpi);
         DpiScale effectiveDpi = VisualTreeHelper.GetDpi(scene);
@@ -272,6 +310,135 @@ public sealed class VisualSnapshotTests
         ribbon.SelectedTab = home;
 
         root.Children.Add(ribbon);
+        return root;
+    }
+
+    private static FrameworkElement CreateOffice2010ButtonStateScene(FlowDirection flowDirection)
+    {
+        var root = (Grid)CreateScene(flowDirection);
+        Assert.Single(root.Children);
+        var ribbon = Assert.IsType<Ribbon>(root.Children[0]);
+        var home = Assert.IsType<RibbonTab>(ribbon.Tabs[0]);
+
+        var stateGroup = new RibbonGroup { Header = "States" };
+        stateGroup.Items.Add(new RibbonToggleButton
+        {
+            Header = "Checked",
+            Size = RibbonControlSize.Large,
+            Icon = Icon("M3,8 L7,12 L14,3"),
+            LargeIcon = Icon("M3,8 L7,12 L14,3"),
+            IsChecked = true,
+            UseLayoutRounding = true,
+            SnapsToDevicePixels = true,
+        });
+        stateGroup.Items.Add(new RibbonDropDownButton
+        {
+            Header = "Drop",
+            Size = RibbonControlSize.Large,
+            Icon = Icon("M3,5 L8,10 L13,5"),
+            LargeIcon = Icon("M3,5 L8,10 L13,5"),
+            IsDropDownOpen = true,
+            UseLayoutRounding = true,
+            SnapsToDevicePixels = true,
+        });
+        stateGroup.Items.Add(new RibbonSplitButton
+        {
+            Header = "Split",
+            Size = RibbonControlSize.Large,
+            Icon = Icon("M3,3 L13,3 L13,13 L3,13 Z"),
+            LargeIcon = Icon("M3,3 L13,3 L13,13 L3,13 Z"),
+            IsDropDownOpen = true,
+            UseLayoutRounding = true,
+            SnapsToDevicePixels = true,
+        });
+        home.Groups.Add(stateGroup);
+
+        var backstage = new Backstage { Design = RibbonBackstageDesign.Classic2010 };
+        backstage.Items.Add(new BackstageTabItem { Header = "Info" });
+        ribbon.Backstage = backstage;
+        ribbon.IsBackstageOpen = true;
+        return root;
+    }
+
+    private static FrameworkElement CreateOffice2010BackstageShellScene(FlowDirection flowDirection)
+    {
+        var root = (Grid)CreateScene(flowDirection);
+        root.Children.Clear();
+
+        var backstage = new Backstage
+        {
+            Design = RibbonBackstageDesign.Classic2010,
+            UseLayoutRounding = true,
+            SnapsToDevicePixels = true,
+        };
+        backstage.Items.Add(new BackstageTabItem
+        {
+            Header = "Info",
+            Content = new StackPanel
+            {
+                HorizontalAlignment = HorizontalAlignment.Left,
+                Children =
+                {
+                    new TextBlock
+                    {
+                        Text = "Information",
+                        FontSize = 24,
+                        FontWeight = FontWeights.Light,
+                        Margin = new Thickness(0, 0, 0, 10),
+                    },
+                    new TextBlock
+                    {
+                        Text = "RibbonKit document",
+                        FontSize = 14,
+                        FontWeight = FontWeights.SemiBold,
+                    },
+                },
+            },
+        });
+        backstage.Items.Add(new BackstageTabItem { Header = "Recent" });
+        backstage.Items.Add(new BackstageTabItem { Header = "New" });
+        backstage.SelectedIndex = 0;
+
+        root.Children.Add(backstage);
+        return root;
+    }
+
+    private static FrameworkElement CreateApplicationMenuScene(FlowDirection flowDirection)
+    {
+        var root = (Grid)CreateScene(flowDirection);
+        root.Children.Clear();
+
+        var heading = new TextBlock
+        {
+            Text = "Recent Documents",
+            FontWeight = FontWeights.Bold,
+            Margin = new Thickness(2, 0, 0, 5),
+        };
+        heading.SetResourceReference(
+            TextBlock.ForegroundProperty,
+            "RibbonKit.Brushes.ApplicationMenu.HeadingForeground");
+
+        var defaultPage = new StackPanel();
+        defaultPage.Children.Add(heading);
+        defaultPage.Children.Add(new RibbonApplicationMenuPaneItem { Content = "1  Quarterly report.docx" });
+        defaultPage.Children.Add(new RibbonApplicationMenuPaneItem { Content = "2  Meeting notes.docx" });
+
+        var footer = new StackPanel { Orientation = Orientation.Horizontal };
+        footer.Children.Add(new RibbonApplicationMenuButton { Content = "Options" });
+        footer.Children.Add(new RibbonApplicationMenuButton { Content = "Exit" });
+
+        var menu = new RibbonApplicationMenu
+        {
+            DefaultContent = defaultPage,
+            DefaultHeader = "Recent Documents",
+            FooterContent = footer,
+            UseLayoutRounding = true,
+            SnapsToDevicePixels = true,
+        };
+        menu.Items.Add(new RibbonApplicationMenuItem { Header = "New" });
+        menu.Items.Add(new RibbonApplicationMenuItem { Header = "Open" });
+
+        root.Children.Add(menu);
         return root;
     }
 

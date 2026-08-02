@@ -138,10 +138,10 @@
                         <StackPanel>
                             <TextBlock Text="Recent Documents"
                                        FontWeight="Bold"
-                                       Foreground="#15428B"
+                                       Foreground="{DynamicResource RibbonKit.Brushes.ApplicationMenu.HeadingForeground}"
                                        Margin="2,0,0,4" />
-                            <Rectangle Height="1" Fill="#D8D8D8" />
-                            <Rectangle Height="1" Fill="#F5F5F5" Margin="0,0,0,4" />
+                            <Rectangle Height="1" Fill="{DynamicResource RibbonKit.Brushes.ApplicationMenu.Separator}" />
+                            <Rectangle Height="1" Fill="{DynamicResource RibbonKit.Brushes.ApplicationMenu.SeparatorHighlight}" Margin="0,0,0,4" />
                             <rk:RibbonApplicationMenuPaneItem Content="1  Quarterly report.docx"
                                                               Click="OnApplicationMenuCommand" />
                             <rk:RibbonApplicationMenuPaneItem Content="2  Meeting notes.docx"

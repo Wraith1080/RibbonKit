@@ -14,6 +14,14 @@ One additional Office 2024 snapshot at 100% applies `FlowDirection.RightToLeft` 
 It is an RTL layout smoke test kept separate from localization so a mirrored-layout regression is
 not confused with translated text or font fallback.
 
+A focused Office 2010 snapshot at 100% renders the open File application button, a checked toggle,
+an open dropdown, and both halves of an open split button. These are deterministic stand-ins for the
+shared state brushes because `IsMouseOver` cannot be forced reliably on the disconnected visual tree.
+A second focused Office 2010 snapshot renders the real `Classic2010` Backstage shell, including its
+square radial selection marker and content drop shadow. Two more focused snapshots render the complete
+Office 2007 Black and Office 2010 Black application menus. Together with the 40-image matrix and RTL
+smoke scene, the suite contains 45 approved PNGs.
+
 `RenderTargetBitmap`'s 96-DPI setting does not override the DPI WPF assigns to a disconnected visual
 tree. The harness explicitly assigns each scene's root DPI with `VisualTreeHelper.SetRootDpi` before
 layout, verifies that WPF reports the requested value, and scales both bitmap dimensions and DPI

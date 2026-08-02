@@ -48,7 +48,7 @@
          RibbonApplicationMenuItem — one row of the left command column
          ============================================================ -->
     <Style TargetType="{x:Type controls:RibbonApplicationMenuItem}">
-        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.ApplicationMenu.Foreground}" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="Template">
@@ -138,7 +138,7 @@
                                 HorizontalContentAlignment="Center"
                                 VerticalContentAlignment="Center">
                             <Path Data="M0,0 L4.5,4.5 L0,9 Z"
-                                  Fill="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
+                                  Fill="{DynamicResource RibbonKit.Brushes.ApplicationMenu.SecondaryForeground}" />
                         </Button>
                     </Grid>
                     <ControlTemplate.Triggers>
@@ -286,7 +286,7 @@
          RibbonApplicationMenuPaneItem — a row inside the right pane
          ============================================================ -->
     <Style TargetType="{x:Type controls:RibbonApplicationMenuPaneItem}">
-        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.ApplicationMenu.Foreground}" />
         <Setter Property="HorizontalContentAlignment" Value="Left" />
         <Setter Property="Padding" Value="6,5" />
         <Setter Property="Template">
@@ -313,12 +313,12 @@
                             <StackPanel x:Name="TextStack" Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
                                 <ContentPresenter x:Name="HeaderText"
                                                   TextElement.FontWeight="Bold"
-                                                  TextElement.Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
+                                                  TextElement.Foreground="{DynamicResource RibbonKit.Brushes.ApplicationMenu.SecondaryForeground}" />
                                 <TextBlock x:Name="DescriptionText"
                                            Text="{TemplateBinding Description}"
                                            TextWrapping="Wrap"
                                            Margin="0,2,0,0"
-                                           Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+                                           Foreground="{DynamicResource RibbonKit.Brushes.ApplicationMenu.Foreground}" />
                             </StackPanel>
                         </Grid>
                     </Border>
@@ -329,7 +329,7 @@
                             <Setter TargetName="DescriptionText" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="HeaderText" Property="TextElement.FontWeight" Value="Normal" />
                             <Setter TargetName="HeaderText" Property="TextElement.Foreground"
-                                    Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+                                    Value="{DynamicResource RibbonKit.Brushes.ApplicationMenu.Foreground}" />
                         </Trigger>
                         <!-- No icon: reclaim the 32px column entirely rather than leaving a hole. -->
                         <Trigger Property="Icon" Value="{x:Null}">
@@ -361,7 +361,7 @@
          RibbonApplicationMenuButton — the footer bar's buttons
          ============================================================ -->
     <Style TargetType="{x:Type controls:RibbonApplicationMenuButton}">
-        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.ApplicationMenu.Foreground}" />
         <Setter Property="Padding" Value="9,3" />
         <Setter Property="Margin" Value="4,0,0,0" />
         <Setter Property="MinWidth" Value="94" />
@@ -415,6 +415,7 @@
          RibbonApplicationMenu — the two-pane drop-down itself
          ============================================================ -->
     <Style TargetType="{x:Type controls:RibbonApplicationMenu}">
+        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.ApplicationMenu.Foreground}" />
         <Setter Property="HorizontalAlignment" Value="Left" />
         <Setter Property="VerticalAlignment" Value="Top" />
         <Setter Property="ItemsPanel">
@@ -523,7 +524,7 @@
                                                                     <TextBlock Text="{TemplateBinding ActivePaneHeader}"
                                                                                FontWeight="Bold"
                                                                                TextTrimming="CharacterEllipsis"
-                                                                               Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
+                                                                               Foreground="{DynamicResource RibbonKit.Brushes.ApplicationMenu.HeadingForeground}" />
                                                                 </Border>
                                                                 <!-- Shows the ACTIVE ITEM's Content.
                                                                      The item is that content's

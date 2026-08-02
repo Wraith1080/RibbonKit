@@ -167,6 +167,8 @@
                                  pre-2007 themes set it to their own strip value, so nothing moves. -->
                             <Setter TargetName="NavColumn" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Backstage.NavBackground}" />
+                            <Setter TargetName="ContentArea" Property="Effect"
+                                    Value="{DynamicResource RibbonKit.Effects.Backstage.ContentShadow}" />
                         </Trigger>
 
                         <!-- Translucent (reveal a window Mica/Acrylic backdrop behind the

@@ -36,6 +36,8 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemHoverBackground" Color="#3974A3" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemSelectedBackground" Color="#24547B" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ContentBackground" Color="#202020" />
+    <DropShadowEffect x:Key="RibbonKit.Effects.Backstage.ContentShadow"
+                      Opacity="0" BlurRadius="0" ShadowDepth="0" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.NavBackground" Color="#262626" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.Foreground" Color="#F2F2F2" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemHover" Color="#333333" />
@@ -64,6 +66,9 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.CaptionButtonHoverBackground" Color="#26FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.CaptionButtonPressedBackground" Color="#40FFFFFF" />
 
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.Foreground" Color="#F2F2F2" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.SecondaryForeground" Color="#D0D0D0" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.HeadingForeground" Color="#8CC8FF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.FrameBorder" Color="#555555" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.FrameRim" Color="#3A3A3A" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.FrameBand" Color="#262626" />
@@ -78,4 +83,5 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.SeparatorHighlight" Color="#303030" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.ButtonBackground" Color="#303030" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.ButtonBorder" Color="#5A5A5A" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.InnerGlow" Color="Transparent" />
 </ResourceDictionary>

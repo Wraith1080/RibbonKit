@@ -122,6 +122,8 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.NavBackground" Color="#FFFFFF" />
     <system:Double x:Key="RibbonKit.Metrics.BackstageBackButtonSize">36</system:Double>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ContentBackground" Color="#FFFFFF" />
+    <DropShadowEffect x:Key="RibbonKit.Effects.Backstage.ContentShadow"
+                      Opacity="0" BlurRadius="0" ShadowDepth="0" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.NavBackground" Color="#F5F4F3" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.Foreground" Color="#201F1E" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemHover" Color="#EDEBE9" />
@@ -174,6 +176,7 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverUnderline" Color="Transparent" />
     <!-- No File-button border (Office 2010 uses one). -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.Border" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.InnerGlow" Color="Transparent" />
     <!-- Orb tokens. This theme uses the rectangular File tab, so these only matter if an app opts
          into Ribbon.ApplicationButtonShape = Orb anyway. Kept at the 2007 geometry minus the
          overhang, so an orb here sits neatly inside the tab strip. -->
@@ -266,6 +269,9 @@
          than 2007's glass. The top band is nearly nothing here because there is no orb to tuck
          under it.
          ============================================================ -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.Foreground" Color="#202020" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.SecondaryForeground" Color="#474747" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.HeadingForeground" Color="#2B579A" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.FrameBorder" Color="#919191" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.FrameRim" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.FrameBand" Color="#F3F3F3" />

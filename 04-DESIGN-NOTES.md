@@ -1534,6 +1534,70 @@ settle that rides the existing tab-switch slide animation, so it shouldn't read 
   toolbox items + right-click design-time editor. (RepositoryUrl still has the `YOUR-GITHUB-USERNAME`
   placeholder — set it before publishing.) See `RibbonKit.Design/SETUP-DESIGNTOOLS.md` → "NuGet packaging".
 
+**Eighth feedback pass — continuous top chrome + complete button-state glass (2026-08-02):**
+
+- **The title/tab gradient seam was real.** `RibbonWindow` paints `TitleBar.Background` while the
+  nested `Ribbon` separately paints `Ribbon.Background`; WPF normalizes each gradient inside its own
+  element, so 2010's old title-bottom `#CFDEEE` abruptly reset to strip-top `#E4EDF7`. The light and
+  Black palettes now make the title's final stop exactly equal the strip's first stop. The two bands
+  remain independently tokenized (colored-title-bar behavior is unchanged) but read as one continuous
+  ramp at their physical seam. A contract test locks the matching endpoints in both variants.
+- **Every released 2010 command highlight now has the strong lower inner glow from the reference.**
+  The common hover/checked gradients keep their smooth matte middle, move the former light foot to
+  offset `0.9`, and finish at `1.0` with a narrow near-white specular stop. This is token-only, so it
+  reaches normal/toggle buttons at every size, QAT proxies, dropdown/split halves, collapsed-group and
+  gallery buttons, plus the existing menu/combo consumers without duplicating templates or changing
+  `BorderThickness` (therefore no return of the 1px hover jitter).
+- **Pressed is recessed, not glowing.** The live reference correction showed that the near-white foot
+  belongs to hover and checked only. `Control.PressedBackground` and
+  `ApplicationButton.PressedBackground` are three-stop ramps again, the normal/toggle `PressWash`
+  layers no longer draw `Control.InnerGlow`, and custom-accent 2010 pressed states use `PressedGel(...)`.
+- **The blue File application button uses a faint radial inner rim, not a white band.** Rest, hover,
+  pressed, and open Backstage all remain smooth three-stop gradients without a uniform bright foot.
+  A File-specific `ApplicationButton.InnerGlow` radial brush supplies the low-alpha rim and localized
+  lower-center bloom seen in the reference; the pressed trigger hides it. Custom accents use
+  `ApplicationButtonGel(...)` for rest/hover/open and `PressedGel(...)` for pressed, so neither path
+  recreates the fluorescent lower stripe. The other generations define the same rim token as transparent.
+- **Deterministic coverage.** `Office2010ThemeContractTests` checks the light/Black seam, the bright
+  released-state feet, their deliberate absence from pressed and File-body ramps, the scoped radial
+  File rim, and every shared ribbon-button template family. A focused
+  `office2010-button-states-100` approved PNG renders the open File button, a checked toggle, an open
+  dropdown, and both halves of an open split button. It complements the 40-image matrix and RTL smoke,
+  bringing the approved total to **42 images**; live `IsMouseOver` still requires the Windows pass.
+
+**Ninth feedback pass — Classic2010 Backstage shell depth (2026-08-02):**
+
+- **The selected page stays square and uses the reference's concentrated blue glow.** The oversized
+  triangular experiment was removed. `Backstage.ItemSelectedGlass` is now a four-stop radial gradient
+  centered slightly left and below the row's midpoint, producing the bright core and darker side edges
+  visible in the Word crop. Custom Office 2010 accents derive the same shape through
+  `BackstageSelectionGlow(...)` instead of falling back to the generic vertical `Gel(...)`.
+- **The white content sheet now casts a conventional shadow.** `ContentArea` receives a tokenized
+  left-casting `DropShadowEffect` in `Classic2010`; the painted edge-gradient strip was removed. The
+  effect is active in the light and Black 2010 palettes and zeroed in every other palette. The existing
+  full-window overlay, back button, page layout, selection behavior, and animation remain unchanged.
+- **Deterministic coverage.** Two template/token contract tests lock the square full-width selection,
+  radial glow, drop-shadow trigger, and ten-palette effect parity. A new
+  `office2010-backstage-shell-100` approval renders
+  the real `Backstage` and selected page end-to-end, bringing the visual total to **43 images**.
+
+**Tenth feedback pass — complete 2007/2010 Black application menus (2026-08-02):**
+
+- **The blue bars and light footer buttons were missing dark overrides.** The 2007/2010 dark overlay
+  dictionaries previously replaced only five application-menu resources; `FrameRim`, top/footer bands,
+  nav/pane surfaces, separators, and footer-button fills still fell through to the light blue base
+  palette. Both Black variants now own the complete 14-surface menu palette. Office 2007 retains its
+  hard-crease gradients while 2010 uses smoother two-stop ramps.
+- **Menu text is now scoped independently from the hybrid ribbon.** Both historical Black variants
+  intentionally keep their silver command surface and dark `Text.Primary`, so darkening the menu while
+  continuing to consume global text tokens would make its labels unreadable. New application-menu
+  foreground, secondary-foreground, and heading-foreground tokens are defined in all ten palettes and
+  consumed throughout the menu templates. The Showcase Recent Documents heading and rules now use the
+  same tokens instead of fixed light-theme colors.
+- **Deterministic coverage.** Three logic contracts require complete dark surface ownership, ten-palette
+  foreground parity, and template isolation from global text tokens. Focused 100%-scale snapshots cover
+  the real 2007 Black and 2010 Black menu shells, bringing the approved total to **45 images**.
+
 At that point this batch had not yet been built or visually checked on Windows; the later verification
 record in §5 supersedes that historical status.
 
@@ -3321,16 +3385,18 @@ Possible post-v1 polish: an optional `MonochromeIcon` on QAT-capable command but
 purpose-authored alpha mask on accent-colored title/tab surfaces. This is an API idea, not scheduled
 work; a separate `DarkIcon` property remains intentionally unplanned.
 
-**Unit tests: 122 green (verified 2026-08-02).** Coverage now includes the STA harness, the borrow
+**Unit tests: 144 green (verified 2026-08-02).** Coverage now includes the STA harness, the borrow
 protocol, overflow strip measure/arrange rules, popup motion and dismissal, proxy mirroring,
-application-menu layering/hover/KeyTips, and the existing reduction/size-definition/theme-scope tests.
+application-menu layering/hover/KeyTips, Office 2010 seam/state/consumer contracts, and the existing
+reduction/size-definition/theme-scope tests.
 `RibbonMergeModalTests` adds the Phase 7 automated invariants: merge ordering across later
 permutations, merge/unmerge round-trips, group restore with two sources in one tab, capture while
 modal, modal enter/exit selection and cancellation, forced exit when a merged modal tab leaves,
 customization rebuild/remerge, and declarative activation. The broader coverage gaps listed above remain.
 
-**Visual tests: 1 green locally (2026-08-02), covering all 41 approved images.** The §§3.48–3.49 matrix
+**Visual tests: 1 green locally (2026-08-02), covering all 45 approved images.** The §§3.48–3.49 matrix
 spans five light themes plus five dark/black variants × 100/125/150/200%, followed by the §3.51 RTL
-smoke image; its separate project keeps rendering policy out of the
+smoke image and the focused §3.27 Office 2010 button-state/Backstage-shell plus 2007/2010 Black
+application-menu scenes; its separate project keeps rendering policy out of the
 headless logic-test harness. It passed three successive fresh-process stability runs in addition to
 the normal project and solution runs.

@@ -257,10 +257,14 @@
                                                                 CornerRadius="{DynamicResource RibbonKit.Metrics.ApplicationButtonCornerRadius}"
                                                                 SnapsToDevicePixels="True">
                                                             <Grid>
-                                                                <!-- Inner light rim just inside the outer border (2010 glass). -->
-                                                                <Border BorderBrush="{DynamicResource RibbonKit.Brushes.Control.InnerGlow}"
+                                                                <!-- File-specific inner rim. Office 2010 supplies a faint
+                                                                     radial brush with a lower-center bloom; flat generations
+                                                                     supply Transparent. It is suppressed while pressed below. -->
+                                                                <Border x:Name="InnerRim"
+                                                                        BorderBrush="{DynamicResource RibbonKit.Brushes.ApplicationButton.InnerGlow}"
                                                                         BorderThickness="{DynamicResource RibbonKit.Metrics.ApplicationButtonBorderThickness}"
-                                                                        CornerRadius="{DynamicResource RibbonKit.Metrics.ApplicationButtonCornerRadius}" />
+                                                                        CornerRadius="{DynamicResource RibbonKit.Metrics.ApplicationButtonCornerRadius}"
+                                                                        IsHitTestVisible="False" />
                                                                 <ContentPresenter Margin="{DynamicResource RibbonKit.Metrics.ApplicationButtonPadding}"
                                                                                   HorizontalAlignment="Center"
                                                                                   VerticalAlignment="Center" />
@@ -324,6 +328,7 @@
                                                         <Trigger Property="IsPressed" Value="True">
                                                             <Setter TargetName="Chrome" Property="Background"
                                                                     Value="{DynamicResource RibbonKit.Brushes.ApplicationButton.PressedBackground}" />
+                                                            <Setter TargetName="InnerRim" Property="Opacity" Value="0" />
                                                             <Setter TargetName="HoverUnderline" Property="Visibility" Value="Collapsed" />
                                                         </Trigger>
                                                         <!-- Backstage open: File highlights in accent, like Office -->

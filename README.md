@@ -225,7 +225,7 @@ Design-time tooling setup is documented in [`src/RibbonKit.Design/SETUP-DESIGNTO
 
 ## Roadmap to v1.0
 
-Remaining before the API freeze: full RTL verification and localization (the final Phase 6 items). Every generation has a dark variant—historical Black for 2007/2010, Dark Gray for 2013, and modern dark for 2019/2024—and the 40-image theme/variant × DPI matrix is complete. A 41st Office 2024 RTL smoke image guards basic mirroring. The Phase 7 merge/modal invariant tests are complete. One item is still deferred out of the Office 2007 work: the 2007 window frame. (The two-pane 2007 application menu, the other deferral, shipped as `RibbonApplicationMenu`.) Then release engineering — API review and freeze, docs site, SourceLink, and a performance pass.
+Remaining before the API freeze: full RTL verification and localization (the final Phase 6 items). Every generation has a dark variant—historical Black for 2007/2010, Dark Gray for 2013, and modern dark for 2019/2024—and the 40-image theme/variant × DPI matrix is complete. An Office 2024 RTL smoke image guards basic mirroring, and a focused Office 2010 button-state image covers its generation-specific glass, for 42 approvals total. The Phase 7 merge/modal invariant tests are complete. One item is still deferred out of the Office 2007 work: the 2007 window frame. (The two-pane 2007 application menu, the other deferral, shipped as `RibbonApplicationMenu`.) Then release engineering — API review and freeze, docs site, SourceLink, and a performance pass.
 
 ## Contributing
 

@@ -321,9 +321,10 @@ public static class ThemeManager
         resources[AccentKey] = Frozen(accent);
         resources[BackstageHoverKey] = Frozen(Mix(accent, Colors.White, 0.22));
         resources[BackstageSelectedKey] = Frozen(Mix(accent, Colors.Black, 0.28));
-        // The Classic2010 selected "glass" marker tracks the accent as a gel (only visible when
-        // that backstage design is active, harmless otherwise). The dialog primary (OK) button
-        // is flat accent by default; the Office 2010 case below swaps it for a glass gel.
+        // The Classic2010 selected marker tracks the accent (only visible when that backstage
+        // design is active, harmless otherwise). Office 2010 replaces this baseline gel with its
+        // lower-center radial glow below. The dialog primary (OK) button is flat accent by default;
+        // the Office 2010 case swaps it for a glass gel.
         resources[BackstageSelectedGlassKey] = Gel(accent);
         resources[DialogPrimaryBackgroundKey] = Frozen(accent);
         resources[DialogPrimaryBorderKey] = Frozen(accent);
@@ -363,13 +364,15 @@ public static class ThemeManager
                 break;
             case RibbonTheme.Office2010:
                 // The File button tracks the accent — but as a GRADIENT (a smooth blue-style
-                // gel in the accent hue) with a matching border, NOT a flat solid, so it keeps
-                // the 2010 glass look when the accent changes. The connected selected tab keeps
-                // its dark label (SelectedForeground left at the theme default).
-                resources[AppButtonBackgroundKey] = Gel(accent);
-                resources[AppButtonHoverKey] = Gel(Mix(accent, Colors.White, 0.18));
-                resources[AppButtonPressedKey] = Gel(Mix(accent, Colors.Black, 0.22));
+                // gel in the accent hue) with a matching border, NOT a flat solid. Its separate
+                // radial inner-rim token provides the lower-center bloom, so these body ramps do
+                // not end in Gel's uniform bright foot. The connected selected tab keeps its dark
+                // label (SelectedForeground left at the theme default).
+                resources[AppButtonBackgroundKey] = ApplicationButtonGel(accent);
+                resources[AppButtonHoverKey] = ApplicationButtonGel(Mix(accent, Colors.White, 0.18));
+                resources[AppButtonPressedKey] = PressedGel(Mix(accent, Colors.Black, 0.22));
                 resources[AppButtonBorderKey] = Frozen(Mix(accent, Colors.Black, 0.30));
+                resources[BackstageSelectedGlassKey] = BackstageSelectionGlow(accent);
                 // The OK button borrows the same glass gel + border in 2010.
                 resources[DialogPrimaryBackgroundKey] = Gel(accent);
                 resources[DialogPrimaryBorderKey] = Frozen(Mix(accent, Colors.Black, 0.30));
@@ -424,8 +427,8 @@ public static class ThemeManager
     }
 
     /// <summary>
-    /// Builds a smooth 3-stop vertical "gel" gradient centered on <paramref name="baseColor"/>
-    /// (lighter top, base middle, darker bottom) — the Office 2010 glossy-block look, derived so
+    /// Builds a smooth 4-stop vertical "gel" gradient centered on <paramref name="baseColor"/>
+    /// (lighter top, matte middle, bright bottom foot) — the Office 2010 glossy-block look, derived so
     /// a custom accent keeps its gradient instead of flattening to a solid.
     /// </summary>
     private static LinearGradientBrush Gel(Color baseColor)
@@ -435,11 +438,69 @@ public static class ThemeManager
             StartPoint = new Point(0, 0),
             EndPoint = new Point(0, 1),
         };
-        // Light top (inner glow), a slightly darker matte middle, then a LIGHTER bottom — the
-        // small specular reflection of a 2010 glass button.
+        // Light top, a slightly darker matte middle, then a LIGHTER bottom — the
+        // strong bottom inner glow of a 2010 glass button.
+        brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.White, 0.38), 0.0));
+        brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.Black, 0.10), 0.5));
+        brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.White, 0.20), 0.9));
+        brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.White, 0.72), 1.0));
+        brush.Freeze();
+        return brush;
+    }
+
+    /// <summary>
+    /// Builds the smooth Office 2010 File-button body. Its lower bloom is rendered by the
+    /// application-button-specific radial inner rim, so this ramp deliberately has no white foot.
+    /// </summary>
+    private static LinearGradientBrush ApplicationButtonGel(Color baseColor)
+    {
+        var brush = new LinearGradientBrush
+        {
+            StartPoint = new Point(0, 0),
+            EndPoint = new Point(0, 1),
+        };
         brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.White, 0.38), 0.0));
         brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.Black, 0.10), 0.5));
         brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.White, 0.20), 1.0));
+        brush.Freeze();
+        return brush;
+    }
+
+    /// <summary>
+    /// Builds the Office 2010 Backstage selected-row glow: brightest below center, then easing
+    /// toward darker side edges. This is intentionally radial rather than a button-style vertical gel.
+    /// </summary>
+    private static RadialGradientBrush BackstageSelectionGlow(Color baseColor)
+    {
+        var brush = new RadialGradientBrush
+        {
+            Center = new Point(0.43, 0.78),
+            GradientOrigin = new Point(0.43, 0.78),
+            RadiusX = 0.78,
+            RadiusY = 1.05,
+        };
+        brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.White, 0.40), 0.0));
+        brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.White, 0.18), 0.45));
+        brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.Black, 0.08), 0.78));
+        brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.Black, 0.25), 1.0));
+        brush.Freeze();
+        return brush;
+    }
+
+    /// <summary>
+    /// Builds the recessed Office 2010 button state. Unlike <see cref="Gel"/>, it ends on the
+    /// lower-face color and deliberately has no bright bottom foot while the button is pressed.
+    /// </summary>
+    private static LinearGradientBrush PressedGel(Color baseColor)
+    {
+        var brush = new LinearGradientBrush
+        {
+            StartPoint = new Point(0, 0),
+            EndPoint = new Point(0, 1),
+        };
+        brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.White, 0.20), 0.0));
+        brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.Black, 0.12), 0.5));
+        brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.White, 0.10), 1.0));
         brush.Freeze();
         return brush;
     }
@@ -513,11 +574,15 @@ public static class ThemeManager
         resources.Remove(AppButtonMenuOpenBackgroundKey);
         resources.Remove(AppButtonMenuOpenForegroundKey);
         // Menu-open tokens normally preserve the old checked-state contract: accent fill and
-        // white text, including when a custom accent is active. The Office 2019 colored-band
-        // branch below replaces that baseline with the menu's neutral frame surface.
+        // white text, including when a custom accent is active. Office 2010 keeps its smooth
+        // gel rather than flattening the open File tab; the Office 2019 colored-band branch
+        // below replaces this baseline with the menu's neutral frame surface.
         if (_accent is Color customAccent)
         {
-            resources[AppButtonMenuOpenBackgroundKey] = Frozen(customAccent);
+            resources[AppButtonMenuOpenBackgroundKey] =
+                (CurrentTheme ?? RibbonTheme.Office2024) == RibbonTheme.Office2010
+                    ? ApplicationButtonGel(Mix(customAccent, Colors.Black, 0.10))
+                    : Frozen(customAccent);
             resources[AppButtonMenuOpenForegroundKey] = Frozen(Colors.White);
         }
         // Note: the ApplicationButton hover/pressed keys are NOT cleared wholesale — they are
@@ -599,7 +664,7 @@ public static class ThemeManager
         };
         Brush captionPressedBrush = CurrentTheme switch
         {
-            RibbonTheme.Office2010 => Gel(captionPressed),
+            RibbonTheme.Office2010 => PressedGel(captionPressed),
             RibbonTheme.Office2007 => Glass(captionPressed),
             _ => Frozen(captionPressed),
         };
