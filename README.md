@@ -188,7 +188,7 @@ ThemeManager.Apply(Application.Current, RibbonTheme.Office2010);
 ThemeManager.SetAccent(Application.Current, Colors.SeaGreen);  // ClearAccent() returns to the theme default
 
 ThemeManager.Apply(Application.Current, RibbonTheme.Office2024);
-ThemeManager.SetDarkMode(Application.Current, true);            // Also supported by Office 2019
+ThemeManager.SetDarkMode(Application.Current, true);            // Supported by every generation
 ```
 
 ## Building from source
@@ -225,7 +225,7 @@ Design-time tooling setup is documented in [`src/RibbonKit.Design/SETUP-DESIGNTO
 
 ## Roadmap to v1.0
 
-Remaining before the API freeze: full RTL verification and localization (the final Phase 6 items). Dark mode and the 28-image light/dark visual-regression matrix are complete, and a 29th Office 2024 RTL smoke image now guards basic mirroring. The Phase 7 merge/modal invariant tests are complete. One item is still deferred out of the Office 2007 work: the 2007 window frame. (The two-pane 2007 application menu, the other deferral, shipped as `RibbonApplicationMenu`.) Then release engineering — API review and freeze, docs site, SourceLink, and a performance pass.
+Remaining before the API freeze: full RTL verification and localization (the final Phase 6 items). Every generation has a dark variant—historical Black for 2007/2010, Dark Gray for 2013, and modern dark for 2019/2024—and the 40-image theme/variant × DPI matrix is complete. A 41st Office 2024 RTL smoke image guards basic mirroring. The Phase 7 merge/modal invariant tests are complete. One item is still deferred out of the Office 2007 work: the 2007 window frame. (The two-pane 2007 application menu, the other deferral, shipped as `RibbonApplicationMenu`.) Then release engineering — API review and freeze, docs site, SourceLink, and a performance pass.
 
 ## Contributing
 

@@ -3010,18 +3010,24 @@ All 20 images were inspected at native resolution and the complete matrix passed
 fresh test processes plus the normal project run. The existing Windows CI step will provide the
 remaining cross-machine portability check; no workflow change was needed.
 
-### 3.49 Dark variants for Office 2019/2024 — 2026-08-01
+### 3.49 Dark/Black variants for every generation — 2026-08-01/02
 
 Dark mode is a **palette variant**, not a sixth Office generation. `ThemeManager.SetDarkMode(app,
-bool)` merges `Tokens.Office2019.Dark.xaml` or `Tokens.Office2024.Dark.xaml` after that generation's
-base dictionary, so geometry and the single shared template set stay untouched. The preference
-survives theme switches: Office 2007/2010/2013 keep their historical light palettes, and returning
-to 2019/2024 reactivates dark mode. `SupportsDarkMode` lets hosts explain or disable unsupported
-choices without duplicating the generation rule.
+bool)` merges `Tokens.Office20XX.Dark.xaml` after the active generation's base dictionary, so
+geometry and the single shared template set stay untouched. The preference survives theme switches,
+and `SupportsDarkMode` is true for all five generations.
+
+The palettes remain generation-specific rather than converging on one modern near-black look.
+Office 2007/2010 reproduce their historical **Black** schemes: dark title/tab chrome surrounding a
+silver-gray ribbon with dark command text, while the base dictionaries retain their hard-crease
+2007 and smooth 2010 amber interaction gels. Office 2013 uses a flat **Dark Gray** palette derived
+from the 2019 dark family but keeps 2013's gray outlines, connected selected tab and square geometry.
+Office 2019/2024 retain their fully dark palettes. The visual harness therefore cannot equate
+`IsDarkMode` with light command glyphs: 2007/2010 Black deliberately use dark glyphs on light wells.
 
 The few remaining light-only local resources were promoted into the token contract: window
 background, Modern-backstage rail/interaction brushes, and the options-dialog rail. Every light
-theme supplies the same new keys, preserving its pixels, while the two dark overlays replace them.
+theme supplies the same new keys, preserving its pixels, while the dark overlays replace them.
 This was necessary for a live switch: `StaticResource` values captured inside the shared template
 dictionary cannot be recolored by a later application-scope overlay; the promoted brushes now use
 `DynamicResource` like the rest of the control surface.
@@ -3036,10 +3042,11 @@ white while switching the surrounding window, status bar, ribbon, backstage, men
 ScreenTips, KeyTips and options dialog.
 
 The existing PNG format, checked-in `Snapshots/approved` storage policy, opt-in update variable,
-and Windows CI strategy remain unchanged. The matrix adds 2019-dark and 2024-dark at all four
-synthetic DPIs, growing from 20 to **28 approved images**. The original 20 light approvals passed
-unchanged before the eight dark images were generated; both dark 100% images were inspected at
-native resolution, and the full matrix is deterministic in-process.
+and Windows CI strategy remain unchanged. The original matrix added 2019-dark and 2024-dark at all
+four synthetic DPIs, growing from 20 to 28 approvals. The 2026-08-02 extension adds 2007-dark,
+2010-dark and 2013-dark at the same four DPIs, producing a **40-image** ten-palette matrix. Existing
+approvals stayed byte-identical; all five dark/black 100% images were inspected at native resolution,
+and the full matrix is deterministic in-process.
 
 ### 3.50 Dark live-switch corrections from the 100% showcase pass — 2026-08-01
 
@@ -3073,15 +3080,16 @@ neutral style labels now use `Text.Secondary`; its intentional blue heading prev
 the combo input and in-ribbon gallery's hardcoded white fill with `Ribbon.ContentBackground`. That
 token is intentionally the large ribbon-body gradient in Office 2007/2010, so both small wells
 acquired an inappropriate button-like gradient. They now consume the dedicated solid
-`RibbonKit.Brushes.Control.SurfaceBackground` token. Every light theme supplies white; the 2019/2024
-dark overlays supply their existing dark content colors. Popup surfaces continue using
+`RibbonKit.Brushes.Control.SurfaceBackground` token. Every light theme supplies white; 2007/2010
+Black supply light solid wells, while the 2013/2019/2024 dark overlays supply dark wells. Popup surfaces continue using
 `Ribbon.ContentBackground` as before. Contract tests require both template bindings and require the
 new resource to remain a `SolidColorBrush` in every theme variant.
 
 ### 3.51 First deterministic RTL snapshot slice — 2026-08-01
 
 The visual suite now renders one additional Office 2024 light scene at 100% with
-`FlowDirection.RightToLeft`, bringing the approved total to **29 images**. It deliberately keeps
+`FlowDirection.RightToLeft`, bringing the approved total to **41 images** after the later all-theme
+dark/black expansion. It deliberately keeps
 invariant culture and `en-US` language metadata: this isolates WPF mirroring from translation, font
 fallback and shaping. The approved result is a clean geometric mirror of the LTR scene—QAT, tabs,
 groups, separators and directional glyphs move together while the English labels remain readable.
@@ -3113,8 +3121,8 @@ and their public override point remain separate Phase 6 work.
 > DPI-awareness manifest have now also passed their Windows verification.
 >
 > Roadmap Phases 1–5 and 7 are complete. **Phase 6 now also has the Office 2007 theme (§3.38)**, so
-> all five generations ship, dark variants for 2019/2024 are in §3.49, and the complete 28-image
-> theme/DPI matrix plus one deterministic RTL smoke image are covered by 29 approvals. Phase 6 still
+> all five generations ship with dark/black variants in §3.49, and the complete 40-image
+> theme/variant/DPI matrix plus one deterministic RTL smoke image are covered by 41 approvals. Phase 6 still
 > owes full RTL verification + localization. Phase 8 (API freeze,
 > docs site, perf, launch) is untouched. Of the two items
 > deferred out of §3.38, the two-pane 2007 application menu shipped in §3.46; only the 2007 window
@@ -3321,7 +3329,8 @@ permutations, merge/unmerge round-trips, group restore with two sources in one t
 modal, modal enter/exit selection and cancellation, forced exit when a merged modal tab leaves,
 customization rebuild/remerge, and declarative activation. The broader coverage gaps listed above remain.
 
-**Visual tests: 1 green locally (2026-08-01), covering all 28 approved images.** The §§3.48–3.49 matrix
-spans five light themes plus two dark variants × 100/125/150/200%; its separate project keeps rendering policy out of the
+**Visual tests: 1 green locally (2026-08-02), covering all 41 approved images.** The §§3.48–3.49 matrix
+spans five light themes plus five dark/black variants × 100/125/150/200%, followed by the §3.51 RTL
+smoke image; its separate project keeps rendering policy out of the
 headless logic-test harness. It passed three successive fresh-process stability runs in addition to
 the normal project and solution runs.

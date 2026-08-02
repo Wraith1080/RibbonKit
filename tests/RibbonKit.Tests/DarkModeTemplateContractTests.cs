@@ -113,8 +113,11 @@ public sealed class DarkModeTemplateContractTests
         string[] themeFiles =
         {
             "Tokens.Office2007.xaml",
+            "Tokens.Office2007.Dark.xaml",
             "Tokens.Office2010.xaml",
+            "Tokens.Office2010.Dark.xaml",
             "Tokens.Office2013.xaml",
+            "Tokens.Office2013.Dark.xaml",
             "Tokens.Office2019.xaml",
             "Tokens.Office2024.xaml",
             "Tokens.Office2019.Dark.xaml",

@@ -55,7 +55,7 @@ A custom panel (`RibbonGroupsPanel`) measures groups at their preferred size and
 
 ## 4. Theming system
 
-Two-layer design: **templates are theme-agnostic**; they reference a token layer (`ComponentResourceKey`s or markup extension) of brushes, thicknesses, corner radii, fonts, and metrics. Each Office theme (2007, 2010, 2013, 2019, 2024) is a `ResourceDictionary` that supplies token values; only where a generation genuinely changed geometry (e.g. 2007's rounded glass tabs vs 2013's flat tabs) does a theme override a template. `ThemeManager` static class swaps merged dictionaries at runtime (whole app or per-ribbon), supports accent color variants and dark mode for 2019/2024. This keeps 5 themes maintainable: a visual bug fix lands once, in the shared template.
+Two-layer design: **templates are theme-agnostic**; they reference a token layer (`ComponentResourceKey`s or markup extension) of brushes, thicknesses, corner radii, fonts, and metrics. Each Office theme (2007, 2010, 2013, 2019, 2024) is a `ResourceDictionary` that supplies token values; only where a generation genuinely changed geometry (e.g. 2007's rounded glass tabs vs 2013's flat tabs) does a theme override a template. `ThemeManager` static class swaps merged dictionaries at runtime (whole app or per-ribbon), supports accent colors and a generation-specific dark overlay for every theme. This keeps 5 themes maintainable: a visual bug fix lands once, in the shared template.
 
 ## 5. Window integration
 

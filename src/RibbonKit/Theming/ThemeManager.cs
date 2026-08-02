@@ -37,8 +37,8 @@ public enum RibbonTheme
 /// Applies a RibbonKit theme at runtime by swapping the active token dictionary in
 /// <see cref="Application.Resources"/>. The shared control templates reference tokens
 /// via <c>DynamicResource</c>, so replacing the token dictionary re-colors every
-/// control instantly — no template is duplicated per theme. Office 2019 and Office
-/// 2024 also support a dark token overlay through <see cref="SetDarkMode"/>.
+/// control instantly — no template is duplicated per theme. Every generation supports
+/// its own dark/black token overlay through <see cref="SetDarkMode"/>.
 /// </summary>
 /// <remarks>
 /// A token dictionary must be present for controls to render correctly. Either merge
@@ -127,9 +127,8 @@ public static class ThemeManager
     public static bool IsTitleBarBackdrop => _titleBarBackdrop;
 
     /// <summary>
-    /// Whether dark mode has been requested through <see cref="SetDarkMode"/>. The setting
-    /// persists while an older, unsupported theme is active and takes effect again when the
-    /// application returns to Office 2019 or Office 2024.
+    /// Whether the active generation's dark/black palette has been requested through
+    /// <see cref="SetDarkMode"/>. The preference survives theme switches.
     /// </summary>
     public static bool IsDarkMode => _darkMode;
 
@@ -186,9 +185,9 @@ public static class ThemeManager
     }
 
     /// <summary>
-    /// Enables or disables the dark palette for Office 2019 and Office 2024. Older Office
-    /// generations keep their original palette because RibbonKit does not define historical
-    /// dark variants for them. The preference survives <see cref="Apply"/> calls.
+    /// Enables or disables the active generation's dark/black palette. Office 2007 and 2010
+    /// use their historical hybrid Black schemes; Office 2013 uses Dark Gray; Office 2019 and
+    /// 2024 use fully dark palettes. The preference survives <see cref="Apply"/> calls.
     /// </summary>
     public static void SetDarkMode(Application application, bool enabled)
     {
@@ -203,7 +202,11 @@ public static class ThemeManager
 
     /// <summary>Returns whether <paramref name="theme"/> has a RibbonKit dark palette.</summary>
     public static bool SupportsDarkMode(RibbonTheme theme) =>
-        theme is RibbonTheme.Office2019 or RibbonTheme.Office2024;
+        theme is RibbonTheme.Office2007
+            or RibbonTheme.Office2010
+            or RibbonTheme.Office2013
+            or RibbonTheme.Office2019
+            or RibbonTheme.Office2024;
 
     private static void ApplyDarkModeDictionary(Application application)
     {

@@ -33,6 +33,9 @@ public sealed class VisualSnapshotTests
         (RibbonTheme.Office2013, false, "office2013-default"),
         (RibbonTheme.Office2019, false, "office2019-default"),
         (RibbonTheme.Office2024, false, "office2024-default"),
+        (RibbonTheme.Office2007, true, "office2007-dark"),
+        (RibbonTheme.Office2010, true, "office2010-dark"),
+        (RibbonTheme.Office2013, true, "office2013-dark"),
         (RibbonTheme.Office2019, true, "office2019-dark"),
         (RibbonTheme.Office2024, true, "office2024-dark"),
     };
@@ -59,9 +62,9 @@ public sealed class VisualSnapshotTests
 
             try
             {
-                Assert.True(ThemeManager.SupportsDarkMode(RibbonTheme.Office2019));
-                Assert.True(ThemeManager.SupportsDarkMode(RibbonTheme.Office2024));
-                Assert.False(ThemeManager.SupportsDarkMode(RibbonTheme.Office2013));
+                Assert.All(
+                    Enum.GetValues<RibbonTheme>(),
+                    theme => Assert.True(ThemeManager.SupportsDarkMode(theme)));
                 AssertDarkBackdropRoundTrip(application);
 
                 foreach ((RibbonTheme theme, bool dark, string name) in Themes)
@@ -286,9 +289,10 @@ public sealed class VisualSnapshotTests
     private static ImageSource Icon(string geometryData)
     {
         var geometry = Geometry.Parse(geometryData);
-        bool dark = ThemeManager.IsDarkMode
-            && ThemeManager.SupportsDarkMode(ThemeManager.CurrentTheme ?? RibbonTheme.Office2024);
-        Color foreground = dark
+        RibbonTheme theme = ThemeManager.CurrentTheme ?? RibbonTheme.Office2024;
+        bool lightGlyph = ThemeManager.IsDarkMode
+            && theme is RibbonTheme.Office2013 or RibbonTheme.Office2019 or RibbonTheme.Office2024;
+        Color foreground = lightGlyph
             ? Color.FromRgb(0xD0, 0xD0, 0xD0)
             : Color.FromRgb(0x44, 0x54, 0x6A);
         var pen = new Pen(new SolidColorBrush(foreground), 1.35)

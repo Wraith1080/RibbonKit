@@ -4,7 +4,8 @@ This project renders fixed RibbonKit scenes off-screen and compares them with ap
 It complements the logic-focused `RibbonKit.Tests` project; it does not open a window or depend on
 the showcase's persisted state.
 
-The suite covers all five themes at 100%, 125%, 150%, and 200% DPI. It fixes culture, dimensions,
+The suite covers the light and dark/black variants of all five themes at 100%, 125%, 150%, and 200%
+DPI. It fixes culture, dimensions,
 text rendering, layout rounding, and software rendering, and disables RibbonKit animation before
 taking each snapshot. Every scene is rendered twice and must produce identical pixels before it is
 compared with the approved image.

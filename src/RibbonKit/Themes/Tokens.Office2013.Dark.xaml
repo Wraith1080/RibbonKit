@@ -1,0 +1,88 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Office 2013 Dark Gray. Geometry remains the base theme's square, outlined,
+         connected-tab design; this overlay changes palette tokens only. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Window.Background" Color="#292929" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Background" Color="#333333" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.ContentBackground" Color="#3B3B3B" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.SurfaceBackground" Color="#444444" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Border" Color="#737373" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Primary" Color="#F2F2F2" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Secondary" Color="#CCCCCC" />
+
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.HoverBackground" Color="#4A4A4A" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.PressedBackground" Color="#555555" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CheckedBackground" Color="#294E70" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CheckedHoverBackground" Color="#315D85" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionBackground" Color="#464646" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.HoverBorder" Color="#858585" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.PressedBorder" Color="#969696" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CheckedBorder" Color="#6E9CC4" />
+
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ContextualBackground" Color="#35536D" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ContextualHoverBackground" Color="#416581" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.Foreground" Color="#F2F2F2" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.ControlHoverBackground" Color="#484848" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.ControlPressedBackground" Color="#575757" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.ScrollButtonBackground" Color="#3B3B3B" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverBackground" Color="#484848" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedBackground" Color="#3B3B3B" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedForeground" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedBorderBrush" Color="#737373" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ConnectFootHover" Color="#484848" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ConnectFootSelected" Color="#3B3B3B" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ConnectNotch" Color="#3B3B3B" />
+
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Group.Separator" Color="#666666" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.Background" Color="#444444" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.Border" Color="#777777" />
+
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemHoverBackground" Color="#3974A3" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemSelectedBackground" Color="#24547B" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.NavBackground" Color="#333333" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ContentBackground" Color="#3B3B3B" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.NavBackground" Color="#333333" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.Foreground" Color="#F2F2F2" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemHover" Color="#484848" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemSelected" Color="#525252" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemHoverTranslucent" Color="#18FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemSelectedTranslucent" Color="#26FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.NavBackgroundTranslucent" Color="#00333333" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.OptionsDialog.RailBackground" Color="#333333" />
+
+    <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.HoverBackground" Color="#484848" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.PressedBackground" Color="#575757" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.KeyTip.Background" Color="#4A4A4A" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.KeyTip.Border" Color="#858585" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.KeyTip.Foreground" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.TitleBar.Background" Color="#292929" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.TitleBar.Foreground" Color="#F2F2F2" />
+
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.Foreground" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverBackground" Color="#234879" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.PressedBackground" Color="#1A365B" />
+
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.InactiveCaptionBackground" Color="#3A3A3A" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.InactiveCaptionForeground" Color="#CCCCCC" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.InactiveBorder" Color="#707070" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiClient.Background" Color="#242424" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.CaptionButtonHoverBackground" Color="#26FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.CaptionButtonPressedBackground" Color="#40FFFFFF" />
+
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.FrameBorder" Color="#777777" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.FrameRim" Color="#555555" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.FrameBand" Color="#333333" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.TopBandBackground" Color="#333333" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.FooterBackground" Color="#333333" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.NavBackground" Color="#3B3B3B" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.PaneBackground" Color="#333333" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.PaneSurface" Color="#3B3B3B" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.PaneBorder" Color="#666666" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.HeaderBackground" Color="#484848" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.Separator" Color="#666666" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.SeparatorHighlight" Color="#484848" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.ButtonBackground" Color="#484848" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.ButtonBorder" Color="#777777" />
+</ResourceDictionary>
