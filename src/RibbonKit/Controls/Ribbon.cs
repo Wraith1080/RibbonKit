@@ -6,6 +6,7 @@ using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Markup;
 using RibbonKit.Animation;
+using RibbonKit.Localization;
 // Alias: WPF's legacy Microsoft ribbon declares identically-named peers in
 // System.Windows.Automation.Peers, so the reference must be disambiguated.
 using RibbonAutomationPeer = RibbonKit.Automation.RibbonAutomationPeer;
@@ -1175,25 +1176,38 @@ public class Ribbon : Control
 
         var addItem = new System.Windows.Controls.MenuItem
         {
-            Header = "Add to Quick Access Toolbar",
+            Header = RibbonLocalization.GetString(RibbonString.AddToQuickAccessToolbar),
             IsEnabled = !IsInQuickAccess(target),
         };
         addItem.Click += (_, _) => AddToQuickAccess(target);
 
-        var customizeItem = new System.Windows.Controls.MenuItem { Header = "Customize Quick Access Toolbar…" };
+        var customizeItem = new System.Windows.Controls.MenuItem
+        {
+            Header = RibbonLocalization.GetString(RibbonString.CustomizeQuickAccessToolbar),
+        };
         customizeItem.Click += (_, _) => QuickAccessCustomizeRequested?.Invoke(this, EventArgs.Empty);
 
-        var customizeRibbonItem = new System.Windows.Controls.MenuItem { Header = "Customize the Ribbon…" };
+        var customizeRibbonItem = new System.Windows.Controls.MenuItem
+        {
+            Header = RibbonLocalization.GetString(RibbonString.CustomizeRibbon),
+        };
         customizeRibbonItem.Click += (_, _) => RaiseRibbonCustomizeRequested();
 
         var collapseItem = new System.Windows.Controls.MenuItem
         {
-            Header = "Collapse the Ribbon",
+            Header = RibbonLocalization.GetString(RibbonString.CollapseRibbon),
             IsChecked = IsMinimized,
         };
         collapseItem.Click += (_, _) => SetCurrentValue(IsMinimizedProperty, !IsMinimized);
 
-        var menu = new System.Windows.Controls.ContextMenu { PlacementTarget = target };
+        var menu = new System.Windows.Controls.ContextMenu
+        {
+            PlacementTarget = target,
+            // ContextMenu is hosted in a separate popup window and therefore cannot inherit this
+            // from the command's visual tree. Copy it explicitly so item layout and submenu arrows
+            // mirror with the owning ribbon.
+            FlowDirection = target.FlowDirection,
+        };
         ApplyModernMenuStyle(menu);
         menu.Items.Add(addItem);
         menu.Items.Add(customizeItem);
@@ -1392,6 +1406,7 @@ public class Ribbon : Control
     private System.Windows.Controls.MenuItem? _qatAboveItem;
     private System.Windows.Controls.MenuItem? _qatBelowItem;
     private System.Windows.Controls.MenuItem? _qatRemoveItem;
+    private System.Windows.Controls.MenuItem? _qatCustomizeItem;
     private System.Windows.Controls.Separator? _qatRemoveSeparator;
 
     // The quick-access item under the cursor when the QAT context menu was opened —
@@ -2178,21 +2193,33 @@ public class Ribbon : Control
             return _qatContextMenu;
         }
 
-        _qatTitleBarItem = new System.Windows.Controls.MenuItem { Header = "Show Quick Access Toolbar in the Title Bar" };
+        _qatTitleBarItem = new System.Windows.Controls.MenuItem
+        {
+            Header = RibbonLocalization.GetString(RibbonString.ShowQuickAccessToolbarInTitleBar),
+        };
         _qatTitleBarItem.Click += (_, _) =>
             SetCurrentValue(QuickAccessPositionProperty, RibbonQuickAccessPosition.TitleBar);
 
-        _qatAboveItem = new System.Windows.Controls.MenuItem { Header = "Show Quick Access Toolbar Above the Ribbon" };
+        _qatAboveItem = new System.Windows.Controls.MenuItem
+        {
+            Header = RibbonLocalization.GetString(RibbonString.ShowQuickAccessToolbarAboveRibbon),
+        };
         _qatAboveItem.Click += (_, _) =>
             SetCurrentValue(QuickAccessPositionProperty, RibbonQuickAccessPosition.TabRow);
 
-        _qatBelowItem = new System.Windows.Controls.MenuItem { Header = "Show Quick Access Toolbar Below the Ribbon" };
+        _qatBelowItem = new System.Windows.Controls.MenuItem
+        {
+            Header = RibbonLocalization.GetString(RibbonString.ShowQuickAccessToolbarBelowRibbon),
+        };
         _qatBelowItem.Click += (_, _) =>
             SetCurrentValue(QuickAccessPositionProperty, RibbonQuickAccessPosition.BelowRibbon);
 
         // Shown only when the right-click landed on a quick-access ITEM (the hosts'
         // ContextMenuOpening captures which one into _qatMenuTarget).
-        _qatRemoveItem = new System.Windows.Controls.MenuItem { Header = "Remove from Quick Access Toolbar" };
+        _qatRemoveItem = new System.Windows.Controls.MenuItem
+        {
+            Header = RibbonLocalization.GetString(RibbonString.RemoveFromQuickAccessToolbar),
+        };
         _qatRemoveItem.Click += (_, _) =>
         {
             if (_qatMenuTarget is not null)
@@ -2202,8 +2229,11 @@ public class Ribbon : Control
             }
         };
 
-        var customizeItem = new System.Windows.Controls.MenuItem { Header = "Customize Quick Access Toolbar…" };
-        customizeItem.Click += (_, _) => QuickAccessCustomizeRequested?.Invoke(this, EventArgs.Empty);
+        _qatCustomizeItem = new System.Windows.Controls.MenuItem
+        {
+            Header = RibbonLocalization.GetString(RibbonString.CustomizeQuickAccessToolbar),
+        };
+        _qatCustomizeItem.Click += (_, _) => QuickAccessCustomizeRequested?.Invoke(this, EventArgs.Empty);
 
         _qatRemoveSeparator = new System.Windows.Controls.Separator();
 
@@ -2215,7 +2245,7 @@ public class Ribbon : Control
         _qatContextMenu.Items.Add(_qatAboveItem);
         _qatContextMenu.Items.Add(_qatBelowItem);
         _qatContextMenu.Items.Add(new System.Windows.Controls.Separator());
-        _qatContextMenu.Items.Add(customizeItem);
+        _qatContextMenu.Items.Add(_qatCustomizeItem);
         _qatContextMenu.Opened += OnQatContextMenuOpened;
         return _qatContextMenu;
     }
@@ -2289,10 +2319,19 @@ public class Ribbon : Control
     private void OnQatHostContextMenuOpening(object sender, System.Windows.Controls.ContextMenuEventArgs e)
     {
         _qatMenuTarget = ResolveQuickAccessItem(e.OriginalSource as DependencyObject);
-        if (sender is FrameworkElement { ContextMenu: { } menu })
+        if (sender is FrameworkElement { ContextMenu: { } menu } host)
         {
-            RibbonPopupMotion.SuppressNativeContextMenuAnimationForOpen(menu);
+            PrepareQatContextMenu(host, menu);
         }
+    }
+
+    private static void PrepareQatContextMenu(
+        FrameworkElement host,
+        System.Windows.Controls.ContextMenu menu)
+    {
+        // The menu is hosted in another popup visual tree, so it cannot inherit flow direction.
+        menu.FlowDirection = host.FlowDirection;
+        RibbonPopupMotion.SuppressNativeContextMenuAnimationForOpen(menu);
     }
 
     // Walks up from the right-clicked element to the element that is itself a member of
@@ -2331,6 +2370,8 @@ public class Ribbon : Control
 
     private void OnQatContextMenuOpened(object sender, RoutedEventArgs e)
     {
+        RefreshQatContextMenuText();
+
         // "Remove" applies only when the right-click landed on an actual QAT item.
         Visibility removeVisibility = _qatMenuTarget is null ? Visibility.Collapsed : Visibility.Visible;
         if (_qatRemoveItem is not null)
@@ -2357,6 +2398,34 @@ public class Ribbon : Control
         if (_qatBelowItem is not null)
         {
             _qatBelowItem.IsChecked = QuickAccessPosition == RibbonQuickAccessPosition.BelowRibbon;
+        }
+    }
+
+    private void RefreshQatContextMenuText()
+    {
+        if (_qatTitleBarItem is not null)
+        {
+            _qatTitleBarItem.Header = RibbonLocalization.GetString(RibbonString.ShowQuickAccessToolbarInTitleBar);
+        }
+
+        if (_qatAboveItem is not null)
+        {
+            _qatAboveItem.Header = RibbonLocalization.GetString(RibbonString.ShowQuickAccessToolbarAboveRibbon);
+        }
+
+        if (_qatBelowItem is not null)
+        {
+            _qatBelowItem.Header = RibbonLocalization.GetString(RibbonString.ShowQuickAccessToolbarBelowRibbon);
+        }
+
+        if (_qatRemoveItem is not null)
+        {
+            _qatRemoveItem.Header = RibbonLocalization.GetString(RibbonString.RemoveFromQuickAccessToolbar);
+        }
+
+        if (_qatCustomizeItem is not null)
+        {
+            _qatCustomizeItem.Header = RibbonLocalization.GetString(RibbonString.CustomizeQuickAccessToolbar);
         }
     }
 

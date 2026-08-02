@@ -107,6 +107,13 @@
                         <Trigger Property="HasItems" Value="True">
                             <Setter TargetName="Arrow" Property="Visibility" Value="Visible" />
                         </Trigger>
+                        <!-- PlacementMode.Right is physical rather than logical. The menu itself
+                             copies FlowDirection from its placement target in Ribbon.cs; switch
+                             the submenu edge explicitly so an RTL flyout opens outward to the left. -->
+                        <Trigger Property="FlowDirection" Value="RightToLeft">
+                            <Setter TargetName="PART_Popup" Property="Placement" Value="Left" />
+                            <Setter TargetName="PART_Popup" Property="HorizontalOffset" Value="3" />
+                        </Trigger>
                         <!-- Hover: fill AND a border (the 2010 theme's amber outline, like a
                              normal button) — the thickness is reserved above so only the brush
                              changes and the row never shifts. -->

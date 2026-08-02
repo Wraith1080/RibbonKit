@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms</value>
+  </resheader>
+  <data name="AddToQuickAccessToolbar" xml:space="preserve">
+    <value>Add to Quick Access Toolbar</value>
+  </data>
+  <data name="CustomizeQuickAccessToolbar" xml:space="preserve">
+    <value>Customize Quick Access Toolbar…</value>
+  </data>
+  <data name="CustomizeRibbon" xml:space="preserve">
+    <value>Customize the Ribbon…</value>
+  </data>
+  <data name="CollapseRibbon" xml:space="preserve">
+    <value>Collapse the Ribbon</value>
+  </data>
+  <data name="ShowQuickAccessToolbarInTitleBar" xml:space="preserve">
+    <value>Show Quick Access Toolbar in the Title Bar</value>
+  </data>
+  <data name="ShowQuickAccessToolbarAboveRibbon" xml:space="preserve">
+    <value>Show Quick Access Toolbar Above the Ribbon</value>
+  </data>
+  <data name="ShowQuickAccessToolbarBelowRibbon" xml:space="preserve">
+    <value>Show Quick Access Toolbar Below the Ribbon</value>
+  </data>
+  <data name="RemoveFromQuickAccessToolbar" xml:space="preserve">
+    <value>Remove from Quick Access Toolbar</value>
+  </data>
+</root>

@@ -3159,8 +3159,30 @@ fallback and shaping. The approved result is a clean geometric mirror of the LTR
 groups, separators and directional glyphs move together while the English labels remain readable.
 
 This is an RTL smoke slice, not completion of the roadmap item. Full RTL verification still needs
-the showcase's popup/window surfaces and representative bidirectional text; localization resources
-and their public override point remain separate Phase 6 work.
+the showcase's popup/window surfaces and representative bidirectional text. The first popup and
+localization-resource slice has since landed in §3.52.
+
+### 3.52 Localization foundation + RTL ribbon context menus — 2026-08-02
+
+The first localization slice is deliberately library-owned text only. Application-authored tab,
+group, command and document strings remain the host application's responsibility. Eight strings
+created internally by `Ribbon` for its command and Quick Access Toolbar context menus now live in
+`Resources/Strings.resx`, keyed by the public `RibbonString` enum. `RibbonLocalization.GetString`
+resolves the embedded resource for `CurrentUICulture`; an optional `IRibbonLocalizationProvider`
+can override any subset and return `null` for resource fallback. The cached QAT menu refreshes its
+headers every time it opens, so a provider change does not require recreating the ribbon.
+
+The same surface exposed a real RTL boundary: WPF hosts `ContextMenu` in a separate popup visual
+tree, so it cannot inherit `FlowDirection` from the ribbon or QAT host. RibbonKit now copies the
+placement target's flow direction before opening both menu kinds. The custom submenu template also
+switches its physical `Popup.Placement` from Right to Left under RTL; relying on visual mirroring
+alone would flip the arrow but still open the child flyout on the wrong screen edge.
+
+Six logic tests pin embedded-resource parity, partial provider fallback, live cached-menu refresh,
+the disconnected-popup flow copy, left-opening RTL submenus, and removal of the original hardcoded
+English headers. This is an end-to-end foundation, not localization completion: the larger
+Customize/Options template string set, window/backstage chrome tooltips, default File text,
+representative bidirectional content and the remaining popup/window visual pass are next.
 
 ## 4. Workflow / Session Conventions
 
@@ -3368,7 +3390,9 @@ Backlog (rough priority):
    **shipped 2026-07-28 (§3.46)**. (The 2007 DPI matrix pass is DONE — clean at
    100/125/150/175/200%.)
 3. Full RTL verification + localization resources — the remaining work in roadmap Phase 6. The
-   §§3.48–3.49 visual-regression matrix is complete, and §3.51 adds the first RTL smoke snapshot.
+   §§3.48–3.49 visual-regression matrix is complete, §3.51 adds the first RTL smoke snapshot, and
+   §3.52 localizes/mirrors the ribbon-owned context menus. Customize/Options strings plus the full
+   popup/window and bidirectional-text pass remain.
 4. **The remaining unit tests** — broader customization serializer round-trips, KeyTip resolution,
    and reduction-algorithm gaps. The Phase 7 merge/modal invariants are now DONE: 13 tests cover
    stable ordering, repeated merge/unmerge, two-source group restoration, modal transitions and
@@ -3381,14 +3405,20 @@ Backlog (rough priority):
    of public surface), docs site, NuGet polish, performance pass.
 7. GitHub publish: repo URL placeholder in csproj (`YOUR-GITHUB-USERNAME`).
 
-Possible post-v1 polish: an optional `MonochromeIcon` on QAT-capable command buttons, used as a
-purpose-authored alpha mask on accent-colored title/tab surfaces. This is an API idea, not scheduled
-work; a separate `DarkIcon` property remains intentionally unplanned.
+Possible post-v1 polish:
 
-**Unit tests: 144 green (verified 2026-08-02).** Coverage now includes the STA harness, the borrow
+- An optional `MonochromeIcon` on QAT-capable command buttons, used as a purpose-authored alpha mask
+  on accent-colored title/tab surfaces. This is an API idea, not scheduled work; a separate
+  `DarkIcon` property remains intentionally unplanned.
+- A non-Mica light/dark transition that captures the old opaque window chrome, applies the new
+  palette underneath, and fades the capture away. It should use `RibbonAnimationAction.ThemeSwitch`,
+  honor reduced motion, handle rapid reversals, and stay disabled while a DWM backdrop is active so
+  Mica/Acrylic retain their native material retint without a second cross-fade on top.
+
+**Unit tests: 150 green (verified 2026-08-02).** Coverage now includes the STA harness, the borrow
 protocol, overflow strip measure/arrange rules, popup motion and dismissal, proxy mirroring,
-application-menu layering/hover/KeyTips, Office 2010 seam/state/consumer contracts, and the existing
-reduction/size-definition/theme-scope tests.
+application-menu layering/hover/KeyTips, Office 2010 seam/state/consumer contracts, localization/RTL
+context-menu contracts, and the existing reduction/size-definition/theme-scope tests.
 `RibbonMergeModalTests` adds the Phase 7 automated invariants: merge ordering across later
 permutations, merge/unmerge round-trips, group restore with two sources in one tab, capture while
 modal, modal enter/exit selection and cancellation, forced exit when a merged modal tab leaves,
