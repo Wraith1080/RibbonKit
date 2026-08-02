@@ -1,10 +1,12 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Automation.Peers;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Markup;
+using System.Windows.Threading;
 using RibbonKit.Animation;
 using RibbonKit.Localization;
 // Alias: WPF's legacy Microsoft ribbon declares identically-named peers in
@@ -119,7 +121,20 @@ public class Ribbon : Control
             nameof(ApplicationButtonHeader),
             typeof(string),
             typeof(Ribbon),
+            new FrameworkPropertyMetadata("File", OnApplicationButtonHeaderChanged));
+
+    private static readonly DependencyPropertyKey EffectiveApplicationButtonHeaderPropertyKey =
+        DependencyProperty.RegisterReadOnly(
+            nameof(EffectiveApplicationButtonHeader),
+            typeof(string),
+            typeof(Ribbon),
             new FrameworkPropertyMetadata("File"));
+
+    /// <summary>
+    /// Identifies the read-only <see cref="EffectiveApplicationButtonHeader"/> dependency property.
+    /// </summary>
+    public static readonly DependencyProperty EffectiveApplicationButtonHeaderProperty =
+        EffectiveApplicationButtonHeaderPropertyKey.DependencyProperty;
 
     /// <summary>Identifies the <see cref="ApplicationButtonShape"/> dependency property.</summary>
     public static readonly DependencyProperty ApplicationButtonShapeProperty =
@@ -251,6 +266,11 @@ public class Ribbon : Control
         quickAccessItems.CollectionChanged += (_, _) => UpdateQatButtonContext();
         SetValue(QuickAccessItemsPropertyKey, quickAccessItems);
         _keyTipService = new KeyTipService(this);
+        PropertyChangedEventManager.AddHandler(
+            RibbonLocalizationBindingSource.Instance,
+            OnLocalizationBindingSourceChanged,
+            "Item[]");
+        UpdateEffectiveApplicationButtonHeader();
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
     }
@@ -1337,12 +1357,64 @@ public class Ribbon : Control
         set => SetValue(ApplicationMenuProperty, value);
     }
 
-    /// <summary>Text of the application button. Default: "File".</summary>
+    /// <summary>
+    /// Gets or sets the application button text. When no local value, style or binding supplies
+    /// one, the getter returns RibbonKit's live localized <c>File</c> string.
+    /// </summary>
     public string ApplicationButtonHeader
     {
-        get => (string)GetValue(ApplicationButtonHeaderProperty);
+        get
+        {
+            string? configured = (string?)GetValue(ApplicationButtonHeaderProperty);
+            return UsesDefaultApplicationButtonHeader() || configured is null
+                ? RibbonLocalization.GetString(RibbonString.File)
+                : configured;
+        }
+
         set => SetValue(ApplicationButtonHeaderProperty, value);
     }
+
+    /// <summary>
+    /// Gets the application button text after applying the localized default. Templates should
+    /// bind to this value so provider and UI-culture refreshes do not replace an application-owned
+    /// <see cref="ApplicationButtonHeader"/> value or binding.
+    /// </summary>
+    public string EffectiveApplicationButtonHeader =>
+        (string)GetValue(EffectiveApplicationButtonHeaderProperty);
+
+    private static void OnApplicationButtonHeaderChanged(
+        DependencyObject d,
+        DependencyPropertyChangedEventArgs e) =>
+        ((Ribbon)d).UpdateEffectiveApplicationButtonHeader();
+
+    private void OnLocalizationBindingSourceChanged(
+        object? sender,
+        PropertyChangedEventArgs e)
+    {
+        if (Dispatcher.CheckAccess())
+        {
+            UpdateEffectiveApplicationButtonHeader();
+        }
+        else if (!Dispatcher.HasShutdownStarted && !Dispatcher.HasShutdownFinished)
+        {
+            Dispatcher.BeginInvoke(
+                DispatcherPriority.DataBind,
+                new Action(UpdateEffectiveApplicationButtonHeader));
+        }
+    }
+
+    private void UpdateEffectiveApplicationButtonHeader()
+    {
+        string? configured = (string?)GetValue(ApplicationButtonHeaderProperty);
+        string effective = UsesDefaultApplicationButtonHeader() || configured is null
+            ? RibbonLocalization.GetString(RibbonString.File)
+            : configured;
+        SetValue(EffectiveApplicationButtonHeaderPropertyKey, effective);
+    }
+
+    private bool UsesDefaultApplicationButtonHeader() =>
+        DependencyPropertyHelper.GetValueSource(this, ApplicationButtonHeaderProperty).BaseValueSource
+            == BaseValueSource.Default;
 
     /// <summary>
     /// Whether the application button renders as a rectangular File tab (default) or as the round

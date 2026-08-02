@@ -2,6 +2,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="clr-namespace:RibbonKit.Controls"
+    xmlns:localization="clr-namespace:RibbonKit.Localization"
     xmlns:layout="clr-namespace:RibbonKit.Layout">
 
     <!-- Part of the shared RibbonKit control-template dictionary; merged by Office2024.xaml.
@@ -229,10 +230,10 @@
                                  orb's close-on-second-click. -->
                             <ToggleButton x:Name="PART_ApplicationButton"
                                           WindowChrome.IsHitTestVisibleInChrome="True"
-                                          AutomationProperties.Name="{Binding ApplicationButtonHeader, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
-                                          ToolTip="{Binding ApplicationButtonHeader, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
+                                          AutomationProperties.Name="{Binding EffectiveApplicationButtonHeader, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
+                                          ToolTip="{Binding EffectiveApplicationButtonHeader, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
                                           Margin="{DynamicResource RibbonKit.Metrics.ApplicationButtonMargin}"
-                                          Content="{Binding ApplicationButtonHeader, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
+                                          Content="{Binding EffectiveApplicationButtonHeader, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
                                           IsChecked="{Binding IsBackstageOpen, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}, Mode=TwoWay}">
                                 <ToggleButton.Style>
                                     <Style TargetType="{x:Type ToggleButton}">
@@ -537,7 +538,7 @@
                                     Margin="0,6,8,0"
                                     Padding="6,0"
                                     VerticalAlignment="Center"
-                                    ToolTip="Close"
+                                    ToolTip="{localization:RibbonString Key=Close}"
                                     Content="{Binding ModalTab.CloseButtonText, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
                                     Command="{Binding ExitModalCommand, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
                                     Visibility="{Binding CanCloseModal, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}, Converter={StaticResource RibbonKit.BoolToVis}}">
@@ -597,7 +598,7 @@
                                           Width="24" Height="22"
                                           Margin="0,6,8,0"
                                           VerticalAlignment="Center"
-                                          ToolTip="Minimize the Ribbon"
+                                          ToolTip="{localization:RibbonString Key=MinimizeRibbon}"
                                           IsChecked="{Binding IsMinimized, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}, Mode=TwoWay}">
                                 <ToggleButton.Style>
                                     <Style TargetType="{x:Type ToggleButton}">
@@ -667,7 +668,7 @@
                                  window buttons belong. -->
                             <Button x:Name="PART_MergedCaptionMinimize"
                                     Style="{StaticResource RibbonKit.MergedCaptionButton}"
-                                    ToolTip="Minimize Window"
+                                    ToolTip="{localization:RibbonString Key=MinimizeWindow}"
                                     CommandParameter="{x:Static controls:RibbonMergedCaptionAction.Minimize}"
                                     Visibility="{Binding HasMergedCaption, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}, Converter={StaticResource RibbonKit.BoolToVis}}">
                                 <Rectangle Width="9" Height="1"
@@ -675,7 +676,7 @@
                             </Button>
                             <Button x:Name="PART_MergedCaptionRestore"
                                     Style="{StaticResource RibbonKit.MergedCaptionButton}"
-                                    ToolTip="Restore Window"
+                                    ToolTip="{localization:RibbonString Key=RestoreWindow}"
                                     CommandParameter="{x:Static controls:RibbonMergedCaptionAction.Restore}"
                                     Visibility="{Binding HasMergedCaption, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}, Converter={StaticResource RibbonKit.BoolToVis}}">
                                 <!-- Two offset outlines: the classic "restore down" glyph. -->
@@ -694,7 +695,7 @@
                             <Button x:Name="PART_MergedCaptionClose"
                                     Style="{StaticResource RibbonKit.MergedCaptionButton}"
                                     Margin="0,6,8,0"
-                                    ToolTip="Close Window"
+                                    ToolTip="{localization:RibbonString Key=CloseWindow}"
                                     CommandParameter="{x:Static controls:RibbonMergedCaptionAction.Close}"
                                     Visibility="{Binding MergedCaptionCanClose, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}, Converter={StaticResource RibbonKit.BoolToVis}}">
                                 <Path Data="M0,0 L8,8 M8,0 L0,8"

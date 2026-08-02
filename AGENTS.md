@@ -10,7 +10,7 @@ Last consolidated: 2026-08-01 from the repository Markdown files.
 
 - RibbonKit is an MIT-licensed, Office Fluent UI-style WPF control library for `net8.0-windows` and `net9.0-windows`, currently alpha (`0.1.0-alpha.1`).
 - Treat current user instructions and this file as authoritative. For implementation status and pitfalls, prefer `04-DESIGN-NOTES.md`, especially sections 4-5, over older plans. Use `README.md` for the public feature summary. Files under `docs/` record architecture and historical plans; their original sequencing can be stale even when their design constraints remain useful.
-- The showcase at `samples/RibbonKit.Showcase` is the executable integration demo and should grow with product features.
+- The showcase at `samples/RibbonKit.Showcase` is the executable integration demo and should grow with product features. Its dedicated Localization/RTL lab is the manual verification surface for provider refresh, mirroring, popup direction, and customization dialogs.
 
 ### Architecture invariants
 
@@ -24,11 +24,11 @@ Last consolidated: 2026-08-01 from the repository Markdown files.
 
 ### Status at consolidation
 
-- Roadmap phases 0-5 and 7 are complete. All five themes (Office 2007, 2010, 2013, 2019, and 2024) ship with generation-specific dark/black variants, and DPI was verified at 100/125/150/175/200%. The deterministic 40-image theme/variant matrix covers ten palettes at 100/125/150/200%, with one additional Office 2024 RTL smoke image. Phase 6's first localization/RTL popup slice has landed; full RTL verification and the remaining built-in template strings are still owed. Phase 8/API freeze has not started.
+- Roadmap phases 0-5 and 7 are complete. All five themes (Office 2007, 2010, 2013, 2019, and 2024) ship with generation-specific dark/black variants, and DPI was verified at 100/125/150/175/200%. The deterministic 40-image theme/variant matrix covers ten palettes at 100/125/150/200%, with focused RTL ribbon and QAT-customization approvals. Phase 6's context-menu, Customize/Options, chrome-tooltip, live default-File and conventional application-menu-footer localization slices have landed; full RTL popup/window verification and the representative bidirectional-content pass are still owed. Phase 8/API freeze has not started.
 - The Office 2007 two-pane application menu has shipped as `RibbonApplicationMenu`; the 2007 window frame remains deferred.
 - MDI milestones M0 and M4 are complete: floating children plus tab/caption merge work. M1-M3 remain: arrange commands and keyboard cycling, full MVVM proof, tabbed-document mode, and persistence.
 - Windows verification is complete through design-notes §3.46, including whole-surface/reduced-motion flyouts, the Ribbon Editor's Large-only split-layout behavior, runtime split-button/companion states, proxy enabled-state propagation, and the application-menu theme/DPI matrix.
-- The test suite has 150 green logic tests plus one visual test covering 45 approved images as of 2026-08-02. Phase 7 merge/modal invariants, nested dark-foreground/control-surface contracts, Office 2010 seam/button-state/Backstage-shell contracts, complete 2007/2010 Black application-menu palettes, all ten theme palettes, focused 2010 state/Backstage and classic-dark menu scenes, the first RTL layout smoke scene, and localized/RTL ribbon context menus are covered; important remaining gaps include broader customization round trips, KeyTip resolution, and remaining reduction-algorithm cases.
+- The test suite has 163 green logic tests plus one visual test covering 46 approved images as of 2026-08-02. Phase 7 merge/modal invariants, nested dark-foreground/control-surface contracts, Office 2010 seam/button-state/Backstage-shell contracts, complete 2007/2010 Black application-menu palettes, all ten theme palettes, focused 2010 state/Backstage and classic-dark menu scenes, RTL ribbon/QAT-customization scenes, RTL physical-frame/logical-content isolation, localized ribbon context-menu/customization/chrome/default-File/conventional application-menu-footer contracts, and application-button-width selection-visual reflow are covered; important remaining gaps include broader customization round trips, KeyTip resolution, and remaining reduction-algorithm cases.
 
 ### Working conventions
 

@@ -268,10 +268,10 @@
 
                     <rk:RibbonApplicationMenu.FooterContent>
                         <StackPanel Orientation="Horizontal">
-                            <rk:RibbonApplicationMenuButton Content="RibbonKit Options"
+                            <rk:RibbonApplicationMenuButton Content="{rk:RibbonString Key=Options}"
                                                             Icon="{StaticResource Icon.Gear}"
                                                             Click="OnBackstageOptions" />
-                            <rk:RibbonApplicationMenuButton Content="Exit RibbonKit"
+                            <rk:RibbonApplicationMenuButton Content="{rk:RibbonString Key=Exit}"
                                                             Icon="{StaticResource Icon.Exit}"
                                                             Click="OnBackstageExit" />
                         </StackPanel>
@@ -772,6 +772,14 @@
                                      Click="OnOpenMdiDemo"
                                      ScreenTipTitle="MDI Demo"
                                      ScreenTipText="Open the MDI emulation demo: themed child windows floating inside the client area." />
+                    <rk:RibbonButton Header="Localization / RTL"
+                                     rk:Ribbon.CommandId="cmd.localizationRtlDemo"
+                                     Size="Large"
+                                     LargeIcon="{StaticResource Icon.Font}"
+                                     Icon="{StaticResource Icon.Font}"
+                                     Click="OnOpenLocalizationRtlDemo"
+                                     ScreenTipTitle="Localization &amp; RTL Lab"
+                                     ScreenTipText="Open an interactive lab for pseudo localization, RTL layout, context menus, popups, and customization dialogs." />
                     <rk:RibbonButton Header="Print Preview"
                                      rk:Ribbon.CommandId="cmd.printpreview"
                                      Size="Large"

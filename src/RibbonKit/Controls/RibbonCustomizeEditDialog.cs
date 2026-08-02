@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using RibbonKit.Interop;
+using RibbonKit.Localization;
 
 namespace RibbonKit.Controls;
 
@@ -17,6 +18,13 @@ public sealed class RibbonIconChoice
 
     /// <summary>Whether this is the "no icon" entry (shown as text).</summary>
     public bool IsNone => Icon is null;
+}
+
+internal sealed class RibbonLocalizedChoice<T>(T value, RibbonString displayString)
+{
+    internal T Value { get; } = value;
+
+    public override string ToString() => RibbonLocalization.GetString(displayString);
 }
 
 /// <summary>
@@ -196,9 +204,16 @@ public class RibbonCustomizeEditDialog : Window
 
         if (_layoutBox is not null && CanEditLayout)
         {
-            _layoutBox.ItemsSource = new[] { RibbonGroupLayout.Stacked, RibbonGroupLayout.Large };
-            _layoutBox.SelectedItem =
-                SelectedLayout == RibbonGroupLayout.Default ? RibbonGroupLayout.Stacked : SelectedLayout;
+            var choices = new[]
+            {
+                new RibbonLocalizedChoice<RibbonGroupLayout>(RibbonGroupLayout.Stacked, RibbonString.Stacked),
+                new RibbonLocalizedChoice<RibbonGroupLayout>(RibbonGroupLayout.Large, RibbonString.Large),
+            };
+            RibbonGroupLayout selected = SelectedLayout == RibbonGroupLayout.Default
+                ? RibbonGroupLayout.Stacked
+                : SelectedLayout;
+            _layoutBox.ItemsSource = choices;
+            _layoutBox.SelectedItem = choices.First(choice => choice.Value == selected);
         }
 
         if (_sizeBox is not null && CanEditSize)
@@ -206,15 +221,25 @@ public class RibbonCustomizeEditDialog : Window
             if (SizeLocked)
             {
                 // The group's Large layout dictates the size — show it, but read-only.
-                _sizeBox.ItemsSource = new[] { RibbonControlSize.Large };
+                _sizeBox.ItemsSource = new[]
+                {
+                    new RibbonLocalizedChoice<RibbonControlSize>(RibbonControlSize.Large, RibbonString.Large),
+                };
                 _sizeBox.SelectedIndex = 0;
                 _sizeBox.IsEnabled = false;
             }
             else
             {
-                _sizeBox.ItemsSource = new[] { RibbonControlSize.Medium, RibbonControlSize.Small };
-                _sizeBox.SelectedItem =
-                    SelectedSize == RibbonControlSize.Large ? RibbonControlSize.Medium : SelectedSize;
+                var choices = new[]
+                {
+                    new RibbonLocalizedChoice<RibbonControlSize>(RibbonControlSize.Medium, RibbonString.Medium),
+                    new RibbonLocalizedChoice<RibbonControlSize>(RibbonControlSize.Small, RibbonString.Small),
+                };
+                RibbonControlSize selected = SelectedSize == RibbonControlSize.Large
+                    ? RibbonControlSize.Medium
+                    : SelectedSize;
+                _sizeBox.ItemsSource = choices;
+                _sizeBox.SelectedItem = choices.First(choice => choice.Value == selected);
             }
         }
     }
@@ -240,14 +265,17 @@ public class RibbonCustomizeEditDialog : Window
             SelectedIcon = choice.Icon;
         }
 
-        if (CanEditLayout && _layoutBox?.SelectedItem is RibbonGroupLayout layout)
+        if (CanEditLayout
+            && _layoutBox?.SelectedItem is RibbonLocalizedChoice<RibbonGroupLayout> layout)
         {
-            SelectedLayout = layout;
+            SelectedLayout = layout.Value;
         }
 
-        if (CanEditSize && !SizeLocked && _sizeBox?.SelectedItem is RibbonControlSize size)
+        if (CanEditSize
+            && !SizeLocked
+            && _sizeBox?.SelectedItem is RibbonLocalizedChoice<RibbonControlSize> size)
         {
-            SelectedSize = size;
+            SelectedSize = size.Value;
         }
 
         CloseWithResult(true);

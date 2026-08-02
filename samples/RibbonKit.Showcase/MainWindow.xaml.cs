@@ -12,6 +12,7 @@ using System.Windows.Media;
 using RibbonKit.Animation;
 using RibbonKit.Controls;
 using RibbonKit.Interop;
+using RibbonKit.Localization;
 using RibbonKit.Theming;
 
 namespace RibbonKit.Showcase;
@@ -42,6 +43,7 @@ public partial class MainWindow : RibbonWindow
     // "2007 Menu" toggle or by switching to the Office 2007 theme. A real app that only ever ships
     // one File surface just leaves the one it wants assigned in XAML and never touches this.
     private readonly RibbonApplicationMenu _applicationMenu;
+    private LocalizationRtlDemo? _localizationRtlDemo;
 
     public MainWindow()
     {
@@ -341,6 +343,20 @@ public partial class MainWindow : RibbonWindow
     private void OnOpenMdiDemo(object sender, RoutedEventArgs e) =>
         new MdiDemo { Owner = this }.Show();
 
+    private void OnOpenLocalizationRtlDemo(object sender, RoutedEventArgs e)
+    {
+        if (_localizationRtlDemo is { IsVisible: true } existing)
+        {
+            existing.Activate();
+            return;
+        }
+
+        var demo = new LocalizationRtlDemo { Owner = this };
+        _localizationRtlDemo = demo;
+        demo.Closed += (_, _) => _localizationRtlDemo = null;
+        demo.Show();
+    }
+
     // ---- Modal tab (Print Preview) -------------------------------------------------
     // EnterModal hides every other tab plus the File button, blocks minimize and the
     // backstage, and leaves the QAT alone. It returns false when a ModalEntering handler
@@ -421,12 +437,12 @@ public partial class MainWindow : RibbonWindow
         var editorPage = new RibbonOptionsPage { Header = "Editor", Content = BuildEditorOptionsContent() };
         var customizePage = new RibbonOptionsPage
         {
-            Header = "Customize Ribbon",
+            Header = RibbonLocalization.GetString(RibbonString.CustomizeRibbonPage),
             Content = new RibbonCustomizePage { Ribbon = MainRibbon, ResetLayout = _baselineLayout },
         };
         var qatPage = new RibbonOptionsPage
         {
-            Header = "Quick Access Toolbar",
+            Header = RibbonLocalization.GetString(RibbonString.QuickAccessToolbarPage),
             Content = new RibbonQuickAccessPage { Ribbon = MainRibbon },
         };
 

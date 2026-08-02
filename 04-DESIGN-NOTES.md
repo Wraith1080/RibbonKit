@@ -3181,8 +3181,119 @@ alone would flip the arrow but still open the child flyout on the wrong screen e
 Six logic tests pin embedded-resource parity, partial provider fallback, live cached-menu refresh,
 the disconnected-popup flow copy, left-opening RTL submenus, and removal of the original hardcoded
 English headers. This is an end-to-end foundation, not localization completion: the larger
-Customize/Options template string set, window/backstage chrome tooltips, default File text,
-representative bidirectional content and the remaining popup/window visual pass are next.
+Customize/Options template strings landed in §3.53, chrome tooltips in §3.54, and the default File
+label in §3.55; representative bidirectional content and the remaining popup/window pass are next.
+
+### 3.53 Customize/Options localization + RTL action snapshot — 2026-08-02
+
+The second localization slice moves the complete RibbonKit-owned Customize/Options surface onto the
+same resource/provider model: QAT and ribbon page labels, Add/Remove/Move actions, Reset,
+Import/Export tooltips and automation names, New Tab/New Group/Edit, edit-dialog labels and choices,
+OK/Cancel/Close, custom-node suffixes, file-dialog titles/filter, and import/export error text. The
+`RibbonString` resource set now contains 47 keys, including the conventional page titles hosts use
+when wrapping `RibbonCustomizePage` and `RibbonQuickAccessPage` in `RibbonOptionsPage`. Persisted
+application-authored headers remain untouched; only RibbonKit's fallback names for newly created
+custom tabs/groups are localized.
+
+`RibbonStringExtension` supplies live XAML bindings rather than freezing a resource value when a
+theme dictionary loads. Replacing `RibbonLocalization.Provider` refreshes open templates, and
+`RibbonLocalization.Refresh()` lets a host update them after changing `CurrentUICulture`. Enum
+choices in the short-lived edit dialog are rebuilt from the current provider whenever its template
+is applied.
+
+RTL exposed a bidi-specific trap in the customization action buttons: a translated word and `«/»`
+inside one inherited RTL text run can be reordered back into the wrong visual direction. The words
+are now localized separately from fixed directional glyphs; template triggers physically swap the
+glyph columns. The approved `office2024-rtl-qat-customize-100.png` scene proves the real page mirrors
+available/current lists and points Add toward the current list and Remove back toward available.
+Eight new logic tests cover live XAML refresh, localized custom-node formatting, removal of embedded
+dialog strings, RTL glyph contracts, live LTR/RTL template realization, and the lab's localized page
+titles/small direct-QAT contract, plus the main/dialog physical-frame isolation contracts.
+The current baseline is 158 logic tests and 46 approved images.
+Remaining Phase 6 localization/RTL work is the broader popup/window/backstage pass and representative
+bidirectional content.
+
+The Showcase now exposes **View → Application → Localization / RTL**, a dedicated lab window rather
+than temporary edits to `MainWindow`. Its local RTL toggle mirrors only the lab and the dialogs it
+opens; its pseudo-localization toggle installs a key-revealing application-wide provider and restores
+the previous provider when disabled or closed. The lab includes QAT items, split/dropdown popups,
+right-click menus, both built-in customization pages, custom-tab/group editing, a live status card,
+and English/Arabic/mixed-direction samples. The launcher is single-instance so two provider scopes
+cannot be stacked accidentally. Its directly declared QAT buttons explicitly use `Size="Small"`;
+unlike ribbon-command proxies, direct QAT items retain their own size and otherwise default Large.
+
+The lab also exposed an RTL maximize defect at the boundary between custom chrome and logical
+content. A real maximized-window measurement showed the Win32 overhang was already zero; the bug
+was not a left/right conversion. With `FlowDirection=RightToLeft` on the top-level `Window`, WPF
+arranged a margin on its direct template root against the bottom/left edges: top and right
+compensation disappeared, while those values accumulated on the opposite sides. This is fatal for
+the measured maximize inset and for the glass/WindowChrome edge even though ordinary child layout
+mirrors correctly. Both window templates now keep a margin-free outer physical frame and
+`PART_WindowRoot` explicitly LTR, then reapply the templated parent's `FlowDirection` on a nested
+logical host. Caption buttons, title content, ribbon/dialog UI and popups still mirror, while Mica,
+DWM borders and maximize compensation retain physical top/right/left/bottom geometry. Two template
+contract tests pin the boundary for `RibbonWindow` and the maximizable Options dialog.
+
+### 3.54 Chrome tooltip localization — 2026-08-02
+
+The third localization slice moves the remaining simple RibbonKit-owned chrome tooltips into the
+same live provider: RibbonWindow minimize/maximize/restore/close, Backstage Back, QAT overflow,
+ribbon minimize, modal close, merged-window minimize/restore/close, and group launcher More Options.
+The QAT overflow KeyTip description now resolves the same `MoreQuickAccessCommands` key instead of
+duplicating English in C#. This grows `RibbonString` from 47 to 57 keys. Application-authored command
+ScreenTips remain outside the library localization boundary.
+
+The dedicated lab checklist now calls out hovering these chrome surfaces while pseudo-localization
+is active. One deterministic source/template contract test proves every tooltip in the five affected
+shared dictionaries is markup-backed, pins all expected keys, and rejects the old C# QAT-overflow
+literal. Together with the two RTL physical-frame contracts above, the current baseline is 159 logic
+tests and 46 approved images. The default application-button `File` label was deliberately separate
+because it is dependency-property metadata rather than simple template text; §3.55 supplies the live
+fallback without overwriting an application header.
+
+### 3.55 Live localized default File label — 2026-08-02
+
+`RibbonString.File` grows the resource set to 58 keys and now supplies the application button's
+default display text, tooltip and automation name. The public `ApplicationButtonHeader` dependency
+property retains its original `"File"` metadata for compatibility, but a new read-only
+`EffectiveApplicationButtonHeader` separates the template-facing value from the app-owned value
+source. When the property is still at metadata default (or resolves `null`), the effective value is
+localized; a local value, style setter or binding wins unchanged. Clearing that override immediately
+restores the current localized default.
+
+The ribbon listens weakly to the existing localization binding source, so replacing the provider or
+calling `RibbonLocalization.Refresh()` updates even an already-created ribbon without keeping it
+alive. Delivery is marshalled to each ribbon's own Dispatcher and skipped once that Dispatcher is
+shutting down; otherwise a provider change on one UI thread can touch a still-collectable ribbon
+from another thread. It never writes into `ApplicationButtonHeader`, which is the crucial
+binding-preservation invariant. The lab's pseudo-localization checklist now calls out File. Two
+logic tests cover provider changes, explicit values, a live binding, clearing back to fallback, and
+the template's content/tooltip/automation binding contract. Current baseline: 161 logic tests and 46
+approved images.
+
+### 3.56 Localized conventional application-menu footer actions — 2026-08-02
+
+`RibbonApplicationMenu.FooterContent` intentionally remains arbitrary application-authored content,
+so RibbonKit does not translate everything placed there. The Showcase's two conventional shell
+actions are the useful exception: its branded literals are now generic `RibbonString.Options` and
+`RibbonString.Exit` bindings. They therefore refresh live with the same provider as the default File
+button and appear bracketed in the main window while the Localization/RTL lab's provider is active,
+while host-specific footer labels remain the host application's responsibility. The resource set is
+now 60 keys. One source contract pins the
+two bindings and removal of the old embedded labels. Current baseline: 162 logic tests and 46
+approved images.
+
+### 3.57 Application-button width now reflows the selection visuals — 2026-08-02
+
+Pseudo localization exposed one more §3.36 tab-row sibling: changing the default File label to
+`[File]` widened `PART_ApplicationButton` and moved every tab, but the `RibbonTabControl` itself kept
+the same size, so neither its sliding marker nor the 2010/2013 body-border notch recomputed their
+selected-tab transform. `RibbonTabControl` now detaches/re-attaches a `SizeChanged` handler whenever
+its template is applied and coalesces a `Loaded`-priority `RefreshSelectionVisuals()` after the
+button's layout pass. Tracking measured size rather than the localization callback also covers
+application-owned headers, fonts, templates and any other real geometry change. One source contract
+pins the lifecycle-safe subscription and deferred refresh. Current baseline: 163 logic tests and 46
+approved images.
 
 ## 4. Workflow / Session Conventions
 
@@ -3208,8 +3319,9 @@ representative bidirectional content and the remaining popup/window visual pass 
 >
 > Roadmap Phases 1–5 and 7 are complete. **Phase 6 now also has the Office 2007 theme (§3.38)**, so
 > all five generations ship with dark/black variants in §3.49, and the complete 40-image
-> theme/variant/DPI matrix plus one deterministic RTL smoke image are covered by 41 approvals. Phase 6 still
-> owes full RTL verification + localization. Phase 8 (API freeze,
+> theme/variant/DPI matrix plus six focused scenes are covered by 46 approvals. Phase 6 still owes
+> the remaining RTL popup/window verification, bidirectional-content pass and chrome localization.
+> Phase 8 (API freeze,
 > docs site, perf, launch) is untouched. Of the two items
 > deferred out of §3.38, the two-pane 2007 application menu shipped in §3.46; only the 2007 window
 > frame is still owed.
@@ -3391,8 +3503,8 @@ Backlog (rough priority):
    100/125/150/175/200%.)
 3. Full RTL verification + localization resources — the remaining work in roadmap Phase 6. The
    §§3.48–3.49 visual-regression matrix is complete, §3.51 adds the first RTL smoke snapshot, and
-   §3.52 localizes/mirrors the ribbon-owned context menus. Customize/Options strings plus the full
-   popup/window and bidirectional-text pass remain.
+   §§3.52–3.55 localize/mirror ribbon-owned context menus, Customize/Options, chrome tooltips and the
+   default File label. The full popup/window/backstage and representative bidirectional-text pass remain.
 4. **The remaining unit tests** — broader customization serializer round-trips, KeyTip resolution,
    and reduction-algorithm gaps. The Phase 7 merge/modal invariants are now DONE: 13 tests cover
    stable ordering, repeated merge/unmerge, two-source group restoration, modal transitions and
@@ -3415,18 +3527,19 @@ Possible post-v1 polish:
   honor reduced motion, handle rapid reversals, and stay disabled while a DWM backdrop is active so
   Mica/Acrylic retain their native material retint without a second cross-fade on top.
 
-**Unit tests: 150 green (verified 2026-08-02).** Coverage now includes the STA harness, the borrow
+**Unit tests: 161 green (verified 2026-08-02).** Coverage now includes the STA harness, the borrow
 protocol, overflow strip measure/arrange rules, popup motion and dismissal, proxy mirroring,
 application-menu layering/hover/KeyTips, Office 2010 seam/state/consumer contracts, localization/RTL
-context-menu contracts, and the existing reduction/size-definition/theme-scope tests.
+context-menu, customization-template, chrome-tooltip and default-File contracts, and the existing
+reduction/size-definition/theme-scope tests.
 `RibbonMergeModalTests` adds the Phase 7 automated invariants: merge ordering across later
 permutations, merge/unmerge round-trips, group restore with two sources in one tab, capture while
 modal, modal enter/exit selection and cancellation, forced exit when a merged modal tab leaves,
 customization rebuild/remerge, and declarative activation. The broader coverage gaps listed above remain.
 
-**Visual tests: 1 green locally (2026-08-02), covering all 45 approved images.** The §§3.48–3.49 matrix
-spans five light themes plus five dark/black variants × 100/125/150/200%, followed by the §3.51 RTL
-smoke image and the focused §3.27 Office 2010 button-state/Backstage-shell plus 2007/2010 Black
+**Visual tests: 1 green locally (2026-08-02), covering all 46 approved images.** The §§3.48–3.49 matrix
+spans five light themes plus five dark/black variants × 100/125/150/200%, followed by the §3.51 ribbon
+RTL smoke, §3.53 QAT-customization RTL scene, and the focused §3.27 Office 2010 button-state/Backstage-shell plus 2007/2010 Black
 application-menu scenes; its separate project keeps rendering policy out of the
 headless logic-test harness. It passed three successive fresh-process stability runs in addition to
 the normal project and solution runs.

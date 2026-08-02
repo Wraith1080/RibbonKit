@@ -1,11 +1,13 @@
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
+using RibbonKit.Localization;
 
 namespace RibbonKit.Controls;
 
@@ -45,7 +47,12 @@ public sealed class RibbonCustomizeNode : INotifyPropertyChanged
         Kind = kind;
         Item = item;
         Parent = parent;
-        Header = isCustom ? $"{header} (Custom)" : header;
+        Header = isCustom
+            ? string.Format(
+                CultureInfo.CurrentUICulture,
+                RibbonLocalization.GetString(RibbonString.CustomItemFormat),
+                header)
+            : header;
         Icon = icon;
         IsCustom = isCustom;
     }
@@ -694,7 +701,7 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
             return;
         }
 
-        var tab = new RibbonTab { Header = "New Tab" };
+        var tab = new RibbonTab { Header = RibbonLocalization.GetString(RibbonString.NewTab) };
         Controls.Ribbon.SetIsCustom(tab, true);
         Controls.Ribbon.SetCommandId(tab, NewCustomId());
         tab.Groups.Add(CreateCustomGroup());
@@ -729,7 +736,7 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
 
     private static RibbonGroup CreateCustomGroup()
     {
-        var group = new RibbonGroup { Header = "New Group" };
+        var group = new RibbonGroup { Header = RibbonLocalization.GetString(RibbonString.NewGroup) };
         Controls.Ribbon.SetIsCustom(group, true);
         Controls.Ribbon.SetCommandId(group, NewCustomId());
 
@@ -760,9 +767,9 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
             Owner = Window.GetWindow(this),
             Title = node.Kind switch
             {
-                RibbonCustomizeNodeKind.Tab => "Edit Tab",
-                RibbonCustomizeNodeKind.Group => "Edit Group",
-                _ => "Edit Command",
+                RibbonCustomizeNodeKind.Tab => RibbonLocalization.GetString(RibbonString.EditTab),
+                RibbonCustomizeNodeKind.Group => RibbonLocalization.GetString(RibbonString.EditGroup),
+                _ => RibbonLocalization.GetString(RibbonString.EditCommand),
             },
             ItemName = RawHeaderOfSelection(),
         };
@@ -882,8 +889,8 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
 
         var dialog = new Microsoft.Win32.SaveFileDialog
         {
-            Title = "Export Ribbon Customization",
-            Filter = "Ribbon layout (*.json)|*.json|All files (*.*)|*.*",
+            Title = RibbonLocalization.GetString(RibbonString.ExportRibbonCustomization),
+            Filter = RibbonLocalization.GetString(RibbonString.RibbonLayoutFileFilter),
             DefaultExt = ".json",
             FileName = "ribbon-customization.json",
             AddExtension = true,
@@ -901,7 +908,7 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
         }
         catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException or System.Security.SecurityException)
         {
-            ShowError("Couldn't save the file.\n\n" + ex.Message);
+            ShowError(RibbonLocalization.GetString(RibbonString.CouldNotSaveFile) + "\n\n" + ex.Message);
         }
     }
 
@@ -914,8 +921,8 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
 
         var dialog = new Microsoft.Win32.OpenFileDialog
         {
-            Title = "Import Ribbon Customization",
-            Filter = "Ribbon layout (*.json)|*.json|All files (*.*)|*.*",
+            Title = RibbonLocalization.GetString(RibbonString.ImportRibbonCustomization),
+            Filter = RibbonLocalization.GetString(RibbonString.RibbonLayoutFileFilter),
             DefaultExt = ".json",
             CheckFileExists = true,
         };
@@ -932,7 +939,7 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
         }
         catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException or System.Security.SecurityException)
         {
-            ShowError("Couldn't read the file.\n\n" + ex.Message);
+            ShowError(RibbonLocalization.GetString(RibbonString.CouldNotReadFile) + "\n\n" + ex.Message);
             return;
         }
 
@@ -943,7 +950,12 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
     }
 
     private void ShowError(string message) =>
-        MessageBox.Show(Window.GetWindow(this), message, "Ribbon Customization", MessageBoxButton.OK, MessageBoxImage.Warning);
+        MessageBox.Show(
+            Window.GetWindow(this),
+            message,
+            RibbonLocalization.GetString(RibbonString.RibbonCustomization),
+            MessageBoxButton.OK,
+            MessageBoxImage.Warning);
 
     // Renames change the "Tab › Group › Command" paths shown on the left.
     private void RebuildAvailableListOnly()

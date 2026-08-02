@@ -117,6 +117,11 @@ public sealed class VisualSnapshotTests
                 ThemeManager.Apply(application, RibbonTheme.Office2024);
                 ThemeManager.SetDarkMode(application, false);
                 AssertSnapshot("office2024-rtl-100", 1d, FlowDirection.RightToLeft);
+                AssertSnapshot(
+                    "office2024-rtl-qat-customize-100",
+                    1d,
+                    FlowDirection.RightToLeft,
+                    CreateQuickAccessCustomizeScene);
             }
             finally
             {
@@ -357,6 +362,22 @@ public sealed class VisualSnapshotTests
         backstage.Items.Add(new BackstageTabItem { Header = "Info" });
         ribbon.Backstage = backstage;
         ribbon.IsBackstageOpen = true;
+        return root;
+    }
+
+    private static FrameworkElement CreateQuickAccessCustomizeScene(FlowDirection flowDirection)
+    {
+        var root = (Grid)CreateScene(flowDirection);
+        var ribbon = Assert.IsType<Ribbon>(Assert.Single(root.Children));
+        root.Children.Clear();
+
+        root.Children.Add(new RibbonQuickAccessPage
+        {
+            Ribbon = ribbon,
+            Margin = new Thickness(8),
+            UseLayoutRounding = true,
+            SnapsToDevicePixels = true,
+        });
         return root;
     }
 

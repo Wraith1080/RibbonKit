@@ -1,0 +1,214 @@
+<rk:RibbonWindow x:Class="RibbonKit.Showcase.LocalizationRtlDemo"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:rk="urn:ribbonkit"
+                 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                 mc:Ignorable="d"
+                 Title="RibbonKit Localization &amp; RTL Lab"
+                 Width="1040"
+                 Height="700"
+                 MinWidth="720"
+                 MinHeight="520"
+                 WindowStartupLocation="CenterOwner"
+                 UseLayoutRounding="True"
+                 Background="{DynamicResource RibbonKit.Brushes.Window.Background}">
+    <DockPanel>
+        <rk:Ribbon x:Name="DemoRibbon"
+                   DockPanel.Dock="Top"
+                   QuickAccessPosition="TabRow"
+                   QuickAccessCustomizeRequested="OnCustomizeQuickAccess"
+                   RibbonCustomizeRequested="OnCustomizeRibbon">
+            <rk:Ribbon.QuickAccessItems>
+                <rk:RibbonButton Header="Save"
+                                 rk:Ribbon.CommandId="loc.qat.save"
+                                 Size="Small"
+                                 Icon="{StaticResource Icon.Save}"
+                                 ScreenTipTitle="Save" />
+                <rk:RibbonButton Header="Undo"
+                                 rk:Ribbon.CommandId="loc.qat.undo"
+                                 Size="Small"
+                                 Icon="{StaticResource Icon.Undo}"
+                                 ScreenTipTitle="Undo" />
+            </rk:Ribbon.QuickAccessItems>
+
+            <rk:RibbonTab Header="Localization Lab" rk:Ribbon.CommandId="loc.tab.lab">
+                <rk:RibbonGroup Header="Mode"
+                                rk:Ribbon.CommandId="loc.group.mode"
+                                Icon="{StaticResource Icon.Palette}">
+                    <rk:RibbonToggleButton x:Name="PseudoLocalizationToggle"
+                                           Header="Pseudo Localization"
+                                           Size="Large"
+                                           LargeIcon="{StaticResource Icon.Font}"
+                                           Icon="{StaticResource Icon.Font}"
+                                           Checked="OnTogglePseudoLocalization"
+                                           Unchecked="OnTogglePseudoLocalization"
+                                           ScreenTipTitle="Pseudo localization"
+                                           ScreenTipText="Replace RibbonKit-owned strings with their resource keys. The previous provider is restored when this lab closes." />
+                    <rk:RibbonToggleButton x:Name="RightToLeftToggle"
+                                           Header="Right-to-Left"
+                                           Size="Large"
+                                           LargeIcon="{StaticResource Icon.Redo}"
+                                           Icon="{StaticResource Icon.Redo}"
+                                           Checked="OnToggleRightToLeft"
+                                           Unchecked="OnToggleRightToLeft"
+                                           ScreenTipTitle="Right-to-left layout"
+                                           ScreenTipText="Mirror this lab window without changing the main Showcase window." />
+                </rk:RibbonGroup>
+
+                <rk:RibbonGroup Header="Customization"
+                                rk:Ribbon.CommandId="loc.group.customization"
+                                Icon="{StaticResource Icon.Gear}">
+                    <rk:RibbonButton Header="Customize Ribbon"
+                                     Size="Large"
+                                     LargeIcon="{StaticResource Icon.Gear}"
+                                     Icon="{StaticResource Icon.Gear}"
+                                     Click="OnOpenCustomizeRibbon"
+                                     ScreenTipTitle="Customize Ribbon"
+                                     ScreenTipText="Open the built-in ribbon customization page using this lab's flow direction." />
+                    <rk:RibbonButton Header="Quick Access"
+                                     Size="Large"
+                                     LargeIcon="{StaticResource Icon.Save}"
+                                     Icon="{StaticResource Icon.Save}"
+                                     Click="OnOpenQuickAccess"
+                                     ScreenTipTitle="Quick Access Toolbar"
+                                     ScreenTipText="Open the built-in QAT customization page using this lab's flow direction." />
+                </rk:RibbonGroup>
+
+                <rk:RibbonGroup Header="Popup Checks"
+                                rk:Ribbon.CommandId="loc.group.popups"
+                                Icon="{StaticResource Icon.Paste}">
+                    <rk:RibbonSplitButton Header="Paste"
+                                          rk:Ribbon.CommandId="loc.command.paste"
+                                          Size="Large"
+                                          LargeIcon="{StaticResource Icon.Paste}"
+                                          Icon="{StaticResource Icon.Paste}"
+                                          ScreenTipTitle="Paste"
+                                          ScreenTipText="Open this menu and right-click the button to check popup and context-menu direction.">
+                        <rk:RibbonMenuItem Header="Keep Source Formatting" Icon="{StaticResource Icon.Paste}" />
+                        <rk:RibbonMenuItem Header="Merge Formatting" Icon="{StaticResource Icon.Copy}" />
+                        <rk:RibbonMenuItem Header="Keep Text Only" />
+                    </rk:RibbonSplitButton>
+                    <rk:RibbonDropDownButton Header="Select"
+                                             rk:Ribbon.CommandId="loc.command.select"
+                                             Size="Large"
+                                             LargeIcon="{StaticResource Icon.Select}"
+                                             Icon="{StaticResource Icon.Select}"
+                                             ScreenTipTitle="Select"
+                                             ScreenTipText="Open this dropdown to check its RTL placement and item alignment.">
+                        <rk:RibbonMenuItem Header="Select All" />
+                        <rk:RibbonMenuItem Header="Select Objects" Icon="{StaticResource Icon.Select}" />
+                        <rk:RibbonMenuItem Header="Selection Pane…" />
+                    </rk:RibbonDropDownButton>
+                </rk:RibbonGroup>
+            </rk:RibbonTab>
+        </rk:Ribbon>
+
+        <Grid Margin="16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="3*" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="2*" />
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0"
+                    Padding="24"
+                    Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
+                    BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}"
+                    BorderThickness="1"
+                    CornerRadius="8">
+                <StackPanel>
+                    <TextBlock Text="Localization &amp; RTL test checklist"
+                               FontSize="24"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}"
+                               Margin="0,0,0,12" />
+                    <TextBlock TextWrapping="Wrap"
+                               Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
+                               Margin="0,0,0,16">
+                        Pseudo localization replaces only RibbonKit-owned text. App-authored tab,
+                        group, command, page, and sample strings intentionally stay unchanged.
+                    </TextBlock>
+
+                    <Border Padding="12"
+                            Margin="0,0,0,18"
+                            Background="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}"
+                            BorderBrush="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}"
+                            BorderThickness="1"
+                            CornerRadius="4">
+                        <TextBlock x:Name="StatusText"
+                                   TextWrapping="Wrap"
+                                   Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+                    </Border>
+
+                    <TextBlock Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}"
+                               TextWrapping="Wrap"
+                               LineHeight="25">
+                        1. Toggle Pseudo Localization and confirm the default File button,
+                        main-Showcase application-menu Options/Exit footer, and built-in
+                        dialog/context-menu text become bracketed resource keys.&#x0a;
+                        2. Toggle Right-to-Left and confirm the QAT, groups, popups, and window chrome
+                        mirror while the main Showcase stays LTR.&#x0a;
+                        3. Open both customization pages. Add points toward the target list; Remove
+                        points back toward available commands.&#x0a;
+                        4. Right-click Paste, Select, and both QAT buttons. Check submenu placement
+                        and the localized built-in commands.&#x0a;
+                        5. Create and edit a custom tab/group to exercise names, suffixes, choices,
+                        tooltips, and OK/Cancel.&#x0a;
+                        6. With pseudo localization enabled, hover chrome controls: caption buttons,
+                        QAT overflow, Backstage Back, group launchers, and ribbon/window controls.
+                        Their tooltips should show bracketed resource keys.
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Column="2"
+                    Padding="20"
+                    Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
+                    BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}"
+                    BorderThickness="1"
+                    CornerRadius="8">
+                <StackPanel>
+                    <TextBlock Text="Bidirectional text samples"
+                               FontSize="18"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}"
+                               Margin="0,0,0,14" />
+
+                    <TextBlock Text="English (forced LTR)"
+                               Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
+                    <TextBlock Text="Quarterly report — 2026"
+                               FlowDirection="LeftToRight"
+                               FontSize="16"
+                               Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}"
+                               Margin="0,3,0,16" />
+
+                    <TextBlock Text="Arabic (forced RTL)"
+                               Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
+                    <TextBlock Text="تقرير ربع سنوي — ٢٠٢٦"
+                               FlowDirection="RightToLeft"
+                               FontSize="16"
+                               Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}"
+                               Margin="0,3,0,16" />
+
+                    <TextBlock Text="Mixed content (inherits lab flow)"
+                               Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
+                    <TextBlock Text="RibbonKit 2026 — تقرير الإصدار"
+                               FontSize="16"
+                               TextWrapping="Wrap"
+                               Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}"
+                               Margin="0,3,0,20" />
+
+                    <Separator />
+                    <TextBlock TextWrapping="Wrap"
+                               Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
+                               Margin="0,16,0,0">
+                        The localization provider is application-wide by design. This lab restores
+                        the provider that was active before pseudo localization when you turn it off
+                        or close the window. RTL layout is local to this window and its dialogs.
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </DockPanel>
+</rk:RibbonWindow>

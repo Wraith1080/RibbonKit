@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Windows;
 using System.Windows.Media;
+using RibbonKit.Localization;
 
 namespace RibbonKit.Controls;
 
@@ -271,7 +272,10 @@ public static class RibbonCustomizationSerializer
             RibbonTab? tab;
             if (tabDto.IsCustom)
             {
-                tab = new RibbonTab { Header = tabDto.Header ?? "New Tab" };
+                tab = new RibbonTab
+                {
+                    Header = tabDto.Header ?? RibbonLocalization.GetString(RibbonString.NewTab),
+                };
                 Ribbon.SetIsCustom(tab, true);
                 if (tabDto.Id is not null)
                 {
@@ -357,7 +361,10 @@ public static class RibbonCustomizationSerializer
             RibbonGroup? group;
             if (groupDto.IsCustom)
             {
-                group = new RibbonGroup { Header = groupDto.Header ?? "New Group" };
+                group = new RibbonGroup
+                {
+                    Header = groupDto.Header ?? RibbonLocalization.GetString(RibbonString.NewGroup),
+                };
                 Ribbon.SetIsCustom(group, true);
                 if (groupDto.Id is not null)
                 {
