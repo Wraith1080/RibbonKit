@@ -234,6 +234,7 @@ public sealed class RibbonGroupContextMenuProvider : ContextMenuProvider
         AddControlVerb("Add Radio Button", "RibbonRadioButton");
         AddControlVerb("Add Split Button", "RibbonSplitButton");
         AddControlVerb("Add Drop-Down Button", "RibbonDropDownButton");
+        AddControlVerb("Add Text Box", "RibbonTextBox");
 
         DesignVerbs.AddReorderAndDelete(this, "Groups", "Group");
     }

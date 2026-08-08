@@ -76,6 +76,17 @@ internal static class PropertyMetadata
         Describe(b, "RibbonKit.Controls.RibbonRadioButton", "GroupName",
             "Name shared by radio buttons that form one mutually exclusive option group.");
 
+        Describe(b, "RibbonKit.Controls.RibbonTextBox", "Header",
+            "Optional label shown to the left of the input box.");
+        Describe(b, "RibbonKit.Controls.RibbonTextBox", "InputWidth",
+            "Width of the editable input box, excluding its optional label.");
+        Describe(b, "RibbonKit.Controls.RibbonTextBox", "ScreenTipTitle",
+            "Bold first line of the rich ScreenTip tooltip.");
+        Describe(b, "RibbonKit.Controls.RibbonTextBox", "ScreenTipText",
+            "Descriptive body of the ScreenTip tooltip.");
+        Describe(b, "RibbonKit.Controls.RibbonTextBox", "IsReadOnly",
+            "Allow selection and copying while preventing the text from being edited.");
+
         Describe(b, "RibbonKit.Controls.RibbonSplitButton", "Layout",
             "How the two halves are arranged: Horizontal (command left, chevron right) or Vertical "
             + "(icon on top, caption and chevron beneath). Vertical is honoured ONLY at Size=Large; "

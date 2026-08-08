@@ -993,6 +993,7 @@ internal sealed class RibbonEditorWindow : Window
         "RibbonSplitButton" => "Split",
         "RibbonDropDownButton" => "Drop-Down",
         "RibbonComboBox" => "Combo Box",
+        "RibbonTextBox" => "Text Box",
         "InRibbonGallery" => "Gallery (in-ribbon)",
         "RibbonGallery" => "Gallery",
         "Separator" => "Separator",
@@ -1167,6 +1168,14 @@ internal sealed class RibbonEditorWindow : Window
         new PropSpec("IsEditable", "Editable", EditorKind.Bool),
     };
 
+    private static readonly PropSpec[] TextBoxSpecs =
+    {
+        new PropSpec("InputWidth", "Input width", EditorKind.Text),
+        new PropSpec("Text", "Text", EditorKind.Text),
+        new PropSpec("IsReadOnly", "Read only", EditorKind.Bool),
+        new PropSpec("MaxLength", "Maximum length", EditorKind.Text),
+    };
+
     private static readonly PropSpec[] CheckBoxSpecs =
     {
         new PropSpec("IsChecked", "Checked", EditorKind.Bool),
@@ -1240,6 +1249,7 @@ internal sealed class RibbonEditorWindow : Window
     {
         "BackstageTabItem" => BackstageItemSpecs,
         "RibbonComboBox" => ComboSpecs,
+        "RibbonTextBox" => TextBoxSpecs,
         "RibbonCheckBox" => CheckBoxSpecs,
         "RibbonRadioButton" => RadioButtonSpecs,
         "RibbonSplitButton" => SplitButtonSpecs,
@@ -1933,6 +1943,7 @@ internal sealed class RibbonEditorWindow : Window
             control.Items.Add(MakeControlMenuItem("Drop-Down Button", "RibbonDropDownButton", true));
             control.Items.Add(new Separator());
             control.Items.Add(MakeControlMenuItem("Combo Box", "RibbonComboBox", false));
+            control.Items.Add(MakeControlMenuItem("Text Box", "RibbonTextBox", true));
             control.Items.Add(MakeControlMenuItem("Gallery (in-ribbon)", "InRibbonGallery", false));
             control.Items.Add(MakeControlMenuItem("Gallery (drop-down)", "RibbonGallery", false));
             control.Items.Add(MakeControlMenuItem("Separator", "Separator", false));

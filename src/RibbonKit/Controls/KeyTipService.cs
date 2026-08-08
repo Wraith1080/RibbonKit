@@ -961,6 +961,11 @@ internal sealed class KeyTipService
     {
         switch (element)
         {
+            // Text inputs have no Invoke/Toggle — a KeyTip transfers keyboard focus so typing can
+            // begin without changing the existing selection or value.
+            case TextBox textBox:
+                textBox.Focus();
+                return;
             // A combo box or gallery has no Invoke/Toggle — focus it and drop its list.
             case ComboBox combo:
                 combo.Focus();

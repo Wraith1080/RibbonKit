@@ -3655,8 +3655,7 @@ to QAT/customization icon-command candidates in this slice.
 Six focused logic tests cover lookless inheritance/style keys, ScreenTips, UIA patterns/names,
 KeyTip behavior, ten-palette token parity, templates, and designer/toolbox wiring. Two deterministic
 Office 2024 light/dark approvals cover checked, unchecked, indeterminate, selected, unselected, and
-disabled states. Current automated baseline: 200 logic tests and 61 approved images. `RibbonTextBox`
-remains the next missing input-control candidate; a slider is still unscheduled.
+disabled states. Current automated baseline at this point was 200 logic tests and 61 approved images.
 
 The first live hover/focus check exposed one template-layering mistake: `Chrome` owned the content
 padding, so WPF inset every child—including `HoverWash` and `PressWash`—while the focus visual still
@@ -3664,6 +3663,40 @@ used the complete control bounds. Classic themes made the smaller amber box espe
 `Chrome` is now unpadded and the mathematically equivalent `5,1,5,1` inset lives only on the named
 content grid. Resting indicator/text geometry and desired size are unchanged; interaction washes now
 fill the complete focus rectangle. The template contract pins that separation for both controls.
+
+### 3.68 Compact RibbonTextBox — 2026-08-08
+
+The next pre-freeze input slice adds `RibbonTextBox` as a lookless subclass of WPF's real `TextBox`,
+again with one compact form rather than artificial ribbon sizes. `Header` supplies an optional label,
+`InputWidth` sizes only the editor chrome, and the standard `Text`, selection, caret, validation,
+binding, command, keyboard, scrolling, and IME contracts remain native. `IsReadOnly` therefore still
+allows selection and copying. Rich ScreenTips and KeyTips follow the same surface conventions as the
+other compact inputs; a text-box KeyTip transfers focus without changing its text or selection.
+
+The shared dropdown/input dictionary reuses the existing control-surface, border, primary-text,
+secondary-text, accent, and corner-radius resources, so no new palette token was required. Its
+24-pixel input chrome matches `RibbonComboBox`; hover changes only the border and keyboard focus uses
+the accent border, with no animation or layout-property transition. The required `PART_ContentHost`
+remains the native `ScrollViewer`, preserving WPF editing behavior across all ten themes.
+
+A dedicated automation peer retains Edit identity and the Value pattern while deriving its accessible
+name from `Header`. The Visual Studio toolbox, group context verb, responsive Ribbon Editor Add menu,
+friendly tree name, reorder/delete metadata, and property rows cover `InputWidth`, `Text`, `IsReadOnly`,
+and `MaxLength`. The Showcase adds editable and read-only fields beside the option controls.
+
+Five focused logic tests pin lookless inheritance/style key, native state and ScreenTips, UIA name and
+Value pattern, KeyTip focus, required template part/resources, and designer/toolbox wiring. The two
+existing Office 2024 light/dark input approvals now also cover editable, read-only, and disabled text
+fields, keeping the visual corpus at 61 images. The initial automated baseline was 205 logic tests and
+61 approved images. A ribbon slider remains unscheduled.
+
+The live follow-up passed at 100/125/150/175/200% DPI in both the Office 2024 and classic visual
+profiles. RTL follow-up adds an `RTL Inputs` group to the Localization/RTL lab with inherited mixed
+Arabic/Latin content plus a left-aligned Latin document identifier inside a still-mirrored control.
+The checklist explicitly distinguishes component mirroring from inner text direction. A source
+contract prevents either field from forcing the entire control LTR, and a focused Office 2024 RTL
+approval pins group order, leading option indicators, and label/field reversal. Current automated
+baseline: 206 logic tests and 62 approved images; the interactive RTL caret/selection check remains.
 
 ## 4. Workflow / Session Conventions
 
@@ -3683,7 +3716,8 @@ fill the complete focus rectangle. The template contract pins that separation fo
 
 > **Status as of 2026-08-08: everything through §3.61 and the responsive Ribbon Editor/application-
 > menu authoring work in the later §3.62 entry are implemented AND user-verified on Windows;
-> §§3.64–3.67 are automated and await the focused live visual recheck.**
+> §§3.64–3.66 are automated and await focused live visual rechecks; §3.67 is user-verified;
+> §3.68 passed live DPI verification and awaits its focused RTL caret/selection check.**
 > The ten-point §3.40/§3.41 checklist that stood here has been walked and passed in full, and the
 > **2007 DPI matrix is clean at 100/125/150/175/200%** — which closes the last S6 exit criterion the
 > 2007 arc left open. §3.42's whole-surface flyout animation, reduced-motion behavior, and the
@@ -3691,7 +3725,7 @@ fill the complete focus rectangle. The template contract pins that separation fo
 >
 > Roadmap Phases 0–7 are complete. **Phase 6 closed in §3.61**: all five generations ship with
 > dark/black variants in §3.49, and the complete 40-image
-> theme/variant/DPI matrix plus twenty-one focused scenes are covered by 61 approvals; localization,
+> theme/variant/DPI matrix plus twenty-two focused scenes are covered by 62 approvals; localization,
 > representative bidirectional content, and the live RTL popup/window pass are complete.
 > Phase 8 (API freeze,
 > docs site, perf, launch) is untouched. Of the two items
@@ -3902,7 +3936,7 @@ Possible post-v1 polish:
   honor reduced motion, handle rapid reversals, and stay disabled while a DWM backdrop is active so
   Mica/Acrylic retain their native material retint without a second cross-fade on top.
 
-**Unit tests: 200 green (verified 2026-08-08).** Coverage now includes the STA harness, the borrow
+**Unit tests: 206 green (verified 2026-08-08).** Coverage now includes the STA harness, the borrow
 protocol, overflow strip measure/arrange rules, popup motion and dismissal, proxy mirroring,
 application-menu layering/hover/footer-outline/KeyTips, repeatable message-bar API/template/theme
 contracts, Office 2010 seam/state/consumer contracts, localization/RTL
@@ -3915,7 +3949,7 @@ permutations, merge/unmerge round-trips, group restore with two sources in one t
 modal, modal enter/exit selection and cancellation, forced exit when a merged modal tab leaves,
 customization rebuild/remerge, and declarative activation. The broader coverage gaps listed above remain.
 
-**Visual tests: 1 green locally (2026-08-08), covering all 61 approved images.** The §§3.48–3.49 matrix
+**Visual tests: 1 green locally (2026-08-08), covering all 62 approved images.** The §§3.48–3.49 matrix
 spans five light themes plus five dark/black variants × 100/125/150/200%, followed by the §3.51 ribbon
 RTL smoke, §3.53 QAT-customization RTL scene, §3.58 representative bidirectional Backstage scene,
 and the focused §3.27 Office 2010 button-state/Backstage-shell, §3.65 connected/RTL message-bar

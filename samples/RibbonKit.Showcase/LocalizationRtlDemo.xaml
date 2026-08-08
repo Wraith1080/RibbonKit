@@ -165,6 +165,44 @@
                                      ScreenTipText="Open the built-in QAT customization page using this lab's flow direction." />
                 </rk:RibbonGroup>
 
+                <rk:RibbonGroup Header="RTL Inputs"
+                                rk:Ribbon.CommandId="loc.group.inputs"
+                                Icon="{StaticResource Icon.Font}">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <StackPanel VerticalAlignment="Center">
+                            <rk:RibbonCheckBox Header="إظهار المسطرة — Show ruler"
+                                               IsChecked="True"
+                                               rk:KeyTip.Keys="IR"
+                                               ScreenTipTitle="RTL check box"
+                                               ScreenTipText="The indicator should lead from the right when this lab is RTL." />
+                            <rk:RibbonRadioButton Header="مضغوط — Compact"
+                                                 GroupName="LabDensity"
+                                                 IsChecked="True"
+                                                 rk:KeyTip.Keys="IC"
+                                                 ScreenTipTitle="RTL radio button"
+                                                 ScreenTipText="The selected indicator and mixed label inherit the lab direction." />
+                        </StackPanel>
+                        <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                            <rk:RibbonTextBox x:Name="RtlMixedTextBox"
+                                              Header="بحث — Find"
+                                              InputWidth="112"
+                                              Text="RibbonKit 2026 — تقرير الإصدار"
+                                              rk:KeyTip.Keys="IF"
+                                              ScreenTipTitle="Mixed-direction input"
+                                              ScreenTipText="The label and input mirror while mixed Arabic and Latin text uses Unicode bidirectional ordering." />
+                            <rk:RibbonTextBox x:Name="RtlDocumentTextBox"
+                                              Header="ملف — File"
+                                              InputWidth="112"
+                                              Text="Report-2026-Q3.docx"
+                                              TextAlignment="Left"
+                                              Language="en-US"
+                                              rk:KeyTip.Keys="ID"
+                                              ScreenTipTitle="LTR document identifier"
+                                              ScreenTipText="The control remains mirrored, but this Latin document identifier stays left-aligned." />
+                        </StackPanel>
+                    </StackPanel>
+                </rk:RibbonGroup>
+
                 <rk:RibbonGroup Header="Popup Checks"
                                 rk:Ribbon.CommandId="loc.group.popups"
                                 Icon="{StaticResource Icon.Paste}">
@@ -238,7 +276,10 @@
                         main-Showcase application-menu Options/Exit footer, and built-in
                         dialog/context-menu text become bracketed resource keys.&#x0a;
                         2. Toggle Right-to-Left and confirm the QAT, groups, popups, and window chrome
-                        mirror while the main Showcase stays LTR.&#x0a;
+                        mirror while the main Showcase stays LTR. In RTL Inputs, option indicators
+                        should lead from the right; labels should move right of their text fields;
+                        the mixed field should start at the right while the document name stays
+                        left-aligned inside a still-mirrored control.&#x0a;
                         3. Open both customization pages. Add points toward the target list; Remove
                         points back toward available commands.&#x0a;
                         4. Right-click Paste, Select, and both QAT buttons. Check submenu placement

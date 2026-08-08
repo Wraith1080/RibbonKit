@@ -757,6 +757,21 @@
                                                   ScreenTipTitle="Comfortable spacing"
                                                   ScreenTipText="Radio buttons with the same GroupName remain mutually exclusive." />
                         </StackPanel>
+                        <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                            <rk:RibbonTextBox Header="Find"
+                                              InputWidth="92"
+                                              Text="RibbonKit"
+                                              rk:KeyTip.Keys="VF"
+                                              ScreenTipTitle="Find text"
+                                              ScreenTipText="A native editable RibbonTextBox with an optional label." />
+                            <rk:RibbonTextBox Header="Author"
+                                              InputWidth="92"
+                                              Text="Ada"
+                                              IsReadOnly="True"
+                                              rk:KeyTip.Keys="VA"
+                                              ScreenTipTitle="Document author"
+                                              ScreenTipText="Read-only text remains selectable and copyable." />
+                        </StackPanel>
                     </StackPanel>
                 </rk:RibbonGroup>
                 <!-- Backstage design: modern (2024) light rail vs classic (2013) accent column -->

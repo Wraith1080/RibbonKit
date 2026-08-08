@@ -285,3 +285,21 @@ public class RibbonComboBoxAutomationPeer : ComboBoxAutomationPeer
             : name;
     }
 }
+
+/// <summary>UIA peer for <see cref="RibbonTextBox"/>: names the input from its Header label.</summary>
+public class RibbonTextBoxAutomationPeer : TextBoxAutomationPeer
+{
+    /// <summary>Creates the peer.</summary>
+    public RibbonTextBoxAutomationPeer(RibbonTextBox owner) : base(owner)
+    {
+    }
+
+    /// <inheritdoc />
+    protected override string GetNameCore()
+    {
+        string name = base.GetNameCore();
+        return string.IsNullOrEmpty(name)
+            ? ((RibbonTextBox)Owner).Header ?? string.Empty
+            : name;
+    }
+}

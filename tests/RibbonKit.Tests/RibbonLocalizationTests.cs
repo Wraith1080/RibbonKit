@@ -546,6 +546,29 @@ public class RibbonLocalizationTests
     }
 
     [Fact]
+    public void Localization_lab_exercises_inherited_rtl_and_ltr_text_inside_mirrored_inputs()
+    {
+        var document = XDocument.Load(Path.Combine(
+            RepositoryRoot(),
+            "samples",
+            "RibbonKit.Showcase",
+            "LocalizationRtlDemo.xaml"));
+
+        XElement mixedInput = Assert.Single(
+            document.Descendants(RibbonKitNamespace + "RibbonTextBox"),
+            element => (string?)element.Attribute(Xaml + "Name") == "RtlMixedTextBox");
+        Assert.Null(mixedInput.Attribute("FlowDirection"));
+        Assert.Null(mixedInput.Attribute("TextAlignment"));
+
+        XElement documentInput = Assert.Single(
+            document.Descendants(RibbonKitNamespace + "RibbonTextBox"),
+            element => (string?)element.Attribute(Xaml + "Name") == "RtlDocumentTextBox");
+        Assert.Null(documentInput.Attribute("FlowDirection"));
+        Assert.Equal("Left", (string?)documentInput.Attribute("TextAlignment"));
+        Assert.Equal("en-US", (string?)documentInput.Attribute("Language"));
+    }
+
+    [Fact]
     public void Localization_lab_follows_showcase_file_surface_and_exercises_bidirectional_application_menu()
     {
         string root = RepositoryRoot();

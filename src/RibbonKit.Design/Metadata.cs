@@ -28,6 +28,7 @@ internal sealed class Metadata : IProvideAttributeTable
     private const string RibbonToggleButtonType = "RibbonKit.Controls.RibbonToggleButton";
     private const string RibbonCheckBoxType = "RibbonKit.Controls.RibbonCheckBox";
     private const string RibbonRadioButtonType = "RibbonKit.Controls.RibbonRadioButton";
+    private const string RibbonTextBoxType = "RibbonKit.Controls.RibbonTextBox";
     private const string RibbonSplitButtonType = "RibbonKit.Controls.RibbonSplitButton";
     private const string RibbonDropDownButtonType = "RibbonKit.Controls.RibbonDropDownButton";
 
@@ -74,6 +75,7 @@ internal sealed class Metadata : IProvideAttributeTable
             builder.AddCustomAttributes(RibbonToggleButtonType, controlProvider);
             builder.AddCustomAttributes(RibbonCheckBoxType, controlProvider);
             builder.AddCustomAttributes(RibbonRadioButtonType, controlProvider);
+            builder.AddCustomAttributes(RibbonTextBoxType, controlProvider);
             builder.AddCustomAttributes(RibbonSplitButtonType, controlProvider);
             builder.AddCustomAttributes(RibbonDropDownButtonType, controlProvider);
 
