@@ -3699,6 +3699,56 @@ approval pins group order, leading option indicators, and label/field reversal. 
 caret, selection, mixed-direction text, explicitly LTR document identifier, and KeyTip focus checks
 then passed in the live lab. Current automated baseline: 206 logic tests and 62 approved images.
 
+### 3.69 KeyTip resolution is typeable and prefix-free — 2026-08-08
+
+The per-level resolver now guarantees that every non-empty badge is independently typeable. The old
+`AutoAssign` reserved only exact strings, so duplicate explicit keys never activated and an explicit
+pair such as `F` / `FN` left the shorter key permanently waiting behind the longer prefix. Explicit
+assignments are now reserved before automatic derivation; the first conflicting explicit assignment
+in visual order wins, while later exact or prefix collisions fall back to their label and then the
+standard fallback alphabet. Automatic keys avoid every reserved prefix as well as exact duplicates.
+
+Resolution also now matches the actual input state machine. `KeyToChar` accepts A–Z and 0–9, but the
+old derivation accepted any Unicode letter or digit, producing unreachable badges for fully Arabic
+and other non-Latin labels. Authored keys are trimmed, normalized, and accepted only when every
+character is typeable; label derivation skips non-typeable characters and uses the ASCII fallback
+when necessary. The public `KeyTip.Keys` documentation records the typeable character contract and
+the deterministic first-explicit-wins collision policy.
+
+Ten focused cases cover explicit reservation/case normalization, same-initial label derivation,
+exact and both directions of prefix collision, prefix-free automatic assignment, unlabeled fallback,
+non-Latin labels, and untypeable explicit values. Full validation is green at 216 logic tests plus
+the one visual test covering 62 approved images.
+
+### 3.70 Explicit KeyTips inside arbitrary File-surface content — 2026-08-08
+
+Backstage pages and application-menu panes are intentionally arbitrary content, but their KeyTip
+levels previously recognized only surface navigation plus RibbonKit's two built-in application-menu
+content controls. Setting `rk:KeyTip.Keys` on an ordinary WPF `Button`, toggle, text input, or custom
+automation-aware `UIElement` inside a user-authored page therefore serialized correctly but produced
+no badge.
+
+Both File surfaces now share an explicit-content discovery rule. The walker follows only realized,
+visible visual-tree branches, so a selected Backstage page and the active/default application-menu
+pane contribute targets while hidden pages do not. Application-menu pane/footer items retain their
+existing automatic indexing. Any other `UIElement` opts in only through a non-blank `KeyTip.Keys`,
+which prevents arbitrary page layouts from being flooded with derived badges. Navigation rows are
+excluded from the content walk because their own primary/arrow targets are registered separately;
+the combined level then passes through the same prefix-free resolver from §3.69.
+
+Selecting a Backstage page by KeyTip now keeps the terminal level active and rebuilds it at
+`DispatcherPriority.Loaded`, after the selected-content presenter realizes the new page. This mirrors
+the application menu's existing pane-refresh rule. The work also fixes Backstage action items:
+`IsButton=True` now invokes the item's Click/Command path under KeyTips instead of trying to select
+the action as a page.
+
+The Showcase demonstrates both extension points with ordinary WPF buttons: **Create custom draft**
+(`CD`) in the Backstage Home page and **Manage recent locations** (`MR`) in the application menu's
+default pane. Four focused cases cover visible explicit Backstage targets, built-in plus explicit
+application-menu targets, ordinary-button invocation, and Backstage action invocation. Automated
+baseline: 220 logic tests plus the one visual test covering 62 approved images; the two live examples
+remain the focused interactive verification surface.
+
 ## 4. Workflow / Session Conventions
 
 - Cloud workspace: `/home/user/ribbonkit/`. The user's machine:
@@ -3718,7 +3768,8 @@ then passed in the live lab. Current automated baseline: 206 logic tests and 62 
 > **Status as of 2026-08-08: everything through §3.61 and the responsive Ribbon Editor/application-
 > menu authoring work in the later §3.62 entry are implemented AND user-verified on Windows;
 > §§3.64–3.66 are automated and await focused live visual rechecks; §§3.67–3.68 are user-verified,
-> including §3.68 at 100/125/150/175/200% DPI and in the focused RTL input lab.**
+> including §3.68 at 100/125/150/175/200% DPI and in the focused RTL input lab; §§3.69–3.70's
+> KeyTip resolution and explicit File-surface content contracts are automated.**
 > The ten-point §3.40/§3.41 checklist that stood here has been walked and passed in full, and the
 > **2007 DPI matrix is clean at 100/125/150/175/200%** — which closes the last S6 exit criterion the
 > 2007 arc left open. §3.42's whole-surface flyout animation, reduced-motion behavior, and the
@@ -3915,8 +3966,9 @@ Backlog (rough priority):
    default File label. §3.58 completes the representative bidirectional-text Backstage pass and
    §3.59 fixes its live adorner/title transition; §3.61 records the green live popup/window,
    screen-edge, and 2024/2007 application-menu/orb verification.
-4. **The remaining unit tests** — broader customization serializer round-trips, KeyTip resolution,
-   and reduction-algorithm gaps. The Phase 7 merge/modal invariants are now DONE: 13 tests cover
+4. **The remaining unit tests** — broader customization serializer round-trips and
+   reduction-algorithm gaps. KeyTip resolution is DONE in §3.69. The Phase 7 merge/modal invariants
+   are now DONE: 13 tests cover
    stable ordering, repeated merge/unmerge, two-source group restoration, modal transitions and
    cancellation, serialization exclusion, rebuild/remerge and declarative activation. The harness
    and house style for headless WPF tests are in place (§3.39).
@@ -3926,6 +3978,21 @@ Backlog (rough priority):
 6. Roadmap Phase 8 release engineering: API review and freeze (`PublicAPI.txt` — Phase 7 added a lot
    of public surface), docs site, NuGet polish, performance pass.
 7. GitHub publish: repo URL placeholder in csproj (`YOUR-GITHUB-USERNAME`).
+
+Pre-freeze consideration (not committed scope):
+
+- **Touch mode toggle.** Decide during the Phase 8 API review whether v1 should expose an explicit,
+  opt-in density mode that enlarges hit targets and spacing across the ribbon, QAT, menus, and
+  customization surfaces. Keep it token/metric-driven and compatible with reduction, DPI, RTL, and
+  mouse/keyboard use; do not infer it from a single touch event. If that cross-surface contract is not
+  small enough to validate before the freeze, defer the API rather than ship a partial toggle.
+  **Feasibility check (2026-08-08):** this is not currently a one-property template switch. Theme
+  chrome metrics are centralized, but hit-target geometry still spans hundreds of literal sizes,
+  margins, and paddings across the shared button, dropdown, input, Backstage, application-menu, and
+  customization templates. A complete implementation would first need a semantic density-metric
+  layer, an inheritable enum-shaped setting (not a dead-end boolean), explicit propagation into
+  popup and dialog roots, reduction/layout invalidation, and focused mouse/touch/DPI/RTL approvals.
+  Do not freeze a placeholder API; keep this deferred unless a dedicated cross-surface arc is approved.
 
 Possible post-v1 polish:
 
@@ -3937,14 +4004,16 @@ Possible post-v1 polish:
   honor reduced motion, handle rapid reversals, and stay disabled while a DWM backdrop is active so
   Mica/Acrylic retain their native material retint without a second cross-fade on top.
 
-**Unit tests: 206 green (verified 2026-08-08).** Coverage now includes the STA harness, the borrow
+**Unit tests: 220 green (verified 2026-08-08).** Coverage now includes the STA harness, the borrow
 protocol, overflow strip measure/arrange rules, popup motion and dismissal, proxy mirroring,
 application-menu layering/hover/footer-outline/KeyTips, repeatable message-bar API/template/theme
 contracts, Office 2010 seam/state/consumer contracts, localization/RTL
 context-menu, customization-template, chrome-tooltip, default-File, representative bidi-lab and
 live Backstage/title-transition contracts, design-preview runtime isolation, scoped theme-token
 replacement, dark/Black neutral Backstage rail contracts, and the existing
-reduction/size-definition/theme-scope tests.
+reduction/size-definition/theme-scope tests. The KeyTip resolver cases add explicit-key precedence,
+exact/prefix collision recovery, prefix-free derivation, typeable non-Latin fallback, and explicit
+custom-content discovery/invocation across Backstage and application-menu panes.
 `RibbonMergeModalTests` adds the Phase 7 automated invariants: merge ordering across later
 permutations, merge/unmerge round-trips, group restore with two sources in one tab, capture while
 modal, modal enter/exit selection and cancellation, forced exit when a merged modal tab leaves,

@@ -11,13 +11,19 @@ namespace RibbonKit.Controls;
 /// </code>
 /// When a control has no explicit KeyTip, the ribbon derives a unique one from its
 /// label (matching Office), so setting this is only needed to pin a specific key.
+/// Within one KeyTip level, exact duplicates and prefix collisions cannot both be
+/// typed; the first explicit assignment wins and later conflicting assignments fall
+/// back to automatic derivation. An explicit key also opts an ordinary visible
+/// <see cref="UIElement"/> inside the selected Backstage page or active application-menu
+/// pane/footer into that surface's KeyTip level, provided the element supports a native
+/// invocation path or an appropriate UI Automation pattern.
 /// </summary>
 public static class KeyTip
 {
     /// <summary>
     /// Identifies the KeyTip.Keys attached property — the one or more characters typed
     /// (after <c>Alt</c>) to activate the element. Case-insensitive; usually one or two
-    /// characters, e.g. <c>"H"</c> or <c>"FN"</c>.
+    /// ASCII letters or digits, e.g. <c>"H"</c> or <c>"FN"</c>.
     /// </summary>
     public static readonly DependencyProperty KeysProperty =
         DependencyProperty.RegisterAttached(

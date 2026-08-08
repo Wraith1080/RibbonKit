@@ -71,6 +71,14 @@
                             <TextBlock Text="Quarterly report.docx" Margin="0,5" Foreground="#1A1A1A" />
                             <TextBlock Text="Meeting notes.docx" Margin="0,5" Foreground="#1A1A1A" />
                             <TextBlock Text="RibbonKit roadmap.docx" Margin="0,5" Foreground="#1A1A1A" />
+                            <!-- Arbitrary page content opts into the active Backstage KeyTip level
+                                 by setting the same attached property used by ribbon controls. -->
+                            <Button Content="Create custom draft"
+                                    rk:KeyTip.Keys="CD"
+                                    Click="OnCustomSurfaceCommand"
+                                    HorizontalAlignment="Left"
+                                    Padding="12,6"
+                                    Margin="0,14,0,0" />
                         </StackPanel>
                     </rk:BackstageTabItem>
                     <rk:BackstageTabItem Header="Info">
@@ -169,6 +177,15 @@
                                                               Click="OnApplicationMenuCommand" />
                             <rk:RibbonApplicationMenuPaneItem Content="4  Office 2007 theme plan.docx"
                                                               Click="OnApplicationMenuCommand" />
+                            <!-- This is an ordinary WPF Button, not a RibbonApplicationMenuPaneItem.
+                                 Its explicit key demonstrates custom default/pane content discovery. -->
+                            <Button Content="Manage recent locations"
+                                    rk:KeyTip.Keys="MR"
+                                    Click="OnCustomSurfaceCommand"
+                                    HorizontalAlignment="Stretch"
+                                    HorizontalContentAlignment="Left"
+                                    Padding="10,6"
+                                    Margin="0,4,0,0" />
                         </StackPanel>
                     </rk:RibbonApplicationMenu.DefaultContent>
 

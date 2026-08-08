@@ -323,6 +323,10 @@ internal sealed class KeyTipService
                 RefreshApplicationMenuPane(item);
                 break;
 
+            case KeyTipKind.BackstagePage:
+                RefreshBackstagePage(item);
+                break;
+
             case KeyTipKind.Backstage:
                 DescendIntoBackstage();
                 break;
@@ -563,6 +567,42 @@ internal sealed class KeyTipService
         }));
     }
 
+    private void RefreshBackstagePage(KeyTipItem page)
+    {
+        KeyTipLevel current = _levels.Peek();
+        RemoveAdorners(current);
+        _transitioning = true;
+
+        // Page selection is synchronous, but its arbitrary content is presented through the
+        // Backstage template. Wait for that presenter to realize the new visual tree before
+        // discovering explicitly tagged custom controls and asking for their adorner layers.
+        InvokeControl(page.Target);
+
+        _ribbon.Dispatcher.BeginInvoke(DispatcherPriority.Loaded, (Action)(() =>
+        {
+            _transitioning = false;
+            if (!_active || _levels.Count == 0 || !ReferenceEquals(_levels.Peek(), current))
+            {
+                return;
+            }
+
+            KeyTipLevel refreshed = BuildBackstageLevel();
+            refreshed.OnExit = current.OnExit;
+            refreshed.PersistOnActivate = current.PersistOnActivate;
+            refreshed.IsTerminal = current.IsTerminal;
+
+            if (refreshed.Items.Count == 0)
+            {
+                AddAdorners(current);
+                return;
+            }
+
+            _levels.Pop();
+            _levels.Push(refreshed);
+            AddAdorners(refreshed);
+        }));
+    }
+
     // ---- Level builders -----------------------------------------------------------
 
     private KeyTipLevel BuildRootLevel()
@@ -736,11 +776,19 @@ internal sealed class KeyTipService
         {
             foreach (object? entry in backstage.Items)
             {
-                if (entry is UIElement { IsVisible: true } element)
+                BackstageTabItem? item = entry as BackstageTabItem
+                    ?? backstage.ItemContainerGenerator.ContainerFromItem(entry) as BackstageTabItem;
+                if (item is { IsVisible: true })
                 {
-                    items.Add(new KeyTipItem(element, KeyTipKind.Leaf, GetLabel(element), KeyTip.GetKeys(element)));
+                    items.Add(new KeyTipItem(
+                        item,
+                        item.IsButton ? KeyTipKind.Leaf : KeyTipKind.BackstagePage,
+                        GetLabel(item),
+                        KeyTip.GetKeys(item)));
                 }
             }
+
+            AddContentItems(GetBackstageContentKeyTipTargets(backstage), items);
         }
 
         AutoAssign(items);
@@ -787,17 +835,9 @@ internal sealed class KeyTipService
         }
 
         // The currently visible pane (default Recent Documents or a claimed nav pane) and footer
-        // are arbitrary content, so walk the realized visual tree for the two public command types.
-        var commands = new List<UIElement>();
-        CollectApplicationMenuControls(menu, commands);
-        foreach (UIElement command in commands)
-        {
-            items.Add(new KeyTipItem(
-                command,
-                KeyTipKind.Leaf,
-                GetLabel(command),
-                KeyTip.GetKeys(command)));
-        }
+        // are arbitrary content. Their two RibbonKit command types remain automatic targets; any
+        // other UIElement must explicitly opt in with KeyTip.Keys.
+        AddContentItems(GetApplicationMenuContentKeyTipTargets(menu), items);
 
         AutoAssign(items);
         return new KeyTipLevel(items);
@@ -891,23 +931,83 @@ internal sealed class KeyTipService
         }
     }
 
-    private static void CollectApplicationMenuControls(DependencyObject root, List<UIElement> results)
+    private static void AddContentItems(IEnumerable<UIElement> controls, List<KeyTipItem> items)
     {
-        int count = VisualTreeHelper.GetChildrenCount(root);
-        for (int i = 0; i < count; i++)
+        var existing = new HashSet<UIElement>(items.Select(item => item.Target));
+        foreach (UIElement control in controls)
         {
-            DependencyObject child = VisualTreeHelper.GetChild(root, i);
-            if (child is RibbonApplicationMenuPaneItem or RibbonApplicationMenuButton)
+            if (existing.Add(control))
             {
-                if (child is UIElement { IsVisible: true } command)
+                items.Add(new KeyTipItem(
+                    control,
+                    KeyTipKind.Leaf,
+                    GetLabel(control),
+                    KeyTip.GetKeys(control)));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Finds explicitly tagged controls in the currently realized Backstage page. Navigation items
+    /// are registered separately, so they are excluded even when they carry authored keys.
+    /// </summary>
+    internal static IReadOnlyList<UIElement> GetBackstageContentKeyTipTargets(DependencyObject root) =>
+        GetContentKeyTipTargets(
+            root,
+            includeBuiltIn: static _ => false,
+            exclude: static element => element is BackstageTabItem);
+
+    /// <summary>
+    /// Finds the built-in application-menu pane/footer commands plus arbitrary visible controls
+    /// that explicitly opt in with <see cref="KeyTip.KeysProperty"/>. Navigation rows are registered
+    /// through their primary/arrow template parts and must not appear a second time here.
+    /// </summary>
+    internal static IReadOnlyList<UIElement> GetApplicationMenuContentKeyTipTargets(
+        DependencyObject root) =>
+        GetContentKeyTipTargets(
+            root,
+            includeBuiltIn: static element =>
+                element is RibbonApplicationMenuPaneItem or RibbonApplicationMenuButton,
+            exclude: static element => element is RibbonApplicationMenuItem);
+
+    private static IReadOnlyList<UIElement> GetContentKeyTipTargets(
+        DependencyObject root,
+        Func<UIElement, bool> includeBuiltIn,
+        Func<UIElement, bool> exclude)
+    {
+        var results = new List<UIElement>();
+        var seen = new HashSet<UIElement>();
+
+        Visit(root);
+        return results;
+
+        void Visit(DependencyObject parent)
+        {
+            int count = VisualTreeHelper.GetChildrenCount(parent);
+            for (int index = 0; index < count; index++)
+            {
+                DependencyObject child = VisualTreeHelper.GetChild(parent, index);
+                if (child is UIElement element)
                 {
-                    results.Add(command);
+                    // A collapsed/hidden branch may remain in the visual tree. Stop at that branch
+                    // so only the selected Backstage page or active/default application-menu pane
+                    // contributes targets.
+                    if (element.Visibility != Visibility.Visible)
+                    {
+                        continue;
+                    }
+
+                    bool hasExplicitKey = !string.IsNullOrWhiteSpace(KeyTip.GetKeys(element));
+                    if (!exclude(element) &&
+                        (includeBuiltIn(element) || hasExplicitKey) &&
+                        seen.Add(element))
+                    {
+                        results.Add(element);
+                    }
                 }
 
-                continue;
+                Visit(child);
             }
-
-            CollectApplicationMenuControls(child, results);
         }
     }
 
@@ -952,7 +1052,7 @@ internal sealed class KeyTipService
     // ---- Helpers ------------------------------------------------------------------
 
     /// <summary>
-    /// Invokes a ribbon control's default action through its UI Automation patterns
+    /// Invokes an element's default action through its UI Automation patterns
     /// (Invoke/Toggle), with special handling for combos, galleries, and tab items.
     /// Shared by KeyTip invocation and the quick-access proxy buttons (see
     /// <see cref="Ribbon.AddToQuickAccess"/>), so both paths behave identically.
@@ -976,6 +1076,9 @@ internal sealed class KeyTipService
                 gallery.SetCurrentValue(InRibbonGallery.IsDropDownOpenProperty, true);
                 return;
             // A backstage page: select it (and keep the backstage open).
+            case BackstageTabItem { IsButton: true } backstageAction:
+                backstageAction.InvokeAction();
+                return;
             case TabItem tabItem:
                 tabItem.SetCurrentValue(TabItem.IsSelectedProperty, true);
                 tabItem.Focus();
@@ -1046,34 +1149,66 @@ internal sealed class KeyTipService
 
     private static void AutoAssign(List<KeyTipItem> items)
     {
-        var used = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        string[] resolved = ResolveKeys(items
+            .Select(item => new KeyTipCandidate(item.Label, item.Keys))
+            .ToArray());
 
-        // Reserve explicitly-set (and pre-seeded numeric) keys first.
-        foreach (KeyTipItem item in items)
+        for (int index = 0; index < items.Count; index++)
         {
-            if (!string.IsNullOrEmpty(item.Keys))
-            {
-                item.Keys = item.Keys.ToUpperInvariant();
-                used.Add(item.Keys);
-            }
+            items[index].Keys = resolved[index];
         }
+    }
 
-        foreach (KeyTipItem item in items)
+    /// <summary>
+    /// Resolves one KeyTip level into deterministic, typeable key sequences. Explicit assignments
+    /// are reserved before automatic derivation so authored access keys always take precedence.
+    /// When two explicit assignments are equal or one is a prefix of the other, the first wins and
+    /// the later item falls back to label derivation; otherwise neither badge could be activated.
+    /// </summary>
+    internal static string[] ResolveKeys(IReadOnlyList<KeyTipCandidate> candidates)
+    {
+        var resolved = new string?[candidates.Count];
+        var used = new List<string>();
+
+        // Reserve every usable explicit (and pre-seeded numeric) key before deriving any labels.
+        // This means an automatic item earlier in visual order cannot steal a later authored key.
+        for (int index = 0; index < candidates.Count; index++)
         {
-            if (!string.IsNullOrEmpty(item.Keys))
+            string? explicitKeys = candidates[index].ExplicitKeys;
+            if (string.IsNullOrEmpty(explicitKeys))
             {
                 continue;
             }
 
-            string label = item.Label ?? string.Empty;
+            string normalized = explicitKeys.Trim().ToUpperInvariant();
+            if (normalized.Length == 0 || normalized.Any(ch => !IsTypeableKeyTipChar(ch)))
+            {
+                continue;
+            }
+
+            if (!ConflictsWithAny(normalized, used))
+            {
+                resolved[index] = normalized;
+                used.Add(normalized);
+            }
+        }
+
+        for (int index = 0; index < candidates.Count; index++)
+        {
+            if (resolved[index] is not null)
+            {
+                continue;
+            }
+
+            string label = candidates[index].Label ?? string.Empty;
             string? pick = null;
 
             foreach (char ch in label)
             {
-                if (char.IsLetterOrDigit(ch))
+                if (IsTypeableKeyTipChar(ch))
                 {
                     string candidate = char.ToUpperInvariant(ch).ToString();
-                    if (used.Add(candidate))
+                    if (!ConflictsWithAny(candidate, used))
                     {
                         pick = candidate;
                         break;
@@ -1087,7 +1222,7 @@ internal sealed class KeyTipService
                 foreach (char ch in fallback)
                 {
                     string candidate = ch.ToString();
-                    if (used.Add(candidate))
+                    if (!ConflictsWithAny(candidate, used))
                     {
                         pick = candidate;
                         break;
@@ -1095,9 +1230,23 @@ internal sealed class KeyTipService
                 }
             }
 
-            item.Keys = pick ?? string.Empty;
+            resolved[index] = pick ?? string.Empty;
+            if (pick is not null)
+            {
+                used.Add(pick);
+            }
         }
+
+        return resolved.Select(keys => keys ?? string.Empty).ToArray();
     }
+
+    private static bool ConflictsWithAny(string candidate, IEnumerable<string> used) =>
+        used.Any(existing =>
+            candidate.StartsWith(existing, StringComparison.OrdinalIgnoreCase) ||
+            existing.StartsWith(candidate, StringComparison.OrdinalIgnoreCase));
+
+    private static bool IsTypeableKeyTipChar(char value) =>
+        value is >= 'A' and <= 'Z' or >= 'a' and <= 'z' or >= '0' and <= '9';
 
     private static string? GetLabel(UIElement element) => element switch
     {
@@ -1147,6 +1296,7 @@ internal sealed class KeyTipService
         QuickAccessOverflow,
         ApplicationMenu,
         ApplicationMenuPaneOpener,
+        BackstagePage,
         Backstage,
     }
 
@@ -1182,3 +1332,5 @@ internal sealed class KeyTipService
         public bool IsTerminal { get; set; }
     }
 }
+
+internal readonly record struct KeyTipCandidate(string? Label, string? ExplicitKeys);
