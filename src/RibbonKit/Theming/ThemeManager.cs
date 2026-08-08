@@ -54,6 +54,8 @@ public static class ThemeManager
     private const string CheckedHoverKey = "RibbonKit.Brushes.Control.CheckedHoverBackground";
     private const string BackstageHoverKey = "RibbonKit.Brushes.Backstage.ItemHoverBackground";
     private const string BackstageSelectedKey = "RibbonKit.Brushes.Backstage.ItemSelectedBackground";
+    private const string BackstageClassicNavKey = "RibbonKit.Brushes.Backstage.Classic.NavBackground";
+    private const string BackstageSelectedBorderKey = "RibbonKit.Brushes.Backstage.ItemSelectedBorder";
     private const string SelectedUnderlineKey = "RibbonKit.Brushes.Tab.SelectedUnderline";
     private const string SelectedForegroundKey = "RibbonKit.Brushes.Tab.SelectedForeground";
     private const string AppButtonBackgroundKey = "RibbonKit.Brushes.ApplicationButton.Background";
@@ -99,6 +101,7 @@ public static class ThemeManager
     private static readonly string[] AccentOverrideKeys =
     {
         AccentKey, CheckedKey, CheckedHoverKey, BackstageHoverKey, BackstageSelectedKey,
+        BackstageClassicNavKey, BackstageSelectedBorderKey,
         SelectedUnderlineKey, SelectedForegroundKey, AppButtonBackgroundKey, AppButtonHoverKey,
         AppButtonPressedKey, AppButtonBorderKey, BackstageSelectedGlassKey, DialogPrimaryBackgroundKey,
         DialogPrimaryBorderKey, MdiActiveCaptionKey, MdiActiveBorderKey,
@@ -234,7 +237,7 @@ public static class ThemeManager
 
     /// <summary>
     /// Sets the accent color used across the current theme — the selection highlight,
-    /// toggled-button fills, backstage highlights, the 2024 selected-tab underline/text,
+    /// toggled-button fills, light-palette backstage highlights, the 2024 selected-tab underline/text,
     /// and the 2013 File button. Persists across <see cref="Apply"/> calls, re-deriving
     /// per theme (for example, the flat 2019/2013 themes never gain a selection underline).
     /// </summary>
@@ -316,16 +319,26 @@ public static class ThemeManager
         }
 
         RibbonTheme theme = CurrentTheme ?? RibbonTheme.Office2024;
+        bool dark = _darkMode && SupportsDarkMode(theme);
 
         // Colors shared by every theme.
         resources[AccentKey] = Frozen(accent);
-        resources[BackstageHoverKey] = Frozen(Mix(accent, Colors.White, 0.22));
-        resources[BackstageSelectedKey] = Frozen(Mix(accent, Colors.Black, 0.28));
-        // The Classic2010 selected marker tracks the accent (only visible when that backstage
-        // design is active, harmless otherwise). Office 2010 replaces this baseline gel with its
-        // lower-center radial glow below. The dialog primary (OK) button is flat accent by default;
+        // Classic Backstage rails follow the accent only in light palettes. Dark/Black palettes
+        // deliberately keep their generation-specific neutral rail and selection tokens; otherwise
+        // a custom (or previously selected) accent reintroduces the colored slab those palettes
+        // are meant to replace.
+        if (!dark)
+        {
+            resources[BackstageClassicNavKey] = Frozen(accent);
+            resources[BackstageHoverKey] = Frozen(Mix(accent, Colors.White, 0.22));
+            resources[BackstageSelectedKey] = Frozen(Mix(accent, Colors.Black, 0.28));
+            resources[BackstageSelectedBorderKey] = Frozen(Mix(accent, Colors.Black, 0.30));
+            resources[BackstageSelectedGlassKey] = Gel(accent);
+        }
+        // In light palettes the Classic2010 selected marker tracks the accent (only visible when
+        // that backstage design is active, harmless otherwise). Office 2010 replaces this baseline
+        // gel with its lower-center radial glow below. The dialog primary (OK) button is flat accent by default;
         // the Office 2010 case swaps it for a glass gel.
-        resources[BackstageSelectedGlassKey] = Gel(accent);
         resources[DialogPrimaryBackgroundKey] = Frozen(accent);
         resources[DialogPrimaryBorderKey] = Frozen(accent);
 
@@ -343,7 +356,6 @@ public static class ThemeManager
         // Leaving these unset keeps each theme's own gradient (they were Removed above).
         if (theme is not (RibbonTheme.Office2010 or RibbonTheme.Office2007))
         {
-            bool dark = _darkMode && SupportsDarkMode(theme);
             resources[CheckedKey] = Frozen(Mix(accent, dark ? Colors.Black : Colors.White, dark ? 0.52 : 0.82));
             resources[CheckedHoverKey] = Frozen(Mix(accent, dark ? Colors.Black : Colors.White, dark ? 0.40 : 0.72));
         }
@@ -372,7 +384,10 @@ public static class ThemeManager
                 resources[AppButtonHoverKey] = ApplicationButtonGel(Mix(accent, Colors.White, 0.18));
                 resources[AppButtonPressedKey] = PressedGel(Mix(accent, Colors.Black, 0.22));
                 resources[AppButtonBorderKey] = Frozen(Mix(accent, Colors.Black, 0.30));
-                resources[BackstageSelectedGlassKey] = BackstageSelectionGlow(accent);
+                if (!dark)
+                {
+                    resources[BackstageSelectedGlassKey] = BackstageSelectionGlow(accent);
+                }
                 // The OK button borrows the same glass gel + border in 2010.
                 resources[DialogPrimaryBackgroundKey] = Gel(accent);
                 resources[DialogPrimaryBorderKey] = Frozen(Mix(accent, Colors.Black, 0.30));
@@ -392,7 +407,10 @@ public static class ThemeManager
                 resources[AppButtonBorderKey] = Frozen(Mix(accent, Colors.Black, 0.30));
                 resources[DialogPrimaryBackgroundKey] = Glass(accent);
                 resources[DialogPrimaryBorderKey] = Frozen(Mix(accent, Colors.Black, 0.30));
-                resources[BackstageSelectedGlassKey] = Glass(accent);
+                if (!dark)
+                {
+                    resources[BackstageSelectedGlassKey] = Glass(accent);
+                }
                 resources[MdiActiveCaptionKey] = CaptionGlass(accent);
                 resources[MdiActiveBorderKey] = Frozen(Mix(accent, Colors.Black, 0.30));
                 // SelectedForeground stays the theme's dark blue, as in 2010: a custom accent

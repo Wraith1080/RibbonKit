@@ -113,6 +113,8 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.Border" Color="#C8C6C4" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemHoverBackground" Color="#3D66A8" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemSelectedBackground" Color="#1F3F72" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Classic.NavBackground" Color="#2B579A" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemSelectedBorder" Color="#17365D" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.NavBackground" Color="#E6E6E6" />
     <system:Double x:Key="RibbonKit.Metrics.BackstageBackButtonSize">36</system:Double>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ContentBackground" Color="#FFFFFF" />

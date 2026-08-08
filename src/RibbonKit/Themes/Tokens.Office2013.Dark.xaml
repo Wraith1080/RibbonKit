@@ -39,9 +39,15 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.Background" Color="#444444" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.Border" Color="#777777" />
 
-    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemHoverBackground" Color="#3974A3" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemSelectedBackground" Color="#24547B" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemHoverBackground" Color="#484848" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemSelectedBackground" Color="#525252" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Classic.NavBackground" Color="#333333" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemSelectedBorder" Color="#777777" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.NavBackground" Color="#333333" />
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Backstage.ItemSelectedGlass" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#707070" />
+        <GradientStop Offset="1" Color="#4D4D4D" />
+    </LinearGradientBrush>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ContentBackground" Color="#3B3B3B" />
     <DropShadowEffect x:Key="RibbonKit.Effects.Backstage.ContentShadow"
                       Opacity="0" BlurRadius="0" ShadowDepth="0" />

@@ -76,6 +76,25 @@
 
     <!-- Classic2010 Backstage stays light, but the optional two-pane application menu is a
          complete dark flyout. It uses scoped text tokens so the silver ribbon remains hybrid. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemHoverBackground" Color="#737373" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemSelectedBackground" Color="#565656" />
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Backstage.Classic.NavBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#686868" />
+        <GradientStop Offset="1" Color="#585858" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemSelectedBorder" Color="#4A4A4A" />
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Backstage.NavBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#E2E2E2" />
+        <GradientStop Offset="1" Color="#C6C6C6" />
+    </LinearGradientBrush>
+    <RadialGradientBrush x:Key="RibbonKit.Brushes.Backstage.ItemSelectedGlass"
+                         Center="0.43,0.78" GradientOrigin="0.43,0.78"
+                         RadiusX="0.78" RadiusY="1.05">
+        <GradientStop Offset="0" Color="#888888" />
+        <GradientStop Offset="0.45" Color="#707070" />
+        <GradientStop Offset="0.78" Color="#555555" />
+        <GradientStop Offset="1" Color="#444444" />
+    </RadialGradientBrush>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ContentBackground" Color="#F0F0F0" />
     <DropShadowEffect x:Key="RibbonKit.Effects.Backstage.ContentShadow"
                       BlurRadius="9" ShadowDepth="3" Direction="180"

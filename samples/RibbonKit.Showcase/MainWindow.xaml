@@ -773,7 +773,7 @@
                             Icon="{StaticResource Icon.Backstage}"
                             Click="OnSelectBackstageDesign"
                             ScreenTipTitle="Classic backstage (Office 2013)"
-                            ScreenTipText="Solid accent nav column with white text (flat selected fill)." />
+                            ScreenTipText="Solid accent nav column in light palettes, or matching neutral gray in dark/Black palettes." />
                         <rk:RibbonButton Header="2024 Rail"
                             Tag="Modern"
                             Size="Medium"
@@ -787,7 +787,7 @@
                             Icon="{StaticResource Icon.Backstage}"
                             Click="OnSelectBackstageDesign"
                             ScreenTipTitle="Office 2010 backstage"
-                            ScreenTipText="Blue accent nav with a glossy blue glass marker on the selected item and white text." />
+                            ScreenTipText="Light glass nav with a glossy selected marker; dark/Black palettes use matching grayscale glass." />
                     </StackPanel>
                 </rk:RibbonGroup>
                 <rk:RibbonGroup Header="Application" rk:Ribbon.CommandId="group.view.application" Icon="{StaticResource Icon.Gear}">

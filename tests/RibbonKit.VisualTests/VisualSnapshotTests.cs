@@ -160,6 +160,11 @@ public sealed class VisualSnapshotTests
                     1d,
                     FlowDirection.LeftToRight,
                     CreateApplicationMenuScene);
+                AssertSnapshot(
+                    "office2007-dark-backstage-shell-100",
+                    1d,
+                    FlowDirection.LeftToRight,
+                    CreateOffice2010BackstageShellScene);
 
                 ThemeManager.Apply(application, RibbonTheme.Office2010);
                 ThemeManager.SetDarkMode(application, true);
@@ -168,6 +173,19 @@ public sealed class VisualSnapshotTests
                     1d,
                     FlowDirection.LeftToRight,
                     CreateApplicationMenuScene);
+                AssertSnapshot(
+                    "office2010-dark-backstage-shell-100",
+                    1d,
+                    FlowDirection.LeftToRight,
+                    CreateOffice2010BackstageShellScene);
+
+                ThemeManager.Apply(application, RibbonTheme.Office2013);
+                ThemeManager.SetDarkMode(application, true);
+                AssertSnapshot(
+                    "office2013-dark-classic-backstage-100",
+                    1d,
+                    FlowDirection.LeftToRight,
+                    CreateClassicBackstageShellScene);
 
                 // Smallest deterministic RTL slice: isolate FlowDirection from localization and
                 // DPI variables while exercising the same real tokens/templates as the matrix.
@@ -537,6 +555,34 @@ public sealed class VisualSnapshotTests
         backstage.Items.Add(new BackstageTabItem { Header = "New" });
         backstage.SelectedIndex = 0;
 
+        root.Children.Add(backstage);
+        return root;
+    }
+
+    private static FrameworkElement CreateClassicBackstageShellScene(FlowDirection flowDirection)
+    {
+        var root = (Grid)CreateScene(flowDirection);
+        root.Children.Clear();
+
+        var backstage = new Backstage
+        {
+            Design = RibbonBackstageDesign.Classic,
+            UseLayoutRounding = true,
+            SnapsToDevicePixels = true,
+        };
+        backstage.Items.Add(new BackstageTabItem
+        {
+            Header = "Info",
+            Content = new TextBlock
+            {
+                Text = "Dark Gray Backstage",
+                FontSize = 24,
+                FontWeight = FontWeights.Light,
+            },
+        });
+        backstage.Items.Add(new BackstageTabItem { Header = "New" });
+        backstage.Items.Add(new BackstageTabItem { Header = "Open" });
+        backstage.SelectedIndex = 0;
         root.Children.Add(backstage);
         return root;
     }

@@ -198,6 +198,8 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.Border" Color="#8DA5C4" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemHoverBackground" Color="#2E6DB4" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemSelectedBackground" Color="#17457E" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Classic.NavBackground" Color="#1E5A9C" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemSelectedBorder" Color="#17578F" />
     <!-- Backstage nav column for the glass (Classic2010) design; the theme's own strip gradient,
          which is what this design used before the key existed. -->
     <LinearGradientBrush x:Key="RibbonKit.Brushes.Backstage.NavBackground" StartPoint="0,0" EndPoint="0,1">

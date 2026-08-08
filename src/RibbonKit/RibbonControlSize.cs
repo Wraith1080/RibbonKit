@@ -63,7 +63,8 @@ public enum RibbonBackstageDesign
 {
     /// <summary>
     /// The Office 2013–2019 look: a solid accent-colored navigation column with white
-    /// text and a white back arrow.
+    /// text and a white back arrow. Dark/Black palettes replace the accent slab with their
+    /// matching neutral gray.
     /// </summary>
     Classic,
 
@@ -74,9 +75,9 @@ public enum RibbonBackstageDesign
     Modern,
 
     /// <summary>
-    /// The glossy pre-2013 look: the same solid accent-colored navigation column as
-    /// <see cref="Classic"/> (white text), but the SELECTED item is drawn with a glossy
-    /// "glass" marker instead of a flat fill. Pairs with the Office 2010 <b>and</b> Office 2007
+    /// The glossy pre-2013 look: a light generation-specific rail with dark text and a glossy
+    /// selected-item marker. Its dark/Black counterpart keeps the glass profile in neutral
+    /// grayscale. Pairs with the Office 2010 <b>and</b> Office 2007
     /// themes — both are glass generations, and the marker picks up whichever gradient profile the
     /// active theme derives (2010 a smooth gel, 2007 a hard-crease glass), so one value serves both.
     /// </summary>

@@ -44,7 +44,7 @@
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
                         <Border x:Name="NavColumn" Grid.Column="0"
-                                Background="{DynamicResource RibbonKit.Brushes.Accent}">
+                                Background="{DynamicResource RibbonKit.Brushes.Backstage.Classic.NavBackground}">
                             <DockPanel LastChildFill="True">
                                 <Button x:Name="PART_BackButton"
                                         DockPanel.Dock="Top"
@@ -157,9 +157,9 @@
                                     Value="{DynamicResource RibbonKit.Effects.Backstage.ContentShadow}" />
                         </Trigger>
 
-                        <!-- Classic2010 (Office 2010): the nav column is the ribbon's blue
-                             GRADIENT (not a solid accent), with dark chrome text so the back
-                             arrow and separator read on the light band. Item text is dark and
+                        <!-- Classic2010 (Office 2010): the nav column is the generation's
+                             dedicated gradient (blue in light palettes, neutral in Black), with
+                             dark chrome text so the back arrow and separator read on the light band. Item text is dark and
                              turns white only when selected (BackstageTabItem triggers). -->
                         <Trigger Property="controls:Backstage.Design" Value="Classic2010">
                             <Setter Property="Foreground"
@@ -334,7 +334,7 @@
                                     Value="{DynamicResource RibbonKit.Brushes.Backstage.Modern.ItemSelectedTranslucent}" />
                         </MultiDataTrigger>
 
-                        <!-- Classic2010 (Office 2010): the nav is the ribbon's light-blue gradient,
+                        <!-- Classic2010 (Office 2010): the nav is a light generation-specific gradient,
                              so item text is DARK and turns white only when selected. -->
                         <Trigger Property="controls:Backstage.Design" Value="Classic2010">
                             <Setter TargetName="NavText" Property="TextElement.Foreground"
@@ -347,13 +347,13 @@
                                 <Condition Property="controls:Backstage.Design" Value="Classic2010" />
                                 <Condition SourceName="Chrome" Property="IsMouseOver" Value="True" />
                             </MultiTrigger.Conditions>
-                            <!-- Subtle light wash + hairline border on the blue nav (dark text stays legible). -->
+                            <!-- Subtle light wash + hairline border on the light nav (dark text stays legible). -->
                             <Setter TargetName="Chrome" Property="Background" Value="#40FFFFFF" />
                             <Setter TargetName="Chrome" Property="BorderBrush" Value="#66FFFFFF" />
                             <Setter TargetName="Chrome" Property="BorderThickness" Value="1" />
                         </MultiTrigger>
-                        <!-- SELECTED: a glossy blue "glass" box (accent-tracked gradient) with a
-                             border and white text. Placed last so it wins for this design. -->
+                        <!-- SELECTED: a glossy generation-specific "glass" box (accent-tracked in
+                             light palettes, neutral in Black) with a border and white text. -->
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
                                 <Condition Property="controls:Backstage.Design" Value="Classic2010" />
@@ -362,7 +362,7 @@
                             <Setter TargetName="Chrome" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Backstage.ItemSelectedGlass}" />
                             <Setter TargetName="Chrome" Property="BorderBrush"
-                                    Value="{DynamicResource RibbonKit.Brushes.ApplicationButton.Border}" />
+                                    Value="{DynamicResource RibbonKit.Brushes.Backstage.ItemSelectedBorder}" />
                             <Setter TargetName="Chrome" Property="BorderThickness" Value="1" />
                             <Setter TargetName="NavText" Property="TextElement.Foreground" Value="#FFFFFF" />
                             <Setter TargetName="NavIcon" Property="Fill" Value="#FFFFFF" />

@@ -3605,6 +3605,28 @@ ten-palette token parity, and initially empty/add-from-ribbon Showcase paths. Fo
 connected 2007/2010/2024 stacks, the mirrored 2024 stack, and the 2024 rectangular plus 2007 orb
 open-menu/message compositions. Current automated baseline: 182 logic tests and 56 approved images.
 
+### 3.66 Dark/Black Backstage rails use generation-matched neutrals â€” 2026-08-08
+
+The Classic (2013-style) Backstage rail previously bound its entire navigation column directly to
+`Accent`, so every dark generation retained a saturated blue slab even when the surrounding palette
+was neutral. The shared template now consumes `Backstage.Classic.NavBackground`. All light themes
+publish their established accent color and `ThemeManager.SetAccent` continues to derive it there;
+all dark/Black overlays publish a matching neutral surface instead. The dark Classic hover and
+selected-row brushes are neutral as well. Custom accents deliberately stop at the rail boundary in
+dark mode, while page headings, the File button, and other intended accent consumers remain colored.
+
+Office 2010/2007 Black had a separate gap: their overlays inherited the base generation's pale-blue
+`Backstage.NavBackground` and blue selected glass for the Classic2010 design. Both overlays now
+replace the rail, selected glass, and selected border with grayscale recipes. Office 2010 preserves
+its smooth two-stop rail and radial selection glow; Office 2007 preserves its four-stop hard crease.
+The blue glass back button remains the intentional accent affordance rather than part of the neutral
+navigation sheet.
+
+Nine focused logic cases pin shared-template routing, ten-palette token parity, strict grayscale
+colors, and the distinct 2010/2007 gradient profiles. Three reviewed approvals cover Office 2013
+Dark Gray Classic plus Office 2010/2007 Black Classic2010. Current automated baseline: 194 logic
+tests and 59 approved images; the full Showcase-height live check remains useful for final tuning.
+
 ## 4. Workflow / Session Conventions
 
 - Cloud workspace: `/home/user/ribbonkit/`. The user's machine:
@@ -3622,7 +3644,7 @@ open-menu/message compositions. Current automated baseline: 182 logic tests and 
 ## 5. Current State & Next Steps
 
 > **Status as of 2026-08-08: everything through §3.61 is implemented AND user-verified on Windows;
-> §§3.62, 3.64, and 3.65 are automated and await the focused live visual recheck.**
+> §§3.62 and 3.64–3.66 are automated and await the focused live visual recheck.**
 > The ten-point §3.40/§3.41 checklist that stood here has been walked and passed in full, and the
 > **2007 DPI matrix is clean at 100/125/150/175/200%** — which closes the last S6 exit criterion the
 > 2007 arc left open. §3.42's whole-surface flyout animation, reduced-motion behavior, and the
@@ -3841,20 +3863,20 @@ Possible post-v1 polish:
   honor reduced motion, handle rapid reversals, and stay disabled while a DWM backdrop is active so
   Mica/Acrylic retain their native material retint without a second cross-fade on top.
 
-**Unit tests: 185 green (verified 2026-08-08).** Coverage now includes the STA harness, the borrow
+**Unit tests: 194 green (verified 2026-08-08).** Coverage now includes the STA harness, the borrow
 protocol, overflow strip measure/arrange rules, popup motion and dismissal, proxy mirroring,
 application-menu layering/hover/footer-outline/KeyTips, repeatable message-bar API/template/theme
 contracts, Office 2010 seam/state/consumer contracts, localization/RTL
 context-menu, customization-template, chrome-tooltip, default-File, representative bidi-lab and
-live Backstage/title-transition contracts, design-preview runtime isolation and scoped theme-token
-replacement, and the existing
+live Backstage/title-transition contracts, design-preview runtime isolation, scoped theme-token
+replacement, dark/Black neutral Backstage rail contracts, and the existing
 reduction/size-definition/theme-scope tests.
 `RibbonMergeModalTests` adds the Phase 7 automated invariants: merge ordering across later
 permutations, merge/unmerge round-trips, group restore with two sources in one tab, capture while
 modal, modal enter/exit selection and cancellation, forced exit when a merged modal tab leaves,
 customization rebuild/remerge, and declarative activation. The broader coverage gaps listed above remain.
 
-**Visual tests: 1 green locally (2026-08-08), covering all 56 approved images.** The §§3.48–3.49 matrix
+**Visual tests: 1 green locally (2026-08-08), covering all 59 approved images.** The §§3.48–3.49 matrix
 spans five light themes plus five dark/black variants × 100/125/150/200%, followed by the §3.51 ribbon
 RTL smoke, §3.53 QAT-customization RTL scene, §3.58 representative bidirectional Backstage scene,
 and the focused §3.27 Office 2010 button-state/Backstage-shell, §3.65 connected/RTL message-bar

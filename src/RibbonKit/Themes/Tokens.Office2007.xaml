@@ -234,6 +234,8 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.Border" Color="#8DB2E3" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemHoverBackground" Color="#2E6DB4" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemSelectedBackground" Color="#17457E" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Classic.NavBackground" Color="#1E5A9C" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemSelectedBorder" Color="#17578F" />
     <!-- Backstage nav column for the glass (Classic2010) design. NOT Ribbon.Background: 2007's tab
          strip is deliberately a FLAT solid, and reusing it left the nav a flat blue slab. The nav
          wants the gradient the strip does not have. -->

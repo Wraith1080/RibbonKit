@@ -98,6 +98,27 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.InactiveBorder" Color="#555555" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.MdiClient.Background" Color="#303030" />
 
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemHoverBackground" Color="#737373" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemSelectedBackground" Color="#505050" />
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Backstage.Classic.NavBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#666666" />
+        <GradientStop Offset="0.45" Color="#555555" />
+        <GradientStop Offset="0.45" Color="#444444" />
+        <GradientStop Offset="1" Color="#5B5B5B" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemSelectedBorder" Color="#414141" />
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Backstage.NavBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#E4E4E4" />
+        <GradientStop Offset="0.45" Color="#CCCCCC" />
+        <GradientStop Offset="0.45" Color="#B8B8B8" />
+        <GradientStop Offset="1" Color="#D2D2D2" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Backstage.ItemSelectedGlass" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#898989" />
+        <GradientStop Offset="0.45" Color="#707070" />
+        <GradientStop Offset="0.45" Color="#505050" />
+        <GradientStop Offset="1" Color="#707070" />
+    </LinearGradientBrush>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ContentBackground" Color="#EEEEEE" />
     <DropShadowEffect x:Key="RibbonKit.Effects.Backstage.ContentShadow"
                       BlurRadius="9" ShadowDepth="3" Direction="180"
