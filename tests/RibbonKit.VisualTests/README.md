@@ -39,4 +39,6 @@ Remove-Item Env:RIBBONKIT_UPDATE_SNAPSHOTS
 ```
 
 On a mismatch, the test writes the actual image and a magnified difference image beneath
-`TestResults/visual`; that directory is already ignored by Git.
+`TestResults/visual`; that directory is already ignored by Git. GitHub Actions uploads those PNGs
+as the failure-only `visual-snapshot-diagnostics` run artifact, so cross-machine differences can be
+reviewed before changing an approval or comparison threshold.

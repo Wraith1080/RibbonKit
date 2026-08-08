@@ -3378,6 +3378,37 @@ settled `RenderTargetBitmap` approval harness. The supplied captures are verific
 a new snapshot format or storage policy. With the deterministic 40-image theme/DPI matrix, seven
 focused approvals, 168 logic tests, and this live pass all green, **Roadmap Phase 6 is complete**.
 
+### 3.62 Flat-theme application-menu footer buttons retain their outline — 2026-08-08
+
+A live hover recording exposed a post-close visual regression in `RibbonApplicationMenuButton`.
+The footer buttons have a deliberate one-DIP application-menu outline at rest, but their hover and
+pressed triggers replaced that brush with the generic control-state border. Office 2013, 2019, and
+2024 intentionally make the generic border transparent, so the outline disappeared on hover and the
+visible face looked two DIPs smaller even though WPF layout never changed.
+
+The shared template now keeps a non-interactive `PersistentOutline` beneath the transient `Chrome`.
+Flat themes therefore retain the same measured footprint while their existing fill changes; the
+opaque 2007/2010 hover and pressed borders still paint over that base outline, preserving their
+classic highlighted states. No new tokens or theme-specific template branches were needed. One
+template contract pins the permanent application-menu brush/thickness/corner geometry, prevents
+state triggers from mutating it, and retains the existing theme-specific Chrome state brushes.
+Current baseline: 169 logic tests and 47 approved images; manual hover recheck is pending.
+
+### 3.63 Failure-only CI artifacts for cross-machine snapshot diagnosis — 2026-08-08
+
+The first GitHub-hosted cross-machine run stopped on `office2007-default-100`, the first scene in the
+matrix, with 1,510 significant pixels and a 0.4030 mean channel difference. The triggering commit was
+documentation-only, so this is not evidence for reapproving that scene; because the test stops at the
+first mismatch, it also does not establish that Office 2007 alone differs. The harness wrote useful
+actual/diff PNGs under `TestResults/visual`, but the workflow uploaded only successful NuGet output,
+so both diagnostics disappeared with the runner.
+
+With explicit user approval, CI now uploads `TestResults/visual/*.png` as the failure-only
+`visual-snapshot-diagnostics` artifact. Missing files are ignored, successful runs upload nothing,
+and repository-default artifact retention applies. The committed PNG format/location, explicit
+regeneration opt-in, comparison thresholds, and `windows-latest` runner remain unchanged. The next
+run's actual/diff pair must be reviewed before choosing any portability correction.
+
 ## 4. Workflow / Session Conventions
 
 - Cloud workspace: `/home/user/ribbonkit/`. The user's machine:
@@ -3394,7 +3425,8 @@ focused approvals, 168 logic tests, and this live pass all green, **Roadmap Phas
 
 ## 5. Current State & Next Steps
 
-> **Status as of 2026-08-08: everything through §3.61 is implemented AND user-verified on Windows.**
+> **Status as of 2026-08-08: everything through §3.61 is implemented AND user-verified on Windows;
+> §3.62's footer-button hover correction is automated and awaits the focused visual recheck.**
 > The ten-point §3.40/§3.41 checklist that stood here has been walked and passed in full, and the
 > **2007 DPI matrix is clean at 100/125/150/175/200%** — which closes the last S6 exit criterion the
 > 2007 arc left open. §3.42's whole-surface flyout animation, reduced-motion behavior, and the
@@ -3614,9 +3646,9 @@ Possible post-v1 polish:
   honor reduced motion, handle rapid reversals, and stay disabled while a DWM backdrop is active so
   Mica/Acrylic retain their native material retint without a second cross-fade on top.
 
-**Unit tests: 168 green (verified 2026-08-08).** Coverage now includes the STA harness, the borrow
+**Unit tests: 169 green (verified 2026-08-08).** Coverage now includes the STA harness, the borrow
 protocol, overflow strip measure/arrange rules, popup motion and dismissal, proxy mirroring,
-application-menu layering/hover/KeyTips, Office 2010 seam/state/consumer contracts, localization/RTL
+application-menu layering/hover/footer-outline/KeyTips, Office 2010 seam/state/consumer contracts, localization/RTL
 context-menu, customization-template, chrome-tooltip, default-File, representative bidi-lab and
 live Backstage/title-transition contracts, and the existing reduction/size-definition/theme-scope tests.
 `RibbonMergeModalTests` adds the Phase 7 automated invariants: merge ordering across later

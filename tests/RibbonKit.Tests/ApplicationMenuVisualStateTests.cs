@@ -131,6 +131,49 @@ public class ApplicationMenuVisualStateTests
         }
     }
 
+    [Fact]
+    public void Footer_button_keeps_its_application_menu_outline_during_transient_states()
+    {
+        XElement template = FooterButtonTemplate();
+        XElement persistentOutline = Assert.Single(
+            template.Descendants(Presentation + "Border"),
+            border => (string?)border.Attribute(Xaml + "Name") == "PersistentOutline");
+
+        Assert.Equal(
+            "{DynamicResource RibbonKit.Brushes.ApplicationMenu.ButtonBorder}",
+            (string?)persistentOutline.Attribute("BorderBrush"));
+        Assert.Equal("1", (string?)persistentOutline.Attribute("BorderThickness"));
+
+        XElement chrome = Assert.Single(
+            template.Descendants(Presentation + "Border"),
+            border => (string?)border.Attribute(Xaml + "Name") == "Chrome");
+        Assert.Equal(
+            (string?)chrome.Attribute("CornerRadius"),
+            (string?)persistentOutline.Attribute("CornerRadius"));
+
+        Assert.DoesNotContain(
+            template.Descendants(Presentation + "Setter"),
+            setter => (string?)setter.Attribute("TargetName") == "PersistentOutline");
+        Assert.Contains(
+            template.Descendants(Presentation + "Trigger"),
+            trigger =>
+                (string?)trigger.Attribute("Property") == "IsMouseOver"
+                && SetsResource(
+                    trigger,
+                    "Chrome",
+                    "BorderBrush",
+                    "RibbonKit.Brushes.Control.HoverBorder"));
+        Assert.Contains(
+            template.Descendants(Presentation + "Trigger"),
+            trigger =>
+                (string?)trigger.Attribute("Property") == "IsPressed"
+                && SetsResource(
+                    trigger,
+                    "Chrome",
+                    "BorderBrush",
+                    "RibbonKit.Brushes.Control.PressedBorder"));
+    }
+
     private static bool HasCondition(
         XElement trigger,
         string? sourceName,
@@ -167,6 +210,14 @@ public class ApplicationMenuVisualStateTests
         return Assert.Single(
             document.Descendants(Presentation + "ControlTemplate"),
             template => ((string?)template.Attribute("TargetType"))?.Contains("RibbonApplicationMenuItem") == true);
+    }
+
+    private static XElement FooterButtonTemplate()
+    {
+        var document = XDocument.Load(ApplicationMenuTemplatePath());
+        return Assert.Single(
+            document.Descendants(Presentation + "ControlTemplate"),
+            template => ((string?)template.Attribute("TargetType"))?.Contains("RibbonApplicationMenuButton") == true);
     }
 
     private static string ApplicationMenuTemplatePath() =>

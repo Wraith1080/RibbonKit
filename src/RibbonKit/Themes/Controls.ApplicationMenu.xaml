@@ -368,24 +368,32 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type controls:RibbonApplicationMenuButton}">
-                    <Border x:Name="Chrome"
-                            Background="{DynamicResource RibbonKit.Brushes.ApplicationMenu.ButtonBackground}"
-                            BorderBrush="{DynamicResource RibbonKit.Brushes.ApplicationMenu.ButtonBorder}"
-                            BorderThickness="1"
-                            CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
-                            Padding="{TemplateBinding Padding}"
-                            SnapsToDevicePixels="True">
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                            <Image x:Name="Glyph"
-                                   Source="{TemplateBinding Icon}"
-                                   Width="16"
-                                   Height="16"
-                                   Stretch="Uniform"
-                                   VerticalAlignment="Center"
-                                   Margin="0,0,6,0" />
-                            <ContentPresenter VerticalAlignment="Center" />
-                        </StackPanel>
-                    </Border>
+                    <Grid SnapsToDevicePixels="True">
+                        <!-- Dialog-style footer buttons keep their resting outline through every
+                             state. Flat-theme generic hover/pressed borders are transparent; using
+                             only Chrome made that outer pixel disappear and looked like a resize. -->
+                        <Border x:Name="PersistentOutline"
+                                BorderBrush="{DynamicResource RibbonKit.Brushes.ApplicationMenu.ButtonBorder}"
+                                BorderThickness="1"
+                                CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}" />
+                        <Border x:Name="Chrome"
+                                Background="{DynamicResource RibbonKit.Brushes.ApplicationMenu.ButtonBackground}"
+                                BorderBrush="{DynamicResource RibbonKit.Brushes.ApplicationMenu.ButtonBorder}"
+                                BorderThickness="1"
+                                CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                Padding="{TemplateBinding Padding}">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <Image x:Name="Glyph"
+                                       Source="{TemplateBinding Icon}"
+                                       Width="16"
+                                       Height="16"
+                                       Stretch="Uniform"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,6,0" />
+                                <ContentPresenter VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="Icon" Value="{x:Null}">
                             <Setter TargetName="Glyph" Property="Visibility" Value="Collapsed" />

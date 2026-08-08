@@ -29,6 +29,14 @@ jobs:
       - name: Test
         run: dotnet test RibbonKit.sln --no-build --configuration Release --verbosity normal
 
+      - name: Upload visual snapshot diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-snapshot-diagnostics
+          path: TestResults/visual/*.png
+          if-no-files-found: ignore
+
       - name: Pack
         run: dotnet pack src/RibbonKit/RibbonKit.csproj --no-build --configuration Release --output artifacts
 
