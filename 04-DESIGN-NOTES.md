@@ -3359,6 +3359,25 @@ cleanup, representative bidirectional menu content, and the LTR filename boundar
 168 logic tests and 47 approved images. No snapshot format, storage, or CI-policy change was needed;
 the broader live RTL popup/window pass remains.
 
+### 3.61 Live RTL popup/window verification closes Phase 6 — 2026-08-08
+
+The user completed the remaining separate-HWND/manual pass in the Localization/RTL lab. Under RTL,
+the primary split-button menu opens and aligns correctly; a nested submenu inside the QAT overflow
+opens toward the available logical side; the QAT/context menu mirrors its item layout and directional
+chevron; and both normal and maximized windows fit the left and right screen edges without losing the
+physical frame or caption controls. The edge result reconfirms the physical-frame/logical-content
+isolation introduced in §3.53 rather than introducing a second window fix.
+
+The same pass verified the two-pane application menu and application button under Office 2024 and
+Office 2007: the modern File button/menu pair mirrors correctly, while the 2007 orb remains above its
+menu frame and both surfaces preserve the representative Arabic/Latin and explicitly LTR filename
+content from §3.60. The §3.59 Backstage rail, slide, and title transition also remain clean.
+
+These were live visual checks because WPF `Popup` content owns a separate HWND and is outside the
+settled `RenderTargetBitmap` approval harness. The supplied captures are verification evidence, not
+a new snapshot format or storage policy. With the deterministic 40-image theme/DPI matrix, seven
+focused approvals, 168 logic tests, and this live pass all green, **Roadmap Phase 6 is complete**.
+
 ## 4. Workflow / Session Conventions
 
 - Cloud workspace: `/home/user/ribbonkit/`. The user's machine:
@@ -3375,26 +3394,27 @@ the broader live RTL popup/window pass remains.
 
 ## 5. Current State & Next Steps
 
-> **Status as of 2026-08-01: everything through §3.46 is implemented AND user-verified on Windows.**
+> **Status as of 2026-08-08: everything through §3.61 is implemented AND user-verified on Windows.**
 > The ten-point §3.40/§3.41 checklist that stood here has been walked and passed in full, and the
 > **2007 DPI matrix is clean at 100/125/150/175/200%** — which closes the last S6 exit criterion the
 > 2007 arc left open. §3.42's whole-surface flyout animation, reduced-motion behavior, and the
 > DPI-awareness manifest have now also passed their Windows verification.
 >
-> Roadmap Phases 1–5 and 7 are complete. **Phase 6 now also has the Office 2007 theme (§3.38)**, so
-> all five generations ship with dark/black variants in §3.49, and the complete 40-image
-> theme/variant/DPI matrix plus seven focused scenes are covered by 47 approvals. Phase 6 still owes
-> the remaining live RTL popup/window verification; the representative bidirectional-content and
-> chrome-localization passes are complete.
+> Roadmap Phases 0–7 are complete. **Phase 6 closed in §3.61**: all five generations ship with
+> dark/black variants in §3.49, and the complete 40-image
+> theme/variant/DPI matrix plus seven focused scenes are covered by 47 approvals; localization,
+> representative bidirectional content, and the live RTL popup/window pass are complete.
 > Phase 8 (API freeze,
 > docs site, perf, launch) is untouched. Of the two items
 > deferred out of §3.38, the two-pane 2007 application menu shipped in §3.46; only the 2007 window
 > frame is still owed.
 
-**Manual verification complete through §3.46 (Windows 2026-08-01).** The whole-surface flyout and
-No Motion pass (§3.42), complete split-button matrix including the Visual Studio Ribbon Editor
-gate/reset/single-Undo behavior (§3.43), proxy enabled-state propagation (§3.45), and complete
-application-menu theme/DPI matrix (§3.46) all pass. §3.44 is covered by automated tests.
+**Manual verification complete through §3.61 (Windows 2026-08-08).** The earlier whole-surface
+flyout and No Motion pass (§3.42), complete split-button matrix including the Visual Studio Ribbon
+Editor gate/reset/single-Undo behavior (§3.43), proxy enabled-state propagation (§3.45), and complete
+application-menu theme/DPI matrix (§3.46) all pass; §§3.51–3.61 add the completed localization/RTL,
+bidirectional-content, Backstage/title, popup/window-edge, and application-menu/orb pass. §3.44 is
+covered by automated tests.
 
 A. **A vertical split button** (the showcase's Paste): icon on top, ONE line of caption with an
    ellipsis if it is long, chevron beneath it. Narrow the window until the group reduces — it must
@@ -3566,11 +3586,12 @@ Backlog (rough priority):
    FRAME (glass caption + orb overhang). The other deferral, the real two-pane APPLICATION MENU,
    **shipped 2026-07-28 (§3.46)**. (The 2007 DPI matrix pass is DONE — clean at
    100/125/150/175/200%.)
-3. Full RTL verification + localization resources — the remaining work in roadmap Phase 6. The
+3. **Full RTL verification + localization resources — DONE (§§3.51–3.61).** The
    §§3.48–3.49 visual-regression matrix is complete, §3.51 adds the first RTL smoke snapshot, and
    §§3.52–3.55 localize/mirror ribbon-owned context menus, Customize/Options, chrome tooltips and the
    default File label. §3.58 completes the representative bidirectional-text Backstage pass and
-   §3.59 fixes its live adorner/title transition; broader live popup/window verification remains.
+   §3.59 fixes its live adorner/title transition; §3.61 records the green live popup/window,
+   screen-edge, and 2024/2007 application-menu/orb verification.
 4. **The remaining unit tests** — broader customization serializer round-trips, KeyTip resolution,
    and reduction-algorithm gaps. The Phase 7 merge/modal invariants are now DONE: 13 tests cover
    stable ordering, repeated merge/unmerge, two-source group restoration, modal transitions and
@@ -3593,7 +3614,7 @@ Possible post-v1 polish:
   honor reduced motion, handle rapid reversals, and stay disabled while a DWM backdrop is active so
   Mica/Acrylic retain their native material retint without a second cross-fade on top.
 
-**Unit tests: 167 green (verified 2026-08-08).** Coverage now includes the STA harness, the borrow
+**Unit tests: 168 green (verified 2026-08-08).** Coverage now includes the STA harness, the borrow
 protocol, overflow strip measure/arrange rules, popup motion and dismissal, proxy mirroring,
 application-menu layering/hover/KeyTips, Office 2010 seam/state/consumer contracts, localization/RTL
 context-menu, customization-template, chrome-tooltip, default-File, representative bidi-lab and
