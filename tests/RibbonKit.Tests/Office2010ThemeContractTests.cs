@@ -1,7 +1,10 @@
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Windows.Media;
 using System.Xml.Linq;
+using RibbonKit.Theming;
 using Xunit;
 
 namespace RibbonKit.Tests;
@@ -219,6 +222,28 @@ public sealed class Office2010ThemeContractTests
     }
 
     [Fact]
+    public void Modern_backstage_content_uses_the_same_theme_scoped_shadow_hook()
+    {
+        XDocument document = XDocument.Load(ThemePart("Controls.Backstage.xaml"));
+        XElement contentArea = Assert.Single(
+            document.Descendants(Presentation + "Border"),
+            element => (string?)element.Attribute(Xaml + "Name") == "ContentArea");
+        XElement backstageTemplate = Assert.Single(contentArea.Ancestors(Presentation + "ControlTemplate"));
+        XElement modernTrigger = Assert.Single(
+            backstageTemplate.Descendants(Presentation + "Trigger"),
+            trigger => (string?)trigger.Attribute("Property") == "controls:Backstage.Design"
+                && (string?)trigger.Attribute("Value") == "Modern");
+
+        Assert.Contains(
+            modernTrigger.Elements(Presentation + "Setter"),
+            setter => (string?)setter.Attribute("TargetName") == "ContentArea"
+                && (string?)setter.Attribute("Property") == "Effect"
+                && setter.Attribute("Value")!.Value.Contains(
+                    "RibbonKit.Effects.Backstage.ContentShadow",
+                    StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void Every_theme_defines_the_backstage_content_drop_shadow_token()
     {
         string[] themeFiles =
@@ -240,10 +265,73 @@ public sealed class Office2010ThemeContractTests
             XDocument document = XDocument.Load(ThemePart(themeFile));
             XElement effect = Resource(document, "RibbonKit.Effects.Backstage.ContentShadow");
             Assert.Equal(Presentation + "DropShadowEffect", effect.Name);
-            Assert.Equal(
-                themeFile.StartsWith("Tokens.Office2010", StringComparison.Ordinal) ? "0.24" : "0",
-                (string?)effect.Attribute("Opacity"));
+            string expectedOpacity = themeFile switch
+            {
+                "Tokens.Office2007.xaml" or "Tokens.Office2007.Dark.xaml" => "0.24",
+                "Tokens.Office2010.xaml" or "Tokens.Office2010.Dark.xaml" => "0.24",
+                "Tokens.Office2024.xaml" => "0.12",
+                "Tokens.Office2024.Dark.xaml" => "0.14",
+                _ => "0",
+            };
+            Assert.Equal(expectedOpacity, (string?)effect.Attribute("Opacity"));
         }
+    }
+
+    [Fact]
+    public void Compact_button_templates_do_not_draw_persistent_idle_outlines()
+    {
+        XDocument buttons = XDocument.Load(ThemePart("Controls.Buttons.xaml"));
+        XDocument dropDowns = XDocument.Load(ThemePart("Controls.DropDowns.xaml"));
+        Assert.DoesNotContain(
+            buttons.Descendants().Concat(dropDowns.Descendants()).Attributes(),
+            attribute => attribute.Value.Contains("IdleOutline", StringComparison.Ordinal)
+                || attribute.Value.Contains("RibbonKit.Brushes.Control.IdleBorder", StringComparison.Ordinal));
+
+        string[] themeFiles =
+        [
+            "Tokens.Office2007.xaml",
+            "Tokens.Office2007.Dark.xaml",
+            "Tokens.Office2010.xaml",
+            "Tokens.Office2010.Dark.xaml",
+            "Tokens.Office2013.xaml",
+            "Tokens.Office2013.Dark.xaml",
+            "Tokens.Office2019.xaml",
+            "Tokens.Office2019.Dark.xaml",
+            "Tokens.Office2024.xaml",
+            "Tokens.Office2024.Dark.xaml",
+        ];
+
+        foreach (string themeFile in themeFiles)
+        {
+            XDocument theme = XDocument.Load(ThemePart(themeFile));
+            Assert.DoesNotContain(
+                theme.Root!.Elements(),
+                element => (string?)element.Attribute(Xaml + "Key")
+                    == "RibbonKit.Brushes.Control.IdleBorder");
+        }
+    }
+
+    [Fact]
+    public void Colored_Office2010_title_bar_uses_smooth_glass_without_a_dark_lower_half()
+    {
+        MethodInfo captionGlass = typeof(ThemeManager).GetMethod(
+            "CaptionGlass",
+            BindingFlags.NonPublic | BindingFlags.Static)!;
+        Color accent = Color.FromRgb(0x2B, 0x57, 0x9A);
+        var brush = Assert.IsType<LinearGradientBrush>(captionGlass.Invoke(null, [accent]));
+
+        Assert.Equal(5, brush.GradientStops.Count);
+        Assert.Equal(accent, brush.GradientStops[2].Color);
+        Assert.True(
+            brush.GradientStops.Select(stop => stop.Offset).SequenceEqual(
+                brush.GradientStops.Select(stop => stop.Offset).OrderBy(offset => offset).Distinct()));
+        double baseLuminance = Luminance(accent);
+        Assert.All(
+            brush.GradientStops,
+            stop => Assert.True(
+                Luminance(stop.Color) >= baseLuminance,
+                $"The colored title glass darkened below the accent at offset {stop.Offset}."));
+        Assert.True(Luminance(brush.GradientStops[^1].Color) > baseLuminance);
     }
 
     [Theory]
@@ -289,6 +377,9 @@ public sealed class Office2010ThemeContractTests
         byte blue = byte.Parse(value.AsSpan(start + 4, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture);
         return (0.2126d * red) + (0.7152d * green) + (0.0722d * blue);
     }
+
+    private static double Luminance(Color color) =>
+        (0.2126d * color.R) + (0.7152d * color.G) + (0.0722d * color.B);
 
     private static string ThemePart(string name) =>
         Path.Combine(RepositoryRoot(), "src", "RibbonKit", "Themes", name);

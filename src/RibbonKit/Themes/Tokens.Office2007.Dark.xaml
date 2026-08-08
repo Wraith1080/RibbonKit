@@ -100,7 +100,8 @@
 
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ContentBackground" Color="#EEEEEE" />
     <DropShadowEffect x:Key="RibbonKit.Effects.Backstage.ContentShadow"
-                      Opacity="0" BlurRadius="0" ShadowDepth="0" />
+                      BlurRadius="9" ShadowDepth="3" Direction="180"
+                      Opacity="0.24" Color="#000000" RenderingBias="Performance" />
     <!-- The application menu is fully dark even though Office 2007 Black intentionally keeps
          the ribbon command surface silver. Scoped foreground tokens avoid changing that hybrid. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.Foreground" Color="#F2F2F2" />
@@ -136,4 +137,19 @@
     </LinearGradientBrush>
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.ButtonBorder" Color="#7A7A7A" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.InnerGlow" Color="Transparent" />
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.MessageBar.Background" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#FFF0BC" />
+        <GradientStop Offset="0.45" Color="#F1D886" />
+        <GradientStop Offset="0.46" Color="#DCBC5B" />
+        <GradientStop Offset="1" Color="#EBCF7C" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MessageBar.Border" Color="#B89535" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MessageBar.Foreground" Color="#202020" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MessageBar.IconForeground" Color="#245A8D" />
+    <Thickness x:Key="RibbonKit.Metrics.QatExtenderMarginMessageBar">2,0,2,0</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.QatExtenderCornerRadiusMessageBar">0</CornerRadius>
+    <Thickness x:Key="RibbonKit.Metrics.MessageBar.Margin">2,0,2,0</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.MessageBar.LastCornerRadius">0,0,3,3</CornerRadius>
+    <Thickness x:Key="RibbonKit.Metrics.MessageBar.BorderThickness">1,0,1,1</Thickness>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MessageBar.CloseHoverBorder" Color="#8F6D28" />
 </ResourceDictionary>

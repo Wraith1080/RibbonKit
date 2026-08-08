@@ -145,6 +145,21 @@ public partial class MainWindow : RibbonWindow
         }
     }
 
+    private void OnAddMessage(object sender, RoutedEventArgs e)
+    {
+        RibbonMessage? nextMessage = new[] { ProtectedViewMessage, SecurityNoticeMessage }
+            .FirstOrDefault(message => !message.IsOpen);
+
+        if (nextMessage is null)
+        {
+            StatusReady.Content = "All sample messages are already visible";
+            return;
+        }
+
+        nextMessage.IsOpen = true;
+        StatusReady.Content = $"Message added: {nextMessage.Title}";
+    }
+
     private void OnApplyOffice2024(object sender, RoutedEventArgs e) => ApplyTheme(RibbonTheme.Office2024);
 
     private void OnApplyOffice2019(object sender, RoutedEventArgs e) => ApplyTheme(RibbonTheme.Office2019);
@@ -719,6 +734,26 @@ public partial class MainWindow : RibbonWindow
         {
             PictureFormatTab.Visibility = Visibility.Visible;
         }
+    }
+
+    private void OnEnableEditingMessage(object sender, RoutedEventArgs e)
+    {
+        if (sender is RibbonMessage message)
+        {
+            message.Dismiss();
+        }
+
+        StatusReady.Content = "Editing enabled";
+    }
+
+    private void OnReviewSecurityMessage(object sender, RoutedEventArgs e)
+    {
+        if (sender is RibbonMessage message)
+        {
+            message.Dismiss();
+        }
+
+        StatusReady.Content = "Security settings reviewed";
     }
 
     private void OnPictureDeselected(object sender, RoutedEventArgs e)

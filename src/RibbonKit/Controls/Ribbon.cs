@@ -25,6 +25,9 @@ namespace RibbonKit.Controls;
 /// </code>
 /// </summary>
 [ContentProperty(nameof(Tabs))]
+[TemplatePart(Name = ApplicationMenuOverlayLayerPartName, Type = typeof(Canvas))]
+[TemplatePart(Name = ApplicationMenuOverlayPresenterPartName, Type = typeof(ContentPresenter))]
+[TemplatePart(Name = ApplicationButtonOverlayPartName, Type = typeof(Border))]
 public class Ribbon : Control
 {
     private static readonly DependencyPropertyKey TabsPropertyKey =
@@ -104,6 +107,25 @@ public class Ribbon : Control
             typeof(Ribbon),
             new FrameworkPropertyMetadata(null, OnApplicationMenuChanged));
 
+    /// <summary>Identifies the <see cref="MessageBar"/> dependency property.</summary>
+    public static readonly DependencyProperty MessageBarProperty =
+        DependencyProperty.Register(
+            nameof(MessageBar),
+            typeof(RibbonMessageBar),
+            typeof(Ribbon),
+            new FrameworkPropertyMetadata(null, OnMessageBarChanged));
+
+    private static readonly DependencyPropertyKey HasOpenMessagesPropertyKey =
+        DependencyProperty.RegisterReadOnly(
+            nameof(HasOpenMessages),
+            typeof(bool),
+            typeof(Ribbon),
+            new FrameworkPropertyMetadata(false));
+
+    /// <summary>Identifies the read-only <see cref="HasOpenMessages"/> dependency property.</summary>
+    public static readonly DependencyProperty HasOpenMessagesProperty =
+        HasOpenMessagesPropertyKey.DependencyProperty;
+
     private static readonly DependencyPropertyKey IsApplicationMenuOpenPropertyKey =
         DependencyProperty.RegisterReadOnly(
             nameof(IsApplicationMenuOpen),
@@ -125,6 +147,17 @@ public class Ribbon : Control
             typeof(int),
             typeof(Ribbon),
             new FrameworkPropertyMetadata(-1, OnDesignPreviewFileSurfaceChanged));
+
+    /// <summary>
+    /// Identifies the design-tool-only <see cref="DesignPreviewTheme"/> dependency property.
+    /// </summary>
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public static readonly DependencyProperty DesignPreviewThemeProperty =
+        DependencyProperty.Register(
+            nameof(DesignPreviewTheme),
+            typeof(int),
+            typeof(Ribbon),
+            new FrameworkPropertyMetadata(-1, OnDesignPreviewThemeChanged));
 
     /// <summary>Identifies the <see cref="ApplicationButtonHeader"/> dependency property.</summary>
     public static readonly DependencyProperty ApplicationButtonHeaderProperty =
@@ -153,7 +186,9 @@ public class Ribbon : Control
             nameof(ApplicationButtonShape),
             typeof(RibbonApplicationButtonShape),
             typeof(Ribbon),
-            new FrameworkPropertyMetadata(RibbonApplicationButtonShape.Tab));
+            new FrameworkPropertyMetadata(
+                RibbonApplicationButtonShape.Tab,
+                OnApplicationButtonShapeChanged));
 
     /// <summary>
     /// Attached flag the ribbon sets on a QAT button while it sits on a colored surface
@@ -200,6 +235,12 @@ public class Ribbon : Control
     // it just closed. Matching by NAME rather than by a cached reference is deliberate: the button
     // lives in the NESTED tab control's template, which Ribbon.GetTemplateChild cannot reach.
     internal const string ApplicationButtonPartName = "PART_ApplicationButton";
+    internal const string ApplicationMenuOverlayLayerPartName = "ApplicationMenuOverlayLayer";
+    internal const string ApplicationMenuOverlayPresenterPartName = "PART_ApplicationMenuOverlayPresenter";
+    internal const string ApplicationButtonOverlayPartName = "PART_ApplicationButtonOverlay";
+
+    private const string ApplicationMenuAnchorBelowButtonResourceKey =
+        "RibbonKit.Behaviors.ApplicationMenuAnchorBelowButton";
 
     /// <summary>Identifies the <see cref="SelectedTab"/> dependency property.</summary>
     public static readonly DependencyProperty SelectedTabProperty =
@@ -284,6 +325,7 @@ public class Ribbon : Control
         UpdateEffectiveApplicationButtonHeader();
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
+        LayoutUpdated += OnLayoutUpdated;
     }
 
     /// <summary>The tabs hosted by this ribbon.</summary>
@@ -1369,6 +1411,23 @@ public class Ribbon : Control
     }
 
     /// <summary>
+    /// Gets or sets the repeatable notification surface connected directly below the ribbon
+    /// chrome. Hosting a <see cref="RibbonMessageBar"/> here lets the active theme join the
+    /// preceding ribbon/QAT surface to its first open message without a rounded gap or shadow.
+    /// </summary>
+    public RibbonMessageBar? MessageBar
+    {
+        get => (RibbonMessageBar?)GetValue(MessageBarProperty);
+        set => SetValue(MessageBarProperty, value);
+    }
+
+    /// <summary>
+    /// Gets whether <see cref="MessageBar"/> currently contains at least one open message.
+    /// Shared templates use this direct discriminator to join or release their lower chrome.
+    /// </summary>
+    public bool HasOpenMessages => (bool)GetValue(HasOpenMessagesProperty);
+
+    /// <summary>
     /// Gets or sets the transient File-surface preview requested by RibbonKit's XAML design tools.
     /// Values are -1 for no override, 0 for closed, 1 for Backstage, and 2 for application menu.
     /// Runtime instances ignore this property.
@@ -1380,6 +1439,20 @@ public class Ribbon : Control
     {
         get => (int)GetValue(DesignPreviewFileSurfaceProperty);
         set => SetValue(DesignPreviewFileSurfaceProperty, value);
+    }
+
+    /// <summary>
+    /// Gets or sets the design-tool-only theme generation. <c>-1</c> inherits the project's
+    /// resources; non-negative values map to <see cref="Theming.RibbonTheme"/>. Runtime instances
+    /// ignore this property.
+    /// </summary>
+    [Browsable(false)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public int DesignPreviewTheme
+    {
+        get => (int)GetValue(DesignPreviewThemeProperty);
+        set => SetValue(DesignPreviewThemeProperty, value);
     }
 
     /// <summary>
@@ -1411,6 +1484,15 @@ public class Ribbon : Control
         DependencyObject d,
         DependencyPropertyChangedEventArgs e) =>
         ((Ribbon)d).UpdateEffectiveApplicationButtonHeader();
+
+    private static void OnApplicationButtonShapeChanged(
+        DependencyObject d,
+        DependencyPropertyChangedEventArgs e)
+    {
+        var ribbon = (Ribbon)d;
+        ribbon.UpdateApplicationMenuHost();
+        ribbon.UpdateApplicationMenuOverlayPlacement();
+    }
 
     private void OnLocalizationBindingSourceChanged(
         object? sender,
@@ -1468,6 +1550,7 @@ public class Ribbon : Control
     // Design-time-only host for the backstage preview (see UpdateDesignTimeBackstage). The
     // runtime adorner path needs a real Window the XAML designer doesn't provide.
     private Border? _designBackstageHost;
+    private ResourceDictionary? _designPreviewThemeDictionary;
 
     // Guards the SelectedTab <-> SelectedIndex mirroring so setting one to reflect the other
     // never bounces back and re-enters.
@@ -1515,6 +1598,20 @@ public class Ribbon : Control
     // cross-fade, and the ribbon body host that fades.
     private RibbonTabControl? _ribbonTabControl;
     private FrameworkElement? _ribbonContentHost;
+
+    // Application menus belong in the Ribbon template's outer overlay so the menu alone can paint
+    // above the QAT/message rows. While an Office 2007 menu is open, the real application button is
+    // temporarily moved into that overlay and an inert same-size placeholder preserves its slot;
+    // this keeps one exactly positioned orb without promoting the tab-control/body-shadow branch.
+    // The nested presenter is retained only as a custom-template fallback.
+    private Canvas? _applicationMenuOverlayLayer;
+    private ContentPresenter? _applicationMenuOverlayPresenter;
+    private Border? _applicationButtonOverlay;
+    private ContentPresenter? _nestedApplicationMenuPresenter;
+    private FrameworkElement? _applicationButton;
+    private Panel? _applicationButtonOriginalParent;
+    private Border? _applicationButtonPlaceholder;
+    private int _applicationButtonOriginalIndex = -1;
 
     // Below-ribbon quick-access bar and the last measured body height, so the bar can glide
     // by that height (staying visible) as the body collapses/expands on minimize/restore.
@@ -1908,6 +2005,7 @@ public class Ribbon : Control
         // Assigning or clearing a menu changes WHICH surface IsBackstageOpen means, so the
         // discriminator has to be recomputed even though the open flag itself did not move.
         ribbon.UpdateApplicationMenuState();
+        ribbon.UpdateApplicationMenuHost();
 
         if (DesignerProperties.GetIsInDesignMode(ribbon) && ribbon.DesignPreviewFileSurface >= 0)
         {
@@ -1916,9 +2014,31 @@ public class Ribbon : Control
 
     }
 
+    private static void OnMessageBarChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        var ribbon = (Ribbon)d;
+        if (e.OldValue is RibbonMessageBar oldMessageBar)
+        {
+            oldMessageBar.OpenMessagesChanged -= ribbon.OnOpenMessagesChanged;
+        }
+
+        if (e.NewValue is RibbonMessageBar newMessageBar)
+        {
+            newMessageBar.OpenMessagesChanged += ribbon.OnOpenMessagesChanged;
+        }
+
+        ribbon.UpdateHasOpenMessages();
+    }
+
+    private void OnOpenMessagesChanged(object? sender, EventArgs e) => UpdateHasOpenMessages();
+
+    private void UpdateHasOpenMessages() =>
+        SetValue(HasOpenMessagesPropertyKey, MessageBar?.HasOpenMessages == true);
+
     private static void OnIsApplicationMenuOpenChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         var ribbon = (Ribbon)d;
+        ribbon.UpdateApplicationMenuHost();
         if (System.ComponentModel.DesignerProperties.GetIsInDesignMode(ribbon))
         {
             ribbon.UpdateDesignTimeBackstage(ribbon.IsBackstageOpen && !(bool)e.NewValue);
@@ -1932,6 +2052,44 @@ public class Ribbon : Control
         {
             ribbon.ApplyDesignPreviewFileSurface((int)e.NewValue);
         }
+    }
+
+    private static void OnDesignPreviewThemeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        var ribbon = (Ribbon)d;
+        if (DesignerProperties.GetIsInDesignMode(ribbon))
+        {
+            ribbon.ApplyDesignPreviewTheme((int)e.NewValue);
+        }
+    }
+
+    private void ApplyDesignPreviewTheme(int preview)
+    {
+        if (_designPreviewThemeDictionary is not null)
+        {
+            Resources.MergedDictionaries.Remove(_designPreviewThemeDictionary);
+            _designPreviewThemeDictionary = null;
+        }
+
+        if (preview >= 0 && Enum.IsDefined(typeof(Theming.RibbonTheme), preview))
+        {
+            var theme = (Theming.RibbonTheme)preview;
+            var dictionary = new ResourceDictionary
+            {
+                Source = new Uri(
+                    $"pack://application:,,,/RibbonKit;component/Themes/Tokens.{theme}.xaml",
+                    UriKind.Absolute),
+            };
+            Resources.MergedDictionaries.Add(dictionary);
+            _designPreviewThemeDictionary = dictionary;
+        }
+
+        // Local DynamicResources re-resolve automatically, but the selection underline and the
+        // classic connected-tab notch are geometry-driven and need the same post-layout refresh as
+        // a runtime ThemeManager switch. The scoped dictionary never touches Application.Resources.
+        InvalidateMeasure();
+        UpdateQatButtonContext();
+        RequestSelectionVisualsRefresh();
     }
 
     private void ApplyDesignPreviewFileSurface(int surface)
@@ -1957,13 +2115,307 @@ public class Ribbon : Control
     private void UpdateApplicationMenuState() =>
         IsApplicationMenuOpen = IsBackstageOpen && ApplicationMenu is not null;
 
+    private void UpdateApplicationMenuHost()
+    {
+        ResolveApplicationMenuParts();
+
+        // The shipping template always uses the outer host. Fall back to the historical nested
+        // presenter only for a custom template that has not adopted the new overlay part.
+        bool useNestedHost = _applicationMenuOverlayPresenter is null;
+        ContentPresenter? active = useNestedHost
+            ? _nestedApplicationMenuPresenter
+            : _applicationMenuOverlayPresenter;
+        ContentPresenter? inactive = useNestedHost
+            ? _applicationMenuOverlayPresenter
+            : _nestedApplicationMenuPresenter;
+
+        ClearApplicationMenuPresenter(inactive);
+        if (active is null)
+        {
+            RestoreApplicationButtonFromOverlay();
+            return;
+        }
+
+        if (!ReferenceEquals(active.Content, ApplicationMenu))
+        {
+            // Collapse before replacing the content so RibbonApplicationMenu receives its normal
+            // IsVisibleChanged(false) cleanup when a host or menu object changes while open.
+            active.Visibility = Visibility.Collapsed;
+            active.Content = null;
+            active.Content = ApplicationMenu;
+        }
+
+        active.Visibility = IsApplicationMenuOpen && ApplicationMenu is not null
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
+        if (!useNestedHost && active.Visibility == Visibility.Visible)
+        {
+            UpdateApplicationMenuOverlayPlacement();
+        }
+
+        UpdateApplicationButtonOverlay();
+
+        if (!useNestedHost && active.Visibility == Visibility.Visible)
+        {
+            // The first call anchors from the real button before an orb is reparented. This second
+            // call follows the placeholder after it has been realized, and is a no-op until then.
+            UpdateApplicationMenuOverlayPlacement();
+        }
+    }
+
+    private void ResolveApplicationMenuParts()
+    {
+        if (_nestedApplicationMenuPresenter is not null && _applicationButton is not null)
+        {
+            return;
+        }
+
+        RibbonTabControl? tabControl = GetTemplateChild("TabControlHost") as RibbonTabControl
+            ?? FindDescendantByType<RibbonTabControl>(this);
+        if (tabControl is null)
+        {
+            return;
+        }
+
+        tabControl.ApplyTemplate();
+        _nestedApplicationMenuPresenter ??=
+            FindDescendantByName(tabControl, RibbonTabControl.ApplicationMenuPresenterPartName)
+                as ContentPresenter;
+        _applicationButton ??=
+            FindDescendantByName(tabControl, ApplicationButtonPartName);
+    }
+
+    private void UpdateApplicationMenuOverlayPlacement()
+    {
+        ResolveApplicationMenuParts();
+        FrameworkElement? anchor = _applicationButtonPlaceholder ?? _applicationButton;
+        if (_applicationMenuOverlayLayer is null
+            || _applicationMenuOverlayPresenter is null
+            || anchor is null
+            || _applicationButton is null
+            || _applicationButton.ActualHeight <= 0d
+            || (_applicationButtonPlaceholder is not null && !anchor.IsArrangeValid))
+        {
+            return;
+        }
+
+        try
+        {
+            Point origin = anchor
+                .TransformToVisual(_applicationMenuOverlayLayer)
+                .Transform(new Point(0d, 0d));
+            if (_applicationButtonPlaceholder is not null)
+            {
+                origin.Offset(_applicationButton.Margin.Left, _applicationButton.Margin.Top);
+            }
+
+            bool anchorBelow = TryFindResource(ApplicationMenuAnchorBelowButtonResourceKey) is true;
+            Canvas.SetLeft(_applicationMenuOverlayPresenter, origin.X);
+            Canvas.SetTop(
+                _applicationMenuOverlayPresenter,
+                origin.Y + (anchorBelow ? _applicationButton.ActualHeight : 0d));
+        }
+        catch (InvalidOperationException)
+        {
+            // The nested button and outer layer are not connected under one visual root yet.
+            // LayoutUpdated retries after template realization/reflow completes.
+        }
+    }
+
+    private void UpdateApplicationButtonOverlay()
+    {
+        ResolveApplicationMenuParts();
+        if (_applicationButtonOverlay is null
+            || _applicationMenuOverlayLayer is null
+            || _applicationMenuOverlayPresenter?.Visibility != Visibility.Visible
+            || _applicationButton is null
+            || ApplicationButtonShape != RibbonApplicationButtonShape.Orb
+            || !IsApplicationMenuOpen
+            || ApplicationMenu is null)
+        {
+            RestoreApplicationButtonFromOverlay();
+            return;
+        }
+
+        if (_applicationButtonPlaceholder is null)
+        {
+            MoveApplicationButtonToOverlay();
+        }
+
+        UpdateApplicationButtonOverlayPlacement();
+    }
+
+    private void MoveApplicationButtonToOverlay()
+    {
+        if (_applicationButton is null
+            || _applicationMenuOverlayLayer is null
+            || _applicationButtonOverlay is null
+            || _applicationButton.Parent is not Panel originalParent
+            || _applicationButton.ActualWidth <= 0d
+            || _applicationButton.ActualHeight <= 0d)
+        {
+            return;
+        }
+
+        int originalIndex = originalParent.Children.IndexOf(_applicationButton);
+        if (originalIndex < 0)
+        {
+            return;
+        }
+
+        try
+        {
+            Point origin = _applicationButton
+                .TransformToVisual(_applicationMenuOverlayLayer)
+                .Transform(new Point(0d, 0d));
+            Thickness margin = _applicationButton.Margin;
+            double slotWidth = Math.Max(
+                0d,
+                _applicationButton.ActualWidth + margin.Left + margin.Right);
+            double slotHeight = Math.Max(
+                0d,
+                _applicationButton.ActualHeight + margin.Top + margin.Bottom);
+
+            var placeholder = new Border
+            {
+                Width = slotWidth,
+                Height = slotHeight,
+                HorizontalAlignment = _applicationButton.HorizontalAlignment,
+                VerticalAlignment = _applicationButton.VerticalAlignment,
+                IsHitTestVisible = false,
+            };
+
+            _applicationButtonOriginalParent = originalParent;
+            _applicationButtonOriginalIndex = originalIndex;
+            _applicationButtonPlaceholder = placeholder;
+
+            originalParent.Children.RemoveAt(originalIndex);
+            originalParent.Children.Insert(originalIndex, placeholder);
+
+            _applicationButtonOverlay.Width = slotWidth;
+            _applicationButtonOverlay.Height = slotHeight;
+            Canvas.SetLeft(_applicationButtonOverlay, origin.X - margin.Left);
+            Canvas.SetTop(_applicationButtonOverlay, origin.Y - margin.Top);
+            _applicationButtonOverlay.Child = _applicationButton;
+            _applicationButtonOverlay.Visibility = Visibility.Visible;
+        }
+        catch (InvalidOperationException)
+        {
+            // The button and outer layer have not joined the same visual root yet. Leave the real
+            // button in its ordinary slot; LayoutUpdated retries after realization/reflow.
+            RestoreApplicationButtonFromOverlay();
+        }
+    }
+
+    private void UpdateApplicationButtonOverlayPlacement()
+    {
+        if (_applicationButtonOverlay is null
+            || _applicationMenuOverlayLayer is null
+            || _applicationButtonPlaceholder is null)
+        {
+            return;
+        }
+
+        try
+        {
+            Thickness margin = _applicationButton?.Margin ?? default;
+            if (_applicationButton is not null)
+            {
+                double slotWidth = Math.Max(
+                    0d,
+                    _applicationButton.ActualWidth + margin.Left + margin.Right);
+                double slotHeight = Math.Max(
+                    0d,
+                    _applicationButton.ActualHeight + margin.Top + margin.Bottom);
+                _applicationButtonPlaceholder.Width = slotWidth;
+                _applicationButtonPlaceholder.Height = slotHeight;
+                _applicationButtonOverlay.Width = slotWidth;
+                _applicationButtonOverlay.Height = slotHeight;
+            }
+
+            if (!_applicationButtonPlaceholder.IsArrangeValid)
+            {
+                return;
+            }
+
+            Point origin = _applicationButtonPlaceholder
+                .TransformToVisual(_applicationMenuOverlayLayer)
+                .Transform(new Point(0d, 0d));
+            Canvas.SetLeft(_applicationButtonOverlay, origin.X);
+            Canvas.SetTop(_applicationButtonOverlay, origin.Y);
+        }
+        catch (InvalidOperationException)
+        {
+            // A layout/template transition can briefly disconnect the placeholder. The next
+            // LayoutUpdated pass will position the host once both elements share a visual root.
+        }
+    }
+
+    private void RestoreApplicationButtonFromOverlay()
+    {
+        if (_applicationButtonOverlay is not null)
+        {
+            if (ReferenceEquals(_applicationButtonOverlay.Child, _applicationButton))
+            {
+                _applicationButtonOverlay.Child = null;
+            }
+
+            _applicationButtonOverlay.Visibility = Visibility.Collapsed;
+            _applicationButtonOverlay.ClearValue(FrameworkElement.WidthProperty);
+            _applicationButtonOverlay.ClearValue(FrameworkElement.HeightProperty);
+            _applicationButtonOverlay.ClearValue(Canvas.LeftProperty);
+            _applicationButtonOverlay.ClearValue(Canvas.TopProperty);
+        }
+
+        if (_applicationButton is not null
+            && _applicationButtonOriginalParent is not null
+            && _applicationButtonPlaceholder is not null)
+        {
+            _applicationButtonOriginalParent.Children.Remove(_applicationButtonPlaceholder);
+            int index = Math.Clamp(
+                _applicationButtonOriginalIndex,
+                0,
+                _applicationButtonOriginalParent.Children.Count);
+            _applicationButtonOriginalParent.Children.Insert(index, _applicationButton);
+        }
+
+        _applicationButtonOriginalParent = null;
+        _applicationButtonPlaceholder = null;
+        _applicationButtonOriginalIndex = -1;
+    }
+
+    private static void ClearApplicationMenuPresenter(ContentPresenter? presenter)
+    {
+        if (presenter is null)
+        {
+            return;
+        }
+
+        presenter.Visibility = Visibility.Collapsed;
+        presenter.Content = null;
+    }
+
     /// <inheritdoc />
     protected override AutomationPeer OnCreateAutomationPeer() => new RibbonAutomationPeer(this);
 
     /// <inheritdoc />
     public override void OnApplyTemplate()
     {
+        ClearApplicationMenuPresenter(_applicationMenuOverlayPresenter);
+        ClearApplicationMenuPresenter(_nestedApplicationMenuPresenter);
+        RestoreApplicationButtonFromOverlay();
+
         base.OnApplyTemplate();
+
+        _applicationMenuOverlayLayer =
+            GetTemplateChild(ApplicationMenuOverlayLayerPartName) as Canvas;
+        _applicationMenuOverlayPresenter =
+            GetTemplateChild(ApplicationMenuOverlayPresenterPartName) as ContentPresenter;
+        _applicationButtonOverlay =
+            GetTemplateChild(ApplicationButtonOverlayPartName) as Border;
+        _nestedApplicationMenuPresenter = null;
+        _applicationButton = null;
 
         // Right-clicking either in-ribbon QAT host opens the placement menu (which also
         // offers Remove-from-QAT when the click lands on an item).
@@ -1981,6 +2433,8 @@ public class Ribbon : Control
         }
 
         _designBackstageHost = GetTemplateChild("PART_DesignBackstageHost") as Border;
+
+        UpdateApplicationMenuHost();
 
         // In the designer the runtime adorner path can't run (no host Window). If the backstage
         // was already flagged open before the template was applied, reflect it into the
@@ -2037,6 +2491,17 @@ public class Ribbon : Control
 
         UpdateQuickAccessPlacement();
         UpdateQatButtonContext();
+        UpdateApplicationMenuHost();
+        UpdateApplicationMenuOverlayPlacement();
+    }
+
+    private void OnLayoutUpdated(object? sender, EventArgs e)
+    {
+        if (IsApplicationMenuOpen)
+        {
+            UpdateApplicationButtonOverlay();
+            UpdateApplicationMenuOverlayPlacement();
+        }
     }
 
     private void OnUnloaded(object sender, RoutedEventArgs e)

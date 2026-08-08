@@ -236,6 +236,8 @@
     <Thickness x:Key="RibbonKit.Metrics.QatExtenderMargin">0</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.QatExtenderBorderThickness">0,0,0,1</Thickness>
     <CornerRadius x:Key="RibbonKit.Metrics.QatExtenderCornerRadius">0</CornerRadius>
+    <Thickness x:Key="RibbonKit.Metrics.QatExtenderMarginMessageBar">0</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.QatExtenderCornerRadiusMessageBar">0</CornerRadius>
 
     <!-- Flat theme: the minimized QAT keeps the same full-width, bottom-bordered strip
          (no floating card), so these match the normal values above. -->
@@ -311,4 +313,12 @@
     <system:Double x:Key="RibbonKit.Metrics.ApplicationMenuFooterHeight">34</system:Double>
     <system:Double x:Key="RibbonKit.Metrics.ApplicationMenuDimOpacity">0.4</system:Double>
 
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MessageBar.Background" Color="#FFF4CE" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MessageBar.Border" Color="#E6C753" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MessageBar.Foreground" Color="#323130" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MessageBar.IconForeground" Color="#0078D4" />
+    <Thickness x:Key="RibbonKit.Metrics.MessageBar.Margin">0</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.MessageBar.LastCornerRadius">0</CornerRadius>
+    <Thickness x:Key="RibbonKit.Metrics.MessageBar.BorderThickness">0,0,0,1</Thickness>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MessageBar.CloseHoverBorder" Color="#B3B3B3" />
 </ResourceDictionary>

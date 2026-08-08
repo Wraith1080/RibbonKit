@@ -95,6 +95,63 @@ public sealed class VisualSnapshotTests
                     1d,
                     FlowDirection.LeftToRight,
                     CreateOffice2010BackstageShellScene);
+                AssertSnapshot(
+                    "office2010-message-bar-connected-100",
+                    1d,
+                    FlowDirection.LeftToRight,
+                    CreateMessageBarStackScene,
+                    270);
+
+                ThemeManager.Apply(application, RibbonTheme.Office2007);
+                ThemeManager.SetDarkMode(application, false);
+                AssertSnapshot(
+                    "office2007-backstage-shell-100",
+                    1d,
+                    FlowDirection.LeftToRight,
+                    CreateOffice2010BackstageShellScene);
+                AssertSnapshot(
+                    "office2007-message-bar-connected-100",
+                    1d,
+                    FlowDirection.LeftToRight,
+                    CreateMessageBarStackScene,
+                    270);
+                AssertSnapshot(
+                    "office2007-orb-application-menu-message-bar-100",
+                    1d,
+                    FlowDirection.LeftToRight,
+                    CreateOrbApplicationMenuMessageBarScene,
+                    360);
+                AssertApplicationButtonMarginResourceSurvivesOrbRoundTrip();
+
+                ThemeManager.Apply(application, RibbonTheme.Office2024);
+                AssertSnapshot(
+                    "office2024-backstage-shell-100",
+                    1d,
+                    FlowDirection.LeftToRight,
+                    CreateModernBackstageShellScene);
+                AssertSnapshot(
+                    "office2024-message-bar-stack-100",
+                    1d,
+                    FlowDirection.LeftToRight,
+                    CreateMessageBarStackScene,
+                    270);
+                AssertSnapshot(
+                    "office2024-application-menu-message-bar-100",
+                    1d,
+                    FlowDirection.LeftToRight,
+                    CreateApplicationMenuMessageBarScene,
+                    360);
+
+                ThemeManager.Apply(application, RibbonTheme.Office2010);
+                ThemeManager.SetAccent(application, Color.FromRgb(0x0B, 0x8A, 0x4A));
+                ThemeManager.SetAccentedTitleBar(application, true);
+                AssertSnapshot(
+                    "office2010-colored-titlebar-100",
+                    1d,
+                    FlowDirection.LeftToRight,
+                    CreateColoredTitleBarScene);
+                ThemeManager.SetAccentedTitleBar(application, false);
+                ThemeManager.ClearAccent(application);
 
                 ThemeManager.Apply(application, RibbonTheme.Office2007);
                 ThemeManager.SetDarkMode(application, true);
@@ -127,6 +184,12 @@ public sealed class VisualSnapshotTests
                     1d,
                     FlowDirection.RightToLeft,
                     CreateBidirectionalBackstageScene);
+                AssertSnapshot(
+                    "office2024-rtl-message-bar-stack-100",
+                    1d,
+                    FlowDirection.RightToLeft,
+                    CreateMessageBarStackScene,
+                    270);
             }
             finally
             {
@@ -157,10 +220,11 @@ public sealed class VisualSnapshotTests
         string snapshotName,
         double dpiScale,
         FlowDirection flowDirection = FlowDirection.LeftToRight,
-        Func<FlowDirection, FrameworkElement>? sceneFactory = null)
+        Func<FlowDirection, FrameworkElement>? sceneFactory = null,
+        int height = Height)
     {
-        BitmapSource actual = RenderScene(dpiScale, flowDirection, sceneFactory);
-        BitmapSource repeated = RenderScene(dpiScale, flowDirection, sceneFactory);
+        BitmapSource actual = RenderScene(dpiScale, flowDirection, sceneFactory, height);
+        BitmapSource repeated = RenderScene(dpiScale, flowDirection, sceneFactory, height);
 
         if (!Pixels(actual).AsSpan().SequenceEqual(Pixels(repeated)))
         {
@@ -221,7 +285,8 @@ public sealed class VisualSnapshotTests
     private static BitmapSource RenderScene(
         double dpiScale,
         FlowDirection flowDirection,
-        Func<FlowDirection, FrameworkElement>? sceneFactory)
+        Func<FlowDirection, FrameworkElement>? sceneFactory,
+        int height)
     {
         FrameworkElement scene = (sceneFactory ?? CreateScene)(flowDirection);
         var requestedDpi = new DpiScale(dpiScale, dpiScale);
@@ -236,7 +301,7 @@ public sealed class VisualSnapshotTests
                 "to its visual root.");
         }
 
-        var size = new Size(Width, Height);
+        var size = new Size(Width, height);
 
         scene.Measure(size);
         scene.Arrange(new Rect(size));
@@ -247,7 +312,7 @@ public sealed class VisualSnapshotTests
         scene.UpdateLayout();
 
         int pixelWidth = checked((int)Math.Round(Width * dpiScale, MidpointRounding.AwayFromZero));
-        int pixelHeight = checked((int)Math.Round(Height * dpiScale, MidpointRounding.AwayFromZero));
+        int pixelHeight = checked((int)Math.Round(height * dpiScale, MidpointRounding.AwayFromZero));
         double dpi = BaseDpi * dpiScale;
         var bitmap = new RenderTargetBitmap(pixelWidth, pixelHeight, dpi, dpi, PixelFormats.Pbgra32);
         bitmap.Render(scene);
@@ -476,10 +541,220 @@ public sealed class VisualSnapshotTests
         return root;
     }
 
+    private static FrameworkElement CreateModernBackstageShellScene(FlowDirection flowDirection)
+    {
+        var root = (Grid)CreateScene(flowDirection);
+        root.Children.Clear();
+
+        var backstage = new Backstage
+        {
+            Design = RibbonBackstageDesign.Modern,
+            UseLayoutRounding = true,
+            SnapsToDevicePixels = true,
+        };
+        backstage.Items.Add(new BackstageTabItem
+        {
+            Header = "Home",
+            Content = new StackPanel
+            {
+                HorizontalAlignment = HorizontalAlignment.Left,
+                Children =
+                {
+                    new TextBlock
+                    {
+                        Text = "Good morning",
+                        FontSize = 24,
+                        FontWeight = FontWeights.Light,
+                        Margin = new Thickness(0, 0, 0, 10),
+                    },
+                    new TextBlock
+                    {
+                        Text = "New document",
+                        FontSize = 14,
+                        FontWeight = FontWeights.SemiBold,
+                    },
+                },
+            },
+        });
+        backstage.Items.Add(new BackstageTabItem { Header = "New" });
+        backstage.Items.Add(new BackstageTabItem { Header = "Open" });
+        backstage.SelectedIndex = 0;
+
+        root.Children.Add(backstage);
+        return root;
+    }
+
+    private static FrameworkElement CreateColoredTitleBarScene(FlowDirection flowDirection)
+    {
+        var root = (Grid)CreateScene(flowDirection);
+        root.Children.Clear();
+
+        var titleBar = new Border
+        {
+            Height = 44,
+            VerticalAlignment = VerticalAlignment.Top,
+            UseLayoutRounding = true,
+            SnapsToDevicePixels = true,
+            Child = new TextBlock
+            {
+                Text = "RibbonKit Showcase",
+                Foreground = Brushes.White,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+            },
+        };
+        titleBar.SetResourceReference(
+            Border.BackgroundProperty,
+            "RibbonKit.Brushes.TitleBar.Background");
+        root.Children.Add(titleBar);
+        return root;
+    }
+
+    private static FrameworkElement CreateMessageBarStackScene(FlowDirection flowDirection)
+    {
+        var root = (Grid)CreateScene(flowDirection);
+        root.Children.Clear();
+        root.Height = 270;
+
+        var messageBar = new RibbonMessageBar
+        {
+            UseLayoutRounding = true,
+            SnapsToDevicePixels = true,
+        };
+        messageBar.Items.Add(new RibbonMessage
+        {
+            Title = "PROTECTED VIEW",
+            Message = "Files from the Internet can contain viruses. It is safer to stay in Protected View.",
+            ActionContent = "Enable Editing",
+        });
+        messageBar.Items.Add(new RibbonMessage
+        {
+            Title = "SECURITY NOTICE",
+            Message = "Macros have been disabled in this document.",
+            ActionContent = "Review Settings",
+        });
+
+        var ribbon = new Ribbon
+        {
+            MessageBar = messageBar,
+            QuickAccessPosition = RibbonQuickAccessPosition.BelowRibbon,
+            VerticalAlignment = VerticalAlignment.Top,
+            UseLayoutRounding = true,
+            SnapsToDevicePixels = true,
+        };
+        var home = new RibbonTab { Header = "Home" };
+        var clipboard = new RibbonGroup { Header = "Clipboard" };
+        clipboard.Items.Add(new RibbonButton { Header = "Paste", Size = RibbonControlSize.Large });
+        clipboard.Items.Add(new RibbonButton { Header = "Copy", Size = RibbonControlSize.Small });
+        home.Groups.Add(clipboard);
+        ribbon.Tabs.Add(home);
+        ribbon.Tabs.Add(new RibbonTab { Header = "Insert" });
+        ribbon.QuickAccessItems.Add(new RibbonButton { Header = "Save", Size = RibbonControlSize.Small });
+        ribbon.QuickAccessItems.Add(new RibbonButton { Header = "Undo", Size = RibbonControlSize.Small });
+
+        root.Children.Add(ribbon);
+        return root;
+    }
+
     private static FrameworkElement CreateApplicationMenuScene(FlowDirection flowDirection)
     {
         var root = (Grid)CreateScene(flowDirection);
         root.Children.Clear();
+
+        root.Children.Add(CreateApplicationMenu());
+        return root;
+    }
+
+    private static FrameworkElement CreateApplicationMenuMessageBarScene(FlowDirection flowDirection)
+        => CreateApplicationMenuMessageBarScene(
+            flowDirection,
+            RibbonApplicationButtonShape.Tab);
+
+    private static FrameworkElement CreateOrbApplicationMenuMessageBarScene(
+        FlowDirection flowDirection)
+        => CreateApplicationMenuMessageBarScene(
+            flowDirection,
+            RibbonApplicationButtonShape.Orb);
+
+    private static void AssertApplicationButtonMarginResourceSurvivesOrbRoundTrip()
+    {
+        var root = (Grid)CreateApplicationMenuMessageBarScene(
+            FlowDirection.LeftToRight,
+            RibbonApplicationButtonShape.Orb);
+        var ribbon = Assert.IsType<Ribbon>(Assert.Single(root.Children));
+        var size = new Size(Width, 360);
+
+        // Realize the open 2007 menu first so the real orb takes the outer-host path. Closing it
+        // must preserve the button's DynamicResource expression: Office 2019/2024 both replace
+        // this 2007 margin with 8,4,2,0 during a live theme switch.
+        root.Measure(size);
+        root.Arrange(new Rect(size));
+        root.UpdateLayout();
+        var button = Assert.IsAssignableFrom<FrameworkElement>(
+            FindDescendantByName(root, "PART_ApplicationButton"));
+        Assert.Equal(new Thickness(2d, 2d, 2d, 0d), button.Margin);
+
+        ribbon.SetCurrentValue(Ribbon.IsBackstageOpenProperty, false);
+        ribbon.ApplicationButtonShape = RibbonApplicationButtonShape.Tab;
+        var modernMargin = new Thickness(8d, 4d, 2d, 0d);
+        ribbon.Resources["RibbonKit.Metrics.ApplicationButtonMargin"] = modernMargin;
+        root.Measure(size);
+        root.Arrange(new Rect(size));
+        root.UpdateLayout();
+
+        Assert.Equal(modernMargin, button.Margin);
+    }
+
+    private static FrameworkElement CreateApplicationMenuMessageBarScene(
+        FlowDirection flowDirection,
+        RibbonApplicationButtonShape applicationButtonShape)
+    {
+        var root = (Grid)CreateScene(flowDirection);
+        root.Children.Clear();
+        root.Height = 360;
+
+        var messageBar = new RibbonMessageBar
+        {
+            UseLayoutRounding = true,
+            SnapsToDevicePixels = true,
+        };
+        messageBar.Items.Add(new RibbonMessage
+        {
+            Title = "PROTECTED VIEW",
+            Message = "Files from the Internet can contain viruses.",
+            ActionContent = "Enable Editing",
+        });
+
+        RibbonApplicationMenu menu = CreateApplicationMenu();
+        menu.Height = 300;
+
+        var ribbon = new Ribbon
+        {
+            ApplicationMenu = menu,
+            ApplicationButtonShape = applicationButtonShape,
+            MessageBar = messageBar,
+            QuickAccessPosition = RibbonQuickAccessPosition.BelowRibbon,
+            IsBackstageOpen = true,
+            VerticalAlignment = VerticalAlignment.Top,
+            UseLayoutRounding = true,
+            SnapsToDevicePixels = true,
+        };
+        var home = new RibbonTab { Header = "Home" };
+        var clipboard = new RibbonGroup { Header = "Clipboard" };
+        clipboard.Items.Add(new RibbonButton { Header = "Paste", Size = RibbonControlSize.Large });
+        clipboard.Items.Add(new RibbonButton { Header = "Copy", Size = RibbonControlSize.Small });
+        home.Groups.Add(clipboard);
+        ribbon.Tabs.Add(home);
+        ribbon.Tabs.Add(new RibbonTab { Header = "Insert" });
+        ribbon.QuickAccessItems.Add(new RibbonButton { Header = "Save", Size = RibbonControlSize.Small });
+        ribbon.QuickAccessItems.Add(new RibbonButton { Header = "Undo", Size = RibbonControlSize.Small });
+
+        root.Children.Add(ribbon);
+        return root;
+    }
+
+    private static RibbonApplicationMenu CreateApplicationMenu()
+    {
 
         var heading = new TextBlock
         {
@@ -511,8 +786,31 @@ public sealed class VisualSnapshotTests
         menu.Items.Add(new RibbonApplicationMenuItem { Header = "New" });
         menu.Items.Add(new RibbonApplicationMenuItem { Header = "Open" });
 
-        root.Children.Add(menu);
-        return root;
+        return menu;
+    }
+
+    private static DependencyObject? FindDescendantByName(
+        DependencyObject root,
+        string name)
+    {
+        if (root is FrameworkElement element && element.Name == name)
+        {
+            return element;
+        }
+
+        int count = VisualTreeHelper.GetChildrenCount(root);
+        for (int index = 0; index < count; index++)
+        {
+            DependencyObject? match = FindDescendantByName(
+                VisualTreeHelper.GetChild(root, index),
+                name);
+            if (match is not null)
+            {
+                return match;
+            }
+        }
+
+        return null;
     }
 
     private static RibbonButton Button(string? header, RibbonControlSize size, ImageSource icon) =>

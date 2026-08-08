@@ -15,8 +15,22 @@ internal enum FileSurfacePreview
 }
 
 /// <summary>
+/// Theme-token scope shown only on the selected Ribbon's XAML design surface. Non-negative values
+/// deliberately match the runtime <c>RibbonTheme</c> enum without referencing its assembly.
+/// </summary>
+internal enum ThemePreview
+{
+    ProjectDefault = -1,
+    Office2024 = 0,
+    Office2019 = 1,
+    Office2013 = 2,
+    Office2010 = 3,
+    Office2007 = 4,
+}
+
+/// <summary>
 /// Shared design-time state for the ribbon's design-only previews — the tab shown on the surface
-/// (<c>SelectedIndex</c>) and the mutually-exclusive File surface — without
+/// (<c>SelectedIndex</c>), theme-token scope, and mutually-exclusive File surface — without
 /// touching the serialized XAML or the running app. The editor sets these;
 /// <see cref="SelectedTabPreviewProvider"/> reads them back when the designer re-evaluates the property.
 /// </summary>
@@ -36,12 +50,16 @@ internal static class TabPreviewCoordinator
 
     private static ModelItem? _ribbon;
     private static int? _tabIndex;
+    private static ThemePreview _theme = ThemePreview.ProjectDefault;
     private static FileSurfacePreview _fileSurface;
     private static ModelItem? _backstage;
     private static int? _backstagePage;
 
     /// <summary>The currently previewed tab index, or null when no tab preview is active.</summary>
     public static int? CurrentIndex => _tabIndex;
+
+    /// <summary>The current design-only theme choice.</summary>
+    public static ThemePreview CurrentTheme => _theme;
 
     /// <summary>The current design-only File-surface choice.</summary>
     public static FileSurfacePreview CurrentFileSurface => _fileSurface;
@@ -55,6 +73,18 @@ internal static class TabPreviewCoordinator
         _ribbon = ribbon;
         _tabIndex = index;
         Invalidate(ribbon, "SelectedIndex");
+    }
+
+    /// <summary>
+    /// Sets the selected Ribbon's design-only theme-token scope and repaints the surface. The
+    /// runtime property consumes only the primitive enum value; no Application resources or XAML
+    /// are changed.
+    /// </summary>
+    public static void SetTheme(ModelItem ribbon, ThemePreview theme)
+    {
+        _ribbon = ribbon;
+        _theme = theme;
+        Invalidate(ribbon, "DesignPreviewTheme");
     }
 
     /// <summary>
@@ -82,6 +112,19 @@ internal static class TabPreviewCoordinator
         }
 
         index = 0;
+        return false;
+    }
+
+    /// <summary>True (with the value) when theme-preview state belongs to this Ribbon.</summary>
+    public static bool TryGetTheme(ModelItem ribbon, out ThemePreview theme)
+    {
+        if (Equals(_ribbon, ribbon))
+        {
+            theme = _theme;
+            return true;
+        }
+
+        theme = ThemePreview.ProjectDefault;
         return false;
     }
 
@@ -142,8 +185,8 @@ internal static class TabPreviewCoordinator
 }
 
 /// <summary>
-/// Design-time-only translation of the Ribbon tab and File-surface properties:
-/// when the editor has chosen a preview tab or File surface
+/// Design-time-only translation of the Ribbon tab, theme, and File-surface properties:
+/// when the editor has chosen a preview tab, theme, or File surface
 /// (see <see cref="TabPreviewCoordinator"/>), the surface reflects it while the running app is
 /// unaffected — <c>TranslatePropertyValue</c> is never invoked for run-time code and nothing is
 /// serialized. This is the supported equivalent of hand-authored design-time values, which can't
@@ -156,6 +199,7 @@ public sealed class SelectedTabPreviewProvider : DesignModeValueProvider
     public SelectedTabPreviewProvider()
     {
         Properties.Add(new TypeIdentifier(RibbonType), "SelectedIndex");
+        Properties.Add(new TypeIdentifier(RibbonType), "DesignPreviewTheme");
         Properties.Add(new TypeIdentifier(RibbonType), "DesignPreviewFileSurface");
     }
 
@@ -170,6 +214,14 @@ public sealed class SelectedTabPreviewProvider : DesignModeValueProvider
                 Debug.WriteLine("[RibbonKit] Preview SelectedIndex -> " + index);
                 return index;
             }
+        }
+
+        if (identifier.Name == "DesignPreviewTheme"
+            && TabPreviewCoordinator.TryGetTheme(item, out ThemePreview theme))
+        {
+            int preview = (int)theme;
+            Debug.WriteLine("[RibbonKit] Preview DesignPreviewTheme -> " + preview);
+            return preview;
         }
 
         if (TabPreviewCoordinator.TryGetFileSurface(item, out FileSurfacePreview surface))

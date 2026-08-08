@@ -128,24 +128,47 @@ public class ApplicationMenuLayeringTests
     }
 
     [Fact]
-    public void Open_menu_promotes_tab_control_above_below_ribbon_qat()
+    public void Orb_menu_uses_outer_overlay_and_real_button_host_without_promoting_tab_control()
     {
         var document = XDocument.Load(RibbonChromePath());
 
-        var trigger = document
-            .Descendants(Presentation + "Trigger")
-            .Single(element =>
-                (string?)element.Attribute("Property") == "IsApplicationMenuOpen"
-                && (string?)element.Attribute("Value") == "True");
+        XElement overlay = Named(document, "ApplicationMenuOverlayLayer");
+        XElement presenter = Named(document, "PART_ApplicationMenuOverlayPresenter");
+        XElement buttonOverlay = Named(document, "PART_ApplicationButtonOverlay");
 
-        var setter = Assert.Single(trigger.Elements(Presentation + "Setter"));
-        Assert.Equal("TabControlHost", (string?)setter.Attribute("TargetName"));
-        Assert.Equal("Panel.ZIndex", (string?)setter.Attribute("Property"));
-        Assert.Equal("1", (string?)setter.Attribute("Value"));
+        Assert.Same(overlay, presenter.Parent);
+        Assert.Same(overlay, buttonOverlay.Parent);
+        Assert.True(ZIndex(buttonOverlay) > ZIndex(presenter));
+        Assert.Equal("Collapsed", (string?)buttonOverlay.Attribute("Visibility"));
+        Assert.DoesNotContain(
+            document.Descendants(Presentation + "Setter"),
+            setter => (string?)setter.Attribute("TargetName") == "TabControlHost"
+                && (string?)setter.Attribute("Property") == "Panel.ZIndex");
+    }
 
-        // No local value means the normal, closed state remains at WPF's default z-index (0).
-        Assert.Null(Named(document, "TabControlHost").Attribute("Panel.ZIndex"));
-        Assert.Equal(0, ZIndex(Named(document, "QatBelowHost")));
+    [Fact]
+    public void Application_menu_uses_an_outer_overlay_without_suppressing_the_body_shadow()
+    {
+        var document = XDocument.Load(RibbonChromePath());
+
+        XElement overlay = Named(document, "ApplicationMenuOverlayLayer");
+        XElement presenter = Named(document, "PART_ApplicationMenuOverlayPresenter");
+        XElement qat = Named(document, "QatBelowHost");
+        XElement messages = Named(document, "MessageBarHost");
+        XElement nestedPresenter = Named(document, RibbonTabControl.ApplicationMenuPresenterPartName);
+
+        Assert.Same(overlay, presenter.Parent);
+        Assert.Same(qat.Parent, overlay.Parent);
+        Assert.Same(messages.Parent, overlay.Parent);
+        Assert.True(ZIndex(overlay) > ZIndex(qat));
+        Assert.True(ZIndex(overlay) > ZIndex(messages));
+        Assert.Null(nestedPresenter.Attribute("Content"));
+        Assert.Equal("Collapsed", (string?)nestedPresenter.Attribute("Visibility"));
+        Assert.DoesNotContain(
+            document.Descendants(Presentation + "Setter"),
+            setter => (string?)setter.Attribute("TargetName") == "ContentHost"
+                && (string?)setter.Attribute("Property") == "Effect"
+                && (string?)setter.Attribute("Value") == "{x:Null}");
     }
 
     private static XElement Named(XDocument document, string name) =>

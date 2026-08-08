@@ -245,7 +245,8 @@
     <system:Double x:Key="RibbonKit.Metrics.BackstageBackButtonSize">46</system:Double>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ContentBackground" Color="#FFFFFF" />
     <DropShadowEffect x:Key="RibbonKit.Effects.Backstage.ContentShadow"
-                      Opacity="0" BlurRadius="0" ShadowDepth="0" />
+                      BlurRadius="9" ShadowDepth="3" Direction="180"
+                      Opacity="0.24" Color="#000000" RenderingBias="Performance" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.NavBackground" Color="#F5F4F3" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.Foreground" Color="#201F1E" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemHover" Color="#EDEBE9" />
@@ -443,6 +444,8 @@
     <Thickness x:Key="RibbonKit.Metrics.QatExtenderMargin">2,0,2,0</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.QatExtenderBorderThickness">1,0,1,1</Thickness>
     <CornerRadius x:Key="RibbonKit.Metrics.QatExtenderCornerRadius">0,0,3,3</CornerRadius>
+    <Thickness x:Key="RibbonKit.Metrics.QatExtenderMarginMessageBar">2,0,2,0</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.QatExtenderCornerRadiusMessageBar">0</CornerRadius>
 
     <!-- Minimized: the ribbon body is gone, so the strip is the whole chrome and closes on all
          four sides instead of continuing something above it. -->
@@ -553,4 +556,17 @@
          about a third alpha, which is why one brush plus this number replaces a second gradient. -->
     <system:Double x:Key="RibbonKit.Metrics.ApplicationMenuDimOpacity">0.32</system:Double>
 
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.MessageBar.Background" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#FFFFE6" />
+        <GradientStop Offset="0.45" Color="#FFF6C7" />
+        <GradientStop Offset="0.46" Color="#FFEAA0" />
+        <GradientStop Offset="1" Color="#FFF2C0" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MessageBar.Border" Color="#D69A2D" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MessageBar.Foreground" Color="#1E1E1E" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MessageBar.IconForeground" Color="#1E5A9C" />
+    <Thickness x:Key="RibbonKit.Metrics.MessageBar.Margin">2,0,2,0</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.MessageBar.LastCornerRadius">0,0,3,3</CornerRadius>
+    <Thickness x:Key="RibbonKit.Metrics.MessageBar.BorderThickness">1,0,1,1</Thickness>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MessageBar.CloseHoverBorder" Color="#A97F2A" />
 </ResourceDictionary>

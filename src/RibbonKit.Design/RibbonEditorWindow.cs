@@ -97,10 +97,12 @@ internal sealed class RibbonEditorWindow : Window
     private Button _moveDown = null!;
     private Button _delete = null!;
     private Button _rename = null!;
+    private ComboBox _themeCombo = null!;
     private ComboBox _previewCombo = null!;
     private ComboBox _fileSurfaceCombo = null!;
     private ComboBox _filePageCombo = null!;
     private readonly List<FileSurfacePreview> _fileSurfaceMap = new List<FileSurfacePreview>();
+    private readonly List<ThemePreview> _themeMap = new List<ThemePreview>();
     private readonly List<int> _filePageMap = new List<int>();
     private bool _syncingPreview;
     private readonly StackPanel _propsPanel = new StackPanel { Orientation = Orientation.Vertical };
@@ -318,6 +320,10 @@ internal sealed class RibbonEditorWindow : Window
     {
         var panel = new StackPanel { Margin = new Thickness(10) };
 
+        _themeCombo = new ComboBox { MinWidth = 100, HorizontalAlignment = HorizontalAlignment.Stretch };
+        _themeCombo.SelectionChanged += OnThemePreviewChanged;
+        panel.Children.Add(BuildPreviewRow("Theme", _themeCombo));
+
         _previewCombo = new ComboBox { MinWidth = 100, HorizontalAlignment = HorizontalAlignment.Stretch };
         _previewCombo.SelectionChanged += OnPreviewChanged;
         panel.Children.Add(BuildPreviewRow("Active tab", _previewCombo));
@@ -333,7 +339,9 @@ internal sealed class RibbonEditorWindow : Window
         panel.Children.Add(new TextBlock
         {
             Text = "Design-only preview state is kept in this designer session. It does not change "
-                 + "the XAML or the running application. Structure and property edits still apply "
+                 + "the XAML or the running application. Theme changes palette and metrics only; "
+                 + "authored choices such as the application-button shape stay unchanged. "
+                 + "Structure and property edits still apply "
                  + "immediately, one Ctrl+Z step at a time.",
             TextWrapping = TextWrapping.Wrap,
             Opacity = 0.7,
@@ -691,6 +699,8 @@ internal sealed class RibbonEditorWindow : Window
         _syncingPreview = true;
         try
         {
+            PopulateThemePreview();
+
             _previewCombo.Items.Clear();
             _previewCombo.Items.Add("(no preview)");
 
@@ -740,6 +750,30 @@ internal sealed class RibbonEditorWindow : Window
         {
             _syncingPreview = false;
         }
+    }
+
+    private void PopulateThemePreview()
+    {
+        _themeCombo.Items.Clear();
+        _themeMap.Clear();
+        AddThemePreview("(project default)", ThemePreview.ProjectDefault);
+        AddThemePreview("Office 2024", ThemePreview.Office2024);
+        AddThemePreview("Office 2019", ThemePreview.Office2019);
+        AddThemePreview("Office 2013", ThemePreview.Office2013);
+        AddThemePreview("Office 2010", ThemePreview.Office2010);
+        AddThemePreview("Office 2007", ThemePreview.Office2007);
+
+        ThemePreview theme = TabPreviewCoordinator.TryGetTheme(_ribbon, out ThemePreview current)
+            ? current
+            : ThemePreview.ProjectDefault;
+        int selected = _themeMap.IndexOf(theme);
+        _themeCombo.SelectedIndex = selected < 0 ? 0 : selected;
+    }
+
+    private void AddThemePreview(string label, ThemePreview theme)
+    {
+        _themeCombo.Items.Add(label);
+        _themeMap.Add(theme);
     }
 
     /// <summary>
@@ -858,6 +892,20 @@ internal sealed class RibbonEditorWindow : Window
 
         int sel = _previewCombo.SelectedIndex;
         TabPreviewCoordinator.SetTab(_ribbon, sel <= 0 ? (int?)null : sel - 1);
+    }
+
+    private void OnThemePreviewChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_syncingPreview)
+        {
+            return;
+        }
+
+        int selected = _themeCombo.SelectedIndex;
+        ThemePreview theme = selected >= 0 && selected < _themeMap.Count
+            ? _themeMap[selected]
+            : ThemePreview.ProjectDefault;
+        TabPreviewCoordinator.SetTheme(_ribbon, theme);
     }
 
     private void OnFileSurfaceChanged(object sender, SelectionChangedEventArgs e)

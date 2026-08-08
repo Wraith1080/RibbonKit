@@ -377,8 +377,8 @@ public static class ThemeManager
                 resources[DialogPrimaryBackgroundKey] = Gel(accent);
                 resources[DialogPrimaryBorderKey] = Frozen(Mix(accent, Colors.Black, 0.30));
                 // MDI child captions in 2010 are a title-bar RAMP, not a button gel — see
-                // CaptionRamp for why the two gradients differ.
-                resources[MdiActiveCaptionKey] = CaptionRamp(accent);
+                // CaptionGlass for why the two gradients differ.
+                resources[MdiActiveCaptionKey] = CaptionGlass(accent);
                 resources[MdiActiveBorderKey] = Frozen(Mix(accent, Colors.Black, 0.30));
                 break;
             case RibbonTheme.Office2007:
@@ -393,7 +393,7 @@ public static class ThemeManager
                 resources[DialogPrimaryBackgroundKey] = Glass(accent);
                 resources[DialogPrimaryBorderKey] = Frozen(Mix(accent, Colors.Black, 0.30));
                 resources[BackstageSelectedGlassKey] = Glass(accent);
-                resources[MdiActiveCaptionKey] = CaptionRamp(accent);
+                resources[MdiActiveCaptionKey] = CaptionGlass(accent);
                 resources[MdiActiveBorderKey] = Frozen(Mix(accent, Colors.Black, 0.30));
                 // SelectedForeground stays the theme's dark blue, as in 2010: a custom accent
                 // should not tint the label on a light connected tab.
@@ -506,24 +506,26 @@ public static class ThemeManager
     }
 
     /// <summary>
-    /// Builds the Office 2010 title-bar ramp for <paramref name="baseColor"/>: light at the top,
-    /// base in the middle, DARKER at the bottom.
+    /// Builds the Office 2010 title-bar glass for <paramref name="baseColor"/>: a broad upper
+    /// reflection, a smooth accent-coloured face, and a restrained lower sheen.
     /// </summary>
     /// <remarks>
-    /// Deliberately not <see cref="Gel"/>: a gel ends lighter at the bottom, which reads as the
-    /// specular highlight of a glossy button. A caption is a lit surface receding downwards, so
-    /// reusing the button gradient here made child windows look like giant buttons.
+    /// Deliberately smoother than <see cref="Glass"/>: Office 2007 owns the hard crease. The 2010
+    /// caption keeps every stop at or above the base accent, so the glass depth never recreates the
+    /// dark lower half that made the full-width colored title bar look like a two-tone stripe.
     /// </remarks>
-    private static LinearGradientBrush CaptionRamp(Color baseColor)
+    private static LinearGradientBrush CaptionGlass(Color baseColor)
     {
         var brush = new LinearGradientBrush
         {
             StartPoint = new Point(0, 0),
             EndPoint = new Point(0, 1),
         };
-        brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.White, 0.30), 0.0));
-        brush.GradientStops.Add(new GradientStop(baseColor, 0.5));
-        brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.Black, 0.18), 1.0));
+        brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.White, 0.34), 0.0));
+        brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.White, 0.22), 0.18));
+        brush.GradientStops.Add(new GradientStop(baseColor, 0.52));
+        brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.White, 0.03), 0.72));
+        brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.White, 0.12), 1.0));
         brush.Freeze();
         return brush;
     }
@@ -534,9 +536,10 @@ public static class ThemeManager
     /// again to a specular foot.
     /// </summary>
     /// <remarks>
-    /// Deliberately neither <see cref="CaptionRamp"/> nor <see cref="Glass"/>. A ramp ends dark, so
-    /// it loses 2007's bright bottom edge; <see cref="Glass"/> carries the hard crease that belongs
-    /// on a BUTTON, not on a caption spanning the window. The white mixes stay modest (≤ 0.30) on
+    /// Deliberately neither <see cref="CaptionGlass"/> nor <see cref="Glass"/>. The 2010 glass has
+    /// a smooth lower sheen rather than 2007's deeper valley and bright bottom edge;
+    /// <see cref="Glass"/> carries the hard crease that belongs on a BUTTON, not on a caption
+    /// spanning the window. The white mixes stay modest (≤ 0.30) on
     /// purpose: the accented caption draws white text and glyphs over this, and a lighter band
     /// would swallow them.
     /// </remarks>
@@ -634,7 +637,7 @@ public static class ThemeManager
         // to begin with. It is WRONG for 2010 and 2007, whose uncolored title bars are glass:
         // colouring them flat turned the top 34px into 2013 and broke the illusion for the whole
         // window. Each therefore keeps its own gradient SHAPE, re-hued to the accent — 2010 a
-        // two-stop ramp receding downwards (CaptionRamp), 2007 the "valley": a light lip, a
+        // smooth glass face with a restrained lower sheen (CaptionGlass), 2007 the "valley": a light lip, a
         // deeper band about a third of the way down, then a bright specular foot.
         //
         // Typed as Brush deliberately: the arms return LinearGradientBrush and SolidColorBrush,
@@ -643,7 +646,7 @@ public static class ThemeManager
         // the intent obvious and the compiler honest.
         Brush titleBar = CurrentTheme switch
         {
-            RibbonTheme.Office2010 => CaptionRamp(accent),
+            RibbonTheme.Office2010 => CaptionGlass(accent),
             RibbonTheme.Office2007 => CaptionValley(accent),
             _ => Frozen(accent),
         };

@@ -25,6 +25,25 @@
                    ModalEntered="OnRibbonModalEntered"
                    ModalExited="OnRibbonModalExited"
                    d:IsBackstageOpen="false">
+            <!-- Hosting through Ribbon.MessageBar lets each theme connect the first open message
+                 to the ribbon/QAT chrome. The inner ItemsControl remains repeatable and MVVM-ready. -->
+            <rk:Ribbon.MessageBar>
+                <rk:RibbonMessageBar x:Name="ShowcaseMessageBar">
+                    <rk:RibbonMessage x:Name="ProtectedViewMessage"
+                                      IsOpen="False"
+                                      Title="PROTECTED VIEW"
+                                      Message="Be careful—files from the Internet can contain viruses. Unless you need to edit, it’s safer to stay in Protected View."
+                                      ActionContent="Enable Editing"
+                                      ActionClick="OnEnableEditingMessage" />
+                    <rk:RibbonMessage x:Name="SecurityNoticeMessage"
+                                      IsOpen="False"
+                                      Title="SECURITY NOTICE"
+                                      Message="Macros have been disabled in this sample document."
+                                      ActionContent="Review Settings"
+                                      ActionClick="OnReviewSecurityMessage" />
+                </rk:RibbonMessageBar>
+            </rk:Ribbon.MessageBar>
+
             <rk:Ribbon.Backstage>
                 <!-- d:SelectedIndex previews a specific backstage page on the XAML designer
                      surface (paired with d:IsBackstageOpen above). Runtime is unaffected. -->
@@ -488,6 +507,14 @@
                 <!-- Demo: toggling this disables a plain button (Cut), a split button (Paste),
                      and a whole group (Font) at once, so the disabled/greyed states are visible. -->
                 <rk:RibbonGroup Header="Demo" rk:Ribbon.CommandId="group.home.demo" Icon="{StaticResource Icon.Gear}" CanResize="False">
+                    <rk:RibbonButton Header="Add Message"
+                                     rk:Ribbon.CommandId="cmd.addmessage"
+                                     LargeIcon="{StaticResource Icon.Backstage}"
+                                     Icon="{StaticResource Icon.Backstage}"
+                                     SizeDefinition="Large, Large, Medium"
+                                     Click="OnAddMessage"
+                                     ScreenTipTitle="Add message"
+                                     ScreenTipText="Show the next message-bar notification and demonstrate its entrance animation." />
                     <rk:RibbonToggleButton Header="Disable Samples"
                                            x:Name="DisableSamplesToggle"
                                            LargeIcon="{StaticResource Icon.Gear}"
