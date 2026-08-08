@@ -2,6 +2,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="clr-namespace:RibbonKit.Controls"
+    xmlns:localization="clr-namespace:RibbonKit.Localization"
     xmlns:layout="clr-namespace:RibbonKit.Layout">
 
     <!-- Part of the shared RibbonKit control-template dictionary; merged by Office2024.xaml.
@@ -58,18 +59,19 @@
                         </Grid.RowDefinitions>
 
                         <TextBlock Grid.Column="0" Grid.Row="0"
-                                   Text="Choose commands from the ribbon:"
+                                   Text="{localization:RibbonString Key=ChooseCommandsFromRibbon}"
                                    Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
                                    FontSize="12"
                                    Margin="0,0,0,6" />
                         <TextBlock Grid.Column="2" Grid.Row="0"
-                                   Text="Current Quick Access Toolbar:"
+                                   Text="{localization:RibbonString Key=CurrentQuickAccessToolbar}"
                                    Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
                                    FontSize="12"
                                    Margin="0,0,0,6" />
 
                         <ListBox x:Name="PART_AvailableList"
                                  Grid.Column="0" Grid.Row="1"
+                                 Foreground="{TemplateBinding Foreground}"
                                  Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
                                  BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
                                  BorderThickness="1"
@@ -81,16 +83,41 @@
                                     VerticalAlignment="Center"
                                     Margin="12,0">
                             <Button x:Name="PART_AddButton"
-                                    Content="Add »"
                                     Style="{StaticResource OptionsDialogActionButtonStyle}"
-                                    Margin="0,0,0,6" />
+                                    Margin="0,0,0,6">
+                                <Grid FlowDirection="LeftToRight">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock x:Name="AddActionLabel"
+                                               Text="{localization:RibbonString Key=Add}" />
+                                    <TextBlock x:Name="AddActionArrow"
+                                               Grid.Column="1"
+                                               Text="»"
+                                               Margin="4,0,0,0" />
+                                </Grid>
+                            </Button>
                             <Button x:Name="PART_RemoveButton"
-                                    Content="« Remove"
-                                    Style="{StaticResource OptionsDialogActionButtonStyle}" />
+                                    Style="{StaticResource OptionsDialogActionButtonStyle}">
+                                <Grid FlowDirection="LeftToRight">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock x:Name="RemoveActionArrow"
+                                               Text="«"
+                                               Margin="0,0,4,0" />
+                                    <TextBlock x:Name="RemoveActionLabel"
+                                               Grid.Column="1"
+                                               Text="{localization:RibbonString Key=Remove}" />
+                                </Grid>
+                            </Button>
                         </StackPanel>
 
                         <ListBox x:Name="PART_CurrentList"
                                  Grid.Column="2" Grid.Row="1"
+                                 Foreground="{TemplateBinding Foreground}"
                                  Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
                                  BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
                                  BorderThickness="1"
@@ -105,14 +132,26 @@
                             <Button x:Name="PART_UpButton"
                                     Content="▲"
                                     Style="{StaticResource OptionsDialogReorderButtonStyle}"
-                                    ToolTip="Move Up"
+                                    ToolTip="{localization:RibbonString Key=MoveUp}"
                                     Margin="0,0,0,6" />
                             <Button x:Name="PART_DownButton"
                                     Content="▼"
                                     Style="{StaticResource OptionsDialogReorderButtonStyle}"
-                                    ToolTip="Move Down" />
+                                    ToolTip="{localization:RibbonString Key=MoveDown}" />
                         </StackPanel>
                     </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="FlowDirection" Value="RightToLeft">
+                            <Setter TargetName="AddActionLabel" Property="Grid.Column" Value="1" />
+                            <Setter TargetName="AddActionArrow" Property="Grid.Column" Value="0" />
+                            <Setter TargetName="AddActionArrow" Property="Text" Value="«" />
+                            <Setter TargetName="AddActionArrow" Property="Margin" Value="0,0,4,0" />
+                            <Setter TargetName="RemoveActionLabel" Property="Grid.Column" Value="0" />
+                            <Setter TargetName="RemoveActionArrow" Property="Grid.Column" Value="1" />
+                            <Setter TargetName="RemoveActionArrow" Property="Text" Value="»" />
+                            <Setter TargetName="RemoveActionArrow" Property="Margin" Value="4,0,0,0" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
@@ -191,18 +230,19 @@
                         </Grid.RowDefinitions>
 
                         <TextBlock Grid.Column="0" Grid.Row="0"
-                                   Text="Choose commands from the ribbon:"
+                                   Text="{localization:RibbonString Key=ChooseCommandsFromRibbon}"
                                    Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
                                    FontSize="12"
                                    Margin="0,0,0,6" />
                         <TextBlock Grid.Column="2" Grid.Row="0"
-                                   Text="Customize the ribbon:"
+                                   Text="{localization:RibbonString Key=CustomizeRibbonLabel}"
                                    Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
                                    FontSize="12"
                                    Margin="0,0,0,6" />
 
                         <ListBox x:Name="PART_AvailableList"
                                  Grid.Column="0" Grid.Row="1"
+                                 Foreground="{TemplateBinding Foreground}"
                                  Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
                                  BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
                                  BorderThickness="1"
@@ -213,16 +253,41 @@
                                     VerticalAlignment="Center"
                                     Margin="12,0">
                             <Button x:Name="PART_AddButton"
-                                    Content="Add »"
                                     Style="{StaticResource OptionsDialogActionButtonStyle}"
-                                    Margin="0,0,0,6" />
+                                    Margin="0,0,0,6">
+                                <Grid FlowDirection="LeftToRight">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock x:Name="AddActionLabel"
+                                               Text="{localization:RibbonString Key=Add}" />
+                                    <TextBlock x:Name="AddActionArrow"
+                                               Grid.Column="1"
+                                               Text="»"
+                                               Margin="4,0,0,0" />
+                                </Grid>
+                            </Button>
                             <Button x:Name="PART_RemoveButton"
-                                    Content="« Remove"
-                                    Style="{StaticResource OptionsDialogActionButtonStyle}" />
+                                    Style="{StaticResource OptionsDialogActionButtonStyle}">
+                                <Grid FlowDirection="LeftToRight">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock x:Name="RemoveActionArrow"
+                                               Text="«"
+                                               Margin="0,0,4,0" />
+                                    <TextBlock x:Name="RemoveActionLabel"
+                                               Grid.Column="1"
+                                               Text="{localization:RibbonString Key=Remove}" />
+                                </Grid>
+                            </Button>
                         </StackPanel>
 
                         <TreeView x:Name="PART_Tree"
                                   Grid.Column="2" Grid.Row="1"
+                                  Foreground="{TemplateBinding Foreground}"
                                   Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
                                   BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
                                   BorderThickness="1"
@@ -232,6 +297,13 @@
                                 <!-- Mirror tree state into the node view-model so the page can
                                      re-select/re-expand programmatically after each rebuild. -->
                                 <Style TargetType="{x:Type TreeViewItem}">
+                                    <!-- TreeViewItem's platform style supplies its own black
+                                         Foreground, so forwarding only the TreeView value is not
+                                         enough for dark mode. Bind every generated container back
+                                         to the page-level themed foreground; explicit content
+                                         colors can still override this normally. -->
+                                    <Setter Property="Foreground"
+                                            Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type TreeView}}}" />
                                     <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
                                     <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
                                 </Style>
@@ -244,12 +316,12 @@
                             <Button x:Name="PART_UpButton"
                                     Content="▲"
                                     Style="{StaticResource OptionsDialogReorderButtonStyle}"
-                                    ToolTip="Move Up"
+                                    ToolTip="{localization:RibbonString Key=MoveUp}"
                                     Margin="0,0,0,6" />
                             <Button x:Name="PART_DownButton"
                                     Content="▼"
                                     Style="{StaticResource OptionsDialogReorderButtonStyle}"
-                                    ToolTip="Move Down" />
+                                    ToolTip="{localization:RibbonString Key=MoveDown}" />
                         </StackPanel>
 
                         <!-- Reset restores the host-supplied baseline (factory ribbon),
@@ -260,7 +332,7 @@
                                     HorizontalAlignment="Left"
                                     Margin="0,8,0,0">
                             <Button x:Name="PART_ResetButton"
-                                    Content="Reset"
+                                    Content="{localization:RibbonString Key=Reset}"
                                     Style="{StaticResource OptionsDialogActionButtonStyle}"
                                     Margin="0,0,6,0" />
                             <!-- Import/Export are icon-only (compact reorder-button style) so all
@@ -268,15 +340,15 @@
                                  carries the meaning. Glyphs: OpenFile (load) and Save (write). -->
                             <Button x:Name="PART_ImportButton"
                                     Style="{StaticResource OptionsDialogReorderButtonStyle}"
-                                    ToolTip="Import: load a saved ribbon layout from a file"
-                                    AutomationProperties.Name="Import"
+                                    ToolTip="{localization:RibbonString Key=ImportRibbonLayoutTooltip}"
+                                    AutomationProperties.Name="{localization:RibbonString Key=Import}"
                                     Margin="0,0,6,0">
                                 <TextBlock FontFamily="Segoe MDL2 Assets" FontSize="15" Text="&#xE8E5;" />
                             </Button>
                             <Button x:Name="PART_ExportButton"
                                     Style="{StaticResource OptionsDialogReorderButtonStyle}"
-                                    ToolTip="Export: save the current ribbon layout to a file"
-                                    AutomationProperties.Name="Export">
+                                    ToolTip="{localization:RibbonString Key=ExportRibbonLayoutTooltip}"
+                                    AutomationProperties.Name="{localization:RibbonString Key=Export}">
                                 <TextBlock FontFamily="Segoe MDL2 Assets" FontSize="15" Text="&#xE74E;" />
                             </Button>
                         </StackPanel>
@@ -292,19 +364,31 @@
                             </Grid.ColumnDefinitions>
                             <Button x:Name="PART_NewTabButton"
                                     Grid.Column="0"
-                                    Content="New Tab"
+                                    Content="{localization:RibbonString Key=NewTab}"
                                     Style="{StaticResource OptionsDialogActionButtonStyle}"
                                     Margin="0,0,6,0" />
                             <Button x:Name="PART_NewGroupButton"
                                     Grid.Column="1"
-                                    Content="New Group"
+                                    Content="{localization:RibbonString Key=NewGroup}"
                                     Style="{StaticResource OptionsDialogActionButtonStyle}" />
                             <Button x:Name="PART_EditButton"
                                     Grid.Column="3"
-                                    Content="Edit…"
+                                    Content="{localization:RibbonString Key=Edit}"
                                     Style="{StaticResource OptionsDialogActionButtonStyle}" />
                         </Grid>
                     </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="FlowDirection" Value="RightToLeft">
+                            <Setter TargetName="AddActionLabel" Property="Grid.Column" Value="1" />
+                            <Setter TargetName="AddActionArrow" Property="Grid.Column" Value="0" />
+                            <Setter TargetName="AddActionArrow" Property="Text" Value="«" />
+                            <Setter TargetName="AddActionArrow" Property="Margin" Value="0,0,4,0" />
+                            <Setter TargetName="RemoveActionLabel" Property="Grid.Column" Value="0" />
+                            <Setter TargetName="RemoveActionArrow" Property="Grid.Column" Value="1" />
+                            <Setter TargetName="RemoveActionArrow" Property="Text" Value="»" />
+                            <Setter TargetName="RemoveActionArrow" Property="Margin" Value="4,0,0,0" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
@@ -365,13 +449,14 @@
                                             Grid.Column="1"
                                             WindowChrome.IsHitTestVisibleInChrome="True"
                                             Style="{StaticResource OptionsDialogCloseButtonStyle}"
-                                            ToolTip="Close" />
+                                            ToolTip="{localization:RibbonString Key=Close}" />
                                 </Grid>
 
                                 <!-- Sections; the control collapses the ones that don't
                                      apply to the current target. -->
                                 <StackPanel Grid.Row="1" Margin="16,8,16,4">
-                                    <TextBlock Text="Name:" Style="{StaticResource EditDialogLabelStyle}" />
+                                    <TextBlock Text="{localization:RibbonString Key=NameLabel}"
+                                               Style="{StaticResource EditDialogLabelStyle}" />
                                     <TextBox x:Name="PART_NameBox"
                                              VerticalContentAlignment="Center"
                                              Padding="6,5"
@@ -381,10 +466,11 @@
                                              Margin="0,0,0,12" />
 
                                     <StackPanel x:Name="PART_IconSection" Margin="0,0,0,12">
-                                        <TextBlock Text="Icon (from this ribbon's commands):"
+                                        <TextBlock Text="{localization:RibbonString Key=IconFromRibbonCommandsLabel}"
                                                    Style="{StaticResource EditDialogLabelStyle}" />
                                         <ListBox x:Name="PART_IconList"
                                                  MaxHeight="150"
+                                                 Foreground="{TemplateBinding Foreground}"
                                                  Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
                                                  BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
                                                  BorderThickness="1"
@@ -401,7 +487,7 @@
                                                                Width="20" Height="20"
                                                                HorizontalAlignment="Center"
                                                                VerticalAlignment="Center" />
-                                                        <TextBlock Text="None"
+                                                        <TextBlock Text="{localization:RibbonString Key=None}"
                                                                    FontSize="10"
                                                                    HorizontalAlignment="Center"
                                                                    VerticalAlignment="Center"
@@ -424,12 +510,14 @@
                                     </StackPanel>
 
                                     <StackPanel x:Name="PART_LayoutSection" Margin="0,0,0,12">
-                                        <TextBlock Text="Group layout:" Style="{StaticResource EditDialogLabelStyle}" />
+                                        <TextBlock Text="{localization:RibbonString Key=GroupLayoutLabel}"
+                                                   Style="{StaticResource EditDialogLabelStyle}" />
                                         <ComboBox x:Name="PART_LayoutBox" />
                                     </StackPanel>
 
                                     <StackPanel x:Name="PART_SizeSection" Margin="0,0,0,12">
-                                        <TextBlock Text="Button size:" Style="{StaticResource EditDialogLabelStyle}" />
+                                        <TextBlock Text="{localization:RibbonString Key=ButtonSizeLabel}"
+                                                   Style="{StaticResource EditDialogLabelStyle}" />
                                         <ComboBox x:Name="PART_SizeBox" />
                                     </StackPanel>
                                 </StackPanel>
@@ -442,11 +530,11 @@
                                                 HorizontalAlignment="Right"
                                                 Margin="16,10,16,10">
                                         <Button x:Name="PART_OkButton"
-                                                Content="OK"
+                                                Content="{localization:RibbonString Key=Ok}"
                                                 IsDefault="True"
                                                 Style="{StaticResource OptionsDialogPrimaryButtonStyle}" />
                                         <Button x:Name="PART_CancelButton"
-                                                Content="Cancel"
+                                                Content="{localization:RibbonString Key=Cancel}"
                                                 IsCancel="True"
                                                 Margin="8,0,0,0"
                                                 Style="{StaticResource OptionsDialogActionButtonStyle}" />

@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Media;
 
@@ -13,13 +14,49 @@ namespace RibbonKit.Controls;
 internal sealed class BackstageAdorner : Adorner
 {
     private UIElement? _child;
+    private FrameworkElement? _flowBoundChild;
 
-    public BackstageAdorner(UIElement adornedElement, UIElement backstage)
+    public BackstageAdorner(
+        UIElement adornedElement,
+        UIElement backstage,
+        FrameworkElement flowSource)
         : base(adornedElement)
     {
+        BindingOperations.SetBinding(
+            this,
+            FlowDirectionProperty,
+            new Binding(nameof(FrameworkElement.FlowDirection))
+            {
+                Source = flowSource,
+                Mode = BindingMode.OneWay,
+            });
+
         _child = backstage;
         AddVisualChild(backstage);
         AddLogicalChild(backstage);
+
+        if (backstage is FrameworkElement frameworkBackstage)
+        {
+            ValueSource flowValueSource = DependencyPropertyHelper.GetValueSource(
+                frameworkBackstage,
+                FlowDirectionProperty);
+            if (flowValueSource.BaseValueSource is BaseValueSource.Default or BaseValueSource.Inherited)
+            {
+                // Bind after establishing the logical parent. This keeps an application-owned
+                // local/style value intact, while a default/inherited Backstage tracks the
+                // adorner's live flow even though the adorner branch crosses the physical LTR
+                // window frame.
+                BindingOperations.SetBinding(
+                    frameworkBackstage,
+                    FlowDirectionProperty,
+                    new Binding(nameof(FlowDirection))
+                    {
+                        Source = this,
+                        Mode = BindingMode.OneWay,
+                    });
+                _flowBoundChild = frameworkBackstage;
+            }
+        }
     }
 
     /// <inheritdoc />
@@ -34,6 +71,14 @@ internal sealed class BackstageAdorner : Adorner
             RemoveLogicalChild(_child);
             _child = null;
         }
+
+        if (_flowBoundChild is not null)
+        {
+            BindingOperations.ClearBinding(_flowBoundChild, FlowDirectionProperty);
+            _flowBoundChild = null;
+        }
+
+        BindingOperations.ClearBinding(this, FlowDirectionProperty);
     }
 
     /// <inheritdoc />

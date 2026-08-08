@@ -52,6 +52,7 @@ public class RibbonTabControl : TabControl
     private Canvas? _applicationMenuLayer;
     private FrameworkElement? _applicationButton;
     private FrameworkElement? _applicationMenuPresenter;
+    private bool _selectionVisualsRefreshPending;
 
     static RibbonTabControl()
     {
@@ -105,7 +106,18 @@ public class RibbonTabControl : TabControl
         _connectNotch = GetTemplateChild("PART_ConnectNotch") as Border;
         _connectNotchTranslate = GetTemplateChild("PART_ConnectNotchTranslate") as TranslateTransform;
         _applicationMenuLayer = GetTemplateChild(ApplicationMenuLayerPartName) as Canvas;
+
+        if (_applicationButton is not null)
+        {
+            _applicationButton.SizeChanged -= OnApplicationButtonSizeChanged;
+        }
+
         _applicationButton = GetTemplateChild(Ribbon.ApplicationButtonPartName) as FrameworkElement;
+        if (_applicationButton is not null)
+        {
+            _applicationButton.SizeChanged += OnApplicationButtonSizeChanged;
+        }
+
         _applicationMenuPresenter = GetTemplateChild(ApplicationMenuPresenterPartName) as FrameworkElement;
 
         // Selection may already be set before the template applied; place once layout has run.
@@ -264,6 +276,26 @@ public class RibbonTabControl : TabControl
         // Loaded-priority re-run fires after layout settles, correcting the final resting position.
         UpdateConnectNotch();
         Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(UpdateConnectNotch));
+    }
+
+    private void OnApplicationButtonSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        // The application button and tab strip are siblings. A wider localized/custom header
+        // moves every tab without changing this TabControl's own size, so its SizeChanged hook
+        // cannot re-place the marker/notch. Defer until the sibling-driven layout pass completes.
+        if (_selectionVisualsRefreshPending)
+        {
+            return;
+        }
+
+        _selectionVisualsRefreshPending = true;
+        Dispatcher.BeginInvoke(
+            DispatcherPriority.Loaded,
+            new Action(() =>
+            {
+                _selectionVisualsRefreshPending = false;
+                RefreshSelectionVisuals();
+            }));
     }
 
     /// <summary>

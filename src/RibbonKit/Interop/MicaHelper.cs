@@ -43,6 +43,7 @@ public static class MicaHelper
 {
     // DWMWINDOWATTRIBUTE.DWMWA_SYSTEMBACKDROP_TYPE (Windows 11 22H2+).
     private const int DwmwaSystemBackdropType = 38;
+    private const int DwmwaUseImmersiveDarkMode = 20;
 
     // DWMWA_WINDOW_CORNER_PREFERENCE / DWMWA_BORDER_COLOR (Windows 11 21H2+, build 22000).
     private const int DwmwaWindowCornerPreference = 33;
@@ -103,6 +104,32 @@ public static class MicaHelper
 
         int value = (int)backdrop;
         return DwmSetWindowAttribute(hwnd, DwmwaSystemBackdropType, ref value, sizeof(int)) == 0;
+    }
+
+    /// <summary>
+    /// Tells the DWM whether <paramref name="window"/> uses dark chrome, allowing Mica,
+    /// Acrylic, the system border, and other native frame details to choose the matching
+    /// light or dark treatment. Returns <see langword="false"/> on unsupported Windows builds
+    /// or when the DWM rejects the request.
+    /// </summary>
+    public static bool TrySetDarkMode(Window window, bool enabled)
+    {
+        ArgumentNullException.ThrowIfNull(window);
+
+        if (Environment.OSVersion.Platform != PlatformID.Win32NT
+            || Environment.OSVersion.Version.Build < 18362)
+        {
+            return false;
+        }
+
+        IntPtr hwnd = new WindowInteropHelper(window).EnsureHandle();
+        if (hwnd == IntPtr.Zero)
+        {
+            return false;
+        }
+
+        int value = enabled ? 1 : 0;
+        return DwmSetWindowAttribute(hwnd, DwmwaUseImmersiveDarkMode, ref value, sizeof(int)) == 0;
     }
 
     /// <summary>

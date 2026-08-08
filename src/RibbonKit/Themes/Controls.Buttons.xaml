@@ -43,11 +43,7 @@
                                     BorderBrush="{DynamicResource RibbonKit.Brushes.Control.PressedBorder}"
                                     BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
                                     CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
-                                    Opacity="0" IsHitTestVisible="False">
-                                <Border BorderBrush="{DynamicResource RibbonKit.Brushes.Control.InnerGlow}"
-                                        BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
-                                        CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}" />
-                            </Border>
+                                    Opacity="0" IsHitTestVisible="False" />
                             <!-- Large: 32px icon over wrapped label -->
                             <StackPanel x:Name="LargeLayout"
                                         Orientation="Vertical"
@@ -246,11 +242,7 @@
                                     BorderBrush="{DynamicResource RibbonKit.Brushes.Control.PressedBorder}"
                                     BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
                                     CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
-                                    Opacity="0" IsHitTestVisible="False">
-                                <Border BorderBrush="{DynamicResource RibbonKit.Brushes.Control.InnerGlow}"
-                                        BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
-                                        CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}" />
-                            </Border>
+                                    Opacity="0" IsHitTestVisible="False" />
                             <StackPanel x:Name="LargeLayout"
                                         Orientation="Vertical"
                                         Margin="6,8,6,0"

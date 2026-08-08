@@ -76,8 +76,8 @@ Legend: ✅ done · 🚧 in progress · 📋 planned
 | KeyTips — full chained Alt navigation (Alt → H → F → S) | ✅ |
 | Arrow / Tab / F6 keyboard navigation | ✅ |
 | UI Automation peers | ✅ |
-| RTL support | 📋 |
-| Localization of built-in strings (.resx) | 📋 |
+| RTL support | ✅ Ribbon, popups/context menus, QAT customization, window edges, Backstage and application menu/orb verified through the interactive Showcase lab |
+| Localization of built-in strings (.resx) | ✅ Context menus, Customize/Options, chrome/default File/application-menu footer, live provider and pseudo-localization lab |
 
 ### Theming & rendering
 
@@ -93,7 +93,7 @@ Legend: ✅ done · 🚧 in progress · 📋 planned
 | Per-monitor v2 High DPI (verified 100 / 125 / 150 / 175 / 200%) | ✅ |
 | Mica and Acrylic system backdrops (Windows 11) | ✅ |
 | Animation system — tab slide, hover cross-fade, sliding underline, KeyTip pop, scroll glide, combo-box drop-down slide, title glide, with a reduced-motion switch | ✅ |
-| Dark mode | 📋 |
+| Dark mode (Office 2019 / 2024, including dark-aware Mica) | ✅ |
 
 ![The same window in the Office 2010 theme](docs/images/theme-2010.png)
 
@@ -109,7 +109,7 @@ Legend: ✅ done · 🚧 in progress · 📋 planned
 | **Ribbon Editor** design-time dialog with drag-drop tree reordering | ✅ |
 | NuGet package bundling the design-tools assembly + toolbox manifest | ✅ |
 | Showcase / demo app | ✅ |
-| Visual regression snapshot suite per theme × DPI | 📋 |
+| Visual regression snapshot suite per theme / variant × DPI | ✅ |
 | Documentation site | 📋 |
 
 ![The design-time Ribbon Editor dialog](docs/images/ribbon-editor.png)
@@ -186,6 +186,9 @@ Switch themes and accents at runtime — the shared templates read tokens throug
 ```csharp
 ThemeManager.Apply(Application.Current, RibbonTheme.Office2010);
 ThemeManager.SetAccent(Application.Current, Colors.SeaGreen);  // ClearAccent() returns to the theme default
+
+ThemeManager.Apply(Application.Current, RibbonTheme.Office2024);
+ThemeManager.SetDarkMode(Application.Current, true);            // Supported by every generation
 ```
 
 ## Building from source
@@ -208,6 +211,11 @@ dotnet pack src/RibbonKit/RibbonKit.csproj -c Release
 
 Design-time tooling setup is documented in [`src/RibbonKit.Design/SETUP-DESIGNTOOLS.md`](src/RibbonKit.Design/SETUP-DESIGNTOOLS.md).
 
+RibbonKit-owned context-menu strings resolve from embedded `.resx` resources. Applications can
+override any subset by assigning `RibbonLocalization.Provider`; returning `null` from
+`IRibbonLocalizationProvider.GetString` falls back to RibbonKit's resource for the current UI
+culture. Application-authored tab, group and command text remains the application's responsibility.
+
 ## Documentation
 
 | Document | Contents |
@@ -222,7 +230,7 @@ Design-time tooling setup is documented in [`src/RibbonKit.Design/SETUP-DESIGNTO
 
 ## Roadmap to v1.0
 
-Remaining before the API freeze: dark mode, RTL and localization, and the visual regression suite (all Phase 6). The Phase 7 merge/modal invariant tests are complete. One item is still deferred out of the Office 2007 work: the 2007 window frame. (The two-pane 2007 application menu, the other deferral, shipped as `RibbonApplicationMenu`.) Then release engineering — API review and freeze, docs site, SourceLink, and a performance pass.
+Phase 6 localization/RTL is complete. Every generation has a dark variant—historical Black for 2007/2010, Dark Gray for 2013, and modern dark for 2019/2024—and the 40-image theme/variant × DPI matrix is complete. The 47 approvals also include Office 2024 RTL ribbon, QAT-customization, and representative bidirectional Backstage scenes plus focused Office 2010 state/Backstage and classic-dark application-menu scenes. RibbonKit's runtime context menus, Customize/Options UI, window/Backstage/QAT/group chrome tooltips, QAT-overflow KeyTip, default File label, and conventional Options/Exit application-menu footer now resolve from `.resx` through a live partial-override provider; disconnected context menus and directional customization actions also behave correctly in RTL. The Localization/RTL lab follows the main Showcase's Backstage design/translucency, 2007-menu, and orb choices while providing its own bidirectional two-pane menu. Its live split/nested menus, context menus, normal/maximized screen edges, Backstage, and Office 2024/2007 application-menu/button surfaces are user-verified. The Phase 7 merge/modal invariant tests are complete. One item is still deferred out of the Office 2007 work: the 2007 window frame. (The two-pane 2007 application menu, the other deferral, shipped as `RibbonApplicationMenu`.) Then release engineering — API review and freeze, docs site, SourceLink, and a performance pass.
 
 ## Contributing
 

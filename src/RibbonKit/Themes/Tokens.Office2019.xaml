@@ -14,6 +14,8 @@
          option). A light grey — not white — so the near-white selected tab stands out. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Background" Color="#E6E6E6" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.ContentBackground" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.SurfaceBackground" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Window.Background" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Border" Color="#C8C6C4" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Primary" Color="#201F1E" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Secondary" Color="#605E5C" />
@@ -114,6 +116,16 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.NavBackground" Color="#E6E6E6" />
     <system:Double x:Key="RibbonKit.Metrics.BackstageBackButtonSize">36</system:Double>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ContentBackground" Color="#FFFFFF" />
+    <DropShadowEffect x:Key="RibbonKit.Effects.Backstage.ContentShadow"
+                      Opacity="0" BlurRadius="0" ShadowDepth="0" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.NavBackground" Color="#F5F4F3" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.Foreground" Color="#201F1E" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemHover" Color="#EDEBE9" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemSelected" Color="#E1DFDD" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemHoverTranslucent" Color="#12000000" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemSelectedTranslucent" Color="#1F000000" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.NavBackgroundTranslucent" Color="#00F5F4F3" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.OptionsDialog.RailBackground" Color="#F5F4F3" />
     <!-- Classic2010 selected-item glass marker + dialog primary (OK) button fill (flat accent). -->
     <LinearGradientBrush x:Key="RibbonKit.Brushes.Backstage.ItemSelectedGlass" StartPoint="0,0" EndPoint="0,1">
         <GradientStop Offset="0" Color="#4E7CC0" />
@@ -158,6 +170,7 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverUnderline" Color="Transparent" />
     <!-- No File-button border (Office 2010 uses one). -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.Border" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.InnerGlow" Color="Transparent" />
     <!-- Orb tokens. This theme uses the rectangular File tab, so these only matter if an app opts
          into Ribbon.ApplicationButtonShape = Orb anyway. Kept at the 2007 geometry minus the
          overhang, so an orb here sits neatly inside the tab strip. -->
@@ -253,6 +266,9 @@
          than 2007's glass. The top band is nearly nothing here because there is no orb to tuck
          under it.
          ============================================================ -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.Foreground" Color="#201F1E" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.SecondaryForeground" Color="#605E5C" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.HeadingForeground" Color="#2B579A" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.FrameBorder" Color="#C8C6C4" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.FrameRim" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.FrameBand" Color="#F3F2F1" />

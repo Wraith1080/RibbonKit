@@ -19,4 +19,5 @@ using System.Windows.Markup;
 [assembly: XmlnsDefinition("urn:ribbonkit", "RibbonKit.Controls")]
 [assembly: XmlnsDefinition("urn:ribbonkit", "RibbonKit.Layout")]
 [assembly: XmlnsDefinition("urn:ribbonkit", "RibbonKit.Theming")]
+[assembly: XmlnsDefinition("urn:ribbonkit", "RibbonKit.Localization")]
 [assembly: XmlnsPrefix("urn:ribbonkit", "rk")]

@@ -37,14 +37,15 @@ public enum RibbonTheme
 /// Applies a RibbonKit theme at runtime by swapping the active token dictionary in
 /// <see cref="Application.Resources"/>. The shared control templates reference tokens
 /// via <c>DynamicResource</c>, so replacing the token dictionary re-colors every
-/// control instantly — no template is duplicated per theme.
+/// control instantly — no template is duplicated per theme. Every generation supports
+/// its own dark/black token overlay through <see cref="SetDarkMode"/>.
 /// </summary>
 /// <remarks>
 /// A token dictionary must be present for controls to render correctly. Either merge
 /// one in App.xaml (for example <c>Themes/Tokens.Office2024.xaml</c>) or call
 /// <see cref="Apply"/> once at startup. A custom <see cref="SetAccent"/> and the
-/// <see cref="SetAccentedTitleBar"/> toggle survive theme switches, re-deriving their
-/// colors for whichever theme is active.
+/// <see cref="SetAccentedTitleBar"/> and <see cref="SetDarkMode"/> toggles survive theme
+/// switches, re-deriving their colors for whichever theme is active.
 /// </remarks>
 public static class ThemeManager
 {
@@ -90,6 +91,8 @@ public static class ThemeManager
     // which is what a real Fluent surface does.
     private static readonly SolidColorBrush BackdropControlHover = Frozen(Color.FromArgb(0x1F, 0, 0, 0));
     private static readonly SolidColorBrush BackdropControlPressed = Frozen(Color.FromArgb(0x33, 0, 0, 0));
+    private static readonly SolidColorBrush DarkBackdropControlHover = Frozen(Color.FromArgb(0x24, 255, 255, 255));
+    private static readonly SolidColorBrush DarkBackdropControlPressed = Frozen(Color.FromArgb(0x3D, 255, 255, 255));
 
     // Every key the accent system may override, so a theme switch can clear the previous
     // theme's accent overrides before re-deriving for the new one.
@@ -108,9 +111,11 @@ public static class ThemeManager
     private static readonly Color DefaultAccent = Color.FromRgb(0x2B, 0x57, 0x9A);
 
     private static ResourceDictionary? _current;
+    private static ResourceDictionary? _currentVariant;
     private static Color? _accent;
     private static bool _accentTitleBar;
     private static bool _titleBarBackdrop;
+    private static bool _darkMode;
 
     /// <summary>The theme most recently applied via <see cref="Apply"/>, if any.</summary>
     public static RibbonTheme? CurrentTheme { get; private set; }
@@ -122,7 +127,13 @@ public static class ThemeManager
     public static bool IsTitleBarBackdrop => _titleBarBackdrop;
 
     /// <summary>
-    /// Raised whenever the theme, accent, or accent-title-bar configuration changes, so
+    /// Whether the active generation's dark/black palette has been requested through
+    /// <see cref="SetDarkMode"/>. The preference survives theme switches.
+    /// </summary>
+    public static bool IsDarkMode => _darkMode;
+
+    /// <summary>
+    /// Raised whenever the theme, dark-mode, accent, or accent-title-bar configuration changes, so
     /// dependent visuals (e.g. the ribbon's quick-access icons) can re-evaluate.
     /// </summary>
     public static event EventHandler? Changed;
@@ -144,7 +155,13 @@ public static class ThemeManager
                 UriKind.Absolute),
         };
 
-        // Remove the dictionary we added last time...
+        // Remove the dictionaries we added last time...
+        if (_currentVariant is not null)
+        {
+            application.Resources.MergedDictionaries.Remove(_currentVariant);
+            _currentVariant = null;
+        }
+
         if (_current is not null)
         {
             application.Resources.MergedDictionaries.Remove(_current);
@@ -159,11 +176,60 @@ public static class ThemeManager
         application.Resources.MergedDictionaries.Add(dictionary);
         _current = dictionary;
         CurrentTheme = theme;
+        ApplyDarkModeDictionary(application);
 
         // Re-derive customizations for the freshly-applied theme.
         ApplyAccentOverrides(application);
         ApplyTitleBarOverride(application);
         Changed?.Invoke(null, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Enables or disables the active generation's dark/black palette. Office 2007 and 2010
+    /// use their historical hybrid Black schemes; Office 2013 uses Dark Gray; Office 2019 and
+    /// 2024 use fully dark palettes. The preference survives <see cref="Apply"/> calls.
+    /// </summary>
+    public static void SetDarkMode(Application application, bool enabled)
+    {
+        ArgumentNullException.ThrowIfNull(application);
+
+        _darkMode = enabled;
+        ApplyDarkModeDictionary(application);
+        ApplyAccentOverrides(application);
+        ApplyTitleBarOverride(application);
+        Changed?.Invoke(null, EventArgs.Empty);
+    }
+
+    /// <summary>Returns whether <paramref name="theme"/> has a RibbonKit dark palette.</summary>
+    public static bool SupportsDarkMode(RibbonTheme theme) =>
+        theme is RibbonTheme.Office2007
+            or RibbonTheme.Office2010
+            or RibbonTheme.Office2013
+            or RibbonTheme.Office2019
+            or RibbonTheme.Office2024;
+
+    private static void ApplyDarkModeDictionary(Application application)
+    {
+        if (_currentVariant is not null)
+        {
+            application.Resources.MergedDictionaries.Remove(_currentVariant);
+            _currentVariant = null;
+        }
+
+        RibbonTheme theme = CurrentTheme ?? RibbonTheme.Office2024;
+        if (!_darkMode || !SupportsDarkMode(theme))
+        {
+            return;
+        }
+
+        var dictionary = new ResourceDictionary
+        {
+            Source = new Uri(
+                $"pack://application:,,,/RibbonKit;component/Themes/Tokens.{theme}.Dark.xaml",
+                UriKind.Absolute),
+        };
+        application.Resources.MergedDictionaries.Add(dictionary);
+        _currentVariant = dictionary;
     }
 
     /// <summary>
@@ -255,9 +321,10 @@ public static class ThemeManager
         resources[AccentKey] = Frozen(accent);
         resources[BackstageHoverKey] = Frozen(Mix(accent, Colors.White, 0.22));
         resources[BackstageSelectedKey] = Frozen(Mix(accent, Colors.Black, 0.28));
-        // The Classic2010 selected "glass" marker tracks the accent as a gel (only visible when
-        // that backstage design is active, harmless otherwise). The dialog primary (OK) button
-        // is flat accent by default; the Office 2010 case below swaps it for a glass gel.
+        // The Classic2010 selected marker tracks the accent (only visible when that backstage
+        // design is active, harmless otherwise). Office 2010 replaces this baseline gel with its
+        // lower-center radial glow below. The dialog primary (OK) button is flat accent by default;
+        // the Office 2010 case swaps it for a glass gel.
         resources[BackstageSelectedGlassKey] = Gel(accent);
         resources[DialogPrimaryBackgroundKey] = Frozen(accent);
         resources[DialogPrimaryBorderKey] = Frozen(accent);
@@ -276,8 +343,9 @@ public static class ThemeManager
         // Leaving these unset keeps each theme's own gradient (they were Removed above).
         if (theme is not (RibbonTheme.Office2010 or RibbonTheme.Office2007))
         {
-            resources[CheckedKey] = Frozen(Mix(accent, Colors.White, 0.82));
-            resources[CheckedHoverKey] = Frozen(Mix(accent, Colors.White, 0.72));
+            bool dark = _darkMode && SupportsDarkMode(theme);
+            resources[CheckedKey] = Frozen(Mix(accent, dark ? Colors.Black : Colors.White, dark ? 0.52 : 0.82));
+            resources[CheckedHoverKey] = Frozen(Mix(accent, dark ? Colors.Black : Colors.White, dark ? 0.40 : 0.72));
         }
 
         // Theme-specific accent tokens: only where that theme actually uses the accent,
@@ -296,13 +364,15 @@ public static class ThemeManager
                 break;
             case RibbonTheme.Office2010:
                 // The File button tracks the accent — but as a GRADIENT (a smooth blue-style
-                // gel in the accent hue) with a matching border, NOT a flat solid, so it keeps
-                // the 2010 glass look when the accent changes. The connected selected tab keeps
-                // its dark label (SelectedForeground left at the theme default).
-                resources[AppButtonBackgroundKey] = Gel(accent);
-                resources[AppButtonHoverKey] = Gel(Mix(accent, Colors.White, 0.18));
-                resources[AppButtonPressedKey] = Gel(Mix(accent, Colors.Black, 0.22));
+                // gel in the accent hue) with a matching border, NOT a flat solid. Its separate
+                // radial inner-rim token provides the lower-center bloom, so these body ramps do
+                // not end in Gel's uniform bright foot. The connected selected tab keeps its dark
+                // label (SelectedForeground left at the theme default).
+                resources[AppButtonBackgroundKey] = ApplicationButtonGel(accent);
+                resources[AppButtonHoverKey] = ApplicationButtonGel(Mix(accent, Colors.White, 0.18));
+                resources[AppButtonPressedKey] = PressedGel(Mix(accent, Colors.Black, 0.22));
                 resources[AppButtonBorderKey] = Frozen(Mix(accent, Colors.Black, 0.30));
+                resources[BackstageSelectedGlassKey] = BackstageSelectionGlow(accent);
                 // The OK button borrows the same glass gel + border in 2010.
                 resources[DialogPrimaryBackgroundKey] = Gel(accent);
                 resources[DialogPrimaryBorderKey] = Frozen(Mix(accent, Colors.Black, 0.30));
@@ -357,8 +427,8 @@ public static class ThemeManager
     }
 
     /// <summary>
-    /// Builds a smooth 3-stop vertical "gel" gradient centered on <paramref name="baseColor"/>
-    /// (lighter top, base middle, darker bottom) — the Office 2010 glossy-block look, derived so
+    /// Builds a smooth 4-stop vertical "gel" gradient centered on <paramref name="baseColor"/>
+    /// (lighter top, matte middle, bright bottom foot) — the Office 2010 glossy-block look, derived so
     /// a custom accent keeps its gradient instead of flattening to a solid.
     /// </summary>
     private static LinearGradientBrush Gel(Color baseColor)
@@ -368,11 +438,69 @@ public static class ThemeManager
             StartPoint = new Point(0, 0),
             EndPoint = new Point(0, 1),
         };
-        // Light top (inner glow), a slightly darker matte middle, then a LIGHTER bottom — the
-        // small specular reflection of a 2010 glass button.
+        // Light top, a slightly darker matte middle, then a LIGHTER bottom — the
+        // strong bottom inner glow of a 2010 glass button.
+        brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.White, 0.38), 0.0));
+        brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.Black, 0.10), 0.5));
+        brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.White, 0.20), 0.9));
+        brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.White, 0.72), 1.0));
+        brush.Freeze();
+        return brush;
+    }
+
+    /// <summary>
+    /// Builds the smooth Office 2010 File-button body. Its lower bloom is rendered by the
+    /// application-button-specific radial inner rim, so this ramp deliberately has no white foot.
+    /// </summary>
+    private static LinearGradientBrush ApplicationButtonGel(Color baseColor)
+    {
+        var brush = new LinearGradientBrush
+        {
+            StartPoint = new Point(0, 0),
+            EndPoint = new Point(0, 1),
+        };
         brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.White, 0.38), 0.0));
         brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.Black, 0.10), 0.5));
         brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.White, 0.20), 1.0));
+        brush.Freeze();
+        return brush;
+    }
+
+    /// <summary>
+    /// Builds the Office 2010 Backstage selected-row glow: brightest below center, then easing
+    /// toward darker side edges. This is intentionally radial rather than a button-style vertical gel.
+    /// </summary>
+    private static RadialGradientBrush BackstageSelectionGlow(Color baseColor)
+    {
+        var brush = new RadialGradientBrush
+        {
+            Center = new Point(0.43, 0.78),
+            GradientOrigin = new Point(0.43, 0.78),
+            RadiusX = 0.78,
+            RadiusY = 1.05,
+        };
+        brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.White, 0.40), 0.0));
+        brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.White, 0.18), 0.45));
+        brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.Black, 0.08), 0.78));
+        brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.Black, 0.25), 1.0));
+        brush.Freeze();
+        return brush;
+    }
+
+    /// <summary>
+    /// Builds the recessed Office 2010 button state. Unlike <see cref="Gel"/>, it ends on the
+    /// lower-face color and deliberately has no bright bottom foot while the button is pressed.
+    /// </summary>
+    private static LinearGradientBrush PressedGel(Color baseColor)
+    {
+        var brush = new LinearGradientBrush
+        {
+            StartPoint = new Point(0, 0),
+            EndPoint = new Point(0, 1),
+        };
+        brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.White, 0.20), 0.0));
+        brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.Black, 0.12), 0.5));
+        brush.GradientStops.Add(new GradientStop(Mix(baseColor, Colors.White, 0.10), 1.0));
         brush.Freeze();
         return brush;
     }
@@ -446,11 +574,15 @@ public static class ThemeManager
         resources.Remove(AppButtonMenuOpenBackgroundKey);
         resources.Remove(AppButtonMenuOpenForegroundKey);
         // Menu-open tokens normally preserve the old checked-state contract: accent fill and
-        // white text, including when a custom accent is active. The Office 2019 colored-band
-        // branch below replaces that baseline with the menu's neutral frame surface.
+        // white text, including when a custom accent is active. Office 2010 keeps its smooth
+        // gel rather than flattening the open File tab; the Office 2019 colored-band branch
+        // below replaces this baseline with the menu's neutral frame surface.
         if (_accent is Color customAccent)
         {
-            resources[AppButtonMenuOpenBackgroundKey] = Frozen(customAccent);
+            resources[AppButtonMenuOpenBackgroundKey] =
+                (CurrentTheme ?? RibbonTheme.Office2024) == RibbonTheme.Office2010
+                    ? ApplicationButtonGel(Mix(customAccent, Colors.Black, 0.10))
+                    : Frozen(customAccent);
             resources[AppButtonMenuOpenForegroundKey] = Frozen(Colors.White);
         }
         // Note: the ApplicationButton hover/pressed keys are NOT cleared wholesale — they are
@@ -458,7 +590,8 @@ public static class ThemeManager
         // gets flat mixes, 2010/2007 a gel), and a blind Remove here would delete the value it
         // just derived. The backdrop branch below is the only other writer of PressedBackground,
         // so clear it ONLY when the live value is that override, identified by reference.
-        if (ReferenceEquals(resources[AppButtonPressedKey], BackdropControlPressed))
+        if (ReferenceEquals(resources[AppButtonPressedKey], BackdropControlPressed)
+            || ReferenceEquals(resources[AppButtonPressedKey], DarkBackdropControlPressed))
         {
             resources.Remove(AppButtonPressedKey);
         }
@@ -467,23 +600,26 @@ public static class ThemeManager
         // Office 2024 look with a NON-colored title bar. A colored title bar falls through to
         // the accent branch below (opaque accent); any other theme with a non-colored title bar
         // returns with no override, keeping that theme's solid light band. The caption
-        // foreground/hover tokens are intentionally left at their theme defaults (dark text, a
-        // light hover) which read correctly over the material.
+        // foreground stays at the active light/dark theme default. Hover/press use translucent
+        // black washes in light mode and white washes in dark mode, so both tint the material.
         if (_titleBarBackdrop
             && !_accentTitleBar
             && (CurrentTheme ?? RibbonTheme.Office2024) == RibbonTheme.Office2024)
         {
             resources[TitleBarBackgroundKey] = Brushes.Transparent;
+            resources[RibbonBackgroundKey] = Brushes.Transparent;
+            Brush backdropHover = _darkMode ? DarkBackdropControlHover : BackdropControlHover;
+            Brush backdropPressed = _darkMode ? DarkBackdropControlPressed : BackdropControlPressed;
             // Every hover/press chip that sits on a surface the backdrop shows through has to
             // go translucent with it. The caption buttons sit directly on the now-transparent
             // title bar; the tab-strip chrome buttons and the pressed File button sit on the
             // strip, which is transparent too under Mica. Leaving them solid was the "ugly
             // opaque square on the material" case.
-            resources[CaptionHoverKey] = BackdropControlHover;
-            resources[CaptionPressedKey] = BackdropControlPressed;
-            resources[TabStripControlHoverKey] = BackdropControlHover;
-            resources[TabStripControlPressedKey] = BackdropControlPressed;
-            resources[AppButtonPressedKey] = BackdropControlPressed;
+            resources[CaptionHoverKey] = backdropHover;
+            resources[CaptionPressedKey] = backdropPressed;
+            resources[TabStripControlHoverKey] = backdropHover;
+            resources[TabStripControlPressedKey] = backdropPressed;
+            resources[AppButtonPressedKey] = backdropPressed;
             return;
         }
 
@@ -528,7 +664,7 @@ public static class ThemeManager
         };
         Brush captionPressedBrush = CurrentTheme switch
         {
-            RibbonTheme.Office2010 => Gel(captionPressed),
+            RibbonTheme.Office2010 => PressedGel(captionPressed),
             RibbonTheme.Office2007 => Glass(captionPressed),
             _ => Frozen(captionPressed),
         };

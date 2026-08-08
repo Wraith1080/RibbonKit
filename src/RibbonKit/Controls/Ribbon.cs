@@ -1,11 +1,14 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Automation.Peers;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Markup;
+using System.Windows.Threading;
 using RibbonKit.Animation;
+using RibbonKit.Localization;
 // Alias: WPF's legacy Microsoft ribbon declares identically-named peers in
 // System.Windows.Automation.Peers, so the reference must be disambiguated.
 using RibbonAutomationPeer = RibbonKit.Automation.RibbonAutomationPeer;
@@ -118,7 +121,20 @@ public class Ribbon : Control
             nameof(ApplicationButtonHeader),
             typeof(string),
             typeof(Ribbon),
+            new FrameworkPropertyMetadata("File", OnApplicationButtonHeaderChanged));
+
+    private static readonly DependencyPropertyKey EffectiveApplicationButtonHeaderPropertyKey =
+        DependencyProperty.RegisterReadOnly(
+            nameof(EffectiveApplicationButtonHeader),
+            typeof(string),
+            typeof(Ribbon),
             new FrameworkPropertyMetadata("File"));
+
+    /// <summary>
+    /// Identifies the read-only <see cref="EffectiveApplicationButtonHeader"/> dependency property.
+    /// </summary>
+    public static readonly DependencyProperty EffectiveApplicationButtonHeaderProperty =
+        EffectiveApplicationButtonHeaderPropertyKey.DependencyProperty;
 
     /// <summary>Identifies the <see cref="ApplicationButtonShape"/> dependency property.</summary>
     public static readonly DependencyProperty ApplicationButtonShapeProperty =
@@ -250,6 +266,11 @@ public class Ribbon : Control
         quickAccessItems.CollectionChanged += (_, _) => UpdateQatButtonContext();
         SetValue(QuickAccessItemsPropertyKey, quickAccessItems);
         _keyTipService = new KeyTipService(this);
+        PropertyChangedEventManager.AddHandler(
+            RibbonLocalizationBindingSource.Instance,
+            OnLocalizationBindingSourceChanged,
+            "Item[]");
+        UpdateEffectiveApplicationButtonHeader();
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
     }
@@ -1175,25 +1196,38 @@ public class Ribbon : Control
 
         var addItem = new System.Windows.Controls.MenuItem
         {
-            Header = "Add to Quick Access Toolbar",
+            Header = RibbonLocalization.GetString(RibbonString.AddToQuickAccessToolbar),
             IsEnabled = !IsInQuickAccess(target),
         };
         addItem.Click += (_, _) => AddToQuickAccess(target);
 
-        var customizeItem = new System.Windows.Controls.MenuItem { Header = "Customize Quick Access Toolbar…" };
+        var customizeItem = new System.Windows.Controls.MenuItem
+        {
+            Header = RibbonLocalization.GetString(RibbonString.CustomizeQuickAccessToolbar),
+        };
         customizeItem.Click += (_, _) => QuickAccessCustomizeRequested?.Invoke(this, EventArgs.Empty);
 
-        var customizeRibbonItem = new System.Windows.Controls.MenuItem { Header = "Customize the Ribbon…" };
+        var customizeRibbonItem = new System.Windows.Controls.MenuItem
+        {
+            Header = RibbonLocalization.GetString(RibbonString.CustomizeRibbon),
+        };
         customizeRibbonItem.Click += (_, _) => RaiseRibbonCustomizeRequested();
 
         var collapseItem = new System.Windows.Controls.MenuItem
         {
-            Header = "Collapse the Ribbon",
+            Header = RibbonLocalization.GetString(RibbonString.CollapseRibbon),
             IsChecked = IsMinimized,
         };
         collapseItem.Click += (_, _) => SetCurrentValue(IsMinimizedProperty, !IsMinimized);
 
-        var menu = new System.Windows.Controls.ContextMenu { PlacementTarget = target };
+        var menu = new System.Windows.Controls.ContextMenu
+        {
+            PlacementTarget = target,
+            // ContextMenu is hosted in a separate popup window and therefore cannot inherit this
+            // from the command's visual tree. Copy it explicitly so item layout and submenu arrows
+            // mirror with the owning ribbon.
+            FlowDirection = target.FlowDirection,
+        };
         ApplyModernMenuStyle(menu);
         menu.Items.Add(addItem);
         menu.Items.Add(customizeItem);
@@ -1323,12 +1357,64 @@ public class Ribbon : Control
         set => SetValue(ApplicationMenuProperty, value);
     }
 
-    /// <summary>Text of the application button. Default: "File".</summary>
+    /// <summary>
+    /// Gets or sets the application button text. When no local value, style or binding supplies
+    /// one, the getter returns RibbonKit's live localized <c>File</c> string.
+    /// </summary>
     public string ApplicationButtonHeader
     {
-        get => (string)GetValue(ApplicationButtonHeaderProperty);
+        get
+        {
+            string? configured = (string?)GetValue(ApplicationButtonHeaderProperty);
+            return UsesDefaultApplicationButtonHeader() || configured is null
+                ? RibbonLocalization.GetString(RibbonString.File)
+                : configured;
+        }
+
         set => SetValue(ApplicationButtonHeaderProperty, value);
     }
+
+    /// <summary>
+    /// Gets the application button text after applying the localized default. Templates should
+    /// bind to this value so provider and UI-culture refreshes do not replace an application-owned
+    /// <see cref="ApplicationButtonHeader"/> value or binding.
+    /// </summary>
+    public string EffectiveApplicationButtonHeader =>
+        (string)GetValue(EffectiveApplicationButtonHeaderProperty);
+
+    private static void OnApplicationButtonHeaderChanged(
+        DependencyObject d,
+        DependencyPropertyChangedEventArgs e) =>
+        ((Ribbon)d).UpdateEffectiveApplicationButtonHeader();
+
+    private void OnLocalizationBindingSourceChanged(
+        object? sender,
+        PropertyChangedEventArgs e)
+    {
+        if (Dispatcher.CheckAccess())
+        {
+            UpdateEffectiveApplicationButtonHeader();
+        }
+        else if (!Dispatcher.HasShutdownStarted && !Dispatcher.HasShutdownFinished)
+        {
+            Dispatcher.BeginInvoke(
+                DispatcherPriority.DataBind,
+                new Action(UpdateEffectiveApplicationButtonHeader));
+        }
+    }
+
+    private void UpdateEffectiveApplicationButtonHeader()
+    {
+        string? configured = (string?)GetValue(ApplicationButtonHeaderProperty);
+        string effective = UsesDefaultApplicationButtonHeader() || configured is null
+            ? RibbonLocalization.GetString(RibbonString.File)
+            : configured;
+        SetValue(EffectiveApplicationButtonHeaderPropertyKey, effective);
+    }
+
+    private bool UsesDefaultApplicationButtonHeader() =>
+        DependencyPropertyHelper.GetValueSource(this, ApplicationButtonHeaderProperty).BaseValueSource
+            == BaseValueSource.Default;
 
     /// <summary>
     /// Whether the application button renders as a rectangular File tab (default) or as the round
@@ -1392,6 +1478,7 @@ public class Ribbon : Control
     private System.Windows.Controls.MenuItem? _qatAboveItem;
     private System.Windows.Controls.MenuItem? _qatBelowItem;
     private System.Windows.Controls.MenuItem? _qatRemoveItem;
+    private System.Windows.Controls.MenuItem? _qatCustomizeItem;
     private System.Windows.Controls.Separator? _qatRemoveSeparator;
 
     // The quick-access item under the cursor when the QAT context menu was opened —
@@ -1577,6 +1664,8 @@ public class Ribbon : Control
             ribbonWindow.SetCurrentValue(RibbonWindow.IsTitleBarContentVisibleProperty, !open);
         }
 
+        RibbonSlideFrom slideEdge = BackstageSlideEdge(FlowDirection);
+
         if (open)
         {
             _backstageClosing = false;
@@ -1589,7 +1678,7 @@ public class Ribbon : Control
                 if (Backstage is FrameworkElement reopening)
                 {
                     reopening.Focus();
-                    RibbonMotion.PlayOpen(reopening, RibbonAnimationAction.Backstage, RibbonSlideFrom.Left);
+                    RibbonMotion.PlayOpen(reopening, RibbonAnimationAction.Backstage, slideEdge);
                 }
 
                 HideContentBehindBackstage(_backstageAdorner.AdornedElement);
@@ -1610,7 +1699,7 @@ public class Ribbon : Control
                 return;
             }
 
-            _backstageAdorner = new BackstageAdorner(root, content);
+            _backstageAdorner = new BackstageAdorner(root, content, this);
             layer.Add(_backstageAdorner);
 
             // Hide the content behind a translucent backstage entirely so a window system
@@ -1624,21 +1713,22 @@ public class Ribbon : Control
                 element.Focusable = true;
                 element.Focus(); // So Esc works immediately.
 
-                // Slide the backstage overlay in from the left (honors the global animation level).
-                RibbonMotion.PlayOpen(element, RibbonAnimationAction.Backstage, RibbonSlideFrom.Left);
+                // Slide from the logical leading edge (honors RTL and the global animation level).
+                RibbonMotion.PlayOpen(element, RibbonAnimationAction.Backstage, slideEdge);
             }
         }
         else if (_backstageAdorner is not null && !_backstageClosing)
         {
-            // Slide the backstage back out to the left (mirroring the entrance), then remove
+            // Slide the backstage back out through the logical leading edge, then remove
             // the adorner once the exit animation finishes.
             _backstageClosing = true;
             BackstageAdorner adorner = _backstageAdorner;
             FrameworkElement? content = Backstage as FrameworkElement;
 
             // Restore the hidden content at the START of the exit (not on completion): the
-            // backstage slides out to the left, and the ribbon/document must already be there
-            // for the slide to reveal — restoring at the end would leave the bare backdrop
+            // backstage slides out through its logical leading edge, and the ribbon/document must
+            // already be there for the slide to reveal — restoring at the end would leave the bare
+            // backdrop
             // showing during the whole exit animation. If a re-open cancels this close
             // mid-flight, the open path simply hides the content again.
             RestoreContentBehindBackstage();
@@ -1646,7 +1736,7 @@ public class Ribbon : Control
             RibbonMotion.PlayClose(
                 content,
                 RibbonAnimationAction.Backstage,
-                RibbonSlideFrom.Left,
+                slideEdge,
                 () =>
                 {
                     // A re-open may have cancelled the close mid-flight; only tear down if
@@ -2178,21 +2268,33 @@ public class Ribbon : Control
             return _qatContextMenu;
         }
 
-        _qatTitleBarItem = new System.Windows.Controls.MenuItem { Header = "Show Quick Access Toolbar in the Title Bar" };
+        _qatTitleBarItem = new System.Windows.Controls.MenuItem
+        {
+            Header = RibbonLocalization.GetString(RibbonString.ShowQuickAccessToolbarInTitleBar),
+        };
         _qatTitleBarItem.Click += (_, _) =>
             SetCurrentValue(QuickAccessPositionProperty, RibbonQuickAccessPosition.TitleBar);
 
-        _qatAboveItem = new System.Windows.Controls.MenuItem { Header = "Show Quick Access Toolbar Above the Ribbon" };
+        _qatAboveItem = new System.Windows.Controls.MenuItem
+        {
+            Header = RibbonLocalization.GetString(RibbonString.ShowQuickAccessToolbarAboveRibbon),
+        };
         _qatAboveItem.Click += (_, _) =>
             SetCurrentValue(QuickAccessPositionProperty, RibbonQuickAccessPosition.TabRow);
 
-        _qatBelowItem = new System.Windows.Controls.MenuItem { Header = "Show Quick Access Toolbar Below the Ribbon" };
+        _qatBelowItem = new System.Windows.Controls.MenuItem
+        {
+            Header = RibbonLocalization.GetString(RibbonString.ShowQuickAccessToolbarBelowRibbon),
+        };
         _qatBelowItem.Click += (_, _) =>
             SetCurrentValue(QuickAccessPositionProperty, RibbonQuickAccessPosition.BelowRibbon);
 
         // Shown only when the right-click landed on a quick-access ITEM (the hosts'
         // ContextMenuOpening captures which one into _qatMenuTarget).
-        _qatRemoveItem = new System.Windows.Controls.MenuItem { Header = "Remove from Quick Access Toolbar" };
+        _qatRemoveItem = new System.Windows.Controls.MenuItem
+        {
+            Header = RibbonLocalization.GetString(RibbonString.RemoveFromQuickAccessToolbar),
+        };
         _qatRemoveItem.Click += (_, _) =>
         {
             if (_qatMenuTarget is not null)
@@ -2202,8 +2304,11 @@ public class Ribbon : Control
             }
         };
 
-        var customizeItem = new System.Windows.Controls.MenuItem { Header = "Customize Quick Access Toolbar…" };
-        customizeItem.Click += (_, _) => QuickAccessCustomizeRequested?.Invoke(this, EventArgs.Empty);
+        _qatCustomizeItem = new System.Windows.Controls.MenuItem
+        {
+            Header = RibbonLocalization.GetString(RibbonString.CustomizeQuickAccessToolbar),
+        };
+        _qatCustomizeItem.Click += (_, _) => QuickAccessCustomizeRequested?.Invoke(this, EventArgs.Empty);
 
         _qatRemoveSeparator = new System.Windows.Controls.Separator();
 
@@ -2215,7 +2320,7 @@ public class Ribbon : Control
         _qatContextMenu.Items.Add(_qatAboveItem);
         _qatContextMenu.Items.Add(_qatBelowItem);
         _qatContextMenu.Items.Add(new System.Windows.Controls.Separator());
-        _qatContextMenu.Items.Add(customizeItem);
+        _qatContextMenu.Items.Add(_qatCustomizeItem);
         _qatContextMenu.Opened += OnQatContextMenuOpened;
         return _qatContextMenu;
     }
@@ -2289,10 +2394,24 @@ public class Ribbon : Control
     private void OnQatHostContextMenuOpening(object sender, System.Windows.Controls.ContextMenuEventArgs e)
     {
         _qatMenuTarget = ResolveQuickAccessItem(e.OriginalSource as DependencyObject);
-        if (sender is FrameworkElement { ContextMenu: { } menu })
+        if (sender is FrameworkElement { ContextMenu: { } menu } host)
         {
-            RibbonPopupMotion.SuppressNativeContextMenuAnimationForOpen(menu);
+            PrepareQatContextMenu(host, menu);
         }
+    }
+
+    internal static RibbonSlideFrom BackstageSlideEdge(FlowDirection flowDirection) =>
+        flowDirection == FlowDirection.RightToLeft
+            ? RibbonSlideFrom.Right
+            : RibbonSlideFrom.Left;
+
+    private static void PrepareQatContextMenu(
+        FrameworkElement host,
+        System.Windows.Controls.ContextMenu menu)
+    {
+        // The menu is hosted in another popup visual tree, so it cannot inherit flow direction.
+        menu.FlowDirection = host.FlowDirection;
+        RibbonPopupMotion.SuppressNativeContextMenuAnimationForOpen(menu);
     }
 
     // Walks up from the right-clicked element to the element that is itself a member of
@@ -2331,6 +2450,8 @@ public class Ribbon : Control
 
     private void OnQatContextMenuOpened(object sender, RoutedEventArgs e)
     {
+        RefreshQatContextMenuText();
+
         // "Remove" applies only when the right-click landed on an actual QAT item.
         Visibility removeVisibility = _qatMenuTarget is null ? Visibility.Collapsed : Visibility.Visible;
         if (_qatRemoveItem is not null)
@@ -2357,6 +2478,34 @@ public class Ribbon : Control
         if (_qatBelowItem is not null)
         {
             _qatBelowItem.IsChecked = QuickAccessPosition == RibbonQuickAccessPosition.BelowRibbon;
+        }
+    }
+
+    private void RefreshQatContextMenuText()
+    {
+        if (_qatTitleBarItem is not null)
+        {
+            _qatTitleBarItem.Header = RibbonLocalization.GetString(RibbonString.ShowQuickAccessToolbarInTitleBar);
+        }
+
+        if (_qatAboveItem is not null)
+        {
+            _qatAboveItem.Header = RibbonLocalization.GetString(RibbonString.ShowQuickAccessToolbarAboveRibbon);
+        }
+
+        if (_qatBelowItem is not null)
+        {
+            _qatBelowItem.Header = RibbonLocalization.GetString(RibbonString.ShowQuickAccessToolbarBelowRibbon);
+        }
+
+        if (_qatRemoveItem is not null)
+        {
+            _qatRemoveItem.Header = RibbonLocalization.GetString(RibbonString.RemoveFromQuickAccessToolbar);
+        }
+
+        if (_qatCustomizeItem is not null)
+        {
+            _qatCustomizeItem.Header = RibbonLocalization.GetString(RibbonString.CustomizeQuickAccessToolbar);
         }
     }
 

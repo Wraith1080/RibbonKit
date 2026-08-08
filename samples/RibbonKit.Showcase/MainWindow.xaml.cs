@@ -12,9 +12,16 @@ using System.Windows.Media;
 using RibbonKit.Animation;
 using RibbonKit.Controls;
 using RibbonKit.Interop;
+using RibbonKit.Localization;
 using RibbonKit.Theming;
 
 namespace RibbonKit.Showcase;
+
+internal readonly record struct ShowcaseApplicationSurfaceState(
+    RibbonApplicationButtonShape ApplicationButtonShape,
+    bool UsesApplicationMenu,
+    RibbonBackstageDesign BackstageDesign,
+    bool BackstageTranslucent);
 
 /// <summary>
 /// Main window of the showcase app, hosting the RibbonKit ribbon and demonstrating
@@ -42,6 +49,15 @@ public partial class MainWindow : RibbonWindow
     // "2007 Menu" toggle or by switching to the Office 2007 theme. A real app that only ever ships
     // one File surface just leaves the one it wants assigned in XAML and never touches this.
     private readonly RibbonApplicationMenu _applicationMenu;
+    private LocalizationRtlDemo? _localizationRtlDemo;
+
+    internal event EventHandler? ApplicationSurfaceChanged;
+
+    internal ShowcaseApplicationSurfaceState ApplicationSurfaceState => new(
+        MainRibbon.ApplicationButtonShape,
+        MainRibbon.ApplicationMenu is not null,
+        ShowcaseBackstage.Design,
+        ShowcaseBackstage.Translucent);
 
     public MainWindow()
     {
@@ -146,6 +162,7 @@ public partial class MainWindow : RibbonWindow
     private void ApplyTheme(RibbonTheme theme)
     {
         ThemeManager.Apply(Application.Current, theme);
+        DarkModeToggle.IsEnabled = ThemeManager.SupportsDarkMode(theme);
 
         bool is2007 = theme == RibbonTheme.Office2007;
         MainRibbon.ApplicationButtonShape = is2007
@@ -156,6 +173,13 @@ public partial class MainWindow : RibbonWindow
         // and every generation after it opened a backstage instead. Setting the toggle rather than
         // the ribbon property keeps the two in sync — the Checked handler does the actual swap.
         ApplicationMenuToggle.IsChecked = is2007;
+        NotifyApplicationSurfaceChanged();
+    }
+
+    private void OnToggleDarkMode(object sender, RoutedEventArgs e)
+    {
+        bool enabled = (sender as RibbonToggleButton)?.IsChecked == true;
+        ThemeManager.SetDarkMode(Application.Current, enabled);
     }
 
     // Swap which surface the File button opens. Assigning ApplicationMenu is all it takes: the
@@ -167,6 +191,7 @@ public partial class MainWindow : RibbonWindow
 
         MainRibbon.IsBackstageOpen = false; // Never leave one surface up while swapping to the other.
         MainRibbon.ApplicationMenu = useMenu ? _applicationMenu : null;
+        NotifyApplicationSurfaceChanged();
     }
 
     // Every command inside the application menu — nav rows, pane rows, recent documents. The menu
@@ -225,6 +250,7 @@ public partial class MainWindow : RibbonWindow
             && Enum.TryParse(tag, out RibbonBackstageDesign design))
         {
             ShowcaseBackstage.Design = design;
+            NotifyApplicationSurfaceChanged();
         }
     }
 
@@ -235,10 +261,9 @@ public partial class MainWindow : RibbonWindow
         if (ShowcaseBackstage is not null)
         {
             ShowcaseBackstage.Translucent = (sender as RibbonToggleButton)?.IsChecked == true;
+            NotifyApplicationSurfaceChanged();
         }
     }
-
-    private Brush? _opaqueWindowBackground;
 
     // True while THIS code is flipping a backdrop toggle (undoing a rejected check, or
     // unchecking the other material). The Checked/Unchecked handlers bail out during a
@@ -290,7 +315,6 @@ public partial class MainWindow : RibbonWindow
             // transparent title bar and overlap our custom caption buttons.
             MicaHelper.ShowNativeCaptionButtons(this, false);
 
-            _opaqueWindowBackground ??= Background;
             Background = Brushes.Transparent;
             MainContentArea.Background = Brushes.Transparent;
 
@@ -315,8 +339,12 @@ public partial class MainWindow : RibbonWindow
             // risk to avoid, because the visible content is opaque white again below.
             MicaHelper.ShowNativeCaptionButtons(this, true);
             ThemeManager.SetTitleBarBackdrop(Application.Current, false);
-            Background = _opaqueWindowBackground ?? Brushes.White;
-            MainContentArea.Background = Brushes.White;
+            SetResourceReference(
+                Control.BackgroundProperty,
+                "RibbonKit.Brushes.Window.Background");
+            MainContentArea.SetResourceReference(
+                Panel.BackgroundProperty,
+                "RibbonKit.Brushes.Window.Background");
         }
     }
 
@@ -332,6 +360,24 @@ public partial class MainWindow : RibbonWindow
 
     private void OnOpenMdiDemo(object sender, RoutedEventArgs e) =>
         new MdiDemo { Owner = this }.Show();
+
+    private void OnOpenLocalizationRtlDemo(object sender, RoutedEventArgs e)
+    {
+        if (_localizationRtlDemo is { IsVisible: true } existing)
+        {
+            existing.Activate();
+            return;
+        }
+
+        var demo = new LocalizationRtlDemo { Owner = this };
+        demo.AttachApplicationSurfaceSource(this);
+        _localizationRtlDemo = demo;
+        demo.Closed += (_, _) => _localizationRtlDemo = null;
+        demo.Show();
+    }
+
+    private void NotifyApplicationSurfaceChanged() =>
+        ApplicationSurfaceChanged?.Invoke(this, EventArgs.Empty);
 
     // ---- Modal tab (Print Preview) -------------------------------------------------
     // EnterModal hides every other tab plus the File button, blocks minimize and the
@@ -413,12 +459,12 @@ public partial class MainWindow : RibbonWindow
         var editorPage = new RibbonOptionsPage { Header = "Editor", Content = BuildEditorOptionsContent() };
         var customizePage = new RibbonOptionsPage
         {
-            Header = "Customize Ribbon",
+            Header = RibbonLocalization.GetString(RibbonString.CustomizeRibbonPage),
             Content = new RibbonCustomizePage { Ribbon = MainRibbon, ResetLayout = _baselineLayout },
         };
         var qatPage = new RibbonOptionsPage
         {
-            Header = "Quick Access Toolbar",
+            Header = RibbonLocalization.GetString(RibbonString.QuickAccessToolbarPage),
             Content = new RibbonQuickAccessPage { Ribbon = MainRibbon },
         };
 

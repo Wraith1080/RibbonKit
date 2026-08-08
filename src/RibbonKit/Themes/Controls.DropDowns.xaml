@@ -26,6 +26,7 @@
                              access OVERFLOW flyout opts in, where a centred drop-down looked like a
                              different kind of control from the plain buttons stacked beside it. -->
                         <ToggleButton x:Name="PART_Toggle"
+                                      Foreground="{Binding Foreground, RelativeSource={RelativeSource TemplatedParent}}"
                                       HorizontalContentAlignment="{Binding HorizontalContentAlignment, RelativeSource={RelativeSource TemplatedParent}}"
                                       IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
                             <ToggleButton.Style>
@@ -253,6 +254,7 @@
                                 Grid.Column="0"
                                 Grid.Row="0"
                                 Grid.RowSpan="2"
+                                Foreground="{Binding Foreground, RelativeSource={RelativeSource TemplatedParent}}"
                                 HorizontalContentAlignment="{Binding HorizontalContentAlignment, RelativeSource={RelativeSource TemplatedParent}}"
                                 Command="{TemplateBinding Command}"
                                 CommandParameter="{TemplateBinding CommandParameter}">
@@ -402,6 +404,7 @@
                                       Grid.Column="1"
                                       Grid.Row="0"
                                       Grid.RowSpan="2"
+                                      Foreground="{Binding Foreground, RelativeSource={RelativeSource TemplatedParent}}"
                                       Width="15"
                                       IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
                             <ToggleButton.Style>
@@ -750,7 +753,7 @@
                              the box collapses to the text height and reads as cramped. -->
                         <Grid Width="{TemplateBinding InputWidth}" MinHeight="24">
                             <Border x:Name="Chrome"
-                                    Background="#FFFFFF"
+                                    Background="{DynamicResource RibbonKit.Brushes.Control.SurfaceBackground}"
                                     BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
                                     BorderThickness="1"
                                     CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
@@ -792,6 +795,7 @@
                                      Margin="5,1,21,1"
                                      Padding="0"
                                      Background="Transparent"
+                                     Foreground="{TemplateBinding Foreground}"
                                      BorderThickness="0"
                                      VerticalContentAlignment="Center"
                                      Focusable="True" />

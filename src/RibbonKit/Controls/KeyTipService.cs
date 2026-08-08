@@ -9,6 +9,7 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using RibbonKit.Animation;
 using RibbonKit.Layout;
+using RibbonKit.Localization;
 
 namespace RibbonKit.Controls;
 
@@ -620,7 +621,7 @@ internal sealed class KeyTipService
             items.Add(new KeyTipItem(
                 overflowButton,
                 KeyTipKind.QuickAccessOverflow,
-                "More quick access commands",
+                RibbonLocalization.GetString(RibbonString.MoreQuickAccessCommands),
                 keys)
             {
                 Payload = toolBar,

@@ -2,25 +2,19 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="clr-namespace:RibbonKit.Controls"
+    xmlns:localization="clr-namespace:RibbonKit.Localization"
     xmlns:layout="clr-namespace:RibbonKit.Layout">
 
     <!-- Part of the shared RibbonKit control-template dictionary; merged by Office2024.xaml.
          Modern backstage brushes, Backstage, BackstageTabItem.
          Colours/metrics come from Tokens.Office20XX.xaml via {DynamicResource}. -->
 
-    <!-- Modern (Office 2024) backstage palette — a light rail with neutral highlights.
+    <!-- Modern backstage palette comes from the active light/dark token dictionary.
          The selection bar and selected-item text use the live theme accent. -->
-    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.NavBackground" Color="#F5F4F3" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.Foreground" Color="#201F1E" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemHover" Color="#EDEBE9" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemSelected" Color="#E1DFDD" />
     <!-- Item hover/selected for the TRANSLUCENT Modern rail (over a raw Mica backdrop): the
          opaque greys above would read as solid cards floating on the material, so these are
-         black ALPHA washes instead — they tint whatever the Mica shows (any wallpaper hue)
-         the way Windows 11's own nav lists do. Hover ≈ 7% black, selected ≈ 12% black; nudge
-         the alpha bytes (12/1F) to taste. -->
-    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemHoverTranslucent" Color="#12000000" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemSelectedTranslucent" Color="#1F000000" />
+         alpha washes instead — black in light mode, white in dark mode — so they tint whatever
+         the Mica shows without becoming opaque cards. -->
     <!-- Translucent nav rail used when Backstage.Translucent is on. It composites over the RAW
          window backdrop (Mica/Acrylic): while a translucent backstage is open the Ribbon fully
          hides the content behind it (Opacity 0 — see Ribbon.HideContentBehindBackstage), because
@@ -30,17 +24,16 @@
          plain alpha wash reads as Office's tinted-mica rail. The CONTENT area intentionally has
          no translucent variant — it stays solid (Backstage.ContentBackground) so page text is
          crisp; only the nav rail reveals the material, matching Office on Windows 11. -->
-    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.NavBackgroundTranslucent" Color="#00F5F4F3" />
 
     <!-- ============================================================
          Backstage — navigation column (back button + tabs) + content.
          Two looks via the inherited Backstage.Design property: Classic
-         (solid accent column, default) and Modern (the light 2024 rail).
+         (solid accent column, default) and Modern (the neutral 2024 rail).
          ============================================================ -->
     <Style TargetType="{x:Type controls:Backstage}">
         <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Backstage.ContentBackground}" />
         <!-- Nav-column foreground (back arrow + item text). White for the accent column;
-             the Modern trigger switches it to dark for the light rail. -->
+             the Modern trigger switches it to the active neutral-rail foreground. -->
         <Setter Property="Foreground" Value="#FFFFFF" />
         <Setter Property="Template">
             <Setter.Value>
@@ -60,7 +53,7 @@
                                         Margin="20,20,20,24"
                                         HorizontalAlignment="Left"
                                         Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type controls:Backstage}}}"
-                                        ToolTip="Back">
+                                        ToolTip="{localization:RibbonString Key=Back}">
                                     <Button.Style>
                                         <Style TargetType="{x:Type Button}">
                                             <Setter Property="Template">
@@ -156,9 +149,9 @@
                         <!-- Modern (2024): a narrower, light rail with dark foreground. -->
                         <Trigger Property="controls:Backstage.Design" Value="Modern">
                             <Setter Property="Foreground"
-                                    Value="{StaticResource RibbonKit.Brushes.Backstage.Modern.Foreground}" />
+                                    Value="{DynamicResource RibbonKit.Brushes.Backstage.Modern.Foreground}" />
                             <Setter TargetName="NavColumn" Property="Background"
-                                    Value="{StaticResource RibbonKit.Brushes.Backstage.Modern.NavBackground}" />
+                                    Value="{DynamicResource RibbonKit.Brushes.Backstage.Modern.NavBackground}" />
                             <Setter TargetName="NavColumnDef" Property="Width" Value="200" />
                         </Trigger>
 
@@ -175,6 +168,8 @@
                                  pre-2007 themes set it to their own strip value, so nothing moves. -->
                             <Setter TargetName="NavColumn" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Backstage.NavBackground}" />
+                            <Setter TargetName="ContentArea" Property="Effect"
+                                    Value="{DynamicResource RibbonKit.Effects.Backstage.ContentShadow}" />
                         </Trigger>
 
                         <!-- Translucent (reveal a window Mica/Acrylic backdrop behind the
@@ -196,7 +191,7 @@
                                 <Condition Property="Translucent" Value="True" />
                             </MultiTrigger.Conditions>
                             <Setter TargetName="NavColumn" Property="Background"
-                                    Value="{StaticResource RibbonKit.Brushes.Backstage.Modern.NavBackgroundTranslucent}" />
+                                    Value="{DynamicResource RibbonKit.Brushes.Backstage.Modern.NavBackgroundTranslucent}" />
                         </MultiTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -280,9 +275,9 @@
                              the classic triggers so they win when the design is Modern. -->
                         <Trigger Property="controls:Backstage.Design" Value="Modern">
                             <Setter TargetName="NavText" Property="TextElement.Foreground"
-                                    Value="{StaticResource RibbonKit.Brushes.Backstage.Modern.Foreground}" />
+                                    Value="{DynamicResource RibbonKit.Brushes.Backstage.Modern.Foreground}" />
                             <Setter TargetName="NavIcon" Property="Fill"
-                                    Value="{StaticResource RibbonKit.Brushes.Backstage.Modern.Foreground}" />
+                                    Value="{DynamicResource RibbonKit.Brushes.Backstage.Modern.Foreground}" />
                             <Setter TargetName="Chrome" Property="CornerRadius" Value="4" />
                             <Setter TargetName="Chrome" Property="Margin" Value="8,1" />
                             <Setter TargetName="Chrome" Property="Padding" Value="14,9" />
@@ -293,7 +288,7 @@
                                 <Condition SourceName="Chrome" Property="IsMouseOver" Value="True" />
                             </MultiTrigger.Conditions>
                             <Setter TargetName="Chrome" Property="Background"
-                                    Value="{StaticResource RibbonKit.Brushes.Backstage.Modern.ItemHover}" />
+                                    Value="{DynamicResource RibbonKit.Brushes.Backstage.Modern.ItemHover}" />
                         </MultiTrigger>
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
@@ -301,7 +296,7 @@
                                 <Condition Property="IsSelected" Value="True" />
                             </MultiTrigger.Conditions>
                             <Setter TargetName="Chrome" Property="Background"
-                                    Value="{StaticResource RibbonKit.Brushes.Backstage.Modern.ItemSelected}" />
+                                    Value="{DynamicResource RibbonKit.Brushes.Backstage.Modern.ItemSelected}" />
                             <Setter TargetName="SelBar" Property="Visibility" Value="Visible" />
                             <Setter TargetName="NavText" Property="TextElement.Foreground"
                                     Value="{DynamicResource RibbonKit.Brushes.Accent}" />
@@ -325,7 +320,7 @@
                                 <Condition Binding="{Binding IsMouseOver, ElementName=Chrome}" Value="True" />
                             </MultiDataTrigger.Conditions>
                             <Setter TargetName="Chrome" Property="Background"
-                                    Value="{StaticResource RibbonKit.Brushes.Backstage.Modern.ItemHoverTranslucent}" />
+                                    Value="{DynamicResource RibbonKit.Brushes.Backstage.Modern.ItemHoverTranslucent}" />
                         </MultiDataTrigger>
                         <MultiDataTrigger>
                             <MultiDataTrigger.Conditions>
@@ -334,7 +329,7 @@
                                 <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource Self}}" Value="True" />
                             </MultiDataTrigger.Conditions>
                             <Setter TargetName="Chrome" Property="Background"
-                                    Value="{StaticResource RibbonKit.Brushes.Backstage.Modern.ItemSelectedTranslucent}" />
+                                    Value="{DynamicResource RibbonKit.Brushes.Backstage.Modern.ItemSelectedTranslucent}" />
                         </MultiDataTrigger>
 
                         <!-- Classic2010 (Office 2010): the nav is the ribbon's light-blue gradient,

@@ -105,7 +105,7 @@
                             <ColumnDefinition Width="17" />
                         </Grid.ColumnDefinitions>
                         <Border Grid.ColumnSpan="2"
-                                Background="#FFFFFF"
+                                Background="{DynamicResource RibbonKit.Brushes.Control.SurfaceBackground}"
                                 BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
                                 BorderThickness="1"
                                 CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"

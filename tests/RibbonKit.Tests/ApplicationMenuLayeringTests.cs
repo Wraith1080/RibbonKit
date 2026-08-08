@@ -108,17 +108,19 @@ public class ApplicationMenuLayeringTests
     }
 
     [Theory]
-    [InlineData("Office2007")]
-    [InlineData("Office2010")]
-    [InlineData("Office2013")]
-    [InlineData("Office2019")]
-    [InlineData("Office2024")]
-    public void Every_theme_defines_application_menu_open_file_button_tokens(string theme)
+    [InlineData("Office2007", "SolidColorBrush")]
+    [InlineData("Office2010", "LinearGradientBrush")]
+    [InlineData("Office2013", "SolidColorBrush")]
+    [InlineData("Office2019", "SolidColorBrush")]
+    [InlineData("Office2024", "SolidColorBrush")]
+    public void Every_theme_defines_application_menu_open_file_button_tokens(
+        string theme,
+        string backgroundType)
     {
         var document = XDocument.Load(ThemePath(theme));
 
         Assert.Equal(
-            "SolidColorBrush",
+            backgroundType,
             Resource(document, "RibbonKit.Brushes.ApplicationButton.MenuOpenBackground").Name.LocalName);
         Assert.Equal(
             "SolidColorBrush",

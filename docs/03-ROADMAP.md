@@ -2,7 +2,7 @@
 
 Each phase ends with the showcase app demonstrating everything built so far, tests green, and a tagged pre-release. Phases are sequential but small overlaps are fine.
 
-> **Progress (2026-07-28):** Phases 0–5 and **7 are complete**. Phase 6 is mostly done — **all five themes now ship** (2024, 2019, 2013, 2010 and 2007 — see [`04-DESIGN-NOTES.md`](../04-DESIGN-NOTES.md) §3.38 and [`07-OFFICE-2007-THEME-PLAN.md`](07-OFFICE-2007-THEME-PLAN.md)) and per-monitor DPI is verified at 100/125/150/175/200% **on all five, 2007 included**; still owed are dark mode, RTL, localization and the visual-regression suite. Phase 8 has not started. Post-v1 MDI emulation is unusually shaped: M0 and M4 are done, M1–M3 are not.
+> **Progress (2026-08-08):** Phases 0–7 are complete. Phase 6 closed with the user-verified live RTL popup/window pass in [`04-DESIGN-NOTES.md`](../04-DESIGN-NOTES.md) §3.61: all five themes ship with dark/black variants, per-monitor DPI is verified at 100/125/150/175/200%, the deterministic 40-image theme/variant × DPI suite plus seven focused scenes are green, localization/provider coverage is complete, and the Showcase lab verifies split/nested/context menus, normal/maximized screen edges, Backstage, and Office 2024/2007 application-menu/button/orb behavior. Phase 8 has not started. Post-v1 MDI emulation is unusually shaped: M0 and M4 are done, M1–M3 are not.
 >
 > Live DPI switching needed a fix outside the library: an app must declare **PerMonitorV2** in its own manifest or Windows bitmap-stretches it until restart. The showcase now does, and the README tells consumers to (§3.42).
 >
@@ -32,9 +32,9 @@ Gallery + InRibbonGallery with virtualization, grouping, filtering, resizable po
 
 RibbonWindow with title-bar integration, Quick Access Toolbar (placement, overflow, add/remove via context menu), state persistence (JSON), contextual tab groups with colored headers bound to app state. **Exit criteria:** showcase behaves like Office when an "image" object is selected (Picture Tools appear); QAT survives app restart.
 
-## Phase 6 — Full theme range & DPI hardening
+## Phase 6 — Full theme range & DPI hardening ✅ COMPLETE (2026-08-08)
 
-Office 2019 (+dark/accents), 2013, 2010, 2007 themes on the token layer; visual regression snapshot suite per theme; DPI matrix testing (100/125/150/200%, mixed monitors, per-monitor v2); RTL verification; localization resources. **Exit criteria:** snapshot suite green across 5 themes × 4 DPI levels. *All five themes now ship (2007 landed 2026-07-27, §3.38); dark mode, RTL, localization and the snapshot suite are what remain.*
+Office 2019 (+dark/accents), 2013, 2010, 2007 themes on the token layer; visual regression snapshot suite per theme; DPI matrix testing (100/125/150/200%, mixed monitors, per-monitor v2); RTL verification; localization resources. **Exit criteria met:** snapshot suite green across 5 themes × 4 DPI levels. *All five themes ship (2007 landed 2026-07-27, §3.38), every generation has a dark/black palette (§3.49), and the deterministic 40-image theme/variant × DPI matrix plus seven focused approvals are green. Localization/provider, File-width reflow, representative bidirectional content, live Backstage/title transitions, synchronized Showcase File surfaces, and the final live popup/window, screen-edge, and Office 2024/2007 application-menu/orb verification are complete (§§3.52–3.61).*
 
 ## Phase 7 — Power features ✅ COMPLETE (2026-07-27)
 
@@ -46,7 +46,7 @@ API review and freeze (rename pass, hide internals, `PublicAPI.txt` analyzer), d
 
 ## Post-v1 candidates
 
-Simplified (single-row) ribbon, full ribbon customization dialog (tabs/groups), touch/pen affordances, additional theme variants (colorful/black for 2013+), Office-style status bar, ribbon designer/serializer from XML definitions.
+Simplified (single-row) ribbon, full ribbon customization dialog (tabs/groups), touch/pen affordances, additional theme variants (colorful/black for 2013+), Office-style status bar, ribbon designer/serializer from XML definitions. Possible visual polish: an optional purpose-authored `MonochromeIcon` for QAT-capable commands on accent-colored title/tab surfaces; this is not a committed API, and no separate dark-icon property is currently planned. Also consider a non-Mica light/dark transition that captures the old opaque window chrome, swaps the palette underneath, then fades the capture away while honoring `RibbonAnimationAction.ThemeSwitch` and reduced motion. Mica should keep its native DWM retint rather than layering a second transition over it.
 
 **MDI emulation control** — themed in-window "child windows" (float/resize/cascade/tile/minimize/maximize) plus a switchable tabbed-documents mode, with the maximized child's caption merging into the ribbon. Orchestrates existing subsystems (tab merging, `RibbonState` persistence, token theming, `RibbonWindow` chrome/DPI) rather than adding much new mechanism; can build most of the way without waiting on Phase 7's tab-merging API. Full design in [`docs/05-MDI-EMULATION-PLAN.md`](05-MDI-EMULATION-PLAN.md).
 
