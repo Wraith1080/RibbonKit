@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -111,6 +112,17 @@ public class RibbonApplicationMenu : ItemsControl
     /// <summary>Identifies the read-only <see cref="HasActivePane"/> dependency property.</summary>
     public static readonly DependencyProperty HasActivePaneProperty = HasActivePanePropertyKey.DependencyProperty;
 
+    /// <summary>
+    /// Identifies the design-tool-only <see cref="DesignPreviewActiveIndex"/> dependency property.
+    /// </summary>
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public static readonly DependencyProperty DesignPreviewActiveIndexProperty =
+        DependencyProperty.Register(
+            nameof(DesignPreviewActiveIndex),
+            typeof(int),
+            typeof(RibbonApplicationMenu),
+            new FrameworkPropertyMetadata(-1, OnDesignPreviewActiveIndexChanged));
+
     private FrameworkElement? _frame;
 
     private Window? _dismissWindow;
@@ -214,6 +226,19 @@ public class RibbonApplicationMenu : ItemsControl
         private set => SetValue(HasActivePanePropertyKey, value);
     }
 
+    /// <summary>
+    /// Gets or sets the transient command-pane index requested by RibbonKit's XAML design tools.
+    /// -1 displays the default pane. Runtime instances ignore this property.
+    /// </summary>
+    [Browsable(false)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public int DesignPreviewActiveIndex
+    {
+        get => (int)GetValue(DesignPreviewActiveIndexProperty);
+        set => SetValue(DesignPreviewActiveIndexProperty, value);
+    }
+
     /// <summary>Asks the host to close the menu. Same effect as pressing Esc.</summary>
     public void RequestClose() => CloseRequested?.Invoke(this, EventArgs.Empty);
 
@@ -223,6 +248,7 @@ public class RibbonApplicationMenu : ItemsControl
         base.OnApplyTemplate();
 
         _frame = GetTemplateChild(FramePartName) as FrameworkElement;
+        ApplyDesignPreviewActiveIndex(DesignPreviewActiveIndex);
     }
 
     /// <inheritdoc />
@@ -286,6 +312,29 @@ public class RibbonApplicationMenu : ItemsControl
         ActivePaneContent = item?.Content;
         ActivePaneHeader = item?.PaneHeader;
         HasActivePane = item is not null;
+    }
+
+    private static void OnDesignPreviewActiveIndexChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        var menu = (RibbonApplicationMenu)d;
+        if (DesignerProperties.GetIsInDesignMode(menu))
+        {
+            menu.ApplyDesignPreviewActiveIndex((int)e.NewValue);
+        }
+    }
+
+    private void ApplyDesignPreviewActiveIndex(int index)
+    {
+        if (!DesignerProperties.GetIsInDesignMode(this))
+        {
+            return;
+        }
+
+        RibbonApplicationMenuItem? item = index >= 0 && index < Items.Count
+            ? Items[index] as RibbonApplicationMenuItem
+                ?? ItemContainerGenerator.ContainerFromIndex(index) as RibbonApplicationMenuItem
+            : null;
+        SetActive(item?.HasPane == true ? item : null);
     }
 
     // ------------------------------------------------------------------ open / dismiss

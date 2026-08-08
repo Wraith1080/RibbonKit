@@ -39,34 +39,12 @@ internal static class TabPreviewCoordinator
     private static FileSurfacePreview _fileSurface;
     private static ModelItem? _backstage;
     private static int? _backstagePage;
-    private static ModelItem? _applicationMenu;
 
     /// <summary>The currently previewed tab index, or null when no tab preview is active.</summary>
     public static int? CurrentIndex => _tabIndex;
 
     /// <summary>The current design-only File-surface choice.</summary>
     public static FileSurfacePreview CurrentFileSurface => _fileSurface;
-
-    /// <summary>
-    /// Remembers the authored menu model while its design-surface value is cleared for Backstage
-    /// preview. This also survives closing and reopening the editor inside the same designer session.
-    /// </summary>
-    public static void RememberApplicationMenu(ModelItem ribbon, ModelItem? applicationMenu)
-    {
-        if (_ribbon != null && !Equals(_ribbon, ribbon))
-        {
-            _tabIndex = null;
-            _fileSurface = FileSurfacePreview.Closed;
-            _backstage = null;
-            _backstagePage = null;
-        }
-
-        _ribbon = ribbon;
-        _applicationMenu = applicationMenu;
-    }
-
-    public static ModelItem? CurrentApplicationMenuFor(ModelItem ribbon) =>
-        Equals(_ribbon, ribbon) ? _applicationMenu : null;
 
     /// <summary>The currently previewed backstage page index, or null when no page preview is active.</summary>
     public static int? CurrentBackstagePage => _backstagePage;
@@ -81,19 +59,17 @@ internal static class TabPreviewCoordinator
 
     /// <summary>
     /// Sets the design-only File surface and repaints it. Backstage and application menu are one
-    /// mutually-exclusive choice: the provider temporarily hides ApplicationMenu only when the
-    /// author explicitly asks to preview Backstage, matching Ribbon's runtime precedence rule.
+    /// mutually-exclusive choice through one primitive design-preview property instead of clearing
+    /// either authored object property in the designer model.
     /// </summary>
     public static void SetFileSurface(ModelItem ribbon, FileSurfacePreview surface)
     {
         _ribbon = ribbon;
         _fileSurface = surface;
-        // ApplicationMenu first: when switching to Backstage the design surface must clear the
-        // menu before IsBackstageOpen is applied, otherwise Ribbon's runtime precedence correctly
-        // routes the open flag back to the menu. The reverse transition restores the menu before
-        // the open flag is evaluated.
-        Invalidate(ribbon, "ApplicationMenu");
-        Invalidate(ribbon, "IsBackstageOpen");
+        // A single invalidation makes the runtime-side transition atomic. Object-valued translations
+        // are deliberately avoided: VS 2022 can poison later DesignerModelProperty.Value reads after
+        // either null or UnsetValue is returned for ApplicationMenu.
+        Invalidate(ribbon, "DesignPreviewFileSurface");
     }
 
     /// <summary>True (with the index) when a tab preview is active for <paramref name="ribbon"/>.</summary>
@@ -180,8 +156,7 @@ public sealed class SelectedTabPreviewProvider : DesignModeValueProvider
     public SelectedTabPreviewProvider()
     {
         Properties.Add(new TypeIdentifier(RibbonType), "SelectedIndex");
-        Properties.Add(new TypeIdentifier(RibbonType), "IsBackstageOpen");
-        Properties.Add(new TypeIdentifier(RibbonType), "ApplicationMenu");
+        Properties.Add(new TypeIdentifier(RibbonType), "DesignPreviewFileSurface");
     }
 
     /// <inheritdoc />
@@ -199,21 +174,11 @@ public sealed class SelectedTabPreviewProvider : DesignModeValueProvider
 
         if (TabPreviewCoordinator.TryGetFileSurface(item, out FileSurfacePreview surface))
         {
-            if (identifier.Name == "IsBackstageOpen")
+            if (identifier.Name == "DesignPreviewFileSurface")
             {
-                bool open = surface != FileSurfacePreview.Closed;
-                Debug.WriteLine("[RibbonKit] Preview IsBackstageOpen -> " + open);
-                return open;
-            }
-
-            if (identifier.Name == "ApplicationMenu" && surface == FileSurfacePreview.Backstage)
-            {
-                // The VS 2022 isolated designer crashes its DesignerModelProperty.Value getter
-                // after an object-valued provider returns literal null. UnsetValue is the supported
-                // DesignModeValueProvider sentinel for clearing the surface value while leaving the
-                // authored XAML/model value intact.
-                Debug.WriteLine("[RibbonKit] Preview ApplicationMenu -> UnsetValue (show Backstage)");
-                return System.Windows.DependencyProperty.UnsetValue;
+                int preview = (int)surface;
+                Debug.WriteLine("[RibbonKit] Preview DesignPreviewFileSurface -> " + preview);
+                return preview;
             }
         }
 
@@ -284,115 +249,64 @@ public sealed class BackstagePagePreviewProvider : DesignModeValueProvider
 }
 
 /// <summary>
-/// Design-session state for the application menu's active command pane. The runtime menu owns this
-/// as read-only hover state, so the designer translates the four template-facing values directly
-/// rather than adding a runtime-only selection API.
+/// Design-session state for the application menu's active command pane. Only a primitive index is
+/// translated; the runtime control derives its normal read-only pane state from that index.
 /// </summary>
 internal static class ApplicationMenuPreviewCoordinator
 {
     private const string MenuType = "RibbonKit.Controls.RibbonApplicationMenu";
-    private const string ItemType = "RibbonKit.Controls.RibbonApplicationMenuItem";
-
     private static ModelItem? _menu;
-    private static ModelItem? _item;
+    private static int? _index;
 
-    public static ModelItem? CurrentItemFor(ModelItem menu) => Equals(_menu, menu) ? _item : null;
+    public static int? CurrentIndexFor(ModelItem menu) => Equals(_menu, menu) ? _index : null;
 
-    public static void SetActiveItem(ModelItem? menu, ModelItem? item)
+    public static void SetActiveIndex(ModelItem? menu, int? index)
     {
-        ModelItem? previous = _item;
         _menu = menu;
-        _item = item;
+        _index = index;
 
         if (menu != null)
         {
-            TabPreviewCoordinator.Invalidate(menu, MenuType, "ActivePaneContent");
-            TabPreviewCoordinator.Invalidate(menu, MenuType, "ActivePaneHeader");
-            TabPreviewCoordinator.Invalidate(menu, MenuType, "HasActivePane");
-        }
-
-        if (previous != null)
-        {
-            TabPreviewCoordinator.Invalidate(previous, ItemType, "IsActive");
-        }
-        if (item != null && !Equals(previous, item))
-        {
-            TabPreviewCoordinator.Invalidate(item, ItemType, "IsActive");
+            TabPreviewCoordinator.Invalidate(menu, MenuType, "DesignPreviewActiveIndex");
         }
     }
 
-    public static bool TryGetActiveItem(ModelItem menu, out ModelItem? item)
+    public static bool TryGetActiveIndex(ModelItem menu, out int index)
     {
         if (Equals(_menu, menu))
         {
-            item = _item;
+            index = _index ?? -1;
             return true;
         }
 
-        item = null;
+        index = -1;
         return false;
     }
-
-    public static bool IsActive(ModelItem item) => Equals(_item, item);
 }
 
 /// <summary>
-/// Translates the application menu's read-only pane state for design-only preview. It is registered
-/// on both the menu and its command item type; no value is serialized and runtime behavior is
-/// unchanged.
+/// Translates one primitive application-menu preview index. The runtime menu applies the index to its
+/// regular active-item state synchronously; no object-valued designer property is invalidated.
 /// </summary>
 public sealed class ApplicationMenuPanePreviewProvider : DesignModeValueProvider
 {
     private const string MenuType = "RibbonKit.Controls.RibbonApplicationMenu";
-    private const string ItemType = "RibbonKit.Controls.RibbonApplicationMenuItem";
 
     public ApplicationMenuPanePreviewProvider()
     {
-        Properties.Add(new TypeIdentifier(MenuType), "ActivePaneContent");
-        Properties.Add(new TypeIdentifier(MenuType), "ActivePaneHeader");
-        Properties.Add(new TypeIdentifier(MenuType), "HasActivePane");
-        Properties.Add(new TypeIdentifier(ItemType), "IsActive");
+        Properties.Add(new TypeIdentifier(MenuType), "DesignPreviewActiveIndex");
     }
 
     /// <inheritdoc />
     public override object TranslatePropertyValue(ModelItem item, PropertyIdentifier identifier, object value)
     {
-        if (identifier.Name == "IsActive")
+        if (identifier.Name == "DesignPreviewActiveIndex"
+            && ApplicationMenuPreviewCoordinator.TryGetActiveIndex(item, out int index))
         {
-            return ApplicationMenuPreviewCoordinator.IsActive(item);
-        }
-
-        if (ApplicationMenuPreviewCoordinator.TryGetActiveItem(item, out ModelItem? active))
-        {
-            if (identifier.Name == "HasActivePane")
-            {
-                return active != null;
-            }
-
-            if (active != null && identifier.Name == "ActivePaneHeader")
-            {
-                return ModelValue(active, "PaneHeader");
-            }
-
-            if (active != null && identifier.Name == "ActivePaneContent")
-            {
-                return ModelValue(active, "Content");
-            }
+            Debug.WriteLine("[RibbonKit] Preview DesignPreviewActiveIndex -> " + index);
+            return index;
         }
 
         return base.TranslatePropertyValue(item, identifier, value);
-    }
-
-    private static object ModelValue(ModelItem item, string propertyName)
-    {
-        try
-        {
-            ModelProperty property = item.Properties[propertyName];
-            return property.ComputedValue ?? null!;
-        }
-        catch
-        {
-            return null!;
-        }
     }
 }

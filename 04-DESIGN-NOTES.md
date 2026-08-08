@@ -3420,19 +3420,19 @@ monitors does not retain stale measurements.
 
 Preview now models the File button as one mutually-exclusive choice: Closed, Backstage, or
 Application menu. `SelectedTabPreviewProvider` still owns `Ribbon.SelectedIndex` and
-`IsBackstageOpen`, and also clears `Ribbon.ApplicationMenu` on the design surface only while Backstage
-is the explicit preview choice (otherwise the real runtime precedence would make Backstage impossible
-to preview when both are authored). The first implementation returned literal null from
-`TranslatePropertyValue`; the VS 2022 isolated designer then threw `NullReferenceException` from its
-own `DesignerModelProperty.Value` getter as soon as the editor read the property again. The supported
-`DependencyProperty.UnsetValue` sentinel avoids that broken object-null path, invalidation clears the
-menu before applying the open flag, and the editor retains the authored menu `ModelItem` while the
-surface value is cleared. `Ribbon.OnApplicationMenuChanged` also explicitly transfers the design-time
-Backstage host because the shared open flag can already be true during a surface-to-surface switch.
-Backstage pages keep their existing provider. Application-menu pane
-preview has a new provider for its read-only template state (`ActivePaneContent`,
-`ActivePaneHeader`, `HasActivePane`, and item `IsActive`); this object-valued translation is built and
-requires a live Visual Studio designer pass before it is called verified.
+now translates one integer `DesignPreviewFileSurface` value for the whole File-surface transition. An
+earlier implementation tried to clear `Ribbon.ApplicationMenu` on the design surface. Literal null
+crashed the VS 2022 isolated designer's
+`DesignerModelProperty.Value` getter immediately; `DependencyProperty.UnsetValue` still poisoned the
+model so a later read of the unrelated `Backstage` property crashed. Translating two Booleans separately
+still exposed a runtime-precedence intermediate frame and invalidating the application menu's
+object-valued pane state corrupted its child `ModelItem`s. The editor therefore never translates or
+invalidates any object-valued preview property. `Ribbon` consumes the one primitive surface value and
+updates its normal open/discriminator/design-host state synchronously. Application-menu pane preview
+likewise translates only `DesignPreviewActiveIndex`; `RibbonApplicationMenu` derives its ordinary
+`ActiveItem`, pane content/header, and item state inside the runtime control. Backstage pages keep their
+existing integer `SelectedIndex` provider. The new primitive-only paths require a fresh live Visual
+Studio designer pass before they are called verified.
 
 `Ribbon.ApplicationMenu` is now a deletable singleton editor root and **Add Application Menu** is also
 a Ribbon surface verb. The contextual Add menu creates/reorders/deletes command items, separators,

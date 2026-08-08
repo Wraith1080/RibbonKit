@@ -24,7 +24,6 @@ internal sealed class Metadata : IProvideAttributeTable
     private const string RibbonGroupType = "RibbonKit.Controls.RibbonGroup";
     private const string BackstageType = "RibbonKit.Controls.Backstage";
     private const string ApplicationMenuType = "RibbonKit.Controls.RibbonApplicationMenu";
-    private const string ApplicationMenuItemType = "RibbonKit.Controls.RibbonApplicationMenuItem";
     private const string RibbonButtonType = "RibbonKit.Controls.RibbonButton";
     private const string RibbonToggleButtonType = "RibbonKit.Controls.RibbonToggleButton";
     private const string RibbonSplitButtonType = "RibbonKit.Controls.RibbonSplitButton";
@@ -59,9 +58,6 @@ internal sealed class Metadata : IProvideAttributeTable
 
             builder.AddCustomAttributes(
                 ApplicationMenuType,
-                new FeatureAttribute(typeof(ApplicationMenuPanePreviewProvider)));
-            builder.AddCustomAttributes(
-                ApplicationMenuItemType,
                 new FeatureAttribute(typeof(ApplicationMenuPanePreviewProvider)));
 
             // Group: "Add Button / Toggle / Split / Drop-Down" + reorder/delete the group.

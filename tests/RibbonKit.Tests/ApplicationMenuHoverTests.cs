@@ -53,6 +53,31 @@ public class ApplicationMenuHoverTests
         Assert.False(menu.HasActivePane);
     });
 
+    [Fact]
+    public void Design_preview_index_is_inert_at_runtime() => Sta.Run(() =>
+    {
+        var menu = new RibbonApplicationMenu();
+        menu.Items.Add(PaneItem("Save As", "Save a copy"));
+
+        menu.DesignPreviewActiveIndex = 0;
+
+        Assert.Null(menu.ActiveItem);
+        Assert.False(menu.HasActivePane);
+    });
+
+    [Fact]
+    public void Design_file_surface_is_inert_at_runtime() => Sta.Run(() =>
+    {
+        var ribbon = new Ribbon
+        {
+            ApplicationMenu = new RibbonApplicationMenu(),
+            DesignPreviewFileSurface = 2,
+        };
+
+        Assert.False(ribbon.IsBackstageOpen);
+        Assert.False(ribbon.IsApplicationMenuOpen);
+    });
+
     private static RibbonApplicationMenuItem PaneItem(string header, object content) =>
         new() { Header = header, Content = content };
 }

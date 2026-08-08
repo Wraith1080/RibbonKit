@@ -127,19 +127,19 @@ string) and is edited via the **Caption** box. `TextBlock` editors and an "Add T
 exist for text added directly into a group's panels. The **Design Preview** tab lays out three fields
 vertically: **Active tab**, mutually-exclusive **File surface** (`Closed` / `Backstage` /
 `Application menu`, listing only surfaces present), and the dependent **Page / pane** picker. The
-File-surface provider translates `IsBackstageOpen` and temporarily clears `ApplicationMenu` only when
-Backstage is explicitly selected, matching runtime precedence without serializing state. It returns
-`DependencyProperty.UnsetValue`, not literal null: the VS 2022 isolated designer crashes its own
-`DesignerModelProperty.Value` getter after an object-valued provider returns null. The editor caches
-the authored menu `ModelItem` while its surface value is cleared. The Page
+File-surface provider translates one integer `DesignPreviewFileSurface` value, which the runtime
+control applies atomically without serializing state. Both authored object properties remain
+untouched: literal null for `ApplicationMenu` crashed the VS 2022 isolated designer immediately and
+`DependencyProperty.UnsetValue` still poisoned later model-property reads. The Page
 picker drives the backstage's `SelectedIndex` through a second provider
 (`BackstagePagePreviewProvider`, attached to `Backstage`) the same design-only way — enabled only while
 the backstage is shown, "(default)" clears the override. Because `SelectedIndex` is inherited from
 `Selector`, the provider registers (and the coordinator invalidates) under both the `Backstage` and
 `Selector` declaring types, since which one the designer reports for an inherited DP is unverified.
-For an application menu it translates the read-only `ActivePaneContent`, `ActivePaneHeader`,
-`HasActivePane`, and item `IsActive` values from session state; this path requires the same live
-Windows designer verification used for the original tab/backstage provider. It runs in-process on the VS UI thread (only the design
+For an application menu it translates only the integer `DesignPreviewActiveIndex`; the runtime menu
+derives its normal read-only pane state synchronously. No object-valued preview property is registered
+or invalidated. This path requires the same live Windows designer verification used for the original
+tab/backstage provider. It runs in-process on the VS UI thread (only the design
 *surface* is process-isolated, not extension code), so it's a plain code-built WPF `Window`
 (the design assembly can't reference RibbonKit's themes). Every change is applied straight to
 the `ModelItem` tree through `DesignModel`, each as its own single undo — same transaction model

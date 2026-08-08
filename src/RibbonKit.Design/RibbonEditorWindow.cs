@@ -83,10 +83,6 @@ internal sealed class NodeInfo
 internal sealed class RibbonEditorWindow : Window
 {
     private readonly ModelItem _ribbon;
-    // Keep the authored model item while Backstage preview temporarily clears the application-menu
-    // value on the isolated design surface. Re-reading DesignerModelProperty.Value during that
-    // translation is a confirmed new-designer crash (see design notes §3.62).
-    private ModelItem? _applicationMenu;
     private readonly TreeView _tree = new TreeView { BorderThickness = new Thickness(1) };
     private readonly TextBox _headerBox = new TextBox { MinWidth = 80, VerticalContentAlignment = VerticalAlignment.Center };
     private readonly TextBlock _typeText = new TextBlock { Opacity = 0.75, VerticalAlignment = VerticalAlignment.Center };
@@ -449,27 +445,12 @@ internal sealed class RibbonEditorWindow : Window
             }
         }
 
-        _applicationMenu ??= TabPreviewCoordinator.CurrentApplicationMenuFor(_ribbon);
-        bool previewingBackstage = TabPreviewCoordinator.TryGetFileSurface(_ribbon, out FileSurfacePreview rememberedSurface)
-            && rememberedSurface == FileSurfacePreview.Backstage;
-        if (!previewingBackstage || _applicationMenu is null)
+        ModelItem? applicationMenu = DesignModel.FindProperty(_ribbon, "ApplicationMenu")?.Value;
+        if (applicationMenu != null)
         {
             try
             {
-                _applicationMenu = DesignModel.FindProperty(_ribbon, "ApplicationMenu")?.Value;
-            }
-            catch (Exception ex)
-            {
-                DesignLog.Error("read Ribbon.ApplicationMenu", ex);
-            }
-        }
-        TabPreviewCoordinator.RememberApplicationMenu(_ribbon, _applicationMenu);
-
-        if (_applicationMenu != null)
-        {
-            try
-            {
-                AddApplicationMenuTree(rootItem, _applicationMenu);
+                AddApplicationMenuTree(rootItem, applicationMenu);
             }
             catch (Exception ex)
             {
@@ -736,7 +717,7 @@ internal sealed class RibbonEditorWindow : Window
             // File surfaces are mutually exclusive at runtime. Present them as one choice instead
             // of independent checkboxes, and list only surfaces that actually exist in the model.
             ModelItem? backstage = DesignModel.FindProperty(_ribbon, "Backstage")?.Value;
-            ModelItem? applicationMenu = _applicationMenu;
+            ModelItem? applicationMenu = DesignModel.FindProperty(_ribbon, "ApplicationMenu")?.Value;
             bool hasBackstage = backstage != null;
             bool hasApplicationMenu = applicationMenu != null;
             PopulateFileSurfaces(hasBackstage, hasApplicationMenu);
@@ -840,8 +821,8 @@ internal sealed class RibbonEditorWindow : Window
     {
         IReadOnlyList<ModelItem> items = SafeChildren(applicationMenu, "Items");
         int selected = 0;
-        ModelItem? current = ApplicationMenuPreviewCoordinator.CurrentItemFor(applicationMenu);
-        bool foundCurrent = current is null;
+        int? current = ApplicationMenuPreviewCoordinator.CurrentIndexFor(applicationMenu);
+        bool foundCurrent = !current.HasValue;
         for (int i = 0; i < items.Count; i++)
         {
             ModelItem item = items[i];
@@ -853,7 +834,7 @@ internal sealed class RibbonEditorWindow : Window
             string header = SafeHeader(item);
             _filePageCombo.Items.Add(string.IsNullOrEmpty(header) ? "Pane " + (i + 1) : header);
             _filePageMap.Add(i);
-            if (Equals(current, item))
+            if (current == i)
             {
                 selected = _filePageMap.Count;
                 foundCurrent = true;
@@ -862,7 +843,7 @@ internal sealed class RibbonEditorWindow : Window
 
         if (!foundCurrent)
         {
-            ApplicationMenuPreviewCoordinator.SetActiveItem(applicationMenu, null);
+            ApplicationMenuPreviewCoordinator.SetActiveIndex(applicationMenu, null);
         }
 
         _filePageCombo.SelectedIndex = selected;
@@ -890,10 +871,15 @@ internal sealed class RibbonEditorWindow : Window
         FileSurfacePreview surface = selected >= 0 && selected < _fileSurfaceMap.Count
             ? _fileSurfaceMap[selected]
             : FileSurfacePreview.Closed;
+        // Capture authored objects before invalidating any design-only preview values. Besides
+        // avoiding redundant Model API calls, this keeps the event handler safe if a future VS
+        // designer version defers an invalidation until the next property read.
+        ModelItem? backstage = DesignModel.FindProperty(_ribbon, "Backstage")?.Value;
+        ModelItem? applicationMenu = DesignModel.FindProperty(_ribbon, "ApplicationMenu")?.Value;
         TabPreviewCoordinator.SetFileSurface(_ribbon, surface);
         if (surface != FileSurfacePreview.ApplicationMenu)
         {
-            ApplicationMenuPreviewCoordinator.SetActiveItem(_applicationMenu, null);
+            ApplicationMenuPreviewCoordinator.SetActiveIndex(applicationMenu, null);
         }
 
         _syncingPreview = true;
@@ -901,8 +887,8 @@ internal sealed class RibbonEditorWindow : Window
         {
             PopulateFilePages(
                 surface,
-                DesignModel.FindProperty(_ribbon, "Backstage")?.Value,
-                _applicationMenu);
+                backstage,
+                applicationMenu);
         }
         finally
         {
@@ -922,7 +908,7 @@ internal sealed class RibbonEditorWindow : Window
                 ? _fileSurfaceMap[_fileSurfaceCombo.SelectedIndex]
                 : FileSurfacePreview.Closed;
         ModelItem? backstage = DesignModel.FindProperty(_ribbon, "Backstage")?.Value;
-        ModelItem? applicationMenu = _applicationMenu;
+        ModelItem? applicationMenu = DesignModel.FindProperty(_ribbon, "ApplicationMenu")?.Value;
         int sel = _filePageCombo.SelectedIndex;
         int? itemIndex = sel <= 0 || sel - 1 >= _filePageMap.Count
             ? (int?)null
@@ -931,14 +917,11 @@ internal sealed class RibbonEditorWindow : Window
         if (surface == FileSurfacePreview.Backstage)
         {
             TabPreviewCoordinator.SetBackstagePage(backstage, itemIndex);
-            ApplicationMenuPreviewCoordinator.SetActiveItem(applicationMenu, null);
+            ApplicationMenuPreviewCoordinator.SetActiveIndex(applicationMenu, null);
         }
         else if (surface == FileSurfacePreview.ApplicationMenu)
         {
-            ModelItem? item = itemIndex.HasValue && applicationMenu != null
-                ? SafeChildren(applicationMenu, "Items")[itemIndex.Value]
-                : null;
-            ApplicationMenuPreviewCoordinator.SetActiveItem(applicationMenu, item);
+            ApplicationMenuPreviewCoordinator.SetActiveIndex(applicationMenu, itemIndex);
         }
     }
 
@@ -1792,7 +1775,7 @@ internal sealed class RibbonEditorWindow : Window
     {
         if (node.Kind == NodeKind.Ribbon)
         {
-            return _applicationMenu is null;
+            return DesignModel.FindProperty(_ribbon, "ApplicationMenu")?.Value is null;
         }
 
         ModelItem? menu = FindApplicationMenu(node);
@@ -1864,7 +1847,7 @@ internal sealed class RibbonEditorWindow : Window
         if (node?.Kind == NodeKind.Ribbon)
         {
             _addMenu.Items.Add(MakeMenuItem("Tab", OnAddTab));
-            if (_applicationMenu is null)
+            if (DesignModel.FindProperty(_ribbon, "ApplicationMenu")?.Value is null)
             {
                 _addMenu.Items.Add(MakeMenuItem("Application Menu", OnAddApplicationMenu));
             }
@@ -1966,8 +1949,6 @@ internal sealed class RibbonEditorWindow : Window
         ModelItem? menu = DesignModel.AddApplicationMenu(_ribbon);
         if (menu != null)
         {
-            _applicationMenu = menu;
-            TabPreviewCoordinator.RememberApplicationMenu(_ribbon, menu);
             RebuildTree(menu);
         }
     }
@@ -2498,15 +2479,10 @@ internal sealed class RibbonEditorWindow : Window
                 if (node.Kind == NodeKind.ApplicationMenu)
                 {
                     TabPreviewCoordinator.SetFileSurface(_ribbon, FileSurfacePreview.Closed);
-                    ApplicationMenuPreviewCoordinator.SetActiveItem(node.Item, null);
+                    ApplicationMenuPreviewCoordinator.SetActiveIndex(node.Item, null);
                 }
 
                 DesignModel.ClearProperty(owner, parentProperty);
-                if (node.Kind == NodeKind.ApplicationMenu)
-                {
-                    _applicationMenu = null;
-                    TabPreviewCoordinator.RememberApplicationMenu(_ribbon, null);
-                }
                 RebuildTree(owner);
             }
         }
