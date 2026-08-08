@@ -87,6 +87,31 @@ public class CustomContentKeyTipTests
     });
 
     [Fact]
+    public void Ribbon_toggle_KeyTip_runs_checked_state_and_Click_side_effects_together() => Sta.Run(() =>
+    {
+        var toggle = new RibbonToggleButton();
+        bool? checkedStateSeenByClick = null;
+        int clicks = 0;
+        toggle.Click += (_, _) =>
+        {
+            clicks++;
+            checkedStateSeenByClick = toggle.IsChecked;
+        };
+
+        RibbonKeyTipService.InvokeControl(toggle);
+
+        Assert.True(toggle.IsChecked);
+        Assert.True(checkedStateSeenByClick);
+        Assert.Equal(1, clicks);
+
+        RibbonKeyTipService.InvokeControl(toggle);
+
+        Assert.False(toggle.IsChecked);
+        Assert.False(checkedStateSeenByClick);
+        Assert.Equal(2, clicks);
+    });
+
+    [Fact]
     public void Backstage_action_item_invokes_instead_of_becoming_selected() => Sta.Run(() =>
     {
         var action = new BackstageTabItem { Header = "Options", IsButton = true };
@@ -97,5 +122,23 @@ public class CustomContentKeyTipTests
 
         Assert.True(invoked);
         Assert.False(action.IsSelected);
+    });
+
+    [Fact]
+    public void Disabled_target_is_not_invoked_even_when_an_ancestor_disables_it() => Sta.Run(() =>
+    {
+        var parent = new StackPanel { IsEnabled = false };
+        var button = new Button { Content = "Export" };
+        bool invoked = false;
+        button.Click += (_, _) => invoked = true;
+        parent.Children.Add(button);
+
+        Assert.False(button.IsEnabled);
+        Assert.False(RibbonKeyTipService.CanInvoke(button));
+
+        RibbonKeyTipService.InvokeControl(button);
+        Sta.Drain();
+
+        Assert.False(invoked);
     });
 }

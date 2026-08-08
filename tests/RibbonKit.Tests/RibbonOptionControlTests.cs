@@ -80,11 +80,16 @@ public sealed class RibbonOptionControlTests
     public void KeyTip_invocation_toggles_checks_and_selects_radio_groups() => Sta.Run(() =>
     {
         var checkBox = new RibbonCheckBox();
+        int checkClicks = 0;
+        checkBox.Click += (_, _) => checkClicks++;
         RibbonKeyTipService.InvokeControl(checkBox);
         Assert.True(checkBox.IsChecked);
+        Assert.Equal(1, checkClicks);
 
         var compact = new RibbonRadioButton { GroupName = "Density", IsChecked = true };
         var comfortable = new RibbonRadioButton { GroupName = "Density" };
+        int radioClicks = 0;
+        comfortable.Click += (_, _) => radioClicks++;
         var parent = new StackPanel { Children = { compact, comfortable } };
         Assert.Same(parent, comfortable.Parent);
 
@@ -92,6 +97,23 @@ public sealed class RibbonOptionControlTests
 
         Assert.False(compact.IsChecked);
         Assert.True(comfortable.IsChecked);
+        Assert.Equal(1, radioClicks);
+    });
+
+    [Fact]
+    public void Compact_inputs_participate_in_KeyTip_discovery_and_use_their_headers() => Sta.Run(() =>
+    {
+        var checkBox = new RibbonCheckBox { Header = "Show ruler" };
+        var radioButton = new RibbonRadioButton { Header = "Compact" };
+        var textBox = new RibbonTextBox { Header = "Find" };
+
+        Assert.True(RibbonKeyTipService.IsRibbonKeyTipControl(checkBox));
+        Assert.True(RibbonKeyTipService.IsRibbonKeyTipControl(radioButton));
+        Assert.True(RibbonKeyTipService.IsRibbonKeyTipControl(textBox));
+
+        Assert.Equal("Show ruler", RibbonKeyTipService.GetLabel(checkBox));
+        Assert.Equal("Compact", RibbonKeyTipService.GetLabel(radioButton));
+        Assert.Equal("Find", RibbonKeyTipService.GetLabel(textBox));
     });
 
     [Fact]

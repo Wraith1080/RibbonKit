@@ -94,6 +94,9 @@ public class RibbonCheckBox : CheckBox
     /// <inheritdoc />
     protected override AutomationPeer OnCreateAutomationPeer() => new RibbonCheckBoxAutomationPeer(this);
 
+    /// <summary>Activates through the native CheckBox click/toggle/command path.</summary>
+    internal void InvokeFromKeyTip() => OnClick();
+
     private void UpdateWashes()
     {
         RibbonMotion.FadeWash(_hoverWash, IsMouseOver, RibbonAnimationAction.Hover);

@@ -195,22 +195,32 @@ internal sealed class KeyTipService
 
     /// <summary>Full teardown (Esc at root, Alt, click, deactivate): closes open popups
     /// and the backstage too.</summary>
-    private void Exit() => TearDown(respectPersist: false);
+    private void Exit() => TearDown(respectPersist: false, activatedTarget: null);
 
     /// <summary>Teardown after invoking a leaf: closes menus/flyouts but leaves a
-    /// persistent surface (the backstage, whose page the user just chose) open.</summary>
-    private void ExitAfterActivate() => TearDown(respectPersist: true);
+    /// persistent surface (the backstage, whose page the user just chose) or an
+    /// input's containing flyout open.</summary>
+    private void ExitAfterActivate(UIElement activatedTarget) =>
+        TearDown(respectPersist: true, activatedTarget);
 
-    private void TearDown(bool respectPersist)
+    private void TearDown(bool respectPersist, UIElement? activatedTarget)
     {
+        bool isActivatedLevel = true;
         while (_levels.Count > 0)
         {
             KeyTipLevel level = _levels.Pop();
             RemoveAdorners(level);
-            if (!(respectPersist && level.PersistOnActivate))
+            bool preserveContainingSurface =
+                respectPersist &&
+                isActivatedLevel &&
+                activatedTarget is not null &&
+                KeepsContainingSurfaceOpenAfterKeyTip(activatedTarget);
+            if (!(respectPersist && level.PersistOnActivate) && !preserveContainingSurface)
             {
                 level.OnExit?.Invoke();
             }
+
+            isActivatedLevel = false;
         }
 
         _active = false;
@@ -295,6 +305,15 @@ internal sealed class KeyTipService
 
     private void Activate(KeyTipItem item)
     {
+        if (!CanInvoke(item.Target))
+        {
+            // Disabled commands may still have a badge so the level remains stable as command
+            // state changes, but typing that badge must neither invoke nor dismiss KeyTip mode.
+            _typed = string.Empty;
+            UpdateDim();
+            return;
+        }
+
         _typed = string.Empty;
 
         switch (item.Kind)
@@ -333,9 +352,9 @@ internal sealed class KeyTipService
 
             default:
                 // Leaf: fire the control, then tear the session down (keeping the
-                // backstage open if that is where the just-chosen page lives).
+                // backstage or an input's containing flyout open where appropriate).
                 InvokeControl(item.Target);
-                ExitAfterActivate();
+                ExitAfterActivate(item.Target);
                 break;
         }
     }
@@ -917,7 +936,7 @@ internal sealed class KeyTipService
             // A ribbon control is a KeyTip leaf/opener — collect it and stop descending
             // (we don't want its inner glyphs, and a dropdown's items belong to a deeper
             // level reached by activating it).
-            if (child is RibbonButton or RibbonToggleButton or RibbonDropDownButton or RibbonComboBox or InRibbonGallery)
+            if (IsRibbonKeyTipControl(child))
             {
                 if (child is UIElement { IsVisible: true } control)
                 {
@@ -946,6 +965,29 @@ internal sealed class KeyTipService
             }
         }
     }
+
+    /// <summary>
+    /// Whether a visual is one of RibbonKit's leaf controls or menu openers that participates in a
+    /// tab/group KeyTip level. Kept as a testable classification so new control types cannot ship
+    /// with invocation support but remain undiscoverable.
+    /// </summary>
+    internal static bool IsRibbonKeyTipControl(DependencyObject element) =>
+        element is RibbonButton
+            or RibbonToggleButton
+            or RibbonDropDownButton
+            or RibbonComboBox
+            or InRibbonGallery
+            or RibbonCheckBox
+            or RibbonRadioButton
+            or RibbonTextBox;
+
+    /// <summary>
+    /// Whether KeyTip activation starts an interaction that still needs the containing flyout.
+    /// Command-like controls dismiss a collapsed group just as a mouse click does; editors and
+    /// controls whose action opens a nested picker keep it available.
+    /// </summary>
+    internal static bool KeepsContainingSurfaceOpenAfterKeyTip(UIElement element) =>
+        element is TextBox or ComboBox or InRibbonGallery;
 
     /// <summary>
     /// Finds explicitly tagged controls in the currently realized Backstage page. Navigation items
@@ -1059,8 +1101,25 @@ internal sealed class KeyTipService
     /// </summary>
     internal static void InvokeControl(UIElement element)
     {
+        if (!CanInvoke(element))
+        {
+            return;
+        }
+
         switch (element)
         {
+            // UIA Toggle/SelectionItem changes state but does not run ButtonBase.OnClick, so a
+            // Click handler or Command would be skipped (the Showcase's Disable Samples exposed
+            // this). RibbonKit's toggle-like controls provide their exact native activation path.
+            case RibbonToggleButton toggleButton:
+                toggleButton.InvokeFromKeyTip();
+                return;
+            case RibbonCheckBox checkBox:
+                checkBox.InvokeFromKeyTip();
+                return;
+            case RibbonRadioButton radioButton:
+                radioButton.InvokeFromKeyTip();
+                return;
             // Text inputs have no Invoke/Toggle — a KeyTip transfers keyboard focus so typing can
             // begin without changing the existing selection or value.
             case TextBox textBox:
@@ -1160,6 +1219,12 @@ internal sealed class KeyTipService
     }
 
     /// <summary>
+    /// Whether an element may be invoked by a KeyTip or command proxy. WPF's effective
+    /// <see cref="UIElement.IsEnabled"/> value includes disabled ancestors and command coercion.
+    /// </summary>
+    internal static bool CanInvoke(UIElement element) => element.IsEnabled;
+
+    /// <summary>
     /// Resolves one KeyTip level into deterministic, typeable key sequences. Explicit assignments
     /// are reserved before automatic derivation so authored access keys always take precedence.
     /// When two explicit assignments are equal or one is a prefix of the other, the first wins and
@@ -1248,7 +1313,7 @@ internal sealed class KeyTipService
     private static bool IsTypeableKeyTipChar(char value) =>
         value is >= 'A' and <= 'Z' or >= 'a' and <= 'z' or >= '0' and <= '9';
 
-    private static string? GetLabel(UIElement element) => element switch
+    internal static string? GetLabel(UIElement element) => element switch
     {
         RibbonTab tab => tab.Header?.ToString(),
         RibbonButton button => button.Header,
@@ -1257,6 +1322,9 @@ internal sealed class KeyTipService
         RibbonDropDownButton dropDown => dropDown.Header,
         RibbonMenuItem menuItem => menuItem.Header,
         RibbonComboBox combo => combo.Header,
+        RibbonCheckBox checkBox => checkBox.Header ?? checkBox.Content?.ToString(),
+        RibbonRadioButton radioButton => radioButton.Header ?? radioButton.Content?.ToString(),
+        RibbonTextBox textBox => textBox.Header,
         HeaderedItemsControl headered => headered.Header?.ToString(),
         HeaderedContentControl headeredContent => headeredContent.Header?.ToString(),
         ContentControl content => content.Content?.ToString(),

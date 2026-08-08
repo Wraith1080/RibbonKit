@@ -3742,12 +3742,45 @@ the application menu's existing pane-refresh rule. The work also fixes Backstage
 `IsButton=True` now invokes the item's Click/Command path under KeyTips instead of trying to select
 the action as a page.
 
+Disabled targets remain visible in a stable KeyTip level but are never invoked. The activation state
+machine checks effective `UIElement.IsEnabled` before changing levels or dismissing KeyTip mode, then
+clears the typed prefix so another badge can be chosen. The shared `InvokeControl` helper repeats the
+guard because QAT/customization proxies also call it directly; effective WPF enablement covers both a
+locally disabled control and disablement inherited/coerced from a parent or command source.
+
+The live **Disable Samples** follow-up exposed a separate invocation mismatch: UI Automation's
+`Toggle`/`SelectionItem` patterns update checked/selected state but do not run
+`ButtonBase.OnClick`. The toggle therefore looked checked under its KeyTip while its XAML `Click`
+handler never disabled the sample controls. `RibbonToggleButton`, `RibbonCheckBox`, and
+`RibbonRadioButton` now expose an internal KeyTip activation hook that calls their real `OnClick`
+path. KeyTips therefore update state, raise routed `Click`, and execute `Command` in the same order as
+mouse or Space activation; UIA peers remain unchanged for external automation clients.
+
+The compact-input live pass then exposed a discovery mismatch: `RibbonCheckBox`,
+`RibbonRadioButton`, and `RibbonTextBox` already had invocation support and authored Showcase keys,
+but the root-level collector's ribbon-control type list predated those controls. They now participate
+in normal ribbon KeyTip discovery, with auto-derived labels taken from `Header`; text-box activation
+continues to transfer focus without changing the value.
+
+A collapsed-group follow-up exposed one more lifecycle distinction: invoking any leaf previously
+tore down every non-persistent KeyTip level, whose `OnExit` closes the collapsed-group flyout. That is
+correct after commands but made a text-box KeyTip focus an editor that immediately disappeared. Leaf
+teardown now preserves only the activated level for editors and nested-picker openers (`TextBox`,
+`ComboBox`, and `InRibbonGallery`) while still removing its badges and ending KeyTip mode. Buttons,
+checkboxes, and radio buttons retain normal command dismissal; Escape or light-dismiss still closes
+the preserved flyout afterward.
+
 The Showcase demonstrates both extension points with ordinary WPF buttons: **Create custom draft**
 (`CD`) in the Backstage Home page and **Manage recent locations** (`MR`) in the application menu's
-default pane. Four focused cases cover visible explicit Backstage targets, built-in plus explicit
-application-menu targets, ordinary-button invocation, and Backstage action invocation. Automated
-baseline: 220 logic tests plus the one visual test covering 62 approved images; the two live examples
-remain the focused interactive verification surface.
+default pane. Six focused cases cover visible explicit Backstage targets, built-in plus explicit
+application-menu targets, ordinary-button invocation, Backstage action invocation, and inherited
+disabled-state blocking, plus native toggle Click/state behavior. Automated baseline: 222 logic tests
+plus the one visual test covering 62 approved images; the two live examples remain the focused
+interactive verification surface.
+
+Two additional compact-input cases pin checkbox, radio-button, and text-box participation,
+Header-based label derivation, and the containing-flyout preservation boundary. Current automated
+baseline: 224 logic tests plus the one visual test covering 62 approved images.
 
 ## 4. Workflow / Session Conventions
 
@@ -4004,7 +4037,7 @@ Possible post-v1 polish:
   honor reduced motion, handle rapid reversals, and stay disabled while a DWM backdrop is active so
   Mica/Acrylic retain their native material retint without a second cross-fade on top.
 
-**Unit tests: 220 green (verified 2026-08-08).** Coverage now includes the STA harness, the borrow
+**Unit tests: 224 green (verified 2026-08-08).** Coverage now includes the STA harness, the borrow
 protocol, overflow strip measure/arrange rules, popup motion and dismissal, proxy mirroring,
 application-menu layering/hover/footer-outline/KeyTips, repeatable message-bar API/template/theme
 contracts, Office 2010 seam/state/consumer contracts, localization/RTL
@@ -4013,7 +4046,9 @@ live Backstage/title-transition contracts, design-preview runtime isolation, sco
 replacement, dark/Black neutral Backstage rail contracts, and the existing
 reduction/size-definition/theme-scope tests. The KeyTip resolver cases add explicit-key precedence,
 exact/prefix collision recovery, prefix-free derivation, typeable non-Latin fallback, and explicit
-custom-content discovery/invocation across Backstage and application-menu panes.
+custom-content discovery/invocation across Backstage and application-menu panes, including disabled
+target blocking, native toggle Click/Command semantics, compact-input discovery with Header-based
+label derivation, and collapsed-group preservation for editor/picker activation.
 `RibbonMergeModalTests` adds the Phase 7 automated invariants: merge ordering across later
 permutations, merge/unmerge round-trips, group restore with two sources in one tab, capture while
 modal, modal enter/exit selection and cancellation, forced exit when a merged modal tab leaves,

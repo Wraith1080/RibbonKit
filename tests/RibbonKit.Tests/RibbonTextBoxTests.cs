@@ -76,6 +76,18 @@ public sealed class RibbonTextBoxTests
     });
 
     [Fact]
+    public void KeyTip_text_input_keeps_its_containing_flyout_open() => Sta.Run(() =>
+    {
+        Assert.True(RibbonKeyTipService.KeepsContainingSurfaceOpenAfterKeyTip(new RibbonTextBox()));
+        Assert.True(RibbonKeyTipService.KeepsContainingSurfaceOpenAfterKeyTip(new RibbonComboBox()));
+        Assert.True(RibbonKeyTipService.KeepsContainingSurfaceOpenAfterKeyTip(new InRibbonGallery()));
+
+        Assert.False(RibbonKeyTipService.KeepsContainingSurfaceOpenAfterKeyTip(new RibbonButton()));
+        Assert.False(RibbonKeyTipService.KeepsContainingSurfaceOpenAfterKeyTip(new RibbonCheckBox()));
+        Assert.False(RibbonKeyTipService.KeepsContainingSurfaceOpenAfterKeyTip(new RibbonRadioButton()));
+    });
+
+    [Fact]
     public void Shared_template_and_designer_preserve_native_editing_and_offer_the_control()
     {
         XDocument templates = XDocument.Load(ThemePart("Controls.DropDowns.xaml"));

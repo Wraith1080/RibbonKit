@@ -94,6 +94,9 @@ public class RibbonRadioButton : RadioButton
     /// <inheritdoc />
     protected override AutomationPeer OnCreateAutomationPeer() => new RibbonRadioButtonAutomationPeer(this);
 
+    /// <summary>Activates through the native RadioButton click/selection/command path.</summary>
+    internal void InvokeFromKeyTip() => OnClick();
+
     private void UpdateWashes()
     {
         RibbonMotion.FadeWash(_hoverWash, IsMouseOver, RibbonAnimationAction.Hover);

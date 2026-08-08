@@ -16,7 +16,7 @@ namespace RibbonKit.Controls;
 /// back to automatic derivation. An explicit key also opts an ordinary visible
 /// <see cref="UIElement"/> inside the selected Backstage page or active application-menu
 /// pane/footer into that surface's KeyTip level, provided the element supports a native
-/// invocation path or an appropriate UI Automation pattern.
+/// invocation path or an appropriate UI Automation pattern. Disabled targets are never invoked.
 /// </summary>
 public static class KeyTip
 {
