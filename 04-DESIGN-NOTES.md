@@ -3420,9 +3420,16 @@ monitors does not retain stale measurements.
 
 Preview now models the File button as one mutually-exclusive choice: Closed, Backstage, or
 Application menu. `SelectedTabPreviewProvider` still owns `Ribbon.SelectedIndex` and
-`IsBackstageOpen`, and also translates `Ribbon.ApplicationMenu` to null only while Backstage is the
-explicit preview choice (otherwise the real runtime precedence would make Backstage impossible to
-preview when both are authored). Backstage pages keep their existing provider. Application-menu pane
+`IsBackstageOpen`, and also clears `Ribbon.ApplicationMenu` on the design surface only while Backstage
+is the explicit preview choice (otherwise the real runtime precedence would make Backstage impossible
+to preview when both are authored). The first implementation returned literal null from
+`TranslatePropertyValue`; the VS 2022 isolated designer then threw `NullReferenceException` from its
+own `DesignerModelProperty.Value` getter as soon as the editor read the property again. The supported
+`DependencyProperty.UnsetValue` sentinel avoids that broken object-null path, invalidation clears the
+menu before applying the open flag, and the editor retains the authored menu `ModelItem` while the
+surface value is cleared. `Ribbon.OnApplicationMenuChanged` also explicitly transfers the design-time
+Backstage host because the shared open flag can already be true during a surface-to-surface switch.
+Backstage pages keep their existing provider. Application-menu pane
 preview has a new provider for its read-only template state (`ActivePaneContent`,
 `ActivePaneHeader`, `HasActivePane`, and item `IsActive`); this object-valued translation is built and
 requires a live Visual Studio designer pass before it is called verified.

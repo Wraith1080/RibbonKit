@@ -127,8 +127,11 @@ string) and is edited via the **Caption** box. `TextBlock` editors and an "Add T
 exist for text added directly into a group's panels. The **Design Preview** tab lays out three fields
 vertically: **Active tab**, mutually-exclusive **File surface** (`Closed` / `Backstage` /
 `Application menu`, listing only surfaces present), and the dependent **Page / pane** picker. The
-File-surface provider translates `IsBackstageOpen` and temporarily hides `ApplicationMenu` only when
-Backstage is explicitly selected, matching runtime precedence without serializing state. The Page
+File-surface provider translates `IsBackstageOpen` and temporarily clears `ApplicationMenu` only when
+Backstage is explicitly selected, matching runtime precedence without serializing state. It returns
+`DependencyProperty.UnsetValue`, not literal null: the VS 2022 isolated designer crashes its own
+`DesignerModelProperty.Value` getter after an object-valued provider returns null. The editor caches
+the authored menu `ModelItem` while its surface value is cleared. The Page
 picker drives the backstage's `SelectedIndex` through a second provider
 (`BackstagePagePreviewProvider`, attached to `Backstage`) the same design-only way — enabled only while
 the backstage is shown, "(default)" clears the override. Because `SelectedIndex` is inherited from

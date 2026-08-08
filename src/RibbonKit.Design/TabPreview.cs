@@ -39,12 +39,34 @@ internal static class TabPreviewCoordinator
     private static FileSurfacePreview _fileSurface;
     private static ModelItem? _backstage;
     private static int? _backstagePage;
+    private static ModelItem? _applicationMenu;
 
     /// <summary>The currently previewed tab index, or null when no tab preview is active.</summary>
     public static int? CurrentIndex => _tabIndex;
 
     /// <summary>The current design-only File-surface choice.</summary>
     public static FileSurfacePreview CurrentFileSurface => _fileSurface;
+
+    /// <summary>
+    /// Remembers the authored menu model while its design-surface value is cleared for Backstage
+    /// preview. This also survives closing and reopening the editor inside the same designer session.
+    /// </summary>
+    public static void RememberApplicationMenu(ModelItem ribbon, ModelItem? applicationMenu)
+    {
+        if (_ribbon != null && !Equals(_ribbon, ribbon))
+        {
+            _tabIndex = null;
+            _fileSurface = FileSurfacePreview.Closed;
+            _backstage = null;
+            _backstagePage = null;
+        }
+
+        _ribbon = ribbon;
+        _applicationMenu = applicationMenu;
+    }
+
+    public static ModelItem? CurrentApplicationMenuFor(ModelItem ribbon) =>
+        Equals(_ribbon, ribbon) ? _applicationMenu : null;
 
     /// <summary>The currently previewed backstage page index, or null when no page preview is active.</summary>
     public static int? CurrentBackstagePage => _backstagePage;
@@ -66,8 +88,12 @@ internal static class TabPreviewCoordinator
     {
         _ribbon = ribbon;
         _fileSurface = surface;
-        Invalidate(ribbon, "IsBackstageOpen");
+        // ApplicationMenu first: when switching to Backstage the design surface must clear the
+        // menu before IsBackstageOpen is applied, otherwise Ribbon's runtime precedence correctly
+        // routes the open flag back to the menu. The reverse transition restores the menu before
+        // the open flag is evaluated.
         Invalidate(ribbon, "ApplicationMenu");
+        Invalidate(ribbon, "IsBackstageOpen");
     }
 
     /// <summary>True (with the index) when a tab preview is active for <paramref name="ribbon"/>.</summary>
@@ -182,8 +208,12 @@ public sealed class SelectedTabPreviewProvider : DesignModeValueProvider
 
             if (identifier.Name == "ApplicationMenu" && surface == FileSurfacePreview.Backstage)
             {
-                Debug.WriteLine("[RibbonKit] Preview ApplicationMenu -> null (show Backstage)");
-                return null!;
+                // The VS 2022 isolated designer crashes its DesignerModelProperty.Value getter
+                // after an object-valued provider returns literal null. UnsetValue is the supported
+                // DesignModeValueProvider sentinel for clearing the surface value while leaving the
+                // authored XAML/model value intact.
+                Debug.WriteLine("[RibbonKit] Preview ApplicationMenu -> UnsetValue (show Backstage)");
+                return System.Windows.DependencyProperty.UnsetValue;
             }
         }
 

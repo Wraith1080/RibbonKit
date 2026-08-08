@@ -1884,6 +1884,15 @@ public class Ribbon : Control
         // Assigning or clearing a menu changes WHICH surface IsBackstageOpen means, so the
         // discriminator has to be recomputed even though the open flag itself did not move.
         ribbon.UpdateApplicationMenuState();
+
+        // The design editor can temporarily clear ApplicationMenu on the isolated SURFACE (through
+        // a DesignModeValueProvider) so an authored Backstage can still be previewed when both File
+        // surfaces exist. IsBackstageOpen may already be true, so its change callback will not run
+        // again; explicitly transfer the design-time host here. Runtime never enters this branch.
+        if (System.ComponentModel.DesignerProperties.GetIsInDesignMode(ribbon))
+        {
+            ribbon.UpdateDesignTimeBackstage(ribbon.ApplicationMenu is null && ribbon.IsBackstageOpen);
+        }
     }
 
     private void OnApplicationMenuCloseRequested(object? sender, EventArgs e) =>
