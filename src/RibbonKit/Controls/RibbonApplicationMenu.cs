@@ -31,7 +31,8 @@ namespace RibbonKit.Controls;
 /// window's adorner layer; the application menu is a ribbon-owned drop-down. The shipping template
 /// renders it in the ribbon's outer menu layer, allowing the menu alone to cover the QAT and message
 /// rows without raising the ribbon body's shadow. With the historical orb, Ribbon mirrors only the
-/// button above that layer so the orb still sits over the menu exactly as it does in Office 2007.
+/// button's original layout slot and temporarily moves the real button above that layer, so the orb
+/// still sits over the menu exactly as it does in Office 2007 without a second rendered copy.
 /// Assign one to
 /// <see cref="Ribbon.ApplicationMenu"/> and the File button opens it instead of the backstage.
 /// </para>

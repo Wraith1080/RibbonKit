@@ -5,9 +5,7 @@ using System.Windows;
 using System.Windows.Automation.Peers;
 using System.Windows.Controls;
 using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Markup;
-using System.Windows.Media;
 using System.Windows.Threading;
 using RibbonKit.Animation;
 using RibbonKit.Localization;
@@ -1576,15 +1574,18 @@ public class Ribbon : Control
     private FrameworkElement? _ribbonContentHost;
 
     // Application menus belong in the Ribbon template's outer overlay so the menu alone can paint
-    // above the QAT/message rows. Office 2007 adds a live visual proxy of the orb above that menu;
-    // this preserves the historical overlap without promoting the entire tab-control branch and
-    // its body shadow. The nested presenter is retained only as a custom-template fallback.
+    // above the QAT/message rows. While an Office 2007 menu is open, the real application button is
+    // temporarily moved into that overlay and an inert same-size placeholder preserves its slot;
+    // this keeps one exactly positioned orb without promoting the tab-control/body-shadow branch.
+    // The nested presenter is retained only as a custom-template fallback.
     private Canvas? _applicationMenuOverlayLayer;
     private ContentPresenter? _applicationMenuOverlayPresenter;
     private Border? _applicationButtonOverlay;
-    private VisualBrush? _applicationButtonOverlayBrush;
     private ContentPresenter? _nestedApplicationMenuPresenter;
     private FrameworkElement? _applicationButton;
+    private Panel? _applicationButtonOriginalParent;
+    private Border? _applicationButtonPlaceholder;
+    private int _applicationButtonOriginalIndex = -1;
 
     // Below-ribbon quick-access bar and the last measured body height, so the bar can glide
     // by that height (staying visible) as the body collapses/expands on minimize/restore.
@@ -2067,7 +2068,7 @@ public class Ribbon : Control
         ClearApplicationMenuPresenter(inactive);
         if (active is null)
         {
-            CollapseApplicationButtonOverlay();
+            RestoreApplicationButtonFromOverlay();
             return;
         }
 
@@ -2090,6 +2091,13 @@ public class Ribbon : Control
         }
 
         UpdateApplicationButtonOverlay();
+
+        if (!useNestedHost && active.Visibility == Visibility.Visible)
+        {
+            // The first call anchors from the real button before an orb is reparented. This second
+            // call follows the placeholder after it has been realized, and is a no-op until then.
+            UpdateApplicationMenuOverlayPlacement();
+        }
     }
 
     private void ResolveApplicationMenuParts()
@@ -2117,19 +2125,27 @@ public class Ribbon : Control
     private void UpdateApplicationMenuOverlayPlacement()
     {
         ResolveApplicationMenuParts();
+        FrameworkElement? anchor = _applicationButtonPlaceholder ?? _applicationButton;
         if (_applicationMenuOverlayLayer is null
             || _applicationMenuOverlayPresenter is null
+            || anchor is null
             || _applicationButton is null
-            || _applicationButton.ActualHeight <= 0d)
+            || _applicationButton.ActualHeight <= 0d
+            || (_applicationButtonPlaceholder is not null && !anchor.IsArrangeValid))
         {
             return;
         }
 
         try
         {
-            Point origin = _applicationButton
+            Point origin = anchor
                 .TransformToVisual(_applicationMenuOverlayLayer)
                 .Transform(new Point(0d, 0d));
+            if (_applicationButtonPlaceholder is not null)
+            {
+                origin.Offset(_applicationButton.Margin.Left, _applicationButton.Margin.Top);
+            }
+
             bool anchorBelow = TryFindResource(ApplicationMenuAnchorBelowButtonResourceKey) is true;
             Canvas.SetLeft(_applicationMenuOverlayPresenter, origin.X);
             Canvas.SetTop(
@@ -2154,7 +2170,33 @@ public class Ribbon : Control
             || !IsApplicationMenuOpen
             || ApplicationMenu is null)
         {
-            CollapseApplicationButtonOverlay();
+            RestoreApplicationButtonFromOverlay();
+            return;
+        }
+
+        if (_applicationButtonPlaceholder is null)
+        {
+            MoveApplicationButtonToOverlay();
+        }
+
+        UpdateApplicationButtonOverlayPlacement();
+    }
+
+    private void MoveApplicationButtonToOverlay()
+    {
+        if (_applicationButton is null
+            || _applicationMenuOverlayLayer is null
+            || _applicationButtonOverlay is null
+            || _applicationButton.Parent is not Panel originalParent
+            || _applicationButton.ActualWidth <= 0d
+            || _applicationButton.ActualHeight <= 0d)
+        {
+            return;
+        }
+
+        int originalIndex = originalParent.Children.IndexOf(_applicationButton);
+        if (originalIndex < 0)
+        {
             return;
         }
 
@@ -2163,60 +2205,120 @@ public class Ribbon : Control
             Point origin = _applicationButton
                 .TransformToVisual(_applicationMenuOverlayLayer)
                 .Transform(new Point(0d, 0d));
-            Rect bounds = VisualTreeHelper.GetDescendantBounds(_applicationButton);
-            if (bounds.IsEmpty || bounds.Width <= 0d || bounds.Height <= 0d)
-            {
-                bounds = new Rect(_applicationButton.RenderSize);
-            }
+            Thickness margin = _applicationButton.Margin;
+            double slotWidth = Math.Max(
+                0d,
+                _applicationButton.ActualWidth + margin.Left + margin.Right);
+            double slotHeight = Math.Max(
+                0d,
+                _applicationButton.ActualHeight + margin.Top + margin.Bottom);
 
-            _applicationButtonOverlayBrush ??= new VisualBrush
+            var placeholder = new Border
             {
-                Stretch = Stretch.Fill,
-                ViewboxUnits = BrushMappingMode.Absolute,
+                Width = slotWidth,
+                Height = slotHeight,
+                HorizontalAlignment = _applicationButton.HorizontalAlignment,
+                VerticalAlignment = _applicationButton.VerticalAlignment,
+                IsHitTestVisible = false,
             };
-            _applicationButtonOverlayBrush.Visual = _applicationButton;
-            _applicationButtonOverlayBrush.Viewbox = bounds;
 
-            _applicationButtonOverlay.Background = _applicationButtonOverlayBrush;
-            _applicationButtonOverlay.Width = bounds.Width;
-            _applicationButtonOverlay.Height = bounds.Height;
-            Canvas.SetLeft(_applicationButtonOverlay, origin.X + bounds.X);
-            Canvas.SetTop(_applicationButtonOverlay, origin.Y + bounds.Y);
+            _applicationButtonOriginalParent = originalParent;
+            _applicationButtonOriginalIndex = originalIndex;
+            _applicationButtonPlaceholder = placeholder;
+
+            originalParent.Children.RemoveAt(originalIndex);
+            originalParent.Children.Insert(originalIndex, placeholder);
+
+            _applicationButtonOverlay.Width = slotWidth;
+            _applicationButtonOverlay.Height = slotHeight;
+            Canvas.SetLeft(_applicationButtonOverlay, origin.X - margin.Left);
+            Canvas.SetTop(_applicationButtonOverlay, origin.Y - margin.Top);
+            _applicationButtonOverlay.Child = _applicationButton;
             _applicationButtonOverlay.Visibility = Visibility.Visible;
         }
         catch (InvalidOperationException)
         {
-            // The button and outer layer have not joined the same visual root yet. LayoutUpdated
-            // retries after template realization/reflow completes.
-            CollapseApplicationButtonOverlay();
+            // The button and outer layer have not joined the same visual root yet. Leave the real
+            // button in its ordinary slot; LayoutUpdated retries after realization/reflow.
+            RestoreApplicationButtonFromOverlay();
         }
     }
 
-    private void CollapseApplicationButtonOverlay()
+    private void UpdateApplicationButtonOverlayPlacement()
     {
-        if (_applicationButtonOverlay is not null)
-        {
-            _applicationButtonOverlay.Visibility = Visibility.Collapsed;
-            _applicationButtonOverlay.Background = null;
-        }
-
-        if (_applicationButtonOverlayBrush is not null)
-        {
-            _applicationButtonOverlayBrush.Visual = null;
-        }
-    }
-
-    private void OnApplicationButtonOverlayMouseLeftButtonDown(
-        object sender,
-        MouseButtonEventArgs e)
-    {
-        if (!IsApplicationMenuOpen)
+        if (_applicationButtonOverlay is null
+            || _applicationMenuOverlayLayer is null
+            || _applicationButtonPlaceholder is null)
         {
             return;
         }
 
-        SetCurrentValue(IsBackstageOpenProperty, false);
-        e.Handled = true;
+        try
+        {
+            Thickness margin = _applicationButton?.Margin ?? default;
+            if (_applicationButton is not null)
+            {
+                double slotWidth = Math.Max(
+                    0d,
+                    _applicationButton.ActualWidth + margin.Left + margin.Right);
+                double slotHeight = Math.Max(
+                    0d,
+                    _applicationButton.ActualHeight + margin.Top + margin.Bottom);
+                _applicationButtonPlaceholder.Width = slotWidth;
+                _applicationButtonPlaceholder.Height = slotHeight;
+                _applicationButtonOverlay.Width = slotWidth;
+                _applicationButtonOverlay.Height = slotHeight;
+            }
+
+            if (!_applicationButtonPlaceholder.IsArrangeValid)
+            {
+                return;
+            }
+
+            Point origin = _applicationButtonPlaceholder
+                .TransformToVisual(_applicationMenuOverlayLayer)
+                .Transform(new Point(0d, 0d));
+            Canvas.SetLeft(_applicationButtonOverlay, origin.X);
+            Canvas.SetTop(_applicationButtonOverlay, origin.Y);
+        }
+        catch (InvalidOperationException)
+        {
+            // A layout/template transition can briefly disconnect the placeholder. The next
+            // LayoutUpdated pass will position the host once both elements share a visual root.
+        }
+    }
+
+    private void RestoreApplicationButtonFromOverlay()
+    {
+        if (_applicationButtonOverlay is not null)
+        {
+            if (ReferenceEquals(_applicationButtonOverlay.Child, _applicationButton))
+            {
+                _applicationButtonOverlay.Child = null;
+            }
+
+            _applicationButtonOverlay.Visibility = Visibility.Collapsed;
+            _applicationButtonOverlay.ClearValue(FrameworkElement.WidthProperty);
+            _applicationButtonOverlay.ClearValue(FrameworkElement.HeightProperty);
+            _applicationButtonOverlay.ClearValue(Canvas.LeftProperty);
+            _applicationButtonOverlay.ClearValue(Canvas.TopProperty);
+        }
+
+        if (_applicationButton is not null
+            && _applicationButtonOriginalParent is not null
+            && _applicationButtonPlaceholder is not null)
+        {
+            _applicationButtonOriginalParent.Children.Remove(_applicationButtonPlaceholder);
+            int index = Math.Clamp(
+                _applicationButtonOriginalIndex,
+                0,
+                _applicationButtonOriginalParent.Children.Count);
+            _applicationButtonOriginalParent.Children.Insert(index, _applicationButton);
+        }
+
+        _applicationButtonOriginalParent = null;
+        _applicationButtonPlaceholder = null;
+        _applicationButtonOriginalIndex = -1;
     }
 
     private static void ClearApplicationMenuPresenter(ContentPresenter? presenter)
@@ -2238,12 +2340,7 @@ public class Ribbon : Control
     {
         ClearApplicationMenuPresenter(_applicationMenuOverlayPresenter);
         ClearApplicationMenuPresenter(_nestedApplicationMenuPresenter);
-        CollapseApplicationButtonOverlay();
-        if (_applicationButtonOverlay is not null)
-        {
-            _applicationButtonOverlay.MouseLeftButtonDown -=
-                OnApplicationButtonOverlayMouseLeftButtonDown;
-        }
+        RestoreApplicationButtonFromOverlay();
 
         base.OnApplyTemplate();
 
@@ -2253,11 +2350,6 @@ public class Ribbon : Control
             GetTemplateChild(ApplicationMenuOverlayPresenterPartName) as ContentPresenter;
         _applicationButtonOverlay =
             GetTemplateChild(ApplicationButtonOverlayPartName) as Border;
-        if (_applicationButtonOverlay is not null)
-        {
-            _applicationButtonOverlay.MouseLeftButtonDown +=
-                OnApplicationButtonOverlayMouseLeftButtonDown;
-        }
         _nestedApplicationMenuPresenter = null;
         _applicationButton = null;
 
@@ -2343,8 +2435,8 @@ public class Ribbon : Control
     {
         if (IsApplicationMenuOpen)
         {
-            UpdateApplicationMenuOverlayPlacement();
             UpdateApplicationButtonOverlay();
+            UpdateApplicationMenuOverlayPlacement();
         }
     }
 

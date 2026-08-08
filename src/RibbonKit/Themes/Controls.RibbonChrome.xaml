@@ -96,9 +96,10 @@
                                  the menu cover the QAT/messages without promoting the
                                  RibbonTabControl body (and its shadow) with it. Ribbon assigns and
                                  positions the menu in code because a UIElement can have only one
-                                 visual parent. The small overlay below mirrors only the historical
-                                 orb above its menu; the nested presenter remains a compatibility
-                                 fallback for custom templates that omit this outer layer. -->
+                                 visual parent. The small host below temporarily receives the real
+                                 historical orb while its menu is open; the nested presenter remains
+                                 a compatibility fallback for custom templates that omit this outer
+                                 layer. -->
                             <Canvas x:Name="ApplicationMenuOverlayLayer"
                                     Grid.Row="0"
                                     Grid.RowSpan="3"
@@ -112,7 +113,6 @@
                                                   Visibility="Collapsed" />
                                 <Border x:Name="PART_ApplicationButtonOverlay"
                                         Panel.ZIndex="1"
-                                        Background="Transparent"
                                         Visibility="Collapsed" />
                             </Canvas>
 

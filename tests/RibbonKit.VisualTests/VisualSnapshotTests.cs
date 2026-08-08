@@ -121,6 +121,7 @@ public sealed class VisualSnapshotTests
                     FlowDirection.LeftToRight,
                     CreateOrbApplicationMenuMessageBarScene,
                     360);
+                AssertApplicationButtonMarginResourceSurvivesOrbRoundTrip();
 
                 ThemeManager.Apply(application, RibbonTheme.Office2024);
                 AssertSnapshot(
@@ -675,6 +676,35 @@ public sealed class VisualSnapshotTests
             flowDirection,
             RibbonApplicationButtonShape.Orb);
 
+    private static void AssertApplicationButtonMarginResourceSurvivesOrbRoundTrip()
+    {
+        var root = (Grid)CreateApplicationMenuMessageBarScene(
+            FlowDirection.LeftToRight,
+            RibbonApplicationButtonShape.Orb);
+        var ribbon = Assert.IsType<Ribbon>(Assert.Single(root.Children));
+        var size = new Size(Width, 360);
+
+        // Realize the open 2007 menu first so the real orb takes the outer-host path. Closing it
+        // must preserve the button's DynamicResource expression: Office 2019/2024 both replace
+        // this 2007 margin with 8,4,2,0 during a live theme switch.
+        root.Measure(size);
+        root.Arrange(new Rect(size));
+        root.UpdateLayout();
+        var button = Assert.IsAssignableFrom<FrameworkElement>(
+            FindDescendantByName(root, "PART_ApplicationButton"));
+        Assert.Equal(new Thickness(2d, 2d, 2d, 0d), button.Margin);
+
+        ribbon.SetCurrentValue(Ribbon.IsBackstageOpenProperty, false);
+        ribbon.ApplicationButtonShape = RibbonApplicationButtonShape.Tab;
+        var modernMargin = new Thickness(8d, 4d, 2d, 0d);
+        ribbon.Resources["RibbonKit.Metrics.ApplicationButtonMargin"] = modernMargin;
+        root.Measure(size);
+        root.Arrange(new Rect(size));
+        root.UpdateLayout();
+
+        Assert.Equal(modernMargin, button.Margin);
+    }
+
     private static FrameworkElement CreateApplicationMenuMessageBarScene(
         FlowDirection flowDirection,
         RibbonApplicationButtonShape applicationButtonShape)
@@ -757,6 +787,30 @@ public sealed class VisualSnapshotTests
         menu.Items.Add(new RibbonApplicationMenuItem { Header = "Open" });
 
         return menu;
+    }
+
+    private static DependencyObject? FindDescendantByName(
+        DependencyObject root,
+        string name)
+    {
+        if (root is FrameworkElement element && element.Name == name)
+        {
+            return element;
+        }
+
+        int count = VisualTreeHelper.GetChildrenCount(root);
+        for (int index = 0; index < count; index++)
+        {
+            DependencyObject? match = FindDescendantByName(
+                VisualTreeHelper.GetChild(root, index),
+                name);
+            if (match is not null)
+            {
+                return match;
+            }
+        }
+
+        return null;
     }
 
     private static RibbonButton Button(string? header, RibbonControlSize size, ImageSource icon) =>

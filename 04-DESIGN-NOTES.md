@@ -2830,12 +2830,19 @@ shipping template now hosts **every** application menu in the Ribbon template's 
 ```
 
 For a rectangular File button, the second element stays collapsed. For the Office 2007 orb, Ribbon
-uses a live `VisualBrush` of `PART_ApplicationButton` in that small overlay and positions it from the
-button's measured descendant bounds. Only the orb is re-painted above the menu; the real button
-remains in the tab-control tree for layout, focus, automation, and state. The proxy owns the open
-orb's pointer input and closes the menu on a second click. A nested presenter remains only as a
-compatibility fallback for custom templates that omit the outer parts. The shipping template no
-longer promotes `TabControlHost` for either button shape.
+replaces `PART_ApplicationButton` in its stack with an inert same-size placeholder, then temporarily
+moves that **real button** into the small outer host at the placeholder's measured coordinates. The
+placeholder preserves tab/QAT layout; moving the original preserves its exact pixels, bindings,
+focus/automation identity, hover state, and second-click toggle behavior. Closing the menu or
+changing shape restores it to its original panel/index. **Do not clear or assign the button's
+`Margin` while moving it.** The first reparenting pass restored the resolved Office 2007 `2,2,2,0`
+value as a literal, severing the template's `DynamicResource`; switching that same Ribbon to Office
+2019/2024 then left File offset instead of adopting `8,4,2,0`. The overlay host and placeholder now
+include the margin in their slot geometry while the real button keeps its resource reference alive.
+A focused realized-template regression changes that resource after an orb open/close and requires
+the same button to adopt the new value. A nested presenter remains only as a compatibility fallback
+for custom templates that omit the outer parts. The shipping template no longer promotes
+`TabControlHost` for either button shape.
 
 Two properties of `Canvas` are doing real work here, and both are the reason it is a `Canvas` and
 not a `Grid` cell:
@@ -2851,7 +2858,7 @@ The original 2007 placement was one `Thickness` token, `ApplicationMenuMargin`, 
 the top-left of the tab-strip row. The orb overhangs *upward* out of that row (its own margin has a
 negative top), which is why the old `2,10,0,0` position put the menu's top edge below the row origin,
 tucked under the orb's lower half. The cross-generation pass below keeps the same visual result but
-anchors both the menu and orb proxy to the button itself.
+anchors both the menu and temporarily reparented orb to the button's preserved layout slot.
 
 #### Cross-generation placement — 2026-08-01
 
@@ -3567,10 +3574,11 @@ shadow; Office 2024's 12px shadow consequently painted a dark band over the QAT 
 Suppressing `ContentHost.Effect` removed the leak but also removed wanted depth, so the final fix
 moves every shipping application menu into a direct Ribbon-template overlay above the QAT/message
 siblings; the `TabControlHost` and its unchanged shadow stay at their normal depth. For the
-historical orb, a measured live-visual proxy paints only the button above that outer menu and handles
-the second click. Ribbon assigns the single menu object to exactly one presenter, with the nested
-presenter retained only as a custom-template fallback. The combined 2024 rectangular and 2007 orb
-menu/message visuals are focused approvals rather than relying on isolated scenes to imply correct
+historical orb, a measured placeholder preserves its nested layout slot while the real button is
+temporarily reparented above the outer menu. Ribbon assigns the single menu object to exactly one
+presenter, with the nested presenter retained only as a custom-template fallback. The combined 2024
+rectangular and 2007 orb menu/message visuals are focused approvals rather than relying on isolated
+scenes to imply correct
 cross-branch ordering.
 
 The Showcase and Localization/RTL lab each place two independently actionable rows through the
@@ -3648,9 +3656,10 @@ E. **§3.45 proxies (manual — not unit-testable):** disable a command from cod
 F. **§3.46 application menu.** Switch to the Office 2007 theme (which turns the "2007 Menu" toggle
    on for you) and click the orb.
    1. **The orb is ON TOP of the menu** and stays lit while it is open. The menu is in the Ribbon's
-      outer overlay and only the live orb proxy is above it; if the ribbon body or its shadow rises
-      over the QAT/message rows, the outer-host separation is wrong. Check the title-bar QAT is still
-      visible too — only the backstage hides it.
+      outer overlay and the real orb is temporarily hosted above it; there must not be a second or
+      offset rendering. If the ribbon body or its shadow rises over the QAT/message rows, the
+      outer-host separation is wrong. Check the title-bar QAT is still visible too — only the
+      backstage hides it.
    2. **Position.** The menu is anchored to the measured application-button bounds. The 2007
       `Metrics.ApplicationMenuMargin` (`0,8,0,0`) then tucks its top-left under the orb's lower half.
    3. **Hover ownership:** slide down New → Open → Save → Save As. Pane-less rows show Recent

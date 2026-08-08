@@ -128,7 +128,7 @@ public class ApplicationMenuLayeringTests
     }
 
     [Fact]
-    public void Orb_menu_uses_outer_overlay_and_button_proxy_without_promoting_tab_control()
+    public void Orb_menu_uses_outer_overlay_and_real_button_host_without_promoting_tab_control()
     {
         var document = XDocument.Load(RibbonChromePath());
 
