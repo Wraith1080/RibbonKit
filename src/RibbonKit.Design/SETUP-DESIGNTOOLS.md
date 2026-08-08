@@ -81,9 +81,13 @@ an in-place rebuild won't reload).
 
 Every verb is a single undo.
 
-**Ribbon Editor dialog (`RibbonEditorWindow`):** "Edit Ribbon…" opens a modal with a tree of
-Tabs → Groups → items and a toolbar (Add Tab · Add Group · Add Control ▾ · Add Stack · Move Up/Down ·
-Delete) plus a Header rename box. Nodes can also be **dragged** to reorder or reparent: a blue line
+**Ribbon Editor dialog (`RibbonEditorWindow`):** "Edit Ribbon…" opens a responsive modal with a
+structure tree, a resizable inspector, and a compact contextual toolbar (**Add ▾ · Move Up/Down ·
+Delete**) plus a Caption box. The inspector keeps the caption visible and separates the scrolling
+**Properties** and **Design Preview** tabs, so preview controls no longer force the dialog wider.
+The grid uses device-independent sizing, scrollable content and a deferred layout refresh on live
+`DpiChanged`, so moving the open editor between differently-scaled monitors remeasures it. Nodes can
+also be **dragged** to reorder or reparent: a blue line
 between rows drops before/after that sibling, a blue box over a container row drops *into* it (append).
 Drops are type-checked the same way the verbs are — tabs among tabs, groups among groups (including
 across tabs), controls among a group's/panel's children (including across groups/panels), and
@@ -94,7 +98,7 @@ collection — matching the Office pattern of a vertical stack of horizontal ico
 inserts a `StackPanel` (vertical in a group, horizontal inside another stack); "Add Control" targets
 whatever's selected (a group's `Items`, a container's `Children`, or as a sibling of a control) and
 defaults stacked buttons to `Size="Small"`. Container nodes expose an `Orientation` editor. The
-"Add Control ▾" menu covers Button / Toggle / Split / Drop-Down (each gets a Header caption) plus Combo
+contextual **Add ▾ → Control** menu covers Button / Toggle / Split / Drop-Down (each gets a Header caption) plus Combo
 Box, Gallery (in-ribbon / drop-down), and Separator (no caption); creation tries the RibbonKit xmlns
 first, then WPF framework namespaces (so `Separator` works too). The tree also descends into **item
 containers** — combo boxes, galleries, and the **split / drop-down buttons** (their `Items`, which are
@@ -120,15 +124,19 @@ identity nor a surface KeyTip); clearing either box removes the attribute. Color
 containers (`Items`, i.e. combos/galleries/split+drop-down menus/backstage) but NOT into a control's `Content` (expanding
 every page/gallery item's visual tree was too noisy). A combo item's text lives in its `Content` (a
 string) and is edited via the **Caption** box. `TextBlock` editors and an "Add Text Block" menu entry
-exist for text added directly into a group's panels. A **Show backstage** checkbox (next to Preview tab)
-opens the backstage on the surface design-only — same `DesignModeValueProvider` path as the tab
-preview, now covering `IsBackstageOpen` too; it enables only when the ribbon has a backstage. A
-**Page** combo beside it previews a specific backstage page: it lists the nav pages (footer action
-buttons excluded) and drives the backstage's `SelectedIndex` through a second provider
+exist for text added directly into a group's panels. The **Design Preview** tab lays out three fields
+vertically: **Active tab**, mutually-exclusive **File surface** (`Closed` / `Backstage` /
+`Application menu`, listing only surfaces present), and the dependent **Page / pane** picker. The
+File-surface provider translates `IsBackstageOpen` and temporarily hides `ApplicationMenu` only when
+Backstage is explicitly selected, matching runtime precedence without serializing state. The Page
+picker drives the backstage's `SelectedIndex` through a second provider
 (`BackstagePagePreviewProvider`, attached to `Backstage`) the same design-only way — enabled only while
 the backstage is shown, "(default)" clears the override. Because `SelectedIndex` is inherited from
 `Selector`, the provider registers (and the coordinator invalidates) under both the `Backstage` and
-`Selector` declaring types, since which one the designer reports for an inherited DP is unverified. It runs in-process on the VS UI thread (only the design
+`Selector` declaring types, since which one the designer reports for an inherited DP is unverified.
+For an application menu it translates the read-only `ActivePaneContent`, `ActivePaneHeader`,
+`HasActivePane`, and item `IsActive` values from session state; this path requires the same live
+Windows designer verification used for the original tab/backstage provider. It runs in-process on the VS UI thread (only the design
 *surface* is process-isolated, not extension code), so it's a plain code-built WPF `Window`
 (the design assembly can't reference RibbonKit's themes). Every change is applied straight to
 the `ModelItem` tree through `DesignModel`, each as its own single undo — same transaction model
@@ -141,6 +149,14 @@ skipping any property the type doesn't have (via `DesignModel.HasProperty` / `Fi
   `ScreenTipTitle`, `ScreenTipText`.
 - Tab: `IsContextual`, `ContextualColor` (typed as a name or `#hex`, applied through the brush converter).
 - Group: `ShowDialogLauncher`, `ReductionMode` (Collapse/ResizeThenCollapse/Resize), `CanResize`.
+- Application menu: `DefaultHeader`; command items: `PaneHeader`, `IsSplit`, icon and KeyTip;
+  pane items: `Description`, caption and icon; footer buttons: caption and icon.
+
+The tree also surfaces `Ribbon.ApplicationMenu` as a deletable singleton root. **Add Application
+Menu** exists both on the Ribbon surface verb and in the editor. Contextual Add actions create command
+items, separators, standard default/command pane items, and footer buttons; toolbar/drag operations
+reorder them as one undo. Standard panes use managed `StackPanel` slots. Existing arbitrary content is
+shown as **custom content — edit in XAML** and is never expanded, flattened, or overwritten.
 
 Enum and brush values are set as strings and resolved by the property's type converter (same trick
 as the QAT verb's enum set); an invalid value is logged, not thrown. Each edit is its own undo.
@@ -215,11 +231,6 @@ visuals. The context-menu verbs are the delivery surface for these actions. (See
 
 ## Deferred
 
-- **Application-menu authoring parity with backstage:** a singleton **Add Application Menu** action;
-  an application-menu root in the Ribbon Editor; add/delete/reorder support for command items,
-  separators, default/command pane items and footer buttons; property editing; and design-only
-  menu/active-pane preview.
-  Reuse the existing backstage tree, item-editor and `DesignModeValueProvider` preview patterns.
 - `ParentAdapter` (valid-drop rules); design-time "Add to QAT" (QAT items are runtime proxies, not
   plain XAML). (NuGet packaging of the `lib/<tfm>/Design/` dll + toolbox manifest is now DONE — see
   "NuGet packaging (wired)" above.)

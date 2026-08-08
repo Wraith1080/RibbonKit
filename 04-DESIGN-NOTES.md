@@ -3409,6 +3409,35 @@ and repository-default artifact retention applies. The committed PNG format/loca
 regeneration opt-in, comparison thresholds, and `windows-latest` runner remain unchanged. The next
 run's actual/diff pair must be reviewed before choosing any portability correction.
 
+### 3.62 Responsive Ribbon Editor + application-menu authoring — 2026-08-08
+
+The application-menu backlog is implemented in the existing net472/code-built designer architecture.
+The editor shell now uses a compact contextual **Add** menu, a resizable star-sized tree/inspector
+split, a stretching Caption row, and separate **Properties / Design Preview** tabs. Preview controls
+are vertical rather than one long row. The window uses device-independent layout, scroll viewers,
+layout rounding and a deferred remeasure on `DpiChanged`, so a live move between differently-scaled
+monitors does not retain stale measurements.
+
+Preview now models the File button as one mutually-exclusive choice: Closed, Backstage, or
+Application menu. `SelectedTabPreviewProvider` still owns `Ribbon.SelectedIndex` and
+`IsBackstageOpen`, and also translates `Ribbon.ApplicationMenu` to null only while Backstage is the
+explicit preview choice (otherwise the real runtime precedence would make Backstage impossible to
+preview when both are authored). Backstage pages keep their existing provider. Application-menu pane
+preview has a new provider for its read-only template state (`ActivePaneContent`,
+`ActivePaneHeader`, `HasActivePane`, and item `IsActive`); this object-valued translation is built and
+requires a live Visual Studio designer pass before it is called verified.
+
+`Ribbon.ApplicationMenu` is now a deletable singleton editor root and **Add Application Menu** is also
+a Ribbon surface verb. The contextual Add menu creates/reorders/deletes command items, separators,
+default/command pane items, and footer buttons, reusing the existing caption, property-spec, icon,
+KeyTip, drag/drop and one-editing-scope-per-undo paths. Standard panes are managed StackPanels.
+Arbitrary existing `DefaultContent`, command `Content`, or `FooterContent` is surfaced as custom
+content and left untouched rather than recursively exposing or rewriting its visual tree.
+
+Build verification for this implementation is recorded below; default/minimum width, live DPI move,
+all authoring operations/undo, no-XAML preview state, and active-pane rendering remain the focused
+Windows designer acceptance pass.
+
 ## 4. Workflow / Session Conventions
 
 - Cloud workspace: `/home/user/ribbonkit/`. The user's machine:
@@ -3604,12 +3633,11 @@ during this arc.
 
 Backlog (rough priority):
 
-1. **XAML Designer Ribbon Editor: application-menu authoring parity with backstage.** Add a singleton
-   **Add Application Menu** action; surface `Ribbon.ApplicationMenu` as an editable root node; support
-   adding, deleting and reordering its command items, separators, default/command pane items and
-   footer buttons; and provide design-only menu/active-pane preview without changing runtime XAML
-   state. Follow the existing
-   backstage editor and preview patterns rather than creating a second design-tool architecture.
+1. **XAML Designer Ribbon Editor application-menu parity — IMPLEMENTED (§3.62), live designer pass
+   pending.** The responsive editor, singleton/menu structure authoring, property reuse, File-surface
+   selector and design-only active-pane provider are built. Verify the default/minimum-width and live
+   DPI move, every add/delete/reorder/undo path, and active-pane rendering in Visual Studio before
+   marking this user-verified.
 1a. Design editor: optional clear-to-default buttons for scalar properties. (Drag-drop tree
    reordering + cross-tab/group moves are now DONE — see §5 "Drag-drop reordering".)
 1b. ~~Finish the `DropdownMenu` animation.~~ **DONE (§3.42)** — all five flyouts plus the context

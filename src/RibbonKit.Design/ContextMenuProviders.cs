@@ -8,11 +8,12 @@ namespace RibbonKit.Design;
 // Design-time right-click verbs for building a ribbon on the XAML surface.
 
 /// <summary>
-/// Ribbon-level verbs: Add Tab, Add Backstage (once), and a Quick Access Toolbar position submenu.
+/// Ribbon-level verbs: Add Tab, singleton File surfaces, and a Quick Access Toolbar position submenu.
 /// </summary>
 public sealed class RibbonContextMenuProvider : ContextMenuProvider
 {
     private readonly MenuAction _addBackstage;
+    private readonly MenuAction _addApplicationMenu;
     private readonly MenuAction _qatTitleBar;
     private readonly MenuAction _qatTabRow;
     private readonly MenuAction _qatBelowRibbon;
@@ -35,6 +36,10 @@ public sealed class RibbonContextMenuProvider : ContextMenuProvider
         _addBackstage = new MenuAction("Add Backstage");
         _addBackstage.Execute += OnAddBackstage;
         Items.Add(_addBackstage);
+
+        _addApplicationMenu = new MenuAction("Add Application Menu");
+        _addApplicationMenu.Execute += OnAddApplicationMenu;
+        Items.Add(_addApplicationMenu);
 
         // Quick Access Toolbar position — radio-style submenu, checked on the current value.
         var qat = new MenuGroup("RibbonKit.QatPosition", "Quick Access Toolbar") { HasDropDown = true };
@@ -72,6 +77,7 @@ public sealed class RibbonContextMenuProvider : ContextMenuProvider
 
         // Only one backstage allowed.
         _addBackstage.Enabled = ribbon.Properties["Backstage"].Value is null;
+        _addApplicationMenu.Enabled = ribbon.Properties["ApplicationMenu"].Value is null;
 
         // Reflect the current QAT position as the checked item (ComputedValue includes the default).
         string current = ribbon.Properties["QuickAccessPosition"].ComputedValue?.ToString() ?? "TabRow";
@@ -143,6 +149,11 @@ public sealed class RibbonContextMenuProvider : ContextMenuProvider
             ribbon.Properties["Backstage"].SetValue(backstage);
             scope.Complete();
         }
+    }
+
+    private void OnAddApplicationMenu(object sender, MenuActionEventArgs e)
+    {
+        DesignModel.AddApplicationMenu(e.Selection.PrimarySelection);
     }
 }
 
