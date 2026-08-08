@@ -3688,15 +3688,16 @@ Five focused logic tests pin lookless inheritance/style key, native state and Sc
 Value pattern, KeyTip focus, required template part/resources, and designer/toolbox wiring. The two
 existing Office 2024 light/dark input approvals now also cover editable, read-only, and disabled text
 fields, keeping the visual corpus at 61 images. The initial automated baseline was 205 logic tests and
-61 approved images. A ribbon slider remains unscheduled.
+61 approved images. A ribbon slider was considered after this slice and is intentionally not planned.
 
 The live follow-up passed at 100/125/150/175/200% DPI in both the Office 2024 and classic visual
 profiles. RTL follow-up adds an `RTL Inputs` group to the Localization/RTL lab with inherited mixed
 Arabic/Latin content plus a left-aligned Latin document identifier inside a still-mirrored control.
 The checklist explicitly distinguishes component mirroring from inner text direction. A source
 contract prevents either field from forcing the entire control LTR, and a focused Office 2024 RTL
-approval pins group order, leading option indicators, and label/field reversal. Current automated
-baseline: 206 logic tests and 62 approved images; the interactive RTL caret/selection check remains.
+approval pins group order, leading option indicators, and label/field reversal. The interactive RTL
+caret, selection, mixed-direction text, explicitly LTR document identifier, and KeyTip focus checks
+then passed in the live lab. Current automated baseline: 206 logic tests and 62 approved images.
 
 ## 4. Workflow / Session Conventions
 
@@ -3716,8 +3717,8 @@ baseline: 206 logic tests and 62 approved images; the interactive RTL caret/sele
 
 > **Status as of 2026-08-08: everything through §3.61 and the responsive Ribbon Editor/application-
 > menu authoring work in the later §3.62 entry are implemented AND user-verified on Windows;
-> §§3.64–3.66 are automated and await focused live visual rechecks; §3.67 is user-verified;
-> §3.68 passed live DPI verification and awaits its focused RTL caret/selection check.**
+> §§3.64–3.66 are automated and await focused live visual rechecks; §§3.67–3.68 are user-verified,
+> including §3.68 at 100/125/150/175/200% DPI and in the focused RTL input lab.**
 > The ten-point §3.40/§3.41 checklist that stood here has been walked and passed in full, and the
 > **2007 DPI matrix is clean at 100/125/150/175/200%** — which closes the last S6 exit criterion the
 > 2007 arc left open. §3.42's whole-surface flyout animation, reduced-motion behavior, and the
