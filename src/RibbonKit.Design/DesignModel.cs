@@ -129,6 +129,22 @@ internal static class DesignModel
         }
     }
 
+    /// <summary>Clears a scalar child property as one undo operation.</summary>
+    public static void ClearProperty(ModelItem owner, string propertyName)
+    {
+        ModelProperty? property = FindProperty(owner, propertyName);
+        if (property?.Value is null)
+        {
+            return;
+        }
+
+        using (ModelEditingScope scope = owner.BeginEdit("Clear " + propertyName))
+        {
+            property.ClearValue();
+            scope.Complete();
+        }
+    }
+
     // ---- Reads (used by the editor dialog to build its tree) --------------------------
 
     /// <summary>
@@ -454,6 +470,109 @@ internal static class DesignModel
             Add(ribbon, "Tabs", tab);
             scope.Complete();
             return tab;
+        }
+    }
+
+    /// <summary>Adds the singleton application menu to a ribbon, returning the existing one when present.</summary>
+    public static ModelItem? AddApplicationMenu(ModelItem ribbon)
+    {
+        ModelProperty? property = FindProperty(ribbon, "ApplicationMenu");
+        if (property is null)
+        {
+            return null;
+        }
+
+        if (property.Value is { } existing)
+        {
+            return existing;
+        }
+
+        using (ModelEditingScope scope = ribbon.BeginEdit("Add Application Menu"))
+        {
+            ModelItem? menu = CreateAny(ribbon, "RibbonApplicationMenu");
+            if (menu is null)
+            {
+                DesignLog.Error("AddApplicationMenu", new Exception("could not create RibbonApplicationMenu"));
+                return null;
+            }
+
+            property.SetValue(menu);
+            scope.Complete();
+            return menu;
+        }
+    }
+
+    /// <summary>Adds a command row or separator to an application menu.</summary>
+    public static ModelItem? AddApplicationMenuEntry(ModelItem menu, string typeName, string? header)
+    {
+        using (ModelEditingScope scope = menu.BeginEdit("Add Application Menu Entry"))
+        {
+            ModelItem? item = CreateAny(menu, typeName);
+            if (item is null)
+            {
+                DesignLog.Error("AddApplicationMenuEntry", new Exception("could not create " + typeName));
+                return null;
+            }
+
+            if (!string.IsNullOrEmpty(header))
+            {
+                FindProperty(item, "Header")?.SetValue(header);
+            }
+
+            Add(menu, "Items", item);
+            scope.Complete();
+            return item;
+        }
+    }
+
+    /// <summary>
+    /// Ensures a standard StackPanel in a scalar application-menu content slot and appends one
+    /// managed child to it. Existing non-StackPanel custom content is preserved and rejected.
+    /// </summary>
+    public static ModelItem? AddApplicationMenuContentItem(
+        ModelItem owner,
+        string contentProperty,
+        string orientation,
+        string childType,
+        string caption)
+    {
+        ModelProperty? property = FindProperty(owner, contentProperty);
+        if (property is null)
+        {
+            return null;
+        }
+
+        using (ModelEditingScope scope = owner.BeginEdit("Add " + caption))
+        {
+            ModelItem? stack = property.Value;
+            if (stack is null)
+            {
+                stack = CreateFramework(owner, "StackPanel");
+                if (stack is null)
+                {
+                    DesignLog.Error("AddApplicationMenuContentItem", new Exception("could not create StackPanel"));
+                    return null;
+                }
+
+                FindProperty(stack, "Orientation")?.SetValue(orientation);
+                property.SetValue(stack);
+            }
+            else if (TypeNameOrEmpty(stack) != "StackPanel")
+            {
+                return null;
+            }
+
+            ModelItem? child = CreateAny(owner, childType);
+            if (child is null)
+            {
+                DesignLog.Error("AddApplicationMenuContentItem", new Exception("could not create " + childType));
+                return null;
+            }
+
+            FindProperty(child, "Content")?.SetValue(caption);
+            Add(stack, "Children", child);
+            scope.Complete();
+            return child;
         }
     }
 

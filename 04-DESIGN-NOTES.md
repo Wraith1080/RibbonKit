@@ -3392,7 +3392,7 @@ opaque 2007/2010 hover and pressed borders still paint over that base outline, p
 classic highlighted states. No new tokens or theme-specific template branches were needed. One
 template contract pins the permanent application-menu brush/thickness/corner geometry, prevents
 state triggers from mutating it, and retains the existing theme-specific Chrome state brushes.
-Current baseline: 169 logic tests and 47 approved images; manual hover recheck is pending.
+Current baseline: 171 logic tests and 47 approved images; manual hover recheck is pending.
 
 ### 3.63 Failure-only CI artifacts for cross-machine snapshot diagnosis — 2026-08-08
 
@@ -3408,6 +3408,45 @@ With explicit user approval, CI now uploads `TestResults/visual/*.png` as the fa
 and repository-default artifact retention applies. The committed PNG format/location, explicit
 regeneration opt-in, comparison thresholds, and `windows-latest` runner remain unchanged. The next
 run's actual/diff pair must be reviewed before choosing any portability correction.
+
+### 3.62 Responsive Ribbon Editor + application-menu authoring — VERIFIED IN VS, 2026-08-08
+
+The application-menu backlog is implemented in the existing net472/code-built designer architecture.
+The editor shell now uses a compact contextual **Add** menu, a resizable star-sized tree/inspector
+split, a stretching Caption row, and separate **Properties / Design Preview** tabs. Preview controls
+are vertical rather than one long row. The window uses device-independent layout, scroll viewers,
+layout rounding and a deferred remeasure on `DpiChanged`, so a live move between differently-scaled
+monitors does not retain stale measurements.
+
+Preview now models the File button as one mutually-exclusive choice: Closed, Backstage, or
+Application menu. `SelectedTabPreviewProvider` still owns `Ribbon.SelectedIndex` and
+now translates one integer `DesignPreviewFileSurface` value for the whole File-surface transition. An
+earlier implementation tried to clear `Ribbon.ApplicationMenu` on the design surface. Literal null
+crashed the VS 2022 isolated designer's
+`DesignerModelProperty.Value` getter immediately; `DependencyProperty.UnsetValue` still poisoned the
+model so a later read of the unrelated `Backstage` property crashed. Translating two Booleans separately
+still exposed a runtime-precedence intermediate frame and invalidating the application menu's
+object-valued pane state corrupted its child `ModelItem`s. The editor therefore never translates or
+invalidates any object-valued preview property. `Ribbon` consumes the one primitive surface value and
+updates its normal open/discriminator/design-host state synchronously. Application-menu pane preview
+likewise translates only `DesignPreviewActiveIndex`; `RibbonApplicationMenu` derives its ordinary
+`ActiveItem`, pane content/header, and item state inside the runtime control. Backstage pages keep their
+existing integer `SelectedIndex` provider. The final primitive-only paths are verified in the VS 2022
+isolated designer: Application menu, Closed, and Backstage can be cycled repeatedly without a transient
+wrong surface, a crash, model corruption, or serialized preview state, and application-menu pane
+selection remains usable afterward.
+
+`Ribbon.ApplicationMenu` is now a deletable singleton editor root and **Add Application Menu** is also
+a Ribbon surface verb. The contextual Add menu creates/reorders/deletes command items, separators,
+default/command pane items, and footer buttons, reusing the existing caption, property-spec, icon,
+KeyTip, drag/drop and one-editing-scope-per-undo paths. Standard panes are managed StackPanels.
+Arbitrary existing `DefaultContent`, command `Content`, or `FooterContent` is surfaced as custom
+content and left untouched rather than recursively exposing or rewriting its visual tree.
+
+Build verification for this implementation is recorded below. The redesigned editor and its complete
+File-surface/pane preview cycle are user-verified in Visual Studio; the live DPI-monitor move and the
+full add/delete/reorder/undo matrix remain useful focused regression checks rather than blockers for
+the application-menu parity item.
 
 ## 4. Workflow / Session Conventions
 
@@ -3604,12 +3643,10 @@ during this arc.
 
 Backlog (rough priority):
 
-1. **XAML Designer Ribbon Editor: application-menu authoring parity with backstage.** Add a singleton
-   **Add Application Menu** action; surface `Ribbon.ApplicationMenu` as an editable root node; support
-   adding, deleting and reordering its command items, separators, default/command pane items and
-   footer buttons; and provide design-only menu/active-pane preview without changing runtime XAML
-   state. Follow the existing
-   backstage editor and preview patterns rather than creating a second design-tool architecture.
+1. **XAML Designer Ribbon Editor application-menu parity — DONE AND USER-VERIFIED (§3.62).** The
+   responsive editor, singleton/menu structure authoring, property reuse, atomic File-surface selector,
+   and design-only active-pane preview are complete. Keep default/minimum width, live DPI moves, and
+   representative add/delete/reorder/undo operations in future designer regression passes.
 1a. Design editor: optional clear-to-default buttons for scalar properties. (Drag-drop tree
    reordering + cross-tab/group moves are now DONE — see §5 "Drag-drop reordering".)
 1b. ~~Finish the `DropdownMenu` animation.~~ **DONE (§3.42)** — all five flyouts plus the context
@@ -3646,11 +3683,12 @@ Possible post-v1 polish:
   honor reduced motion, handle rapid reversals, and stay disabled while a DWM backdrop is active so
   Mica/Acrylic retain their native material retint without a second cross-fade on top.
 
-**Unit tests: 169 green (verified 2026-08-08).** Coverage now includes the STA harness, the borrow
+**Unit tests: 171 green (verified 2026-08-08).** Coverage now includes the STA harness, the borrow
 protocol, overflow strip measure/arrange rules, popup motion and dismissal, proxy mirroring,
 application-menu layering/hover/footer-outline/KeyTips, Office 2010 seam/state/consumer contracts, localization/RTL
 context-menu, customization-template, chrome-tooltip, default-File, representative bidi-lab and
-live Backstage/title-transition contracts, and the existing reduction/size-definition/theme-scope tests.
+live Backstage/title-transition contracts, design-preview runtime isolation, and the existing
+reduction/size-definition/theme-scope tests.
 `RibbonMergeModalTests` adds the Phase 7 automated invariants: merge ordering across later
 permutations, merge/unmerge round-trips, group restore with two sources in one tab, capture while
 modal, modal enter/exit selection and cancellation, forced exit when a merged modal tab leaves,

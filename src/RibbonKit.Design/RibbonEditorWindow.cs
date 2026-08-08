@@ -7,6 +7,7 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Threading;
 using Microsoft.VisualStudio.DesignTools.Extensibility.Model;
 
 namespace RibbonKit.Design;
@@ -15,6 +16,8 @@ namespace RibbonKit.Design;
 internal enum NodeKind
 {
     Ribbon,
+    ApplicationMenu,
+    ApplicationMenuSection,
     Tab,
     Group,
 
@@ -33,11 +36,12 @@ internal enum NodeKind
 /// </summary>
 internal sealed class NodeInfo
 {
-    public NodeInfo(ModelItem item, NodeKind kind, string? parentCollection)
+    public NodeInfo(ModelItem item, NodeKind kind, string? parentCollection, string? parentProperty = null)
     {
         Item = item;
         Kind = kind;
         ParentCollection = parentCollection;
+        ParentProperty = parentProperty;
     }
 
     public ModelItem Item { get; }
@@ -46,6 +50,12 @@ internal sealed class NodeInfo
 
     /// <summary>The collection property this node lives in on its parent (null for the ribbon root).</summary>
     public string? ParentCollection { get; }
+
+    /// <summary>
+    /// The scalar property this node occupies on its parent (ApplicationMenu, DefaultContent,
+    /// Content, or FooterContent). Scalar nodes can be deleted but not reordered.
+    /// </summary>
+    public string? ParentProperty { get; }
 }
 
 /// <summary>
@@ -74,7 +84,7 @@ internal sealed class RibbonEditorWindow : Window
 {
     private readonly ModelItem _ribbon;
     private readonly TreeView _tree = new TreeView { BorderThickness = new Thickness(1) };
-    private readonly TextBox _headerBox = new TextBox { MinWidth = 160, VerticalContentAlignment = VerticalAlignment.Center };
+    private readonly TextBox _headerBox = new TextBox { MinWidth = 80, VerticalContentAlignment = VerticalAlignment.Center };
     private readonly TextBlock _typeText = new TextBlock { Opacity = 0.75, VerticalAlignment = VerticalAlignment.Center };
     private readonly Dictionary<ModelItem, TreeViewItem> _map = new Dictionary<ModelItem, TreeViewItem>();
 
@@ -82,18 +92,16 @@ internal sealed class RibbonEditorWindow : Window
     // before it returns, so none of these is ever observed null. `= null!` states that. Declaring
     // them nullable instead would put a `?.` on every use site to describe a state that cannot
     // happen, which reads as "this might not exist" and is simply untrue.
-    private Button _addGroup = null!;
-    private Button _addControl = null!;
-    private Button _addStack = null!;
-    private Button _addItem = null!;
+    private Button _add = null!;
     private Button _moveUp = null!;
     private Button _moveDown = null!;
     private Button _delete = null!;
     private Button _rename = null!;
     private ComboBox _previewCombo = null!;
-    private CheckBox _backstageCheck = null!;
-    private ComboBox _backstagePageCombo = null!;
-    private readonly List<int> _backstagePageMap = new List<int>();
+    private ComboBox _fileSurfaceCombo = null!;
+    private ComboBox _filePageCombo = null!;
+    private readonly List<FileSurfacePreview> _fileSurfaceMap = new List<FileSurfacePreview>();
+    private readonly List<int> _filePageMap = new List<int>();
     private bool _syncingPreview;
     private readonly StackPanel _propsPanel = new StackPanel { Orientation = Orientation.Vertical };
     private bool _syncingProps;
@@ -121,6 +129,20 @@ internal sealed class RibbonEditorWindow : Window
         ShowInTaskbar = false;
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
         UseLayoutRounding = true;
+        SnapsToDevicePixels = true;
+
+        // WPF measures in device-independent units, so the responsive grids below naturally
+        // reflow when Visual Studio moves between monitors. Force one deferred layout pass after
+        // a live DPI transition as well: the designer window lives in the VS process and can remain
+        // open while that process receives WM_DPICHANGED.
+        DpiChanged += (_, _) => Dispatcher.BeginInvoke(
+            DispatcherPriority.Loaded,
+            new Action(() =>
+            {
+                InvalidateMeasure();
+                InvalidateArrange();
+                UpdateLayout();
+            }));
 
         // Own the dialog to the VS main window so it is properly modal over the IDE (and
         // centres/minimises with it). Best-effort: a null/zero HWND just leaves it unowned.
@@ -172,51 +194,29 @@ internal sealed class RibbonEditorWindow : Window
     {
         _toolbar = new WrapPanel { Margin = new Thickness(0, 0, 0, 8) };
 
-        Button addTab = MakeButton("Add Tab", (_, _) => OnAddTab());
-        _addGroup = MakeButton("Add Group", (_, _) => OnAddGroup());
-        _addControl = MakeButton("Add Control ▾", OnAddControlClick);
-        _addStack = MakeButton("Add Stack", (_, _) => OnAddStack());
-        _addItem = MakeButton("Add Item", (_, _) => OnAddItem());
+        _add = MakeButton("Add ▾", OnAddClick);
         _moveUp = MakeButton("Move Up", (_, _) => OnMove(-1));
         _moveDown = MakeButton("Move Down", (_, _) => OnMove(+1));
         _delete = MakeButton("Delete", (_, _) => OnDelete());
 
-        _toolbar.Children.Add(addTab);
-        _toolbar.Children.Add(_addGroup);
-        _toolbar.Children.Add(_addControl);
-        _toolbar.Children.Add(_addStack);
-        _toolbar.Children.Add(_addItem);
+        _toolbar.Children.Add(_add);
         _toolbar.Children.Add(new Separator { Width = 1, Margin = new Thickness(4, 2, 4, 2) });
         _toolbar.Children.Add(_moveUp);
         _toolbar.Children.Add(_moveDown);
         _toolbar.Children.Add(_delete);
 
-        // The "Add Control" type menu. Buttons carry a Header caption; combos/galleries/separators
-        // don't (isButton = false), so no stray "ComboBox" label is written.
-        _addControlMenu = new ContextMenu { PlacementTarget = _addControl, Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom };
-        _addControlMenu.Items.Add(MakeControlMenuItem("Button", "RibbonButton", true));
-        _addControlMenu.Items.Add(MakeControlMenuItem("Toggle Button", "RibbonToggleButton", true));
-        _addControlMenu.Items.Add(MakeControlMenuItem("Split Button", "RibbonSplitButton", true));
-        _addControlMenu.Items.Add(MakeControlMenuItem("Drop-Down Button", "RibbonDropDownButton", true));
-        _addControlMenu.Items.Add(new Separator());
-        _addControlMenu.Items.Add(MakeControlMenuItem("Combo Box", "RibbonComboBox", false));
-        _addControlMenu.Items.Add(MakeControlMenuItem("Gallery (in-ribbon)", "InRibbonGallery", false));
-        _addControlMenu.Items.Add(MakeControlMenuItem("Gallery (drop-down)", "RibbonGallery", false));
-        _addControlMenu.Items.Add(MakeControlMenuItem("Separator", "Separator", false));
-        _addControlMenu.Items.Add(MakeControlMenuItem("Text Block", "TextBlock", false));
-
         return _toolbar;
     }
 
     private WrapPanel _toolbar = null!;
-    private ContextMenu _addControlMenu = null!;
+    private ContextMenu _addMenu = null!;
 
     private UIElement BuildBody()
     {
         var grid = new Grid();
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(320) });
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(8) });
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(2, GridUnitType.Star), MinWidth = 220 });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(6) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(3, GridUnitType.Star), MinWidth = 280 });
 
         _tree.SelectedItemChanged += (_, _) => UpdateDetails();
         _tree.AllowDrop = true;
@@ -227,6 +227,18 @@ internal sealed class RibbonEditorWindow : Window
         _tree.DragLeave += (_, _) => ClearDropAdorner();
         Grid.SetColumn(_tree, 0);
         grid.Children.Add(_tree);
+
+        var splitter = new GridSplitter
+        {
+            Width = 6,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch,
+            ResizeBehavior = GridResizeBehavior.PreviousAndNext,
+            ResizeDirection = GridResizeDirection.Columns,
+            Background = Brushes.Transparent,
+        };
+        Grid.SetColumn(splitter, 1);
+        grid.Children.Add(splitter);
 
         UIElement details = BuildDetailsPanel();
         Grid.SetColumn(details, 2);
@@ -241,8 +253,7 @@ internal sealed class RibbonEditorWindow : Window
         grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // title
         grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // type
         grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // header
-        grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) }); // properties
-        grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // preview
+        grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) }); // inspector tabs
 
         var title = new TextBlock
         {
@@ -259,10 +270,18 @@ internal sealed class RibbonEditorWindow : Window
         Grid.SetRow(typeRow, 1);
         grid.Children.Add(typeRow);
 
-        var headerRow = new StackPanel { Orientation = Orientation.Horizontal };
-        headerRow.Children.Add(new TextBlock { Text = "Caption: ", VerticalAlignment = VerticalAlignment.Center });
+        var headerRow = new Grid();
+        headerRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        headerRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        headerRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        var captionLabel = new TextBlock { Text = "Caption: ", VerticalAlignment = VerticalAlignment.Center };
+        Grid.SetColumn(captionLabel, 0);
+        headerRow.Children.Add(captionLabel);
+        Grid.SetColumn(_headerBox, 1);
         headerRow.Children.Add(_headerBox);
         _rename = MakeButton("Apply", (_, _) => OnRename());
+        _rename.Margin = new Thickness(6, 0, 0, 0);
+        Grid.SetColumn(_rename, 2);
         headerRow.Children.Add(_rename);
         Grid.SetRow(headerRow, 2);
         grid.Children.Add(headerRow);
@@ -277,59 +296,69 @@ internal sealed class RibbonEditorWindow : Window
             }
         };
 
+        var inspector = new TabControl { Margin = new Thickness(0, 12, 0, 0) };
+
         // Dynamic per-item property editors (scrolls when there are many).
         var propsScroll = new ScrollViewer
         {
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
-            Margin = new Thickness(0, 12, 0, 0),
+            Padding = new Thickness(8),
             Content = _propsPanel,
         };
-        Grid.SetRow(propsScroll, 3);
-        grid.Children.Add(propsScroll);
-
-        // Design-only tab preview: shows a tab on the surface without writing to the XAML.
-        var previewArea = new StackPanel { Orientation = Orientation.Vertical };
-        previewArea.Children.Add(new Separator { Margin = new Thickness(0, 12, 0, 12) });
-
-        var previewRow = new StackPanel { Orientation = Orientation.Horizontal };
-        previewRow.Children.Add(new TextBlock { Text = "Preview tab: ", VerticalAlignment = VerticalAlignment.Center });
-        _previewCombo = new ComboBox { MinWidth = 180 };
-        _previewCombo.SelectionChanged += OnPreviewChanged;
-        previewRow.Children.Add(_previewCombo);
-        _backstageCheck = new CheckBox
-        {
-            Content = "Show backstage",
-            VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(16, 0, 0, 0),
-        };
-        _backstageCheck.Click += OnBackstageToggle;
-        previewRow.Children.Add(_backstageCheck);
-
-        previewRow.Children.Add(new TextBlock
-        {
-            Text = "Page: ",
-            VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(16, 0, 0, 0),
-        });
-        _backstagePageCombo = new ComboBox { MinWidth = 150 };
-        _backstagePageCombo.SelectionChanged += OnBackstagePageChanged;
-        previewRow.Children.Add(_backstagePageCombo);
-        previewArea.Children.Add(previewRow);
-
-        previewArea.Children.Add(new TextBlock
-        {
-            Text = "Design-only: renders a tab (and optionally the backstage) on the surface without "
-                 + "changing your XAML or the running app. Reset to “(no preview)” to clear the tab. "
-                 + "Structure and property edits apply immediately (each is one Ctrl+Z).",
-            TextWrapping = TextWrapping.Wrap,
-            Opacity = 0.7,
-            Margin = new Thickness(0, 4, 0, 0),
-        });
-        Grid.SetRow(previewArea, 4);
-        grid.Children.Add(previewArea);
+        inspector.Items.Add(new TabItem { Header = "Properties", Content = propsScroll });
+        inspector.Items.Add(new TabItem { Header = "Design Preview", Content = BuildPreviewPanel() });
+        Grid.SetRow(inspector, 3);
+        grid.Children.Add(inspector);
 
         return grid;
+    }
+
+    private UIElement BuildPreviewPanel()
+    {
+        var panel = new StackPanel { Margin = new Thickness(10) };
+
+        _previewCombo = new ComboBox { MinWidth = 100, HorizontalAlignment = HorizontalAlignment.Stretch };
+        _previewCombo.SelectionChanged += OnPreviewChanged;
+        panel.Children.Add(BuildPreviewRow("Active tab", _previewCombo));
+
+        _fileSurfaceCombo = new ComboBox { MinWidth = 100, HorizontalAlignment = HorizontalAlignment.Stretch };
+        _fileSurfaceCombo.SelectionChanged += OnFileSurfaceChanged;
+        panel.Children.Add(BuildPreviewRow("File surface", _fileSurfaceCombo));
+
+        _filePageCombo = new ComboBox { MinWidth = 100, HorizontalAlignment = HorizontalAlignment.Stretch };
+        _filePageCombo.SelectionChanged += OnFilePageChanged;
+        panel.Children.Add(BuildPreviewRow("Page / pane", _filePageCombo));
+
+        panel.Children.Add(new TextBlock
+        {
+            Text = "Design-only preview state is kept in this designer session. It does not change "
+                 + "the XAML or the running application. Structure and property edits still apply "
+                 + "immediately, one Ctrl+Z step at a time.",
+            TextWrapping = TextWrapping.Wrap,
+            Opacity = 0.7,
+            Margin = new Thickness(0, 8, 0, 0),
+        });
+
+        return new ScrollViewer
+        {
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+            Content = panel,
+        };
+    }
+
+    private static UIElement BuildPreviewRow(string label, UIElement editor)
+    {
+        var row = new Grid { Margin = new Thickness(0, 0, 0, 8) };
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(92) });
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        var text = new TextBlock { Text = label + ":", VerticalAlignment = VerticalAlignment.Center };
+        Grid.SetColumn(text, 0);
+        row.Children.Add(text);
+        Grid.SetColumn(editor, 1);
+        row.Children.Add(editor);
+        return row;
     }
 
     private UIElement BuildFooter()
@@ -340,7 +369,7 @@ internal sealed class RibbonEditorWindow : Window
 
         var hint = new TextBlock
         {
-            Text = "Right-click items on the surface for the same verbs.",
+            Text = "Edits apply immediately; Ctrl+Z undoes one action.",
             Opacity = 0.6,
             VerticalAlignment = VerticalAlignment.Center,
         };
@@ -376,6 +405,13 @@ internal sealed class RibbonEditorWindow : Window
         return item;
     }
 
+    private static MenuItem MakeMenuItem(string caption, Action action)
+    {
+        var item = new MenuItem { Header = caption };
+        item.Click += (_, _) => action();
+        return item;
+    }
+
     // ---- Tree building ----------------------------------------------------------------
 
     private void RebuildTree(ModelItem? select = null)
@@ -406,6 +442,19 @@ internal sealed class RibbonEditorWindow : Window
             catch (Exception ex)
             {
                 DesignLog.Error("build backstage node", ex);
+            }
+        }
+
+        ModelItem? applicationMenu = DesignModel.FindProperty(_ribbon, "ApplicationMenu")?.Value;
+        if (applicationMenu != null)
+        {
+            try
+            {
+                AddApplicationMenuTree(rootItem, applicationMenu);
+            }
+            catch (Exception ex)
+            {
+                DesignLog.Error("build application-menu node", ex);
             }
         }
 
@@ -465,6 +514,74 @@ internal sealed class RibbonEditorWindow : Window
 
         PopulatePreviewCombo();
         UpdateDetails();
+    }
+
+    private void AddApplicationMenuTree(TreeViewItem ribbonItem, ModelItem menu)
+    {
+        var menuNode = MakeTreeItem(
+            new NodeInfo(menu, NodeKind.ApplicationMenu, null, "ApplicationMenu"),
+            "Application Menu");
+        menuNode.IsExpanded = true;
+        ribbonItem.Items.Add(menuNode);
+
+        AddApplicationMenuSection(menuNode, menu, "DefaultContent", "Default pane", "RibbonApplicationMenuPaneItem");
+
+        foreach (ModelItem item in SafeChildren(menu, "Items"))
+        {
+            bool isCommand = SafeType(item) == "RibbonApplicationMenuItem";
+            TreeViewItem itemNode = MakeTreeItem(
+                new NodeInfo(item, NodeKind.Control, "Items"),
+                DisplayFor(item, isPanel: false));
+            menuNode.Items.Add(itemNode);
+
+            if (isCommand)
+            {
+                AddApplicationMenuSection(itemNode, item, "Content", "Pane", "RibbonApplicationMenuPaneItem");
+            }
+        }
+
+        AddApplicationMenuSection(menuNode, menu, "FooterContent", "Footer", "RibbonApplicationMenuButton");
+    }
+
+    private void AddApplicationMenuSection(
+        TreeViewItem parent,
+        ModelItem owner,
+        string propertyName,
+        string label,
+        string managedChildType)
+    {
+        ModelItem? content = DesignModel.FindProperty(owner, propertyName)?.Value;
+        if (content is null)
+        {
+            return;
+        }
+
+        IReadOnlyList<ModelItem> children = SafeChildren(content, "Children");
+        bool isManagedStack = SafeType(content) == "StackPanel";
+        foreach (ModelItem child in children)
+        {
+            if (SafeType(child) != managedChildType)
+            {
+                isManagedStack = false;
+                break;
+            }
+        }
+
+        var section = MakeTreeItem(
+            new NodeInfo(content, NodeKind.ApplicationMenuSection, null, propertyName),
+            isManagedStack ? label : label + " (custom content — edit in XAML)");
+        section.IsExpanded = isManagedStack;
+        parent.Items.Add(section);
+
+        if (!isManagedStack)
+        {
+            return;
+        }
+
+        foreach (ModelItem child in children)
+        {
+            AddNode(section, child, "Children");
+        }
     }
 
     /// <summary>
@@ -597,18 +714,27 @@ internal sealed class RibbonEditorWindow : Window
 
             _previewCombo.SelectedIndex = selected;
 
-            // Backstage toggle: only meaningful when the ribbon actually has a backstage.
+            // File surfaces are mutually exclusive at runtime. Present them as one choice instead
+            // of independent checkboxes, and list only surfaces that actually exist in the model.
             ModelItem? backstage = DesignModel.FindProperty(_ribbon, "Backstage")?.Value;
+            ModelItem? applicationMenu = DesignModel.FindProperty(_ribbon, "ApplicationMenu")?.Value;
             bool hasBackstage = backstage != null;
-            _backstageCheck.IsEnabled = hasBackstage;
-            bool showingBackstage = hasBackstage
-                && TabPreviewCoordinator.TryGetBackstage(_ribbon, out bool open) && open;
-            _backstageCheck.IsChecked = showingBackstage;
+            bool hasApplicationMenu = applicationMenu != null;
+            PopulateFileSurfaces(hasBackstage, hasApplicationMenu);
 
-            // Backstage page switcher: list the pages (nav items that switch to content, not footer
-            // action buttons) so the surface can preview a specific one. Enabled only while the
-            // backstage is being shown.
-            PopulateBackstagePages(backstage, showingBackstage);
+            FileSurfacePreview surface = TabPreviewCoordinator.TryGetFileSurface(_ribbon, out FileSurfacePreview currentSurface)
+                ? currentSurface
+                : FileSurfacePreview.Closed;
+            if ((surface == FileSurfacePreview.Backstage && !hasBackstage)
+                || (surface == FileSurfacePreview.ApplicationMenu && !hasApplicationMenu))
+            {
+                surface = FileSurfacePreview.Closed;
+                TabPreviewCoordinator.SetFileSurface(_ribbon, surface);
+            }
+
+            int surfaceIndex = _fileSurfaceMap.IndexOf(surface);
+            _fileSurfaceCombo.SelectedIndex = surfaceIndex < 0 ? 0 : surfaceIndex;
+            PopulateFilePages(surface, backstage, applicationMenu);
         }
         finally
         {
@@ -617,24 +743,57 @@ internal sealed class RibbonEditorWindow : Window
     }
 
     /// <summary>
-    /// Fills the backstage page combo from <paramref name="backstage"/>'s nav items, skipping footer
-    /// action buttons (<c>IsButton</c>) since those don't switch to a page. Entry 0 is "(default)"
-    /// (clears the override); the rest map to their true index in the backstage's Items via
-    /// <see cref="_backstagePageMap"/>. Disabled (and reset to default) when the backstage isn't shown.
+    /// Rebuilds the File-surface list from the two optional scalar Ribbon properties.
     /// </summary>
-    private void PopulateBackstagePages(ModelItem? backstage, bool enabled)
+    private void PopulateFileSurfaces(bool hasBackstage, bool hasApplicationMenu)
     {
-        _backstagePageCombo.Items.Clear();
-        _backstagePageMap.Clear();
-        _backstagePageCombo.Items.Add("(default)");
-        _backstagePageCombo.IsEnabled = enabled;
-
-        if (backstage is null)
+        _fileSurfaceCombo.Items.Clear();
+        _fileSurfaceMap.Clear();
+        AddFileSurface("Closed", FileSurfacePreview.Closed);
+        if (hasBackstage)
         {
-            _backstagePageCombo.SelectedIndex = 0;
+            AddFileSurface("Backstage", FileSurfacePreview.Backstage);
+        }
+        if (hasApplicationMenu)
+        {
+            AddFileSurface("Application menu", FileSurfacePreview.ApplicationMenu);
+        }
+    }
+
+    private void AddFileSurface(string label, FileSurfacePreview surface)
+    {
+        _fileSurfaceCombo.Items.Add(label);
+        _fileSurfaceMap.Add(surface);
+    }
+
+    /// <summary>
+    /// Populates the dependent selector with backstage pages or application-menu panes. Entry zero
+    /// is always the surface's default page/pane and clears any item-specific override.
+    /// </summary>
+    private void PopulateFilePages(FileSurfacePreview surface, ModelItem? backstage, ModelItem? applicationMenu)
+    {
+        _filePageCombo.Items.Clear();
+        _filePageMap.Clear();
+        _filePageCombo.Items.Add("(default)");
+        _filePageCombo.IsEnabled = surface != FileSurfacePreview.Closed;
+
+        if (surface == FileSurfacePreview.Backstage && backstage != null)
+        {
+            PopulateBackstagePages(backstage);
             return;
         }
 
+        if (surface == FileSurfacePreview.ApplicationMenu && applicationMenu != null)
+        {
+            PopulateApplicationMenuPanes(applicationMenu);
+            return;
+        }
+
+        _filePageCombo.SelectedIndex = 0;
+    }
+
+    private void PopulateBackstagePages(ModelItem backstage)
+    {
         IReadOnlyList<ModelItem> items = SafeChildren(backstage, "Items");
         int selected = 0;
         int? current = TabPreviewCoordinator.TryGetBackstagePage(backstage, out int idx) ? idx : (int?)null;
@@ -647,15 +806,47 @@ internal sealed class RibbonEditorWindow : Window
             }
 
             string header = SafeHeader(items[i]);
-            _backstagePageCombo.Items.Add(string.IsNullOrEmpty(header) ? "Page " + (i + 1) : header);
-            _backstagePageMap.Add(i);
+            _filePageCombo.Items.Add(string.IsNullOrEmpty(header) ? "Page " + (i + 1) : header);
+            _filePageMap.Add(i);
             if (current == i)
             {
-                selected = _backstagePageMap.Count; // +1 for the "(default)" row at index 0
+                selected = _filePageMap.Count; // +1 for the "(default)" row at index 0
             }
         }
 
-        _backstagePageCombo.SelectedIndex = selected;
+        _filePageCombo.SelectedIndex = selected;
+    }
+
+    private void PopulateApplicationMenuPanes(ModelItem applicationMenu)
+    {
+        IReadOnlyList<ModelItem> items = SafeChildren(applicationMenu, "Items");
+        int selected = 0;
+        int? current = ApplicationMenuPreviewCoordinator.CurrentIndexFor(applicationMenu);
+        bool foundCurrent = !current.HasValue;
+        for (int i = 0; i < items.Count; i++)
+        {
+            ModelItem item = items[i];
+            if (SafeType(item) != "RibbonApplicationMenuItem" || DesignModel.ContentElement(item) is null)
+            {
+                continue;
+            }
+
+            string header = SafeHeader(item);
+            _filePageCombo.Items.Add(string.IsNullOrEmpty(header) ? "Pane " + (i + 1) : header);
+            _filePageMap.Add(i);
+            if (current == i)
+            {
+                selected = _filePageMap.Count;
+                foundCurrent = true;
+            }
+        }
+
+        if (!foundCurrent)
+        {
+            ApplicationMenuPreviewCoordinator.SetActiveIndex(applicationMenu, null);
+        }
+
+        _filePageCombo.SelectedIndex = selected;
     }
 
     private void OnPreviewChanged(object sender, SelectionChangedEventArgs e)
@@ -669,22 +860,35 @@ internal sealed class RibbonEditorWindow : Window
         TabPreviewCoordinator.SetTab(_ribbon, sel <= 0 ? (int?)null : sel - 1);
     }
 
-    private void OnBackstageToggle(object sender, RoutedEventArgs e)
+    private void OnFileSurfaceChanged(object sender, SelectionChangedEventArgs e)
     {
         if (_syncingPreview)
         {
             return;
         }
 
-        bool show = _backstageCheck.IsChecked == true;
-        TabPreviewCoordinator.SetBackstage(_ribbon, show);
+        int selected = _fileSurfaceCombo.SelectedIndex;
+        FileSurfacePreview surface = selected >= 0 && selected < _fileSurfaceMap.Count
+            ? _fileSurfaceMap[selected]
+            : FileSurfacePreview.Closed;
+        // Capture authored objects before invalidating any design-only preview values. Besides
+        // avoiding redundant Model API calls, this keeps the event handler safe if a future VS
+        // designer version defers an invalidation until the next property read.
+        ModelItem? backstage = DesignModel.FindProperty(_ribbon, "Backstage")?.Value;
+        ModelItem? applicationMenu = DesignModel.FindProperty(_ribbon, "ApplicationMenu")?.Value;
+        TabPreviewCoordinator.SetFileSurface(_ribbon, surface);
+        if (surface != FileSurfacePreview.ApplicationMenu)
+        {
+            ApplicationMenuPreviewCoordinator.SetActiveIndex(applicationMenu, null);
+        }
 
-        // Re-sync the page switcher's enabled/populated state to the new show/hide. Guard so the
-        // combo's SelectedIndex reset here doesn't re-enter OnBackstagePageChanged.
         _syncingPreview = true;
         try
         {
-            PopulateBackstagePages(DesignModel.FindProperty(_ribbon, "Backstage")?.Value, show);
+            PopulateFilePages(
+                surface,
+                backstage,
+                applicationMenu);
         }
         finally
         {
@@ -692,19 +896,33 @@ internal sealed class RibbonEditorWindow : Window
         }
     }
 
-    private void OnBackstagePageChanged(object sender, SelectionChangedEventArgs e)
+    private void OnFilePageChanged(object sender, SelectionChangedEventArgs e)
     {
         if (_syncingPreview)
         {
             return;
         }
 
+        FileSurfacePreview surface = _fileSurfaceCombo.SelectedIndex >= 0
+            && _fileSurfaceCombo.SelectedIndex < _fileSurfaceMap.Count
+                ? _fileSurfaceMap[_fileSurfaceCombo.SelectedIndex]
+                : FileSurfacePreview.Closed;
         ModelItem? backstage = DesignModel.FindProperty(_ribbon, "Backstage")?.Value;
-        int sel = _backstagePageCombo.SelectedIndex;
-        int? pageIndex = sel <= 0 || sel - 1 >= _backstagePageMap.Count
+        ModelItem? applicationMenu = DesignModel.FindProperty(_ribbon, "ApplicationMenu")?.Value;
+        int sel = _filePageCombo.SelectedIndex;
+        int? itemIndex = sel <= 0 || sel - 1 >= _filePageMap.Count
             ? (int?)null
-            : _backstagePageMap[sel - 1];
-        TabPreviewCoordinator.SetBackstagePage(backstage, pageIndex);
+            : _filePageMap[sel - 1];
+
+        if (surface == FileSurfacePreview.Backstage)
+        {
+            TabPreviewCoordinator.SetBackstagePage(backstage, itemIndex);
+            ApplicationMenuPreviewCoordinator.SetActiveIndex(applicationMenu, null);
+        }
+        else if (surface == FileSurfacePreview.ApplicationMenu)
+        {
+            ApplicationMenuPreviewCoordinator.SetActiveIndex(applicationMenu, itemIndex);
+        }
     }
 
     private TreeViewItem MakeTreeItem(NodeInfo info, string text)
@@ -733,6 +951,11 @@ internal sealed class RibbonEditorWindow : Window
         "ComboBoxItem" => "Combo Item",
         "RibbonMenuItem" => "Menu Item",
         "BackstageTabItem" => "Backstage Page",
+        "RibbonApplicationMenu" => "Application Menu",
+        "RibbonApplicationMenuItem" => "Application Menu Command",
+        "RibbonApplicationMenuSeparator" => "Application Menu Separator",
+        "RibbonApplicationMenuPaneItem" => "Application Menu Pane Item",
+        "RibbonApplicationMenuButton" => "Application Menu Footer Button",
         "TextBlock" => "Text Block",
         _ => typeName,
     };
@@ -753,22 +976,28 @@ internal sealed class RibbonEditorWindow : Window
         else
         {
             string type = SafeType(node.Item);
-            _typeText.Text = node.Kind == NodeKind.Control || node.Kind == NodeKind.Container
-                ? FriendlyType(type) + " (" + type + ")"
-                : node.Kind.ToString();
+            _typeText.Text = node.Kind switch
+            {
+                NodeKind.Control or NodeKind.Container => FriendlyType(type) + " (" + type + ")",
+                NodeKind.ApplicationMenu => "Application Menu (" + type + ")",
+                NodeKind.ApplicationMenuSection => "Application Menu Content (" + type + ")",
+                _ => node.Kind.ToString(),
+            };
             _headerBox.Text = node.Kind == NodeKind.Ribbon ? string.Empty : DesignModel.GetCaption(node.Item);
         }
 
-        // Anything with a parent collection (tab / group / container / control / item) can be moved/deleted.
-        bool structural = node != null && node.ParentCollection != null;
+        // Collection children can move/delete; scalar application-menu roots/sections can delete only.
+        bool structural = node != null && (node.ParentCollection != null || node.ParentProperty != null);
         // Caption edits work for Header controls AND Content items (combo/gallery items).
         bool renameable = node != null && node.Kind != NodeKind.Ribbon && DesignModel.HasCaption(node.Item);
 
-        _addGroup.IsEnabled = ResolveTab(node) != null;
         bool canAddChild = ResolveChildTarget(node) != null;
-        _addControl.IsEnabled = canAddChild;
-        _addStack.IsEnabled = canAddChild;
-        _addItem.IsEnabled = ResolveItemTarget(node) != null; // combo/gallery/backstage entries
+        _add.IsEnabled = node != null
+            && (node.Kind == NodeKind.Ribbon
+                || ResolveTab(node) != null
+                || canAddChild
+                || ResolveItemTarget(node) != null
+                || CanAddApplicationMenuContent(node));
 
         _rename.IsEnabled = renameable;
         _headerBox.IsEnabled = renameable;
@@ -792,8 +1021,8 @@ internal sealed class RibbonEditorWindow : Window
             }
         }
 
-        _moveUp.IsEnabled = structural && index > 0;
-        _moveDown.IsEnabled = structural && index >= 0 && index < count - 1;
+        _moveUp.IsEnabled = node?.ParentCollection != null && index > 0;
+        _moveDown.IsEnabled = node?.ParentCollection != null && index >= 0 && index < count - 1;
 
         BuildProps(node);
     }
@@ -888,6 +1117,22 @@ internal sealed class RibbonEditorWindow : Window
         new PropSpec("IsEditable", "Editable", EditorKind.Bool),
     };
 
+    private static readonly PropSpec[] ApplicationMenuSpecs =
+    {
+        new PropSpec("DefaultHeader", "Default pane name", EditorKind.Text),
+    };
+
+    private static readonly PropSpec[] ApplicationMenuItemSpecs =
+    {
+        new PropSpec("PaneHeader", "Pane header", EditorKind.Text),
+        new PropSpec("IsSplit", "Split command", EditorKind.Bool),
+    };
+
+    private static readonly PropSpec[] ApplicationMenuPaneItemSpecs =
+    {
+        new PropSpec("Description", "Description", EditorKind.Text),
+    };
+
     // Split layout is Large-only (§3.43), so the row is GATED rather than always shown: offering
     // "Vertical" on a button that can never render Large would set a property with no visible
     // effect, and the author would have no way to tell that from a bug in the control.
@@ -934,6 +1179,9 @@ internal sealed class RibbonEditorWindow : Window
         "BackstageTabItem" => BackstageItemSpecs,
         "RibbonComboBox" => ComboSpecs,
         "RibbonSplitButton" => SplitButtonSpecs,
+        "RibbonApplicationMenu" => ApplicationMenuSpecs,
+        "RibbonApplicationMenuItem" => ApplicationMenuItemSpecs,
+        "RibbonApplicationMenuPaneItem" => ApplicationMenuPaneItemSpecs,
         "TextBlock" => TextBlockSpecs,
         _ => System.Array.Empty<PropSpec>(),
     };
@@ -957,10 +1205,14 @@ internal sealed class RibbonEditorWindow : Window
         {
             NodeKind.Tab => true,
             NodeKind.Group => true,
-            NodeKind.Control => node.Item.Parent is null || ItemRule(node.Item.Parent) == null,
+            NodeKind.Control => node.Item.Parent is null
+                || (ItemRule(node.Item.Parent) == null && SafeType(node.Item.Parent) != "RibbonApplicationMenu"),
             _ => false,
         };
     }
+
+    private static bool ShowsApplicationMenuKeyTip(NodeInfo node) =>
+        node.Kind == NodeKind.Control && SafeType(node.Item) == "RibbonApplicationMenuItem";
 
     /// <summary>Type-specific editors first, then the kind's editors, de-duplicated by name.</summary>
     private List<PropSpec> SpecsForNode(NodeInfo node)
@@ -1023,6 +1275,12 @@ internal sealed class RibbonEditorWindow : Window
             if (ShowsIdentityProps(node))
             {
                 _propsPanel.Children.Add(BuildPropRow(node.Item, CommandIdSpec));
+                _propsPanel.Children.Add(BuildPropRow(node.Item, KeyTipSpec));
+                any = true;
+            }
+
+            if (ShowsApplicationMenuKeyTip(node))
+            {
                 _propsPanel.Children.Add(BuildPropRow(node.Item, KeyTipSpec));
                 any = true;
             }
@@ -1387,6 +1645,11 @@ internal sealed class RibbonEditorWindow : Window
     /// </summary>
     private (ModelItem Parent, string Collection)? ResolveChildTarget(NodeInfo? node)
     {
+        if (node != null && FindApplicationMenu(node) != null)
+        {
+            return null; // application-menu slots use their semantic Add actions below
+        }
+
         switch (node?.Kind)
         {
             case NodeKind.Group:
@@ -1453,6 +1716,102 @@ internal sealed class RibbonEditorWindow : Window
         return node.Item.Parent != null ? ItemRule(node.Item.Parent) : null;
     }
 
+    private ModelItem? FindApplicationMenu(NodeInfo? node)
+    {
+        for (ModelItem? item = node?.Item; item != null; item = item.Parent)
+        {
+            if (SafeType(item) == "RibbonApplicationMenu")
+            {
+                return item;
+            }
+        }
+
+        return null;
+    }
+
+    private NodeInfo? FindApplicationMenuSection(NodeInfo? node)
+    {
+        if (node?.Kind == NodeKind.ApplicationMenuSection)
+        {
+            return node;
+        }
+
+        ModelItem? parent = node?.Item.Parent;
+        if (parent != null && _map.TryGetValue(parent, out TreeViewItem treeItem))
+        {
+            return treeItem.Tag as NodeInfo is { Kind: NodeKind.ApplicationMenuSection } section
+                ? section
+                : null;
+        }
+
+        return null;
+    }
+
+    private static bool IsManagedContentSlot(ModelItem owner, string propertyName, string childType)
+    {
+        ModelItem? content = DesignModel.FindProperty(owner, propertyName)?.Value;
+        if (content is null)
+        {
+            return true;
+        }
+
+        if (SafeType(content) != "StackPanel")
+        {
+            return false;
+        }
+
+        foreach (ModelItem child in SafeChildren(content, "Children"))
+        {
+            if (SafeType(child) != childType)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private bool CanAddApplicationMenuContent(NodeInfo node)
+    {
+        if (node.Kind == NodeKind.Ribbon)
+        {
+            return DesignModel.FindProperty(_ribbon, "ApplicationMenu")?.Value is null;
+        }
+
+        ModelItem? menu = FindApplicationMenu(node);
+        if (menu is null)
+        {
+            return false;
+        }
+
+        if (node.Kind == NodeKind.ApplicationMenu
+            || node.Item.Parent != null && SafeType(node.Item.Parent) == "RibbonApplicationMenu")
+        {
+            return true; // command or separator sibling
+        }
+
+        if (SafeType(node.Item) == "RibbonApplicationMenuItem")
+        {
+            return IsManagedContentSlot(node.Item, "Content", "RibbonApplicationMenuPaneItem");
+        }
+
+        NodeInfo? section = FindApplicationMenuSection(node);
+        if (section?.ParentProperty == "DefaultContent")
+        {
+            return IsManagedContentSlot(menu, "DefaultContent", "RibbonApplicationMenuPaneItem");
+        }
+        if (section?.ParentProperty == "Content" && section.Item.Parent is { } command)
+        {
+            return IsManagedContentSlot(command, "Content", "RibbonApplicationMenuPaneItem");
+        }
+        if (section?.ParentProperty == "FooterContent")
+        {
+            return IsManagedContentSlot(menu, "FooterContent", "RibbonApplicationMenuButton");
+        }
+
+        return false;
+    }
+
     // ---- Commands ---------------------------------------------------------------------
 
     private void OnAddTab()
@@ -1471,11 +1830,169 @@ internal sealed class RibbonEditorWindow : Window
         }
     }
 
-    private void OnAddControlClick(object sender, RoutedEventArgs e)
+    private void OnAddClick(object sender, RoutedEventArgs e)
     {
-        if (_addControl.IsEnabled)
+        if (!_add.IsEnabled)
         {
-            _addControlMenu.IsOpen = true;
+            return;
+        }
+
+        _addMenu = new ContextMenu
+        {
+            PlacementTarget = _add,
+            Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom,
+        };
+
+        NodeInfo? node = Selected;
+        if (node?.Kind == NodeKind.Ribbon)
+        {
+            _addMenu.Items.Add(MakeMenuItem("Tab", OnAddTab));
+            if (DesignModel.FindProperty(_ribbon, "ApplicationMenu")?.Value is null)
+            {
+                _addMenu.Items.Add(MakeMenuItem("Application Menu", OnAddApplicationMenu));
+            }
+        }
+
+        if (ResolveTab(node) != null)
+        {
+            _addMenu.Items.Add(MakeMenuItem("Group", OnAddGroup));
+        }
+
+        if (ResolveChildTarget(node) != null)
+        {
+            var control = new MenuItem { Header = "Control" };
+            control.Items.Add(MakeControlMenuItem("Button", "RibbonButton", true));
+            control.Items.Add(MakeControlMenuItem("Toggle Button", "RibbonToggleButton", true));
+            control.Items.Add(MakeControlMenuItem("Split Button", "RibbonSplitButton", true));
+            control.Items.Add(MakeControlMenuItem("Drop-Down Button", "RibbonDropDownButton", true));
+            control.Items.Add(new Separator());
+            control.Items.Add(MakeControlMenuItem("Combo Box", "RibbonComboBox", false));
+            control.Items.Add(MakeControlMenuItem("Gallery (in-ribbon)", "InRibbonGallery", false));
+            control.Items.Add(MakeControlMenuItem("Gallery (drop-down)", "RibbonGallery", false));
+            control.Items.Add(MakeControlMenuItem("Separator", "Separator", false));
+            control.Items.Add(MakeControlMenuItem("Text Block", "TextBlock", false));
+            _addMenu.Items.Add(control);
+            _addMenu.Items.Add(MakeMenuItem("Stack Panel", OnAddStack));
+        }
+
+        if (ResolveItemTarget(node) != null)
+        {
+            _addMenu.Items.Add(MakeMenuItem("Item", OnAddItem));
+        }
+
+
+        AddApplicationMenuActions(node);
+
+        _addMenu.IsOpen = true;
+    }
+
+    private void AddApplicationMenuActions(NodeInfo? node)
+    {
+        ModelItem? menu = FindApplicationMenu(node);
+        if (node is null || menu is null)
+        {
+            return;
+        }
+
+        bool directEntry = node.Kind == NodeKind.ApplicationMenu
+            || node.Item.Parent != null && SafeType(node.Item.Parent) == "RibbonApplicationMenu";
+        if (directEntry)
+        {
+            _addMenu.Items.Add(MakeMenuItem("Application Menu Command", OnAddApplicationMenuCommand));
+            _addMenu.Items.Add(MakeMenuItem("Application Menu Separator", OnAddApplicationMenuSeparator));
+        }
+
+        if (node.Kind == NodeKind.ApplicationMenu
+            && IsManagedContentSlot(menu, "DefaultContent", "RibbonApplicationMenuPaneItem"))
+        {
+            _addMenu.Items.Add(MakeMenuItem("Default Pane Item", () =>
+                OnAddApplicationMenuContentItem(menu, "DefaultContent", "Vertical", "RibbonApplicationMenuPaneItem", "Pane Item")));
+        }
+
+        if (node.Kind == NodeKind.ApplicationMenu
+            && IsManagedContentSlot(menu, "FooterContent", "RibbonApplicationMenuButton"))
+        {
+            _addMenu.Items.Add(MakeMenuItem("Footer Button", () =>
+                OnAddApplicationMenuContentItem(menu, "FooterContent", "Horizontal", "RibbonApplicationMenuButton", "Footer Button")));
+        }
+
+        if (SafeType(node.Item) == "RibbonApplicationMenuItem"
+            && IsManagedContentSlot(node.Item, "Content", "RibbonApplicationMenuPaneItem"))
+        {
+            _addMenu.Items.Add(MakeMenuItem("Pane Item", () =>
+                OnAddApplicationMenuContentItem(node.Item, "Content", "Vertical", "RibbonApplicationMenuPaneItem", "Pane Item")));
+        }
+
+        NodeInfo? section = FindApplicationMenuSection(node);
+        if (section?.ParentProperty == "DefaultContent"
+            && IsManagedContentSlot(menu, "DefaultContent", "RibbonApplicationMenuPaneItem"))
+        {
+            _addMenu.Items.Add(MakeMenuItem("Pane Item", () =>
+                OnAddApplicationMenuContentItem(menu, "DefaultContent", "Vertical", "RibbonApplicationMenuPaneItem", "Pane Item")));
+        }
+        else if (section?.ParentProperty == "Content" && section.Item.Parent is { } command
+            && IsManagedContentSlot(command, "Content", "RibbonApplicationMenuPaneItem"))
+        {
+            _addMenu.Items.Add(MakeMenuItem("Pane Item", () =>
+                OnAddApplicationMenuContentItem(command, "Content", "Vertical", "RibbonApplicationMenuPaneItem", "Pane Item")));
+        }
+        else if (section?.ParentProperty == "FooterContent"
+            && IsManagedContentSlot(menu, "FooterContent", "RibbonApplicationMenuButton"))
+        {
+            _addMenu.Items.Add(MakeMenuItem("Footer Button", () =>
+                OnAddApplicationMenuContentItem(menu, "FooterContent", "Horizontal", "RibbonApplicationMenuButton", "Footer Button")));
+        }
+    }
+
+    private void OnAddApplicationMenu()
+    {
+        ModelItem? menu = DesignModel.AddApplicationMenu(_ribbon);
+        if (menu != null)
+        {
+            RebuildTree(menu);
+        }
+    }
+
+    private void OnAddApplicationMenuCommand()
+    {
+        ModelItem? menu = FindApplicationMenu(Selected);
+        ModelItem? item = menu is null
+            ? null
+            : DesignModel.AddApplicationMenuEntry(menu, "RibbonApplicationMenuItem", "New Command");
+        if (item != null)
+        {
+            RebuildTree(item);
+        }
+    }
+
+    private void OnAddApplicationMenuSeparator()
+    {
+        ModelItem? menu = FindApplicationMenu(Selected);
+        ModelItem? item = menu is null
+            ? null
+            : DesignModel.AddApplicationMenuEntry(menu, "RibbonApplicationMenuSeparator", null);
+        if (item != null)
+        {
+            RebuildTree(item);
+        }
+    }
+
+    private void OnAddApplicationMenuContentItem(
+        ModelItem owner,
+        string propertyName,
+        string orientation,
+        string childType,
+        string caption)
+    {
+        ModelItem? item = DesignModel.AddApplicationMenuContentItem(
+            owner,
+            propertyName,
+            orientation,
+            childType,
+            caption);
+        if (item != null)
+        {
+            RebuildTree(item);
         }
     }
 
@@ -1683,6 +2200,29 @@ internal sealed class RibbonEditorWindow : Window
     /// <summary>Whether the collection <paramref name="collection"/> on <paramref name="parent"/> may hold <paramref name="source"/>.</summary>
     private static bool Accepts(ModelItem parent, string collection, NodeInfo source)
     {
+        if (IsInsideApplicationMenu(source.Item))
+        {
+            string sourceType = SafeType(source.Item);
+            if (sourceType == "RibbonApplicationMenuItem" || sourceType == "RibbonApplicationMenuSeparator")
+            {
+                return collection == "Items" && SafeType(parent) == "RibbonApplicationMenu";
+            }
+
+            if (sourceType == "RibbonApplicationMenuPaneItem")
+            {
+                return collection == "Children"
+                    && IsManagedApplicationMenuStack(parent, "RibbonApplicationMenuPaneItem");
+            }
+
+            if (sourceType == "RibbonApplicationMenuButton")
+            {
+                return collection == "Children"
+                    && IsManagedApplicationMenuStack(parent, "RibbonApplicationMenuButton");
+            }
+
+            return false;
+        }
+
         switch (source.Kind)
         {
             case NodeKind.Tab:
@@ -1712,11 +2252,44 @@ internal sealed class RibbonEditorWindow : Window
             NodeKind.Tab => (target.Item, "Groups"),
             NodeKind.Group => (target.Item, "Items"),
             NodeKind.Container => (target.Item, "Children"),
+            NodeKind.ApplicationMenu => (target.Item, "Items"),
+            NodeKind.ApplicationMenuSection => (target.Item, "Children"),
             NodeKind.Control when ItemRule(target.Item) != null => (target.Item, "Items"),
             _ => ((ModelItem, string)?)null,
         };
 
         return candidate is { } c && Accepts(c.Parent, c.Collection, source) ? c : null;
+    }
+
+    private static bool IsInsideApplicationMenu(ModelItem item)
+    {
+        for (ModelItem? cursor = item; cursor != null; cursor = cursor.Parent)
+        {
+            if (SafeType(cursor) == "RibbonApplicationMenu")
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool IsManagedApplicationMenuStack(ModelItem stack, string childType)
+    {
+        if (SafeType(stack) != "StackPanel" || !IsInsideApplicationMenu(stack))
+        {
+            return false;
+        }
+
+        foreach (ModelItem child in SafeChildren(stack, "Children"))
+        {
+            if (SafeType(child) != childType)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /// <summary>True when <paramref name="ancestor"/> is <paramref name="node"/> or one of its ancestors (blocks dropping a node into itself).</summary>
@@ -1885,14 +2458,34 @@ internal sealed class RibbonEditorWindow : Window
     private void OnDelete()
     {
         NodeInfo? node = Selected;
-        if (node?.ParentCollection is not { } parentCollection)
+        if (node is null)
         {
             return;
         }
 
-        ModelItem parent = node.Item.Parent;
-        DesignModel.Delete(node.Item, parentCollection);
-        RebuildTree(parent);
+        if (node.ParentCollection is { } parentCollection)
+        {
+            ModelItem parent = node.Item.Parent;
+            DesignModel.Delete(node.Item, parentCollection);
+            RebuildTree(parent);
+            return;
+        }
+
+        if (node.ParentProperty is { } parentProperty)
+        {
+            ModelItem? owner = node.Kind == NodeKind.ApplicationMenu ? _ribbon : node.Item.Parent;
+            if (owner != null)
+            {
+                if (node.Kind == NodeKind.ApplicationMenu)
+                {
+                    TabPreviewCoordinator.SetFileSurface(_ribbon, FileSurfacePreview.Closed);
+                    ApplicationMenuPreviewCoordinator.SetActiveIndex(node.Item, null);
+                }
+
+                DesignModel.ClearProperty(owner, parentProperty);
+                RebuildTree(owner);
+            }
+        }
     }
 
     private void OnRename()

@@ -23,6 +23,7 @@ internal sealed class Metadata : IProvideAttributeTable
     private const string RibbonTabType = "RibbonKit.Controls.RibbonTab";
     private const string RibbonGroupType = "RibbonKit.Controls.RibbonGroup";
     private const string BackstageType = "RibbonKit.Controls.Backstage";
+    private const string ApplicationMenuType = "RibbonKit.Controls.RibbonApplicationMenu";
     private const string RibbonButtonType = "RibbonKit.Controls.RibbonButton";
     private const string RibbonToggleButtonType = "RibbonKit.Controls.RibbonToggleButton";
     private const string RibbonSplitButtonType = "RibbonKit.Controls.RibbonSplitButton";
@@ -54,6 +55,10 @@ internal sealed class Metadata : IProvideAttributeTable
                 BackstageType,
                 new FeatureAttribute(typeof(BackstageContextMenuProvider)),
                 new FeatureAttribute(typeof(BackstagePagePreviewProvider)));
+
+            builder.AddCustomAttributes(
+                ApplicationMenuType,
+                new FeatureAttribute(typeof(ApplicationMenuPanePreviewProvider)));
 
             // Group: "Add Button / Toggle / Split / Drop-Down" + reorder/delete the group.
             builder.AddCustomAttributes(

@@ -109,11 +109,22 @@ public class Ribbon : Control
             nameof(IsApplicationMenuOpen),
             typeof(bool),
             typeof(Ribbon),
-            new FrameworkPropertyMetadata(false));
+            new FrameworkPropertyMetadata(false, OnIsApplicationMenuOpenChanged));
 
     /// <summary>Identifies the read-only <see cref="IsApplicationMenuOpen"/> dependency property.</summary>
     public static readonly DependencyProperty IsApplicationMenuOpenProperty =
         IsApplicationMenuOpenPropertyKey.DependencyProperty;
+
+    /// <summary>
+    /// Identifies the design-tool-only <see cref="DesignPreviewFileSurface"/> dependency property.
+    /// </summary>
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public static readonly DependencyProperty DesignPreviewFileSurfaceProperty =
+        DependencyProperty.Register(
+            nameof(DesignPreviewFileSurface),
+            typeof(int),
+            typeof(Ribbon),
+            new FrameworkPropertyMetadata(-1, OnDesignPreviewFileSurfaceChanged));
 
     /// <summary>Identifies the <see cref="ApplicationButtonHeader"/> dependency property.</summary>
     public static readonly DependencyProperty ApplicationButtonHeaderProperty =
@@ -1358,6 +1369,20 @@ public class Ribbon : Control
     }
 
     /// <summary>
+    /// Gets or sets the transient File-surface preview requested by RibbonKit's XAML design tools.
+    /// Values are -1 for no override, 0 for closed, 1 for Backstage, and 2 for application menu.
+    /// Runtime instances ignore this property.
+    /// </summary>
+    [Browsable(false)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public int DesignPreviewFileSurface
+    {
+        get => (int)GetValue(DesignPreviewFileSurfaceProperty);
+        set => SetValue(DesignPreviewFileSurfaceProperty, value);
+    }
+
+    /// <summary>
     /// Gets or sets the application button text. When no local value, style or binding supplies
     /// one, the getter returns RibbonKit's live localized <c>File</c> string.
     /// </summary>
@@ -1637,6 +1662,15 @@ public class Ribbon : Control
 
     private void UpdateBackstageOverlay(bool open)
     {
+        // The designer translates one primitive preview property so it can switch between two
+        // authored File surfaces without clearing either object-valued model property. The VS 2022
+        // isolated designer can corrupt later ModelProperty.Value reads after such a clear.
+        if (System.ComponentModel.DesignerProperties.GetIsInDesignMode(this))
+        {
+            UpdateDesignTimeBackstage(open && !IsApplicationMenuOpen);
+            return;
+        }
+
         // AN APPLICATION MENU TAKES THE WHOLE PATH OVER. It is not an overlay at all: the template
         // renders it inside the tab-strip row, gated purely on IsApplicationMenuOpen, so there is no
         // adorner to add, nothing to hide behind, and — crucially — no title-bar QAT to hide either
@@ -1644,16 +1678,6 @@ public class Ribbon : Control
         // point is backstage-only.
         if (ApplicationMenu is not null)
         {
-            return;
-        }
-
-        // The XAML designer doesn't host the ribbon in a real Window, so the runtime adorner
-        // path below (which needs Window.GetWindow) can't run — it would silently no-op and the
-        // backstage would never appear on the surface. In design mode, route the backstage into
-        // an in-template host instead so its content is visible and editable while designing.
-        if (System.ComponentModel.DesignerProperties.GetIsInDesignMode(this))
-        {
-            UpdateDesignTimeBackstage(open);
             return;
         }
 
@@ -1884,6 +1908,47 @@ public class Ribbon : Control
         // Assigning or clearing a menu changes WHICH surface IsBackstageOpen means, so the
         // discriminator has to be recomputed even though the open flag itself did not move.
         ribbon.UpdateApplicationMenuState();
+
+        if (DesignerProperties.GetIsInDesignMode(ribbon) && ribbon.DesignPreviewFileSurface >= 0)
+        {
+            ribbon.ApplyDesignPreviewFileSurface(ribbon.DesignPreviewFileSurface);
+        }
+
+    }
+
+    private static void OnIsApplicationMenuOpenChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        var ribbon = (Ribbon)d;
+        if (System.ComponentModel.DesignerProperties.GetIsInDesignMode(ribbon))
+        {
+            ribbon.UpdateDesignTimeBackstage(ribbon.IsBackstageOpen && !(bool)e.NewValue);
+        }
+    }
+
+    private static void OnDesignPreviewFileSurfaceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        var ribbon = (Ribbon)d;
+        if (DesignerProperties.GetIsInDesignMode(ribbon))
+        {
+            ribbon.ApplyDesignPreviewFileSurface((int)e.NewValue);
+        }
+    }
+
+    private void ApplyDesignPreviewFileSurface(int surface)
+    {
+        if (surface < 0)
+        {
+            return;
+        }
+
+        bool open = surface is 1 or 2;
+        bool applicationMenuOpen = surface == 2;
+
+        // One primitive design value drives the complete transition synchronously. Rendering cannot
+        // observe the runtime-precedence intermediate state produced by IsBackstageOpen's callback.
+        SetCurrentValue(IsBackstageOpenProperty, open);
+        IsApplicationMenuOpen = applicationMenuOpen;
+        UpdateDesignTimeBackstage(open && !applicationMenuOpen);
     }
 
     private void OnApplicationMenuCloseRequested(object? sender, EventArgs e) =>
@@ -1922,7 +1987,14 @@ public class Ribbon : Control
         // design-time host now that the host exists.
         if (System.ComponentModel.DesignerProperties.GetIsInDesignMode(this))
         {
-            UpdateDesignTimeBackstage(IsBackstageOpen);
+            if (DesignPreviewFileSurface >= 0)
+            {
+                ApplyDesignPreviewFileSurface(DesignPreviewFileSurface);
+            }
+            else
+            {
+                UpdateDesignTimeBackstage(IsBackstageOpen && !IsApplicationMenuOpen);
+            }
         }
 
         UpdateQuickAccessPlacement();
