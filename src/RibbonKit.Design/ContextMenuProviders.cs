@@ -223,20 +223,22 @@ public sealed class RibbonTabContextMenuProvider : ContextMenuProvider
     }
 }
 
-/// <summary>"Add Button/Toggle/Split/Drop-Down" plus reorder/delete for a selected <c>RibbonGroup</c> (within its Tab.Groups).</summary>
+/// <summary>Control-add verbs plus reorder/delete for a selected <c>RibbonGroup</c> (within its Tab.Groups).</summary>
 public sealed class RibbonGroupContextMenuProvider : ContextMenuProvider
 {
     public RibbonGroupContextMenuProvider()
     {
-        AddButtonVerb("Add Button", "RibbonButton");
-        AddButtonVerb("Add Toggle Button", "RibbonToggleButton");
-        AddButtonVerb("Add Split Button", "RibbonSplitButton");
-        AddButtonVerb("Add Drop-Down Button", "RibbonDropDownButton");
+        AddControlVerb("Add Button", "RibbonButton");
+        AddControlVerb("Add Toggle Button", "RibbonToggleButton");
+        AddControlVerb("Add Check Box", "RibbonCheckBox");
+        AddControlVerb("Add Radio Button", "RibbonRadioButton");
+        AddControlVerb("Add Split Button", "RibbonSplitButton");
+        AddControlVerb("Add Drop-Down Button", "RibbonDropDownButton");
 
         DesignVerbs.AddReorderAndDelete(this, "Groups", "Group");
     }
 
-    private void AddButtonVerb(string caption, string typeName)
+    private void AddControlVerb(string caption, string typeName)
     {
         var action = new MenuAction(caption);
         action.Execute += (sender, e) => AddControl(e, typeName, caption.Substring("Add ".Length));
@@ -250,7 +252,7 @@ public sealed class RibbonGroupContextMenuProvider : ContextMenuProvider
         {
             ModelItem control = DesignModel.Create(group, typeName);
 
-            // All the button types carry their caption in "Header" (see RibbonButton.Header).
+            // RibbonKit command and compact option controls carry their caption in Header.
             control.Properties["Header"]?.SetValue(label);
 
             DesignModel.Add(group, "Items", control); // control -> group.Items
@@ -260,9 +262,9 @@ public sealed class RibbonGroupContextMenuProvider : ContextMenuProvider
 }
 
 /// <summary>
-/// Reorder/delete for a selected leaf control (button/toggle/split/drop-down) within its
-/// <c>RibbonGroup.Items</c>. Registered on all four button types (one provider serves them all,
-/// since it acts on the current selection).
+/// Reorder/delete for a selected leaf command or compact option control within its
+/// <c>RibbonGroup.Items</c>. One provider serves every registered type because it acts on the
+/// current selection.
 /// </summary>
 public sealed class RibbonControlContextMenuProvider : ContextMenuProvider
 {

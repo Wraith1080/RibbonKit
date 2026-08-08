@@ -99,7 +99,9 @@ public sealed class Office2010ThemeContractTests
             .Where(element => (string?)element.Attribute(Xaml + "Name") == "PressWash")
             .ToArray();
 
-        Assert.Equal(2, pressedWashes.Length);
+        // Button, toggle, check box, and radio button each own a pressed wash. Every compact input
+        // must obey the same no-shared-rim rule as the original command controls.
+        Assert.Equal(4, pressedWashes.Length);
         Assert.All(pressedWashes, wash => Assert.DoesNotContain(
             wash.DescendantsAndSelf().Attributes(),
             attribute => attribute.Value.Contains("RibbonKit.Brushes.Control.InnerGlow", StringComparison.Ordinal)));

@@ -44,6 +44,7 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Primary" Color="#1E1E1E" />
     <!-- 2007 group labels are BLUE, not grey (unlike every later generation). -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Secondary" Color="#15428B" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Input.Glyph" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Accent" Color="#1E5A9C" />
 
     <!-- ============================================================

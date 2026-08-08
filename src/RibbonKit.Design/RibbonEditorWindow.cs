@@ -24,7 +24,7 @@ internal enum NodeKind
     /// <summary>A layout container inside a group (a <c>StackPanel</c> etc.) — has a <c>Children</c> collection we recurse into.</summary>
     Container,
 
-    /// <summary>A leaf control (button/toggle/split/drop-down, combo, gallery, …).</summary>
+    /// <summary>A leaf control (command, compact input, combo, gallery, …).</summary>
     Control,
 }
 
@@ -406,10 +406,10 @@ internal sealed class RibbonEditorWindow : Window
         return button;
     }
 
-    private MenuItem MakeControlMenuItem(string caption, string typeName, bool isButton)
+    private MenuItem MakeControlMenuItem(string caption, string typeName, bool hasHeader)
     {
         var item = new MenuItem { Header = caption };
-        item.Click += (_, _) => OnAddControl(typeName, caption, isButton);
+        item.Click += (_, _) => OnAddControl(typeName, caption, hasHeader);
         return item;
     }
 
@@ -988,6 +988,8 @@ internal sealed class RibbonEditorWindow : Window
     {
         "RibbonButton" => "Button",
         "RibbonToggleButton" => "Toggle",
+        "RibbonCheckBox" => "Check Box",
+        "RibbonRadioButton" => "Radio Button",
         "RibbonSplitButton" => "Split",
         "RibbonDropDownButton" => "Drop-Down",
         "RibbonComboBox" => "Combo Box",
@@ -1165,6 +1167,18 @@ internal sealed class RibbonEditorWindow : Window
         new PropSpec("IsEditable", "Editable", EditorKind.Bool),
     };
 
+    private static readonly PropSpec[] CheckBoxSpecs =
+    {
+        new PropSpec("IsChecked", "Checked", EditorKind.Bool),
+        new PropSpec("IsThreeState", "Three state", EditorKind.Bool),
+    };
+
+    private static readonly PropSpec[] RadioButtonSpecs =
+    {
+        new PropSpec("IsChecked", "Selected", EditorKind.Bool),
+        new PropSpec("GroupName", "Group name", EditorKind.Text),
+    };
+
     private static readonly PropSpec[] ApplicationMenuSpecs =
     {
         new PropSpec("DefaultHeader", "Default pane name", EditorKind.Text),
@@ -1226,6 +1240,8 @@ internal sealed class RibbonEditorWindow : Window
     {
         "BackstageTabItem" => BackstageItemSpecs,
         "RibbonComboBox" => ComboSpecs,
+        "RibbonCheckBox" => CheckBoxSpecs,
+        "RibbonRadioButton" => RadioButtonSpecs,
         "RibbonSplitButton" => SplitButtonSpecs,
         "RibbonApplicationMenu" => ApplicationMenuSpecs,
         "RibbonApplicationMenuItem" => ApplicationMenuItemSpecs,
@@ -1911,6 +1927,8 @@ internal sealed class RibbonEditorWindow : Window
             var control = new MenuItem { Header = "Control" };
             control.Items.Add(MakeControlMenuItem("Button", "RibbonButton", true));
             control.Items.Add(MakeControlMenuItem("Toggle Button", "RibbonToggleButton", true));
+            control.Items.Add(MakeControlMenuItem("Check Box", "RibbonCheckBox", true));
+            control.Items.Add(MakeControlMenuItem("Radio Button", "RibbonRadioButton", true));
             control.Items.Add(MakeControlMenuItem("Split Button", "RibbonSplitButton", true));
             control.Items.Add(MakeControlMenuItem("Drop-Down Button", "RibbonDropDownButton", true));
             control.Items.Add(new Separator());
@@ -2044,15 +2062,15 @@ internal sealed class RibbonEditorWindow : Window
         }
     }
 
-    private void OnAddControl(string typeName, string caption, bool isButton)
+    private void OnAddControl(string typeName, string caption, bool hasHeader)
     {
         (ModelItem Parent, string Collection)? target = ResolveChildTarget(Selected);
         if (target != null)
         {
-            // Only buttons get a Header caption; buttons stacked inside a container default to
-            // Small (the icon-row form). Combos/galleries/separators get neither.
-            string? header = isButton ? caption : null;
-            string? size = isButton && target.Value.Collection == "Children" ? "Small" : null;
+            // Header-bearing controls get a caption. Only controls that actually expose Size use
+            // the stacked Small default; DesignModel harmlessly skips absent properties on compact inputs.
+            string? header = hasHeader ? caption : null;
+            string? size = hasHeader && target.Value.Collection == "Children" ? "Small" : null;
             ModelItem? control = DesignModel.AddControl(target.Value.Parent, target.Value.Collection, typeName, header, size);
             if (control != null)
             {

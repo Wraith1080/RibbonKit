@@ -3627,6 +3627,44 @@ colors, and the distinct 2010/2007 gradient profiles. Three reviewed approvals c
 Dark Gray Classic plus Office 2010/2007 Black Classic2010. Current automated baseline: 194 logic
 tests and 59 approved images; the full Showcase-height live check remains useful for final tuning.
 
+### 3.67 Compact RibbonCheckBox and RibbonRadioButton — 2026-08-08
+
+The first pre-freeze input-control slice adds `RibbonCheckBox` and `RibbonRadioButton` as lookless
+subclasses of WPF's real `CheckBox` and `RadioButton`. They deliberately have one compact form, like
+`RibbonComboBox`, rather than artificial Large/Medium/Small layouts. Both expose RibbonKit's familiar
+string `Header` plus rich ScreenTip properties; when Header is absent, the shared template falls back
+to ordinary WPF `Content`, preserving standard content syntax. Native command, routed-event,
+keyboard, three-state check-box, `GroupName`, and radio exclusivity behavior remain inherited.
+
+The shared button dictionary supplies theme-aware square/check and circular/radio indicators,
+keyboard-focus outlines, disabled state, and reduced-motion-aware hover/press washes. Existing accent,
+text, surface, and interaction tokens carry the structure; the only new token is
+`RibbonKit.Brushes.Input.Glyph`, defined by all ten light/dark generation dictionaries so checked
+marks remain legible on the accent fill. No layout property is animated. The check template also
+covers the indeterminate state.
+
+Dedicated UI Automation peers retain the native CheckBox Toggle and RadioButton SelectionItem
+patterns while naming controls from Header. KeyTip invocation now consumes SelectionItem after
+Invoke/Toggle, so a radio KeyTip selects the target and applies normal `GroupName` exclusivity rather
+than merely raising a routed click. The Visual Studio toolbox, surface context verbs, responsive
+Ribbon Editor Add menu, friendly tree names, reorder/delete metadata, and option-specific property
+rows all include both controls. The Showcase View tab has a compact Inputs group for direct theme,
+hover, keyboard, ScreenTip, KeyTip, and mutual-exclusion checks. They are intentionally not promoted
+to QAT/customization icon-command candidates in this slice.
+
+Six focused logic tests cover lookless inheritance/style keys, ScreenTips, UIA patterns/names,
+KeyTip behavior, ten-palette token parity, templates, and designer/toolbox wiring. Two deterministic
+Office 2024 light/dark approvals cover checked, unchecked, indeterminate, selected, unselected, and
+disabled states. Current automated baseline: 200 logic tests and 61 approved images. `RibbonTextBox`
+remains the next missing input-control candidate; a slider is still unscheduled.
+
+The first live hover/focus check exposed one template-layering mistake: `Chrome` owned the content
+padding, so WPF inset every child—including `HoverWash` and `PressWash`—while the focus visual still
+used the complete control bounds. Classic themes made the smaller amber box especially conspicuous.
+`Chrome` is now unpadded and the mathematically equivalent `5,1,5,1` inset lives only on the named
+content grid. Resting indicator/text geometry and desired size are unchanged; interaction washes now
+fill the complete focus rectangle. The template contract pins that separation for both controls.
+
 ## 4. Workflow / Session Conventions
 
 - Cloud workspace: `/home/user/ribbonkit/`. The user's machine:
@@ -3643,8 +3681,9 @@ tests and 59 approved images; the full Showcase-height live check remains useful
 
 ## 5. Current State & Next Steps
 
-> **Status as of 2026-08-08: everything through §3.61 is implemented AND user-verified on Windows;
-> §§3.62 and 3.64–3.66 are automated and await the focused live visual recheck.**
+> **Status as of 2026-08-08: everything through §3.61 and the responsive Ribbon Editor/application-
+> menu authoring work in the later §3.62 entry are implemented AND user-verified on Windows;
+> §§3.64–3.67 are automated and await the focused live visual recheck.**
 > The ten-point §3.40/§3.41 checklist that stood here has been walked and passed in full, and the
 > **2007 DPI matrix is clean at 100/125/150/175/200%** — which closes the last S6 exit criterion the
 > 2007 arc left open. §3.42's whole-surface flyout animation, reduced-motion behavior, and the
@@ -3652,7 +3691,7 @@ tests and 59 approved images; the full Showcase-height live check remains useful
 >
 > Roadmap Phases 0–7 are complete. **Phase 6 closed in §3.61**: all five generations ship with
 > dark/black variants in §3.49, and the complete 40-image
-> theme/variant/DPI matrix plus sixteen focused scenes are covered by 56 approvals; localization,
+> theme/variant/DPI matrix plus twenty-one focused scenes are covered by 61 approvals; localization,
 > representative bidirectional content, and the live RTL popup/window pass are complete.
 > Phase 8 (API freeze,
 > docs site, perf, launch) is untouched. Of the two items
@@ -3863,7 +3902,7 @@ Possible post-v1 polish:
   honor reduced motion, handle rapid reversals, and stay disabled while a DWM backdrop is active so
   Mica/Acrylic retain their native material retint without a second cross-fade on top.
 
-**Unit tests: 194 green (verified 2026-08-08).** Coverage now includes the STA harness, the borrow
+**Unit tests: 200 green (verified 2026-08-08).** Coverage now includes the STA harness, the borrow
 protocol, overflow strip measure/arrange rules, popup motion and dismissal, proxy mirroring,
 application-menu layering/hover/footer-outline/KeyTips, repeatable message-bar API/template/theme
 contracts, Office 2010 seam/state/consumer contracts, localization/RTL
@@ -3876,7 +3915,7 @@ permutations, merge/unmerge round-trips, group restore with two sources in one t
 modal, modal enter/exit selection and cancellation, forced exit when a merged modal tab leaves,
 customization rebuild/remerge, and declarative activation. The broader coverage gaps listed above remain.
 
-**Visual tests: 1 green locally (2026-08-08), covering all 59 approved images.** The §§3.48–3.49 matrix
+**Visual tests: 1 green locally (2026-08-08), covering all 61 approved images.** The §§3.48–3.49 matrix
 spans five light themes plus five dark/black variants × 100/125/150/200%, followed by the §3.51 ribbon
 RTL smoke, §3.53 QAT-customization RTL scene, §3.58 representative bidirectional Backstage scene,
 and the focused §3.27 Office 2010 button-state/Backstage-shell, §3.65 connected/RTL message-bar

@@ -21,6 +21,8 @@
       <!-- Command controls -->
       <Item Type="RibbonKit.Controls.RibbonButton" />
       <Item Type="RibbonKit.Controls.RibbonToggleButton" />
+      <Item Type="RibbonKit.Controls.RibbonCheckBox" />
+      <Item Type="RibbonKit.Controls.RibbonRadioButton" />
       <Item Type="RibbonKit.Controls.RibbonSplitButton" />
       <Item Type="RibbonKit.Controls.RibbonDropDownButton" />
       <Item Type="RibbonKit.Controls.RibbonComboBox" />

@@ -75,8 +75,8 @@ an in-place rebuild won't reload).
 
 - Ribbon — **Edit Ribbon…** (opens the structure editor dialog) · Add Tab · Add Backstage (once; also surfaces the File button) · Quick Access Toolbar ▸ Title Bar / Tab Row / Below Ribbon (checked on current).
 - Tab — Add Group · Move Tab Left/Right · Delete Tab.
-- Group — Add Button / Toggle / Split / Drop-Down · Move Group Left/Right · Delete Group.
-- Button/Toggle/Split/Drop-Down — Move Control Left/Right · Delete Control.
+- Group — Add Button / Toggle / Check Box / Radio Button / Split / Drop-Down · Move Group Left/Right · Delete Group.
+- Button/Toggle/Check Box/Radio Button/Split/Drop-Down — Move Control Left/Right · Delete Control.
 - Backstage — Add Nav Item (page) · Add Nav Button (footer action). Select the backstage via the Document Outline or `d:IsBackstageOpen="True"`.
 
 Every verb is a single undo.
@@ -98,7 +98,7 @@ collection — matching the Office pattern of a vertical stack of horizontal ico
 inserts a `StackPanel` (vertical in a group, horizontal inside another stack); "Add Control" targets
 whatever's selected (a group's `Items`, a container's `Children`, or as a sibling of a control) and
 defaults stacked buttons to `Size="Small"`. Container nodes expose an `Orientation` editor. The
-contextual **Add ▾ → Control** menu covers Button / Toggle / Split / Drop-Down (each gets a Header caption) plus Combo
+contextual **Add ▾ → Control** menu covers Button / Toggle / Check Box / Radio Button / Split / Drop-Down (each gets a Header caption) plus Combo
 Box, Gallery (in-ribbon / drop-down), and Separator (no caption); creation tries the RibbonKit xmlns
 first, then WPF framework namespaces (so `Separator` works too). The tree also descends into **item
 containers** — combo boxes, galleries, and the **split / drop-down buttons** (their `Items`, which are
@@ -156,6 +156,8 @@ skipping any property the type doesn't have (via `DesignModel.HasProperty` / `Fi
 
 - Controls (button/toggle/split/drop-down): `Size` (Large/Medium/Small), `SizeDefinition`,
   `ScreenTipTitle`, `ScreenTipText`.
+- Compact inputs: Check Box exposes `IsChecked` / `IsThreeState`; Radio Button exposes
+  `IsChecked` / `GroupName`; both also expose ScreenTips, Command Id, and KeyTip.
 - Tab: `IsContextual`, `ContextualColor` (typed as a name or `#hex`, applied through the brush converter).
 - Group: `ShowDialogLauncher`, `ReductionMode` (Collapse/ResizeThenCollapse/Resize), `CanResize`.
 - Application menu: `DefaultHeader`; command items: `PaneHeader`, `IsSplit`, icon and KeyTip;

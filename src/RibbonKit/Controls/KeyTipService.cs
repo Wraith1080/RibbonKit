@@ -987,6 +987,12 @@ internal sealed class KeyTipService
         {
             toggle.Toggle();
         }
+        else if (peer?.GetPattern(PatternInterface.SelectionItem) is ISelectionItemProvider selection)
+        {
+            // RadioButton exposes SelectionItem rather than Toggle. Use its UIA contract so a
+            // KeyTip selects it exactly like keyboard Space/click, including GroupName exclusivity.
+            selection.Select();
+        }
         else if (element is ButtonBase button)
         {
             button.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));
