@@ -122,6 +122,11 @@ public sealed class VisualSnapshotTests
                     1d,
                     FlowDirection.RightToLeft,
                     CreateQuickAccessCustomizeScene);
+                AssertSnapshot(
+                    "office2024-rtl-bidirectional-backstage-100",
+                    1d,
+                    FlowDirection.RightToLeft,
+                    CreateBidirectionalBackstageScene);
             }
             finally
             {
@@ -378,6 +383,53 @@ public sealed class VisualSnapshotTests
             UseLayoutRounding = true,
             SnapsToDevicePixels = true,
         });
+        return root;
+    }
+
+    private static FrameworkElement CreateBidirectionalBackstageScene(FlowDirection flowDirection)
+    {
+        var root = (Grid)CreateScene(flowDirection);
+        root.Children.Clear();
+        root.Language = XmlLanguage.GetLanguage("ar-SA");
+
+        var content = new StackPanel();
+        content.Children.Add(new TextBlock
+        {
+            Text = "تقرير الإصدار — RibbonKit 2026",
+            FontSize = 22,
+            FontWeight = FontWeights.SemiBold,
+            Margin = new Thickness(0, 0, 0, 10),
+        });
+        content.Children.Add(new TextBlock
+        {
+            Text = "تقرير ربع سنوي — Quarterly report — ٢٠٢٦",
+            FontSize = 14,
+            Margin = new Thickness(0, 0, 0, 8),
+        });
+        content.Children.Add(new TextBlock
+        {
+            Text = "Report-2026-Q3.docx",
+            FlowDirection = FlowDirection.LeftToRight,
+            TextAlignment = TextAlignment.Left,
+            FontFamily = new FontFamily("Consolas"),
+        });
+
+        var backstage = new Backstage
+        {
+            Design = RibbonBackstageDesign.Modern,
+            UseLayoutRounding = true,
+            SnapsToDevicePixels = true,
+        };
+        backstage.Items.Add(new BackstageTabItem
+        {
+            Header = "معلومات — Info",
+            Content = content,
+        });
+        backstage.Items.Add(new BackstageTabItem { Header = "Recent — الأخيرة" });
+        backstage.Items.Add(new BackstageTabItem { Header = "خيارات — Options" });
+        backstage.SelectedIndex = 0;
+
+        root.Children.Add(backstage);
         return root;
     }
 

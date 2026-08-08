@@ -211,10 +211,21 @@ public class RibbonWindow : Window
             return;
         }
 
+        if (_title is not { } title)
+        {
+            return;
+        }
+
+        double localDelta = ConvertAncestorDeltaToLocalX(title, this, delta);
+        if (double.IsNaN(localDelta))
+        {
+            return;
+        }
+
         Animation.RibbonMotion.AnimateTranslateX(
-            _title,
+            title,
             Animation.RibbonAnimationAction.Backstage,
-            delta,
+            localDelta,
             0d);
     }
 
@@ -231,10 +242,18 @@ public class RibbonWindow : Window
 
         try
         {
-            double x = _title.TransformToAncestor(this).Transform(default).X;
+            GeneralTransform transform = _title.TransformToAncestor(this);
+            Point origin = transform.Transform(default);
+            double x = origin.X;
             if (!includeTransform && _title.RenderTransform is TranslateTransform translate)
             {
-                x -= translate.X;
+                double ancestorXPerLocalX = AncestorXPerLocalX(transform, origin);
+                if (Math.Abs(ancestorXPerLocalX) < 1e-9)
+                {
+                    return double.NaN;
+                }
+
+                x -= translate.X * ancestorXPerLocalX;
             }
 
             return x;
@@ -245,6 +264,40 @@ public class RibbonWindow : Window
             return double.NaN;
         }
     }
+
+    /// <summary>
+    /// Converts a horizontal displacement measured in an ancestor's physical coordinates into
+    /// the local X displacement that produces it on <paramref name="element"/>.
+    /// </summary>
+    /// <remarks>
+    /// RibbonWindow deliberately keeps its outer frame LTR and mirrors a nested logical host.
+    /// Across that boundary a positive local X displacement becomes a negative window-space
+    /// displacement. Applying a window-space FLIP delta directly therefore makes the title
+    /// overshoot to the wrong side in RTL. Deriving the axis from the realized transform also
+    /// remains correct for custom templates that introduce scaling or a different boundary.
+    /// </remarks>
+    internal static double ConvertAncestorDeltaToLocalX(
+        FrameworkElement element,
+        Visual ancestor,
+        double ancestorDelta)
+    {
+        try
+        {
+            GeneralTransform transform = element.TransformToAncestor(ancestor);
+            Point origin = transform.Transform(default);
+            double ancestorXPerLocalX = AncestorXPerLocalX(transform, origin);
+            return Math.Abs(ancestorXPerLocalX) < 1e-9
+                ? double.NaN
+                : ancestorDelta / ancestorXPerLocalX;
+        }
+        catch (InvalidOperationException)
+        {
+            return double.NaN;
+        }
+    }
+
+    private static double AncestorXPerLocalX(GeneralTransform transform, Point origin) =>
+        transform.Transform(new Point(1d, 0d)).X - origin.X;
 
     /// <inheritdoc />
     protected override void OnSourceInitialized(EventArgs e)

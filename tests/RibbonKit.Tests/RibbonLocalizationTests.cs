@@ -511,6 +511,85 @@ public class RibbonLocalizationTests
     }
 
     [Fact]
+    public void Localization_lab_exercises_bidirectional_backstage_content()
+    {
+        var document = XDocument.Load(Path.Combine(
+            RepositoryRoot(),
+            "samples",
+            "RibbonKit.Showcase",
+            "LocalizationRtlDemo.xaml"));
+        XElement backstageProperty = Assert.Single(
+            document.Descendants(RibbonKitNamespace + "Ribbon.Backstage"));
+        XElement backstage = Assert.Single(
+            backstageProperty.Elements(RibbonKitNamespace + "Backstage"));
+        XElement[] items = backstage
+            .Elements(RibbonKitNamespace + "BackstageTabItem")
+            .ToArray();
+
+        Assert.Equal(3, items.Length);
+        Assert.Contains(items, item => (string?)item.Attribute("Header") == "معلومات — Info");
+        Assert.Contains(items, item => (string?)item.Attribute("Header") == "Recent — الأخيرة");
+        Assert.Contains(items, item => (string?)item.Attribute("Header") == "خيارات — Options");
+
+        XElement mixedText = Assert.Single(
+            backstage.Descendants(Presentation + "TextBlock"),
+            element =>
+                (string?)element.Attribute("Text")
+                == "تقرير ربع سنوي — Quarterly report — ٢٠٢٦");
+        Assert.Null(mixedText.Attribute("FlowDirection"));
+
+        XElement documentName = Assert.Single(
+            backstage.Descendants(Presentation + "TextBlock"),
+            element => (string?)element.Attribute("Text") == "Report-2026-Q3.docx");
+        Assert.Equal("LeftToRight", (string?)documentName.Attribute("FlowDirection"));
+        Assert.Equal("Left", (string?)documentName.Attribute("TextAlignment"));
+    }
+
+    [Fact]
+    public void Localization_lab_follows_showcase_file_surface_and_exercises_bidirectional_application_menu()
+    {
+        string root = RepositoryRoot();
+        var document = XDocument.Load(Path.Combine(
+            root,
+            "samples",
+            "RibbonKit.Showcase",
+            "LocalizationRtlDemo.xaml"));
+        XElement applicationMenuProperty = Assert.Single(
+            document.Descendants(RibbonKitNamespace + "Ribbon.ApplicationMenu"));
+        XElement applicationMenu = Assert.Single(
+            applicationMenuProperty.Elements(RibbonKitNamespace + "RibbonApplicationMenu"));
+
+        Assert.Equal("DemoApplicationMenu", (string?)applicationMenu.Attribute(Xaml + "Name"));
+        Assert.Contains(
+            applicationMenu.Elements(RibbonKitNamespace + "RibbonApplicationMenuItem"),
+            item => (string?)item.Attribute("Header") == "حفظ باسم — Save As");
+
+        XElement ltrDocument = Assert.Single(
+            applicationMenu.Descendants(RibbonKitNamespace + "RibbonApplicationMenuPaneItem"),
+            item => (string?)item.Attribute("Content") == "2  Report-2026-Q3.docx");
+        Assert.Equal("LeftToRight", (string?)ltrDocument.Attribute("FlowDirection"));
+
+        string mainCode = File.ReadAllText(Path.Combine(
+            root,
+            "samples",
+            "RibbonKit.Showcase",
+            "MainWindow.xaml.cs"));
+        string demoCode = File.ReadAllText(Path.Combine(
+            root,
+            "samples",
+            "RibbonKit.Showcase",
+            "LocalizationRtlDemo.xaml.cs"));
+
+        Assert.Contains("demo.AttachApplicationSurfaceSource(this);", mainCode);
+        Assert.Contains("ApplicationSurfaceChanged?.Invoke", mainCode);
+        Assert.Contains("DemoRibbon.ApplicationButtonShape = state.ApplicationButtonShape;", demoCode);
+        Assert.Contains("DemoRibbon.ApplicationMenu = state.UsesApplicationMenu ? _applicationMenu : null;", demoCode);
+        Assert.Contains("DemoBackstage.Design = state.BackstageDesign;", demoCode);
+        Assert.Contains("DemoBackstage.Translucent = state.BackstageTranslucent;", demoCode);
+        Assert.Contains("source.ApplicationSurfaceChanged -= OnApplicationSurfaceChanged;", demoCode);
+    }
+
+    [Fact]
     public void Showcase_application_menu_footer_uses_localized_conventional_actions()
     {
         var document = XDocument.Load(Path.Combine(

@@ -1664,6 +1664,8 @@ public class Ribbon : Control
             ribbonWindow.SetCurrentValue(RibbonWindow.IsTitleBarContentVisibleProperty, !open);
         }
 
+        RibbonSlideFrom slideEdge = BackstageSlideEdge(FlowDirection);
+
         if (open)
         {
             _backstageClosing = false;
@@ -1676,7 +1678,7 @@ public class Ribbon : Control
                 if (Backstage is FrameworkElement reopening)
                 {
                     reopening.Focus();
-                    RibbonMotion.PlayOpen(reopening, RibbonAnimationAction.Backstage, RibbonSlideFrom.Left);
+                    RibbonMotion.PlayOpen(reopening, RibbonAnimationAction.Backstage, slideEdge);
                 }
 
                 HideContentBehindBackstage(_backstageAdorner.AdornedElement);
@@ -1697,7 +1699,7 @@ public class Ribbon : Control
                 return;
             }
 
-            _backstageAdorner = new BackstageAdorner(root, content);
+            _backstageAdorner = new BackstageAdorner(root, content, this);
             layer.Add(_backstageAdorner);
 
             // Hide the content behind a translucent backstage entirely so a window system
@@ -1711,21 +1713,22 @@ public class Ribbon : Control
                 element.Focusable = true;
                 element.Focus(); // So Esc works immediately.
 
-                // Slide the backstage overlay in from the left (honors the global animation level).
-                RibbonMotion.PlayOpen(element, RibbonAnimationAction.Backstage, RibbonSlideFrom.Left);
+                // Slide from the logical leading edge (honors RTL and the global animation level).
+                RibbonMotion.PlayOpen(element, RibbonAnimationAction.Backstage, slideEdge);
             }
         }
         else if (_backstageAdorner is not null && !_backstageClosing)
         {
-            // Slide the backstage back out to the left (mirroring the entrance), then remove
+            // Slide the backstage back out through the logical leading edge, then remove
             // the adorner once the exit animation finishes.
             _backstageClosing = true;
             BackstageAdorner adorner = _backstageAdorner;
             FrameworkElement? content = Backstage as FrameworkElement;
 
             // Restore the hidden content at the START of the exit (not on completion): the
-            // backstage slides out to the left, and the ribbon/document must already be there
-            // for the slide to reveal — restoring at the end would leave the bare backdrop
+            // backstage slides out through its logical leading edge, and the ribbon/document must
+            // already be there for the slide to reveal — restoring at the end would leave the bare
+            // backdrop
             // showing during the whole exit animation. If a re-open cancels this close
             // mid-flight, the open path simply hides the content again.
             RestoreContentBehindBackstage();
@@ -1733,7 +1736,7 @@ public class Ribbon : Control
             RibbonMotion.PlayClose(
                 content,
                 RibbonAnimationAction.Backstage,
-                RibbonSlideFrom.Left,
+                slideEdge,
                 () =>
                 {
                     // A re-open may have cancelled the close mid-flight; only tear down if
@@ -2396,6 +2399,11 @@ public class Ribbon : Control
             PrepareQatContextMenu(host, menu);
         }
     }
+
+    internal static RibbonSlideFrom BackstageSlideEdge(FlowDirection flowDirection) =>
+        flowDirection == FlowDirection.RightToLeft
+            ? RibbonSlideFrom.Right
+            : RibbonSlideFrom.Left;
 
     private static void PrepareQatContextMenu(
         FrameworkElement host,

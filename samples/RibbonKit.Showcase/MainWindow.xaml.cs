@@ -17,6 +17,12 @@ using RibbonKit.Theming;
 
 namespace RibbonKit.Showcase;
 
+internal readonly record struct ShowcaseApplicationSurfaceState(
+    RibbonApplicationButtonShape ApplicationButtonShape,
+    bool UsesApplicationMenu,
+    RibbonBackstageDesign BackstageDesign,
+    bool BackstageTranslucent);
+
 /// <summary>
 /// Main window of the showcase app, hosting the RibbonKit ribbon and demonstrating
 /// gallery live preview: hovering a style previews it on the sample text, clicking
@@ -44,6 +50,14 @@ public partial class MainWindow : RibbonWindow
     // one File surface just leaves the one it wants assigned in XAML and never touches this.
     private readonly RibbonApplicationMenu _applicationMenu;
     private LocalizationRtlDemo? _localizationRtlDemo;
+
+    internal event EventHandler? ApplicationSurfaceChanged;
+
+    internal ShowcaseApplicationSurfaceState ApplicationSurfaceState => new(
+        MainRibbon.ApplicationButtonShape,
+        MainRibbon.ApplicationMenu is not null,
+        ShowcaseBackstage.Design,
+        ShowcaseBackstage.Translucent);
 
     public MainWindow()
     {
@@ -159,6 +173,7 @@ public partial class MainWindow : RibbonWindow
         // and every generation after it opened a backstage instead. Setting the toggle rather than
         // the ribbon property keeps the two in sync — the Checked handler does the actual swap.
         ApplicationMenuToggle.IsChecked = is2007;
+        NotifyApplicationSurfaceChanged();
     }
 
     private void OnToggleDarkMode(object sender, RoutedEventArgs e)
@@ -176,6 +191,7 @@ public partial class MainWindow : RibbonWindow
 
         MainRibbon.IsBackstageOpen = false; // Never leave one surface up while swapping to the other.
         MainRibbon.ApplicationMenu = useMenu ? _applicationMenu : null;
+        NotifyApplicationSurfaceChanged();
     }
 
     // Every command inside the application menu — nav rows, pane rows, recent documents. The menu
@@ -234,6 +250,7 @@ public partial class MainWindow : RibbonWindow
             && Enum.TryParse(tag, out RibbonBackstageDesign design))
         {
             ShowcaseBackstage.Design = design;
+            NotifyApplicationSurfaceChanged();
         }
     }
 
@@ -244,6 +261,7 @@ public partial class MainWindow : RibbonWindow
         if (ShowcaseBackstage is not null)
         {
             ShowcaseBackstage.Translucent = (sender as RibbonToggleButton)?.IsChecked == true;
+            NotifyApplicationSurfaceChanged();
         }
     }
 
@@ -352,10 +370,14 @@ public partial class MainWindow : RibbonWindow
         }
 
         var demo = new LocalizationRtlDemo { Owner = this };
+        demo.AttachApplicationSurfaceSource(this);
         _localizationRtlDemo = demo;
         demo.Closed += (_, _) => _localizationRtlDemo = null;
         demo.Show();
     }
+
+    private void NotifyApplicationSurfaceChanged() =>
+        ApplicationSurfaceChanged?.Invoke(this, EventArgs.Empty);
 
     // ---- Modal tab (Print Preview) -------------------------------------------------
     // EnterModal hides every other tab plus the File button, blocks minimize and the

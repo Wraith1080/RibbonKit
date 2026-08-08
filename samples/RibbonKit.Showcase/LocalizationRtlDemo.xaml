@@ -19,6 +19,72 @@
                    QuickAccessPosition="TabRow"
                    QuickAccessCustomizeRequested="OnCustomizeQuickAccess"
                    RibbonCustomizeRequested="OnCustomizeRibbon">
+            <rk:Ribbon.Backstage>
+                <rk:Backstage x:Name="DemoBackstage" Design="Modern" SelectedIndex="0">
+                    <rk:BackstageTabItem Header="معلومات — Info">
+                        <StackPanel Language="ar-SA">
+                            <TextBlock Text="تقرير الإصدار — RibbonKit 2026"
+                                       FontSize="26"
+                                       FontWeight="SemiBold"
+                                       Margin="0,0,0,14" />
+                            <TextBlock Text="تقرير ربع سنوي — Quarterly report — ٢٠٢٦"
+                                       FontSize="16"
+                                       Margin="0,0,0,10" />
+                            <TextBlock Text="Report-2026-Q3.docx"
+                                       FlowDirection="LeftToRight"
+                                       TextAlignment="Left"
+                                       FontFamily="Consolas" />
+                        </StackPanel>
+                    </rk:BackstageTabItem>
+                    <rk:BackstageTabItem Header="Recent — الأخيرة" />
+                    <rk:BackstageTabItem Header="خيارات — Options" />
+                </rk:Backstage>
+            </rk:Ribbon.Backstage>
+
+            <!-- Parked by the window constructor until the main Showcase selects its 2007 Menu.
+                 Keeping a distinct instance lets this lab exercise the same surface under local RTL. -->
+            <rk:Ribbon.ApplicationMenu>
+                <rk:RibbonApplicationMenu x:Name="DemoApplicationMenu">
+                    <rk:RibbonApplicationMenu.DefaultContent>
+                        <StackPanel Language="ar-SA">
+                            <TextBlock Text="المستندات الأخيرة — Recent documents"
+                                       FontSize="16"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource RibbonKit.Brushes.ApplicationMenu.HeadingForeground}"
+                                       Margin="0,0,0,8" />
+                            <Rectangle Height="1"
+                                       Fill="{DynamicResource RibbonKit.Brushes.ApplicationMenu.Separator}" />
+                            <rk:RibbonApplicationMenuPaneItem Content="١  تقرير ربع سنوي — Quarterly report" />
+                            <rk:RibbonApplicationMenuPaneItem Content="2  Report-2026-Q3.docx"
+                                                              FlowDirection="LeftToRight" />
+                        </StackPanel>
+                    </rk:RibbonApplicationMenu.DefaultContent>
+
+                    <rk:RibbonApplicationMenuItem Header="جديد — New" Icon="{StaticResource Icon.Picture}" />
+                    <rk:RibbonApplicationMenuItem Header="فتح — Open" Icon="{StaticResource Icon.Table}" />
+                    <rk:RibbonApplicationMenuItem Header="حفظ — Save" Icon="{StaticResource Icon.Save}" />
+                    <rk:RibbonApplicationMenuItem Header="حفظ باسم — Save As"
+                                                  Icon="{StaticResource Icon.Save}"
+                                                  IsSplit="True">
+                        <StackPanel>
+                            <rk:RibbonApplicationMenuPaneItem Content="مستند Word — Word Document" />
+                            <rk:RibbonApplicationMenuPaneItem Content="قالب — Template" />
+                        </StackPanel>
+                    </rk:RibbonApplicationMenuItem>
+
+                    <rk:RibbonApplicationMenu.FooterContent>
+                        <StackPanel Orientation="Horizontal">
+                            <rk:RibbonApplicationMenuButton Content="{rk:RibbonString Key=Options}"
+                                                            Icon="{StaticResource Icon.Gear}"
+                                                            Click="OnOpenCustomizeRibbon" />
+                            <rk:RibbonApplicationMenuButton Content="{rk:RibbonString Key=Exit}"
+                                                            Icon="{StaticResource Icon.Exit}"
+                                                            Click="OnCloseLab" />
+                        </StackPanel>
+                    </rk:RibbonApplicationMenu.FooterContent>
+                </rk:RibbonApplicationMenu>
+            </rk:Ribbon.ApplicationMenu>
+
             <rk:Ribbon.QuickAccessItems>
                 <rk:RibbonButton Header="Save"
                                  rk:Ribbon.CommandId="loc.qat.save"
@@ -155,7 +221,14 @@
                         and the localized built-in commands.&#x0a;
                         5. Create and edit a custom tab/group to exercise names, suffixes, choices,
                         tooltips, and OK/Cancel.&#x0a;
-                        6. With pseudo localization enabled, hover chrome controls: caption buttons,
+                        6. Change the main Showcase Backstage rail design, translucency, theme, and
+                        2007 Menu toggle; this lab follows live. With RTL enabled, verify each
+                        Backstage rail stays on the right and opens/closes toward that edge. Under
+                        Office 2007, verify the File button becomes an orb and opens this lab's
+                        bidirectional two-pane menu instead of its Backstage. The window title should
+                        glide directly between its QAT/no-QAT positions without overshooting. Also
+                        check Arabic shaping, mixed Arabic/Latin ordering, and the LTR document name.&#x0a;
+                        7. With pseudo localization enabled, hover chrome controls: caption buttons,
                         QAT overflow, Backstage Back, group launchers, and ribbon/window controls.
                         Their tooltips should show bracketed resource keys.
                     </TextBlock>
@@ -203,6 +276,7 @@
                     <TextBlock TextWrapping="Wrap"
                                Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
                                Margin="0,16,0,0">
+                        The File Backstage repeats these cases inside a real RibbonKit surface.
                         The localization provider is application-wide by design. This lab restores
                         the provider that was active before pseudo localization when you turn it off
                         or close the window. RTL layout is local to this window and its dialogs.

@@ -259,7 +259,8 @@ Subtle.**
 5. The below-ribbon QAT bar **glides with the body** on minimize/restore via
    `AnimateTranslateY(±bodyHeight)` (body height captured while visible), staying
    visible; transform resets in the same step as the collapse so it looks stationary.
-6. Backstage: slide-in from LEFT on open; slide-out LEFT on close with the adorner
+6. Backstage: slide-in from the logical leading edge (LEFT in LTR, RIGHT in RTL) on open;
+   slide-out through the same edge on close with the adorner
    removed in the Completed callback (`_backstageClosing` guard; re-open mid-close
    reuses the existing adorner — a UIElement can't have two).
 7. Tab switch: slide from **Top** (content drops down away from the tab strip — user
@@ -1700,7 +1701,8 @@ Mechanism:
   animatable and cannot disturb the adorner layer — the backstage lives in the AdornerDecorator's
   adorner layer, a SIBLING branch of the root, so the root's opacity doesn't touch it.
 - `RestoreContentBehindBackstage` runs at the START of the exit slide (old blur cleared on
-  completion): the backstage slides out to the LEFT and must reveal live content, not bare
+  completion): the backstage slides out through its logical leading edge and must reveal live
+  content, not bare
   backdrop. A reopen-while-closing simply re-hides; saved state (opacity/hit-test) is captured
   only on the first hide so a mid-fade reopen can't corrupt it.
 - Template: the `Translucent` trigger now only clears `RootGrid`'s fill; the
@@ -3295,6 +3297,68 @@ application-owned headers, fonts, templates and any other real geometry change. 
 pins the lifecycle-safe subscription and deferred refresh. Current baseline: 163 logic tests and 46
 approved images.
 
+### 3.58 Representative bidirectional content in RTL Backstage — 2026-08-03
+
+The smallest deterministic remaining localization/RTL slice uses the already-settled visual-test
+format and storage policy: one focused Office 2024 snapshot renders the real Modern `Backstage`
+under inherited RTL with `ar-SA` language metadata, Arabic and Latin navigation headers, mixed
+Arabic/Latin content, Arabic-Indic digits, and an explicitly LTR document identifier. The harness
+still renders the scene twice before comparison, so the approved pixels are accepted only after the
+same in-process determinism gate as the existing matrix.
+
+The Localization/RTL lab now exposes the matching Backstage through its File button and calls out
+navigation mirroring, Arabic shaping, mixed-run ordering, and the LTR document name in its manual
+checklist. A logic contract pins the three representative nav headers, keeps the mixed content
+inheriting the lab's direction, and preserves the document identifier's explicit physical LTR
+alignment. This completes the representative bidirectional-content pass without pretending that
+`RenderTargetBitmap` covers separate-HWND `Popup` placement; the broader live popup/window pass is
+still owed. Current baseline: 164 logic tests and 47 approved images.
+
+### 3.59 Live RTL Backstage rail, slide and title transition — 2026-08-08
+
+A real Localization/RTL lab recording exposed two live-window defects that the disconnected §3.58
+snapshot could not see. First, `Ribbon.Backstage` is reparented into a `BackstageAdorner`; that
+adorner branch crossed the deliberately physical-LTR window frame without carrying the ribbon's
+logical flow, so the otherwise-correct Backstage template rendered its rail on the left. The
+adorner now binds its own flow to the owning ribbon and, only when the Backstage has no application-
+owned local/style value, binds the child to that live flow as well. Explicit host direction still
+wins. Backstage open/reopen/close motion now uses the logical leading edge: left in LTR, right in
+RTL.
+
+Second, hiding/showing title-bar QAT content shifts the title's resting center. The existing FLIP
+transition measured that shift in physical window coordinates but applied the same number as the
+title's local `TranslateX`. Across the physical-LTR/logical-RTL boundary those axes have opposite
+signs, so the title overshot beyond its destination before settling. `RibbonWindow` now derives the
+realized local-X-to-window-X scale from `TransformToAncestor`, uses it both when removing a current
+transform from a measurement and when converting the new FLIP delta, and therefore also remains
+correct for a custom template that introduces scaling.
+
+Three realized-layout contracts cover the inverted title axis, a live attached Backstage adorner
+with application-owned-flow preservation, and logical-leading-edge selection. The lab checklist
+pins the visible rail/slide/title behavior. Current baseline: 167 logic tests and 47 approved images;
+the broader live RTL popup/window pass remains.
+
+### 3.60 Localization/RTL lab follows the Showcase File-surface policy — 2026-08-08
+
+The live lab originally hardcoded a Modern Backstage and had no `RibbonApplicationMenu`. Theme
+resources still flowed application-wide, but the Showcase's application-owned choices did not:
+Office 2007 did not turn the lab's File tab into an orb, the `2007 Menu` toggle could not replace its
+Backstage, and the three Backstage design choices affected only the main ribbon. That made the lab
+incapable of verifying the surfaces it was meant to exercise.
+
+`MainWindow` now publishes one small Showcase-only application-surface snapshot and change event:
+application-button shape, Backstage versus application menu, Backstage design, and translucency.
+The modeless lab subscribes while open, detaches on close, and applies every change live. It owns a
+separate two-pane application-menu instance because WPF elements cannot have two visual parents;
+the menu carries Arabic/Latin navigation, recent-document and pane content plus an explicitly LTR
+filename. Switching File-surface kind closes the old surface before reparenting, while design and
+translucency can update an already-open Backstage without forcing it closed.
+
+One deterministic source/XAML contract pins the live subscription, all four synchronized choices,
+cleanup, representative bidirectional menu content, and the LTR filename boundary. Current baseline:
+168 logic tests and 47 approved images. No snapshot format, storage, or CI-policy change was needed;
+the broader live RTL popup/window pass remains.
+
 ## 4. Workflow / Session Conventions
 
 - Cloud workspace: `/home/user/ribbonkit/`. The user's machine:
@@ -3319,8 +3383,9 @@ approved images.
 >
 > Roadmap Phases 1–5 and 7 are complete. **Phase 6 now also has the Office 2007 theme (§3.38)**, so
 > all five generations ship with dark/black variants in §3.49, and the complete 40-image
-> theme/variant/DPI matrix plus six focused scenes are covered by 46 approvals. Phase 6 still owes
-> the remaining RTL popup/window verification, bidirectional-content pass and chrome localization.
+> theme/variant/DPI matrix plus seven focused scenes are covered by 47 approvals. Phase 6 still owes
+> the remaining live RTL popup/window verification; the representative bidirectional-content and
+> chrome-localization passes are complete.
 > Phase 8 (API freeze,
 > docs site, perf, launch) is untouched. Of the two items
 > deferred out of §3.38, the two-pane 2007 application menu shipped in §3.46; only the 2007 window
@@ -3504,7 +3569,8 @@ Backlog (rough priority):
 3. Full RTL verification + localization resources — the remaining work in roadmap Phase 6. The
    §§3.48–3.49 visual-regression matrix is complete, §3.51 adds the first RTL smoke snapshot, and
    §§3.52–3.55 localize/mirror ribbon-owned context menus, Customize/Options, chrome tooltips and the
-   default File label. The full popup/window/backstage and representative bidirectional-text pass remain.
+   default File label. §3.58 completes the representative bidirectional-text Backstage pass and
+   §3.59 fixes its live adorner/title transition; broader live popup/window verification remains.
 4. **The remaining unit tests** — broader customization serializer round-trips, KeyTip resolution,
    and reduction-algorithm gaps. The Phase 7 merge/modal invariants are now DONE: 13 tests cover
    stable ordering, repeated merge/unmerge, two-source group restoration, modal transitions and
@@ -3527,19 +3593,20 @@ Possible post-v1 polish:
   honor reduced motion, handle rapid reversals, and stay disabled while a DWM backdrop is active so
   Mica/Acrylic retain their native material retint without a second cross-fade on top.
 
-**Unit tests: 161 green (verified 2026-08-02).** Coverage now includes the STA harness, the borrow
+**Unit tests: 167 green (verified 2026-08-08).** Coverage now includes the STA harness, the borrow
 protocol, overflow strip measure/arrange rules, popup motion and dismissal, proxy mirroring,
 application-menu layering/hover/KeyTips, Office 2010 seam/state/consumer contracts, localization/RTL
-context-menu, customization-template, chrome-tooltip and default-File contracts, and the existing
-reduction/size-definition/theme-scope tests.
+context-menu, customization-template, chrome-tooltip, default-File, representative bidi-lab and
+live Backstage/title-transition contracts, and the existing reduction/size-definition/theme-scope tests.
 `RibbonMergeModalTests` adds the Phase 7 automated invariants: merge ordering across later
 permutations, merge/unmerge round-trips, group restore with two sources in one tab, capture while
 modal, modal enter/exit selection and cancellation, forced exit when a merged modal tab leaves,
 customization rebuild/remerge, and declarative activation. The broader coverage gaps listed above remain.
 
-**Visual tests: 1 green locally (2026-08-02), covering all 46 approved images.** The §§3.48–3.49 matrix
+**Visual tests: 1 green locally (2026-08-08), covering all 47 approved images.** The §§3.48–3.49 matrix
 spans five light themes plus five dark/black variants × 100/125/150/200%, followed by the §3.51 ribbon
-RTL smoke, §3.53 QAT-customization RTL scene, and the focused §3.27 Office 2010 button-state/Backstage-shell plus 2007/2010 Black
-application-menu scenes; its separate project keeps rendering policy out of the
+RTL smoke, §3.53 QAT-customization RTL scene, §3.58 representative bidirectional Backstage scene,
+and the focused §3.27 Office 2010 button-state/Backstage-shell plus 2007/2010 Black application-menu
+scenes; its separate project keeps rendering policy out of the
 headless logic-test harness. It passed three successive fresh-process stability runs in addition to
 the normal project and solution runs.
