@@ -67,6 +67,9 @@ public enum RibbonAnimationAction
 
     /// <summary>An MDI child window minimizing, maximizing, or restoring.</summary>
     MdiWindowState,
+
+    /// <summary>A ribbon message row appearing or disappearing.</summary>
+    MessageBar,
 }
 
 /// <summary>
@@ -256,6 +259,7 @@ public static class RibbonAnimation
             RibbonAnimationAction.QuickAccessMove => 6d,
             RibbonAnimationAction.TabSwitch => 10d,
             RibbonAnimationAction.KeyTip => 4d,
+            RibbonAnimationAction.MessageBar => 6d,
             _ => 0d,
         };
 
@@ -303,6 +307,7 @@ public static class RibbonAnimation
             RibbonAnimationAction.RibbonScroll => 160d,
             RibbonAnimationAction.QuickAccessMove => 150d,
             RibbonAnimationAction.ThemeSwitch => 160d,
+            RibbonAnimationAction.MessageBar => 160d,
             RibbonAnimationAction.RibbonMinimize => 180d,
             RibbonAnimationAction.MdiWindowState => 200d,
             RibbonAnimationAction.Gallery => 180d,

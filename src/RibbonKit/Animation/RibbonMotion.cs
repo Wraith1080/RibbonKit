@@ -64,6 +64,17 @@ public static class RibbonMotion
         double offset = from == RibbonSlideFrom.None ? 0d : RibbonAnimation.GetSlideOffset(action);
 
         var fade = new DoubleAnimation(0d, 1d, duration) { EasingFunction = ease };
+        fade.Completed += (_, _) =>
+        {
+            // Leave a normal resting value behind. The seed prevents a first-frame flash, but
+            // would leave the element invisible if a later caller cleared the animation alone.
+            element.SetValue(UIElement.OpacityProperty, 1d);
+            element.BeginAnimation(UIElement.OpacityProperty, null);
+        };
+
+        // WPF ticks animation clocks before layout/render. Seed the base value so a transition
+        // started later in that frame cannot briefly fall back to the resting opacity of 1.
+        element.SetValue(UIElement.OpacityProperty, 0d);
         element.BeginAnimation(UIElement.OpacityProperty, fade);
 
         TranslateTransform translate = EnsureTranslate(element);
@@ -685,13 +696,24 @@ public static class RibbonMotion
         Duration duration,
         IEasingFunction ease)
     {
-        var slide = new DoubleAnimation(fromValue, 0d, duration) { EasingFunction = ease };
         // Zero out the other axis so a reused transform never leaves a stale offset.
         DependencyProperty other = axis == TranslateTransform.XProperty
             ? TranslateTransform.YProperty
             : TranslateTransform.XProperty;
         translate.BeginAnimation(other, null);
         translate.SetValue(other, 0d);
+
+        // As with opacity, seed before the animation clock starts. Otherwise a render-frame race
+        // can expose the base value (the destination) before snapping back to the animated start.
+        translate.BeginAnimation(axis, null);
+        translate.SetValue(axis, fromValue);
+
+        var slide = new DoubleAnimation(fromValue, 0d, duration) { EasingFunction = ease };
+        slide.Completed += (_, _) =>
+        {
+            translate.SetValue(axis, 0d);
+            translate.BeginAnimation(axis, null);
+        };
         translate.BeginAnimation(axis, slide);
     }
 

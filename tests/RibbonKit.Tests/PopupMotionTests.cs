@@ -114,6 +114,26 @@ public class PopupMotionTests
     });
 
     [Fact]
+    public void Shared_open_seeds_its_start_before_the_animation_clock_ticks() => Sta.Run(() =>
+    {
+        using var motion = new ForcedMotion();
+        var message = new Border();
+
+        RibbonMotion.PlayOpen(
+            message,
+            RibbonAnimationAction.MessageBar,
+            RibbonSlideFrom.Top);
+
+        Assert.Equal(0d, message.Opacity);
+        Assert.Equal(0d, Assert.IsType<double>(message.ReadLocalValue(UIElement.OpacityProperty)));
+
+        TranslateTransform translate = Assert.IsType<TranslateTransform>(message.RenderTransform);
+        Assert.True(OffsetY(message) < 0d);
+        Assert.True(
+            Assert.IsType<double>(translate.ReadLocalValue(TranslateTransform.YProperty)) < 0d);
+    });
+
+    [Fact]
     public void AnimateOpen_is_off_and_defaults_to_the_menu_timing() => Sta.Run(() =>
     {
         var menu = new ContextMenu();

@@ -2814,26 +2814,28 @@ disappears under it. That one sentence rules out both of the obvious hosts:
 | `Popup` | Its own top-level HWND. It is above *everything* in the owner window by construction, and nothing in that window can ever paint over it. |
 | Adorner layer (what `Backstage` uses) | A sibling visual branch inside the `AdornerDecorator` that paints above all window content — including the ribbon, including the orb. |
 
-So the menu is hosted **inside the ribbon's own tab-strip row**, carried by a **zero-sized
-`Canvas`**, and placed on an explicit layer between the ordinary tab-row content and the
-application-button/orb layer:
+The first implementation hosted the orb menu inside the tab-strip row so the real button could
+paint above it. Message-bar integration exposed the cost of that arrangement: promoting the nested
+tab-control branch also promoted the ribbon body's shadow over later QAT/message siblings. The
+shipping template now hosts **every** application menu in the Ribbon template's outer, zero-sized
+`Canvas`, above those siblings but independently of the body:
 
 ```xml
-<Canvas Grid.Column="0" Grid.ColumnSpan="4" Panel.ZIndex="1"
+<Canvas Grid.Row="0" Grid.RowSpan="3" Panel.ZIndex="2"
         Width="0" Height="0" HorizontalAlignment="Left" VerticalAlignment="Top">
-    <ContentPresenter Content="{Binding ApplicationMenu, …}"
-                      Margin="{DynamicResource RibbonKit.Metrics.ApplicationMenuMargin}"
-                      Visibility="{Binding IsApplicationMenuOpen, …, Converter={StaticResource RibbonKit.BoolToVis}}" />
+    <ContentPresenter x:Name="PART_ApplicationMenuOverlayPresenter"
+                      Margin="{DynamicResource RibbonKit.Metrics.ApplicationMenuMargin}" />
+    <Border x:Name="PART_ApplicationButtonOverlay" Panel.ZIndex="1" />
 </Canvas>
 ```
 
-The explicit ordering is important: ordinary tab-row content (tab labels, the shared active-tab
-marker, and the tab-row QAT) stays at z=0, the application menu is z=1, and the application-button
-stack is z=2 so only the orb paints above the menu. Declaration order alone is insufficient because
-the later-declared tab strip otherwise paints its labels and marker over the menu. One level higher,
-the `RibbonTabControl` branch is conditionally promoted while `IsApplicationMenuOpen` is true so
-the separately hosted, later-declared below-ribbon QAT cannot cover the menu either; keeping that
-promotion conditional preserves the normal closed-ribbon card/QAT overlap.
+For a rectangular File button, the second element stays collapsed. For the Office 2007 orb, Ribbon
+uses a live `VisualBrush` of `PART_ApplicationButton` in that small overlay and positions it from the
+button's measured descendant bounds. Only the orb is re-painted above the menu; the real button
+remains in the tab-control tree for layout, focus, automation, and state. The proxy owns the open
+orb's pointer input and closes the menu on a second click. A nested presenter remains only as a
+compatibility fallback for custom templates that omit the outer parts. The shipping template no
+longer promotes `TabControlHost` for either button shape.
 
 Two properties of `Canvas` are doing real work here, and both are the reason it is a `Canvas` and
 not a `Grid` cell:
@@ -2849,13 +2851,13 @@ The original 2007 placement was one `Thickness` token, `ApplicationMenuMargin`, 
 the top-left of the tab-strip row. The orb overhangs *upward* out of that row (its own margin has a
 negative top), which is why the old `2,10,0,0` position put the menu's top edge below the row origin,
 tucked under the orb's lower half. The cross-generation pass below keeps the same visual result but
-anchors the offset to the button itself.
+anchors both the menu and orb proxy to the button itself.
 
 #### Cross-generation placement — 2026-08-01
 
 The first implementation merely gave the non-2007 themes flatter colours; it still placed the menu
 from the tab-row origin, so their rectangular File buttons sat **under** the surface. Placement is
-now anchored to the measured `PART_ApplicationButton` bounds by `RibbonTabControl`, which avoids
+now anchored to the measured `PART_ApplicationButton` bounds by `Ribbon`, which avoids
 duplicating the button's theme-specific height in another token and remains correct when font,
 padding, DPI, or a merged-caption icon changes.
 
@@ -3448,6 +3450,138 @@ File-surface/pane preview cycle are user-verified in Visual Studio; the live DPI
 full add/delete/reorder/undo matrix remain useful focused regression checks rather than blockers for
 the application-menu parity item.
 
+### 3.64 Backstage sheet depth and the 2010 colored caption — 2026-08-08
+
+Three reference-driven depth corrections stay inside the shared-template/token architecture. The
+Backstage content sheet now consumes `Backstage.ContentShadow` for both `Modern` and `Classic2010`.
+Office 2024 publishes a restrained 6px/1px left-cast shadow (0.12 light, 0.14 dark), while Office
+2007 publishes the established stronger 2010 sheet recipe (9px/3px, 0.24). Other generations remain
+zero, and the 2010 values are unchanged.
+
+An attempted Office 2007 idle outline for Medium/Small commands was rejected in the live Showcase:
+the persistent boxes made the ribbon visually busy and unlike the desired large-command treatment.
+The `IdleOutline` template overlays and `Control.IdleBorder` palette token were removed completely
+from normal, toggle, dropdown, and split families. Compact commands remain borderless at rest and
+continue to use the existing hover/pressed glass borders only.
+
+The Office 2010 accent caption now uses a generation-specific smooth glass rather than a plain ramp.
+`CaptionGlass` moves through a broad upper reflection, the exact accent-coloured face, and a restrained
+lower sheen. Its five offsets are strictly increasing—Office 2007 alone owns the hard crease—and no
+stop is darker than the chosen accent, so the earlier heavy lower band cannot return. Three focused
+contracts cover the Modern shadow hook, the deliberate absence of compact idle outlines, and the
+2010 glass shape/luminance; the existing ten-palette shadow contract covers the new effect values.
+Focused approvals cover the 2007 Classic2010 sheet, 2024 Modern sheet, and 2010 colored caption, with
+the RTL Modern Backstage approval refreshed. Current automated baseline: 174 logic tests and 50
+approved images.
+
+### 3.65 Repeatable Ribbon message bar — 2026-08-08
+
+`RibbonMessageBar` is a lookless `ItemsControl`; ordinary `Items`/`ItemsSource` collection semantics
+determine how many rows are present. For the connected Office presentation it is assigned through
+`Ribbon.MessageBar`, which hosts it as the ribbon template's third row. A separate top-docked sibling
+cannot alter the inner 2007/2024 card or below-ribbon QAT geometry and therefore leaves rounded feet,
+shadows, and bottom gaps visible. The integrated path consumes `HasOpenMessages` to square the
+preceding surface and remove only its lower gap: the ribbon/QAT keeps its depth shadow at the join,
+while the complete message stack casts a second shadow from its final edge. When the last row closes,
+the normal ribbon/QAT foot geometry returns.
+The vertical items panel stacks every open `RibbonMessage`; one message closing does not disturb the
+state of its siblings.
+
+Each `RibbonMessage` exposes `Title`, `Message`, optional `Icon`, action content/command/parameter,
+two-way-by-default `IsOpen`, and `IsDismissible`. The action and dismissal paths publish bubbling
+`ActionClick` and `Dismissed` routed events, while `Dismiss()` is idempotent for code-driven closure.
+The shared template provides the shield, wrapped text, action button, localized Close tooltip, and
+per-item visibility triggers. Dedicated UI Automation peers expose the bar as a pane and each
+polite live-region message as text named from its title/body. Four matching brush tokens exist in every light/dark generation;
+historical dark themes retain the readable light warning surface while modern dark themes use a
+muted dark ochre surface. Office 2007 uses a period-correct hard glass crease and Office 2010 a
+smoother four-stop glass face; the flat generations retain restrained solid fills. The connected
+bar mirrors the generation's horizontal card inset (7px in 2024, 2px in 2007), and the final open
+row receives the theme's lower corner token (8px in 2024, 3px in 2007). Rows use a compact 34px
+minimum with smaller action/close chrome, while wrapped text can still grow naturally. Inset
+generations also carry explicit side outlines on every row, closing the combined card rather than
+leaving yellow fill against an unbordered edge. The Close target reserves a transparent rounded
+1px outline at rest and resolves a dedicated theme border on hover/press; this contains the heavy
+2007/2010 state wash instead of rendering the large borderless rectangle seen in the first pass.
+The target is 22×22 with an 8px trailing inset, matching the restrained Office 2024 close affordance
+without letting its hover outline crowd the message card edge. Its diagonal glyph receives a
+half-DIP optical offset down and right so anti-aliasing does not make the mathematically centered
+path appear high-left beside the action button.
+
+Message appearance/dismissal uses the dedicated `RibbonAnimationAction.MessageBar`: a restrained
+160ms opacity/6-DIP vertical transform at the subtle level, with the normal expressive multiplier
+and instant reduced-motion path inherited from `RibbonAnimation`. `IsOpen` remains the immediate
+logical/bindable state, while read-only `IsPresented` keeps an exiting row, the stack shadow, and
+the ribbon connection alive until `RibbonMotion.PlayClose` completes. No height, margin, or other
+layout property is animated, and the translated template root is clipped to its row so stacked
+messages never paint across each other. Rapid close/reopen changes invalidate the older completion callback,
+so a newly reopened row cannot be collapsed by a stale exit. The Showcase and RTL lab now begin
+with both sample rows closed; their ribbon-level Add Message commands reveal or reopen the next row
+one at a time, making repeatability and both transition directions directly testable.
+
+The first live entrance exposed the same intermittent destination-frame flash documented in
+§3.41. The row became presentable and then queued `PlayOpen` at `DispatcherPriority.Loaded`, which
+runs after Render; depending on frame timing, the fully opaque/resting row could be presented before
+the queued animation rewound it. `BeginShow` now starts motion synchronously in the same dispatcher
+turn as `IsPresented`, and shared `RibbonMotion.PlayOpen` seeds both base opacity and translation
+before installing their clocks. Both animations self-release to ordinary resting values on
+completion, so seeding cannot leave a row invisible or displaced if a later caller clears a clock.
+The regression contracts pin the seeded start and prohibit another dispatcher hop in the message
+entrance path.
+
+A second first-use-only gap remained: rows authored closed can stay `Collapsed` without ever
+instantiating their control template, so the initial `BeginShow` had no `PART_Root` for `PlayOpen`
+even though later reopens did. The row now records a pending entrance, requests `ApplyTemplate`, and
+lets `OnApplyTemplate` consume that request synchronously once the root exists. If realization is
+deferred until layout, the row still has no visual to flash; the pending animation is installed
+inside `OnApplyTemplate` before the new root can render. Close/unload clears the request, and the
+already-realized reopen path remains immediate.
+
+Template realization also raises `Loaded` for that first reveal. Without coordination,
+`OnApplyTemplate` consumed the pending entrance and the following `OnLoaded` called `BeginShow`
+again, producing a short first pass followed by a full restart. A per-open handled flag now makes
+pending-template consumption and `Loaded` mutually exclusive animation owners. A logical close
+resets the flag for the next open; No Motion marks the entrance handled while snapping to rest.
+
+The first template attachment can itself produce an `Unloaded`/`Loaded` pair while `IsOpen` remains
+true. Resetting the handled flag from `OnUnloaded` therefore still authorized a second entrance:
+the first animation was cancelled quickly by `Rest`, then `Loaded` replayed it at full duration.
+`BeginHide` is now the sole handled-flag reset point. `OnUnloaded` clears only an unrealized pending
+request and rests the departing visual, preserving the one-animation-per-logical-open invariant
+across template churn.
+
+The persistent first-show restart ultimately exposed a separate control-flow error in
+`OnApplyTemplate`, not another lifecycle race. Its original compound condition was
+`if (IsOpen && !TryPlayPendingEntrance()) ... else if (IsPresented) BeginHide()`. When a pending
+entrance was successfully consumed, the negated call made the whole condition false, so the attached
+`else if` immediately entered `BeginHide` even though `IsOpen` was still true. That cancelled the
+first clock, reset the per-open guard, and let `Loaded` start the normal entrance again. The open and
+closed cases are now separate outer branches; successful pending consumption can no longer fall
+through to the close path. A focused STA regression realizes a pending-open template and verifies
+that it remains presented, reproducing the old failure without relying on frame timing.
+
+Application-menu integration exposed one cross-branch depth leak. The original menu-open trigger
+promoted the complete `TabControlHost` above the later QAT/message rows because every menu lived
+inside the nested tab-strip template. That promotion also raised `ContentHost` and its ribbon-card
+shadow; Office 2024's 12px shadow consequently painted a dark band over the QAT and open message.
+Suppressing `ContentHost.Effect` removed the leak but also removed wanted depth, so the final fix
+moves every shipping application menu into a direct Ribbon-template overlay above the QAT/message
+siblings; the `TabControlHost` and its unchanged shadow stay at their normal depth. For the
+historical orb, a measured live-visual proxy paints only the button above that outer menu and handles
+the second click. Ribbon assigns the single menu object to exactly one presenter, with the nested
+presenter retained only as a custom-template fallback. The combined 2024 rectangular and 2007 orb
+menu/message visuals are focused approvals rather than relying on isolated scenes to imply correct
+cross-branch ordering.
+
+The Showcase and Localization/RTL lab each place two independently actionable rows through the
+integrated property. The RTL lab uses mixed Arabic/English title, body, and action text and verifies
+that logical start content mirrors right while action/Close move left. Seven focused logic contracts cover
+the public control shape/defaults, idempotent aggregate/last-open state, connected template geometry,
+pending-template entrance ownership, application-menu shadow isolation, vertical item parts/states,
+ten-palette token parity, and initially empty/add-from-ribbon Showcase paths. Focused approvals cover
+connected 2007/2010/2024 stacks, the mirrored 2024 stack, and the 2024 rectangular plus 2007 orb
+open-menu/message compositions. Current automated baseline: 182 logic tests and 56 approved images.
+
 ## 4. Workflow / Session Conventions
 
 - Cloud workspace: `/home/user/ribbonkit/`. The user's machine:
@@ -3465,7 +3599,7 @@ the application-menu parity item.
 ## 5. Current State & Next Steps
 
 > **Status as of 2026-08-08: everything through §3.61 is implemented AND user-verified on Windows;
-> §3.62's footer-button hover correction is automated and awaits the focused visual recheck.**
+> §§3.62, 3.64, and 3.65 are automated and await the focused live visual recheck.**
 > The ten-point §3.40/§3.41 checklist that stood here has been walked and passed in full, and the
 > **2007 DPI matrix is clean at 100/125/150/175/200%** — which closes the last S6 exit criterion the
 > 2007 arc left open. §3.42's whole-surface flyout animation, reduced-motion behavior, and the
@@ -3473,7 +3607,7 @@ the application-menu parity item.
 >
 > Roadmap Phases 0–7 are complete. **Phase 6 closed in §3.61**: all five generations ship with
 > dark/black variants in §3.49, and the complete 40-image
-> theme/variant/DPI matrix plus seven focused scenes are covered by 47 approvals; localization,
+> theme/variant/DPI matrix plus sixteen focused scenes are covered by 56 approvals; localization,
 > representative bidirectional content, and the live RTL popup/window pass are complete.
 > Phase 8 (API freeze,
 > docs site, perf, launch) is untouched. Of the two items
@@ -3513,10 +3647,10 @@ E. **§3.45 proxies (manual — not unit-testable):** disable a command from cod
 
 F. **§3.46 application menu.** Switch to the Office 2007 theme (which turns the "2007 Menu" toggle
    on for you) and click the orb.
-   1. **The orb is ON TOP of the menu** and stays lit while it is open. This is the whole point of
-      hosting the menu in the tab-strip row; if it is behind, the `Canvas`/`ZIndex` ordering in
-      `Controls.RibbonChrome.xaml` is wrong. Check the title-bar QAT is still visible too — only the
-      backstage hides it.
+   1. **The orb is ON TOP of the menu** and stays lit while it is open. The menu is in the Ribbon's
+      outer overlay and only the live orb proxy is above it; if the ribbon body or its shadow rises
+      over the QAT/message rows, the outer-host separation is wrong. Check the title-bar QAT is still
+      visible too — only the backstage hides it.
    2. **Position.** The menu is anchored to the measured application-button bounds. The 2007
       `Metrics.ApplicationMenuMargin` (`0,8,0,0`) then tucks its top-left under the orb's lower half.
    3. **Hover ownership:** slide down New → Open → Save → Save As. Pane-less rows show Recent
@@ -3683,9 +3817,10 @@ Possible post-v1 polish:
   honor reduced motion, handle rapid reversals, and stay disabled while a DWM backdrop is active so
   Mica/Acrylic retain their native material retint without a second cross-fade on top.
 
-**Unit tests: 171 green (verified 2026-08-08).** Coverage now includes the STA harness, the borrow
+**Unit tests: 182 green (verified 2026-08-08).** Coverage now includes the STA harness, the borrow
 protocol, overflow strip measure/arrange rules, popup motion and dismissal, proxy mirroring,
-application-menu layering/hover/footer-outline/KeyTips, Office 2010 seam/state/consumer contracts, localization/RTL
+application-menu layering/hover/footer-outline/KeyTips, repeatable message-bar API/template/theme
+contracts, Office 2010 seam/state/consumer contracts, localization/RTL
 context-menu, customization-template, chrome-tooltip, default-File, representative bidi-lab and
 live Backstage/title-transition contracts, design-preview runtime isolation, and the existing
 reduction/size-definition/theme-scope tests.
@@ -3694,10 +3829,11 @@ permutations, merge/unmerge round-trips, group restore with two sources in one t
 modal, modal enter/exit selection and cancellation, forced exit when a merged modal tab leaves,
 customization rebuild/remerge, and declarative activation. The broader coverage gaps listed above remain.
 
-**Visual tests: 1 green locally (2026-08-08), covering all 47 approved images.** The §§3.48–3.49 matrix
+**Visual tests: 1 green locally (2026-08-08), covering all 56 approved images.** The §§3.48–3.49 matrix
 spans five light themes plus five dark/black variants × 100/125/150/200%, followed by the §3.51 ribbon
 RTL smoke, §3.53 QAT-customization RTL scene, §3.58 representative bidirectional Backstage scene,
-and the focused §3.27 Office 2010 button-state/Backstage-shell plus 2007/2010 Black application-menu
-scenes; its separate project keeps rendering policy out of the
+and the focused §3.27 Office 2010 button-state/Backstage-shell, §3.65 connected/RTL message-bar
+stacks and 2024 rectangular/2007 orb open-menu/message compositions, plus
+2007/2010 Black application-menu scenes; its separate project keeps rendering policy out of the
 headless logic-test harness. It passed three successive fresh-process stability runs in addition to
 the normal project and solution runs.

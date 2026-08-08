@@ -51,6 +51,7 @@
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
                             <controls:RibbonTabControl
                                 x:Name="TabControlHost"
@@ -83,6 +84,38 @@
                                 </ItemsControl>
                             </Border>
 
+                            <!-- A message bar hosted through Ribbon.MessageBar is part of the
+                                 ribbon surface, not an unrelated document sibling. Its own
+                                 HasOpenMessages state drives the continuation geometry above. -->
+                            <ContentPresenter x:Name="MessageBarHost"
+                                              Grid.Row="2"
+                                              Content="{TemplateBinding MessageBar}"
+                                              Focusable="False" />
+
+                            <!-- Application menus are direct ribbon-template siblings. This lets
+                                 the menu cover the QAT/messages without promoting the
+                                 RibbonTabControl body (and its shadow) with it. Ribbon assigns and
+                                 positions the menu in code because a UIElement can have only one
+                                 visual parent. The small overlay below mirrors only the historical
+                                 orb above its menu; the nested presenter remains a compatibility
+                                 fallback for custom templates that omit this outer layer. -->
+                            <Canvas x:Name="ApplicationMenuOverlayLayer"
+                                    Grid.Row="0"
+                                    Grid.RowSpan="3"
+                                    Panel.ZIndex="2"
+                                    Width="0"
+                                    Height="0"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Top">
+                                <ContentPresenter x:Name="PART_ApplicationMenuOverlayPresenter"
+                                                  Margin="{DynamicResource RibbonKit.Metrics.ApplicationMenuMargin}"
+                                                  Visibility="Collapsed" />
+                                <Border x:Name="PART_ApplicationButtonOverlay"
+                                        Panel.ZIndex="1"
+                                        Background="Transparent"
+                                        Visibility="Collapsed" />
+                            </Canvas>
+
                             <!-- Design-time-only backstage preview surface. At runtime the
                                  backstage is hosted in the WINDOW's adorner layer (see
                                  Ribbon.UpdateBackstageOverlay); that path needs a real Window,
@@ -93,7 +126,7 @@
                                  preview room on the surface; it has no effect while Collapsed. -->
                             <Border x:Name="PART_DesignBackstageHost"
                                     Grid.Row="0"
-                                    Grid.RowSpan="2"
+                                    Grid.RowSpan="3"
                                     Visibility="Collapsed"
                                     MinHeight="440"
                                     Background="{DynamicResource RibbonKit.Brushes.Backstage.ContentBackground}" />
@@ -108,14 +141,6 @@
                                              RelativeSource="{RelativeSource AncestorType={x:Type controls:Ribbon}}" />
                                 </Setter.Value>
                             </Setter>
-                        </Trigger>
-                        <!-- The application menu is allowed to escape the nested tab-control
-                             template. Promote that whole branch while it is open so the later-
-                             declared below-ribbon QAT cannot paint over it. This is deliberately
-                             conditional: when the menu is closed, the QAT/card overlap keeps its
-                             established declaration-order rendering. -->
-                        <Trigger Property="IsApplicationMenuOpen" Value="True">
-                            <Setter TargetName="TabControlHost" Property="Panel.ZIndex" Value="1" />
                         </Trigger>
                         <!-- Minimized + QAT below: the ribbon body card is collapsed, so the
                              QAT bar is left standing alone under the tab strip. Make it a
@@ -137,6 +162,16 @@
                             <Setter TargetName="QatBelowHost" Property="Margin"
                                     Value="{DynamicResource RibbonKit.Metrics.QatExtenderMarginMinimized}" />
                         </MultiTrigger>
+                        <!-- An open message continues the ribbon downward. Remove only the lower
+                             card gap/rounding from a below-ribbon QAT so the first notification
+                             begins at the very next pixel. Keep the QAT shadow: the connected
+                             ribbon and message stack intentionally retain their own depth layers. -->
+                        <Trigger Property="HasOpenMessages" Value="True">
+                            <Setter TargetName="QatBelowHost" Property="CornerRadius"
+                                    Value="{DynamicResource RibbonKit.Metrics.QatExtenderCornerRadiusMessageBar}" />
+                            <Setter TargetName="QatBelowHost" Property="Margin"
+                                    Value="{DynamicResource RibbonKit.Metrics.QatExtenderMarginMessageBar}" />
+                        </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
@@ -168,19 +203,10 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
 
-                            <!-- OFFICE 2007 APPLICATION MENU. Hosted HERE, in the tab-strip row,
-                                 rather than in the window's adorner layer like the backstage — and
-                                 declared BEFORE the application button so the orb paints on top of
-                                 it, which is the whole point: in Office 2007 the orb sits over the
-                                 menu's top-left corner, and a Popup (its own top-level window) or an
-                                 adorner (a sibling branch that paints above all window content)
-                                 would both put the menu in front of it instead.
-                                 A zero-sized Canvas is the carrier: its child contributes NOTHING to
-                                 the row's measure, so a 500px menu cannot inflate the tab strip, and
-                                 Canvas does not clip, so the menu is free to paint and hit-test far
-                                 outside its parent's bounds. Positioning comes from the child's
-                                 Margin (ApplicationMenuMargin), tuned per theme to land under the
-                                 orb. -->
+                            <!-- Compatibility fallback for custom Ribbon templates that omit the
+                                 outer application-menu layer. The shipping template leaves this
+                                 presenter empty so the Ribbon body never has to be promoted above
+                                 the QAT/message rows. -->
                             <Canvas x:Name="ApplicationMenuLayer"
                                     Grid.Column="0"
                                     Grid.ColumnSpan="4"
@@ -190,9 +216,8 @@
                                     HorizontalAlignment="Left"
                                     VerticalAlignment="Top">
                                 <ContentPresenter x:Name="PART_ApplicationMenuPresenter"
-                                                  Content="{Binding ApplicationMenu, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
                                                   Margin="{DynamicResource RibbonKit.Metrics.ApplicationMenuMargin}"
-                                                  Visibility="{Binding IsApplicationMenuOpen, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}, Converter={StaticResource RibbonKit.BoolToVis}}" />
+                                                  Visibility="Collapsed" />
                             </Canvas>
 
                             <!-- Left end of the tab strip row: the merged-caption icon (only while
@@ -824,6 +849,17 @@
                              connects flush underneath. -->
                         <DataTrigger Binding="{Binding QuickAccessPosition, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
                                      Value="BelowRibbon">
+                            <Setter TargetName="ContentHost" Property="CornerRadius"
+                                    Value="{DynamicResource RibbonKit.Metrics.ContentCornerRadiusTop}" />
+                            <Setter TargetName="ContentHost" Property="Margin"
+                                    Value="{DynamicResource RibbonKit.Metrics.ContentMarginQatBelow}" />
+                        </DataTrigger>
+                        <!-- The message row is another continuation surface, just like a
+                             below-ribbon QAT. Square the body foot and consume its lower gap, but
+                             keep the ribbon shadow as a deliberate depth boundary above the
+                             independently shadowed message stack. -->
+                        <DataTrigger Binding="{Binding HasOpenMessages, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
+                                     Value="True">
                             <Setter TargetName="ContentHost" Property="CornerRadius"
                                     Value="{DynamicResource RibbonKit.Metrics.ContentCornerRadiusTop}" />
                             <Setter TargetName="ContentHost" Property="Margin"

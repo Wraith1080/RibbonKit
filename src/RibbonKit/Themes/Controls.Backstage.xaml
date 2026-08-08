@@ -153,6 +153,8 @@
                             <Setter TargetName="NavColumn" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Backstage.Modern.NavBackground}" />
                             <Setter TargetName="NavColumnDef" Property="Width" Value="200" />
+                            <Setter TargetName="ContentArea" Property="Effect"
+                                    Value="{DynamicResource RibbonKit.Effects.Backstage.ContentShadow}" />
                         </Trigger>
 
                         <!-- Classic2010 (Office 2010): the nav column is the ribbon's blue

@@ -20,6 +20,53 @@ public class RibbonAutomationPeer : FrameworkElementAutomationPeer
     protected override string GetClassNameCore() => "Ribbon";
 }
 
+/// <summary>UIA peer for a repeatable <see cref="RibbonMessageBar"/> notification surface.</summary>
+public class RibbonMessageBarAutomationPeer : FrameworkElementAutomationPeer
+{
+    /// <summary>Creates the peer.</summary>
+    public RibbonMessageBarAutomationPeer(RibbonMessageBar owner) : base(owner)
+    {
+    }
+
+    /// <inheritdoc />
+    protected override AutomationControlType GetAutomationControlTypeCore() => AutomationControlType.Pane;
+
+    /// <inheritdoc />
+    protected override string GetClassNameCore() => "RibbonMessageBar";
+}
+
+/// <summary>UIA live-region peer that names a <see cref="RibbonMessage"/> from its text.</summary>
+public class RibbonMessageAutomationPeer : FrameworkElementAutomationPeer
+{
+    /// <summary>Creates the peer.</summary>
+    public RibbonMessageAutomationPeer(RibbonMessage owner) : base(owner)
+    {
+    }
+
+    /// <inheritdoc />
+    protected override AutomationControlType GetAutomationControlTypeCore() => AutomationControlType.Text;
+
+    /// <inheritdoc />
+    protected override string GetClassNameCore() => "RibbonMessage";
+
+    /// <inheritdoc />
+    protected override string GetNameCore()
+    {
+        string name = base.GetNameCore();
+        if (!string.IsNullOrEmpty(name))
+        {
+            return name;
+        }
+
+        var message = (RibbonMessage)Owner;
+        return string.IsNullOrEmpty(message.Title)
+            ? message.Message ?? string.Empty
+            : string.IsNullOrEmpty(message.Message)
+                ? message.Title
+                : $"{message.Title} {message.Message}";
+    }
+}
+
 /// <summary>UIA peer for <see cref="RibbonGroup"/>: reports the group name.</summary>
 public class RibbonGroupAutomationPeer : FrameworkElementAutomationPeer
 {

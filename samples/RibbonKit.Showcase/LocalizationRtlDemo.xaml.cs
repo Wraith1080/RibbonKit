@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls.Primitives;
 using RibbonKit.Controls;
@@ -120,6 +121,41 @@ public partial class LocalizationRtlDemo : RibbonWindow
 
     private void OnCloseLab(object sender, RoutedEventArgs e) => Close();
 
+    private void OnAddMessage(object sender, RoutedEventArgs e)
+    {
+        RibbonMessage? nextMessage = new[] { DemoProtectedViewMessage, DemoSecurityNoticeMessage }
+            .FirstOrDefault(message => !message.IsOpen);
+
+        if (nextMessage is null)
+        {
+            UpdateStatus("All RTL sample messages are already visible");
+            return;
+        }
+
+        nextMessage.IsOpen = true;
+        UpdateStatus($"Message added: {nextMessage.Title}");
+    }
+
+    private void OnEnableEditingMessage(object sender, RoutedEventArgs e)
+    {
+        if (sender is RibbonMessage message)
+        {
+            message.Dismiss();
+        }
+
+        UpdateStatus("Editing enabled from the message bar");
+    }
+
+    private void OnReviewSecurityMessage(object sender, RoutedEventArgs e)
+    {
+        if (sender is RibbonMessage message)
+        {
+            message.Dismiss();
+        }
+
+        UpdateStatus("Security settings reviewed from the message bar");
+    }
+
     private void OpenOptionsDialog(bool showQuickAccessPage)
     {
         var customizePage = new RibbonOptionsPage
@@ -158,7 +194,7 @@ public partial class LocalizationRtlDemo : RibbonWindow
         _providerBeforePseudoLocalization = null;
     }
 
-    private void UpdateStatus()
+    private void UpdateStatus(string? action = null)
     {
         if (StatusText is null)
         {
@@ -175,7 +211,8 @@ public partial class LocalizationRtlDemo : RibbonWindow
             ? $"Application menu ({DemoRibbon.ApplicationButtonShape})"
             : $"{DemoBackstage.Design} Backstage ({DemoRibbon.ApplicationButtonShape})";
         StatusText.Text =
-            $"Layout: {flow}\nFile surface: {surface}\nBuilt-in strings: {localization}\nUI culture: {CultureInfo.CurrentUICulture.Name}";
+            $"Layout: {flow}\nFile surface: {surface}\nBuilt-in strings: {localization}\nUI culture: {CultureInfo.CurrentUICulture.Name}" +
+            (action is null ? string.Empty : $"\nLast action: {action}");
     }
 
     private sealed class PseudoLocalizationProvider : IRibbonLocalizationProvider

@@ -396,6 +396,8 @@
     <Thickness x:Key="RibbonKit.Metrics.QatExtenderMargin">0</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.QatExtenderBorderThickness">0,0,0,1</Thickness>
     <CornerRadius x:Key="RibbonKit.Metrics.QatExtenderCornerRadius">0</CornerRadius>
+    <Thickness x:Key="RibbonKit.Metrics.QatExtenderMarginMessageBar">0</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.QatExtenderCornerRadiusMessageBar">0</CornerRadius>
 
     <!-- The minimized QAT keeps the same full-width, bottom-bordered strip (no floating card). -->
     <Thickness x:Key="RibbonKit.Metrics.QatExtenderMarginMinimized">0</Thickness>
@@ -485,4 +487,17 @@
     <system:Double x:Key="RibbonKit.Metrics.ApplicationMenuFooterHeight">32</system:Double>
     <system:Double x:Key="RibbonKit.Metrics.ApplicationMenuDimOpacity">0.35</system:Double>
 
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.MessageBar.Background" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#FFFFE4" />
+        <GradientStop Offset="0.38" Color="#FFF8D0" />
+        <GradientStop Offset="0.72" Color="#FFF0B5" />
+        <GradientStop Offset="1" Color="#FFF7D2" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MessageBar.Border" Color="#D9B451" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MessageBar.Foreground" Color="#1E1E1E" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MessageBar.IconForeground" Color="#1E5A9C" />
+    <Thickness x:Key="RibbonKit.Metrics.MessageBar.Margin">0</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.MessageBar.LastCornerRadius">0</CornerRadius>
+    <Thickness x:Key="RibbonKit.Metrics.MessageBar.BorderThickness">0,0,0,1</Thickness>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MessageBar.CloseHoverBorder" Color="#A67924" />
 </ResourceDictionary>

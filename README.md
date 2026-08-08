@@ -57,6 +57,7 @@ Legend: ✅ done · 🚧 in progress · 📋 planned
 | Application menu (2007-style two-pane dropdown) | ✅ |
 | Backstage view (Modern 2024, Classic 2013, Classic 2010 designs) | ✅ |
 | Backstage footer items, button items, recent-items pattern | ✅ |
+| Repeatable `RibbonMessageBar` notifications with animated appearance, action, and dismissal | ✅ |
 | Quick Access Toolbar — 3 placements, overflow flyout, right-click add/remove | ✅ |
 | Contextual tabs with colored tab groups | ✅ |
 | "Customize the Ribbon" + QAT customization dialog (Word-Options style) | ✅ |
@@ -134,6 +135,19 @@ Still planned: cascade/tile/arrange commands with `Ctrl+Tab` cycling, a switchab
                  Title="My App" UseLayoutRounding="True">
   <DockPanel>
     <rk:Ribbon DockPanel.Dock="Top" QuickAccessPosition="BelowRibbon">
+
+      <!-- Add as many rows as needed, or bind RibbonMessageBar.ItemsSource. -->
+      <rk:Ribbon.MessageBar>
+        <rk:RibbonMessageBar>
+          <rk:RibbonMessage Title="PROTECTED VIEW"
+                            Message="Files from the Internet can contain viruses."
+                            ActionContent="Enable Editing"
+                            ActionCommand="{Binding EnableEditingCommand}" />
+          <rk:RibbonMessage Title="SECURITY NOTICE"
+                            Message="Macros have been disabled."
+                            ActionContent="Review Settings" />
+        </rk:RibbonMessageBar>
+      </rk:Ribbon.MessageBar>
 
       <rk:Ribbon.Backstage>
         <rk:Backstage Design="Modern">
@@ -230,7 +244,7 @@ culture. Application-authored tab, group and command text remains the applicatio
 
 ## Roadmap to v1.0
 
-Phase 6 localization/RTL is complete. Every generation has a dark variant—historical Black for 2007/2010, Dark Gray for 2013, and modern dark for 2019/2024—and the 40-image theme/variant × DPI matrix is complete. The 47 approvals also include Office 2024 RTL ribbon, QAT-customization, and representative bidirectional Backstage scenes plus focused Office 2010 state/Backstage and classic-dark application-menu scenes. RibbonKit's runtime context menus, Customize/Options UI, window/Backstage/QAT/group chrome tooltips, QAT-overflow KeyTip, default File label, and conventional Options/Exit application-menu footer now resolve from `.resx` through a live partial-override provider; disconnected context menus and directional customization actions also behave correctly in RTL. The Localization/RTL lab follows the main Showcase's Backstage design/translucency, 2007-menu, and orb choices while providing its own bidirectional two-pane menu. Its live split/nested menus, context menus, normal/maximized screen edges, Backstage, and Office 2024/2007 application-menu/button surfaces are user-verified. The Phase 7 merge/modal invariant tests are complete. One item is still deferred out of the Office 2007 work: the 2007 window frame. (The two-pane 2007 application menu, the other deferral, shipped as `RibbonApplicationMenu`.) Then release engineering — API review and freeze, docs site, SourceLink, and a performance pass.
+Phase 6 localization/RTL is complete. Every generation has a dark variant—historical Black for 2007/2010, Dark Gray for 2013, and modern dark for 2019/2024—and the 40-image theme/variant × DPI matrix is complete. The 56 approvals also include Office 2024 RTL ribbon, QAT-customization, representative bidirectional Backstage, connected 2007/2010/2024 message-bar stacks, an RTL message-bar stack, and the Office 2024 rectangular plus Office 2007 orb open-application-menu/message compositions; focused Office 2007/2010/2024 Backstage depth and 2010 colored-caption scenes; Office 2010 button states; and classic-dark application-menu scenes. RibbonKit's runtime context menus, Customize/Options UI, window/Backstage/QAT/group chrome tooltips, QAT-overflow KeyTip, default File label, and conventional Options/Exit application-menu footer now resolve from `.resx` through a live partial-override provider; disconnected context menus and directional customization actions also behave correctly in RTL. The Localization/RTL lab follows the main Showcase's Backstage design/translucency, 2007-menu, and orb choices while providing its own bidirectional two-pane menu and connected mixed-language message stack. Its live split/nested menus, context menus, normal/maximized screen edges, Backstage, and Office 2024/2007 application-menu/button surfaces are user-verified. The Phase 7 merge/modal invariant tests are complete. One item is still deferred out of the Office 2007 work: the 2007 window frame. (The two-pane 2007 application menu, the other deferral, shipped as `RibbonApplicationMenu`.) Then release engineering — API review and freeze, docs site, SourceLink, and a performance pass.
 
 ## Contributing
 

@@ -125,7 +125,8 @@
     <system:Double x:Key="RibbonKit.Metrics.BackstageBackButtonSize">36</system:Double>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ContentBackground" Color="#FFFFFF" />
     <DropShadowEffect x:Key="RibbonKit.Effects.Backstage.ContentShadow"
-                      Opacity="0" BlurRadius="0" ShadowDepth="0" />
+                      BlurRadius="6" ShadowDepth="1" Direction="180"
+                      Opacity="0.12" Color="#000000" RenderingBias="Performance" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.NavBackground" Color="#F5F4F3" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.Foreground" Color="#201F1E" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemHover" Color="#EDEBE9" />
@@ -249,6 +250,8 @@
     <Thickness x:Key="RibbonKit.Metrics.QatExtenderMargin">7,0,7,7</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.QatExtenderBorderThickness">1,0,1,1</Thickness>
     <CornerRadius x:Key="RibbonKit.Metrics.QatExtenderCornerRadius">0,0,8,8</CornerRadius>
+    <Thickness x:Key="RibbonKit.Metrics.QatExtenderMarginMessageBar">7,0,7,0</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.QatExtenderCornerRadiusMessageBar">0</CornerRadius>
 
     <!-- When the ribbon is minimized the body card disappears and the QAT bar stands
          alone, so it becomes a fully rounded, fully bordered floating card with a small
@@ -330,4 +333,14 @@
     <system:Double x:Key="RibbonKit.Metrics.ApplicationMenuFooterHeight">36</system:Double>
     <system:Double x:Key="RibbonKit.Metrics.ApplicationMenuDimOpacity">0.4</system:Double>
 
+    <!-- Repeatable message bars shown immediately below the ribbon. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MessageBar.Background" Color="#FFF4CE" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MessageBar.Border" Color="#E6C753" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MessageBar.Foreground" Color="#323130" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MessageBar.IconForeground" Color="#0078D4" />
+
+    <Thickness x:Key="RibbonKit.Metrics.MessageBar.Margin">7,0,7,7</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.MessageBar.LastCornerRadius">0,0,8,8</CornerRadius>
+    <Thickness x:Key="RibbonKit.Metrics.MessageBar.BorderThickness">1,0,1,1</Thickness>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MessageBar.CloseHoverBorder" Color="#B8B8B8" />
 </ResourceDictionary>

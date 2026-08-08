@@ -19,6 +19,23 @@
                    QuickAccessPosition="TabRow"
                    QuickAccessCustomizeRequested="OnCustomizeQuickAccess"
                    RibbonCustomizeRequested="OnCustomizeRibbon">
+            <rk:Ribbon.MessageBar>
+                <rk:RibbonMessageBar x:Name="DemoMessageBar">
+                    <rk:RibbonMessage x:Name="DemoProtectedViewMessage"
+                                      IsOpen="False"
+                                      Title="عرض محمي — PROTECTED VIEW"
+                                      Message="قد تحتوي ملفات الإنترنت على فيروسات — files from the Internet can contain viruses."
+                                      ActionContent="تمكين التحرير — Enable Editing"
+                                      ActionClick="OnEnableEditingMessage" />
+                    <rk:RibbonMessage x:Name="DemoSecurityNoticeMessage"
+                                      IsOpen="False"
+                                      Title="إشعار أمان — SECURITY NOTICE"
+                                      Message="تم تعطيل وحدات الماكرو في هذا المستند — macros are disabled."
+                                      ActionContent="مراجعة الإعدادات — Review Settings"
+                                      ActionClick="OnReviewSecurityMessage" />
+                </rk:RibbonMessageBar>
+            </rk:Ribbon.MessageBar>
+
             <rk:Ribbon.Backstage>
                 <rk:Backstage x:Name="DemoBackstage" Design="Modern" SelectedIndex="0">
                     <rk:BackstageTabItem Header="معلومات — Info">
@@ -102,6 +119,13 @@
                 <rk:RibbonGroup Header="Mode"
                                 rk:Ribbon.CommandId="loc.group.mode"
                                 Icon="{StaticResource Icon.Palette}">
+                    <rk:RibbonButton Header="Add Message"
+                                     Size="Large"
+                                     LargeIcon="{StaticResource Icon.Backstage}"
+                                     Icon="{StaticResource Icon.Backstage}"
+                                     Click="OnAddMessage"
+                                     ScreenTipTitle="Add RTL message"
+                                     ScreenTipText="Show the next mixed Arabic/English message and exercise animated RTL presentation." />
                     <rk:RibbonToggleButton x:Name="PseudoLocalizationToggle"
                                            Header="Pseudo Localization"
                                            Size="Large"
@@ -228,7 +252,10 @@
                         bidirectional two-pane menu instead of its Backstage. The window title should
                         glide directly between its QAT/no-QAT positions without overshooting. Also
                         check Arabic shaping, mixed Arabic/Latin ordering, and the LTR document name.&#x0a;
-                        7. With pseudo localization enabled, hover chrome controls: caption buttons,
+                        7. Confirm both message rows attach directly below the ribbon, then toggle
+                        RTL: icons/title/body should start at the right while action and Close move
+                        to the left. Dismiss either row and confirm the other remains attached.&#x0a;
+                        8. With pseudo localization enabled, hover chrome controls: caption buttons,
                         QAT overflow, Backstage Back, group launchers, and ribbon/window controls.
                         Their tooltips should show bracketed resource keys.
                     </TextBlock>

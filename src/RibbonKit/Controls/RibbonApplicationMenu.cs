@@ -28,10 +28,12 @@ namespace RibbonKit.Controls;
 /// </code>
 /// <para>
 /// <b>This is not the backstage.</b> <see cref="Backstage"/> is a full-window overlay hosted in the
-/// window's adorner layer; the application menu is a drop-down rendered <i>inside the ribbon's own
-/// tab-strip row</i>, deliberately BEHIND the application button so the orb keeps sitting on top of
-/// it exactly as it does in Office 2007. Assign one to <see cref="Ribbon.ApplicationMenu"/> and the
-/// File button opens it instead of the backstage.
+/// window's adorner layer; the application menu is a ribbon-owned drop-down. The shipping template
+/// renders it in the ribbon's outer menu layer, allowing the menu alone to cover the QAT and message
+/// rows without raising the ribbon body's shadow. With the historical orb, Ribbon mirrors only the
+/// button above that layer so the orb still sits over the menu exactly as it does in Office 2007.
+/// Assign one to
+/// <see cref="Ribbon.ApplicationMenu"/> and the File button opens it instead of the backstage.
 /// </para>
 /// <para>
 /// <b>The hover model</b> (matching Office 2007, see 04-DESIGN-NOTES §3.46). The pane shows

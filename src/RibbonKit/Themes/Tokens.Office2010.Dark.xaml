@@ -115,4 +115,19 @@
         <GradientStop Offset="0.55" Color="#2CFFFFFF" />
         <GradientStop Offset="1" Color="#14FFFFFF" />
     </RadialGradientBrush>
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.MessageBar.Background" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#FFF2C5" />
+        <GradientStop Offset="0.38" Color="#F3DFA0" />
+        <GradientStop Offset="0.72" Color="#E5C979" />
+        <GradientStop Offset="1" Color="#EED996" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MessageBar.Border" Color="#B89535" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MessageBar.Foreground" Color="#202020" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MessageBar.IconForeground" Color="#245A8D" />
+    <Thickness x:Key="RibbonKit.Metrics.QatExtenderMarginMessageBar">0</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.QatExtenderCornerRadiusMessageBar">0</CornerRadius>
+    <Thickness x:Key="RibbonKit.Metrics.MessageBar.Margin">0</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.MessageBar.LastCornerRadius">0</CornerRadius>
+    <Thickness x:Key="RibbonKit.Metrics.MessageBar.BorderThickness">0,0,0,1</Thickness>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MessageBar.CloseHoverBorder" Color="#8E6D2A" />
 </ResourceDictionary>

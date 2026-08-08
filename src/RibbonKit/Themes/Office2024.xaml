@@ -22,6 +22,7 @@
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.Shared.xaml" />
         <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.RibbonChrome.xaml" />
+        <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.MessageBar.xaml" />
         <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.Groups.xaml" />
         <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.Buttons.xaml" />
         <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.DropDowns.xaml" />
