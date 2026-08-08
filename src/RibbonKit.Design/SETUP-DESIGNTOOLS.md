@@ -138,8 +138,9 @@ the backstage is shown, "(default)" clears the override. Because `SelectedIndex`
 `Selector` declaring types, since which one the designer reports for an inherited DP is unverified.
 For an application menu it translates only the integer `DesignPreviewActiveIndex`; the runtime menu
 derives its normal read-only pane state synchronously. No object-valued preview property is registered
-or invalidated. This path requires the same live Windows designer verification used for the original
-tab/backstage provider. It runs in-process on the VS UI thread (only the design
+or invalidated. The complete Application menu → Closed → Backstage → Application menu → Closed
+cycle and subsequent pane selection are verified in the VS 2022 isolated designer without a flash,
+crash, or model corruption. It runs in-process on the VS UI thread (only the design
 *surface* is process-isolated, not extension code), so it's a plain code-built WPF `Window`
 (the design assembly can't reference RibbonKit's themes). Every change is applied straight to
 the `ModelItem` tree through `DesignModel`, each as its own single undo — same transaction model
