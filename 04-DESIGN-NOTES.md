@@ -3457,6 +3457,21 @@ File-surface/pane preview cycle are user-verified in Visual Studio; the live DPI
 full add/delete/reorder/undo matrix remain useful focused regression checks rather than blockers for
 the application-menu parity item.
 
+The **Design Preview** tab now also begins with a session-only **Theme** selector: project default,
+Office 2024, Office 2019, Office 2013, Office 2010, or Office 2007. The net472 design assembly keeps a
+small `ThemePreview` enum whose non-negative values deliberately mirror the runtime `RibbonTheme`
+ordering without adding a runtime-project reference. `SelectedTabPreviewProvider` translates only the
+primitive hidden `DesignPreviewTheme` integer. In design mode, `Ribbon` responds by replacing one
+Ribbon-local token dictionary; project default removes it. This leaves `Application.Resources`, the
+serialized XAML, and runtime instances untouched while allowing DynamicResources and theme metrics to
+refresh on the designer surface. A deferred selection-visual refresh covers the geometry-driven tab
+underline and classic connected-tab notch. The selector does not rewrite authored structural choices
+such as `ApplicationButtonShape`, so choosing Office 2007 previews its palette and metrics without
+silently converting a rectangular File button into an orb. Three focused tests pin runtime
+inertness, local dictionary replacement/removal, representative generation metrics, and the editor /
+provider wiring. Current automated baseline: 185 logic tests and 56 approved images; live Visual
+Studio designer confirmation of the new selector remains the focused manual check.
+
 ### 3.64 Backstage sheet depth and the 2010 colored caption — 2026-08-08
 
 Three reference-driven depth corrections stay inside the shared-template/token architecture. The
@@ -3826,12 +3841,13 @@ Possible post-v1 polish:
   honor reduced motion, handle rapid reversals, and stay disabled while a DWM backdrop is active so
   Mica/Acrylic retain their native material retint without a second cross-fade on top.
 
-**Unit tests: 182 green (verified 2026-08-08).** Coverage now includes the STA harness, the borrow
+**Unit tests: 185 green (verified 2026-08-08).** Coverage now includes the STA harness, the borrow
 protocol, overflow strip measure/arrange rules, popup motion and dismissal, proxy mirroring,
 application-menu layering/hover/footer-outline/KeyTips, repeatable message-bar API/template/theme
 contracts, Office 2010 seam/state/consumer contracts, localization/RTL
 context-menu, customization-template, chrome-tooltip, default-File, representative bidi-lab and
-live Backstage/title-transition contracts, design-preview runtime isolation, and the existing
+live Backstage/title-transition contracts, design-preview runtime isolation and scoped theme-token
+replacement, and the existing
 reduction/size-definition/theme-scope tests.
 `RibbonMergeModalTests` adds the Phase 7 automated invariants: merge ordering across later
 permutations, merge/unmerge round-trips, group restore with two sources in one tab, capture while

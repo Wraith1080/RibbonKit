@@ -105,7 +105,7 @@ Legend: ✅ done · 🚧 in progress · 📋 planned
 | Feature | Status |
 |---|---|
 | MVVM — `ItemsSource` + `DataTemplate` throughout | ✅ |
-| XAML designer preview (active tab + Backstage/application menu + page/pane selection) | ✅ |
+| XAML designer preview (theme + active tab + Backstage/application menu + page/pane selection) | ✅ |
 | Design-time smart tags / quick actions in Visual Studio | ✅ |
 | Responsive **Ribbon Editor** with drag-drop authoring for ribbon, Backstage, and application-menu structure | ✅ |
 | NuGet package bundling the design-tools assembly + toolbox manifest | ✅ |
@@ -115,7 +115,7 @@ Legend: ✅ done · 🚧 in progress · 📋 planned
 
 ![The design-time Ribbon Editor dialog](docs/images/ribbon-editor.png)
 
-*The responsive design-time Ribbon Editor: drag-drop structure authoring, contextual property editing, and active-tab/File-surface/page-or-pane previews rendered on the XAML design surface without changing application XAML or runtime behavior.*
+*The responsive design-time Ribbon Editor: drag-drop structure authoring, contextual property editing, and theme/active-tab/File-surface/page-or-pane previews rendered on the XAML design surface without changing application XAML or runtime behavior.*
 
 ### Preview: MDI emulation
 

@@ -124,9 +124,14 @@ identity nor a surface KeyTip); clearing either box removes the attribute. Color
 containers (`Items`, i.e. combos/galleries/split+drop-down menus/backstage) but NOT into a control's `Content` (expanding
 every page/gallery item's visual tree was too noisy). A combo item's text lives in its `Content` (a
 string) and is edited via the **Caption** box. `TextBlock` editors and an "Add Text Block" menu entry
-exist for text added directly into a group's panels. The **Design Preview** tab lays out three fields
-vertically: **Active tab**, mutually-exclusive **File surface** (`Closed` / `Backstage` /
-`Application menu`, listing only surfaces present), and the dependent **Page / pane** picker. The
+exist for text added directly into a group's panels. The **Design Preview** tab lays out four fields
+vertically: **Theme** (`project default` or any of the five Office generations), **Active tab**,
+mutually-exclusive **File surface** (`Closed` / `Backstage` / `Application menu`, listing only
+surfaces present), and the dependent **Page / pane** picker. Theme preview translates the primitive
+integer `DesignPreviewTheme`; in design mode the runtime control scopes the matching token dictionary
+to that Ribbon, leaving `Application.Resources`, serialized XAML, and runtime behavior untouched.
+`project default` removes the scoped override. This changes theme palette and metrics only: authored
+structural choices such as `ApplicationButtonShape` remain independent. The
 File-surface provider translates one integer `DesignPreviewFileSurface` value, which the runtime
 control applies atomically without serializing state. Both authored object properties remain
 untouched: literal null for `ApplicationMenu` crashed the VS 2022 isolated designer immediately and

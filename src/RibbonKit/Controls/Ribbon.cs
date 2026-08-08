@@ -148,6 +148,17 @@ public class Ribbon : Control
             typeof(Ribbon),
             new FrameworkPropertyMetadata(-1, OnDesignPreviewFileSurfaceChanged));
 
+    /// <summary>
+    /// Identifies the design-tool-only <see cref="DesignPreviewTheme"/> dependency property.
+    /// </summary>
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public static readonly DependencyProperty DesignPreviewThemeProperty =
+        DependencyProperty.Register(
+            nameof(DesignPreviewTheme),
+            typeof(int),
+            typeof(Ribbon),
+            new FrameworkPropertyMetadata(-1, OnDesignPreviewThemeChanged));
+
     /// <summary>Identifies the <see cref="ApplicationButtonHeader"/> dependency property.</summary>
     public static readonly DependencyProperty ApplicationButtonHeaderProperty =
         DependencyProperty.Register(
@@ -1431,6 +1442,20 @@ public class Ribbon : Control
     }
 
     /// <summary>
+    /// Gets or sets the design-tool-only theme generation. <c>-1</c> inherits the project's
+    /// resources; non-negative values map to <see cref="Theming.RibbonTheme"/>. Runtime instances
+    /// ignore this property.
+    /// </summary>
+    [Browsable(false)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public int DesignPreviewTheme
+    {
+        get => (int)GetValue(DesignPreviewThemeProperty);
+        set => SetValue(DesignPreviewThemeProperty, value);
+    }
+
+    /// <summary>
     /// Gets or sets the application button text. When no local value, style or binding supplies
     /// one, the getter returns RibbonKit's live localized <c>File</c> string.
     /// </summary>
@@ -1525,6 +1550,7 @@ public class Ribbon : Control
     // Design-time-only host for the backstage preview (see UpdateDesignTimeBackstage). The
     // runtime adorner path needs a real Window the XAML designer doesn't provide.
     private Border? _designBackstageHost;
+    private ResourceDictionary? _designPreviewThemeDictionary;
 
     // Guards the SelectedTab <-> SelectedIndex mirroring so setting one to reflect the other
     // never bounces back and re-enters.
@@ -2026,6 +2052,44 @@ public class Ribbon : Control
         {
             ribbon.ApplyDesignPreviewFileSurface((int)e.NewValue);
         }
+    }
+
+    private static void OnDesignPreviewThemeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        var ribbon = (Ribbon)d;
+        if (DesignerProperties.GetIsInDesignMode(ribbon))
+        {
+            ribbon.ApplyDesignPreviewTheme((int)e.NewValue);
+        }
+    }
+
+    private void ApplyDesignPreviewTheme(int preview)
+    {
+        if (_designPreviewThemeDictionary is not null)
+        {
+            Resources.MergedDictionaries.Remove(_designPreviewThemeDictionary);
+            _designPreviewThemeDictionary = null;
+        }
+
+        if (preview >= 0 && Enum.IsDefined(typeof(Theming.RibbonTheme), preview))
+        {
+            var theme = (Theming.RibbonTheme)preview;
+            var dictionary = new ResourceDictionary
+            {
+                Source = new Uri(
+                    $"pack://application:,,,/RibbonKit;component/Themes/Tokens.{theme}.xaml",
+                    UriKind.Absolute),
+            };
+            Resources.MergedDictionaries.Add(dictionary);
+            _designPreviewThemeDictionary = dictionary;
+        }
+
+        // Local DynamicResources re-resolve automatically, but the selection underline and the
+        // classic connected-tab notch are geometry-driven and need the same post-layout refresh as
+        // a runtime ThemeManager switch. The scoped dictionary never touches Application.Resources.
+        InvalidateMeasure();
+        UpdateQatButtonContext();
+        RequestSelectionVisualsRefresh();
     }
 
     private void ApplyDesignPreviewFileSurface(int surface)
