@@ -165,7 +165,13 @@ public class ApplicationMenuLayeringTests
         Assert.Null(nestedPresenter.Attribute("Content"));
         Assert.Equal("Collapsed", (string?)nestedPresenter.Attribute("Visibility"));
         Assert.DoesNotContain(
-            document.Descendants(Presentation + "Setter"),
+            document
+                .Descendants(Presentation + "DataTrigger")
+                .Where(trigger =>
+                    ((string?)trigger.Attribute("Binding"))?.Contains(
+                        "IsApplicationMenuOpen",
+                        StringComparison.Ordinal) == true)
+                .SelectMany(trigger => trigger.Elements(Presentation + "Setter")),
             setter => (string?)setter.Attribute("TargetName") == "ContentHost"
                 && (string?)setter.Attribute("Property") == "Effect"
                 && (string?)setter.Attribute("Value") == "{x:Null}");

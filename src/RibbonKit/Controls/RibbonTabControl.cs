@@ -53,6 +53,7 @@ public class RibbonTabControl : TabControl
     private FrameworkElement? _applicationButton;
     private FrameworkElement? _applicationMenuPresenter;
     private bool _selectionVisualsRefreshPending;
+    private bool _resizeVisualsRefreshPending;
 
     static RibbonTabControl()
     {
@@ -67,9 +68,31 @@ public class RibbonTabControl : TabControl
         // Keep the marker and the body-border notch under the selected tab when the strip
         // reflows (window resize). These don't fire on tab selection (the strip's own size is
         // unchanged), so they never race the selection glide.
-        SizeChanged += (_, _) => { UpdateMarker(animate: false); UpdateConnectNotch(); };
+        SizeChanged += OnTabControlSizeChanged;
         Loaded += (_, _) => { UpdateMarker(animate: false); UpdateConnectNotch(); };
         LayoutUpdated += (_, _) => UpdateApplicationMenuPlacement();
+    }
+
+    private void OnTabControlSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        // SizeChanged fires inside WPF's layout pass. Transforming between template branches and
+        // changing marker/notch geometry inline can dirty arrange again while the window is still
+        // processing WM_SIZE. Queue one update at the render boundary instead; repeated layout
+        // notifications before that frame collapse into the same operation.
+        if (_resizeVisualsRefreshPending)
+        {
+            return;
+        }
+
+        _resizeVisualsRefreshPending = true;
+        Dispatcher.BeginInvoke(
+            DispatcherPriority.Render,
+            new Action(() =>
+            {
+                _resizeVisualsRefreshPending = false;
+                UpdateMarker(animate: false);
+                UpdateConnectNotch();
+            }));
     }
 
     /// <inheritdoc />
@@ -245,6 +268,7 @@ public class RibbonTabControl : TabControl
         if (_applicationMenuLayer is null
             || _applicationButton is null
             || _applicationMenuPresenter is null
+            || !_applicationMenuPresenter.IsVisible
             || _applicationButton.ActualHeight <= 0d)
         {
             return;

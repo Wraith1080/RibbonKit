@@ -28,6 +28,19 @@ public class RibbonWindow : Window
     private const string WindowRootPartName = "PART_WindowRoot";
     private const string TitlePartName = "PART_Title";
 
+    private static readonly DependencyPropertyKey IsLiveResizingPropertyKey =
+        DependencyProperty.RegisterReadOnly(
+            nameof(IsLiveResizing),
+            typeof(bool),
+            typeof(RibbonWindow),
+            new FrameworkPropertyMetadata(false));
+
+    /// <summary>
+    /// Identifies the read-only <see cref="IsLiveResizing"/> dependency property.
+    /// </summary>
+    public static readonly DependencyProperty IsLiveResizingProperty =
+        IsLiveResizingPropertyKey.DependencyProperty;
+
     /// <summary>Identifies the <see cref="TitleBarContent"/> dependency property.</summary>
     public static readonly DependencyProperty TitleBarContentProperty =
         DependencyProperty.Register(
@@ -81,7 +94,11 @@ public class RibbonWindow : Window
         // resolution/DPI while maximized.
         SizeChanged += (_, _) => UpdateMaximizeInset();
         ThemeManager.Changed += OnThemeManagerChanged;
-        Closed += (_, _) => ThemeManager.Changed -= OnThemeManagerChanged;
+        Closed += (_, _) =>
+        {
+            EndLiveResize();
+            ThemeManager.Changed -= OnThemeManagerChanged;
+        };
     }
 
     /// <summary>
@@ -318,6 +335,47 @@ public class RibbonWindow : Window
         UpdateMaximizeInset();
     }
 
+    /// <summary>
+    /// Marks the window as being interactively sized so templates can suspend expensive transient
+    /// rendering, such as wide off-screen shadow surfaces, until the drag finishes.
+    /// </summary>
+    /// <remarks>
+    /// The read-only state starts with the first native <c>WM_SIZING</c> message and ends on
+    /// <c>WM_EXITSIZEMOVE</c>. A title-bar move uses the same outer modal loop but never sends
+    /// <c>WM_SIZING</c>, so merely moving the window does not suppress its ribbon shadow. Resting
+    /// values are not replaced, so application and theme resources remain untouched.
+    /// </remarks>
+    internal void BeginLiveResize()
+    {
+        if (IsLiveResizing)
+        {
+            return;
+        }
+
+        SetValue(IsLiveResizingPropertyKey, true);
+    }
+
+    /// <summary>Restores the resting ribbon shadow after interactive window sizing.</summary>
+    internal void EndLiveResize()
+    {
+        if (!IsLiveResizing)
+        {
+            return;
+        }
+
+        SetValue(IsLiveResizingPropertyKey, false);
+        InvalidateVisual();
+    }
+
+    /// <summary>
+    /// Gets whether this window is inside Windows' native interactive move/size loop.
+    /// </summary>
+    /// <remarks>
+    /// RibbonKit templates use this state to suspend wide drop shadows during a resize drag. The
+    /// normal visual state is restored automatically before the final frame is presented.
+    /// </remarks>
+    public bool IsLiveResizing => (bool)GetValue(IsLiveResizingProperty);
+
     private void OnThemeManagerChanged(object? sender, EventArgs e)
     {
         if (new WindowInteropHelper(this).Handle != IntPtr.Zero)
@@ -408,10 +466,21 @@ public class RibbonWindow : Window
             && Math.Abs(a.Bottom - b.Bottom) < eps;
     }
 
-    private static IntPtr WindowHook(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+    private IntPtr WindowHook(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
     {
         const int WmGetMinMaxInfo = 0x0024;
-        if (msg == WmGetMinMaxInfo && ConstrainMaximizedBounds(hwnd, lParam))
+        const int WmSizing = 0x0214;
+        const int WmExitSizeMove = 0x0232;
+
+        if (msg == WmSizing)
+        {
+            BeginLiveResize();
+        }
+        else if (msg == WmExitSizeMove)
+        {
+            EndLiveResize();
+        }
+        else if (msg == WmGetMinMaxInfo && ConstrainMaximizedBounds(hwnd, lParam))
         {
             handled = true;
         }
