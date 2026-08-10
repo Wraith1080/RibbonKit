@@ -23,6 +23,11 @@ namespace RibbonKit.Layout;
 /// </remarks>
 public static class ReductionAlgorithm
 {
+    // Same scale-aware tolerance pattern WPF uses internally for layout-double comparisons.
+    // It absorbs binary representation noise (for example 0.1 + 0.2 vs 0.3) without hiding a
+    // meaningful DIP difference at ordinary ribbon dimensions.
+    private const double DoubleEpsilon = 2.2204460492503131e-016;
+
     /// <summary>
     /// Computes the size-state index for each group using the default order:
     /// rightmost group first.
@@ -33,6 +38,12 @@ public static class ReductionAlgorithm
     /// largest. A single-element array marks a non-adaptive child.
     /// </param>
     /// <returns>The chosen state index for each group (0 = largest).</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="stateWidths"/> is null.</exception>
+    /// <exception cref="ArgumentException">A group has no state widths.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// <paramref name="availableWidth"/> or a state width is negative, NaN, or an unsupported
+    /// infinity.
+    /// </exception>
     public static int[] ComputeStates(double availableWidth, IReadOnlyList<double[]> stateWidths)
     {
         ArgumentNullException.ThrowIfNull(stateWidths);
@@ -59,6 +70,16 @@ public static class ReductionAlgorithm
     /// before the next is touched. Indices omitted from the order are never reduced.
     /// </param>
     /// <returns>The chosen state index for each group (0 = largest).</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="stateWidths"/> or <paramref name="reductionOrder"/> is null.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// A group has no state widths, or <paramref name="reductionOrder"/> contains an invalid index.
+    /// </exception>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// <paramref name="availableWidth"/> or a state width is negative, NaN, or an unsupported
+    /// infinity.
+    /// </exception>
     public static int[] ComputeStates(
         double availableWidth,
         IReadOnlyList<double[]> stateWidths,
@@ -69,6 +90,7 @@ public static class ReductionAlgorithm
 
         int count = stateWidths.Count;
         var states = new int[count];
+        ValidateInputs(availableWidth, stateWidths, reductionOrder);
         if (count == 0 || double.IsPositiveInfinity(availableWidth))
         {
             return states;
@@ -77,24 +99,12 @@ public static class ReductionAlgorithm
         double total = 0;
         for (int i = 0; i < count; i++)
         {
-            if (stateWidths[i] is null || stateWidths[i].Length == 0)
-            {
-                throw new ArgumentException(
-                    $"Group {i} must provide at least one state width.", nameof(stateWidths));
-            }
-
             total += stateWidths[i][0];
         }
 
         foreach (int index in reductionOrder)
         {
-            if (index < 0 || index >= count)
-            {
-                throw new ArgumentException(
-                    $"Reduction order contains invalid group index {index}.", nameof(reductionOrder));
-            }
-
-            while (total > availableWidth)
+            while (GreaterThan(total, availableWidth))
             {
                 int next = NextNarrowerState(stateWidths[index], states[index]);
                 if (next < 0)
@@ -107,13 +117,69 @@ public static class ReductionAlgorithm
                 total += stateWidths[index][next];
             }
 
-            if (total <= availableWidth)
+            if (!GreaterThan(total, availableWidth))
             {
                 break;
             }
         }
 
         return states;
+    }
+
+    private static void ValidateInputs(
+        double availableWidth,
+        IReadOnlyList<double[]> stateWidths,
+        IReadOnlyList<int> reductionOrder)
+    {
+        if (double.IsNaN(availableWidth)
+            || double.IsNegativeInfinity(availableWidth)
+            || availableWidth < 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(availableWidth),
+                availableWidth,
+                "Available width must be non-negative or positive infinity.");
+        }
+
+        double largeWidthTotal = 0;
+        for (int i = 0; i < stateWidths.Count; i++)
+        {
+            double[]? widths = stateWidths[i];
+            if (widths is null || widths.Length == 0)
+            {
+                throw new ArgumentException(
+                    $"Group {i} must provide at least one state width.", nameof(stateWidths));
+            }
+
+            for (int state = 0; state < widths.Length; state++)
+            {
+                double width = widths[state];
+                if (!double.IsFinite(width) || width < 0)
+                {
+                    throw new ArgumentOutOfRangeException(
+                        nameof(stateWidths),
+                        width,
+                        $"Group {i}, state {state} must have a finite, non-negative width.");
+                }
+            }
+
+            largeWidthTotal += widths[0];
+            if (!double.IsFinite(largeWidthTotal))
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(stateWidths),
+                    "The combined large-state width must be finite.");
+            }
+        }
+
+        foreach (int index in reductionOrder)
+        {
+            if (index < 0 || index >= stateWidths.Count)
+            {
+                throw new ArgumentException(
+                    $"Reduction order contains invalid group index {index}.", nameof(reductionOrder));
+            }
+        }
     }
 
     /// <summary>
@@ -125,12 +191,29 @@ public static class ReductionAlgorithm
     {
         for (int t = current + 1; t < widths.Length; t++)
         {
-            if (widths[t] < widths[current])
+            if (LessThan(widths[t], widths[current]))
             {
                 return t;
             }
         }
 
         return -1;
+    }
+
+    private static bool GreaterThan(double left, double right) =>
+        left > right && !AreClose(left, right);
+
+    private static bool LessThan(double left, double right) =>
+        left < right && !AreClose(left, right);
+
+    private static bool AreClose(double left, double right)
+    {
+        if (left == right)
+        {
+            return true;
+        }
+
+        double tolerance = (Math.Abs(left) + Math.Abs(right) + 10.0) * DoubleEpsilon;
+        return Math.Abs(left - right) < tolerance;
     }
 }

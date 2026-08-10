@@ -3835,6 +3835,31 @@ Two real defects fell out of that coverage:
 Twenty focused cases cover these contracts. Current automated baseline: 257 logic tests plus the
 one visual test covering 62 approved images.
 
+### 3.73 Reduction thresholds, priority order, and malformed-width coverage — 2026-08-10
+
+The remaining adaptive-layout test gap is closed with 37 focused cases: 29 against the pure
+`ReductionAlgorithm` and eight STA measurements through the real `RibbonGroupsPanel`. The panel
+cases pin explicit priority (highest first), rightmost tie-breaking, unprioritized largest-first
+ordering, fixed-group exclusion, the complete ResizeThenCollapse state map, and cache invalidation/
+reprobe after a runtime width change.
+
+The pure cases add exact-fit, fractional-DIP, equal/nearly-equal/non-monotonic state, empty/duplicate
+custom order, null/empty table, invalid index, and invalid measurement coverage. Two hardening changes
+were warranted:
+
+- Layout comparisons now use a scale-aware epsilon equivalent to WPF's internal double-comparison
+  pattern. A conceptual exact fit such as `0.1 + 0.2 == 0.3` no longer crosses a reduction threshold
+  because of binary floating-point noise, and a near-identical probed state is skipped until a
+  genuinely narrower state is found. Meaningful DIP differences and deliberately non-monotonic
+  sequences retain the existing behavior.
+- Public inputs are validated before the positive-infinity/empty fast paths: available width must be
+  non-negative (positive infinity remains supported), every state width must be finite/non-negative,
+  each group must expose a state, the combined large width must remain finite, and every reduction
+  index must exist. The public XML documentation now records these exceptions.
+
+No `RibbonGroupsPanel` ordering or cache behavior needed correction. Twenty-five new cases raise the
+current automated baseline to 282 logic tests plus the one visual test covering 62 approved images.
+
 ## 4. Workflow / Session Conventions
 
 - Cloud workspace: `/home/user/ribbonkit/`. The user's machine:
@@ -4052,8 +4077,9 @@ Backlog (rough priority):
    default File label. §3.58 completes the representative bidirectional-text Backstage pass and
    §3.59 fixes its live adorner/title transition; §3.61 records the green live popup/window,
    screen-edge, and 2024/2007 application-menu/orb verification.
-4. **The remaining unit tests** — customization serializer round-trips are DONE in §3.72; the
-   reduction-algorithm gaps remain. KeyTip resolution is DONE in §3.69. The Phase 7 merge/modal invariants
+4. **The remaining unit tests — DONE.** Customization serializer round-trips are covered in §3.72
+   and the reduction algorithm/panel-order gaps in §3.73. KeyTip resolution is DONE in §3.69. The
+   Phase 7 merge/modal invariants
    are now DONE: 13 tests cover
    stable ordering, repeated merge/unmerge, two-source group restoration, modal transitions and
    cancellation, serialization exclusion, rebuild/remerge and declarative activation. The harness
@@ -4090,7 +4116,7 @@ Possible post-v1 polish:
   honor reduced motion, handle rapid reversals, and stay disabled while a DWM backdrop is active so
   Mica/Acrylic retain their native material retint without a second cross-fade on top.
 
-**Unit tests: 257 green (verified 2026-08-10).** Coverage now includes the STA harness, the borrow
+**Unit tests: 282 green (verified 2026-08-10).** Coverage now includes the STA harness, the borrow
 protocol, overflow strip measure/arrange rules, popup motion and dismissal, proxy mirroring,
 application-menu layering/hover/footer-outline/KeyTips, repeatable message-bar API/template/theme
 contracts, Office 2010 seam/state/consumer contracts, localization/RTL

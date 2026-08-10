@@ -165,4 +165,146 @@ public class ReductionAlgorithmTests
         Assert.Throws<ArgumentException>(
             () => ReductionAlgorithm.ComputeStates(50, widths, new[] { 3 }));
     }
+
+    [Fact]
+    public void Exact_fit_does_not_reduce()
+    {
+        var widths = new[]
+        {
+            new double[] { 100, 80 },
+            new double[] { 50, 30 },
+        };
+
+        Assert.Equal(new[] { 0, 0 }, ReductionAlgorithm.ComputeStates(150, widths));
+    }
+
+    [Fact]
+    public void Fractional_exact_fit_ignores_binary_rounding_noise()
+    {
+        var widths = new[]
+        {
+            new double[] { 0.1, 0.05 },
+            new double[] { 0.2, 0.1 },
+        };
+
+        Assert.Equal(new[] { 0, 0 }, ReductionAlgorithm.ComputeStates(0.3, widths));
+    }
+
+    [Fact]
+    public void Equal_and_nearly_equal_steps_are_skipped_for_a_real_reduction()
+    {
+        var widths = new[]
+        {
+            new[] { 100.0, 100.0, 100.0 - 1e-14, 70.0 },
+        };
+
+        Assert.Equal(new[] { 3 }, ReductionAlgorithm.ComputeStates(90, widths));
+    }
+
+    [Fact]
+    public void Empty_custom_order_leaves_every_group_large()
+    {
+        var widths = new[]
+        {
+            new double[] { 100, 50 },
+            new double[] { 100, 50 },
+        };
+
+        Assert.Equal(
+            new[] { 0, 0 },
+            ReductionAlgorithm.ComputeStates(50, widths, Array.Empty<int>()));
+    }
+
+    [Fact]
+    public void Duplicate_order_entries_are_deterministic_and_harmless()
+    {
+        var widths = new[]
+        {
+            new double[] { 100, 50 },
+            new double[] { 100, 50 },
+        };
+
+        Assert.Equal(
+            new[] { 1, 1 },
+            ReductionAlgorithm.ComputeStates(100, widths, new[] { 1, 1, 0 }));
+    }
+
+    [Fact]
+    public void Negative_order_index_throws()
+    {
+        var widths = new[] { new double[] { 100, 50 } };
+
+        Assert.Throws<ArgumentException>(
+            () => ReductionAlgorithm.ComputeStates(50, widths, new[] { -1 }));
+    }
+
+    [Fact]
+    public void Null_arguments_throw()
+    {
+        Assert.Throws<ArgumentNullException>(
+            () => ReductionAlgorithm.ComputeStates(100, null!));
+        Assert.Throws<ArgumentNullException>(
+            () => ReductionAlgorithm.ComputeStates(100, Array.Empty<double[]>(), null!));
+    }
+
+    [Fact]
+    public void Null_or_empty_group_state_tables_throw()
+    {
+        Assert.Throws<ArgumentException>(
+            () => ReductionAlgorithm.ComputeStates(100, new double[][] { null! }));
+        Assert.Throws<ArgumentException>(
+            () => ReductionAlgorithm.ComputeStates(100, new[] { Array.Empty<double>() }));
+    }
+
+    [Theory]
+    [InlineData(double.NaN)]
+    [InlineData(double.NegativeInfinity)]
+    [InlineData(-1.0)]
+    public void Invalid_available_width_throws(double availableWidth)
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => ReductionAlgorithm.ComputeStates(
+                availableWidth,
+                new[] { new double[] { 100, 50 } }));
+    }
+
+    [Theory]
+    [InlineData(double.NaN)]
+    [InlineData(double.PositiveInfinity)]
+    [InlineData(double.NegativeInfinity)]
+    [InlineData(-0.01)]
+    public void Invalid_state_width_throws(double width)
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => ReductionAlgorithm.ComputeStates(
+                100,
+                new[] { new[] { 100.0, width } }));
+    }
+
+    [Fact]
+    public void Infinite_available_width_still_validates_state_tables_and_order()
+    {
+        Assert.Throws<ArgumentException>(
+            () => ReductionAlgorithm.ComputeStates(
+                double.PositiveInfinity,
+                new[] { Array.Empty<double>() }));
+        Assert.Throws<ArgumentException>(
+            () => ReductionAlgorithm.ComputeStates(
+                double.PositiveInfinity,
+                new[] { new double[] { 100 } },
+                new[] { 1 }));
+    }
+
+    [Fact]
+    public void Overflowing_combined_large_width_throws()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => ReductionAlgorithm.ComputeStates(
+                double.MaxValue,
+                new[]
+                {
+                    new[] { double.MaxValue },
+                    new[] { double.MaxValue },
+                }));
+    }
 }
