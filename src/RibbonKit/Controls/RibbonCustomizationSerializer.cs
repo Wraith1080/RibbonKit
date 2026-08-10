@@ -63,14 +63,30 @@ public static class RibbonCustomizationSerializer
         RibbonLayoutDto? layout;
         try
         {
-            layout = JsonSerializer.Deserialize<RibbonLayoutDto>(json, Options);
+            using JsonDocument document = JsonDocument.Parse(json);
+            JsonElement root = document.RootElement;
+
+            // System.Text.Json ignores unknown properties. Without a small shape check, a valid
+            // but unrelated object such as { "theme": "dark" } deserializes to an empty layout
+            // and destructively clears every customization and QAT item. Every document produced
+            // by Serialize has both arrays (including older files), so require that signature.
+            if (root.ValueKind != JsonValueKind.Object
+                || !root.TryGetProperty(nameof(RibbonLayoutDto.Tabs), out JsonElement tabs)
+                || tabs.ValueKind != JsonValueKind.Array
+                || !root.TryGetProperty(nameof(RibbonLayoutDto.QuickAccess), out JsonElement quickAccess)
+                || quickAccess.ValueKind != JsonValueKind.Array)
+            {
+                return;
+            }
+
+            layout = root.Deserialize<RibbonLayoutDto>(Options);
         }
         catch (JsonException)
         {
             return; // Corrupt/foreign string — leave the ribbon as-is.
         }
 
-        if (layout is null)
+        if (layout is null || !IsValid(layout))
         {
             return;
         }
@@ -89,6 +105,47 @@ public static class RibbonCustomizationSerializer
         {
             ribbon.RemergeAfterRebuild(merged);
         }
+    }
+
+    private static bool IsValid(RibbonLayoutDto layout)
+    {
+        if (layout.Tabs is null
+            || layout.QuickAccess is null
+            || (layout.QuickAccessPosition is { } position && !Enum.IsDefined(position)))
+        {
+            return false;
+        }
+
+        foreach (TabDto? tab in layout.Tabs)
+        {
+            if (tab?.Groups is null)
+            {
+                return false;
+            }
+
+            foreach (GroupDto? group in tab.Groups)
+            {
+                if (group is null || !Enum.IsDefined(group.Layout))
+                {
+                    return false;
+                }
+
+                if (group.Commands is null)
+                {
+                    continue; // Built-in groups and older files omit this collection.
+                }
+
+                foreach (CommandDto? command in group.Commands)
+                {
+                    if (command is null || !Enum.IsDefined(command.Size))
+                    {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return layout.QuickAccess.All(item => item is not null);
     }
 
     // ---- Serialize ---------------------------------------------------------------
@@ -458,7 +515,12 @@ public static class RibbonCustomizationSerializer
             foreach (RibbonGroup group in tab.Groups)
             {
                 string groupKey = Ribbon.GetCommandId(group) ?? group.Header?.ToString() ?? "group";
-                if (Ribbon.GetCommandId(group) is { } gid && group.Icon is { } gi)
+                // A custom group usually borrows one of the catalog's command/group icons. Do
+                // not register the custom group's own id for that image: FindIconId would then
+                // persist a self-reference that cannot exist yet when the group is rebuilt.
+                if (!Ribbon.GetIsCustom(group)
+                    && Ribbon.GetCommandId(group) is { } gid
+                    && group.Icon is { } gi)
                 {
                     iconById.TryAdd(gid, gi);
                 }

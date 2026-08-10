@@ -3810,6 +3810,31 @@ complete JSON round-trip, factory defaults, schema/corruption rejection, enum re
 accent normalization. Current automated baseline: 237 logic tests plus the one visual test covering
 62 approved images.
 
+### 3.72 Customization serializer round-trip and foreign-JSON hardening — 2026-08-10
+
+A dedicated `RibbonCustomizationSerializerTests` suite now exercises the real public
+`Serialize`/`Apply` boundary against separately constructed ribbons, rather than only checking the
+merge/modal exclusions around it. The complete round trip covers built-in tab/group reorder and
+renaming, authored visibility, custom tabs/groups, custom layout, renamed and resized button/toggle/
+drop-down proxies, explicit and auto-derived command identities, borrowed icons, declared plus proxy
+QAT ordering, QAT placement, newly shipped/contextual/id-less content preservation, missing-command
+skips, baseline Reset, repeated Apply idempotence, and older JSON without `QuickAccessPosition`.
+
+Two real defects fell out of that coverage:
+
+- A syntactically valid but unrelated JSON object deserialized into an empty DTO because
+  `System.Text.Json` ignores unknown properties. Applying `{}` or `{"theme":"dark"}` therefore
+  stripped custom tabs/groups and cleared the QAT. `Apply` now verifies the root signature contains
+  array-valued `Tabs` and `QuickAccess`, validates nested collections and enum values, and returns
+  before unmerge/reconciliation for foreign, null-shaped, or otherwise invalid documents.
+- `BuildIdentity` registered a custom group's borrowed icon under the custom group's own id before
+  `FindIconId` ran. Depending on traversal order, serialization stored that self-reference; a fresh
+  ribbon could not resolve it because the custom group did not exist until reconstruction. Custom
+  groups no longer seed the icon identity map, so the stable built-in command/group id wins.
+
+Twenty focused cases cover these contracts. Current automated baseline: 257 logic tests plus the
+one visual test covering 62 approved images.
+
 ## 4. Workflow / Session Conventions
 
 - Cloud workspace: `/home/user/ribbonkit/`. The user's machine:
@@ -4027,8 +4052,8 @@ Backlog (rough priority):
    default File label. §3.58 completes the representative bidirectional-text Backstage pass and
    §3.59 fixes its live adorner/title transition; §3.61 records the green live popup/window,
    screen-edge, and 2024/2007 application-menu/orb verification.
-4. **The remaining unit tests** — broader customization serializer round-trips and
-   reduction-algorithm gaps. KeyTip resolution is DONE in §3.69. The Phase 7 merge/modal invariants
+4. **The remaining unit tests** — customization serializer round-trips are DONE in §3.72; the
+   reduction-algorithm gaps remain. KeyTip resolution is DONE in §3.69. The Phase 7 merge/modal invariants
    are now DONE: 13 tests cover
    stable ordering, repeated merge/unmerge, two-source group restoration, modal transitions and
    cancellation, serialization exclusion, rebuild/remerge and declarative activation. The harness
@@ -4065,7 +4090,7 @@ Possible post-v1 polish:
   honor reduced motion, handle rapid reversals, and stay disabled while a DWM backdrop is active so
   Mica/Acrylic retain their native material retint without a second cross-fade on top.
 
-**Unit tests: 237 green (verified 2026-08-10).** Coverage now includes the STA harness, the borrow
+**Unit tests: 257 green (verified 2026-08-10).** Coverage now includes the STA harness, the borrow
 protocol, overflow strip measure/arrange rules, popup motion and dismissal, proxy mirroring,
 application-menu layering/hover/footer-outline/KeyTips, repeatable message-bar API/template/theme
 contracts, Office 2010 seam/state/consumer contracts, localization/RTL
