@@ -30,12 +30,21 @@ internal readonly record struct ShowcaseApplicationSurfaceState(
 /// </summary>
 public partial class MainWindow : RibbonWindow
 {
+    private static readonly string SettingsFolder = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "RibbonKitShowcase");
+
     // Where this app persists the user's ribbon customizations between runs. A real app
     // would use its own product folder; LocalApplicationData keeps it per-user, per-machine.
     private static readonly string CustomizationFile = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "RibbonKitShowcase",
+        SettingsFolder,
         "ribbon-customization.json");
+
+    // Appearance is intentionally separate from structural ribbon customization. Importing or
+    // resetting tabs/QAT must never switch theme, File surface, or a DWM window material.
+    private static readonly string AppearancePreferencesFile = Path.Combine(
+        SettingsFolder,
+        "appearance-preferences.json");
 
     private string _committedStyle = "Normal";
 
@@ -50,6 +59,9 @@ public partial class MainWindow : RibbonWindow
     // one File surface just leaves the one it wants assigned in XAML and never touches this.
     private readonly RibbonApplicationMenu _applicationMenu;
     private LocalizationRtlDemo? _localizationRtlDemo;
+    private string? _customAccent;
+    private ShowcaseBackdropPreference _preferredBackdrop;
+    private bool _restoringAppearance;
 
     internal event EventHandler? ApplicationSurfaceChanged;
 
@@ -94,6 +106,8 @@ public partial class MainWindow : RibbonWindow
         {
         }
 
+        RestoreAppearancePreferences();
+
         // Persist QAT edits made OUTSIDE the options dialog too: right-click "Add/Remove from
         // Quick Access Toolbar" mutates QuickAccessItems, and the placement menu changes
         // QuickAccessPosition — neither goes through the dialog's Apply. Subscribe AFTER the
@@ -115,6 +129,103 @@ public partial class MainWindow : RibbonWindow
         catch (IOException)
         {
             // Best-effort persistence — a locked/unwritable file just isn't saved this time.
+        }
+        catch (UnauthorizedAccessException)
+        {
+        }
+    }
+
+    private void RestoreAppearancePreferences()
+    {
+        ShowcaseAppearancePreferences preferences = new();
+        try
+        {
+            if (File.Exists(AppearancePreferencesFile)
+                && ShowcaseAppearancePreferencesSerializer.TryDeserialize(
+                    File.ReadAllText(AppearancePreferencesFile),
+                    out ShowcaseAppearancePreferences restored))
+            {
+                preferences = restored;
+            }
+        }
+        catch (IOException)
+        {
+            // Unreadable preferences are equivalent to first run.
+        }
+        catch (UnauthorizedAccessException)
+        {
+        }
+
+        _restoringAppearance = true;
+        try
+        {
+            // Theme first: ApplyTheme intentionally selects that generation's conventional File
+            // surface. The explicit saved surface is restored later so the user's choice wins.
+            ApplyTheme(preferences.Theme);
+
+            DarkModeToggle.IsChecked = preferences.DarkMode;
+            AccentedTitleBarToggle.IsChecked = preferences.AccentedTitleBar;
+            ApplyAccentPreference(preferences.Accent);
+
+            ShowcaseBackstage.Design = preferences.BackstageDesign;
+            BackstageTranslucentToggle.IsChecked = preferences.BackstageTranslucent;
+            ApplicationMenuToggle.IsChecked =
+                preferences.FileSurface == ShowcaseFileSurface.ApplicationMenu;
+
+            _preferredBackdrop = preferences.Backdrop;
+            switch (preferences.Backdrop)
+            {
+                case ShowcaseBackdropPreference.Mica:
+                    MicaToggle.IsChecked = true;
+                    break;
+                case ShowcaseBackdropPreference.Acrylic:
+                    AcrylicToggle.IsChecked = true;
+                    break;
+                default:
+                    MicaToggle.IsChecked = false;
+                    AcrylicToggle.IsChecked = false;
+                    break;
+            }
+
+            NotifyApplicationSurfaceChanged();
+        }
+        finally
+        {
+            _restoringAppearance = false;
+        }
+    }
+
+    private void SaveAppearancePreferences()
+    {
+        if (_restoringAppearance)
+        {
+            return;
+        }
+
+        var preferences = new ShowcaseAppearancePreferences
+        {
+            Theme = ThemeManager.CurrentTheme ?? RibbonTheme.Office2024,
+            Accent = _customAccent,
+            DarkMode = ThemeManager.IsDarkMode,
+            AccentedTitleBar = ThemeManager.IsAccentedTitleBar,
+            BackstageDesign = ShowcaseBackstage.Design,
+            BackstageTranslucent = ShowcaseBackstage.Translucent,
+            FileSurface = MainRibbon.ApplicationMenu is null
+                ? ShowcaseFileSurface.Backstage
+                : ShowcaseFileSurface.ApplicationMenu,
+            Backdrop = _preferredBackdrop,
+        };
+
+        try
+        {
+            Directory.CreateDirectory(SettingsFolder);
+            File.WriteAllText(
+                AppearancePreferencesFile,
+                ShowcaseAppearancePreferencesSerializer.Serialize(preferences));
+        }
+        catch (IOException)
+        {
+            // Best-effort per-user preferences; keep the live selection when persistence fails.
         }
         catch (UnauthorizedAccessException)
         {
@@ -189,12 +300,14 @@ public partial class MainWindow : RibbonWindow
         // the ribbon property keeps the two in sync — the Checked handler does the actual swap.
         ApplicationMenuToggle.IsChecked = is2007;
         NotifyApplicationSurfaceChanged();
+        SaveAppearancePreferences();
     }
 
     private void OnToggleDarkMode(object sender, RoutedEventArgs e)
     {
         bool enabled = (sender as RibbonToggleButton)?.IsChecked == true;
         ThemeManager.SetDarkMode(Application.Current, enabled);
+        SaveAppearancePreferences();
     }
 
     // Swap which surface the File button opens. Assigning ApplicationMenu is all it takes: the
@@ -207,6 +320,7 @@ public partial class MainWindow : RibbonWindow
         MainRibbon.IsBackstageOpen = false; // Never leave one surface up while swapping to the other.
         MainRibbon.ApplicationMenu = useMenu ? _applicationMenu : null;
         NotifyApplicationSurfaceChanged();
+        SaveAppearancePreferences();
     }
 
     // Every command inside the application menu — nav rows, pane rows, recent documents. The menu
@@ -233,8 +347,13 @@ public partial class MainWindow : RibbonWindow
         StatusReady.Content = $"Custom File-surface action: {label}";
     }
 
-    private void OnToggleAccentTitleBar(object sender, RoutedEventArgs e) =>
-        ThemeManager.SetAccentedTitleBar(Application.Current, (sender as RibbonToggleButton)?.IsChecked == true);
+    private void OnToggleAccentTitleBar(object sender, RoutedEventArgs e)
+    {
+        ThemeManager.SetAccentedTitleBar(
+            Application.Current,
+            (sender as RibbonToggleButton)?.IsChecked == true);
+        SaveAppearancePreferences();
+    }
 
     private void OnAccentGalleryChanged(object sender, SelectionChangedEventArgs e)
     {
@@ -245,12 +364,41 @@ public partial class MainWindow : RibbonWindow
 
         if (tag == "reset")
         {
+            _customAccent = null;
             ThemeManager.ClearAccent(Application.Current);
         }
         else if (ColorConverter.ConvertFromString(tag) is Color color)
         {
+            _customAccent = $"#{color.A:X2}{color.R:X2}{color.G:X2}{color.B:X2}";
             ThemeManager.SetAccent(Application.Current, color);
         }
+
+        SaveAppearancePreferences();
+    }
+
+    private void ApplyAccentPreference(string? accent)
+    {
+        _customAccent = ShowcaseAppearancePreferencesSerializer.NormalizeAccent(accent);
+
+        if (_customAccent is null)
+        {
+            ThemeManager.ClearAccent(Application.Current);
+        }
+        else if (ColorConverter.ConvertFromString(_customAccent) is Color color)
+        {
+            ThemeManager.SetAccent(Application.Current, color);
+        }
+
+        object? matchingItem = AccentGallery.Items
+            .Cast<object>()
+            .FirstOrDefault(item =>
+            {
+                string? tag = GetStyleTag(item);
+                return _customAccent is null
+                    ? tag == "reset"
+                    : ShowcaseAppearancePreferencesSerializer.NormalizeAccent(tag) == _customAccent;
+            });
+        AccentGallery.SelectedItem = matchingItem;
     }
 
     private void OnAnimationOff(object sender, RoutedEventArgs e) =>
@@ -275,6 +423,7 @@ public partial class MainWindow : RibbonWindow
         {
             ShowcaseBackstage.Design = design;
             NotifyApplicationSurfaceChanged();
+            SaveAppearancePreferences();
         }
     }
 
@@ -286,6 +435,7 @@ public partial class MainWindow : RibbonWindow
         {
             ShowcaseBackstage.Translucent = (sender as RibbonToggleButton)?.IsChecked == true;
             NotifyApplicationSurfaceChanged();
+            SaveAppearancePreferences();
         }
     }
 
@@ -295,15 +445,27 @@ public partial class MainWindow : RibbonWindow
     private bool _backdropSync;
 
     private void OnToggleMica(object sender, RoutedEventArgs e) =>
-        ToggleBackdrop(sender as RibbonToggleButton, RibbonBackdrop.Mica, AcrylicToggle);
+        ToggleBackdrop(
+            sender as RibbonToggleButton,
+            RibbonBackdrop.Mica,
+            ShowcaseBackdropPreference.Mica,
+            AcrylicToggle);
 
     private void OnToggleAcrylic(object sender, RoutedEventArgs e) =>
-        ToggleBackdrop(sender as RibbonToggleButton, RibbonBackdrop.Acrylic, MicaToggle);
+        ToggleBackdrop(
+            sender as RibbonToggleButton,
+            RibbonBackdrop.Acrylic,
+            ShowcaseBackdropPreference.Acrylic,
+            MicaToggle);
 
     // Shared Mica/Acrylic plumbing: both are DWM system backdrops applied the same way, and a
     // window has exactly ONE — so checking one material overwrites the DWM attribute and
     // silently unchecks the other toggle (the transparent-window setup below is shared and stays).
-    private void ToggleBackdrop(RibbonToggleButton? toggle, RibbonBackdrop backdrop, RibbonToggleButton? other)
+    private void ToggleBackdrop(
+        RibbonToggleButton? toggle,
+        RibbonBackdrop backdrop,
+        ShowcaseBackdropPreference preference,
+        RibbonToggleButton? other)
     {
         if (_backdropSync || toggle is null)
         {
@@ -312,6 +474,10 @@ public partial class MainWindow : RibbonWindow
 
         if (toggle.IsChecked == true)
         {
+            // Keep the requested preference even when this launch cannot apply it. The settings
+            // file is a preference contract; the unchecked toggle is the truthful runtime state.
+            _preferredBackdrop = preference;
+
             // System backdrops need Windows 11 22H2+. If the DWM rejects it, undo the toggle
             // (guarded, so the Unchecked event doesn't run a pointless teardown) and stop.
             if (!MicaHelper.TrySetBackdrop(this, backdrop))
@@ -319,6 +485,7 @@ public partial class MainWindow : RibbonWindow
                 _backdropSync = true;
                 toggle.IsChecked = false;
                 _backdropSync = false;
+                SaveAppearancePreferences();
                 return;
             }
 
@@ -347,12 +514,13 @@ public partial class MainWindow : RibbonWindow
             // re-derives it across theme/accent changes, so switching themes no longer reverts it).
             ThemeManager.SetTitleBarBackdrop(Application.Current, true);
 
-            // Backstage stays opaque (Translucent left false): it fully covers the content
-            // behind it, so the material shows in the title bar / ribbon chrome but does not
-            // bleed through the backstage page.
+            // Backstage translucency is an independent app preference. Leave its current value
+            // alone: false keeps the material in the title/ribbon chrome, while true deliberately
+            // lets the library's translucent Backstage treatment reveal it.
         }
         else
         {
+            _preferredBackdrop = ShowcaseBackdropPreference.None;
             MicaHelper.TrySetBackdrop(this, RibbonBackdrop.None);
 
             // Do NOT collapse the glass frame here. The RibbonWindow template keeps
@@ -370,6 +538,8 @@ public partial class MainWindow : RibbonWindow
                 Panel.BackgroundProperty,
                 "RibbonKit.Brushes.Window.Background");
         }
+
+        SaveAppearancePreferences();
     }
 
     private enum OptionsPageKind

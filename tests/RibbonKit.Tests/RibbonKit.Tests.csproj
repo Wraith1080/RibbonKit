@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\RibbonKit\RibbonKit.csproj" />
+    <ProjectReference Include="..\..\samples\RibbonKit.Showcase\RibbonKit.Showcase.csproj" />
   </ItemGroup>
 
 </Project>

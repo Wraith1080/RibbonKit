@@ -670,7 +670,8 @@
                                            Unchecked="OnToggleDarkMode"
                                            ScreenTipTitle="Dark mode"
                                            ScreenTipText="Use this generation's dark palette: Black for Office 2007/2010, Dark Gray for 2013, and modern dark for 2019/2024." />
-                    <rk:RibbonToggleButton Header="Colored Title Bar"
+                    <rk:RibbonToggleButton x:Name="AccentedTitleBarToggle"
+                                           Header="Colored Title Bar"
                                            Size="Large"
                                            LargeIcon="{StaticResource Icon.ColorDrop}"
                                            Icon="{StaticResource Icon.ColorDrop}"
@@ -820,7 +821,8 @@
                                            Unchecked="OnToggleApplicationMenu"
                                            ScreenTipTitle="Office 2007 application menu"
                                            ScreenTipText="Swap the File button's surface from the backstage overlay to the Office 2007 two-pane application menu — a drop-down rendered behind the orb. Switching to the Office 2007 theme turns this on for you." />
-                    <rk:RibbonToggleButton Header="Translucent Backstage"
+                    <rk:RibbonToggleButton x:Name="BackstageTranslucentToggle"
+                                           Header="Translucent Backstage"
                                            Size="Large"
                                            LargeIcon="{StaticResource Icon.Mica}"
                                            Icon="{StaticResource Icon.Mica}"

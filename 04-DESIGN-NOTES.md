@@ -3782,6 +3782,34 @@ Two additional compact-input cases pin checkbox, radio-button, and text-box part
 Header-based label derivation, and the containing-flyout preservation boundary. Current automated
 baseline: 224 logic tests plus the one visual test covering 62 approved images.
 
+### 3.71 Showcase appearance preferences stay separate from ribbon customization — 2026-08-10
+
+The Showcase now persists its user-selected appearance in
+`%LocalAppData%\RibbonKitShowcase\appearance-preferences.json`. This is deliberately a second file,
+not an expansion of `RibbonCustomizationSerializer`: importing or resetting tab/group/QAT structure
+must not unexpectedly change the application palette, swap its File surface, or activate an
+operating-system window material.
+
+`ShowcaseAppearancePreferences` is an app-owned, schema-versioned record covering the Office
+generation, nullable custom accent (`null` means the theme default), dark variant, colored title bar,
+Backstage design/translucency, Backstage versus application-menu surface, and one mutually-exclusive
+None/Mica/Acrylic backdrop preference. Enums serialize as readable strings and accents normalize to
+`#AARRGGBB`; corrupt JSON, unknown enum values, invalid colors, and future schema versions fall back
+to the factory appearance without partially applying state.
+
+Restore order is part of the contract: apply the theme first, then dark/accent/title-bar state, then
+the Backstage design and explicit File-surface choice, and finally request the DWM backdrop. Theme
+selection still chooses its conventional live surface (2007 menu for Office 2007, Backstage for the
+other generations), but the saved explicit surface wins during startup. The stored backdrop is the
+user's requested preference rather than only the last successful DWM state: on an unsupported
+Windows build the toggle truthfully reverts off while the preference remains available for a later
+supported launch. `ThemeManager.IsTitleBarBackdrop` is derived runtime state and is not serialized.
+
+The runtime library gains no public API from this sample feature. Thirteen focused cases cover
+complete JSON round-trip, factory defaults, schema/corruption rejection, enum rejection, and stable
+accent normalization. Current automated baseline: 237 logic tests plus the one visual test covering
+62 approved images.
+
 ## 4. Workflow / Session Conventions
 
 - Cloud workspace: `/home/user/ribbonkit/`. The user's machine:
@@ -4037,7 +4065,7 @@ Possible post-v1 polish:
   honor reduced motion, handle rapid reversals, and stay disabled while a DWM backdrop is active so
   Mica/Acrylic retain their native material retint without a second cross-fade on top.
 
-**Unit tests: 224 green (verified 2026-08-08).** Coverage now includes the STA harness, the borrow
+**Unit tests: 237 green (verified 2026-08-10).** Coverage now includes the STA harness, the borrow
 protocol, overflow strip measure/arrange rules, popup motion and dismissal, proxy mirroring,
 application-menu layering/hover/footer-outline/KeyTips, repeatable message-bar API/template/theme
 contracts, Office 2010 seam/state/consumer contracts, localization/RTL
