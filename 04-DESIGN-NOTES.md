@@ -4128,6 +4128,39 @@ Pre-freeze consideration (not committed scope):
 
 Possible post-v1 polish:
 
+- **Richer QAT projections — decision recorded 2026-08-10, not Phase 8 scope.** The current supported
+  discovery/proxy set is `RibbonButton`, `RibbonToggleButton`, `RibbonSplitButton`, and
+  `RibbonDropDownButton`. `QuickAccessItems` can still contain hand-declared elements, but the
+  customization catalog, overflow projection, persistence identity, popup lifetime and KeyTips do
+  not make an arbitrary element a supported source merely because `AddToQuickAccess` accepts a
+  `FrameworkElement`. Keep that boundary explicit rather than reopening the v1 freeze.
+  - **Group first.** Represent a `RibbonGroup` as a small dropdown using its existing `Header` and
+    `Icon`; require a usable group icon for QAT eligibility. Its popup should be generated from
+    source-linked command proxies (the same proven machinery used by custom groups), never by moving
+    the original group body — reparenting would visibly empty a source group whose tab is open.
+    Candidate discovery and persistence must register the group itself, and the projection must cover
+    dialog launchers, nested dropdowns, overflow, KeyTips, merge parking and removal while open.
+    Until richer child projections exist, do not silently omit a gallery/combo/custom child from an
+    otherwise addable group; either declare that group ineligible or present a clear limitation.
+  - **Gallery second; combo separately.** A gallery should become an icon/label dropdown rather than
+    an inline QAT strip and will need explicit quick-access metadata plus synchronized selection and
+    preview/commit forwarding. A combo box is useful only as a compact inline editor and needs fresh
+    strip/overflow views synchronized for `ItemsSource`, selection, editable `Text`, validation and
+    width. Direct `RibbonGalleryItem`/`ComboBoxItem` children remain single-parent WPF elements and
+    cannot simply be shared between projections.
+  - Do not freeze the architecture document's old, unimplemented one-method
+    `IQuickAccessItemProvider` sketch. A proven future contract needs presentation context (strip vs
+    overflow), fresh-view creation, stable source identity/persistence, enabled/merge propagation and
+    deterministic popup cleanup. Adding such an extension point after v1 is additive; a placeholder
+    contract now would be harder to repair.
+- **Custom group content needs no new host control.** `RibbonGroup` is already a
+  `HeaderedItemsControl`, so an application may place a custom control or panel directly in it; the
+  collapsed group re-homes the existing body intact. The child needs no icon — `RibbonGroup.Icon`
+  represents the whole group — and may implement the existing public `IRibbonSizeAware` hook when it
+  must react to reduction states. Prefer a `RibbonDropDownButton` for large, secondary, or
+  popup-owning content. A future integration pass may broaden explicit-KeyTip discovery and provide a
+  keep-open/lifecycle hook for arbitrary popup-owning controls, but those needs do not justify a
+  wrapper whose only job is to host WPF content.
 - An optional `MonochromeIcon` on QAT-capable command buttons, used as a purpose-authored alpha mask
   on accent-colored title/tab surfaces. This is an API idea, not scheduled work; a separate
   `DarkIcon` property remains intentionally unplanned.

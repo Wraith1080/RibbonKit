@@ -71,9 +71,9 @@ Global Alt-key handler enters KeyTip mode: overlay adorner shows each control's 
 
 **Galleries**: `InRibbonGallery` shows a scrollable strip of items in the ribbon with expand button opening a resizable popup; `Gallery` inside dropdowns. Both use `VirtualizingPanel`, item grouping with headers, filter support, and live-preview hooks (mouse-over raises preview events, click commits).
 
-**QAT**: item collection mirroring ribbon controls via a lightweight "quick-access clone" contract (`IQuickAccessItemProvider` — a control knows how to produce its QAT representation). Above/below-ribbon placement, overflow dropdown, add/remove via right-click context menu.
+**QAT**: `Ribbon.QuickAccessItems` holds the active strip. `Ribbon.AddToQuickAccess` leaves the source command in its group and creates a small proxy; toggles, enabled state, split/drop-down behavior, merge parking, and persistence remain tied to the source. Constrained title-bar/tab-row placements create a second, medium proxy of the original command in the overflow flyout. The supported built-in candidate set is currently button, toggle, split, and drop-down commands; groups, galleries, and combo boxes are intentionally not projected yet. A future projection contract must distinguish strip and overflow contexts, create a fresh element for each visual parent, preserve source identity for persistence, and own popup cleanup. The earlier proposed one-method `IQuickAccessItemProvider` was never shipped and is not an API commitment.
 
-**Customize dialog + persistence**: runtime dialog for reordering QAT (v1) and tabs/groups (post-v1); `RibbonState` serializer (JSON) persists QAT contents, ribbon minimized flag, selected tab; consumer chooses storage location.
+**Customize dialog + persistence**: the runtime options surface includes QAT ordering plus tab/group structure customization. `RibbonCustomizationSerializer` persists QAT order and placement, tab/group structure, custom command proxies, names, icons and layout as JSON; Import/Export and Reset use the same representation, while the application chooses where its saved state lives.
 
 ## 8. Tab merging & modal tabs
 

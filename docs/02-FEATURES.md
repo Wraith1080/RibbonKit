@@ -32,6 +32,7 @@ Priority key: **P0** = core skeleton (Milestone 1) · **P1** = required for a cr
 | In-ribbon gallery + expandable popup | P2 | Virtualized, grouped, filterable |
 | Gallery in dropdown menus | P2 | Color picker, style gallery patterns |
 | Live preview events (hover preview / commit / cancel) | P2 | |
+| Arbitrary application content in RibbonGroup | P1 | Direct controls/panels are supported; implement `IRibbonSizeAware` when custom content must react to group reduction |
 
 ## Application-level features
 
@@ -40,9 +41,9 @@ Priority key: **P0** = core skeleton (Milestone 1) · **P1** = required for a cr
 | ApplicationButton (File button / Office orb for 2007) | P1 | Orb shape differs per theme |
 | Application menu (2007/2010 dropdown style) | P2 | |
 | Backstage view (2013+ full-window) | P2 | Left nav + content, animation, Esc to close |
-| Quick Access Toolbar (above/below, overflow, add/remove) | P2 | IQuickAccessItemProvider contract |
-| Customize dialog (QAT reorder v1; tabs/groups later) | P3 | |
-| State persistence (QAT, minimized, selected tab) | P2 | JSON, consumer-controlled storage |
+| Quick Access Toolbar (three placements, overflow, add/remove) | P2 | Source-linked proxies for button, toggle, split and drop-down commands; richer group/gallery/combo projections are post-v1 candidates |
+| Customize dialog (QAT plus tabs/groups) | P3 | Word-Options-style extensible host with Import/Export and Reset |
+| Customization persistence | P2 | JSON round-trip for QAT order/placement and tab/group structure; consumer-controlled storage |
 | Contextual tabs + colored tab groups | P2 | Visibility bound to app state |
 | Tab merging (child ribbon contributes into host) | P3 | RibbonMergeSource API |
 | Modal tabs (Print-Preview-style exclusive tab) | P3 | IsModal + close button |

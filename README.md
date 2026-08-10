@@ -49,6 +49,7 @@ Legend: ✅ done · 🚧 in progress · 📋 planned
 | Live-preview event contract | ✅ |
 | `RibbonCheckBox` / `RibbonRadioButton` | ✅ |
 | `RibbonTextBox` (editable + read-only) | ✅ |
+| Arbitrary application controls/panels inside `RibbonGroup` (`IRibbonSizeAware` opt-in for adaptive sizing) | ✅ |
 
 ### Application-level
 
@@ -59,7 +60,7 @@ Legend: ✅ done · 🚧 in progress · 📋 planned
 | Backstage view (Modern 2024, Classic 2013, Classic 2010 designs) | ✅ |
 | Backstage footer items, button items, recent-items pattern | ✅ |
 | Repeatable `RibbonMessageBar` notifications with animated appearance, action, and dismissal | ✅ |
-| Quick Access Toolbar — 3 placements, overflow flyout, right-click add/remove | ✅ |
+| Quick Access Toolbar — 3 placements, overflow flyout, right-click add/remove for button, toggle, split and drop-down commands | ✅ |
 | Contextual tabs with colored tab groups | ✅ |
 | "Customize the Ribbon" + QAT customization dialog (Word-Options style) | ✅ |
 | Customization persistence — JSON serialize / restore / reset | ✅ |
