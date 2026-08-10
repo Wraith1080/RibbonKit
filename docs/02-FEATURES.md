@@ -80,6 +80,7 @@ Priority key: **P0** = core skeleton (Milestone 1) · **P1** = required for a cr
 | MVVM: ItemsSource + DataTemplates everywhere | P1 | Design API this way from day one |
 | XAML designer preview (VS 2022) | P1 | Design-mode guards, default content |
 | XML doc comments on all public API | P1 | Enforced in CI |
+| Frozen public-API compatibility baseline | P1 | Nullability-aware shipped/unshipped files enforced for both runtime TFMs |
 | Showcase/demo app | P0 | Grows with every feature; is the test bed |
 | NuGet package + SourceLink + symbols | P1 | |
 | CI: build + tests + pack on PR | P0 | GitHub Actions |

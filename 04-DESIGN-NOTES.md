@@ -3877,8 +3877,38 @@ language without adding debugger-driven API and template complexity before the A
 **Verification rule:** assess perceived WPF resize performance outside the debugger. Visual Studio's
 managed debugger, XAML Hot Reload, and diagnostic tooling can materially alter UI-thread, layout, and
 render cadence. Debug runs remain useful for correctness; Ctrl+F5 or the built executable is the
-appropriate baseline for interaction performance. The automated baseline returns to 282 logic tests
+appropriate baseline for interaction performance. The current automated baseline is 283 logic tests
 plus the one visual test covering 62 approved images.
+
+### 3.75 Phase 8 API review and freeze — 2026-08-10
+
+The v1 runtime surface is now frozen. `RibbonKit.csproj` references
+`Microsoft.CodeAnalysis.PublicApiAnalyzers` 5.6.0 as a private analyzer and marks its compatibility,
+nullability and baseline-integrity diagnostics as errors for both `net8.0-windows` and
+`net9.0-windows`. `PublicAPI.Shipped.txt` captures the reviewed 1,094-line nullability-aware surface;
+`PublicAPI.Unshipped.txt` starts empty except for `#nullable enable`. Compiler errors also enforce
+missing public XML docs and broken `cref` references. Future compatible additions belong in the
+unshipped file and must be reviewed deliberately; the shipped file is not edited to disguise a
+breaking change.
+
+The review retained the intentional WPF extension surfaces: lookless controls and their automation
+peers, dependency/routed-event identifiers, layout panels used by templates, `IRibbonSizeAware`,
+theme/localization/backdrop APIs, and the public animation primitives that let application-authored
+controls honor RibbonKit's motion policy. The analyzer confirms that the surface has no oblivious
+reference types and is identical across the two runtime TFMs.
+
+One behavior needed correction before freezing. `Ribbon.AddToQuickAccess(FrameworkElement)` formerly
+accepted an unknown control and fell into `CreateCommandProxy`'s generic UIA button, producing a
+blank or misleading QAT entry even though the catalog never offered that type. It now returns
+`false` unless the source is a `RibbonButton`, `RibbonToggleButton`, `RibbonSplitButton`, or
+`RibbonDropDownButton` (and still returns false for a duplicate). The generic internal fallback
+remains available to overflow a hand-declared QAT element without widening the supported automatic
+projection claim. A test pins rejection of groups, combo boxes, galleries and arbitrary WPF buttons;
+richer group/gallery/combo representations remain the post-v1 work recorded below.
+
+The same zero-warning pass fixed two broken runtime XML-doc references and four real nullable-flow
+warnings in the net472 design tools without changing their behavior. Verification: Release solution
+build zero warnings/errors; 283 logic tests green; the visual test green across all 62 approvals.
 
 ## 4. Workflow / Session Conventions
 
@@ -3910,8 +3940,8 @@ plus the one visual test covering 62 approved images.
 > dark/black variants in §3.49, and the complete 40-image
 > theme/variant/DPI matrix plus twenty-two focused scenes are covered by 62 approvals; localization,
 > representative bidirectional content, and the live RTL popup/window pass are complete.
-> Phase 8 (API freeze,
-> docs site, perf, launch) is untouched. Of the two items
+> Phase 8 is in progress: the API review/freeze gate is complete in §3.75; the docs site, NuGet
+> polish, final performance/install pass and launch remain. Of the two items
 > deferred out of §3.38, the two-pane 2007 application menu shipped in §3.46; only the 2007 window
 > frame is still owed.
 
@@ -4107,17 +4137,17 @@ Backlog (rough priority):
 5. **MDI M1–M3**: cascade/tile/arrange commands + Ctrl+Tab (M1), the MVVM `ItemsSource` demo and a
    per-theme pass (M2), tabbed-documents mode + `RibbonState` layout persistence (M3). M0 and M4 are
    done, so the feature currently has a hole in its middle.
-6. Roadmap Phase 8 release engineering: API review and freeze (`PublicAPI.txt` — Phase 7 added a lot
-   of public surface), docs site, NuGet polish, performance pass.
+6. Roadmap Phase 8 release engineering: **API review/freeze DONE (§3.75)**. Next: docs site, then
+   NuGet polish and the final performance/install pass.
 7. GitHub publish: repo URL placeholder in csproj (`YOUR-GITHUB-USERNAME`).
 
-Pre-freeze consideration (not committed scope):
+Resolved at the API freeze (not v1 scope):
 
-- **Touch mode toggle.** Decide during the Phase 8 API review whether v1 should expose an explicit,
-  opt-in density mode that enlarges hit targets and spacing across the ribbon, QAT, menus, and
+- **Touch mode toggle.** The Phase 8 API review decided not to expose an explicit v1 density API.
+  A future implementation would need an opt-in density mode that enlarges hit targets and spacing
+  across the ribbon, QAT, menus, and
   customization surfaces. Keep it token/metric-driven and compatible with reduction, DPI, RTL, and
-  mouse/keyboard use; do not infer it from a single touch event. If that cross-surface contract is not
-  small enough to validate before the freeze, defer the API rather than ship a partial toggle.
+  mouse/keyboard use; do not infer it from a single touch event.
   **Feasibility check (2026-08-08):** this is not currently a one-property template switch. Theme
   chrome metrics are centralized, but hit-target geometry still spans hundreds of literal sizes,
   margins, and paddings across the shared button, dropdown, input, Backstage, application-menu, and
@@ -4132,8 +4162,8 @@ Possible post-v1 polish:
   discovery/proxy set is `RibbonButton`, `RibbonToggleButton`, `RibbonSplitButton`, and
   `RibbonDropDownButton`. `QuickAccessItems` can still contain hand-declared elements, but the
   customization catalog, overflow projection, persistence identity, popup lifetime and KeyTips do
-  not make an arbitrary element a supported source merely because `AddToQuickAccess` accepts a
-  `FrameworkElement`. Keep that boundary explicit rather than reopening the v1 freeze.
+  not make an arbitrary element a supported source. `AddToQuickAccess(FrameworkElement)` now returns
+  `false` for those unsupported types. Keep that boundary explicit rather than reopening the v1 freeze.
   - **Group first.** Represent a `RibbonGroup` as a small dropdown using its existing `Header` and
     `Icon`; require a usable group icon for QAT eligibility. Its popup should be generated from
     source-linked command proxies (the same proven machinery used by custom groups), never by moving
@@ -4169,14 +4199,15 @@ Possible post-v1 polish:
   honor reduced motion, handle rapid reversals, and stay disabled while a DWM backdrop is active so
   Mica/Acrylic retain their native material retint without a second cross-fade on top.
 
-**Unit tests: 282 green (verified 2026-08-10).** Coverage now includes the STA harness, the borrow
+**Unit tests: 283 green (verified 2026-08-10).** Coverage now includes the STA harness, the borrow
 protocol, overflow strip measure/arrange rules, popup motion and dismissal, proxy mirroring,
 application-menu layering/hover/footer-outline/KeyTips, repeatable message-bar API/template/theme
 contracts, Office 2010 seam/state/consumer contracts, localization/RTL
 context-menu, customization-template, chrome-tooltip, default-File, representative bidi-lab and
 live Backstage/title-transition contracts, design-preview runtime isolation, scoped theme-token
 replacement, dark/Black neutral Backstage rail contracts, and the existing
-reduction/size-definition/theme-scope tests. The KeyTip resolver cases add explicit-key precedence,
+reduction/size-definition/theme-scope tests, plus rejection of unsupported automatic QAT projections.
+The KeyTip resolver cases add explicit-key precedence,
 exact/prefix collision recovery, prefix-free derivation, typeable non-Latin fallback, and explicit
 custom-content discovery/invocation across Backstage and application-menu panes, including disabled
 target blocking, native toggle Click/Command semantics, compact-input discovery with Header-based

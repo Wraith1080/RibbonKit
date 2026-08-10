@@ -146,7 +146,7 @@ public class RibbonWindow : Window
     /// reflects the last COMPLETED layout until the next pass runs.
     /// </para>
     /// <para>
-    /// The second is taken in a one-shot <see cref="FrameworkElement.LayoutUpdated"/> handler,
+    /// The second is taken in a one-shot <c>LayoutUpdated</c> handler,
     /// NOT on a dispatcher hop. <c>LayoutUpdated</c> fires at the end of the arrange pass, still
     /// inside the frame that is about to be presented, so the start offset is in place before
     /// anything reaches the screen. A <c>DispatcherPriority.Loaded</c> callback runs AFTER Render

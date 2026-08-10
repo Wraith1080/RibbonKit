@@ -2,7 +2,7 @@
 
 Each phase ends with the showcase app demonstrating everything built so far, tests green, and a tagged pre-release. Phases are sequential but small overlaps are fine.
 
-> **Progress (2026-08-08):** Phases 0–7 are complete. Phase 6 closed with the user-verified live RTL popup/window pass in [`04-DESIGN-NOTES.md`](../04-DESIGN-NOTES.md) §3.61: all five themes ship with dark/black variants, per-monitor DPI is verified at 100/125/150/175/200%, the deterministic 40-image theme/variant × DPI suite plus seven focused scenes are green, localization/provider coverage is complete, and the Showcase lab verifies split/nested/context menus, normal/maximized screen edges, Backstage, and Office 2024/2007 application-menu/button/orb behavior. Phase 8 has not started. Post-v1 MDI emulation is unusually shaped: M0 and M4 are done, M1–M3 are not.
+> **Progress (2026-08-10):** Phases 0–7 are complete. Phase 6 closed with the user-verified live RTL popup/window pass in [`04-DESIGN-NOTES.md`](../04-DESIGN-NOTES.md) §3.61: all five themes ship with dark/black variants, per-monitor DPI is verified at 100/125/150/175/200%, the deterministic 40-image theme/variant × DPI suite plus seven focused scenes are green, localization/provider coverage is complete, and the Showcase lab verifies split/nested/context menus, normal/maximized screen edges, Backstage, and Office 2024/2007 application-menu/button/orb behavior. Phase 8 is in progress: the API review/freeze gate is complete (§3.75); the docs site, NuGet polish, final performance/install pass, and launch remain. Post-v1 MDI emulation is unusually shaped: M0 and M4 are done, M1–M3 are not.
 >
 > Live DPI switching needed a fix outside the library: an app must declare **PerMonitorV2** in its own manifest or Windows bitmap-stretches it until restart. The showcase now does, and the README tells consumers to (§3.42).
 >
@@ -42,7 +42,9 @@ KeyTips subsystem (full Alt-chain), tab merging API, modal tabs, customize dialo
 
 ## Phase 8 — v1.0 release engineering
 
-API review and freeze (rename pass, hide internals, `PublicAPI.txt` analyzer), documentation site with control gallery and getting-started guide, NuGet polish (icon, readme, SourceLink), performance pass (startup time, resize CPU, memory), community launch (announce, good-first-issues). **Exit criteria:** v1.0.0 on NuGet.
+**API review and freeze: complete (2026-08-10).** The nullability-aware v1 surface is captured in `PublicAPI.Shipped.txt`; `Microsoft.CodeAnalysis.PublicApiAnalyzers` treats additions, removals, invalid baselines and nullability drift as build errors for both TFMs. Unsupported automatic QAT projections now return `false` instead of creating an unusable generic proxy, and the release solution builds with zero warnings.
+
+Remaining: documentation site with control gallery and getting-started guide, NuGet polish (icon, readme, SourceLink), performance/install pass (startup time, resize CPU, memory, clean consumer project and VS designer), and community launch. **Exit criteria:** v1.0.0 on NuGet.
 
 ## Post-v1 candidates
 

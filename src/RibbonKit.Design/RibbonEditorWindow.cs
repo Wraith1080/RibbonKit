@@ -1730,8 +1730,9 @@ internal sealed class RibbonEditorWindow : Window
                 return (node.Item, "Items");
             case NodeKind.Container:
                 return (node.Item, "Children");
-            case NodeKind.Control:
-                return node.Item.Parent is ModelItem parent ? (parent, node.ParentCollection) : default((ModelItem, string)?);
+            case NodeKind.Control when node.Item.Parent is ModelItem parent
+                && node.ParentCollection is { } parentCollection:
+                return (parent, parentCollection);
             default:
                 return null;
         }
@@ -2181,12 +2182,13 @@ internal sealed class RibbonEditorWindow : Window
     private void OnTreeDrop(object sender, DragEventArgs e)
     {
         ClearDropAdorner();
-        if (PlanFromEvent(e) is not { } plan)
+        if (PlanFromEvent(e) is not { } plan
+            || plan.Source.ParentCollection is not { } sourceCollection)
         {
             return;
         }
 
-        DesignModel.MoveInto(plan.Source.Item, plan.Source.ParentCollection, plan.TargetParent, plan.CollectionProperty, plan.Index);
+        DesignModel.MoveInto(plan.Source.Item, sourceCollection, plan.TargetParent, plan.CollectionProperty, plan.Index);
         RebuildTree(plan.Source.Item);
         e.Handled = true;
     }
@@ -2218,8 +2220,8 @@ internal sealed class RibbonEditorWindow : Window
         }
 
         // Before/After: insert as a sibling of the target in the target's own collection.
-        ModelItem parent = target.Item.Parent;
-        string collection = target.ParentCollection;
+        ModelItem? parent = target.Item.Parent;
+        string? collection = target.ParentCollection;
         if (parent is null || collection is null || !Accepts(parent, collection, source) || IsAncestorOrSelf(source.Item, parent))
         {
             return null;

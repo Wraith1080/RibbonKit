@@ -997,17 +997,18 @@ public class Ribbon : Control
         RibbonCustomizeRequested?.Invoke(this, EventArgs.Empty);
 
     /// <summary>
-    /// Adds <paramref name="source"/> (a command control living in a ribbon group) to the
-    /// quick access toolbar. Because a WPF element can only have one visual parent, the
-    /// control is not moved: a small PROXY button is created that mirrors its 16px icon and
-    /// ScreenTip and invokes it (toggles stay state-synced via a two-way IsChecked binding).
-    /// Returns <see langword="false"/> when the control is already in the QAT.
+    /// Adds <paramref name="source"/> (a button, toggle, split button, or drop-down button living
+    /// in a ribbon group) to the quick access toolbar. Because a WPF element can only have one
+    /// visual parent, the control is not moved: a small PROXY button is created that mirrors its
+    /// 16px icon and ScreenTip and invokes it (toggles stay state-synced via a two-way IsChecked
+    /// binding). Returns <see langword="false"/> when the control is already in the QAT or its type
+    /// does not have a supported quick-access representation.
     /// </summary>
     public bool AddToQuickAccess(FrameworkElement source)
     {
         ArgumentNullException.ThrowIfNull(source);
 
-        if (IsInQuickAccess(source))
+        if (!IsSupportedQuickAccessSource(source) || IsInQuickAccess(source))
         {
             return false;
         }
@@ -1026,6 +1027,9 @@ public class Ribbon : Control
         QuickAccessItems.Add(proxy);
         return true;
     }
+
+    private static bool IsSupportedQuickAccessSource(FrameworkElement source) =>
+        source is RibbonButton or RibbonToggleButton or RibbonDropDownButton;
 
     /// <summary>Whether <paramref name="source"/> is already in the quick access toolbar,
     /// either directly or via a proxy created by <see cref="AddToQuickAccess"/>.</summary>
@@ -1152,7 +1156,7 @@ public class Ribbon : Control
     /// property was never touched, and its proxies grey with it.
     /// </para>
     /// <para>
-    /// ⚠ A <see cref="MultiBinding"/> rather than a plain one because there are TWO independent
+    /// ⚠ A <see cref="System.Windows.Data.MultiBinding"/> rather than a plain one because there are TWO independent
     /// reasons a proxy is disabled — the source, and <see cref="IsCommandParkedProperty"/> for a
     /// merged source that has stepped out. They cannot be separate writes to the same property:
     /// assigning a value to a property carrying a ONE-WAY binding clears that binding, so the merge
