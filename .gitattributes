@@ -1,0 +1,2 @@
+# Keep repository text normalized while checking all detected text files out as CRLF.
+* text=auto eol=crlf

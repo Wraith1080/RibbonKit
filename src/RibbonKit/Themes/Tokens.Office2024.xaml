@@ -17,6 +17,7 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Border" Color="#E0E0E0" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Primary" Color="#1A1A1A" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Secondary" Color="#616161" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Input.Glyph" Color="#FFFFFF" />
     <!-- Default (Auto) accent: Office blue #2B579A, the SAME default as 2019/2013, so switching
          theme generations doesn't jump the accent (was Fluent #0F6CBD, which only 2024 used).
          Every #2B579A below tracks this; a runtime accent via ThemeManager overrides them all. -->

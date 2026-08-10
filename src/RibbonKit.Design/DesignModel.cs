@@ -590,7 +590,7 @@ internal static class DesignModel
     }
 
     /// <summary>
-    /// Adds a new leaf control of type <paramref name="typeName"/> (a button/toggle/split/drop-down)
+    /// Adds a new leaf control of type <paramref name="typeName"/> (a command or compact input control)
     /// into <paramref name="parent"/>'s <paramref name="collectionProperty"/> (a group's <c>Items</c>
     /// or a container's <c>Children</c>), labelled <paramref name="label"/>. When <paramref name="size"/>
     /// is given it seeds the control's <c>Size</c> (e.g. "Small" for stacked icon rows). Returns the control.

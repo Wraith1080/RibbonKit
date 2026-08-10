@@ -5,7 +5,7 @@
     xmlns:layout="clr-namespace:RibbonKit.Layout">
 
     <!-- Part of the shared RibbonKit control-template dictionary; merged by Office2024.xaml.
-         RibbonButton, RibbonScreenTip, RibbonToggleButton.
+         RibbonButton, RibbonScreenTip, RibbonToggleButton, RibbonCheckBox, RibbonRadioButton.
          Colours/metrics come from Tokens.Office20XX.xaml via {DynamicResource}. -->
 
     <!-- ============================================================
@@ -345,6 +345,186 @@
                             <Setter TargetName="Chrome" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Qat.ColoredPressedBackground}" />
                         </MultiTrigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ============================================================
+         Compact option controls — CheckBox / RadioButton
+         ============================================================ -->
+    <Style TargetType="{x:Type controls:RibbonCheckBox}">
+        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+        <Setter Property="Focusable" Value="True" />
+        <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="MinHeight" Value="22" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type controls:RibbonCheckBox}">
+                    <Border x:Name="Chrome" Background="Transparent" BorderBrush="Transparent"
+                            BorderThickness="1"
+                            CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                            SnapsToDevicePixels="True">
+                        <Grid>
+                            <Border x:Name="HoverWash"
+                                    Background="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}"
+                                    BorderBrush="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}"
+                                    BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                    Opacity="0" IsHitTestVisible="False" />
+                            <Border x:Name="PressWash"
+                                    Background="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}"
+                                    BorderBrush="{DynamicResource RibbonKit.Brushes.Control.PressedBorder}"
+                                    BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                    Opacity="0" IsHitTestVisible="False" />
+                            <!-- Keep content spacing off Chrome: padding there would also inset the
+                                 sibling hover/press washes from the full focus rectangle. -->
+                            <Grid x:Name="ContentGrid" Margin="5,1,5,1">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Border x:Name="Indicator" Width="14" Height="14"
+                                        VerticalAlignment="Center"
+                                        Background="{DynamicResource RibbonKit.Brushes.Control.SurfaceBackground}"
+                                        BorderBrush="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
+                                        BorderThickness="1"
+                                        CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}">
+                                    <Grid>
+                                        <Path x:Name="CheckMark" Data="M 1,5 L 4,8 L 10,1"
+                                              Stroke="{DynamicResource RibbonKit.Brushes.Input.Glyph}"
+                                              StrokeThickness="2" StrokeStartLineCap="Round"
+                                              StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                                              Stretch="Uniform" Margin="2.5" Visibility="Collapsed" />
+                                        <Rectangle x:Name="IndeterminateMark" Width="7" Height="2"
+                                                   RadiusX="1" RadiusY="1"
+                                                   Fill="{DynamicResource RibbonKit.Brushes.Input.Glyph}"
+                                                   Visibility="Collapsed" />
+                                    </Grid>
+                                </Border>
+                                <ContentPresenter x:Name="HeaderPresenter" Grid.Column="1"
+                                                  Content="{TemplateBinding Header}"
+                                                  ContentTemplate="{TemplateBinding ContentTemplate}"
+                                                  ContentTemplateSelector="{TemplateBinding ContentTemplateSelector}"
+                                                  Margin="6,0,0,0" VerticalAlignment="Center"
+                                                  RecognizesAccessKey="True" />
+                            </Grid>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Header" Value="{x:Null}">
+                            <Setter TargetName="HeaderPresenter" Property="Content"
+                                    Value="{Binding Content, RelativeSource={RelativeSource TemplatedParent}}" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Indicator" Property="BorderBrush"
+                                    Value="{DynamicResource RibbonKit.Brushes.Accent}" />
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Indicator" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.Accent}" />
+                            <Setter TargetName="Indicator" Property="BorderBrush"
+                                    Value="{DynamicResource RibbonKit.Brushes.Accent}" />
+                            <Setter TargetName="CheckMark" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="{x:Null}">
+                            <Setter TargetName="Indicator" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.Accent}" />
+                            <Setter TargetName="Indicator" Property="BorderBrush"
+                                    Value="{DynamicResource RibbonKit.Brushes.Accent}" />
+                            <Setter TargetName="IndeterminateMark" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Chrome" Property="BorderBrush"
+                                    Value="{DynamicResource RibbonKit.Brushes.Accent}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="{x:Type controls:RibbonRadioButton}">
+        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+        <Setter Property="Focusable" Value="True" />
+        <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="MinHeight" Value="22" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type controls:RibbonRadioButton}">
+                    <Border x:Name="Chrome" Background="Transparent" BorderBrush="Transparent"
+                            BorderThickness="1"
+                            CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                            SnapsToDevicePixels="True">
+                        <Grid>
+                            <Border x:Name="HoverWash"
+                                    Background="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}"
+                                    BorderBrush="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}"
+                                    BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                    Opacity="0" IsHitTestVisible="False" />
+                            <Border x:Name="PressWash"
+                                    Background="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}"
+                                    BorderBrush="{DynamicResource RibbonKit.Brushes.Control.PressedBorder}"
+                                    BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                    Opacity="0" IsHitTestVisible="False" />
+                            <!-- Same geometry contract as RibbonCheckBox: washes fill Chrome;
+                                 only indicator/text content receives the inset. -->
+                            <Grid x:Name="ContentGrid" Margin="5,1,5,1">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Ellipse x:Name="Indicator" Width="14" Height="14"
+                                         VerticalAlignment="Center"
+                                         Fill="{DynamicResource RibbonKit.Brushes.Control.SurfaceBackground}"
+                                         Stroke="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
+                                         StrokeThickness="1" />
+                                <Ellipse x:Name="SelectionMark" Width="6" Height="6"
+                                         Fill="{DynamicResource RibbonKit.Brushes.Input.Glyph}"
+                                         VerticalAlignment="Center" Visibility="Collapsed" />
+                                <ContentPresenter x:Name="HeaderPresenter" Grid.Column="1"
+                                                  Content="{TemplateBinding Header}"
+                                                  ContentTemplate="{TemplateBinding ContentTemplate}"
+                                                  ContentTemplateSelector="{TemplateBinding ContentTemplateSelector}"
+                                                  Margin="6,0,0,0" VerticalAlignment="Center"
+                                                  RecognizesAccessKey="True" />
+                            </Grid>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Header" Value="{x:Null}">
+                            <Setter TargetName="HeaderPresenter" Property="Content"
+                                    Value="{Binding Content, RelativeSource={RelativeSource TemplatedParent}}" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Indicator" Property="Stroke"
+                                    Value="{DynamicResource RibbonKit.Brushes.Accent}" />
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Indicator" Property="Fill"
+                                    Value="{DynamicResource RibbonKit.Brushes.Accent}" />
+                            <Setter TargetName="Indicator" Property="Stroke"
+                                    Value="{DynamicResource RibbonKit.Brushes.Accent}" />
+                            <Setter TargetName="SelectionMark" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Chrome" Property="BorderBrush"
+                                    Value="{DynamicResource RibbonKit.Brushes.Accent}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4" />
+                        </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>

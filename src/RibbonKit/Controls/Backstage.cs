@@ -352,6 +352,9 @@ public class BackstageTabItem : TabItem
             command.Execute(CommandParameter);
         }
     }
+
+    /// <summary>Invokes an action item through the same path as mouse and keyboard input.</summary>
+    internal void InvokeAction() => Activate();
 }
 
 /// <summary>

@@ -18,6 +18,7 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Border" Color="#919191" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Primary" Color="#444444" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Secondary" Color="#777777" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Input.Glyph" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Accent" Color="#2B579A" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.HoverBackground" Color="#E8EEF7" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.PressedBackground" Color="#D0E0F5" />

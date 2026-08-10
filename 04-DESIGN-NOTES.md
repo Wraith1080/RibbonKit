@@ -3627,6 +3627,161 @@ colors, and the distinct 2010/2007 gradient profiles. Three reviewed approvals c
 Dark Gray Classic plus Office 2010/2007 Black Classic2010. Current automated baseline: 194 logic
 tests and 59 approved images; the full Showcase-height live check remains useful for final tuning.
 
+### 3.67 Compact RibbonCheckBox and RibbonRadioButton — 2026-08-08
+
+The first pre-freeze input-control slice adds `RibbonCheckBox` and `RibbonRadioButton` as lookless
+subclasses of WPF's real `CheckBox` and `RadioButton`. They deliberately have one compact form, like
+`RibbonComboBox`, rather than artificial Large/Medium/Small layouts. Both expose RibbonKit's familiar
+string `Header` plus rich ScreenTip properties; when Header is absent, the shared template falls back
+to ordinary WPF `Content`, preserving standard content syntax. Native command, routed-event,
+keyboard, three-state check-box, `GroupName`, and radio exclusivity behavior remain inherited.
+
+The shared button dictionary supplies theme-aware square/check and circular/radio indicators,
+keyboard-focus outlines, disabled state, and reduced-motion-aware hover/press washes. Existing accent,
+text, surface, and interaction tokens carry the structure; the only new token is
+`RibbonKit.Brushes.Input.Glyph`, defined by all ten light/dark generation dictionaries so checked
+marks remain legible on the accent fill. No layout property is animated. The check template also
+covers the indeterminate state.
+
+Dedicated UI Automation peers retain the native CheckBox Toggle and RadioButton SelectionItem
+patterns while naming controls from Header. KeyTip invocation now consumes SelectionItem after
+Invoke/Toggle, so a radio KeyTip selects the target and applies normal `GroupName` exclusivity rather
+than merely raising a routed click. The Visual Studio toolbox, surface context verbs, responsive
+Ribbon Editor Add menu, friendly tree names, reorder/delete metadata, and option-specific property
+rows all include both controls. The Showcase View tab has a compact Inputs group for direct theme,
+hover, keyboard, ScreenTip, KeyTip, and mutual-exclusion checks. They are intentionally not promoted
+to QAT/customization icon-command candidates in this slice.
+
+Six focused logic tests cover lookless inheritance/style keys, ScreenTips, UIA patterns/names,
+KeyTip behavior, ten-palette token parity, templates, and designer/toolbox wiring. Two deterministic
+Office 2024 light/dark approvals cover checked, unchecked, indeterminate, selected, unselected, and
+disabled states. Current automated baseline at this point was 200 logic tests and 61 approved images.
+
+The first live hover/focus check exposed one template-layering mistake: `Chrome` owned the content
+padding, so WPF inset every child—including `HoverWash` and `PressWash`—while the focus visual still
+used the complete control bounds. Classic themes made the smaller amber box especially conspicuous.
+`Chrome` is now unpadded and the mathematically equivalent `5,1,5,1` inset lives only on the named
+content grid. Resting indicator/text geometry and desired size are unchanged; interaction washes now
+fill the complete focus rectangle. The template contract pins that separation for both controls.
+
+### 3.68 Compact RibbonTextBox — 2026-08-08
+
+The next pre-freeze input slice adds `RibbonTextBox` as a lookless subclass of WPF's real `TextBox`,
+again with one compact form rather than artificial ribbon sizes. `Header` supplies an optional label,
+`InputWidth` sizes only the editor chrome, and the standard `Text`, selection, caret, validation,
+binding, command, keyboard, scrolling, and IME contracts remain native. `IsReadOnly` therefore still
+allows selection and copying. Rich ScreenTips and KeyTips follow the same surface conventions as the
+other compact inputs; a text-box KeyTip transfers focus without changing its text or selection.
+
+The shared dropdown/input dictionary reuses the existing control-surface, border, primary-text,
+secondary-text, accent, and corner-radius resources, so no new palette token was required. Its
+24-pixel input chrome matches `RibbonComboBox`; hover changes only the border and keyboard focus uses
+the accent border, with no animation or layout-property transition. The required `PART_ContentHost`
+remains the native `ScrollViewer`, preserving WPF editing behavior across all ten themes.
+
+A dedicated automation peer retains Edit identity and the Value pattern while deriving its accessible
+name from `Header`. The Visual Studio toolbox, group context verb, responsive Ribbon Editor Add menu,
+friendly tree name, reorder/delete metadata, and property rows cover `InputWidth`, `Text`, `IsReadOnly`,
+and `MaxLength`. The Showcase adds editable and read-only fields beside the option controls.
+
+Five focused logic tests pin lookless inheritance/style key, native state and ScreenTips, UIA name and
+Value pattern, KeyTip focus, required template part/resources, and designer/toolbox wiring. The two
+existing Office 2024 light/dark input approvals now also cover editable, read-only, and disabled text
+fields, keeping the visual corpus at 61 images. The initial automated baseline was 205 logic tests and
+61 approved images. A ribbon slider was considered after this slice and is intentionally not planned.
+
+The live follow-up passed at 100/125/150/175/200% DPI in both the Office 2024 and classic visual
+profiles. RTL follow-up adds an `RTL Inputs` group to the Localization/RTL lab with inherited mixed
+Arabic/Latin content plus a left-aligned Latin document identifier inside a still-mirrored control.
+The checklist explicitly distinguishes component mirroring from inner text direction. A source
+contract prevents either field from forcing the entire control LTR, and a focused Office 2024 RTL
+approval pins group order, leading option indicators, and label/field reversal. The interactive RTL
+caret, selection, mixed-direction text, explicitly LTR document identifier, and KeyTip focus checks
+then passed in the live lab. Current automated baseline: 206 logic tests and 62 approved images.
+
+### 3.69 KeyTip resolution is typeable and prefix-free — 2026-08-08
+
+The per-level resolver now guarantees that every non-empty badge is independently typeable. The old
+`AutoAssign` reserved only exact strings, so duplicate explicit keys never activated and an explicit
+pair such as `F` / `FN` left the shorter key permanently waiting behind the longer prefix. Explicit
+assignments are now reserved before automatic derivation; the first conflicting explicit assignment
+in visual order wins, while later exact or prefix collisions fall back to their label and then the
+standard fallback alphabet. Automatic keys avoid every reserved prefix as well as exact duplicates.
+
+Resolution also now matches the actual input state machine. `KeyToChar` accepts A–Z and 0–9, but the
+old derivation accepted any Unicode letter or digit, producing unreachable badges for fully Arabic
+and other non-Latin labels. Authored keys are trimmed, normalized, and accepted only when every
+character is typeable; label derivation skips non-typeable characters and uses the ASCII fallback
+when necessary. The public `KeyTip.Keys` documentation records the typeable character contract and
+the deterministic first-explicit-wins collision policy.
+
+Ten focused cases cover explicit reservation/case normalization, same-initial label derivation,
+exact and both directions of prefix collision, prefix-free automatic assignment, unlabeled fallback,
+non-Latin labels, and untypeable explicit values. Full validation is green at 216 logic tests plus
+the one visual test covering 62 approved images.
+
+### 3.70 Explicit KeyTips inside arbitrary File-surface content — 2026-08-08
+
+Backstage pages and application-menu panes are intentionally arbitrary content, but their KeyTip
+levels previously recognized only surface navigation plus RibbonKit's two built-in application-menu
+content controls. Setting `rk:KeyTip.Keys` on an ordinary WPF `Button`, toggle, text input, or custom
+automation-aware `UIElement` inside a user-authored page therefore serialized correctly but produced
+no badge.
+
+Both File surfaces now share an explicit-content discovery rule. The walker follows only realized,
+visible visual-tree branches, so a selected Backstage page and the active/default application-menu
+pane contribute targets while hidden pages do not. Application-menu pane/footer items retain their
+existing automatic indexing. Any other `UIElement` opts in only through a non-blank `KeyTip.Keys`,
+which prevents arbitrary page layouts from being flooded with derived badges. Navigation rows are
+excluded from the content walk because their own primary/arrow targets are registered separately;
+the combined level then passes through the same prefix-free resolver from §3.69.
+
+Selecting a Backstage page by KeyTip now keeps the terminal level active and rebuilds it at
+`DispatcherPriority.Loaded`, after the selected-content presenter realizes the new page. This mirrors
+the application menu's existing pane-refresh rule. The work also fixes Backstage action items:
+`IsButton=True` now invokes the item's Click/Command path under KeyTips instead of trying to select
+the action as a page.
+
+Disabled targets remain visible in a stable KeyTip level but are never invoked. The activation state
+machine checks effective `UIElement.IsEnabled` before changing levels or dismissing KeyTip mode, then
+clears the typed prefix so another badge can be chosen. The shared `InvokeControl` helper repeats the
+guard because QAT/customization proxies also call it directly; effective WPF enablement covers both a
+locally disabled control and disablement inherited/coerced from a parent or command source.
+
+The live **Disable Samples** follow-up exposed a separate invocation mismatch: UI Automation's
+`Toggle`/`SelectionItem` patterns update checked/selected state but do not run
+`ButtonBase.OnClick`. The toggle therefore looked checked under its KeyTip while its XAML `Click`
+handler never disabled the sample controls. `RibbonToggleButton`, `RibbonCheckBox`, and
+`RibbonRadioButton` now expose an internal KeyTip activation hook that calls their real `OnClick`
+path. KeyTips therefore update state, raise routed `Click`, and execute `Command` in the same order as
+mouse or Space activation; UIA peers remain unchanged for external automation clients.
+
+The compact-input live pass then exposed a discovery mismatch: `RibbonCheckBox`,
+`RibbonRadioButton`, and `RibbonTextBox` already had invocation support and authored Showcase keys,
+but the root-level collector's ribbon-control type list predated those controls. They now participate
+in normal ribbon KeyTip discovery, with auto-derived labels taken from `Header`; text-box activation
+continues to transfer focus without changing the value.
+
+A collapsed-group follow-up exposed one more lifecycle distinction: invoking any leaf previously
+tore down every non-persistent KeyTip level, whose `OnExit` closes the collapsed-group flyout. That is
+correct after commands but made a text-box KeyTip focus an editor that immediately disappeared. Leaf
+teardown now preserves only the activated level for editors and nested-picker openers (`TextBox`,
+`ComboBox`, and `InRibbonGallery`) while still removing its badges and ending KeyTip mode. Buttons,
+checkboxes, and radio buttons retain normal command dismissal; Escape or light-dismiss still closes
+the preserved flyout afterward.
+
+The Showcase demonstrates both extension points with ordinary WPF buttons: **Create custom draft**
+(`CD`) in the Backstage Home page and **Manage recent locations** (`MR`) in the application menu's
+default pane. Six focused cases cover visible explicit Backstage targets, built-in plus explicit
+application-menu targets, ordinary-button invocation, Backstage action invocation, and inherited
+disabled-state blocking, plus native toggle Click/state behavior. Automated baseline: 222 logic tests
+plus the one visual test covering 62 approved images; the two live examples remain the focused
+interactive verification surface.
+
+Two additional compact-input cases pin checkbox, radio-button, and text-box participation,
+Header-based label derivation, and the containing-flyout preservation boundary. Current automated
+baseline: 224 logic tests plus the one visual test covering 62 approved images.
+
 ## 4. Workflow / Session Conventions
 
 - Cloud workspace: `/home/user/ribbonkit/`. The user's machine:
@@ -3643,8 +3798,11 @@ tests and 59 approved images; the full Showcase-height live check remains useful
 
 ## 5. Current State & Next Steps
 
-> **Status as of 2026-08-08: everything through §3.61 is implemented AND user-verified on Windows;
-> §§3.62 and 3.64–3.66 are automated and await the focused live visual recheck.**
+> **Status as of 2026-08-08: everything through §3.61 and the responsive Ribbon Editor/application-
+> menu authoring work in the later §3.62 entry are implemented AND user-verified on Windows;
+> §§3.64–3.66 are automated and await focused live visual rechecks; §§3.67–3.68 are user-verified,
+> including §3.68 at 100/125/150/175/200% DPI and in the focused RTL input lab; §§3.69–3.70's
+> KeyTip resolution and explicit File-surface content contracts are automated.**
 > The ten-point §3.40/§3.41 checklist that stood here has been walked and passed in full, and the
 > **2007 DPI matrix is clean at 100/125/150/175/200%** — which closes the last S6 exit criterion the
 > 2007 arc left open. §3.42's whole-surface flyout animation, reduced-motion behavior, and the
@@ -3652,7 +3810,7 @@ tests and 59 approved images; the full Showcase-height live check remains useful
 >
 > Roadmap Phases 0–7 are complete. **Phase 6 closed in §3.61**: all five generations ship with
 > dark/black variants in §3.49, and the complete 40-image
-> theme/variant/DPI matrix plus sixteen focused scenes are covered by 56 approvals; localization,
+> theme/variant/DPI matrix plus twenty-two focused scenes are covered by 62 approvals; localization,
 > representative bidirectional content, and the live RTL popup/window pass are complete.
 > Phase 8 (API freeze,
 > docs site, perf, launch) is untouched. Of the two items
@@ -3841,8 +3999,9 @@ Backlog (rough priority):
    default File label. §3.58 completes the representative bidirectional-text Backstage pass and
    §3.59 fixes its live adorner/title transition; §3.61 records the green live popup/window,
    screen-edge, and 2024/2007 application-menu/orb verification.
-4. **The remaining unit tests** — broader customization serializer round-trips, KeyTip resolution,
-   and reduction-algorithm gaps. The Phase 7 merge/modal invariants are now DONE: 13 tests cover
+4. **The remaining unit tests** — broader customization serializer round-trips and
+   reduction-algorithm gaps. KeyTip resolution is DONE in §3.69. The Phase 7 merge/modal invariants
+   are now DONE: 13 tests cover
    stable ordering, repeated merge/unmerge, two-source group restoration, modal transitions and
    cancellation, serialization exclusion, rebuild/remerge and declarative activation. The harness
    and house style for headless WPF tests are in place (§3.39).
@@ -3852,6 +4011,21 @@ Backlog (rough priority):
 6. Roadmap Phase 8 release engineering: API review and freeze (`PublicAPI.txt` — Phase 7 added a lot
    of public surface), docs site, NuGet polish, performance pass.
 7. GitHub publish: repo URL placeholder in csproj (`YOUR-GITHUB-USERNAME`).
+
+Pre-freeze consideration (not committed scope):
+
+- **Touch mode toggle.** Decide during the Phase 8 API review whether v1 should expose an explicit,
+  opt-in density mode that enlarges hit targets and spacing across the ribbon, QAT, menus, and
+  customization surfaces. Keep it token/metric-driven and compatible with reduction, DPI, RTL, and
+  mouse/keyboard use; do not infer it from a single touch event. If that cross-surface contract is not
+  small enough to validate before the freeze, defer the API rather than ship a partial toggle.
+  **Feasibility check (2026-08-08):** this is not currently a one-property template switch. Theme
+  chrome metrics are centralized, but hit-target geometry still spans hundreds of literal sizes,
+  margins, and paddings across the shared button, dropdown, input, Backstage, application-menu, and
+  customization templates. A complete implementation would first need a semantic density-metric
+  layer, an inheritable enum-shaped setting (not a dead-end boolean), explicit propagation into
+  popup and dialog roots, reduction/layout invalidation, and focused mouse/touch/DPI/RTL approvals.
+  Do not freeze a placeholder API; keep this deferred unless a dedicated cross-surface arc is approved.
 
 Possible post-v1 polish:
 
@@ -3863,20 +4037,24 @@ Possible post-v1 polish:
   honor reduced motion, handle rapid reversals, and stay disabled while a DWM backdrop is active so
   Mica/Acrylic retain their native material retint without a second cross-fade on top.
 
-**Unit tests: 194 green (verified 2026-08-08).** Coverage now includes the STA harness, the borrow
+**Unit tests: 224 green (verified 2026-08-08).** Coverage now includes the STA harness, the borrow
 protocol, overflow strip measure/arrange rules, popup motion and dismissal, proxy mirroring,
 application-menu layering/hover/footer-outline/KeyTips, repeatable message-bar API/template/theme
 contracts, Office 2010 seam/state/consumer contracts, localization/RTL
 context-menu, customization-template, chrome-tooltip, default-File, representative bidi-lab and
 live Backstage/title-transition contracts, design-preview runtime isolation, scoped theme-token
 replacement, dark/Black neutral Backstage rail contracts, and the existing
-reduction/size-definition/theme-scope tests.
+reduction/size-definition/theme-scope tests. The KeyTip resolver cases add explicit-key precedence,
+exact/prefix collision recovery, prefix-free derivation, typeable non-Latin fallback, and explicit
+custom-content discovery/invocation across Backstage and application-menu panes, including disabled
+target blocking, native toggle Click/Command semantics, compact-input discovery with Header-based
+label derivation, and collapsed-group preservation for editor/picker activation.
 `RibbonMergeModalTests` adds the Phase 7 automated invariants: merge ordering across later
 permutations, merge/unmerge round-trips, group restore with two sources in one tab, capture while
 modal, modal enter/exit selection and cancellation, forced exit when a merged modal tab leaves,
 customization rebuild/remerge, and declarative activation. The broader coverage gaps listed above remain.
 
-**Visual tests: 1 green locally (2026-08-08), covering all 59 approved images.** The §§3.48–3.49 matrix
+**Visual tests: 1 green locally (2026-08-08), covering all 62 approved images.** The §§3.48–3.49 matrix
 spans five light themes plus five dark/black variants × 100/125/150/200%, followed by the §3.51 ribbon
 RTL smoke, §3.53 QAT-customization RTL scene, §3.58 representative bidirectional Backstage scene,
 and the focused §3.27 Office 2010 button-state/Backstage-shell, §3.65 connected/RTL message-bar

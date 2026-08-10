@@ -137,6 +137,12 @@ public class RibbonToggleButton : ToggleButton, IRibbonSizeAware
     /// <inheritdoc />
     protected override AutomationPeer OnCreateAutomationPeer() => new RibbonToggleButtonAutomationPeer(this);
 
+    /// <summary>
+    /// Activates through the real ToggleButton path so checked state, Click, and Command behavior
+    /// stay identical for KeyTips, mouse input, and keyboard Space.
+    /// </summary>
+    internal void InvokeFromKeyTip() => OnClick();
+
     // ── Hover / press / checked cross-fade (drives the template's Hover/Press/CheckWash layers) ──
     private FrameworkElement? _hoverWash;
     private FrameworkElement? _pressWash;

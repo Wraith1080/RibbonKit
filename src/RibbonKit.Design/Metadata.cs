@@ -26,6 +26,9 @@ internal sealed class Metadata : IProvideAttributeTable
     private const string ApplicationMenuType = "RibbonKit.Controls.RibbonApplicationMenu";
     private const string RibbonButtonType = "RibbonKit.Controls.RibbonButton";
     private const string RibbonToggleButtonType = "RibbonKit.Controls.RibbonToggleButton";
+    private const string RibbonCheckBoxType = "RibbonKit.Controls.RibbonCheckBox";
+    private const string RibbonRadioButtonType = "RibbonKit.Controls.RibbonRadioButton";
+    private const string RibbonTextBoxType = "RibbonKit.Controls.RibbonTextBox";
     private const string RibbonSplitButtonType = "RibbonKit.Controls.RibbonSplitButton";
     private const string RibbonDropDownButtonType = "RibbonKit.Controls.RibbonDropDownButton";
 
@@ -60,16 +63,19 @@ internal sealed class Metadata : IProvideAttributeTable
                 ApplicationMenuType,
                 new FeatureAttribute(typeof(ApplicationMenuPanePreviewProvider)));
 
-            // Group: "Add Button / Toggle / Split / Drop-Down" + reorder/delete the group.
+            // Group: add command/option controls + reorder/delete the group.
             builder.AddCustomAttributes(
                 RibbonGroupType,
                 new FeatureAttribute(typeof(RibbonGroupContextMenuProvider)));
 
-            // Leaf controls: reorder/delete within their group. One provider serves all four
-            // button types (it acts on the current selection).
+            // Leaf controls: reorder/delete within their group. One provider serves every
+            // registered leaf type (it acts on the current selection).
             var controlProvider = new FeatureAttribute(typeof(RibbonControlContextMenuProvider));
             builder.AddCustomAttributes(RibbonButtonType, controlProvider);
             builder.AddCustomAttributes(RibbonToggleButtonType, controlProvider);
+            builder.AddCustomAttributes(RibbonCheckBoxType, controlProvider);
+            builder.AddCustomAttributes(RibbonRadioButtonType, controlProvider);
+            builder.AddCustomAttributes(RibbonTextBoxType, controlProvider);
             builder.AddCustomAttributes(RibbonSplitButtonType, controlProvider);
             builder.AddCustomAttributes(RibbonDropDownButtonType, controlProvider);
 

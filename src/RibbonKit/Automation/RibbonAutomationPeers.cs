@@ -127,6 +127,56 @@ public class RibbonToggleButtonAutomationPeer : ToggleButtonAutomationPeer
     }
 }
 
+/// <summary>UIA peer for <see cref="RibbonCheckBox"/>: names it from its Header.</summary>
+public class RibbonCheckBoxAutomationPeer : CheckBoxAutomationPeer
+{
+    /// <summary>Creates the peer.</summary>
+    public RibbonCheckBoxAutomationPeer(RibbonCheckBox owner) : base(owner)
+    {
+    }
+
+    /// <inheritdoc />
+    protected override string GetNameCore()
+    {
+        string name = base.GetNameCore();
+        if (!string.IsNullOrEmpty(name))
+        {
+            return name;
+        }
+
+        var checkBox = (RibbonCheckBox)Owner;
+        return checkBox.Header ?? checkBox.Content?.ToString() ?? string.Empty;
+    }
+
+    /// <inheritdoc />
+    protected override string GetClassNameCore() => "RibbonCheckBox";
+}
+
+/// <summary>UIA peer for <see cref="RibbonRadioButton"/>: names it from its Header.</summary>
+public class RibbonRadioButtonAutomationPeer : RadioButtonAutomationPeer
+{
+    /// <summary>Creates the peer.</summary>
+    public RibbonRadioButtonAutomationPeer(RibbonRadioButton owner) : base(owner)
+    {
+    }
+
+    /// <inheritdoc />
+    protected override string GetNameCore()
+    {
+        string name = base.GetNameCore();
+        if (!string.IsNullOrEmpty(name))
+        {
+            return name;
+        }
+
+        var radioButton = (RibbonRadioButton)Owner;
+        return radioButton.Header ?? radioButton.Content?.ToString() ?? string.Empty;
+    }
+
+    /// <inheritdoc />
+    protected override string GetClassNameCore() => "RibbonRadioButton";
+}
+
 /// <summary>UIA peer for <see cref="RibbonMenuItem"/>: a menu item named from its Header.</summary>
 public class RibbonMenuItemAutomationPeer : ButtonAutomationPeer
 {
@@ -232,6 +282,24 @@ public class RibbonComboBoxAutomationPeer : ComboBoxAutomationPeer
         string name = base.GetNameCore();
         return string.IsNullOrEmpty(name)
             ? ((RibbonComboBox)Owner).Header ?? string.Empty
+            : name;
+    }
+}
+
+/// <summary>UIA peer for <see cref="RibbonTextBox"/>: names the input from its Header label.</summary>
+public class RibbonTextBoxAutomationPeer : TextBoxAutomationPeer
+{
+    /// <summary>Creates the peer.</summary>
+    public RibbonTextBoxAutomationPeer(RibbonTextBox owner) : base(owner)
+    {
+    }
+
+    /// <inheritdoc />
+    protected override string GetNameCore()
+    {
+        string name = base.GetNameCore();
+        return string.IsNullOrEmpty(name)
+            ? ((RibbonTextBox)Owner).Header ?? string.Empty
             : name;
     }
 }

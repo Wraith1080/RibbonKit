@@ -124,6 +124,24 @@ public sealed class VisualSnapshotTests
                 AssertApplicationButtonMarginResourceSurvivesOrbRoundTrip();
 
                 ThemeManager.Apply(application, RibbonTheme.Office2024);
+                ThemeManager.SetDarkMode(application, false);
+                AssertSnapshot(
+                    "office2024-input-controls-100",
+                    1d,
+                    FlowDirection.LeftToRight,
+                    CreateInputControlsScene);
+                AssertSnapshot(
+                    "office2024-rtl-input-controls-100",
+                    1d,
+                    FlowDirection.RightToLeft,
+                    CreateInputControlsScene);
+                ThemeManager.SetDarkMode(application, true);
+                AssertSnapshot(
+                    "office2024-dark-input-controls-100",
+                    1d,
+                    FlowDirection.LeftToRight,
+                    CreateInputControlsScene);
+                ThemeManager.SetDarkMode(application, false);
                 AssertSnapshot(
                     "office2024-backstage-shell-100",
                     1d,
@@ -450,6 +468,55 @@ public sealed class VisualSnapshotTests
         backstage.Items.Add(new BackstageTabItem { Header = "Info" });
         ribbon.Backstage = backstage;
         ribbon.IsBackstageOpen = true;
+        return root;
+    }
+
+    private static FrameworkElement CreateInputControlsScene(FlowDirection flowDirection)
+    {
+        var root = (Grid)CreateScene(flowDirection);
+        var ribbon = Assert.IsType<Ribbon>(Assert.Single(root.Children));
+        var home = Assert.IsType<RibbonTab>(ribbon.Tabs[0]);
+
+        var checks = new StackPanel
+        {
+            VerticalAlignment = VerticalAlignment.Center,
+            Children =
+            {
+                new RibbonCheckBox { Header = "Checked", IsChecked = true },
+                new RibbonCheckBox { Header = "Unchecked" },
+                new RibbonCheckBox { Header = "Indeterminate", IsThreeState = true, IsChecked = null },
+            },
+        };
+        var radios = new StackPanel
+        {
+            Margin = new Thickness(12, 0, 0, 0),
+            VerticalAlignment = VerticalAlignment.Center,
+            Children =
+            {
+                new RibbonRadioButton { Header = "Selected", GroupName = "SnapshotDensity", IsChecked = true },
+                new RibbonRadioButton { Header = "Unselected", GroupName = "SnapshotDensity" },
+                new RibbonRadioButton { Header = "Disabled", GroupName = "SnapshotDensity", IsEnabled = false },
+            },
+        };
+        var textBoxes = new StackPanel
+        {
+            Margin = new Thickness(12, 0, 0, 0),
+            VerticalAlignment = VerticalAlignment.Center,
+            Children =
+            {
+                new RibbonTextBox { Header = "Editable", InputWidth = 76, Text = "RibbonKit" },
+                new RibbonTextBox { Header = "Read only", InputWidth = 76, Text = "Select me", IsReadOnly = true },
+                new RibbonTextBox { Header = "Disabled", InputWidth = 76, Text = "Unavailable", IsEnabled = false },
+            },
+        };
+        var options = new RibbonGroup { Header = "Inputs" };
+        options.Items.Add(new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            VerticalAlignment = VerticalAlignment.Center,
+            Children = { checks, radios, textBoxes },
+        });
+        home.Groups.Add(options);
         return root;
     }
 

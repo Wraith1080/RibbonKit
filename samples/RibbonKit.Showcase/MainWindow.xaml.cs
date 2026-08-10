@@ -224,6 +224,15 @@ public partial class MainWindow : RibbonWindow
         StatusReady.Content = $"Application menu: {label}";
     }
 
+    // Ordinary WPF controls inside arbitrary Backstage/application-menu content can opt into the
+    // current surface's KeyTip level with rk:KeyTip.Keys; invocation remains the control's native
+    // Click/command behavior.
+    private void OnCustomSurfaceCommand(object sender, RoutedEventArgs e)
+    {
+        string label = (sender as ContentControl)?.Content?.ToString() ?? "Custom action";
+        StatusReady.Content = $"Custom File-surface action: {label}";
+    }
+
     private void OnToggleAccentTitleBar(object sender, RoutedEventArgs e) =>
         ThemeManager.SetAccentedTitleBar(Application.Current, (sender as RibbonToggleButton)?.IsChecked == true);
 
