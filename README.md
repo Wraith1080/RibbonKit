@@ -6,7 +6,9 @@ An open-source, Office Fluent UI–style **Ribbon control library for WPF** on m
 [![Target](https://img.shields.io/badge/.NET-8.0%20%7C%209.0-512BD4)](https://dotnet.microsoft.com/)
 [![NuGet](https://img.shields.io/badge/NuGet-0.1.0--alpha.1-orange)](https://www.nuget.org/)
 
-> **Status: alpha (`0.1.0-alpha.1`).** The control set is feature-complete for most real applications — ribbon, backstage, galleries, QAT with overflow, contextual tabs, KeyTips, tab merging, modal tabs, a runtime customization dialog with persistence, five Office themes, and a full design-time experience in Visual Studio. Roadmap phases 1–7 are done and the v1 public API is now frozen; the remaining Phase 8 work is documentation, package/release polish, final validation, and launch. See the [roadmap](docs/03-ROADMAP.md).
+> **Status: alpha (`0.1.0-alpha.1`).** The control set is feature-complete for most real applications — ribbon, backstage, galleries, QAT with overflow, contextual tabs, KeyTips, tab merging, modal tabs, a runtime customization dialog with persistence, five Office themes, and a full design-time experience in Visual Studio. Roadmap phases 1–7 are done, the v1 public API is frozen, and the repository documentation is ready; package/release polish, final validation, and launch remain. See the [roadmap](docs/03-ROADMAP.md).
+
+[Getting started](#getting-started) · [Feature status](#feature-status) · [Theming](#theming--rendering) · [Design tools](#developer-experience) · [Documentation](#documentation) · [Roadmap](#roadmap-to-v10)
 
 ![RibbonKit's showcase app in the default Office 2024 theme](docs/images/theme-2024.png)
 
@@ -16,7 +18,8 @@ An open-source, Office Fluent UI–style **Ribbon control library for WPF** on m
 
 WPF's built-in `System.Windows.Controls.Ribbon` is visually stuck around Office 2010 and effectively unmaintained. RibbonKit targets modern .NET only, ships **five Office generations from one shared template set**, and is MVVM-first from day one — `ItemsSource` and `DataTemplate` everywhere, dependency properties, routed events, `ICommand`.
 
-Everything renders from vector geometries, never bitmaps, so per-monitor High-DPI scaling is free.
+Everything renders from vector geometries rather than control bitmaps, so it remains crisp across
+per-monitor DPI changes when the host application enables `PerMonitorV2` awareness.
 
 ## Feature status
 
@@ -113,7 +116,7 @@ Legend: ✅ done · 🚧 in progress · 📋 planned
 | NuGet package bundling the design-tools assembly + toolbox manifest | ✅ |
 | Showcase / demo app | ✅ |
 | Visual regression snapshot suite per theme / variant × DPI | ✅ |
-| Documentation site | 📋 |
+| Repository documentation (README + focused Markdown guides) | ✅ |
 
 ![The design-time Ribbon Editor dialog](docs/images/ribbon-editor.png)
 
@@ -128,6 +131,19 @@ Point `MdiContainer.Ribbon` at a ribbon and it integrates the classic-MDI way: t
 Still planned: cascade/tile/arrange commands with `Ctrl+Tab` cycling, a switchable tabbed-documents mode, and layout persistence. Design: [`docs/05-MDI-EMULATION-PLAN.md`](docs/05-MDI-EMULATION-PLAN.md).
 
 ## Getting started
+
+RibbonKit currently targets WPF applications on `net8.0-windows` and `net9.0-windows`. While the v1
+NuGet release is being prepared, clone the repository, build the solution, and reference the runtime
+project from your application:
+
+```xml
+<ItemGroup>
+  <ProjectReference Include="..\RibbonKit\src\RibbonKit\RibbonKit.csproj" />
+</ItemGroup>
+```
+
+Use the single XAML namespace `urn:ribbonkit`. Office 2024 light is the default theme, so a first
+ribbon does not require application-level resource dictionaries:
 
 ```xml
 <rk:RibbonWindow x:Class="MyApp.MainWindow"
@@ -163,11 +179,10 @@ Still planned: cascade/tile/arrange commands with `Ctrl+Tab` cycling, a switchab
         <rk:RibbonGroup Header="Clipboard">
           <rk:RibbonButton Header="Paste"
                            Size="Large"
-                           LargeIcon="{StaticResource Icon.Paste}"
                            ScreenTipTitle="Paste (Ctrl+V)"
                            Command="{Binding PasteCommand}" />
-          <rk:RibbonButton Header="Cut"  Size="Small" Icon="{StaticResource Icon.Cut}" />
-          <rk:RibbonButton Header="Copy" Size="Small" Icon="{StaticResource Icon.Copy}" />
+          <rk:RibbonButton Header="Cut" Size="Small" />
+          <rk:RibbonButton Header="Copy" Size="Small" />
         </rk:RibbonGroup>
         <rk:RibbonGroup Header="View">
           <StackPanel>
@@ -186,7 +201,10 @@ Still planned: cascade/tile/arrange commands with `Ctrl+Tab` cycling, a switchab
 </rk:RibbonWindow>
 ```
 
-`RibbonWindow` is optional — the ribbon renders self-contained inside a plain `Window`, you just lose the title-bar integration.
+The example intentionally omits icon resources so it can be pasted into a new project unchanged.
+Assign any `ImageSource` to `Icon`/`LargeIcon` when the application is ready to supply its own vector
+or bitmap artwork. `RibbonWindow` is optional—the ribbon also renders inside a plain `Window`, with
+only the title-bar integration omitted.
 
 ### One thing to add to your app: a DPI manifest
 
@@ -242,7 +260,18 @@ culture. Application-authored tab, group and command text remains the applicatio
 
 ## Documentation
 
-| Document | Contents |
+The README is the public documentation entry point. Start with the task that matches what you are
+doing; the longer Markdown files are design and contributor references, not prerequisites for using
+the control.
+
+| Start here | Contents |
+|---|---|
+| [Getting started](#getting-started) | First project reference, ribbon window, theme switching, and the required DPI manifest |
+| [Feature status](#feature-status) | Control gallery and the supported application, accessibility, and theming surfaces |
+| [Showcase project](samples/RibbonKit.Showcase) | Executable examples for every major control, theme, customization flow, localization/RTL, and MDI |
+| [Design-tools setup](src/RibbonKit.Design/SETUP-DESIGNTOOLS.md) | Visual Studio toolbox, designer preview, smart tags, and Ribbon Editor setup |
+
+| Deep reference | Contents |
 |---|---|
 | [Planning overview](docs/00-PLANNING-OVERVIEW.md) | Vision, guiding principles, technical risks |
 | [Architecture](docs/01-ARCHITECTURE.md) | Control hierarchy, sizing engine, theming, subsystems |
@@ -254,7 +283,14 @@ culture. Application-authored tab, group and command text remains the applicatio
 
 ## Roadmap to v1.0
 
-Phase 6 localization/RTL is complete. Every generation has a dark variant—historical Black for 2007/2010, Dark Gray for 2013, and modern dark for 2019/2024—and the 40-image theme/variant × DPI matrix is complete. The 62 approvals also include Office 2024 RTL ribbon, QAT-customization, representative bidirectional Backstage, connected 2007/2010/2024 message-bar stacks, an RTL message-bar stack, Office 2024 light/dark compact input controls plus a focused RTL input scene, and the Office 2024 rectangular plus Office 2007 orb open-application-menu/message compositions; focused Office 2007/2010/2024 Backstage depth and 2010 colored-caption scenes; Office 2010 button states; and classic-dark application-menu scenes. RibbonKit's runtime context menus, Customize/Options UI, window/Backstage/QAT/group chrome tooltips, QAT-overflow KeyTip, default File label, and conventional Options/Exit application-menu footer now resolve from `.resx` through a live partial-override provider; disconnected context menus and directional customization actions also behave correctly in RTL. The Localization/RTL lab follows the main Showcase's Backstage design/translucency, 2007-menu, and orb choices while providing its own bidirectional two-pane menu, connected mixed-language message stack, and compact RTL input group. Its live split/nested menus, context menus, normal/maximized screen edges, Backstage, and Office 2024/2007 application-menu/button surfaces are user-verified. The Phase 7 merge/modal invariant tests are complete. Phase 8's API review/freeze gate is also complete: the nullability-aware shipped baseline is enforced for both runtime TFMs and intentional additions must enter `PublicAPI.Unshipped.txt`. One item remains deferred out of the Office 2007 work: the 2007 window frame. (The two-pane 2007 application menu, the other deferral, shipped as `RibbonApplicationMenu`.) The documentation site, NuGet/SourceLink polish, final performance/install pass, and launch remain.
+Phases 0–7 are complete. Phase 8's API-freeze and repository-documentation gates are also complete:
+the nullability-aware shipped baseline is enforced for both runtime TFMs, and this README is the
+maintained public entry point backed by focused Markdown references and the executable Showcase.
+
+Remaining before v1: NuGet/readme/icon/SourceLink polish, the final performance and clean-install
+validation pass, and launch. The Office 2007 window frame and MDI milestones M1–M3 remain explicitly
+post-v1. See the [roadmap](docs/03-ROADMAP.md) and [design notes](04-DESIGN-NOTES.md) for the detailed
+status and verification history.
 
 ## Contributing
 

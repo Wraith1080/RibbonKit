@@ -2,7 +2,7 @@
 
 Each phase ends with the showcase app demonstrating everything built so far, tests green, and a tagged pre-release. Phases are sequential but small overlaps are fine.
 
-> **Progress (2026-08-10):** Phases 0–7 are complete. Phase 6 closed with the user-verified live RTL popup/window pass in [`04-DESIGN-NOTES.md`](../04-DESIGN-NOTES.md) §3.61: all five themes ship with dark/black variants, per-monitor DPI is verified at 100/125/150/175/200%, the deterministic 40-image theme/variant × DPI suite plus seven focused scenes are green, localization/provider coverage is complete, and the Showcase lab verifies split/nested/context menus, normal/maximized screen edges, Backstage, and Office 2024/2007 application-menu/button/orb behavior. Phase 8 is in progress: the API review/freeze gate is complete (§3.75); the docs site, NuGet polish, final performance/install pass, and launch remain. Post-v1 MDI emulation is unusually shaped: M0 and M4 are done, M1–M3 are not.
+> **Progress (2026-08-10):** Phases 0–7 are complete. Phase 6 closed with the user-verified live RTL popup/window pass in [`04-DESIGN-NOTES.md`](../04-DESIGN-NOTES.md) §3.61: all five themes ship with dark/black variants, per-monitor DPI is verified at 100/125/150/175/200%, the deterministic 40-image theme/variant × DPI suite plus seven focused scenes are green, localization/provider coverage is complete, and the Showcase lab verifies split/nested/context menus, normal/maximized screen edges, Backstage, and Office 2024/2007 application-menu/button/orb behavior. Phase 8 is in progress: the API review/freeze (§3.75) and repository-documentation (§3.76) gates are complete; NuGet polish, the final performance/install pass, and launch remain. Post-v1 MDI emulation is unusually shaped: M0 and M4 are done, M1–M3 are not.
 >
 > Live DPI switching needed a fix outside the library: an app must declare **PerMonitorV2** in its own manifest or Windows bitmap-stretches it until restart. The showcase now does, and the README tells consumers to (§3.42).
 >
@@ -44,7 +44,9 @@ KeyTips subsystem (full Alt-chain), tab merging API, modal tabs, customize dialo
 
 **API review and freeze: complete (2026-08-10).** The nullability-aware v1 surface is captured in `PublicAPI.Shipped.txt`; `Microsoft.CodeAnalysis.PublicApiAnalyzers` treats additions, removals, invalid baselines and nullability drift as build errors for both TFMs. Unsupported automatic QAT projections now return `false` instead of creating an unusable generic proxy, and the release solution builds with zero warnings.
 
-Remaining: documentation site with control gallery and getting-started guide, NuGet polish (icon, readme, SourceLink), performance/install pass (startup time, resize CPU, memory, clean consumer project and VS designer), and community launch. **Exit criteria:** v1.0.0 on NuGet.
+**Repository documentation: complete (2026-08-10).** A separate website was deliberately avoided: the GitHub README is the public landing page and contains the visual control overview, source-reference path, pasteable first ribbon, theming and DPI guidance, and task-oriented links into the existing focused Markdown references and executable Showcase.
+
+Remaining: NuGet polish (icon, packaged readme, SourceLink), performance/install pass (startup time, resize CPU, memory, clean consumer project and VS designer), and community launch. **Exit criteria:** v1.0.0 on NuGet.
 
 ## Post-v1 candidates
 

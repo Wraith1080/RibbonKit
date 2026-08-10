@@ -3910,6 +3910,23 @@ The same zero-warning pass fixed two broken runtime XML-doc references and four 
 warnings in the net472 design tools without changing their behavior. Verification: Release solution
 build zero warnings/errors; 283 logic tests green; the visual test green across all 62 approvals.
 
+### 3.76 Repository-native v1 documentation gate — 2026-08-10
+
+The v1 documentation deliberately stays in the GitHub repository rather than introducing a separate
+site and deployment stack for a single WPF control library. `README.md` is the maintained public
+entry point: it now links directly to the getting-started, feature, theming, design-tool,
+documentation and roadmap sections; records the current source-reference path before the v1 NuGet
+package is published; and makes the first XAML sample pasteable by omitting application-specific icon
+resources. It also explains that Office 2024 is the default theme and routes readers by task into the
+Showcase and focused Markdown references.
+
+The existing four screenshots already cover the useful product story—current ribbon, Backstage,
+historical theming and the Visual Studio Ribbon Editor—so no decorative or redundant captures were
+added. Screenshot generation remains available when a future feature needs visual explanation. The
+obsolete documentation-site feature/roadmap entries were replaced with the completed repository-docs
+gate. Link, image and sample validation are part of this gate; API-reference generation remains a
+possible post-v1 addition rather than a release dependency.
+
 ## 4. Workflow / Session Conventions
 
 - Cloud workspace: `/home/user/ribbonkit/`. The user's machine:
@@ -3940,8 +3957,8 @@ build zero warnings/errors; 283 logic tests green; the visual test green across 
 > dark/black variants in §3.49, and the complete 40-image
 > theme/variant/DPI matrix plus twenty-two focused scenes are covered by 62 approvals; localization,
 > representative bidirectional content, and the live RTL popup/window pass are complete.
-> Phase 8 is in progress: the API review/freeze gate is complete in §3.75; the docs site, NuGet
-> polish, final performance/install pass and launch remain. Of the two items
+> Phase 8 is in progress: the API review/freeze and repository-documentation gates are complete in
+> §3.75–§3.76; NuGet polish, the final performance/install pass and launch remain. Of the two items
 > deferred out of §3.38, the two-pane 2007 application menu shipped in §3.46; only the 2007 window
 > frame is still owed.
 
@@ -4137,8 +4154,8 @@ Backlog (rough priority):
 5. **MDI M1–M3**: cascade/tile/arrange commands + Ctrl+Tab (M1), the MVVM `ItemsSource` demo and a
    per-theme pass (M2), tabbed-documents mode + `RibbonState` layout persistence (M3). M0 and M4 are
    done, so the feature currently has a hole in its middle.
-6. Roadmap Phase 8 release engineering: **API review/freeze DONE (§3.75)**. Next: docs site, then
-   NuGet polish and the final performance/install pass.
+6. Roadmap Phase 8 release engineering: **API review/freeze DONE (§3.75); repository documentation
+   DONE (§3.76).** Next: NuGet polish, then the final performance/install pass.
 7. GitHub publish: repo URL placeholder in csproj (`YOUR-GITHUB-USERNAME`).
 
 Resolved at the API freeze (not v1 scope):
