@@ -172,14 +172,6 @@
                             <Setter TargetName="QatBelowHost" Property="Margin"
                                     Value="{DynamicResource RibbonKit.Metrics.QatExtenderMarginMessageBar}" />
                         </Trigger>
-                        <!-- A WPF Effect owns an off-screen surface as wide as its target. Avoid
-                             re-compositing the below-ribbon QAT shadow for every intermediate
-                             WM_SIZE; the read-only window state returns to false on exit, so the
-                             untouched theme/application effect is restored automatically. -->
-                        <DataTrigger Binding="{Binding IsLiveResizing, RelativeSource={RelativeSource AncestorType={x:Type controls:RibbonWindow}}}"
-                                     Value="True">
-                            <Setter TargetName="QatBelowHost" Property="Effect" Value="{x:Null}" />
-                        </DataTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
@@ -872,12 +864,6 @@
                                     Value="{DynamicResource RibbonKit.Metrics.ContentCornerRadiusTop}" />
                             <Setter TargetName="ContentHost" Property="Margin"
                                     Value="{DynamicResource RibbonKit.Metrics.ContentMarginQatBelow}" />
-                        </DataTrigger>
-                        <!-- Keep the resting card shadow exactly as themed, but omit its large
-                             intermediate surface while the native window resize loop is active. -->
-                        <DataTrigger Binding="{Binding IsLiveResizing, RelativeSource={RelativeSource AncestorType={x:Type controls:RibbonWindow}}}"
-                                     Value="True">
-                            <Setter TargetName="ContentHost" Property="Effect" Value="{x:Null}" />
                         </DataTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

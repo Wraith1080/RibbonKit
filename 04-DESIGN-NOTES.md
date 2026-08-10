@@ -3860,37 +3860,25 @@ were warranted:
 No `RibbonGroupsPanel` ordering or cache behavior needed correction. Twenty-five new cases raise the
 current automated baseline to 282 logic tests plus the one visual test covering 62 approved images.
 
-### 3.74 Interactive window-resize fast path — 2026-08-10
+### 3.74 Visual Studio debugger distorted live-resize performance — 2026-08-10
 
-Two three-second screen recordings made the resize-cadence difference visible: RibbonKit repeatedly
-held an intermediate width for roughly 120–180 ms, while Word usually advanced in roughly 60–80 ms.
-This is an indicative comparison rather than a controlled benchmark (the pointer paths and total
-distance differ), but it identified a real WPF hot path: both the Office 2024 ribbon card and its
-below-ribbon QAT apply `DropShadowEffect` to a surface whose width changes on every `WM_SIZE`. WPF
-must re-composite those wide off-screen effect surfaces during the native modal resize loop.
+The initial screen-recording comparison appeared to show that RibbonKit resized materially more
+slowly than Word. A resize-only shadow-suppression path and, later, lightweight body/QAT/message proxy
+shadows were explored. Follow-up testing isolated the decisive variable: the slowdown occurred only
+while the Showcase was attached to Visual Studio's debugger. Running with Ctrl+F5 or launching the
+built executable removed the slowdown with opaque, Mica, and Acrylic backgrounds.
 
-`RibbonWindow` now exposes the read-only `IsLiveResizing` DP. Its HWND hook turns the state on at the
-first `WM_SIZING` and off at `WM_EXITSIZEMOVE`; deliberately using `WM_SIZING`, rather than
-`WM_ENTERSIZEMOVE`, means an ordinary title-bar move does not suppress anything. Two shared-template
-triggers set only `ContentHost.Effect` and `QatBelowHost.Effect` to null during that interval. Their
-resting `DynamicResource` values are never replaced, so the current theme or an application override
-returns automatically for the final frame. Mica/Acrylic and the window's DWM backdrop are untouched.
+The workaround was therefore removed completely. RibbonKit has no `IsLiveResizing` public state or
+native sizing hook, no resize-specific shadow switching, proxy geometry, or theme tokens, and no
+resize-only marker/notch coalescing or application-menu placement guard. The normal themed
+`DropShadowEffect` remains present throughout interactive resizing, preserving the intended visual
+language without adding debugger-driven API and template complexity before the API freeze.
 
-Two smaller per-resize costs were removed alongside it:
-
-- `RibbonTabControl.SizeChanged` no longer transforms and rewrites the marker/notch geometry inline
-  during layout. It queues one coalesced update at `DispatcherPriority.Render`, avoiding layout
-  re-entry while still placing the visuals before the next presented frame.
-- Application-menu placement now returns before any cross-branch transform while its presenter is
-  hidden. Open menus retain the same `LayoutUpdated` placement behavior.
-
-The first implementation tried to shadow `RibbonKit.Effects.ContentShadow` with a window-local null
-resource. The focused test proved that a programmatic null resource behaves like removal and cannot
-reliably block theme lookup, so it was replaced with the deterministic template-trigger approach.
-Two tests cover the read-only/idempotent live-resize state and both shadow-suppression contracts. The
-full suite is green at 284 logic tests plus the one visual test covering 62 approved images; the idle
-visual snapshots are unchanged by design. A final live resize comparison, including Mica/Acrylic,
-remains the acceptance check for the perceived cadence improvement.
+**Verification rule:** assess perceived WPF resize performance outside the debugger. Visual Studio's
+managed debugger, XAML Hot Reload, and diagnostic tooling can materially alter UI-thread, layout, and
+render cadence. Debug runs remain useful for correctness; Ctrl+F5 or the built executable is the
+appropriate baseline for interaction performance. The automated baseline returns to 282 logic tests
+plus the one visual test covering 62 approved images.
 
 ## 4. Workflow / Session Conventions
 
@@ -4148,7 +4136,7 @@ Possible post-v1 polish:
   honor reduced motion, handle rapid reversals, and stay disabled while a DWM backdrop is active so
   Mica/Acrylic retain their native material retint without a second cross-fade on top.
 
-**Unit tests: 284 green (verified 2026-08-10).** Coverage now includes the STA harness, the borrow
+**Unit tests: 282 green (verified 2026-08-10).** Coverage now includes the STA harness, the borrow
 protocol, overflow strip measure/arrange rules, popup motion and dismissal, proxy mirroring,
 application-menu layering/hover/footer-outline/KeyTips, repeatable message-bar API/template/theme
 contracts, Office 2010 seam/state/consumer contracts, localization/RTL
