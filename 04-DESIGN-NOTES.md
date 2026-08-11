@@ -14,7 +14,8 @@ Fluent UI Ribbon on modern .NET.
 Locked decisions:
 
 - **Targets `net8.0-windows` and `net9.0-windows` only.** No .NET Framework support.
-- Open source, packaged for NuGet (`RibbonKit`, currently `0.1.0-alpha.1`).
+- Open source, packaged as a downloadable GitHub Release asset (`RibbonKit`, local `v1.0.0`
+  candidate); NuGet.org publication is not planned.
 - Planning docs live in `docs/` inside the repo.
 - Sample app: `samples/RibbonKit.Showcase` (a Word-like demo window).
 
@@ -4075,7 +4076,33 @@ the live automation tree exposed the RibbonWindow, ribbon, tab, group, and butto
 ribbon produced the packaged design-tools commands (`Edit Ribbon…`, `Add Tab`, application-menu and
 QAT actions); invoking `Edit Ribbon…` opened the net472 Ribbon Editor, rebuilt the one-tab model and
 logged `RibbonEditorWindow: ready`. The user confirmed both the styled surface and editor visually.
-The final performance/install gate is complete; community launch is the remaining Phase 8 item.
+At that point the final performance/install gate was complete and community launch was the remaining
+Phase 8 item; §3.84 records the subsequent distribution decision.
+
+### 3.84 Local v1.0.0 GitHub-release candidate — 2026-08-11
+
+The public-launch policy changed at the user's direction: RibbonKit will not be submitted to
+NuGet.org. If public distribution is requested later, the validated `.nupkg` and `.snupkg` will be
+attached directly to a GitHub Release. Until then, no release, tag, push, or upload is performed.
+
+Release metadata now defaults to `1.0.0`, attributes the package and assemblies neutrally to
+`RibbonKit contributors`, and documents that development was performed primarily with AI coding
+assistants under human direction, visual review, and automated verification. The same neutral
+copyright notice is used by the MIT license; no individual is presented as the package author.
+
+`eng/Prepare-GitHubRelease.ps1` is the repeatable, local-only release gate. It restores, builds,
+tests, packs, invokes the isolated package validator, copies `RELEASE_NOTES.md`, and emits SHA-256
+sums under ignored `artifacts/github-release-v1.0.0/`; it contains no publishing command. The first
+candidate passed with zero build warnings or errors, 298/298 logic tests, the single visual test and
+all 62 approvals, and isolated package consumption on both runtime TFMs. Its inspected NuSpec reports
+version `1.0.0`, author `RibbonKit contributors`, MIT, the expected repository and release notes.
+
+The prepared files remain local: `RibbonKit.1.0.0.nupkg` (567,192 bytes),
+`RibbonKit.1.0.0.snupkg` (109,774 bytes), `RELEASE_NOTES.md`, and `SHA256SUMS.txt`. Because the release
+changes are not yet committed, this candidate's Source Link repository commit still identifies the
+current pre-release HEAD. If publication is ever authorized, commit first and rerun the preparation
+script so the final assets point to the exact release commit. Local release preparation is complete;
+public community launch is intentionally deferred.
 
 ## 4. Workflow / Session Conventions
 
@@ -4107,8 +4134,9 @@ The final performance/install gate is complete; community launch is the remainin
 > dark/black variants in §3.49, and the complete 40-image
 > theme/variant/DPI matrix plus twenty-two focused scenes are covered by 62 approvals; localization,
 > representative bidirectional content, and the live RTL popup/window pass are complete.
-> Phase 8 release engineering is complete through §3.83: API freeze, repository documentation,
-> NuGet polish and the final performance/install pass are closed; community launch remains. Of the
+> Phase 8 release engineering and the local GitHub-release candidate are complete through §3.84:
+> API freeze, repository documentation, package polish and the final performance/install pass are
+> closed; public GitHub publication is deferred until explicitly requested. Of the
 > two items
 > deferred out of §3.38, the two-pane 2007 application menu shipped in §3.46; only the 2007 window
 > frame is still owed.
@@ -4308,8 +4336,9 @@ Backlog (rough priority):
 6. Roadmap Phase 8 release engineering: **API review/freeze DONE (§3.75); repository documentation
    DONE (§3.76); repository URL and package/Showcase icon DONE (§3.77); Source Link and symbol
    generation DONE (§3.79); portable package output DONE (§3.80); deterministic versioning DONE
-   (§3.81); package/clean-consumer gate DONE (§3.82); live performance/install pass DONE (§3.83).**
-   Next: community launch.
+   (§3.81); package/clean-consumer gate DONE (§3.82); live performance/install pass DONE (§3.83);
+   local v1.0.0 GitHub-release candidate DONE (§3.84).** Public launch is deferred until explicitly
+   requested; NuGet.org publication is not planned.
 7. GitHub repository metadata: **DONE** — the package points to `Wraith1080/RibbonKit`.
 
 Resolved at the API freeze (not v1 scope):

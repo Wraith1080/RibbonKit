@@ -4,9 +4,9 @@ An open-source, Office Fluent UI–style **Ribbon control library for WPF** on m
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Target](https://img.shields.io/badge/.NET-8.0%20%7C%209.0-512BD4)](https://dotnet.microsoft.com/)
-[![NuGet](https://img.shields.io/badge/NuGet-0.1.0--alpha.1-orange)](https://www.nuget.org/)
+[![Release](https://img.shields.io/badge/release-v1.0.0%20candidate-yellow)](https://github.com/Wraith1080/RibbonKit/releases)
 
-> **Status: alpha (`0.1.0-alpha.1`).** The control set is feature-complete for most real applications — ribbon, backstage, galleries, QAT with overflow, contextual tabs, KeyTips, tab merging, modal tabs, a runtime customization dialog with persistence, five Office themes, and a full design-time experience in Visual Studio. Roadmap phases 1–7 are done, the v1 public API is frozen, and the repository documentation is ready; package/release polish, final validation, and launch remain. See the [roadmap](docs/03-ROADMAP.md).
+> **Status: local `v1.0.0` release candidate.** The control set is feature-complete for most real applications — ribbon, backstage, galleries, QAT with overflow, contextual tabs, KeyTips, tab merging, modal tabs, a runtime customization dialog with persistence, five Office themes, and a full design-time experience in Visual Studio. The v1 public API and release package are validated. Public distribution is intentionally deferred until a GitHub Release is requested; RibbonKit is not published on NuGet.org. See the [roadmap](docs/03-ROADMAP.md).
 
 [Getting started](#getting-started) · [Feature status](#feature-status) · [Theming](#theming--rendering) · [Design tools](#developer-experience) · [Documentation](#documentation) · [Roadmap](#roadmap-to-v10)
 
@@ -137,9 +137,9 @@ Still planned: cascade/tile/arrange commands with `Ctrl+Tab` cycling, a switchab
 
 ## Getting started
 
-RibbonKit currently targets WPF applications on `net8.0-windows` and `net9.0-windows`. While the v1
-NuGet release is being prepared, clone the repository, build the solution, and reference the runtime
-project from your application:
+RibbonKit targets WPF applications on `net8.0-windows` and `net9.0-windows`. Until a public GitHub
+Release is created, clone the repository, build the solution, and reference the runtime project from
+your application:
 
 ```xml
 <ItemGroup>
@@ -250,15 +250,22 @@ dotnet build RibbonKit.sln
 
 Open `RibbonKit.sln` and set **`RibbonKit.Showcase`** as the startup project — it is a Word-like demo window that exercises every feature and includes a theme switcher, backdrop toggles, gallery and live-preview samples, the customize dialog, and the MDI demo. The Showcase persists structural ribbon customization and app-owned appearance preferences in separate JSON files, demonstrating how a host can remember its theme, accent, dark/title-bar state, Backstage design, File surface, and preferred Mica/Acrylic material without coupling those choices to ribbon customization Import/Export or Reset.
 
-Pack the NuGet package (bundles the runtime assembly plus `RibbonKit.DesignTools.dll` and the toolbox manifest):
+Pack the GitHub Release asset (a `.nupkg` bundling the runtime assembly, `RibbonKit.DesignTools.dll`,
+and the toolbox manifest):
 
 ```
 dotnet pack src/RibbonKit/RibbonKit.csproj -c Release
 ```
 
-The `.nupkg` and `.snupkg` are written to the repository's `artifacts/` directory.
-The default version matches the current alpha, `0.1.0-alpha.1`; an intentional release build can
-override it explicitly, for example with `-p:Version=1.0.0`.
+The versioned `.nupkg` and `.snupkg` are written to the ignored `artifacts/` directory. The default
+version is `1.0.0`. No command in this repository publishes them to NuGet.org or GitHub.
+
+After a GitHub Release exists, download `RibbonKit.1.0.0.nupkg` into a local folder and install it as
+a local package source:
+
+```powershell
+dotnet add package RibbonKit --version 1.0.0 --source C:\path\to\downloaded-packages
+```
 
 Validate the package layout, metadata, symbols, and an isolated two-target WPF consumer build:
 
@@ -309,15 +316,23 @@ Phases 0–7 are complete. Phase 8's API-freeze and repository-documentation gat
 the nullability-aware shipped baseline is enforced for both runtime TFMs, and this README is the
 maintained public entry point backed by focused Markdown references and the executable Showcase.
 
-Remaining before v1: community launch. NuGet package layout, metadata, Source Link, symbols,
-isolated consumer compilation, live packaged runtime behavior, Release performance, and the Visual
-Studio designer are verified. The Office 2007 window frame and MDI milestones M1–M3 remain explicitly
-post-v1. See the [roadmap](docs/03-ROADMAP.md) and [design notes](04-DESIGN-NOTES.md) for the detailed
-status and verification history.
+The local `v1.0.0` candidate is complete. Package layout, metadata, Source Link, symbols, isolated
+consumer compilation, live packaged runtime behavior, Release performance, and the Visual Studio
+designer are verified. Public distribution is deferred until an explicit GitHub Release request;
+NuGet.org publication is not planned. The Office 2007 window frame and MDI milestones M1–M3 remain
+explicitly post-v1. See the [roadmap](docs/03-ROADMAP.md) and [design notes](04-DESIGN-NOTES.md) for
+the detailed status and verification history.
 
 ## Contributing
 
 Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md). One feature per PR, with tests, a showcase page, and a docs snippet.
+
+## Development provenance
+
+RibbonKit was developed primarily with AI coding assistants under human direction, visual review,
+and automated verification. Project and package metadata therefore use the neutral attribution
+**RibbonKit contributors** rather than naming an individual author. Contributions remain subject to
+the repository's MIT license and normal review requirements.
 
 ## License
 

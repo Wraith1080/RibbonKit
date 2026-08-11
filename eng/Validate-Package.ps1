@@ -143,6 +143,7 @@ $packageVersion = [string]$metadata.version
 
 Assert-Condition ([string]$metadata.id -eq 'RibbonKit') 'NuSpec package ID must be RibbonKit.'
 Assert-Condition (-not [string]::IsNullOrWhiteSpace($packageVersion)) 'NuSpec package version is missing.'
+Assert-Condition ([string]$metadata.authors -eq 'RibbonKit contributors') 'NuSpec authors must use the neutral RibbonKit contributors attribution.'
 Assert-Condition ([string]$metadata.license.InnerText -eq 'MIT') 'NuSpec license must be MIT.'
 Assert-Condition ([string]$metadata.license.type -eq 'expression') 'NuSpec license must use an SPDX expression.'
 Assert-Condition ([string]$metadata.readme -eq 'README.md') 'NuSpec readme path is incorrect.'
@@ -150,6 +151,7 @@ Assert-Condition ([string]$metadata.icon -eq 'RibbonKit.png') 'NuSpec icon path 
 Assert-Condition ([string]$metadata.repository.type -eq 'git') 'NuSpec repository type must be git.'
 Assert-Condition ([string]$metadata.repository.url -eq 'https://github.com/Wraith1080/RibbonKit') 'NuSpec repository URL is incorrect.'
 Assert-Condition ([string]$metadata.repository.commit -match '^[0-9a-f]{40}$') 'NuSpec repository commit must be a full Git SHA.'
+Assert-Condition (-not [string]::IsNullOrWhiteSpace([string]$metadata.releaseNotes)) 'NuSpec release notes are missing.'
 
 $dependencyGroups = @($metadata.dependencies.group)
 $dependencyTfms = @($dependencyGroups | ForEach-Object { [string]$_.targetFramework })

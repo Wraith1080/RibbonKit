@@ -9,7 +9,7 @@
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <Company>RibbonKit</Company>
     <Product>RibbonKit</Product>
-    <Copyright>Copyright (c) 2026 Irfan Rahmat and RibbonKit contributors</Copyright>
+    <Copyright>Copyright (c) 2026 RibbonKit contributors</Copyright>
   </PropertyGroup>
 
 </Project>
