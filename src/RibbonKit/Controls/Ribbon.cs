@@ -2276,17 +2276,15 @@ public class Ribbon : Control
                 .TransformToVisual(_applicationMenuOverlayLayer)
                 .Transform(new Point(0d, 0d));
             Thickness margin = _applicationButton.Margin;
-            double slotWidth = Math.Max(
-                0d,
-                _applicationButton.ActualWidth + margin.Left + margin.Right);
-            double slotHeight = Math.Max(
-                0d,
-                _applicationButton.ActualHeight + margin.Top + margin.Bottom);
+            Size slotSize = GetStableApplicationButtonSlotSize(_applicationButton);
+            Size overlaySize = GetStableApplicationButtonOverlaySize(_applicationButton);
+            double slotWidth = slotSize.Width;
+            double slotHeight = slotSize.Height;
 
             var placeholder = new Border
             {
                 Width = slotWidth,
-                Height = slotHeight,
+                MinHeight = slotHeight,
                 HorizontalAlignment = _applicationButton.HorizontalAlignment,
                 VerticalAlignment = _applicationButton.VerticalAlignment,
                 IsHitTestVisible = false,
@@ -2299,8 +2297,11 @@ public class Ribbon : Control
             originalParent.Children.RemoveAt(originalIndex);
             originalParent.Children.Insert(originalIndex, placeholder);
 
-            _applicationButtonOverlay.Width = slotWidth;
-            _applicationButtonOverlay.Height = slotHeight;
+            // The placeholder preserves the original panel's DESIRED contribution, while the
+            // overlay preserves the button's ARRANGED render size. Conflating those two either
+            // changes the tab-row height or shrinks/repositions the overhanging 2007 orb.
+            _applicationButtonOverlay.Width = overlaySize.Width;
+            _applicationButtonOverlay.Height = overlaySize.Height;
             Canvas.SetLeft(_applicationButtonOverlay, origin.X - margin.Left);
             Canvas.SetTop(_applicationButtonOverlay, origin.Y - margin.Top);
             _applicationButtonOverlay.Child = _applicationButton;
@@ -2325,21 +2326,6 @@ public class Ribbon : Control
 
         try
         {
-            Thickness margin = _applicationButton?.Margin ?? default;
-            if (_applicationButton is not null)
-            {
-                double slotWidth = Math.Max(
-                    0d,
-                    _applicationButton.ActualWidth + margin.Left + margin.Right);
-                double slotHeight = Math.Max(
-                    0d,
-                    _applicationButton.ActualHeight + margin.Top + margin.Bottom);
-                _applicationButtonPlaceholder.Width = slotWidth;
-                _applicationButtonPlaceholder.Height = slotHeight;
-                _applicationButtonOverlay.Width = slotWidth;
-                _applicationButtonOverlay.Height = slotHeight;
-            }
-
             if (!_applicationButtonPlaceholder.IsArrangeValid)
             {
                 return;
@@ -2357,6 +2343,26 @@ public class Ribbon : Control
             // LayoutUpdated pass will position the host once both elements share a visual root.
         }
     }
+
+    /// <summary>
+    /// Returns the layout slot to reserve while the application button is reparented above its
+    /// menu. DesiredSize already includes the button's margin and records the size it contributed
+    /// to the original panel before reparenting.
+    /// </summary>
+    internal static Size GetStableApplicationButtonSlotSize(FrameworkElement button) =>
+        new(
+            Math.Max(0d, button.DesiredSize.Width),
+            Math.Max(0d, button.DesiredSize.Height));
+
+    /// <summary>
+    /// Returns the arranged bounds to preserve while the button is hosted above the menu.
+    /// Unlike the placeholder reservation, these bounds deliberately use ActualSize so a button
+    /// stretched by its original row does not shrink when moved into the overlay.
+    /// </summary>
+    internal static Size GetStableApplicationButtonOverlaySize(FrameworkElement button) =>
+        new(
+            Math.Max(0d, button.ActualWidth + button.Margin.Left + button.Margin.Right),
+            Math.Max(0d, button.ActualHeight + button.Margin.Top + button.Margin.Bottom));
 
     private void RestoreApplicationButtonFromOverlay()
     {

@@ -1,6 +1,8 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Windows;
+using System.Windows.Controls;
 using System.Xml.Linq;
 using RibbonKit.Controls;
 using Xunit;
@@ -169,6 +171,37 @@ public class ApplicationMenuLayeringTests
             setter => (string?)setter.Attribute("TargetName") == "ContentHost"
                 && (string?)setter.Attribute("Property") == "Effect"
                 && (string?)setter.Attribute("Value") == "{x:Null}");
+    }
+
+    [Fact]
+    public void Orb_placeholder_preserves_the_pre_reparent_layout_contribution()
+    {
+        Sta.Run(() =>
+        {
+            var button = new Button
+            {
+                Content = "File",
+                Margin = new Thickness(2, 2, 2, 0),
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Stretch,
+            };
+
+            button.Measure(new Size(200, 80));
+            Size desiredBeforeReparent = button.DesiredSize;
+            button.Arrange(new Rect(0, 0, 160, 48));
+
+            Size reconstructedFromActual = new(
+                button.ActualWidth + button.Margin.Left + button.Margin.Right,
+                button.ActualHeight + button.Margin.Top + button.Margin.Bottom);
+
+            Assert.NotEqual(desiredBeforeReparent, reconstructedFromActual);
+            Assert.Equal(
+                desiredBeforeReparent,
+                RibbonKit.Controls.Ribbon.GetStableApplicationButtonSlotSize(button));
+            Assert.Equal(
+                reconstructedFromActual,
+                RibbonKit.Controls.Ribbon.GetStableApplicationButtonOverlaySize(button));
+        });
     }
 
     private static XElement Named(XDocument document, string name) =>

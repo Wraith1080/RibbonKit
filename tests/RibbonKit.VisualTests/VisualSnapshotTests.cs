@@ -115,6 +115,7 @@ public sealed class VisualSnapshotTests
                     FlowDirection.LeftToRight,
                     CreateMessageBarStackScene,
                     270);
+                AssertOrbApplicationMenuKeepsRibbonLayoutStable();
                 AssertSnapshot(
                     "office2007-orb-application-menu-message-bar-100",
                     1d,
@@ -816,6 +817,48 @@ public sealed class VisualSnapshotTests
         root.UpdateLayout();
 
         Assert.Equal(modernMargin, button.Margin);
+    }
+
+    private static void AssertOrbApplicationMenuKeepsRibbonLayoutStable()
+    {
+        var root = (Grid)CreateApplicationMenuMessageBarScene(
+            FlowDirection.LeftToRight,
+            RibbonApplicationButtonShape.Orb);
+        var ribbon = Assert.IsType<Ribbon>(Assert.Single(root.Children));
+        var size = new Size(Width, 360);
+
+        ribbon.SetCurrentValue(Ribbon.IsBackstageOpenProperty, false);
+        root.Measure(size);
+        root.Arrange(new Rect(size));
+        root.UpdateLayout();
+        double closedHeight = ribbon.ActualHeight;
+        double closedBodyTop = DescendantTop(ribbon, "ContentHost");
+        double closedQatTop = DescendantTop(ribbon, "QatBelowHost");
+        double closedMessageTop = DescendantTop(ribbon, "MessageBarHost");
+        Point closedButtonOrigin = DescendantOrigin(ribbon, "PART_ApplicationButton");
+
+        ribbon.SetCurrentValue(Ribbon.IsBackstageOpenProperty, true);
+        root.Measure(size);
+        root.Arrange(new Rect(size));
+        root.UpdateLayout();
+
+        Assert.Equal(closedHeight, ribbon.ActualHeight, 6);
+        Assert.Equal(closedBodyTop, DescendantTop(ribbon, "ContentHost"), 6);
+        Assert.Equal(closedQatTop, DescendantTop(ribbon, "QatBelowHost"), 6);
+        Assert.Equal(closedMessageTop, DescendantTop(ribbon, "MessageBarHost"), 6);
+        Point openButtonOrigin = DescendantOrigin(ribbon, "PART_ApplicationButton");
+        Assert.Equal(closedButtonOrigin.X, openButtonOrigin.X, 6);
+        Assert.Equal(closedButtonOrigin.Y, openButtonOrigin.Y, 6);
+    }
+
+    private static double DescendantTop(FrameworkElement ancestor, string descendantName)
+        => DescendantOrigin(ancestor, descendantName).Y;
+
+    private static Point DescendantOrigin(FrameworkElement ancestor, string descendantName)
+    {
+        var descendant = Assert.IsAssignableFrom<FrameworkElement>(
+            FindDescendantByName(ancestor, descendantName));
+        return descendant.TransformToAncestor(ancestor).Transform(default(Point));
     }
 
     private static FrameworkElement CreateApplicationMenuMessageBarScene(

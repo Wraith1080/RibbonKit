@@ -3956,6 +3956,30 @@ already owns application identity. This is keyed to the actual shape rather than
 and adds no post-freeze public API. NuGet's packaged README was already wired; SourceLink and final
 package-content validation remain next.
 
+### 3.78 Office 2007 application-menu open layout stability — 2026-08-11
+
+Opening the two-pane menu could nudge the complete ribbon downward by a few DIPs. This was specific
+to the orb path, not the new caption icon or Windows 11 maximize hook: the menu moves the real orb
+above its outer overlay and leaves a placeholder in `ApplicationButtonLayer`, while rectangular File
+tabs never take that path. The placeholder was initially sized from the button's `ActualHeight` plus
+margin and then repeatedly recalculated after the button had moved into a differently constrained
+overlay. That created a layout feedback loop; Office 2007's negative orb overhang made the changed
+tab-row contribution visible.
+
+The placeholder now reserves the button's pre-reparent `DesiredSize`, which is exactly the size
+reported to its original panel and already includes margin, and keeps that reservation stable until
+the button returns. Menu/overlay placement continues to follow the arranged placeholder, but no
+longer writes post-reparent measurements back into the ribbon's layout. A focused STA case pins the
+difference between desired layout contribution and a stretched post-arrange `ActualSize`.
+
+The first correction stabilized the ribbon but exposed the other half of the distinction: giving the
+placeholder an explicit desired height centered its origin inside the taller tab row, so the overlay
+followed that origin and the orb itself moved down on open. The placeholder now uses its desired
+height as a minimum while retaining stretch alignment, preserving the original slot origin. The
+overlay separately keeps the pre-reparent arranged size (`ActualSize` plus margin), so the real orb
+neither shrinks nor moves. The deterministic open/closed scene now pins the application button's X/Y
+origin in addition to the ribbon, body, QAT and message-bar geometry.
+
 ## 4. Workflow / Session Conventions
 
 - Cloud workspace: `/home/user/ribbonkit/`. The user's machine:
