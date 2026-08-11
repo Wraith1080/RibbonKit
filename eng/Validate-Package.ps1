@@ -1,7 +1,8 @@
 [CmdletBinding()]
 param(
     [string]$PackageDirectory = (Join-Path $PSScriptRoot '..\artifacts'),
-    [switch]$KeepConsumer
+    [switch]$KeepConsumer,
+    [switch]$RunConsumer
 )
 
 Set-StrictMode -Version Latest
@@ -197,6 +198,7 @@ Write-Utf8File (Join-Path $consumerRoot 'NuGet.Config') @"
 Write-Utf8File $consumerProject @"
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+    <OutputType>WinExe</OutputType>
     <TargetFrameworks>net8.0-windows;net9.0-windows</TargetFrameworks>
     <UseWPF>true</UseWPF>
     <Nullable>enable</Nullable>
@@ -207,23 +209,79 @@ Write-Utf8File $consumerProject @"
 </Project>
 "@
 
+Write-Utf8File (Join-Path $consumerRoot 'App.xaml') @'
+<Application x:Class="PackageConsumer.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             StartupUri="ConsumerWindow.xaml">
+  <Application.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/RibbonKit;component/Themes/Tokens.Office2024.xaml" />
+        <ResourceDictionary Source="/RibbonKit;component/Themes/Office2024.xaml" />
+        <ResourceDictionary Source="/RibbonKit;component/Themes/Mdi.xaml" />
+      </ResourceDictionary.MergedDictionaries>
+    </ResourceDictionary>
+  </Application.Resources>
+</Application>
+'@
+
+Write-Utf8File (Join-Path $consumerRoot 'App.xaml.cs') @'
+using System.Diagnostics;
+using System.Windows;
+
+namespace PackageConsumer;
+
+public partial class App : Application
+{
+    internal static Stopwatch StartupStopwatch { get; } = Stopwatch.StartNew();
+
+    public App()
+    {
+        _ = StartupStopwatch;
+    }
+}
+'@
+
 Write-Utf8File (Join-Path $consumerRoot 'ConsumerWindow.xaml') @'
 <rk:RibbonWindow x:Class="PackageConsumer.ConsumerWindow"
                  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:rk="urn:ribbonkit"
-                 Title="Package consumer">
-  <rk:Ribbon>
-    <rk:RibbonTab Header="Home">
-      <rk:RibbonGroup Header="Clipboard">
-        <rk:RibbonButton Header="Paste" Size="Large" />
-      </rk:RibbonGroup>
-    </rk:RibbonTab>
-  </rk:Ribbon>
+                 Title="RibbonKit package consumer"
+                 Width="960"
+                 Height="560"
+                 UseLayoutRounding="True">
+  <DockPanel>
+    <rk:Ribbon x:Name="MainRibbon" DockPanel.Dock="Top">
+      <rk:Ribbon.Backstage>
+        <rk:Backstage Design="Modern">
+          <rk:BackstageTabItem Header="Info">
+            <TextBlock Text="Package runtime smoke test" />
+          </rk:BackstageTabItem>
+        </rk:Backstage>
+      </rk:Ribbon.Backstage>
+      <rk:RibbonTab Header="Home">
+        <rk:RibbonGroup Header="Clipboard">
+          <rk:RibbonButton Header="Paste" Size="Large" />
+          <rk:RibbonButton Header="Cut" Size="Small" />
+          <rk:RibbonButton Header="Copy" Size="Small" />
+        </rk:RibbonGroup>
+      </rk:RibbonTab>
+    </rk:Ribbon>
+    <TextBlock Text="Installed entirely from the local RibbonKit package."
+               Margin="24"
+               FontSize="18" />
+  </DockPanel>
 </rk:RibbonWindow>
 '@
 
 Write-Utf8File (Join-Path $consumerRoot 'ConsumerWindow.xaml.cs') @'
+using System.Diagnostics;
+using System.IO;
+using System.Text.Json;
+using System.Windows;
+using System.Windows.Threading;
 using RibbonKit.Controls;
 
 namespace PackageConsumer;
@@ -233,6 +291,71 @@ public partial class ConsumerWindow : RibbonWindow
     public ConsumerWindow()
     {
         InitializeComponent();
+    }
+
+    protected override void OnContentRendered(EventArgs e)
+    {
+        base.OnContentRendered(e);
+
+        if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("RIBBONKIT_PACKAGE_SMOKE_RESULT")))
+        {
+            Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, new Action(RunSmokeTest));
+        }
+    }
+
+    private void RunSmokeTest()
+    {
+        string resultPath = Environment.GetEnvironmentVariable("RIBBONKIT_PACKAGE_SMOKE_RESULT")!;
+        try
+        {
+            double contentRenderedMilliseconds = App.StartupStopwatch.Elapsed.TotalMilliseconds;
+            ForceFullCollection();
+            long managedBefore = GC.GetTotalMemory(forceFullCollection: true);
+
+            MainRibbon.IsBackstageOpen = true;
+            UpdateLayout();
+            MainRibbon.IsBackstageOpen = false;
+
+            for (int index = 0; index < 120; index++)
+            {
+                Width = index % 2 == 0 ? 620 : 1040;
+                UpdateLayout();
+            }
+
+            Width = 960;
+            UpdateLayout();
+            ForceFullCollection();
+            long managedAfter = GC.GetTotalMemory(forceFullCollection: true);
+
+            using Process process = Process.GetCurrentProcess();
+            File.WriteAllText(resultPath, JsonSerializer.Serialize(new
+            {
+                succeeded = true,
+                contentRenderedMilliseconds,
+                managedBeforeBytes = managedBefore,
+                managedAfterBytes = managedAfter,
+                managedChangeBytes = managedAfter - managedBefore,
+                workingSetBytes = process.WorkingSet64,
+                privateMemoryBytes = process.PrivateMemorySize64
+            }, new JsonSerializerOptions { WriteIndented = true }));
+            Application.Current.Shutdown(0);
+        }
+        catch (Exception exception)
+        {
+            File.WriteAllText(resultPath, JsonSerializer.Serialize(new
+            {
+                succeeded = false,
+                error = exception.ToString()
+            }, new JsonSerializerOptions { WriteIndented = true }));
+            Application.Current.Shutdown(1);
+        }
+    }
+
+    private static void ForceFullCollection()
+    {
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        GC.Collect();
     }
 }
 '@
@@ -255,6 +378,40 @@ try {
     foreach ($tfm in @('net8.0-windows', 'net9.0-windows')) {
         $consumerAssembly = Join-Path $consumerRoot "bin\Release\$tfm\PackageConsumer.dll"
         Assert-Condition (Test-Path -LiteralPath $consumerAssembly -PathType Leaf) "Clean consumer did not produce '$consumerAssembly'."
+    }
+
+    if ($RunConsumer) {
+        $consumerExecutable = Join-Path $consumerRoot 'bin\Release\net8.0-windows\PackageConsumer.exe'
+        $runtimeResultPath = Join-Path $consumerRoot 'runtime-smoke.json'
+        Assert-Condition (Test-Path -LiteralPath $consumerExecutable -PathType Leaf) "Clean consumer did not produce '$consumerExecutable'."
+
+        $previousResultPath = [Environment]::GetEnvironmentVariable('RIBBONKIT_PACKAGE_SMOKE_RESULT', 'Process')
+        [Environment]::SetEnvironmentVariable('RIBBONKIT_PACKAGE_SMOKE_RESULT', $runtimeResultPath, 'Process')
+        try {
+            $runtimeProcess = Start-Process -FilePath $consumerExecutable -PassThru
+            try {
+                if (-not $runtimeProcess.WaitForExit(30000)) {
+                    $runtimeProcess.Kill()
+                    $null = $runtimeProcess.WaitForExit(5000)
+                    throw 'Packaged consumer runtime smoke test timed out after 30 seconds.'
+                }
+                Assert-Condition ($runtimeProcess.ExitCode -eq 0) "Packaged consumer exited with code $($runtimeProcess.ExitCode)."
+            }
+            finally {
+                $runtimeProcess.Dispose()
+            }
+        }
+        finally {
+            [Environment]::SetEnvironmentVariable('RIBBONKIT_PACKAGE_SMOKE_RESULT', $previousResultPath, 'Process')
+        }
+
+        Assert-Condition (Test-Path -LiteralPath $runtimeResultPath -PathType Leaf) 'Packaged consumer did not write its runtime result.'
+        $runtimeResult = Get-Content -LiteralPath $runtimeResultPath -Raw | ConvertFrom-Json
+        if (-not [bool]$runtimeResult.succeeded) {
+            $runtimeError = $runtimeResult.PSObject.Properties['error']
+            throw "Packaged consumer runtime failed: $($runtimeError.Value)"
+        }
+        Write-Host (Get-Content -LiteralPath $runtimeResultPath -Raw)
     }
 
     $consumerSucceeded = $true

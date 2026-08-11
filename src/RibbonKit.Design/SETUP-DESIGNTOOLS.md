@@ -66,6 +66,15 @@ platform version `7.0`; update the `<None>` PackagePath if the `TargetFrameworks
 Build `RibbonKit.Design`, then **close and reopen the XAML designer** (it caches design assemblies;
 an in-place rebuild won't reload).
 
+### Installed-package validation
+
+`eng/Validate-Package.ps1 -RunConsumer -KeepConsumer` creates the isolated package-reference app used
+for release verification. Its `App.xaml` explicitly loads the Office 2024 token dictionary, shared
+control-template aggregator, and MDI dictionary. On 2026-08-11, Visual Studio Community 2026 18.7.1
+loaded that app in `WpfSurface`; the Ribbon context commands appeared from the packaged design-tools
+assembly, and **Edit Ribbon…** opened the one-tab model without an error. Fully exit Visual Studio
+before repeating the check so its designer assembly cache cannot mask a changed package.
+
 ## What you get
 
 **Toolbox default:** dropping a `Ribbon` seeds a "Home" tab with a "Group".
@@ -172,20 +181,67 @@ shown as **custom content — edit in XAML** and is never expanded, flattened, o
 Enum and brush values are set as strings and resolved by the property's type converter (same trick
 as the QAT verb's enum set); an invalid value is logged, not thrown. Each edit is its own undo.
 
-Controls also have **Icon / Large icon** editing (verified working). Each row shows the current
-resource key and has a "…" button that opens the **icon picker** (`IconPickerDialog`):
+### Using the Icons.xaml browser
 
-- It always lists the icon keys **already used elsewhere in this ribbon** (no file needed).
-- **"Load Icons.xaml…"** browses to the project's icon dictionary; it's parsed in-process
-  (`XamlReader.Load`) so the icons show as real **thumbnails**, and the dictionary is cached for the
-  session (`IconCatalog`). A filter box narrows the grid; the current icon is highlighted.
-- Picking a tile (or typing a key + Set) writes `{StaticResource key}` via `DesignModel.SetStaticResource`,
-  which builds a StaticResource **ModelItem** with `ResourceKey` set in the model — a raw
-  `StaticResourceExtension` object loses its key when the model serializes it, so that indirection is
-  required. `GetStaticResourceKey` reads the current key back.
+Controls and supported application-menu items have **Icon** and, where applicable, **Large icon**
+rows in the Ribbon Editor. The browser expects WPF `ImageSource` resources; keyed `DrawingImage`
+entries are recommended because they remain sharp at every DPI. A minimal `Icons.xaml` looks like
+this:
 
-The extension can't auto-discover Icons.xaml (resources live in the isolated surface process; there's
-no document-path service), which is why the file is loaded once via the browse button per session.
+```xaml
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <DrawingImage x:Key="Icon.Save">
+        <DrawingImage.Drawing>
+            <GeometryDrawing Brush="#0F6CBD" Geometry="M3,2 H21 V22 H3 Z" />
+        </DrawingImage.Drawing>
+    </DrawingImage>
+</ResourceDictionary>
+```
+
+Merge the dictionary into application, window, or another ancestor resource scope before assigning
+its keys. Loading the file into the browser provides thumbnails only; it does **not** make the
+resources available to the running application. For example, in `App.xaml`:
+
+```xaml
+<Application.Resources>
+    <ResourceDictionary>
+        <ResourceDictionary.MergedDictionaries>
+            <ResourceDictionary Source="Icons.xaml" />
+        </ResourceDictionary.MergedDictionaries>
+    </ResourceDictionary>
+</Application.Resources>
+```
+
+To assign an icon in Visual Studio:
+
+1. Select the `Ribbon` on the XAML design surface, right-click it, and choose **Edit Ribbon…**.
+2. Select the button, menu item, or other supported node in the editor's structure tree.
+3. In **Properties**, find **Icon (resource key)** or **Large icon (resource key)** and click **…**.
+4. The picker automatically checks the active XAML project for a single `Icons.xaml`. When it reports
+   **auto-loaded**, filter or scroll to the icon. Otherwise click **Load Icons.xaml…** and select the
+   intended dictionary manually.
+5. Click a tile. The editor immediately writes the corresponding static-resource reference, for
+   example `Icon="{StaticResource Icon.Save}"`, as one undoable designer edit.
+
+The key can also be typed into the property row and applied with **Set**. Without loading a file, the
+browser still offers keys already used elsewhere in the current ribbon, but without thumbnails. The
+loaded file is cached for the current design-tools session. On the next Visual Studio session the
+automatic check runs again; the browse button always remains available when no match is found, the
+project contains multiple files with that name, or parsing fails. Keep browseable icon entries directly
+in the selected dictionary, and use string `x:Key` values. Only `ImageSource` values receive previews.
+To remove an assignment entirely, delete the `Icon` or `LargeIcon` attribute in XAML; the current
+editor only sets or replaces icon references.
+
+The extension still can't enumerate application resources directly because they live in the isolated
+design-surface process. Instead, it reads the active document and solution paths from the DTE object
+registered to the current Visual Studio process, looks beside the document and then within its project,
+and loads only a single unambiguous match. No EnvDTE assembly is added to the package. The selected
+dictionary is parsed in-process with `XamlReader.Load`, cached in `IconCatalog`, and written as a
+`{StaticResource key}` model item through `DesignModel.SetStaticResource`. See the working catalog in
+[`samples/RibbonKit.Showcase/Icons.xaml`](../../samples/RibbonKit.Showcase/Icons.xaml) and its merge in
+[`samples/RibbonKit.Showcase/App.xaml`](../../samples/RibbonKit.Showcase/App.xaml).
 
 ## Diagnostics (`DesignLog`)
 

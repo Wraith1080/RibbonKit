@@ -1074,7 +1074,8 @@ errors. Icon read+write via a StaticResource model item is fully proven.
 
 **Visual picker shipped (`IconPickerDialog` + `IconCatalog`).** Enumeration was the last constraint:
 no reliable resource-enumeration API, `ModelItem.Source` is not a file path, and resources live in the
-isolated surface process the extension can't read — so the extension can't auto-discover Icons.xaml.
+isolated surface process the extension can't read — so the extension can't discover Icons.xaml through
+the design model itself.
 Design that needs zero uncertain APIs: a "…" button on each icon row opens a picker that (1) always
 lists the icon keys **already used elsewhere in this ribbon** (a pure model walk, `CollectUsedIconKeys`),
 and (2) has **"Load Icons.xaml…"** — an `OpenFileDialog` that parses the file with `XamlReader.Load`
@@ -1084,6 +1085,16 @@ key is highlighted, and clicking a tile writes via the proven `SetStaticResource
 with no file loaded (used-keys), and it can't hit an undocumented API. Trimmed the now-proven spike
 logging (read-back / create-attempt / model-type lines). Later polish: remember the Icons.xaml path
 across sessions; a "(none)" tile to clear an icon (needs a verified `ClearValue`).
+
+**Automatic Icons.xaml check (2026-08-11 follow-up).** The picker now performs a conservative
+filesystem discovery before its first render while retaining **Load Icons.xaml…** unchanged. Because
+the design extension runs in the Visual Studio process, it locates the DTE automation object registered
+for that exact process in the Running Object Table, reads `ActiveDocument.FullName` and
+`Solution.FullName` by reflection (no EnvDTE package/deployment dependency), and searches in priority
+order: beside the active document, within its nearest `.csproj` directory, then the solution directory.
+Build/output/cache folders and reparse points are skipped. It auto-loads only one unambiguous match;
+none, multiple matches, an unavailable IDE context, or a parse failure leaves the browse workflow and
+an explanatory picker status. The selected dictionary remains cached for the design-tools session.
 
 **Nested containers (StackPanels) in the editor — DONE.** Real ribbons put a `StackPanel` (often a
 vertical column of horizontal icon rows) inside a group's `Items`, not just leaf controls. The editor
@@ -4037,6 +4048,35 @@ CI runs this gate after packing and retains both the main and symbol packages in
 artifact; this does not publish either package to NuGet. Final live runtime/performance and Visual
 Studio installed-package designer validation remain next.
 
+### 3.83 Final live performance and installed-package pass — 2026-08-11
+
+`eng/Measure-ShowcasePerformance.ps1` now captures the Release Showcase baseline by launching the
+built executable directly, never through the Visual Studio debugger. Five process-start-to-input-idle
+runs measured 711.88–747.12 ms (727.66 ms median). After one 160-resize cache-warmup sweep, three
+identical 160-resize passes averaged 16.081 ms of process CPU per resize and 63.61% of one core. The
+Showcase's large all-features visual tree allocated its expected WPF/render caches during warmup;
+across the subsequent 480 resizes, working set and private memory changed by 10.12 MiB and 10.41 MiB
+respectively rather than repeating the initial allocation on every pass. Results are written only to
+ignored `TestResults/performance/showcase-release.json`; the live-GUI baseline is intentionally not a
+machine-independent CI threshold.
+
+The package validator's generated consumer is now a real executable as well as a compile probe. Its
+`App.xaml` explicitly merges `Tokens.Office2024.xaml`, the complete `Office2024.xaml` shared-control
+aggregator, and `Mdi.xaml`, so package URI and visible styling failures cannot hide behind the
+assembly's implicit default theme. With `-RunConsumer`, it opens the package-installed RibbonWindow,
+renders Backstage, opens and closes that surface, performs 120 width/layout changes, forces managed
+collections, records a local JSON result, and exits. The final styled run reached `ContentRendered`
+in 996.05 ms and retained 71,152 bytes (about 69 KiB) of managed memory across the exercise; both
+target frameworks still compiled with zero warnings and errors from the isolated local package feed.
+
+Visual Studio Community 2026 18.7.1 then opened that same package-only project from a clean IDE
+process. Its isolated `WpfSurface` loaded `RibbonKit.dll` 0.1.0-alpha.1 from the designer cache, and
+the live automation tree exposed the RibbonWindow, ribbon, tab, group, and buttons. Selecting the
+ribbon produced the packaged design-tools commands (`Edit Ribbon…`, `Add Tab`, application-menu and
+QAT actions); invoking `Edit Ribbon…` opened the net472 Ribbon Editor, rebuilt the one-tab model and
+logged `RibbonEditorWindow: ready`. The user confirmed both the styled surface and editor visually.
+The final performance/install gate is complete; community launch is the remaining Phase 8 item.
+
 ## 4. Workflow / Session Conventions
 
 - Cloud workspace: `/home/user/ribbonkit/`. The user's machine:
@@ -4067,8 +4107,9 @@ Studio installed-package designer validation remain next.
 > dark/black variants in §3.49, and the complete 40-image
 > theme/variant/DPI matrix plus twenty-two focused scenes are covered by 62 approvals; localization,
 > representative bidirectional content, and the live RTL popup/window pass are complete.
-> Phase 8 is in progress: the API review/freeze and repository-documentation gates are complete in
-> §3.75–§3.76; NuGet polish, the final performance/install pass and launch remain. Of the two items
+> Phase 8 release engineering is complete through §3.83: API freeze, repository documentation,
+> NuGet polish and the final performance/install pass are closed; community launch remains. Of the
+> two items
 > deferred out of §3.38, the two-pane 2007 application menu shipped in §3.46; only the 2007 window
 > frame is still owed.
 
@@ -4267,7 +4308,8 @@ Backlog (rough priority):
 6. Roadmap Phase 8 release engineering: **API review/freeze DONE (§3.75); repository documentation
    DONE (§3.76); repository URL and package/Showcase icon DONE (§3.77); Source Link and symbol
    generation DONE (§3.79); portable package output DONE (§3.80); deterministic versioning DONE
-   (§3.81); package/clean-consumer gate DONE (§3.82).** Next: the final performance/install pass.
+   (§3.81); package/clean-consumer gate DONE (§3.82); live performance/install pass DONE (§3.83).**
+   Next: community launch.
 7. GitHub repository metadata: **DONE** — the package points to `Wraith1080/RibbonKit`.
 
 Resolved at the API freeze (not v1 scope):

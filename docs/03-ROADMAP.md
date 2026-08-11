@@ -2,7 +2,7 @@
 
 Each phase ends with the showcase app demonstrating everything built so far, tests green, and a tagged pre-release. Phases are sequential but small overlaps are fine.
 
-> **Progress (2026-08-10):** Phases 0–7 are complete. Phase 6 closed with the user-verified live RTL popup/window pass in [`04-DESIGN-NOTES.md`](../04-DESIGN-NOTES.md) §3.61: all five themes ship with dark/black variants, per-monitor DPI is verified at 100/125/150/175/200%, the deterministic 40-image theme/variant × DPI suite plus seven focused scenes are green, localization/provider coverage is complete, and the Showcase lab verifies split/nested/context menus, normal/maximized screen edges, Backstage, and Office 2024/2007 application-menu/button/orb behavior. Phase 8 is in progress: the API review/freeze (§3.75) and repository-documentation (§3.76) gates are complete; NuGet polish, the final performance/install pass, and launch remain. Post-v1 MDI emulation is unusually shaped: M0 and M4 are done, M1–M3 are not.
+> **Progress (2026-08-11):** Phases 0–7 are complete. Phase 6 closed with the user-verified live RTL popup/window pass in [`04-DESIGN-NOTES.md`](../04-DESIGN-NOTES.md) §3.61: all five themes ship with dark/black variants, per-monitor DPI is verified at 100/125/150/175/200%, the deterministic 40-image theme/variant × DPI suite plus twenty-two focused scenes are green, localization/provider coverage is complete, and the Showcase lab verifies split/nested/context menus, normal/maximized screen edges, Backstage, and Office 2024/2007 application-menu/button/orb behavior. Phase 8 release engineering is complete through §3.83; community launch remains. Post-v1 MDI emulation is unusually shaped: M0 and M4 are done, M1–M3 are not.
 >
 > Live DPI switching needed a fix outside the library: an app must declare **PerMonitorV2** in its own manifest or Windows bitmap-stretches it until restart. The showcase now does, and the README tells consumers to (§3.42).
 >
@@ -52,7 +52,9 @@ KeyTips subsystem (full Alt-chain), tab merging API, modal tabs, customize dialo
 
 **Package and clean-consumer gate: complete (2026-08-11).** CI now validates the exact main/symbol package layout and metadata, then restores exclusively from that local package into an isolated cache and compiles real RibbonKit XAML for both runtime TFMs. Both package files are retained as CI artifacts; no publish step exists.
 
-Remaining: performance/install pass (startup time, resize CPU, memory, live packaged-app behavior and the Visual Studio designer), and community launch. **Exit criteria:** v1.0.0 on NuGet.
+**Performance and installed-package validation: complete (2026-08-11).** The Release Showcase has a repeatable outside-the-debugger startup/resize/memory baseline; a locally packaged executable loads the explicit theme/control dictionaries and passes Backstage plus repeated-resize runtime checks; and the same package is user-verified in Visual Studio 2026 through the live designer context commands and Ribbon Editor.
+
+Remaining: community launch. **Exit criteria:** v1.0.0 on NuGet.
 
 ## Post-v1 candidates
 

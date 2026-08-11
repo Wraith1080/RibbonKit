@@ -122,6 +122,11 @@ Legend: ✅ done · 🚧 in progress · 📋 planned
 
 *The responsive design-time Ribbon Editor: drag-drop structure authoring, contextual property editing, and theme/active-tab/File-surface/page-or-pane previews rendered on the XAML design surface without changing application XAML or runtime behavior.*
 
+The editor also includes a thumbnail browser for application-owned `Icons.xaml` vector resources. It
+auto-loads a single dictionary from the active project and keeps a browse button as the fallback. See
+[Using the Icons.xaml browser](src/RibbonKit.Design/SETUP-DESIGNTOOLS.md#using-the-iconsxaml-browser)
+for the required resource-dictionary format, application merge, and Visual Studio workflow.
+
 ### Preview: MDI emulation
 
 WPF has no native MDI. RibbonKit ships an in-window emulation — themed floating child windows with drag, resize, minimize, maximize, close, cascade placement and state animations, driven by an MVVM-friendly document model (`MdiDocument` / `MdiContainer` / `MdiChild`), working across all five themes.
@@ -261,6 +266,13 @@ Validate the package layout, metadata, symbols, and an isolated two-target WPF c
 powershell -NoProfile -ExecutionPolicy Bypass -File eng/Validate-Package.ps1
 ```
 
+Add `-RunConsumer` for the visible package-installed runtime smoke test. Measure Release Showcase
+startup, resize CPU, and memory outside the debugger with:
+
+```
+powershell -NoProfile -ExecutionPolicy Bypass -File eng/Measure-ShowcasePerformance.ps1
+```
+
 Design-time tooling setup is documented in [`src/RibbonKit.Design/SETUP-DESIGNTOOLS.md`](src/RibbonKit.Design/SETUP-DESIGNTOOLS.md).
 
 RibbonKit-owned context-menu strings resolve from embedded `.resx` resources. Applications can
@@ -279,7 +291,7 @@ the control.
 | [Getting started](#getting-started) | First project reference, ribbon window, theme switching, and the required DPI manifest |
 | [Feature status](#feature-status) | Control gallery and the supported application, accessibility, and theming surfaces |
 | [Showcase project](samples/RibbonKit.Showcase) | Executable examples for every major control, theme, customization flow, localization/RTL, and MDI |
-| [Design-tools setup](src/RibbonKit.Design/SETUP-DESIGNTOOLS.md) | Visual Studio toolbox, designer preview, smart tags, and Ribbon Editor setup |
+| [Design-tools setup](src/RibbonKit.Design/SETUP-DESIGNTOOLS.md) | Visual Studio toolbox, designer preview, smart tags, Ribbon Editor setup, and the `Icons.xaml` browser |
 
 | Deep reference | Contents |
 |---|---|
@@ -297,11 +309,11 @@ Phases 0–7 are complete. Phase 8's API-freeze and repository-documentation gat
 the nullability-aware shipped baseline is enforced for both runtime TFMs, and this README is the
 maintained public entry point backed by focused Markdown references and the executable Showcase.
 
-Remaining before v1: the final live performance/install validation pass and launch. NuGet package
-layout, metadata, Source Link, symbols, and isolated consumer compilation are verified for both
-runtime TFMs. The Office 2007 window frame and MDI milestones M1–M3 remain explicitly post-v1. See
-the [roadmap](docs/03-ROADMAP.md) and [design notes](04-DESIGN-NOTES.md) for the detailed status and
-verification history.
+Remaining before v1: community launch. NuGet package layout, metadata, Source Link, symbols,
+isolated consumer compilation, live packaged runtime behavior, Release performance, and the Visual
+Studio designer are verified. The Office 2007 window frame and MDI milestones M1–M3 remain explicitly
+post-v1. See the [roadmap](docs/03-ROADMAP.md) and [design notes](04-DESIGN-NOTES.md) for the detailed
+status and verification history.
 
 ## Contributing
 
