@@ -251,6 +251,8 @@ Pack the NuGet package (bundles the runtime assembly plus `RibbonKit.DesignTools
 dotnet pack src/RibbonKit/RibbonKit.csproj -c Release
 ```
 
+The `.nupkg` and `.snupkg` are written to the repository's `artifacts/` directory.
+
 Design-time tooling setup is documented in [`src/RibbonKit.Design/SETUP-DESIGNTOOLS.md`](src/RibbonKit.Design/SETUP-DESIGNTOOLS.md).
 
 RibbonKit-owned context-menu strings resolve from embedded `.resx` resources. Applications can
@@ -287,10 +289,11 @@ Phases 0–7 are complete. Phase 8's API-freeze and repository-documentation gat
 the nullability-aware shipped baseline is enforced for both runtime TFMs, and this README is the
 maintained public entry point backed by focused Markdown references and the executable Showcase.
 
-Remaining before v1: SourceLink and final NuGet-package validation, the final performance and clean-install
-validation pass, and launch. The Office 2007 window frame and MDI milestones M1–M3 remain explicitly
-post-v1. See the [roadmap](docs/03-ROADMAP.md) and [design notes](04-DESIGN-NOTES.md) for the detailed
-status and verification history.
+Remaining before v1: final NuGet-package validation, the final performance and clean-install
+validation pass, and launch. Source Link and portable symbols are verified for both runtime TFMs.
+The Office 2007 window frame and MDI milestones M1–M3 remain explicitly post-v1. See the
+[roadmap](docs/03-ROADMAP.md) and [design notes](04-DESIGN-NOTES.md) for the detailed status and
+verification history.
 
 ## Contributing
 

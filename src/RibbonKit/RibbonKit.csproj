@@ -28,7 +28,7 @@
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-	<PackageOutputPath>E:\NuGet</PackageOutputPath>
+    <PackageOutputPath>$(MSBuildProjectDirectory)\..\..\artifacts</PackageOutputPath>
   </PropertyGroup>
 
   <ItemGroup>

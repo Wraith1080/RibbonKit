@@ -46,7 +46,9 @@ KeyTips subsystem (full Alt-chain), tab merging API, modal tabs, customize dialo
 
 **Repository documentation: complete (2026-08-10).** A separate website was deliberately avoided: the GitHub README is the public landing page and contains the visual control overview, source-reference path, pasteable first ribbon, theming and DPI guidance, and task-oriented links into the existing focused Markdown references and executable Showcase.
 
-Remaining: NuGet polish (SourceLink and final package validation; the icon and packaged readme are complete), performance/install pass (startup time, resize CPU, memory, clean consumer project and VS designer), and community launch. **Exit criteria:** v1.0.0 on NuGet.
+**Source Link and symbols: complete (2026-08-11).** The .NET 8+ SDK's built-in GitHub provider emits commit-pinned source mappings for both runtime TFMs; the symbol package contains both portable PDBs, and the NuSpec publishes the repository URL and commit.
+
+Remaining: final NuGet package validation (the icon, packaged readme, Source Link, and symbols are complete), performance/install pass (startup time, resize CPU, memory, clean consumer project and VS designer), and community launch. **Exit criteria:** v1.0.0 on NuGet.
 
 ## Post-v1 candidates
 

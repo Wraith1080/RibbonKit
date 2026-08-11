@@ -3980,6 +3980,30 @@ overlay separately keeps the pre-reparent arranged size (`ActualSize` plus margi
 neither shrinks nor moves. The deterministic open/closed scene now pins the application button's X/Y
 origin in addition to the ribbon, body, QAT and message-bar geometry.
 
+### 3.79 Source Link and symbol package verification — 2026-08-11
+
+Source Link is complete without an explicit `Microsoft.SourceLink.GitHub` dependency. RibbonKit is
+built with the .NET 8-or-newer SDK, which supplies GitHub Source Link automatically; adding the
+provider package would only override the SDK's bundled implementation. The existing
+`PublishRepositoryUrl`, `IncludeSymbols`, and `SymbolPackageFormat=snupkg` settings are therefore the
+intentional release configuration.
+
+A clean Release pack was inspected rather than inferred from a successful build. Its NuSpec carries
+the canonical repository URL, `git` type, branch, and exact commit. The `.snupkg` contains one
+portable `RibbonKit.pdb` for each of `net8.0-windows` and `net9.0-windows`; both PDBs contain exactly
+one Source Link record mapping all repository documents to the same commit-pinned
+`raw.githubusercontent.com/Wraith1080/RibbonKit` URL. The generated assembly informational version
+also includes that commit. Final package-content/consumer validation remains the next release item.
+
+### 3.80 Portable local package output — 2026-08-11
+
+The runtime project no longer sends every local pack to the original developer's machine-specific
+`E:\NuGet` directory. Its default `PackageOutputPath` is now the repository-relative `artifacts/`
+directory, matching the location already used explicitly by GitHub Actions. A plain
+`dotnet pack src/RibbonKit/RibbonKit.csproj -c Release` therefore has the same discoverable output
+location on any checkout while callers can still override it with `--output` when needed. Release
+versioning and final package-content/consumer validation remain next.
+
 ## 4. Workflow / Session Conventions
 
 - Cloud workspace: `/home/user/ribbonkit/`. The user's machine:
@@ -4208,7 +4232,8 @@ Backlog (rough priority):
    per-theme pass (M2), tabbed-documents mode + `RibbonState` layout persistence (M3). M0 and M4 are
    done, so the feature currently has a hole in its middle.
 6. Roadmap Phase 8 release engineering: **API review/freeze DONE (§3.75); repository documentation
-   DONE (§3.76); repository URL and package/Showcase icon DONE (§3.77).** Next: SourceLink and final
+   DONE (§3.76); repository URL and package/Showcase icon DONE (§3.77); Source Link and symbol
+   generation DONE (§3.79); portable package output DONE (§3.80).** Next: release versioning and final
    package validation, then the final performance/install pass.
 7. GitHub repository metadata: **DONE** — the package points to `Wraith1080/RibbonKit`.
 
