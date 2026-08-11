@@ -2,7 +2,7 @@
 
 Each phase ends with the showcase app demonstrating everything built so far, tests green, and a tagged pre-release. Phases are sequential but small overlaps are fine.
 
-> **Progress (2026-08-08):** Phases 0–7 are complete. Phase 6 closed with the user-verified live RTL popup/window pass in [`04-DESIGN-NOTES.md`](../04-DESIGN-NOTES.md) §3.61: all five themes ship with dark/black variants, per-monitor DPI is verified at 100/125/150/175/200%, the deterministic 40-image theme/variant × DPI suite plus seven focused scenes are green, localization/provider coverage is complete, and the Showcase lab verifies split/nested/context menus, normal/maximized screen edges, Backstage, and Office 2024/2007 application-menu/button/orb behavior. Phase 8 has not started. Post-v1 MDI emulation is unusually shaped: M0 and M4 are done, M1–M3 are not.
+> **Progress (2026-08-11):** Phases 0–7 are complete. Phase 6 closed with the user-verified live RTL popup/window pass in [`04-DESIGN-NOTES.md`](../04-DESIGN-NOTES.md) §3.61: all five themes ship with dark/black variants, per-monitor DPI is verified at 100/125/150/175/200%, the deterministic 40-image theme/variant × DPI suite plus twenty-two focused scenes are green, localization/provider coverage is complete, and the Showcase lab verifies split/nested/context menus, normal/maximized screen edges, Backstage, and Office 2024/2007 application-menu/button/orb behavior. Phase 8 release engineering is complete through §3.83; a local `v1.0.0` GitHub-release candidate is being prepared, while public distribution is deferred until explicitly requested. Post-v1 MDI emulation is unusually shaped: M0 and M4 are done, M1–M3 are not.
 >
 > Live DPI switching needed a fix outside the library: an app must declare **PerMonitorV2** in its own manifest or Windows bitmap-stretches it until restart. The showcase now does, and the README tells consumers to (§3.42).
 >
@@ -42,7 +42,28 @@ KeyTips subsystem (full Alt-chain), tab merging API, modal tabs, customize dialo
 
 ## Phase 8 — v1.0 release engineering
 
-API review and freeze (rename pass, hide internals, `PublicAPI.txt` analyzer), documentation site with control gallery and getting-started guide, NuGet polish (icon, readme, SourceLink), performance pass (startup time, resize CPU, memory), community launch (announce, good-first-issues). **Exit criteria:** v1.0.0 on NuGet.
+**API review and freeze: complete (2026-08-10).** The nullability-aware v1 surface is captured in `PublicAPI.Shipped.txt`; `Microsoft.CodeAnalysis.PublicApiAnalyzers` treats additions, removals, invalid baselines and nullability drift as build errors for both TFMs. Unsupported automatic QAT projections now return `false` instead of creating an unusable generic proxy, and the release solution builds with zero warnings.
+
+**Repository documentation: complete (2026-08-10).** A separate website was deliberately avoided: the GitHub README is the public landing page and contains the visual control overview, source-reference path, pasteable first ribbon, theming and DPI guidance, and task-oriented links into the existing focused Markdown references and executable Showcase.
+
+**Source Link and symbols: complete (2026-08-11).** The .NET 8+ SDK's built-in GitHub provider emits commit-pinned source mappings for both runtime TFMs; the symbol package contains both portable PDBs, and the NuSpec publishes the repository URL and commit.
+
+**Portable output and deterministic versioning: complete (2026-08-11).** Local packs write to the
+repository's ignored `artifacts/` directory. The default advanced from `0.1.0-alpha.1` to `1.0.0`
+when the local GitHub-release candidate was prepared.
+
+**Package and clean-consumer gate: complete (2026-08-11).** CI now validates the exact main/symbol package layout and metadata, then restores exclusively from that local package into an isolated cache and compiles real RibbonKit XAML for both runtime TFMs. Both package files are retained as CI artifacts; no publish step exists.
+
+**Performance and installed-package validation: complete (2026-08-11).** The Release Showcase has a repeatable outside-the-debugger startup/resize/memory baseline; a locally packaged executable loads the explicit theme/control dictionaries and passes Backstage plus repeated-resize runtime checks; and the same package is user-verified in Visual Studio 2026 through the live designer context commands and Ribbon Editor.
+
+**Local GitHub-release candidate: complete (2026-08-11).** Version 1.0.0 uses the neutral
+`RibbonKit contributors` attribution and includes an explicit AI-development provenance note. The
+repeatable preparation script produces the main package, symbols, release notes, and SHA-256 sums
+without containing any upload or publish operation.
+
+Remaining: optional public launch. The chosen distribution path is a downloadable package attached to
+a GitHub Release, not NuGet.org, and publication is deferred until explicitly requested. **Exit
+criteria:** a signed-off `v1.0.0` GitHub Release.
 
 ## Post-v1 candidates
 

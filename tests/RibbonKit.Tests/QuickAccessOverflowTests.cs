@@ -183,6 +183,26 @@ public class QuickAccessOverflowTests
     });
 
     [Fact]
+    public void Unsupported_controls_are_not_added_to_the_quick_access_toolbar() => Sta.Run(() =>
+    {
+        var ribbon = new Ribbon();
+        FrameworkElement[] unsupported =
+        {
+            new RibbonGroup(),
+            new RibbonComboBox(),
+            new InRibbonGallery(),
+            new Button(),
+        };
+
+        foreach (FrameworkElement source in unsupported)
+        {
+            Assert.False(ribbon.AddToQuickAccess(source));
+        }
+
+        Assert.Empty(ribbon.QuickAccessItems);
+    });
+
+    [Fact]
     public void An_overflow_entry_points_back_at_the_toolbar_item_it_stands_for() => Sta.Run(() =>
     {
         // Entries in the flyout are proxies, not members of QuickAccessItems, so a right-click on

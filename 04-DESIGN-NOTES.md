@@ -14,7 +14,8 @@ Fluent UI Ribbon on modern .NET.
 Locked decisions:
 
 - **Targets `net8.0-windows` and `net9.0-windows` only.** No .NET Framework support.
-- Open source, packaged for NuGet (`RibbonKit`, currently `0.1.0-alpha.1`).
+- Open source, packaged as a downloadable GitHub Release asset (`RibbonKit`, local `v1.0.0`
+  candidate); NuGet.org publication is not planned.
 - Planning docs live in `docs/` inside the repo.
 - Sample app: `samples/RibbonKit.Showcase` (a Word-like demo window).
 
@@ -88,6 +89,18 @@ Theme identities:
 
 - Custom chrome via `WindowChrome` (`CaptionHeight=34`, `UseAeroCaptionButtons=False`),
   themed caption buttons, a `TitleBarContent` slot (used by the title-bar QAT).
+- Windows 11 Snap Layouts: the HWND hook returns `HTMAXBUTTON` from `WM_NCHITTEST`
+  when the pointer is within the visible themed maximize/restore template part. Snap is
+  a native non-client hit-test contract; a WPF hover or `SystemCommands.MaximizeWindow`
+  invocation alone does not expose the flyout. Once advertised that way, Windows sends
+  non-client mouse messages instead of WPF mouse events, so the hook also tracks leave,
+  drives the existing caption hover/pressed brush tokens through `Button.Background`,
+  and owns maximize/restore button-up. Do not forward the button down/up to the native
+  caption handler: on a transparent Mica title bar it can paint over the themed control.
+  The resource references deliberately share `ThemeManager`'s keys, so colored-title-bar
+  accent/glass overrides and live theme/accent switches continue to apply while hovered.
+  **User-verified on Windows 11 (2026-08-11):** the Snap Layout flyout, themed hover/press,
+  maximize/restore clicks, Mica on/off, and colored-title-bar combinations all behave correctly.
 - **Maximize overhang fix (important)**: a maximized WindowChrome window hangs past the
   monitor work area. `WM_GETMINMAXINFO` hooks did NOT fix it reliably. The working fix
   is *measured margin compensation*: on state/DPI changes, measure `GetWindowRect` vs
@@ -1062,7 +1075,8 @@ errors. Icon read+write via a StaticResource model item is fully proven.
 
 **Visual picker shipped (`IconPickerDialog` + `IconCatalog`).** Enumeration was the last constraint:
 no reliable resource-enumeration API, `ModelItem.Source` is not a file path, and resources live in the
-isolated surface process the extension can't read — so the extension can't auto-discover Icons.xaml.
+isolated surface process the extension can't read — so the extension can't discover Icons.xaml through
+the design model itself.
 Design that needs zero uncertain APIs: a "…" button on each icon row opens a picker that (1) always
 lists the icon keys **already used elsewhere in this ribbon** (a pure model walk, `CollectUsedIconKeys`),
 and (2) has **"Load Icons.xaml…"** — an `OpenFileDialog` that parses the file with `XamlReader.Load`
@@ -1072,6 +1086,16 @@ key is highlighted, and clicking a tile writes via the proven `SetStaticResource
 with no file loaded (used-keys), and it can't hit an undocumented API. Trimmed the now-proven spike
 logging (read-back / create-attempt / model-type lines). Later polish: remember the Icons.xaml path
 across sessions; a "(none)" tile to clear an icon (needs a verified `ClearValue`).
+
+**Automatic Icons.xaml check (2026-08-11 follow-up).** The picker now performs a conservative
+filesystem discovery before its first render while retaining **Load Icons.xaml…** unchanged. Because
+the design extension runs in the Visual Studio process, it locates the DTE automation object registered
+for that exact process in the Running Object Table, reads `ActiveDocument.FullName` and
+`Solution.FullName` by reflection (no EnvDTE package/deployment dependency), and searches in priority
+order: beside the active document, within its nearest `.csproj` directory, then the solution directory.
+Build/output/cache folders and reparse points are skipped. It auto-loads only one unambiguous match;
+none, multiple matches, an unavailable IDE context, or a parse failure leaves the browse workflow and
+an explanatory picker status. The selected dictionary remains cached for the design-tools session.
 
 **Nested containers (StackPanels) in the editor — DONE.** Real ribbons put a `StackPanel` (often a
 vertical column of horizontal icon rows) inside a group's `Items`, not just leaf controls. The editor
@@ -1532,8 +1556,8 @@ settle that rides the existing tab-switch slide animation, so it shouldn't read 
   runtime reference) plus a `TargetsForTfmSpecificContentInPackage` target that packs it into
   `lib/<tfm>/Design/` for each TFM. With the already-packed `tools/VisualStudioToolsManifest.xml`,
   `dotnet pack src/RibbonKit/RibbonKit.csproj -c Release` yields a package that gives consumers the
-  toolbox items + right-click design-time editor. (RepositoryUrl still has the `YOUR-GITHUB-USERNAME`
-  placeholder — set it before publishing.) See `RibbonKit.Design/SETUP-DESIGNTOOLS.md` → "NuGet packaging".
+  toolbox items + right-click design-time editor. The package repository metadata points to the
+  public RibbonKit GitHub repository. See `RibbonKit.Design/SETUP-DESIGNTOOLS.md` → "NuGet packaging".
 
 **Eighth feedback pass — continuous top chrome + complete button-state glass (2026-08-02):**
 
@@ -3877,8 +3901,208 @@ language without adding debugger-driven API and template complexity before the A
 **Verification rule:** assess perceived WPF resize performance outside the debugger. Visual Studio's
 managed debugger, XAML Hot Reload, and diagnostic tooling can materially alter UI-thread, layout, and
 render cadence. Debug runs remain useful for correctness; Ctrl+F5 or the built executable is the
-appropriate baseline for interaction performance. The automated baseline returns to 282 logic tests
+appropriate baseline for interaction performance. The current automated baseline is 283 logic tests
 plus the one visual test covering 62 approved images.
+
+### 3.75 Phase 8 API review and freeze — 2026-08-10
+
+The v1 runtime surface is now frozen. `RibbonKit.csproj` references
+`Microsoft.CodeAnalysis.PublicApiAnalyzers` 5.6.0 as a private analyzer and marks its compatibility,
+nullability and baseline-integrity diagnostics as errors for both `net8.0-windows` and
+`net9.0-windows`. `PublicAPI.Shipped.txt` captures the reviewed 1,094-line nullability-aware surface;
+`PublicAPI.Unshipped.txt` starts empty except for `#nullable enable`. Compiler errors also enforce
+missing public XML docs and broken `cref` references. Future compatible additions belong in the
+unshipped file and must be reviewed deliberately; the shipped file is not edited to disguise a
+breaking change.
+
+The review retained the intentional WPF extension surfaces: lookless controls and their automation
+peers, dependency/routed-event identifiers, layout panels used by templates, `IRibbonSizeAware`,
+theme/localization/backdrop APIs, and the public animation primitives that let application-authored
+controls honor RibbonKit's motion policy. The analyzer confirms that the surface has no oblivious
+reference types and is identical across the two runtime TFMs.
+
+One behavior needed correction before freezing. `Ribbon.AddToQuickAccess(FrameworkElement)` formerly
+accepted an unknown control and fell into `CreateCommandProxy`'s generic UIA button, producing a
+blank or misleading QAT entry even though the catalog never offered that type. It now returns
+`false` unless the source is a `RibbonButton`, `RibbonToggleButton`, `RibbonSplitButton`, or
+`RibbonDropDownButton` (and still returns false for a duplicate). The generic internal fallback
+remains available to overflow a hand-declared QAT element without widening the supported automatic
+projection claim. A test pins rejection of groups, combo boxes, galleries and arbitrary WPF buttons;
+richer group/gallery/combo representations remain the post-v1 work recorded below.
+
+The same zero-warning pass fixed two broken runtime XML-doc references and four real nullable-flow
+warnings in the net472 design tools without changing their behavior. Verification: Release solution
+build zero warnings/errors; 283 logic tests green; the visual test green across all 62 approvals.
+
+### 3.76 Repository-native v1 documentation gate — 2026-08-10
+
+The v1 documentation deliberately stays in the GitHub repository rather than introducing a separate
+site and deployment stack for a single WPF control library. `README.md` is the maintained public
+entry point: it now links directly to the getting-started, feature, theming, design-tool,
+documentation and roadmap sections; records the current source-reference path before the v1 NuGet
+package is published; and makes the first XAML sample pasteable by omitting application-specific icon
+resources. It also explains that Office 2024 is the default theme and routes readers by task into the
+Showcase and focused Markdown references.
+
+The existing four screenshots already cover the useful product story—current ribbon, Backstage,
+historical theming and the Visual Studio Ribbon Editor—so no decorative or redundant captures were
+added. Screenshot generation remains available when a future feature needs visual explanation. The
+obsolete documentation-site feature/roadmap entries were replaced with the completed repository-docs
+gate. Link, image and sample validation are part of this gate; API-reference generation remains a
+possible post-v1 addition rather than a release dependency.
+
+### 3.77 NuGet and Showcase identity icon — 2026-08-11
+
+The release package and executable now share a purpose-built RibbonKit identity. The deterministic
+`assets/RibbonKit.svg` master uses a compact folded-ribbon `R` that remains recognizable at Windows
+taskbar sizes; `RibbonKit.png` is the NuGet package icon and the multi-resolution `RibbonKit.ico`
+contains 16 through 256 px frames. The Showcase embeds the ICO as its executable icon and assigns it
+directly to `MainWindow`. Because `RibbonWindow` replaces the native caption, its shared template now
+also binds `Window.Icon` into a 16-DIP leading image; setting the property alone populated the taskbar
+but left the custom title bar empty. The icon remains visible when Backstage hides title-bar QAT
+content, while a null icon collapses without leaving a new gap. When a hosted ribbon explicitly uses
+the Office 2007 `Orb` application-button shape, it internally registers that state with its owning
+`RibbonWindow`; the caption icon then collapses and returns its width to the QAT because the orb
+already owns application identity. This is keyed to the actual shape rather than the theme, keeps
+`Window.Icon` intact for the taskbar/executable, handles shape changes and unload/reparent cleanup,
+and adds no post-freeze public API. NuGet's packaged README was already wired; SourceLink and final
+package-content validation remain next.
+
+### 3.78 Office 2007 application-menu open layout stability — 2026-08-11
+
+Opening the two-pane menu could nudge the complete ribbon downward by a few DIPs. This was specific
+to the orb path, not the new caption icon or Windows 11 maximize hook: the menu moves the real orb
+above its outer overlay and leaves a placeholder in `ApplicationButtonLayer`, while rectangular File
+tabs never take that path. The placeholder was initially sized from the button's `ActualHeight` plus
+margin and then repeatedly recalculated after the button had moved into a differently constrained
+overlay. That created a layout feedback loop; Office 2007's negative orb overhang made the changed
+tab-row contribution visible.
+
+The placeholder now reserves the button's pre-reparent `DesiredSize`, which is exactly the size
+reported to its original panel and already includes margin, and keeps that reservation stable until
+the button returns. Menu/overlay placement continues to follow the arranged placeholder, but no
+longer writes post-reparent measurements back into the ribbon's layout. A focused STA case pins the
+difference between desired layout contribution and a stretched post-arrange `ActualSize`.
+
+The first correction stabilized the ribbon but exposed the other half of the distinction: giving the
+placeholder an explicit desired height centered its origin inside the taller tab row, so the overlay
+followed that origin and the orb itself moved down on open. The placeholder now uses its desired
+height as a minimum while retaining stretch alignment, preserving the original slot origin. The
+overlay separately keeps the pre-reparent arranged size (`ActualSize` plus margin), so the real orb
+neither shrinks nor moves. The deterministic open/closed scene now pins the application button's X/Y
+origin in addition to the ribbon, body, QAT and message-bar geometry.
+
+### 3.79 Source Link and symbol package verification — 2026-08-11
+
+Source Link is complete without an explicit `Microsoft.SourceLink.GitHub` dependency. RibbonKit is
+built with the .NET 8-or-newer SDK, which supplies GitHub Source Link automatically; adding the
+provider package would only override the SDK's bundled implementation. The existing
+`PublishRepositoryUrl`, `IncludeSymbols`, and `SymbolPackageFormat=snupkg` settings are therefore the
+intentional release configuration.
+
+A clean Release pack was inspected rather than inferred from a successful build. Its NuSpec carries
+the canonical repository URL, `git` type, branch, and exact commit. The `.snupkg` contains one
+portable `RibbonKit.pdb` for each of `net8.0-windows` and `net9.0-windows`; both PDBs contain exactly
+one Source Link record mapping all repository documents to the same commit-pinned
+`raw.githubusercontent.com/Wraith1080/RibbonKit` URL. The generated assembly informational version
+also includes that commit. Final package-content/consumer validation remains the next release item.
+
+### 3.80 Portable local package output — 2026-08-11
+
+The runtime project no longer sends every local pack to the original developer's machine-specific
+`E:\NuGet` directory. Its default `PackageOutputPath` is now the repository-relative `artifacts/`
+directory, matching the location already used explicitly by GitHub Actions. A plain
+`dotnet pack src/RibbonKit/RibbonKit.csproj -c Release` therefore has the same discoverable output
+location on any checkout while callers can still override it with `--output` when needed. Release
+versioning and final package-content/consumer validation remain next.
+
+### 3.81 Deterministic package versioning — 2026-08-11
+
+Package versions no longer depend on the wall clock. The former
+`1.0.0-dev-<yyyyMMddHHmm>` expression could give separate build and `--no-build` pack evaluations
+different identities, made identical source commits produce differently named packages, and
+prematurely presented routine local output as the v1 line. The project now composes its documented
+current version from `VersionPrefix=0.1.0` and `VersionSuffix=alpha.1`, so normal builds and packs
+consistently produce `0.1.0-alpha.1` and the assembly informational version adds only the Source Link
+commit metadata.
+
+Release automation may still set the standard `Version` MSBuild property explicitly (for example,
+`-p:Version=1.0.0`) when a validated release is intentionally prepared. No tag-derived or automatic
+publishing behavior was added. Final package-content and clean-consumer validation remain next.
+
+### 3.82 NuGet package and clean-consumer release gate — 2026-08-11
+
+`eng/Validate-Package.ps1` is now the repeatable post-pack gate. It requires exactly one matching
+`.nupkg`/`.snupkg` pair, allowlists the package layout, rejects duplicate entries, source leakage,
+PDB duplication and unexpected consumer dependencies, and verifies the license, readme, icon,
+repository/commit, target-framework groups, toolbox manifest and matching symbol-package version.
+Both runtime assemblies, XML documentation files, design-tools copies and portable PDBs must be in
+their exact framework-specific locations.
+
+The same gate creates a temporary package-reference-only WPF consumer with `nuget.org` and every
+other feed cleared, restores RibbonKit solely from the local `artifacts/` directory into an isolated
+package cache, and compiles real `urn:ribbonkit` XAML against both `net8.0-windows` and
+`net9.0-windows`. The temporary project is removed after success and preserved on failure for
+diagnosis. The local `0.1.0-alpha.1` validation completed with zero warnings or errors.
+
+CI runs this gate after packing and retains both the main and symbol packages in its existing build
+artifact; this does not publish either package to NuGet. Final live runtime/performance and Visual
+Studio installed-package designer validation remain next.
+
+### 3.83 Final live performance and installed-package pass — 2026-08-11
+
+`eng/Measure-ShowcasePerformance.ps1` now captures the Release Showcase baseline by launching the
+built executable directly, never through the Visual Studio debugger. Five process-start-to-input-idle
+runs measured 711.88–747.12 ms (727.66 ms median). After one 160-resize cache-warmup sweep, three
+identical 160-resize passes averaged 16.081 ms of process CPU per resize and 63.61% of one core. The
+Showcase's large all-features visual tree allocated its expected WPF/render caches during warmup;
+across the subsequent 480 resizes, working set and private memory changed by 10.12 MiB and 10.41 MiB
+respectively rather than repeating the initial allocation on every pass. Results are written only to
+ignored `TestResults/performance/showcase-release.json`; the live-GUI baseline is intentionally not a
+machine-independent CI threshold.
+
+The package validator's generated consumer is now a real executable as well as a compile probe. Its
+`App.xaml` explicitly merges `Tokens.Office2024.xaml`, the complete `Office2024.xaml` shared-control
+aggregator, and `Mdi.xaml`, so package URI and visible styling failures cannot hide behind the
+assembly's implicit default theme. With `-RunConsumer`, it opens the package-installed RibbonWindow,
+renders Backstage, opens and closes that surface, performs 120 width/layout changes, forces managed
+collections, records a local JSON result, and exits. The final styled run reached `ContentRendered`
+in 996.05 ms and retained 71,152 bytes (about 69 KiB) of managed memory across the exercise; both
+target frameworks still compiled with zero warnings and errors from the isolated local package feed.
+
+Visual Studio Community 2026 18.7.1 then opened that same package-only project from a clean IDE
+process. Its isolated `WpfSurface` loaded `RibbonKit.dll` 0.1.0-alpha.1 from the designer cache, and
+the live automation tree exposed the RibbonWindow, ribbon, tab, group, and buttons. Selecting the
+ribbon produced the packaged design-tools commands (`Edit Ribbon…`, `Add Tab`, application-menu and
+QAT actions); invoking `Edit Ribbon…` opened the net472 Ribbon Editor, rebuilt the one-tab model and
+logged `RibbonEditorWindow: ready`. The user confirmed both the styled surface and editor visually.
+At that point the final performance/install gate was complete and community launch was the remaining
+Phase 8 item; §3.84 records the subsequent distribution decision.
+
+### 3.84 Local v1.0.0 GitHub-release candidate — 2026-08-11
+
+The public-launch policy changed at the user's direction: RibbonKit will not be submitted to
+NuGet.org. If public distribution is requested later, the validated `.nupkg` and `.snupkg` will be
+attached directly to a GitHub Release. Until then, no release, tag, push, or upload is performed.
+
+Release metadata now defaults to `1.0.0`, attributes the package and assemblies neutrally to
+`RibbonKit contributors`, and documents that development was performed primarily with AI coding
+assistants under human direction, visual review, and automated verification. The same neutral
+copyright notice is used by the MIT license; no individual is presented as the package author.
+
+`eng/Prepare-GitHubRelease.ps1` is the repeatable, local-only release gate. It restores, builds,
+tests, packs, invokes the isolated package validator, copies `RELEASE_NOTES.md`, and emits SHA-256
+sums under ignored `artifacts/github-release-v1.0.0/`; it contains no publishing command. The first
+candidate passed with zero build warnings or errors, 298/298 logic tests, the single visual test and
+all 62 approvals, and isolated package consumption on both runtime TFMs. Its inspected NuSpec reports
+version `1.0.0`, author `RibbonKit contributors`, MIT, the expected repository and release notes.
+
+The prepared files remain local: `RibbonKit.1.0.0.nupkg` (567,192 bytes),
+`RibbonKit.1.0.0.snupkg` (109,774 bytes), `RELEASE_NOTES.md`, and `SHA256SUMS.txt`. Because the release
+changes are not yet committed, this candidate's Source Link repository commit still identifies the
+current pre-release HEAD. If publication is ever authorized, commit first and rerun the preparation
+script so the final assets point to the exact release commit. Local release preparation is complete;
+public community launch is intentionally deferred.
 
 ## 4. Workflow / Session Conventions
 
@@ -3910,8 +4134,10 @@ plus the one visual test covering 62 approved images.
 > dark/black variants in §3.49, and the complete 40-image
 > theme/variant/DPI matrix plus twenty-two focused scenes are covered by 62 approvals; localization,
 > representative bidirectional content, and the live RTL popup/window pass are complete.
-> Phase 8 (API freeze,
-> docs site, perf, launch) is untouched. Of the two items
+> Phase 8 release engineering and the local GitHub-release candidate are complete through §3.84:
+> API freeze, repository documentation, package polish and the final performance/install pass are
+> closed; public GitHub publication is deferred until explicitly requested. Of the
+> two items
 > deferred out of §3.38, the two-pane 2007 application menu shipped in §3.46; only the 2007 window
 > frame is still owed.
 
@@ -4107,17 +4333,21 @@ Backlog (rough priority):
 5. **MDI M1–M3**: cascade/tile/arrange commands + Ctrl+Tab (M1), the MVVM `ItemsSource` demo and a
    per-theme pass (M2), tabbed-documents mode + `RibbonState` layout persistence (M3). M0 and M4 are
    done, so the feature currently has a hole in its middle.
-6. Roadmap Phase 8 release engineering: API review and freeze (`PublicAPI.txt` — Phase 7 added a lot
-   of public surface), docs site, NuGet polish, performance pass.
-7. GitHub publish: repo URL placeholder in csproj (`YOUR-GITHUB-USERNAME`).
+6. Roadmap Phase 8 release engineering: **API review/freeze DONE (§3.75); repository documentation
+   DONE (§3.76); repository URL and package/Showcase icon DONE (§3.77); Source Link and symbol
+   generation DONE (§3.79); portable package output DONE (§3.80); deterministic versioning DONE
+   (§3.81); package/clean-consumer gate DONE (§3.82); live performance/install pass DONE (§3.83);
+   local v1.0.0 GitHub-release candidate DONE (§3.84).** Public launch is deferred until explicitly
+   requested; NuGet.org publication is not planned.
+7. GitHub repository metadata: **DONE** — the package points to `Wraith1080/RibbonKit`.
 
-Pre-freeze consideration (not committed scope):
+Resolved at the API freeze (not v1 scope):
 
-- **Touch mode toggle.** Decide during the Phase 8 API review whether v1 should expose an explicit,
-  opt-in density mode that enlarges hit targets and spacing across the ribbon, QAT, menus, and
+- **Touch mode toggle.** The Phase 8 API review decided not to expose an explicit v1 density API.
+  A future implementation would need an opt-in density mode that enlarges hit targets and spacing
+  across the ribbon, QAT, menus, and
   customization surfaces. Keep it token/metric-driven and compatible with reduction, DPI, RTL, and
-  mouse/keyboard use; do not infer it from a single touch event. If that cross-surface contract is not
-  small enough to validate before the freeze, defer the API rather than ship a partial toggle.
+  mouse/keyboard use; do not infer it from a single touch event.
   **Feasibility check (2026-08-08):** this is not currently a one-property template switch. Theme
   chrome metrics are centralized, but hit-target geometry still spans hundreds of literal sizes,
   margins, and paddings across the shared button, dropdown, input, Backstage, application-menu, and
@@ -4132,8 +4362,8 @@ Possible post-v1 polish:
   discovery/proxy set is `RibbonButton`, `RibbonToggleButton`, `RibbonSplitButton`, and
   `RibbonDropDownButton`. `QuickAccessItems` can still contain hand-declared elements, but the
   customization catalog, overflow projection, persistence identity, popup lifetime and KeyTips do
-  not make an arbitrary element a supported source merely because `AddToQuickAccess` accepts a
-  `FrameworkElement`. Keep that boundary explicit rather than reopening the v1 freeze.
+  not make an arbitrary element a supported source. `AddToQuickAccess(FrameworkElement)` now returns
+  `false` for those unsupported types. Keep that boundary explicit rather than reopening the v1 freeze.
   - **Group first.** Represent a `RibbonGroup` as a small dropdown using its existing `Header` and
     `Icon`; require a usable group icon for QAT eligibility. Its popup should be generated from
     source-linked command proxies (the same proven machinery used by custom groups), never by moving
@@ -4169,14 +4399,15 @@ Possible post-v1 polish:
   honor reduced motion, handle rapid reversals, and stay disabled while a DWM backdrop is active so
   Mica/Acrylic retain their native material retint without a second cross-fade on top.
 
-**Unit tests: 282 green (verified 2026-08-10).** Coverage now includes the STA harness, the borrow
+**Unit tests: 283 green (verified 2026-08-10).** Coverage now includes the STA harness, the borrow
 protocol, overflow strip measure/arrange rules, popup motion and dismissal, proxy mirroring,
 application-menu layering/hover/footer-outline/KeyTips, repeatable message-bar API/template/theme
 contracts, Office 2010 seam/state/consumer contracts, localization/RTL
 context-menu, customization-template, chrome-tooltip, default-File, representative bidi-lab and
 live Backstage/title-transition contracts, design-preview runtime isolation, scoped theme-token
 replacement, dark/Black neutral Backstage rail contracts, and the existing
-reduction/size-definition/theme-scope tests. The KeyTip resolver cases add explicit-key precedence,
+reduction/size-definition/theme-scope tests, plus rejection of unsupported automatic QAT projections.
+The KeyTip resolver cases add explicit-key precedence,
 exact/prefix collision recovery, prefix-free derivation, typeable non-Latin fallback, and explicit
 custom-content discovery/invocation across Backstage and application-menu panes, including disabled
 target blocking, native toggle Click/Command semantics, compact-input discovery with Header-based

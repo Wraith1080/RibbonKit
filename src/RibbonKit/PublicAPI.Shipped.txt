@@ -1,0 +1,1094 @@
+#nullable enable
+const RibbonKit.Controls.Ribbon.QatColoredHoverBackgroundKey = "RibbonKit.Brushes.Qat.ColoredHoverBackground" -> string!
+const RibbonKit.Controls.Ribbon.QatColoredPressedBackgroundKey = "RibbonKit.Brushes.Qat.ColoredPressedBackground" -> string!
+override RibbonKit.Automation.RibbonAutomationPeer.GetAutomationControlTypeCore() -> System.Windows.Automation.Peers.AutomationControlType
+override RibbonKit.Automation.RibbonAutomationPeer.GetClassNameCore() -> string!
+override RibbonKit.Automation.RibbonButtonAutomationPeer.GetNameCore() -> string!
+override RibbonKit.Automation.RibbonCheckBoxAutomationPeer.GetClassNameCore() -> string!
+override RibbonKit.Automation.RibbonCheckBoxAutomationPeer.GetNameCore() -> string!
+override RibbonKit.Automation.RibbonComboBoxAutomationPeer.GetNameCore() -> string!
+override RibbonKit.Automation.RibbonDropDownButtonAutomationPeer.GetAutomationControlTypeCore() -> System.Windows.Automation.Peers.AutomationControlType
+override RibbonKit.Automation.RibbonDropDownButtonAutomationPeer.GetClassNameCore() -> string!
+override RibbonKit.Automation.RibbonDropDownButtonAutomationPeer.GetNameCore() -> string!
+override RibbonKit.Automation.RibbonDropDownButtonAutomationPeer.GetPattern(System.Windows.Automation.Peers.PatternInterface patternInterface) -> object?
+override RibbonKit.Automation.RibbonGroupAutomationPeer.GetAutomationControlTypeCore() -> System.Windows.Automation.Peers.AutomationControlType
+override RibbonKit.Automation.RibbonGroupAutomationPeer.GetClassNameCore() -> string!
+override RibbonKit.Automation.RibbonGroupAutomationPeer.GetNameCore() -> string!
+override RibbonKit.Automation.RibbonMenuItemAutomationPeer.GetAutomationControlTypeCore() -> System.Windows.Automation.Peers.AutomationControlType
+override RibbonKit.Automation.RibbonMenuItemAutomationPeer.GetClassNameCore() -> string!
+override RibbonKit.Automation.RibbonMenuItemAutomationPeer.GetNameCore() -> string!
+override RibbonKit.Automation.RibbonMessageAutomationPeer.GetAutomationControlTypeCore() -> System.Windows.Automation.Peers.AutomationControlType
+override RibbonKit.Automation.RibbonMessageAutomationPeer.GetClassNameCore() -> string!
+override RibbonKit.Automation.RibbonMessageAutomationPeer.GetNameCore() -> string!
+override RibbonKit.Automation.RibbonMessageBarAutomationPeer.GetAutomationControlTypeCore() -> System.Windows.Automation.Peers.AutomationControlType
+override RibbonKit.Automation.RibbonMessageBarAutomationPeer.GetClassNameCore() -> string!
+override RibbonKit.Automation.RibbonRadioButtonAutomationPeer.GetClassNameCore() -> string!
+override RibbonKit.Automation.RibbonRadioButtonAutomationPeer.GetNameCore() -> string!
+override RibbonKit.Automation.RibbonSplitButtonAutomationPeer.GetClassNameCore() -> string!
+override RibbonKit.Automation.RibbonSplitButtonAutomationPeer.GetPattern(System.Windows.Automation.Peers.PatternInterface patternInterface) -> object?
+override RibbonKit.Automation.RibbonTextBoxAutomationPeer.GetNameCore() -> string!
+override RibbonKit.Automation.RibbonToggleButtonAutomationPeer.GetNameCore() -> string!
+override RibbonKit.Controls.Backstage.GetContainerForItemOverride() -> System.Windows.DependencyObject!
+override RibbonKit.Controls.Backstage.IsItemItsOwnContainerOverride(object! item) -> bool
+override RibbonKit.Controls.Backstage.OnApplyTemplate() -> void
+override RibbonKit.Controls.Backstage.OnPreviewKeyDown(System.Windows.Input.KeyEventArgs! e) -> void
+override RibbonKit.Controls.Backstage.OnSelectionChanged(System.Windows.Controls.SelectionChangedEventArgs! e) -> void
+override RibbonKit.Controls.BackstageNavPanel.ArrangeOverride(System.Windows.Size finalSize) -> System.Windows.Size
+override RibbonKit.Controls.BackstageNavPanel.MeasureOverride(System.Windows.Size availableSize) -> System.Windows.Size
+override RibbonKit.Controls.BackstageNavPanel.OnRender(System.Windows.Media.DrawingContext! drawingContext) -> void
+override RibbonKit.Controls.BackstageTabItem.OnKeyDown(System.Windows.Input.KeyEventArgs! e) -> void
+override RibbonKit.Controls.BackstageTabItem.OnPreviewMouseLeftButtonDown(System.Windows.Input.MouseButtonEventArgs! e) -> void
+override RibbonKit.Controls.InRibbonGallery.OnApplyTemplate() -> void
+override RibbonKit.Controls.InRibbonGallery.OnSelectionChanged(System.Windows.Controls.SelectionChangedEventArgs! e) -> void
+override RibbonKit.Controls.MdiChild.OnApplyTemplate() -> void
+override RibbonKit.Controls.MdiChild.OnPreviewMouseDown(System.Windows.Input.MouseButtonEventArgs! e) -> void
+override RibbonKit.Controls.MdiContainer.ClearContainerForItemOverride(System.Windows.DependencyObject! element, object! item) -> void
+override RibbonKit.Controls.MdiContainer.GetContainerForItemOverride() -> System.Windows.DependencyObject!
+override RibbonKit.Controls.MdiContainer.IsItemItsOwnContainerOverride(object! item) -> bool
+override RibbonKit.Controls.MdiContainer.OnItemsChanged(System.Collections.Specialized.NotifyCollectionChangedEventArgs! e) -> void
+override RibbonKit.Controls.MdiContainer.PrepareContainerForItemOverride(System.Windows.DependencyObject! element, object! item) -> void
+override RibbonKit.Controls.Ribbon.OnApplyTemplate() -> void
+override RibbonKit.Controls.Ribbon.OnContextMenuOpening(System.Windows.Controls.ContextMenuEventArgs! e) -> void
+override RibbonKit.Controls.Ribbon.OnCreateAutomationPeer() -> System.Windows.Automation.Peers.AutomationPeer!
+override RibbonKit.Controls.RibbonApplicationMenu.GetContainerForItemOverride() -> System.Windows.DependencyObject!
+override RibbonKit.Controls.RibbonApplicationMenu.IsItemItsOwnContainerOverride(object! item) -> bool
+override RibbonKit.Controls.RibbonApplicationMenu.OnApplyTemplate() -> void
+override RibbonKit.Controls.RibbonApplicationMenu.OnPreviewKeyDown(System.Windows.Input.KeyEventArgs! e) -> void
+override RibbonKit.Controls.RibbonApplicationMenuItem.OnApplyTemplate() -> void
+override RibbonKit.Controls.RibbonApplicationMenuItem.OnContentChanged(object? oldContent, object? newContent) -> void
+override RibbonKit.Controls.RibbonApplicationMenuItem.OnMouseEnter(System.Windows.Input.MouseEventArgs! e) -> void
+override RibbonKit.Controls.RibbonApplicationMenuItem.OnMouseLeave(System.Windows.Input.MouseEventArgs! e) -> void
+override RibbonKit.Controls.RibbonButton.OnApplyTemplate() -> void
+override RibbonKit.Controls.RibbonButton.OnCreateAutomationPeer() -> System.Windows.Automation.Peers.AutomationPeer!
+override RibbonKit.Controls.RibbonButton.OnPropertyChanged(System.Windows.DependencyPropertyChangedEventArgs e) -> void
+override RibbonKit.Controls.RibbonCheckBox.OnApplyTemplate() -> void
+override RibbonKit.Controls.RibbonCheckBox.OnCreateAutomationPeer() -> System.Windows.Automation.Peers.AutomationPeer!
+override RibbonKit.Controls.RibbonCheckBox.OnPropertyChanged(System.Windows.DependencyPropertyChangedEventArgs e) -> void
+override RibbonKit.Controls.RibbonComboBox.OnApplyTemplate() -> void
+override RibbonKit.Controls.RibbonComboBox.OnCreateAutomationPeer() -> System.Windows.Automation.Peers.AutomationPeer!
+override RibbonKit.Controls.RibbonComboBox.OnDropDownOpened(System.EventArgs! e) -> void
+override RibbonKit.Controls.RibbonCustomizeEditDialog.OnApplyTemplate() -> void
+override RibbonKit.Controls.RibbonCustomizeEditDialog.OnSourceInitialized(System.EventArgs! e) -> void
+override RibbonKit.Controls.RibbonCustomizePage.OnApplyTemplate() -> void
+override RibbonKit.Controls.RibbonDropDownButton.OnApplyTemplate() -> void
+override RibbonKit.Controls.RibbonDropDownButton.OnCreateAutomationPeer() -> System.Windows.Automation.Peers.AutomationPeer!
+override RibbonKit.Controls.RibbonGallery.ClearContainerForItemOverride(System.Windows.DependencyObject! element, object! item) -> void
+override RibbonKit.Controls.RibbonGallery.GetContainerForItemOverride() -> System.Windows.DependencyObject!
+override RibbonKit.Controls.RibbonGallery.IsItemItsOwnContainerOverride(object! item) -> bool
+override RibbonKit.Controls.RibbonGallery.OnMouseLeave(System.Windows.Input.MouseEventArgs! e) -> void
+override RibbonKit.Controls.RibbonGallery.PrepareContainerForItemOverride(System.Windows.DependencyObject! element, object! item) -> void
+override RibbonKit.Controls.RibbonGroup.OnApplyTemplate() -> void
+override RibbonKit.Controls.RibbonGroup.OnCreateAutomationPeer() -> System.Windows.Automation.Peers.AutomationPeer!
+override RibbonKit.Controls.RibbonGroup.OnItemsChanged(System.Collections.Specialized.NotifyCollectionChangedEventArgs! e) -> void
+override RibbonKit.Controls.RibbonMenuItem.OnCreateAutomationPeer() -> System.Windows.Automation.Peers.AutomationPeer!
+override RibbonKit.Controls.RibbonMessage.OnApplyTemplate() -> void
+override RibbonKit.Controls.RibbonMessage.OnCreateAutomationPeer() -> System.Windows.Automation.Peers.AutomationPeer!
+override RibbonKit.Controls.RibbonMessageBar.ClearContainerForItemOverride(System.Windows.DependencyObject! element, object! item) -> void
+override RibbonKit.Controls.RibbonMessageBar.GetContainerForItemOverride() -> System.Windows.DependencyObject!
+override RibbonKit.Controls.RibbonMessageBar.IsItemItsOwnContainerOverride(object! item) -> bool
+override RibbonKit.Controls.RibbonMessageBar.OnCreateAutomationPeer() -> System.Windows.Automation.Peers.AutomationPeer!
+override RibbonKit.Controls.RibbonMessageBar.OnItemsChanged(System.Collections.Specialized.NotifyCollectionChangedEventArgs! e) -> void
+override RibbonKit.Controls.RibbonMessageBar.PrepareContainerForItemOverride(System.Windows.DependencyObject! element, object! item) -> void
+override RibbonKit.Controls.RibbonOptionsDialog.OnApplyTemplate() -> void
+override RibbonKit.Controls.RibbonOptionsDialog.OnSourceInitialized(System.EventArgs! e) -> void
+override RibbonKit.Controls.RibbonQuickAccessPage.OnApplyTemplate() -> void
+override RibbonKit.Controls.RibbonQuickAccessToolBar.OnApplyTemplate() -> void
+override RibbonKit.Controls.RibbonQuickAccessToolBar.OnItemsChanged(System.Collections.Specialized.NotifyCollectionChangedEventArgs! e) -> void
+override RibbonKit.Controls.RibbonRadioButton.OnApplyTemplate() -> void
+override RibbonKit.Controls.RibbonRadioButton.OnCreateAutomationPeer() -> System.Windows.Automation.Peers.AutomationPeer!
+override RibbonKit.Controls.RibbonRadioButton.OnPropertyChanged(System.Windows.DependencyPropertyChangedEventArgs e) -> void
+override RibbonKit.Controls.RibbonSplitButton.OnApplyTemplate() -> void
+override RibbonKit.Controls.RibbonSplitButton.OnCreateAutomationPeer() -> System.Windows.Automation.Peers.AutomationPeer!
+override RibbonKit.Controls.RibbonTab.OnApplyTemplate() -> void
+override RibbonKit.Controls.RibbonTab.OnMouseDoubleClick(System.Windows.Input.MouseButtonEventArgs! e) -> void
+override RibbonKit.Controls.RibbonTabControl.GetContainerForItemOverride() -> System.Windows.DependencyObject!
+override RibbonKit.Controls.RibbonTabControl.IsItemItsOwnContainerOverride(object! item) -> bool
+override RibbonKit.Controls.RibbonTabControl.OnApplyTemplate() -> void
+override RibbonKit.Controls.RibbonTabControl.OnSelectionChanged(System.Windows.Controls.SelectionChangedEventArgs! e) -> void
+override RibbonKit.Controls.RibbonTextBox.OnCreateAutomationPeer() -> System.Windows.Automation.Peers.AutomationPeer!
+override RibbonKit.Controls.RibbonToggleButton.OnApplyTemplate() -> void
+override RibbonKit.Controls.RibbonToggleButton.OnCreateAutomationPeer() -> System.Windows.Automation.Peers.AutomationPeer!
+override RibbonKit.Controls.RibbonToggleButton.OnPropertyChanged(System.Windows.DependencyPropertyChangedEventArgs e) -> void
+override RibbonKit.Controls.RibbonWindow.OnApplyTemplate() -> void
+override RibbonKit.Controls.RibbonWindow.OnDpiChanged(System.Windows.DpiScale oldDpi, System.Windows.DpiScale newDpi) -> void
+override RibbonKit.Controls.RibbonWindow.OnSourceInitialized(System.EventArgs! e) -> void
+override RibbonKit.Controls.RibbonWindow.OnStateChanged(System.EventArgs! e) -> void
+override RibbonKit.Layout.MdiCanvasPanel.ArrangeOverride(System.Windows.Size finalSize) -> System.Windows.Size
+override RibbonKit.Layout.MdiCanvasPanel.MeasureOverride(System.Windows.Size availableSize) -> System.Windows.Size
+override RibbonKit.Layout.RibbonGroupsPanel.ArrangeOverride(System.Windows.Size finalSize) -> System.Windows.Size
+override RibbonKit.Layout.RibbonGroupsPanel.MeasureOverride(System.Windows.Size availableSize) -> System.Windows.Size
+override RibbonKit.Layout.RibbonGroupsPanel.OnChildDesiredSizeChanged(System.Windows.UIElement! child) -> void
+override RibbonKit.Layout.RibbonGroupsPanel.OnVisualChildrenChanged(System.Windows.DependencyObject! visualAdded, System.Windows.DependencyObject! visualRemoved) -> void
+override RibbonKit.Layout.RibbonQuickAccessPanel.ArrangeOverride(System.Windows.Size finalSize) -> System.Windows.Size
+override RibbonKit.Layout.RibbonQuickAccessPanel.MeasureOverride(System.Windows.Size availableSize) -> System.Windows.Size
+override RibbonKit.Layout.RibbonScrollContentHost.ArrangeOverride(System.Windows.Size arrangeSize) -> System.Windows.Size
+override RibbonKit.Layout.RibbonScrollContentHost.MeasureOverride(System.Windows.Size constraint) -> System.Windows.Size
+override RibbonKit.Layout.RibbonScrollContentHost.OnMouseWheel(System.Windows.Input.MouseWheelEventArgs! e) -> void
+override RibbonKit.Localization.RibbonStringExtension.ProvideValue(System.IServiceProvider! serviceProvider) -> object!
+RibbonKit.Animation.RibbonAnimation
+RibbonKit.Animation.RibbonAnimationAction
+RibbonKit.Animation.RibbonAnimationAction.Backstage = 1 -> RibbonKit.Animation.RibbonAnimationAction
+RibbonKit.Animation.RibbonAnimationAction.ContextualTab = 9 -> RibbonKit.Animation.RibbonAnimationAction
+RibbonKit.Animation.RibbonAnimationAction.DropdownMenu = 6 -> RibbonKit.Animation.RibbonAnimationAction
+RibbonKit.Animation.RibbonAnimationAction.Gallery = 4 -> RibbonKit.Animation.RibbonAnimationAction
+RibbonKit.Animation.RibbonAnimationAction.Hover = 7 -> RibbonKit.Animation.RibbonAnimationAction
+RibbonKit.Animation.RibbonAnimationAction.KeyTip = 10 -> RibbonKit.Animation.RibbonAnimationAction
+RibbonKit.Animation.RibbonAnimationAction.MdiWindowState = 13 -> RibbonKit.Animation.RibbonAnimationAction
+RibbonKit.Animation.RibbonAnimationAction.MessageBar = 14 -> RibbonKit.Animation.RibbonAnimationAction
+RibbonKit.Animation.RibbonAnimationAction.QuickAccessMove = 8 -> RibbonKit.Animation.RibbonAnimationAction
+RibbonKit.Animation.RibbonAnimationAction.RibbonMinimize = 0 -> RibbonKit.Animation.RibbonAnimationAction
+RibbonKit.Animation.RibbonAnimationAction.RibbonScroll = 5 -> RibbonKit.Animation.RibbonAnimationAction
+RibbonKit.Animation.RibbonAnimationAction.TabMarker = 2 -> RibbonKit.Animation.RibbonAnimationAction
+RibbonKit.Animation.RibbonAnimationAction.TabSwitch = 3 -> RibbonKit.Animation.RibbonAnimationAction
+RibbonKit.Animation.RibbonAnimationAction.ThemeSwitch = 12 -> RibbonKit.Animation.RibbonAnimationAction
+RibbonKit.Animation.RibbonAnimationAction.ToggleState = 11 -> RibbonKit.Animation.RibbonAnimationAction
+RibbonKit.Animation.RibbonAnimationLevel
+RibbonKit.Animation.RibbonAnimationLevel.Expressive = 2 -> RibbonKit.Animation.RibbonAnimationLevel
+RibbonKit.Animation.RibbonAnimationLevel.None = 0 -> RibbonKit.Animation.RibbonAnimationLevel
+RibbonKit.Animation.RibbonAnimationLevel.Subtle = 1 -> RibbonKit.Animation.RibbonAnimationLevel
+RibbonKit.Animation.RibbonMotion
+RibbonKit.Animation.RibbonPopupMotion
+RibbonKit.Animation.RibbonSlideFrom
+RibbonKit.Animation.RibbonSlideFrom.Bottom = 4 -> RibbonKit.Animation.RibbonSlideFrom
+RibbonKit.Animation.RibbonSlideFrom.Left = 2 -> RibbonKit.Animation.RibbonSlideFrom
+RibbonKit.Animation.RibbonSlideFrom.None = 0 -> RibbonKit.Animation.RibbonSlideFrom
+RibbonKit.Animation.RibbonSlideFrom.Right = 3 -> RibbonKit.Animation.RibbonSlideFrom
+RibbonKit.Animation.RibbonSlideFrom.Top = 1 -> RibbonKit.Animation.RibbonSlideFrom
+RibbonKit.Automation.RibbonAutomationPeer
+RibbonKit.Automation.RibbonAutomationPeer.RibbonAutomationPeer(RibbonKit.Controls.Ribbon! owner) -> void
+RibbonKit.Automation.RibbonButtonAutomationPeer
+RibbonKit.Automation.RibbonButtonAutomationPeer.RibbonButtonAutomationPeer(RibbonKit.Controls.RibbonButton! owner) -> void
+RibbonKit.Automation.RibbonCheckBoxAutomationPeer
+RibbonKit.Automation.RibbonCheckBoxAutomationPeer.RibbonCheckBoxAutomationPeer(RibbonKit.Controls.RibbonCheckBox! owner) -> void
+RibbonKit.Automation.RibbonComboBoxAutomationPeer
+RibbonKit.Automation.RibbonComboBoxAutomationPeer.RibbonComboBoxAutomationPeer(RibbonKit.Controls.RibbonComboBox! owner) -> void
+RibbonKit.Automation.RibbonDropDownButtonAutomationPeer
+RibbonKit.Automation.RibbonDropDownButtonAutomationPeer.Collapse() -> void
+RibbonKit.Automation.RibbonDropDownButtonAutomationPeer.Expand() -> void
+RibbonKit.Automation.RibbonDropDownButtonAutomationPeer.ExpandCollapseState.get -> System.Windows.Automation.ExpandCollapseState
+RibbonKit.Automation.RibbonDropDownButtonAutomationPeer.RibbonDropDownButtonAutomationPeer(RibbonKit.Controls.RibbonDropDownButton! owner) -> void
+RibbonKit.Automation.RibbonGroupAutomationPeer
+RibbonKit.Automation.RibbonGroupAutomationPeer.RibbonGroupAutomationPeer(RibbonKit.Controls.RibbonGroup! owner) -> void
+RibbonKit.Automation.RibbonMenuItemAutomationPeer
+RibbonKit.Automation.RibbonMenuItemAutomationPeer.RibbonMenuItemAutomationPeer(RibbonKit.Controls.RibbonMenuItem! owner) -> void
+RibbonKit.Automation.RibbonMessageAutomationPeer
+RibbonKit.Automation.RibbonMessageAutomationPeer.RibbonMessageAutomationPeer(RibbonKit.Controls.RibbonMessage! owner) -> void
+RibbonKit.Automation.RibbonMessageBarAutomationPeer
+RibbonKit.Automation.RibbonMessageBarAutomationPeer.RibbonMessageBarAutomationPeer(RibbonKit.Controls.RibbonMessageBar! owner) -> void
+RibbonKit.Automation.RibbonRadioButtonAutomationPeer
+RibbonKit.Automation.RibbonRadioButtonAutomationPeer.RibbonRadioButtonAutomationPeer(RibbonKit.Controls.RibbonRadioButton! owner) -> void
+RibbonKit.Automation.RibbonSplitButtonAutomationPeer
+RibbonKit.Automation.RibbonSplitButtonAutomationPeer.Invoke() -> void
+RibbonKit.Automation.RibbonSplitButtonAutomationPeer.RibbonSplitButtonAutomationPeer(RibbonKit.Controls.RibbonSplitButton! owner) -> void
+RibbonKit.Automation.RibbonTextBoxAutomationPeer
+RibbonKit.Automation.RibbonTextBoxAutomationPeer.RibbonTextBoxAutomationPeer(RibbonKit.Controls.RibbonTextBox! owner) -> void
+RibbonKit.Automation.RibbonToggleButtonAutomationPeer
+RibbonKit.Automation.RibbonToggleButtonAutomationPeer.RibbonToggleButtonAutomationPeer(RibbonKit.Controls.RibbonToggleButton! owner) -> void
+RibbonKit.Controls.Backstage
+RibbonKit.Controls.Backstage.BackRequested -> System.EventHandler?
+RibbonKit.Controls.Backstage.Backstage() -> void
+RibbonKit.Controls.Backstage.Design.get -> RibbonKit.RibbonBackstageDesign
+RibbonKit.Controls.Backstage.Design.set -> void
+RibbonKit.Controls.Backstage.Translucent.get -> bool
+RibbonKit.Controls.Backstage.Translucent.set -> void
+RibbonKit.Controls.BackstageItemPlacement
+RibbonKit.Controls.BackstageItemPlacement.Bottom = 1 -> RibbonKit.Controls.BackstageItemPlacement
+RibbonKit.Controls.BackstageItemPlacement.Top = 0 -> RibbonKit.Controls.BackstageItemPlacement
+RibbonKit.Controls.BackstageNavPanel
+RibbonKit.Controls.BackstageNavPanel.BackstageNavPanel() -> void
+RibbonKit.Controls.BackstageNavPanel.SeparatorBrush.get -> System.Windows.Media.Brush?
+RibbonKit.Controls.BackstageNavPanel.SeparatorBrush.set -> void
+RibbonKit.Controls.BackstageTabItem
+RibbonKit.Controls.BackstageTabItem.BackstageTabItem() -> void
+RibbonKit.Controls.BackstageTabItem.Click -> System.Windows.RoutedEventHandler!
+RibbonKit.Controls.BackstageTabItem.Command.get -> System.Windows.Input.ICommand?
+RibbonKit.Controls.BackstageTabItem.Command.set -> void
+RibbonKit.Controls.BackstageTabItem.CommandParameter.get -> object?
+RibbonKit.Controls.BackstageTabItem.CommandParameter.set -> void
+RibbonKit.Controls.BackstageTabItem.Icon.get -> System.Windows.Media.ImageSource?
+RibbonKit.Controls.BackstageTabItem.Icon.set -> void
+RibbonKit.Controls.BackstageTabItem.IsButton.get -> bool
+RibbonKit.Controls.BackstageTabItem.IsButton.set -> void
+RibbonKit.Controls.BackstageTabItem.Placement.get -> RibbonKit.Controls.BackstageItemPlacement
+RibbonKit.Controls.BackstageTabItem.Placement.set -> void
+RibbonKit.Controls.InRibbonGallery
+RibbonKit.Controls.InRibbonGallery.InRibbonGallery() -> void
+RibbonKit.Controls.InRibbonGallery.IsDropDownOpen.get -> bool
+RibbonKit.Controls.InRibbonGallery.IsDropDownOpen.set -> void
+RibbonKit.Controls.IRibbonFillPage
+RibbonKit.Controls.IRibbonSizeAware
+RibbonKit.Controls.IRibbonSizeAware.ApplySizeState(RibbonKit.RibbonGroupSizeState state) -> void
+RibbonKit.Controls.KeyTip
+RibbonKit.Controls.MdiChild
+RibbonKit.Controls.MdiChild.ActivationRequested -> System.Windows.RoutedEventHandler!
+RibbonKit.Controls.MdiChild.CanClose.get -> bool
+RibbonKit.Controls.MdiChild.CanClose.set -> void
+RibbonKit.Controls.MdiChild.CloseRequested -> System.Windows.RoutedEventHandler!
+RibbonKit.Controls.MdiChild.Icon.get -> object?
+RibbonKit.Controls.MdiChild.Icon.set -> void
+RibbonKit.Controls.MdiChild.IsActive.get -> bool
+RibbonKit.Controls.MdiChild.IsActive.set -> void
+RibbonKit.Controls.MdiChild.IsCaptionMerged.get -> bool
+RibbonKit.Controls.MdiChild.IsCaptionMerged.set -> void
+RibbonKit.Controls.MdiChild.IsModified.get -> bool
+RibbonKit.Controls.MdiChild.IsModified.set -> void
+RibbonKit.Controls.MdiChild.Left.get -> double
+RibbonKit.Controls.MdiChild.Left.set -> void
+RibbonKit.Controls.MdiChild.MdiChild() -> void
+RibbonKit.Controls.MdiChild.RestoreBounds.get -> System.Windows.Rect
+RibbonKit.Controls.MdiChild.Title.get -> string!
+RibbonKit.Controls.MdiChild.Title.set -> void
+RibbonKit.Controls.MdiChild.Top.get -> double
+RibbonKit.Controls.MdiChild.Top.set -> void
+RibbonKit.Controls.MdiChild.WindowState.get -> System.Windows.WindowState
+RibbonKit.Controls.MdiChild.WindowState.set -> void
+RibbonKit.Controls.MdiChild.WindowStateChanged -> System.Windows.RoutedEventHandler!
+RibbonKit.Controls.MdiContainer
+RibbonKit.Controls.MdiContainer.ActivateDocument(object! item) -> void
+RibbonKit.Controls.MdiContainer.ActiveDocument.get -> object?
+RibbonKit.Controls.MdiContainer.ActiveDocumentChanged -> System.EventHandler?
+RibbonKit.Controls.MdiContainer.AddDocument(RibbonKit.Controls.MdiDocument! document) -> void
+RibbonKit.Controls.MdiContainer.AddDocument(System.Windows.FrameworkElement! content, string! title) -> RibbonKit.Controls.MdiDocument!
+RibbonKit.Controls.MdiContainer.CloseDocument(object! item) -> void
+RibbonKit.Controls.MdiContainer.DocumentClosed -> System.EventHandler<RibbonKit.Controls.MdiDocumentEventArgs!>?
+RibbonKit.Controls.MdiContainer.DocumentClosing -> System.EventHandler<RibbonKit.Controls.MdiDocumentClosingEventArgs!>?
+RibbonKit.Controls.MdiContainer.IsCaptionMergeEnabled.get -> bool
+RibbonKit.Controls.MdiContainer.IsCaptionMergeEnabled.set -> void
+RibbonKit.Controls.MdiContainer.MdiContainer() -> void
+RibbonKit.Controls.MdiContainer.Ribbon.get -> RibbonKit.Controls.Ribbon?
+RibbonKit.Controls.MdiContainer.Ribbon.set -> void
+RibbonKit.Controls.MdiDocument
+RibbonKit.Controls.MdiDocument.CanClose.get -> bool
+RibbonKit.Controls.MdiDocument.CanClose.set -> void
+RibbonKit.Controls.MdiDocument.Content.get -> object?
+RibbonKit.Controls.MdiDocument.Content.set -> void
+RibbonKit.Controls.MdiDocument.Height.get -> double
+RibbonKit.Controls.MdiDocument.Height.set -> void
+RibbonKit.Controls.MdiDocument.Icon.get -> object?
+RibbonKit.Controls.MdiDocument.Icon.set -> void
+RibbonKit.Controls.MdiDocument.IsActive.get -> bool
+RibbonKit.Controls.MdiDocument.IsActive.set -> void
+RibbonKit.Controls.MdiDocument.IsModified.get -> bool
+RibbonKit.Controls.MdiDocument.IsModified.set -> void
+RibbonKit.Controls.MdiDocument.Left.get -> double
+RibbonKit.Controls.MdiDocument.Left.set -> void
+RibbonKit.Controls.MdiDocument.MdiDocument() -> void
+RibbonKit.Controls.MdiDocument.MdiDocument(object? content, string! title) -> void
+RibbonKit.Controls.MdiDocument.MergeSource.get -> RibbonKit.Controls.RibbonMergeSource?
+RibbonKit.Controls.MdiDocument.MergeSource.set -> void
+RibbonKit.Controls.MdiDocument.PropertyChanged -> System.ComponentModel.PropertyChangedEventHandler?
+RibbonKit.Controls.MdiDocument.Title.get -> string!
+RibbonKit.Controls.MdiDocument.Title.set -> void
+RibbonKit.Controls.MdiDocument.Top.get -> double
+RibbonKit.Controls.MdiDocument.Top.set -> void
+RibbonKit.Controls.MdiDocument.Width.get -> double
+RibbonKit.Controls.MdiDocument.Width.set -> void
+RibbonKit.Controls.MdiDocument.WindowState.get -> System.Windows.WindowState
+RibbonKit.Controls.MdiDocument.WindowState.set -> void
+RibbonKit.Controls.MdiDocumentClosingEventArgs
+RibbonKit.Controls.MdiDocumentClosingEventArgs.Document.get -> object!
+RibbonKit.Controls.MdiDocumentClosingEventArgs.MdiDocumentClosingEventArgs(object! document) -> void
+RibbonKit.Controls.MdiDocumentEventArgs
+RibbonKit.Controls.MdiDocumentEventArgs.Document.get -> object!
+RibbonKit.Controls.MdiDocumentEventArgs.MdiDocumentEventArgs(object! document) -> void
+RibbonKit.Controls.Ribbon
+RibbonKit.Controls.Ribbon.AddToQuickAccess(System.Windows.FrameworkElement! source) -> bool
+RibbonKit.Controls.Ribbon.ApplicationButtonHeader.get -> string!
+RibbonKit.Controls.Ribbon.ApplicationButtonHeader.set -> void
+RibbonKit.Controls.Ribbon.ApplicationButtonShape.get -> RibbonKit.RibbonApplicationButtonShape
+RibbonKit.Controls.Ribbon.ApplicationButtonShape.set -> void
+RibbonKit.Controls.Ribbon.ApplicationMenu.get -> object?
+RibbonKit.Controls.Ribbon.ApplicationMenu.set -> void
+RibbonKit.Controls.Ribbon.Backstage.get -> object?
+RibbonKit.Controls.Ribbon.Backstage.set -> void
+RibbonKit.Controls.Ribbon.CanCloseModal.get -> bool
+RibbonKit.Controls.Ribbon.ClearMergedCaption() -> void
+RibbonKit.Controls.Ribbon.DesignPreviewFileSurface.get -> int
+RibbonKit.Controls.Ribbon.DesignPreviewFileSurface.set -> void
+RibbonKit.Controls.Ribbon.DesignPreviewTheme.get -> int
+RibbonKit.Controls.Ribbon.DesignPreviewTheme.set -> void
+RibbonKit.Controls.Ribbon.EffectiveApplicationButtonHeader.get -> string!
+RibbonKit.Controls.Ribbon.EnterModal(RibbonKit.Controls.RibbonTab! tab) -> bool
+RibbonKit.Controls.Ribbon.ExitModal() -> bool
+RibbonKit.Controls.Ribbon.ExitModal(RibbonKit.Controls.RibbonModalReason reason) -> bool
+RibbonKit.Controls.Ribbon.ExitModalCommand.get -> System.Windows.Input.ICommand!
+RibbonKit.Controls.Ribbon.GetAuthoredVisibility(RibbonKit.Controls.RibbonTab! tab) -> System.Windows.Visibility
+RibbonKit.Controls.Ribbon.HasMergedCaption.get -> bool
+RibbonKit.Controls.Ribbon.HasOpenMessages.get -> bool
+RibbonKit.Controls.Ribbon.IsApplicationMenuOpen.get -> bool
+RibbonKit.Controls.Ribbon.IsBackstageOpen.get -> bool
+RibbonKit.Controls.Ribbon.IsBackstageOpen.set -> void
+RibbonKit.Controls.Ribbon.IsInQuickAccess(System.Windows.FrameworkElement! source) -> bool
+RibbonKit.Controls.Ribbon.IsMerged(RibbonKit.Controls.RibbonMergeSource! source) -> bool
+RibbonKit.Controls.Ribbon.IsMinimized.get -> bool
+RibbonKit.Controls.Ribbon.IsMinimized.set -> void
+RibbonKit.Controls.Ribbon.IsModal.get -> bool
+RibbonKit.Controls.Ribbon.Merge(RibbonKit.Controls.RibbonMergeSource! source) -> bool
+RibbonKit.Controls.Ribbon.MergedCaptionActionRequested -> System.EventHandler<RibbonKit.Controls.RibbonMergedCaptionEventArgs!>?
+RibbonKit.Controls.Ribbon.MergedCaptionCanClose.get -> bool
+RibbonKit.Controls.Ribbon.MergedCaptionCommand.get -> System.Windows.Input.ICommand!
+RibbonKit.Controls.Ribbon.MergedCaptionIcon.get -> System.Windows.Media.ImageSource?
+RibbonKit.Controls.Ribbon.MergedCaptionTitle.get -> string?
+RibbonKit.Controls.Ribbon.MergedSources.get -> System.Collections.Generic.IReadOnlyList<RibbonKit.Controls.RibbonMergeSource!>!
+RibbonKit.Controls.Ribbon.MessageBar.get -> RibbonKit.Controls.RibbonMessageBar?
+RibbonKit.Controls.Ribbon.MessageBar.set -> void
+RibbonKit.Controls.Ribbon.ModalEntered -> System.EventHandler<RibbonKit.Controls.RibbonModalEventArgs!>?
+RibbonKit.Controls.Ribbon.ModalEntering -> System.EventHandler<RibbonKit.Controls.RibbonModalEventArgs!>?
+RibbonKit.Controls.Ribbon.ModalExited -> System.EventHandler<RibbonKit.Controls.RibbonModalEventArgs!>?
+RibbonKit.Controls.Ribbon.ModalExiting -> System.EventHandler<RibbonKit.Controls.RibbonModalEventArgs!>?
+RibbonKit.Controls.Ribbon.ModalTab.get -> RibbonKit.Controls.RibbonTab?
+RibbonKit.Controls.Ribbon.QuickAccessCustomizeRequested -> System.EventHandler?
+RibbonKit.Controls.Ribbon.QuickAccessItems.get -> System.Collections.ObjectModel.ObservableCollection<object!>!
+RibbonKit.Controls.Ribbon.QuickAccessMaxWidth.get -> double
+RibbonKit.Controls.Ribbon.QuickAccessMaxWidth.set -> void
+RibbonKit.Controls.Ribbon.QuickAccessPosition.get -> RibbonKit.RibbonQuickAccessPosition
+RibbonKit.Controls.Ribbon.QuickAccessPosition.set -> void
+RibbonKit.Controls.Ribbon.Ribbon() -> void
+RibbonKit.Controls.Ribbon.RibbonCustomizeRequested -> System.EventHandler?
+RibbonKit.Controls.Ribbon.SelectedIndex.get -> int
+RibbonKit.Controls.Ribbon.SelectedIndex.set -> void
+RibbonKit.Controls.Ribbon.SelectedTab.get -> RibbonKit.Controls.RibbonTab?
+RibbonKit.Controls.Ribbon.SelectedTab.set -> void
+RibbonKit.Controls.Ribbon.SetAuthoredVisibility(RibbonKit.Controls.RibbonTab! tab, System.Windows.Visibility value) -> void
+RibbonKit.Controls.Ribbon.ShowMergedCaption(System.Windows.Media.ImageSource? icon, string? title, bool canClose = true) -> void
+RibbonKit.Controls.Ribbon.Tabs.get -> System.Collections.ObjectModel.ObservableCollection<RibbonKit.Controls.RibbonTab!>!
+RibbonKit.Controls.Ribbon.Unmerge(RibbonKit.Controls.RibbonMergeSource! source) -> bool
+RibbonKit.Controls.RibbonApplicationMenu
+RibbonKit.Controls.RibbonApplicationMenu.ActiveItem.get -> RibbonKit.Controls.RibbonApplicationMenuItem?
+RibbonKit.Controls.RibbonApplicationMenu.ActivePaneContent.get -> object?
+RibbonKit.Controls.RibbonApplicationMenu.ActivePaneHeader.get -> string?
+RibbonKit.Controls.RibbonApplicationMenu.CloseRequested -> System.EventHandler?
+RibbonKit.Controls.RibbonApplicationMenu.DefaultContent.get -> object?
+RibbonKit.Controls.RibbonApplicationMenu.DefaultContent.set -> void
+RibbonKit.Controls.RibbonApplicationMenu.DefaultHeader.get -> string?
+RibbonKit.Controls.RibbonApplicationMenu.DefaultHeader.set -> void
+RibbonKit.Controls.RibbonApplicationMenu.DesignPreviewActiveIndex.get -> int
+RibbonKit.Controls.RibbonApplicationMenu.DesignPreviewActiveIndex.set -> void
+RibbonKit.Controls.RibbonApplicationMenu.FooterContent.get -> object?
+RibbonKit.Controls.RibbonApplicationMenu.FooterContent.set -> void
+RibbonKit.Controls.RibbonApplicationMenu.HasActivePane.get -> bool
+RibbonKit.Controls.RibbonApplicationMenu.RequestClose() -> void
+RibbonKit.Controls.RibbonApplicationMenu.RibbonApplicationMenu() -> void
+RibbonKit.Controls.RibbonApplicationMenuButton
+RibbonKit.Controls.RibbonApplicationMenuButton.Icon.get -> System.Windows.Media.ImageSource?
+RibbonKit.Controls.RibbonApplicationMenuButton.Icon.set -> void
+RibbonKit.Controls.RibbonApplicationMenuButton.RibbonApplicationMenuButton() -> void
+RibbonKit.Controls.RibbonApplicationMenuItem
+RibbonKit.Controls.RibbonApplicationMenuItem.Click -> System.Windows.RoutedEventHandler!
+RibbonKit.Controls.RibbonApplicationMenuItem.Command.get -> System.Windows.Input.ICommand?
+RibbonKit.Controls.RibbonApplicationMenuItem.Command.set -> void
+RibbonKit.Controls.RibbonApplicationMenuItem.CommandParameter.get -> object?
+RibbonKit.Controls.RibbonApplicationMenuItem.CommandParameter.set -> void
+RibbonKit.Controls.RibbonApplicationMenuItem.HasPane.get -> bool
+RibbonKit.Controls.RibbonApplicationMenuItem.Icon.get -> System.Windows.Media.ImageSource?
+RibbonKit.Controls.RibbonApplicationMenuItem.Icon.set -> void
+RibbonKit.Controls.RibbonApplicationMenuItem.IsActive.get -> bool
+RibbonKit.Controls.RibbonApplicationMenuItem.IsSplit.get -> bool
+RibbonKit.Controls.RibbonApplicationMenuItem.IsSplit.set -> void
+RibbonKit.Controls.RibbonApplicationMenuItem.IsSplitPresentation.get -> bool
+RibbonKit.Controls.RibbonApplicationMenuItem.PaneHeader.get -> string?
+RibbonKit.Controls.RibbonApplicationMenuItem.PaneHeader.set -> void
+RibbonKit.Controls.RibbonApplicationMenuItem.RibbonApplicationMenuItem() -> void
+RibbonKit.Controls.RibbonApplicationMenuPaneItem
+RibbonKit.Controls.RibbonApplicationMenuPaneItem.Description.get -> string?
+RibbonKit.Controls.RibbonApplicationMenuPaneItem.Description.set -> void
+RibbonKit.Controls.RibbonApplicationMenuPaneItem.Icon.get -> System.Windows.Media.ImageSource?
+RibbonKit.Controls.RibbonApplicationMenuPaneItem.Icon.set -> void
+RibbonKit.Controls.RibbonApplicationMenuPaneItem.RibbonApplicationMenuPaneItem() -> void
+RibbonKit.Controls.RibbonApplicationMenuSeparator
+RibbonKit.Controls.RibbonApplicationMenuSeparator.RibbonApplicationMenuSeparator() -> void
+RibbonKit.Controls.RibbonButton
+RibbonKit.Controls.RibbonButton.Header.get -> string?
+RibbonKit.Controls.RibbonButton.Header.set -> void
+RibbonKit.Controls.RibbonButton.Icon.get -> System.Windows.Media.ImageSource?
+RibbonKit.Controls.RibbonButton.Icon.set -> void
+RibbonKit.Controls.RibbonButton.LargeIcon.get -> System.Windows.Media.ImageSource?
+RibbonKit.Controls.RibbonButton.LargeIcon.set -> void
+RibbonKit.Controls.RibbonButton.RibbonButton() -> void
+RibbonKit.Controls.RibbonButton.ScreenTipText.get -> string?
+RibbonKit.Controls.RibbonButton.ScreenTipText.set -> void
+RibbonKit.Controls.RibbonButton.ScreenTipTitle.get -> string?
+RibbonKit.Controls.RibbonButton.ScreenTipTitle.set -> void
+RibbonKit.Controls.RibbonButton.Size.get -> RibbonKit.RibbonControlSize
+RibbonKit.Controls.RibbonButton.Size.set -> void
+RibbonKit.Controls.RibbonButton.SizeDefinition.get -> string?
+RibbonKit.Controls.RibbonButton.SizeDefinition.set -> void
+RibbonKit.Controls.RibbonCheckBox
+RibbonKit.Controls.RibbonCheckBox.Header.get -> string?
+RibbonKit.Controls.RibbonCheckBox.Header.set -> void
+RibbonKit.Controls.RibbonCheckBox.RibbonCheckBox() -> void
+RibbonKit.Controls.RibbonCheckBox.ScreenTipText.get -> string?
+RibbonKit.Controls.RibbonCheckBox.ScreenTipText.set -> void
+RibbonKit.Controls.RibbonCheckBox.ScreenTipTitle.get -> string?
+RibbonKit.Controls.RibbonCheckBox.ScreenTipTitle.set -> void
+RibbonKit.Controls.RibbonComboBox
+RibbonKit.Controls.RibbonComboBox.Header.get -> string?
+RibbonKit.Controls.RibbonComboBox.Header.set -> void
+RibbonKit.Controls.RibbonComboBox.InputWidth.get -> double
+RibbonKit.Controls.RibbonComboBox.InputWidth.set -> void
+RibbonKit.Controls.RibbonComboBox.RibbonComboBox() -> void
+RibbonKit.Controls.RibbonComboBox.ScreenTipText.get -> string?
+RibbonKit.Controls.RibbonComboBox.ScreenTipText.set -> void
+RibbonKit.Controls.RibbonComboBox.ScreenTipTitle.get -> string?
+RibbonKit.Controls.RibbonComboBox.ScreenTipTitle.set -> void
+RibbonKit.Controls.RibbonCommandEntry
+RibbonKit.Controls.RibbonCommandEntry.Control.get -> System.Windows.FrameworkElement!
+RibbonKit.Controls.RibbonCommandEntry.DisplayName.get -> string!
+RibbonKit.Controls.RibbonCommandEntry.Icon.get -> System.Windows.Media.ImageSource?
+RibbonKit.Controls.RibbonCustomizationSerializer
+RibbonKit.Controls.RibbonCustomizeEditDialog
+RibbonKit.Controls.RibbonCustomizeEditDialog.CanEditIcon.get -> bool
+RibbonKit.Controls.RibbonCustomizeEditDialog.CanEditIcon.set -> void
+RibbonKit.Controls.RibbonCustomizeEditDialog.CanEditLayout.get -> bool
+RibbonKit.Controls.RibbonCustomizeEditDialog.CanEditLayout.set -> void
+RibbonKit.Controls.RibbonCustomizeEditDialog.CanEditSize.get -> bool
+RibbonKit.Controls.RibbonCustomizeEditDialog.CanEditSize.set -> void
+RibbonKit.Controls.RibbonCustomizeEditDialog.IconChoices.get -> System.Collections.Generic.IReadOnlyList<System.Windows.Media.ImageSource!>!
+RibbonKit.Controls.RibbonCustomizeEditDialog.IconChoices.set -> void
+RibbonKit.Controls.RibbonCustomizeEditDialog.ItemName.get -> string?
+RibbonKit.Controls.RibbonCustomizeEditDialog.ItemName.set -> void
+RibbonKit.Controls.RibbonCustomizeEditDialog.RibbonCustomizeEditDialog() -> void
+RibbonKit.Controls.RibbonCustomizeEditDialog.SelectedIcon.get -> System.Windows.Media.ImageSource?
+RibbonKit.Controls.RibbonCustomizeEditDialog.SelectedIcon.set -> void
+RibbonKit.Controls.RibbonCustomizeEditDialog.SelectedLayout.get -> RibbonKit.Controls.RibbonGroupLayout
+RibbonKit.Controls.RibbonCustomizeEditDialog.SelectedLayout.set -> void
+RibbonKit.Controls.RibbonCustomizeEditDialog.SelectedSize.get -> RibbonKit.RibbonControlSize
+RibbonKit.Controls.RibbonCustomizeEditDialog.SelectedSize.set -> void
+RibbonKit.Controls.RibbonCustomizeEditDialog.SizeLocked.get -> bool
+RibbonKit.Controls.RibbonCustomizeEditDialog.SizeLocked.set -> void
+RibbonKit.Controls.RibbonCustomizeNode
+RibbonKit.Controls.RibbonCustomizeNode.Children.get -> System.Collections.ObjectModel.ObservableCollection<RibbonKit.Controls.RibbonCustomizeNode!>!
+RibbonKit.Controls.RibbonCustomizeNode.Header.get -> string!
+RibbonKit.Controls.RibbonCustomizeNode.Icon.get -> System.Windows.Media.ImageSource?
+RibbonKit.Controls.RibbonCustomizeNode.IsCustom.get -> bool
+RibbonKit.Controls.RibbonCustomizeNode.IsExpanded.get -> bool
+RibbonKit.Controls.RibbonCustomizeNode.IsExpanded.set -> void
+RibbonKit.Controls.RibbonCustomizeNode.IsSelected.get -> bool
+RibbonKit.Controls.RibbonCustomizeNode.IsSelected.set -> void
+RibbonKit.Controls.RibbonCustomizeNode.IsVisibleChecked.get -> bool
+RibbonKit.Controls.RibbonCustomizeNode.IsVisibleChecked.set -> void
+RibbonKit.Controls.RibbonCustomizeNode.Kind.get -> RibbonKit.Controls.RibbonCustomizeNodeKind
+RibbonKit.Controls.RibbonCustomizeNode.PropertyChanged -> System.ComponentModel.PropertyChangedEventHandler?
+RibbonKit.Controls.RibbonCustomizeNode.ShowCheckBox.get -> bool
+RibbonKit.Controls.RibbonCustomizeNodeKind
+RibbonKit.Controls.RibbonCustomizeNodeKind.Command = 2 -> RibbonKit.Controls.RibbonCustomizeNodeKind
+RibbonKit.Controls.RibbonCustomizeNodeKind.Group = 1 -> RibbonKit.Controls.RibbonCustomizeNodeKind
+RibbonKit.Controls.RibbonCustomizeNodeKind.Tab = 0 -> RibbonKit.Controls.RibbonCustomizeNodeKind
+RibbonKit.Controls.RibbonCustomizePage
+RibbonKit.Controls.RibbonCustomizePage.ResetLayout.get -> string?
+RibbonKit.Controls.RibbonCustomizePage.ResetLayout.set -> void
+RibbonKit.Controls.RibbonCustomizePage.Ribbon.get -> RibbonKit.Controls.Ribbon?
+RibbonKit.Controls.RibbonCustomizePage.Ribbon.set -> void
+RibbonKit.Controls.RibbonCustomizePage.RibbonCustomizePage() -> void
+RibbonKit.Controls.RibbonDropDownButton
+RibbonKit.Controls.RibbonDropDownButton.ApplySizeStateCore(RibbonKit.RibbonGroupSizeState state) -> void
+RibbonKit.Controls.RibbonDropDownButton.Header.get -> string?
+RibbonKit.Controls.RibbonDropDownButton.Header.set -> void
+RibbonKit.Controls.RibbonDropDownButton.Icon.get -> System.Windows.Media.ImageSource?
+RibbonKit.Controls.RibbonDropDownButton.Icon.set -> void
+RibbonKit.Controls.RibbonDropDownButton.IsDropDownOpen.get -> bool
+RibbonKit.Controls.RibbonDropDownButton.IsDropDownOpen.set -> void
+RibbonKit.Controls.RibbonDropDownButton.LargeIcon.get -> System.Windows.Media.ImageSource?
+RibbonKit.Controls.RibbonDropDownButton.LargeIcon.set -> void
+RibbonKit.Controls.RibbonDropDownButton.RibbonDropDownButton() -> void
+RibbonKit.Controls.RibbonDropDownButton.ScreenTipText.get -> string?
+RibbonKit.Controls.RibbonDropDownButton.ScreenTipText.set -> void
+RibbonKit.Controls.RibbonDropDownButton.ScreenTipTitle.get -> string?
+RibbonKit.Controls.RibbonDropDownButton.ScreenTipTitle.set -> void
+RibbonKit.Controls.RibbonDropDownButton.Size.get -> RibbonKit.RibbonControlSize
+RibbonKit.Controls.RibbonDropDownButton.Size.set -> void
+RibbonKit.Controls.RibbonDropDownButton.SizeDefinition.get -> string?
+RibbonKit.Controls.RibbonDropDownButton.SizeDefinition.set -> void
+RibbonKit.Controls.RibbonGallery
+RibbonKit.Controls.RibbonGallery.ItemPreview -> RibbonKit.Controls.RibbonGalleryPreviewEventHandler!
+RibbonKit.Controls.RibbonGallery.ItemPreviewCancelled -> System.Windows.RoutedEventHandler!
+RibbonKit.Controls.RibbonGallery.RibbonGallery() -> void
+RibbonKit.Controls.RibbonGalleryItem
+RibbonKit.Controls.RibbonGalleryItem.RibbonGalleryItem() -> void
+RibbonKit.Controls.RibbonGalleryPreviewEventArgs
+RibbonKit.Controls.RibbonGalleryPreviewEventArgs.PreviewedItem.get -> object?
+RibbonKit.Controls.RibbonGalleryPreviewEventArgs.RibbonGalleryPreviewEventArgs(System.Windows.RoutedEvent! routedEvent, object! source, object? previewedItem) -> void
+RibbonKit.Controls.RibbonGalleryPreviewEventHandler
+RibbonKit.Controls.RibbonGroup
+RibbonKit.Controls.RibbonGroup.CanResize.get -> bool
+RibbonKit.Controls.RibbonGroup.CanResize.set -> void
+RibbonKit.Controls.RibbonGroup.ContentAlignment.get -> System.Windows.HorizontalAlignment
+RibbonKit.Controls.RibbonGroup.ContentAlignment.set -> void
+RibbonKit.Controls.RibbonGroup.DialogLauncherClick -> System.Windows.RoutedEventHandler!
+RibbonKit.Controls.RibbonGroup.DialogLauncherCommand.get -> System.Windows.Input.ICommand?
+RibbonKit.Controls.RibbonGroup.DialogLauncherCommand.set -> void
+RibbonKit.Controls.RibbonGroup.Icon.get -> System.Windows.Media.ImageSource?
+RibbonKit.Controls.RibbonGroup.Icon.set -> void
+RibbonKit.Controls.RibbonGroup.Layout.get -> RibbonKit.Controls.RibbonGroupLayout
+RibbonKit.Controls.RibbonGroup.Layout.set -> void
+RibbonKit.Controls.RibbonGroup.ReductionMode.get -> RibbonKit.RibbonGroupReductionMode
+RibbonKit.Controls.RibbonGroup.ReductionMode.set -> void
+RibbonKit.Controls.RibbonGroup.ReductionPriority.get -> int?
+RibbonKit.Controls.RibbonGroup.ReductionPriority.set -> void
+RibbonKit.Controls.RibbonGroup.RibbonGroup() -> void
+RibbonKit.Controls.RibbonGroup.ShowDialogLauncher.get -> bool
+RibbonKit.Controls.RibbonGroup.ShowDialogLauncher.set -> void
+RibbonKit.Controls.RibbonGroup.SizeState.get -> RibbonKit.RibbonGroupSizeState
+RibbonKit.Controls.RibbonGroupContribution
+RibbonKit.Controls.RibbonGroupContribution.Group.get -> RibbonKit.Controls.RibbonGroup?
+RibbonKit.Controls.RibbonGroupContribution.Group.set -> void
+RibbonKit.Controls.RibbonGroupContribution.Order.get -> int
+RibbonKit.Controls.RibbonGroupContribution.Order.set -> void
+RibbonKit.Controls.RibbonGroupContribution.RibbonGroupContribution() -> void
+RibbonKit.Controls.RibbonGroupContribution.TargetTabId.get -> string?
+RibbonKit.Controls.RibbonGroupContribution.TargetTabId.set -> void
+RibbonKit.Controls.RibbonGroupLayout
+RibbonKit.Controls.RibbonGroupLayout.Default = 0 -> RibbonKit.Controls.RibbonGroupLayout
+RibbonKit.Controls.RibbonGroupLayout.Large = 2 -> RibbonKit.Controls.RibbonGroupLayout
+RibbonKit.Controls.RibbonGroupLayout.Stacked = 1 -> RibbonKit.Controls.RibbonGroupLayout
+RibbonKit.Controls.RibbonGroupsHost
+RibbonKit.Controls.RibbonGroupsHost.RibbonGroupsHost() -> void
+RibbonKit.Controls.RibbonIconChoice
+RibbonKit.Controls.RibbonIconChoice.Icon.get -> System.Windows.Media.ImageSource?
+RibbonKit.Controls.RibbonIconChoice.IsNone.get -> bool
+RibbonKit.Controls.RibbonMenuItem
+RibbonKit.Controls.RibbonMenuItem.Header.get -> string?
+RibbonKit.Controls.RibbonMenuItem.Header.set -> void
+RibbonKit.Controls.RibbonMenuItem.Icon.get -> System.Windows.Media.ImageSource?
+RibbonKit.Controls.RibbonMenuItem.Icon.set -> void
+RibbonKit.Controls.RibbonMenuItem.RibbonMenuItem() -> void
+RibbonKit.Controls.RibbonMergedCaptionAction
+RibbonKit.Controls.RibbonMergedCaptionAction.Close = 2 -> RibbonKit.Controls.RibbonMergedCaptionAction
+RibbonKit.Controls.RibbonMergedCaptionAction.Minimize = 0 -> RibbonKit.Controls.RibbonMergedCaptionAction
+RibbonKit.Controls.RibbonMergedCaptionAction.Restore = 1 -> RibbonKit.Controls.RibbonMergedCaptionAction
+RibbonKit.Controls.RibbonMergedCaptionEventArgs
+RibbonKit.Controls.RibbonMergedCaptionEventArgs.Action.get -> RibbonKit.Controls.RibbonMergedCaptionAction
+RibbonKit.Controls.RibbonMergedCaptionEventArgs.RibbonMergedCaptionEventArgs(RibbonKit.Controls.RibbonMergedCaptionAction action) -> void
+RibbonKit.Controls.RibbonMergeSource
+RibbonKit.Controls.RibbonMergeSource.Groups.get -> System.Collections.ObjectModel.ObservableCollection<RibbonKit.Controls.RibbonGroupContribution!>!
+RibbonKit.Controls.RibbonMergeSource.IsActive.get -> bool
+RibbonKit.Controls.RibbonMergeSource.IsActive.set -> void
+RibbonKit.Controls.RibbonMergeSource.IsMerged.get -> bool
+RibbonKit.Controls.RibbonMergeSource.MergedInto.get -> RibbonKit.Controls.Ribbon?
+RibbonKit.Controls.RibbonMergeSource.Order.get -> int
+RibbonKit.Controls.RibbonMergeSource.Order.set -> void
+RibbonKit.Controls.RibbonMergeSource.RibbonMergeSource() -> void
+RibbonKit.Controls.RibbonMergeSource.Tabs.get -> System.Collections.ObjectModel.ObservableCollection<RibbonKit.Controls.RibbonTab!>!
+RibbonKit.Controls.RibbonMergeSource.Target.get -> RibbonKit.Controls.Ribbon?
+RibbonKit.Controls.RibbonMergeSource.Target.set -> void
+RibbonKit.Controls.RibbonMessage
+RibbonKit.Controls.RibbonMessage.ActionClick -> System.Windows.RoutedEventHandler!
+RibbonKit.Controls.RibbonMessage.ActionCommand.get -> System.Windows.Input.ICommand?
+RibbonKit.Controls.RibbonMessage.ActionCommand.set -> void
+RibbonKit.Controls.RibbonMessage.ActionCommandParameter.get -> object?
+RibbonKit.Controls.RibbonMessage.ActionCommandParameter.set -> void
+RibbonKit.Controls.RibbonMessage.ActionContent.get -> object?
+RibbonKit.Controls.RibbonMessage.ActionContent.set -> void
+RibbonKit.Controls.RibbonMessage.Dismiss() -> void
+RibbonKit.Controls.RibbonMessage.Dismissed -> System.Windows.RoutedEventHandler!
+RibbonKit.Controls.RibbonMessage.Icon.get -> System.Windows.Media.ImageSource?
+RibbonKit.Controls.RibbonMessage.Icon.set -> void
+RibbonKit.Controls.RibbonMessage.IsDismissible.get -> bool
+RibbonKit.Controls.RibbonMessage.IsDismissible.set -> void
+RibbonKit.Controls.RibbonMessage.IsLastOpenMessage.get -> bool
+RibbonKit.Controls.RibbonMessage.IsOpen.get -> bool
+RibbonKit.Controls.RibbonMessage.IsOpen.set -> void
+RibbonKit.Controls.RibbonMessage.IsPresented.get -> bool
+RibbonKit.Controls.RibbonMessage.Message.get -> string?
+RibbonKit.Controls.RibbonMessage.Message.set -> void
+RibbonKit.Controls.RibbonMessage.RibbonMessage() -> void
+RibbonKit.Controls.RibbonMessage.Title.get -> string?
+RibbonKit.Controls.RibbonMessage.Title.set -> void
+RibbonKit.Controls.RibbonMessageBar
+RibbonKit.Controls.RibbonMessageBar.HasOpenMessages.get -> bool
+RibbonKit.Controls.RibbonMessageBar.RibbonMessageBar() -> void
+RibbonKit.Controls.RibbonModalEventArgs
+RibbonKit.Controls.RibbonModalEventArgs.Cancel.get -> bool
+RibbonKit.Controls.RibbonModalEventArgs.Cancel.set -> void
+RibbonKit.Controls.RibbonModalEventArgs.Reason.get -> RibbonKit.Controls.RibbonModalReason
+RibbonKit.Controls.RibbonModalEventArgs.RibbonModalEventArgs(RibbonKit.Controls.RibbonTab! tab, RibbonKit.Controls.RibbonModalReason reason) -> void
+RibbonKit.Controls.RibbonModalEventArgs.Tab.get -> RibbonKit.Controls.RibbonTab!
+RibbonKit.Controls.RibbonModalReason
+RibbonKit.Controls.RibbonModalReason.Application = 0 -> RibbonKit.Controls.RibbonModalReason
+RibbonKit.Controls.RibbonModalReason.CloseButton = 1 -> RibbonKit.Controls.RibbonModalReason
+RibbonKit.Controls.RibbonModalReason.TabRemoved = 2 -> RibbonKit.Controls.RibbonModalReason
+RibbonKit.Controls.RibbonOptionsDialog
+RibbonKit.Controls.RibbonOptionsDialog.Applied -> System.EventHandler?
+RibbonKit.Controls.RibbonOptionsDialog.Pages.get -> System.Collections.ObjectModel.ObservableCollection<RibbonKit.Controls.RibbonOptionsPage!>!
+RibbonKit.Controls.RibbonOptionsDialog.RibbonOptionsDialog() -> void
+RibbonKit.Controls.RibbonOptionsDialog.SelectedPage.get -> RibbonKit.Controls.RibbonOptionsPage?
+RibbonKit.Controls.RibbonOptionsDialog.SelectedPage.set -> void
+RibbonKit.Controls.RibbonOptionsPage
+RibbonKit.Controls.RibbonOptionsPage.RibbonOptionsPage() -> void
+RibbonKit.Controls.RibbonQuickAccessPage
+RibbonKit.Controls.RibbonQuickAccessPage.Ribbon.get -> RibbonKit.Controls.Ribbon?
+RibbonKit.Controls.RibbonQuickAccessPage.Ribbon.set -> void
+RibbonKit.Controls.RibbonQuickAccessPage.RibbonQuickAccessPage() -> void
+RibbonKit.Controls.RibbonQuickAccessToolBar
+RibbonKit.Controls.RibbonQuickAccessToolBar.HasOverflow.get -> bool
+RibbonKit.Controls.RibbonQuickAccessToolBar.RibbonQuickAccessToolBar() -> void
+RibbonKit.Controls.RibbonRadioButton
+RibbonKit.Controls.RibbonRadioButton.Header.get -> string?
+RibbonKit.Controls.RibbonRadioButton.Header.set -> void
+RibbonKit.Controls.RibbonRadioButton.RibbonRadioButton() -> void
+RibbonKit.Controls.RibbonRadioButton.ScreenTipText.get -> string?
+RibbonKit.Controls.RibbonRadioButton.ScreenTipText.set -> void
+RibbonKit.Controls.RibbonRadioButton.ScreenTipTitle.get -> string?
+RibbonKit.Controls.RibbonRadioButton.ScreenTipTitle.set -> void
+RibbonKit.Controls.RibbonScreenTip
+RibbonKit.Controls.RibbonScreenTip.Description.get -> string?
+RibbonKit.Controls.RibbonScreenTip.Description.set -> void
+RibbonKit.Controls.RibbonScreenTip.RibbonScreenTip() -> void
+RibbonKit.Controls.RibbonScreenTip.Title.get -> string?
+RibbonKit.Controls.RibbonScreenTip.Title.set -> void
+RibbonKit.Controls.RibbonSplitButton
+RibbonKit.Controls.RibbonSplitButton.Click -> System.Windows.RoutedEventHandler!
+RibbonKit.Controls.RibbonSplitButton.Command.get -> System.Windows.Input.ICommand?
+RibbonKit.Controls.RibbonSplitButton.Command.set -> void
+RibbonKit.Controls.RibbonSplitButton.CommandParameter.get -> object?
+RibbonKit.Controls.RibbonSplitButton.CommandParameter.set -> void
+RibbonKit.Controls.RibbonSplitButton.IsVerticalLayout.get -> bool
+RibbonKit.Controls.RibbonSplitButton.Layout.get -> RibbonKit.Controls.RibbonSplitButtonLayout
+RibbonKit.Controls.RibbonSplitButton.Layout.set -> void
+RibbonKit.Controls.RibbonSplitButton.RibbonSplitButton() -> void
+RibbonKit.Controls.RibbonSplitButtonLayout
+RibbonKit.Controls.RibbonSplitButtonLayout.Horizontal = 0 -> RibbonKit.Controls.RibbonSplitButtonLayout
+RibbonKit.Controls.RibbonSplitButtonLayout.Vertical = 1 -> RibbonKit.Controls.RibbonSplitButtonLayout
+RibbonKit.Controls.RibbonTab
+RibbonKit.Controls.RibbonTab.CanClose.get -> bool
+RibbonKit.Controls.RibbonTab.CanClose.set -> void
+RibbonKit.Controls.RibbonTab.CloseButtonText.get -> string?
+RibbonKit.Controls.RibbonTab.CloseButtonText.set -> void
+RibbonKit.Controls.RibbonTab.ContextualBrush.get -> System.Windows.Media.Brush?
+RibbonKit.Controls.RibbonTab.ContextualColor.get -> System.Windows.Media.Brush?
+RibbonKit.Controls.RibbonTab.ContextualColor.set -> void
+RibbonKit.Controls.RibbonTab.Groups.get -> System.Collections.ObjectModel.ObservableCollection<RibbonKit.Controls.RibbonGroup!>!
+RibbonKit.Controls.RibbonTab.IsContextual.get -> bool
+RibbonKit.Controls.RibbonTab.IsContextual.set -> void
+RibbonKit.Controls.RibbonTab.IsModal.get -> bool
+RibbonKit.Controls.RibbonTab.IsModal.set -> void
+RibbonKit.Controls.RibbonTab.RibbonTab() -> void
+RibbonKit.Controls.RibbonTabControl
+RibbonKit.Controls.RibbonTabControl.RibbonTabControl() -> void
+RibbonKit.Controls.RibbonTextBox
+RibbonKit.Controls.RibbonTextBox.Header.get -> string?
+RibbonKit.Controls.RibbonTextBox.Header.set -> void
+RibbonKit.Controls.RibbonTextBox.InputWidth.get -> double
+RibbonKit.Controls.RibbonTextBox.InputWidth.set -> void
+RibbonKit.Controls.RibbonTextBox.RibbonTextBox() -> void
+RibbonKit.Controls.RibbonTextBox.ScreenTipText.get -> string?
+RibbonKit.Controls.RibbonTextBox.ScreenTipText.set -> void
+RibbonKit.Controls.RibbonTextBox.ScreenTipTitle.get -> string?
+RibbonKit.Controls.RibbonTextBox.ScreenTipTitle.set -> void
+RibbonKit.Controls.RibbonToggleButton
+RibbonKit.Controls.RibbonToggleButton.Header.get -> string?
+RibbonKit.Controls.RibbonToggleButton.Header.set -> void
+RibbonKit.Controls.RibbonToggleButton.Icon.get -> System.Windows.Media.ImageSource?
+RibbonKit.Controls.RibbonToggleButton.Icon.set -> void
+RibbonKit.Controls.RibbonToggleButton.LargeIcon.get -> System.Windows.Media.ImageSource?
+RibbonKit.Controls.RibbonToggleButton.LargeIcon.set -> void
+RibbonKit.Controls.RibbonToggleButton.RibbonToggleButton() -> void
+RibbonKit.Controls.RibbonToggleButton.ScreenTipText.get -> string?
+RibbonKit.Controls.RibbonToggleButton.ScreenTipText.set -> void
+RibbonKit.Controls.RibbonToggleButton.ScreenTipTitle.get -> string?
+RibbonKit.Controls.RibbonToggleButton.ScreenTipTitle.set -> void
+RibbonKit.Controls.RibbonToggleButton.Size.get -> RibbonKit.RibbonControlSize
+RibbonKit.Controls.RibbonToggleButton.Size.set -> void
+RibbonKit.Controls.RibbonToggleButton.SizeDefinition.get -> string?
+RibbonKit.Controls.RibbonToggleButton.SizeDefinition.set -> void
+RibbonKit.Controls.RibbonWindow
+RibbonKit.Controls.RibbonWindow.IsTitleBarContentVisible.get -> bool
+RibbonKit.Controls.RibbonWindow.IsTitleBarContentVisible.set -> void
+RibbonKit.Controls.RibbonWindow.RibbonWindow() -> void
+RibbonKit.Controls.RibbonWindow.TitleBarContent.get -> object?
+RibbonKit.Controls.RibbonWindow.TitleBarContent.set -> void
+RibbonKit.Interop.MicaHelper
+RibbonKit.Interop.RibbonBackdrop
+RibbonKit.Interop.RibbonBackdrop.Acrylic = 3 -> RibbonKit.Interop.RibbonBackdrop
+RibbonKit.Interop.RibbonBackdrop.Mica = 2 -> RibbonKit.Interop.RibbonBackdrop
+RibbonKit.Interop.RibbonBackdrop.None = 1 -> RibbonKit.Interop.RibbonBackdrop
+RibbonKit.Interop.RibbonBackdrop.Tabbed = 4 -> RibbonKit.Interop.RibbonBackdrop
+RibbonKit.Layout.MdiCanvasPanel
+RibbonKit.Layout.MdiCanvasPanel.MdiCanvasPanel() -> void
+RibbonKit.Layout.ReductionAlgorithm
+RibbonKit.Layout.RibbonGroupsPanel
+RibbonKit.Layout.RibbonGroupsPanel.InvalidateStateCache() -> void
+RibbonKit.Layout.RibbonGroupsPanel.RibbonGroupsPanel() -> void
+RibbonKit.Layout.RibbonQuickAccessPanel
+RibbonKit.Layout.RibbonQuickAccessPanel.RibbonQuickAccessPanel() -> void
+RibbonKit.Layout.RibbonScrollContentHost
+RibbonKit.Layout.RibbonScrollContentHost.CanScrollLeft.get -> bool
+RibbonKit.Layout.RibbonScrollContentHost.CanScrollRight.get -> bool
+RibbonKit.Layout.RibbonScrollContentHost.ConstrainChildWidth.get -> bool
+RibbonKit.Layout.RibbonScrollContentHost.ConstrainChildWidth.set -> void
+RibbonKit.Layout.RibbonScrollContentHost.ExtentWidth.get -> double
+RibbonKit.Layout.RibbonScrollContentHost.LineSize.get -> double
+RibbonKit.Layout.RibbonScrollContentHost.LineSize.set -> void
+RibbonKit.Layout.RibbonScrollContentHost.Offset.get -> double
+RibbonKit.Layout.RibbonScrollContentHost.Offset.set -> void
+RibbonKit.Layout.RibbonScrollContentHost.OffsetChanged -> System.EventHandler?
+RibbonKit.Layout.RibbonScrollContentHost.Refresh() -> void
+RibbonKit.Layout.RibbonScrollContentHost.RibbonScrollContentHost() -> void
+RibbonKit.Layout.RibbonScrollContentHost.ScrollLeftCommand.get -> System.Windows.Input.ICommand!
+RibbonKit.Layout.RibbonScrollContentHost.ScrollRightCommand.get -> System.Windows.Input.ICommand!
+RibbonKit.Layout.RibbonScrollContentHost.ViewportWidth.get -> double
+RibbonKit.Layout.RibbonSizeDefinition
+RibbonKit.Localization.IRibbonLocalizationProvider
+RibbonKit.Localization.IRibbonLocalizationProvider.GetString(RibbonKit.Localization.RibbonString key, System.Globalization.CultureInfo! culture) -> string?
+RibbonKit.Localization.RibbonLocalization
+RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.Add = 13 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.AddToQuickAccessToolbar = 0 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.Back = 47 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.ButtonSizeLabel = 30 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.Cancel = 36 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.ChooseCommandsFromRibbon = 8 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.Close = 25 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.CloseWindow = 55 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.CollapseRibbon = 3 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.CouldNotReadFile = 46 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.CouldNotSaveFile = 45 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.CurrentQuickAccessToolbar = 9 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.CustomItemFormat = 37 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.CustomizeQuickAccessToolbar = 1 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.CustomizeRibbon = 2 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.CustomizeRibbonLabel = 10 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.CustomizeRibbonPage = 11 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.Edit = 24 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.EditCommand = 40 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.EditGroup = 39 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.EditTab = 38 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.Exit = 59 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.Export = 19 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.ExportRibbonCustomization = 41 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.ExportRibbonLayoutTooltip = 21 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.File = 57 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.GroupLayoutLabel = 29 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.IconFromRibbonCommandsLabel = 27 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.Import = 18 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.ImportRibbonCustomization = 42 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.ImportRibbonLayoutTooltip = 20 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.Large = 32 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.Maximize = 49 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.Medium = 33 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.Minimize = 48 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.MinimizeRibbon = 52 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.MinimizeWindow = 53 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.MoreOptions = 56 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.MoreQuickAccessCommands = 51 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.MoveDown = 16 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.MoveUp = 15 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.NameLabel = 26 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.NewGroup = 23 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.NewTab = 22 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.None = 28 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.Ok = 35 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.Options = 58 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.QuickAccessToolbarPage = 12 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.Remove = 14 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.RemoveFromQuickAccessToolbar = 7 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.Reset = 17 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.RestoreDown = 50 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.RestoreWindow = 54 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.RibbonCustomization = 44 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.RibbonLayoutFileFilter = 43 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.ShowQuickAccessToolbarAboveRibbon = 5 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.ShowQuickAccessToolbarBelowRibbon = 6 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.ShowQuickAccessToolbarInTitleBar = 4 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.Small = 34 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.Stacked = 31 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonStringExtension
+RibbonKit.Localization.RibbonStringExtension.Key.get -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonStringExtension.Key.set -> void
+RibbonKit.Localization.RibbonStringExtension.RibbonStringExtension() -> void
+RibbonKit.Localization.RibbonStringExtension.RibbonStringExtension(RibbonKit.Localization.RibbonString key) -> void
+RibbonKit.RibbonApplicationButtonShape
+RibbonKit.RibbonApplicationButtonShape.Orb = 1 -> RibbonKit.RibbonApplicationButtonShape
+RibbonKit.RibbonApplicationButtonShape.Tab = 0 -> RibbonKit.RibbonApplicationButtonShape
+RibbonKit.RibbonBackstageDesign
+RibbonKit.RibbonBackstageDesign.Classic = 0 -> RibbonKit.RibbonBackstageDesign
+RibbonKit.RibbonBackstageDesign.Classic2010 = 2 -> RibbonKit.RibbonBackstageDesign
+RibbonKit.RibbonBackstageDesign.Modern = 1 -> RibbonKit.RibbonBackstageDesign
+RibbonKit.RibbonControlSize
+RibbonKit.RibbonControlSize.Large = 0 -> RibbonKit.RibbonControlSize
+RibbonKit.RibbonControlSize.Medium = 1 -> RibbonKit.RibbonControlSize
+RibbonKit.RibbonControlSize.Small = 2 -> RibbonKit.RibbonControlSize
+RibbonKit.RibbonGroupReductionMode
+RibbonKit.RibbonGroupReductionMode.Collapse = 0 -> RibbonKit.RibbonGroupReductionMode
+RibbonKit.RibbonGroupReductionMode.Resize = 2 -> RibbonKit.RibbonGroupReductionMode
+RibbonKit.RibbonGroupReductionMode.ResizeThenCollapse = 1 -> RibbonKit.RibbonGroupReductionMode
+RibbonKit.RibbonGroupSizeState
+RibbonKit.RibbonGroupSizeState.Collapsed = 3 -> RibbonKit.RibbonGroupSizeState
+RibbonKit.RibbonGroupSizeState.Large = 0 -> RibbonKit.RibbonGroupSizeState
+RibbonKit.RibbonGroupSizeState.Medium = 1 -> RibbonKit.RibbonGroupSizeState
+RibbonKit.RibbonGroupSizeState.Small = 2 -> RibbonKit.RibbonGroupSizeState
+RibbonKit.RibbonQuickAccessPosition
+RibbonKit.RibbonQuickAccessPosition.BelowRibbon = 1 -> RibbonKit.RibbonQuickAccessPosition
+RibbonKit.RibbonQuickAccessPosition.TabRow = 0 -> RibbonKit.RibbonQuickAccessPosition
+RibbonKit.RibbonQuickAccessPosition.TitleBar = 2 -> RibbonKit.RibbonQuickAccessPosition
+RibbonKit.Theming.RibbonTheme
+RibbonKit.Theming.RibbonTheme.Office2007 = 4 -> RibbonKit.Theming.RibbonTheme
+RibbonKit.Theming.RibbonTheme.Office2010 = 3 -> RibbonKit.Theming.RibbonTheme
+RibbonKit.Theming.RibbonTheme.Office2013 = 2 -> RibbonKit.Theming.RibbonTheme
+RibbonKit.Theming.RibbonTheme.Office2019 = 1 -> RibbonKit.Theming.RibbonTheme
+RibbonKit.Theming.RibbonTheme.Office2024 = 0 -> RibbonKit.Theming.RibbonTheme
+RibbonKit.Theming.ThemeManager
+static readonly RibbonKit.Animation.RibbonMotion.AnimatedVerticalOffsetProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Animation.RibbonPopupMotion.AnimateOpenProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Animation.RibbonPopupMotion.OpenActionProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.Backstage.DesignProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.Backstage.TranslucentProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.BackstageNavPanel.SeparatorBrushProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.BackstageTabItem.ClickEvent -> System.Windows.RoutedEvent!
+static readonly RibbonKit.Controls.BackstageTabItem.CommandParameterProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.BackstageTabItem.CommandProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.BackstageTabItem.IconProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.BackstageTabItem.IsButtonProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.BackstageTabItem.PlacementProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.InRibbonGallery.IsDropDownOpenProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.KeyTip.KeysProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.MdiChild.ActivationRequestedEvent -> System.Windows.RoutedEvent!
+static readonly RibbonKit.Controls.MdiChild.CanCloseProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.MdiChild.CloseRequestedEvent -> System.Windows.RoutedEvent!
+static readonly RibbonKit.Controls.MdiChild.IconProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.MdiChild.IsActiveProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.MdiChild.IsCaptionMergedProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.MdiChild.IsModifiedProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.MdiChild.LeftProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.MdiChild.TitleProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.MdiChild.TopProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.MdiChild.WindowStateChangedEvent -> System.Windows.RoutedEvent!
+static readonly RibbonKit.Controls.MdiChild.WindowStateProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.MdiContainer.ActiveDocumentProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.MdiContainer.IsCaptionMergeEnabledProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.MdiContainer.RibbonProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.Ribbon.ApplicationButtonHeaderProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.Ribbon.ApplicationButtonShapeProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.Ribbon.ApplicationMenuProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.Ribbon.BackstageProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.Ribbon.CanCloseModalProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.Ribbon.CommandIdProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.Ribbon.DesignPreviewFileSurfaceProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.Ribbon.DesignPreviewThemeProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.Ribbon.EffectiveApplicationButtonHeaderProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.Ribbon.HasMergedCaptionProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.Ribbon.HasOpenMessagesProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.Ribbon.IsApplicationMenuOpenProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.Ribbon.IsBackstageOpenProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.Ribbon.IsCommandParkedProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.Ribbon.IsCustomProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.Ribbon.IsMergedProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.Ribbon.IsMinimizedProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.Ribbon.IsModalProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.Ribbon.MergedCaptionCanCloseProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.Ribbon.MergedCaptionIconProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.Ribbon.MergedCaptionTitleProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.Ribbon.MergeSourceProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.Ribbon.MessageBarProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.Ribbon.ModalTabProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.Ribbon.QatOnColoredSurfaceProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.Ribbon.QuickAccessItemsProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.Ribbon.QuickAccessMaxWidthProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.Ribbon.QuickAccessOverflowItemProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.Ribbon.QuickAccessPositionProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.Ribbon.QuickAccessSourceProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.Ribbon.SelectedIndexProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.Ribbon.SelectedTabProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.Ribbon.TabsProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonApplicationMenu.ActiveItemProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonApplicationMenu.ActivePaneContentProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonApplicationMenu.ActivePaneHeaderProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonApplicationMenu.DefaultContentProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonApplicationMenu.DefaultHeaderProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonApplicationMenu.DesignPreviewActiveIndexProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonApplicationMenu.FooterContentProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonApplicationMenu.HasActivePaneProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonApplicationMenuButton.IconProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonApplicationMenuItem.ClickEvent -> System.Windows.RoutedEvent!
+static readonly RibbonKit.Controls.RibbonApplicationMenuItem.CommandParameterProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonApplicationMenuItem.CommandProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonApplicationMenuItem.HasPaneProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonApplicationMenuItem.IconProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonApplicationMenuItem.IsActiveProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonApplicationMenuItem.IsSplitPresentationProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonApplicationMenuItem.IsSplitProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonApplicationMenuItem.PaneHeaderProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonApplicationMenuPaneItem.DescriptionProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonApplicationMenuPaneItem.IconProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonButton.HeaderProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonButton.IconProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonButton.LargeIconProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonButton.ScreenTipTextProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonButton.ScreenTipTitleProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonButton.SizeDefinitionProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonButton.SizeProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonCheckBox.HeaderProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonCheckBox.ScreenTipTextProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonCheckBox.ScreenTipTitleProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonComboBox.HeaderProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonComboBox.InputWidthProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonComboBox.ScreenTipTextProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonComboBox.ScreenTipTitleProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonCustomizePage.ResetLayoutProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonCustomizePage.RibbonProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonDropDownButton.HeaderProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonDropDownButton.IconProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonDropDownButton.IsDropDownOpenProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonDropDownButton.LargeIconProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonDropDownButton.ScreenTipTextProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonDropDownButton.ScreenTipTitleProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonDropDownButton.SizeDefinitionProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonDropDownButton.SizeProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonGallery.ItemPreviewCancelledEvent -> System.Windows.RoutedEvent!
+static readonly RibbonKit.Controls.RibbonGallery.ItemPreviewEvent -> System.Windows.RoutedEvent!
+static readonly RibbonKit.Controls.RibbonGroup.CanResizeProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonGroup.ContentAlignmentProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonGroup.DialogLauncherClickEvent -> System.Windows.RoutedEvent!
+static readonly RibbonKit.Controls.RibbonGroup.DialogLauncherCommandProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonGroup.IconProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonGroup.LayoutProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonGroup.ReductionModeProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonGroup.ReductionPriorityProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonGroup.ShowDialogLauncherProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonGroup.SizeStateProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonGroupContribution.GroupProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonGroupContribution.OrderProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonGroupContribution.TargetTabIdProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonMenuItem.HeaderProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonMenuItem.IconProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonMergeSource.GroupsProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonMergeSource.IsActiveProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonMergeSource.MergedIntoProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonMergeSource.OrderProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonMergeSource.SourceProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonMergeSource.TabsProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonMergeSource.TargetProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonMessage.ActionClickEvent -> System.Windows.RoutedEvent!
+static readonly RibbonKit.Controls.RibbonMessage.ActionCommandParameterProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonMessage.ActionCommandProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonMessage.ActionContentProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonMessage.DismissedEvent -> System.Windows.RoutedEvent!
+static readonly RibbonKit.Controls.RibbonMessage.IconProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonMessage.IsDismissibleProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonMessage.IsLastOpenMessageProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonMessage.IsOpenProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonMessage.IsPresentedProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonMessage.MessageProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonMessage.TitleProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonMessageBar.HasOpenMessagesProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonOptionsDialog.PagesProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonOptionsDialog.SelectedPageProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonQuickAccessPage.RibbonProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonQuickAccessToolBar.HasOverflowProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonRadioButton.HeaderProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonRadioButton.ScreenTipTextProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonRadioButton.ScreenTipTitleProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonScreenTip.DescriptionProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonScreenTip.TitleProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonSplitButton.ClickEvent -> System.Windows.RoutedEvent!
+static readonly RibbonKit.Controls.RibbonSplitButton.CommandParameterProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonSplitButton.CommandProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonSplitButton.IsVerticalLayoutProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonSplitButton.LayoutProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonTab.CanCloseProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonTab.CloseButtonTextProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonTab.ContextualBrushProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonTab.ContextualColorProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonTab.GroupsProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonTab.IsContextualProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonTab.IsModalProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonTextBox.HeaderProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonTextBox.InputWidthProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonTextBox.ScreenTipTextProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonTextBox.ScreenTipTitleProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonToggleButton.HeaderProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonToggleButton.IconProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonToggleButton.LargeIconProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonToggleButton.ScreenTipTextProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonToggleButton.ScreenTipTitleProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonToggleButton.SizeDefinitionProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonToggleButton.SizeProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonWindow.IsTitleBarContentVisibleProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonWindow.TitleBarContentProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Layout.RibbonScrollContentHost.CanScrollLeftProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Layout.RibbonScrollContentHost.CanScrollRightProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Layout.RibbonScrollContentHost.ConstrainChildWidthProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Layout.RibbonScrollContentHost.ExtentWidthProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Layout.RibbonScrollContentHost.LineSizeProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Layout.RibbonScrollContentHost.OffsetProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Layout.RibbonScrollContentHost.ViewportWidthProperty -> System.Windows.DependencyProperty!
+static RibbonKit.Animation.RibbonAnimation.Changed -> System.EventHandler?
+static RibbonKit.Animation.RibbonAnimation.ClearActionLevel(RibbonKit.Animation.RibbonAnimationAction action) -> void
+static RibbonKit.Animation.RibbonAnimation.GetActionOverride(RibbonKit.Animation.RibbonAnimationAction action) -> RibbonKit.Animation.RibbonAnimationLevel?
+static RibbonKit.Animation.RibbonAnimation.GetDuration(RibbonKit.Animation.RibbonAnimationAction action) -> System.Windows.Duration
+static RibbonKit.Animation.RibbonAnimation.GetEase(RibbonKit.Animation.RibbonAnimationAction action) -> System.Windows.Media.Animation.IEasingFunction!
+static RibbonKit.Animation.RibbonAnimation.GetEffectiveLevel(RibbonKit.Animation.RibbonAnimationAction action) -> RibbonKit.Animation.RibbonAnimationLevel
+static RibbonKit.Animation.RibbonAnimation.GetSlideOffset(RibbonKit.Animation.RibbonAnimationAction action) -> double
+static RibbonKit.Animation.RibbonAnimation.GlobalLevel.get -> RibbonKit.Animation.RibbonAnimationLevel
+static RibbonKit.Animation.RibbonAnimation.GlobalLevel.set -> void
+static RibbonKit.Animation.RibbonAnimation.Initialize(System.Windows.Application! application) -> void
+static RibbonKit.Animation.RibbonAnimation.IsEnabled(RibbonKit.Animation.RibbonAnimationAction action) -> bool
+static RibbonKit.Animation.RibbonAnimation.RespectSystemReduceMotion.get -> bool
+static RibbonKit.Animation.RibbonAnimation.RespectSystemReduceMotion.set -> void
+static RibbonKit.Animation.RibbonAnimation.SetActionLevel(RibbonKit.Animation.RibbonAnimationAction action, RibbonKit.Animation.RibbonAnimationLevel level) -> void
+static RibbonKit.Animation.RibbonAnimation.SystemReduceMotion.get -> bool
+static RibbonKit.Animation.RibbonMotion.AnimateScrollToVerticalOffset(System.Windows.Controls.ScrollViewer? scrollViewer, double targetOffset, RibbonKit.Animation.RibbonAnimationAction action, double? fromOffset = null) -> void
+static RibbonKit.Animation.RibbonMotion.AnimateTranslateX(System.Windows.FrameworkElement? element, RibbonKit.Animation.RibbonAnimationAction action, double fromX, double toX) -> void
+static RibbonKit.Animation.RibbonMotion.AnimateTranslateY(System.Windows.FrameworkElement? element, RibbonKit.Animation.RibbonAnimationAction action, double fromY, double toY) -> void
+static RibbonKit.Animation.RibbonMotion.FadeWash(System.Windows.FrameworkElement? wash, bool show, RibbonKit.Animation.RibbonAnimationAction action) -> void
+static RibbonKit.Animation.RibbonMotion.GetAnimatedVerticalOffset(System.Windows.DependencyObject! element) -> double
+static RibbonKit.Animation.RibbonMotion.PlayClose(System.Windows.FrameworkElement? element, RibbonKit.Animation.RibbonAnimationAction action, RibbonKit.Animation.RibbonSlideFrom to = RibbonKit.Animation.RibbonSlideFrom.Top, System.Action? onCompleted = null) -> void
+static RibbonKit.Animation.RibbonMotion.PlayFadeIn(System.Windows.FrameworkElement? element, RibbonKit.Animation.RibbonAnimationAction action) -> void
+static RibbonKit.Animation.RibbonMotion.PlayFlyoutOpen(System.Windows.FrameworkElement? surface, RibbonKit.Animation.RibbonAnimationAction action) -> void
+static RibbonKit.Animation.RibbonMotion.PlayKeyTipPop(System.Windows.FrameworkElement? element, RibbonKit.Animation.RibbonAnimationAction action) -> void
+static RibbonKit.Animation.RibbonMotion.PlayOpen(System.Windows.FrameworkElement? element, RibbonKit.Animation.RibbonAnimationAction action, RibbonKit.Animation.RibbonSlideFrom from = RibbonKit.Animation.RibbonSlideFrom.Top) -> void
+static RibbonKit.Animation.RibbonMotion.PlaySlideIn(System.Windows.FrameworkElement? element, RibbonKit.Animation.RibbonAnimationAction action, RibbonKit.Animation.RibbonSlideFrom from = RibbonKit.Animation.RibbonSlideFrom.Bottom) -> void
+static RibbonKit.Animation.RibbonMotion.PlayThemeCrossfade(System.Windows.FrameworkElement? element, RibbonKit.Animation.RibbonAnimationAction action) -> void
+static RibbonKit.Animation.RibbonMotion.Rest(System.Windows.FrameworkElement? element) -> void
+static RibbonKit.Animation.RibbonMotion.SetAnimatedVerticalOffset(System.Windows.DependencyObject! element, double value) -> void
+static RibbonKit.Animation.RibbonMotion.StopScrollAnimation(System.Windows.Controls.ScrollViewer? scrollViewer) -> void
+static RibbonKit.Animation.RibbonPopupMotion.GetAnimateOpen(System.Windows.DependencyObject! element) -> bool
+static RibbonKit.Animation.RibbonPopupMotion.GetOpenAction(System.Windows.DependencyObject! element) -> RibbonKit.Animation.RibbonAnimationAction
+static RibbonKit.Animation.RibbonPopupMotion.SetAnimateOpen(System.Windows.DependencyObject! element, bool value) -> void
+static RibbonKit.Animation.RibbonPopupMotion.SetOpenAction(System.Windows.DependencyObject! element, RibbonKit.Animation.RibbonAnimationAction value) -> void
+static RibbonKit.Controls.Backstage.GetDesign(System.Windows.DependencyObject! element) -> RibbonKit.RibbonBackstageDesign
+static RibbonKit.Controls.Backstage.SetDesign(System.Windows.DependencyObject! element, RibbonKit.RibbonBackstageDesign value) -> void
+static RibbonKit.Controls.KeyTip.GetKeys(System.Windows.DependencyObject! element) -> string?
+static RibbonKit.Controls.KeyTip.SetKeys(System.Windows.DependencyObject! element, string? value) -> void
+static RibbonKit.Controls.Ribbon.GetCommandId(System.Windows.DependencyObject! element) -> string?
+static RibbonKit.Controls.Ribbon.GetIsCommandParked(System.Windows.DependencyObject! element) -> bool
+static RibbonKit.Controls.Ribbon.GetIsCustom(System.Windows.DependencyObject! element) -> bool
+static RibbonKit.Controls.Ribbon.GetIsMerged(System.Windows.DependencyObject! element) -> bool
+static RibbonKit.Controls.Ribbon.GetMergeSource(System.Windows.DependencyObject! element) -> RibbonKit.Controls.RibbonMergeSource?
+static RibbonKit.Controls.Ribbon.GetQatOnColoredSurface(System.Windows.DependencyObject! element) -> bool
+static RibbonKit.Controls.Ribbon.GetQuickAccessOverflowItem(System.Windows.DependencyObject! element) -> System.Windows.FrameworkElement?
+static RibbonKit.Controls.Ribbon.GetQuickAccessSource(System.Windows.DependencyObject! element) -> System.Windows.FrameworkElement?
+static RibbonKit.Controls.Ribbon.SetCommandId(System.Windows.DependencyObject! element, string? value) -> void
+static RibbonKit.Controls.Ribbon.SetIsCustom(System.Windows.DependencyObject! element, bool value) -> void
+static RibbonKit.Controls.Ribbon.SetQatOnColoredSurface(System.Windows.DependencyObject! element, bool value) -> void
+static RibbonKit.Controls.RibbonCustomizationSerializer.Apply(RibbonKit.Controls.Ribbon! ribbon, string? json) -> void
+static RibbonKit.Controls.RibbonCustomizationSerializer.Serialize(RibbonKit.Controls.Ribbon! ribbon) -> string!
+static RibbonKit.Controls.RibbonMergeSource.GetSource(System.Windows.DependencyObject! element) -> RibbonKit.Controls.RibbonMergeSource?
+static RibbonKit.Controls.RibbonMergeSource.SetSource(System.Windows.DependencyObject! element, RibbonKit.Controls.RibbonMergeSource? value) -> void
+static RibbonKit.Interop.MicaHelper.ExtendGlassFrame(System.Windows.Window! window, bool full) -> void
+static RibbonKit.Interop.MicaHelper.IsSupported.get -> bool
+static RibbonKit.Interop.MicaHelper.SetRoundedCorners(System.Windows.Window! window, int? borderColor = null) -> void
+static RibbonKit.Interop.MicaHelper.ShowNativeCaptionButtons(System.Windows.Window! window, bool visible) -> void
+static RibbonKit.Interop.MicaHelper.TrySetBackdrop(System.Windows.Window! window, RibbonKit.Interop.RibbonBackdrop backdrop) -> bool
+static RibbonKit.Interop.MicaHelper.TrySetDarkMode(System.Windows.Window! window, bool enabled) -> bool
+static RibbonKit.Layout.ReductionAlgorithm.ComputeStates(double availableWidth, System.Collections.Generic.IReadOnlyList<double[]!>! stateWidths) -> int[]!
+static RibbonKit.Layout.ReductionAlgorithm.ComputeStates(double availableWidth, System.Collections.Generic.IReadOnlyList<double[]!>! stateWidths, System.Collections.Generic.IReadOnlyList<int>! reductionOrder) -> int[]!
+static RibbonKit.Layout.RibbonSizeDefinition.Parse(string! definition) -> RibbonKit.RibbonControlSize[]!
+static RibbonKit.Layout.RibbonSizeDefinition.SizeFor(string! definition, RibbonKit.RibbonGroupSizeState state) -> RibbonKit.RibbonControlSize
+static RibbonKit.Localization.RibbonLocalization.GetString(RibbonKit.Localization.RibbonString key) -> string!
+static RibbonKit.Localization.RibbonLocalization.Provider.get -> RibbonKit.Localization.IRibbonLocalizationProvider?
+static RibbonKit.Localization.RibbonLocalization.Provider.set -> void
+static RibbonKit.Localization.RibbonLocalization.Refresh() -> void
+static RibbonKit.Theming.ThemeManager.Apply(System.Windows.Application! application, RibbonKit.Theming.RibbonTheme theme) -> void
+static RibbonKit.Theming.ThemeManager.Changed -> System.EventHandler?
+static RibbonKit.Theming.ThemeManager.ClearAccent(System.Windows.Application! application) -> void
+static RibbonKit.Theming.ThemeManager.CurrentTheme.get -> RibbonKit.Theming.RibbonTheme?
+static RibbonKit.Theming.ThemeManager.IsAccentedTitleBar.get -> bool
+static RibbonKit.Theming.ThemeManager.IsDarkMode.get -> bool
+static RibbonKit.Theming.ThemeManager.IsTitleBarBackdrop.get -> bool
+static RibbonKit.Theming.ThemeManager.SetAccent(System.Windows.Application! application, System.Windows.Media.Color accent) -> void
+static RibbonKit.Theming.ThemeManager.SetAccentedTitleBar(System.Windows.Application! application, bool enabled) -> void
+static RibbonKit.Theming.ThemeManager.SetDarkMode(System.Windows.Application! application, bool enabled) -> void
+static RibbonKit.Theming.ThemeManager.SetTitleBarBackdrop(System.Windows.Application! application, bool enabled) -> void
+static RibbonKit.Theming.ThemeManager.SupportsDarkMode(RibbonKit.Theming.RibbonTheme theme) -> bool
+virtual RibbonKit.Controls.RibbonGalleryPreviewEventHandler.Invoke(object! sender, RibbonKit.Controls.RibbonGalleryPreviewEventArgs! e) -> void

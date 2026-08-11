@@ -19,7 +19,9 @@ Microsoft's built-in `System.Windows.Controls.Ribbon` is dated, visually stuck a
 
 **Product decisions** — name, license (MIT recommended), target framework (locked: net8.0-windows, add net9.0-windows), versioning policy (SemVer), what "v1.0" means.
 
-**Repository & infrastructure** — GitHub repo layout, CI (build + test + package on every PR), NuGet publishing pipeline, demo/showcase app, contribution docs, issue templates, API docs generation.
+**Repository & infrastructure** — GitHub repo layout, CI (build + test + package on every PR), local
+package validation and optional GitHub Release assets, demo/showcase app, contribution docs, issue
+templates, API docs generation.
 
 **Architecture** — control class hierarchy, the adaptive sizing/layout engine (the hardest problem in the project), theming system, window-chrome integration, KeyTip/keyboard system, state persistence, design-time support. Detailed in `01-ARCHITECTURE.md`.
 

@@ -1,6 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.ComTypes;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Markup;
@@ -9,19 +14,28 @@ using System.Windows.Media;
 namespace RibbonKit.Design;
 
 /// <summary>
-/// Session cache of an icon <see cref="ResourceDictionary"/> the user has pointed the picker at
-/// (their project's Icons.xaml). The design extension can't auto-discover that file — resources
-/// live in the isolated design-surface process and there's no reliable document-path service — so
-/// the user browses to it once and it's remembered for the rest of the session. Parsing happens in
-/// the extension's own WPF context, so the <c>DrawingImage</c> values render as real thumbnails.
+/// Session cache of an icon <see cref="ResourceDictionary"/> from the active project. The catalog
+/// first makes a conservative best-effort search for Icons.xaml beside/within the active XAML
+/// project's directory, using the current Visual Studio automation object only to locate that
+/// document. The browse button remains the fallback when discovery is unavailable or ambiguous.
+/// Parsing happens in the extension's own WPF context, so <c>DrawingImage</c> values render as real
+/// thumbnails.
 /// </summary>
 internal static class IconCatalog
 {
+    private static string? _lastDiscoveryContext;
+
     /// <summary>The loaded dictionary, or null until the user loads one this session.</summary>
     public static ResourceDictionary? Loaded { get; private set; }
 
     /// <summary>The path the current <see cref="Loaded"/> dictionary came from (for display).</summary>
     public static string? LoadedPath { get; private set; }
+
+    /// <summary>Whether the current dictionary was found automatically rather than browsed to.</summary>
+    public static bool AutomaticallyLoaded { get; private set; }
+
+    /// <summary>Why automatic discovery did not load a catalog; null after a successful load.</summary>
+    public static string? DiscoveryMessage { get; private set; }
 
     /// <summary>Loads a ResourceDictionary XAML file (e.g. Icons.xaml). Returns false with a message on failure.</summary>
     public static bool TryLoad(string path, out string? error)
@@ -35,6 +49,8 @@ internal static class IconCatalog
                 {
                     Loaded = dictionary;
                     LoadedPath = path;
+                    AutomaticallyLoaded = false;
+                    DiscoveryMessage = null;
                     return true;
                 }
             }
@@ -47,6 +63,53 @@ internal static class IconCatalog
             error = ex.Message;
             DesignLog.Error("IconCatalog.TryLoad " + path, ex);
             return false;
+        }
+    }
+
+    /// <summary>
+    /// Tries to load a single unambiguous Icons.xaml from the active XAML project. Failure is silent
+    /// and leaves the explicit browse workflow available.
+    /// </summary>
+    public static void TryAutoDiscover()
+    {
+        if (Loaded != null)
+        {
+            return;
+        }
+
+        VisualStudioPaths.TryGet(out string? activeDocumentPath, out string? solutionPath);
+        string context = (activeDocumentPath ?? string.Empty) + "|" + (solutionPath ?? string.Empty);
+        if (string.Equals(context, _lastDiscoveryContext, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        _lastDiscoveryContext = context;
+
+        try
+        {
+            string? path = IconCatalogDiscovery.FindSingle(activeDocumentPath, solutionPath, out string message);
+            if (path == null)
+            {
+                DiscoveryMessage = message;
+                return;
+            }
+
+            if (TryLoad(path, out string? error))
+            {
+                AutomaticallyLoaded = true;
+                DiscoveryMessage = null;
+                DesignLog.Write("IconCatalog: automatically loaded " + path);
+            }
+            else
+            {
+                DiscoveryMessage = "Automatic Icons.xaml load failed; use Load Icons.xaml…. " + error;
+            }
+        }
+        catch (Exception ex)
+        {
+            DiscoveryMessage = "Icons.xaml wasn't found automatically; use Load Icons.xaml….";
+            DesignLog.Error("IconCatalog.TryAutoDiscover", ex);
         }
     }
 
@@ -119,6 +182,7 @@ internal sealed class IconPickerDialog : Window
         UseLayoutRounding = true;
 
         Content = BuildLayout();
+        IconCatalog.TryAutoDiscover();
         RebuildTiles();
     }
 
@@ -214,7 +278,9 @@ internal sealed class IconPickerDialog : Window
                 _tiles.Children.Add(MakeTile(key, IconCatalog.Preview(key)));
             }
 
-            _status.Text = keys.Count + " of " + IconCatalog.Keys().Count() + " icons — " + IconCatalog.LoadedPath;
+            _status.Text = keys.Count + " of " + IconCatalog.Keys().Count() + " icons — "
+                + (IconCatalog.AutomaticallyLoaded ? "auto-loaded " : string.Empty)
+                + IconCatalog.LoadedPath;
         }
         else
         {
@@ -224,9 +290,12 @@ internal sealed class IconPickerDialog : Window
                 _tiles.Children.Add(MakeTile(key, null));
             }
 
-            _status.Text = _usedKeys.Count == 0
+            string guidance = _usedKeys.Count == 0
                 ? "No icons in use yet. Click “Load Icons.xaml…” to browse all icons with previews."
                 : "Icons used in this ribbon. Click “Load Icons.xaml…” to browse all with previews.";
+            _status.Text = string.IsNullOrEmpty(IconCatalog.DiscoveryMessage)
+                ? guidance
+                : IconCatalog.DiscoveryMessage + " " + guidance;
         }
     }
 
@@ -275,4 +344,246 @@ internal sealed class IconPickerDialog : Window
         };
         return tile;
     }
+}
+
+/// <summary>Locates a single Icons.xaml without depending on Visual Studio SDK interop assemblies.</summary>
+internal static class IconCatalogDiscovery
+{
+    private static readonly HashSet<string> ExcludedDirectories = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    {
+        ".git", ".vs", "artifacts", "bin", "node_modules", "obj", "packages", "TestResults",
+    };
+
+    public static string? FindSingle(string? activeDocumentPath, string? solutionPath, out string message)
+    {
+        string? solutionDirectory = DirectoryOfExistingFile(solutionPath);
+        DirectoryInfo? documentDirectory = DirectoryInfoOfExistingFile(activeDocumentPath);
+        DirectoryInfo? projectDirectory = null;
+
+        for (DirectoryInfo? current = documentDirectory; current != null; current = current.Parent)
+        {
+            string besideDocument = Path.Combine(current.FullName, "Icons.xaml");
+            if (File.Exists(besideDocument))
+            {
+                message = string.Empty;
+                return besideDocument;
+            }
+
+            if (projectDirectory == null && ContainsProjectFile(current.FullName))
+            {
+                projectDirectory = current;
+                break;
+            }
+
+            if (solutionDirectory != null && PathsEqual(current.FullName, solutionDirectory))
+            {
+                break;
+            }
+        }
+
+        if (projectDirectory != null)
+        {
+            List<string> projectMatches = FindInTree(projectDirectory.FullName, 2);
+            if (projectMatches.Count == 1)
+            {
+                message = string.Empty;
+                return projectMatches[0];
+            }
+
+            if (projectMatches.Count > 1)
+            {
+                message = "Multiple Icons.xaml files were found in the active project; use Load Icons.xaml….";
+                return null;
+            }
+        }
+
+        if (solutionDirectory != null)
+        {
+            List<string> solutionMatches = FindInTree(solutionDirectory, 2);
+            if (solutionMatches.Count == 1)
+            {
+                message = string.Empty;
+                return solutionMatches[0];
+            }
+
+            if (solutionMatches.Count > 1)
+            {
+                message = "Multiple Icons.xaml files were found in the solution; use Load Icons.xaml….";
+                return null;
+            }
+        }
+
+        message = "Icons.xaml wasn't found automatically; use Load Icons.xaml….";
+        return null;
+    }
+
+    private static string? DirectoryOfExistingFile(string? path)
+    {
+        return DirectoryInfoOfExistingFile(path)?.FullName;
+    }
+
+    private static DirectoryInfo? DirectoryInfoOfExistingFile(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return null;
+        }
+
+        try
+        {
+            string? directory = Path.GetDirectoryName(path);
+            return string.IsNullOrEmpty(directory) || !Directory.Exists(directory)
+                ? null
+                : new DirectoryInfo(directory);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static bool ContainsProjectFile(string directory)
+    {
+        try
+        {
+            return Directory.EnumerateFiles(directory, "*.csproj", SearchOption.TopDirectoryOnly).Any();
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static List<string> FindInTree(string root, int limit)
+    {
+        var matches = new List<string>();
+        var pending = new Stack<string>();
+        pending.Push(root);
+
+        while (pending.Count != 0 && matches.Count < limit)
+        {
+            string directory = pending.Pop();
+            try
+            {
+                matches.AddRange(Directory.EnumerateFiles(directory, "Icons.xaml", SearchOption.TopDirectoryOnly)
+                    .Take(limit - matches.Count));
+
+                foreach (string child in Directory.EnumerateDirectories(directory))
+                {
+                    var info = new DirectoryInfo(child);
+                    if (!ExcludedDirectories.Contains(info.Name)
+                        && (info.Attributes & FileAttributes.ReparsePoint) == 0)
+                    {
+                        pending.Push(child);
+                    }
+                }
+            }
+            catch (IOException)
+            {
+            }
+            catch (UnauthorizedAccessException)
+            {
+            }
+        }
+
+        return matches;
+    }
+
+    private static bool PathsEqual(string left, string right)
+    {
+        return string.Equals(
+            Path.GetFullPath(left).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar),
+            Path.GetFullPath(right).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar),
+            StringComparison.OrdinalIgnoreCase);
+    }
+}
+
+/// <summary>
+/// Reads the active document and solution paths from the DTE object registered for this exact
+/// Visual Studio process. Reflection avoids adding an EnvDTE deployment dependency.
+/// </summary>
+internal static class VisualStudioPaths
+{
+    public static void TryGet(out string? activeDocumentPath, out string? solutionPath)
+    {
+        activeDocumentPath = null;
+        solutionPath = null;
+
+        try
+        {
+            object? dte = GetCurrentProcessDte();
+            if (dte == null)
+            {
+                return;
+            }
+
+            object? document = ReadProperty(dte, "ActiveDocument");
+            activeDocumentPath = ReadString(document, "FullName") ?? ReadString(document, "FileName");
+            object? solution = ReadProperty(dte, "Solution");
+            solutionPath = ReadString(solution, "FullName") ?? ReadString(solution, "FileName");
+        }
+        catch (Exception ex)
+        {
+            DesignLog.Error("VisualStudioPaths.TryGet", ex);
+        }
+    }
+
+    private static object? GetCurrentProcessDte()
+    {
+        if (GetRunningObjectTable(0, out IRunningObjectTable table) != 0)
+        {
+            return null;
+        }
+
+        table.EnumRunning(out IEnumMoniker monikers);
+        monikers.Reset();
+        var current = new IMoniker[1];
+        string processSuffix = ":" + Process.GetCurrentProcess().Id;
+
+        while (monikers.Next(1, current, IntPtr.Zero) == 0)
+        {
+            try
+            {
+                if (CreateBindCtx(0, out IBindCtx bindContext) != 0)
+                {
+                    continue;
+                }
+
+                current[0].GetDisplayName(bindContext, null, out string displayName);
+                if (displayName.StartsWith("!VisualStudio.DTE.", StringComparison.OrdinalIgnoreCase)
+                    && displayName.EndsWith(processSuffix, StringComparison.OrdinalIgnoreCase))
+                {
+                    table.GetObject(current[0], out object dte);
+                    return dte;
+                }
+            }
+            catch (COMException)
+            {
+                // Some unrelated ROT entries don't expose a display name to this process.
+            }
+        }
+
+        return null;
+    }
+
+    private static object? ReadProperty(object? instance, string name)
+    {
+        return instance?.GetType().InvokeMember(
+            name,
+            BindingFlags.GetProperty,
+            binder: null,
+            target: instance,
+            args: null);
+    }
+
+    private static string? ReadString(object? instance, string name)
+    {
+        return ReadProperty(instance, name) as string;
+    }
+
+    [DllImport("ole32.dll")]
+    private static extern int GetRunningObjectTable(int reserved, out IRunningObjectTable table);
+
+    [DllImport("ole32.dll")]
+    private static extern int CreateBindCtx(int reserved, out IBindCtx bindContext);
 }

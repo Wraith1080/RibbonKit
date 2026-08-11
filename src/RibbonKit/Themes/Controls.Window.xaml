@@ -64,14 +64,24 @@
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
 
-                                <!-- Quick-access slot: interactive inside the caption area.
-                                     Hidden while the ribbon's backstage is open. -->
-                                <ContentPresenter x:Name="TitleBarContentHost"
-                                                  Grid.Column="0"
-                                                  Content="{TemplateBinding TitleBarContent}"
-                                                  VerticalAlignment="Center"
-                                                  Margin="10,0,6,0"
-                                                  WindowChrome.IsHitTestVisibleInChrome="True" />
+                                <!-- Window identity plus quick-access slot. The icon remains in
+                                     the caption when Backstage hides only TitleBarContent. -->
+                                <StackPanel Grid.Column="0"
+                                            Orientation="Horizontal">
+                                    <Image x:Name="PART_WindowIcon"
+                                           Width="16"
+                                           Height="16"
+                                           Margin="10,0,0,0"
+                                           VerticalAlignment="Center"
+                                           Stretch="Uniform"
+                                           Source="{TemplateBinding Icon}"
+                                           RenderOptions.BitmapScalingMode="HighQuality" />
+                                    <ContentPresenter x:Name="TitleBarContentHost"
+                                                      Content="{TemplateBinding TitleBarContent}"
+                                                      VerticalAlignment="Center"
+                                                      Margin="6,0,6,0"
+                                                      WindowChrome.IsHitTestVisibleInChrome="True" />
+                                </StackPanel>
 
                                 <!-- Named part: the title sits in the star column between the
                                      quick-access slot and the caption buttons, so collapsing that
@@ -97,10 +107,11 @@
                                             <Setter Property="Width" Value="46" />
                                             <Setter Property="Height" Value="34" />
                                             <Setter Property="Focusable" Value="False" />
+                                            <Setter Property="Background" Value="Transparent" />
                                             <Setter Property="Template">
                                                 <Setter.Value>
                                                     <ControlTemplate TargetType="{x:Type Button}">
-                                                        <Border x:Name="Chrome" Background="Transparent">
+                                                        <Border x:Name="Chrome" Background="{TemplateBinding Background}">
                                                             <ContentPresenter HorizontalAlignment="Center"
                                                                               VerticalAlignment="Center" />
                                                         </Border>
@@ -157,7 +168,7 @@
                                               Stroke="{DynamicResource RibbonKit.Brushes.TitleBar.Foreground}"
                                               StrokeThickness="1" />
                                     </Button>
-                                    <Button x:Name="MaximizeButton"
+                                    <Button x:Name="PART_MaximizeButton"
                                             Style="{StaticResource CaptionButtonStyle}"
                                             Command="{x:Static SystemCommands.MaximizeWindowCommand}"
                                             ToolTip="{localization:RibbonString Key=Maximize}">
@@ -165,7 +176,7 @@
                                               Stroke="{DynamicResource RibbonKit.Brushes.TitleBar.Foreground}"
                                               StrokeThickness="1" />
                                     </Button>
-                                    <Button x:Name="RestoreButton"
+                                    <Button x:Name="PART_RestoreButton"
                                             Style="{StaticResource CaptionButtonStyle}"
                                             Command="{x:Static SystemCommands.RestoreWindowCommand}"
                                             ToolTip="{localization:RibbonString Key=RestoreDown}"
@@ -198,11 +209,15 @@
                                  that, so the caption buttons stay on-screen and the ribbon
                                  card keeps its side margin. Here we only swap the caption
                                  glyph from Maximize to Restore. -->
-                            <Setter TargetName="MaximizeButton" Property="Visibility" Value="Collapsed" />
-                            <Setter TargetName="RestoreButton" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="PART_MaximizeButton" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="PART_RestoreButton" Property="Visibility" Value="Visible" />
                         </Trigger>
                         <Trigger Property="IsTitleBarContentVisible" Value="False">
                             <Setter TargetName="TitleBarContentHost" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="Icon" Value="{x:Null}">
+                            <Setter TargetName="PART_WindowIcon" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="TitleBarContentHost" Property="Margin" Value="10,0,6,0" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

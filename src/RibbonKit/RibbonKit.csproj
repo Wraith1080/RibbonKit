@@ -6,25 +6,35 @@
     <RootNamespace>RibbonKit</RootNamespace>
     <AssemblyName>RibbonKit</AssemblyName>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <WarningsAsErrors>$(WarningsAsErrors);CS1574;CS1591;RS0016;RS0017;RS0022;RS0024;RS0025;RS0026;RS0027;RS0036;RS0037;RS0041;RS0048;RS0050</WarningsAsErrors>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="5.6.0" PrivateAssets="all" />
+    <AdditionalFiles Include="PublicAPI.Shipped.txt" />
+    <AdditionalFiles Include="PublicAPI.Unshipped.txt" />
+  </ItemGroup>
 
   <PropertyGroup Label="Packaging">
     <PackageId>RibbonKit</PackageId>
-    <Version>1.0.0-dev-$([System.DateTime]::Now.ToString("yyyyMMddHHmm"))</Version>
-    <Authors>Irfan Rahmat</Authors>
+    <VersionPrefix>1.0.0</VersionPrefix>
+    <Authors>RibbonKit contributors</Authors>
     <Description>Open-source Office Fluent UI-style Ribbon control library for WPF on modern .NET: adaptive button sizing, galleries, backstage, contextual tabs, quick access toolbar, KeyTips, and Office 2007-2024 themes.</Description>
     <PackageTags>wpf;ribbon;fluent;office;ui;controls</PackageTags>
+    <PackageReleaseNotes>Initial stable release. Distributed as a downloadable GitHub Release package.</PackageReleaseNotes>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <RepositoryUrl>https://github.com/YOUR-GITHUB-USERNAME/RibbonKit</RepositoryUrl>
+    <PackageIcon>RibbonKit.png</PackageIcon>
+    <RepositoryUrl>https://github.com/Wraith1080/RibbonKit</RepositoryUrl>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-	<PackageOutputPath>E:\NuGet</PackageOutputPath>
+    <PackageOutputPath>$(MSBuildProjectDirectory)\..\..\artifacts</PackageOutputPath>
   </PropertyGroup>
 
   <ItemGroup>
     <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\assets\RibbonKit.png" Pack="true" PackagePath="\" />
     <!-- New XAML designer toolbox allowlist (effective only when consumed as a NuGet package). -->
     <None Include="tools\VisualStudioToolsManifest.xml" Pack="true" PackagePath="tools\" />
   </ItemGroup>

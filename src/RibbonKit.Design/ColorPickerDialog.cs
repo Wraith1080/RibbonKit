@@ -116,7 +116,7 @@ internal sealed class ColorPickerDialog : Window
 
         try
         {
-            return (Brush)new BrushConverter().ConvertFromString(text.Trim());
+            return new BrushConverter().ConvertFromString(text!.Trim()) as Brush ?? Brushes.Transparent;
         }
         catch
         {

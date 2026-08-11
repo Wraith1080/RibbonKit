@@ -480,6 +480,6 @@ widest visual range it will ever face. The remaining v1 blockers and later addit
 2. **The 2007 window frame** — the theme's one remaining deliberate deferral; implement and
    maximize-test it independently.
 3. **Dark mode, RTL, localization and visual-regression snapshots** — the rest of Phase 6.
-4. **Phase 8** — API freeze, `YOUR-GITHUB-USERNAME` still in the csproj, README screenshots, NuGet.
+4. **Phase 8** — API freeze, repository metadata, README screenshots, and release packaging.
 5. **MDI M1–M3 (post-v1)** — cascade/tile/Ctrl+Tab, MVVM demo, tabbed mode + persistence.
 6. **Application-menu enhancements (additive)** — arrow-key navigation and a scrolling pane (§3.46).

@@ -997,17 +997,18 @@ public class Ribbon : Control
         RibbonCustomizeRequested?.Invoke(this, EventArgs.Empty);
 
     /// <summary>
-    /// Adds <paramref name="source"/> (a command control living in a ribbon group) to the
-    /// quick access toolbar. Because a WPF element can only have one visual parent, the
-    /// control is not moved: a small PROXY button is created that mirrors its 16px icon and
-    /// ScreenTip and invokes it (toggles stay state-synced via a two-way IsChecked binding).
-    /// Returns <see langword="false"/> when the control is already in the QAT.
+    /// Adds <paramref name="source"/> (a button, toggle, split button, or drop-down button living
+    /// in a ribbon group) to the quick access toolbar. Because a WPF element can only have one
+    /// visual parent, the control is not moved: a small PROXY button is created that mirrors its
+    /// 16px icon and ScreenTip and invokes it (toggles stay state-synced via a two-way IsChecked
+    /// binding). Returns <see langword="false"/> when the control is already in the QAT or its type
+    /// does not have a supported quick-access representation.
     /// </summary>
     public bool AddToQuickAccess(FrameworkElement source)
     {
         ArgumentNullException.ThrowIfNull(source);
 
-        if (IsInQuickAccess(source))
+        if (!IsSupportedQuickAccessSource(source) || IsInQuickAccess(source))
         {
             return false;
         }
@@ -1026,6 +1027,9 @@ public class Ribbon : Control
         QuickAccessItems.Add(proxy);
         return true;
     }
+
+    private static bool IsSupportedQuickAccessSource(FrameworkElement source) =>
+        source is RibbonButton or RibbonToggleButton or RibbonDropDownButton;
 
     /// <summary>Whether <paramref name="source"/> is already in the quick access toolbar,
     /// either directly or via a proxy created by <see cref="AddToQuickAccess"/>.</summary>
@@ -1152,7 +1156,7 @@ public class Ribbon : Control
     /// property was never touched, and its proxies grey with it.
     /// </para>
     /// <para>
-    /// ⚠ A <see cref="MultiBinding"/> rather than a plain one because there are TWO independent
+    /// ⚠ A <see cref="System.Windows.Data.MultiBinding"/> rather than a plain one because there are TWO independent
     /// reasons a proxy is disabled — the source, and <see cref="IsCommandParkedProperty"/> for a
     /// merged source that has stepped out. They cannot be separate writes to the same property:
     /// assigning a value to a property carrying a ONE-WAY binding clears that binding, so the merge
@@ -1492,6 +1496,7 @@ public class Ribbon : Control
         var ribbon = (Ribbon)d;
         ribbon.UpdateApplicationMenuHost();
         ribbon.UpdateApplicationMenuOverlayPlacement();
+        ribbon.UpdateRibbonWindowApplicationButtonShape();
     }
 
     private void OnLocalizationBindingSourceChanged(
@@ -1565,6 +1570,7 @@ public class Ribbon : Control
     // shared context menu lets the user move the QAT between placements (like Office).
     private RibbonQuickAccessToolBar? _titleBarQatHost;
     private object? _savedTitleBarContent;
+    private RibbonWindow? _applicationButtonShapeWindow;
     private System.Windows.Controls.ContextMenu? _qatContextMenu;
 
     /// <summary>
@@ -2270,17 +2276,15 @@ public class Ribbon : Control
                 .TransformToVisual(_applicationMenuOverlayLayer)
                 .Transform(new Point(0d, 0d));
             Thickness margin = _applicationButton.Margin;
-            double slotWidth = Math.Max(
-                0d,
-                _applicationButton.ActualWidth + margin.Left + margin.Right);
-            double slotHeight = Math.Max(
-                0d,
-                _applicationButton.ActualHeight + margin.Top + margin.Bottom);
+            Size slotSize = GetStableApplicationButtonSlotSize(_applicationButton);
+            Size overlaySize = GetStableApplicationButtonOverlaySize(_applicationButton);
+            double slotWidth = slotSize.Width;
+            double slotHeight = slotSize.Height;
 
             var placeholder = new Border
             {
                 Width = slotWidth,
-                Height = slotHeight,
+                MinHeight = slotHeight,
                 HorizontalAlignment = _applicationButton.HorizontalAlignment,
                 VerticalAlignment = _applicationButton.VerticalAlignment,
                 IsHitTestVisible = false,
@@ -2293,8 +2297,11 @@ public class Ribbon : Control
             originalParent.Children.RemoveAt(originalIndex);
             originalParent.Children.Insert(originalIndex, placeholder);
 
-            _applicationButtonOverlay.Width = slotWidth;
-            _applicationButtonOverlay.Height = slotHeight;
+            // The placeholder preserves the original panel's DESIRED contribution, while the
+            // overlay preserves the button's ARRANGED render size. Conflating those two either
+            // changes the tab-row height or shrinks/repositions the overhanging 2007 orb.
+            _applicationButtonOverlay.Width = overlaySize.Width;
+            _applicationButtonOverlay.Height = overlaySize.Height;
             Canvas.SetLeft(_applicationButtonOverlay, origin.X - margin.Left);
             Canvas.SetTop(_applicationButtonOverlay, origin.Y - margin.Top);
             _applicationButtonOverlay.Child = _applicationButton;
@@ -2319,21 +2326,6 @@ public class Ribbon : Control
 
         try
         {
-            Thickness margin = _applicationButton?.Margin ?? default;
-            if (_applicationButton is not null)
-            {
-                double slotWidth = Math.Max(
-                    0d,
-                    _applicationButton.ActualWidth + margin.Left + margin.Right);
-                double slotHeight = Math.Max(
-                    0d,
-                    _applicationButton.ActualHeight + margin.Top + margin.Bottom);
-                _applicationButtonPlaceholder.Width = slotWidth;
-                _applicationButtonPlaceholder.Height = slotHeight;
-                _applicationButtonOverlay.Width = slotWidth;
-                _applicationButtonOverlay.Height = slotHeight;
-            }
-
             if (!_applicationButtonPlaceholder.IsArrangeValid)
             {
                 return;
@@ -2351,6 +2343,26 @@ public class Ribbon : Control
             // LayoutUpdated pass will position the host once both elements share a visual root.
         }
     }
+
+    /// <summary>
+    /// Returns the layout slot to reserve while the application button is reparented above its
+    /// menu. DesiredSize already includes the button's margin and records the size it contributed
+    /// to the original panel before reparenting.
+    /// </summary>
+    internal static Size GetStableApplicationButtonSlotSize(FrameworkElement button) =>
+        new(
+            Math.Max(0d, button.DesiredSize.Width),
+            Math.Max(0d, button.DesiredSize.Height));
+
+    /// <summary>
+    /// Returns the arranged bounds to preserve while the button is hosted above the menu.
+    /// Unlike the placeholder reservation, these bounds deliberately use ActualSize so a button
+    /// stretched by its original row does not shrink when moved into the overlay.
+    /// </summary>
+    internal static Size GetStableApplicationButtonOverlaySize(FrameworkElement button) =>
+        new(
+            Math.Max(0d, button.ActualWidth + button.Margin.Left + button.Margin.Right),
+            Math.Max(0d, button.ActualHeight + button.Margin.Top + button.Margin.Bottom));
 
     private void RestoreApplicationButtonFromOverlay()
     {
@@ -2493,6 +2505,7 @@ public class Ribbon : Control
         UpdateQatButtonContext();
         UpdateApplicationMenuHost();
         UpdateApplicationMenuOverlayPlacement();
+        UpdateRibbonWindowApplicationButtonShape();
     }
 
     private void OnLayoutUpdated(object? sender, EventArgs e)
@@ -2507,11 +2520,30 @@ public class Ribbon : Control
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
         Theming.ThemeManager.Changed -= OnThemeConfigurationChanged;
+        UnregisterRibbonWindowApplicationButtonShape();
         if (_ribbonTabControl is not null)
         {
             _ribbonTabControl.SelectionChanged -= OnRibbonTabSelectionChanged;
             _ribbonTabControl = null;
         }
+    }
+
+    private void UpdateRibbonWindowApplicationButtonShape()
+    {
+        var window = Window.GetWindow(this) as RibbonWindow;
+        if (!ReferenceEquals(window, _applicationButtonShapeWindow))
+        {
+            _applicationButtonShapeWindow?.UnregisterApplicationButton(this);
+            _applicationButtonShapeWindow = window;
+        }
+
+        window?.UpdateApplicationButtonShape(this, ApplicationButtonShape);
+    }
+
+    private void UnregisterRibbonWindowApplicationButtonShape()
+    {
+        _applicationButtonShapeWindow?.UnregisterApplicationButton(this);
+        _applicationButtonShapeWindow = null;
     }
 
     private void OnRibbonTabSelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
