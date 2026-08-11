@@ -23,7 +23,8 @@
     <PackageTags>wpf;ribbon;fluent;office;ui;controls</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <RepositoryUrl>https://github.com/YOUR-GITHUB-USERNAME/RibbonKit</RepositoryUrl>
+    <PackageIcon>RibbonKit.png</PackageIcon>
+    <RepositoryUrl>https://github.com/Wraith1080/RibbonKit</RepositoryUrl>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
@@ -32,6 +33,7 @@
 
   <ItemGroup>
     <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\assets\RibbonKit.png" Pack="true" PackagePath="\" />
     <!-- New XAML designer toolbox allowlist (effective only when consumed as a NuGet package). -->
     <None Include="tools\VisualStudioToolsManifest.xml" Pack="true" PackagePath="tools\" />
   </ItemGroup>

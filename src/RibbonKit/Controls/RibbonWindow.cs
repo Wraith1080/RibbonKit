@@ -24,12 +24,14 @@ namespace RibbonKit.Controls;
 /// </summary>
 [TemplatePart(Name = WindowRootPartName, Type = typeof(FrameworkElement))]
 [TemplatePart(Name = TitlePartName, Type = typeof(FrameworkElement))]
+[TemplatePart(Name = WindowIconPartName, Type = typeof(Image))]
 [TemplatePart(Name = MaximizeButtonPartName, Type = typeof(FrameworkElement))]
 [TemplatePart(Name = RestoreButtonPartName, Type = typeof(FrameworkElement))]
 public class RibbonWindow : Window
 {
     private const string WindowRootPartName = "PART_WindowRoot";
     private const string TitlePartName = "PART_Title";
+    private const string WindowIconPartName = "PART_WindowIcon";
     private const string MaximizeButtonPartName = "PART_MaximizeButton";
     private const string RestoreButtonPartName = "PART_RestoreButton";
 
@@ -51,6 +53,7 @@ public class RibbonWindow : Window
 
     private FrameworkElement? _windowRoot;
     private FrameworkElement? _title;
+    private Image? _windowIcon;
     private Button? _maximizeButton;
     private Button? _restoreButton;
     private bool _snapButtonPressed;
@@ -59,6 +62,9 @@ public class RibbonWindow : Window
     // one-shot LayoutUpdated handler that consumes it is currently subscribed.
     private double _titleShiftFrom;
     private bool _titleShiftPending;
+    private readonly HashSet<Ribbon> _orbApplicationButtonOwners = [];
+
+    internal bool IsTitleBarIconSuppressed => _orbApplicationButtonOwners.Count > 0;
 
     static RibbonWindow()
     {
@@ -129,10 +135,59 @@ public class RibbonWindow : Window
 
         _windowRoot = GetTemplateChild(WindowRootPartName) as FrameworkElement;
         _title = GetTemplateChild(TitlePartName) as FrameworkElement;
+        _windowIcon = GetTemplateChild(WindowIconPartName) as Image;
         _maximizeButton = GetTemplateChild(MaximizeButtonPartName) as Button;
         _restoreButton = GetTemplateChild(RestoreButtonPartName) as Button;
+        UpdateTitleBarIconVisibility();
         SetSnapButtonVisualState(SnapButtonVisualState.Normal);
         UpdateMaximizeInset();
+    }
+
+    internal void UpdateApplicationButtonShape(
+        Ribbon owner,
+        RibbonApplicationButtonShape shape)
+    {
+        bool changed = shape == RibbonApplicationButtonShape.Orb
+            ? _orbApplicationButtonOwners.Add(owner)
+            : _orbApplicationButtonOwners.Remove(owner);
+
+        if (changed)
+        {
+            UpdateTitleBarIconVisibility();
+        }
+    }
+
+    internal void UnregisterApplicationButton(Ribbon owner)
+    {
+        if (_orbApplicationButtonOwners.Remove(owner))
+        {
+            UpdateTitleBarIconVisibility();
+        }
+    }
+
+    private void UpdateTitleBarIconVisibility()
+    {
+        if (_windowIcon is null)
+        {
+            return;
+        }
+
+        Visibility before = _windowIcon.Visibility;
+        if (IsTitleBarIconSuppressed)
+        {
+            _windowIcon.SetCurrentValue(VisibilityProperty, Visibility.Collapsed);
+        }
+        else
+        {
+            // Return control to the template: its null-Icon trigger still collapses the slot
+            // without changing Window.Icon, which remains the executable/taskbar identity.
+            _windowIcon.ClearValue(VisibilityProperty);
+        }
+
+        if (_windowIcon.Visibility != before)
+        {
+            AnimateTitleShift();
+        }
     }
 
     private static void OnIsTitleBarContentVisibleChanged(

@@ -1496,6 +1496,7 @@ public class Ribbon : Control
         var ribbon = (Ribbon)d;
         ribbon.UpdateApplicationMenuHost();
         ribbon.UpdateApplicationMenuOverlayPlacement();
+        ribbon.UpdateRibbonWindowApplicationButtonShape();
     }
 
     private void OnLocalizationBindingSourceChanged(
@@ -1569,6 +1570,7 @@ public class Ribbon : Control
     // shared context menu lets the user move the QAT between placements (like Office).
     private RibbonQuickAccessToolBar? _titleBarQatHost;
     private object? _savedTitleBarContent;
+    private RibbonWindow? _applicationButtonShapeWindow;
     private System.Windows.Controls.ContextMenu? _qatContextMenu;
 
     /// <summary>
@@ -2497,6 +2499,7 @@ public class Ribbon : Control
         UpdateQatButtonContext();
         UpdateApplicationMenuHost();
         UpdateApplicationMenuOverlayPlacement();
+        UpdateRibbonWindowApplicationButtonShape();
     }
 
     private void OnLayoutUpdated(object? sender, EventArgs e)
@@ -2511,11 +2514,30 @@ public class Ribbon : Control
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
         Theming.ThemeManager.Changed -= OnThemeConfigurationChanged;
+        UnregisterRibbonWindowApplicationButtonShape();
         if (_ribbonTabControl is not null)
         {
             _ribbonTabControl.SelectionChanged -= OnRibbonTabSelectionChanged;
             _ribbonTabControl = null;
         }
+    }
+
+    private void UpdateRibbonWindowApplicationButtonShape()
+    {
+        var window = Window.GetWindow(this) as RibbonWindow;
+        if (!ReferenceEquals(window, _applicationButtonShapeWindow))
+        {
+            _applicationButtonShapeWindow?.UnregisterApplicationButton(this);
+            _applicationButtonShapeWindow = window;
+        }
+
+        window?.UpdateApplicationButtonShape(this, ApplicationButtonShape);
+    }
+
+    private void UnregisterRibbonWindowApplicationButtonShape()
+    {
+        _applicationButtonShapeWindow?.UnregisterApplicationButton(this);
+        _applicationButtonShapeWindow = null;
     }
 
     private void OnRibbonTabSelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)

@@ -98,6 +98,8 @@ Theme identities:
   caption handler: on a transparent Mica title bar it can paint over the themed control.
   The resource references deliberately share `ThemeManager`'s keys, so colored-title-bar
   accent/glass overrides and live theme/accent switches continue to apply while hovered.
+  **User-verified on Windows 11 (2026-08-11):** the Snap Layout flyout, themed hover/press,
+  maximize/restore clicks, Mica on/off, and colored-title-bar combinations all behave correctly.
 - **Maximize overhang fix (important)**: a maximized WindowChrome window hangs past the
   monitor work area. `WM_GETMINMAXINFO` hooks did NOT fix it reliably. The working fix
   is *measured margin compensation*: on state/DPI changes, measure `GetWindowRect` vs
@@ -1542,8 +1544,8 @@ settle that rides the existing tab-switch slide animation, so it shouldn't read 
   runtime reference) plus a `TargetsForTfmSpecificContentInPackage` target that packs it into
   `lib/<tfm>/Design/` for each TFM. With the already-packed `tools/VisualStudioToolsManifest.xml`,
   `dotnet pack src/RibbonKit/RibbonKit.csproj -c Release` yields a package that gives consumers the
-  toolbox items + right-click design-time editor. (RepositoryUrl still has the `YOUR-GITHUB-USERNAME`
-  placeholder — set it before publishing.) See `RibbonKit.Design/SETUP-DESIGNTOOLS.md` → "NuGet packaging".
+  toolbox items + right-click design-time editor. The package repository metadata points to the
+  public RibbonKit GitHub repository. See `RibbonKit.Design/SETUP-DESIGNTOOLS.md` → "NuGet packaging".
 
 **Eighth feedback pass — continuous top chrome + complete button-state glass (2026-08-02):**
 
@@ -3937,6 +3939,23 @@ obsolete documentation-site feature/roadmap entries were replaced with the compl
 gate. Link, image and sample validation are part of this gate; API-reference generation remains a
 possible post-v1 addition rather than a release dependency.
 
+### 3.77 NuGet and Showcase identity icon — 2026-08-11
+
+The release package and executable now share a purpose-built RibbonKit identity. The deterministic
+`assets/RibbonKit.svg` master uses a compact folded-ribbon `R` that remains recognizable at Windows
+taskbar sizes; `RibbonKit.png` is the NuGet package icon and the multi-resolution `RibbonKit.ico`
+contains 16 through 256 px frames. The Showcase embeds the ICO as its executable icon and assigns it
+directly to `MainWindow`. Because `RibbonWindow` replaces the native caption, its shared template now
+also binds `Window.Icon` into a 16-DIP leading image; setting the property alone populated the taskbar
+but left the custom title bar empty. The icon remains visible when Backstage hides title-bar QAT
+content, while a null icon collapses without leaving a new gap. When a hosted ribbon explicitly uses
+the Office 2007 `Orb` application-button shape, it internally registers that state with its owning
+`RibbonWindow`; the caption icon then collapses and returns its width to the QAT because the orb
+already owns application identity. This is keyed to the actual shape rather than the theme, keeps
+`Window.Icon` intact for the taskbar/executable, handles shape changes and unload/reparent cleanup,
+and adds no post-freeze public API. NuGet's packaged README was already wired; SourceLink and final
+package-content validation remain next.
+
 ## 4. Workflow / Session Conventions
 
 - Cloud workspace: `/home/user/ribbonkit/`. The user's machine:
@@ -4165,8 +4184,9 @@ Backlog (rough priority):
    per-theme pass (M2), tabbed-documents mode + `RibbonState` layout persistence (M3). M0 and M4 are
    done, so the feature currently has a hole in its middle.
 6. Roadmap Phase 8 release engineering: **API review/freeze DONE (§3.75); repository documentation
-   DONE (§3.76).** Next: NuGet polish, then the final performance/install pass.
-7. GitHub publish: repo URL placeholder in csproj (`YOUR-GITHUB-USERNAME`).
+   DONE (§3.76); repository URL and package/Showcase icon DONE (§3.77).** Next: SourceLink and final
+   package validation, then the final performance/install pass.
+7. GitHub repository metadata: **DONE** — the package points to `Wraith1080/RibbonKit`.
 
 Resolved at the API freeze (not v1 scope):
 

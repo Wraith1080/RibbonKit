@@ -61,8 +61,7 @@ with NETSDK1005 by pushing net8/net9 onto the design project), plus a `<None Pac
 copies `RibbonKit.DesignTools.dll` into `lib/net8.0-windows7.0/Design/` and `lib/net9.0-windows7.0/
 Design/`. A consumer who installs the RibbonKit package therefore gets the toolbox items and the
 right-click design-time editor with no extra steps. (The lib folder names carry the WPF default Windows
-platform version `7.0`; update the `<None>` PackagePath if the `TargetFrameworks` change. Also set a
-real `RepositoryUrl` in the csproj before publishing — it still has the `YOUR-GITHUB-USERNAME` placeholder.)
+platform version `7.0`; update the `<None>` PackagePath if the `TargetFrameworks` change.)
 
 Build `RibbonKit.Design`, then **close and reopen the XAML designer** (it caches design assemblies;
 an in-place rebuild won't reload).

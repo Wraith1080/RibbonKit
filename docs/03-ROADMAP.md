@@ -46,7 +46,7 @@ KeyTips subsystem (full Alt-chain), tab merging API, modal tabs, customize dialo
 
 **Repository documentation: complete (2026-08-10).** A separate website was deliberately avoided: the GitHub README is the public landing page and contains the visual control overview, source-reference path, pasteable first ribbon, theming and DPI guidance, and task-oriented links into the existing focused Markdown references and executable Showcase.
 
-Remaining: NuGet polish (icon, packaged readme, SourceLink), performance/install pass (startup time, resize CPU, memory, clean consumer project and VS designer), and community launch. **Exit criteria:** v1.0.0 on NuGet.
+Remaining: NuGet polish (SourceLink and final package validation; the icon and packaged readme are complete), performance/install pass (startup time, resize CPU, memory, clean consumer project and VS designer), and community launch. **Exit criteria:** v1.0.0 on NuGet.
 
 ## Post-v1 candidates
 
