@@ -88,6 +88,16 @@ Theme identities:
 
 - Custom chrome via `WindowChrome` (`CaptionHeight=34`, `UseAeroCaptionButtons=False`),
   themed caption buttons, a `TitleBarContent` slot (used by the title-bar QAT).
+- Windows 11 Snap Layouts: the HWND hook returns `HTMAXBUTTON` from `WM_NCHITTEST`
+  when the pointer is within the visible themed maximize/restore template part. Snap is
+  a native non-client hit-test contract; a WPF hover or `SystemCommands.MaximizeWindow`
+  invocation alone does not expose the flyout. Once advertised that way, Windows sends
+  non-client mouse messages instead of WPF mouse events, so the hook also tracks leave,
+  drives the existing caption hover/pressed brush tokens through `Button.Background`,
+  and owns maximize/restore button-up. Do not forward the button down/up to the native
+  caption handler: on a transparent Mica title bar it can paint over the themed control.
+  The resource references deliberately share `ThemeManager`'s keys, so colored-title-bar
+  accent/glass overrides and live theme/accent switches continue to apply while hovered.
 - **Maximize overhang fix (important)**: a maximized WindowChrome window hangs past the
   monitor work area. `WM_GETMINMAXINFO` hooks did NOT fix it reliably. The working fix
   is *measured margin compensation*: on state/DPI changes, measure `GetWindowRect` vs

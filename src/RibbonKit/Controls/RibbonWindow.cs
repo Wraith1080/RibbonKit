@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Interop;
 using System.Windows.Media;
 using RibbonKit.Interop;
@@ -23,10 +24,14 @@ namespace RibbonKit.Controls;
 /// </summary>
 [TemplatePart(Name = WindowRootPartName, Type = typeof(FrameworkElement))]
 [TemplatePart(Name = TitlePartName, Type = typeof(FrameworkElement))]
+[TemplatePart(Name = MaximizeButtonPartName, Type = typeof(FrameworkElement))]
+[TemplatePart(Name = RestoreButtonPartName, Type = typeof(FrameworkElement))]
 public class RibbonWindow : Window
 {
     private const string WindowRootPartName = "PART_WindowRoot";
     private const string TitlePartName = "PART_Title";
+    private const string MaximizeButtonPartName = "PART_MaximizeButton";
+    private const string RestoreButtonPartName = "PART_RestoreButton";
 
     /// <summary>Identifies the <see cref="TitleBarContent"/> dependency property.</summary>
     public static readonly DependencyProperty TitleBarContentProperty =
@@ -46,6 +51,9 @@ public class RibbonWindow : Window
 
     private FrameworkElement? _windowRoot;
     private FrameworkElement? _title;
+    private Button? _maximizeButton;
+    private Button? _restoreButton;
+    private bool _snapButtonPressed;
 
     // Pending title-shift capture: where the title was BEFORE the layout change, and whether the
     // one-shot LayoutUpdated handler that consumes it is currently subscribed.
@@ -121,6 +129,9 @@ public class RibbonWindow : Window
 
         _windowRoot = GetTemplateChild(WindowRootPartName) as FrameworkElement;
         _title = GetTemplateChild(TitlePartName) as FrameworkElement;
+        _maximizeButton = GetTemplateChild(MaximizeButtonPartName) as Button;
+        _restoreButton = GetTemplateChild(RestoreButtonPartName) as Button;
+        SetSnapButtonVisualState(SnapButtonVisualState.Normal);
         UpdateMaximizeInset();
     }
 
@@ -337,6 +348,8 @@ public class RibbonWindow : Window
     protected override void OnStateChanged(EventArgs e)
     {
         base.OnStateChanged(e);
+        _snapButtonPressed = false;
+        SetSnapButtonVisualState(SnapButtonVisualState.Normal);
         UpdateMaximizeInset();
     }
 
@@ -408,15 +421,197 @@ public class RibbonWindow : Window
             && Math.Abs(a.Bottom - b.Bottom) < eps;
     }
 
-    private static IntPtr WindowHook(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+    private IntPtr WindowHook(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
     {
         const int WmGetMinMaxInfo = 0x0024;
+        const int WmNcHitTest = 0x0084;
+        const int WmNcMouseMove = 0x00a0;
+        const int WmNcLButtonDown = 0x00a1;
+        const int WmNcLButtonUp = 0x00a2;
+        const int WmNcLButtonDoubleClick = 0x00a3;
+        const int WmCancelMode = 0x001f;
+        const int WmCaptureChanged = 0x0215;
+        const int WmNcMouseLeave = 0x02a2;
+        const int HtMaxButton = 9;
+
+        // Windows 11 discovers the Snap Layout hover surface through non-client hit testing.
+        // WindowChrome.IsHitTestVisibleInChrome deliberately makes our themed caption buttons
+        // ordinary WPF client controls, so advertise just the visible maximize/restore bounds as
+        // HTMAXBUTTON. Windows then owns the flyout while the same custom visuals remain in place.
+        if (msg == WmNcHitTest)
+        {
+            bool isOverButton = IsOverMaximizeOrRestoreButton(lParam);
+            SetSnapButtonVisualState(
+                isOverButton
+                    ? _snapButtonPressed
+                        ? SnapButtonVisualState.Pressed
+                        : SnapButtonVisualState.Hot
+                    : SnapButtonVisualState.Normal);
+
+            if (isOverButton)
+            {
+                TrackNonClientMouseLeave(hwnd);
+                handled = true;
+                return new IntPtr(HtMaxButton);
+            }
+        }
+
+        if (msg == WmNcMouseMove && wParam.ToInt64() == HtMaxButton)
+        {
+            SetSnapButtonVisualState(
+                _snapButtonPressed
+                    ? SnapButtonVisualState.Pressed
+                    : SnapButtonVisualState.Hot);
+            TrackNonClientMouseLeave(hwnd);
+        }
+
+        // HTMAXBUTTON turns the WPF control into a native non-client target. Handle its button
+        // messages here so the themed control still gets a real pressed state and exactly one
+        // maximize/restore action; forwarding them to DefWindowProc would instead ask Windows to
+        // paint and invoke a native caption button over our custom one (visible through Mica).
+        if ((msg == WmNcLButtonDown || msg == WmNcLButtonDoubleClick)
+            && wParam.ToInt64() == HtMaxButton)
+        {
+            _snapButtonPressed = true;
+            SetSnapButtonVisualState(SnapButtonVisualState.Pressed);
+            handled = true;
+            return IntPtr.Zero;
+        }
+
+        if (msg == WmNcLButtonUp && _snapButtonPressed)
+        {
+            bool invoke = IsOverMaximizeOrRestoreButton(lParam);
+            _snapButtonPressed = false;
+            SetSnapButtonVisualState(
+                invoke ? SnapButtonVisualState.Hot : SnapButtonVisualState.Normal);
+            handled = true;
+
+            if (invoke)
+            {
+                if (WindowState == WindowState.Maximized)
+                {
+                    SystemCommands.RestoreWindow(this);
+                }
+                else
+                {
+                    SystemCommands.MaximizeWindow(this);
+                }
+            }
+
+            return IntPtr.Zero;
+        }
+
+        if (msg == WmNcMouseLeave || msg == WmCancelMode || msg == WmCaptureChanged)
+        {
+            _snapButtonPressed = false;
+            SetSnapButtonVisualState(SnapButtonVisualState.Normal);
+        }
+
         if (msg == WmGetMinMaxInfo && ConstrainMaximizedBounds(hwnd, lParam))
         {
             handled = true;
         }
 
         return IntPtr.Zero;
+    }
+
+    private void SetSnapButtonVisualState(SnapButtonVisualState state)
+    {
+        SetSnapButtonBackground(_maximizeButton, state);
+        SetSnapButtonBackground(_restoreButton, state);
+    }
+
+    private static void SetSnapButtonBackground(Button? button, SnapButtonVisualState state)
+    {
+        if (button is null)
+        {
+            return;
+        }
+
+        switch (state)
+        {
+            case SnapButtonVisualState.Hot:
+                button.SetResourceReference(
+                    Control.BackgroundProperty,
+                    ThemeManager.CaptionHoverKey);
+                break;
+
+            case SnapButtonVisualState.Pressed:
+                button.SetResourceReference(
+                    Control.BackgroundProperty,
+                    ThemeManager.CaptionPressedKey);
+                break;
+
+            default:
+                button.ClearValue(Control.BackgroundProperty);
+                break;
+        }
+    }
+
+    private static void TrackNonClientMouseLeave(IntPtr hwnd)
+    {
+        var tracking = new NativeTrackMouseEvent
+        {
+            cbSize = Marshal.SizeOf<NativeTrackMouseEvent>(),
+            dwFlags = TmeLeave | TmeNonClient,
+            hwndTrack = hwnd,
+        };
+
+        _ = TrackMouseEvent(ref tracking);
+    }
+
+    private bool IsOverMaximizeOrRestoreButton(IntPtr lParam)
+    {
+        FrameworkElement? button = _maximizeButton?.IsVisible == true
+            ? _maximizeButton
+            : _restoreButton?.IsVisible == true
+                ? _restoreButton
+                : null;
+
+        if (button is null
+            || !button.IsEnabled
+            || button.ActualWidth <= 0d
+            || button.ActualHeight <= 0d)
+        {
+            return false;
+        }
+
+        try
+        {
+            Point firstCorner = button.PointToScreen(default);
+            Point secondCorner = button.PointToScreen(new Point(button.ActualWidth, button.ActualHeight));
+            return IsScreenPointWithinBounds(ScreenPointFromLParam(lParam), firstCorner, secondCorner);
+        }
+        catch (InvalidOperationException)
+        {
+            // The template can be replaced while native messages are still in flight. If the
+            // old part is no longer connected, let WindowChrome perform its normal hit test.
+            return false;
+        }
+    }
+
+    /// <summary>Decodes the signed screen coordinates packed into a mouse-message LPARAM.</summary>
+    internal static Point ScreenPointFromLParam(IntPtr lParam)
+    {
+        long packed = lParam.ToInt64();
+        return new Point(
+            unchecked((short)(packed & 0xffff)),
+            unchecked((short)((packed >> 16) & 0xffff)));
+    }
+
+    /// <summary>
+    /// Returns whether a screen point falls inside two opposite corners, allowing mirrored or
+    /// otherwise transformed templates to report those corners in either order.
+    /// </summary>
+    internal static bool IsScreenPointWithinBounds(Point point, Point firstCorner, Point secondCorner)
+    {
+        double left = Math.Min(firstCorner.X, secondCorner.X);
+        double top = Math.Min(firstCorner.Y, secondCorner.Y);
+        double right = Math.Max(firstCorner.X, secondCorner.X);
+        double bottom = Math.Max(firstCorner.Y, secondCorner.Y);
+
+        // Match Win32 PtInRect: left/top are inclusive; right/bottom are exclusive.
+        return point.X >= left && point.X < right && point.Y >= top && point.Y < bottom;
     }
 
     private static bool ConstrainMaximizedBounds(IntPtr hwnd, IntPtr lParam)
@@ -452,6 +647,8 @@ public class RibbonWindow : Window
     }
 
     private const int MonitorDefaultToNearest = 0x00000002;
+    private const int TmeLeave = 0x00000002;
+    private const int TmeNonClient = 0x00000010;
 
     [DllImport("user32.dll")]
     private static extern IntPtr MonitorFromWindow(IntPtr hwnd, int flags);
@@ -462,6 +659,17 @@ public class RibbonWindow : Window
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool GetWindowRect(IntPtr hwnd, out NativeRect lpRect);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool TrackMouseEvent(ref NativeTrackMouseEvent lpEventTrack);
+
+    private enum SnapButtonVisualState
+    {
+        Normal,
+        Hot,
+        Pressed,
+    }
 
     [StructLayout(LayoutKind.Sequential)]
     private struct NativePoint
@@ -477,6 +685,15 @@ public class RibbonWindow : Window
         public int Top;
         public int Right;
         public int Bottom;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct NativeTrackMouseEvent
+    {
+        public int cbSize;
+        public int dwFlags;
+        public IntPtr hwndTrack;
+        public int dwHoverTime;
     }
 
     [StructLayout(LayoutKind.Sequential)]

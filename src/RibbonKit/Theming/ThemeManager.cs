@@ -73,8 +73,8 @@ public static class ThemeManager
     private const string MdiActiveBorderKey = "RibbonKit.Brushes.MdiChild.ActiveBorder";
     private const string TitleBarBackgroundKey = "RibbonKit.Brushes.TitleBar.Background";
     private const string TitleBarForegroundKey = "RibbonKit.Brushes.TitleBar.Foreground";
-    private const string CaptionHoverKey = "RibbonKit.Brushes.CaptionButton.HoverBackground";
-    private const string CaptionPressedKey = "RibbonKit.Brushes.CaptionButton.PressedBackground";
+    internal const string CaptionHoverKey = "RibbonKit.Brushes.CaptionButton.HoverBackground";
+    internal const string CaptionPressedKey = "RibbonKit.Brushes.CaptionButton.PressedBackground";
 
     // "Colorful" themes (Office 2019) extend the accent title bar into the tab-strip band
     // behind the headers, so the title bar and strip read as one colored band.
