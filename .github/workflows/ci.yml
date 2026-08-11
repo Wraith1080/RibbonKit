@@ -40,8 +40,15 @@ jobs:
       - name: Pack
         run: dotnet pack src/RibbonKit/RibbonKit.csproj --no-build --configuration Release --output artifacts
 
+      - name: Validate package
+        shell: pwsh
+        run: ./eng/Validate-Package.ps1 -PackageDirectory artifacts
+
       - name: Upload package artifact
         uses: actions/upload-artifact@v4
         with:
           name: nuget-package
-          path: artifacts/*.nupkg
+          path: |
+            artifacts/*.nupkg
+            artifacts/*.snupkg
+          if-no-files-found: error

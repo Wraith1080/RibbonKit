@@ -252,6 +252,14 @@ dotnet pack src/RibbonKit/RibbonKit.csproj -c Release
 ```
 
 The `.nupkg` and `.snupkg` are written to the repository's `artifacts/` directory.
+The default version matches the current alpha, `0.1.0-alpha.1`; an intentional release build can
+override it explicitly, for example with `-p:Version=1.0.0`.
+
+Validate the package layout, metadata, symbols, and an isolated two-target WPF consumer build:
+
+```
+powershell -NoProfile -ExecutionPolicy Bypass -File eng/Validate-Package.ps1
+```
 
 Design-time tooling setup is documented in [`src/RibbonKit.Design/SETUP-DESIGNTOOLS.md`](src/RibbonKit.Design/SETUP-DESIGNTOOLS.md).
 
@@ -289,10 +297,10 @@ Phases 0–7 are complete. Phase 8's API-freeze and repository-documentation gat
 the nullability-aware shipped baseline is enforced for both runtime TFMs, and this README is the
 maintained public entry point backed by focused Markdown references and the executable Showcase.
 
-Remaining before v1: final NuGet-package validation, the final performance and clean-install
-validation pass, and launch. Source Link and portable symbols are verified for both runtime TFMs.
-The Office 2007 window frame and MDI milestones M1–M3 remain explicitly post-v1. See the
-[roadmap](docs/03-ROADMAP.md) and [design notes](04-DESIGN-NOTES.md) for the detailed status and
+Remaining before v1: the final live performance/install validation pass and launch. NuGet package
+layout, metadata, Source Link, symbols, and isolated consumer compilation are verified for both
+runtime TFMs. The Office 2007 window frame and MDI milestones M1–M3 remain explicitly post-v1. See
+the [roadmap](docs/03-ROADMAP.md) and [design notes](04-DESIGN-NOTES.md) for the detailed status and
 verification history.
 
 ## Contributing

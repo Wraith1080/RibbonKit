@@ -83,7 +83,7 @@ Priority key: **P0** = core skeleton (Milestone 1) · **P1** = required for a cr
 | Frozen public-API compatibility baseline | P1 | Nullability-aware shipped/unshipped files enforced for both runtime TFMs |
 | Repository-native user documentation | P1 | README is the public entry point; focused Markdown and Showcase provide depth |
 | Showcase/demo app | P0 | Grows with every feature; is the test bed |
-| NuGet package + SourceLink + symbols | P1 | Source Link and `.snupkg` verified for both runtime TFMs; final package/consumer validation remains |
+| NuGet package + SourceLink + symbols | P1 | Package layout, metadata, symbols and isolated two-TFM consumer compile are enforced after pack |
 | CI: build + tests + pack on PR | P0 | GitHub Actions |
 | Visual regression snapshots per theme/DPI | P2 | |
 | Docs site (getting started, control gallery) | P2 | |

@@ -4004,6 +4004,39 @@ directory, matching the location already used explicitly by GitHub Actions. A pl
 location on any checkout while callers can still override it with `--output` when needed. Release
 versioning and final package-content/consumer validation remain next.
 
+### 3.81 Deterministic package versioning — 2026-08-11
+
+Package versions no longer depend on the wall clock. The former
+`1.0.0-dev-<yyyyMMddHHmm>` expression could give separate build and `--no-build` pack evaluations
+different identities, made identical source commits produce differently named packages, and
+prematurely presented routine local output as the v1 line. The project now composes its documented
+current version from `VersionPrefix=0.1.0` and `VersionSuffix=alpha.1`, so normal builds and packs
+consistently produce `0.1.0-alpha.1` and the assembly informational version adds only the Source Link
+commit metadata.
+
+Release automation may still set the standard `Version` MSBuild property explicitly (for example,
+`-p:Version=1.0.0`) when a validated release is intentionally prepared. No tag-derived or automatic
+publishing behavior was added. Final package-content and clean-consumer validation remain next.
+
+### 3.82 NuGet package and clean-consumer release gate — 2026-08-11
+
+`eng/Validate-Package.ps1` is now the repeatable post-pack gate. It requires exactly one matching
+`.nupkg`/`.snupkg` pair, allowlists the package layout, rejects duplicate entries, source leakage,
+PDB duplication and unexpected consumer dependencies, and verifies the license, readme, icon,
+repository/commit, target-framework groups, toolbox manifest and matching symbol-package version.
+Both runtime assemblies, XML documentation files, design-tools copies and portable PDBs must be in
+their exact framework-specific locations.
+
+The same gate creates a temporary package-reference-only WPF consumer with `nuget.org` and every
+other feed cleared, restores RibbonKit solely from the local `artifacts/` directory into an isolated
+package cache, and compiles real `urn:ribbonkit` XAML against both `net8.0-windows` and
+`net9.0-windows`. The temporary project is removed after success and preserved on failure for
+diagnosis. The local `0.1.0-alpha.1` validation completed with zero warnings or errors.
+
+CI runs this gate after packing and retains both the main and symbol packages in its existing build
+artifact; this does not publish either package to NuGet. Final live runtime/performance and Visual
+Studio installed-package designer validation remain next.
+
 ## 4. Workflow / Session Conventions
 
 - Cloud workspace: `/home/user/ribbonkit/`. The user's machine:
@@ -4233,8 +4266,8 @@ Backlog (rough priority):
    done, so the feature currently has a hole in its middle.
 6. Roadmap Phase 8 release engineering: **API review/freeze DONE (§3.75); repository documentation
    DONE (§3.76); repository URL and package/Showcase icon DONE (§3.77); Source Link and symbol
-   generation DONE (§3.79); portable package output DONE (§3.80).** Next: release versioning and final
-   package validation, then the final performance/install pass.
+   generation DONE (§3.79); portable package output DONE (§3.80); deterministic versioning DONE
+   (§3.81); package/clean-consumer gate DONE (§3.82).** Next: the final performance/install pass.
 7. GitHub repository metadata: **DONE** — the package points to `Wraith1080/RibbonKit`.
 
 Resolved at the API freeze (not v1 scope):

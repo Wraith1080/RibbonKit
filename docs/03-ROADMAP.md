@@ -48,7 +48,11 @@ KeyTips subsystem (full Alt-chain), tab merging API, modal tabs, customize dialo
 
 **Source Link and symbols: complete (2026-08-11).** The .NET 8+ SDK's built-in GitHub provider emits commit-pinned source mappings for both runtime TFMs; the symbol package contains both portable PDBs, and the NuSpec publishes the repository URL and commit.
 
-Remaining: final NuGet package validation (the icon, packaged readme, Source Link, and symbols are complete), performance/install pass (startup time, resize CPU, memory, clean consumer project and VS designer), and community launch. **Exit criteria:** v1.0.0 on NuGet.
+**Portable output and deterministic versioning: complete (2026-08-11).** Local packs now write to the repository's ignored `artifacts/` directory and consistently use the documented `0.1.0-alpha.1` version unless an intentional release build explicitly overrides `Version`.
+
+**Package and clean-consumer gate: complete (2026-08-11).** CI now validates the exact main/symbol package layout and metadata, then restores exclusively from that local package into an isolated cache and compiles real RibbonKit XAML for both runtime TFMs. Both package files are retained as CI artifacts; no publish step exists.
+
+Remaining: performance/install pass (startup time, resize CPU, memory, live packaged-app behavior and the Visual Studio designer), and community launch. **Exit criteria:** v1.0.0 on NuGet.
 
 ## Post-v1 candidates
 
