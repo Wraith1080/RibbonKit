@@ -9,6 +9,7 @@ RibbonKit.Controls.RibbonWindow.FrameAppearance.set -> void
 RibbonKit.Controls.RibbonWindowFrameAppearance
 RibbonKit.Controls.RibbonWindowFrameAppearance.Default = 0 -> RibbonKit.Controls.RibbonWindowFrameAppearance
 RibbonKit.Controls.RibbonWindowFrameAppearance.Office2007Aero = 1 -> RibbonKit.Controls.RibbonWindowFrameAppearance
+RibbonKit.RibbonBackstageDesign.Glass2007 = 3 -> RibbonKit.RibbonBackstageDesign
 static readonly RibbonKit.Controls.RibbonWindow.ActiveBackdropProperty -> System.Windows.DependencyProperty!
 static readonly RibbonKit.Controls.RibbonWindow.AeroFrameTintIntensityProperty -> System.Windows.DependencyProperty!
 static readonly RibbonKit.Controls.RibbonWindow.AeroFrameTintProperty -> System.Windows.DependencyProperty!

@@ -140,7 +140,7 @@ public class Office2007WindowFrameTests
     }
 
     [Fact]
-    public void Maximized_and_inactive_triggers_do_not_inset_the_complete_window()
+    public void Maximized_inactive_and_backstage_triggers_preserve_the_expected_frame_layers()
     {
         XDocument template = LoadTheme("Controls.Window.xaml");
         XElement controlTemplate = Assert.Single(
@@ -158,6 +158,11 @@ public class Office2007WindowFrameTests
             "TitleBarBand",
             "Opacity",
             "{DynamicResource RibbonKit.Metrics.WindowFrame.InactiveTitleBarOpacity}");
+
+        XElement backstage = Trigger(controlTemplate, "IsTitleBarContentVisible", "False");
+        AssertSetter(backstage, "TitleBarContentHost", "Visibility", "Collapsed");
+        AssertSetter(backstage, "AeroFrameInnerHighlight", "Visibility", "Collapsed");
+        AssertSetter(backstage, "AeroTitleBottomHighlight", "Visibility", "Collapsed");
     }
 
     [Fact]
@@ -177,6 +182,26 @@ public class Office2007WindowFrameTests
             "{DynamicResource RibbonKit.Metrics.WindowFrame.AeroThickness}");
         AssertSetter(aero, "AeroFrameOverlay", "Visibility", "Visible");
         AssertSetter(aero, "AeroTitleVisual", "Visibility", "Visible");
+        AssertSetter(
+            aero,
+            "TitleBarBackgroundLayer",
+            "Background",
+            "{DynamicResource RibbonKit.Brushes.WindowFrame.AeroFallback}");
+
+        XElement inactiveAero = Assert.Single(
+            controlTemplate.Descendants(),
+            element => element.Name.LocalName == "MultiTrigger"
+                && element.Descendants().Any(condition => condition.Name.LocalName == "Condition"
+                    && (string?)condition.Attribute("Property") == "FrameAppearance"
+                    && (string?)condition.Attribute("Value") == "Office2007Aero")
+                && element.Descendants().Any(condition => condition.Name.LocalName == "Condition"
+                    && (string?)condition.Attribute("Property") == "IsActive"
+                    && (string?)condition.Attribute("Value") == "False"));
+        AssertSetter(
+            inactiveAero,
+            "TitleBarBackgroundLayer",
+            "Background",
+            "{DynamicResource RibbonKit.Brushes.WindowFrame.AeroInactiveFallback}");
 
         XElement material = Assert.Single(
             controlTemplate.Descendants(),

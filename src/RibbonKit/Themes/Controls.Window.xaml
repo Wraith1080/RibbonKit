@@ -98,7 +98,8 @@
                                             Opacity="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroReflectionOpacity}" />
                                     <Border Background="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroGrain}"
                                             Opacity="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroGrainOpacity}" />
-                                    <Border BorderBrush="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroInnerHighlight}"
+                                    <Border x:Name="AeroTitleBottomHighlight"
+                                            BorderBrush="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroInnerHighlight}"
                                             BorderThickness="0,0,0,1" />
                                 </Grid>
 
@@ -301,6 +302,12 @@
                                     Value="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroThickness}" />
                             <Setter TargetName="AeroFrameOverlay" Property="Visibility" Value="Visible" />
                             <Setter TargetName="AeroTitleVisual" Property="Visibility" Value="Visible" />
+                            <!-- An unavailable Acrylic backdrop changes only the material source.
+                                 Keep the title and restored frame on one opaque Aero surface rather
+                                 than revealing the ordinary Office 2007 title gradient. -->
+                            <Setter TargetName="TitleBarBackgroundLayer"
+                                    Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroFallback}" />
                             <Setter TargetName="PART_Title"
                                     Property="Foreground"
                                     Value="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroTitleForeground}" />
@@ -331,6 +338,15 @@
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
                                 <Condition Property="FrameAppearance" Value="Office2007Aero" />
+                                <Condition Property="IsActive" Value="False" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="TitleBarBackgroundLayer"
+                                    Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroInactiveFallback}" />
+                        </MultiTrigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="FrameAppearance" Value="Office2007Aero" />
                                 <Condition Property="ActiveBackdrop" Value="Acrylic" />
                             </MultiTrigger.Conditions>
                             <Setter TargetName="AeroFrameHost" Property="BorderBrush" Value="Transparent" />
@@ -353,6 +369,11 @@
                         </Trigger>
                         <Trigger Property="IsTitleBarContentVisible" Value="False">
                             <Setter TargetName="TitleBarContentHost" Property="Visibility" Value="Collapsed" />
+                            <!-- A full-window Backstage surface already supplies its own visual
+                                 edge. Suppress the restored-frame inner bevel so it does not draw
+                                 the large three-sided outline around that surface. -->
+                            <Setter TargetName="AeroFrameInnerHighlight" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="AeroTitleBottomHighlight" Property="Visibility" Value="Collapsed" />
                         </Trigger>
                         <Trigger Property="Icon" Value="{x:Null}">
                             <Setter TargetName="PART_WindowIcon" Property="Visibility" Value="Collapsed" />

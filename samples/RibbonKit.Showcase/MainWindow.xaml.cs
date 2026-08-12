@@ -521,6 +521,10 @@ public partial class MainWindow : RibbonWindow
         SaveAppearancePreferences();
     }
 
+    private void OnResetAeroFrameTintIntensity(object sender, RoutedEventArgs e) =>
+        AeroFrameTintIntensitySlider.Value =
+            ShowcaseAppearancePreferences.DefaultAeroFrameTintIntensity;
+
     private void ApplyFrameAppearancePreference()
     {
         FrameAppearance =

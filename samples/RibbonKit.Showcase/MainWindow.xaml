@@ -688,6 +688,35 @@
                                 <TextBlock DockPanel.Dock="Left"
                                            Text="Tint"
                                            VerticalAlignment="Center" />
+                                <Button DockPanel.Dock="Right"
+                                        Content="Reset"
+                                        AutomationProperties.Name="Reset Aero frame tint intensity"
+                                        MinWidth="40"
+                                        Height="18"
+                                        Margin="4,0,0,0"
+                                        Padding="3,0"
+                                        FontSize="10"
+                                        Click="OnResetAeroFrameTintIntensity"
+                                        ToolTip="Restore the authored Office 2007 frame tint intensity to 16%.">
+                                    <Button.Style>
+                                        <Style TargetType="{x:Type Button}">
+                                            <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+                                            <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Control.SurfaceBackground}" />
+                                            <Setter Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Ribbon.Border}" />
+                                            <Setter Property="BorderThickness" Value="1" />
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
+                                                    <Setter Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
+                                                </Trigger>
+                                                <Trigger Property="IsPressed" Value="True">
+                                                    <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
+                                                    <Setter Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Control.PressedBorder}" />
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
                                 <TextBlock x:Name="AeroFrameTintIntensityValue"
                                            DockPanel.Dock="Right"
                                            Width="36"
@@ -906,6 +935,13 @@
                             Click="OnSelectBackstageDesign"
                             ScreenTipTitle="Office 2010 backstage"
                             ScreenTipText="Light glass nav with a glossy selected marker; dark/Black palettes use matching grayscale glass." />
+                        <rk:RibbonButton Header="2007 Glass"
+                            Tag="Glass2007"
+                            Size="Medium"
+                            Icon="{StaticResource Icon.Backstage}"
+                            Click="OnSelectBackstageDesign"
+                            ScreenTipTitle="RibbonKit Office 2007 Glass backstage"
+                            ScreenTipText="Select the RibbonKit-authored 2007 glass rail. It has an opaque fallback and reveals Acrylic only when Translucent Backstage is also enabled." />
                     </StackPanel>
                 </rk:RibbonGroup>
                 <rk:RibbonGroup Header="Application" rk:Ribbon.CommandId="group.view.application" Icon="{StaticResource Icon.Gear}">

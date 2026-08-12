@@ -60,7 +60,7 @@ Legend: ✅ done · 🚧 in progress · 📋 planned
 |---|---|
 | Application button (rectangular tab, or the Office 2007 orb) | ✅ |
 | Application menu (2007-style two-pane dropdown) | ✅ |
-| Backstage view (Modern 2024, Classic 2013, Classic 2010 designs) | ✅ |
+| Backstage view (Modern 2024, Classic 2013, Classic 2010, and RibbonKit Glass 2007 designs) | ✅ |
 | Backstage footer items, button items, recent-items pattern | ✅ |
 | Repeatable `RibbonMessageBar` notifications with animated appearance, action, and dismissal | ✅ |
 | Quick Access Toolbar — 3 placements, overflow flyout, right-click add/remove for button, toggle, split and drop-down commands | ✅ |

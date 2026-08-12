@@ -126,6 +126,22 @@ public class ShowcaseAppearancePreferencesTests
             restored.AeroFrameTintIntensity);
     }
 
+    [Fact]
+    public void Glass2007_backstage_choice_round_trips_as_an_appearance_preference()
+    {
+        var source = new ShowcaseAppearancePreferences
+        {
+            BackstageDesign = RibbonBackstageDesign.Glass2007,
+            BackstageTranslucent = true,
+        };
+
+        string json = ShowcaseAppearancePreferencesSerializer.Serialize(source);
+
+        Assert.True(ShowcaseAppearancePreferencesSerializer.TryDeserialize(json, out var restored));
+        Assert.Equal(RibbonBackstageDesign.Glass2007, restored.BackstageDesign);
+        Assert.True(restored.BackstageTranslucent);
+    }
+
     [Theory]
     [InlineData("#107c41", "#FF107C41")]
     [InlineData("#80107c41", "#80107C41")]

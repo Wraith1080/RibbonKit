@@ -45,7 +45,27 @@
                         </Grid.ColumnDefinitions>
                         <Border x:Name="NavColumn" Grid.Column="0"
                                 Background="{DynamicResource RibbonKit.Brushes.Backstage.Classic.NavBackground}">
-                            <DockPanel LastChildFill="True">
+                            <Grid>
+                                <!-- Glass2007 composes the same restrained reflection and grain
+                                     used by the optional 2007 window frame. The rail deliberately
+                                     has no authored perimeter so it joins the frame without a
+                                     second inset outline. The layers stay collapsed elsewhere. -->
+                                <Border x:Name="Glass2007RailTint"
+                                        Background="{DynamicResource RibbonKit.Brushes.Backstage.Classic.NavBackground}"
+                                        Opacity="{Binding AeroFrameTintIntensity, RelativeSource={RelativeSource AncestorType={x:Type controls:RibbonWindow}}, FallbackValue=0.16}"
+                                        IsHitTestVisible="False"
+                                        Visibility="Collapsed" />
+                                <Border x:Name="Glass2007RailReflection"
+                                        Background="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroReflection}"
+                                        Opacity="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroReflectionOpacity}"
+                                        IsHitTestVisible="False"
+                                        Visibility="Collapsed" />
+                                <Border x:Name="Glass2007RailGrain"
+                                        Background="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroGrain}"
+                                        Opacity="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroGrainOpacity}"
+                                        IsHitTestVisible="False"
+                                        Visibility="Collapsed" />
+                                <DockPanel LastChildFill="True">
                                 <Button x:Name="PART_BackButton"
                                         DockPanel.Dock="Top"
                                         Width="{DynamicResource RibbonKit.Metrics.BackstageBackButtonSize}"
@@ -109,6 +129,15 @@
                                                                 <Setter TargetName="Arrow" Property="Stroke" Value="#FFFFFF" />
                                                                 <Setter TargetName="HoverFill" Property="Fill" Value="#FFFFFF" />
                                                             </Trigger>
+                                                            <!-- Glass2007 deliberately borrows the application-orb glass disc. -->
+                                                            <Trigger Property="controls:Backstage.Design" Value="Glass2007">
+                                                                <Setter TargetName="GlassFill" Property="Visibility" Value="Visible" />
+                                                                <Setter TargetName="GlassFill" Property="Opacity"
+                                                                        Value="{DynamicResource RibbonKit.Metrics.Backstage.GlassChromeOpacity}" />
+                                                                <Setter TargetName="Outline" Property="Visibility" Value="Collapsed" />
+                                                                <Setter TargetName="Arrow" Property="Stroke" Value="#FFFFFF" />
+                                                                <Setter TargetName="HoverFill" Property="Fill" Value="#FFFFFF" />
+                                                            </Trigger>
                                                             <!-- Mouse-DOWN (click): a recessed dark press wash. Last, so it
                                                                  wins over hover and the Classic2010 white wash while held. -->
                                                             <Trigger Property="IsPressed" Value="True">
@@ -130,7 +159,8 @@
                                           Background="Transparent"
                                           Margin="0,0,0,14"
                                           SeparatorBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type controls:Backstage}}}" />
-                            </DockPanel>
+                                </DockPanel>
+                            </Grid>
                         </Border>
                         <!-- The content area's text foreground is pinned dark, NOT inherited from
                              the Backstage.Foreground (which is white to drive the accent nav column).
@@ -174,6 +204,19 @@
                                     Value="{DynamicResource RibbonKit.Effects.Backstage.ContentShadow}" />
                         </Trigger>
 
+                        <!-- RibbonKit-original Office 2007 glass Backstage. Its opaque state uses
+                             the generation-specific glass rail; the translucent state below clears
+                             that fill and leaves authored tint/reflection/grain over Acrylic. -->
+                        <Trigger Property="controls:Backstage.Design" Value="Glass2007">
+                            <Setter Property="Foreground"
+                                    Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+                            <Setter TargetName="NavColumn" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.Backstage.NavBackground}" />
+                            <Setter TargetName="NavColumnDef" Property="Width" Value="210" />
+                             <Setter TargetName="ContentArea" Property="Effect"
+                                     Value="{DynamicResource RibbonKit.Effects.Backstage.ContentShadow}" />
+                        </Trigger>
+
                         <!-- Translucent (reveal a window Mica/Acrylic backdrop behind the
                              backstage): clear the root fill so the material shows in the nav
                              column, where the Modern MultiTrigger below lays its translucent
@@ -194,6 +237,16 @@
                             </MultiTrigger.Conditions>
                             <Setter TargetName="NavColumn" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Backstage.Modern.NavBackgroundTranslucent}" />
+                        </MultiTrigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="controls:Backstage.Design" Value="Glass2007" />
+                                <Condition Property="Translucent" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="NavColumn" Property="Background" Value="Transparent" />
+                            <Setter TargetName="Glass2007RailTint" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="Glass2007RailReflection" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="Glass2007RailGrain" Property="Visibility" Value="Visible" />
                         </MultiTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -225,40 +278,51 @@
                              so it reads as part of the selected pill rather than floating in the
                              left gutter. Panel.ZIndex=1 keeps it ABOVE the pill (it's declared before
                              Chrome, so without this the pill would paint over it). -->
-                        <Rectangle x:Name="SelBar"
+                         <Rectangle x:Name="SelBar"
                                    Width="3" Height="16"
                                    HorizontalAlignment="Left"
                                    VerticalAlignment="Center"
                                    Margin="8,0,0,0"
                                    Panel.ZIndex="1"
                                    RadiusX="1.5" RadiusY="1.5"
-                                   Fill="{DynamicResource RibbonKit.Brushes.Accent}"
-                                   Visibility="Collapsed" />
+                                    Fill="{DynamicResource RibbonKit.Brushes.Accent}"
+                                    Visibility="Collapsed" />
+                        <!-- The glass state fill is a sibling of Chrome so its opacity affects only
+                             the colored surface, never the text/icon or the crisp Chrome outline. -->
+                        <Border x:Name="Glass2007StateChrome"
+                                Margin="6,1"
+                                CornerRadius="2"
+                                Background="Transparent"
+                                Opacity="{DynamicResource RibbonKit.Metrics.Backstage.GlassChromeOpacity}"
+                                IsHitTestVisible="False"
+                                Visibility="Collapsed" />
                         <Border x:Name="Chrome"
                                 Background="Transparent"
                                 BorderThickness="1"
                                 CornerRadius="0"
                                 Padding="26,11">
-                            <!-- NavText carries the nav-item TEXT colour (independent of the
-                                 container Foreground, which stays dark for content safety). The
-                                 header presenter inherits it; the icon binds to it. Default is the
-                                 accent-column white; design/selection triggers below override it. -->
-                            <StackPanel x:Name="NavText" Orientation="Horizontal"
-                                        TextElement.Foreground="#FFFFFF">
-                                <!-- Reserved icon column: a foreground-tinted silhouette of
-                                     the item's Icon. When no Icon is set the mask is empty, so
-                                     the 16px slot stays blank and every item stays aligned. -->
-                                <Grid Width="16" Height="16" Margin="0,0,12,0" VerticalAlignment="Center">
-                                    <Rectangle x:Name="NavIcon" Fill="#FFFFFF">
-                                        <Rectangle.OpacityMask>
-                                            <ImageBrush ImageSource="{Binding Icon, RelativeSource={RelativeSource TemplatedParent}}" />
-                                        </Rectangle.OpacityMask>
-                                    </Rectangle>
-                                </Grid>
-                                <ContentPresenter ContentSource="Header"
-                                                  VerticalAlignment="Center"
-                                                  RecognizesAccessKey="True" />
-                            </StackPanel>
+                            <Grid>
+                                <!-- NavText carries the nav-item TEXT colour (independent of the
+                                     container Foreground, which stays dark for content safety). The
+                                     header presenter inherits it; the icon binds to it. Default is the
+                                     accent-column white; design/selection triggers below override it. -->
+                                <StackPanel x:Name="NavText" Orientation="Horizontal"
+                                            TextElement.Foreground="#FFFFFF">
+                                    <!-- Reserved icon column: a foreground-tinted silhouette of
+                                         the item's Icon. When no Icon is set the mask is empty, so
+                                         the 16px slot stays blank and every item stays aligned. -->
+                                    <Grid Width="16" Height="16" Margin="0,0,12,0" VerticalAlignment="Center">
+                                        <Rectangle x:Name="NavIcon" Fill="#FFFFFF">
+                                            <Rectangle.OpacityMask>
+                                                <ImageBrush ImageSource="{Binding Icon, RelativeSource={RelativeSource TemplatedParent}}" />
+                                            </Rectangle.OpacityMask>
+                                        </Rectangle>
+                                    </Grid>
+                                    <ContentPresenter ContentSource="Header"
+                                                      VerticalAlignment="Center"
+                                                      RecognizesAccessKey="True" />
+                                </StackPanel>
+                            </Grid>
                         </Border>
                     </Grid>
                     <ControlTemplate.Triggers>
@@ -333,6 +397,46 @@
                             <Setter TargetName="Chrome" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Backstage.Modern.ItemSelectedTranslucent}" />
                         </MultiDataTrigger>
+
+                        <!-- Glass2007: compact, lightly rounded glass tiles. Gold hover comes from
+                             the generation's ordinary control hot state; selection uses the
+                             accent-derived 2007 glass marker. The fill alone is translucent while
+                             the state outline remains crisp. -->
+                        <Trigger Property="controls:Backstage.Design" Value="Glass2007">
+                            <Setter TargetName="NavText" Property="TextElement.Foreground"
+                                    Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+                            <Setter TargetName="NavIcon" Property="Fill"
+                                    Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+                            <Setter TargetName="Chrome" Property="CornerRadius" Value="2" />
+                            <Setter TargetName="Chrome" Property="Margin" Value="6,1" />
+                            <Setter TargetName="Chrome" Property="Padding" Value="18,10" />
+                            <Setter TargetName="Chrome" Property="Background" Value="Transparent" />
+                            <Setter TargetName="Chrome" Property="BorderBrush" Value="Transparent" />
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="controls:Backstage.Design" Value="Glass2007" />
+                                <Condition SourceName="Chrome" Property="IsMouseOver" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="Glass2007StateChrome" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
+                            <Setter TargetName="Glass2007StateChrome" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="Chrome" Property="BorderBrush"
+                                    Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
+                        </MultiTrigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="controls:Backstage.Design" Value="Glass2007" />
+                                <Condition Property="IsSelected" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="Glass2007StateChrome" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.Backstage.ItemSelectedGlass}" />
+                            <Setter TargetName="Glass2007StateChrome" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="Chrome" Property="BorderBrush"
+                                    Value="{DynamicResource RibbonKit.Brushes.Backstage.ItemSelectedBorder}" />
+                            <Setter TargetName="NavText" Property="TextElement.Foreground" Value="#FFFFFF" />
+                            <Setter TargetName="NavIcon" Property="Fill" Value="#FFFFFF" />
+                        </MultiTrigger>
 
                         <!-- Classic2010 (Office 2010): the nav is a light generation-specific gradient,
                              so item text is DARK and turns white only when selected. -->

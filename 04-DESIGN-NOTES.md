@@ -4247,11 +4247,12 @@ Aero appearance alone creates a physical-LTR 6-DIP frame on the restored left, r
 edges, with a blue tint, bright inner edge, restrained diagonal reflection and tiled grain. The same
 overlays continue through the title band. Accepted Acrylic makes only that frame and title fill
 transparent; the tab strip, ribbon, document surface and status area remain opaque. Without Acrylic,
-`#9BBBE3` supplies a coherent opaque Aero fallback. Inactive windows reduce the overlay/title
-strength and use a quieter `#BCC8D6` fallback. Maximizing collapses the side/bottom frame and leaves
-the material title treatment, matching the supplied Word, Task Manager and Paint evidence.
+the title now uses the same `#9BBBE3` Aero fallback brush as the restored frame rather than exposing
+the ordinary Office 2007 title gradient; the inactive title/frame pair similarly shares the quieter
+`#BCC8D6` fallback. Maximizing collapses the side/bottom frame and leaves the material title
+treatment, matching the supplied Word, Task Manager and Paint evidence.
 
-The five base dictionaries now carry **205 identical token keys**. Non-2007 themes publish neutral
+The five base dictionaries now carry **206 identical token keys**. Non-2007 themes publish neutral
 transparent/zero frame values, so the project retains one lookless template. Office 2007 Black
 overrides only its required frame/tint/foreground colours. Caption hover and pressed brushes also
 flow through the existing non-client bridge, so `WM_NCHITTEST` can still return `HTMAXBUTTON` while
@@ -4285,6 +4286,37 @@ The seams were not DPI rounding; they were the deliberate inner-bevel stroke inc
 through the title. Its left/right strokes now begin below the 34-DIP caption so the title and frame
 remain one uninterrupted material surface. Tint opacity is applied only to the tint layers, so the
 slider does not weaken reflection, grain or the corrected inner highlight.
+
+### 3.91 RibbonKit-original Glass2007 Backstage prototype — 2026-08-12
+
+The translucent Modern Backstage over the Office 2007 Aero frame suggested a useful post-v1 design
+that is intentionally not presented as historical Office behavior. Real Office 2007 still defaults
+to RibbonKit's two-pane orb application menu. The additive public
+`RibbonBackstageDesign.Glass2007` value is an explicitly selected full-window alternative; neither
+the Office 2007 theme nor this design enables Acrylic automatically.
+
+The first visual stage stays in the one shared `Controls.Backstage.xaml` template. Its opaque mode
+uses the generation-aware `Backstage.NavBackground`; translucent mode clears that rail and layers a
+low-strength theme/accent tint plus the existing Office 2007 frame reflection and grain over the
+supported app-controlled Acrylic path. The content sheet remains opaque and keeps only the
+established historical shadow. Live review removed the authored rail perimeter, content-edge stroke
+and residual top specular line. A follow-up screenshot clarified that the remaining large
+frame-sized outline was the window frame's `AeroFrameInnerHighlight` plus the title surface's bottom
+highlight, not a navigation-tile border; both now collapse through the existing
+`IsTitleBarContentVisible=False` Backstage state.
+Hover and selected tile outlines remain crisp, while their fills plus the orb-derived back-button
+disc use a shared `0.88` opacity token, allowing a restrained amount of rail color through without
+fading text, icons or the back arrow. All five base themes define the new metric, retaining a single
+shared template and an identical token contract.
+
+The Showcase adds a `2007 Glass` selector and persists it through the app-owned appearance document,
+separate from ribbon customization. The frame tint slider now has a compact Reset action that assigns
+the shared `DefaultAeroFrameTintIntensity` constant (`0.16`), so UI reset, schema migration and the
+factory value cannot drift. Logic contracts cover the enum, opaque/translucent template triggers,
+generation-aware navigation resources, Showcase wiring and appearance round-trip. Acrylic remains a
+live visual check; the next stage is user review of this shell before changing the Backstage page
+content layout. The full automated gate passes **318 logic tests plus one visual test covering 62
+approved images**.
 
 ## 4. Workflow / Session Conventions
 
@@ -4601,7 +4633,7 @@ Possible post-v1 polish:
   honor reduced motion, handle rapid reversals, and stay disabled while a DWM backdrop is active so
   Mica/Acrylic retain their native material retint without a second cross-fade on top.
 
-**Unit tests: 298 green (verified 2026-08-11).** Coverage now includes the STA harness, the borrow
+**Unit tests: 318 green (verified 2026-08-12).** Coverage now includes the STA harness, the borrow
 protocol, overflow strip measure/arrange rules, popup motion and dismissal, proxy mirroring,
 application-menu layering/hover/footer-outline/KeyTips, repeatable message-bar API/template/theme
 contracts, Office 2010 seam/state/consumer contracts, localization/RTL
@@ -4614,6 +4646,9 @@ exact/prefix collision recovery, prefix-free derivation, typeable non-Latin fall
 custom-content discovery/invocation across Backstage and application-menu panes, including disabled
 target blocking, native toggle Click/Command semantics, compact-input discovery with Header-based
 label derivation, and collapsed-group preservation for editor/picker activation.
+The post-v1 window-frame and Glass2007 Backstage contracts cover opaque/Aero separation, tint
+validation/default migration, shared-template material triggers, generation-aware navigation and
+Showcase appearance persistence.
 `RibbonMergeModalTests` adds the Phase 7 automated invariants: merge ordering across later
 permutations, merge/unmerge round-trips, group restore with two sources in one tab, capture while
 modal, modal enter/exit selection and cancellation, forced exit when a merged modal tab leaves,

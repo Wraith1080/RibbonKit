@@ -106,9 +106,11 @@ public class Backstage : TabControl
     }
 
     /// <summary>
-    /// The backstage chrome design: <see cref="RibbonBackstageDesign.Classic"/> (the
-    /// accent-colored 2013 column, default) or <see cref="RibbonBackstageDesign.Modern"/>
-    /// (the light 2024 rail). Inherited by the nav items.
+    /// The backstage chrome design. <see cref="RibbonBackstageDesign.Classic"/> is the
+    /// accent-colored 2013 column (the default), <see cref="RibbonBackstageDesign.Modern"/>
+    /// is the light 2024 rail, <see cref="RibbonBackstageDesign.Classic2010"/> is the shared
+    /// pre-2013 glass rail, and <see cref="RibbonBackstageDesign.Glass2007"/> is RibbonKit's
+    /// optional Office 2007 glass interpretation. Inherited by the nav items.
     /// </summary>
     public RibbonBackstageDesign Design
     {

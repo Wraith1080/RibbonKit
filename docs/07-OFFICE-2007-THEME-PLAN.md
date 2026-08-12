@@ -1,10 +1,11 @@
 # Office 2007 Theme — Implementation Plan
 
-> **Status: S0-S6 COMPLETE; S7 IN PROGRESS.** The guaranteed opaque no-material window baseline was
+> **Status: S0-S6 COMPLETE; S7 IN PROGRESS; S8 SHELL PROTOTYPE.** The guaranteed opaque no-material window baseline was
 > corrected against the restored Word reference on `codex/office-2007-window-frame` on 2026-08-12
 > and the separately selectable Aero-inspired prototype now passes its automated gate plus
 > active/inactive, normal/maximized 125% live checks. The remaining DPI/mixed-monitor and hands-on
-> interaction gates are open. The other original deferral,
+> interaction gates are open. The additive RibbonKit-original `Glass2007` Backstage shell passes its
+> automated contracts and awaits live visual approval before page-content redesign. The other original deferral,
 > the two-pane application menu, shipped on 2026-07-28. See `04-DESIGN-NOTES.md` §§3.38, 3.88-3.89.
 > Original header follows.
 >
@@ -443,6 +444,24 @@ DWMBlurGlass settings. They establish restored frame continuity, maximized frame
 active/inactive delta; the injected implementation remains a visual reference only. Do not sample
 wallpaper-contaminated pixels as opaque token colours.
 
+### 6.4 RibbonKit-original Glass2007 Backstage
+
+Post-v1, the user approved a distinct RibbonKit-authored `Glass2007` Backstage after reviewing the
+Modern translucent rail over the new Aero-inspired frame. It is an optional full-window File surface,
+not a historical-emulation claim: the two-pane orb application menu remains the Office 2007 default.
+Theme selection does not select this design, enable translucency or request Acrylic.
+
+The first stage reuses the shared Backstage template and existing generation-aware tokens. Opaque
+mode paints the 2007 rail gradient; translucent mode exposes Acrylic only through the rail beneath
+authored tint, reflection and grain layers. The page sheet stays opaque. Navigation uses inset
+two-DIP tiles, gold hover, hard-crease glass selection and an orb-derived back button. Live review
+removed the authored rail/content strokes and the remaining top highlight because they read as
+nested borders and produced a stray selected-row line. The larger three-sided outline shown in the
+follow-up capture belonged to the Aero frame bevel and title-bottom highlight; both now collapse only
+while Backstage hides the title content. Hover/selected tile outlines remain crisp, while their fills and the back-button disc
+are 88% opaque so a small amount of rail color passes through. Stop for a live shell review before
+redesigning template/recent-document page content.
+
 ---
 
 ## 7. Working rules that apply to every step
@@ -458,7 +477,7 @@ These are recorded failures, not general advice:
   the split rules and is the only thing between a mis-scoped resource and a crash on a machine you
   are not sitting at.
 - **Token parity check** — after changing a base token dictionary, diff its key set against
-  `Tokens.Office2024.xaml`. The five base dictionaries currently carry exactly **205 keys with
+  `Tokens.Office2024.xaml`. The five base dictionaries currently carry exactly **206 keys with
   identical sets** (verified with the Aero prototype). A missing key means a control
   silently renders with whatever the previous theme left behind:
 
@@ -504,9 +523,10 @@ partly because too much changed between looks.
 | ~~S2~~ | ~~Glass~~ | ✅ **Shipped with S1** — the measured crease values were already in hand, so splitting them out would have meant reviewing a flat 2007 that told us nothing. S2 became refinement. | — |
 | ~~S3~~ | ~~Orb~~ | ✅ **Done.** Overhang works. Needed `WindowChrome.IsHitTestVisibleInChrome` (only the bottom half was clickable), a backstage-hide trigger, size 37→46, and a shadow instead of a border. | — |
 | ~~S4~~ | ~~Geometry~~ | ✅ Group boxes + `ContentCornerRadius` 0→3 **built and verified 2026-07-27** (§4.5). The original domed-tab idea was rejected in favor of the measured flat 2007 tab strip (§3.38). The §6 window frame was split out as the plan's one remaining deliberate deferral so it can be implemented and maximize-tested independently. | — |
-| ~~S5~~ | ~~Accent + backstage~~ | ✅ **Done.** `Glass()` helper beside `Gel()`, `Office2007` case, hot-state guard widened. `Classic2007` deliberately NOT added — `Classic2010` already is the 2007 look and a near-duplicate enum member before the freeze was not worth it. | — |
+| ~~S5~~ | ~~Accent + backstage~~ | ✅ **Done.** `Glass()` helper beside `Gel()`, `Office2007` case, hot-state guard widened. `Classic2007` was deliberately not added before v1 because it duplicated `Classic2010`; the later post-v1 `Glass2007` work in S8 is a materially different translucent/opaque RibbonKit-original design. | — |
 | ~~S6~~ | ~~Wiring + verify~~ | ✅ **Done.** Showcase button + `ApplyTheme` helper, README application-menu row corrected and the 2007 row marked ✅, design notes §3.38, roadmap and features updated. DPI matrix verified clean at 100/125/150/175/200%. | — |
 | S7 | Post-v1 window frame — **IN PROGRESS** | §6.1 corrected 2026-08-12: no app-painted full-window band in the default opaque baseline. §6.2 is implemented separately with independent `FrameAppearance` and Acrylic choices, opaque fallback, active/inactive overlays and maximized frame collapse. The frame tint brush/intensity are host-controlled; the Showcase adds opt-in accent coloring and a persisted 0–100% hosted WPF slider. Automated tests plus real 125% active/inactive normal, maximized and hit-test probes pass; complete the remaining DPI/mixed-monitor and hands-on gates. | Opaque fallback is deterministic and correct at 100/125/150/175/200%; Aero mode falls back cleanly; resize, maximize/restore, mixed-DPI movement, caption commands and Windows 11 Snap Layouts remain correct. |
+| S8 | Post-v1 Glass2007 Backstage — **SHELL PROTOTYPE** | Additive `Glass2007` design, shared-template opaque/translucent rail without a frame-sized inner outline, crisp tile state borders over subtly translucent orb/state fills, gold hover, hard-crease selection, opaque content sheet, Showcase selector and appearance persistence. | Automated template/API/persistence contracts pass; approve the shell live before redesigning page content. |
 
 ---
 
@@ -519,6 +539,8 @@ partly because too much changed between looks.
 | The Aero reference tempts the implementation toward private DWM hooks or `AllowsTransparency` | Mitigated in prototype | The effect is app-local WPF token/overlay visuals plus the existing supported Acrylic path only. No injection, private composition API, desktop capture or CPU blur. |
 | DWM material makes snapshot output machine-dependent | High for Acrylic | Approve the opaque frame and deterministic overlay in snapshots; verify the actual Acrylic composition live with reference screenshots rather than creating unstable pixel baselines. |
 | Frame appearance leaks into ribbon customization persistence | Mitigated in prototype | Schema-3 app appearance preferences own backdrop/frame/tint state and migrate schemas 1–2; customization Import/Export/Reset remains structural. |
+| A RibbonKit-original Backstage is mistaken for historical Office 2007 UI | Low | Name and document it as `Glass2007`, keep it explicitly selected, and retain the two-pane orb application menu as the Office 2007 default. |
+| Glass2007 becomes a second Backstage template fork | Mitigated in shell prototype | Keep one shared template with inherited design triggers and existing `DynamicResource` tokens; stop before page-content redesign and review the shell live. |
 | The contextual band wants a gradient + edge line, but the tokens are solid brushes | Medium | Gradients drop in free at a token key; the `#FDE41B` edge line may need a new key (§4.4). Decide in S4; a new key goes into all five files. |
 | **The group-box template change is the largest single edit in this theme** | **Confirmed, not a risk any more** | Six new keys across five theme files plus the `RibbonGroup` template (§4.5). Do it as its own commit, run `dotnet test` immediately after, and keep the flat themes zeroed. |
 | A new resource breaks the split-dictionary scope rule | Medium | `dotnet test` after every dictionary edit. |
