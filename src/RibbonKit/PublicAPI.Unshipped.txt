@@ -1,4 +1,8 @@
 #nullable enable
+RibbonKit.Controls.RibbonWindow.AeroFrameTint.get -> System.Windows.Media.Brush?
+RibbonKit.Controls.RibbonWindow.AeroFrameTint.set -> void
+RibbonKit.Controls.RibbonWindow.AeroFrameTintIntensity.get -> double
+RibbonKit.Controls.RibbonWindow.AeroFrameTintIntensity.set -> void
 RibbonKit.Controls.RibbonWindow.ActiveBackdrop.get -> RibbonKit.Interop.RibbonBackdrop
 RibbonKit.Controls.RibbonWindow.FrameAppearance.get -> RibbonKit.Controls.RibbonWindowFrameAppearance
 RibbonKit.Controls.RibbonWindow.FrameAppearance.set -> void
@@ -6,4 +10,6 @@ RibbonKit.Controls.RibbonWindowFrameAppearance
 RibbonKit.Controls.RibbonWindowFrameAppearance.Default = 0 -> RibbonKit.Controls.RibbonWindowFrameAppearance
 RibbonKit.Controls.RibbonWindowFrameAppearance.Office2007Aero = 1 -> RibbonKit.Controls.RibbonWindowFrameAppearance
 static readonly RibbonKit.Controls.RibbonWindow.ActiveBackdropProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonWindow.AeroFrameTintIntensityProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonWindow.AeroFrameTintProperty -> System.Windows.DependencyProperty!
 static readonly RibbonKit.Controls.RibbonWindow.FrameAppearanceProperty -> System.Windows.DependencyProperty!

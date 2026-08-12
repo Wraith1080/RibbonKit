@@ -86,6 +86,23 @@ public class RibbonWindow : Window
                 RibbonWindowFrameAppearance.Default,
                 OnFrameAppearanceChanged));
 
+    /// <summary>Identifies the <see cref="AeroFrameTint"/> dependency property.</summary>
+    public static readonly DependencyProperty AeroFrameTintProperty =
+        DependencyProperty.Register(
+            nameof(AeroFrameTint),
+            typeof(Brush),
+            typeof(RibbonWindow),
+            new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender));
+
+    /// <summary>Identifies the <see cref="AeroFrameTintIntensity"/> dependency property.</summary>
+    public static readonly DependencyProperty AeroFrameTintIntensityProperty =
+        DependencyProperty.Register(
+            nameof(AeroFrameTintIntensity),
+            typeof(double),
+            typeof(RibbonWindow),
+            new FrameworkPropertyMetadata(0d, FrameworkPropertyMetadataOptions.AffectsRender),
+            IsValidAeroFrameTintIntensity);
+
     /// <summary>Identifies the read-only <see cref="ActiveBackdrop"/> dependency property.</summary>
     public static readonly DependencyProperty ActiveBackdropProperty =
         ActiveBackdropPropertyKey.DependencyProperty;
@@ -170,6 +187,27 @@ public class RibbonWindow : Window
     }
 
     /// <summary>
+    /// Gets or sets the tint brush used by the Aero-inspired frame and title overlays. The shared
+    /// style supplies the selected theme's default brush; setting a local value lets a host use an
+    /// accent or another app-owned frame color without changing ribbon theme resources.
+    /// </summary>
+    public Brush? AeroFrameTint
+    {
+        get => (Brush?)GetValue(AeroFrameTintProperty);
+        set => SetValue(AeroFrameTintProperty, value);
+    }
+
+    /// <summary>
+    /// Gets or sets the opacity applied to <see cref="AeroFrameTint"/>, from 0 (no authored tint)
+    /// through 1 (fully opaque tint). Reflection, grain, and the inner highlight remain separate.
+    /// </summary>
+    public double AeroFrameTintIntensity
+    {
+        get => (double)GetValue(AeroFrameTintIntensityProperty);
+        set => SetValue(AeroFrameTintIntensityProperty, value);
+    }
+
+    /// <summary>
     /// Gets the system backdrop most recently accepted for this window through
     /// <see cref="MicaHelper.TrySetBackdrop"/>. This is derived runtime state, not an appearance
     /// preference to serialize.
@@ -178,6 +216,11 @@ public class RibbonWindow : Window
 
     internal void SetActiveBackdrop(RibbonBackdrop backdrop) =>
         SetValue(ActiveBackdropPropertyKey, backdrop);
+
+    private static bool IsValidAeroFrameTintIntensity(object value) =>
+        value is double intensity
+        && double.IsFinite(intensity)
+        && intensity is >= 0d and <= 1d;
 
     private static void OnFrameAppearanceChanged(
         DependencyObject dependencyObject,

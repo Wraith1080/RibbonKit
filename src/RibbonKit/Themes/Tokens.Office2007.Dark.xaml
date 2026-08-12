@@ -8,7 +8,7 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Window.Background" Color="#AFAFAF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroFallback" Color="#505A62" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroInactiveFallback" Color="#656A6E" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroTint" Color="#285B7788" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroTint" Color="#5B7788" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroInnerHighlight" Color="#82FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroTitleForeground" Color="#F2F2F2" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionHover" Color="#24FFFFFF" />

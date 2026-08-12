@@ -17,6 +17,8 @@
     <Style TargetType="{x:Type controls:RibbonWindow}">
         <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Window.Background}" />
         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+        <Setter Property="AeroFrameTint" Value="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroTint}" />
+        <Setter Property="AeroFrameTintIntensity" Value="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroTintIntensity}" />
         <Setter Property="WindowChrome.WindowChrome">
             <Setter.Value>
                 <!-- No GlassFrameThickness="-1": extending the DWM glass across the whole
@@ -89,7 +91,9 @@
                                       Grid.ColumnSpan="3"
                                       IsHitTestVisible="False"
                                       Visibility="Collapsed">
-                                    <Border Background="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroTint}" />
+                                    <Border x:Name="AeroTitleTintLayer"
+                                            Background="{TemplateBinding AeroFrameTint}"
+                                            Opacity="{TemplateBinding AeroFrameTintIntensity}" />
                                     <Border Background="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroReflection}"
                                             Opacity="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroReflectionOpacity}" />
                                     <Border Background="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroGrain}"
@@ -269,9 +273,11 @@
                           FlowDirection="LeftToRight"
                           IsHitTestVisible="False"
                           Visibility="Collapsed">
-                        <Border x:Name="AeroFrameTint"
-                                BorderBrush="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroTint}"
-                                BorderThickness="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroThickness}">
+                        <Border x:Name="AeroFrameTintLayer"
+                                BorderBrush="{TemplateBinding AeroFrameTint}"
+                                BorderThickness="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroThickness}"
+                                Opacity="{TemplateBinding AeroFrameTintIntensity}" />
+                        <Border BorderThickness="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroThickness}">
                             <!-- The frame and title are one glass surface. Begin the vertical
                                  inner bevel below the title instead of drawing two bright seams
                                  beside the orb and Close button. -->

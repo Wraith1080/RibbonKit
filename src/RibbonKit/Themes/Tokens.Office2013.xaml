@@ -217,6 +217,7 @@
     <system:Double x:Key="RibbonKit.Metrics.WindowFrame.CaptionHeight">34</system:Double>
     <system:Double x:Key="RibbonKit.Metrics.WindowFrame.InactiveTitleBarOpacity">1</system:Double>
     <Thickness x:Key="RibbonKit.Metrics.WindowFrame.AeroThickness">0</Thickness>
+    <system:Double x:Key="RibbonKit.Metrics.WindowFrame.AeroTintIntensity">0</system:Double>
     <Thickness x:Key="RibbonKit.Metrics.WindowFrame.AeroInnerHighlightMargin">0</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.WindowFrame.AeroInnerHighlightThickness">0</Thickness>
     <system:Double x:Key="RibbonKit.Metrics.WindowFrame.AeroReflectionOpacity">0</system:Double>

@@ -1,4 +1,5 @@
 using System.IO;
+using System.Windows.Media;
 using System.Xml.Linq;
 using RibbonKit.Controls;
 using RibbonKit.Interop;
@@ -45,8 +46,9 @@ public class Office2007WindowFrameTests
         Assert.Equal("0.78", Value(theme, "RibbonKit.Metrics.WindowFrame.InactiveTitleBarOpacity"));
         Assert.Equal("#9BBBE3", Attribute(theme, AeroBrushKeys[0], "Color"));
         Assert.Equal("#BCC8D6", Attribute(theme, AeroBrushKeys[1], "Color"));
-        Assert.Equal("#2A1A78A5", Attribute(theme, AeroBrushKeys[2], "Color"));
+        Assert.Equal("#1A78A5", Attribute(theme, AeroBrushKeys[2], "Color"));
         Assert.Equal("6,0,6,6", Value(theme, "RibbonKit.Metrics.WindowFrame.AeroThickness"));
+        Assert.Equal("0.16", Value(theme, "RibbonKit.Metrics.WindowFrame.AeroTintIntensity"));
         Assert.Equal("0,34,0,0", Value(theme, "RibbonKit.Metrics.WindowFrame.AeroInnerHighlightMargin"));
         Assert.Equal("1,0,1,1", Value(theme, "RibbonKit.Metrics.WindowFrame.AeroInnerHighlightThickness"));
         Assert.Equal("0.40", Value(theme, "RibbonKit.Metrics.WindowFrame.AeroReflectionOpacity"));
@@ -81,6 +83,7 @@ public class Office2007WindowFrameTests
         }
 
         Assert.Equal("0", Value(theme, "RibbonKit.Metrics.WindowFrame.AeroThickness"));
+        Assert.Equal("0", Value(theme, "RibbonKit.Metrics.WindowFrame.AeroTintIntensity"));
         Assert.Equal("0", Value(theme, "RibbonKit.Metrics.WindowFrame.AeroInnerHighlightMargin"));
         Assert.Equal("0", Value(theme, "RibbonKit.Metrics.WindowFrame.AeroInnerHighlightThickness"));
         Assert.Equal("0", Value(theme, "RibbonKit.Metrics.WindowFrame.AeroReflectionOpacity"));
@@ -111,6 +114,17 @@ public class Office2007WindowFrameTests
         Assert.Equal(
             "{DynamicResource RibbonKit.Brushes.TitleBar.Background}",
             (string?)titleBackground.Attribute("Background"));
+
+        XElement titleTint = NamedElement(template, "AeroTitleTintLayer");
+        XElement frameTint = NamedElement(template, "AeroFrameTintLayer");
+        Assert.Equal("{TemplateBinding AeroFrameTint}", (string?)titleTint.Attribute("Background"));
+        Assert.Equal(
+            "{TemplateBinding AeroFrameTintIntensity}",
+            (string?)titleTint.Attribute("Opacity"));
+        Assert.Equal("{TemplateBinding AeroFrameTint}", (string?)frameTint.Attribute("BorderBrush"));
+        Assert.Equal(
+            "{TemplateBinding AeroFrameTintIntensity}",
+            (string?)frameTint.Attribute("Opacity"));
 
         XElement innerHighlight = NamedElement(template, "AeroFrameInnerHighlight");
         Assert.Equal(
@@ -190,14 +204,25 @@ public class Office2007WindowFrameTests
 
             Assert.Equal(RibbonWindowFrameAppearance.Default, window.FrameAppearance);
             Assert.Equal(RibbonBackdrop.None, window.ActiveBackdrop);
+            Assert.Null(window.AeroFrameTint);
+            Assert.Equal(0d, window.AeroFrameTintIntensity);
 
             window.FrameAppearance = RibbonWindowFrameAppearance.Office2007Aero;
+            var tint = new SolidColorBrush(Colors.Purple);
+            window.AeroFrameTint = tint;
+            window.AeroFrameTintIntensity = 0.35;
 
             Assert.Equal(RibbonWindowFrameAppearance.Office2007Aero, window.FrameAppearance);
             Assert.Equal(RibbonBackdrop.None, window.ActiveBackdrop);
+            Assert.Same(tint, window.AeroFrameTint);
+            Assert.Equal(0.35, window.AeroFrameTintIntensity);
 
             window.SetActiveBackdrop(RibbonBackdrop.Acrylic);
             Assert.Equal(RibbonBackdrop.Acrylic, window.ActiveBackdrop);
+
+            Assert.Throws<ArgumentException>(() => window.AeroFrameTintIntensity = -0.01);
+            Assert.Throws<ArgumentException>(() => window.AeroFrameTintIntensity = 1.01);
+            Assert.Throws<ArgumentException>(() => window.AeroFrameTintIntensity = double.NaN);
         });
     }
 

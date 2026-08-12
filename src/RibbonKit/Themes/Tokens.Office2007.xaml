@@ -44,7 +44,7 @@
          backdrop; RibbonWindow.FrameAppearance and MicaHelper remain independent host choices. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroFallback" Color="#9BBBE3" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroInactiveFallback" Color="#BCC8D6" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroTint" Color="#2A1A78A5" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroTint" Color="#1A78A5" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroInnerHighlight" Color="#B8FFFFFF" />
     <LinearGradientBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroReflection"
                          StartPoint="0,0"
@@ -443,6 +443,7 @@
     <system:Double x:Key="RibbonKit.Metrics.WindowFrame.CaptionHeight">34</system:Double>
     <system:Double x:Key="RibbonKit.Metrics.WindowFrame.InactiveTitleBarOpacity">0.78</system:Double>
     <Thickness x:Key="RibbonKit.Metrics.WindowFrame.AeroThickness">6,0,6,6</Thickness>
+    <system:Double x:Key="RibbonKit.Metrics.WindowFrame.AeroTintIntensity">0.16</system:Double>
     <Thickness x:Key="RibbonKit.Metrics.WindowFrame.AeroInnerHighlightMargin">0,34,0,0</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.WindowFrame.AeroInnerHighlightThickness">1,0,1,1</Thickness>
     <system:Double x:Key="RibbonKit.Metrics.WindowFrame.AeroReflectionOpacity">0.40</system:Double>

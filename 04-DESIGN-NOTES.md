@@ -4251,33 +4251,40 @@ transparent; the tab strip, ribbon, document surface and status area remain opaq
 strength and use a quieter `#BCC8D6` fallback. Maximizing collapses the side/bottom frame and leaves
 the material title treatment, matching the supplied Word, Task Manager and Paint evidence.
 
-The five base dictionaries now carry **204 identical token keys**. Non-2007 themes publish neutral
+The five base dictionaries now carry **205 identical token keys**. Non-2007 themes publish neutral
 transparent/zero frame values, so the project retains one lookless template. Office 2007 Black
 overrides only its required frame/tint/foreground colours. Caption hover and pressed brushes also
 flow through the existing non-client bridge, so `WM_NCHITTEST` can still return `HTMAXBUTTON` while
 the custom button renders the Aero state.
 
 The Showcase exposes `2007 Aero` separately from `Acrylic`. Its versioned appearance settings moved
-to schema 2 and migrate schema 1 with `FrameAppearance=Default`; this file remains independent of
-ribbon customization Import/Export/Reset. Selecting Office 2007 enables the frame control but does
-not check it and does not enable Acrylic. A saved Aero preference is dormant under other themes and
-returns when Office 2007 is selected.
+to schema 3 and migrate schemas 1–2 with the reference tint defaults; this file remains independent
+of ribbon customization Import/Export/Reset. Selecting Office 2007 enables the frame control but
+does not check it and does not enable Acrylic. A saved Aero preference is dormant under other themes
+and returns when Office 2007 is selected.
 
 At the available real 125% per-monitor-v2 setting, live normal active, normal inactive and maximized
 Acrylic captures pass: material is continuous only through the title/restored frame, the inactive
 state is quieter, and the maximized side/bottom band disappears. The opaque Aero fallback also
 passes at 125%. Direct `WM_NCHITTEST` probes return the expected eight resize codes (`HTLEFT` through
-`HTBOTTOMRIGHT`) and `HTMAXBUTTON` over the maximize button. The full automated gate passes **310
+`HTBOTTOMRIGHT`) and `HTMAXBUTTON` over the maximize button. The full automated gate passes **313
 logic tests plus one visual test covering 62 approved images**. Actual Acrylic remains deliberately
 outside deterministic snapshots. Still required for final approval: live 100/150/175/200%, mixed-DPI
 movement, hands-on resize/restore cycling, caption clicks and a visible Windows 11 Snap Layout flyout.
 
 The first user review found the frame faithful but the composition too dense and identified bright
 vertical seams beside the orb and Close button. The supported DWM Acrylic backdrop has no public
-blur-density control, but RibbonKit's authored tint did: its alpha was reduced from `0x46` to `0x2A`
-(and from `0x3D` to `0x28` in Office 2007 Black). The seams were not DPI rounding; they were the
-deliberate inner-bevel stroke incorrectly continuing through the title. Its left/right strokes now
-begin below the 34-DIP caption so the title and frame remain one uninterrupted material surface.
+blur-density control, but RibbonKit's authored tint does. `RibbonWindow.AeroFrameTint` is a
+host-overridable brush and `AeroFrameTintIntensity` is a validated 0–1 dependency property; the
+Office 2007 token default is 0.16. The Showcase hosts an ordinary WPF Slider presenting that value as
+0–100% and an explicit `Use accent color` checkbox. The latter resolves the current ribbon accent
+into a local frame brush without making theme/accent selection automatically enable or recolor Aero.
+No public `RibbonSlider` control was introduced.
+
+The seams were not DPI rounding; they were the deliberate inner-bevel stroke incorrectly continuing
+through the title. Its left/right strokes now begin below the 34-DIP caption so the title and frame
+remain one uninterrupted material surface. Tint opacity is applied only to the tint layers, so the
+slider does not weaken reflection, grain or the corrected inner highlight.
 
 ## 4. Workflow / Session Conventions
 

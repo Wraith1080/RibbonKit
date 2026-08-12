@@ -62,6 +62,9 @@ public partial class MainWindow : RibbonWindow
     private string? _customAccent;
     private ShowcaseBackdropPreference _preferredBackdrop;
     private RibbonWindowFrameAppearance _preferredFrameAppearance;
+    private bool _useAccentForAeroFrame;
+    private double _aeroFrameTintIntensity =
+        ShowcaseAppearancePreferences.DefaultAeroFrameTintIntensity;
     private bool _restoringAppearance;
 
     internal event EventHandler? ApplicationSurfaceChanged;
@@ -173,6 +176,12 @@ public partial class MainWindow : RibbonWindow
                 preferences.FrameAppearance == RibbonWindowFrameAppearance.Office2007Aero;
             ApplyFrameAppearancePreference();
 
+            _useAccentForAeroFrame = preferences.UseAccentForAeroFrame;
+            UseAccentForAeroFrameToggle.IsChecked = preferences.UseAccentForAeroFrame;
+            _aeroFrameTintIntensity = preferences.AeroFrameTintIntensity;
+            AeroFrameTintIntensitySlider.Value = preferences.AeroFrameTintIntensity;
+            ApplyAeroFrameTintPreference();
+
             ShowcaseBackstage.Design = preferences.BackstageDesign;
             BackstageTranslucentToggle.IsChecked = preferences.BackstageTranslucent;
             ApplicationMenuToggle.IsChecked =
@@ -215,6 +224,8 @@ public partial class MainWindow : RibbonWindow
             DarkMode = ThemeManager.IsDarkMode,
             AccentedTitleBar = ThemeManager.IsAccentedTitleBar,
             FrameAppearance = _preferredFrameAppearance,
+            UseAccentForAeroFrame = _useAccentForAeroFrame,
+            AeroFrameTintIntensity = _aeroFrameTintIntensity,
             BackstageDesign = ShowcaseBackstage.Design,
             BackstageTranslucent = ShowcaseBackstage.Translucent,
             FileSurface = MainRibbon.ApplicationMenu is null
@@ -298,7 +309,7 @@ public partial class MainWindow : RibbonWindow
         DarkModeToggle.IsEnabled = ThemeManager.SupportsDarkMode(theme);
 
         bool is2007 = theme == RibbonTheme.Office2007;
-        Office2007AeroFrameToggle.IsEnabled = is2007;
+        Office2007FrameGroup.IsEnabled = is2007;
         MainRibbon.ApplicationButtonShape = is2007
             ? RibbonApplicationButtonShape.Orb
             : RibbonApplicationButtonShape.Tab;
@@ -308,6 +319,7 @@ public partial class MainWindow : RibbonWindow
         // the ribbon property keeps the two in sync — the Checked handler does the actual swap.
         ApplicationMenuToggle.IsChecked = is2007;
         ApplyFrameAppearancePreference();
+        ApplyAeroFrameTintPreference();
         UpdateBackdropSurfaceTransparency();
         NotifyApplicationSurfaceChanged();
         SaveAppearancePreferences();
@@ -383,6 +395,7 @@ public partial class MainWindow : RibbonWindow
             ThemeManager.SetAccent(Application.Current, color);
         }
 
+        ApplyAeroFrameTintPreference();
         SaveAppearancePreferences();
     }
 
@@ -409,6 +422,7 @@ public partial class MainWindow : RibbonWindow
                     : ShowcaseAppearancePreferencesSerializer.NormalizeAccent(tag) == _customAccent;
             });
         AccentGallery.SelectedItem = matchingItem;
+        ApplyAeroFrameTintPreference();
     }
 
     private void OnAnimationOff(object sender, RoutedEventArgs e) =>
@@ -478,12 +492,62 @@ public partial class MainWindow : RibbonWindow
         SaveAppearancePreferences();
     }
 
+    private void OnToggleAeroFrameAccent(object sender, RoutedEventArgs e)
+    {
+        _useAccentForAeroFrame =
+            (sender as RibbonCheckBox)?.IsChecked == true;
+        ApplyAeroFrameTintPreference();
+        SaveAppearancePreferences();
+    }
+
+    private void OnAeroFrameTintIntensityChanged(
+        object sender,
+        RoutedPropertyChangedEventArgs<double> e)
+    {
+        _aeroFrameTintIntensity = e.NewValue;
+        if (AeroFrameTintIntensityValue is not null)
+        {
+            AeroFrameTintIntensityValue.Text = e.NewValue.ToString("P0", CultureInfo.CurrentCulture);
+        }
+
+        // Value is assigned while InitializeComponent builds the Slider. The named ribbon and
+        // persistence surfaces are not ready until the window has completed initialization.
+        if (!IsInitialized)
+        {
+            return;
+        }
+
+        ApplyAeroFrameTintPreference();
+        SaveAppearancePreferences();
+    }
+
     private void ApplyFrameAppearancePreference()
     {
         FrameAppearance =
             ThemeManager.CurrentTheme == RibbonTheme.Office2007
                 ? _preferredFrameAppearance
                 : RibbonWindowFrameAppearance.Default;
+    }
+
+    private void ApplyAeroFrameTintPreference()
+    {
+        AeroFrameTintIntensity = _aeroFrameTintIntensity;
+
+        if (!_useAccentForAeroFrame)
+        {
+            // Return control to the shared style's DynamicResource so Office 2007 Blue/Black and
+            // future token changes continue to flow without a stale local brush.
+            ClearValue(AeroFrameTintProperty);
+            return;
+        }
+
+        Color accent = Application.Current.TryFindResource("RibbonKit.Brushes.Accent") is
+            SolidColorBrush accentBrush
+                ? accentBrush.Color
+                : Color.FromRgb(0x2B, 0x57, 0x9A);
+        var frameBrush = new SolidColorBrush(Color.FromRgb(accent.R, accent.G, accent.B));
+        frameBrush.Freeze();
+        AeroFrameTint = frameBrush;
     }
 
     // Shared Mica/Acrylic plumbing: both are DWM system backdrops applied the same way, and a

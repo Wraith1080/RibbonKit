@@ -458,7 +458,7 @@ These are recorded failures, not general advice:
   the split rules and is the only thing between a mis-scoped resource and a crash on a machine you
   are not sitting at.
 - **Token parity check** — after changing a base token dictionary, diff its key set against
-  `Tokens.Office2024.xaml`. The five base dictionaries currently carry exactly **204 keys with
+  `Tokens.Office2024.xaml`. The five base dictionaries currently carry exactly **205 keys with
   identical sets** (verified with the Aero prototype). A missing key means a control
   silently renders with whatever the previous theme left behind:
 
@@ -506,7 +506,7 @@ partly because too much changed between looks.
 | ~~S4~~ | ~~Geometry~~ | ✅ Group boxes + `ContentCornerRadius` 0→3 **built and verified 2026-07-27** (§4.5). The original domed-tab idea was rejected in favor of the measured flat 2007 tab strip (§3.38). The §6 window frame was split out as the plan's one remaining deliberate deferral so it can be implemented and maximize-tested independently. | — |
 | ~~S5~~ | ~~Accent + backstage~~ | ✅ **Done.** `Glass()` helper beside `Gel()`, `Office2007` case, hot-state guard widened. `Classic2007` deliberately NOT added — `Classic2010` already is the 2007 look and a near-duplicate enum member before the freeze was not worth it. | — |
 | ~~S6~~ | ~~Wiring + verify~~ | ✅ **Done.** Showcase button + `ApplyTheme` helper, README application-menu row corrected and the 2007 row marked ✅, design notes §3.38, roadmap and features updated. DPI matrix verified clean at 100/125/150/175/200%. | — |
-| S7 | Post-v1 window frame — **IN PROGRESS** | §6.1 corrected 2026-08-12: no app-painted full-window band in the default opaque baseline. §6.2 is implemented separately with independent `FrameAppearance` and Acrylic choices, opaque fallback, active/inactive overlays and maximized frame collapse. Automated tests plus real 125% active/inactive normal, maximized and hit-test probes pass; complete the remaining DPI/mixed-monitor and hands-on gates. | Opaque fallback is deterministic and correct at 100/125/150/175/200%; Aero mode falls back cleanly; resize, maximize/restore, mixed-DPI movement, caption commands and Windows 11 Snap Layouts remain correct. |
+| S7 | Post-v1 window frame — **IN PROGRESS** | §6.1 corrected 2026-08-12: no app-painted full-window band in the default opaque baseline. §6.2 is implemented separately with independent `FrameAppearance` and Acrylic choices, opaque fallback, active/inactive overlays and maximized frame collapse. The frame tint brush/intensity are host-controlled; the Showcase adds opt-in accent coloring and a persisted 0–100% hosted WPF slider. Automated tests plus real 125% active/inactive normal, maximized and hit-test probes pass; complete the remaining DPI/mixed-monitor and hands-on gates. | Opaque fallback is deterministic and correct at 100/125/150/175/200%; Aero mode falls back cleanly; resize, maximize/restore, mixed-DPI movement, caption commands and Windows 11 Snap Layouts remain correct. |
 
 ---
 
@@ -518,7 +518,7 @@ partly because too much changed between looks.
 | The Aero material frame perturbs the measured-margin maximize fix (§2.3) | Reduced; 125% passes | The default root remains flush and the separate Aero frame collapses when maximized. Complete the 100/150/175/200% plus mixed-DPI passes before final approval. |
 | The Aero reference tempts the implementation toward private DWM hooks or `AllowsTransparency` | Mitigated in prototype | The effect is app-local WPF token/overlay visuals plus the existing supported Acrylic path only. No injection, private composition API, desktop capture or CPU blur. |
 | DWM material makes snapshot output machine-dependent | High for Acrylic | Approve the opaque frame and deterministic overlay in snapshots; verify the actual Acrylic composition live with reference screenshots rather than creating unstable pixel baselines. |
-| Frame appearance leaks into ribbon customization persistence | Mitigated in prototype | Schema-2 app appearance preferences own backdrop/frame state and migrate schema 1; customization Import/Export/Reset remains structural. |
+| Frame appearance leaks into ribbon customization persistence | Mitigated in prototype | Schema-3 app appearance preferences own backdrop/frame/tint state and migrate schemas 1–2; customization Import/Export/Reset remains structural. |
 | The contextual band wants a gradient + edge line, but the tokens are solid brushes | Medium | Gradients drop in free at a token key; the `#FDE41B` edge line may need a new key (§4.4). Decide in S4; a new key goes into all five files. |
 | **The group-box template change is the largest single edit in this theme** | **Confirmed, not a risk any more** | Six new keys across five theme files plus the `RibbonGroup` template (§4.5). Do it as its own commit, run `dotnet test` immediately after, and keep the flat themes zeroed. |
 | A new resource breaks the split-dictionary scope rule | Medium | `dotnet test` after every dictionary edit. |
