@@ -93,6 +93,12 @@ public static class MicaHelper
 
         if (!IsSupported)
         {
+            if (backdrop == RibbonBackdrop.None
+                && window is RibbonKit.Controls.RibbonWindow unsupportedWindow)
+            {
+                unsupportedWindow.SetActiveBackdrop(RibbonBackdrop.None);
+            }
+
             return false;
         }
 
@@ -103,7 +109,18 @@ public static class MicaHelper
         }
 
         int value = (int)backdrop;
-        return DwmSetWindowAttribute(hwnd, DwmwaSystemBackdropType, ref value, sizeof(int)) == 0;
+        bool accepted = DwmSetWindowAttribute(
+            hwnd,
+            DwmwaSystemBackdropType,
+            ref value,
+            sizeof(int)) == 0;
+
+        if (accepted && window is RibbonKit.Controls.RibbonWindow ribbonWindow)
+        {
+            ribbonWindow.SetActiveBackdrop(backdrop);
+        }
+
+        return accepted;
     }
 
     /// <summary>

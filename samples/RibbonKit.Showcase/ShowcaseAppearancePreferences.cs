@@ -25,7 +25,7 @@ internal enum ShowcaseBackdropPreference
 /// </summary>
 internal sealed record ShowcaseAppearancePreferences
 {
-    internal const int CurrentSchemaVersion = 1;
+    internal const int CurrentSchemaVersion = 2;
 
     public int SchemaVersion { get; init; } = CurrentSchemaVersion;
 
@@ -37,6 +37,8 @@ internal sealed record ShowcaseAppearancePreferences
     public bool DarkMode { get; init; }
 
     public bool AccentedTitleBar { get; init; }
+
+    public RibbonWindowFrameAppearance FrameAppearance { get; init; }
 
     public RibbonBackstageDesign BackstageDesign { get; init; } = RibbonBackstageDesign.Modern;
 
@@ -92,8 +94,9 @@ internal static class ShowcaseAppearancePreferencesSerializer
         }
 
         if (parsed is null
-            || parsed.SchemaVersion != ShowcaseAppearancePreferences.CurrentSchemaVersion
+            || parsed.SchemaVersion is < 1 or > ShowcaseAppearancePreferences.CurrentSchemaVersion
             || !Enum.IsDefined(parsed.Theme)
+            || !Enum.IsDefined(parsed.FrameAppearance)
             || !Enum.IsDefined(parsed.BackstageDesign)
             || !Enum.IsDefined(parsed.FileSurface)
             || !Enum.IsDefined(parsed.Backdrop))
@@ -107,7 +110,11 @@ internal static class ShowcaseAppearancePreferencesSerializer
             return false;
         }
 
-        preferences = parsed with { Accent = accent };
+        preferences = parsed with
+        {
+            SchemaVersion = ShowcaseAppearancePreferences.CurrentSchemaVersion,
+            Accent = accent,
+        };
         return true;
     }
 

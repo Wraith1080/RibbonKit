@@ -4223,16 +4223,61 @@ The Aero Word reference establishes a different composition: its material runs c
 outer restored edge across the title region down to the opaque tab strip. The Task Manager/Paint
 DWMBlurGlass captures are appearance references only; their supplied setup is Aero, radius 20,
 ColorBalance 8%, BlurBalance 49%, AfterglowBalance 43% and reflection opacity 40%, with accent
-override and custom reflection texture disabled. The optional Aero-inspired implementation has
-**not** started and remains a separate visual stage.
+override and custom reflection texture disabled. Section §3.90 records the separately implemented
+Aero-inspired prototype.
 
 After the correction, `dotnet build RibbonKit.sln --no-restore` is clean and `dotnet test
 RibbonKit.sln --no-build --no-restore` passes **306 logic tests plus one visual test covering 62
 approved images**. All five base token dictionaries have **188 identical keys**. A per-monitor-aware
 real-HWND capture at the available 125% setting confirms that normal title/status surfaces now span
-the complete client width and maximize adds no painted frame band. Still open before the opaque stage
-is closed: a reliable inactive capture, live 100/150/175/200%, mixed-DPI movement, hands-on resize
-drags, visible Snap Layout flyout, caption hover/press/click and restore cycling.
+the complete client width and maximize adds no painted frame band. The remaining cross-DPI and
+hands-on interaction gates are tracked with the Aero prototype in §3.90.
+
+### 3.90 Office 2007 Aero-inspired window-frame prototype — 2026-08-12
+
+The optional stage is now implemented as a separate, host-controlled appearance. The new public
+`RibbonWindow.FrameAppearance` dependency property accepts `Default` or `Office2007Aero`; changing
+it never requests a DWM material. `MicaHelper.TrySetBackdrop` independently reports its last accepted
+material through the read-only `RibbonWindow.ActiveBackdrop` property so the shared template can
+distinguish a real Acrylic composition from its deterministic fallback. No `RibbonBackdrop.Aero`
+value was added.
+
+`Controls.Window.xaml` still keeps `PART_WindowRoot` flush in the default/opaque mode. The explicit
+Aero appearance alone creates a physical-LTR 6-DIP frame on the restored left, right and bottom
+edges, with a blue tint, bright inner edge, restrained diagonal reflection and tiled grain. The same
+overlays continue through the title band. Accepted Acrylic makes only that frame and title fill
+transparent; the tab strip, ribbon, document surface and status area remain opaque. Without Acrylic,
+`#9BBBE3` supplies a coherent opaque Aero fallback. Inactive windows reduce the overlay/title
+strength and use a quieter `#BCC8D6` fallback. Maximizing collapses the side/bottom frame and leaves
+the material title treatment, matching the supplied Word, Task Manager and Paint evidence.
+
+The five base dictionaries now carry **204 identical token keys**. Non-2007 themes publish neutral
+transparent/zero frame values, so the project retains one lookless template. Office 2007 Black
+overrides only its required frame/tint/foreground colours. Caption hover and pressed brushes also
+flow through the existing non-client bridge, so `WM_NCHITTEST` can still return `HTMAXBUTTON` while
+the custom button renders the Aero state.
+
+The Showcase exposes `2007 Aero` separately from `Acrylic`. Its versioned appearance settings moved
+to schema 2 and migrate schema 1 with `FrameAppearance=Default`; this file remains independent of
+ribbon customization Import/Export/Reset. Selecting Office 2007 enables the frame control but does
+not check it and does not enable Acrylic. A saved Aero preference is dormant under other themes and
+returns when Office 2007 is selected.
+
+At the available real 125% per-monitor-v2 setting, live normal active, normal inactive and maximized
+Acrylic captures pass: material is continuous only through the title/restored frame, the inactive
+state is quieter, and the maximized side/bottom band disappears. The opaque Aero fallback also
+passes at 125%. Direct `WM_NCHITTEST` probes return the expected eight resize codes (`HTLEFT` through
+`HTBOTTOMRIGHT`) and `HTMAXBUTTON` over the maximize button. The full automated gate passes **310
+logic tests plus one visual test covering 62 approved images**. Actual Acrylic remains deliberately
+outside deterministic snapshots. Still required for final approval: live 100/150/175/200%, mixed-DPI
+movement, hands-on resize/restore cycling, caption clicks and a visible Windows 11 Snap Layout flyout.
+
+The first user review found the frame faithful but the composition too dense and identified bright
+vertical seams beside the orb and Close button. The supported DWM Acrylic backdrop has no public
+blur-density control, but RibbonKit's authored tint did: its alpha was reduced from `0x46` to `0x2A`
+(and from `0x3D` to `0x28` in Office 2007 Black). The seams were not DPI rounding; they were the
+deliberate inner-bevel stroke incorrectly continuing through the title. Its left/right strokes now
+begin below the 34-DIP caption so the title and frame remain one uninterrupted material surface.
 
 ## 4. Workflow / Session Conventions
 
@@ -4270,8 +4315,8 @@ drags, visible Snap Layout flyout, caption hover/press/click and restore cycling
 > Of the
 > two items
 > deferred out of §3.38, the two-pane 2007 application menu shipped in §3.46. Section §3.89 corrects
-> the opaque no-material baseline on its feature branch and awaits the remaining live approval gates;
-> the optional Aero-inspired prototype has not started.
+> the opaque no-material baseline; §3.90 implements the separate Aero-inspired prototype and records
+> its passing 125% live/automated gate. The remaining multi-DPI and hands-on checks are still open.
 
 **Manual verification complete through §3.61 (Windows 2026-08-08).** The earlier whole-surface
 flyout and No Motion pass (§3.42), complete split-button matrix including the Visual Studio Ribbon
@@ -4445,8 +4490,9 @@ Backlog (rough priority):
    reordering + cross-tab/group moves are now DONE — see §5 "Drag-drop reordering".)
 1b. ~~Finish the `DropdownMenu` animation.~~ **DONE (§3.42)** — all five flyouts plus the context
    menu and its submenus now animate the whole surface.
-2. **Office 2007 leftover** — §3.89 corrects the guaranteed opaque WINDOW baseline on its feature
-   branch; full five-DPI/live approval and the separate optional Aero-inspired prototype remain.
+2. **Office 2007 leftover** — §§3.89–3.90 implement the corrected opaque baseline and separate
+   optional Aero-inspired prototype on their feature branch; finish the remaining four live DPI
+   settings, mixed-DPI movement and hands-on caption/resize/Snap approval.
    The other deferral, the real two-pane APPLICATION MENU, **shipped 2026-07-28 (§3.46)**.
 3. **Full RTL verification + localization resources — DONE (§§3.51–3.61).** The
    §§3.48–3.49 visual-regression matrix is complete, §3.51 adds the first RTL smoke snapshot, and

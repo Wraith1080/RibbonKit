@@ -8,6 +8,20 @@ using RibbonKit.Theming;
 
 namespace RibbonKit.Controls;
 
+/// <summary>The optional frame presentation composed by <see cref="RibbonWindow"/>.</summary>
+public enum RibbonWindowFrameAppearance
+{
+    /// <summary>Use the selected theme's ordinary title and client-edge treatment.</summary>
+    Default,
+
+    /// <summary>
+    /// Use the Office 2007 Aero-inspired restored frame and title treatment. This visual choice
+    /// does not request a system backdrop; hosts may independently apply
+    /// <see cref="RibbonBackdrop.Acrylic"/> through <see cref="MicaHelper"/>.
+    /// </summary>
+    Office2007Aero,
+}
+
 /// <summary>
 /// A window with Office-style chrome: a custom title bar hosting the window title,
 /// optional <see cref="TitleBarContent"/> (quick access buttons live well there),
@@ -34,6 +48,17 @@ public class RibbonWindow : Window
     private const string WindowIconPartName = "PART_WindowIcon";
     private const string MaximizeButtonPartName = "PART_MaximizeButton";
     private const string RestoreButtonPartName = "PART_RestoreButton";
+    private const string AeroCaptionHoverKey =
+        "RibbonKit.Brushes.WindowFrame.AeroCaptionHover";
+    private const string AeroCaptionPressedKey =
+        "RibbonKit.Brushes.WindowFrame.AeroCaptionPressed";
+
+    private static readonly DependencyPropertyKey ActiveBackdropPropertyKey =
+        DependencyProperty.RegisterReadOnly(
+            nameof(ActiveBackdrop),
+            typeof(RibbonBackdrop),
+            typeof(RibbonWindow),
+            new FrameworkPropertyMetadata(RibbonBackdrop.None));
 
     /// <summary>Identifies the <see cref="TitleBarContent"/> dependency property.</summary>
     public static readonly DependencyProperty TitleBarContentProperty =
@@ -50,6 +75,20 @@ public class RibbonWindow : Window
             typeof(bool),
             typeof(RibbonWindow),
             new FrameworkPropertyMetadata(true, OnIsTitleBarContentVisibleChanged));
+
+    /// <summary>Identifies the <see cref="FrameAppearance"/> dependency property.</summary>
+    public static readonly DependencyProperty FrameAppearanceProperty =
+        DependencyProperty.Register(
+            nameof(FrameAppearance),
+            typeof(RibbonWindowFrameAppearance),
+            typeof(RibbonWindow),
+            new FrameworkPropertyMetadata(
+                RibbonWindowFrameAppearance.Default,
+                OnFrameAppearanceChanged));
+
+    /// <summary>Identifies the read-only <see cref="ActiveBackdrop"/> dependency property.</summary>
+    public static readonly DependencyProperty ActiveBackdropProperty =
+        ActiveBackdropPropertyKey.DependencyProperty;
 
     private FrameworkElement? _windowRoot;
     private FrameworkElement? _title;
@@ -117,6 +156,36 @@ public class RibbonWindow : Window
     {
         get => (bool)GetValue(IsTitleBarContentVisibleProperty);
         set => SetValue(IsTitleBarContentVisibleProperty, value);
+    }
+
+    /// <summary>
+    /// Gets or sets the optional frame presentation. Selecting
+    /// <see cref="RibbonWindowFrameAppearance.Office2007Aero"/> changes only RibbonKit-authored
+    /// geometry and overlays; it never enables Acrylic or another DWM material by itself.
+    /// </summary>
+    public RibbonWindowFrameAppearance FrameAppearance
+    {
+        get => (RibbonWindowFrameAppearance)GetValue(FrameAppearanceProperty);
+        set => SetValue(FrameAppearanceProperty, value);
+    }
+
+    /// <summary>
+    /// Gets the system backdrop most recently accepted for this window through
+    /// <see cref="MicaHelper.TrySetBackdrop"/>. This is derived runtime state, not an appearance
+    /// preference to serialize.
+    /// </summary>
+    public RibbonBackdrop ActiveBackdrop => (RibbonBackdrop)GetValue(ActiveBackdropProperty);
+
+    internal void SetActiveBackdrop(RibbonBackdrop backdrop) =>
+        SetValue(ActiveBackdropPropertyKey, backdrop);
+
+    private static void OnFrameAppearanceChanged(
+        DependencyObject dependencyObject,
+        DependencyPropertyChangedEventArgs e)
+    {
+        var window = (RibbonWindow)dependencyObject;
+        window._snapButtonPressed = false;
+        window.SetSnapButtonVisualState(SnapButtonVisualState.Normal);
     }
 
     /// <inheritdoc />
@@ -576,7 +645,7 @@ public class RibbonWindow : Window
         SetSnapButtonBackground(_restoreButton, state);
     }
 
-    private static void SetSnapButtonBackground(Button? button, SnapButtonVisualState state)
+    private void SetSnapButtonBackground(Button? button, SnapButtonVisualState state)
     {
         if (button is null)
         {
@@ -588,13 +657,17 @@ public class RibbonWindow : Window
             case SnapButtonVisualState.Hot:
                 button.SetResourceReference(
                     Control.BackgroundProperty,
-                    ThemeManager.CaptionHoverKey);
+                    FrameAppearance == RibbonWindowFrameAppearance.Office2007Aero
+                        ? AeroCaptionHoverKey
+                        : ThemeManager.CaptionHoverKey);
                 break;
 
             case SnapButtonVisualState.Pressed:
                 button.SetResourceReference(
                     Control.BackgroundProperty,
-                    ThemeManager.CaptionPressedKey);
+                    FrameAppearance == RibbonWindowFrameAppearance.Office2007Aero
+                        ? AeroCaptionPressedKey
+                        : ThemeManager.CaptionPressedKey);
                 break;
 
             default:

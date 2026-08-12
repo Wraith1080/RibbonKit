@@ -1,1 +1,9 @@
 #nullable enable
+RibbonKit.Controls.RibbonWindow.ActiveBackdrop.get -> RibbonKit.Interop.RibbonBackdrop
+RibbonKit.Controls.RibbonWindow.FrameAppearance.get -> RibbonKit.Controls.RibbonWindowFrameAppearance
+RibbonKit.Controls.RibbonWindow.FrameAppearance.set -> void
+RibbonKit.Controls.RibbonWindowFrameAppearance
+RibbonKit.Controls.RibbonWindowFrameAppearance.Default = 0 -> RibbonKit.Controls.RibbonWindowFrameAppearance
+RibbonKit.Controls.RibbonWindowFrameAppearance.Office2007Aero = 1 -> RibbonKit.Controls.RibbonWindowFrameAppearance
+static readonly RibbonKit.Controls.RibbonWindow.ActiveBackdropProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonWindow.FrameAppearanceProperty -> System.Windows.DependencyProperty!

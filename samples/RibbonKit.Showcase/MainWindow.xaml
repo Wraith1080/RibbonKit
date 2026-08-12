@@ -659,6 +659,15 @@
                                      Click="OnApplyOffice2007"
                                      ScreenTipTitle="Office 2007 theme"
                                      ScreenTipText="Apply the Office 2007 Blue theme (hard-crease glass gels, valley gradients on the title bar and ribbon body, flat light-blue tab strip)." />
+                    <rk:RibbonToggleButton x:Name="Office2007AeroFrameToggle"
+                                           Header="2007 Aero"
+                                           SizeDefinition="Large, Medium, Small"
+                                           LargeIcon="{StaticResource Icon.Acrylic}"
+                                           Icon="{StaticResource Icon.Acrylic}"
+                                           Checked="OnToggleOffice2007AeroFrame"
+                                           Unchecked="OnToggleOffice2007AeroFrame"
+                                           ScreenTipTitle="Office 2007 Aero-inspired frame"
+                                           ScreenTipText="Add the Office 2007 restored-frame tint, highlight, reflection and grain. Acrylic remains a separate choice; without it this uses the opaque fallback." />
                 </rk:RibbonGroup>
                 <!-- Accent customization: title-bar accent toggle + swappable accent color -->
                 <rk:RibbonGroup Header="Accent" rk:Ribbon.CommandId="group.view.accent" Icon="{StaticResource Icon.ColorDrop}">
