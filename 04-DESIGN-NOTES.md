@@ -2238,7 +2238,8 @@ the Phase 8 review, but renaming is breaking and it has shipped.
 
 - **The 2007 window frame** (`#3B5A82` over a 5–7px `#9BBBE3` band). Windows 11 has no Aero and draws
   its own border; the frame is also the change most likely to perturb the measured-margin maximize
-  fix (§2.3). Left until it can be done alone and tested properly.
+  fix (§2.3). Left until it can be done alone and tested properly. The later post-v1 decision in
+  §3.88 keeps this opaque frame as the guaranteed baseline and adds an optional Aero-inspired mode.
 - **The real two-pane application menu** — command column, Recent Documents pane, Options/Exit bar.
   That is a NEW CONTROL, not a theme, and it is a genuine feature gap: `README.md` claimed an
   application menu existed when it only had the application button plus the backstage. The README row
@@ -4104,6 +4105,94 @@ current pre-release HEAD. If publication is ever authorized, commit first and re
 script so the final assets point to the exact release commit. Local release preparation is complete;
 public community launch is intentionally deferred.
 
+### 3.85 GitHub v1.0.0 community release — 2026-08-11
+
+The user subsequently authorized and published the GitHub-only community release. Tag `v1.0.0`
+points at merge commit `6d6dd32`; the GitHub Release carries the main package, symbol package,
+release notes/checksums, and GitHub's generated source archives. RibbonKit remains intentionally
+absent from NuGet.org. The release-facing repository documentation now describes v1.0.0 as published
+rather than as a local candidate. Deleting unrelated leftover patch/bug-note files after the tag is
+ordinary repository cleanup and does not require a new binary release.
+
+### 3.86 Post-v1 custom-control projection and future-theme plans — 2026-08-12
+
+`docs/08-CUSTOM-CONTROL-INTEGRATION-PLAN.md` records an opt-in integration contract for arbitrary
+controls hosted in `RibbonGroup`. Ordinary hosting remains requirement-free and `IRibbonSizeAware`
+remains the optional adaptive-layout hook. A control that wants customization/QAT participation must
+instead provide stable identity, display metadata, a small icon and a context-aware factory that
+creates fresh source-bound projections for QAT strip, overflow and custom-group use. The provider
+owns command/state binding and custom event cleanup; RibbonKit owns identity, persistence,
+enabled/merge state, placement, KeyTip/automation context and deterministic disposal. The proposed
+names are deliberately provisional until two distinct control shapes prove the lifecycle.
+
+The same plan makes a small consumer-facing `DynamicResource` token subset the theme contract for
+custom content; it rejects a copied palette snapshot that would go stale on a live theme switch.
+`docs/09-FUTURE-THEMES-PLAN.md` records the complementary theme-intake and whole-surface verification
+gate. Office 2021 is the leading candidate: the deliberately skipped sharp-edged midpoint between
+RibbonKit's Office 2019 and Office 2024 themes. The user-approved reference is the pre-rounded UI with
+Office 2019's compact square group/control geometry, saturated blue integrated title bar, white
+ribbon, centered title-bar search and rectangular search flyout. It is explicitly not the later
+Windows 11-style rounded visual refresh that already resembles Office 2024. The theme must remain
+visibly distinct from both neighboring generations in a side-by-side matrix.
+
+The ordered theme shortlist continues with **RibbonKit Aurora**, a signature dark-indigo theme using
+matte surfaces, translucent state washes, a restrained blue/violet title band and middle-weight
+rounding; **Warm Sand**, a non-white parchment/teal light theme; and **Graphite Copper**, a compact
+charcoal/copper professional dark theme. Evergreen, Aubergine and Polar Slate remain exploratory.
+High contrast stays a system-accessibility mode rather than an aesthetic theme. Exact palette anchors
+and acceptance boundaries live in `docs/09-FUTURE-THEMES-PLAN.md` and remain provisional until
+Showcase comparison.
+
+### 3.87 RibbonKit Writer functional reference-app plan — 2026-08-12
+
+`docs/10-RIBBONKIT-WRITER-PLAN.md` records a separate post-v1 `RibbonKit.Writer` application rather
+than adding more product behaviour to the Showcase. The target is a genuinely usable lightweight
+rich-text editor that exercises document lifetime, selection-sensitive command state, Backstage,
+QAT, contextual tabs, customization, appearance persistence, accessibility and DPI in one coherent
+consumer. The initial format boundary is `.txt`, `.rtf` and a versioned native `.rkw` package; the
+native format owns complete page-settings, image and structured-content fidelity.
+
+Paper size, orientation and margins belong to a document-owned `DocumentPageSettings` model applied
+to `FlowDocument.PageWidth`, `PageHeight` and `PagePadding`. Editing remains a centred continuous
+`RichTextBox` paper surface; a cloned document renders through the paginator for true page preview and
+printing. The plan deliberately rejects fake editable page breaks and does not promise Word's fixed
+layout engine.
+
+Tables are in scope as native FlowDocument structure. Insert uses a small grid picker; a contextual
+Table Tools tab owns row/column insertion and deletion, merge/split, cell sizing, alignment, padding,
+borders and background. Table mutation helpers must preserve a valid document tree and predictable
+caret position, with `.rkw` as the fidelity format and RTF interoperability treated as best effort.
+
+OLE/COM compound objects are explicitly out of scope. Although FlowDocument can host WPF UI elements,
+in-place OLE would add executable-content, COM activation, focus, storage, bitness, print and security
+contracts unrelated to proving RibbonKit. Images and hyperlinks ship first; any later attachment is
+an inert Writer-owned file card, not an activated embedded application.
+
+### 3.88 Office 2007 opaque and Aero-inspired window-frame plan — 2026-08-12
+
+The deferred Office 2007 window frame now has a two-tier contract in
+`docs/07-OFFICE-2007-THEME-PLAN.md` §6. The measured non-Aero treatment remains the guaranteed
+baseline: a `#3B5A82` 1px outline, a 5–7 DIP `#9BBBE3` active frame, the existing opaque title
+gradient and a quieter inactive state. It must work without transparency or a system material.
+
+An optional Aero-inspired mode may layer translucent tint, grain, reflection and active/inactive
+glass treatment over that geometry. Where supported, the existing app-controlled Acrylic backdrop
+may show through only the transparent frame/title regions; body and ribbon surfaces remain opaque,
+including the measured `#BFDBFF` tab strip. Theme selection does not activate the material, and the
+host's frame/backdrop choice remains separate from structural ribbon customization persistence.
+
+The implementation stays inside the application. It must not use `AllowsTransparency`, desktop
+capture/CPU blur, DWM injection, private composition hooks or downloaded symbols. DWMBlurGlass is a
+visual reference only. The user plans to provide injected Task Manager and Paint captures because
+their native DWM-painted frames expose useful tint, reflection, caption and inactive-state evidence;
+the plan requests active/inactive, normal/maximized, detail crops and the injection settings.
+
+Implement and approve the opaque frame first. The Aero enhancement follows as a separate prototype
+and must fall back to the opaque result. Verification covers 100/125/150/175/200% DPI,
+normal/maximized/restore, active/inactive, all resize edges, mixed-DPI monitor movement, caption
+commands and the existing Windows 11 `HTMAXBUTTON` Snap Layout/non-client hover bridge. Actual
+Acrylic composition is a live check rather than a deterministic snapshot baseline.
+
 ## 4. Workflow / Session Conventions
 
 - Cloud workspace: `/home/user/ribbonkit/`. The user's machine:
@@ -4134,9 +4223,10 @@ public community launch is intentionally deferred.
 > dark/black variants in §3.49, and the complete 40-image
 > theme/variant/DPI matrix plus twenty-two focused scenes are covered by 62 approvals; localization,
 > representative bidirectional content, and the live RTL popup/window pass are complete.
-> Phase 8 release engineering and the local GitHub-release candidate are complete through §3.84:
-> API freeze, repository documentation, package polish and the final performance/install pass are
-> closed; public GitHub publication is deferred until explicitly requested. Of the
+> Phase 8 release engineering and the GitHub v1.0.0 community launch are complete through §3.85.
+> Sections §3.86–§3.88 record the provisional custom-control projection and future-theme tracks,
+> the RibbonKit Writer reference-app plan, and the opaque/Aero-inspired Office 2007 frame decision.
+> Of the
 > two items
 > deferred out of §3.38, the two-pane 2007 application menu shipped in §3.46; only the 2007 window
 > frame is still owed.
@@ -4337,8 +4427,8 @@ Backlog (rough priority):
    DONE (§3.76); repository URL and package/Showcase icon DONE (§3.77); Source Link and symbol
    generation DONE (§3.79); portable package output DONE (§3.80); deterministic versioning DONE
    (§3.81); package/clean-consumer gate DONE (§3.82); live performance/install pass DONE (§3.83);
-   local v1.0.0 GitHub-release candidate DONE (§3.84).** Public launch is deferred until explicitly
-   requested; NuGet.org publication is not planned.
+   local v1.0.0 GitHub-release candidate DONE (§3.84); GitHub community launch DONE (§3.85).**
+   NuGet.org publication is not planned.
 7. GitHub repository metadata: **DONE** — the package points to `Wraith1080/RibbonKit`.
 
 Resolved at the API freeze (not v1 scope):
@@ -4357,6 +4447,24 @@ Resolved at the API freeze (not v1 scope):
   Do not freeze a placeholder API; keep this deferred unless a dedicated cross-surface arc is approved.
 
 Possible post-v1 polish:
+
+- **Custom-control integration/projection contract — planned in
+  `docs/08-CUSTOM-CONTROL-INTEGRATION-PLAN.md` (§3.86).** Keep arbitrary group hosting unrestricted;
+  require identity, display/icon metadata and a fresh-view factory only for controls opting into
+  customization/QAT. The provider owns behavioral bindings and event cleanup while RibbonKit owns
+  placement, persistence, enabled/merge state and lifecycle calls. Prototype strip and overflow
+  contexts before freezing the additive public API.
+- **Office 2021 bridge theme — leading candidate in `docs/09-FUTURE-THEMES-PLAN.md` (§3.86).** Model
+  the sharp-edged pre-rounded UI between Office 2019 and 2024 through the shared token/template
+  system; do not substitute the later rounded visual refresh, and do not ship it unless the midpoint
+  is visibly distinct.
+- **Original theme sequence — planned in `docs/09-FUTURE-THEMES-PLAN.md`.** After Office 2021,
+  prototype RibbonKit Aurora, then Warm Sand and Graphite Copper. Keep Evergreen, Aubergine and Polar
+  Slate exploratory until the snapshot/maintenance cost of the earlier additions is understood.
+- **RibbonKit Writer reference application — planned in
+  `docs/10-RIBBONKIT-WRITER-PLAN.md` (§3.87).** Build it as a separate functional consumer with a
+  paper-aware native format, paginated preview/printing and contextual table editing. Keep OLE, DOCX
+  and true editable page layout outside the boundary.
 
 - **Richer QAT projections — decision recorded 2026-08-10, not Phase 8 scope.** The current supported
   discovery/proxy set is `RibbonButton`, `RibbonToggleButton`, `RibbonSplitButton`, and
@@ -4399,7 +4507,7 @@ Possible post-v1 polish:
   honor reduced motion, handle rapid reversals, and stay disabled while a DWM backdrop is active so
   Mica/Acrylic retain their native material retint without a second cross-fade on top.
 
-**Unit tests: 283 green (verified 2026-08-10).** Coverage now includes the STA harness, the borrow
+**Unit tests: 298 green (verified 2026-08-11).** Coverage now includes the STA harness, the borrow
 protocol, overflow strip measure/arrange rules, popup motion and dismissal, proxy mirroring,
 application-menu layering/hover/footer-outline/KeyTips, repeatable message-bar API/template/theme
 contracts, Office 2010 seam/state/consumer contracts, localization/RTL

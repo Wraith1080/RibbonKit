@@ -372,23 +372,73 @@ permanent — because after Phase 8 they are.
 
 ---
 
-## 6. Windows 11 has no Aero — and 2007 assumed it did
+## 6. Windows 11 has no Aero — define a baseline and an optional enhancement
 
-Ten of the eleven references show Aero glass. Windows 11 has no glass title bar, so **the non-Aero
-screenshot is the one that actually specifies what to build.** Two consequences:
+Ten of the eleven original references show Aero glass, while the non-Aero reference exposes the
+colours Office drew when the operating system supplied no glass. The implementation therefore has
+two deliberately separate levels. The first is the guaranteed historical baseline; the second is an
+optional Aero-inspired presentation that may use a supported system backdrop but must never be
+required for a correct Office 2007 window.
 
-1. **The title bar must be an opaque gradient.** Use the §4.1 `TitleBar.Background` valley. Do not
-   attempt to emulate Aero blur — RibbonKit's Mica/Acrylic path (§3.12, §3.30) is a 2024-era
-   feature and pointing it at a 2007 theme would produce a hybrid that matches nothing.
-2. **2007 drew its own window frame.** Non-Aero shows a `#3B5A82` 1px outline over a 5–7px
-   `#9BBBE3` band on all sides. `RibbonWindow` uses `WindowChrome` with themed caption buttons, so this is
-   reachable — but it is the first time a RibbonKit theme has asked for a *thick coloured* window
-   frame. **Check in S4 whether the existing measured-margin maximize fix (§2.3) still lands
-   correctly with a 5px frame**; that fix insets `PART_WindowRoot` by a measured amount and a new
-   border thickness is exactly the sort of thing that perturbs it.
+### 6.1 Guaranteed opaque frame
 
-The tab strip colour `#BFDBFF` is identical in both the Aero and non-Aero shots, which is a useful
-confirmation that the strip is genuinely opaque and not tinted glass.
+- Use the §4.1 `TitleBar.Background` valley for the solid title bar.
+- Draw the measured non-Aero frame: a `#3B5A82` 1px outside outline over a 5–7 DIP `#9BBBE3`
+  active-window band on all sides, with a quieter inactive state. This is the default and the
+  automatic fallback whenever transparency or a supported backdrop is unavailable.
+- Add frame brushes and metrics through the shared token contract, with neutral/transparent values
+  in every other theme. Do not fork the `RibbonWindow` control template for Office 2007.
+- Keep the decoration in the physical left-to-right window-frame layer. Do not make theme padding
+  impersonate the measured maximize inset owned by `RibbonWindow`; hide or collapse the side/bottom
+  decorative bands while maximized and re-measure the real work-area overhang.
+
+`RibbonWindow` already uses `WindowChrome` with themed caption buttons, so the frame is reachable,
+but it is the first RibbonKit theme to ask for a thick coloured window edge. The existing
+measured-margin maximize fix (§2.3) must be rechecked because it adjusts `PART_WindowRoot` and a new
+visual inset is exactly the sort of change that can expose an incorrect assumption.
+
+### 6.2 Optional Aero-inspired frame
+
+The optional treatment layers Office 2007-authored visuals over the same geometry:
+
+- translucent blue tint, bright inner edge, restrained grain and a static or position-derived
+  reflection highlight;
+- active/inactive tint and title/caption contrast based on the supplied references;
+- the existing `RibbonBackdrop.Acrylic` path underneath transparent frame/title regions where the
+  operating system supports it, with the document/body surfaces remaining opaque; and
+- a visually coherent opaque result when Acrylic activation fails, transparency is disabled, or the
+  host chooses not to use a system backdrop.
+
+This remains an **app-owned appearance preference**, separate from ribbon customization Import,
+Export and Reset. Choosing `RibbonTheme.Office2007` must not silently turn on a DWM material. Aero is
+also a composed window appearance, not a new native backdrop kind, so do not add
+`RibbonBackdrop.Aero` merely to name it; first prototype whether a separate frame-appearance setting
+is needed at all.
+
+Do not use `AllowsTransparency=True`, capture and CPU-blur the desktop, inject into DWM, hook private
+composition functions, or depend on downloaded system symbols. `DWMBlurGlass` is a useful visual
+reference for glass tint, reflection, caption glow and inactive-window treatment, but its global
+injection architecture and source are not a RibbonKit dependency or implementation starting point.
+
+The tab strip colour `#BFDBFF` is identical in both the Aero and non-Aero Office references. Keep it
+opaque; the optional material belongs to the frame/title composition rather than bleeding through
+the ribbon.
+
+### 6.3 Reference captures requested
+
+The user can provide Task Manager and Paint screenshots with the DWMBlurGlass effect injected; both
+applications let the reference show a DWM-painted frame without RibbonKit's own chrome obscuring it.
+Treat these as appearance references, not as proof that the injected mechanism is safe to ship.
+Capture, when practical:
+
+1. active and inactive windows at 100% scaling;
+2. the full normal window plus close crops of the top corners/caption buttons and a side/bottom edge;
+3. a maximized window to show which bands disappear or change; and
+4. the DWMBlurGlass blur, tint, opacity and reflection settings used for the captures.
+
+Use the captures to measure border thickness, tint, highlight/reflection placement, grain, caption
+contrast and the inactive-state delta. Do not sample wallpaper-contaminated pixels as opaque token
+colours.
 
 ---
 
@@ -453,6 +503,7 @@ partly because too much changed between looks.
 | ~~S4~~ | ~~Geometry~~ | ✅ Group boxes + `ContentCornerRadius` 0→3 **built and verified 2026-07-27** (§4.5). The original domed-tab idea was rejected in favor of the measured flat 2007 tab strip (§3.38). The §6 window frame was split out as the plan's one remaining deliberate deferral so it can be implemented and maximize-tested independently. | — |
 | ~~S5~~ | ~~Accent + backstage~~ | ✅ **Done.** `Glass()` helper beside `Gel()`, `Office2007` case, hot-state guard widened. `Classic2007` deliberately NOT added — `Classic2010` already is the 2007 look and a near-duplicate enum member before the freeze was not worth it. | — |
 | ~~S6~~ | ~~Wiring + verify~~ | ✅ **Done.** Showcase button + `ApplyTheme` helper, README application-menu row corrected and the 2007 row marked ✅, design notes §3.38, roadmap and features updated. DPI matrix verified clean at 100/125/150/175/200%. | — |
+| S7 | Post-v1 window frame | Build the §6.1 opaque frame first; approve normal/maximized and active/inactive behavior. Then prototype the §6.2 Aero-inspired overlay and optional Acrylic underlay without changing theme selection or customization persistence. | Opaque fallback is deterministic and correct at 100/125/150/175/200%; Aero mode falls back cleanly; resize, maximize/restore, mixed-DPI movement, caption commands and Windows 11 Snap Layouts remain correct. |
 
 ---
 
@@ -462,6 +513,9 @@ partly because too much changed between looks.
 |---|---|---|
 | Orb overhang clipped by the tab scroll host | **High** — 22px of overhang, and this class of failure already happened in §3.27 | Prototype the overhang in S3 before styling. Fallback: `RibbonWindow` title-bar layer. |
 | The 5px window frame perturbs the measured-margin maximize fix (§2.3) | Medium | Re-check maximize at S4 on a multi-monitor, mixed-DPI setup. |
+| The Aero reference tempts the implementation toward private DWM hooks or `AllowsTransparency` | Medium | Keep the effect app-local: WPF token/overlay visuals plus the existing supported Acrylic path only. No injection, private composition API, desktop capture or CPU blur. |
+| DWM material makes snapshot output machine-dependent | High for Acrylic | Approve the opaque frame and deterministic overlay in snapshots; verify the actual Acrylic composition live with reference screenshots rather than creating unstable pixel baselines. |
+| Frame appearance leaks into ribbon customization persistence | Low but user-visible | Keep the host's backdrop/frame preference in its versioned appearance settings; customization Import/Export/Reset remains structural. |
 | The contextual band wants a gradient + edge line, but the tokens are solid brushes | Medium | Gradients drop in free at a token key; the `#FDE41B` edge line may need a new key (§4.4). Decide in S4; a new key goes into all five files. |
 | **The group-box template change is the largest single edit in this theme** | **Confirmed, not a risk any more** | Six new keys across five theme files plus the `RibbonGroup` template (§4.5). Do it as its own commit, run `dotnet test` immediately after, and keep the flat themes zeroed. |
 | A new resource breaks the split-dictionary scope rule | Medium | `dotnet test` after every dictionary edit. |
@@ -477,8 +531,9 @@ widest visual range it will ever face. The remaining v1 blockers and later addit
 
 1. ~~**Phase 7 unit tests**~~ — **completed 2026-08-01**; `RibbonMergeModalTests` covers the
    automated invariants from `06-MERGE-AND-MODAL-PLAN.md` §7.
-2. **The 2007 window frame** — the theme's one remaining deliberate deferral; implement and
-   maximize-test it independently.
+2. **The 2007 window frame** — the theme's one remaining deliberate deferral; implement the opaque
+   baseline and optional Aero-inspired enhancement in S7, then maximize/Snap/mixed-DPI test them
+   independently.
 3. **Dark mode, RTL, localization and visual-regression snapshots** — the rest of Phase 6.
 4. **Phase 8** — API freeze, repository metadata, README screenshots, and release packaging.
 5. **MDI M1–M3 (post-v1)** — cascade/tile/Ctrl+Tab, MVVM demo, tabbed mode + persistence.

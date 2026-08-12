@@ -4,9 +4,9 @@ An open-source, Office Fluent UI–style **Ribbon control library for WPF** on m
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Target](https://img.shields.io/badge/.NET-8.0%20%7C%209.0-512BD4)](https://dotnet.microsoft.com/)
-[![Release](https://img.shields.io/badge/release-v1.0.0%20candidate-yellow)](https://github.com/Wraith1080/RibbonKit/releases)
+[![Release](https://img.shields.io/badge/release-v1.0.0-blue)](https://github.com/Wraith1080/RibbonKit/releases/tag/v1.0.0)
 
-> **Status: local `v1.0.0` release candidate.** The control set is feature-complete for most real applications — ribbon, backstage, galleries, QAT with overflow, contextual tabs, KeyTips, tab merging, modal tabs, a runtime customization dialog with persistence, five Office themes, and a full design-time experience in Visual Studio. The v1 public API and release package are validated. Public distribution is intentionally deferred until a GitHub Release is requested; RibbonKit is not published on NuGet.org. See the [roadmap](docs/03-ROADMAP.md).
+> **Status: `v1.0.0` released on GitHub.** The control set is feature-complete for most real applications — ribbon, backstage, galleries, QAT with overflow, contextual tabs, KeyTips, tab merging, modal tabs, a runtime customization dialog with persistence, five Office themes, and a full design-time experience in Visual Studio. RibbonKit is distributed through GitHub Releases rather than NuGet.org. See the [roadmap](docs/03-ROADMAP.md).
 
 [Getting started](#getting-started) · [Feature status](#feature-status) · [Theming](#theming--rendering) · [Design tools](#developer-experience) · [Documentation](#documentation) · [Roadmap](#roadmap-to-v10)
 
@@ -137,9 +137,15 @@ Still planned: cascade/tile/arrange commands with `Ctrl+Tab` cycling, a switchab
 
 ## Getting started
 
-RibbonKit targets WPF applications on `net8.0-windows` and `net9.0-windows`. Until a public GitHub
-Release is created, clone the repository, build the solution, and reference the runtime project from
-your application:
+RibbonKit targets WPF applications on `net8.0-windows` and `net9.0-windows`. Download
+`RibbonKit.1.0.0.nupkg` from the [v1.0.0 GitHub Release](https://github.com/Wraith1080/RibbonKit/releases/tag/v1.0.0)
+into a local package folder, then add it to an application with:
+
+```powershell
+dotnet add package RibbonKit --version 1.0.0 --source C:\path\to\downloaded-packages
+```
+
+For source development, clone the repository and reference the runtime project directly:
 
 ```xml
 <ItemGroup>
@@ -260,12 +266,8 @@ dotnet pack src/RibbonKit/RibbonKit.csproj -c Release
 The versioned `.nupkg` and `.snupkg` are written to the ignored `artifacts/` directory. The default
 version is `1.0.0`. No command in this repository publishes them to NuGet.org or GitHub.
 
-After a GitHub Release exists, download `RibbonKit.1.0.0.nupkg` into a local folder and install it as
-a local package source:
-
-```powershell
-dotnet add package RibbonKit --version 1.0.0 --source C:\path\to\downloaded-packages
-```
+The published package, symbols and SHA-256 sums are available from the
+[v1.0.0 GitHub Release](https://github.com/Wraith1080/RibbonKit/releases/tag/v1.0.0).
 
 Validate the package layout, metadata, symbols, and an isolated two-target WPF consumer build:
 
@@ -309,19 +311,22 @@ the control.
 | [Design notes](04-DESIGN-NOTES.md) | Living record of every implemented feature, decision and pitfall |
 | [MDI emulation plan](docs/05-MDI-EMULATION-PLAN.md) | Design for the in-window MDI control |
 | [Merge & modal plan](docs/06-MERGE-AND-MODAL-PLAN.md) | Design record for tab merging and modal tabs (Phase 7, complete) |
+| [Custom-control integration](docs/08-CUSTOM-CONTROL-INTEGRATION-PLAN.md) | Provisional post-v1 customization/QAT projection and theme-resource contract |
+| [Future themes](docs/09-FUTURE-THEMES-PLAN.md) | Sharp-edged Office 2021 bridge plus Aurora, Warm Sand, Graphite Copper and exploratory palettes |
+| [RibbonKit Writer](docs/10-RIBBONKIT-WRITER-PLAN.md) | Functional rich-text reference app with paper layout, pagination and contextual table editing |
 
-## Roadmap to v1.0
+## Post-v1 roadmap
 
-Phases 0–7 are complete. Phase 8's API-freeze and repository-documentation gates are also complete:
-the nullability-aware shipped baseline is enforced for both runtime TFMs, and this README is the
-maintained public entry point backed by focused Markdown references and the executable Showcase.
+Phases 0–8 and the v1.0.0 GitHub launch are complete. The nullability-aware shipped baseline is
+enforced for both runtime TFMs, and this README is the maintained public entry point backed by
+focused Markdown references and the executable Showcase.
 
-The local `v1.0.0` candidate is complete. Package layout, metadata, Source Link, symbols, isolated
-consumer compilation, live packaged runtime behavior, Release performance, and the Visual Studio
-designer are verified. Public distribution is deferred until an explicit GitHub Release request;
-NuGet.org publication is not planned. The Office 2007 window frame and MDI milestones M1–M3 remain
-explicitly post-v1. See the [roadmap](docs/03-ROADMAP.md) and [design notes](04-DESIGN-NOTES.md) for
-the detailed status and verification history.
+Version 1.0.0 is published through GitHub Releases. Package layout, metadata, Source Link, symbols,
+isolated consumer compilation, live packaged runtime behavior, Release performance, and the Visual
+Studio designer were verified for launch. The Office 2007 window frame, MDI milestones M1–M3,
+custom-control projections, future theme expansion and the RibbonKit Writer reference application
+remain post-v1 work. See the
+[roadmap](docs/03-ROADMAP.md) and [design notes](04-DESIGN-NOTES.md) for detailed status.
 
 ## Contributing
 

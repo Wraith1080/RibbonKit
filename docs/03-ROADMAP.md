@@ -2,11 +2,16 @@
 
 Each phase ends with the showcase app demonstrating everything built so far, tests green, and a tagged pre-release. Phases are sequential but small overlaps are fine.
 
-> **Progress (2026-08-11):** Phases 0–7 are complete. Phase 6 closed with the user-verified live RTL popup/window pass in [`04-DESIGN-NOTES.md`](../04-DESIGN-NOTES.md) §3.61: all five themes ship with dark/black variants, per-monitor DPI is verified at 100/125/150/175/200%, the deterministic 40-image theme/variant × DPI suite plus twenty-two focused scenes are green, localization/provider coverage is complete, and the Showcase lab verifies split/nested/context menus, normal/maximized screen edges, Backstage, and Office 2024/2007 application-menu/button/orb behavior. Phase 8 release engineering is complete through §3.83; a local `v1.0.0` GitHub-release candidate is being prepared, while public distribution is deferred until explicitly requested. Post-v1 MDI emulation is unusually shaped: M0 and M4 are done, M1–M3 are not.
+> **Progress (2026-08-12):** Phases 0–8 are complete and `v1.0.0` is published as a GitHub Release. Phase 6 closed with the user-verified live RTL popup/window pass in [`04-DESIGN-NOTES.md`](../04-DESIGN-NOTES.md) §3.61: all five themes ship with dark/black variants, per-monitor DPI is verified at 100/125/150/175/200%, and the deterministic 40-image theme/variant × DPI suite plus twenty-two focused scenes are green. Post-v1 MDI emulation is unusually shaped: M0 and M4 are done, M1–M3 are not. Custom-control projection/extensibility and future theme expansion are now recorded as separate post-v1 candidate tracks.
 >
 > Live DPI switching needed a fix outside the library: an app must declare **PerMonitorV2** in its own manifest or Windows bitmap-stretches it until restart. The showcase now does, and the README tells consumers to (§3.42).
 >
-> Deferred out of the 2007 work on purpose: the 2007 window frame (Windows 11 draws its own border, and the frame is the change most likely to perturb the measured-margin maximize fix). The other deferral — the real two-pane 2007 application menu — **shipped on 2026-07-28** as `RibbonApplicationMenu`, a new control rather than a theme (§3.46).
+> Deferred out of the 2007 work on purpose: the 2007 window frame, now planned as a guaranteed opaque
+> historical frame plus an optional app-controlled Aero-inspired enhancement. It remains the change
+> most likely to perturb the measured-margin maximize fix and therefore gets an independent post-v1
+> implementation/verification pass ([Office 2007 plan](07-OFFICE-2007-THEME-PLAN.md) §6/S7). The
+> other deferral — the real two-pane 2007 application menu — **shipped on 2026-07-28** as
+> `RibbonApplicationMenu`, a new control rather than a theme (§3.46).
 
 ## Phase 0 — Foundation (before any control code)
 
@@ -61,13 +66,42 @@ when the local GitHub-release candidate was prepared.
 repeatable preparation script produces the main package, symbols, release notes, and SHA-256 sums
 without containing any upload or publish operation.
 
-Remaining: optional public launch. The chosen distribution path is a downloadable package attached to
-a GitHub Release, not NuGet.org, and publication is deferred until explicitly requested. **Exit
-criteria:** a signed-off `v1.0.0` GitHub Release.
+**Community launch: complete (2026-08-11).** The signed-off `v1.0.0` package, symbols and checksums
+are distributed through the GitHub Release rather than NuGet.org. **Exit criteria met:** published
+`v1.0.0` GitHub Release.
 
 ## Post-v1 candidates
 
-Simplified (single-row) ribbon, touch/pen affordances, additional theme variants (colorful/black for 2013+), Office-style status bar, and a ribbon designer/serializer from XML definitions. Richer QAT projections are also candidates: group-as-dropdown first, gallery-as-icon-dropdown second, and an inline combo-box projection only after its editable/selection/overflow contract is proven. These should create source-linked representations rather than move the original WPF content, and should prove the strip/overflow/popup lifecycle before exposing a public provider interface. Possible visual polish: an optional purpose-authored `MonochromeIcon` for QAT-capable commands on accent-colored title/tab surfaces; this is not a committed API, and no separate dark-icon property is currently planned. Also consider a non-Mica light/dark transition that captures the old opaque window chrome, swaps the palette underneath, then fades the capture away while honoring `RibbonAnimationAction.ThemeSwitch` and reduced motion. Mica should keep its native DWM retint rather than layering a second transition over it.
+Simplified (single-row) ribbon, touch/pen affordances, Office-style status bar, and a ribbon
+designer/serializer from XML definitions remain candidates.
+
+**Custom-control integration and richer projections** are planned as one opt-in extensibility track.
+Arbitrary group content remains unrestricted; controls that want customization/QAT participation
+provide stable identity, display metadata, an icon and a context-aware projection factory with an
+explicit cleanup lifetime. Commands and state are source-bound rather than copied. Group, gallery and
+combo projections remain separate proof cases. Full provisional design:
+[`docs/08-CUSTOM-CONTROL-INTEGRATION-PLAN.md`](08-CUSTOM-CONTROL-INTEGRATION-PLAN.md).
+
+**Additional themes/variants** are a separate candidate track. Office 2021's sharp-edged,
+pre-rounded UI is the leading first addition: Office 2024-era title/search composition while retaining
+Office 2019's compact square geometry, not the later rounded visual refresh. The shared-template/token
+boundary and whole-surface acceptance matrix remain mandatory. The recommended original-theme
+sequence after it is RibbonKit Aurora (dark indigo
+flagship), Warm Sand (non-white light), then Graphite Copper (warm professional dark); Evergreen,
+Aubergine and Polar Slate remain exploratory. Full intake and verification plan:
+[`docs/09-FUTURE-THEMES-PLAN.md`](09-FUTURE-THEMES-PLAN.md).
+
+**RibbonKit Writer** is the planned complex consumer/reference application: a separate functional
+rich-text editor rather than another Showcase page. Its scope includes `.txt`, `.rtf` and a native
+paper-aware format, Backstage/QAT/customization, images and hyperlinks, paginated preview/printing,
+and native FlowDocument tables with contextual Table Tools. OLE embedding, DOCX compatibility and
+editable Word-style page layout are explicit non-goals. Full plan:
+[`docs/10-RIBBONKIT-WRITER-PLAN.md`](10-RIBBONKIT-WRITER-PLAN.md).
+
+Possible visual polish also includes an optional purpose-authored `MonochromeIcon` for QAT-capable
+commands and a non-Mica light/dark transition that captures the old opaque window chrome, swaps the
+palette underneath, then fades the capture away while honoring reduced motion. Mica should retain
+its native DWM retint.
 
 **MDI emulation control** — themed in-window "child windows" (float/resize/cascade/tile/minimize/maximize) plus a switchable tabbed-documents mode, with the maximized child's caption merging into the ribbon. Orchestrates existing subsystems (tab merging, `RibbonState` persistence, token theming, `RibbonWindow` chrome/DPI) rather than adding much new mechanism; can build most of the way without waiting on Phase 7's tab-merging API. Full design in [`docs/05-MDI-EMULATION-PLAN.md`](05-MDI-EMULATION-PLAN.md).
 

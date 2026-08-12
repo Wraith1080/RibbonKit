@@ -1,8 +1,8 @@
 # Contributing to RibbonKit
 
-Thanks for your interest! RibbonKit has a validated local v1.0.0 candidate, while public GitHub
-distribution is intentionally deferred. The public API is frozen, so the most valuable contributions
-are focused fixes, documentation, showcase feedback, and discussion of additive post-v1 features.
+Thanks for your interest! RibbonKit v1.0.0 is published through GitHub Releases. The v1 public API is
+frozen, so the most valuable contributions are focused fixes, documentation, showcase feedback, and
+discussion of additive post-v1 features.
 
 ## Ground rules
 

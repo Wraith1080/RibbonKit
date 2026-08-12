@@ -1,6 +1,6 @@
-# RibbonKit v1.0.0 release candidate
+# RibbonKit v1.0.0
 
-This is the prepared release text for a future GitHub Release. The release has not been published.
+RibbonKit v1.0.0 is published through GitHub Releases.
 
 RibbonKit is an MIT-licensed Office Fluent UI-style Ribbon control library for WPF applications on
 modern .NET. Version 1.0.0 freezes the validated public API and packages the runtime, Visual Studio
@@ -38,5 +38,5 @@ and automated verification. Release metadata uses the neutral attribution **Ribb
 
 ## Distribution
 
-The planned distribution is `RibbonKit.1.0.0.nupkg` attached directly to a GitHub Release, with
+Distribution is `RibbonKit.1.0.0.nupkg` attached directly to the GitHub Release, with
 `RibbonKit.1.0.0.snupkg` and SHA-256 checksums alongside it. No NuGet.org publication is planned.
