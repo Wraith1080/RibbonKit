@@ -1,8 +1,9 @@
 # Office 2007 Theme — Implementation Plan
 
-> **Status: COMPLETE 2026-07-27**, bar one deliberate deferral (§9): the 2007 window frame. The
-> other original deferral, the two-pane application menu, shipped on 2026-07-28. The as-built record is
-> `04-DESIGN-NOTES.md` §3.38 — read that first; this plan stays useful for the measured palette in §4.
+> **Status: S0-S6 COMPLETE; S7 IN PROGRESS.** The guaranteed opaque no-material window baseline was
+> corrected against the restored Word reference on `codex/office-2007-window-frame` on 2026-08-12
+> and awaits its remaining five-DPI/live approval gates. The optional Aero-inspired prototype has not started. The other original deferral,
+> the two-pane application menu, shipped on 2026-07-28. See `04-DESIGN-NOTES.md` §§3.38, 3.88-3.89.
 > Original header follows.
 >
 > **Status:** S0 complete, S1 not started. Written 2026-07-27; revised the same day after the user
@@ -92,13 +93,15 @@ supplied afterwards and the band is now measured — see §4.4. Nothing outstand
 
 The DPI-scaled non-Aero shot is at **125%**. Comparing it against the 96 DPI shot:
 
-- **Every colour is bit-identical** — `#3B5A82` frame, `#E3EBF6`/`#CADEF7` title bar, `#BFDBFF`
+- **Every colour is bit-identical** — `#3B5A82` edge, `#E3EBF6`/`#CADEF7` title bar, `#BFDBFF`
   strip, `#8DB2E3` body border, the `#E7EFF8`/`#DFECF7` body highlight lines. The palette is
   DPI-independent.
 - **Geometry scales linearly.** The orb measures **46px at 125%** against 36–37px at 100% — a ratio
   of 1.26. So the orb is a fixed DIP size and WPF's own scaling handles the rest: no per-DPI orb
   metrics, and no reason to expect trouble in the S6 DPI matrix.
-- The window frame measures ~9px at 125%, so **5–7px at 100%** (refining the §6 estimate).
+- **Correction (2026-08-12):** the earlier ~9px "window frame" measurement sampled the bevel/padding
+  beside the ribbon/document client area. The title and status bar begin immediately inside the
+  one-pixel native edge, so the wider blue stack is not a full-window opaque frame.
 
 ---
 
@@ -127,7 +130,7 @@ All values sampled from the supplied screenshots. Gradients are vertical
 | `Ribbon.ContentBackground` (groups area) | `0.00 #DBE6F4` → `0.17 #C8D9ED` → `1.00 #E3F4FF` |
 | `TitleBar.Background` | `0.00 #E4EBF6` → `0.14 #D5E5FA` → `0.28 #CADEF7` → `1.00 #E4EFFD` |
 | `TitleBar.Foreground` | `#15428B` |
-| Window frame (see §6) | `#3B5A82` 1px outline over a ~5px `#9BBBE3` band |
+| Restored non-Aero edge (see §6) | One native/system edge; no Office-painted full-window band. The `#9BBBE3` strip is client-area padding beside the ribbon/document only. |
 | Client area below the ribbon | `#A3C2EA` |
 
 **The 2007 signature is the "valley".** Both the title bar and the ribbon body run *light → dip →
@@ -380,22 +383,19 @@ two deliberately separate levels. The first is the guaranteed historical baselin
 optional Aero-inspired presentation that may use a supported system backdrop but must never be
 required for a correct Office 2007 window.
 
-### 6.1 Guaranteed opaque frame
+### 6.1 Guaranteed opaque no-material baseline
 
 - Use the §4.1 `TitleBar.Background` valley for the solid title bar.
-- Draw the measured non-Aero frame: a `#3B5A82` 1px outside outline over a 5–7 DIP `#9BBBE3`
-  active-window band on all sides, with a quieter inactive state. This is the default and the
-  automatic fallback whenever transparency or a supported backdrop is unavailable.
-- Add frame brushes and metrics through the shared token contract, with neutral/transparent values
-  in every other theme. Do not fork the `RibbonWindow` control template for Office 2007.
-- Keep the decoration in the physical left-to-right window-frame layer. Do not make theme padding
-  impersonate the measured maximize inset owned by `RibbonWindow`; hide or collapse the side/bottom
-  decorative bands while maximized and re-measure the real work-area overhang.
+- Keep `PART_WindowRoot` flush with the physical-LTR host and let supported native `WindowChrome`/DWM
+  supply its one-pixel edge. Do not paint a duplicate Office outline or a full-window blue band.
+- Preserve the ribbon/document client bevel and padding in their existing templates. Those local
+  surfaces must not inset the title bar or status bar.
+- Use a quieter inactive title treatment. Keep its metric in the shared token contract with a neutral
+  value in every other theme; do not fork the `RibbonWindow` template for Office 2007.
 
 `RibbonWindow` already uses `WindowChrome` with themed caption buttons, so the frame is reachable,
-but it is the first RibbonKit theme to ask for a thick coloured window edge. The existing
-measured-margin maximize fix (§2.3) must be rechecked because it adjusts `PART_WindowRoot` and a new
-visual inset is exactly the sort of change that can expose an incorrect assumption.
+but the opaque reference does not justify a new app-painted outer inset. The existing measured-margin
+maximize fix (§2.3) remains the only geometry around `PART_WindowRoot` and must stay unchanged.
 
 ### 6.2 Optional Aero-inspired frame
 
@@ -454,10 +454,10 @@ These are recorded failures, not general advice:
 - **Run `dotnet test` after touching any theme dictionary.** `ThemeDictionaryScopeTests.cs` enforces
   the split rules and is the only thing between a mis-scoped resource and a crash on a machine you
   are not sitting at.
-- **Token parity check** — after writing `Tokens.Office2007.xaml`, diff its key set against
-  `Tokens.Office2024.xaml`. All four current files carry exactly **95 keys, identical sets**
-  (verified 2026-07-27). A missing key means a control silently renders with whatever the previous
-  theme left behind:
+- **Token parity check** — after changing a base token dictionary, diff its key set against
+  `Tokens.Office2024.xaml`. The five base dictionaries currently carry exactly **188 keys with
+  identical sets** (verified after the 2026-08-12 reference correction). A missing key means a control
+  silently renders with whatever the previous theme left behind:
 
   ```python
   import re, glob
@@ -503,7 +503,7 @@ partly because too much changed between looks.
 | ~~S4~~ | ~~Geometry~~ | ✅ Group boxes + `ContentCornerRadius` 0→3 **built and verified 2026-07-27** (§4.5). The original domed-tab idea was rejected in favor of the measured flat 2007 tab strip (§3.38). The §6 window frame was split out as the plan's one remaining deliberate deferral so it can be implemented and maximize-tested independently. | — |
 | ~~S5~~ | ~~Accent + backstage~~ | ✅ **Done.** `Glass()` helper beside `Gel()`, `Office2007` case, hot-state guard widened. `Classic2007` deliberately NOT added — `Classic2010` already is the 2007 look and a near-duplicate enum member before the freeze was not worth it. | — |
 | ~~S6~~ | ~~Wiring + verify~~ | ✅ **Done.** Showcase button + `ApplyTheme` helper, README application-menu row corrected and the 2007 row marked ✅, design notes §3.38, roadmap and features updated. DPI matrix verified clean at 100/125/150/175/200%. | — |
-| S7 | Post-v1 window frame | Build the §6.1 opaque frame first; approve normal/maximized and active/inactive behavior. Then prototype the §6.2 Aero-inspired overlay and optional Acrylic underlay without changing theme selection or customization persistence. | Opaque fallback is deterministic and correct at 100/125/150/175/200%; Aero mode falls back cleanly; resize, maximize/restore, mixed-DPI movement, caption commands and Windows 11 Snap Layouts remain correct. |
+| S7 | Post-v1 window frame — **IN PROGRESS** | §6.1 corrected 2026-08-12: no app-painted full-window band in the opaque baseline. Build/tests and per-monitor-aware 125% normal/maximized live captures pass; complete inactive and the other DPI/live gates. After approval, prototype §6.2 separately without changing theme selection or customization persistence. | Opaque fallback is deterministic and correct at 100/125/150/175/200%; Aero mode falls back cleanly; resize, maximize/restore, mixed-DPI movement, caption commands and Windows 11 Snap Layouts remain correct. |
 
 ---
 
@@ -512,7 +512,7 @@ partly because too much changed between looks.
 | Risk | Likelihood | Mitigation |
 |---|---|---|
 | Orb overhang clipped by the tab scroll host | **High** — 22px of overhang, and this class of failure already happened in §3.27 | Prototype the overhang in S3 before styling. Fallback: `RibbonWindow` title-bar layer. |
-| The 5px window frame perturbs the measured-margin maximize fix (§2.3) | Medium | Re-check maximize at S4 on a multi-monitor, mixed-DPI setup. |
+| The Aero material frame perturbs the measured-margin maximize fix (§2.3) | Medium | Keep the opaque root flush. Prototype material/overlay geometry separately, collapse it appropriately when maximized, and complete the 100/125/150/175/200% plus mixed-DPI passes before approval. |
 | The Aero reference tempts the implementation toward private DWM hooks or `AllowsTransparency` | Medium | Keep the effect app-local: WPF token/overlay visuals plus the existing supported Acrylic path only. No injection, private composition API, desktop capture or CPU blur. |
 | DWM material makes snapshot output machine-dependent | High for Acrylic | Approve the opaque frame and deterministic overlay in snapshots; verify the actual Acrylic composition live with reference screenshots rather than creating unstable pixel baselines. |
 | Frame appearance leaks into ribbon customization persistence | Low but user-visible | Keep the host's backdrop/frame preference in its versioned appearance settings; customization Import/Export/Reset remains structural. |
@@ -531,8 +531,8 @@ widest visual range it will ever face. The remaining v1 blockers and later addit
 
 1. ~~**Phase 7 unit tests**~~ — **completed 2026-08-01**; `RibbonMergeModalTests` covers the
    automated invariants from `06-MERGE-AND-MODAL-PLAN.md` §7.
-2. **The 2007 window frame** — the theme's one remaining deliberate deferral; implement the opaque
-   baseline and optional Aero-inspired enhancement in S7, then maximize/Snap/mixed-DPI test them
+2. **The 2007 window frame** — the theme's one remaining deliberate deferral; verify the corrected
+   opaque baseline and implement the optional Aero-inspired enhancement in S7, then maximize/Snap/mixed-DPI test them
    independently.
 3. **Dark mode, RTL, localization and visual-regression snapshots** — the rest of Phase 6.
 4. **Phase 8** — API freeze, repository metadata, README screenshots, and release packaging.

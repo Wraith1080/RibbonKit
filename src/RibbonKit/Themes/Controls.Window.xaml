@@ -23,7 +23,7 @@
                      window breaks WindowChrome's maximize/work-area handling (the window
                      then overhangs the screen when maximized). Default glass + the
                      WM_GETMINMAXINFO hook in RibbonWindow keep maximize correct. -->
-                <WindowChrome CaptionHeight="34"
+                <WindowChrome CaptionHeight="{DynamicResource RibbonKit.Metrics.WindowFrame.CaptionHeight}"
                               GlassFrameThickness="-1"
                               ResizeBorderThickness="{x:Static SystemParameters.WindowResizeBorderThickness}"
                               CornerRadius="0"
@@ -38,7 +38,13 @@
                          edges, losing the top/right inset. Logical content is mirrored one layer
                          farther in so caption buttons, title content and the ribbon still follow
                          the window's FlowDirection. -->
-                    <Grid x:Name="PhysicalWindowFrameHost" FlowDirection="LeftToRight">
+                    <Grid x:Name="PhysicalWindowFrameHost"
+                          FlowDirection="LeftToRight"
+                          SnapsToDevicePixels="True">
+                    <!-- Keep PART_WindowRoot flush with the physical host. The restored non-Aero
+                         Word reference carries no app-painted band around the complete window:
+                         its title and status bars run directly to the native one-pixel edge. The
+                         wider blue beside the ribbon/document is client-area padding, not chrome. -->
                     <Border x:Name="PART_WindowRoot"
                             Background="{TemplateBinding Background}"
                             FlowDirection="LeftToRight">
@@ -56,7 +62,8 @@
 
                             <!-- Title bar (its own band token, separate from the tab strip:
                                  Office 2019/2013 use a colored title bar over a light strip) -->
-                            <Grid Grid.Row="0"
+                            <Grid x:Name="TitleBarBand"
+                                  Grid.Row="0"
                                   Background="{DynamicResource RibbonKit.Brushes.TitleBar.Background}">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto" />
@@ -211,6 +218,11 @@
                                  glyph from Maximize to Restore. -->
                             <Setter TargetName="PART_MaximizeButton" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="PART_RestoreButton" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsActive" Value="False">
+                            <Setter TargetName="TitleBarBand"
+                                    Property="Opacity"
+                                    Value="{DynamicResource RibbonKit.Metrics.WindowFrame.InactiveTitleBarOpacity}" />
                         </Trigger>
                         <Trigger Property="IsTitleBarContentVisible" Value="False">
                             <Setter TargetName="TitleBarContentHost" Property="Visibility" Value="Collapsed" />

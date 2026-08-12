@@ -199,6 +199,8 @@
                       Opacity="0.5" Color="#2E4257" RenderingBias="Quality" />
     <!-- Left inset of the title-bar QAT; reproduces the previous hard-coded 2,0,6,0. -->
     <Thickness x:Key="RibbonKit.Metrics.TitleBarQatMargin">2,0,6,0</Thickness>
+    <system:Double x:Key="RibbonKit.Metrics.WindowFrame.CaptionHeight">34</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.WindowFrame.InactiveTitleBarOpacity">1</system:Double>
     <system:Double x:Key="RibbonKit.Metrics.ApplicationOrbSize">46</system:Double>
     <Thickness x:Key="RibbonKit.Metrics.ApplicationOrbMargin">2,0,6,0</Thickness>
 

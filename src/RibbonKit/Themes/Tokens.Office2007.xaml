@@ -397,6 +397,8 @@
     <!-- Left inset of the title-bar QAT. Office 2007 reserves room so the QAT clears the orb,
          which overhangs up into the caption. -->
     <Thickness x:Key="RibbonKit.Metrics.TitleBarQatMargin">56,0,6,0</Thickness>
+    <system:Double x:Key="RibbonKit.Metrics.WindowFrame.CaptionHeight">34</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.WindowFrame.InactiveTitleBarOpacity">0.78</system:Double>
     <system:Double x:Key="RibbonKit.Metrics.ApplicationOrbSize">46</system:Double>
     <Thickness x:Key="RibbonKit.Metrics.ApplicationOrbMargin">6,-18,6,0</Thickness>
 
