@@ -4309,6 +4309,18 @@ disc use a shared `0.88` opacity token, allowing a restrained amount of rail col
 fading text, icons or the back arrow. All five base themes define the new metric, retaining a single
 shared template and an identical token contract.
 
+The next live pass exposed three composition details. The translucent rail had used
+`Backstage.Classic.NavBackground` while the title used the host-overridable `AeroFrameTint`, and the
+rail overlays stayed at active strength after the title became inactive. The rail now binds the same
+window tint/intensity and uses the title's inactive-opacity token. The relative diagonal reflection
+and tiled grain are suppressed on both sides while Backstage owns the surface: mapping the same brush
+independently into a 34-DIP title and a full-height rail visibly restarted it at the join. DWM material
+plus the common tint therefore remain continuous when inactive Acrylic falls back. Conversely, an
+opaque `Glass2007` rail under `Office2007Aero` deliberately restores the local `1,1,0,1` white bevel
+to separate its historical gradient from the page. The title-bottom highlight is now a final,
+non-hit-test overlay above the caption buttons; hover/pressed caption fills cannot interrupt or
+overlap that one-pixel seam, while Backstage still collapses it with the larger frame bevel.
+
 The Showcase adds a `2007 Glass` selector and persists it through the app-owned appearance document,
 separate from ribbon customization. The frame tint slider now has a compact Reset action that assigns
 the shared `DefaultAeroFrameTintIntensity` constant (`0.16`), so UI reset, schema migration and the

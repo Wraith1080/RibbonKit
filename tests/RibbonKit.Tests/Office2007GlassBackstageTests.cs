@@ -51,20 +51,16 @@ public class Office2007GlassBackstageTests
                 && HasCondition(trigger, "Translucent", "True"));
         AssertSetter(translucent, "NavColumn", "Background", "Transparent");
         AssertSetter(translucent, "Glass2007RailTint", "Visibility", "Visible");
-        AssertSetter(translucent, "Glass2007RailReflection", "Visibility", "Visible");
-        AssertSetter(translucent, "Glass2007RailGrain", "Visibility", "Visible");
 
         XElement tint = NamedElement(document, "Glass2007RailTint");
         Assert.Equal(
-            "{DynamicResource RibbonKit.Brushes.Backstage.Classic.NavBackground}",
+            "{Binding AeroFrameTint, RelativeSource={RelativeSource AncestorType={x:Type controls:RibbonWindow}}}",
             (string?)tint.Attribute("Background"));
         Assert.Contains("AeroFrameTintIntensity", (string?)tint.Attribute("Opacity"));
-        Assert.Equal(
-            "{DynamicResource RibbonKit.Brushes.WindowFrame.AeroReflection}",
-            (string?)NamedElement(document, "Glass2007RailReflection").Attribute("Background"));
-        Assert.Equal(
-            "{DynamicResource RibbonKit.Brushes.WindowFrame.AeroGrain}",
-            (string?)NamedElement(document, "Glass2007RailGrain").Attribute("Background"));
+        Assert.DoesNotContain(
+            document.Descendants(),
+            element => (string?)element.Attribute(Xaml + "Name") is
+                "Glass2007RailReflection" or "Glass2007RailGrain");
         XElement backButtonGlass = Assert.Single(
             document.Descendants(Presentation + "Trigger"),
             trigger => (string?)trigger.Attribute("Property") == "controls:Backstage.Design"
@@ -97,9 +93,26 @@ public class Office2007GlassBackstageTests
                     == "RibbonKit.Metrics.Backstage.GlassChromeOpacity");
             Assert.Equal("0.88", opacity.Value);
         }
-        Assert.DoesNotContain(
-            document.Descendants(),
-            element => (string?)element.Attribute(Xaml + "Name") == "Glass2007RailHighlight");
+        XElement inactiveMaterial = Assert.Single(
+            template.Descendants(Presentation + "MultiDataTrigger"),
+            trigger => HasBindingCondition(trigger, "Backstage.Design", "Glass2007")
+                && HasBindingCondition(trigger, "Translucent", "True")
+                && HasBindingCondition(trigger, "IsActive", "False"));
+        AssertSetter(
+            inactiveMaterial,
+            "Glass2007RailMaterial",
+            "Opacity",
+            "{DynamicResource RibbonKit.Metrics.WindowFrame.InactiveTitleBarOpacity}");
+
+        XElement opaqueAero = Assert.Single(
+            template.Descendants(Presentation + "MultiDataTrigger"),
+            trigger => HasBindingCondition(trigger, "Backstage.Design", "Glass2007")
+                && HasBindingCondition(trigger, "Translucent", "False")
+                && HasBindingCondition(trigger, "FrameAppearance", "Office2007Aero"));
+        AssertSetter(opaqueAero, "Glass2007OpaqueRailHighlight", "Visibility", "Visible");
+        Assert.Equal(
+            "1,1,0,1",
+            (string?)NamedElement(document, "Glass2007OpaqueRailHighlight").Attribute("BorderThickness"));
         Assert.DoesNotContain(
             design.Elements(Presentation + "Setter"),
             setter => (string?)setter.Attribute("TargetName") == "ContentArea"
@@ -194,6 +207,14 @@ public class Office2007GlassBackstageTests
         trigger
             .Descendants(Presentation + "Condition")
             .Any(condition => (string?)condition.Attribute("Property") == property
+                && (string?)condition.Attribute("Value") == value);
+
+    private static bool HasBindingCondition(XElement trigger, string bindingFragment, string value) =>
+        trigger
+            .Descendants(Presentation + "Condition")
+            .Any(condition => ((string?)condition.Attribute("Binding"))?.Contains(
+                    bindingFragment,
+                    StringComparison.Ordinal) == true
                 && (string?)condition.Attribute("Value") == value);
 
     private static void AssertSetter(

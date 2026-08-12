@@ -94,13 +94,12 @@
                                     <Border x:Name="AeroTitleTintLayer"
                                             Background="{TemplateBinding AeroFrameTint}"
                                             Opacity="{TemplateBinding AeroFrameTintIntensity}" />
-                                    <Border Background="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroReflection}"
+                                    <Border x:Name="AeroTitleReflectionLayer"
+                                            Background="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroReflection}"
                                             Opacity="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroReflectionOpacity}" />
-                                    <Border Background="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroGrain}"
+                                    <Border x:Name="AeroTitleGrainLayer"
+                                            Background="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroGrain}"
                                             Opacity="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroGrainOpacity}" />
-                                    <Border x:Name="AeroTitleBottomHighlight"
-                                            BorderBrush="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroInnerHighlight}"
-                                            BorderThickness="0,0,0,1" />
                                 </Grid>
 
                                 <!-- Window identity plus quick-access slot. The icon remains in
@@ -256,6 +255,17 @@
                                             Command="{x:Static SystemCommands.CloseWindowCommand}"
                                             ToolTip="{localization:RibbonString Key=Close}" />
                                 </StackPanel>
+
+                                <!-- Draw the title bevel after all caption content so hover/pressed
+                                     button backgrounds cannot interrupt it or leave their lower edge
+                                     overlapping the glass seam. It never participates in hit testing. -->
+                                <Border x:Name="AeroTitleBottomHighlight"
+                                        Grid.ColumnSpan="3"
+                                        Panel.ZIndex="10"
+                                        BorderBrush="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroInnerHighlight}"
+                                        BorderThickness="0,0,0,1"
+                                        IsHitTestVisible="False"
+                                        Visibility="Collapsed" />
                             </Grid>
 
                             <!-- Window content. The AdornerDecorator is REQUIRED: without
@@ -302,6 +312,7 @@
                                     Value="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroThickness}" />
                             <Setter TargetName="AeroFrameOverlay" Property="Visibility" Value="Visible" />
                             <Setter TargetName="AeroTitleVisual" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="AeroTitleBottomHighlight" Property="Visibility" Value="Visible" />
                             <!-- An unavailable Acrylic backdrop changes only the material source.
                                  Keep the title and restored frame on one opaque Aero surface rather
                                  than revealing the ordinary Office 2007 title gradient. -->
@@ -374,6 +385,8 @@
                                  the large three-sided outline around that surface. -->
                             <Setter TargetName="AeroFrameInnerHighlight" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="AeroTitleBottomHighlight" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="AeroTitleReflectionLayer" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="AeroTitleGrainLayer" Property="Visibility" Value="Collapsed" />
                         </Trigger>
                         <Trigger Property="Icon" Value="{x:Null}">
                             <Setter TargetName="PART_WindowIcon" Property="Visibility" Value="Collapsed" />

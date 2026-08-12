@@ -130,6 +130,10 @@ public class Office2007WindowFrameTests
         Assert.Equal(
             "{DynamicResource RibbonKit.Metrics.WindowFrame.AeroInnerHighlightMargin}",
             (string?)innerHighlight.Attribute("Margin"));
+        XElement titleHighlight = NamedElement(template, "AeroTitleBottomHighlight");
+        Assert.Equal("TitleBarBand", (string?)titleHighlight.Parent!.Attribute(Xaml + "Name"));
+        Assert.Equal("10", (string?)titleHighlight.Attribute("Panel.ZIndex"));
+        Assert.Equal("Collapsed", (string?)titleHighlight.Attribute("Visibility"));
 
         Assert.DoesNotContain(
             template.Descendants(),
@@ -163,6 +167,8 @@ public class Office2007WindowFrameTests
         AssertSetter(backstage, "TitleBarContentHost", "Visibility", "Collapsed");
         AssertSetter(backstage, "AeroFrameInnerHighlight", "Visibility", "Collapsed");
         AssertSetter(backstage, "AeroTitleBottomHighlight", "Visibility", "Collapsed");
+        AssertSetter(backstage, "AeroTitleReflectionLayer", "Visibility", "Collapsed");
+        AssertSetter(backstage, "AeroTitleGrainLayer", "Visibility", "Collapsed");
     }
 
     [Fact]
@@ -182,6 +188,7 @@ public class Office2007WindowFrameTests
             "{DynamicResource RibbonKit.Metrics.WindowFrame.AeroThickness}");
         AssertSetter(aero, "AeroFrameOverlay", "Visibility", "Visible");
         AssertSetter(aero, "AeroTitleVisual", "Visibility", "Visible");
+        AssertSetter(aero, "AeroTitleBottomHighlight", "Visibility", "Visible");
         AssertSetter(
             aero,
             "TitleBarBackgroundLayer",

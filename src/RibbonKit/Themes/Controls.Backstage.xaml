@@ -46,23 +46,25 @@
                         <Border x:Name="NavColumn" Grid.Column="0"
                                 Background="{DynamicResource RibbonKit.Brushes.Backstage.Classic.NavBackground}">
                             <Grid>
-                                <!-- Glass2007 composes the same restrained reflection and grain
-                                     used by the optional 2007 window frame. The rail deliberately
-                                     has no authored perimeter so it joins the frame without a
-                                     second inset outline. The layers stay collapsed elsewhere. -->
-                                <Border x:Name="Glass2007RailTint"
-                                        Background="{DynamicResource RibbonKit.Brushes.Backstage.Classic.NavBackground}"
-                                        Opacity="{Binding AeroFrameTintIntensity, RelativeSource={RelativeSource AncestorType={x:Type controls:RibbonWindow}}, FallbackValue=0.16}"
-                                        IsHitTestVisible="False"
-                                        Visibility="Collapsed" />
-                                <Border x:Name="Glass2007RailReflection"
-                                        Background="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroReflection}"
-                                        Opacity="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroReflectionOpacity}"
-                                        IsHitTestVisible="False"
-                                        Visibility="Collapsed" />
-                                <Border x:Name="Glass2007RailGrain"
-                                        Background="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroGrain}"
-                                        Opacity="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroGrainOpacity}"
+                                <!-- Glass2007 composes the exact title/frame tint so its translucent
+                                     rail is one continuous material with the caption. Reflection and
+                                     grain are deliberately omitted while Backstage owns the surface:
+                                     a relative gradient remaps independently in the 34-DIP title and
+                                     full-height rail, creating a visible restart at their join. -->
+                                <Grid x:Name="Glass2007RailMaterial"
+                                      IsHitTestVisible="False">
+                                    <Border x:Name="Glass2007RailTint"
+                                            Background="{Binding AeroFrameTint, RelativeSource={RelativeSource AncestorType={x:Type controls:RibbonWindow}}}"
+                                            Opacity="{Binding AeroFrameTintIntensity, RelativeSource={RelativeSource AncestorType={x:Type controls:RibbonWindow}}, FallbackValue=0.16}"
+                                            Visibility="Collapsed" />
+                                </Grid>
+                                <!-- In opaque mode this local bevel separates the historical
+                                     gradient rail from the page. Translucent mode leaves it hidden
+                                     so the title and rail remain a continuous glass surface. -->
+                                <Border x:Name="Glass2007OpaqueRailHighlight"
+                                        Margin="1"
+                                        BorderBrush="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroInnerHighlight}"
+                                        BorderThickness="1,1,0,1"
                                         IsHitTestVisible="False"
                                         Visibility="Collapsed" />
                                 <DockPanel LastChildFill="True">
@@ -245,9 +247,31 @@
                             </MultiTrigger.Conditions>
                             <Setter TargetName="NavColumn" Property="Background" Value="Transparent" />
                             <Setter TargetName="Glass2007RailTint" Property="Visibility" Value="Visible" />
-                            <Setter TargetName="Glass2007RailReflection" Property="Visibility" Value="Visible" />
-                            <Setter TargetName="Glass2007RailGrain" Property="Visibility" Value="Visible" />
                         </MultiTrigger>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding Path=(controls:Backstage.Design), RelativeSource={RelativeSource TemplatedParent}}"
+                                           Value="Glass2007" />
+                                <Condition Binding="{Binding Translucent, RelativeSource={RelativeSource TemplatedParent}}"
+                                           Value="True" />
+                                <Condition Binding="{Binding IsActive, RelativeSource={RelativeSource AncestorType={x:Type controls:RibbonWindow}}}"
+                                           Value="False" />
+                            </MultiDataTrigger.Conditions>
+                            <Setter TargetName="Glass2007RailMaterial"
+                                    Property="Opacity"
+                                    Value="{DynamicResource RibbonKit.Metrics.WindowFrame.InactiveTitleBarOpacity}" />
+                        </MultiDataTrigger>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding Path=(controls:Backstage.Design), RelativeSource={RelativeSource TemplatedParent}}"
+                                           Value="Glass2007" />
+                                <Condition Binding="{Binding Translucent, RelativeSource={RelativeSource TemplatedParent}}"
+                                           Value="False" />
+                                <Condition Binding="{Binding FrameAppearance, RelativeSource={RelativeSource AncestorType={x:Type controls:RibbonWindow}}}"
+                                           Value="Office2007Aero" />
+                            </MultiDataTrigger.Conditions>
+                            <Setter TargetName="Glass2007OpaqueRailHighlight" Property="Visibility" Value="Visible" />
+                        </MultiDataTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>

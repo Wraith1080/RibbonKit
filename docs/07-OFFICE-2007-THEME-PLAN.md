@@ -462,6 +462,15 @@ while Backstage hides the title content. Hover/selected tile outlines remain cri
 are 88% opaque so a small amount of rail color passes through. Stop for a live shell review before
 redesigning template/recent-document page content.
 
+The translucent rail must bind `RibbonWindow.AeroFrameTint` and its intensity, then attenuate it
+with the title's inactive opacity. Using the separate classic-nav brush makes the material split
+visibly when DWM suspends Acrylic for an inactive window. Relative reflection/grain brushes also
+restart when separately mapped to the short title and tall rail, so both are suppressed while
+Backstage owns the otherwise continuous DWM-material-plus-tint surface. Opaque
+`Glass2007` under `Office2007Aero` is intentionally different: it restores the local three-sided
+white bevel around the gradient rail. The title-bottom highlight renders as the final non-hit-test
+title overlay, above all caption-button backgrounds, and collapses with the frame bevel in Backstage.
+
 ---
 
 ## 7. Working rules that apply to every step
@@ -526,7 +535,7 @@ partly because too much changed between looks.
 | ~~S5~~ | ~~Accent + backstage~~ | ✅ **Done.** `Glass()` helper beside `Gel()`, `Office2007` case, hot-state guard widened. `Classic2007` was deliberately not added before v1 because it duplicated `Classic2010`; the later post-v1 `Glass2007` work in S8 is a materially different translucent/opaque RibbonKit-original design. | — |
 | ~~S6~~ | ~~Wiring + verify~~ | ✅ **Done.** Showcase button + `ApplyTheme` helper, README application-menu row corrected and the 2007 row marked ✅, design notes §3.38, roadmap and features updated. DPI matrix verified clean at 100/125/150/175/200%. | — |
 | S7 | Post-v1 window frame — **IN PROGRESS** | §6.1 corrected 2026-08-12: no app-painted full-window band in the default opaque baseline. §6.2 is implemented separately with independent `FrameAppearance` and Acrylic choices, opaque fallback, active/inactive overlays and maximized frame collapse. The frame tint brush/intensity are host-controlled; the Showcase adds opt-in accent coloring and a persisted 0–100% hosted WPF slider. Automated tests plus real 125% active/inactive normal, maximized and hit-test probes pass; complete the remaining DPI/mixed-monitor and hands-on gates. | Opaque fallback is deterministic and correct at 100/125/150/175/200%; Aero mode falls back cleanly; resize, maximize/restore, mixed-DPI movement, caption commands and Windows 11 Snap Layouts remain correct. |
-| S8 | Post-v1 Glass2007 Backstage — **SHELL PROTOTYPE** | Additive `Glass2007` design, shared-template opaque/translucent rail without a frame-sized inner outline, crisp tile state borders over subtly translucent orb/state fills, gold hover, hard-crease selection, opaque content sheet, Showcase selector and appearance persistence. | Automated template/API/persistence contracts pass; approve the shell live before redesigning page content. |
+| S8 | Post-v1 Glass2007 Backstage — **SHELL PROTOTYPE** | Additive `Glass2007` design, shared-template translucent rail continuous with active/inactive Aero title material, conditional opaque-rail bevel, crisp tile state borders over subtly translucent orb/state fills, gold hover, hard-crease selection, opaque content sheet, Showcase selector and appearance persistence. | Automated template/API/persistence contracts pass; approve the shell live before redesigning page content. |
 
 ---
 
