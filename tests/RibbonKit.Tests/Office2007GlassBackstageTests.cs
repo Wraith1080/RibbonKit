@@ -72,6 +72,17 @@ public class Office2007GlassBackstageTests
             "GlassFill",
             "Opacity",
             "{DynamicResource RibbonKit.Metrics.Backstage.GlassChromeOpacity}");
+        AssertSetter(
+            backButtonGlass,
+            "GlassFill",
+            "Fill",
+            "{DynamicResource RibbonKit.Brushes.Backstage.ItemSelectedGlass}");
+        AssertSetter(
+            backButtonGlass,
+            "GlassFill",
+            "Stroke",
+            "{DynamicResource RibbonKit.Brushes.Backstage.ItemSelectedBorder}");
+        AssertSetter(backButtonGlass, "Arrow", "Stroke", "#FFFFFF");
         foreach (string themeName in new[]
                  {
                      "Office2007",
@@ -131,6 +142,16 @@ public class Office2007GlassBackstageTests
                     setter => (string?)setter.Attribute("TargetName") == "Chrome"));
         AssertSetter(baseTrigger, "Chrome", "CornerRadius", "2");
         AssertSetter(baseTrigger, "Chrome", "Margin", "6,1");
+        AssertSetter(
+            baseTrigger,
+            "NavText",
+            "TextElement.Foreground",
+            "{DynamicResource RibbonKit.Brushes.WindowFrame.AeroTitleForeground}");
+        AssertSetter(
+            baseTrigger,
+            "NavIcon",
+            "Fill",
+            "{DynamicResource RibbonKit.Brushes.WindowFrame.AeroTitleForeground}");
 
         XElement hover = Assert.Single(
             document.Descendants(Presentation + "MultiTrigger"),

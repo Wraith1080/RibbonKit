@@ -452,8 +452,8 @@ not a historical-emulation claim: the two-pane orb application menu remains the 
 Theme selection does not select this design, enable translucency or request Acrylic.
 
 The first stage reuses the shared Backstage template and existing generation-aware tokens. Opaque
-mode paints the 2007 rail gradient; translucent mode exposes Acrylic only through the rail beneath
-authored tint, reflection and grain layers. The page sheet stays opaque. Navigation uses inset
+mode paints the 2007 rail gradient; translucent mode exposes Acrylic only through the rail
+beneath the same tint used by the Aero title and outer frame. The page sheet stays opaque. Navigation uses inset
 two-DIP tiles, gold hover, hard-crease glass selection and an orb-derived back button. Live review
 removed the authored rail/content strokes and the remaining top highlight because they read as
 nested borders and produced a stray selected-row line. The larger three-sided outline shown in the
@@ -462,14 +462,20 @@ while Backstage hides the title content. Hover/selected tile outlines remain cri
 are 88% opaque so a small amount of rail color passes through. Stop for a live shell review before
 redesigning template/recent-document page content.
 
-The translucent rail must bind `RibbonWindow.AeroFrameTint` and its intensity, then attenuate it
-with the title's inactive opacity. Using the separate classic-nav brush makes the material split
-visibly when DWM suspends Acrylic for an inactive window. Relative reflection/grain brushes also
-restart when separately mapped to the short title and tall rail, so both are suppressed while
-Backstage owns the otherwise continuous DWM-material-plus-tint surface. Opaque
-`Glass2007` under `Office2007Aero` is intentionally different: it restores the local three-sided
-white bevel around the gradient rail. The title-bottom highlight renders as the final non-hit-test
-title overlay, above all caption-button backgrounds, and collapses with the frame bevel in Backstage.
+The translucent rail must bind `RibbonWindow.AeroFrameTint` and its intensity. In inactive Backstage,
+the title and rail retain `InactiveTitleBarOpacity`, while the outer frame uses the dedicated
+`AeroInactiveBackstageFrameOpacity`. Its Office 2007 value is `1`: DWM supplies different suspended-
+Acrylic fallback colors to the outermost frame and transparent client rail, and full frame tint
+compensates them to the same sampled boundary color at 125%. Outside Backstage, inactive Aero keeps
+the shared title/frame fallback base opaque, quiets title content separately, and applies
+`AeroInactiveOverlayOpacity` to both authored tint layers. Using the separate
+classic-nav brush or attenuating only one surface creates the same split. Relative
+reflection/grain brushes also restart when separately mapped to the short
+title fill and full-height frame border. They therefore appear only for an active normal window with
+accepted Acrylic, and are suppressed for Backstage, inactive and opaque-fallback compositions.
+Explicit opaque mode under `Office2007Aero` restores the local three-sided white bevel around its
+gradient rail. The title-bottom highlight renders as the final non-hit-test title overlay, above
+all caption-button backgrounds, and collapses with the frame bevel in Backstage.
 
 ---
 
@@ -486,7 +492,7 @@ These are recorded failures, not general advice:
   the split rules and is the only thing between a mis-scoped resource and a crash on a machine you
   are not sitting at.
 - **Token parity check** — after changing a base token dictionary, diff its key set against
-  `Tokens.Office2024.xaml`. The five base dictionaries currently carry exactly **206 keys with
+  `Tokens.Office2024.xaml`. The five base dictionaries currently carry exactly **207 keys with
   identical sets** (verified with the Aero prototype). A missing key means a control
   silently renders with whatever the previous theme left behind:
 
@@ -535,7 +541,7 @@ partly because too much changed between looks.
 | ~~S5~~ | ~~Accent + backstage~~ | ✅ **Done.** `Glass()` helper beside `Gel()`, `Office2007` case, hot-state guard widened. `Classic2007` was deliberately not added before v1 because it duplicated `Classic2010`; the later post-v1 `Glass2007` work in S8 is a materially different translucent/opaque RibbonKit-original design. | — |
 | ~~S6~~ | ~~Wiring + verify~~ | ✅ **Done.** Showcase button + `ApplyTheme` helper, README application-menu row corrected and the 2007 row marked ✅, design notes §3.38, roadmap and features updated. DPI matrix verified clean at 100/125/150/175/200%. | — |
 | S7 | Post-v1 window frame — **IN PROGRESS** | §6.1 corrected 2026-08-12: no app-painted full-window band in the default opaque baseline. §6.2 is implemented separately with independent `FrameAppearance` and Acrylic choices, opaque fallback, active/inactive overlays and maximized frame collapse. The frame tint brush/intensity are host-controlled; the Showcase adds opt-in accent coloring and a persisted 0–100% hosted WPF slider. Automated tests plus real 125% active/inactive normal, maximized and hit-test probes pass; complete the remaining DPI/mixed-monitor and hands-on gates. | Opaque fallback is deterministic and correct at 100/125/150/175/200%; Aero mode falls back cleanly; resize, maximize/restore, mixed-DPI movement, caption commands and Windows 11 Snap Layouts remain correct. |
-| S8 | Post-v1 Glass2007 Backstage — **SHELL PROTOTYPE** | Additive `Glass2007` design, shared-template translucent rail continuous with active/inactive Aero title material, conditional opaque-rail bevel, crisp tile state borders over subtly translucent orb/state fills, gold hover, hard-crease selection, opaque content sheet, Showcase selector and appearance persistence. | Automated template/API/persistence contracts pass; approve the shell live before redesigning page content. |
+| S8 | Post-v1 Glass2007 Backstage — **SHELL PROTOTYPE** | Additive `Glass2007` design, shared-template translucent rail continuous with active/inactive Aero title material, conditional opaque-rail bevel, crisp tile state borders over subtly translucent orb/state fills, gold hover, hard-crease selection, dark-palette back-disc and navigation contrast, opaque content sheet, Showcase selector and appearance persistence. | Automated template/API/persistence contracts pass; approve the shell live before redesigning page content. |
 
 ---
 

@@ -96,10 +96,12 @@
                                             Opacity="{TemplateBinding AeroFrameTintIntensity}" />
                                     <Border x:Name="AeroTitleReflectionLayer"
                                             Background="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroReflection}"
-                                            Opacity="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroReflectionOpacity}" />
+                                            Opacity="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroReflectionOpacity}"
+                                            Visibility="Collapsed" />
                                     <Border x:Name="AeroTitleGrainLayer"
                                             Background="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroGrain}"
-                                            Opacity="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroGrainOpacity}" />
+                                            Opacity="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroGrainOpacity}"
+                                            Visibility="Collapsed" />
                                 </Grid>
 
                                 <!-- Window identity plus quick-access slot. The icon remains in
@@ -297,12 +299,16 @@
                                     BorderBrush="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroInnerHighlight}"
                                     BorderThickness="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroInnerHighlightThickness}" />
                         </Border>
-                        <Border BorderBrush="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroReflection}"
+                        <Border x:Name="AeroFrameReflectionLayer"
+                                BorderBrush="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroReflection}"
                                 BorderThickness="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroThickness}"
-                                Opacity="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroReflectionOpacity}" />
-                        <Border BorderBrush="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroGrain}"
+                                Opacity="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroReflectionOpacity}"
+                                Visibility="Collapsed" />
+                        <Border x:Name="AeroFrameGrainLayer"
+                                BorderBrush="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroGrain}"
                                 BorderThickness="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroThickness}"
-                                Opacity="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroGrainOpacity}" />
+                                Opacity="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroGrainOpacity}"
+                                Visibility="Collapsed" />
                     </Grid>
                     </Grid>
                     <ControlTemplate.Triggers>
@@ -354,6 +360,47 @@
                             <Setter TargetName="TitleBarBackgroundLayer"
                                     Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroInactiveFallback}" />
+                            <Setter TargetName="AeroTitleReflectionLayer" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="AeroTitleGrainLayer" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="AeroFrameReflectionLayer" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="AeroFrameGrainLayer" Property="Visibility" Value="Collapsed" />
+                            <!-- Preserve the quieter inactive-window identity without changing
+                                 the shared glass base beneath it. -->
+                            <Setter TargetName="PART_WindowIcon"
+                                    Property="Opacity"
+                                    Value="{DynamicResource RibbonKit.Metrics.WindowFrame.InactiveTitleBarOpacity}" />
+                            <Setter TargetName="TitleBarContentHost"
+                                    Property="Opacity"
+                                    Value="{DynamicResource RibbonKit.Metrics.WindowFrame.InactiveTitleBarOpacity}" />
+                            <Setter TargetName="PART_Title"
+                                    Property="Opacity"
+                                    Value="{DynamicResource RibbonKit.Metrics.WindowFrame.InactiveTitleBarOpacity}" />
+                            <Setter TargetName="PART_MinimizeButton"
+                                    Property="Opacity"
+                                    Value="{DynamicResource RibbonKit.Metrics.WindowFrame.InactiveTitleBarOpacity}" />
+                            <Setter TargetName="PART_MaximizeButton"
+                                    Property="Opacity"
+                                    Value="{DynamicResource RibbonKit.Metrics.WindowFrame.InactiveTitleBarOpacity}" />
+                            <Setter TargetName="PART_RestoreButton"
+                                    Property="Opacity"
+                                    Value="{DynamicResource RibbonKit.Metrics.WindowFrame.InactiveTitleBarOpacity}" />
+                            <Setter TargetName="PART_CloseButton"
+                                    Property="Opacity"
+                                    Value="{DynamicResource RibbonKit.Metrics.WindowFrame.InactiveTitleBarOpacity}" />
+                        </MultiTrigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="FrameAppearance" Value="Office2007Aero" />
+                                <Condition Property="IsActive" Value="False" />
+                                <Condition Property="IsTitleBarContentVisible" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <!-- A normal inactive Aero window uses the same opaque base and tint
+                                 composition in its title and restored frame. Quiet the content
+                                 separately instead of fading that shared base. -->
+                            <Setter TargetName="TitleBarBand" Property="Opacity" Value="1" />
+                            <Setter TargetName="AeroTitleVisual"
+                                    Property="Opacity"
+                                    Value="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroInactiveOverlayOpacity}" />
                         </MultiTrigger>
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
@@ -364,6 +411,21 @@
                             <Setter TargetName="TitleBarBackgroundLayer"
                                     Property="Opacity"
                                     Value="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroMaterialTitleBackgroundOpacity}" />
+                        </MultiTrigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="FrameAppearance" Value="Office2007Aero" />
+                                <Condition Property="ActiveBackdrop" Value="Acrylic" />
+                                <Condition Property="IsActive" Value="True" />
+                                <Condition Property="IsTitleBarContentVisible" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <!-- Relative reflection/grain brushes are material-only decoration.
+                                 Show them only for the uninterrupted active title/frame surface;
+                                 all opaque, inactive and Backstage compositions use base+tint. -->
+                            <Setter TargetName="AeroTitleReflectionLayer" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="AeroTitleGrainLayer" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="AeroFrameReflectionLayer" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="AeroFrameGrainLayer" Property="Visibility" Value="Visible" />
                         </MultiTrigger>
                         <Trigger Property="WindowState" Value="Maximized">
                             <!-- The maximize overhang (a WindowChrome window is placed to
@@ -387,7 +449,23 @@
                             <Setter TargetName="AeroTitleBottomHighlight" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="AeroTitleReflectionLayer" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="AeroTitleGrainLayer" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="AeroFrameReflectionLayer" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="AeroFrameGrainLayer" Property="Visibility" Value="Collapsed" />
                         </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="FrameAppearance" Value="Office2007Aero" />
+                                <Condition Property="IsActive" Value="False" />
+                                <Condition Property="IsTitleBarContentVisible" Value="False" />
+                            </MultiTrigger.Conditions>
+                            <!-- Backstage intentionally keeps the already-approved 78% inactive
+                                 title/rail material. DWM gives the outer frame a different inactive
+                                 fallback, so apply the tokenized frame compensation that removes
+                                 the remaining left/bottom strength step. -->
+                            <Setter TargetName="AeroFrameOverlay"
+                                    Property="Opacity"
+                                    Value="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroInactiveBackstageFrameOpacity}" />
+                        </MultiTrigger>
                         <Trigger Property="Icon" Value="{x:Null}">
                             <Setter TargetName="PART_WindowIcon" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="TitleBarContentHost" Property="Margin" Value="10,0,6,0" />

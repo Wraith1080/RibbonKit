@@ -226,6 +226,7 @@
     <system:Double x:Key="RibbonKit.Metrics.WindowFrame.AeroReflectionOpacity">0</system:Double>
     <system:Double x:Key="RibbonKit.Metrics.WindowFrame.AeroGrainOpacity">0</system:Double>
     <system:Double x:Key="RibbonKit.Metrics.WindowFrame.AeroInactiveOverlayOpacity">1</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.WindowFrame.AeroInactiveBackstageFrameOpacity">1</system:Double>
     <system:Double x:Key="RibbonKit.Metrics.WindowFrame.AeroMaterialTitleBackgroundOpacity">1</system:Double>
     <system:Double x:Key="RibbonKit.Metrics.ApplicationOrbSize">46</system:Double>
     <Thickness x:Key="RibbonKit.Metrics.ApplicationOrbMargin">2,0,6,0</Thickness>

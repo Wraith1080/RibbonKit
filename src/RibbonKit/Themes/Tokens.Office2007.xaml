@@ -450,6 +450,7 @@
     <system:Double x:Key="RibbonKit.Metrics.WindowFrame.AeroReflectionOpacity">0.40</system:Double>
     <system:Double x:Key="RibbonKit.Metrics.WindowFrame.AeroGrainOpacity">0.10</system:Double>
     <system:Double x:Key="RibbonKit.Metrics.WindowFrame.AeroInactiveOverlayOpacity">0.58</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.WindowFrame.AeroInactiveBackstageFrameOpacity">1</system:Double>
     <system:Double x:Key="RibbonKit.Metrics.WindowFrame.AeroMaterialTitleBackgroundOpacity">0</system:Double>
     <system:Double x:Key="RibbonKit.Metrics.ApplicationOrbSize">46</system:Double>
     <Thickness x:Key="RibbonKit.Metrics.ApplicationOrbMargin">6,-18,6,0</Thickness>

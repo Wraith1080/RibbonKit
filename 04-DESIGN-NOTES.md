@@ -4252,7 +4252,7 @@ the ordinary Office 2007 title gradient; the inactive title/frame pair similarly
 `#BCC8D6` fallback. Maximizing collapses the side/bottom frame and leaves the material title
 treatment, matching the supplied Word, Task Manager and Paint evidence.
 
-The five base dictionaries now carry **206 identical token keys**. Non-2007 themes publish neutral
+The five base dictionaries now carry **207 identical token keys**. Non-2007 themes publish neutral
 transparent/zero frame values, so the project retains one lookless template. Office 2007 Black
 overrides only its required frame/tint/foreground colours. Caption hover and pressed brushes also
 flow through the existing non-client bridge, so `WM_NCHITTEST` can still return `HTMAXBUTTON` while
@@ -4296,9 +4296,9 @@ to RibbonKit's two-pane orb application menu. The additive public
 the Office 2007 theme nor this design enables Acrylic automatically.
 
 The first visual stage stays in the one shared `Controls.Backstage.xaml` template. Its opaque mode
-uses the generation-aware `Backstage.NavBackground`; translucent mode clears that rail and layers a
-low-strength theme/accent tint plus the existing Office 2007 frame reflection and grain over the
-supported app-controlled Acrylic path. The content sheet remains opaque and keeps only the
+uses the generation-aware `Backstage.NavBackground`; translucent mode clears that rail and applies
+the same low-strength theme/accent tint as the title and outer frame over the app-controlled Acrylic
+path. The content sheet remains opaque and keeps only the
 established historical shadow. Live review removed the authored rail perimeter, content-edge stroke
 and residual top specular line. A follow-up screenshot clarified that the remaining large
 frame-sized outline was the window frame's `AeroFrameInnerHighlight` plus the title surface's bottom
@@ -4312,14 +4312,30 @@ shared template and an identical token contract.
 The next live pass exposed three composition details. The translucent rail had used
 `Backstage.Classic.NavBackground` while the title used the host-overridable `AeroFrameTint`, and the
 rail overlays stayed at active strength after the title became inactive. The rail now binds the same
-window tint/intensity and uses the title's inactive-opacity token. The relative diagonal reflection
-and tiled grain are suppressed on both sides while Backstage owns the surface: mapping the same brush
-independently into a 34-DIP title and a full-height rail visibly restarted it at the join. DWM material
-plus the common tint therefore remain continuous when inactive Acrylic falls back. Conversely, an
-opaque `Glass2007` rail under `Office2007Aero` deliberately restores the local `1,1,0,1` white bevel
-to separate its historical gradient from the page. The title-bottom highlight is now a final,
+window tint/intensity and keeps the title's established inactive opacity. While inactive Backstage
+owns the window, `AeroInactiveBackstageFrameOpacity=1` compensates for DWM using a different inactive
+fallback in the outermost frame pixels than in the transparent client rail. At 125%, the resulting
+left frame, bottom frame and rail boundary all sample `#B6BFCA`; using the normal frame attenuation
+left a lighter strip. The already-approved top join keeps its existing title/rail composition. The
+relative diagonal reflection and tiled grain are
+material-only decoration: they appear only for an active, normal title/frame with accepted Acrylic
+and are suppressed while Backstage owns the surface, while the window is inactive, or while the
+opaque fallback is in use. Mapping those brushes independently into a 34-DIP fill and a full-height
+border had visibly restarted them at shared edges. Outside Backstage, inactive Aero instead keeps its
+shared fallback base fully opaque and quiets title content separately; title and restored frame then
+use the normal `AeroInactiveOverlayOpacity` over that common base. Consequently the inactive Backstage
+material stays continuous when Windows suspends Acrylic, while the normal no-material title/frame pair
+shares the same inactive fallback composition. Explicitly
+opaque `Glass2007` under `Office2007Aero` retains its historical rail and local `1,1,0,1` white bevel.
+The title-bottom highlight is now a final,
 non-hit-test overlay above the caption buttons; hover/pressed caption fills cannot interrupt or
 overlap that one-pixel seam, while Backstage still collapses it with the larger frame bevel.
+Dark Office 2007 review also found that the Glass2007 back disc and unselected navigation labels
+retained their light-palette colors against the neutral translucent rail. The disc now consumes the
+same `ItemSelectedGlass`/`ItemSelectedBorder` pair as a selected tile, its arrow remains explicitly
+white, and unselected labels/icons consume the Aero title foreground. That foreground is dark in the
+light palette and white in the dark overlay, preserving contrast without forking the template or
+changing the page-content foreground.
 
 The Showcase adds a `2007 Glass` selector and persists it through the app-owned appearance document,
 separate from ribbon customization. The frame tint slider now has a compact Reset action that assigns

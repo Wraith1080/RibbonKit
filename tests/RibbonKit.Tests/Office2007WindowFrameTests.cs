@@ -54,6 +54,7 @@ public class Office2007WindowFrameTests
         Assert.Equal("0.40", Value(theme, "RibbonKit.Metrics.WindowFrame.AeroReflectionOpacity"));
         Assert.Equal("0.10", Value(theme, "RibbonKit.Metrics.WindowFrame.AeroGrainOpacity"));
         Assert.Equal("0.58", Value(theme, "RibbonKit.Metrics.WindowFrame.AeroInactiveOverlayOpacity"));
+        Assert.Equal("1", Value(theme, "RibbonKit.Metrics.WindowFrame.AeroInactiveBackstageFrameOpacity"));
         Assert.Equal("0", Value(theme, "RibbonKit.Metrics.WindowFrame.AeroMaterialTitleBackgroundOpacity"));
         AssertRemovedGlobalFrameKeysAreAbsent(theme);
     }
@@ -89,6 +90,7 @@ public class Office2007WindowFrameTests
         Assert.Equal("0", Value(theme, "RibbonKit.Metrics.WindowFrame.AeroReflectionOpacity"));
         Assert.Equal("0", Value(theme, "RibbonKit.Metrics.WindowFrame.AeroGrainOpacity"));
         Assert.Equal("1", Value(theme, "RibbonKit.Metrics.WindowFrame.AeroInactiveOverlayOpacity"));
+        Assert.Equal("1", Value(theme, "RibbonKit.Metrics.WindowFrame.AeroInactiveBackstageFrameOpacity"));
         Assert.Equal("1", Value(theme, "RibbonKit.Metrics.WindowFrame.AeroMaterialTitleBackgroundOpacity"));
         AssertRemovedGlobalFrameKeysAreAbsent(theme);
     }
@@ -134,6 +136,16 @@ public class Office2007WindowFrameTests
         Assert.Equal("TitleBarBand", (string?)titleHighlight.Parent!.Attribute(Xaml + "Name"));
         Assert.Equal("10", (string?)titleHighlight.Attribute("Panel.ZIndex"));
         Assert.Equal("Collapsed", (string?)titleHighlight.Attribute("Visibility"));
+        foreach (string layerName in new[]
+                 {
+                     "AeroTitleReflectionLayer",
+                     "AeroTitleGrainLayer",
+                     "AeroFrameReflectionLayer",
+                     "AeroFrameGrainLayer",
+                 })
+        {
+            Assert.Equal("Collapsed", (string?)NamedElement(template, layerName).Attribute("Visibility"));
+        }
 
         Assert.DoesNotContain(
             template.Descendants(),
@@ -169,6 +181,20 @@ public class Office2007WindowFrameTests
         AssertSetter(backstage, "AeroTitleBottomHighlight", "Visibility", "Collapsed");
         AssertSetter(backstage, "AeroTitleReflectionLayer", "Visibility", "Collapsed");
         AssertSetter(backstage, "AeroTitleGrainLayer", "Visibility", "Collapsed");
+        AssertSetter(backstage, "AeroFrameReflectionLayer", "Visibility", "Collapsed");
+        AssertSetter(backstage, "AeroFrameGrainLayer", "Visibility", "Collapsed");
+
+        XElement inactiveBackstage = Assert.Single(
+            controlTemplate.Descendants(),
+            element => element.Name.LocalName == "MultiTrigger"
+                && HasCondition(element, "FrameAppearance", "Office2007Aero")
+                && HasCondition(element, "IsActive", "False")
+                && HasCondition(element, "IsTitleBarContentVisible", "False"));
+        AssertSetter(
+            inactiveBackstage,
+            "AeroFrameOverlay",
+            "Opacity",
+            "{DynamicResource RibbonKit.Metrics.WindowFrame.AeroInactiveBackstageFrameOpacity}");
     }
 
     [Fact]
@@ -203,12 +229,54 @@ public class Office2007WindowFrameTests
                     && (string?)condition.Attribute("Value") == "Office2007Aero")
                 && element.Descendants().Any(condition => condition.Name.LocalName == "Condition"
                     && (string?)condition.Attribute("Property") == "IsActive"
-                    && (string?)condition.Attribute("Value") == "False"));
+                    && (string?)condition.Attribute("Value") == "False")
+                && !HasCondition(element, "IsTitleBarContentVisible", "True")
+                && !HasCondition(element, "IsTitleBarContentVisible", "False"));
         AssertSetter(
             inactiveAero,
             "TitleBarBackgroundLayer",
             "Background",
             "{DynamicResource RibbonKit.Brushes.WindowFrame.AeroInactiveFallback}");
+        foreach (string layerName in new[]
+                 {
+                     "AeroTitleReflectionLayer",
+                     "AeroTitleGrainLayer",
+                     "AeroFrameReflectionLayer",
+                     "AeroFrameGrainLayer",
+                 })
+        {
+            AssertSetter(inactiveAero, layerName, "Visibility", "Collapsed");
+        }
+        foreach (string contentName in new[]
+                 {
+                     "PART_WindowIcon",
+                     "TitleBarContentHost",
+                     "PART_Title",
+                     "PART_MinimizeButton",
+                     "PART_MaximizeButton",
+                     "PART_RestoreButton",
+                     "PART_CloseButton",
+                 })
+        {
+            AssertSetter(
+                inactiveAero,
+                contentName,
+                "Opacity",
+                "{DynamicResource RibbonKit.Metrics.WindowFrame.InactiveTitleBarOpacity}");
+        }
+
+        XElement inactiveNormalAero = Assert.Single(
+            controlTemplate.Descendants(),
+            element => element.Name.LocalName == "MultiTrigger"
+                && HasCondition(element, "FrameAppearance", "Office2007Aero")
+                && HasCondition(element, "IsActive", "False")
+                && HasCondition(element, "IsTitleBarContentVisible", "True"));
+        AssertSetter(inactiveNormalAero, "TitleBarBand", "Opacity", "1");
+        AssertSetter(
+            inactiveNormalAero,
+            "AeroTitleVisual",
+            "Opacity",
+            "{DynamicResource RibbonKit.Metrics.WindowFrame.AeroInactiveOverlayOpacity}");
 
         XElement material = Assert.Single(
             controlTemplate.Descendants(),
@@ -218,13 +286,41 @@ public class Office2007WindowFrameTests
                     && (string?)condition.Attribute("Value") == "Office2007Aero")
                 && element.Descendants().Any(condition => condition.Name.LocalName == "Condition"
                     && (string?)condition.Attribute("Property") == "ActiveBackdrop"
-                    && (string?)condition.Attribute("Value") == "Acrylic"));
+                    && (string?)condition.Attribute("Value") == "Acrylic")
+                && element.Elements().Any(setter => setter.Name.LocalName == "Setter"
+                    && (string?)setter.Attribute("TargetName") == "AeroFrameHost"));
         AssertSetter(material, "AeroFrameHost", "BorderBrush", "Transparent");
         AssertSetter(
             material,
             "TitleBarBackgroundLayer",
             "Opacity",
             "{DynamicResource RibbonKit.Metrics.WindowFrame.AeroMaterialTitleBackgroundOpacity}");
+
+        XElement activeMaterialDecoration = Assert.Single(
+            controlTemplate.Descendants(),
+            element => element.Name.LocalName == "MultiTrigger"
+                && element.Descendants().Any(condition => condition.Name.LocalName == "Condition"
+                    && (string?)condition.Attribute("Property") == "FrameAppearance"
+                    && (string?)condition.Attribute("Value") == "Office2007Aero")
+                && element.Descendants().Any(condition => condition.Name.LocalName == "Condition"
+                    && (string?)condition.Attribute("Property") == "ActiveBackdrop"
+                    && (string?)condition.Attribute("Value") == "Acrylic")
+                && element.Descendants().Any(condition => condition.Name.LocalName == "Condition"
+                    && (string?)condition.Attribute("Property") == "IsActive"
+                    && (string?)condition.Attribute("Value") == "True")
+                && element.Descendants().Any(condition => condition.Name.LocalName == "Condition"
+                    && (string?)condition.Attribute("Property") == "IsTitleBarContentVisible"
+                    && (string?)condition.Attribute("Value") == "True"));
+        foreach (string layerName in new[]
+                 {
+                     "AeroTitleReflectionLayer",
+                     "AeroTitleGrainLayer",
+                     "AeroFrameReflectionLayer",
+                     "AeroFrameGrainLayer",
+                 })
+        {
+            AssertSetter(activeMaterialDecoration, layerName, "Visibility", "Visible");
+        }
     }
 
     [Fact]
@@ -274,6 +370,13 @@ public class Office2007WindowFrameTests
             element => element.Name.LocalName == "Trigger"
                 && (string?)element.Attribute("Property") == property
                 && (string?)element.Attribute("Value") == value);
+
+    private static bool HasCondition(XElement trigger, string property, string value) =>
+        trigger
+            .Descendants()
+            .Any(condition => condition.Name.LocalName == "Condition"
+                && (string?)condition.Attribute("Property") == property
+                && (string?)condition.Attribute("Value") == value);
 
     private static void AssertSetter(
         XElement trigger,
