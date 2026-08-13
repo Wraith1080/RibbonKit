@@ -63,6 +63,7 @@ public static class ThemeManager
     private const string AppButtonPressedKey = "RibbonKit.Brushes.ApplicationButton.PressedBackground";
     private const string AppButtonBorderKey = "RibbonKit.Brushes.ApplicationButton.Border";
     private const string AppButtonMenuOpenBackgroundKey = "RibbonKit.Brushes.ApplicationButton.MenuOpenBackground";
+    private const string AppButtonMenuOpenBottomKey = "RibbonKit.Brushes.ApplicationButton.MenuOpenBottom";
     private const string AppButtonMenuOpenForegroundKey = "RibbonKit.Brushes.ApplicationButton.MenuOpenForeground";
     private const string ApplicationMenuFrameBandKey = "RibbonKit.Brushes.ApplicationMenu.FrameBand";
     private const string TextPrimaryKey = "RibbonKit.Brushes.Text.Primary";
@@ -593,6 +594,7 @@ public static class ThemeManager
         resources.Remove(TabStripControlHoverKey);
         resources.Remove(TabStripControlPressedKey);
         resources.Remove(AppButtonMenuOpenBackgroundKey);
+        resources.Remove(AppButtonMenuOpenBottomKey);
         resources.Remove(AppButtonMenuOpenForegroundKey);
         // Menu-open tokens normally preserve the old checked-state contract: accent fill and
         // white text, including when a custom accent is active. Office 2010 keeps its smooth
@@ -600,10 +602,17 @@ public static class ThemeManager
         // below replaces this baseline with the menu's neutral frame surface.
         if (_accent is Color customAccent)
         {
-            resources[AppButtonMenuOpenBackgroundKey] =
-                (CurrentTheme ?? RibbonTheme.Office2024) == RibbonTheme.Office2010
-                    ? ApplicationButtonGel(Mix(customAccent, Colors.Black, 0.10))
-                    : Frozen(customAccent);
+            if ((CurrentTheme ?? RibbonTheme.Office2024) == RibbonTheme.Office2010)
+            {
+                Color openBase = Mix(customAccent, Colors.Black, 0.10);
+                resources[AppButtonMenuOpenBackgroundKey] = ApplicationButtonGel(openBase);
+                resources[AppButtonMenuOpenBottomKey] = Frozen(Mix(openBase, Colors.White, 0.20));
+            }
+            else
+            {
+                resources[AppButtonMenuOpenBackgroundKey] = Frozen(customAccent);
+                resources[AppButtonMenuOpenBottomKey] = Frozen(customAccent);
+            }
             resources[AppButtonMenuOpenForegroundKey] = Frozen(Colors.White);
         }
         // Note: the ApplicationButton hover/pressed keys are NOT cleared wholesale — they are
@@ -715,6 +724,7 @@ public static class ThemeManager
             if (application.TryFindResource(ApplicationMenuFrameBandKey) is Brush menuFrameBand)
             {
                 resources[AppButtonMenuOpenBackgroundKey] = menuFrameBand;
+                resources[AppButtonMenuOpenBottomKey] = menuFrameBand;
             }
 
             if (application.TryFindResource(TextPrimaryKey) is Brush menuForeground)

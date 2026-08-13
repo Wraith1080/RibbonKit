@@ -163,7 +163,7 @@ public sealed class Office2010ThemeContractTests
     }
 
     [Fact]
-    public void Classic2010_backstage_selection_is_square_and_content_casts_a_drop_shadow()
+    public void Classic2010_backstage_selection_is_square_and_content_has_only_a_clipped_left_shadow()
     {
         XDocument document = XDocument.Load(ThemePart("Controls.Backstage.xaml"));
 
@@ -205,16 +205,38 @@ public sealed class Office2010ThemeContractTests
             backstageTemplate.Descendants(Presentation + "Trigger"),
             trigger => (string?)trigger.Attribute("Property") == "controls:Backstage.Design"
                 && (string?)trigger.Attribute("Value") == "Classic2010"
-                && trigger
-                    .Elements(Presentation + "Setter")
-                    .Any(setter => (string?)setter.Attribute("TargetName") == "ContentArea"));
+                && trigger.Elements(Presentation + "Setter").Any(
+                    setter => (string?)setter.Attribute("TargetName") == "Classic2010TopSeam"));
+        Assert.DoesNotContain(
+            classicTrigger.Elements(Presentation + "Setter"),
+            setter => (string?)setter.Attribute("TargetName") == "ContentArea"
+                && (string?)setter.Attribute("Property") == "Effect");
+        Assert.Contains(
+            classicTrigger.Elements(Presentation + "Setter"),
+            setter => (string?)setter.Attribute("TargetName") == "NavColumn"
+                && (string?)setter.Attribute("Property") == "Padding"
+                && (string?)setter.Attribute("Value") == "0,3,0,0");
         Assert.Contains(
             classicTrigger.Elements(Presentation + "Setter"),
             setter => (string?)setter.Attribute("TargetName") == "ContentArea"
-                && (string?)setter.Attribute("Property") == "Effect"
-                && setter.Attribute("Value")!.Value.Contains(
-                    "RibbonKit.Effects.Backstage.ContentShadow",
-                    StringComparison.Ordinal));
+                && (string?)setter.Attribute("Property") == "Padding"
+                && (string?)setter.Attribute("Value") == "42,35,42,32");
+        Assert.Contains(
+            classicTrigger.Elements(Presentation + "Setter"),
+            setter => (string?)setter.Attribute("TargetName") == "Classic2010ContentLeftShadow"
+                && (string?)setter.Attribute("Property") == "Visibility"
+                && (string?)setter.Attribute("Value") == "Visible");
+
+        XElement leftShadow = Assert.Single(
+            document.Descendants(Presentation + "Grid"),
+            element => (string?)element.Attribute(Xaml + "Name") == "Classic2010ContentLeftShadow");
+        Assert.Equal("0,3,0,0", (string?)leftShadow.Attribute("Margin"));
+        Assert.Equal("True", (string?)leftShadow.Attribute("ClipToBounds"));
+        Assert.Contains(
+            leftShadow.Descendants().Attributes("Effect"),
+            attribute => attribute.Value.Contains(
+                "RibbonKit.Effects.Backstage.ContentLeftShadow",
+                StringComparison.Ordinal));
 
         XDocument theme = XDocument.Load(ThemePart("Tokens.Office2010.xaml"));
         XElement selectedGlass = Resource(theme, "RibbonKit.Brushes.Backstage.ItemSelectedGlass");
@@ -267,6 +289,8 @@ public sealed class Office2010ThemeContractTests
             XDocument document = XDocument.Load(ThemePart(themeFile));
             XElement effect = Resource(document, "RibbonKit.Effects.Backstage.ContentShadow");
             Assert.Equal(Presentation + "DropShadowEffect", effect.Name);
+            XElement leftEffect = Resource(document, "RibbonKit.Effects.Backstage.ContentLeftShadow");
+            Assert.Equal(Presentation + "DropShadowEffect", leftEffect.Name);
             string expectedOpacity = themeFile switch
             {
                 "Tokens.Office2007.xaml" or "Tokens.Office2007.Dark.xaml" => "0.24",
@@ -276,7 +300,55 @@ public sealed class Office2010ThemeContractTests
                 _ => "0",
             };
             Assert.Equal(expectedOpacity, (string?)effect.Attribute("Opacity"));
+            string expectedLeftOpacity = themeFile switch
+            {
+                "Tokens.Office2007.xaml" or "Tokens.Office2007.Dark.xaml" => "0.32",
+                "Tokens.Office2010.xaml" or "Tokens.Office2010.Dark.xaml" => "0.32",
+                "Tokens.Office2024.xaml" => "0.18",
+                "Tokens.Office2024.Dark.xaml" => "0.20",
+                _ => "0",
+            };
+            Assert.Equal(expectedLeftOpacity, (string?)leftEffect.Attribute("Opacity"));
         }
+    }
+
+    [Fact]
+    public void Every_theme_defines_the_open_file_bottom_connection_color()
+    {
+        string[] themeFiles =
+        [
+            "Tokens.Office2007.xaml",
+            "Tokens.Office2007.Dark.xaml",
+            "Tokens.Office2010.xaml",
+            "Tokens.Office2010.Dark.xaml",
+            "Tokens.Office2013.xaml",
+            "Tokens.Office2013.Dark.xaml",
+            "Tokens.Office2019.xaml",
+            "Tokens.Office2019.Dark.xaml",
+            "Tokens.Office2024.xaml",
+            "Tokens.Office2024.Dark.xaml",
+        ];
+
+        foreach (string themeFile in themeFiles)
+        {
+            XDocument document = XDocument.Load(ThemePart(themeFile));
+            XElement bottom = Resource(
+                document,
+                "RibbonKit.Brushes.ApplicationButton.MenuOpenBottom");
+            Assert.Equal(Presentation + "SolidColorBrush", bottom.Name);
+        }
+
+        XDocument office2010 = XDocument.Load(ThemePart("Tokens.Office2010.xaml"));
+        XElement openBackground = Resource(
+            office2010,
+            "RibbonKit.Brushes.ApplicationButton.MenuOpenBackground");
+        XElement openBottom = Resource(
+            office2010,
+            "RibbonKit.Brushes.ApplicationButton.MenuOpenBottom");
+        Assert.Equal(
+            Stops(openBackground).Last().Attribute("Color")?.Value,
+            openBottom.Attribute("Color")?.Value,
+            ignoreCase: true);
     }
 
     [Fact]

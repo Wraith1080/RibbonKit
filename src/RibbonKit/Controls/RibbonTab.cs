@@ -30,6 +30,17 @@ public class RibbonTab : TabItem
     /// <summary>Identifies the read-only <see cref="Groups"/> dependency property.</summary>
     public static readonly DependencyProperty GroupsProperty = GroupsPropertyKey.DependencyProperty;
 
+    private static readonly DependencyPropertyKey IsBackstageActivePropertyKey =
+        DependencyProperty.RegisterReadOnly(
+            nameof(IsBackstageActive),
+            typeof(bool),
+            typeof(RibbonTab),
+            new FrameworkPropertyMetadata(false));
+
+    /// <summary>Identifies the read-only <see cref="IsBackstageActive"/> dependency property.</summary>
+    public static readonly DependencyProperty IsBackstageActiveProperty =
+        IsBackstageActivePropertyKey.DependencyProperty;
+
     /// <summary>Identifies the <see cref="IsContextual"/> dependency property.</summary>
     public static readonly DependencyProperty IsContextualProperty =
         DependencyProperty.Register(
@@ -102,6 +113,15 @@ public class RibbonTab : TabItem
     /// <summary>The groups shown in the ribbon when this tab is selected.</summary>
     public ObservableCollection<RibbonGroup> Groups =>
         (ObservableCollection<RibbonGroup>)GetValue(GroupsProperty);
+
+    /// <summary>
+    /// Gets whether Backstage currently owns the exposed tab strip. The tab keeps its logical
+    /// selection while this is true, but its template renders the unselected header chrome.
+    /// </summary>
+    public bool IsBackstageActive => (bool)GetValue(IsBackstageActiveProperty);
+
+    internal void SetBackstageActive(bool value) =>
+        SetValue(IsBackstageActivePropertyKey, value);
 
     /// <summary>
     /// Marks this as a contextual tab (e.g. "Picture Format"): the header renders with

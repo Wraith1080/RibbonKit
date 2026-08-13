@@ -19,8 +19,10 @@ public enum BackstageItemPlacement
 }
 
 /// <summary>
-/// The Office 2013+ style backstage view: a full-window overlay with an accent-colored
-/// navigation column (back button + tabs) and a content area. Assign one to
+/// The Office 2013+ style backstage view: a window-level File surface with a navigation
+/// column (back button + tabs) and a content area. Most designs cover the complete window
+/// content; <see cref="RibbonBackstageDesign.Classic2010"/> begins below the live ribbon tab
+/// headers. Assign one to
 /// <see cref="Ribbon.Backstage"/>; the ribbon's File button opens it.
 /// <code language="xaml">
 /// &lt;rk:Ribbon.Backstage&gt;
@@ -75,6 +77,8 @@ public class Backstage : TabControl
 
     private ButtonBase? _backButton;
 
+    private bool _isBelowTabsPlacement;
+
     private FrameworkElement? _contentArea;
 
     /// <summary>
@@ -82,6 +86,40 @@ public class Backstage : TabControl
     /// can move between its normal ribbon host and the Backstage adorner without an app restart.
     /// </summary>
     internal event EventHandler? DesignChanged;
+
+    /// <summary>
+    /// Applies the placement-owned Back button state without adding a public layout option.
+    /// The visible File tab is the return affordance while the Office 2010 surface sits below it.
+    /// </summary>
+    internal void SetBelowTabsPlacement(bool active)
+    {
+        if (_isBelowTabsPlacement == active)
+        {
+            return;
+        }
+
+        _isBelowTabsPlacement = active;
+        UpdatePlacementChrome();
+    }
+
+    private void UpdatePlacementChrome()
+    {
+        if (_backButton is null)
+        {
+            return;
+        }
+
+        if (_isBelowTabsPlacement)
+        {
+            _backButton.SetCurrentValue(VisibilityProperty, Visibility.Collapsed);
+        }
+        else
+        {
+            // Clear only our placement-owned local value so design triggers such as Classic2007
+            // regain control when the same Backstage instance switches appearance while open.
+            _backButton.ClearValue(VisibilityProperty);
+        }
+    }
 
     static Backstage()
     {
@@ -98,7 +136,7 @@ public class Backstage : TabControl
     /// <summary>Initializes a new <see cref="Backstage"/>.</summary>
     public Backstage()
     {
-        // Focus trap. The backstage is shown as a full-window overlay in the WINDOW'S ADORNER
+        // Focus trap. The backstage is shown in the WINDOW'S ADORNER
         // LAYER — a separate visual branch that paints on top of the ribbon but does NOT sit
         // between it and the keyboard-focus tree. Without a trap, Tab walks straight past the
         // overlay into the ribbon/document controls sitting behind it (they're visually covered
@@ -171,6 +209,8 @@ public class Backstage : TabControl
         {
             _backButton.Click += OnBackButtonClick;
         }
+
+        UpdatePlacementChrome();
     }
 
     /// <summary>Esc leaves the backstage, matching Office.</summary>

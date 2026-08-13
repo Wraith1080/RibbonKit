@@ -149,6 +149,9 @@
     <DropShadowEffect x:Key="RibbonKit.Effects.Backstage.ContentShadow"
                       BlurRadius="6" ShadowDepth="1" Direction="180"
                       Opacity="0.12" Color="#000000" RenderingBias="Performance" />
+    <DropShadowEffect x:Key="RibbonKit.Effects.Backstage.ContentLeftShadow"
+                      BlurRadius="6" ShadowDepth="1" Direction="180"
+                      Opacity="0.18" Color="#000000" RenderingBias="Performance" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.NavBackground" Color="#F5F4F3" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.Foreground" Color="#201F1E" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemHover" Color="#EDEBE9" />
@@ -196,6 +199,7 @@
     <!-- Application-menu open defaults to the historical checked File-tab treatment. Colored
          tab bands may override these independently without changing Backstage. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.MenuOpenBackground" Color="#2B579A" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.MenuOpenBottom" Color="#2B579A" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.MenuOpenForeground" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverUnderline" Color="#B8B8B8" />
     <!-- No File-button border (Office 2010 uses one). -->

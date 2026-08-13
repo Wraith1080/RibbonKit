@@ -6,6 +6,8 @@ RibbonKit.Controls.RibbonWindow.AeroFrameTintIntensity.set -> void
 RibbonKit.Controls.RibbonWindow.ActiveBackdrop.get -> RibbonKit.Interop.RibbonBackdrop
 RibbonKit.Controls.RibbonWindow.FrameAppearance.get -> RibbonKit.Controls.RibbonWindowFrameAppearance
 RibbonKit.Controls.RibbonWindow.FrameAppearance.set -> void
+RibbonKit.Controls.RibbonTabControl.IsBackstageActive.get -> bool
+RibbonKit.Controls.RibbonTab.IsBackstageActive.get -> bool
 RibbonKit.Controls.RibbonWindowFrameAppearance
 RibbonKit.Controls.RibbonWindowFrameAppearance.Default = 0 -> RibbonKit.Controls.RibbonWindowFrameAppearance
 RibbonKit.Controls.RibbonWindowFrameAppearance.Office2007Aero = 1 -> RibbonKit.Controls.RibbonWindowFrameAppearance
@@ -15,3 +17,5 @@ static readonly RibbonKit.Controls.RibbonWindow.ActiveBackdropProperty -> System
 static readonly RibbonKit.Controls.RibbonWindow.AeroFrameTintIntensityProperty -> System.Windows.DependencyProperty!
 static readonly RibbonKit.Controls.RibbonWindow.AeroFrameTintProperty -> System.Windows.DependencyProperty!
 static readonly RibbonKit.Controls.RibbonWindow.FrameAppearanceProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonTabControl.IsBackstageActiveProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonTab.IsBackstageActiveProperty -> System.Windows.DependencyProperty!

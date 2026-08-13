@@ -252,7 +252,9 @@
                         <!-- ZIndex above the ribbon body (Row 1): where a theme overlaps the
                              selected tab into the body (Office 2010's TabStripMargin bottom = -1),
                              the tab must paint OVER the body's top border to connect into it. -->
-                        <Grid Grid.Row="0" Panel.ZIndex="1">
+                        <Grid x:Name="PART_TabHeaderHost"
+                              Grid.Row="0"
+                              Panel.ZIndex="1">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="Auto" />
@@ -386,7 +388,7 @@
                                                         <!-- Backstage open: File highlights in accent, like Office -->
                                                         <Trigger Property="IsChecked" Value="True">
                                                             <Setter TargetName="Chrome" Property="Background"
-                                                                    Value="{DynamicResource RibbonKit.Brushes.Accent}" />
+                                                                    Value="{DynamicResource RibbonKit.Brushes.ApplicationButton.MenuOpenBackground}" />
                                                             <Setter TargetName="HoverUnderline" Property="Visibility" Value="Collapsed" />
                                                             <Setter Property="Foreground" Value="#FFFFFF" />
                                                         </Trigger>

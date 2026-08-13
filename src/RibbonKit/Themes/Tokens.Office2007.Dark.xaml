@@ -140,6 +140,9 @@
     <DropShadowEffect x:Key="RibbonKit.Effects.Backstage.ContentShadow"
                       BlurRadius="9" ShadowDepth="3" Direction="180"
                       Opacity="0.24" Color="#000000" RenderingBias="Performance" />
+    <DropShadowEffect x:Key="RibbonKit.Effects.Backstage.ContentLeftShadow"
+                      BlurRadius="9" ShadowDepth="3" Direction="180"
+                      Opacity="0.32" Color="#000000" RenderingBias="Performance" />
     <!-- The application menu is fully dark even though Office 2007 Black intentionally keeps
          the ribbon command surface silver. Scoped foreground tokens avoid changing that hybrid. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.Foreground" Color="#F2F2F2" />
@@ -174,6 +177,7 @@
         <GradientStop Offset="1" Color="#5A5A5A" />
     </LinearGradientBrush>
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.ButtonBorder" Color="#7A7A7A" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.MenuOpenBottom" Color="#1E5A9C" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.InnerGlow" Color="Transparent" />
     <LinearGradientBrush x:Key="RibbonKit.Brushes.MessageBar.Background" StartPoint="0,0" EndPoint="0,1">
         <GradientStop Offset="0" Color="#FFF0BC" />

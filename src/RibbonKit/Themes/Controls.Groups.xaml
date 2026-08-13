@@ -186,6 +186,40 @@
                             <!-- The selected contextual tab's tinted underline is now drawn by
                                  the shared gliding PART_TabMarker (tinted to ContextualBrush). -->
                         </MultiTrigger>
+                        <!-- Backstage temporarily owns the tab strip just like File were the active
+                             tab. Keep the logical selection untouched, but remove its selected chrome
+                             so the previous ribbon tab returns immediately when Backstage closes. -->
+                        <Trigger Property="IsBackstageActive" Value="True">
+                            <Setter TargetName="HeaderChrome" Property="Background" Value="Transparent" />
+                            <Setter TargetName="HeaderChrome" Property="BorderBrush" Value="Transparent" />
+                            <Setter TargetName="ConnectFoot" Property="Background" Value="Transparent" />
+                            <Setter TargetName="ConnectFoot" Property="BorderBrush" Value="Transparent" />
+                            <Setter TargetName="HoverIndicator" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="SelectionIndicator" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="ContextualSelectionIndicator" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="ContextualHeaderText" Property="Opacity"
+                                    Value="{DynamicResource RibbonKit.Metrics.ContextualUnselectedOpacity}" />
+                            <Setter Property="Foreground"
+                                    Value="{DynamicResource RibbonKit.Brushes.TabStrip.Foreground}" />
+                        </Trigger>
+                        <!-- Ribbon tabs remain interactive while Backstage is open. Show the normal
+                             unselected hover treatment when the pointer reaches one rather than
+                             leaving the exposed strip inert. -->
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsBackstageActive" Value="True" />
+                                <Condition SourceName="HeaderChrome" Property="IsMouseOver" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="HeaderChrome" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.Tab.HoverBackground}" />
+                            <Setter TargetName="HeaderChrome" Property="BorderBrush"
+                                    Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
+                            <Setter TargetName="ConnectFoot" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.Tab.ConnectFootHover}" />
+                            <Setter TargetName="ConnectFoot" Property="BorderBrush"
+                                    Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
+                            <Setter TargetName="HoverIndicator" Property="Visibility" Value="Visible" />
+                        </MultiTrigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.4" />
                         </Trigger>

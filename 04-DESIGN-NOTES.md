@@ -4448,6 +4448,74 @@ restores that orb at close start beneath the departing Backstage surface, lettin
 naturally; Classic alone keeps the real orb suppressed until its proxy completes the exit rotation.
 Fresh-process 60-fps captures verified first-open rotation and both close timings.
 
+### 3.95 Office 2010 Backstage begins below the tab headers — 2026-08-13
+
+`Classic2010` now uses the Word 2010 File-surface placement that was originally deferred in §3.27.
+The title bar and complete tab-header row remain visible; the Backstage begins at the live bottom of
+that row and covers the ribbon body, below-ribbon QAT/message rows, and document. This is still the
+window-level `BackstageAdorner`, not an in-ribbon host: the shared `RibbonTabControl` template exposes
+`PART_TabHeaderHost`, and the adorner transforms that part's bottom edge into its adorned-root
+coordinates on every relevant layout pass. Resizing, theme/DPI reflow, and tab-row QAT changes can
+therefore move the boundary without a fixed theme-specific height. A custom template that omits the
+part retains the established full-content overlay rather than failing open or clipping content.
+
+The exposed chrome is functional rather than decorative. The real File button stays visible and
+checked, title-bar QAT content remains available, and the Backstage's redundant round Back button is
+collapsed only while the inset placement is active. Clicking File again, the selected ribbon tab, or
+a different tab closes the surface; a different tab continues through normal selection. Hit testing
+above the inset passes through the adorner to those controls. Other Backstage designs retain their
+full-content placement, including both Office 2007 paths and the Classic2007 orb proxy. A remembered
+`Translucent` preference does not hide the adorned root in this mode because doing so would also erase
+the deliberately exposed title/tab band.
+
+Three focused contracts pin the named template anchor, live inset/reflow and hit routing, plus the
+placement-owned Back-button state. Live testing on the 125% per-monitor-v2 display confirmed the
+Word-style boundary, visible File/tab strip, selected-tab and different-tab close paths, and the
+unchanged Office 2010 page shell. The future Office 2010 Aero/frame treatment remains separate work;
+this placement deliberately leaves the complete caption/tab band available for that material pass.
+Current gate: **342 logic tests plus one visual test covering 62 approved images**, with zero build
+warnings or errors.
+
+### 3.96 Office 2010 Backstage tab-strip polish — 2026-08-13
+
+The below-tabs `Classic2010` surface now completes the visual handoff at the exposed tab row. A
+device-snapped three-DIP `Classic2010TopSeam` spans the Backstage top edge using the dedicated
+`ApplicationButton.MenuOpenBottom` token. Office 2010 sets that token to the checked File gradient's
+bottom stop, so the rule reads as a direct continuation of the button while still separating Home
+(the first navigation item) from it. Every palette defines the same key, and custom accents derive it
+beside `MenuOpenBackground`, preserving the shared-template/theme-token boundary.
+
+The checked File trigger had still been painting the raw flat `Accent` brush even though Office 2010
+already supplied a dimensional `ApplicationButton.MenuOpenBackground` gradient. It now consumes that
+dedicated open-state token, retaining the established white Backstage foreground. This fixes the flat
+open state without altering the short mouse-down `PressedBackground` state or the separate
+application-menu-open shadow path.
+
+While a real Backstage (not `RibbonApplicationMenu`) is open, the ribbon-tab template now suppresses
+selected fill/border/connect-foot/indicator chrome and restores the normal tab-strip foreground. The
+logical `RibbonTabControl.SelectedItem` is deliberately untouched, so the same selection returns on
+close. Exposed tabs remain hoverable with the ordinary unselected hover treatment and retain the §3.95
+close/select behavior. Both the tab-control host and every `RibbonTab` receive a read-only
+`IsBackstageActive` state. Publishing it directly on each tab matters for joined ribbons: a merged
+contextual tab did not reliably resolve the earlier ancestor binding in the live Showcase even though
+the isolated snapshot did. Collection and merge changes now synchronize newly arriving tabs too.
+
+The historical `Backstage.ContentShadow` remains available to older/full-overlay generations, but
+`Classic2010` no longer applies it to the complete `ContentArea`. Instead a clipped 14-DIP host at
+the pane divider casts only to the left through the dedicated `Backstage.ContentLeftShadow` token.
+Office 2007/2010 palettes keep its original nine-DIP blur and three-DIP projection but raise opacity
+from 0.24 to 0.32, restoring darker depth without reintroducing haze across the top connector. The
+navigation host also gains three DIPs of top padding, and content top padding grows by the same amount,
+so neither the first selected row nor page content sits beneath the seam.
+
+Focused contracts pin the seam geometry/color, checked File token, clipped left-only 2010 shadow,
+padding, token parity, and host/per-tab Backstage ownership. Intentional shell updates and the new
+`office2010-merged-backstage-tabs-100` scene were reviewed. Live testing on the 125% per-monitor-v2
+display confirmed the thicker connected edge, clean top boundary, darker left divider depth, padded
+first navigation row/content, open File depth, ordinary close/select paths, and a selected merged
+`Chart Design` header becoming inactive while Backstage owns the row. Current gate: **347 logic tests
+plus one visual test covering 63 approved images**, with zero build warnings or errors.
+
 ## 4. Workflow / Session Conventions
 
 - Work from the current Windows checkout at
@@ -4480,6 +4548,11 @@ Fresh-process 60-fps captures verified first-open rotation and both close timing
 - The post-v1 Office 2007 arc is complete through §3.94: corrected opaque baseline, optional
   Aero-inspired/Acrylic frame, `Glass2007`, `Classic2007`, shared orb proxy, five-scale geometry,
   and live mixed-monitor caption/resize/maximize/Snap Layout verification.
+- The Office 2010 `Classic2010` Backstage now begins below the live tab-header row (§3.95), leaving
+  File, ribbon tabs, and title-bar QAT chrome exposed and interactive with a safe custom-template
+  fallback. Its tab-strip handoff now includes the three-DIP File-bottom-colored seam, dimensional
+  checked File state, padded pane content, darker left-only divider depth with a clean top edge, and
+  Backstage-owned inactive selection for native and joined ribbon tabs (§3.96).
 - MDI milestones M0 and M4 are complete: floating children plus ribbon tab/caption merging.
 
 ### Remaining or intentionally deferred
@@ -4495,7 +4568,7 @@ Fresh-process 60-fps captures verified first-open rotation and both close timing
 
 ### Verification checkpoint
 
-- 2026-08-13: 339 logic tests, one visual test covering 62 approved images, and zero build
+- 2026-08-13: 347 logic tests, one visual test covering 63 approved images, and zero build
   warnings/errors.
 - Before quoting a current count or declaring a new change complete, rerun the proportional build
   and test commands. Inspect actual/diff PNG artifacts before changing visual baselines or

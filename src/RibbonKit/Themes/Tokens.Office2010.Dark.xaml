@@ -109,6 +109,9 @@
     <DropShadowEffect x:Key="RibbonKit.Effects.Backstage.ContentShadow"
                       BlurRadius="9" ShadowDepth="3" Direction="180"
                       Opacity="0.24" Color="#000000" RenderingBias="Performance" />
+    <DropShadowEffect x:Key="RibbonKit.Effects.Backstage.ContentLeftShadow"
+                      BlurRadius="9" ShadowDepth="3" Direction="180"
+                      Opacity="0.32" Color="#000000" RenderingBias="Performance" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.Foreground" Color="#F2F2F2" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.SecondaryForeground" Color="#D0D0D0" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.HeadingForeground" Color="#8CC8FF" />
@@ -135,6 +138,7 @@
         <GradientStop Offset="1" Color="#4C4C4C" />
     </LinearGradientBrush>
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.ButtonBorder" Color="#747474" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.MenuOpenBottom" Color="#3277B4" />
     <RadialGradientBrush x:Key="RibbonKit.Brushes.ApplicationButton.InnerGlow"
                          Center="0.5,1.12"
                          GradientOrigin="0.5,1.12"
