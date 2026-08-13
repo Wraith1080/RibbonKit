@@ -4252,7 +4252,7 @@ the ordinary Office 2007 title gradient; the inactive title/frame pair similarly
 `#BCC8D6` fallback. Maximizing collapses the side/bottom frame and leaves the material title
 treatment, matching the supplied Word, Task Manager and Paint evidence.
 
-The five base dictionaries now carry **207 identical token keys**. Non-2007 themes publish neutral
+The five base dictionaries now carry **208 identical token keys**. Non-2007 themes publish neutral
 transparent/zero frame values, so the project retains one lookless template. Office 2007 Black
 overrides only its required frame/tint/foreground colours. Caption hover and pressed brushes also
 flow through the existing non-client bridge, so `WM_NCHITTEST` can still return `HTMAXBUTTON` while
@@ -4345,6 +4345,32 @@ generation-aware navigation resources, Showcase wiring and appearance round-trip
 live visual check; the next stage is user review of this shell before changing the Backstage page
 content layout. The full automated gate passes **318 logic tests plus one visual test covering 62
 approved images**.
+
+### 3.92 Separate Classic2007 Backstage concept — 2026-08-13
+
+A new user-supplied concept image explored what a full-window Backstage might have looked like if
+Office 2007 had shipped one. It is not historical evidence and does not replace either the real
+two-pane Office 2007 application menu or RibbonKit's existing modern `Glass2007` interpretation.
+The additive `RibbonBackstageDesign.Classic2007` value is appended as enum value 4, leaving the
+already-persisted `Glass2007=3` contract stable. The Showcase labels those two independent choices
+`2007 Classic` and `2007 Modern` respectively.
+
+`Classic2007` stays in the single shared Backstage template. It uses an opaque inset silver-blue
+perimeter, a 220-DIP navigation rail, a filled hard-crease back button, 26-DIP navigation icons and
+gold Office 2007 hover/selection glass. The main sheet uses the existing generation-aware ribbon,
+Backstage, group, ScreenTip and control tokens plus one parity-safe `Classic2007.Foreground` key, so
+no duplicate theme-template fork was needed. The mode deliberately remains opaque when
+`Backstage.Translucent` is true; the app
+preference is retained and becomes visible again when the user returns to `Glass2007` or Modern.
+
+The Showcase Home page preserves its original `Good morning` content for every established design
+and conditionally reveals a Classic2007-only document dashboard: Recent Documents, Preview,
+Properties, Quick Actions and a three-part document-management footer. This demonstrates that the
+library still accepts arbitrary application content rather than introducing a special-purpose page
+control. Live 125% review tightened the content padding, filled the recent-document panel and removed
+unnecessary horizontal/vertical scrolling. A direct mode-switch check confirmed that `Glass2007`
+returns to its previous Acrylic rail and original page unchanged. Current automated gate: **323 logic
+tests plus one visual test covering 62 approved images**.
 
 ## 4. Workflow / Session Conventions
 
@@ -4661,7 +4687,7 @@ Possible post-v1 polish:
   honor reduced motion, handle rapid reversals, and stay disabled while a DWM backdrop is active so
   Mica/Acrylic retain their native material retint without a second cross-fade on top.
 
-**Unit tests: 318 green (verified 2026-08-12).** Coverage now includes the STA harness, the borrow
+**Unit tests: 323 green (verified 2026-08-13).** Coverage now includes the STA harness, the borrow
 protocol, overflow strip measure/arrange rules, popup motion and dismissal, proxy mirroring,
 application-menu layering/hover/footer-outline/KeyTips, repeatable message-bar API/template/theme
 contracts, Office 2010 seam/state/consumer contracts, localization/RTL
@@ -4674,9 +4700,9 @@ exact/prefix collision recovery, prefix-free derivation, typeable non-Latin fall
 custom-content discovery/invocation across Backstage and application-menu panes, including disabled
 target blocking, native toggle Click/Command semantics, compact-input discovery with Header-based
 label derivation, and collapsed-group preservation for editor/picker activation.
-The post-v1 window-frame and Glass2007 Backstage contracts cover opaque/Aero separation, tint
-validation/default migration, shared-template material triggers, generation-aware navigation and
-Showcase appearance persistence.
+The post-v1 window-frame and 2007 Backstage contracts cover opaque/Aero separation, tint
+validation/default migration, shared-template material triggers, generation-aware navigation,
+independent modern `Glass2007` and opaque `Classic2007` choices, and Showcase appearance persistence.
 `RibbonMergeModalTests` adds the Phase 7 automated invariants: merge ordering across later
 permutations, merge/unmerge round-trips, group restore with two sources in one tab, capture while
 modal, modal enter/exit selection and cancellation, forced exit when a merged modal tab leaves,

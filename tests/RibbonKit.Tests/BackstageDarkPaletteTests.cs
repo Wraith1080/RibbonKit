@@ -101,6 +101,7 @@ public class BackstageDarkPaletteTests
             XDocument document = XDocument.Load(file);
             _ = Resource(document, "RibbonKit.Brushes.Backstage.Classic.NavBackground");
             _ = Resource(document, "RibbonKit.Brushes.Backstage.ItemSelectedBorder");
+            _ = Resource(document, "RibbonKit.Brushes.Backstage.Classic2007.Foreground");
         }
     }
 

@@ -90,6 +90,13 @@ public enum RibbonBackstageDesign
     /// historical Backstage view.
     /// </summary>
     Glass2007,
+
+    /// <summary>
+    /// A RibbonKit-authored classic Office 2007 interpretation: an opaque silver-blue framed
+    /// shell, larger navigation rows, gold glass selection, and dense document-oriented content.
+    /// This is an optional Backstage concept, not a claim that Office 2007 shipped one.
+    /// </summary>
+    Classic2007,
 }
 
 /// <summary>

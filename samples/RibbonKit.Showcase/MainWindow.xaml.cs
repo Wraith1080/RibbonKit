@@ -437,7 +437,7 @@ public partial class MainWindow : RibbonWindow
     private void OnToggleRespectSystemMotion(object sender, RoutedEventArgs e) =>
         RibbonAnimation.RespectSystemReduceMotion = (sender as RibbonToggleButton)?.IsChecked == true;
 
-    // Pick one of the three backstage designs (Classic 2013 / Modern 2024 / Classic2010 glass)
+    // Pick one of the Backstage designs, including the independent modern and classic 2007 concepts,
     // from the button's Tag. Open the File menu to see the change.
     private void OnSelectBackstageDesign(object sender, RoutedEventArgs e)
     {

@@ -288,6 +288,7 @@
         <GradientStop Offset="0.45" Color="#BFDBFF" />
         <GradientStop Offset="1" Color="#A3C6F0" />
     </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Classic2007.Foreground" Color="#15428B" />
     <system:Double x:Key="RibbonKit.Metrics.BackstageBackButtonSize">46</system:Double>
     <system:Double x:Key="RibbonKit.Metrics.Backstage.GlassChromeOpacity">0.88</system:Double>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ContentBackground" Color="#FFFFFF" />

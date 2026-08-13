@@ -203,7 +203,7 @@ public class Office2007GlassBackstageTests
         XElement choice = Assert.Single(
             showcase.Descendants(RibbonKit + "RibbonButton"),
             element => (string?)element.Attribute("Tag") == "Glass2007");
-        Assert.Equal("2007 Glass", (string?)choice.Attribute("Header"));
+        Assert.Equal("2007 Modern", (string?)choice.Attribute("Header"));
 
         XElement slider = NamedElement(showcase, "AeroFrameTintIntensitySlider");
         Assert.Equal("0.16", (string?)slider.Attribute("Value"));

@@ -42,6 +42,7 @@
         <GradientStop Offset="0" Color="#5A5A5A" />
         <GradientStop Offset="1" Color="#3E3E3E" />
     </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Classic2007.Foreground" Color="#F2F2F2" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ContentBackground" Color="#1E1E1E" />
     <DropShadowEffect x:Key="RibbonKit.Effects.Backstage.ContentShadow"
                       Opacity="0" BlurRadius="0" ShadowDepth="0" />

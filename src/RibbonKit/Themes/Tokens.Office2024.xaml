@@ -134,6 +134,7 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Classic.NavBackground" Color="#2B579A" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemSelectedBorder" Color="#17365D" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.NavBackground" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Classic2007.Foreground" Color="#2B579A" />
     <system:Double x:Key="RibbonKit.Metrics.BackstageBackButtonSize">36</system:Double>
     <system:Double x:Key="RibbonKit.Metrics.Backstage.GlassChromeOpacity">0.88</system:Double>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ContentBackground" Color="#FFFFFF" />
