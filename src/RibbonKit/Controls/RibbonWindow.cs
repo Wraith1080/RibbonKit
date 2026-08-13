@@ -8,6 +8,20 @@ using RibbonKit.Theming;
 
 namespace RibbonKit.Controls;
 
+/// <summary>The optional frame presentation composed by <see cref="RibbonWindow"/>.</summary>
+public enum RibbonWindowFrameAppearance
+{
+    /// <summary>Use the selected theme's ordinary title and client-edge treatment.</summary>
+    Default,
+
+    /// <summary>
+    /// Use the Office 2007 Aero-inspired restored frame and title treatment. This visual choice
+    /// does not request a system backdrop; hosts may independently apply
+    /// <see cref="RibbonBackdrop.Acrylic"/> through <see cref="MicaHelper"/>.
+    /// </summary>
+    Office2007Aero,
+}
+
 /// <summary>
 /// A window with Office-style chrome: a custom title bar hosting the window title,
 /// optional <see cref="TitleBarContent"/> (quick access buttons live well there),
@@ -34,6 +48,17 @@ public class RibbonWindow : Window
     private const string WindowIconPartName = "PART_WindowIcon";
     private const string MaximizeButtonPartName = "PART_MaximizeButton";
     private const string RestoreButtonPartName = "PART_RestoreButton";
+    private const string AeroCaptionHoverKey =
+        "RibbonKit.Brushes.WindowFrame.AeroCaptionHover";
+    private const string AeroCaptionPressedKey =
+        "RibbonKit.Brushes.WindowFrame.AeroCaptionPressed";
+
+    private static readonly DependencyPropertyKey ActiveBackdropPropertyKey =
+        DependencyProperty.RegisterReadOnly(
+            nameof(ActiveBackdrop),
+            typeof(RibbonBackdrop),
+            typeof(RibbonWindow),
+            new FrameworkPropertyMetadata(RibbonBackdrop.None));
 
     /// <summary>Identifies the <see cref="TitleBarContent"/> dependency property.</summary>
     public static readonly DependencyProperty TitleBarContentProperty =
@@ -51,7 +76,39 @@ public class RibbonWindow : Window
             typeof(RibbonWindow),
             new FrameworkPropertyMetadata(true, OnIsTitleBarContentVisibleChanged));
 
+    /// <summary>Identifies the <see cref="FrameAppearance"/> dependency property.</summary>
+    public static readonly DependencyProperty FrameAppearanceProperty =
+        DependencyProperty.Register(
+            nameof(FrameAppearance),
+            typeof(RibbonWindowFrameAppearance),
+            typeof(RibbonWindow),
+            new FrameworkPropertyMetadata(
+                RibbonWindowFrameAppearance.Default,
+                OnFrameAppearanceChanged));
+
+    /// <summary>Identifies the <see cref="AeroFrameTint"/> dependency property.</summary>
+    public static readonly DependencyProperty AeroFrameTintProperty =
+        DependencyProperty.Register(
+            nameof(AeroFrameTint),
+            typeof(Brush),
+            typeof(RibbonWindow),
+            new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender));
+
+    /// <summary>Identifies the <see cref="AeroFrameTintIntensity"/> dependency property.</summary>
+    public static readonly DependencyProperty AeroFrameTintIntensityProperty =
+        DependencyProperty.Register(
+            nameof(AeroFrameTintIntensity),
+            typeof(double),
+            typeof(RibbonWindow),
+            new FrameworkPropertyMetadata(0d, FrameworkPropertyMetadataOptions.AffectsRender),
+            IsValidAeroFrameTintIntensity);
+
+    /// <summary>Identifies the read-only <see cref="ActiveBackdrop"/> dependency property.</summary>
+    public static readonly DependencyProperty ActiveBackdropProperty =
+        ActiveBackdropPropertyKey.DependencyProperty;
+
     private FrameworkElement? _windowRoot;
+
     private FrameworkElement? _title;
     private Image? _windowIcon;
     private Button? _maximizeButton;
@@ -117,6 +174,62 @@ public class RibbonWindow : Window
     {
         get => (bool)GetValue(IsTitleBarContentVisibleProperty);
         set => SetValue(IsTitleBarContentVisibleProperty, value);
+    }
+
+    /// <summary>
+    /// Gets or sets the optional frame presentation. Selecting
+    /// <see cref="RibbonWindowFrameAppearance.Office2007Aero"/> changes only RibbonKit-authored
+    /// geometry and overlays; it never enables Acrylic or another DWM material by itself.
+    /// </summary>
+    public RibbonWindowFrameAppearance FrameAppearance
+    {
+        get => (RibbonWindowFrameAppearance)GetValue(FrameAppearanceProperty);
+        set => SetValue(FrameAppearanceProperty, value);
+    }
+
+    /// <summary>
+    /// Gets or sets the tint brush used by the Aero-inspired frame and title overlays. The shared
+    /// style supplies the selected theme's default brush; setting a local value lets a host use an
+    /// accent or another app-owned frame color without changing ribbon theme resources.
+    /// </summary>
+    public Brush? AeroFrameTint
+    {
+        get => (Brush?)GetValue(AeroFrameTintProperty);
+        set => SetValue(AeroFrameTintProperty, value);
+    }
+
+    /// <summary>
+    /// Gets or sets the opacity applied to <see cref="AeroFrameTint"/>, from 0 (no authored tint)
+    /// through 1 (fully opaque tint). Reflection, grain, and the inner highlight remain separate.
+    /// </summary>
+    public double AeroFrameTintIntensity
+    {
+        get => (double)GetValue(AeroFrameTintIntensityProperty);
+        set => SetValue(AeroFrameTintIntensityProperty, value);
+    }
+
+    /// <summary>
+    /// Gets the system backdrop most recently accepted for this window through
+    /// <see cref="MicaHelper.TrySetBackdrop"/>. This is derived runtime state, not an appearance
+    /// preference to serialize.
+    /// </summary>
+    public RibbonBackdrop ActiveBackdrop => (RibbonBackdrop)GetValue(ActiveBackdropProperty);
+
+    internal void SetActiveBackdrop(RibbonBackdrop backdrop) =>
+        SetValue(ActiveBackdropPropertyKey, backdrop);
+
+    private static bool IsValidAeroFrameTintIntensity(object value) =>
+        value is double intensity
+        && double.IsFinite(intensity)
+        && intensity is >= 0d and <= 1d;
+
+    private static void OnFrameAppearanceChanged(
+        DependencyObject dependencyObject,
+        DependencyPropertyChangedEventArgs e)
+    {
+        var window = (RibbonWindow)dependencyObject;
+        window._snapButtonPressed = false;
+        window.SetSnapButtonVisualState(SnapButtonVisualState.Normal);
     }
 
     /// <inheritdoc />
@@ -448,13 +561,18 @@ public class RibbonWindow : Window
                     double sx = dpi.DpiScaleX <= 0 ? 1.0 : dpi.DpiScaleX;
                     double sy = dpi.DpiScaleY <= 0 ? 1.0 : dpi.DpiScaleY;
 
-                    // How far the window spills past the work area on each edge (device px),
-                    // clamped to >= 0, then converted to DIPs for the WPF layout margin.
-                    target = new Thickness(
-                        Math.Max(0, work.Left - win.Left) / sx,
-                        Math.Max(0, work.Top - win.Top) / sy,
-                        Math.Max(0, win.Right - work.Right) / sx,
-                        Math.Max(0, win.Bottom - work.Bottom) / sy);
+                    target = CalculateMaximizeInset(
+                        new Rect(
+                            win.Left,
+                            win.Top,
+                            win.Right - win.Left,
+                            win.Bottom - win.Top),
+                        new Rect(
+                            work.Left,
+                            work.Top,
+                            work.Right - work.Left,
+                            work.Bottom - work.Top),
+                        new DpiScale(sx, sy));
                 }
             }
         }
@@ -465,6 +583,27 @@ public class RibbonWindow : Window
         {
             _windowRoot.Margin = target;
         }
+    }
+
+    /// <summary>
+    /// Converts a maximized WindowChrome overhang from device pixels to the WPF margin that keeps
+    /// authored content flush with the monitor work area. Keeping this geometry independent from
+    /// the HWND query makes every supported DPI and negative-coordinate monitor arrangement
+    /// directly testable without changing the user's display configuration.
+    /// </summary>
+    internal static Thickness CalculateMaximizeInset(
+        Rect windowRectPixels,
+        Rect workAreaPixels,
+        DpiScale dpi)
+    {
+        double sx = dpi.DpiScaleX <= 0d ? 1d : dpi.DpiScaleX;
+        double sy = dpi.DpiScaleY <= 0d ? 1d : dpi.DpiScaleY;
+
+        return new Thickness(
+            Math.Max(0d, workAreaPixels.Left - windowRectPixels.Left) / sx,
+            Math.Max(0d, workAreaPixels.Top - windowRectPixels.Top) / sy,
+            Math.Max(0d, windowRectPixels.Right - workAreaPixels.Right) / sx,
+            Math.Max(0d, windowRectPixels.Bottom - workAreaPixels.Bottom) / sy);
     }
 
     private static bool ThicknessesClose(Thickness a, Thickness b)
@@ -576,7 +715,7 @@ public class RibbonWindow : Window
         SetSnapButtonBackground(_restoreButton, state);
     }
 
-    private static void SetSnapButtonBackground(Button? button, SnapButtonVisualState state)
+    private void SetSnapButtonBackground(Button? button, SnapButtonVisualState state)
     {
         if (button is null)
         {
@@ -588,13 +727,17 @@ public class RibbonWindow : Window
             case SnapButtonVisualState.Hot:
                 button.SetResourceReference(
                     Control.BackgroundProperty,
-                    ThemeManager.CaptionHoverKey);
+                    FrameAppearance == RibbonWindowFrameAppearance.Office2007Aero
+                        ? AeroCaptionHoverKey
+                        : ThemeManager.CaptionHoverKey);
                 break;
 
             case SnapButtonVisualState.Pressed:
                 button.SetResourceReference(
                     Control.BackgroundProperty,
-                    ThemeManager.CaptionPressedKey);
+                    FrameAppearance == RibbonWindowFrameAppearance.Office2007Aero
+                        ? AeroCaptionPressedKey
+                        : ThemeManager.CaptionPressedKey);
                 break;
 
             default:
@@ -633,9 +776,26 @@ public class RibbonWindow : Window
 
         try
         {
-            Point firstCorner = button.PointToScreen(default);
-            Point secondCorner = button.PointToScreen(new Point(button.ActualWidth, button.ActualHeight));
-            return IsScreenPointWithinBounds(ScreenPointFromLParam(lParam), firstCorner, secondCorner);
+            IntPtr hwnd = new WindowInteropHelper(this).Handle;
+            var clientOrigin = new NativePoint();
+            if (hwnd == IntPtr.Zero || !ClientToScreen(hwnd, ref clientOrigin))
+            {
+                return false;
+            }
+
+            GeneralTransform transform = button.TransformToAncestor(this);
+            Point firstCorner = transform.Transform(default);
+            Point secondCorner = transform.Transform(new Point(button.ActualWidth, button.ActualHeight));
+            Rect screenBounds = CalculateScreenBounds(
+                new Point(clientOrigin.X, clientOrigin.Y),
+                firstCorner,
+                secondCorner,
+                VisualTreeHelper.GetDpi(this));
+
+            return IsScreenPointWithinBounds(
+                ScreenPointFromLParam(lParam),
+                screenBounds.TopLeft,
+                screenBounds.BottomRight);
         }
         catch (InvalidOperationException)
         {
@@ -643,6 +803,30 @@ public class RibbonWindow : Window
             // old part is no longer connected, let WindowChrome perform its normal hit test.
             return false;
         }
+    }
+
+    /// <summary>
+    /// Converts opposite corners measured in client-space DIPs into native screen-pixel bounds.
+    /// This avoids <c>PointToScreen</c>, whose cached screen transform can
+    /// briefly retain the previous monitor's scale during a per-monitor DPI transition.
+    /// </summary>
+    internal static Rect CalculateScreenBounds(
+        Point clientOriginPixels,
+        Point firstCornerDips,
+        Point secondCornerDips,
+        DpiScale dpi)
+    {
+        double sx = dpi.DpiScaleX <= 0d ? 1d : dpi.DpiScaleX;
+        double sy = dpi.DpiScaleY <= 0d ? 1d : dpi.DpiScaleY;
+
+        var first = new Point(
+            clientOriginPixels.X + (firstCornerDips.X * sx),
+            clientOriginPixels.Y + (firstCornerDips.Y * sy));
+        var second = new Point(
+            clientOriginPixels.X + (secondCornerDips.X * sx),
+            clientOriginPixels.Y + (secondCornerDips.Y * sy));
+
+        return new Rect(first, second);
     }
 
     /// <summary>Decodes the signed screen coordinates packed into a mouse-message LPARAM.</summary>
@@ -714,6 +898,10 @@ public class RibbonWindow : Window
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool GetWindowRect(IntPtr hwnd, out NativeRect lpRect);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool ClientToScreen(IntPtr hwnd, ref NativePoint lpPoint);
 
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]

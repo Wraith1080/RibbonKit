@@ -2,14 +2,14 @@
 
 Each phase ends with the showcase app demonstrating everything built so far, tests green, and a tagged pre-release. Phases are sequential but small overlaps are fine.
 
-> **Progress (2026-08-12):** Phases 0–8 are complete and `v1.0.0` is published as a GitHub Release. Phase 6 closed with the user-verified live RTL popup/window pass in [`04-DESIGN-NOTES.md`](../04-DESIGN-NOTES.md) §3.61: all five themes ship with dark/black variants, per-monitor DPI is verified at 100/125/150/175/200%, and the deterministic 40-image theme/variant × DPI suite plus twenty-two focused scenes are green. Post-v1 MDI emulation is unusually shaped: M0 and M4 are done, M1–M3 are not. Custom-control projection/extensibility and future theme expansion are now recorded as separate post-v1 candidate tracks.
+> **Progress (2026-08-13):** Phases 0–8 are complete and `v1.0.0` is published as a GitHub Release. Phase 6 closed with the user-verified live RTL popup/window pass in [`04-DESIGN-NOTES.md`](../04-DESIGN-NOTES.md) §3.61: all five themes ship with dark/black variants, per-monitor DPI is verified at 100/125/150/175/200%, and the deterministic 40-image theme/variant × DPI suite plus twenty-two focused scenes are green. Post-v1 Office 2007 frame and Backstage S7-S9 are complete through §3.94. MDI M0 and M4 are done while M1-M3 remain; custom-control projection/extensibility, future themes, and RibbonKit Writer remain candidate tracks.
 >
 > Live DPI switching needed a fix outside the library: an app must declare **PerMonitorV2** in its own manifest or Windows bitmap-stretches it until restart. The showcase now does, and the README tells consumers to (§3.42).
 >
-> Deferred out of the 2007 work on purpose: the 2007 window frame, now planned as a guaranteed opaque
-> historical frame plus an optional app-controlled Aero-inspired enhancement. It remains the change
-> most likely to perturb the measured-margin maximize fix and therefore gets an independent post-v1
-> implementation/verification pass ([Office 2007 plan](07-OFFICE-2007-THEME-PLAN.md) §6/S7). The
+> The 2007 window frame was deferred on purpose and is now complete: a corrected no-material baseline
+> plus an optional app-controlled Aero-inspired enhancement passed its independent post-v1
+> implementation/verification gate, including maximize, Snap Layout and real 125%↔150% mixed-DPI
+> checks ([Office 2007 plan](07-OFFICE-2007-THEME-PLAN.md) §6/S7). The
 > other deferral — the real two-pane 2007 application menu — **shipped on 2026-07-28** as
 > `RibbonApplicationMenu`, a new control rather than a theme (§3.46).
 

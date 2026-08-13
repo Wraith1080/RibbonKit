@@ -101,6 +101,14 @@ public class BackstageDarkPaletteTests
             XDocument document = XDocument.Load(file);
             _ = Resource(document, "RibbonKit.Brushes.Backstage.Classic.NavBackground");
             _ = Resource(document, "RibbonKit.Brushes.Backstage.ItemSelectedBorder");
+            _ = Resource(document, "RibbonKit.Brushes.Backstage.Classic2007.Foreground");
+            XElement shellGlass = Resource(
+                document,
+                "RibbonKit.Brushes.Backstage.Classic2007.ShellGlass");
+            Assert.Contains(
+                shellGlass.Elements(Presentation + "GradientStop")
+                    .GroupBy(stop => (string?)stop.Attribute("Offset")),
+                group => group.Count() > 1);
         }
     }
 

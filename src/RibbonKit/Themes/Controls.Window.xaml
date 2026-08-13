@@ -17,13 +17,15 @@
     <Style TargetType="{x:Type controls:RibbonWindow}">
         <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Window.Background}" />
         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+        <Setter Property="AeroFrameTint" Value="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroTint}" />
+        <Setter Property="AeroFrameTintIntensity" Value="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroTintIntensity}" />
         <Setter Property="WindowChrome.WindowChrome">
             <Setter.Value>
                 <!-- No GlassFrameThickness="-1": extending the DWM glass across the whole
                      window breaks WindowChrome's maximize/work-area handling (the window
                      then overhangs the screen when maximized). Default glass + the
                      WM_GETMINMAXINFO hook in RibbonWindow keep maximize correct. -->
-                <WindowChrome CaptionHeight="34"
+                <WindowChrome CaptionHeight="{DynamicResource RibbonKit.Metrics.WindowFrame.CaptionHeight}"
                               GlassFrameThickness="-1"
                               ResizeBorderThickness="{x:Static SystemParameters.WindowResizeBorderThickness}"
                               CornerRadius="0"
@@ -38,7 +40,19 @@
                          edges, losing the top/right inset. Logical content is mirrored one layer
                          farther in so caption buttons, title content and the ribbon still follow
                          the window's FlowDirection. -->
-                    <Grid x:Name="PhysicalWindowFrameHost" FlowDirection="LeftToRight">
+                    <Grid x:Name="PhysicalWindowFrameHost"
+                          FlowDirection="LeftToRight"
+                          SnapsToDevicePixels="True">
+                    <!-- Keep PART_WindowRoot flush with the physical host. The restored non-Aero
+                         Word reference carries no app-painted band around the complete window:
+                         its title and status bars run directly to the native one-pixel edge. The
+                         wider blue beside the ribbon/document is client-area padding, not chrome.
+                         AeroFrameHost stays at zero thickness for that default; the explicit
+                         Office2007Aero appearance alone gives it a restored material frame. -->
+                    <Border x:Name="AeroFrameHost"
+                            BorderBrush="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroFallback}"
+                            BorderThickness="0"
+                            FlowDirection="LeftToRight">
                     <Border x:Name="PART_WindowRoot"
                             Background="{TemplateBinding Background}"
                             FlowDirection="LeftToRight">
@@ -56,13 +70,39 @@
 
                             <!-- Title bar (its own band token, separate from the tab strip:
                                  Office 2019/2013 use a colored title bar over a light strip) -->
-                            <Grid Grid.Row="0"
-                                  Background="{DynamicResource RibbonKit.Brushes.TitleBar.Background}">
+                            <Grid x:Name="TitleBarBand"
+                                  Grid.Row="0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
+
+                                <!-- Keep the opaque title fill separate from title content so the
+                                     accepted Acrylic state can fade only the background away. -->
+                                <Border x:Name="TitleBarBackgroundLayer"
+                                        Grid.ColumnSpan="3"
+                                        Background="{DynamicResource RibbonKit.Brushes.TitleBar.Background}" />
+
+                                <!-- Deterministic Office 2007-authored tint, reflection and grain.
+                                     These remain useful over the opaque fallback and, when Acrylic
+                                     is active, tint the material without covering it. -->
+                                <Grid x:Name="AeroTitleVisual"
+                                      Grid.ColumnSpan="3"
+                                      IsHitTestVisible="False"
+                                      Visibility="Collapsed">
+                                    <Border x:Name="AeroTitleTintLayer"
+                                            Background="{TemplateBinding AeroFrameTint}"
+                                            Opacity="{TemplateBinding AeroFrameTintIntensity}" />
+                                    <Border x:Name="AeroTitleReflectionLayer"
+                                            Background="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroReflection}"
+                                            Opacity="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroReflectionOpacity}"
+                                            Visibility="Collapsed" />
+                                    <Border x:Name="AeroTitleGrainLayer"
+                                            Background="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroGrain}"
+                                            Opacity="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroGrainOpacity}"
+                                            Visibility="Collapsed" />
+                                </Grid>
 
                                 <!-- Window identity plus quick-access slot. The icon remains in
                                      the caption when Backstage hides only TitleBarContent. -->
@@ -107,6 +147,8 @@
                                             <Setter Property="Width" Value="46" />
                                             <Setter Property="Height" Value="34" />
                                             <Setter Property="Focusable" Value="False" />
+                                            <Setter Property="Foreground"
+                                                    Value="{DynamicResource RibbonKit.Brushes.TitleBar.Foreground}" />
                                             <Setter Property="Background" Value="Transparent" />
                                             <Setter Property="Template">
                                                 <Setter.Value>
@@ -124,6 +166,28 @@
                                                                 <Setter TargetName="Chrome" Property="Background"
                                                                         Value="{DynamicResource RibbonKit.Brushes.CaptionButton.PressedBackground}" />
                                                             </Trigger>
+                                                            <MultiDataTrigger>
+                                                                <MultiDataTrigger.Conditions>
+                                                                    <Condition Binding="{Binding FrameAppearance, RelativeSource={RelativeSource AncestorType={x:Type controls:RibbonWindow}}}"
+                                                                               Value="Office2007Aero" />
+                                                                    <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}"
+                                                                               Value="True" />
+                                                                </MultiDataTrigger.Conditions>
+                                                                <Setter TargetName="Chrome"
+                                                                        Property="Background"
+                                                                        Value="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroCaptionHover}" />
+                                                            </MultiDataTrigger>
+                                                            <MultiDataTrigger>
+                                                                <MultiDataTrigger.Conditions>
+                                                                    <Condition Binding="{Binding FrameAppearance, RelativeSource={RelativeSource AncestorType={x:Type controls:RibbonWindow}}}"
+                                                                               Value="Office2007Aero" />
+                                                                    <Condition Binding="{Binding IsPressed, RelativeSource={RelativeSource Self}}"
+                                                                               Value="True" />
+                                                                </MultiDataTrigger.Conditions>
+                                                                <Setter TargetName="Chrome"
+                                                                        Property="Background"
+                                                                        Value="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroCaptionPressed}" />
+                                                            </MultiDataTrigger>
                                                         </ControlTemplate.Triggers>
                                                     </ControlTemplate>
                                                 </Setter.Value>
@@ -133,13 +197,15 @@
                                             <Setter Property="Width" Value="46" />
                                             <Setter Property="Height" Value="34" />
                                             <Setter Property="Focusable" Value="False" />
+                                            <Setter Property="Foreground"
+                                                    Value="{DynamicResource RibbonKit.Brushes.TitleBar.Foreground}" />
                                             <Setter Property="Template">
                                                 <Setter.Value>
                                                     <ControlTemplate TargetType="{x:Type Button}">
                                                         <Border x:Name="Chrome" Background="Transparent">
                                                             <Path x:Name="Glyph"
                                                                   Data="M0,0 L9,9 M9,0 L0,9"
-                                                                  Stroke="{DynamicResource RibbonKit.Brushes.TitleBar.Foreground}"
+                                                                  Stroke="{TemplateBinding Foreground}"
                                                                   StrokeThickness="1"
                                                                   HorizontalAlignment="Center"
                                                                   VerticalAlignment="Center" />
@@ -161,11 +227,12 @@
                                             </Setter>
                                         </Style>
                                     </StackPanel.Resources>
-                                    <Button Style="{StaticResource CaptionButtonStyle}"
+                                    <Button x:Name="PART_MinimizeButton"
+                                            Style="{StaticResource CaptionButtonStyle}"
                                             Command="{x:Static SystemCommands.MinimizeWindowCommand}"
                                             ToolTip="{localization:RibbonString Key=Minimize}">
                                         <Path Data="M0,0 H10"
-                                              Stroke="{DynamicResource RibbonKit.Brushes.TitleBar.Foreground}"
+                                              Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
                                               StrokeThickness="1" />
                                     </Button>
                                     <Button x:Name="PART_MaximizeButton"
@@ -173,7 +240,7 @@
                                             Command="{x:Static SystemCommands.MaximizeWindowCommand}"
                                             ToolTip="{localization:RibbonString Key=Maximize}">
                                         <Path Data="M0,0 H9 V9 H0 Z"
-                                              Stroke="{DynamicResource RibbonKit.Brushes.TitleBar.Foreground}"
+                                              Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
                                               StrokeThickness="1" />
                                     </Button>
                                     <Button x:Name="PART_RestoreButton"
@@ -182,13 +249,25 @@
                                             ToolTip="{localization:RibbonString Key=RestoreDown}"
                                             Visibility="Collapsed">
                                         <Path Data="M0,2 H7 V9 H0 Z M2,2 V0 H9 V7 H7"
-                                              Stroke="{DynamicResource RibbonKit.Brushes.TitleBar.Foreground}"
+                                              Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
                                               StrokeThickness="1" />
                                     </Button>
-                                    <Button Style="{StaticResource CloseCaptionButtonStyle}"
+                                    <Button x:Name="PART_CloseButton"
+                                            Style="{StaticResource CloseCaptionButtonStyle}"
                                             Command="{x:Static SystemCommands.CloseWindowCommand}"
                                             ToolTip="{localization:RibbonString Key=Close}" />
                                 </StackPanel>
+
+                                <!-- Draw the title bevel after all caption content so hover/pressed
+                                     button backgrounds cannot interrupt it or leave their lower edge
+                                     overlapping the glass seam. It never participates in hit testing. -->
+                                <Border x:Name="AeroTitleBottomHighlight"
+                                        Grid.ColumnSpan="3"
+                                        Panel.ZIndex="10"
+                                        BorderBrush="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroInnerHighlight}"
+                                        BorderThickness="0,0,0,1"
+                                        IsHitTestVisible="False"
+                                        Visibility="Collapsed" />
                             </Grid>
 
                             <!-- Window content. The AdornerDecorator is REQUIRED: without
@@ -199,8 +278,155 @@
                         </Grid>
                         </AdornerDecorator>
                     </Border>
+                    </Border>
+
+                    <!-- Frame-only overlays are drawn after the content but never receive input.
+                         Their BorderThickness follows the same physical-LTR frame inset. -->
+                    <Grid x:Name="AeroFrameOverlay"
+                          FlowDirection="LeftToRight"
+                          IsHitTestVisible="False"
+                          Visibility="Collapsed">
+                        <Border x:Name="AeroFrameTintLayer"
+                                BorderBrush="{TemplateBinding AeroFrameTint}"
+                                BorderThickness="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroThickness}"
+                                Opacity="{TemplateBinding AeroFrameTintIntensity}" />
+                        <Border BorderThickness="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroThickness}">
+                            <!-- The frame and title are one glass surface. Begin the vertical
+                                 inner bevel below the title instead of drawing two bright seams
+                                 beside the orb and Close button. -->
+                            <Border x:Name="AeroFrameInnerHighlight"
+                                    Margin="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroInnerHighlightMargin}"
+                                    BorderBrush="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroInnerHighlight}"
+                                    BorderThickness="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroInnerHighlightThickness}" />
+                        </Border>
+                        <Border x:Name="AeroFrameReflectionLayer"
+                                BorderBrush="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroReflection}"
+                                BorderThickness="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroThickness}"
+                                Opacity="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroReflectionOpacity}"
+                                Visibility="Collapsed" />
+                        <Border x:Name="AeroFrameGrainLayer"
+                                BorderBrush="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroGrain}"
+                                BorderThickness="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroThickness}"
+                                Opacity="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroGrainOpacity}"
+                                Visibility="Collapsed" />
+                    </Grid>
                     </Grid>
                     <ControlTemplate.Triggers>
+                        <Trigger Property="FrameAppearance" Value="Office2007Aero">
+                            <Setter TargetName="AeroFrameHost"
+                                    Property="BorderThickness"
+                                    Value="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroThickness}" />
+                            <Setter TargetName="AeroFrameOverlay" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="AeroTitleVisual" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="AeroTitleBottomHighlight" Property="Visibility" Value="Visible" />
+                            <!-- An unavailable Acrylic backdrop changes only the material source.
+                                 Keep the title and restored frame on one opaque Aero surface rather
+                                 than revealing the ordinary Office 2007 title gradient. -->
+                            <Setter TargetName="TitleBarBackgroundLayer"
+                                    Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroFallback}" />
+                            <Setter TargetName="PART_Title"
+                                    Property="Foreground"
+                                    Value="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroTitleForeground}" />
+                            <Setter TargetName="PART_MinimizeButton"
+                                    Property="Foreground"
+                                    Value="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroTitleForeground}" />
+                            <Setter TargetName="PART_MaximizeButton"
+                                    Property="Foreground"
+                                    Value="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroTitleForeground}" />
+                            <Setter TargetName="PART_RestoreButton"
+                                    Property="Foreground"
+                                    Value="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroTitleForeground}" />
+                            <Setter TargetName="PART_CloseButton"
+                                    Property="Foreground"
+                                    Value="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroTitleForeground}" />
+                        </Trigger>
+                        <Trigger Property="IsActive" Value="False">
+                            <Setter TargetName="AeroFrameHost"
+                                    Property="BorderBrush"
+                                    Value="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroInactiveFallback}" />
+                            <Setter TargetName="AeroFrameOverlay"
+                                    Property="Opacity"
+                                    Value="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroInactiveOverlayOpacity}" />
+                            <Setter TargetName="TitleBarBand"
+                                    Property="Opacity"
+                                    Value="{DynamicResource RibbonKit.Metrics.WindowFrame.InactiveTitleBarOpacity}" />
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="FrameAppearance" Value="Office2007Aero" />
+                                <Condition Property="IsActive" Value="False" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="TitleBarBackgroundLayer"
+                                    Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroInactiveFallback}" />
+                            <Setter TargetName="AeroTitleReflectionLayer" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="AeroTitleGrainLayer" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="AeroFrameReflectionLayer" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="AeroFrameGrainLayer" Property="Visibility" Value="Collapsed" />
+                            <!-- Preserve the quieter inactive-window identity without changing
+                                 the shared glass base beneath it. -->
+                            <Setter TargetName="PART_WindowIcon"
+                                    Property="Opacity"
+                                    Value="{DynamicResource RibbonKit.Metrics.WindowFrame.InactiveTitleBarOpacity}" />
+                            <Setter TargetName="TitleBarContentHost"
+                                    Property="Opacity"
+                                    Value="{DynamicResource RibbonKit.Metrics.WindowFrame.InactiveTitleBarOpacity}" />
+                            <Setter TargetName="PART_Title"
+                                    Property="Opacity"
+                                    Value="{DynamicResource RibbonKit.Metrics.WindowFrame.InactiveTitleBarOpacity}" />
+                            <Setter TargetName="PART_MinimizeButton"
+                                    Property="Opacity"
+                                    Value="{DynamicResource RibbonKit.Metrics.WindowFrame.InactiveTitleBarOpacity}" />
+                            <Setter TargetName="PART_MaximizeButton"
+                                    Property="Opacity"
+                                    Value="{DynamicResource RibbonKit.Metrics.WindowFrame.InactiveTitleBarOpacity}" />
+                            <Setter TargetName="PART_RestoreButton"
+                                    Property="Opacity"
+                                    Value="{DynamicResource RibbonKit.Metrics.WindowFrame.InactiveTitleBarOpacity}" />
+                            <Setter TargetName="PART_CloseButton"
+                                    Property="Opacity"
+                                    Value="{DynamicResource RibbonKit.Metrics.WindowFrame.InactiveTitleBarOpacity}" />
+                        </MultiTrigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="FrameAppearance" Value="Office2007Aero" />
+                                <Condition Property="IsActive" Value="False" />
+                                <Condition Property="IsTitleBarContentVisible" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <!-- A normal inactive Aero window uses the same opaque base and tint
+                                 composition in its title and restored frame. Quiet the content
+                                 separately instead of fading that shared base. -->
+                            <Setter TargetName="TitleBarBand" Property="Opacity" Value="1" />
+                            <Setter TargetName="AeroTitleVisual"
+                                    Property="Opacity"
+                                    Value="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroInactiveOverlayOpacity}" />
+                        </MultiTrigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="FrameAppearance" Value="Office2007Aero" />
+                                <Condition Property="ActiveBackdrop" Value="Acrylic" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="AeroFrameHost" Property="BorderBrush" Value="Transparent" />
+                            <Setter TargetName="TitleBarBackgroundLayer"
+                                    Property="Opacity"
+                                    Value="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroMaterialTitleBackgroundOpacity}" />
+                        </MultiTrigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="FrameAppearance" Value="Office2007Aero" />
+                                <Condition Property="ActiveBackdrop" Value="Acrylic" />
+                                <Condition Property="IsActive" Value="True" />
+                                <Condition Property="IsTitleBarContentVisible" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <!-- Relative reflection/grain brushes are material-only decoration.
+                                 Show them only for the uninterrupted active title/frame surface;
+                                 all opaque, inactive and Backstage compositions use base+tint. -->
+                            <Setter TargetName="AeroTitleReflectionLayer" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="AeroTitleGrainLayer" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="AeroFrameReflectionLayer" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="AeroFrameGrainLayer" Property="Visibility" Value="Visible" />
+                        </MultiTrigger>
                         <Trigger Property="WindowState" Value="Maximized">
                             <!-- The maximize overhang (a WindowChrome window is placed to
                                  hang past every screen edge) is compensated in code:
@@ -209,12 +435,37 @@
                                  that, so the caption buttons stay on-screen and the ribbon
                                  card keeps its side margin. Here we only swap the caption
                                  glyph from Maximize to Restore. -->
+                            <Setter TargetName="AeroFrameHost" Property="BorderThickness" Value="0" />
+                            <Setter TargetName="AeroFrameOverlay" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="PART_MaximizeButton" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="PART_RestoreButton" Property="Visibility" Value="Visible" />
                         </Trigger>
                         <Trigger Property="IsTitleBarContentVisible" Value="False">
                             <Setter TargetName="TitleBarContentHost" Property="Visibility" Value="Collapsed" />
+                            <!-- A full-window Backstage surface already supplies its own visual
+                                 edge. Suppress the restored-frame inner bevel so it does not draw
+                                 the large three-sided outline around that surface. -->
+                            <Setter TargetName="AeroFrameInnerHighlight" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="AeroTitleBottomHighlight" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="AeroTitleReflectionLayer" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="AeroTitleGrainLayer" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="AeroFrameReflectionLayer" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="AeroFrameGrainLayer" Property="Visibility" Value="Collapsed" />
                         </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="FrameAppearance" Value="Office2007Aero" />
+                                <Condition Property="IsActive" Value="False" />
+                                <Condition Property="IsTitleBarContentVisible" Value="False" />
+                            </MultiTrigger.Conditions>
+                            <!-- Backstage intentionally keeps the already-approved 78% inactive
+                                 title/rail material. DWM gives the outer frame a different inactive
+                                 fallback, so apply the tokenized frame compensation that removes
+                                 the remaining left/bottom strength step. -->
+                            <Setter TargetName="AeroFrameOverlay"
+                                    Property="Opacity"
+                                    Value="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroInactiveBackstageFrameOpacity}" />
+                        </MultiTrigger>
                         <Trigger Property="Icon" Value="{x:Null}">
                             <Setter TargetName="PART_WindowIcon" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="TitleBarContentHost" Property="Margin" Value="10,0,6,0" />

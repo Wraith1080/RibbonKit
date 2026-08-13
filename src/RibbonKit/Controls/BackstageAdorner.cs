@@ -15,6 +15,9 @@ internal sealed class BackstageAdorner : Adorner
 {
     private UIElement? _child;
     private FrameworkElement? _flowBoundChild;
+    private FrameworkElement? _classicOrbProxy;
+    private Point _classicOrbProxyOrigin;
+    private Size _classicOrbProxySize;
 
     public BackstageAdorner(
         UIElement adornedElement,
@@ -60,11 +63,48 @@ internal sealed class BackstageAdorner : Adorner
     }
 
     /// <inheritdoc />
-    protected override int VisualChildrenCount => _child is null ? 0 : 1;
+    protected override int VisualChildrenCount =>
+        (_child is null ? 0 : 1) + (_classicOrbProxy is null ? 0 : 1);
+
+    /// <summary>
+    /// Hosts the Classic2007 Backstage's private orb proxy above the animated surface.
+    /// The real ribbon application button remains in its original layout slot.
+    /// </summary>
+    internal void AttachClassicOrbProxy(FrameworkElement proxy, Point origin, Size size)
+    {
+        if (!ReferenceEquals(_classicOrbProxy, proxy))
+        {
+            DetachClassicOrbProxy();
+            _classicOrbProxy = proxy;
+            AddVisualChild(proxy);
+            AddLogicalChild(proxy);
+            InvalidateMeasure();
+        }
+
+        _classicOrbProxyOrigin = origin;
+        _classicOrbProxySize = size;
+        InvalidateArrange();
+    }
+
+    /// <summary>Releases the Classic2007 orb proxy.</summary>
+    internal void DetachClassicOrbProxy()
+    {
+        if (_classicOrbProxy is null)
+        {
+            return;
+        }
+
+        RemoveVisualChild(_classicOrbProxy);
+        RemoveLogicalChild(_classicOrbProxy);
+        _classicOrbProxy = null;
+        InvalidateMeasure();
+    }
 
     /// <summary>Releases the hosted backstage so it can be shown again later.</summary>
     public void Detach()
     {
+        DetachClassicOrbProxy();
+
         if (_child is not null)
         {
             RemoveVisualChild(_child);
@@ -82,13 +122,29 @@ internal sealed class BackstageAdorner : Adorner
     }
 
     /// <inheritdoc />
-    protected override Visual GetVisualChild(int index) => _child!;
+    protected override Visual GetVisualChild(int index)
+    {
+        if (_child is not null)
+        {
+            if (index == 0)
+            {
+                return _child;
+            }
+
+            index--;
+        }
+
+        return index == 0 && _classicOrbProxy is not null
+            ? _classicOrbProxy
+            : throw new ArgumentOutOfRangeException(nameof(index));
+    }
 
     /// <inheritdoc />
     protected override Size MeasureOverride(Size constraint)
     {
         Size size = AdornedElement.RenderSize;
         _child?.Measure(size);
+        _classicOrbProxy?.Measure(_classicOrbProxySize);
         return size;
     }
 
@@ -96,6 +152,7 @@ internal sealed class BackstageAdorner : Adorner
     protected override Size ArrangeOverride(Size finalSize)
     {
         _child?.Arrange(new Rect(new Point(0, 0), AdornedElement.RenderSize));
+        _classicOrbProxy?.Arrange(new Rect(_classicOrbProxyOrigin, _classicOrbProxySize));
         return AdornedElement.RenderSize;
     }
 }

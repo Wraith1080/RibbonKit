@@ -15,12 +15,15 @@ public class RtlWindowChromeTests
     {
         XDocument document = LoadTheme("Controls.Window.xaml");
         XElement physicalHost = NamedElement(document, "PhysicalWindowFrameHost");
+        XElement aeroFrameHost = NamedElement(document, "AeroFrameHost");
         XElement windowRoot = NamedElement(document, "PART_WindowRoot");
         XElement logicalHost = NamedElement(document, "WindowAdornerHost");
 
         Assert.Equal("LeftToRight", (string?)physicalHost.Attribute("FlowDirection"));
+        Assert.Equal("LeftToRight", (string?)aeroFrameHost.Attribute("FlowDirection"));
         Assert.Equal("LeftToRight", (string?)windowRoot.Attribute("FlowDirection"));
-        Assert.Same(physicalHost, windowRoot.Parent);
+        Assert.Same(physicalHost, aeroFrameHost.Parent);
+        Assert.Same(aeroFrameHost, windowRoot.Parent);
         Assert.Equal(
             "{TemplateBinding FlowDirection}",
             (string?)logicalHost.Attribute("FlowDirection"));

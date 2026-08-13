@@ -82,6 +82,21 @@ public enum RibbonBackstageDesign
     /// active theme derives (2010 a smooth gel, 2007 a hard-crease glass), so one value serves both.
     /// </summary>
     Classic2010,
+
+    /// <summary>
+    /// A RibbonKit-authored Office 2007 glass interpretation: an optional translucent or opaque
+    /// blue rail, hard-crease navigation markers, a glass back button, and a beveled content edge.
+    /// This is an alternative full-window File surface, not a claim that Office 2007 shipped a
+    /// historical Backstage view.
+    /// </summary>
+    Glass2007,
+
+    /// <summary>
+    /// A RibbonKit-authored classic Office 2007 interpretation: an opaque silver-blue framed
+    /// shell, larger navigation rows, gold glass selection, and dense document-oriented content.
+    /// This is an optional Backstage concept, not a claim that Office 2007 shipped one.
+    /// </summary>
+    Classic2007,
 }
 
 /// <summary>

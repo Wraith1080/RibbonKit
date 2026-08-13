@@ -1,8 +1,14 @@
 # Office 2007 Theme — Implementation Plan
 
-> **Status: COMPLETE 2026-07-27**, bar one deliberate deferral (§9): the 2007 window frame. The
-> other original deferral, the two-pane application menu, shipped on 2026-07-28. The as-built record is
-> `04-DESIGN-NOTES.md` §3.38 — read that first; this plan stays useful for the measured palette in §4.
+> **Status: S0-S9 COMPLETE.** The guaranteed opaque no-material window baseline was
+> corrected against the restored Word reference on 2026-08-12
+> and the separately selectable Aero-inspired prototype now passes its automated gate plus
+> active/inactive, normal/maximized live checks plus proportional 100/125/150/175/200% geometry and
+> real 125%↔150% mixed-monitor caption, resize, maximize/work-area and Snap Layout verification. The
+> preserved RibbonKit-original `Glass2007` modern Backstage shell and
+> the separate opaque `Classic2007` document-dashboard concept pass their automated contracts and
+> live same-process/restart switch checks. The other original deferral,
+> the two-pane application menu, shipped on 2026-07-28. See `04-DESIGN-NOTES.md` §§3.38, 3.88-3.89.
 > Original header follows.
 >
 > **Status:** S0 complete, S1 not started. Written 2026-07-27; revised the same day after the user
@@ -61,7 +67,11 @@ rendered into an adorner as a full-window overlay; the only variation point is
 What the README row actually describes is the application *button* plus the backstage. **Fix the
 README row as part of S6.**
 
-**Consequence for this theme:** add a fourth `RibbonBackstageDesign` value, `Classic2007`. The real
+**Historical consequence, later superseded:** this audit proposed a fourth
+`RibbonBackstageDesign` value named `Classic2007`. It was not added before v1 because it duplicated
+`Classic2010`; post-v1, `Glass2007=3` became the first distinct 2007 Backstage interpretation. The
+name is now used by the separately approved concept as the additive fifth value
+`Classic2007=4`, preserving serialized values. The real
 two-pane dropdown menu — left command column, right "Recent Documents" pane, bottom
 `Word Options` / `Exit Word` bar, all visible in `application_menu.png` — is a **new control**, and
 belongs in its own work item after the theme lands. It is a genuine feature gap, not a theme gap.
@@ -92,13 +102,15 @@ supplied afterwards and the band is now measured — see §4.4. Nothing outstand
 
 The DPI-scaled non-Aero shot is at **125%**. Comparing it against the 96 DPI shot:
 
-- **Every colour is bit-identical** — `#3B5A82` frame, `#E3EBF6`/`#CADEF7` title bar, `#BFDBFF`
+- **Every colour is bit-identical** — `#3B5A82` edge, `#E3EBF6`/`#CADEF7` title bar, `#BFDBFF`
   strip, `#8DB2E3` body border, the `#E7EFF8`/`#DFECF7` body highlight lines. The palette is
   DPI-independent.
 - **Geometry scales linearly.** The orb measures **46px at 125%** against 36–37px at 100% — a ratio
   of 1.26. So the orb is a fixed DIP size and WPF's own scaling handles the rest: no per-DPI orb
   metrics, and no reason to expect trouble in the S6 DPI matrix.
-- The window frame measures ~9px at 125%, so **5–7px at 100%** (refining the §6 estimate).
+- **Correction (2026-08-12):** the earlier ~9px "window frame" measurement sampled the bevel/padding
+  beside the ribbon/document client area. The title and status bar begin immediately inside the
+  one-pixel native edge, so the wider blue stack is not a full-window opaque frame.
 
 ---
 
@@ -127,7 +139,7 @@ All values sampled from the supplied screenshots. Gradients are vertical
 | `Ribbon.ContentBackground` (groups area) | `0.00 #DBE6F4` → `0.17 #C8D9ED` → `1.00 #E3F4FF` |
 | `TitleBar.Background` | `0.00 #E4EBF6` → `0.14 #D5E5FA` → `0.28 #CADEF7` → `1.00 #E4EFFD` |
 | `TitleBar.Foreground` | `#15428B` |
-| Window frame (see §6) | `#3B5A82` 1px outline over a ~5px `#9BBBE3` band |
+| Restored non-Aero edge (see §6) | One native/system edge; no Office-painted full-window band. The `#9BBBE3` strip is client-area padding beside the ribbon/document only. |
 | Client area below the ribbon | `#A3C2EA` |
 
 **The 2007 signature is the "valley".** Both the title bar and the ribbon body run *light → dip →
@@ -380,22 +392,19 @@ two deliberately separate levels. The first is the guaranteed historical baselin
 optional Aero-inspired presentation that may use a supported system backdrop but must never be
 required for a correct Office 2007 window.
 
-### 6.1 Guaranteed opaque frame
+### 6.1 Guaranteed opaque no-material baseline
 
 - Use the §4.1 `TitleBar.Background` valley for the solid title bar.
-- Draw the measured non-Aero frame: a `#3B5A82` 1px outside outline over a 5–7 DIP `#9BBBE3`
-  active-window band on all sides, with a quieter inactive state. This is the default and the
-  automatic fallback whenever transparency or a supported backdrop is unavailable.
-- Add frame brushes and metrics through the shared token contract, with neutral/transparent values
-  in every other theme. Do not fork the `RibbonWindow` control template for Office 2007.
-- Keep the decoration in the physical left-to-right window-frame layer. Do not make theme padding
-  impersonate the measured maximize inset owned by `RibbonWindow`; hide or collapse the side/bottom
-  decorative bands while maximized and re-measure the real work-area overhang.
+- Keep `PART_WindowRoot` flush with the physical-LTR host and let supported native `WindowChrome`/DWM
+  supply its one-pixel edge. Do not paint a duplicate Office outline or a full-window blue band.
+- Preserve the ribbon/document client bevel and padding in their existing templates. Those local
+  surfaces must not inset the title bar or status bar.
+- Use a quieter inactive title treatment. Keep its metric in the shared token contract with a neutral
+  value in every other theme; do not fork the `RibbonWindow` template for Office 2007.
 
 `RibbonWindow` already uses `WindowChrome` with themed caption buttons, so the frame is reachable,
-but it is the first RibbonKit theme to ask for a thick coloured window edge. The existing
-measured-margin maximize fix (§2.3) must be rechecked because it adjusts `PART_WindowRoot` and a new
-visual inset is exactly the sort of change that can expose an incorrect assumption.
+but the opaque reference does not justify a new app-painted outer inset. The existing measured-margin
+maximize fix (§2.3) remains the only geometry around `PART_WindowRoot` and must stay unchanged.
 
 ### 6.2 Optional Aero-inspired frame
 
@@ -411,18 +420,18 @@ The optional treatment layers Office 2007-authored visuals over the same geometr
 
 This remains an **app-owned appearance preference**, separate from ribbon customization Import,
 Export and Reset. Choosing `RibbonTheme.Office2007` must not silently turn on a DWM material. Aero is
-also a composed window appearance, not a new native backdrop kind, so do not add
-`RibbonBackdrop.Aero` merely to name it; first prototype whether a separate frame-appearance setting
-is needed at all.
+also a composed window appearance, not a new native backdrop kind. The prototype therefore adds
+`RibbonWindow.FrameAppearance=Office2007Aero`, not `RibbonBackdrop.Aero`; the existing Acrylic
+preference remains independently selectable.
 
 Do not use `AllowsTransparency=True`, capture and CPU-blur the desktop, inject into DWM, hook private
 composition functions, or depend on downloaded system symbols. `DWMBlurGlass` is a useful visual
 reference for glass tint, reflection, caption glow and inactive-window treatment, but its global
 injection architecture and source are not a RibbonKit dependency or implementation starting point.
 
-The tab strip colour `#BFDBFF` is identical in both the Aero and non-Aero Office references. Keep it
-opaque; the optional material belongs to the frame/title composition rather than bleeding through
-the ribbon.
+The tab strip colour `#BFDBFF` is identical in both the Aero and non-Aero Office references. It stays
+opaque in the implemented prototype; the optional material belongs to the restored frame/title
+composition rather than bleeding through the ribbon.
 
 ### 6.3 Reference captures requested
 
@@ -436,9 +445,61 @@ Capture, when practical:
 3. a maximized window to show which bands disappear or change; and
 4. the DWMBlurGlass blur, tint, opacity and reflection settings used for the captures.
 
-Use the captures to measure border thickness, tint, highlight/reflection placement, grain, caption
-contrast and the inactive-state delta. Do not sample wallpaper-contaminated pixels as opaque token
-colours.
+The supplied captures cover normal/maximized Task Manager and Paint, the top of Aero Word, and the
+DWMBlurGlass settings. They establish restored frame continuity, maximized frame removal and the
+active/inactive delta; the injected implementation remains a visual reference only. Do not sample
+wallpaper-contaminated pixels as opaque token colours.
+
+### 6.4 RibbonKit-original Glass2007 Backstage
+
+Post-v1, the user approved a distinct RibbonKit-authored `Glass2007` Backstage after reviewing the
+Modern translucent rail over the new Aero-inspired frame. It is an optional full-window File surface,
+not a historical-emulation claim: the two-pane orb application menu remains the Office 2007 default.
+Theme selection does not select this design, enable translucency or request Acrylic.
+
+The first stage reuses the shared Backstage template and existing generation-aware tokens. Opaque
+mode paints the 2007 rail gradient; translucent mode exposes Acrylic only through the rail
+beneath the same tint used by the Aero title and outer frame. The page sheet stays opaque. Navigation uses inset
+two-DIP tiles, gold hover, hard-crease glass selection and an orb-derived back button. Live review
+removed the authored rail/content strokes and the remaining top highlight because they read as
+nested borders and produced a stray selected-row line. The larger three-sided outline shown in the
+follow-up capture belonged to the Aero frame bevel and title-bottom highlight; both now collapse only
+while Backstage hides the title content. Hover/selected tile outlines remain crisp, while their fills and the back-button disc
+are 88% opaque so a small amount of rail color passes through. Stop for a live shell review before
+redesigning template/recent-document page content.
+
+The translucent rail must bind `RibbonWindow.AeroFrameTint` and its intensity. In inactive Backstage,
+the title and rail retain `InactiveTitleBarOpacity`, while the outer frame uses the dedicated
+`AeroInactiveBackstageFrameOpacity`. Its Office 2007 value is `1`: DWM supplies different suspended-
+Acrylic fallback colors to the outermost frame and transparent client rail, and full frame tint
+compensates them to the same sampled boundary color at 125%. Outside Backstage, inactive Aero keeps
+the shared title/frame fallback base opaque, quiets title content separately, and applies
+`AeroInactiveOverlayOpacity` to both authored tint layers. Using the separate
+classic-nav brush or attenuating only one surface creates the same split. Relative
+reflection/grain brushes also restart when separately mapped to the short
+title fill and full-height frame border. They therefore appear only for an active normal window with
+accepted Acrylic, and are suppressed for Backstage, inactive and opaque-fallback compositions.
+Explicit opaque mode under `Office2007Aero` restores the local three-sided white bevel around its
+gradient rail. The title-bottom highlight renders as the final non-hit-test title overlay, above
+all caption-button backgrounds, and collapses with the frame bevel in Backstage.
+
+### 6.5 Separate Classic2007 Backstage concept
+
+The later `Classic2007` option is a second RibbonKit-authored thought experiment based on a supplied
+concept image: an opaque skeuomorphic blue shell, larger command navigation, gold glass states and a
+compact document dashboard. Nav and content share the same field. One continuous dark-blue perimeter,
+a one-pixel divider and a continuous white inner highlight avoid compounded seams; a dedicated
+full-frame shadow adds depth inside the eight-DIP gutter. The dashboard has its own balanced render
+gutter so card shadows are not clipped by its `ScrollViewer`.
+
+Classic reparents the real ribbon application button into the Backstage adorner rather than creating
+a second orb. Only its four-color glyph rotates during open/close; sphere, rim and shadow stay fixed.
+Owner bindings and design-change reconciliation guarantee that `2007 Modern`/`2007 Classic` switches
+restore or host that same button correctly, including after restart. A restored `Office2007Aero`
+host adds a local four-sided white shell/frame join bevel. It does not replace `Glass2007`; the
+Showcase calls the preserved translucent design `2007 Modern` and this opaque design `2007 Classic`.
+Both remain explicit choices, and the real two-pane application menu remains the Office 2007 theme
+default.
 
 ---
 
@@ -454,10 +515,10 @@ These are recorded failures, not general advice:
 - **Run `dotnet test` after touching any theme dictionary.** `ThemeDictionaryScopeTests.cs` enforces
   the split rules and is the only thing between a mis-scoped resource and a crash on a machine you
   are not sitting at.
-- **Token parity check** — after writing `Tokens.Office2007.xaml`, diff its key set against
-  `Tokens.Office2024.xaml`. All four current files carry exactly **95 keys, identical sets**
-  (verified 2026-07-27). A missing key means a control silently renders with whatever the previous
-  theme left behind:
+- **Token parity check** — after changing a base token dictionary, diff its key set against
+  `Tokens.Office2024.xaml`. The five base dictionaries currently carry exactly **209 keys with
+  identical sets** (verified with the Aero prototype). A missing key means a control
+  silently renders with whatever the previous theme left behind:
 
   ```python
   import re, glob
@@ -501,9 +562,11 @@ partly because too much changed between looks.
 | ~~S2~~ | ~~Glass~~ | ✅ **Shipped with S1** — the measured crease values were already in hand, so splitting them out would have meant reviewing a flat 2007 that told us nothing. S2 became refinement. | — |
 | ~~S3~~ | ~~Orb~~ | ✅ **Done.** Overhang works. Needed `WindowChrome.IsHitTestVisibleInChrome` (only the bottom half was clickable), a backstage-hide trigger, size 37→46, and a shadow instead of a border. | — |
 | ~~S4~~ | ~~Geometry~~ | ✅ Group boxes + `ContentCornerRadius` 0→3 **built and verified 2026-07-27** (§4.5). The original domed-tab idea was rejected in favor of the measured flat 2007 tab strip (§3.38). The §6 window frame was split out as the plan's one remaining deliberate deferral so it can be implemented and maximize-tested independently. | — |
-| ~~S5~~ | ~~Accent + backstage~~ | ✅ **Done.** `Glass()` helper beside `Gel()`, `Office2007` case, hot-state guard widened. `Classic2007` deliberately NOT added — `Classic2010` already is the 2007 look and a near-duplicate enum member before the freeze was not worth it. | — |
+| ~~S5~~ | ~~Accent + backstage~~ | ✅ **Done.** `Glass()` helper beside `Gel()`, `Office2007` case, hot-state guard widened. `Classic2007` was deliberately not added before v1 because it duplicated `Classic2010`; the later post-v1 `Glass2007` work in S8 is a materially different translucent/opaque RibbonKit-original design. | — |
 | ~~S6~~ | ~~Wiring + verify~~ | ✅ **Done.** Showcase button + `ApplyTheme` helper, README application-menu row corrected and the 2007 row marked ✅, design notes §3.38, roadmap and features updated. DPI matrix verified clean at 100/125/150/175/200%. | — |
-| S7 | Post-v1 window frame | Build the §6.1 opaque frame first; approve normal/maximized and active/inactive behavior. Then prototype the §6.2 Aero-inspired overlay and optional Acrylic underlay without changing theme selection or customization persistence. | Opaque fallback is deterministic and correct at 100/125/150/175/200%; Aero mode falls back cleanly; resize, maximize/restore, mixed-DPI movement, caption commands and Windows 11 Snap Layouts remain correct. |
+| ~~S7~~ | ~~Post-v1 window frame~~ | ✅ **Complete 2026-08-13.** §6.1 has no app-painted full-window band in the default opaque baseline. §6.2 is independently selectable from Acrylic, falls back opaquely, distinguishes active/inactive state and collapses restored side/bottom bands when maximized. Tint brush/intensity remain host-controlled. The final gate covers proportional 100/125/150/175/200% geometry and real 125%↔150% mixed-monitor movement, all resize edges, caption commands, maximize/work-area compensation and Windows 11 Snap Layouts. | ✅ Passed. Actual Acrylic was approved live; deterministic fallback and geometry remain automated. |
+| ~~S8~~ | ~~Post-v1 Glass2007 Backstage~~ | ✅ **Complete 2026-08-13.** Additive `Glass2007` design, shared-template translucent rail continuous with active/inactive Aero title material, conditional opaque-rail bevel, crisp subtly translucent states, gold hover, hard-crease selection, dark-palette contrast, opaque content sheet, Showcase selector and appearance persistence. | Automated template/API/persistence contracts and live active/inactive Acrylic/fallback review pass. |
+| ~~S9~~ | ~~Post-v1 Classic2007 Backstage~~ | ✅ **Complete 2026-08-13.** Separate additive `Classic2007` design with one continuous opaque blue field, continuous frame/highlight/shadow, clean pane divider, the single real orb with glyph-only rotation, larger navigation, gold states and a compact Showcase-only document dashboard with unclipped shadows. `Glass2007=3` remains unchanged; `Classic2007=4` persists independently. | Shared-template/API/persistence/lifecycle contracts, live shell review and same-process/restart Modern/Classic switching pass. |
 
 ---
 
@@ -512,10 +575,14 @@ partly because too much changed between looks.
 | Risk | Likelihood | Mitigation |
 |---|---|---|
 | Orb overhang clipped by the tab scroll host | **High** — 22px of overhang, and this class of failure already happened in §3.27 | Prototype the overhang in S3 before styling. Fallback: `RibbonWindow` title-bar layer. |
-| The 5px window frame perturbs the measured-margin maximize fix (§2.3) | Medium | Re-check maximize at S4 on a multi-monitor, mixed-DPI setup. |
-| The Aero reference tempts the implementation toward private DWM hooks or `AllowsTransparency` | Medium | Keep the effect app-local: WPF token/overlay visuals plus the existing supported Acrylic path only. No injection, private composition API, desktop capture or CPU blur. |
+| The Aero material frame perturbs the measured-margin maximize fix (§2.3) | Mitigated; S7 passed | The default root remains flush and the separate Aero frame collapses when maximized. Proportional 100/125/150/175/200% checks and real 125%↔150% maximized mixed-monitor verification preserve the measured work-area inset. |
+| WPF screen coordinates retain the previous monitor transform after a DPI transition | Found and mitigated in S7 | Derive caption hit bounds from template-local DIPs, the native `ClientToScreen` origin and the current window `DpiScale`; focused tests cover all required scales, negative coordinates and mirrored corners, and real mixed-monitor Snap Layout verification confirms alignment. |
+| The Aero reference tempts the implementation toward private DWM hooks or `AllowsTransparency` | Mitigated in prototype | The effect is app-local WPF token/overlay visuals plus the existing supported Acrylic path only. No injection, private composition API, desktop capture or CPU blur. |
 | DWM material makes snapshot output machine-dependent | High for Acrylic | Approve the opaque frame and deterministic overlay in snapshots; verify the actual Acrylic composition live with reference screenshots rather than creating unstable pixel baselines. |
-| Frame appearance leaks into ribbon customization persistence | Low but user-visible | Keep the host's backdrop/frame preference in its versioned appearance settings; customization Import/Export/Reset remains structural. |
+| Frame appearance leaks into ribbon customization persistence | Mitigated in prototype | Schema-3 app appearance preferences own backdrop/frame/tint state and migrate schemas 1–2; customization Import/Export/Reset remains structural. |
+| A RibbonKit-original Backstage is mistaken for historical Office 2007 UI | Low | Name and document it as `Glass2007`, keep it explicitly selected, and retain the two-pane orb application menu as the Office 2007 default. |
+| Glass2007 becomes a second Backstage template fork | Mitigated | Both completed 2007 Backstage designs remain additive trigger branches in the one shared template and consume the existing `DynamicResource` token contract. |
+| Classic2007 is mistaken for historical Office 2007 behavior or replaces Glass2007 | Mitigated | Both additive enum values and Showcase selectors remain, labeled `2007 Classic` and `2007 Modern`; lifecycle tests prove switching preserves each surface and the same real orb. The supplied image remains documented as a concept rather than historical evidence. |
 | The contextual band wants a gradient + edge line, but the tokens are solid brushes | Medium | Gradients drop in free at a token key; the `#FDE41B` edge line may need a new key (§4.4). Decide in S4; a new key goes into all five files. |
 | **The group-box template change is the largest single edit in this theme** | **Confirmed, not a risk any more** | Six new keys across five theme files plus the `RibbonGroup` template (§4.5). Do it as its own commit, run `dotnet test` immediately after, and keep the flat themes zeroed. |
 | A new resource breaks the split-dictionary scope rule | Medium | `dotnet test` after every dictionary edit. |
@@ -531,9 +598,8 @@ widest visual range it will ever face. The remaining v1 blockers and later addit
 
 1. ~~**Phase 7 unit tests**~~ — **completed 2026-08-01**; `RibbonMergeModalTests` covers the
    automated invariants from `06-MERGE-AND-MODAL-PLAN.md` §7.
-2. **The 2007 window frame** — the theme's one remaining deliberate deferral; implement the opaque
-   baseline and optional Aero-inspired enhancement in S7, then maximize/Snap/mixed-DPI test them
-   independently.
+2. ~~**The 2007 window frame**~~ — **completed in S7** with the corrected opaque baseline, optional
+   Aero-inspired enhancement and independent maximize/Snap/mixed-DPI gate.
 3. **Dark mode, RTL, localization and visual-regression snapshots** — the rest of Phase 6.
 4. **Phase 8** — API freeze, repository metadata, README screenshots, and release packaging.
 5. **MDI M1–M3 (post-v1)** — cascade/tile/Ctrl+Tab, MVVM demo, tabbed mode + persistence.

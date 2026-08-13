@@ -54,7 +54,8 @@ public class Backstage : TabControl
             typeof(Backstage),
             new FrameworkPropertyMetadata(
                 RibbonBackstageDesign.Classic,
-                FrameworkPropertyMetadataOptions.Inherits));
+                FrameworkPropertyMetadataOptions.Inherits,
+                OnDesignChanged));
 
     /// <summary>Sets the backstage <see cref="Design"/> for an element (and its subtree).</summary>
     public static void SetDesign(DependencyObject element, RibbonBackstageDesign value) =>
@@ -75,6 +76,12 @@ public class Backstage : TabControl
     private ButtonBase? _backButton;
 
     private FrameworkElement? _contentArea;
+
+    /// <summary>
+    /// Notifies the owning ribbon when the live design changes so design-specific overlay chrome
+    /// can move between its normal ribbon host and the Backstage adorner without an app restart.
+    /// </summary>
+    internal event EventHandler? DesignChanged;
 
     static Backstage()
     {
@@ -106,14 +113,27 @@ public class Backstage : TabControl
     }
 
     /// <summary>
-    /// The backstage chrome design: <see cref="RibbonBackstageDesign.Classic"/> (the
-    /// accent-colored 2013 column, default) or <see cref="RibbonBackstageDesign.Modern"/>
-    /// (the light 2024 rail). Inherited by the nav items.
+    /// The backstage chrome design. <see cref="RibbonBackstageDesign.Classic"/> is the
+    /// accent-colored 2013 column (the default), <see cref="RibbonBackstageDesign.Modern"/>
+    /// is the light 2024 rail, <see cref="RibbonBackstageDesign.Classic2010"/> is the shared
+    /// pre-2013 glass rail, and <see cref="RibbonBackstageDesign.Glass2007"/> is RibbonKit's
+    /// optional modern Office 2007 glass interpretation. <see cref="RibbonBackstageDesign.Classic2007"/>
+    /// is the separate opaque, document-oriented Office 2007 concept. Inherited by the nav items.
     /// </summary>
     public RibbonBackstageDesign Design
     {
         get => GetDesign(this);
         set => SetDesign(this, value);
+    }
+
+    private static void OnDesignChanged(
+        DependencyObject dependencyObject,
+        DependencyPropertyChangedEventArgs eventArgs)
+    {
+        if (dependencyObject is Backstage backstage && eventArgs.OldValue != eventArgs.NewValue)
+        {
+            backstage.DesignChanged?.Invoke(backstage, EventArgs.Empty);
+        }
     }
 
     /// <summary>

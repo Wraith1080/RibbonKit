@@ -61,6 +61,10 @@ public partial class MainWindow : RibbonWindow
     private LocalizationRtlDemo? _localizationRtlDemo;
     private string? _customAccent;
     private ShowcaseBackdropPreference _preferredBackdrop;
+    private RibbonWindowFrameAppearance _preferredFrameAppearance;
+    private bool _useAccentForAeroFrame;
+    private double _aeroFrameTintIntensity =
+        ShowcaseAppearancePreferences.DefaultAeroFrameTintIntensity;
     private bool _restoringAppearance;
 
     internal event EventHandler? ApplicationSurfaceChanged;
@@ -167,6 +171,17 @@ public partial class MainWindow : RibbonWindow
             AccentedTitleBarToggle.IsChecked = preferences.AccentedTitleBar;
             ApplyAccentPreference(preferences.Accent);
 
+            _preferredFrameAppearance = preferences.FrameAppearance;
+            Office2007AeroFrameToggle.IsChecked =
+                preferences.FrameAppearance == RibbonWindowFrameAppearance.Office2007Aero;
+            ApplyFrameAppearancePreference();
+
+            _useAccentForAeroFrame = preferences.UseAccentForAeroFrame;
+            UseAccentForAeroFrameToggle.IsChecked = preferences.UseAccentForAeroFrame;
+            _aeroFrameTintIntensity = preferences.AeroFrameTintIntensity;
+            AeroFrameTintIntensitySlider.Value = preferences.AeroFrameTintIntensity;
+            ApplyAeroFrameTintPreference();
+
             ShowcaseBackstage.Design = preferences.BackstageDesign;
             BackstageTranslucentToggle.IsChecked = preferences.BackstageTranslucent;
             ApplicationMenuToggle.IsChecked =
@@ -208,6 +223,9 @@ public partial class MainWindow : RibbonWindow
             Accent = _customAccent,
             DarkMode = ThemeManager.IsDarkMode,
             AccentedTitleBar = ThemeManager.IsAccentedTitleBar,
+            FrameAppearance = _preferredFrameAppearance,
+            UseAccentForAeroFrame = _useAccentForAeroFrame,
+            AeroFrameTintIntensity = _aeroFrameTintIntensity,
             BackstageDesign = ShowcaseBackstage.Design,
             BackstageTranslucent = ShowcaseBackstage.Translucent,
             FileSurface = MainRibbon.ApplicationMenu is null
@@ -291,6 +309,7 @@ public partial class MainWindow : RibbonWindow
         DarkModeToggle.IsEnabled = ThemeManager.SupportsDarkMode(theme);
 
         bool is2007 = theme == RibbonTheme.Office2007;
+        Office2007FrameGroup.IsEnabled = is2007;
         MainRibbon.ApplicationButtonShape = is2007
             ? RibbonApplicationButtonShape.Orb
             : RibbonApplicationButtonShape.Tab;
@@ -299,6 +318,9 @@ public partial class MainWindow : RibbonWindow
         // and every generation after it opened a backstage instead. Setting the toggle rather than
         // the ribbon property keeps the two in sync — the Checked handler does the actual swap.
         ApplicationMenuToggle.IsChecked = is2007;
+        ApplyFrameAppearancePreference();
+        ApplyAeroFrameTintPreference();
+        UpdateBackdropSurfaceTransparency();
         NotifyApplicationSurfaceChanged();
         SaveAppearancePreferences();
     }
@@ -373,6 +395,7 @@ public partial class MainWindow : RibbonWindow
             ThemeManager.SetAccent(Application.Current, color);
         }
 
+        ApplyAeroFrameTintPreference();
         SaveAppearancePreferences();
     }
 
@@ -399,6 +422,7 @@ public partial class MainWindow : RibbonWindow
                     : ShowcaseAppearancePreferencesSerializer.NormalizeAccent(tag) == _customAccent;
             });
         AccentGallery.SelectedItem = matchingItem;
+        ApplyAeroFrameTintPreference();
     }
 
     private void OnAnimationOff(object sender, RoutedEventArgs e) =>
@@ -413,7 +437,7 @@ public partial class MainWindow : RibbonWindow
     private void OnToggleRespectSystemMotion(object sender, RoutedEventArgs e) =>
         RibbonAnimation.RespectSystemReduceMotion = (sender as RibbonToggleButton)?.IsChecked == true;
 
-    // Pick one of the three backstage designs (Classic 2013 / Modern 2024 / Classic2010 glass)
+    // Pick one of the Backstage designs, including the independent modern and classic 2007 concepts,
     // from the button's Tag. Open the File menu to see the change.
     private void OnSelectBackstageDesign(object sender, RoutedEventArgs e)
     {
@@ -457,6 +481,78 @@ public partial class MainWindow : RibbonWindow
             RibbonBackdrop.Acrylic,
             ShowcaseBackdropPreference.Acrylic,
             MicaToggle);
+
+    private void OnToggleOffice2007AeroFrame(object sender, RoutedEventArgs e)
+    {
+        _preferredFrameAppearance =
+            (sender as RibbonToggleButton)?.IsChecked == true
+                ? RibbonWindowFrameAppearance.Office2007Aero
+                : RibbonWindowFrameAppearance.Default;
+        ApplyFrameAppearancePreference();
+        SaveAppearancePreferences();
+    }
+
+    private void OnToggleAeroFrameAccent(object sender, RoutedEventArgs e)
+    {
+        _useAccentForAeroFrame =
+            (sender as RibbonCheckBox)?.IsChecked == true;
+        ApplyAeroFrameTintPreference();
+        SaveAppearancePreferences();
+    }
+
+    private void OnAeroFrameTintIntensityChanged(
+        object sender,
+        RoutedPropertyChangedEventArgs<double> e)
+    {
+        _aeroFrameTintIntensity = e.NewValue;
+        if (AeroFrameTintIntensityValue is not null)
+        {
+            AeroFrameTintIntensityValue.Text = e.NewValue.ToString("P0", CultureInfo.CurrentCulture);
+        }
+
+        // Value is assigned while InitializeComponent builds the Slider. The named ribbon and
+        // persistence surfaces are not ready until the window has completed initialization.
+        if (!IsInitialized)
+        {
+            return;
+        }
+
+        ApplyAeroFrameTintPreference();
+        SaveAppearancePreferences();
+    }
+
+    private void OnResetAeroFrameTintIntensity(object sender, RoutedEventArgs e) =>
+        AeroFrameTintIntensitySlider.Value =
+            ShowcaseAppearancePreferences.DefaultAeroFrameTintIntensity;
+
+    private void ApplyFrameAppearancePreference()
+    {
+        FrameAppearance =
+            ThemeManager.CurrentTheme == RibbonTheme.Office2007
+                ? _preferredFrameAppearance
+                : RibbonWindowFrameAppearance.Default;
+    }
+
+    private void ApplyAeroFrameTintPreference()
+    {
+        AeroFrameTintIntensity = _aeroFrameTintIntensity;
+
+        if (!_useAccentForAeroFrame)
+        {
+            // Return control to the shared style's DynamicResource so Office 2007 Blue/Black and
+            // future token changes continue to flow without a stale local brush.
+            ClearValue(AeroFrameTintProperty);
+            return;
+        }
+
+        Color accent = Application.Current.TryFindResource("RibbonKit.Brushes.Accent") is
+            SolidColorBrush accentBrush
+                ? accentBrush.Color
+                : Color.FromRgb(0x2B, 0x57, 0x9A);
+        var frameBrush = new SolidColorBrush(Color.FromRgb(accent.R, accent.G, accent.B));
+        frameBrush.Freeze();
+        AeroFrameTint = frameBrush;
+    }
 
     // Shared Mica/Acrylic plumbing: both are DWM system backdrops applied the same way, and a
     // window has exactly ONE — so checking one material overwrites the DWM attribute and
@@ -506,13 +602,11 @@ public partial class MainWindow : RibbonWindow
             // transparent title bar and overlap our custom caption buttons.
             MicaHelper.ShowNativeCaptionButtons(this, false);
 
-            Background = Brushes.Transparent;
-            MainContentArea.Background = Brushes.Transparent;
-
             // Let the title bar go transparent so the material shows through it — but only for
             // the 2024 look with a non-colored title bar (ThemeManager enforces that rule and
             // re-derives it across theme/accent changes, so switching themes no longer reverts it).
             ThemeManager.SetTitleBarBackdrop(Application.Current, true);
+            UpdateBackdropSurfaceTransparency();
 
             // Backstage translucency is an independent app preference. Leave its current value
             // alone: false keeps the material in the title/ribbon chrome, while true deliberately
@@ -531,15 +625,39 @@ public partial class MainWindow : RibbonWindow
             // risk to avoid, because the visible content is opaque white again below.
             MicaHelper.ShowNativeCaptionButtons(this, true);
             ThemeManager.SetTitleBarBackdrop(Application.Current, false);
+            UpdateBackdropSurfaceTransparency();
+        }
+
+        SaveAppearancePreferences();
+    }
+
+    private void UpdateBackdropSurfaceTransparency()
+    {
+        if (ActiveBackdrop == RibbonBackdrop.None)
+        {
             SetResourceReference(
                 Control.BackgroundProperty,
                 "RibbonKit.Brushes.Window.Background");
             MainContentArea.SetResourceReference(
                 Panel.BackgroundProperty,
                 "RibbonKit.Brushes.Window.Background");
+            return;
         }
 
-        SaveAppearancePreferences();
+        Background = Brushes.Transparent;
+
+        // Office 2007 exposes material only through the optional frame/title composition. The
+        // ribbon, tab strip, document body and status area remain opaque over Acrylic.
+        if (ThemeManager.CurrentTheme == RibbonTheme.Office2007)
+        {
+            MainContentArea.SetResourceReference(
+                Panel.BackgroundProperty,
+                "RibbonKit.Brushes.Window.Background");
+        }
+        else
+        {
+            MainContentArea.Background = Brushes.Transparent;
+        }
     }
 
     private enum OptionsPageKind

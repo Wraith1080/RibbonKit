@@ -25,7 +25,8 @@ internal enum ShowcaseBackdropPreference
 /// </summary>
 internal sealed record ShowcaseAppearancePreferences
 {
-    internal const int CurrentSchemaVersion = 1;
+    internal const int CurrentSchemaVersion = 3;
+    internal const double DefaultAeroFrameTintIntensity = 0.16;
 
     public int SchemaVersion { get; init; } = CurrentSchemaVersion;
 
@@ -37,6 +38,12 @@ internal sealed record ShowcaseAppearancePreferences
     public bool DarkMode { get; init; }
 
     public bool AccentedTitleBar { get; init; }
+
+    public RibbonWindowFrameAppearance FrameAppearance { get; init; }
+
+    public bool UseAccentForAeroFrame { get; init; }
+
+    public double AeroFrameTintIntensity { get; init; } = DefaultAeroFrameTintIntensity;
 
     public RibbonBackstageDesign BackstageDesign { get; init; } = RibbonBackstageDesign.Modern;
 
@@ -68,6 +75,10 @@ internal static class ShowcaseAppearancePreferencesSerializer
         {
             SchemaVersion = ShowcaseAppearancePreferences.CurrentSchemaVersion,
             Accent = NormalizeAccent(preferences.Accent),
+            AeroFrameTintIntensity = IsValidAeroFrameTintIntensity(
+                preferences.AeroFrameTintIntensity)
+                    ? preferences.AeroFrameTintIntensity
+                    : ShowcaseAppearancePreferences.DefaultAeroFrameTintIntensity,
         };
 
         return JsonSerializer.Serialize(normalized, Options);
@@ -92,8 +103,10 @@ internal static class ShowcaseAppearancePreferencesSerializer
         }
 
         if (parsed is null
-            || parsed.SchemaVersion != ShowcaseAppearancePreferences.CurrentSchemaVersion
+            || parsed.SchemaVersion is < 1 or > ShowcaseAppearancePreferences.CurrentSchemaVersion
             || !Enum.IsDefined(parsed.Theme)
+            || !Enum.IsDefined(parsed.FrameAppearance)
+            || !IsValidAeroFrameTintIntensity(parsed.AeroFrameTintIntensity)
             || !Enum.IsDefined(parsed.BackstageDesign)
             || !Enum.IsDefined(parsed.FileSurface)
             || !Enum.IsDefined(parsed.Backdrop))
@@ -107,9 +120,16 @@ internal static class ShowcaseAppearancePreferencesSerializer
             return false;
         }
 
-        preferences = parsed with { Accent = accent };
+        preferences = parsed with
+        {
+            SchemaVersion = ShowcaseAppearancePreferences.CurrentSchemaVersion,
+            Accent = accent,
+        };
         return true;
     }
+
+    private static bool IsValidAeroFrameTintIntensity(double value) =>
+        double.IsFinite(value) && value is >= 0d and <= 1d;
 
     internal static string? NormalizeAccent(string? value)
     {

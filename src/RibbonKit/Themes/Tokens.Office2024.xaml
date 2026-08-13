@@ -14,6 +14,15 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.ContentBackground" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.SurfaceBackground" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Window.Background" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroFallback" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroInactiveFallback" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroTint" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroInnerHighlight" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroReflection" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroGrain" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroTitleForeground" Color="#1A1A1A" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionHover" Color="#1F000000" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionPressed" Color="#33000000" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Border" Color="#E0E0E0" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Primary" Color="#1A1A1A" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Secondary" Color="#616161" />
@@ -125,7 +134,17 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Classic.NavBackground" Color="#2B579A" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemSelectedBorder" Color="#17365D" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.NavBackground" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Classic2007.Foreground" Color="#2B579A" />
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Backstage.Classic2007.ShellGlass" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#F7FCFF" />
+        <GradientStop Offset="0.12" Color="#E5F3FF" />
+        <GradientStop Offset="0.45" Color="#C8E2FA" />
+        <GradientStop Offset="0.45" Color="#B8D6F2" />
+        <GradientStop Offset="0.82" Color="#B8D4EF" />
+        <GradientStop Offset="1" Color="#91B9E0" />
+    </LinearGradientBrush>
     <system:Double x:Key="RibbonKit.Metrics.BackstageBackButtonSize">36</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.Backstage.GlassChromeOpacity">0.88</system:Double>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ContentBackground" Color="#FFFFFF" />
     <DropShadowEffect x:Key="RibbonKit.Effects.Backstage.ContentShadow"
                       BlurRadius="6" ShadowDepth="1" Direction="180"
@@ -207,6 +226,17 @@
                       Opacity="0.5" Color="#2E4257" RenderingBias="Quality" />
     <!-- Left inset of the title-bar QAT; reproduces the previous hard-coded 2,0,6,0. -->
     <Thickness x:Key="RibbonKit.Metrics.TitleBarQatMargin">2,0,6,0</Thickness>
+    <system:Double x:Key="RibbonKit.Metrics.WindowFrame.CaptionHeight">34</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.WindowFrame.InactiveTitleBarOpacity">1</system:Double>
+    <Thickness x:Key="RibbonKit.Metrics.WindowFrame.AeroThickness">0</Thickness>
+    <system:Double x:Key="RibbonKit.Metrics.WindowFrame.AeroTintIntensity">0</system:Double>
+    <Thickness x:Key="RibbonKit.Metrics.WindowFrame.AeroInnerHighlightMargin">0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.WindowFrame.AeroInnerHighlightThickness">0</Thickness>
+    <system:Double x:Key="RibbonKit.Metrics.WindowFrame.AeroReflectionOpacity">0</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.WindowFrame.AeroGrainOpacity">0</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.WindowFrame.AeroInactiveOverlayOpacity">1</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.WindowFrame.AeroInactiveBackstageFrameOpacity">1</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.WindowFrame.AeroMaterialTitleBackgroundOpacity">1</system:Double>
     <system:Double x:Key="RibbonKit.Metrics.ApplicationOrbSize">46</system:Double>
     <Thickness x:Key="RibbonKit.Metrics.ApplicationOrbMargin">2,0,6,0</Thickness>
 

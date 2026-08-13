@@ -4,12 +4,12 @@ A custom control in c# language for WPF Application to create Office Fluent UI l
 
 ## Project context for coding agents
 
-Last consolidated: 2026-08-01 from the repository Markdown files.
+Last consolidated: 2026-08-13 from the repository Markdown files.
 
 ### Product and source of truth
 
 - RibbonKit is an MIT-licensed, Office Fluent UI-style WPF control library for `net8.0-windows` and `net9.0-windows`. Version 1.0.0 is published through GitHub Releases; NuGet.org publication is not planned.
-- Treat current user instructions and this file as authoritative. For implementation status and pitfalls, prefer `04-DESIGN-NOTES.md`, especially sections 4-5, over older plans. Use `README.md` for the public feature summary. Files under `docs/` record architecture and historical plans; their original sequencing can be stale even when their design constraints remain useful.
+- Treat current user instructions and this file as authoritative. For current implementation status, use `04-DESIGN-NOTES.md` §5; for subsystem history and pitfalls, use its matching §3 entry. Use `README.md` for the public feature summary. Files under `docs/` are architecture/design records unless their status banner says otherwise; do not infer current implementation state from their original sequencing.
 - The showcase at `samples/RibbonKit.Showcase` is the executable integration demo and should grow with product features. Its dedicated Localization/RTL lab is the manual verification surface for provider refresh, mirroring, popup direction, and customization dialogs.
 
 ### Architecture invariants
@@ -24,12 +24,12 @@ Last consolidated: 2026-08-01 from the repository Markdown files.
 
 ### Status at consolidation
 
-- Roadmap phases 0-8 and the GitHub v1.0.0 launch are complete through design-notes §3.86. All five themes (Office 2007, 2010, 2013, 2019, and 2024) ship with generation-specific dark/black variants, and DPI was verified at 100/125/150/175/200%. The deterministic 40-image theme/variant matrix covers ten palettes at 100/125/150/200%, with focused RTL ribbon, QAT-customization, and representative bidirectional Backstage approvals. Post-v1 work includes MDI M1-M3, the Office 2007 window frame, the provisional custom-control projection plan, and future themes in this order: the sharp-edged pre-rounded Office 2021 bridge, RibbonKit Aurora, Warm Sand, and Graphite Copper; Evergreen, Aubergine and Polar Slate remain exploratory. See `docs/08-CUSTOM-CONTROL-INTEGRATION-PLAN.md` and `docs/09-FUTURE-THEMES-PLAN.md`.
-- The Office 2007 two-pane application menu has shipped as `RibbonApplicationMenu`; the 2007 window frame remains deferred.
+- Roadmap phases 0-8 and the GitHub v1.0.0 launch are complete. Post-v1 Office 2007 window-frame/Backstage S7-S9 is complete through design-notes §3.94. MDI M1-M3 remain; custom-control projections, future themes, and RibbonKit Writer are plans rather than implementation evidence.
+- The Office 2007 two-pane application menu has shipped as `RibbonApplicationMenu`. The post-v1 S7 window-frame work is complete: the corrected no-material baseline and independently selectable Aero-inspired/Acrylic presentation passed the 100/125/150/175/200% proportional gate plus live 125%↔150% mixed-monitor, caption, eight-edge resize, maximize/work-area and Snap Layout checks. The additive `Glass2007` and `Classic2007` Backstage designs are complete without replacing the real application-menu default; Classic uses a shared-chrome Backstage orb proxy while the real ribbon button remains in its original layout slot.
 - MDI milestones M0 and M4 are complete: floating children plus tab/caption merge work. M1-M3 remain: arrange commands and keyboard cycling, full MVVM proof, tabbed-document mode, and persistence.
-- Windows verification is complete through design-notes §3.62, including whole-surface/reduced-motion flyouts, the Ribbon Editor's Large-only split-layout behavior, runtime split-button/companion states, proxy enabled-state propagation, the application-menu theme/DPI matrix, the final live localization/RTL popup/window pass, and crash-free atomic Ribbon Editor cycling among Closed, Backstage, and application-menu previews with pane selection.
+- Windows verification includes whole-surface/reduced-motion flyouts, split-button states, proxy enabled-state propagation, the application-menu theme/DPI matrix, localization/RTL popup and window behavior, the responsive Ribbon Editor (§3.63a), and the Office 2007 frame/Backstage work (§§3.89-3.94).
 - The compact `RibbonCheckBox`, `RibbonRadioButton`, and `RibbonTextBox` input slice is user-verified, including `RibbonTextBox` at 100/125/150/175/200% DPI and focused RTL input behavior. A ribbon slider was considered and is intentionally not planned.
-- The test suite has 298 green logic tests plus one visual test covering 62 approved images as of 2026-08-11. Phase 7 merge/modal invariants, prefix-free/typeable KeyTip resolution plus explicit custom-content discovery/invocation, disabled-target blocking, native toggle Click/Command semantics across Backstage and application-menu panes, compact checkbox/radio/text input discovery with Header-derived labels, collapsed-group preservation for editor/picker activation, app-owned Showcase appearance-preference serialization, full customization serializer round-trips/foreign-JSON hardening, reduction threshold/priority/cache behavior, and rejection of unsupported automatic QAT projections are covered alongside the existing theme/template/RTL/visual contracts. The specifically tracked customization and reduction logic-test gaps are closed. Evaluate perceived live-resize performance outside Visual Studio's debugger; no resize-specific shadow workaround ships. Touch mode and richer QAT projections are post-v1 considerations rather than frozen placeholder APIs.
+- Verified baseline on 2026-08-13: 339 logic tests plus one visual test covering 62 approved images, with zero build warnings/errors. Treat this as a dated checkpoint and rerun before quoting a current count. Evaluate live-resize performance outside Visual Studio's debugger; no resize-specific shadow workaround ships. Touch mode and richer QAT projections remain post-v1 considerations rather than frozen placeholder APIs.
 
 ### Working conventions
 

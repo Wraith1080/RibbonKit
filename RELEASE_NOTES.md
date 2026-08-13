@@ -25,9 +25,10 @@ assets.
 - The Release Showcase performance baseline and deterministic visual approvals are recorded in
   `04-DESIGN-NOTES.md`.
 
-## Known post-v1 work
+## Known post-v1 work at release
 
-- Office 2007 window-frame emulation.
+- Office 2007 window-frame/Backstage S7-S9 was completed after v1.0.0; see `04-DESIGN-NOTES.md`
+  §§3.89-3.94 for the current repository state.
 - Remaining MDI arrange/cycling, full MVVM proof, tabbed-document mode, and persistence milestones.
 - Touch-density architecture and richer automatic QAT projections.
 
