@@ -54,7 +54,8 @@ public class Backstage : TabControl
             typeof(Backstage),
             new FrameworkPropertyMetadata(
                 RibbonBackstageDesign.Classic,
-                FrameworkPropertyMetadataOptions.Inherits));
+                FrameworkPropertyMetadataOptions.Inherits,
+                OnDesignChanged));
 
     /// <summary>Sets the backstage <see cref="Design"/> for an element (and its subtree).</summary>
     public static void SetDesign(DependencyObject element, RibbonBackstageDesign value) =>
@@ -75,6 +76,12 @@ public class Backstage : TabControl
     private ButtonBase? _backButton;
 
     private FrameworkElement? _contentArea;
+
+    /// <summary>
+    /// Notifies the owning ribbon when the live design changes so design-specific overlay chrome
+    /// can move between its normal ribbon host and the Backstage adorner without an app restart.
+    /// </summary>
+    internal event EventHandler? DesignChanged;
 
     static Backstage()
     {
@@ -117,6 +124,16 @@ public class Backstage : TabControl
     {
         get => GetDesign(this);
         set => SetDesign(this, value);
+    }
+
+    private static void OnDesignChanged(
+        DependencyObject dependencyObject,
+        DependencyPropertyChangedEventArgs eventArgs)
+    {
+        if (dependencyObject is Backstage backstage && eventArgs.OldValue != eventArgs.NewValue)
+        {
+            backstage.DesignChanged?.Invoke(backstage, EventArgs.Empty);
+        }
     }
 
     /// <summary>

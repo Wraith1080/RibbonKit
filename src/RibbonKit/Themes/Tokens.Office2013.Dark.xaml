@@ -50,6 +50,14 @@
         <GradientStop Offset="1" Color="#4D4D4D" />
     </LinearGradientBrush>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Classic2007.Foreground" Color="#F2F2F2" />
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Backstage.Classic2007.ShellGlass" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#4D5967" />
+        <GradientStop Offset="0.12" Color="#43505E" />
+        <GradientStop Offset="0.45" Color="#34414F" />
+        <GradientStop Offset="0.45" Color="#2D3946" />
+        <GradientStop Offset="0.82" Color="#354351" />
+        <GradientStop Offset="1" Color="#25303C" />
+    </LinearGradientBrush>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ContentBackground" Color="#3B3B3B" />
     <DropShadowEffect x:Key="RibbonKit.Effects.Backstage.ContentShadow"
                       Opacity="0" BlurRadius="0" ShadowDepth="0" />

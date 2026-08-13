@@ -322,6 +322,39 @@ public static class RibbonMotion
         translate.BeginAnimation(TranslateTransform.XProperty, anim);
     }
 
+    /// <summary>Rotates an element in place for the Classic 2007 application-orb transition.</summary>
+    internal static void PlayRotation(
+        FrameworkElement? element,
+        RibbonAnimationAction action,
+        double degrees)
+    {
+        if (element is null)
+        {
+            return;
+        }
+
+        RotateTransform rotate = EnsureRotate(element);
+        rotate.BeginAnimation(RotateTransform.AngleProperty, null);
+
+        if (!RibbonAnimation.IsEnabled(action))
+        {
+            rotate.Angle = 0d;
+            return;
+        }
+
+        element.RenderTransformOrigin = new Point(0.5d, 0.5d);
+        var animation = new DoubleAnimation(0d, degrees, RibbonAnimation.GetDuration(action))
+        {
+            EasingFunction = RibbonAnimation.GetEase(action),
+        };
+        animation.Completed += (_, _) =>
+        {
+            rotate.BeginAnimation(RotateTransform.AngleProperty, null);
+            rotate.Angle = 0d;
+        };
+        rotate.BeginAnimation(RotateTransform.AngleProperty, animation);
+    }
+
     /// <summary>
     /// Plays a flyout's open transition: the bordered SURFACE fades in while its CONTENT slides
     /// down into place inside it. Used by every RibbonKit popup — drop-down and split buttons, the
@@ -727,5 +760,40 @@ public static class RibbonMotion
         var translate = new TranslateTransform();
         element.RenderTransform = translate;
         return translate;
+    }
+
+    private static RotateTransform EnsureRotate(FrameworkElement element)
+    {
+        if (element.RenderTransform is RotateTransform rotate)
+        {
+            return rotate;
+        }
+
+        if (element.RenderTransform is TransformGroup group)
+        {
+            foreach (Transform transform in group.Children)
+            {
+                if (transform is RotateTransform existing)
+                {
+                    return existing;
+                }
+            }
+
+            rotate = new RotateTransform();
+            group.Children.Add(rotate);
+            return rotate;
+        }
+
+        Transform current = element.RenderTransform;
+        var transforms = new TransformGroup();
+        if (current is not null && !ReferenceEquals(current, Transform.Identity))
+        {
+            transforms.Children.Add(current);
+        }
+
+        rotate = new RotateTransform();
+        transforms.Children.Add(rotate);
+        element.RenderTransform = transforms;
+        return rotate;
     }
 }

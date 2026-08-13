@@ -329,7 +329,10 @@
                                                                      Stroke="{DynamicResource RibbonKit.Brushes.ApplicationOrb.Ring}"
                                                                      StrokeThickness="1.5"
                                                                      Effect="{DynamicResource RibbonKit.Effects.ApplicationOrbShadow}" />
-                                                            <Viewbox Margin="13" Stretch="Uniform">
+                                                            <!-- Rotate this glyph host during the Classic 2007
+                                                                 Backstage transition. The spherical fill, rim, and
+                                                                 drop shadow remain stationary. -->
+                                                            <Viewbox x:Name="OrbGlyph" Margin="13" Stretch="Uniform">
                                                                 <Grid Width="16" Height="16">
                                                                     <Rectangle Width="7" Height="7" RadiusX="1.5" RadiusY="1.5"
                                                                                HorizontalAlignment="Left" VerticalAlignment="Top" Fill="#E8762C" />
@@ -430,6 +433,41 @@
                                                             </MultiDataTrigger.Conditions>
                                                             <Setter TargetName="Orb" Property="Visibility" Value="Collapsed" />
                                                         </MultiDataTrigger>
+                                                        <!-- Classic2007 moves this exact ToggleButton into the window
+                                                             adorner. Its stable Ribbon owner is stored in Tag immediately
+                                                             before the move, so these final setters preserve the real orb
+                                                             after normal ancestor-based template bindings lose their path. -->
+                                                        <MultiDataTrigger>
+                                                            <MultiDataTrigger.Conditions>
+                                                                <Condition Binding="{Binding Tag.Backstage.Design, RelativeSource={RelativeSource TemplatedParent}}" Value="Classic2007" />
+                                                                <Condition Binding="{Binding IsChecked, RelativeSource={RelativeSource Self}}" Value="True" />
+                                                            </MultiDataTrigger.Conditions>
+                                                            <Setter TargetName="Chrome" Property="Visibility" Value="Collapsed" />
+                                                            <Setter TargetName="HoverUnderline" Property="Visibility" Value="Collapsed" />
+                                                            <Setter TargetName="Orb" Property="Visibility" Value="Visible" />
+                                                        </MultiDataTrigger>
+                                                        <MultiDataTrigger>
+                                                            <MultiDataTrigger.Conditions>
+                                                                <Condition Binding="{Binding Tag.Backstage.Design, RelativeSource={RelativeSource TemplatedParent}}" Value="Classic2007" />
+                                                                <Condition Binding="{Binding IsChecked, RelativeSource={RelativeSource Self}}" Value="True" />
+                                                                <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True" />
+                                                            </MultiDataTrigger.Conditions>
+                                                            <Setter TargetName="OrbFill" Property="Fill"
+                                                                    Value="{DynamicResource RibbonKit.Brushes.ApplicationOrb.HoverBackground}" />
+                                                            <Setter TargetName="OrbFill" Property="Stroke"
+                                                                    Value="{DynamicResource RibbonKit.Brushes.ApplicationOrb.HoverRing}" />
+                                                        </MultiDataTrigger>
+                                                        <MultiDataTrigger>
+                                                            <MultiDataTrigger.Conditions>
+                                                                <Condition Binding="{Binding Tag.Backstage.Design, RelativeSource={RelativeSource TemplatedParent}}" Value="Classic2007" />
+                                                                <Condition Binding="{Binding IsChecked, RelativeSource={RelativeSource Self}}" Value="True" />
+                                                                <Condition Binding="{Binding IsPressed, RelativeSource={RelativeSource Self}}" Value="True" />
+                                                            </MultiDataTrigger.Conditions>
+                                                            <Setter TargetName="OrbFill" Property="Fill"
+                                                                    Value="{DynamicResource RibbonKit.Brushes.ApplicationOrb.PressedBackground}" />
+                                                            <Setter TargetName="OrbFill" Property="Stroke"
+                                                                    Value="{DynamicResource RibbonKit.Brushes.ApplicationOrb.HoverRing}" />
+                                                        </MultiDataTrigger>
                                                         <!-- Application menu open: the orb stays put and
                                                              holds a lit "pressed" gel, so it reads as the
                                                              thing the open menu belongs to. -->
@@ -463,11 +501,18 @@
                                             <!-- A modal tab (Print Preview) hides File entirely, like
                                                  Word: the backstage is blocked in that mode, so leaving
                                                  the button visible would offer a dead affordance. -->
-                                            <DataTrigger Binding="{Binding IsModal, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
-                                                         Value="True">
-                                                <Setter Property="Visibility" Value="Collapsed" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
+                                             <DataTrigger Binding="{Binding IsModal, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
+                                                          Value="True">
+                                                 <Setter Property="Visibility" Value="Collapsed" />
+                                             </DataTrigger>
+                                             <MultiDataTrigger>
+                                                 <MultiDataTrigger.Conditions>
+                                                     <Condition Binding="{Binding Tag.Backstage.Design, RelativeSource={RelativeSource Self}}" Value="Classic2007" />
+                                                     <Condition Binding="{Binding IsChecked, RelativeSource={RelativeSource Self}}" Value="True" />
+                                                 </MultiDataTrigger.Conditions>
+                                                 <Setter Property="Visibility" Value="Visible" />
+                                             </MultiDataTrigger>
+                                         </Style.Triggers>
                                     </Style>
                                 </ToggleButton.Style>
                             </ToggleButton>

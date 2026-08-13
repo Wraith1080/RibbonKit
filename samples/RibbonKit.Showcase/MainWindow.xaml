@@ -23,6 +23,8 @@
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="4" />
             <Setter Property="Padding" Value="14" />
+            <Setter Property="Effect" Value="{DynamicResource RibbonKit.Effects.Backstage.ContentShadow}" />
+            <Setter Property="SnapsToDevicePixels" Value="True" />
         </Style>
         <Style x:Key="Classic2007SectionTitle" TargetType="{x:Type TextBlock}">
             <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Backstage.Classic2007.Foreground}" />
@@ -132,7 +134,10 @@
                                         </Style.Triggers>
                                     </Style>
                                 </ScrollViewer.Style>
-                                <Grid MaxWidth="1080" HorizontalAlignment="Stretch">
+                                <!-- The gutter gives DropShadowEffect its full blur extent inside
+                                     the ScrollViewer clip. Classic shell padding is reduced by the
+                                     same amount, preserving the approved card positions and size. -->
+                                <Grid MaxWidth="1080" HorizontalAlignment="Stretch" Margin="8">
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto" />
                                         <RowDefinition Height="*" />
@@ -161,10 +166,6 @@
                                                     <Grid Margin="0,3"><Grid.ColumnDefinitions><ColumnDefinition Width="34"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><Border Width="24" Height="29" BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}" BorderThickness="1" Background="#FFFFFFFF"><TextBlock Text="W" Foreground="#1E5A9C" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border><StackPanel Grid.Column="1"><TextBlock Text="Project Proposal.docx" FontWeight="SemiBold" Foreground="{DynamicResource RibbonKit.Brushes.Backstage.Classic2007.Foreground}"/><TextBlock Text="Documents\Projects" FontSize="11"/></StackPanel><TextBlock Grid.Column="2" Text="10:31 AM" VerticalAlignment="Center"/></Grid>
                                                     <Grid Margin="0,3"><Grid.ColumnDefinitions><ColumnDefinition Width="34"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><Border Width="24" Height="29" BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}" BorderThickness="1" Background="#FFFFFFFF"><TextBlock Text="W" Foreground="#1E5A9C" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border><StackPanel Grid.Column="1"><TextBlock Text="Marketing Plan.docx" FontWeight="SemiBold" Foreground="{DynamicResource RibbonKit.Brushes.Backstage.Classic2007.Foreground}"/><TextBlock Text="Documents" FontSize="11"/></StackPanel><TextBlock Grid.Column="2" Text="Yesterday" VerticalAlignment="Center"/></Grid>
                                                     <Grid Margin="0,3"><Grid.ColumnDefinitions><ColumnDefinition Width="34"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><Border Width="24" Height="29" BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}" BorderThickness="1" Background="#FFFFFFFF"><TextBlock Text="W" Foreground="#1E5A9C" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border><StackPanel Grid.Column="1"><TextBlock Text="Quarterly Report.docx" FontWeight="SemiBold" Foreground="{DynamicResource RibbonKit.Brushes.Backstage.Classic2007.Foreground}"/><TextBlock Text="Documents\Reports" FontSize="11"/></StackPanel><TextBlock Grid.Column="2" Text="Monday" VerticalAlignment="Center"/></Grid>
-                                                    <Grid Margin="0,3"><Grid.ColumnDefinitions><ColumnDefinition Width="34"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><Border Width="24" Height="29" BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}" BorderThickness="1" Background="#FFFFFFFF"><TextBlock Text="W" Foreground="#1E5A9C" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border><StackPanel Grid.Column="1"><TextBlock Text="RibbonKit Roadmap.docx" FontWeight="SemiBold" Foreground="{DynamicResource RibbonKit.Brushes.Backstage.Classic2007.Foreground}"/><TextBlock Text="Documents\RibbonKit" FontSize="11"/></StackPanel><TextBlock Grid.Column="2" Text="Friday" VerticalAlignment="Center"/></Grid>
-                                                    <Grid Margin="0,3"><Grid.ColumnDefinitions><ColumnDefinition Width="34"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><Border Width="24" Height="29" BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}" BorderThickness="1" Background="#FFFFFFFF"><TextBlock Text="W" Foreground="#1E5A9C" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border><StackPanel Grid.Column="1"><TextBlock Text="Team Meeting Notes.docx" FontWeight="SemiBold" Foreground="{DynamicResource RibbonKit.Brushes.Backstage.Classic2007.Foreground}"/><TextBlock Text="Documents\Meetings" FontSize="11"/></StackPanel><TextBlock Grid.Column="2" Text="Thursday" VerticalAlignment="Center"/></Grid>
-                                                    <Grid Margin="0,3"><Grid.ColumnDefinitions><ColumnDefinition Width="34"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><Border Width="24" Height="29" BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}" BorderThickness="1" Background="#FFFFFFFF"><TextBlock Text="W" Foreground="#1E5A9C" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border><StackPanel Grid.Column="1"><TextBlock Text="Product Launch Brief.docx" FontWeight="SemiBold" Foreground="{DynamicResource RibbonKit.Brushes.Backstage.Classic2007.Foreground}"/><TextBlock Text="Documents\Launch" FontSize="11"/></StackPanel><TextBlock Grid.Column="2" Text="May 12" VerticalAlignment="Center"/></Grid>
-                                                    <Grid Margin="0,3"><Grid.ColumnDefinitions><ColumnDefinition Width="34"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><Border Width="24" Height="29" BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}" BorderThickness="1" Background="#FFFFFFFF"><TextBlock Text="W" Foreground="#1E5A9C" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border><StackPanel Grid.Column="1"><TextBlock Text="Budget Overview.docx" FontWeight="SemiBold" Foreground="{DynamicResource RibbonKit.Brushes.Backstage.Classic2007.Foreground}"/><TextBlock Text="Documents\Finance" FontSize="11"/></StackPanel><TextBlock Grid.Column="2" Text="May 11" VerticalAlignment="Center"/></Grid>
                                                     <Border Height="1" Background="{DynamicResource RibbonKit.Brushes.Group.Border}" Margin="0,8,0,9" />
                                                     <TextBlock Text="Open Recent Documents" Style="{StaticResource Classic2007Link}" />
                                                 </StackPanel>
@@ -183,19 +184,19 @@
                                                     <Border DockPanel.Dock="Top" Height="1"
                                                             Background="{DynamicResource RibbonKit.Brushes.Group.Border}"
                                                             Margin="0,7,0,9" />
-                                                    <Border Width="170" Height="205" Background="#FFFFFFFF"
+                                                    <Border Width="160" Height="185" Background="#FFFFFFFF"
                                                             BorderBrush="#8A9BAE" BorderThickness="1"
                                                             HorizontalAlignment="Center">
-                                                        <StackPanel Margin="18,24">
+                                                        <StackPanel Margin="16,18">
                                                             <TextBlock Text="RibbonKit Proposal" Foreground="#15428B"
                                                                        FontSize="15" FontWeight="Bold"
                                                                        HorizontalAlignment="Center" />
                                                             <TextBlock Text="SUMMARY" Foreground="#2E75B6" FontSize="8"
-                                                                       FontWeight="Bold" HorizontalAlignment="Center" Margin="0,5,0,13" />
-                                                            <TextBlock Text="A compact preview of the selected document and its Office Fluent UI proposal."
+                                                                       FontWeight="Bold" HorizontalAlignment="Center" Margin="0,4,0,9" />
+                                                            <TextBlock Text="A compact Office Fluent UI proposal."
                                                                        FontSize="8" TextWrapping="Wrap" />
                                                             <TextBlock Text="Objectives" Foreground="#15428B" FontSize="9"
-                                                                       FontWeight="Bold" Margin="0,12,0,3" />
+                                                                       FontWeight="Bold" Margin="0,8,0,3" />
                                                             <TextBlock Text="• Clear command hierarchy&#x0a;• Familiar navigation&#x0a;• Per-monitor DPI support"
                                                                        FontSize="8" />
                                                         </StackPanel>
@@ -208,18 +209,17 @@
                                                     <StackPanel><TextBlock Text="Properties" Style="{StaticResource Classic2007SectionTitle}"/><Border Height="1" Background="{DynamicResource RibbonKit.Brushes.Group.Border}" Margin="0,7"/><TextBlock Text="Pages:        6"/><TextBlock Text="Words:     1,243"/><TextBlock Text="Author: RibbonKit"/></StackPanel>
                                                 </Border>
                                                 <Border Grid.Column="1" Style="{StaticResource Classic2007Card}" Margin="6,0,0,0">
-                                                    <StackPanel><TextBlock Text="Quick Actions" Style="{StaticResource Classic2007SectionTitle}"/><Border Height="1" Background="{DynamicResource RibbonKit.Brushes.Group.Border}" Margin="0,7"/><TextBlock Text="Protect Document" Margin="0,2"/><TextBlock Text="Inspect Document" Margin="0,2"/><TextBlock Text="Check Compatibility" Margin="0,2"/></StackPanel>
+                                                    <StackPanel><TextBlock Text="Quick Actions" Style="{StaticResource Classic2007SectionTitle}"/><Border Height="1" Background="{DynamicResource RibbonKit.Brushes.Group.Border}" Margin="0,7"/><TextBlock Text="Protect Document" Margin="0,2"/><TextBlock Text="Inspect Document" Margin="0,2"/></StackPanel>
                                                 </Border>
                                             </Grid>
                                         </Grid>
                                     </Grid>
 
-                                    <Border Grid.Row="2" Style="{StaticResource Classic2007Card}" Margin="0,12,0,0" Padding="14,10">
+                                    <Border Grid.Row="2" Style="{StaticResource Classic2007Card}" Margin="0,20,0,0" Padding="14,10">
                                         <Grid>
-                                            <Grid.ColumnDefinitions><ColumnDefinition Width="1.1*"/><ColumnDefinition/><ColumnDefinition Width="0.8*"/></Grid.ColumnDefinitions>
-                                            <StackPanel Grid.Column="0" Margin="0,0,16,0"><TextBlock Text="Manage Document" Style="{StaticResource Classic2007SectionTitle}"/><TextBlock Text="Check in, recover, and review unsaved changes." TextWrapping="Wrap" Margin="0,6,0,0"/></StackPanel>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="1.1*"/><ColumnDefinition/></Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0" Margin="0,0,16,0"><TextBlock Text="Manage Document" Style="{StaticResource Classic2007SectionTitle}"/><TextBlock Text="Review and recover unsaved changes." TextWrapping="Wrap" Margin="0,6,0,0"/></StackPanel>
                                             <Border Grid.Column="1" BorderBrush="{DynamicResource RibbonKit.Brushes.Group.Border}" BorderThickness="1,0,0,0" Padding="16,0" Margin="0"><StackPanel><TextBlock Text="Related Locations" Style="{StaticResource Classic2007SectionTitle}"/><TextBlock Text="Open File Location" Style="{StaticResource Classic2007Link}" Margin="0,6,0,0"/><TextBlock Text="Show All Properties" Style="{StaticResource Classic2007Link}" Margin="0,3,0,0"/></StackPanel></Border>
-                                            <Border Grid.Column="2" BorderBrush="{DynamicResource RibbonKit.Brushes.Group.Border}" BorderThickness="1,0,0,0" Padding="16,0,0,0"><StackPanel><TextBlock Text="Tips" Style="{StaticResource Classic2007SectionTitle}"/><TextBlock Text="Learn more about building custom Office Fluent experiences." TextWrapping="Wrap" Margin="0,6,0,0"/></StackPanel></Border>
                                         </Grid>
                                     </Border>
                                 </Grid>
@@ -230,7 +230,7 @@
                         <StackPanel MaxWidth="560" HorizontalAlignment="Left">
                             <TextBlock Text="Info" FontSize="28" FontWeight="Light" Margin="0,0,0,16" />
                             <TextBlock Text="RibbonKit Showcase Document" FontSize="16" FontWeight="SemiBold" />
-                            <TextBlock Text="This is the backstage view — a full-window overlay opened by the File button, just like Office 2013 and later. Press Esc or click the back arrow to return."
+                            <TextBlock Text="This is the backstage view — a full-window overlay opened by the File button, just like Office 2013 and later. Press Esc or activate the Back control to return."
                                        TextWrapping="Wrap" Foreground="#616161" Margin="0,8,0,0" />
                         </StackPanel>
                     </rk:BackstageTabItem>

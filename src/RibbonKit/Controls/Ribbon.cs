@@ -2,8 +2,11 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Windows;
+using System.Windows.Automation;
 using System.Windows.Automation.Peers;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
+using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Markup;
 using System.Windows.Threading;
@@ -1808,6 +1811,7 @@ public class Ribbon : Control
                     RibbonMotion.PlayOpen(reopening, RibbonAnimationAction.Backstage, slideEdge);
                 }
 
+                ReconcileClassicBackstageApplicationButton(playEntranceRotation: true);
                 HideContentBehindBackstage(_backstageAdorner.AdornedElement);
                 return;
             }
@@ -1828,6 +1832,7 @@ public class Ribbon : Control
 
             _backstageAdorner = new BackstageAdorner(root, content, this);
             layer.Add(_backstageAdorner);
+            ReconcileClassicBackstageApplicationButton(playEntranceRotation: true);
 
             // Hide the content behind a translucent backstage entirely so a window system
             // backdrop (Mica) composites raw behind it. The hide targets the adorned root; the
@@ -1851,6 +1856,7 @@ public class Ribbon : Control
             _backstageClosing = true;
             BackstageAdorner adorner = _backstageAdorner;
             FrameworkElement? content = Backstage as FrameworkElement;
+            PlayClassicBackstageOrbRotation(360d);
 
             // Restore the hidden content at the START of the exit (not on completion): the
             // backstage slides out through its logical leading edge, and the ribbon/document must
@@ -1873,6 +1879,8 @@ public class Ribbon : Control
                         return;
                     }
 
+                    adorner.DetachApplicationButton();
+                    RestoreApplicationButtonFromOverlay();
                     AdornerLayer.GetAdornerLayer(adorner.AdornedElement)?.Remove(adorner);
                     adorner.Detach();
                     _backstageAdorner = null;
@@ -1984,16 +1992,21 @@ public class Ribbon : Control
         if (e.OldValue is Backstage oldBackstage)
         {
             oldBackstage.BackRequested -= ribbon.OnBackstageBackRequested;
+            oldBackstage.DesignChanged -= ribbon.OnBackstageDesignChanged;
         }
 
         if (e.NewValue is Backstage newBackstage)
         {
             newBackstage.BackRequested += ribbon.OnBackstageBackRequested;
+            newBackstage.DesignChanged += ribbon.OnBackstageDesignChanged;
         }
     }
 
     private void OnBackstageBackRequested(object? sender, EventArgs e) =>
         SetCurrentValue(IsBackstageOpenProperty, false);
+
+    private void OnBackstageDesignChanged(object? sender, EventArgs e) =>
+        ReconcileClassicBackstageApplicationButton(playEntranceRotation: true);
 
     private static void OnApplicationMenuChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
@@ -2174,6 +2187,11 @@ public class Ribbon : Control
     {
         if (_nestedApplicationMenuPresenter is not null && _applicationButton is not null)
         {
+            if (_applicationButton is ToggleButton resolvedButton)
+            {
+                EnsureApplicationButtonOwnerBindings(resolvedButton);
+            }
+
             return;
         }
 
@@ -2190,6 +2208,37 @@ public class Ribbon : Control
                 as ContentPresenter;
         _applicationButton ??=
             FindDescendantByName(tabControl, ApplicationButtonPartName);
+        if (_applicationButton is ToggleButton button)
+        {
+            EnsureApplicationButtonOwnerBindings(button);
+        }
+    }
+
+    /// <summary>
+    /// Gives the template-owned application button a stable owner before any Backstage design can
+    /// move it across visual branches. Besides keeping the hosted Classic orb live, this makes the
+    /// normal Modern hide trigger observe <see cref="IsBackstageOpen"/> reliably after a previous
+    /// Classic transition.
+    /// </summary>
+    private void EnsureApplicationButtonOwnerBindings(ToggleButton button)
+    {
+        button.Tag = this;
+        BindingOperations.SetBinding(
+            button,
+            ToggleButton.IsCheckedProperty,
+            new Binding(nameof(IsBackstageOpen)) { Source = this, Mode = BindingMode.TwoWay });
+        BindingOperations.SetBinding(
+            button,
+            ContentControl.ContentProperty,
+            new Binding(nameof(EffectiveApplicationButtonHeader)) { Source = this });
+        BindingOperations.SetBinding(
+            button,
+            FrameworkElement.ToolTipProperty,
+            new Binding(nameof(EffectiveApplicationButtonHeader)) { Source = this });
+        BindingOperations.SetBinding(
+            button,
+            AutomationProperties.NameProperty,
+            new Binding(nameof(EffectiveApplicationButtonHeader)) { Source = this });
     }
 
     private void UpdateApplicationMenuOverlayPlacement()
@@ -2250,6 +2299,173 @@ public class Ribbon : Control
         }
 
         UpdateApplicationButtonOverlayPlacement();
+    }
+
+    private bool UsesClassicBackstageOrbTransition() =>
+        ApplicationMenu is null
+        && ApplicationButtonShape == RibbonApplicationButtonShape.Orb
+        && Backstage is Controls.Backstage { Design: RibbonBackstageDesign.Classic2007 };
+
+    /// <summary>
+    /// Keeps the real application button in the visual host required by the current Backstage
+    /// design. Design can change while the overlay is already open, so open/close callbacks alone
+    /// are insufficient: leaving Classic must restore normal ancestor bindings immediately, and
+    /// entering Classic must move the same button above the adorner immediately.
+    /// </summary>
+    private void ReconcileClassicBackstageApplicationButton(bool playEntranceRotation)
+    {
+        if (_backstageAdorner is null)
+        {
+            return;
+        }
+
+        if (!IsBackstageOpen)
+        {
+            // A design can change while the close animation still owns the adorner. Leaving
+            // Classic must not let the orb remain stranded there until that animation completes.
+            if (!UsesClassicBackstageOrbTransition())
+            {
+                _backstageAdorner.DetachApplicationButton();
+                RestoreApplicationButtonFromOverlay();
+            }
+
+            return;
+        }
+
+        if (UsesClassicBackstageOrbTransition())
+        {
+            MoveApplicationButtonToBackstageAdorner(_backstageAdorner.AdornedElement);
+            if (playEntranceRotation)
+            {
+                PlayClassicBackstageOrbRotation(-360d);
+            }
+
+            return;
+        }
+
+        // Restore only after releasing the adorner's logical/visual ownership. Otherwise WPF
+        // rejects reinsertion into the original panel because the button still has a parent.
+        _backstageAdorner.DetachApplicationButton();
+        RestoreApplicationButtonFromOverlay();
+    }
+
+    private void MoveApplicationButtonToBackstageAdorner(UIElement adornedRoot)
+    {
+        if (!UsesClassicBackstageOrbTransition() || _backstageAdorner is null)
+        {
+            return;
+        }
+
+        ResolveApplicationMenuParts();
+        if (_applicationButton is not ToggleButton button
+            || _applicationButtonPlaceholder is not null
+            || button.Parent is not Panel originalParent
+            || button.ActualWidth <= 0d
+            || button.ActualHeight <= 0d)
+        {
+            return;
+        }
+
+        int originalIndex = originalParent.Children.IndexOf(button);
+        if (originalIndex < 0)
+        {
+            return;
+        }
+
+        try
+        {
+            EnsureApplicationButtonOwnerBindings(button);
+
+            Point origin = button.TransformToVisual(adornedRoot).Transform(new Point(0d, 0d));
+            Thickness margin = button.Margin;
+            Size slotSize = GetStableApplicationButtonSlotSize(button);
+            Size overlaySize = GetStableApplicationButtonOverlaySize(button);
+            var placeholder = new Border
+            {
+                Width = slotSize.Width,
+                MinHeight = slotSize.Height,
+                HorizontalAlignment = button.HorizontalAlignment,
+                VerticalAlignment = button.VerticalAlignment,
+                IsHitTestVisible = false,
+            };
+
+            _applicationButtonOriginalParent = originalParent;
+            _applicationButtonOriginalIndex = originalIndex;
+            _applicationButtonPlaceholder = placeholder;
+
+            originalParent.Children.RemoveAt(originalIndex);
+            originalParent.Children.Insert(originalIndex, placeholder);
+            _backstageAdorner.AttachApplicationButton(
+                button,
+                new Point(origin.X - margin.Left, origin.Y - margin.Top),
+                overlaySize);
+            SetHostedClassicOrbVisual(button, hosted: true);
+        }
+        catch (InvalidOperationException)
+        {
+            _backstageAdorner.DetachApplicationButton();
+            RestoreApplicationButtonFromOverlay();
+        }
+    }
+
+    private void PlayClassicBackstageOrbRotation(double degrees)
+    {
+        if (!UsesClassicBackstageOrbTransition() || _applicationButton is null)
+        {
+            return;
+        }
+
+        _applicationButton.ApplyTemplate();
+        RibbonMotion.PlayRotation(
+            FindApplicationButtonTemplatePart(_applicationButton, "OrbGlyph"),
+            RibbonAnimationAction.Backstage,
+            degrees);
+    }
+
+    private static FrameworkElement? FindApplicationButtonTemplatePart(
+        FrameworkElement button,
+        string name)
+    {
+        button.ApplyTemplate();
+        if (button is Control control
+            && control.Template?.FindName(name, control) is FrameworkElement templatePart)
+        {
+            return templatePart;
+        }
+
+        return FindDescendantByName(button, name) as FrameworkElement;
+    }
+
+    /// <summary>
+    /// Applies the visual state owned by the Classic Backstage host itself. A local value is
+    /// intentional here: after reparenting, the ordinary no-ancestor hide trigger and the hosted
+    /// show trigger can otherwise resolve in different dispatcher passes. The values are removed
+    /// as soon as the button returns to its normal ribbon host.
+    /// </summary>
+    private static void SetHostedClassicOrbVisual(FrameworkElement button, bool hosted)
+    {
+        button.ApplyTemplate();
+        foreach ((string name, Visibility visibility) in new[]
+                 {
+                     ("Orb", Visibility.Visible),
+                     ("Chrome", Visibility.Collapsed),
+                     ("HoverUnderline", Visibility.Collapsed),
+                 })
+        {
+            if (FindApplicationButtonTemplatePart(button, name) is not FrameworkElement part)
+            {
+                continue;
+            }
+
+            if (hosted)
+            {
+                part.SetValue(VisibilityProperty, visibility);
+            }
+            else
+            {
+                part.ClearValue(VisibilityProperty);
+            }
+        }
     }
 
     private void MoveApplicationButtonToOverlay()
@@ -2366,6 +2582,11 @@ public class Ribbon : Control
 
     private void RestoreApplicationButtonFromOverlay()
     {
+        if (_applicationButton is not null)
+        {
+            SetHostedClassicOrbVisual(_applicationButton, hosted: false);
+        }
+
         if (_applicationButtonOverlay is not null)
         {
             if (ReferenceEquals(_applicationButtonOverlay.Child, _applicationButton))
@@ -2514,6 +2735,18 @@ public class Ribbon : Control
         {
             UpdateApplicationButtonOverlay();
             UpdateApplicationMenuOverlayPlacement();
+            return;
+        }
+
+        // A Backstage design switch invalidates the tab-row layout. The first attempt to move the
+        // orb can therefore run before the application button has usable arranged bounds; retry on
+        // the next layout pass, matching the application-menu overlay's established behavior.
+        if (_backstageAdorner is not null
+            && IsBackstageOpen
+            && UsesClassicBackstageOrbTransition()
+            && _applicationButtonPlaceholder is null)
+        {
+            ReconcileClassicBackstageApplicationButton(playEntranceRotation: false);
         }
     }
 

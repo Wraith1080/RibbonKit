@@ -10,6 +10,8 @@ public class Office2007ClassicBackstageTests
 {
     private static readonly XNamespace Presentation =
         "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+    private static readonly XNamespace Xaml =
+        "http://schemas.microsoft.com/winfx/2006/xaml";
     private static readonly XNamespace RibbonKit = "urn:ribbonkit";
 
     [Fact]
@@ -43,16 +45,47 @@ public class Office2007ClassicBackstageTests
             "NavColumn",
             "Background",
             "{DynamicResource RibbonKit.Brushes.Backstage.NavBackground}");
-        AssertSetter(design, "NavColumn", "Margin", "8,8,0,8");
-        AssertSetter(design, "NavColumn", "BorderThickness", "1,1,0,1");
+        AssertSetter(design, "Classic2007ShellMaterial", "Visibility", "Visible");
+        AssertSetter(design, "Classic2007ShellChrome", "Visibility", "Visible");
+        AssertSetter(design, "Classic2007PaneDivider", "Visibility", "Visible");
+        AssertSetter(design, "Classic2007AeroJoinBevel", "Visibility", "Visible");
+        AssertSetter(design, "PART_BackButton", "Visibility", "Collapsed");
+        AssertSetter(design, "NavColumn", "Margin", "8,36,0,8");
+        AssertSetter(design, "NavColumn", "Padding", "0,4,0,0");
+        AssertSetter(design, "NavColumn", "BorderThickness", "0");
         AssertSetter(
             design,
             "ContentArea",
             "Background",
-            "{DynamicResource RibbonKit.Brushes.ScreenTip.Background}");
-        AssertSetter(design, "ContentArea", "Margin", "0,8,8,8");
-        AssertSetter(design, "ContentArea", "Padding", "28,14");
-        AssertSetter(design, "ContentArea", "BorderThickness", "0,1,1,1");
+            "{DynamicResource RibbonKit.Brushes.Backstage.NavBackground}");
+        AssertSetter(design, "ContentArea", "Margin", "0,36,8,8");
+        AssertSetter(design, "ContentArea", "Padding", "20,6");
+        AssertSetter(design, "ContentArea", "BorderThickness", "0");
+
+        XElement shellMaterial = NamedElement(document, "Classic2007ShellMaterial");
+        Assert.Contains(
+            shellMaterial.Elements(Presentation + "Border"),
+            border => (string?)border.Attribute("Background")
+                == "{DynamicResource RibbonKit.Brushes.Ribbon.Background}");
+
+        XElement shellChrome = NamedElement(document, "Classic2007ShellChrome");
+        Assert.Contains(
+            shellChrome.Descendants(Presentation + "Border"),
+            border => (string?)border.Attribute("BorderBrush")
+                == "{DynamicResource RibbonKit.Brushes.Ribbon.Border}");
+        XElement innerFrameShadow = NamedElement(document, "Classic2007InnerFrameShadow");
+        Assert.Equal("8,36,8,8", (string?)innerFrameShadow.Attribute("Margin"));
+        Assert.Equal(
+            "{DynamicResource RibbonKit.Effects.Backstage.ContentShadow}",
+            (string?)innerFrameShadow.Attribute("Effect"));
+        XElement paneDivider = NamedElement(document, "Classic2007PaneDivider");
+        Assert.Equal(
+            "{DynamicResource RibbonKit.Brushes.Ribbon.Border}",
+            (string?)paneDivider.Attribute("Background"));
+        Assert.Equal("0,37,0,9", (string?)paneDivider.Attribute("Margin"));
+        XElement aeroJoin = NamedElement(document, "Classic2007AeroJoinBevel");
+        Assert.Equal("#FFFFFFFF", (string?)aeroJoin.Attribute("BorderBrush"));
+        Assert.Equal("1", (string?)aeroJoin.Attribute("BorderThickness"));
 
         XElement translucent = Assert.Single(
             template.Descendants(Presentation + "MultiTrigger"),
@@ -64,14 +97,9 @@ public class Office2007ClassicBackstageTests
             "Background",
             "{DynamicResource RibbonKit.Brushes.Ribbon.Background}");
 
-        XElement backButton = Assert.Single(
-            template.Descendants(Presentation + "Trigger"),
-            trigger => (string?)trigger.Attribute("Property") == "controls:Backstage.Design"
-                && (string?)trigger.Attribute("Value") == "Classic2007"
-                && trigger.Elements(Presentation + "Setter").Any(
-                    setter => (string?)setter.Attribute("TargetName") == "GlassFill"));
-        AssertSetter(backButton, "GlassFill", "Visibility", "Visible");
-        AssertSetter(backButton, "Arrow", "Stroke", "#FFFFFF");
+        Assert.DoesNotContain(
+            document.Descendants(),
+            element => (string?)element.Attribute(Xaml + "Name") == "Classic2007Orb");
     }
 
     [Fact]
@@ -97,7 +125,9 @@ public class Office2007ClassicBackstageTests
         XElement hover = Assert.Single(
             document.Descendants(Presentation + "MultiTrigger"),
             trigger => HasCondition(trigger, "controls:Backstage.Design", "Classic2007")
-                && HasCondition(trigger, "IsMouseOver", "True"));
+                && HasCondition(trigger, "IsMouseOver", "True")
+                && trigger.Elements(Presentation + "Setter").Any(
+                    setter => (string?)setter.Attribute("TargetName") == "Chrome"));
         AssertSetter(
             hover,
             "Chrome",
@@ -149,6 +179,19 @@ public class Office2007ClassicBackstageTests
             dashboardTitle.Ancestors(Presentation + "ScrollViewer")
                 .Descendants(Presentation + "DataTrigger"),
             trigger => (string?)trigger.Attribute("Value") == "Classic2007");
+        XElement dashboardGrid = Assert.Single(
+            dashboardTitle.Ancestors(Presentation + "Grid"),
+            grid => (string?)grid.Attribute("MaxWidth") == "1080");
+        Assert.Equal("8", (string?)dashboardGrid.Attribute("Margin"));
+
+        XElement cardStyle = Assert.Single(
+            showcase.Descendants(Presentation + "Style"),
+            style => (string?)style.Attribute(Xaml + "Key") == "Classic2007Card");
+        Assert.Contains(
+            cardStyle.Elements(Presentation + "Setter"),
+            setter => (string?)setter.Attribute("Property") == "Effect"
+                && (string?)setter.Attribute("Value")
+                    == "{DynamicResource RibbonKit.Effects.Backstage.ContentShadow}");
     }
 
     private static bool HasCondition(XElement trigger, string property, string value) =>
@@ -156,6 +199,11 @@ public class Office2007ClassicBackstageTests
             .Descendants(Presentation + "Condition")
             .Any(condition => (string?)condition.Attribute("Property") == property
                 && (string?)condition.Attribute("Value") == value);
+
+    private static XElement NamedElement(XDocument document, string name) =>
+        Assert.Single(
+            document.Descendants(),
+            element => (string?)element.Attribute(Xaml + "Name") == name);
 
     private static void AssertSetter(
         XElement trigger,

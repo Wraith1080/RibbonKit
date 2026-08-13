@@ -15,6 +15,9 @@ internal sealed class BackstageAdorner : Adorner
 {
     private UIElement? _child;
     private FrameworkElement? _flowBoundChild;
+    private FrameworkElement? _applicationButton;
+    private Point _applicationButtonOrigin;
+    private Size _applicationButtonSize;
 
     public BackstageAdorner(
         UIElement adornedElement,
@@ -60,11 +63,40 @@ internal sealed class BackstageAdorner : Adorner
     }
 
     /// <inheritdoc />
-    protected override int VisualChildrenCount => _child is null ? 0 : 1;
+    protected override int VisualChildrenCount =>
+        (_child is null ? 0 : 1) + (_applicationButton is null ? 0 : 1);
+
+    /// <summary>Hosts the ribbon's real application button above the Backstage surface.</summary>
+    internal void AttachApplicationButton(FrameworkElement button, Point origin, Size size)
+    {
+        DetachApplicationButton();
+        _applicationButton = button;
+        _applicationButtonOrigin = origin;
+        _applicationButtonSize = size;
+        AddVisualChild(button);
+        AddLogicalChild(button);
+        InvalidateMeasure();
+    }
+
+    /// <summary>Releases the application button so the ribbon can restore its original slot.</summary>
+    internal void DetachApplicationButton()
+    {
+        if (_applicationButton is null)
+        {
+            return;
+        }
+
+        RemoveVisualChild(_applicationButton);
+        RemoveLogicalChild(_applicationButton);
+        _applicationButton = null;
+        InvalidateMeasure();
+    }
 
     /// <summary>Releases the hosted backstage so it can be shown again later.</summary>
     public void Detach()
     {
+        DetachApplicationButton();
+
         if (_child is not null)
         {
             RemoveVisualChild(_child);
@@ -82,13 +114,29 @@ internal sealed class BackstageAdorner : Adorner
     }
 
     /// <inheritdoc />
-    protected override Visual GetVisualChild(int index) => _child!;
+    protected override Visual GetVisualChild(int index)
+    {
+        if (_child is not null)
+        {
+            if (index == 0)
+            {
+                return _child;
+            }
+
+            index--;
+        }
+
+        return index == 0 && _applicationButton is not null
+            ? _applicationButton
+            : throw new ArgumentOutOfRangeException(nameof(index));
+    }
 
     /// <inheritdoc />
     protected override Size MeasureOverride(Size constraint)
     {
         Size size = AdornedElement.RenderSize;
         _child?.Measure(size);
+        _applicationButton?.Measure(_applicationButtonSize);
         return size;
     }
 
@@ -96,6 +144,7 @@ internal sealed class BackstageAdorner : Adorner
     protected override Size ArrangeOverride(Size finalSize)
     {
         _child?.Arrange(new Rect(new Point(0, 0), AdornedElement.RenderSize));
+        _applicationButton?.Arrange(new Rect(_applicationButtonOrigin, _applicationButtonSize));
         return AdornedElement.RenderSize;
     }
 }

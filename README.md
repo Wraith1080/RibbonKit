@@ -323,9 +323,9 @@ focused Markdown references and the executable Showcase.
 
 Version 1.0.0 is published through GitHub Releases. Package layout, metadata, Source Link, symbols,
 isolated consumer compilation, live packaged runtime behavior, Release performance, and the Visual
-Studio designer were verified for launch. The Office 2007 window frame, MDI milestones M1–M3,
-custom-control projections, future theme expansion and the RibbonKit Writer reference application
-remain post-v1 work. See the
+Studio designer were verified for launch. The post-v1 Office 2007 window frame is complete; MDI
+milestones M1–M3, custom-control projections, future theme expansion and the RibbonKit Writer
+reference application remain post-v1 work. See the
 [roadmap](docs/03-ROADMAP.md) and [design notes](04-DESIGN-NOTES.md) for detailed status.
 
 ## Contributing

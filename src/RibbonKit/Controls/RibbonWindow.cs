@@ -560,13 +560,18 @@ public class RibbonWindow : Window
                     double sx = dpi.DpiScaleX <= 0 ? 1.0 : dpi.DpiScaleX;
                     double sy = dpi.DpiScaleY <= 0 ? 1.0 : dpi.DpiScaleY;
 
-                    // How far the window spills past the work area on each edge (device px),
-                    // clamped to >= 0, then converted to DIPs for the WPF layout margin.
-                    target = new Thickness(
-                        Math.Max(0, work.Left - win.Left) / sx,
-                        Math.Max(0, work.Top - win.Top) / sy,
-                        Math.Max(0, win.Right - work.Right) / sx,
-                        Math.Max(0, win.Bottom - work.Bottom) / sy);
+                    target = CalculateMaximizeInset(
+                        new Rect(
+                            win.Left,
+                            win.Top,
+                            win.Right - win.Left,
+                            win.Bottom - win.Top),
+                        new Rect(
+                            work.Left,
+                            work.Top,
+                            work.Right - work.Left,
+                            work.Bottom - work.Top),
+                        new DpiScale(sx, sy));
                 }
             }
         }
@@ -577,6 +582,27 @@ public class RibbonWindow : Window
         {
             _windowRoot.Margin = target;
         }
+    }
+
+    /// <summary>
+    /// Converts a maximized WindowChrome overhang from device pixels to the WPF margin that keeps
+    /// authored content flush with the monitor work area. Keeping this geometry independent from
+    /// the HWND query makes every supported DPI and negative-coordinate monitor arrangement
+    /// directly testable without changing the user's display configuration.
+    /// </summary>
+    internal static Thickness CalculateMaximizeInset(
+        Rect windowRectPixels,
+        Rect workAreaPixels,
+        DpiScale dpi)
+    {
+        double sx = dpi.DpiScaleX <= 0d ? 1d : dpi.DpiScaleX;
+        double sy = dpi.DpiScaleY <= 0d ? 1d : dpi.DpiScaleY;
+
+        return new Thickness(
+            Math.Max(0d, workAreaPixels.Left - windowRectPixels.Left) / sx,
+            Math.Max(0d, workAreaPixels.Top - windowRectPixels.Top) / sy,
+            Math.Max(0d, windowRectPixels.Right - workAreaPixels.Right) / sx,
+            Math.Max(0d, windowRectPixels.Bottom - workAreaPixels.Bottom) / sy);
     }
 
     private static bool ThicknessesClose(Thickness a, Thickness b)
@@ -749,9 +775,26 @@ public class RibbonWindow : Window
 
         try
         {
-            Point firstCorner = button.PointToScreen(default);
-            Point secondCorner = button.PointToScreen(new Point(button.ActualWidth, button.ActualHeight));
-            return IsScreenPointWithinBounds(ScreenPointFromLParam(lParam), firstCorner, secondCorner);
+            IntPtr hwnd = new WindowInteropHelper(this).Handle;
+            var clientOrigin = new NativePoint();
+            if (hwnd == IntPtr.Zero || !ClientToScreen(hwnd, ref clientOrigin))
+            {
+                return false;
+            }
+
+            GeneralTransform transform = button.TransformToAncestor(this);
+            Point firstCorner = transform.Transform(default);
+            Point secondCorner = transform.Transform(new Point(button.ActualWidth, button.ActualHeight));
+            Rect screenBounds = CalculateScreenBounds(
+                new Point(clientOrigin.X, clientOrigin.Y),
+                firstCorner,
+                secondCorner,
+                VisualTreeHelper.GetDpi(this));
+
+            return IsScreenPointWithinBounds(
+                ScreenPointFromLParam(lParam),
+                screenBounds.TopLeft,
+                screenBounds.BottomRight);
         }
         catch (InvalidOperationException)
         {
@@ -759,6 +802,30 @@ public class RibbonWindow : Window
             // old part is no longer connected, let WindowChrome perform its normal hit test.
             return false;
         }
+    }
+
+    /// <summary>
+    /// Converts opposite corners measured in client-space DIPs into native screen-pixel bounds.
+    /// This avoids <c>PointToScreen</c>, whose cached screen transform can
+    /// briefly retain the previous monitor's scale during a per-monitor DPI transition.
+    /// </summary>
+    internal static Rect CalculateScreenBounds(
+        Point clientOriginPixels,
+        Point firstCornerDips,
+        Point secondCornerDips,
+        DpiScale dpi)
+    {
+        double sx = dpi.DpiScaleX <= 0d ? 1d : dpi.DpiScaleX;
+        double sy = dpi.DpiScaleY <= 0d ? 1d : dpi.DpiScaleY;
+
+        var first = new Point(
+            clientOriginPixels.X + (firstCornerDips.X * sx),
+            clientOriginPixels.Y + (firstCornerDips.Y * sy));
+        var second = new Point(
+            clientOriginPixels.X + (secondCornerDips.X * sx),
+            clientOriginPixels.Y + (secondCornerDips.Y * sy));
+
+        return new Rect(first, second);
     }
 
     /// <summary>Decodes the signed screen coordinates packed into a mouse-message LPARAM.</summary>
@@ -830,6 +897,10 @@ public class RibbonWindow : Window
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool GetWindowRect(IntPtr hwnd, out NativeRect lpRect);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool ClientToScreen(IntPtr hwnd, ref NativePoint lpPoint);
 
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]

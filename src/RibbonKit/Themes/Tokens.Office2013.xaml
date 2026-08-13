@@ -133,6 +133,14 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemSelectedBorder" Color="#17365D" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.NavBackground" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Classic2007.Foreground" Color="#2B579A" />
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Backstage.Classic2007.ShellGlass" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#F7FCFF" />
+        <GradientStop Offset="0.12" Color="#E5F3FF" />
+        <GradientStop Offset="0.45" Color="#C8E2FA" />
+        <GradientStop Offset="0.45" Color="#B8D6F2" />
+        <GradientStop Offset="0.82" Color="#B8D4EF" />
+        <GradientStop Offset="1" Color="#91B9E0" />
+    </LinearGradientBrush>
     <system:Double x:Key="RibbonKit.Metrics.BackstageBackButtonSize">36</system:Double>
     <system:Double x:Key="RibbonKit.Metrics.Backstage.GlassChromeOpacity">0.88</system:Double>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ContentBackground" Color="#FFFFFF" />

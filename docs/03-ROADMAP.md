@@ -6,10 +6,10 @@ Each phase ends with the showcase app demonstrating everything built so far, tes
 >
 > Live DPI switching needed a fix outside the library: an app must declare **PerMonitorV2** in its own manifest or Windows bitmap-stretches it until restart. The showcase now does, and the README tells consumers to (§3.42).
 >
-> Deferred out of the 2007 work on purpose: the 2007 window frame, now planned as a guaranteed opaque
-> historical frame plus an optional app-controlled Aero-inspired enhancement. It remains the change
-> most likely to perturb the measured-margin maximize fix and therefore gets an independent post-v1
-> implementation/verification pass ([Office 2007 plan](07-OFFICE-2007-THEME-PLAN.md) §6/S7). The
+> The 2007 window frame was deferred on purpose and is now complete: a corrected no-material baseline
+> plus an optional app-controlled Aero-inspired enhancement passed its independent post-v1
+> implementation/verification gate, including maximize, Snap Layout and real 125%↔150% mixed-DPI
+> checks ([Office 2007 plan](07-OFFICE-2007-THEME-PLAN.md) §6/S7). The
 > other deferral — the real two-pane 2007 application menu — **shipped on 2026-07-28** as
 > `RibbonApplicationMenu`, a new control rather than a theme (§3.46).
 

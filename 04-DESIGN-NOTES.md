@@ -4252,7 +4252,7 @@ the ordinary Office 2007 title gradient; the inactive title/frame pair similarly
 `#BCC8D6` fallback. Maximizing collapses the side/bottom frame and leaves the material title
 treatment, matching the supplied Word, Task Manager and Paint evidence.
 
-The five base dictionaries now carry **208 identical token keys**. Non-2007 themes publish neutral
+The five base dictionaries now carry **209 identical token keys**. Non-2007 themes publish neutral
 transparent/zero frame values, so the project retains one lookless template. Office 2007 Black
 overrides only its required frame/tint/foreground colours. Caption hover and pressed brushes also
 flow through the existing non-client bridge, so `WM_NCHITTEST` can still return `HTMAXBUTTON` while
@@ -4270,8 +4270,8 @@ state is quieter, and the maximized side/bottom band disappears. The opaque Aero
 passes at 125%. Direct `WM_NCHITTEST` probes return the expected eight resize codes (`HTLEFT` through
 `HTBOTTOMRIGHT`) and `HTMAXBUTTON` over the maximize button. The full automated gate passes **313
 logic tests plus one visual test covering 62 approved images**. Actual Acrylic remains deliberately
-outside deterministic snapshots. Still required for final approval: live 100/150/175/200%, mixed-DPI
-movement, hands-on resize/restore cycling, caption clicks and a visible Windows 11 Snap Layout flyout.
+outside deterministic snapshots. The final multi-DPI, mixed-monitor and hands-on approval is recorded
+in §3.93.
 
 The first user review found the frame faithful but the composition too dense and identified bright
 vertical seams beside the orb and Close button. The supported DWM Acrylic backdrop has no public
@@ -4355,22 +4355,66 @@ The additive `RibbonBackstageDesign.Classic2007` value is appended as enum value
 already-persisted `Glass2007=3` contract stable. The Showcase labels those two independent choices
 `2007 Classic` and `2007 Modern` respectively.
 
-`Classic2007` stays in the single shared Backstage template. It uses an opaque inset silver-blue
-perimeter, a 220-DIP navigation rail, a filled hard-crease back button, 26-DIP navigation icons and
-gold Office 2007 hover/selection glass. The main sheet uses the existing generation-aware ribbon,
-Backstage, group, ScreenTip and control tokens plus one parity-safe `Classic2007.Foreground` key, so
-no duplicate theme-template fork was needed. The mode deliberately remains opaque when
-`Backstage.Translucent` is true; the app
-preference is retained and becomes visible again when the user returns to `Glass2007` or Modern.
+`Classic2007` stays in the single shared Backstage template. Its final shell is an opaque
+Office-blue field shared by the 220-DIP navigation rail and the content pane; it deliberately ignores
+`Backstage.Translucent`, while retaining that preference for the next switch back to `Glass2007` or
+Modern. A single continuous dark-blue perimeter and a matching one-pixel pane divider replace the
+earlier segmented and etched borders. The divider terminates inside the continuous white inner
+highlight, so the horizontal and vertical strokes never compound at the bottom junction. A second
+full-perimeter border carrying `Backstage.ContentShadow` casts depth into the eight-DIP shell gutter.
+
+Classic uses the real ribbon application button rather than drawing a duplicate Backstage orb.
+Opening reparents that one button into `BackstageAdorner`, preserves its window-relative position and
+rotates only the four-color glyph; the sphere, rim and drop shadow remain stationary. Closing performs
+the reverse transition and restores the original visual parent. Explicit owner bindings, a
+`Backstage.DesignChanged` reconciliation hook and template-part visibility ownership make live
+`2007 Modern`/`2007 Classic` switches deterministic in either direction, including after restart.
+Esc, mouse hit testing (including the orb's upper half), keyboard focus and UI Automation continue to
+use the original button and Backstage close path.
+
+When the containing window uses `Office2007Aero`, the Backstage draws a local four-sided white join
+bevel between the Aero frame and the opaque shell. The normal window-wide Aero inner highlight stays
+suppressed while Backstage is open, preserving the measured maximize/work-area compensation and the
+previously approved modern-glass seams.
 
 The Showcase Home page preserves its original `Good morning` content for every established design
 and conditionally reveals a Classic2007-only document dashboard: Recent Documents, Preview,
 Properties, Quick Actions and a three-part document-management footer. This demonstrates that the
 library still accepts arbitrary application content rather than introducing a special-purpose page
-control. Live 125% review tightened the content padding, filled the recent-document panel and removed
-unnecessary horizontal/vertical scrolling. A direct mode-switch check confirmed that `Glass2007`
-returns to its previous Acrylic rail and original page unchanged. Current automated gate: **323 logic
-tests plus one visual test covering 62 approved images**.
+control. Live review tightened the content padding, reduced the sample data enough to remove the
+scrollbar and added an eight-DIP render gutter around the dashboard. That gutter is balanced by an
+equal shell-padding reduction, so the approved layout does not move while every card shadow receives
+enough room to render without being clipped by the `ScrollViewer`. A direct same-process and restart
+mode-switch check confirmed that `Glass2007` returns to its previous Acrylic rail and original page
+unchanged, while Classic restores the same real orb. Final automated gate: **325 logic tests plus one
+visual test covering 62 approved images**.
+
+### 3.93 S7 Office 2007 window-frame final verification — 2026-08-13
+
+S7 is complete. Proportional geometry checks cover 100/125/150/175/200% for the frame, maximized
+overhang compensation and native maximize hit bounds. Live testing used a real per-monitor-v2
+125% 1920×1200 primary display and 150% 2560×1440 secondary display. Repeated restored moves
+125%→150%→125% updated the HWND DPI and caption metrics from 58×42 to 69×51 physical pixels and
+back without restarting. All eight resize edges/corners retained their native hit codes and direct
+drag-resize behavior. Real caption clicks passed minimize, maximize, restore and close; maximize
+produced the expected WindowChrome overhang while the measured root inset kept the title, ribbon,
+document and status surfaces flush with the monitor work area.
+
+The mixed-monitor pass caught one issue that single-monitor and synthetic `WM_DPICHANGED` checks
+could not: WPF `PointToScreen` retained the previous monitor's screen transform for the realized
+maximize template part, moving `HTMAXBUTTON` away from the rendered button after a DPI transition.
+`RibbonWindow` now transforms the part into window-client DIPs, combines it with the native
+`ClientToScreen` origin and applies the window's current `DpiScale`. Focused contracts cover that
+conversion at all five required scales, negative monitor coordinates and mirrored corners. On the
+real 150% monitor the corrected region measured 69×51 pixels exactly over the visible button; the
+Windows 11 Snap Layout flyout appeared, the custom non-client hover/pressed bridge remained visible,
+and maximize/restore completed from that same region. Moving back to 125% restored the 58×42 region.
+
+Active/inactive Acrylic, maximized Acrylic and the deterministic opaque fallback were inspected
+live. Acrylic remained confined to the transparent title/restored frame, inactive treatment stayed
+quieter, and the opaque fallback preserved the same frame geometry. The final automated gate passes
+**337 logic tests plus one visual test covering 62 approved images**, with zero build warnings or
+errors. Actual Acrylic composition remains a live-only approval rather than a snapshot baseline.
 
 ## 4. Workflow / Session Conventions
 
@@ -4388,7 +4432,7 @@ tests plus one visual test covering 62 approved images**.
 
 ## 5. Current State & Next Steps
 
-> **Status as of 2026-08-08: everything through §3.61 and the responsive Ribbon Editor/application-
+> **Status as of 2026-08-13: everything through §3.61 and the responsive Ribbon Editor/application-
 > menu authoring work in the later §3.62 entry are implemented AND user-verified on Windows;
 > §§3.64–3.66 are automated and await focused live visual rechecks; §§3.67–3.68 are user-verified,
 > including §3.68 at 100/125/150/175/200% DPI and in the focused RTL input lab; §§3.69–3.70's
@@ -4408,8 +4452,9 @@ tests plus one visual test covering 62 approved images**.
 > Of the
 > two items
 > deferred out of §3.38, the two-pane 2007 application menu shipped in §3.46. Section §3.89 corrects
-> the opaque no-material baseline; §3.90 implements the separate Aero-inspired prototype and records
-> its passing 125% live/automated gate. The remaining multi-DPI and hands-on checks are still open.
+> the opaque no-material baseline; §3.90 implements the separate Aero-inspired prototype; §§3.91–3.92
+> complete its two additive Backstage designs; and §3.93 closes S7 with the five-scale proportional
+> gate plus real 125%↔150% mixed-monitor, resize, caption, maximize and Snap Layout approval.
 
 **Manual verification complete through §3.61 (Windows 2026-08-08).** The earlier whole-surface
 flyout and No Motion pass (§3.42), complete split-button matrix including the Visual Studio Ribbon
@@ -4583,9 +4628,10 @@ Backlog (rough priority):
    reordering + cross-tab/group moves are now DONE — see §5 "Drag-drop reordering".)
 1b. ~~Finish the `DropdownMenu` animation.~~ **DONE (§3.42)** — all five flyouts plus the context
    menu and its submenus now animate the whole surface.
-2. **Office 2007 leftover** — §§3.89–3.90 implement the corrected opaque baseline and separate
-   optional Aero-inspired prototype on their feature branch; finish the remaining four live DPI
-   settings, mixed-DPI movement and hands-on caption/resize/Snap approval.
+2. **Office 2007 leftover — DONE (§§3.89–3.93).** The corrected opaque baseline, independent
+   optional Aero-inspired frame and both additive 2007 Backstage designs pass their automated and
+   live gates, including proportional 100/125/150/175/200% geometry and real 125%↔150%
+   mixed-monitor caption/resize/maximize/Snap verification.
    The other deferral, the real two-pane APPLICATION MENU, **shipped 2026-07-28 (§3.46)**.
 3. **Full RTL verification + localization resources — DONE (§§3.51–3.61).** The
    §§3.48–3.49 visual-regression matrix is complete, §3.51 adds the first RTL smoke snapshot, and
@@ -4687,7 +4733,7 @@ Possible post-v1 polish:
   honor reduced motion, handle rapid reversals, and stay disabled while a DWM backdrop is active so
   Mica/Acrylic retain their native material retint without a second cross-fade on top.
 
-**Unit tests: 323 green (verified 2026-08-13).** Coverage now includes the STA harness, the borrow
+**Unit tests: 337 green (verified 2026-08-13).** Coverage now includes the STA harness, the borrow
 protocol, overflow strip measure/arrange rules, popup motion and dismissal, proxy mirroring,
 application-menu layering/hover/footer-outline/KeyTips, repeatable message-bar API/template/theme
 contracts, Office 2010 seam/state/consumer contracts, localization/RTL
@@ -4702,7 +4748,9 @@ target blocking, native toggle Click/Command semantics, compact-input discovery 
 label derivation, and collapsed-group preservation for editor/picker activation.
 The post-v1 window-frame and 2007 Backstage contracts cover opaque/Aero separation, tint
 validation/default migration, shared-template material triggers, generation-aware navigation,
-independent modern `Glass2007` and opaque `Classic2007` choices, and Showcase appearance persistence.
+independent modern `Glass2007` and opaque `Classic2007` choices, Showcase appearance persistence,
+single-orb reparent/restore ownership, restart-independent Modern/Classic switching, five-scale
+maximize compensation and per-monitor caption-hit coordinate conversion.
 `RibbonMergeModalTests` adds the Phase 7 automated invariants: merge ordering across later
 permutations, merge/unmerge round-trips, group restore with two sources in one tab, capture while
 modal, modal enter/exit selection and cancellation, forced exit when a merged modal tab leaves,

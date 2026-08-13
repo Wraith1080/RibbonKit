@@ -1,5 +1,6 @@
 using System.IO;
 using System.Windows;
+using System.Windows.Media;
 using System.Xml.Linq;
 using RibbonKit.Controls;
 using RibbonKit.Theming;
@@ -92,6 +93,79 @@ public class RibbonWindowSnapLayoutTests
             new Point(120, 220),
             new Point(146, 234),
             new Point(100, 200)));
+    }
+
+    [Theory]
+    [InlineData(1.00, -1920, 80, -1800, 114, 46, 34)]
+    [InlineData(1.25, 0, 0, 150, 42.5, 57.5, 42.5)]
+    [InlineData(1.50, 1920, 0, 2100, 51, 69, 51)]
+    [InlineData(1.75, -2560, -1440, -2350, -1380.5, 80.5, 59.5)]
+    [InlineData(2.00, 3840, -2160, 4080, -2092, 92, 68)]
+    public void Client_DIP_bounds_follow_native_screen_origin_at_every_required_scale(
+        double scale,
+        double clientX,
+        double clientY,
+        double expectedX,
+        double expectedY,
+        double expectedWidth,
+        double expectedHeight)
+    {
+        Rect bounds = RibbonWindow.CalculateScreenBounds(
+            new Point(clientX, clientY),
+            new Point(120d, 34d),
+            new Point(166d, 68d),
+            new DpiScale(scale, scale));
+
+        Assert.Equal(new Rect(expectedX, expectedY, expectedWidth, expectedHeight), bounds);
+    }
+
+    [Fact]
+    public void Client_DIP_bounds_preserve_mirrored_template_corners()
+    {
+        Rect bounds = RibbonWindow.CalculateScreenBounds(
+            new Point(-1280d, 100d),
+            new Point(92d, 20d),
+            new Point(46d, 54d),
+            new DpiScale(1.5d, 1.5d));
+
+        Assert.Equal(new Rect(-1211d, 130d, 69d, 51d), bounds);
+    }
+
+    [Theory]
+    [InlineData(1.00)]
+    [InlineData(1.25)]
+    [InlineData(1.50)]
+    [InlineData(1.75)]
+    [InlineData(2.00)]
+    public void Maximized_overhang_is_converted_to_the_same_DIP_inset_at_every_required_scale(
+        double scale)
+    {
+        const double expectedInset = 8d;
+        double overhangPixels = expectedInset * scale;
+        var workArea = new Rect(-2560d, 0d, 2560d, 1440d);
+        var windowRect = new Rect(
+            workArea.Left - overhangPixels,
+            workArea.Top - overhangPixels,
+            workArea.Width + (2d * overhangPixels),
+            workArea.Height + (2d * overhangPixels));
+
+        Thickness inset = RibbonWindow.CalculateMaximizeInset(
+            windowRect,
+            workArea,
+            new DpiScale(scale, scale));
+
+        Assert.Equal(new Thickness(expectedInset), inset);
+    }
+
+    [Fact]
+    public void Maximized_inset_clamps_edges_that_do_not_overhang()
+    {
+        Thickness inset = RibbonWindow.CalculateMaximizeInset(
+            new Rect(4d, 6d, 1910d, 1060d),
+            new Rect(0d, 0d, 1920d, 1080d),
+            new DpiScale(1.25d, 1.25d));
+
+        Assert.Equal(default, inset);
     }
 
     private static IntPtr PackScreenPoint(int x, int y)
