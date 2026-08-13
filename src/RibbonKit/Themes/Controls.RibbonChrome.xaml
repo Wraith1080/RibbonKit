@@ -3,7 +3,8 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="clr-namespace:RibbonKit.Controls"
     xmlns:localization="clr-namespace:RibbonKit.Localization"
-    xmlns:layout="clr-namespace:RibbonKit.Layout">
+    xmlns:layout="clr-namespace:RibbonKit.Layout"
+    xmlns:primitives="clr-namespace:System.Windows.Controls.Primitives;assembly=PresentationFramework">
 
     <!-- Part of the shared RibbonKit control-template dictionary; merged by Office2024.xaml.
          Ribbon root + RibbonTabControl.
@@ -17,6 +18,62 @@
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.Shared.xaml" />
     </ResourceDictionary.MergedDictionaries>
+
+    <!-- One pixel-identical orb drawing shared by the ribbon application button and the
+         Classic2007 Backstage's private visual proxy. The proxy is a Back button, not a
+         second application-button state owner; sharing this template prevents the two
+         presentations from drifting as theme tokens evolve. -->
+    <DataTemplate x:Key="RibbonKit.Templates.ApplicationOrbChrome">
+        <Grid Width="{DynamicResource RibbonKit.Metrics.ApplicationOrbSize}"
+              Height="{DynamicResource RibbonKit.Metrics.ApplicationOrbSize}"
+              Margin="{DynamicResource RibbonKit.Metrics.ApplicationOrbMargin}">
+            <!-- The dark edge of a real orb is a soft shadow plus a light rim, not a
+                 hard outer stroke. The sphere gradient supplies the top-arc highlight. -->
+            <Ellipse x:Name="OrbFill"
+                     Fill="{DynamicResource RibbonKit.Brushes.ApplicationOrb.Background}"
+                     Stroke="{DynamicResource RibbonKit.Brushes.ApplicationOrb.Ring}"
+                     StrokeThickness="1.5"
+                     Effect="{DynamicResource RibbonKit.Effects.ApplicationOrbShadow}" />
+            <!-- Only the logo rotates during the Classic2007 Backstage transition. -->
+            <Viewbox x:Name="OrbGlyph" Margin="13" Stretch="Uniform">
+                <Grid Width="16" Height="16">
+                    <Rectangle Width="7" Height="7" RadiusX="1.5" RadiusY="1.5"
+                               HorizontalAlignment="Left" VerticalAlignment="Top" Fill="#E8762C" />
+                    <Rectangle Width="7" Height="7" RadiusX="1.5" RadiusY="1.5"
+                               HorizontalAlignment="Right" VerticalAlignment="Top" Fill="#5FA92C" />
+                    <Rectangle Width="7" Height="7" RadiusX="1.5" RadiusY="1.5"
+                               HorizontalAlignment="Left" VerticalAlignment="Bottom" Fill="#2C7FD1" />
+                    <Rectangle Width="7" Height="7" RadiusX="1.5" RadiusY="1.5"
+                               HorizontalAlignment="Right" VerticalAlignment="Bottom" Fill="#F2B705" />
+                </Grid>
+            </Viewbox>
+        </Grid>
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType={x:Type primitives:ButtonBase}}}"
+                         Value="True">
+                <Setter TargetName="OrbFill" Property="Fill"
+                        Value="{DynamicResource RibbonKit.Brushes.ApplicationOrb.HoverBackground}" />
+                <Setter TargetName="OrbFill" Property="Stroke"
+                        Value="{DynamicResource RibbonKit.Brushes.ApplicationOrb.HoverRing}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding IsPressed, RelativeSource={RelativeSource AncestorType={x:Type primitives:ButtonBase}}}"
+                         Value="True">
+                <Setter TargetName="OrbFill" Property="Fill"
+                        Value="{DynamicResource RibbonKit.Brushes.ApplicationOrb.PressedBackground}" />
+                <Setter TargetName="OrbFill" Property="Stroke"
+                        Value="{DynamicResource RibbonKit.Brushes.ApplicationOrb.HoverRing}" />
+            </DataTrigger>
+            <!-- The historical two-pane menu still moves the real application button into
+                 the Ribbon overlay. It remains pressed while that menu is open. -->
+            <DataTrigger Binding="{Binding IsApplicationMenuOpen, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
+                         Value="True">
+                <Setter TargetName="OrbFill" Property="Fill"
+                        Value="{DynamicResource RibbonKit.Brushes.ApplicationOrb.PressedBackground}" />
+                <Setter TargetName="OrbFill" Property="Stroke"
+                        Value="{DynamicResource RibbonKit.Brushes.ApplicationOrb.HoverRing}" />
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
 
     <!-- ============================================================
          Ribbon
@@ -304,47 +361,13 @@
                                                                    VerticalAlignment="Bottom"
                                                                    Fill="{DynamicResource RibbonKit.Brushes.ApplicationButton.HoverUnderline}"
                                                                    Visibility="Collapsed" />
-                                                        <!-- Office 2007 ORB, shown instead of Chrome when
-                                                             Ribbon.ApplicationButtonShape is Orb. Top-aligned
-                                                             with a negative top margin so it straddles the
-                                                             tab-strip / title-bar boundary like the real one.
-                                                             The glyph is built in because
-                                                             ApplicationButtonHeader is a string and cannot
-                                                             render inside a 37px circle; the header becomes
-                                                             the accessible name instead. -->
-                                                        <Grid x:Name="Orb"
-                                                              Visibility="Collapsed"
-                                                              VerticalAlignment="Top"
-                                                              Width="{DynamicResource RibbonKit.Metrics.ApplicationOrbSize}"
-                                                              Height="{DynamicResource RibbonKit.Metrics.ApplicationOrbSize}"
-                                                              Margin="{DynamicResource RibbonKit.Metrics.ApplicationOrbMargin}">
-                                                            <!-- The dark edge of a real orb is a soft
-                                                                 SHADOW plus a light rim, not a dark
-                                                                 stroke. No inset highlight ring: a full
-                                                                 circle reads as a hard band, and the
-                                                                 sphere gradient already carries the
-                                                                 top-arc highlight. -->
-                                                            <Ellipse x:Name="OrbFill"
-                                                                     Fill="{DynamicResource RibbonKit.Brushes.ApplicationOrb.Background}"
-                                                                     Stroke="{DynamicResource RibbonKit.Brushes.ApplicationOrb.Ring}"
-                                                                     StrokeThickness="1.5"
-                                                                     Effect="{DynamicResource RibbonKit.Effects.ApplicationOrbShadow}" />
-                                                            <!-- Rotate this glyph host during the Classic 2007
-                                                                 Backstage transition. The spherical fill, rim, and
-                                                                 drop shadow remain stationary. -->
-                                                            <Viewbox x:Name="OrbGlyph" Margin="13" Stretch="Uniform">
-                                                                <Grid Width="16" Height="16">
-                                                                    <Rectangle Width="7" Height="7" RadiusX="1.5" RadiusY="1.5"
-                                                                               HorizontalAlignment="Left" VerticalAlignment="Top" Fill="#E8762C" />
-                                                                    <Rectangle Width="7" Height="7" RadiusX="1.5" RadiusY="1.5"
-                                                                               HorizontalAlignment="Right" VerticalAlignment="Top" Fill="#5FA92C" />
-                                                                    <Rectangle Width="7" Height="7" RadiusX="1.5" RadiusY="1.5"
-                                                                               HorizontalAlignment="Left" VerticalAlignment="Bottom" Fill="#2C7FD1" />
-                                                                    <Rectangle Width="7" Height="7" RadiusX="1.5" RadiusY="1.5"
-                                                                               HorizontalAlignment="Right" VerticalAlignment="Bottom" Fill="#F2B705" />
-                                                                </Grid>
-                                                            </Viewbox>
-                                                        </Grid>
+                                                        <!-- Office 2007 orb. Its chrome is shared with the
+                                                             Classic2007 Backstage's private overlay proxy. -->
+                                                        <ContentPresenter x:Name="Orb"
+                                                                          Content="{Binding RelativeSource={RelativeSource TemplatedParent}}"
+                                                                          ContentTemplate="{StaticResource RibbonKit.Templates.ApplicationOrbChrome}"
+                                                                          Visibility="Collapsed"
+                                                                          VerticalAlignment="Top" />
                                                     </Grid>
                                                     <ControlTemplate.Triggers>
                                                         <Trigger Property="IsMouseOver" Value="True">
@@ -394,79 +417,15 @@
                                                             <Setter TargetName="HoverUnderline" Property="Visibility" Value="Collapsed" />
                                                             <Setter TargetName="Orb" Property="Visibility" Value="Visible" />
                                                         </DataTrigger>
-                                                        <MultiDataTrigger>
-                                                            <MultiDataTrigger.Conditions>
-                                                                <Condition Binding="{Binding ApplicationButtonShape, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}" Value="Orb" />
-                                                                <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True" />
-                                                            </MultiDataTrigger.Conditions>
-                                                            <Setter TargetName="OrbFill" Property="Fill"
-                                                                    Value="{DynamicResource RibbonKit.Brushes.ApplicationOrb.HoverBackground}" />
-                                                            <Setter TargetName="OrbFill" Property="Stroke"
-                                                                    Value="{DynamicResource RibbonKit.Brushes.ApplicationOrb.HoverRing}" />
-                                                        </MultiDataTrigger>
-                                                        <MultiDataTrigger>
-                                                            <MultiDataTrigger.Conditions>
-                                                                <Condition Binding="{Binding ApplicationButtonShape, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}" Value="Orb" />
-                                                                <Condition Binding="{Binding IsPressed, RelativeSource={RelativeSource Self}}" Value="True" />
-                                                            </MultiDataTrigger.Conditions>
-                                                            <Setter TargetName="OrbFill" Property="Fill"
-                                                                    Value="{DynamicResource RibbonKit.Brushes.ApplicationOrb.PressedBackground}" />
-                                                            <Setter TargetName="OrbFill" Property="Stroke"
-                                                                    Value="{DynamicResource RibbonKit.Brushes.ApplicationOrb.HoverRing}" />
-                                                        </MultiDataTrigger>
-                                                        <!-- Ordinary Backstage leaves this orb in the original ribbon
-                                                             layer. RibbonWindow clips that subtree at the content-row
-                                                             boundary while the Backstage adorner covers the remainder,
-                                                             so the opening surface naturally unfurls above the orb.
-                                                             Application-menu layering remains unchanged. -->
-                                                        <!-- Classic2007 moves this exact ToggleButton into the window
-                                                             adorner. Its stable Ribbon owner is stored in Tag immediately
-                                                             before the move, so these final setters preserve the real orb
-                                                             after normal ancestor-based template bindings lose their path. -->
-                                                        <MultiDataTrigger>
-                                                            <MultiDataTrigger.Conditions>
-                                                                <Condition Binding="{Binding Tag.Backstage.Design, RelativeSource={RelativeSource TemplatedParent}}" Value="Classic2007" />
-                                                                <Condition Binding="{Binding IsChecked, RelativeSource={RelativeSource Self}}" Value="True" />
-                                                            </MultiDataTrigger.Conditions>
-                                                            <Setter TargetName="Chrome" Property="Visibility" Value="Collapsed" />
-                                                            <Setter TargetName="HoverUnderline" Property="Visibility" Value="Collapsed" />
-                                                            <Setter TargetName="Orb" Property="Visibility" Value="Visible" />
-                                                        </MultiDataTrigger>
-                                                        <MultiDataTrigger>
-                                                            <MultiDataTrigger.Conditions>
-                                                                <Condition Binding="{Binding Tag.Backstage.Design, RelativeSource={RelativeSource TemplatedParent}}" Value="Classic2007" />
-                                                                <Condition Binding="{Binding IsChecked, RelativeSource={RelativeSource Self}}" Value="True" />
-                                                                <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True" />
-                                                            </MultiDataTrigger.Conditions>
-                                                            <Setter TargetName="OrbFill" Property="Fill"
-                                                                    Value="{DynamicResource RibbonKit.Brushes.ApplicationOrb.HoverBackground}" />
-                                                            <Setter TargetName="OrbFill" Property="Stroke"
-                                                                    Value="{DynamicResource RibbonKit.Brushes.ApplicationOrb.HoverRing}" />
-                                                        </MultiDataTrigger>
-                                                        <MultiDataTrigger>
-                                                            <MultiDataTrigger.Conditions>
-                                                                <Condition Binding="{Binding Tag.Backstage.Design, RelativeSource={RelativeSource TemplatedParent}}" Value="Classic2007" />
-                                                                <Condition Binding="{Binding IsChecked, RelativeSource={RelativeSource Self}}" Value="True" />
-                                                                <Condition Binding="{Binding IsPressed, RelativeSource={RelativeSource Self}}" Value="True" />
-                                                            </MultiDataTrigger.Conditions>
-                                                            <Setter TargetName="OrbFill" Property="Fill"
-                                                                    Value="{DynamicResource RibbonKit.Brushes.ApplicationOrb.PressedBackground}" />
-                                                            <Setter TargetName="OrbFill" Property="Stroke"
-                                                                    Value="{DynamicResource RibbonKit.Brushes.ApplicationOrb.HoverRing}" />
-                                                        </MultiDataTrigger>
-                                                        <!-- Application menu open: the orb stays put and
-                                                             holds a lit "pressed" gel, so it reads as the
-                                                             thing the open menu belongs to. -->
+                                                        <!-- Application menu open: keep the orb visible above its
+                                                             historical two-pane menu. The shared chrome template owns
+                                                             the pressed gel. -->
                                                         <MultiDataTrigger>
                                                             <MultiDataTrigger.Conditions>
                                                                 <Condition Binding="{Binding ApplicationButtonShape, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}" Value="Orb" />
                                                                 <Condition Binding="{Binding IsApplicationMenuOpen, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}" Value="True" />
                                                             </MultiDataTrigger.Conditions>
                                                             <Setter TargetName="Orb" Property="Visibility" Value="Visible" />
-                                                            <Setter TargetName="OrbFill" Property="Fill"
-                                                                    Value="{DynamicResource RibbonKit.Brushes.ApplicationOrb.PressedBackground}" />
-                                                            <Setter TargetName="OrbFill" Property="Stroke"
-                                                                    Value="{DynamicResource RibbonKit.Brushes.ApplicationOrb.HoverRing}" />
                                                         </MultiDataTrigger>
                                                     </ControlTemplate.Triggers>
                                                 </ControlTemplate>
@@ -491,13 +450,6 @@
                                                           Value="True">
                                                  <Setter Property="Visibility" Value="Collapsed" />
                                              </DataTrigger>
-                                             <MultiDataTrigger>
-                                                 <MultiDataTrigger.Conditions>
-                                                     <Condition Binding="{Binding Tag.Backstage.Design, RelativeSource={RelativeSource Self}}" Value="Classic2007" />
-                                                     <Condition Binding="{Binding IsChecked, RelativeSource={RelativeSource Self}}" Value="True" />
-                                                 </MultiDataTrigger.Conditions>
-                                                 <Setter Property="Visibility" Value="Visible" />
-                                             </MultiDataTrigger>
                                          </Style.Triggers>
                                     </Style>
                                 </ToggleButton.Style>

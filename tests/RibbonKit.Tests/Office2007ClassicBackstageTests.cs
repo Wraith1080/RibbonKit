@@ -152,6 +152,33 @@ public class Office2007ClassicBackstageTests
     }
 
     [Fact]
+    public void Ribbon_and_Classic2007_proxy_share_one_orb_chrome_template()
+    {
+        XDocument document = LoadRibbonChromeTemplate();
+        XElement orbTemplate = Assert.Single(
+            document.Root!.Elements(Presentation + "DataTemplate"),
+            element => (string?)element.Attribute(Xaml + "Key")
+                == "RibbonKit.Templates.ApplicationOrbChrome");
+        _ = Assert.Single(
+            orbTemplate.Descendants(Presentation + "Ellipse"),
+            element => (string?)element.Attribute(Xaml + "Name") == "OrbFill");
+        _ = Assert.Single(
+            orbTemplate.Descendants(Presentation + "Viewbox"),
+            element => (string?)element.Attribute(Xaml + "Name") == "OrbGlyph");
+
+        XElement ribbonOrb = NamedElement(document, "Orb");
+        Assert.Equal(
+            "{StaticResource RibbonKit.Templates.ApplicationOrbChrome}",
+            (string?)ribbonOrb.Attribute("ContentTemplate"));
+
+        Assert.DoesNotContain(
+            document.Descendants(Presentation + "Condition"),
+            condition => ((string?)condition.Attribute("Binding"))?.Contains(
+                "Tag.Backstage.Design",
+                System.StringComparison.Ordinal) == true);
+    }
+
+    [Fact]
     public void Showcase_exposes_Classic2007_without_replacing_the_modern_Glass2007_page()
     {
         XDocument showcase = XDocument.Load(Path.Combine(
@@ -224,6 +251,13 @@ public class Office2007ClassicBackstageTests
         "RibbonKit",
         "Themes",
         "Controls.Backstage.xaml"));
+
+    private static XDocument LoadRibbonChromeTemplate() => XDocument.Load(Path.Combine(
+        RepositoryRoot(),
+        "src",
+        "RibbonKit",
+        "Themes",
+        "Controls.RibbonChrome.xaml"));
 
     private static string RepositoryRoot()
     {

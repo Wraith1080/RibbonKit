@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Windows;
+using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Data;
@@ -24,7 +25,7 @@ public class ClassicBackstageOrbLifecycleTests
             ?? throw new InvalidOperationException("Application-button binding helper was not found.");
         ensureBindings.Invoke(ribbon, new object[] { button });
 
-        Assert.Same(ribbon, button.Tag);
+        Assert.Null(button.Tag);
         Assert.False(button.IsChecked);
 
         ribbon.IsBackstageOpen = true;
@@ -39,7 +40,7 @@ public class ClassicBackstageOrbLifecycleTests
     });
 
     [Fact]
-    public void Switching_an_open_backstage_moves_and_restores_the_same_orb_button() => Sta.Run(() =>
+    public void Switching_an_open_backstage_keeps_the_real_button_in_place_and_swaps_only_the_proxy() => Sta.Run(() =>
     {
         var backstage = new Backstage { Design = RibbonBackstageDesign.Glass2007 };
         var ribbon = new Ribbon
@@ -48,20 +49,7 @@ public class ClassicBackstageOrbLifecycleTests
             Backstage = backstage,
             IsBackstageOpen = true,
         };
-        var orb = new FrameworkElementFactory(typeof(Grid), "Orb");
-        orb.SetValue(UIElement.VisibilityProperty, Visibility.Collapsed);
-        var chrome = new FrameworkElementFactory(typeof(Border), "Chrome");
-        var underline = new FrameworkElementFactory(typeof(Border), "HoverUnderline");
-        var templateRoot = new FrameworkElementFactory(typeof(Grid));
-        templateRoot.AppendChild(chrome);
-        templateRoot.AppendChild(underline);
-        templateRoot.AppendChild(orb);
-        var button = new ToggleButton
-        {
-            Width = 48,
-            Height = 48,
-            Template = new ControlTemplate(typeof(ToggleButton)) { VisualTree = templateRoot },
-        };
+        ToggleButton button = CreateApplicationButton();
         var buttonHost = new StackPanel();
         var adornedRoot = new Grid { Width = 500, Height = 300 };
         buttonHost.Children.Add(button);
@@ -78,23 +66,57 @@ public class ClassicBackstageOrbLifecycleTests
 
         backstage.Design = RibbonBackstageDesign.Classic2007;
 
-        Assert.IsType<Border>(Assert.Single(buttonHost.Children));
+        Assert.Same(button, Assert.Single(buttonHost.Children));
+        Assert.Equal(0d, button.Opacity);
+        Assert.False(button.IsHitTestVisible);
         Assert.Equal(2, VisualTreeHelper.GetChildrenCount(adorner));
-        Assert.Same(button, VisualTreeHelper.GetChild(adorner, 1));
-        Assert.Equal(Visibility.Visible, FindTemplatePart(button, "Orb").Visibility);
-        Assert.Equal(Visibility.Collapsed, FindTemplatePart(button, "Chrome").Visibility);
+        var proxy = Assert.IsType<Button>(GetPrivateField(ribbon, "_classicBackstageOrbProxy"));
+        Assert.Same(proxy, VisualTreeHelper.GetChild(adorner, 1));
+        Assert.NotSame(button, proxy);
+        Assert.Equal(string.Empty, proxy.Content);
+        Assert.NotSame(ribbon, proxy.Content);
+        Assert.Same(
+            Assert.IsType<ContentPresenter>(button.Template.FindName("Orb", button)).ContentTemplate,
+            proxy.ContentTemplate);
+        Assert.Equal(
+            -360d,
+            Assert.IsType<double>(GetPrivateField(ribbon, "_pendingClassicBackstageOrbRotation")));
+        string automationName = AutomationProperties.GetName(proxy);
+        Assert.False(string.IsNullOrWhiteSpace(automationName));
+        Assert.Equal(proxy.ToolTip, automationName);
+        proxy.ApplyTemplate();
+        var proxyPresenter = Assert.IsType<ContentPresenter>(VisualTreeHelper.GetChild(proxy, 0));
+        Assert.Equal(VerticalAlignment.Top, proxyPresenter.VerticalAlignment);
+        Assert.Same(proxy.ContentTemplate, proxyPresenter.ContentTemplate);
 
         backstage.Design = RibbonBackstageDesign.Glass2007;
 
         Assert.Same(button, Assert.Single(buttonHost.Children));
         Assert.Equal(1, VisualTreeHelper.GetChildrenCount(adorner));
-        Assert.Equal(Visibility.Collapsed, FindTemplatePart(button, "Orb").Visibility);
+        Assert.Equal(0d, button.Opacity);
+        Assert.False(button.IsHitTestVisible);
 
+        SetPrivateField(ribbon, "_backstageClosing", true);
+        ribbon.IsBackstageOpen = false;
+        InvokeReconcile(ribbon);
+
+        Assert.Equal(1d, button.Opacity);
+        Assert.True(button.IsHitTestVisible);
+        SetPrivateField(ribbon, "_backstageClosing", false);
+
+        backstage.Design = RibbonBackstageDesign.Classic2007;
+        ribbon.IsBackstageOpen = true;
+
+        Assert.Same(button, Assert.Single(buttonHost.Children));
+        Assert.Equal(2, VisualTreeHelper.GetChildrenCount(adorner));
+        Assert.Same(proxy, VisualTreeHelper.GetChild(adorner, 1));
+
+        InvokePrivate(ribbon, "SetBackstageApplicationButtonSuppressed", false);
         adorner.Detach();
     });
 
     [Fact]
-    public void Startup_Classic_then_other_open_backstage_keeps_orb_in_the_covered_ribbon_layer() => Sta.Run(() =>
+    public void Startup_Classic_then_other_open_backstage_keeps_the_real_orb_suppressed_without_reparenting() => Sta.Run(() =>
     {
         var backstage = new Backstage { Design = RibbonBackstageDesign.Classic2007 };
         var ribbon = new Ribbon
@@ -103,7 +125,7 @@ public class ClassicBackstageOrbLifecycleTests
             Backstage = backstage,
             IsBackstageOpen = true,
         };
-        var button = new ToggleButton { Width = 48, Height = 48 };
+        ToggleButton button = CreateApplicationButton();
         var buttonHost = new StackPanel();
         var adornedRoot = new Grid { Width = 500, Height = 300 };
         buttonHost.Children.Add(button);
@@ -119,22 +141,26 @@ public class ClassicBackstageOrbLifecycleTests
         SetPrivateField(ribbon, "_applicationButton", button);
 
         InvokeReconcile(ribbon);
-        Assert.Equal(Visibility.Visible, button.Visibility);
+        Assert.Same(button, Assert.Single(buttonHost.Children));
+        Assert.Equal(0d, button.Opacity);
+        Assert.False(button.IsHitTestVisible);
         Assert.Equal(2, VisualTreeHelper.GetChildrenCount(adorner));
 
         backstage.Design = RibbonBackstageDesign.Glass2007;
 
         Assert.Same(button, Assert.Single(buttonHost.Children));
         Assert.Equal(1, VisualTreeHelper.GetChildrenCount(adorner));
-        Assert.Equal(Visibility.Visible, button.Visibility);
+        Assert.Equal(0d, button.Opacity);
+        Assert.False(button.IsHitTestVisible);
 
         backstage.Design = RibbonBackstageDesign.Classic2007;
 
-        Assert.Equal(Visibility.Visible, button.Visibility);
+        Assert.Same(button, Assert.Single(buttonHost.Children));
         Assert.Equal(2, VisualTreeHelper.GetChildrenCount(adorner));
 
-        adorner.DetachApplicationButton();
-        InvokePrivate(ribbon, "RestoreApplicationButtonFromOverlay");
+        InvokePrivate(ribbon, "SetBackstageApplicationButtonSuppressed", false);
+        Assert.Equal(1d, button.Opacity);
+        Assert.True(button.IsHitTestVisible);
         adorner.Detach();
     });
 
@@ -148,7 +174,32 @@ public class ClassicBackstageOrbLifecycleTests
     }
 
     private static void InvokeReconcile(Ribbon ribbon) =>
-        InvokePrivate(ribbon, "ReconcileClassicBackstageApplicationButton", false);
+        InvokePrivate(ribbon, "ReconcileClassicBackstageOrbProxy", false);
+
+    private static ToggleButton CreateApplicationButton()
+    {
+        var chrome = new FrameworkElementFactory(typeof(Grid));
+        var orb = new FrameworkElementFactory(typeof(ContentPresenter), "Orb");
+        var orbRoot = new FrameworkElementFactory(typeof(Grid), "OrbGlyph");
+        var orbTemplate = new DataTemplate { VisualTree = orbRoot };
+        orb.SetValue(ContentPresenter.ContentTemplateProperty, orbTemplate);
+        chrome.AppendChild(orb);
+        return new ToggleButton
+        {
+            Width = 48,
+            Height = 48,
+            Template = new ControlTemplate(typeof(ToggleButton)) { VisualTree = chrome },
+        };
+    }
+
+    private static object? GetPrivateField(object instance, string name)
+    {
+        FieldInfo field = instance.GetType().GetField(
+            name,
+            BindingFlags.Instance | BindingFlags.NonPublic)
+            ?? throw new InvalidOperationException($"Field '{name}' was not found.");
+        return field.GetValue(instance);
+    }
 
     private static void InvokePrivate(object instance, string name, params object[] arguments)
     {
@@ -159,9 +210,4 @@ public class ClassicBackstageOrbLifecycleTests
         method.Invoke(instance, arguments);
     }
 
-    private static FrameworkElement FindTemplatePart(Control root, string name)
-    {
-        root.ApplyTemplate();
-        return Assert.IsAssignableFrom<FrameworkElement>(root.Template.FindName(name, root));
-    }
 }

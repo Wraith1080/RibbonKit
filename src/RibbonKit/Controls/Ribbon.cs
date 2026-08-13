@@ -9,6 +9,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Markup;
+using System.Windows.Shell;
 using System.Windows.Threading;
 using RibbonKit.Animation;
 using RibbonKit.Localization;
@@ -244,7 +245,6 @@ public class Ribbon : Control
 
     private const string ApplicationMenuAnchorBelowButtonResourceKey =
         "RibbonKit.Behaviors.ApplicationMenuAnchorBelowButton";
-
     /// <summary>Identifies the <see cref="SelectedTab"/> dependency property.</summary>
     public static readonly DependencyProperty SelectedTabProperty =
         DependencyProperty.Register(
@@ -1622,6 +1622,17 @@ public class Ribbon : Control
     private Border? _applicationButtonPlaceholder;
     private int _applicationButtonOriginalIndex = -1;
 
+    // Classic2007 Backstage uses a private visual proxy above the animated adorner. The real
+    // application button never leaves its ribbon slot. It is render-suppressed while Backstage is
+    // open; Classic keeps it suppressed through exit while ordinary Backstage restores it below
+    // the departing surface so the animation reveals it naturally. The historical two-pane
+    // application menu continues to use the separate real-button overlay above.
+    private Button? _classicBackstageOrbProxy;
+    private double? _pendingClassicBackstageOrbRotation;
+    private FrameworkElement? _suppressedBackstageApplicationButton;
+    private double _suppressedBackstageApplicationButtonOpacity = 1d;
+    private bool _suppressedBackstageApplicationButtonHitTestVisible = true;
+
     // Below-ribbon quick-access bar and the last measured body height, so the bar can glide
     // by that height (staying visible) as the body collapses/expands on minimize/restore.
     private FrameworkElement? _qatBelowHost;
@@ -1811,7 +1822,7 @@ public class Ribbon : Control
                     RibbonMotion.PlayOpen(reopening, RibbonAnimationAction.Backstage, slideEdge);
                 }
 
-                ReconcileClassicBackstageApplicationButton(playEntranceRotation: true);
+                ReconcileClassicBackstageOrbProxy(playEntranceRotation: true);
                 HideContentBehindBackstage(_backstageAdorner.AdornedElement);
                 return;
             }
@@ -1832,7 +1843,7 @@ public class Ribbon : Control
 
             _backstageAdorner = new BackstageAdorner(root, content, this);
             layer.Add(_backstageAdorner);
-            ReconcileClassicBackstageApplicationButton(playEntranceRotation: true);
+            ReconcileClassicBackstageOrbProxy(playEntranceRotation: true);
 
             // Hide the content behind a translucent backstage entirely so a window system
             // backdrop (Mica) composites raw behind it. The hide targets the adorned root; the
@@ -1856,7 +1867,17 @@ public class Ribbon : Control
             _backstageClosing = true;
             BackstageAdorner adorner = _backstageAdorner;
             FrameworkElement? content = Backstage as FrameworkElement;
-            PlayClassicBackstageOrbRotation(360d);
+            if (UsesClassicBackstageOrbProxy())
+            {
+                PlayClassicBackstageOrbRotation(360d);
+            }
+            else
+            {
+                // The ordinary Backstage surface is already above the real orb. Restore the orb
+                // now so the sliding surface reveals it at the correct moment instead of popping
+                // it in only after the completion callback.
+                SetBackstageApplicationButtonSuppressed(false);
+            }
 
             // Restore the hidden content at the START of the exit (not on completion): the
             // backstage slides out through its logical leading edge, and the ribbon/document must
@@ -1879,9 +1900,9 @@ public class Ribbon : Control
                         return;
                     }
 
-                    adorner.DetachApplicationButton();
-                    RestoreApplicationButtonFromOverlay();
-                    SetBackstageTitleLayering(allowsOrbOverhang: true);
+                    CancelPendingClassicBackstageOrbRotation();
+                    adorner.DetachClassicOrbProxy();
+                    SetBackstageApplicationButtonSuppressed(false);
                     AdornerLayer.GetAdornerLayer(adorner.AdornedElement)?.Remove(adorner);
                     adorner.Detach();
                     _backstageAdorner = null;
@@ -2007,7 +2028,7 @@ public class Ribbon : Control
         SetCurrentValue(IsBackstageOpenProperty, false);
 
     private void OnBackstageDesignChanged(object? sender, EventArgs e) =>
-        ReconcileClassicBackstageApplicationButton(playEntranceRotation: true);
+        ReconcileClassicBackstageOrbProxy(playEntranceRotation: true);
 
     private static void OnApplicationMenuChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
@@ -2216,14 +2237,11 @@ public class Ribbon : Control
     }
 
     /// <summary>
-    /// Gives the template-owned application button a stable owner before any Backstage design can
-    /// move it across visual branches. Besides keeping the hosted Classic orb live, this makes the
-    /// normal Modern hide trigger observe <see cref="IsBackstageOpen"/> reliably after a previous
-    /// Classic transition.
+    /// Gives the template-owned application button stable bindings before the historical
+    /// application-menu overlay moves it across visual branches.
     /// </summary>
     private void EnsureApplicationButtonOwnerBindings(ToggleButton button)
     {
-        button.Tag = this;
         BindingOperations.SetBinding(
             button,
             ToggleButton.IsCheckedProperty,
@@ -2302,41 +2320,42 @@ public class Ribbon : Control
         UpdateApplicationButtonOverlayPlacement();
     }
 
-    private bool UsesClassicBackstageOrbTransition() =>
+    private bool UsesClassicBackstageOrbProxy() =>
         ApplicationMenu is null
         && ApplicationButtonShape == RibbonApplicationButtonShape.Orb
         && Backstage is Controls.Backstage { Design: RibbonBackstageDesign.Classic2007 };
 
     /// <summary>
-    /// Keeps the real application button in the visual host required by the current Backstage
-    /// design. Design can change while the overlay is already open, so open/close callbacks alone
-    /// are insufficient: leaving Classic must restore normal ancestor bindings immediately, and
-    /// entering Classic must move the same button above the adorner immediately.
+    /// Keeps the real application button suppressed for the whole Backstage lifetime and presents
+    /// a separate, pixel-identical Back button only for Classic2007. A design can change while the
+    /// overlay is already open, so open/close callbacks alone are insufficient.
     /// </summary>
-    private void ReconcileClassicBackstageApplicationButton(bool playEntranceRotation)
+    private void ReconcileClassicBackstageOrbProxy(bool playEntranceRotation)
     {
         if (_backstageAdorner is null)
         {
             return;
         }
 
+        SetBackstageApplicationButtonSuppressed(
+            IsBackstageOpen || (_backstageClosing && UsesClassicBackstageOrbProxy()));
+
         if (!IsBackstageOpen)
         {
-            // A design can change while the close animation still owns the adorner. Leaving
-            // Classic must not let the orb remain stranded there until that animation completes.
-            if (!UsesClassicBackstageOrbTransition())
+            // The Classic proxy stays through its own exit rotation, but switching away while the
+            // close animation still owns the adorner must remove it immediately.
+            if (!UsesClassicBackstageOrbProxy())
             {
-                _backstageAdorner.DetachApplicationButton();
-                RestoreApplicationButtonFromOverlay();
+                CancelPendingClassicBackstageOrbRotation();
+                _backstageAdorner.DetachClassicOrbProxy();
             }
 
             return;
         }
 
-        if (UsesClassicBackstageOrbTransition())
+        if (UsesClassicBackstageOrbProxy())
         {
-            SetBackstageTitleLayering(allowsOrbOverhang: true);
-            MoveApplicationButtonToBackstageAdorner(_backstageAdorner.AdornedElement);
+            AttachClassicBackstageOrbProxy(_backstageAdorner.AdornedElement);
             if (playEntranceRotation)
             {
                 PlayClassicBackstageOrbRotation(-360d);
@@ -2345,138 +2364,223 @@ public class Ribbon : Control
             return;
         }
 
-        // Restore only after releasing the adorner's logical/visual ownership. Otherwise WPF
-        // rejects reinsertion into the original panel because the button still has a parent.
-        _backstageAdorner.DetachApplicationButton();
-        RestoreApplicationButtonFromOverlay();
-        SetBackstageTitleLayering(allowsOrbOverhang: false);
+        CancelPendingClassicBackstageOrbRotation();
+        _backstageAdorner.DetachClassicOrbProxy();
     }
 
-    private void SetBackstageTitleLayering(bool allowsOrbOverhang)
+    private void AttachClassicBackstageOrbProxy(UIElement adornedRoot)
     {
-        if (Window.GetWindow(this) is RibbonWindow ribbonWindow)
-        {
-            ribbonWindow.SetContentOverlapsTitleBar(allowsOrbOverhang);
-        }
-    }
-
-    private void MoveApplicationButtonToBackstageAdorner(UIElement adornedRoot)
-    {
-        if (!UsesClassicBackstageOrbTransition() || _backstageAdorner is null)
+        if (!UsesClassicBackstageOrbProxy() || _backstageAdorner is null)
         {
             return;
         }
 
         ResolveApplicationMenuParts();
-        if (_applicationButton is not ToggleButton button
-            || _applicationButtonPlaceholder is not null
-            || button.Parent is not Panel originalParent
+        if (_applicationButton is not { } button
             || button.ActualWidth <= 0d
             || button.ActualHeight <= 0d)
         {
             return;
         }
 
-        int originalIndex = originalParent.Children.IndexOf(button);
-        if (originalIndex < 0)
+        try
+        {
+            Point origin = button.TransformToVisual(adornedRoot).Transform(new Point(0d, 0d));
+            DataTemplate? orbTemplate = GetApplicationOrbChromeTemplate(button);
+            if (orbTemplate is null)
+            {
+                return;
+            }
+
+            Button proxy = GetOrCreateClassicBackstageOrbProxy(orbTemplate);
+            proxy.SetCurrentValue(FlowDirectionProperty, button.FlowDirection);
+            var proxySize = new Size(button.ActualWidth, button.ActualHeight);
+            _backstageAdorner.AttachClassicOrbProxy(proxy, origin, proxySize);
+
+            // Give the shared DataTemplate its first realization opportunity before requesting
+            // rotation. A newly attached proxy can still defer OrbGlyph until Loaded/LayoutUpdated;
+            // PlayClassicBackstageOrbRotation queues that first request when necessary.
+            proxy.ApplyTemplate();
+            proxy.Measure(proxySize);
+        }
+        catch (InvalidOperationException)
+        {
+            // The nested application button and the adorned root have not joined one visual tree
+            // yet. LayoutUpdated retries once template realization/reflow completes.
+        }
+    }
+
+    private Button GetOrCreateClassicBackstageOrbProxy(DataTemplate orbTemplate)
+    {
+        if (_classicBackstageOrbProxy is not null)
+        {
+            _classicBackstageOrbProxy.ContentTemplate = orbTemplate;
+            return _classicBackstageOrbProxy;
+        }
+
+        string back = RibbonLocalization.GetString(RibbonString.Back);
+        var proxy = new Button
+        {
+            Name = "PART_Classic2007OrbProxy",
+            Content = string.Empty,
+            ContentTemplate = orbTemplate,
+            Focusable = true,
+            ToolTip = back,
+        };
+        AutomationProperties.SetName(proxy, back);
+        WindowChrome.SetIsHitTestVisibleInChrome(proxy, true);
+        proxy.Template = CreateClassicBackstageOrbProxyTemplate();
+
+        proxy.Click += OnClassicBackstageOrbProxyClick;
+        _classicBackstageOrbProxy = proxy;
+        return proxy;
+    }
+
+    private static DataTemplate? GetApplicationOrbChromeTemplate(FrameworkElement button)
+    {
+        button.ApplyTemplate();
+        if (button is Control control
+            && control.Template?.FindName("Orb", control) is ContentPresenter presenter)
+        {
+            return presenter.ContentTemplate;
+        }
+
+        return (FindDescendantByName(button, "Orb") as ContentPresenter)?.ContentTemplate;
+    }
+
+    private static ControlTemplate CreateClassicBackstageOrbProxyTemplate()
+    {
+#pragma warning disable CS0618 // FrameworkElementFactory is required for a code-owned private template.
+        var presenter = new FrameworkElementFactory(typeof(ContentPresenter));
+        // Match the named Orb presenter inside the real ToggleButton exactly. Leaving this at
+        // ContentPresenter's default Stretch alignment shifts the negative-top-margin orb down
+        // when the proxy takes over.
+        presenter.SetValue(FrameworkElement.VerticalAlignmentProperty, VerticalAlignment.Top);
+        presenter.SetValue(FrameworkElement.HorizontalAlignmentProperty, HorizontalAlignment.Stretch);
+        presenter.SetBinding(
+            ContentPresenter.ContentProperty,
+            new Binding(nameof(ContentControl.Content)) { RelativeSource = RelativeSource.TemplatedParent });
+        presenter.SetBinding(
+            ContentPresenter.ContentTemplateProperty,
+            new Binding(nameof(ContentControl.ContentTemplate))
+            {
+                RelativeSource = RelativeSource.TemplatedParent,
+            });
+#pragma warning restore CS0618
+        return new ControlTemplate(typeof(Button)) { VisualTree = presenter };
+    }
+
+    private void OnClassicBackstageOrbProxyClick(object sender, RoutedEventArgs e) =>
+        SetCurrentValue(IsBackstageOpenProperty, false);
+
+    /// <summary>
+    /// Suppresses only rendering and input; the real button remains measured and arranged in its
+    /// original panel, so tabs never reflow and the proxy can continuously follow its exact bounds.
+    /// </summary>
+    private void SetBackstageApplicationButtonSuppressed(bool suppressed)
+    {
+        ResolveApplicationMenuParts();
+
+        if (!suppressed)
+        {
+            if (_suppressedBackstageApplicationButton is { } previous)
+            {
+                previous.SetCurrentValue(
+                    OpacityProperty,
+                    _suppressedBackstageApplicationButtonOpacity);
+                previous.SetCurrentValue(
+                    IsHitTestVisibleProperty,
+                    _suppressedBackstageApplicationButtonHitTestVisible);
+                _suppressedBackstageApplicationButton = null;
+            }
+
+            return;
+        }
+
+        if (_applicationButton is not { } button
+            || ReferenceEquals(_suppressedBackstageApplicationButton, button))
         {
             return;
         }
 
-        try
+        if (_suppressedBackstageApplicationButton is { } oldButton)
         {
-            EnsureApplicationButtonOwnerBindings(button);
-
-            Point origin = button.TransformToVisual(adornedRoot).Transform(new Point(0d, 0d));
-            Thickness margin = button.Margin;
-            Size slotSize = GetStableApplicationButtonSlotSize(button);
-            Size overlaySize = GetStableApplicationButtonOverlaySize(button);
-            var placeholder = new Border
-            {
-                Width = slotSize.Width,
-                MinHeight = slotSize.Height,
-                HorizontalAlignment = button.HorizontalAlignment,
-                VerticalAlignment = button.VerticalAlignment,
-                IsHitTestVisible = false,
-            };
-
-            _applicationButtonOriginalParent = originalParent;
-            _applicationButtonOriginalIndex = originalIndex;
-            _applicationButtonPlaceholder = placeholder;
-
-            originalParent.Children.RemoveAt(originalIndex);
-            originalParent.Children.Insert(originalIndex, placeholder);
-            _backstageAdorner.AttachApplicationButton(
-                button,
-                new Point(origin.X - margin.Left, origin.Y - margin.Top),
-                overlaySize);
-            SetHostedClassicOrbVisual(button, hosted: true);
+            oldButton.SetCurrentValue(OpacityProperty, _suppressedBackstageApplicationButtonOpacity);
+            oldButton.SetCurrentValue(
+                IsHitTestVisibleProperty,
+                _suppressedBackstageApplicationButtonHitTestVisible);
         }
-        catch (InvalidOperationException)
-        {
-            _backstageAdorner.DetachApplicationButton();
-            RestoreApplicationButtonFromOverlay();
-        }
+
+        _suppressedBackstageApplicationButton = button;
+        _suppressedBackstageApplicationButtonOpacity = button.Opacity;
+        _suppressedBackstageApplicationButtonHitTestVisible = button.IsHitTestVisible;
+        button.SetCurrentValue(OpacityProperty, 0d);
+        button.SetCurrentValue(IsHitTestVisibleProperty, false);
     }
 
     private void PlayClassicBackstageOrbRotation(double degrees)
     {
-        if (!UsesClassicBackstageOrbTransition() || _applicationButton is null)
+        if (!UsesClassicBackstageOrbProxy() || _classicBackstageOrbProxy is null)
+        {
+            CancelPendingClassicBackstageOrbRotation();
+            return;
+        }
+
+        _pendingClassicBackstageOrbRotation = degrees;
+        if (TryPlayPendingClassicBackstageOrbRotation())
         {
             return;
         }
 
-        _applicationButton.ApplyTemplate();
+        // On first open the ContentPresenter is attached above an already-loaded adorner, but its
+        // DataTemplate may not have produced OrbGlyph yet. Loaded occurs before the first render;
+        // LayoutUpdated is the fallback for hosts that defer the DataTemplate one more pass.
+        _classicBackstageOrbProxy.Loaded -= OnClassicBackstageOrbProxyRealized;
+        _classicBackstageOrbProxy.Loaded += OnClassicBackstageOrbProxyRealized;
+        _classicBackstageOrbProxy.LayoutUpdated -= OnClassicBackstageOrbProxyLayoutUpdated;
+        _classicBackstageOrbProxy.LayoutUpdated += OnClassicBackstageOrbProxyLayoutUpdated;
+    }
+
+    private bool TryPlayPendingClassicBackstageOrbRotation()
+    {
+        if (_pendingClassicBackstageOrbRotation is not double degrees
+            || _classicBackstageOrbProxy is not { } proxy
+            || !UsesClassicBackstageOrbProxy()
+            || (!IsBackstageOpen && !_backstageClosing))
+        {
+            return false;
+        }
+
+        proxy.ApplyTemplate();
+        if (FindDescendantByName(proxy, "OrbGlyph") is not FrameworkElement glyph)
+        {
+            return false;
+        }
+
         RibbonMotion.PlayRotation(
-            FindApplicationButtonTemplatePart(_applicationButton, "OrbGlyph"),
+            glyph,
             RibbonAnimationAction.Backstage,
             degrees);
+        CancelPendingClassicBackstageOrbRotation();
+        return true;
     }
 
-    private static FrameworkElement? FindApplicationButtonTemplatePart(
-        FrameworkElement button,
-        string name)
+    private void OnClassicBackstageOrbProxyRealized(object sender, RoutedEventArgs e) =>
+        TryPlayPendingClassicBackstageOrbRotation();
+
+    private void OnClassicBackstageOrbProxyLayoutUpdated(object? sender, EventArgs e) =>
+        TryPlayPendingClassicBackstageOrbRotation();
+
+    private void CancelPendingClassicBackstageOrbRotation()
     {
-        button.ApplyTemplate();
-        if (button is Control control
-            && control.Template?.FindName(name, control) is FrameworkElement templatePart)
+        _pendingClassicBackstageOrbRotation = null;
+        if (_classicBackstageOrbProxy is not { } proxy)
         {
-            return templatePart;
+            return;
         }
 
-        return FindDescendantByName(button, name) as FrameworkElement;
-    }
-
-    /// <summary>
-    /// Applies the visual state owned by the Classic Backstage host itself. A local value is
-    /// intentional here: after reparenting, the ordinary no-ancestor hide trigger and the hosted
-    /// show trigger can otherwise resolve in different dispatcher passes. The values are removed
-    /// as soon as the button returns to its normal ribbon host.
-    /// </summary>
-    private static void SetHostedClassicOrbVisual(FrameworkElement button, bool hosted)
-    {
-        button.ApplyTemplate();
-        foreach ((string name, Visibility visibility) in new[]
-                 {
-                     ("Orb", Visibility.Visible),
-                     ("Chrome", Visibility.Collapsed),
-                     ("HoverUnderline", Visibility.Collapsed),
-                 })
-        {
-            if (FindApplicationButtonTemplatePart(button, name) is not FrameworkElement part)
-            {
-                continue;
-            }
-
-            if (hosted)
-            {
-                part.SetValue(VisibilityProperty, visibility);
-            }
-            else
-            {
-                part.ClearValue(VisibilityProperty);
-            }
-        }
+        proxy.Loaded -= OnClassicBackstageOrbProxyRealized;
+        proxy.LayoutUpdated -= OnClassicBackstageOrbProxyLayoutUpdated;
     }
 
     private void MoveApplicationButtonToOverlay()
@@ -2593,11 +2697,6 @@ public class Ribbon : Control
 
     private void RestoreApplicationButtonFromOverlay()
     {
-        if (_applicationButton is not null)
-        {
-            SetHostedClassicOrbVisual(_applicationButton, hosted: false);
-        }
-
         if (_applicationButtonOverlay is not null)
         {
             if (ReferenceEquals(_applicationButtonOverlay.Child, _applicationButton))
@@ -2646,6 +2745,9 @@ public class Ribbon : Control
     /// <inheritdoc />
     public override void OnApplyTemplate()
     {
+        CancelPendingClassicBackstageOrbRotation();
+        SetBackstageApplicationButtonSuppressed(false);
+        _backstageAdorner?.DetachClassicOrbProxy();
         ClearApplicationMenuPresenter(_applicationMenuOverlayPresenter);
         ClearApplicationMenuPresenter(_nestedApplicationMenuPresenter);
         RestoreApplicationButtonFromOverlay();
@@ -2679,6 +2781,10 @@ public class Ribbon : Control
         _designBackstageHost = GetTemplateChild("PART_DesignBackstageHost") as Border;
 
         UpdateApplicationMenuHost();
+        if (_backstageAdorner is not null)
+        {
+            ReconcileClassicBackstageOrbProxy(playEntranceRotation: false);
+        }
 
         // In the designer the runtime adorner path can't run (no host Window). If the backstage
         // was already flagged open before the template was applied, reflect it into the
@@ -2749,15 +2855,13 @@ public class Ribbon : Control
             return;
         }
 
-        // A Backstage design switch invalidates the tab-row layout. The first attempt to move the
-        // orb can therefore run before the application button has usable arranged bounds; retry on
-        // the next layout pass, matching the application-menu overlay's established behavior.
+        // A template/design/DPI transition can invalidate the tab-row layout. Keep the proxy
+        // aligned to the real (still-arranged) application button and retry until bounds exist.
         if (_backstageAdorner is not null
             && IsBackstageOpen
-            && UsesClassicBackstageOrbTransition()
-            && _applicationButtonPlaceholder is null)
+            && ApplicationMenu is null)
         {
-            ReconcileClassicBackstageApplicationButton(playEntranceRotation: false);
+            ReconcileClassicBackstageOrbProxy(playEntranceRotation: false);
         }
     }
 

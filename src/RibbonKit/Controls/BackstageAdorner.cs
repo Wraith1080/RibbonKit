@@ -15,9 +15,9 @@ internal sealed class BackstageAdorner : Adorner
 {
     private UIElement? _child;
     private FrameworkElement? _flowBoundChild;
-    private FrameworkElement? _applicationButton;
-    private Point _applicationButtonOrigin;
-    private Size _applicationButtonSize;
+    private FrameworkElement? _classicOrbProxy;
+    private Point _classicOrbProxyOrigin;
+    private Size _classicOrbProxySize;
 
     public BackstageAdorner(
         UIElement adornedElement,
@@ -64,38 +64,46 @@ internal sealed class BackstageAdorner : Adorner
 
     /// <inheritdoc />
     protected override int VisualChildrenCount =>
-        (_child is null ? 0 : 1) + (_applicationButton is null ? 0 : 1);
+        (_child is null ? 0 : 1) + (_classicOrbProxy is null ? 0 : 1);
 
-    /// <summary>Hosts the ribbon's real application button above the Backstage surface.</summary>
-    internal void AttachApplicationButton(FrameworkElement button, Point origin, Size size)
+    /// <summary>
+    /// Hosts the Classic2007 Backstage's private orb proxy above the animated surface.
+    /// The real ribbon application button remains in its original layout slot.
+    /// </summary>
+    internal void AttachClassicOrbProxy(FrameworkElement proxy, Point origin, Size size)
     {
-        DetachApplicationButton();
-        _applicationButton = button;
-        _applicationButtonOrigin = origin;
-        _applicationButtonSize = size;
-        AddVisualChild(button);
-        AddLogicalChild(button);
-        InvalidateMeasure();
+        if (!ReferenceEquals(_classicOrbProxy, proxy))
+        {
+            DetachClassicOrbProxy();
+            _classicOrbProxy = proxy;
+            AddVisualChild(proxy);
+            AddLogicalChild(proxy);
+            InvalidateMeasure();
+        }
+
+        _classicOrbProxyOrigin = origin;
+        _classicOrbProxySize = size;
+        InvalidateArrange();
     }
 
-    /// <summary>Releases the application button so the ribbon can restore its original slot.</summary>
-    internal void DetachApplicationButton()
+    /// <summary>Releases the Classic2007 orb proxy.</summary>
+    internal void DetachClassicOrbProxy()
     {
-        if (_applicationButton is null)
+        if (_classicOrbProxy is null)
         {
             return;
         }
 
-        RemoveVisualChild(_applicationButton);
-        RemoveLogicalChild(_applicationButton);
-        _applicationButton = null;
+        RemoveVisualChild(_classicOrbProxy);
+        RemoveLogicalChild(_classicOrbProxy);
+        _classicOrbProxy = null;
         InvalidateMeasure();
     }
 
     /// <summary>Releases the hosted backstage so it can be shown again later.</summary>
     public void Detach()
     {
-        DetachApplicationButton();
+        DetachClassicOrbProxy();
 
         if (_child is not null)
         {
@@ -126,8 +134,8 @@ internal sealed class BackstageAdorner : Adorner
             index--;
         }
 
-        return index == 0 && _applicationButton is not null
-            ? _applicationButton
+        return index == 0 && _classicOrbProxy is not null
+            ? _classicOrbProxy
             : throw new ArgumentOutOfRangeException(nameof(index));
     }
 
@@ -136,7 +144,7 @@ internal sealed class BackstageAdorner : Adorner
     {
         Size size = AdornedElement.RenderSize;
         _child?.Measure(size);
-        _applicationButton?.Measure(_applicationButtonSize);
+        _classicOrbProxy?.Measure(_classicOrbProxySize);
         return size;
     }
 
@@ -144,7 +152,7 @@ internal sealed class BackstageAdorner : Adorner
     protected override Size ArrangeOverride(Size finalSize)
     {
         _child?.Arrange(new Rect(new Point(0, 0), AdornedElement.RenderSize));
-        _applicationButton?.Arrange(new Rect(_applicationButtonOrigin, _applicationButtonSize));
+        _classicOrbProxy?.Arrange(new Rect(_classicOrbProxyOrigin, _classicOrbProxySize));
         return AdornedElement.RenderSize;
     }
 }

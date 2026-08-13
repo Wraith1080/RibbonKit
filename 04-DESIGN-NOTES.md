@@ -4363,14 +4363,10 @@ earlier segmented and etched borders. The divider terminates inside the continuo
 highlight, so the horizontal and vertical strokes never compound at the bottom junction. A second
 full-perimeter border carrying `Backstage.ContentShadow` casts depth into the eight-DIP shell gutter.
 
-Classic uses the real ribbon application button rather than drawing a duplicate Backstage orb.
-Opening reparents that one button into `BackstageAdorner`, preserves its window-relative position and
-rotates only the four-color glyph; the sphere, rim and drop shadow remain stationary. Closing performs
-the reverse transition and restores the original visual parent. Explicit owner bindings, a
-`Backstage.DesignChanged` reconciliation hook and template-part visibility ownership make live
-`2007 Modern`/`2007 Classic` switches deterministic in either direction, including after restart.
-Esc, mouse hit testing (including the orb's upper half), keyboard focus and UI Automation continue to
-use the original button and Backstage close path.
+Classic originally reparented the real ribbon application button into `BackstageAdorner`. That
+implementation passed the initial gate, but animated Classic-to-Modern switching later exposed its
+dependence on title-row clipping and template ancestry. Section §3.94 supersedes the hosting detail
+with a pixel-identical private Backstage proxy while retaining this section's visual design.
 
 When the containing window uses `Office2007Aero`, the Backstage draws a local four-sided white join
 bevel between the Aero frame and the opaque shell. The normal window-wide Aero inner highlight stays
@@ -4412,14 +4408,45 @@ and maximize/restore completed from that same region. Moving back to 125% restor
 
 Active/inactive Acrylic, maximized Acrylic and the deterministic opaque fallback were inspected
 live. Acrylic remained confined to the transparent title/restored frame, inactive treatment stayed
-quieter, and the opaque fallback preserved the same frame geometry. A post-gate startup regression
-also found that an orb first realized under persisted `Classic2007` could remain visible after
-switching the open surface to another Backstage design. Non-Classic Backstage now leaves the restored
-orb in its original ribbon layer and temporarily clips that content row, so the Backstage adorner
-naturally slides over it without a visibility-state pop; close or re-entering Classic removes the
-clip. The persisted-startup Classic→Glass→Classic sequence is covered directly. The final
-automated gate passes **338 logic tests plus one visual test covering 62 approved images**, with zero build warnings or
-errors. Actual Acrylic composition remains a live-only approval rather than a snapshot baseline.
+quieter, and the opaque fallback preserved the same frame geometry. The first post-gate mitigation
+for persisted `Classic2007` startup used temporary title-row clipping; §3.94 replaces that workaround
+because its animated transition could still expose a partial orb. Actual Acrylic composition remains
+a live-only approval rather than a snapshot baseline.
+
+### 3.94 Classic2007 Backstage orb proxy and seamless design switching — 2026-08-13
+
+Classic2007 now owns a private Back button above `BackstageAdorner`; it does not reparent or duplicate
+the real application button's command/state ownership. Both presentations render the same
+`RibbonKit.Templates.ApplicationOrbChrome` data template, so the sphere, glyph and dynamic theme
+resources remain pixel-identical. The real button stays measured and arranged in its original ribbon
+slot, but is opacity- and hit-test-suppressed for the entire Backstage lifetime. Ordinary Backstage
+designs omit the proxy, while Classic attaches it at the real button's transformed bounds. The old
+`RibbonWindow` title-row clipping workaround and `Tag.Backstage.Design` template state are removed;
+the historical two-pane application-menu overlay continues to move the real button as before.
+
+The proxy carries the localized Back tooltip and automation name, participates in window-chrome hit
+testing, closes through `IsBackstageOpen`, and rotates only the shared `OrbGlyph`. Its content is an
+inert string: an early implementation used the owning `Ribbon` as data, which tried to give that
+already-parented control a second logical parent and crashed on open. The private proxy template also
+pins its `ContentPresenter` to `VerticalAlignment=Top`. Without that explicit alignment, the orb's
+negative top margin was stretched inside the proxy and the rendered sphere moved down on open.
+
+Focused lifecycle contracts cover persisted Classic→Glass→Classic switching, stable real-button
+parentage/suppression, shared chrome identity, inert proxy content, top alignment, accessibility and
+unchanged application-menu layering. A live 60-fps named-window capture verified clean Classic and
+ordinary open/close animations. Frame analysis held the orb's yellow-glyph bounds at y=22…69 before
+and after proxy takeover, confirming no vertical movement; ordinary Backstage showed no partial
+Classic orb. Final gate: **339 logic tests plus one visual test covering 62 approved images**, with
+zero build warnings or errors.
+
+A follow-up first-use capture exposed two timing edges. On the first Classic open, the proxy's
+`ContentPresenter` had not inflated the shared data template when rotation was requested, so
+`OrbGlyph` was absent and only later opens animated. The request is now retained until the proxy's
+first Loaded/layout pass, before first rendering, and cancelled on design/template teardown. Ordinary
+Backstage also used to restore the real ribbon orb only in the close-completion callback. It now
+restores that orb at close start beneath the departing Backstage surface, letting the slide reveal it
+naturally; Classic alone keeps the real orb suppressed until its proxy completes the exit rotation.
+Fresh-process 60-fps captures verified first-open rotation and both close timings.
 
 ## 4. Workflow / Session Conventions
 
@@ -4738,7 +4765,7 @@ Possible post-v1 polish:
   honor reduced motion, handle rapid reversals, and stay disabled while a DWM backdrop is active so
   Mica/Acrylic retain their native material retint without a second cross-fade on top.
 
-**Unit tests: 338 green (verified 2026-08-13).** Coverage now includes the STA harness, the borrow
+**Unit tests: 339 green (verified 2026-08-13).** Coverage now includes the STA harness, the borrow
 protocol, overflow strip measure/arrange rules, popup motion and dismissal, proxy mirroring,
 application-menu layering/hover/footer-outline/KeyTips, repeatable message-bar API/template/theme
 contracts, Office 2010 seam/state/consumer contracts, localization/RTL
@@ -4754,7 +4781,7 @@ label derivation, and collapsed-group preservation for editor/picker activation.
 The post-v1 window-frame and 2007 Backstage contracts cover opaque/Aero separation, tint
 validation/default migration, shared-template material triggers, generation-aware navigation,
 independent modern `Glass2007` and opaque `Classic2007` choices, Showcase appearance persistence,
-single-orb reparent/restore ownership, restart-independent Modern/Classic switching, five-scale
+shared-orb proxy ownership/alignment, restart-independent Modern/Classic switching, five-scale
 maximize compensation and per-monitor caption-hit coordinate conversion.
 `RibbonMergeModalTests` adds the Phase 7 automated invariants: merge ordering across later
 permutations, merge/unmerge round-trips, group restore with two sources in one tab, capture while

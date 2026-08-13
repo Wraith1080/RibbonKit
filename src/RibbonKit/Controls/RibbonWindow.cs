@@ -109,7 +109,6 @@ public class RibbonWindow : Window
 
     private FrameworkElement? _windowRoot;
 
-    private FrameworkElement? _contentAdornerHost;
     private FrameworkElement? _title;
     private Image? _windowIcon;
     private Button? _maximizeButton;
@@ -248,7 +247,6 @@ public class RibbonWindow : Window
         }
 
         _windowRoot = GetTemplateChild(WindowRootPartName) as FrameworkElement;
-        _contentAdornerHost = GetTemplateChild("ContentAdornerHost") as FrameworkElement;
         _title = GetTemplateChild(TitlePartName) as FrameworkElement;
         _windowIcon = GetTemplateChild(WindowIconPartName) as Image;
         _maximizeButton = GetTemplateChild(MaximizeButtonPartName) as Button;
@@ -256,20 +254,6 @@ public class RibbonWindow : Window
         UpdateTitleBarIconVisibility();
         SetSnapButtonVisualState(SnapButtonVisualState.Normal);
         UpdateMaximizeInset();
-    }
-
-    /// <summary>
-    /// Controls whether content may paint into the title row. The closed Office 2007 orb and the
-    /// Classic2007-hosted orb intentionally overhang it; ordinary Backstage designs instead clip
-    /// the original ribbon subtree at the content-row boundary while the Backstage adorner covers
-    /// the remainder.
-    /// </summary>
-    internal void SetContentOverlapsTitleBar(bool overlaps)
-    {
-        if (_contentAdornerHost is not null)
-        {
-            _contentAdornerHost.ClipToBounds = !overlaps;
-        }
     }
 
     internal void UpdateApplicationButtonShape(
