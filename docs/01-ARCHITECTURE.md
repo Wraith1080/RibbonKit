@@ -1,5 +1,10 @@
 # Architecture Plan
 
+> **Status: design record.** Most of this architecture is implemented, but examples and proposed
+> APIs below may describe the original design rather than the as-built code. Use the
+> [README](../README.md) for supported features and [design notes](../04-DESIGN-NOTES.md) for current
+> implementation details and pitfalls.
+
 ## 1. Solution & repository layout
 
 ```

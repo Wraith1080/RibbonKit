@@ -60,7 +60,7 @@ Legend: ✅ done · 🚧 in progress · 📋 planned
 |---|---|
 | Application button (rectangular tab, or the Office 2007 orb) | ✅ |
 | Application menu (2007-style two-pane dropdown) | ✅ |
-| Backstage view (Modern 2024, Classic 2013, Classic 2010, and RibbonKit Glass 2007 designs) | ✅ |
+| Backstage view (Modern 2024, Classic 2013/2010, Glass2007, and Classic2007 designs) | ✅ |
 | Backstage footer items, button items, recent-items pattern | ✅ |
 | Repeatable `RibbonMessageBar` notifications with animated appearance, action, and dismissal | ✅ |
 | Quick Access Toolbar — 3 placements, overflow flyout, right-click add/remove for button, toggle, split and drop-down commands | ✅ |
@@ -323,7 +323,8 @@ focused Markdown references and the executable Showcase.
 
 Version 1.0.0 is published through GitHub Releases. Package layout, metadata, Source Link, symbols,
 isolated consumer compilation, live packaged runtime behavior, Release performance, and the Visual
-Studio designer were verified for launch. The post-v1 Office 2007 window frame is complete; MDI
+Studio designer were verified for launch. The post-v1 Office 2007 frame and Backstage S7-S9 work is
+complete through design-notes §3.94; MDI
 milestones M1–M3, custom-control projections, future theme expansion and the RibbonKit Writer
 reference application remain post-v1 work. See the
 [roadmap](docs/03-ROADMAP.md) and [design notes](04-DESIGN-NOTES.md) for detailed status.

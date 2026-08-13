@@ -1,7 +1,7 @@
 # Office 2007 Theme — Implementation Plan
 
 > **Status: S0-S9 COMPLETE.** The guaranteed opaque no-material window baseline was
-> corrected against the restored Word reference on `codex/office-2007-window-frame` on 2026-08-12
+> corrected against the restored Word reference on 2026-08-12
 > and the separately selectable Aero-inspired prototype now passes its automated gate plus
 > active/inactive, normal/maximized live checks plus proportional 100/125/150/175/200% geometry and
 > real 125%↔150% mixed-monitor caption, resize, maximize/work-area and Snap Layout verification. The

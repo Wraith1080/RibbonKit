@@ -4,7 +4,7 @@
 > hard-won pitfalls of this project. Written so that any future session (human or AI)
 > can pick up exactly where we left off without re-discovering these lessons.
 >
-> Last updated: July 2026.
+> Last updated: 2026-08-13.
 
 ## 1. Project Overview
 
@@ -3443,7 +3443,7 @@ and repository-default artifact retention applies. The committed PNG format/loca
 regeneration opt-in, comparison thresholds, and `windows-latest` runner remain unchanged. The next
 run's actual/diff pair must be reviewed before choosing any portability correction.
 
-### 3.62 Responsive Ribbon Editor + application-menu authoring — VERIFIED IN VS, 2026-08-08
+### 3.63a Responsive Ribbon Editor + application-menu authoring — VERIFIED IN VS, 2026-08-08
 
 The application-menu backlog is implemented in the existing net472/code-built designer architecture.
 The editor shell now uses a compact contextual **Add** menu, a resizable star-sized tree/inspector
@@ -4450,349 +4450,53 @@ Fresh-process 60-fps captures verified first-open rotation and both close timing
 
 ## 4. Workflow / Session Conventions
 
-- Cloud workspace: `/home/user/ribbonkit/`. The user's machine:
-  `C:\Users\LENOVO\Claude\Projects\Professional Ribbon Custom Control for WPF\`
-  (device `brin-mm-2026-0004`).
-- This Windows workspace builds and runs the WPF solution locally. Use `dotnet build RibbonKit.sln`
-  and `dotnet test RibbonKit.sln`; do not carry forward the older Linux-sandbox limitation.
-- The user prefers: concise explanations, minimal-formatting replies, files delivered
-  immediately, and "just update your side + reply 'Got it'" for their own edits.
-- User's own edits so far: `UseLayoutRounding="True"` on the showcase RibbonWindow
-  (fixes blurriness); tab-switch slide direction Bottom→Top; backstage open changed
-  fade→slide-from-left; document panel margin 14→`8,8,8,0` (aligns the panel edges with
-  the ribbon card's inner edge: 7px card margin + 1px border).
+- Work from the current Windows checkout at
+  `C:\Users\LENOVO\Claude\Projects\Professional Ribbon Custom Control for WPF\`.
+- Read `AGENTS.md` first, then this document's matching §3 subsystem entry and §5 status before
+  changing code. Treat plans under `docs/` as design records unless their status banner says
+  otherwise.
+- Preserve unrelated worktree changes. Keep implementation slices narrow and update tests, the
+  Showcase, and public documentation when the change affects them.
+- Build and run WPF locally with `dotnet build RibbonKit.sln` and `dotnet test RibbonKit.sln`.
+  For resize performance, use the built Release executable outside Visual Studio's debugger.
+- Visual or designer claims require live verification on the relevant surface; opening the Showcase
+  or Visual Studio alone is not evidence that the target interaction works.
 
 ## 5. Current State & Next Steps
 
-> **Status as of 2026-08-13: everything through §3.61 and the responsive Ribbon Editor/application-
-> menu authoring work in the later §3.62 entry are implemented AND user-verified on Windows;
-> §§3.64–3.66 are automated and await focused live visual rechecks; §§3.67–3.68 are user-verified,
-> including §3.68 at 100/125/150/175/200% DPI and in the focused RTL input lab; §§3.69–3.70's
-> KeyTip resolution and explicit File-surface content contracts are automated.**
-> The ten-point §3.40/§3.41 checklist that stood here has been walked and passed in full, and the
-> **2007 DPI matrix is clean at 100/125/150/175/200%** — which closes the last S6 exit criterion the
-> 2007 arc left open. §3.42's whole-surface flyout animation, reduced-motion behavior, and the
-> DPI-awareness manifest have now also passed their Windows verification.
->
-> Roadmap Phases 0–7 are complete. **Phase 6 closed in §3.61**: all five generations ship with
-> dark/black variants in §3.49, and the complete 40-image
-> theme/variant/DPI matrix plus twenty-two focused scenes are covered by 62 approvals; localization,
-> representative bidirectional content, and the live RTL popup/window pass are complete.
-> Phase 8 release engineering and the GitHub v1.0.0 community launch are complete through §3.85.
-> Sections §3.86–§3.88 record the provisional custom-control projection and future-theme tracks,
-> the RibbonKit Writer reference-app plan, and the opaque/Aero-inspired Office 2007 frame decision.
-> Of the
-> two items
-> deferred out of §3.38, the two-pane 2007 application menu shipped in §3.46. Section §3.89 corrects
-> the opaque no-material baseline; §3.90 implements the separate Aero-inspired prototype; §§3.91–3.92
-> complete its two additive Backstage designs; and §3.93 closes S7 with the five-scale proportional
-> gate plus real 125%↔150% mixed-monitor, resize, caption, maximize and Snap Layout approval.
+> **Authoritative status as of 2026-08-13.** Historical checkpoints remain in §3, but status and
+> test counts quoted elsewhere should be reconciled against this section and rerun when current
+> evidence matters.
 
-**Manual verification complete through §3.61 (Windows 2026-08-08).** The earlier whole-surface
-flyout and No Motion pass (§3.42), complete split-button matrix including the Visual Studio Ribbon
-Editor gate/reset/single-Undo behavior (§3.43), proxy enabled-state propagation (§3.45), and complete
-application-menu theme/DPI matrix (§3.46) all pass; §§3.51–3.61 add the completed localization/RTL,
-bidirectional-content, Backstage/title, popup/window-edge, and application-menu/orb pass. §3.44 is
-covered by automated tests.
+### Complete
 
-A. **A vertical split button** (the showcase's Paste): icon on top, ONE line of caption with an
-   ellipsis if it is long, chevron beneath it. Narrow the window until the group reduces — it must
-   fall back to the horizontal arrangement at Medium and Small, and come back on widening.
-B. **Companion highlight, all five themes**: hover the icon half and the chevron half should also
-   light; hover the chevron half and the icon half should. 2007/2010 draw an amber border with a
-   thin glow rim just inside it and NO fill — the companion must stay clearly cooler than the half
-   under the pointer; 2013/2019/2024 draw a lighter version of their hover fill and no border.
-   Check the open (checked) chevron state too, and both arrangements. The icon must not shift by a
-   pixel when the rim appears.
-C. **The corners still meet** — top/bottom rounding in vertical, left/right in horizontal, with no
-   gap or double border down the seam.
-D. **Ribbon Editor**: select a split button — "Split layout" shows for a Large one (or one whose
-   SizeDefinition names Large) and is absent otherwise. Set Size to Medium on a Large+Vertical
-   button: the row should vanish and the XAML drop back to Horizontal in one undo step.
-   **Verified in Visual Studio on Windows 2026-08-01**, including the SizeDefinition gate and one
-   Undo restoring both the Large-capable definition and Vertical layout.
-E. **§3.45 proxies (manual — not unit-testable):** disable a command from code and confirm its QAT
-   proxy, its entry in the » overflow flyout, and any custom-group copy all grey together. Repeat
-   with a whole GROUP disabled (that path goes through coercion, not a property set). Then unmerge a
-   merged source and confirm its parked proxy greys in BOTH the strip and the overflow flyout —
-   the flyout was the half that stayed live. **Verified 2026-08-01.** To trigger overflow, add enough
-   items to cross `QuickAccessMaxWidth`; narrowing the window alone is not expected to do it because
-   the tab header scrolls and the title text ellipsizes first. That is intentional QAT behavior.
+- Roadmap phases 0-8 and the GitHub `v1.0.0` release are complete through §3.85.
+- All five Office generations and their dark/black variants ship. The deterministic suite covers
+  ten palettes at 100/125/150/200% plus focused RTL, customization, Backstage, message-bar, and
+  application-menu scenes.
+- Localization/RTL, full-surface popup motion, reduced motion, KeyTips, customization persistence,
+  merge/modal invariants, compact input controls, package validation, installed-package behavior,
+  and Visual Studio design tooling are complete at the checkpoints recorded in §3.
+- The post-v1 Office 2007 arc is complete through §3.94: corrected opaque baseline, optional
+  Aero-inspired/Acrylic frame, `Glass2007`, `Classic2007`, shared orb proxy, five-scale geometry,
+  and live mixed-monitor caption/resize/maximize/Snap Layout verification.
+- MDI milestones M0 and M4 are complete: floating children plus ribbon tab/caption merging.
 
-F. **§3.46 application menu.** Switch to the Office 2007 theme (which turns the "2007 Menu" toggle
-   on for you) and click the orb.
-   1. **The orb is ON TOP of the menu** and stays lit while it is open. The menu is in the Ribbon's
-      outer overlay and the real orb is temporarily hosted above it; there must not be a second or
-      offset rendering. If the ribbon body or its shadow rises over the QAT/message rows, the
-      outer-host separation is wrong. Check the title-bar QAT is still visible too — only the
-      backstage hides it.
-   2. **Position.** The menu is anchored to the measured application-button bounds. The 2007
-      `Metrics.ApplicationMenuMargin` (`0,8,0,0`) then tucks its top-left under the orb's lower half.
-   3. **Hover ownership:** slide down New → Open → Save → Save As. Pane-less rows show Recent
-      Documents; Save As claims "Save a copy of the document" immediately, with no flicker.
-   4. **Slow gap crossing:** hover Save As, then move right INTO the pane as slowly as possible over
-      the narrow separator gap. The pane must not reset. Once the pointer leaves the nav row, its
-      command half drops to the theme's subdued level while **the arrow half stays fully lit** and
-      the full outline and divider remain. Hover individual items inside the pane:
-      the command half must stay subdued, never jump back to full intensity. Drag off any empty edge
-      of the menu — the pane must still stay put until another nav row is entered or the menu closes.
-      Return to the row: both halves light fully while the divider remains visible.
-   5. **Publish is `IsSplit="False"`** — its active state spans the whole row. Press the body and
-      then the arrow: both must show the same merged full-row pressed visual, never two independent
-      halves. That is the contrast the two shapes exist to show.
-   6. **Clicks:** a pane row or a plain nav row closes the menu (status bar shows what was picked);
-      the arrow half of a split row does NOT; clicking Publish anywhere does NOT. Esc closes;
-      clicking the document closes; **clicking the orb again closes and does not immediately
-      re-open** (that is the dismissal exemption). **Steps 1–6 verified on Windows 2026-08-01.**
-   7. **Every other generation:** flip the toggle on under 2010/2013/2019/2024. In 2010/2013/2019,
-      the menu's top border must touch the File button's bottom edge and their left edges must align;
-      the open button gets a compact shadow. In 2024 there is a 6 DIP gap, both surfaces have a soft
-      shadow, and every menu corner is visibly rounded. No theme may cover its application button.
-   8. **DPI 125/150/200%** on the frame bands and the 52px rows. **Steps 7–8 verified on Windows
-      2026-08-01 across all five themes at 100/125/150/175/200/225%.** The pass exposed one Office
-      2019 colored-title-bar issue: the File button disappeared into the accent band while open and
-      flashed a neutral grey on mouse-down. The fix gives application-menu-open its own background /
-      foreground tokens (separate from Backstage), connects the open File tab to the neutral menu
-      frame, and derives mouse-down from the accent band. The corrected states were user-verified.
+### Remaining or intentionally deferred
 
+- MDI M1-M3: arrange/cascade/tile commands and Ctrl+Tab cycling; full MVVM `ItemsSource` proof and
+  a per-theme pass; tabbed-document mode and layout persistence.
+- Optional Ribbon Editor clear-to-default actions for scalar properties.
+- Touch density, richer automatic QAT projections, custom-control projection APIs, additional
+  themes, and RibbonKit Writer remain post-v1 candidates. Their plan documents are not
+  implementation evidence.
+- Automatic `Icons.xaml` discovery is best-effort by design. Keep `Load Icons.xaml…` available
+  for ambiguity, inaccessible paths, parse failures, or no match.
 
+### Verification checkpoint
 
-1. **Every flyout opens as ONE surface** — border, shadow and contents together, no card snapping
-   in around sliding items: drop-down button, split button, combo box, right-click menu, a
-   right-click **submenu**, the in-ribbon gallery, and the QAT » overflow flyout.
-1a. **POSITION, on every one of them** — this is the item that failed twice. Every template is back
-   to its pre-§3.41 geometry, so each flyout should sit exactly where it did before any of this
-   work: menus flush under their openers, the context menu on the cursor, the gallery flyout over
-   the strip it replaces. The combo box is the reference case: it had been 10px high since §3.41
-   and should now be flush for the first time.
-1c. **A collapsed group's flyout** (narrow the window until a group collapses): clicking a plain
-   button or a menu row inside it CLOSES it; clicking a drop-down/split chevron, a gallery's expand
-   or scroll buttons, or a combo's chevron does NOT; right-clicking does not; and a split button's
-   left half both runs the command and closes.
-1b. **The » flyout with the QAT in the tab row AND in an accent title bar** — entries must use the
-   NORMAL hover/pressed colours, and a split entry's chevron must be dark and visible. Check the
-   chevron on the strip itself is still white-on-band; that is the behaviour the reset must not undo.
-2. **No sliced top edge, and no flicker** — the card should fade up cleanly rather than blinking in
-   at full strength first, and the contents should settle without any edge being cut.
-3. **Nothing moved at rest** — see 1a; this is the item that failed the first time.
-4. **`RibbonAnimation.GlobalLevel = Expressive`** — the level that used to clip. The content should
-   simply travel further, with no edge sliced and the card itself still not moving.
-5. **Change the Windows display scale with the app running.** It should relayout live and stay
-   crisp; no restart, and the maximized window must still sit flush against the work area
-   afterwards. (Try it maximized, and on a second monitor at a different scale if there is one.)
-
-**Working and confirmed by user: everything through §3.21** — including the QAT
-customization + merged options dialog with all its refinements (custom close-only title
-bar, DWM rounded corners, resizable, per-page scroll policy via `IRibbonFillPage`), the
-Customize-the-Ribbon page + Edit… dialog, customization **persistence** (round-trip / Reset /
-corrupt-JSON-starts-clean), the §3.18 QAT/dialog polish batch, the §3.19 dropdown/split QAT
-proxies, the §3.20 large-label chevron/ellipsis work, and the §3.21 backstage footer/button
-items. The §3.14 XAML **design-time** preview (active tab + backstage on the VS/Blend surface)
-is also user-confirmed. The §3.21 #4 **backstage Tab-focus leak is now fixed** (focus trap;
-see §3.21). Nothing through §3.21 remains in the "needs verification" state; the later manual checks
-listed above are still outstanding.
-
-**Animation polish is now complete.** All six items formerly tracked here — hover
-cross-fade, the true sliding tab marker (shared animated underline), contextual-tab
-appear, toggle-state cross-fade, theme-switch cross-fade, and KeyTip badge pop — are
-wired and confirmed; see §3/"Wired so far" list above for the code sites. KeyTip badge
-pop was the last of the six: `RibbonMotion.PlayKeyTipPop` plays a fade + short downward
-settle from `KeyTipService.AddAdorners`, self-releasing its opacity animation on
-completion so the existing dim/undim-while-typing logic (`KeyTipAdorner.Dimmed`) keeps
-working afterward (hard rule 8).
-
-**Import / Export (customize page) — DONE.** `RibbonCustomizePage` now has **Import…** / **Export…**
-buttons beside **Reset** (bottom-left, `PART_ImportButton` / `PART_ExportButton` in the Office2024
-template). Export writes `RibbonCustomizationSerializer.Serialize(ribbon)` to a `.json` the user picks
-(`Microsoft.Win32.SaveFileDialog`, no WinForms); Import reads one back (`OpenFileDialog`) and
-`Apply`s it, then `RebuildAll`. File IO is guarded (IO/access/security exceptions → a `MessageBox`),
-and `Apply` already tolerates a foreign/corrupt string, so a bad file can't corrupt the ribbon. Import
-mutates the live ribbon immediately (same as Reset); the host persists it when the options dialog's
-Apply fires. The serializer already round-tripped (§3.17) — this was just the missing UI.
-
-**Design-time editor — done this arc:** the runtime ribbon horizontal scroll (§3.25, incl. the
-reduce-then-scroll clamp fix and the chevrons-return-on-tab-switch fix), split/drop-down button menu-item
-editing, `Ribbon.CommandId` + `KeyTip.Keys` attached-property editors (attached-property model access
-proven — `Find(PropertyIdentifier)`), the backstage page switcher, the modern context menus (§3.26), and
-**drag-drop tree reordering** (see below). Showcase gained a Disable-Samples demo (button/split/group
-disabled states).
-
-**Drag-drop reordering (RibbonEditorWindow):** drag a tree node onto another to reorder or reparent.
-`PreviewMouseLeftButtonDown` records the candidate + start point; `PreviewMouseMove` starts
-`DragDrop.DoDragDrop` once past the system drag threshold (so a plain click still selects). `DragOver`
-builds a `DropPlan` and shows a `DropAdorner` (a blue insertion line above/below the target row, or a
-rounded box for an "into"/append drop, chosen by where the pointer sits in the row's header height);
-`Drop` applies it via `DesignModel.MoveInto` (remove-from + insert-into as one undo, with the insert
-index adjusted for the removal shift when it's a same-collection reorder). Compatibility (`Accepts`)
-mirrors the verbs: tabs↔Tabs, groups↔Groups (any tab), real controls/panels↔a group's `Items` or a
-panel's `Children` (any group/panel), and item entries↔`Items` of a container of the SAME item type
-(so a `RibbonMenuItem` can move between dropdowns/splits, a `ComboBoxItem` between combos, etc.).
-`IsAncestorOrSelf` blocks dropping a node into itself or its own subtree. The drag payload is the
-`NodeInfo` itself (in-process WPF drag-drop keeps the managed reference, so an internal type is fine).
-
-**Phase 7 is COMPLETE and user-verified on Windows (2026-07-27).** All four steps landed in one
-arc: modal tabs (§3.32), tab merging (§3.33), group contributions + the declarative activation path
-+ QAT proxy parking (§3.33), and the MDI tab/caption merge that also closes **MDI milestone M4**
-(§3.34). Design doc: `docs/06-MERGE-AND-MODAL-PLAN.md`. Every remaining v1.0 item is now a repeat of
-a pattern already solved here.
-
-**Quick access toolbar overflow — DONE and verified (§3.35).** The tab-row and title-bar placements
-cap at `Ribbon.QuickAccessMaxWidth` and move the rest into a » flyout; below-ribbon is unconstrained
-and unchanged.
-
-**The overflow flyout's second stranding bug is fixed (§3.39)** — dismissing the flyout while one of
-its drop-down/split entries had its menu open used to leave the ORIGINAL ribbon button opening onto
-an empty menu for the rest of the session. Covered by tests rather than by clicking, so the manual
-repro in §3.39 is still worth one pass.
-
-**Cross-cutting rule worth reading before touching the tab strip: §3.36.** The sliding underline and
-the 2010/2013 connect notch do not update themselves, and neither `SizeChanged` on the tab control
-nor `SizeChanged` on a sibling whose `Visibility` toggles will tell you. Both variants shipped broken
-during this arc.
-
-Backlog (rough priority):
-
-1. **XAML Designer Ribbon Editor application-menu parity — DONE AND USER-VERIFIED (§3.62).** The
-   responsive editor, singleton/menu structure authoring, property reuse, atomic File-surface selector,
-   and design-only active-pane preview are complete. Keep default/minimum width, live DPI moves, and
-   representative add/delete/reorder/undo operations in future designer regression passes.
-1a. Design editor: optional clear-to-default buttons for scalar properties. (Drag-drop tree
-   reordering + cross-tab/group moves are now DONE — see §5 "Drag-drop reordering".)
-1b. ~~Finish the `DropdownMenu` animation.~~ **DONE (§3.42)** — all five flyouts plus the context
-   menu and its submenus now animate the whole surface.
-2. **Office 2007 leftover — DONE (§§3.89–3.93).** The corrected opaque baseline, independent
-   optional Aero-inspired frame and both additive 2007 Backstage designs pass their automated and
-   live gates, including proportional 100/125/150/175/200% geometry and real 125%↔150%
-   mixed-monitor caption/resize/maximize/Snap verification.
-   The other deferral, the real two-pane APPLICATION MENU, **shipped 2026-07-28 (§3.46)**.
-3. **Full RTL verification + localization resources — DONE (§§3.51–3.61).** The
-   §§3.48–3.49 visual-regression matrix is complete, §3.51 adds the first RTL smoke snapshot, and
-   §§3.52–3.55 localize/mirror ribbon-owned context menus, Customize/Options, chrome tooltips and the
-   default File label. §3.58 completes the representative bidirectional-text Backstage pass and
-   §3.59 fixes its live adorner/title transition; §3.61 records the green live popup/window,
-   screen-edge, and 2024/2007 application-menu/orb verification.
-4. **The remaining unit tests — DONE.** Customization serializer round-trips are covered in §3.72
-   and the reduction algorithm/panel-order gaps in §3.73. KeyTip resolution is DONE in §3.69. The
-   Phase 7 merge/modal invariants
-   are now DONE: 13 tests cover
-   stable ordering, repeated merge/unmerge, two-source group restoration, modal transitions and
-   cancellation, serialization exclusion, rebuild/remerge and declarative activation. The harness
-   and house style for headless WPF tests are in place (§3.39).
-5. **MDI M1–M3**: cascade/tile/arrange commands + Ctrl+Tab (M1), the MVVM `ItemsSource` demo and a
-   per-theme pass (M2), tabbed-documents mode + `RibbonState` layout persistence (M3). M0 and M4 are
-   done, so the feature currently has a hole in its middle.
-6. Roadmap Phase 8 release engineering: **API review/freeze DONE (§3.75); repository documentation
-   DONE (§3.76); repository URL and package/Showcase icon DONE (§3.77); Source Link and symbol
-   generation DONE (§3.79); portable package output DONE (§3.80); deterministic versioning DONE
-   (§3.81); package/clean-consumer gate DONE (§3.82); live performance/install pass DONE (§3.83);
-   local v1.0.0 GitHub-release candidate DONE (§3.84); GitHub community launch DONE (§3.85).**
-   NuGet.org publication is not planned.
-7. GitHub repository metadata: **DONE** — the package points to `Wraith1080/RibbonKit`.
-
-Resolved at the API freeze (not v1 scope):
-
-- **Touch mode toggle.** The Phase 8 API review decided not to expose an explicit v1 density API.
-  A future implementation would need an opt-in density mode that enlarges hit targets and spacing
-  across the ribbon, QAT, menus, and
-  customization surfaces. Keep it token/metric-driven and compatible with reduction, DPI, RTL, and
-  mouse/keyboard use; do not infer it from a single touch event.
-  **Feasibility check (2026-08-08):** this is not currently a one-property template switch. Theme
-  chrome metrics are centralized, but hit-target geometry still spans hundreds of literal sizes,
-  margins, and paddings across the shared button, dropdown, input, Backstage, application-menu, and
-  customization templates. A complete implementation would first need a semantic density-metric
-  layer, an inheritable enum-shaped setting (not a dead-end boolean), explicit propagation into
-  popup and dialog roots, reduction/layout invalidation, and focused mouse/touch/DPI/RTL approvals.
-  Do not freeze a placeholder API; keep this deferred unless a dedicated cross-surface arc is approved.
-
-Possible post-v1 polish:
-
-- **Custom-control integration/projection contract — planned in
-  `docs/08-CUSTOM-CONTROL-INTEGRATION-PLAN.md` (§3.86).** Keep arbitrary group hosting unrestricted;
-  require identity, display/icon metadata and a fresh-view factory only for controls opting into
-  customization/QAT. The provider owns behavioral bindings and event cleanup while RibbonKit owns
-  placement, persistence, enabled/merge state and lifecycle calls. Prototype strip and overflow
-  contexts before freezing the additive public API.
-- **Office 2021 bridge theme — leading candidate in `docs/09-FUTURE-THEMES-PLAN.md` (§3.86).** Model
-  the sharp-edged pre-rounded UI between Office 2019 and 2024 through the shared token/template
-  system; do not substitute the later rounded visual refresh, and do not ship it unless the midpoint
-  is visibly distinct.
-- **Original theme sequence — planned in `docs/09-FUTURE-THEMES-PLAN.md`.** After Office 2021,
-  prototype RibbonKit Aurora, then Warm Sand and Graphite Copper. Keep Evergreen, Aubergine and Polar
-  Slate exploratory until the snapshot/maintenance cost of the earlier additions is understood.
-- **RibbonKit Writer reference application — planned in
-  `docs/10-RIBBONKIT-WRITER-PLAN.md` (§3.87).** Build it as a separate functional consumer with a
-  paper-aware native format, paginated preview/printing and contextual table editing. Keep OLE, DOCX
-  and true editable page layout outside the boundary.
-
-- **Richer QAT projections — decision recorded 2026-08-10, not Phase 8 scope.** The current supported
-  discovery/proxy set is `RibbonButton`, `RibbonToggleButton`, `RibbonSplitButton`, and
-  `RibbonDropDownButton`. `QuickAccessItems` can still contain hand-declared elements, but the
-  customization catalog, overflow projection, persistence identity, popup lifetime and KeyTips do
-  not make an arbitrary element a supported source. `AddToQuickAccess(FrameworkElement)` now returns
-  `false` for those unsupported types. Keep that boundary explicit rather than reopening the v1 freeze.
-  - **Group first.** Represent a `RibbonGroup` as a small dropdown using its existing `Header` and
-    `Icon`; require a usable group icon for QAT eligibility. Its popup should be generated from
-    source-linked command proxies (the same proven machinery used by custom groups), never by moving
-    the original group body — reparenting would visibly empty a source group whose tab is open.
-    Candidate discovery and persistence must register the group itself, and the projection must cover
-    dialog launchers, nested dropdowns, overflow, KeyTips, merge parking and removal while open.
-    Until richer child projections exist, do not silently omit a gallery/combo/custom child from an
-    otherwise addable group; either declare that group ineligible or present a clear limitation.
-  - **Gallery second; combo separately.** A gallery should become an icon/label dropdown rather than
-    an inline QAT strip and will need explicit quick-access metadata plus synchronized selection and
-    preview/commit forwarding. A combo box is useful only as a compact inline editor and needs fresh
-    strip/overflow views synchronized for `ItemsSource`, selection, editable `Text`, validation and
-    width. Direct `RibbonGalleryItem`/`ComboBoxItem` children remain single-parent WPF elements and
-    cannot simply be shared between projections.
-  - Do not freeze the architecture document's old, unimplemented one-method
-    `IQuickAccessItemProvider` sketch. A proven future contract needs presentation context (strip vs
-    overflow), fresh-view creation, stable source identity/persistence, enabled/merge propagation and
-    deterministic popup cleanup. Adding such an extension point after v1 is additive; a placeholder
-    contract now would be harder to repair.
-- **Custom group content needs no new host control.** `RibbonGroup` is already a
-  `HeaderedItemsControl`, so an application may place a custom control or panel directly in it; the
-  collapsed group re-homes the existing body intact. The child needs no icon — `RibbonGroup.Icon`
-  represents the whole group — and may implement the existing public `IRibbonSizeAware` hook when it
-  must react to reduction states. Prefer a `RibbonDropDownButton` for large, secondary, or
-  popup-owning content. A future integration pass may broaden explicit-KeyTip discovery and provide a
-  keep-open/lifecycle hook for arbitrary popup-owning controls, but those needs do not justify a
-  wrapper whose only job is to host WPF content.
-- An optional `MonochromeIcon` on QAT-capable command buttons, used as a purpose-authored alpha mask
-  on accent-colored title/tab surfaces. This is an API idea, not scheduled work; a separate
-  `DarkIcon` property remains intentionally unplanned.
-- A non-Mica light/dark transition that captures the old opaque window chrome, applies the new
-  palette underneath, and fades the capture away. It should use `RibbonAnimationAction.ThemeSwitch`,
-  honor reduced motion, handle rapid reversals, and stay disabled while a DWM backdrop is active so
-  Mica/Acrylic retain their native material retint without a second cross-fade on top.
-
-**Unit tests: 339 green (verified 2026-08-13).** Coverage now includes the STA harness, the borrow
-protocol, overflow strip measure/arrange rules, popup motion and dismissal, proxy mirroring,
-application-menu layering/hover/footer-outline/KeyTips, repeatable message-bar API/template/theme
-contracts, Office 2010 seam/state/consumer contracts, localization/RTL
-context-menu, customization-template, chrome-tooltip, default-File, representative bidi-lab and
-live Backstage/title-transition contracts, design-preview runtime isolation, scoped theme-token
-replacement, dark/Black neutral Backstage rail contracts, and the existing
-reduction/size-definition/theme-scope tests, plus rejection of unsupported automatic QAT projections.
-The KeyTip resolver cases add explicit-key precedence,
-exact/prefix collision recovery, prefix-free derivation, typeable non-Latin fallback, and explicit
-custom-content discovery/invocation across Backstage and application-menu panes, including disabled
-target blocking, native toggle Click/Command semantics, compact-input discovery with Header-based
-label derivation, and collapsed-group preservation for editor/picker activation.
-The post-v1 window-frame and 2007 Backstage contracts cover opaque/Aero separation, tint
-validation/default migration, shared-template material triggers, generation-aware navigation,
-independent modern `Glass2007` and opaque `Classic2007` choices, Showcase appearance persistence,
-shared-orb proxy ownership/alignment, restart-independent Modern/Classic switching, five-scale
-maximize compensation and per-monitor caption-hit coordinate conversion.
-`RibbonMergeModalTests` adds the Phase 7 automated invariants: merge ordering across later
-permutations, merge/unmerge round-trips, group restore with two sources in one tab, capture while
-modal, modal enter/exit selection and cancellation, forced exit when a merged modal tab leaves,
-customization rebuild/remerge, and declarative activation. The broader coverage gaps listed above remain.
-
-**Visual tests: 1 green locally (2026-08-08), covering all 62 approved images.** The §§3.48–3.49 matrix
-spans five light themes plus five dark/black variants × 100/125/150/200%, followed by the §3.51 ribbon
-RTL smoke, §3.53 QAT-customization RTL scene, §3.58 representative bidirectional Backstage scene,
-and the focused §3.27 Office 2010 button-state/Backstage-shell, §3.65 connected/RTL message-bar
-stacks and 2024 rectangular/2007 orb open-menu/message compositions, plus
-2007/2010 Black application-menu scenes; its separate project keeps rendering policy out of the
-headless logic-test harness. It passed three successive fresh-process stability runs in addition to
-the normal project and solution runs.
+- 2026-08-13: 339 logic tests, one visual test covering 62 approved images, and zero build
+  warnings/errors.
+- Before quoting a current count or declaring a new change complete, rerun the proportional build
+  and test commands. Inspect actual/diff PNG artifacts before changing visual baselines or
+  tolerances.

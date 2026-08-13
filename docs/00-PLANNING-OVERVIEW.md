@@ -1,7 +1,10 @@
 # Professional Ribbon Custom Control for WPF — Planning Overview
 
-> Status: Planning · Last updated: 2026-07-02
-> Decisions locked: **Name: RibbonKit** · **.NET 8/9 only** · **Open source** · **Milestone 1 = core ribbon skeleton**
+> **Status: historical foundation.** The product described here shipped as RibbonKit v1.0.0; this
+> document preserves the original vision, principles, and risks rather than current implementation
+> status. See the [README](../README.md) and [design notes §5](../04-DESIGN-NOTES.md#5-current-state--next-steps) for current state.
+>
+> Written 2026-07-02. Locked decisions: **RibbonKit** · **.NET 8/9** · **MIT/open source**.
 
 ## 1. Vision
 

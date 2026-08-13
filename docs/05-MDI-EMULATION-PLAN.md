@@ -10,7 +10,7 @@ did. Consumers inject arbitrary content (a `UserControl`, or a view-model +
 WPF has no native MDI (it left with WinForms' `Form.IsMdiContainer`), so this is
 an emulation over an in-visual-tree host, not a wrapper over OS child windows.
 
-> **Status (2026-07-27): M0 and M4 are BUILT and user-verified; M2 is partly complete; M1 and M3 are not started.**
+> **Status (confirmed 2026-08-13): M0 and M4 are built and user-verified; M2 is partly complete; M1 and M3 are not started.**
 > The feature therefore has a hole in its middle — floating child windows work and the
 > maximized child merges its tabs and caption into the ribbon, but there are still no
 > cascade/tile/arrange commands, no `Ctrl+Tab` cycling, no tabbed-documents mode and no
