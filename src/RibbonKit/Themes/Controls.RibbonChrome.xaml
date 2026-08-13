@@ -414,25 +414,11 @@
                                                             <Setter TargetName="OrbFill" Property="Stroke"
                                                                     Value="{DynamicResource RibbonKit.Brushes.ApplicationOrb.HoverRing}" />
                                                         </MultiDataTrigger>
-                                                        <!-- Backstage open. The orb is drawn with a
-                                                             negative margin above its row, which puts it
-                                                             over the backstage adorner as well, so it has
-                                                             to hide itself. IsChecked is bound TwoWay to
-                                                             Ribbon.IsBackstageOpen. Must stay LAST so it
-                                                             beats the shape trigger that shows the orb.
-                                                             ⚠ The third condition is what keeps the
-                                                             APPLICATION MENU case working: that menu is
-                                                             drawn BEHIND the orb on purpose, so hiding
-                                                             the orb over it would delete the one piece
-                                                             of chrome the whole layering exists for. -->
-                                                        <MultiDataTrigger>
-                                                            <MultiDataTrigger.Conditions>
-                                                                <Condition Binding="{Binding ApplicationButtonShape, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}" Value="Orb" />
-                                                                <Condition Binding="{Binding IsChecked, RelativeSource={RelativeSource Self}}" Value="True" />
-                                                                <Condition Binding="{Binding IsApplicationMenuOpen, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}" Value="False" />
-                                                            </MultiDataTrigger.Conditions>
-                                                            <Setter TargetName="Orb" Property="Visibility" Value="Collapsed" />
-                                                        </MultiDataTrigger>
+                                                        <!-- Ordinary Backstage leaves this orb in the original ribbon
+                                                             layer. RibbonWindow clips that subtree at the content-row
+                                                             boundary while the Backstage adorner covers the remainder,
+                                                             so the opening surface naturally unfurls above the orb.
+                                                             Application-menu layering remains unchanged. -->
                                                         <!-- Classic2007 moves this exact ToggleButton into the window
                                                              adorner. Its stable Ribbon owner is stored in Tag immediately
                                                              before the move, so these final setters preserve the real orb

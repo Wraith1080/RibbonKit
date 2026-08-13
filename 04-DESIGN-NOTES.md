@@ -4412,8 +4412,13 @@ and maximize/restore completed from that same region. Moving back to 125% restor
 
 Active/inactive Acrylic, maximized Acrylic and the deterministic opaque fallback were inspected
 live. Acrylic remained confined to the transparent title/restored frame, inactive treatment stayed
-quieter, and the opaque fallback preserved the same frame geometry. The final automated gate passes
-**337 logic tests plus one visual test covering 62 approved images**, with zero build warnings or
+quieter, and the opaque fallback preserved the same frame geometry. A post-gate startup regression
+also found that an orb first realized under persisted `Classic2007` could remain visible after
+switching the open surface to another Backstage design. Non-Classic Backstage now leaves the restored
+orb in its original ribbon layer and temporarily clips that content row, so the Backstage adorner
+naturally slides over it without a visibility-state pop; close or re-entering Classic removes the
+clip. The persisted-startup Classic→Glass→Classic sequence is covered directly. The final
+automated gate passes **338 logic tests plus one visual test covering 62 approved images**, with zero build warnings or
 errors. Actual Acrylic composition remains a live-only approval rather than a snapshot baseline.
 
 ## 4. Workflow / Session Conventions
@@ -4733,7 +4738,7 @@ Possible post-v1 polish:
   honor reduced motion, handle rapid reversals, and stay disabled while a DWM backdrop is active so
   Mica/Acrylic retain their native material retint without a second cross-fade on top.
 
-**Unit tests: 337 green (verified 2026-08-13).** Coverage now includes the STA harness, the borrow
+**Unit tests: 338 green (verified 2026-08-13).** Coverage now includes the STA harness, the borrow
 protocol, overflow strip measure/arrange rules, popup motion and dismissal, proxy mirroring,
 application-menu layering/hover/footer-outline/KeyTips, repeatable message-bar API/template/theme
 contracts, Office 2010 seam/state/consumer contracts, localization/RTL

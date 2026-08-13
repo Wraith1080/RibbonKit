@@ -1881,6 +1881,7 @@ public class Ribbon : Control
 
                     adorner.DetachApplicationButton();
                     RestoreApplicationButtonFromOverlay();
+                    SetBackstageTitleLayering(allowsOrbOverhang: true);
                     AdornerLayer.GetAdornerLayer(adorner.AdornedElement)?.Remove(adorner);
                     adorner.Detach();
                     _backstageAdorner = null;
@@ -2334,6 +2335,7 @@ public class Ribbon : Control
 
         if (UsesClassicBackstageOrbTransition())
         {
+            SetBackstageTitleLayering(allowsOrbOverhang: true);
             MoveApplicationButtonToBackstageAdorner(_backstageAdorner.AdornedElement);
             if (playEntranceRotation)
             {
@@ -2347,6 +2349,15 @@ public class Ribbon : Control
         // rejects reinsertion into the original panel because the button still has a parent.
         _backstageAdorner.DetachApplicationButton();
         RestoreApplicationButtonFromOverlay();
+        SetBackstageTitleLayering(allowsOrbOverhang: false);
+    }
+
+    private void SetBackstageTitleLayering(bool allowsOrbOverhang)
+    {
+        if (Window.GetWindow(this) is RibbonWindow ribbonWindow)
+        {
+            ribbonWindow.SetContentOverlapsTitleBar(allowsOrbOverhang);
+        }
     }
 
     private void MoveApplicationButtonToBackstageAdorner(UIElement adornedRoot)
