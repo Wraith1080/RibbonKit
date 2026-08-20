@@ -4807,6 +4807,38 @@ editor then passed real find/replace, embedded-object preservation, the default 
 MainWindow or ribbon-XAML change; W1-C owns that integration and must call the statistics `Refresh()`
 seam after replacing the editor document. No RibbonKit runtime change was required.
 
+### 3.105 RibbonKit Writer W1-C editing ribbon integration — 2026-08-21
+
+Writer now exposes its accepted W1-A/W1-B editing services through an app-owned Home ribbon. The
+Clipboard, Font, Paragraph and Editing groups cover native clipboard/undo, family and point-size
+selection, bold/italic/underline, solid foreground and highlight colours, alignment, indentation,
+lists, paragraph-spacing presets, find/replace, spelling and Select All. Stable QAT Save/Undo/Redo
+commands remain usable below a minimized ribbon. Every W1-C action has a command identity, KeyTip,
+ScreenTip and automation name; incomplete Styles and Format Painter surfaces were not added.
+
+`WriterEditingRibbonController` bridges the realized controls to the existing editing contracts
+without taking ownership of document content, selection, caret, native undo or IME. It converts the
+point values displayed by the ribbon to WPF device-independent units, projects uniform and mixed
+selection state, gates mutations for disabled/read-only editors, refreshes statistics after document
+replacement, and restores editor focus at dispatcher context-idle so terminating KeyTip input cannot
+enter the document. Editable family/size combos commit only at an explicit Enter, drop-down-close or
+focus-loss boundary, preventing partial typed values from redirecting the remaining keystrokes into
+the editor. The Writer-owned find/replace dialog leaves Find available while disabling replacement in
+read-only mode.
+
+An independent max-effort Luna review reported no priority-one defects and drove corrections for
+missing colour/highlight/spacing surfaces, read-only replacement, focus restoration, point/DIP
+semantics and integration-test coverage. Its targeted follow-up found one remaining point-comparison
+edge, which was corrected. Lead live verification then exposed and corrected the KeyTip focus timing
+and editable-combo commit races before acceptance.
+
+The final Writer suite passed **138/138** and the full solution passed **493 logic tests plus one
+visual test covering 63 approved images**, with zero build warnings/errors. On the actual Writer
+window, mouse and full Home KeyTip formatting, family/size entry, colour/highlight/spacing, mixed and
+caret-only selection state, find/replace, spelling, live counts, zoom, minimized-ribbon QAT
+undo/redo, TXT/RTF document replacement, Save/Open/New and dirty-prompt Cancel/Discard paths all
+passed. No RibbonKit runtime or project-file change was required.
+
 ## 4. Workflow / Session Conventions
 
 - Work from the current Windows checkout at
@@ -4823,7 +4855,7 @@ seam after replacing the editor document. No RibbonKit runtime change was requir
 
 ## 5. Current State & Next Steps
 
-> **Authoritative status as of 2026-08-20.** Historical checkpoints remain in §3, but status and
+> **Authoritative status as of 2026-08-21.** Historical checkpoints remain in §3, but status and
 > test counts quoted elsewhere should be reconciled against this section and rerun when current
 > evidence matters.
 
@@ -4851,10 +4883,10 @@ seam after replacing the editor document. No RibbonKit runtime change was requir
   directly beneath tabs and both QAT placements (§3.97). Its automated gate is green; live
   fallback/Acrylic visual approval remains pending.
 - MDI milestones M0 and M4 are complete: floating children plus ribbon tab/caption merging.
-- RibbonKit Writer W0-A through W0-D and W1-A/W1-B are complete through §3.104: the separate app/test
+- RibbonKit Writer W0-A through W0-D and W1-A through W1-C are complete through §3.105: the separate app/test
   scaffold, document lifetime, TXT/RTF/atomic/recent services, live Backstage/QAT file-command shell,
-  formatting/selection-state engine, and non-UI find/spelling/statistics/zoom utilities are integrated
-  at their packet boundaries.
+  formatting/selection-state engine, find/spelling/statistics/zoom utilities, and the accessible
+  Home-ribbon/QAT editing surface are integrated at their packet boundaries.
 
 ### Remaining or intentionally deferred
 
@@ -4864,8 +4896,8 @@ seam after replacing the editor document. No RibbonKit runtime change was requir
 - Final live visual tuning and approval of the Office 2010 Aero-inspired frame prototype (§3.97).
 - Touch density, richer automatic QAT projections, custom-control projection APIs and additional
   themes remain post-v1 candidates. Their plan documents are not implementation evidence.
-- RibbonKit Writer W1-C through W5 remain. W1-C and W2-A are dependency-ready now that W0-D and
-  W1-A/W1-B are accepted. No later packet is implied by the W1-B editing-utility contracts.
+- RibbonKit Writer W2-A through W5 remain. W2-A is dependency-ready; W2-C also depends on W2-A, so
+  no later packet is implied by the accepted W1-C editing surface.
 - Automatic `Icons.xaml` discovery is best-effort by design. Keep `Load Icons.xaml…` available
   for ambiguity, inaccessible paths, parse failures, or no match.
 
@@ -4892,6 +4924,9 @@ seam after replacing the editor document. No RibbonKit runtime change was requir
 - 2026-08-20 after §3.104: 493 logic tests, one visual test covering 63 approved images, and zero
   build warnings/errors; Writer passed 138/138 tests, W1-B passed 30/30 across five consecutive runs,
   and its separately shown native-editor utility/status gate passed.
+- 2026-08-21 after §3.105: 493 logic tests, one visual test covering 63 approved images, and zero
+  build warnings/errors; Writer passed 138/138 tests and the actual mouse/keyboard, complete Home
+  KeyTip, QAT/minimized-ribbon, selection-state, editing-utility and file-lifecycle surface gate passed.
 - Before quoting a current count or declaring a new change complete, rerun the proportional build
   and test commands. Inspect actual/diff PNG artifacts before changing visual baselines or
   tolerances.

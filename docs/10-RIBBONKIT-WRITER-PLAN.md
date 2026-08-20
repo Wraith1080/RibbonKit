@@ -1,8 +1,8 @@
 # RibbonKit Writer — Functional Reference Application Plan
 
-> **Status:** approved post-v1 application plan. W0-A through W0-D and W1-A/W1-B are implemented: scaffold,
+> **Status:** approved post-v1 application plan. W0-A through W0-D and W1-A through W1-C are implemented: scaffold,
 > document lifetime, TXT/RTF persistence, atomic saves, recent files, the live Backstage/QAT
-> file-command shell, the formatting command/selection-state engine, and non-UI find/replace, native
+> file-command shell, and the accessible Home-ribbon integration over formatting, find/replace, native
 > spelling, debounced statistics and bounded zoom. No later packet is implied.
 > Live status remains in `04-DESIGN-NOTES.md` §5.
 > RibbonKit Writer is a separate functional sample, not another feature page inside

@@ -17,16 +17,37 @@
         </ResourceDictionary>
     </rk:RibbonWindow.Resources>
     <rk:RibbonWindow.InputBindings>
-        <KeyBinding Key="N" Modifiers="Control" Command="{Binding NewCommand}" />
-        <KeyBinding Key="O" Modifiers="Control" Command="{Binding OpenCommand}" />
-        <KeyBinding Key="S" Modifiers="Control" Command="{Binding SaveCommand}" />
-        <KeyBinding Key="S" Modifiers="Control+Shift" Command="{Binding SaveAsCommand}" />
+        <KeyBinding x:Name="NewKeyBinding" Key="N" Modifiers="Control" />
+        <KeyBinding x:Name="OpenKeyBinding" Key="O" Modifiers="Control" />
+        <KeyBinding x:Name="SaveKeyBinding" Key="S" Modifiers="Control" />
+        <KeyBinding x:Name="SaveAsKeyBinding" Key="S" Modifiers="Control+Shift" />
+        <KeyBinding x:Name="UndoKeyBinding" Key="Z" Modifiers="Control" />
+        <KeyBinding x:Name="RedoKeyBinding" Key="Y" Modifiers="Control" />
+        <KeyBinding x:Name="CutKeyBinding" Key="X" Modifiers="Control" />
+        <KeyBinding x:Name="CopyKeyBinding" Key="C" Modifiers="Control" />
+        <KeyBinding x:Name="PasteKeyBinding" Key="V" Modifiers="Control" />
+        <KeyBinding x:Name="BoldKeyBinding" Key="B" Modifiers="Control" />
+        <KeyBinding x:Name="ItalicKeyBinding" Key="I" Modifiers="Control" />
+        <KeyBinding x:Name="UnderlineKeyBinding" Key="U" Modifiers="Control" />
+        <KeyBinding x:Name="FindKeyBinding" Key="F" Modifiers="Control" />
+        <KeyBinding x:Name="ReplaceKeyBinding" Key="H" Modifiers="Control" />
     </rk:RibbonWindow.InputBindings>
     <DockPanel AutomationProperties.AutomationId="WriterWindow">
         <rk:Ribbon x:Name="MainRibbon" DockPanel.Dock="Top" QuickAccessPosition="BelowRibbon"
                    AutomationProperties.AutomationId="MainRibbon" AutomationProperties.Name="Main ribbon">
             <rk:Ribbon.QuickAccessItems>
-                <rk:RibbonButton Header="Save" Size="Small" Icon="{StaticResource Icon.WriterSave}" Command="{Binding SaveCommand}" rk:Ribbon.CommandId="Writer.Save" rk:KeyTip.Keys="S" ScreenTipTitle="Save" ScreenTipText="Save the current document (Ctrl+S)." AutomationProperties.AutomationId="QatSave" AutomationProperties.Name="Save" />
+                <rk:RibbonButton x:Name="QatSave" Header="Save" Size="Small" Icon="{StaticResource Icon.WriterSave}"
+                                 rk:Ribbon.CommandId="Writer.Save" rk:KeyTip.Keys="QS"
+                                 ScreenTipTitle="Save" ScreenTipText="Save the current document (Ctrl+S)."
+                                 AutomationProperties.AutomationId="QatSave" AutomationProperties.Name="Save" />
+                <rk:RibbonButton x:Name="QatUndo" Header="Undo" Size="Small" Icon="{StaticResource Icon.WriterUndo}"
+                                 rk:Ribbon.CommandId="Writer.Undo" rk:KeyTip.Keys="QU"
+                                 ScreenTipTitle="Undo" ScreenTipText="Undo the last editing action (Ctrl+Z)."
+                                 AutomationProperties.AutomationId="QatUndo" AutomationProperties.Name="Undo" />
+                <rk:RibbonButton x:Name="QatRedo" Header="Redo" Size="Small" Icon="{StaticResource Icon.WriterRedo}"
+                                 rk:Ribbon.CommandId="Writer.Redo" rk:KeyTip.Keys="QR"
+                                 ScreenTipTitle="Redo" ScreenTipText="Redo the last undone editing action (Ctrl+Y)."
+                                 AutomationProperties.AutomationId="QatRedo" AutomationProperties.Name="Redo" />
             </rk:Ribbon.QuickAccessItems>
             <rk:Ribbon.Backstage>
                 <rk:Backstage Design="Modern" AutomationProperties.AutomationId="WriterBackstage" AutomationProperties.Name="File">
@@ -49,15 +70,178 @@
                 </rk:Backstage>
             </rk:Ribbon.Backstage>
             <rk:RibbonTab Header="Home" rk:Ribbon.CommandId="Writer.Home" rk:KeyTip.Keys="H" AutomationProperties.AutomationId="HomeTab" AutomationProperties.Name="Home">
-                <rk:RibbonGroup Header="Document" rk:Ribbon.CommandId="Writer.DocumentGroup" AutomationProperties.AutomationId="DocumentGroup" AutomationProperties.Name="Document">
-                    <rk:RibbonButton Header="New" Size="Medium" Command="{Binding NewCommand}" rk:Ribbon.CommandId="Writer.New" rk:KeyTip.Keys="N" ScreenTipTitle="New" ScreenTipText="Create a new document (Ctrl+N)." AutomationProperties.AutomationId="HomeNew" AutomationProperties.Name="New" />
-                    <rk:RibbonButton Header="Open" Size="Medium" Command="{Binding OpenCommand}" rk:Ribbon.CommandId="Writer.Open" rk:KeyTip.Keys="O" ScreenTipTitle="Open" ScreenTipText="Open a document (Ctrl+O)." AutomationProperties.AutomationId="HomeOpen" AutomationProperties.Name="Open" />
-                    <rk:RibbonButton Header="Save" Size="Medium" Command="{Binding SaveCommand}" rk:Ribbon.CommandId="Writer.Save" rk:KeyTip.Keys="S" ScreenTipTitle="Save" ScreenTipText="Save the current document (Ctrl+S)." AutomationProperties.AutomationId="HomeSave" AutomationProperties.Name="Save" />
-                    <rk:RibbonButton Header="Save As" Size="Medium" Command="{Binding SaveAsCommand}" rk:Ribbon.CommandId="Writer.SaveAs" rk:KeyTip.Keys="A" ScreenTipTitle="Save As" ScreenTipText="Save to a new file (Ctrl+Shift+S)." AutomationProperties.AutomationId="HomeSaveAs" AutomationProperties.Name="Save As" />
+                <rk:RibbonGroup Header="Clipboard" rk:Ribbon.CommandId="Writer.Home.Clipboard" rk:KeyTip.Keys="CL" Icon="{StaticResource Icon.WriterPaste}" AutomationProperties.AutomationId="ClipboardGroup" AutomationProperties.Name="Clipboard">
+                    <StackPanel VerticalAlignment="Center">
+                        <rk:RibbonButton x:Name="PasteButton" Header="Paste" Size="Medium" Icon="{StaticResource Icon.WriterPaste}"
+                                         rk:Ribbon.CommandId="Writer.Home.Clipboard.Paste" rk:KeyTip.Keys="PV"
+                                         ScreenTipTitle="Paste" ScreenTipText="Paste the clipboard contents at the caret (Ctrl+V)."
+                                         AutomationProperties.AutomationId="HomePaste" AutomationProperties.Name="Paste" />
+                        <rk:RibbonButton x:Name="CutButton" Header="Cut" Size="Medium" Icon="{StaticResource Icon.WriterCut}"
+                                         rk:Ribbon.CommandId="Writer.Home.Clipboard.Cut" rk:KeyTip.Keys="CX"
+                                         ScreenTipTitle="Cut" ScreenTipText="Remove the selected text and place it on the clipboard (Ctrl+X)."
+                                         AutomationProperties.AutomationId="HomeCut" AutomationProperties.Name="Cut" />
+                        <rk:RibbonButton x:Name="CopyButton" Header="Copy" Size="Medium" Icon="{StaticResource Icon.WriterCopy}"
+                                         rk:Ribbon.CommandId="Writer.Home.Clipboard.Copy" rk:KeyTip.Keys="CP"
+                                         ScreenTipTitle="Copy" ScreenTipText="Copy the selected text to the clipboard (Ctrl+C)."
+                                         AutomationProperties.AutomationId="HomeCopy" AutomationProperties.Name="Copy" />
+                    </StackPanel>
+                </rk:RibbonGroup>
+                <rk:RibbonGroup Header="Font" rk:Ribbon.CommandId="Writer.Home.Font" rk:KeyTip.Keys="FO" Icon="{StaticResource Icon.WriterFont}" AutomationProperties.AutomationId="FontGroup" AutomationProperties.Name="Font">
+                    <StackPanel VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                            <rk:RibbonComboBox x:Name="FontFamilyCombo" InputWidth="128" IsEditable="True"
+                                               rk:Ribbon.CommandId="Writer.Home.Font.Family" rk:KeyTip.Keys="FF"
+                                               ScreenTipTitle="Font family" ScreenTipText="Choose the font family for the selection."
+                                               AutomationProperties.AutomationId="FontFamily" AutomationProperties.Name="Font family">
+                                <ComboBoxItem Content="Segoe UI" />
+                                <ComboBoxItem Content="Calibri" />
+                                <ComboBoxItem Content="Arial" />
+                                <ComboBoxItem Content="Times New Roman" />
+                                <ComboBoxItem Content="Consolas" />
+                            </rk:RibbonComboBox>
+                            <rk:RibbonComboBox x:Name="FontSizeCombo" InputWidth="48" Margin="4,0,0,0" IsEditable="True"
+                                               rk:Ribbon.CommandId="Writer.Home.Font.Size" rk:KeyTip.Keys="FS"
+                                               ScreenTipTitle="Font size" ScreenTipText="Choose the text size in points."
+                                               AutomationProperties.AutomationId="FontSize" AutomationProperties.Name="Font size">
+                                <ComboBoxItem Content="9" />
+                                <ComboBoxItem Content="10" />
+                                <ComboBoxItem Content="11" />
+                                <ComboBoxItem Content="12" />
+                                <ComboBoxItem Content="14" />
+                                <ComboBoxItem Content="18" />
+                                <ComboBoxItem Content="24" />
+                            </rk:RibbonComboBox>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <rk:RibbonToggleButton x:Name="BoldButton" Header="Bold" Size="Small" Icon="{StaticResource Icon.WriterBold}"
+                                                   rk:Ribbon.CommandId="Writer.Home.Font.Bold" rk:KeyTip.Keys="FB"
+                                                   ScreenTipTitle="Bold" ScreenTipText="Make the selected text bold (Ctrl+B)."
+                                                   AutomationProperties.AutomationId="HomeBold" AutomationProperties.Name="Bold" />
+                            <rk:RibbonToggleButton x:Name="ItalicButton" Header="Italic" Size="Small" Icon="{StaticResource Icon.WriterItalic}"
+                                                   rk:Ribbon.CommandId="Writer.Home.Font.Italic" rk:KeyTip.Keys="FI"
+                                                   ScreenTipTitle="Italic" ScreenTipText="Italicize the selected text (Ctrl+I)."
+                                                   AutomationProperties.AutomationId="HomeItalic" AutomationProperties.Name="Italic" />
+                            <rk:RibbonToggleButton x:Name="UnderlineButton" Header="Underline" Size="Small" Icon="{StaticResource Icon.WriterUnderline}"
+                                                   rk:Ribbon.CommandId="Writer.Home.Font.Underline" rk:KeyTip.Keys="FU"
+                                                   ScreenTipTitle="Underline" ScreenTipText="Underline the selected text (Ctrl+U)."
+                                                   AutomationProperties.AutomationId="HomeUnderline" AutomationProperties.Name="Underline" />
+                            <rk:RibbonDropDownButton x:Name="TextColorButton" Header="Text Color" Size="Small" Icon="{StaticResource Icon.WriterTextColor}"
+                                                     rk:Ribbon.CommandId="Writer.Home.Font.TextColor" rk:KeyTip.Keys="TC"
+                                                     ScreenTipTitle="Text Color" ScreenTipText="Choose a solid text color for the selection."
+                                                     AutomationProperties.AutomationId="TextColor" AutomationProperties.Name="Text Color">
+                                <rk:RibbonMenuItem x:Name="TextColorAutomatic" Header="Automatic" rk:Ribbon.CommandId="Writer.Home.Font.TextColor.Automatic" rk:KeyTip.Keys="A" AutomationProperties.AutomationId="TextColorAutomatic" AutomationProperties.Name="Automatic text color" />
+                                <rk:RibbonMenuItem x:Name="TextColorBlack" Header="Black" rk:Ribbon.CommandId="Writer.Home.Font.TextColor.Black" rk:KeyTip.Keys="B" AutomationProperties.AutomationId="TextColorBlack" AutomationProperties.Name="Black text" />
+                                <rk:RibbonMenuItem x:Name="TextColorBlue" Header="Blue" rk:Ribbon.CommandId="Writer.Home.Font.TextColor.Blue" rk:KeyTip.Keys="U" AutomationProperties.AutomationId="TextColorBlue" AutomationProperties.Name="Blue text" />
+                                <rk:RibbonMenuItem x:Name="TextColorRed" Header="Red" rk:Ribbon.CommandId="Writer.Home.Font.TextColor.Red" rk:KeyTip.Keys="R" AutomationProperties.AutomationId="TextColorRed" AutomationProperties.Name="Red text" />
+                            </rk:RibbonDropDownButton>
+                            <rk:RibbonDropDownButton x:Name="HighlightColorButton" Header="Highlight" Size="Small" Icon="{StaticResource Icon.WriterHighlight}"
+                                                     rk:Ribbon.CommandId="Writer.Home.Font.Highlight" rk:KeyTip.Keys="TH"
+                                                     ScreenTipTitle="Text Highlight" ScreenTipText="Choose a solid highlight color for the selection."
+                                                     AutomationProperties.AutomationId="HighlightColor" AutomationProperties.Name="Text Highlight">
+                                <rk:RibbonMenuItem x:Name="HighlightNone" Header="No Color" rk:Ribbon.CommandId="Writer.Home.Font.Highlight.None" rk:KeyTip.Keys="N" AutomationProperties.AutomationId="HighlightNone" AutomationProperties.Name="No highlight color" />
+                                <rk:RibbonMenuItem x:Name="HighlightYellow" Header="Yellow" rk:Ribbon.CommandId="Writer.Home.Font.Highlight.Yellow" rk:KeyTip.Keys="Y" AutomationProperties.AutomationId="HighlightYellow" AutomationProperties.Name="Yellow highlight" />
+                                <rk:RibbonMenuItem x:Name="HighlightGreen" Header="Green" rk:Ribbon.CommandId="Writer.Home.Font.Highlight.Green" rk:KeyTip.Keys="G" AutomationProperties.AutomationId="HighlightGreen" AutomationProperties.Name="Green highlight" />
+                            </rk:RibbonDropDownButton>
+                        </StackPanel>
+                    </StackPanel>
+                </rk:RibbonGroup>
+                <rk:RibbonGroup Header="Paragraph" rk:Ribbon.CommandId="Writer.Home.Paragraph" rk:KeyTip.Keys="PA" Icon="{StaticResource Icon.WriterAlignLeft}" AutomationProperties.AutomationId="ParagraphGroup" AutomationProperties.Name="Paragraph">
+                    <StackPanel VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                            <rk:RibbonToggleButton x:Name="AlignLeftButton" Header="Align Left" Size="Small" Icon="{StaticResource Icon.WriterAlignLeft}"
+                                                   rk:Ribbon.CommandId="Writer.Home.Paragraph.AlignLeft" rk:KeyTip.Keys="AL"
+                                                   ScreenTipTitle="Align Left" ScreenTipText="Align the selected paragraphs to the left."
+                                                   AutomationProperties.AutomationId="AlignLeft" AutomationProperties.Name="Align Left" />
+                            <rk:RibbonToggleButton x:Name="AlignCenterButton" Header="Center" Size="Small" Icon="{StaticResource Icon.WriterAlignCenter}"
+                                                   rk:Ribbon.CommandId="Writer.Home.Paragraph.AlignCenter" rk:KeyTip.Keys="AC"
+                                                   ScreenTipTitle="Center" ScreenTipText="Center the selected paragraphs."
+                                                   AutomationProperties.AutomationId="AlignCenter" AutomationProperties.Name="Center" />
+                            <rk:RibbonToggleButton x:Name="AlignRightButton" Header="Align Right" Size="Small" Icon="{StaticResource Icon.WriterAlignRight}"
+                                                   rk:Ribbon.CommandId="Writer.Home.Paragraph.AlignRight" rk:KeyTip.Keys="AR"
+                                                   ScreenTipTitle="Align Right" ScreenTipText="Align the selected paragraphs to the right."
+                                                   AutomationProperties.AutomationId="AlignRight" AutomationProperties.Name="Align Right" />
+                            <rk:RibbonToggleButton x:Name="AlignJustifyButton" Header="Justify" Size="Small" Icon="{StaticResource Icon.WriterJustify}"
+                                                   rk:Ribbon.CommandId="Writer.Home.Paragraph.AlignJustify" rk:KeyTip.Keys="AJ"
+                                                   ScreenTipTitle="Justify" ScreenTipText="Justify the selected paragraphs."
+                                                   AutomationProperties.AutomationId="AlignJustify" AutomationProperties.Name="Justify" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <rk:RibbonToggleButton x:Name="BulletsButton" Header="Bullets" Size="Small" Icon="{StaticResource Icon.WriterBullets}"
+                                                   rk:Ribbon.CommandId="Writer.Home.Paragraph.Bullets" rk:KeyTip.Keys="BL"
+                                                   ScreenTipTitle="Bullets" ScreenTipText="Toggle a bulleted list for the selected paragraphs."
+                                                   AutomationProperties.AutomationId="ParagraphBullets" AutomationProperties.Name="Bullets" />
+                            <rk:RibbonToggleButton x:Name="NumberingButton" Header="Numbering" Size="Small" Icon="{StaticResource Icon.WriterNumbering}"
+                                                   rk:Ribbon.CommandId="Writer.Home.Paragraph.Numbering" rk:KeyTip.Keys="NU"
+                                                   ScreenTipTitle="Numbering" ScreenTipText="Toggle a numbered list for the selected paragraphs."
+                                                   AutomationProperties.AutomationId="ParagraphNumbering" AutomationProperties.Name="Numbering" />
+                            <rk:RibbonButton x:Name="IncreaseIndentButton" Header="Increase Indent" Size="Small" Icon="{StaticResource Icon.WriterIndentIncrease}"
+                                             rk:Ribbon.CommandId="Writer.Home.Paragraph.IncreaseIndent" rk:KeyTip.Keys="II"
+                                             ScreenTipTitle="Increase Indent" ScreenTipText="Move the selected paragraphs one step to the right."
+                                             AutomationProperties.AutomationId="IncreaseIndent" AutomationProperties.Name="Increase Indent" />
+                            <rk:RibbonButton x:Name="DecreaseIndentButton" Header="Decrease Indent" Size="Small" Icon="{StaticResource Icon.WriterIndentDecrease}"
+                                             rk:Ribbon.CommandId="Writer.Home.Paragraph.DecreaseIndent" rk:KeyTip.Keys="DI"
+                                             ScreenTipTitle="Decrease Indent" ScreenTipText="Move the selected paragraphs one step to the left."
+                                             AutomationProperties.AutomationId="DecreaseIndent" AutomationProperties.Name="Decrease Indent" />
+                            <rk:RibbonDropDownButton x:Name="ParagraphSpacingButton" Header="Paragraph Spacing" Size="Small" Icon="{StaticResource Icon.WriterParagraphSpacing}"
+                                                     rk:Ribbon.CommandId="Writer.Home.Paragraph.Spacing" rk:KeyTip.Keys="PS"
+                                                     ScreenTipTitle="Paragraph Spacing" ScreenTipText="Choose spacing before and after the selected paragraphs."
+                                                     AutomationProperties.AutomationId="ParagraphSpacing" AutomationProperties.Name="Paragraph Spacing">
+                                <rk:RibbonMenuItem x:Name="ParagraphSpacingCompact" Header="Compact (0 / 0 pt)" rk:Ribbon.CommandId="Writer.Home.Paragraph.Spacing.Compact" rk:KeyTip.Keys="C" AutomationProperties.AutomationId="ParagraphSpacingCompact" AutomationProperties.Name="Compact paragraph spacing" />
+                                <rk:RibbonMenuItem x:Name="ParagraphSpacingNormal" Header="Normal (0 / 6 pt)" rk:Ribbon.CommandId="Writer.Home.Paragraph.Spacing.Normal" rk:KeyTip.Keys="N" AutomationProperties.AutomationId="ParagraphSpacingNormal" AutomationProperties.Name="Normal paragraph spacing" />
+                                <rk:RibbonMenuItem x:Name="ParagraphSpacingOpen" Header="Open (6 / 12 pt)" rk:Ribbon.CommandId="Writer.Home.Paragraph.Spacing.Open" rk:KeyTip.Keys="O" AutomationProperties.AutomationId="ParagraphSpacingOpen" AutomationProperties.Name="Open paragraph spacing" />
+                            </rk:RibbonDropDownButton>
+                        </StackPanel>
+                    </StackPanel>
+                </rk:RibbonGroup>
+                <rk:RibbonGroup Header="Editing" rk:Ribbon.CommandId="Writer.Home.Editing" rk:KeyTip.Keys="ED" Icon="{StaticResource Icon.WriterFind}" AutomationProperties.AutomationId="EditingGroup" AutomationProperties.Name="Editing">
+                    <StackPanel VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                            <rk:RibbonButton x:Name="FindButton" Header="Find" Size="Small" Icon="{StaticResource Icon.WriterFind}"
+                                             rk:Ribbon.CommandId="Writer.Home.Editing.Find" rk:KeyTip.Keys="FD"
+                                             ScreenTipTitle="Find" ScreenTipText="Find text in the current document (Ctrl+F)."
+                                             AutomationProperties.AutomationId="EditingFind" AutomationProperties.Name="Find" />
+                            <rk:RibbonButton x:Name="ReplaceButton" Header="Replace" Size="Small" Icon="{StaticResource Icon.WriterReplace}"
+                                             rk:Ribbon.CommandId="Writer.Home.Editing.Replace" rk:KeyTip.Keys="RP"
+                                             ScreenTipTitle="Replace" ScreenTipText="Find and replace text in the current document (Ctrl+H)."
+                                             AutomationProperties.AutomationId="EditingReplace" AutomationProperties.Name="Replace" />
+                            <rk:RibbonButton x:Name="SelectAllButton" Header="Select All" Size="Small" Icon="{StaticResource Icon.WriterSelectAll}"
+                                             rk:Ribbon.CommandId="Writer.Home.Editing.SelectAll" rk:KeyTip.Keys="SA"
+                                             ScreenTipTitle="Select All" ScreenTipText="Select all document content."
+                                             AutomationProperties.AutomationId="EditingSelectAll" AutomationProperties.Name="Select All" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <rk:RibbonToggleButton x:Name="SpellCheckButton" Header="Spelling" Size="Small" Icon="{StaticResource Icon.WriterSpellCheck}"
+                                                   rk:Ribbon.CommandId="Writer.Home.Editing.Spelling" rk:KeyTip.Keys="SP"
+                                                   ScreenTipTitle="Spelling" ScreenTipText="Toggle native WPF spelling underlines."
+                                                   AutomationProperties.AutomationId="EditingSpelling" AutomationProperties.Name="Spelling" />
+                            <rk:RibbonButton x:Name="ZoomOutButton" Header="Zoom Out" Size="Small" Icon="{StaticResource Icon.WriterZoomOut}"
+                                             rk:Ribbon.CommandId="Writer.Home.Editing.ZoomOut" rk:KeyTip.Keys="ZO"
+                                             ScreenTipTitle="Zoom Out" ScreenTipText="Reduce the document zoom by ten percent."
+                                             AutomationProperties.AutomationId="ZoomOut" AutomationProperties.Name="Zoom Out" />
+                            <rk:RibbonButton x:Name="ZoomResetButton" Header="100%" Size="Small" Icon="{StaticResource Icon.WriterZoomReset}"
+                                             rk:Ribbon.CommandId="Writer.Home.Editing.ZoomReset" rk:KeyTip.Keys="ZR"
+                                             ScreenTipTitle="Reset Zoom" ScreenTipText="Restore document zoom to 100 percent."
+                                             AutomationProperties.AutomationId="ZoomReset" AutomationProperties.Name="Reset Zoom" />
+                            <rk:RibbonButton x:Name="ZoomInButton" Header="Zoom In" Size="Small" Icon="{StaticResource Icon.WriterZoomIn}"
+                                             rk:Ribbon.CommandId="Writer.Home.Editing.ZoomIn" rk:KeyTip.Keys="ZI"
+                                             ScreenTipTitle="Zoom In" ScreenTipText="Increase the document zoom by ten percent."
+                                             AutomationProperties.AutomationId="ZoomIn" AutomationProperties.Name="Zoom In" />
+                        </StackPanel>
+                    </StackPanel>
                 </rk:RibbonGroup>
             </rk:RibbonTab>
         </rk:Ribbon>
-        <StatusBar DockPanel.Dock="Bottom" AutomationProperties.AutomationId="Status" AutomationProperties.Name="Status"><TextBlock Text="{Binding StatusText}" /></StatusBar>
+        <StatusBar DockPanel.Dock="Bottom" AutomationProperties.AutomationId="Status" AutomationProperties.Name="Status">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock x:Name="StatusMessage" Text="{Binding StatusText}" />
+                <TextBlock Text="  |  " />
+                <TextBlock x:Name="StatisticsText" Text="0 words, 0 characters" AutomationProperties.AutomationId="DocumentStatistics" AutomationProperties.Name="Document statistics" />
+                <TextBlock Text="  |  " />
+                <TextBlock x:Name="SpellCheckStatusText" Text="Spelling off" AutomationProperties.AutomationId="SpellingStatus" AutomationProperties.Name="Spelling status" />
+                <TextBlock Text="  |  " />
+                <TextBlock x:Name="ZoomText" Text="100%" AutomationProperties.AutomationId="ZoomStatus" AutomationProperties.Name="Zoom" />
+            </StackPanel>
+        </StatusBar>
         <RichTextBox x:Name="DocumentEditor"
                      Background="White"
                      BorderThickness="0"
