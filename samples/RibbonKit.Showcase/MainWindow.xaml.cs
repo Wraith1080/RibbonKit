@@ -66,6 +66,7 @@ public partial class MainWindow : RibbonWindow
     private double _aeroFrameTintIntensity =
         ShowcaseAppearancePreferences.DefaultAeroFrameTintIntensity;
     private bool _restoringAppearance;
+    private bool _frameAppearanceSync;
 
     internal event EventHandler? ApplicationSurfaceChanged;
 
@@ -174,6 +175,8 @@ public partial class MainWindow : RibbonWindow
             _preferredFrameAppearance = preferences.FrameAppearance;
             Office2007AeroFrameToggle.IsChecked =
                 preferences.FrameAppearance == RibbonWindowFrameAppearance.Office2007Aero;
+            Office2010AeroFrameToggle.IsChecked =
+                preferences.FrameAppearance == RibbonWindowFrameAppearance.Office2010Aero;
             ApplyFrameAppearancePreference();
 
             _useAccentForAeroFrame = preferences.UseAccentForAeroFrame;
@@ -309,7 +312,14 @@ public partial class MainWindow : RibbonWindow
         DarkModeToggle.IsEnabled = ThemeManager.SupportsDarkMode(theme);
 
         bool is2007 = theme == RibbonTheme.Office2007;
-        Office2007FrameGroup.IsEnabled = is2007;
+        bool is2010 = theme == RibbonTheme.Office2010;
+        AeroFrameGroup.IsEnabled = is2007 || is2010;
+        Office2007AeroFrameToggle.Visibility = is2007
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+        Office2010AeroFrameToggle.Visibility = is2010
+            ? Visibility.Visible
+            : Visibility.Collapsed;
         MainRibbon.ApplicationButtonShape = is2007
             ? RibbonApplicationButtonShape.Orb
             : RibbonApplicationButtonShape.Tab;
@@ -484,10 +494,42 @@ public partial class MainWindow : RibbonWindow
 
     private void OnToggleOffice2007AeroFrame(object sender, RoutedEventArgs e)
     {
-        _preferredFrameAppearance =
-            (sender as RibbonToggleButton)?.IsChecked == true
-                ? RibbonWindowFrameAppearance.Office2007Aero
-                : RibbonWindowFrameAppearance.Default;
+        SelectFrameAppearance(
+            sender as RibbonToggleButton,
+            RibbonWindowFrameAppearance.Office2007Aero,
+            Office2010AeroFrameToggle);
+    }
+
+    private void OnToggleOffice2010AeroFrame(object sender, RoutedEventArgs e)
+    {
+        SelectFrameAppearance(
+            sender as RibbonToggleButton,
+            RibbonWindowFrameAppearance.Office2010Aero,
+            Office2007AeroFrameToggle);
+    }
+
+    private void SelectFrameAppearance(
+        RibbonToggleButton? toggle,
+        RibbonWindowFrameAppearance appearance,
+        RibbonToggleButton other)
+    {
+        if (_frameAppearanceSync || toggle is null)
+        {
+            return;
+        }
+
+        bool selected = toggle.IsChecked == true;
+        _preferredFrameAppearance = selected
+            ? appearance
+            : RibbonWindowFrameAppearance.Default;
+
+        if (selected && other.IsChecked == true)
+        {
+            _frameAppearanceSync = true;
+            other.IsChecked = false;
+            _frameAppearanceSync = false;
+        }
+
         ApplyFrameAppearancePreference();
         SaveAppearancePreferences();
     }
@@ -527,10 +569,19 @@ public partial class MainWindow : RibbonWindow
 
     private void ApplyFrameAppearancePreference()
     {
-        FrameAppearance =
-            ThemeManager.CurrentTheme == RibbonTheme.Office2007
-                ? _preferredFrameAppearance
-                : RibbonWindowFrameAppearance.Default;
+        RibbonTheme? theme = ThemeManager.CurrentTheme;
+        FrameAppearance = _preferredFrameAppearance switch
+        {
+            RibbonWindowFrameAppearance.Office2007Aero when theme == RibbonTheme.Office2007 =>
+                RibbonWindowFrameAppearance.Office2007Aero,
+            RibbonWindowFrameAppearance.Office2010Aero when theme == RibbonTheme.Office2010 =>
+                RibbonWindowFrameAppearance.Office2010Aero,
+            _ => RibbonWindowFrameAppearance.Default,
+        };
+
+        AeroFrameSettingsPanel.IsEnabled =
+            FrameAppearance != RibbonWindowFrameAppearance.Default;
+        UpdateBackdropSurfaceTransparency();
     }
 
     private void ApplyAeroFrameTintPreference()
@@ -539,8 +590,8 @@ public partial class MainWindow : RibbonWindow
 
         if (!_useAccentForAeroFrame)
         {
-            // Return control to the shared style's DynamicResource so Office 2007 Blue/Black and
-            // future token changes continue to flow without a stale local brush.
+            // Return control to the shared style's DynamicResource so the selected generation and
+            // dark palette continue to flow without a stale local brush.
             ClearValue(AeroFrameTintProperty);
             return;
         }
@@ -646,9 +697,10 @@ public partial class MainWindow : RibbonWindow
 
         Background = Brushes.Transparent;
 
-        // Office 2007 exposes material only through the optional frame/title composition. The
-        // ribbon, tab strip, document body and status area remain opaque over Acrylic.
-        if (ThemeManager.CurrentTheme == RibbonTheme.Office2007)
+        // Historical Aero appearances keep material in the authored frame/title/tab composition;
+        // the document body and status area remain opaque over Acrylic.
+        if (ThemeManager.CurrentTheme == RibbonTheme.Office2007
+            || FrameAppearance == RibbonWindowFrameAppearance.Office2010Aero)
         {
             MainContentArea.SetResourceReference(
                 Panel.BackgroundProperty,

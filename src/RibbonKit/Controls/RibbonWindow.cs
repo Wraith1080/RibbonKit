@@ -20,6 +20,14 @@ public enum RibbonWindowFrameAppearance
     /// <see cref="RibbonBackdrop.Acrylic"/> through <see cref="MicaHelper"/>.
     /// </summary>
     Office2007Aero,
+
+    /// <summary>
+    /// Use the Office 2010 Aero-inspired restored frame and title treatment. The material extends
+    /// through the ribbon tab-header row, where authored readability glass protects tab and QAT
+    /// contrast. This visual choice does not request a system backdrop; hosts may independently
+    /// apply <see cref="RibbonBackdrop.Acrylic"/> through <see cref="MicaHelper"/>.
+    /// </summary>
+    Office2010Aero,
 }
 
 /// <summary>
@@ -52,6 +60,12 @@ public class RibbonWindow : Window
         "RibbonKit.Brushes.WindowFrame.AeroCaptionHover";
     private const string AeroCaptionPressedKey =
         "RibbonKit.Brushes.WindowFrame.AeroCaptionPressed";
+    private const string AeroCaptionHoverBorderKey =
+        "RibbonKit.Brushes.WindowFrame.AeroCaptionHoverBorder";
+    private const string AeroCaptionPressedBorderKey =
+        "RibbonKit.Brushes.WindowFrame.AeroCaptionPressedBorder";
+    private const string AeroCaptionBorderThicknessKey =
+        "RibbonKit.Metrics.WindowFrame.AeroCaptionBorderThickness";
 
     private static readonly DependencyPropertyKey ActiveBackdropPropertyKey =
         DependencyProperty.RegisterReadOnly(
@@ -178,8 +192,8 @@ public class RibbonWindow : Window
 
     /// <summary>
     /// Gets or sets the optional frame presentation. Selecting
-    /// <see cref="RibbonWindowFrameAppearance.Office2007Aero"/> changes only RibbonKit-authored
-    /// geometry and overlays; it never enables Acrylic or another DWM material by itself.
+    /// an Aero-inspired value changes only RibbonKit-authored geometry and overlays; it never
+    /// enables Acrylic or another DWM material by itself.
     /// </summary>
     public RibbonWindowFrameAppearance FrameAppearance
     {
@@ -711,40 +725,56 @@ public class RibbonWindow : Window
 
     private void SetSnapButtonVisualState(SnapButtonVisualState state)
     {
-        SetSnapButtonBackground(_maximizeButton, state);
-        SetSnapButtonBackground(_restoreButton, state);
+        SetSnapButtonChrome(_maximizeButton, state);
+        SetSnapButtonChrome(_restoreButton, state);
     }
 
-    private void SetSnapButtonBackground(Button? button, SnapButtonVisualState state)
+    private void SetSnapButtonChrome(Button? button, SnapButtonVisualState state)
     {
         if (button is null)
         {
             return;
         }
 
-        switch (state)
+        if (state == SnapButtonVisualState.Normal)
         {
-            case SnapButtonVisualState.Hot:
-                button.SetResourceReference(
-                    Control.BackgroundProperty,
-                    FrameAppearance == RibbonWindowFrameAppearance.Office2007Aero
-                        ? AeroCaptionHoverKey
-                        : ThemeManager.CaptionHoverKey);
-                break;
-
-            case SnapButtonVisualState.Pressed:
-                button.SetResourceReference(
-                    Control.BackgroundProperty,
-                    FrameAppearance == RibbonWindowFrameAppearance.Office2007Aero
-                        ? AeroCaptionPressedKey
-                        : ThemeManager.CaptionPressedKey);
-                break;
-
-            default:
-                button.ClearValue(Control.BackgroundProperty);
-                break;
+            button.ClearValue(Control.BackgroundProperty);
+            button.ClearValue(Control.BorderBrushProperty);
+            button.ClearValue(Control.BorderThicknessProperty);
+            return;
         }
+
+        bool pressed = state == SnapButtonVisualState.Pressed;
+        button.SetResourceReference(
+            Control.BackgroundProperty,
+            ResolveSnapButtonBackgroundResourceKey(FrameAppearance, pressed));
+
+        string? borderKey = ResolveSnapButtonBorderResourceKey(FrameAppearance, pressed);
+        if (borderKey is null)
+        {
+            button.ClearValue(Control.BorderBrushProperty);
+            button.ClearValue(Control.BorderThicknessProperty);
+            return;
+        }
+
+        button.SetResourceReference(Control.BorderBrushProperty, borderKey);
+        button.SetResourceReference(Control.BorderThicknessProperty, AeroCaptionBorderThicknessKey);
     }
+
+    internal static string ResolveSnapButtonBackgroundResourceKey(
+        RibbonWindowFrameAppearance appearance,
+        bool pressed) =>
+        appearance is RibbonWindowFrameAppearance.Office2007Aero
+            or RibbonWindowFrameAppearance.Office2010Aero
+            ? pressed ? AeroCaptionPressedKey : AeroCaptionHoverKey
+            : pressed ? ThemeManager.CaptionPressedKey : ThemeManager.CaptionHoverKey;
+
+    internal static string? ResolveSnapButtonBorderResourceKey(
+        RibbonWindowFrameAppearance appearance,
+        bool pressed) =>
+        appearance == RibbonWindowFrameAppearance.Office2010Aero
+            ? pressed ? AeroCaptionPressedBorderKey : AeroCaptionHoverBorderKey
+            : null;
 
     private static void TrackNonClientMouseLeave(IntPtr hwnd)
     {

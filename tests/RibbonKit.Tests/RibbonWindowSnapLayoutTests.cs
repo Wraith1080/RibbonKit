@@ -51,8 +51,38 @@ public class RibbonWindowSnapLayoutTests
         Assert.Equal("{x:Static SystemCommands.RestoreWindowCommand}", (string?)restore.Attribute("Command"));
         Assert.Equal("Transparent", (string?)backgroundSetter.Attribute("Value"));
         Assert.Equal("{TemplateBinding Background}", (string?)chrome.Attribute("Background"));
+        Assert.Equal("{TemplateBinding BorderBrush}", (string?)chrome.Attribute("BorderBrush"));
+        Assert.Equal("{TemplateBinding BorderThickness}", (string?)chrome.Attribute("BorderThickness"));
         Assert.Contains($"{{DynamicResource {ThemeManager.CaptionHoverKey}}}", stateBackgrounds);
         Assert.Contains($"{{DynamicResource {ThemeManager.CaptionPressedKey}}}", stateBackgrounds);
+    }
+
+    [Fact]
+    public void Office2010_aero_snap_button_bridge_uses_translucent_frame_fill_and_opaque_border()
+    {
+        Assert.Equal(
+            "RibbonKit.Brushes.WindowFrame.AeroCaptionHover",
+            RibbonWindow.ResolveSnapButtonBackgroundResourceKey(
+                RibbonWindowFrameAppearance.Office2010Aero,
+                pressed: false));
+        Assert.Equal(
+            "RibbonKit.Brushes.WindowFrame.AeroCaptionPressed",
+            RibbonWindow.ResolveSnapButtonBackgroundResourceKey(
+                RibbonWindowFrameAppearance.Office2010Aero,
+                pressed: true));
+        Assert.Equal(
+            "RibbonKit.Brushes.WindowFrame.AeroCaptionHoverBorder",
+            RibbonWindow.ResolveSnapButtonBorderResourceKey(
+                RibbonWindowFrameAppearance.Office2010Aero,
+                pressed: false));
+        Assert.Equal(
+            "RibbonKit.Brushes.WindowFrame.AeroCaptionPressedBorder",
+            RibbonWindow.ResolveSnapButtonBorderResourceKey(
+                RibbonWindowFrameAppearance.Office2010Aero,
+                pressed: true));
+        Assert.Null(RibbonWindow.ResolveSnapButtonBorderResourceKey(
+            RibbonWindowFrameAppearance.Default,
+            pressed: false));
     }
 
     [Theory]

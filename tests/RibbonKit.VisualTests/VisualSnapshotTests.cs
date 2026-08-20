@@ -91,6 +91,11 @@ public sealed class VisualSnapshotTests
                     FlowDirection.LeftToRight,
                     CreateOffice2010ButtonStateScene);
                 AssertSnapshot(
+                    "office2010-merged-backstage-tabs-100",
+                    1d,
+                    FlowDirection.LeftToRight,
+                    CreateOffice2010MergedBackstageTabScene);
+                AssertSnapshot(
                     "office2010-backstage-shell-100",
                     1d,
                     FlowDirection.LeftToRight,
@@ -465,6 +470,29 @@ public sealed class VisualSnapshotTests
         });
         home.Groups.Add(stateGroup);
 
+        var backstage = new Backstage { Design = RibbonBackstageDesign.Classic2010 };
+        backstage.Items.Add(new BackstageTabItem { Header = "Info" });
+        ribbon.Backstage = backstage;
+        ribbon.IsBackstageOpen = true;
+        return root;
+    }
+
+    private static FrameworkElement CreateOffice2010MergedBackstageTabScene(FlowDirection flowDirection)
+    {
+        var root = (Grid)CreateScene(flowDirection);
+        var ribbon = Assert.IsType<Ribbon>(Assert.Single(root.Children));
+        var source = new RibbonMergeSource();
+        var chartDesign = new RibbonTab
+        {
+            Header = "Chart Design",
+            IsContextual = true,
+            ContextualColor = new SolidColorBrush(Color.FromRgb(0x1F, 0x7A, 0x4D)),
+        };
+        chartDesign.Groups.Add(new RibbonGroup { Header = "Chart" });
+        source.Tabs.Add(chartDesign);
+
+        Assert.True(ribbon.Merge(source));
+        ribbon.SelectedTab = chartDesign;
         var backstage = new Backstage { Design = RibbonBackstageDesign.Classic2010 };
         backstage.Items.Add(new BackstageTabItem { Header = "Info" });
         ribbon.Backstage = backstage;

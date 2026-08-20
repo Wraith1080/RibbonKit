@@ -1401,7 +1401,7 @@ white caption text; the gradient strip below stays (2019's strip-coloring specia
 - **File-button width is now a token.** The width was hardcoded `Padding="14,7,14,9"` on the File button's
   `Chrome` in the shared template. Tokenized as `RibbonKit.Metrics.ApplicationButtonPadding` (one template
   edit) and added to ALL four theme files (66 keys each now): 2024 keeps `14,7,14,9`; 2019 `20,7,20,9`,
-  2010 `22,7,22,9`, 2013 `24,7,24,9` (the pre-2024 File tabs read as broader blocks).
+  2010 now uses `24,7,22,9`, and 2013 `24,7,24,9` (the pre-2024 File tabs read as broader blocks).
 
 **Second feedback pass (reference images provided):**
 
@@ -4448,6 +4448,140 @@ restores that orb at close start beneath the departing Backstage surface, lettin
 naturally; Classic alone keeps the real orb suppressed until its proxy completes the exit rotation.
 Fresh-process 60-fps captures verified first-open rotation and both close timings.
 
+### 3.95 Office 2010 Backstage begins below the tab headers — 2026-08-13
+
+`Classic2010` now uses the Word 2010 File-surface placement that was originally deferred in §3.27.
+The title bar and complete tab-header row remain visible; the Backstage begins at the live bottom of
+that row and covers the ribbon body, below-ribbon QAT/message rows, and document. This is still the
+window-level `BackstageAdorner`, not an in-ribbon host: the shared `RibbonTabControl` template exposes
+`PART_TabHeaderHost`, and the adorner transforms that part's bottom edge into its adorned-root
+coordinates on every relevant layout pass. Resizing, theme/DPI reflow, and tab-row QAT changes can
+therefore move the boundary without a fixed theme-specific height. A custom template that omits the
+part retains the established full-content overlay rather than failing open or clipping content.
+
+The exposed chrome is functional rather than decorative. The real File button stays visible and
+checked, title-bar QAT content remains available, and the Backstage's redundant round Back button is
+collapsed only while the inset placement is active. Clicking File again, the selected ribbon tab, or
+a different tab closes the surface; a different tab continues through normal selection. Hit testing
+above the inset passes through the adorner to those controls. Other Backstage designs retain their
+full-content placement, including both Office 2007 paths and the Classic2007 orb proxy. A remembered
+`Translucent` preference does not hide the adorned root in this mode because doing so would also erase
+the deliberately exposed title/tab band.
+
+Three focused contracts pin the named template anchor, live inset/reflow and hit routing, plus the
+placement-owned Back-button state. Live testing on the 125% per-monitor-v2 display confirmed the
+Word-style boundary, visible File/tab strip, selected-tab and different-tab close paths, and the
+unchanged Office 2010 page shell. The future Office 2010 Aero/frame treatment remains separate work;
+this placement deliberately leaves the complete caption/tab band available for that material pass.
+Current gate: **342 logic tests plus one visual test covering 62 approved images**, with zero build
+warnings or errors.
+
+### 3.96 Office 2010 Backstage tab-strip polish — 2026-08-13
+
+The below-tabs `Classic2010` surface now completes the visual handoff at the exposed tab row. A
+device-snapped three-DIP `Classic2010TopSeam` spans the Backstage top edge using the dedicated
+`ApplicationButton.MenuOpenBottom` token. Office 2010 sets that token to the checked File gradient's
+bottom stop, so the rule reads as a direct continuation of the button while still separating Home
+(the first navigation item) from it. Every palette defines the same key, and custom accents derive it
+beside `MenuOpenBackground`, preserving the shared-template/theme-token boundary.
+
+The checked File trigger had still been painting the raw flat `Accent` brush even though Office 2010
+already supplied a dimensional `ApplicationButton.MenuOpenBackground` gradient. It now consumes that
+dedicated open-state token, retaining the established white Backstage foreground. This fixes the flat
+open state without altering the short mouse-down `PressedBackground` state or the separate
+application-menu-open shadow path.
+
+While a real Backstage (not `RibbonApplicationMenu`) is open, the ribbon-tab template now suppresses
+selected fill/border/connect-foot/indicator chrome and restores the normal tab-strip foreground. The
+logical `RibbonTabControl.SelectedItem` is deliberately untouched, so the same selection returns on
+close. Exposed tabs remain hoverable with the ordinary unselected hover treatment and retain the §3.95
+close/select behavior. Both the tab-control host and every `RibbonTab` receive a read-only
+`IsBackstageActive` state. Publishing it directly on each tab matters for joined ribbons: a merged
+contextual tab did not reliably resolve the earlier ancestor binding in the live Showcase even though
+the isolated snapshot did. Collection and merge changes now synchronize newly arriving tabs too.
+
+The historical `Backstage.ContentShadow` remains available to older/full-overlay generations, but
+`Classic2010` no longer applies it to the complete `ContentArea`. Instead a clipped 14-DIP host at
+the pane divider casts only to the left through the dedicated `Backstage.ContentLeftShadow` token.
+Office 2007/2010 palettes use a nine-DIP blur with the three-DIP projection and opacity raised to
+0.48. The clipped host keeps that darker, softer edge off the top connector. The
+navigation host also gains three DIPs of top padding, and content top padding grows by the same amount,
+so neither the first selected row nor page content sits beneath the seam.
+
+Focused contracts pin the seam geometry/color, checked File token, clipped left-only 2010 shadow,
+padding, token parity, and host/per-tab Backstage ownership. Intentional shell updates and the new
+`office2010-merged-backstage-tabs-100` scene were reviewed. Live testing on the 125% per-monitor-v2
+display confirmed the thicker connected edge, clean top boundary, darker left divider depth, padded
+first navigation row/content, open File depth, ordinary close/select paths, and a selected merged
+`Chart Design` header becoming inactive while Backstage owns the row. Current gate: **347 logic tests
+plus one visual test covering 63 approved images**, with zero build warnings or errors.
+
+### 3.97 Office 2010 Aero-inspired frame prototype — 2026-08-20
+
+The optional `RibbonWindowFrameAppearance` contract now includes `Office2010Aero` beside the
+established 2007 value. It remains an authored presentation choice rather than a backdrop request:
+the host still selects Acrylic independently, and an unavailable or disabled material uses the
+tokenized opaque fallback. The restored left/right/bottom frame, title tint, reflection, caption
+foreground/state and inactive fallback reuse the proven `RibbonWindow` frame composition with
+Office-2010-specific palette values.
+
+Unlike the 2007 treatment, the 2010 material continues through the complete live tab-header row.
+The ordinary ribbon root becomes transparent only for this appearance; the groups body, document
+surface and status area remain opaque. The tab row owns a deterministic Aero fallback layer which
+fades to zero only after Acrylic is accepted. It and the title use the same fallback brush plus the
+same live tint brush/intensity, so the caption and tab row form one surface in both opaque fallback
+and Acrylic modes. Acrylic itself supplies the textured blur; no authored white readability box or
+QAT-specific veil remains above it. File, ordinary/contextual tabs, both QAT placements and caption
+controls therefore sit directly on the shared material.
+
+The Showcase's Frame group now exposes mutually exclusive, generation-gated `2007 Aero` and
+`2010 Aero` selectors. The existing tint/accent controls apply to either appearance, persistence
+round-trips the new enum value, and changing themes leaves a mismatched preference dormant rather
+than applying 2010 chrome to another generation. When 2010 Aero is active over Acrylic, the Showcase
+keeps the document/status surface opaque so material remains confined to the authored frame,
+caption and tab row. Focused template, token, persistence and Showcase contracts accompany the
+change. Current automated gate: **350 logic tests plus one visual test covering 63 approved images**,
+with zero build warnings or errors. Live Acrylic/fallback comparison and final visual tuning remain
+the user-review gate for this prototype.
+
+Early live passes tested a separate feathered white readability pane, first at full height and then
+as a shorter blurred layer. That layer was removed after Acrylic proved to already provide the
+required textured blur; retaining it only introduced an extra band and obscured material continuity.
+The pale Office 2010 outer client edge was instead darkened directly.
+
+Office 2010 light replaces the white outer client edge with a translucent blue-gray rule, but its
+upper glass is now structurally continuous. The title-bottom rule is suppressed for `Office2010Aero`,
+the frame's side bevel begins at 69 DIPs (the 34-DIP caption plus the live 35-DIP tab row) rather than below the 34-DIP
+caption), and the tab row owns a tint layer bound to the same host `AeroFrameTint` and
+`AeroFrameTintIntensity` as the title. Accepted Acrylic therefore removes both opaque fallback
+layers while preserving one tint percentage across caption and tabs. The title-only reflection and
+grain overlays are also suppressed for this appearance because their relative brushes restart at
+the row boundary; Acrylic already supplies the texture continuously. Office 2007 and both
+dark-generation edge treatments remain unchanged. Office 2010 tab and tab-strip-control hover fills
+now carry alpha instead of replacing that shared material with opaque amber/blue rectangles. The
+File tab's left margin is zero only while `Office2010Aero` is active and those two DIPs move into its
+left padding, so the blue chrome reaches the ribbon body's left rule without shifting either the
+label or right edge. The ordinary 2010 frame retains its original two-DIP left margin and narrower
+padding, preventing the File tab from touching the non-Aero frame.
+The Acrylic tab hover keeps its alpha-bearing amber fill and connector, but its one-DIP outline now
+uses a dedicated fully opaque, stronger amber token instead of the paler shared control border.
+Office 2010 Aero caption buttons follow the same separation: minimize/maximize/restore use neutral
+translucent hover/press washes with opaque gray outlines, while Close uses translucent red with an
+opaque red outline. Dedicated sibling state-chrome layers handle ordinary WPF mouse input. The
+maximize/restore surface is different: advertising `HTMAXBUTTON` for Windows 11 Snap Layouts moves
+its input into non-client messages, so `IsMouseOver` does not activate. The existing native bridge
+now resolves the 2010 Aero fill and border resources explicitly and drives all three template-bound
+properties; previously it recognized only 2007 Aero and therefore kept applying the ordinary 2010
+blue gradient despite correct-looking XAML triggers.
+
+Pixel inspection of the reported capture identified the protruding stroke as the frame inner-right
+highlight, not the ribbon body's border: it began at the earlier assumed 68-DIP boundary, one row
+above the actual 69-DIP body top. The temporary split/inset ribbon-right workaround was removed and
+the original four-sided `ContentHost` border restored. The complete frame inner-right rule remains;
+its top margin now matches the real caption-plus-tab-row boundary, so it joins the body at the top
+and continues to the bottom frame without the extra row. Final live confirmation remains part of
+the prototype's user-review gate.
+
 ## 4. Workflow / Session Conventions
 
 - Work from the current Windows checkout at
@@ -4464,7 +4598,7 @@ Fresh-process 60-fps captures verified first-open rotation and both close timing
 
 ## 5. Current State & Next Steps
 
-> **Authoritative status as of 2026-08-13.** Historical checkpoints remain in §3, but status and
+> **Authoritative status as of 2026-08-20.** Historical checkpoints remain in §3, but status and
 > test counts quoted elsewhere should be reconciled against this section and rerun when current
 > evidence matters.
 
@@ -4480,6 +4614,15 @@ Fresh-process 60-fps captures verified first-open rotation and both close timing
 - The post-v1 Office 2007 arc is complete through §3.94: corrected opaque baseline, optional
   Aero-inspired/Acrylic frame, `Glass2007`, `Classic2007`, shared orb proxy, five-scale geometry,
   and live mixed-monitor caption/resize/maximize/Snap Layout verification.
+- The Office 2010 `Classic2010` Backstage now begins below the live tab-header row (§3.95), leaving
+  File, ribbon tabs, and title-bar QAT chrome exposed and interactive with a safe custom-template
+  fallback. Its tab-strip handoff now includes the three-DIP File-bottom-colored seam, dimensional
+  checked File state, padded pane content, darker left-only divider depth with a clean top edge, and
+  Backstage-owned inactive selection for native and joined ribbon tabs (§3.96).
+- The opt-in Office 2010 Aero-inspired frame prototype extends material through the title and tab
+  row with one fallback/tint composition; accepted Acrylic supplies the continuous textured blur
+  directly beneath tabs and both QAT placements (§3.97). Its automated gate is green; live
+  fallback/Acrylic visual approval remains pending.
 - MDI milestones M0 and M4 are complete: floating children plus ribbon tab/caption merging.
 
 ### Remaining or intentionally deferred
@@ -4487,6 +4630,7 @@ Fresh-process 60-fps captures verified first-open rotation and both close timing
 - MDI M1-M3: arrange/cascade/tile commands and Ctrl+Tab cycling; full MVVM `ItemsSource` proof and
   a per-theme pass; tabbed-document mode and layout persistence.
 - Optional Ribbon Editor clear-to-default actions for scalar properties.
+- Final live visual tuning and approval of the Office 2010 Aero-inspired frame prototype (§3.97).
 - Touch density, richer automatic QAT projections, custom-control projection APIs, additional
   themes, and RibbonKit Writer remain post-v1 candidates. Their plan documents are not
   implementation evidence.
@@ -4495,8 +4639,10 @@ Fresh-process 60-fps captures verified first-open rotation and both close timing
 
 ### Verification checkpoint
 
-- 2026-08-13: 339 logic tests, one visual test covering 62 approved images, and zero build
+- 2026-08-13: 347 logic tests, one visual test covering 63 approved images, and zero build
   warnings/errors.
+- 2026-08-20: 350 logic tests, one visual test covering 63 approved images, and zero build
+  warnings/errors; Office 2010 Aero live visual approval remains pending.
 - Before quoting a current count or declaring a new change complete, rerun the proportional build
   and test commands. Inspect actual/diff PNG artifacts before changing visual baselines or
   tolerances.

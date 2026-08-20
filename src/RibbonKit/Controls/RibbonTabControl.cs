@@ -30,16 +30,29 @@ namespace RibbonKit.Controls;
 /// </remarks>
 [TemplatePart(Name = ApplicationMenuLayerPartName, Type = typeof(Canvas))]
 [TemplatePart(Name = ApplicationMenuPresenterPartName, Type = typeof(ContentPresenter))]
+[TemplatePart(Name = TabHeaderHostPartName, Type = typeof(FrameworkElement))]
 public class RibbonTabControl : TabControl
 {
     internal const string ApplicationMenuLayerPartName = "ApplicationMenuLayer";
     internal const string ApplicationMenuPresenterPartName = "PART_ApplicationMenuPresenter";
+    internal const string TabHeaderHostPartName = "PART_TabHeaderHost";
 
     private const string ApplicationMenuAnchorBelowButtonResourceKey =
         "RibbonKit.Behaviors.ApplicationMenuAnchorBelowButton";
 
     /// <summary>Horizontal inset of the underline from each edge of the tab (matches the old per-tab underline's <c>Margin="10,0"</c>).</summary>
     private const double UnderlineInset = 10d;
+
+    private static readonly DependencyPropertyKey IsBackstageActivePropertyKey =
+        DependencyProperty.RegisterReadOnly(
+            nameof(IsBackstageActive),
+            typeof(bool),
+            typeof(RibbonTabControl),
+            new FrameworkPropertyMetadata(false, OnIsBackstageActiveChanged));
+
+    /// <summary>Identifies the read-only <see cref="IsBackstageActive"/> dependency property.</summary>
+    public static readonly DependencyProperty IsBackstageActiveProperty =
+        IsBackstageActivePropertyKey.DependencyProperty;
 
     private Rectangle? _marker;
     private TranslateTransform? _markerTranslate;
@@ -52,7 +65,20 @@ public class RibbonTabControl : TabControl
     private Canvas? _applicationMenuLayer;
     private FrameworkElement? _applicationButton;
     private FrameworkElement? _applicationMenuPresenter;
+    private FrameworkElement? _tabHeaderHost;
     private bool _selectionVisualsRefreshPending;
+
+    /// <summary>The realized tab-row surface used to anchor the Office 2010 Backstage.</summary>
+    internal FrameworkElement? TabHeaderHost => _tabHeaderHost;
+
+    /// <summary>
+    /// Gets whether the owning ribbon's Backstage currently owns the exposed tab strip.
+    /// Templates use this host-level state for both locally declared and merged tabs.
+    /// </summary>
+    public bool IsBackstageActive => (bool)GetValue(IsBackstageActiveProperty);
+
+    internal void SetBackstageActive(bool value) =>
+        SetValue(IsBackstageActivePropertyKey, value);
 
     static RibbonTabControl()
     {
@@ -88,6 +114,7 @@ public class RibbonTabControl : TabControl
         _markerHost = _marker?.Parent as Panel;
         _markerPlaced = false;
         _contentScroll = GetTemplateChild("PART_ContentScroll") as RibbonKit.Layout.RibbonScrollContentHost;
+        _tabHeaderHost = GetTemplateChild(TabHeaderHostPartName) as FrameworkElement;
 
         // The notch tracks the selected tab from OUTSIDE the tab scroller, so it must be told
         // when the strip scrolls under it (every frame of a glide). Re-applying the template
@@ -155,7 +182,10 @@ public class RibbonTabControl : TabControl
             return;
         }
 
-        if (SelectedItem is not RibbonTab tab || !tab.IsVisible || tab.ActualWidth <= 0d)
+        if (IsBackstageActive
+            || SelectedItem is not RibbonTab tab
+            || !tab.IsVisible
+            || tab.ActualWidth <= 0d)
         {
             _marker.Opacity = 0d;
             _markerPlaced = false;
@@ -329,7 +359,10 @@ public class RibbonTabControl : TabControl
             return;
         }
 
-        if (SelectedItem is not RibbonTab tab || !tab.IsVisible || tab.ActualWidth <= 0d
+        if (IsBackstageActive
+            || SelectedItem is not RibbonTab tab
+            || !tab.IsVisible
+            || tab.ActualWidth <= 0d
             || TryFindResource("RibbonKit.Brushes.Tab.ConnectNotch") is not Brush fill
             || !IsVisibleBrush(fill))
         {
@@ -375,4 +408,9 @@ public class RibbonTabControl : TabControl
 
     /// <summary>True when the brush would actually paint something — i.e. it isn't null and isn't a fully transparent solid colour (how flat themes disable the underline).</summary>
     private static bool IsVisibleBrush(Brush brush) => brush is not SolidColorBrush solid || solid.Color.A != 0;
+
+    private static void OnIsBackstageActiveChanged(
+        DependencyObject d,
+        DependencyPropertyChangedEventArgs e) =>
+        ((RibbonTabControl)d).RefreshSelectionVisuals();
 }

@@ -8,6 +8,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Documents;
+using System.Windows.Input;
 using System.Windows.Markup;
 using System.Windows.Shell;
 using System.Windows.Threading;
@@ -505,6 +506,7 @@ public class Ribbon : Control
             SelectedTab = FindFirstVisibleTab();
         }
 
+        UpdateBackstageTabState();
         RefreshSelectionVisuals();
     }
 
@@ -1798,11 +1800,9 @@ public class Ribbon : Control
             return;
         }
 
-        // Office hides title-bar quick access content while the backstage is open;
-        // the overlay only covers the window CONTENT, so the title bar must opt in.
-        if (Window.GetWindow(this) is RibbonWindow ribbonWindow)
+        if (!open)
         {
-            ribbonWindow.SetCurrentValue(RibbonWindow.IsTitleBarContentVisibleProperty, !open);
+            ReconcileBackstagePlacementChrome();
         }
 
         RibbonSlideFrom slideEdge = BackstageSlideEdge(FlowDirection);
@@ -1816,12 +1816,14 @@ public class Ribbon : Control
             // content, which a single UIElement can't have two of).
             if (_backstageAdorner is not null)
             {
+                UpdateBackstagePlacement();
                 if (Backstage is FrameworkElement reopening)
                 {
                     reopening.Focus();
                     RibbonMotion.PlayOpen(reopening, RibbonAnimationAction.Backstage, slideEdge);
                 }
 
+                ReconcileBackstagePlacementChrome();
                 ReconcileClassicBackstageOrbProxy(playEntranceRotation: true);
                 HideContentBehindBackstage(_backstageAdorner.AdornedElement);
                 return;
@@ -1841,8 +1843,11 @@ public class Ribbon : Control
                 return;
             }
 
-            _backstageAdorner = new BackstageAdorner(root, content, this);
+            FrameworkElement? topEdgeAnchor = ResolveBackstageTopEdgeAnchor();
+            _backstageAdorner = new BackstageAdorner(root, content, this, topEdgeAnchor);
+            _backstageAdorner.PlacementChanged += OnBackstageAdornerPlacementChanged;
             layer.Add(_backstageAdorner);
+            ReconcileBackstagePlacementChrome();
             ReconcileClassicBackstageOrbProxy(playEntranceRotation: true);
 
             // Hide the content behind a translucent backstage entirely so a window system
@@ -1904,11 +1909,92 @@ public class Ribbon : Control
                     adorner.DetachClassicOrbProxy();
                     SetBackstageApplicationButtonSuppressed(false);
                     AdornerLayer.GetAdornerLayer(adorner.AdornedElement)?.Remove(adorner);
+                    adorner.PlacementChanged -= OnBackstageAdornerPlacementChanged;
                     adorner.Detach();
                     _backstageAdorner = null;
                     _backstageClosing = false;
+                    if (Backstage is Controls.Backstage backstage)
+                    {
+                        backstage.SetBelowTabsPlacement(false);
+                    }
                     RibbonMotion.Rest(content);
                 });
+        }
+    }
+
+    private bool WantsBelowTabsBackstagePlacement() =>
+        ApplicationMenu is null
+        && Backstage is Controls.Backstage { Design: RibbonBackstageDesign.Classic2010 };
+
+    private bool IsBelowTabsBackstagePlacementActive() =>
+        WantsBelowTabsBackstagePlacement()
+        && _backstageAdorner is { IsInsetPlacementActive: true };
+
+    private FrameworkElement? ResolveBackstageTopEdgeAnchor()
+    {
+        if (!WantsBelowTabsBackstagePlacement())
+        {
+            return null;
+        }
+
+        RibbonTabControl? tabControl = GetTemplateChild("TabControlHost") as RibbonTabControl
+            ?? _ribbonTabControl
+            ?? FindDescendantByType<RibbonTabControl>(this);
+        tabControl?.ApplyTemplate();
+        return tabControl?.TabHeaderHost;
+    }
+
+    /// <summary>
+    /// Keeps the Office 2010 Backstage attached to the live bottom of the tab-header row.
+    /// A custom template without that named part retains the established full-content overlay.
+    /// </summary>
+    private void UpdateBackstagePlacement()
+    {
+        if (_backstageAdorner is null)
+        {
+            return;
+        }
+
+        _backstageAdorner.SetTopEdgeAnchor(ResolveBackstageTopEdgeAnchor());
+        ReconcileBackstagePlacementChrome();
+    }
+
+    private void OnBackstageAdornerPlacementChanged(object? sender, EventArgs e)
+    {
+        ReconcileBackstagePlacementChrome();
+        ReconcileClassicBackstageOrbProxy(playEntranceRotation: false);
+
+        if (_backstageAdorner is not { } adorner)
+        {
+            return;
+        }
+
+        if (IsBelowTabsBackstagePlacementActive())
+        {
+            // The exposed title/tab band belongs to the adorned root and must stay rendered.
+            RestoreContentBehindBackstage();
+        }
+        else
+        {
+            HideContentBehindBackstage(adorner.AdornedElement);
+        }
+    }
+
+    private void ReconcileBackstagePlacementChrome()
+    {
+        bool belowTabs = IsBelowTabsBackstagePlacementActive();
+        if (Backstage is Controls.Backstage backstage)
+        {
+            backstage.SetBelowTabsPlacement(belowTabs);
+        }
+
+        if (Window.GetWindow(this) is RibbonWindow ribbonWindow)
+        {
+            // Full-content Backstage hides the title QAT. Word 2010 keeps the caption QAT and
+            // tab row exposed above its File surface.
+            ribbonWindow.SetCurrentValue(
+                RibbonWindow.IsTitleBarContentVisibleProperty,
+                !IsBackstageOpen || belowTabs);
         }
     }
 
@@ -1933,7 +2019,8 @@ public class Ribbon : Control
     /// </remarks>
     private void HideContentBehindBackstage(UIElement root)
     {
-        if (Backstage is not Backstage { Translucent: true })
+        if (Backstage is not Backstage { Translucent: true }
+            || IsBelowTabsBackstagePlacementActive())
         {
             return;
         }
@@ -2027,8 +2114,23 @@ public class Ribbon : Control
     private void OnBackstageBackRequested(object? sender, EventArgs e) =>
         SetCurrentValue(IsBackstageOpenProperty, false);
 
-    private void OnBackstageDesignChanged(object? sender, EventArgs e) =>
+    private void OnBackstageDesignChanged(object? sender, EventArgs e)
+    {
+        if (_backstageAdorner is not null && IsBackstageOpen)
+        {
+            UpdateBackstagePlacement();
+            if (IsBelowTabsBackstagePlacementActive())
+            {
+                RestoreContentBehindBackstage();
+            }
+            else
+            {
+                HideContentBehindBackstage(_backstageAdorner.AdornedElement);
+            }
+        }
+
         ReconcileClassicBackstageOrbProxy(playEntranceRotation: true);
+    }
 
     private static void OnApplicationMenuChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
@@ -2079,6 +2181,7 @@ public class Ribbon : Control
     private static void OnIsApplicationMenuOpenChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         var ribbon = (Ribbon)d;
+        ribbon.UpdateBackstageTabState();
         ribbon.UpdateApplicationMenuHost();
         if (System.ComponentModel.DesignerProperties.GetIsInDesignMode(ribbon))
         {
@@ -2153,8 +2256,22 @@ public class Ribbon : Control
     private void OnApplicationMenuCloseRequested(object? sender, EventArgs e) =>
         SetCurrentValue(IsBackstageOpenProperty, false);
 
-    private void UpdateApplicationMenuState() =>
+    private void UpdateApplicationMenuState()
+    {
         IsApplicationMenuOpen = IsBackstageOpen && ApplicationMenu is not null;
+        UpdateBackstageTabState();
+    }
+
+    private void UpdateBackstageTabState()
+    {
+        bool active = IsBackstageOpen && !IsApplicationMenuOpen;
+        (_ribbonTabControl ?? FindDescendantByType<RibbonTabControl>(this))?.SetBackstageActive(active);
+
+        foreach (RibbonTab tab in Tabs)
+        {
+            tab.SetBackstageActive(active);
+        }
+    }
 
     private void UpdateApplicationMenuHost()
     {
@@ -2326,9 +2443,10 @@ public class Ribbon : Control
         && Backstage is Controls.Backstage { Design: RibbonBackstageDesign.Classic2007 };
 
     /// <summary>
-    /// Keeps the real application button suppressed for the whole Backstage lifetime and presents
-    /// a separate, pixel-identical Back button only for Classic2007. A design can change while the
-    /// overlay is already open, so open/close callbacks alone are insufficient.
+    /// Keeps the real application button suppressed while a Backstage covers it and presents a
+    /// separate, pixel-identical Back button only for Classic2007. The below-tabs Classic2010 path
+    /// leaves the real File button exposed. A design can change while the overlay is already open,
+    /// so open/close callbacks alone are insufficient.
     /// </summary>
     private void ReconcileClassicBackstageOrbProxy(bool playEntranceRotation)
     {
@@ -2338,7 +2456,8 @@ public class Ribbon : Control
         }
 
         SetBackstageApplicationButtonSuppressed(
-            IsBackstageOpen || (_backstageClosing && UsesClassicBackstageOrbProxy()));
+            (IsBackstageOpen && !IsBelowTabsBackstagePlacementActive())
+            || (_backstageClosing && UsesClassicBackstageOrbProxy()));
 
         if (!IsBackstageOpen)
         {
@@ -2783,6 +2902,7 @@ public class Ribbon : Control
         UpdateApplicationMenuHost();
         if (_backstageAdorner is not null)
         {
+            UpdateBackstagePlacement();
             ReconcileClassicBackstageOrbProxy(playEntranceRotation: false);
         }
 
@@ -2802,6 +2922,12 @@ public class Ribbon : Control
         }
 
         UpdateQuickAccessPlacement();
+
+        // The nested tab control can already be realized before Ribbon.Loaded (for example in
+        // deterministic render tests and designer hosts). Publish Backstage ownership as soon as
+        // the template exists; OnLoaded later caches the same instance and attaches interaction
+        // handlers without making this visual state depend on that lifecycle event.
+        UpdateBackstageTabState();
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e)
@@ -2828,7 +2954,9 @@ public class Ribbon : Control
         if (_ribbonTabControl is null && FindDescendantByType<RibbonTabControl>(this) is { } tabControl)
         {
             _ribbonTabControl = tabControl;
+            UpdateBackstageTabState();
             tabControl.SelectionChanged += OnRibbonTabSelectionChanged;
+            tabControl.PreviewMouseLeftButtonDown += OnRibbonTabPreviewMouseLeftButtonDown;
         }
 
         // Visibility of the ribbon body is code-managed (see OnIsMinimizedChanged); sync it
@@ -2861,6 +2989,7 @@ public class Ribbon : Control
             && IsBackstageOpen
             && ApplicationMenu is null)
         {
+            UpdateBackstagePlacement();
             ReconcileClassicBackstageOrbProxy(playEntranceRotation: false);
         }
     }
@@ -2872,6 +3001,7 @@ public class Ribbon : Control
         if (_ribbonTabControl is not null)
         {
             _ribbonTabControl.SelectionChanged -= OnRibbonTabSelectionChanged;
+            _ribbonTabControl.PreviewMouseLeftButtonDown -= OnRibbonTabPreviewMouseLeftButtonDown;
             _ribbonTabControl = null;
         }
     }
@@ -2898,7 +3028,17 @@ public class Ribbon : Control
     {
         // Only the tab strip's own selection counts — ignore selection bubbling up from
         // galleries, combo boxes, or the backstage nested inside a tab's content.
-        if (!ReferenceEquals(e.OriginalSource, _ribbonTabControl) || IsMinimized)
+        if (!ReferenceEquals(e.OriginalSource, _ribbonTabControl))
+        {
+            return;
+        }
+
+        if (IsBelowTabsBackstagePlacementActive())
+        {
+            SetCurrentValue(IsBackstageOpenProperty, false);
+        }
+
+        if (IsMinimized)
         {
             return;
         }
@@ -2909,6 +3049,31 @@ public class Ribbon : Control
         // Slide (no fade): the new content is already realized at full opacity, so a fade
         // would flash it transparent for a frame — a subtle rise reads cleanly instead.
         RibbonMotion.PlaySlideIn(target, RibbonAnimationAction.TabSwitch, RibbonSlideFrom.Top);
+    }
+
+    private void OnRibbonTabPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (!IsBelowTabsBackstagePlacementActive())
+        {
+            return;
+        }
+
+        DependencyObject? node = e.OriginalSource as DependencyObject;
+        while (node is not null && !ReferenceEquals(node, _ribbonTabControl))
+        {
+            if (node is RibbonTab)
+            {
+                // Also closes when the already-selected tab is clicked, which raises no
+                // SelectionChanged event. Leave the event unhandled so normal selection runs.
+                SetCurrentValue(IsBackstageOpenProperty, false);
+                return;
+            }
+
+            DependencyObject? next = node is System.Windows.Media.Visual or System.Windows.Media.Media3D.Visual3D
+                ? System.Windows.Media.VisualTreeHelper.GetParent(node)
+                : null;
+            node = next ?? LogicalTreeHelper.GetParent(node);
+        }
     }
 
     private void OnThemeConfigurationChanged(object? sender, EventArgs e)
@@ -3434,6 +3599,7 @@ public class Ribbon : Control
             foreach (RibbonTab tab in e.OldItems)
             {
                 tab.IsVisibleChanged -= OnTabIsVisibleChanged;
+                tab.SetBackstageActive(false);
 
                 // Removing the modal tab ends modal mode; removing any other drops its
                 // recorded pre-modal visibility.
@@ -3450,6 +3616,7 @@ public class Ribbon : Control
             foreach (RibbonTab tab in e.NewItems)
             {
                 tab.IsVisibleChanged += OnTabIsVisibleChanged;
+                tab.SetBackstageActive(IsBackstageOpen && !IsApplicationMenuOpen);
 
                 // A tab arriving during modal mode is hidden immediately and recorded, so
                 // exiting reveals it correctly.
@@ -3462,6 +3629,7 @@ public class Ribbon : Control
         if (e.Action == NotifyCollectionChangedAction.Reset)
         {
             _modalScope.OnCollectionReset();
+            UpdateBackstageTabState();
         }
 
         // Keep the selection valid as tabs come and go.

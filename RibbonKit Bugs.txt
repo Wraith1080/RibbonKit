@@ -1,0 +1,5 @@
+RibbonKit Bugs :
+1. Collapsed group pop up's X axis is offset
+2. Disabled Collapsed group is not disabled in coloring (but cannot be pressed because it's disabled), and the group label when not collapsed is not disabled in coloring
+3. New Classic Backstage's Orb's tooltip doesn't use localization
+4. New Classic Backstage's outer white border is too thick and also shows up when aero is disabled

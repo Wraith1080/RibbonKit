@@ -127,10 +127,10 @@
                         <Trigger SourceName="HeaderChrome" Property="IsMouseOver" Value="True">
                             <Setter TargetName="HeaderChrome" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Tab.HoverBackground}" />
-                            <!-- Gold hover border like a normal 2010 button. Brush only — the thickness
-                                 is already reserved on HeaderChrome above, so hover never shifts the tab. -->
+                            <!-- Theme-specific tab hover outline. Brush only — the thickness is
+                                 already reserved on HeaderChrome above, so hover never shifts the tab. -->
                             <Setter TargetName="HeaderChrome" Property="BorderBrush"
-                                    Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
+                                    Value="{DynamicResource RibbonKit.Brushes.Tab.HoverBorder}" />
                             <!-- Connect the hovered tab toward the body WITHOUT moving the tab. Instead
                                  of dropping the whole HeaderChrome 1px (which lowered the top edge and
                                  the label off the File-button line), we color the 1px ConnectFoot at the
@@ -143,7 +143,7 @@
                             <!-- Continue the tab's side borders 1px down through the foot so the
                                  hovered tab's outline meets the body without a break at the corners. -->
                             <Setter TargetName="ConnectFoot" Property="BorderBrush"
-                                    Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
+                                    Value="{DynamicResource RibbonKit.Brushes.Tab.HoverBorder}" />
                             <Setter TargetName="HoverIndicator" Property="Visibility" Value="Visible" />
                         </Trigger>
                         <Trigger Property="IsSelected" Value="True">
@@ -185,6 +185,40 @@
                             <Setter TargetName="ContextualHeaderText" Property="Opacity" Value="1" />
                             <!-- The selected contextual tab's tinted underline is now drawn by
                                  the shared gliding PART_TabMarker (tinted to ContextualBrush). -->
+                        </MultiTrigger>
+                        <!-- Backstage temporarily owns the tab strip just like File were the active
+                             tab. Keep the logical selection untouched, but remove its selected chrome
+                             so the previous ribbon tab returns immediately when Backstage closes. -->
+                        <Trigger Property="IsBackstageActive" Value="True">
+                            <Setter TargetName="HeaderChrome" Property="Background" Value="Transparent" />
+                            <Setter TargetName="HeaderChrome" Property="BorderBrush" Value="Transparent" />
+                            <Setter TargetName="ConnectFoot" Property="Background" Value="Transparent" />
+                            <Setter TargetName="ConnectFoot" Property="BorderBrush" Value="Transparent" />
+                            <Setter TargetName="HoverIndicator" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="SelectionIndicator" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="ContextualSelectionIndicator" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="ContextualHeaderText" Property="Opacity"
+                                    Value="{DynamicResource RibbonKit.Metrics.ContextualUnselectedOpacity}" />
+                            <Setter Property="Foreground"
+                                    Value="{DynamicResource RibbonKit.Brushes.TabStrip.Foreground}" />
+                        </Trigger>
+                        <!-- Ribbon tabs remain interactive while Backstage is open. Show the normal
+                             unselected hover treatment when the pointer reaches one rather than
+                             leaving the exposed strip inert. -->
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsBackstageActive" Value="True" />
+                                <Condition SourceName="HeaderChrome" Property="IsMouseOver" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="HeaderChrome" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.Tab.HoverBackground}" />
+                            <Setter TargetName="HeaderChrome" Property="BorderBrush"
+                                    Value="{DynamicResource RibbonKit.Brushes.Tab.HoverBorder}" />
+                            <Setter TargetName="ConnectFoot" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.Tab.ConnectFootHover}" />
+                            <Setter TargetName="ConnectFoot" Property="BorderBrush"
+                                    Value="{DynamicResource RibbonKit.Brushes.Tab.HoverBorder}" />
+                            <Setter TargetName="HoverIndicator" Property="Visibility" Value="Visible" />
                         </MultiTrigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.4" />
