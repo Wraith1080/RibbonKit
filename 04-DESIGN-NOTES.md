@@ -4503,8 +4503,8 @@ the isolated snapshot did. Collection and merge changes now synchronize newly ar
 The historical `Backstage.ContentShadow` remains available to older/full-overlay generations, but
 `Classic2010` no longer applies it to the complete `ContentArea`. Instead a clipped 14-DIP host at
 the pane divider casts only to the left through the dedicated `Backstage.ContentLeftShadow` token.
-Office 2007/2010 palettes keep its original nine-DIP blur and three-DIP projection but raise opacity
-from 0.24 to 0.32, restoring darker depth without reintroducing haze across the top connector. The
+Office 2007/2010 palettes use a nine-DIP blur with the three-DIP projection and opacity raised to
+0.48. The clipped host keeps that darker, softer edge off the top connector. The
 navigation host also gains three DIPs of top padding, and content top padding grows by the same amount,
 so neither the first selected row nor page content sits beneath the seam.
 

@@ -57,8 +57,8 @@
                       BlurRadius="6" ShadowDepth="1" Direction="180"
                       Opacity="0.14" Color="#000000" RenderingBias="Performance" />
     <DropShadowEffect x:Key="RibbonKit.Effects.Backstage.ContentLeftShadow"
-                      BlurRadius="6" ShadowDepth="1" Direction="180"
-                      Opacity="0.20" Color="#000000" RenderingBias="Performance" />
+                      BlurRadius="4" ShadowDepth="1" Direction="180"
+                      Opacity="0.30" Color="#000000" RenderingBias="Performance" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.NavBackground" Color="#262626" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.Foreground" Color="#F2F2F2" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemHover" Color="#333333" />

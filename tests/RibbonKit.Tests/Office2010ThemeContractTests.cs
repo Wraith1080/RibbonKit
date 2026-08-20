@@ -302,13 +302,21 @@ public sealed class Office2010ThemeContractTests
             Assert.Equal(expectedOpacity, (string?)effect.Attribute("Opacity"));
             string expectedLeftOpacity = themeFile switch
             {
-                "Tokens.Office2007.xaml" or "Tokens.Office2007.Dark.xaml" => "0.32",
-                "Tokens.Office2010.xaml" or "Tokens.Office2010.Dark.xaml" => "0.32",
-                "Tokens.Office2024.xaml" => "0.18",
-                "Tokens.Office2024.Dark.xaml" => "0.20",
+                "Tokens.Office2007.xaml" or "Tokens.Office2007.Dark.xaml" => "0.48",
+                "Tokens.Office2010.xaml" or "Tokens.Office2010.Dark.xaml" => "0.48",
+                "Tokens.Office2024.xaml" => "0.28",
+                "Tokens.Office2024.Dark.xaml" => "0.30",
                 _ => "0",
             };
             Assert.Equal(expectedLeftOpacity, (string?)leftEffect.Attribute("Opacity"));
+            string expectedLeftBlur = themeFile switch
+            {
+                "Tokens.Office2007.xaml" or "Tokens.Office2007.Dark.xaml" => "9",
+                "Tokens.Office2010.xaml" or "Tokens.Office2010.Dark.xaml" => "9",
+                "Tokens.Office2024.xaml" or "Tokens.Office2024.Dark.xaml" => "4",
+                _ => "0",
+            };
+            Assert.Equal(expectedLeftBlur, (string?)leftEffect.Attribute("BlurRadius"));
         }
     }
 

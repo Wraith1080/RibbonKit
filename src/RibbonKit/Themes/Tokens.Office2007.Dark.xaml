@@ -142,7 +142,7 @@
                       Opacity="0.24" Color="#000000" RenderingBias="Performance" />
     <DropShadowEffect x:Key="RibbonKit.Effects.Backstage.ContentLeftShadow"
                       BlurRadius="9" ShadowDepth="3" Direction="180"
-                      Opacity="0.32" Color="#000000" RenderingBias="Performance" />
+                      Opacity="0.48" Color="#000000" RenderingBias="Performance" />
     <!-- The application menu is fully dark even though Office 2007 Black intentionally keeps
          the ribbon command surface silver. Scoped foreground tokens avoid changing that hybrid. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.Foreground" Color="#F2F2F2" />
