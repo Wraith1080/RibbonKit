@@ -1,0 +1,117 @@
+# RibbonKit Writer — Consumer Friction Log
+
+> **Status:** living consumer-evidence record created 2026-08-21. Entries describe friction found while
+> building RibbonKit Writer; they are not confirmed RibbonKit defects, approved runtime work or current
+> implementation status. [`04-DESIGN-NOTES.md` §5](../04-DESIGN-NOTES.md#5-current-state--next-steps)
+> remains authoritative.
+
+## 1. Purpose
+
+Writer is RibbonKit's sustained real-application consumer. This log captures places where an ordinary
+WPF application needs surprising glue, timing workarounds, duplicated integration code or testing
+exceptions to use the ribbon successfully. It keeps that evidence separate from Writer's feature plan
+and from RibbonKit's accepted implementation history.
+
+Record friction when it is encountered; do not wait until a packet closes. An entry may later become:
+
+- **App-owned:** normal document/editor responsibility or ordinary WPF behaviour; keep the workaround
+  in Writer and improve samples or documentation if useful.
+- **Runtime candidate:** repeated or high-impact friction that RibbonKit can solve additively without
+  taking over application state.
+- **Approved runtime work:** separately authorized RibbonKit scope with a focused failing test, public
+  API review when applicable, Showcase coverage and proportional live/visual verification.
+- **Closed:** resolved, superseded, not reproducible or intentionally outside RibbonKit's boundary.
+
+## 2. Promotion gate
+
+Do not edit `src/RibbonKit/**` merely because an entry exists. Before promotion, the lead must:
+
+1. Reproduce the behaviour in a minimal RibbonKit consumer or focused Writer test.
+2. Identify the exact RibbonKit control, template, service or automation peer involved.
+3. Show why the app-owned workaround is unsafe, misleading, excessively repetitive or impossible.
+4. State the smallest additive library direction and its compatibility/accessibility consequences.
+5. Obtain separate user approval for the runtime packet.
+
+Every accepted runtime correction must add RibbonKit tests, XML documentation for public API, a
+relevant Showcase scenario and live verification on the affected surface. Existing snapshot approvals
+remain read-only until actual/diff evidence justifies a deliberate change.
+
+## 3. Entry template
+
+```text
+### RKWF-NNN — Short title
+
+- First seen / packet:
+- Status:
+- Consumer goal:
+- Reproduction and evidence:
+- Friction:
+- Current app-owned workaround:
+- Application impact:
+- Smallest possible library direction:
+- Evidence still required:
+```
+
+## 4. Open observations
+
+### RKWF-001 — KeyTip leaf activation has no consumer focus-handoff contract
+
+- **First seen / packet:** 2026-08-21, Writer W1-C Home formatting commands.
+- **Status:** Open runtime/documentation candidate; app workaround accepted for W1-C.
+- **Consumer goal:** after a KeyTip invokes a formatting command, return keyboard input to the native
+  document editor without inserting any characters from the KeyTip sequence.
+- **Reproduction and evidence:** the actual Writer window leaked terminating KeyTip input into the
+  document when the app restored editor focus at `DispatcherPriority.Input`. The accepted controller
+  attaches focus restoration to each relevant command and defers it to `ContextIdle`.
+- **Friction:** `KeyTipService` invokes a leaf and tears down its session internally, but consumers have
+  no public activation-completed notification or declarative focus-return target. An editor app must
+  know the service's input timing and repeat focus glue across ribbon/QAT actions.
+- **Current app-owned workaround:** `WriterEditingRibbonController.RestoreEditorFocusDeferred()`.
+- **Application impact:** timing-sensitive integration code in any long-lived editor surface; an
+  incorrect dispatcher priority can corrupt typed content.
+- **Smallest possible library direction:** first evaluate documentation or a general completion hook;
+  only then consider an additive focus-return contract that does not make RibbonKit own editor focus.
+- **Evidence still required:** a minimal consumer test proving the leakage and expected focus behavior
+  across ordinary buttons, toggles, menus, QAT proxies and editable ribbon inputs.
+
+### RKWF-002 — Editable RibbonComboBox has no single semantic commit boundary
+
+- **First seen / packet:** 2026-08-21, Writer W1-C font-family and font-size controls.
+- **Status:** Open ergonomics/documentation candidate; may remain ordinary WPF app responsibility.
+- **Consumer goal:** let users type or choose a value, commit once, run a command and return to editing.
+- **Reproduction and evidence:** committing on `SelectionChanged` accepted the first type-to-search
+  match, restored editor focus too early and sent the remaining characters into the document.
+- **Friction:** a command-backed editable ribbon combo must compose `DropDownClosed`, Enter handling and
+  keyboard-focus loss while preventing selection-state refresh from overwriting in-progress text.
+- **Current app-owned workaround:** Writer commits from those three boundaries and deliberately ignores
+  intermediate `SelectionChanged` events.
+- **Application impact:** repeated, easy-to-get-wrong glue for Office-style font and size controls.
+- **Smallest possible library direction:** document a canonical binding pattern or provide an optional
+  additive commit event/command behavior; do not change inherited WPF ComboBox semantics by default.
+- **Evidence still required:** a reusable minimal example covering typing, auto-selection, drop-down
+  choice, Enter, Escape, focus loss, invalid input, selection refresh and IME composition.
+
+### RKWF-003 — QAT external UIA action semantics need an isolated reproduction
+
+- **First seen / packet:** 2026-08-21, Writer W1-C live minimized-ribbon/QAT verification.
+- **Status:** Open investigation; not yet a confirmed RibbonKit defect.
+- **Consumer goal:** external UI Automation clients should discover named QAT commands as actionable
+  buttons with the same Invoke/Toggle semantics as their source controls.
+- **Reproduction and evidence:** live UIA traversal presented the visible Writer QAT entries through
+  `DataItem`-like wrappers without an available Invoke pattern, while direct in-process
+  `RibbonButtonAutomationPeer` activation and the actual mouse path succeeded.
+- **Friction:** the difference forced live verification to use clickable bounds and leaves uncertainty
+  about what external automation and assistive-technology clients receive from the QAT item hierarchy.
+- **Current app-owned workaround:** preserve automation IDs/names and verify commands through direct
+  peers plus real mouse/keyboard paths.
+- **Application impact:** possible fragility for external automated testing; accessibility impact is
+  unproven until the hierarchy is reproduced with more than one client.
+- **Smallest possible library direction:** inspect the QAT `ItemsControl` container/peer hierarchy and
+  add a specialized peer only if a minimal external UIA reproduction confirms lost action semantics.
+- **Evidence still required:** Inspect.exe or equivalent external-client capture for hand-declared QAT
+  buttons, projected QAT proxies and overflow proxies, including Invoke/Toggle, name, enabled state and
+  source/proxy consistency.
+
+## 5. Closed observations
+
+None yet.

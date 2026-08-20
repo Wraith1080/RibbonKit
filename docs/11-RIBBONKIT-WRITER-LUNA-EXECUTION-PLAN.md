@@ -1,8 +1,8 @@
 # RibbonKit Writer — Luna Execution Plan
 
 > **Status:** durable execution decomposition created 2026-08-20. W0-A through W0-D and W1-A through W1-C are
-> implemented, but this document does not schedule future agents or imply that later Writer packets
-> exist.
+> implemented. W1-D is planned and dependency-ready, but no agent or implementation for it is implied.
+> This document does not schedule future agents or imply that any later Writer packet exists.
 > [`10-RIBBONKIT-WRITER-PLAN.md`](10-RIBBONKIT-WRITER-PLAN.md) owns product scope; current
 > implementation status remains in [`04-DESIGN-NOTES.md` §5](../04-DESIGN-NOTES.md#5-current-state--next-steps).
 
@@ -19,7 +19,8 @@ Before any packet begins, the lead agent must re-read, in this order:
 2. `04-DESIGN-NOTES.md` §5 for live status and §3.87/§3.87a for Writer decisions.
 3. `docs/10-RIBBONKIT-WRITER-PLAN.md` for product scope.
 4. This execution plan for packet boundaries.
-5. The current worktree and any Writer files that may have appeared since this plan was written.
+5. `docs/12-RIBBONKIT-WRITER-CONSUMER-FRICTION-LOG.md` for known integration observations.
+6. The current worktree and any Writer files that may have appeared since this plan was written.
 
 If those sources conflict, current user instructions and `AGENTS.md` win, followed by design-notes
 live status. This plan must be corrected before execution rather than used to overwrite newer work.
@@ -42,6 +43,8 @@ The lead agent owns coordination and acceptance. It must:
 - inspect every worker diff and run the packet's checks itself before accepting it;
 - integrate shared UI and project-file changes serially;
 - run the wave and milestone gates, including the real Writer GUI surface where required;
+- record surprising RibbonKit glue, timing workarounds or automation/testing exceptions in the
+  consumer-friction log while evidence is fresh;
 - record completed implementation in `04-DESIGN-NOTES.md`, not by turning this plan into a progress
   checklist; and
 - stop at the requested packet, wave or milestone boundary instead of continuing automatically.
@@ -136,13 +139,14 @@ Only packets whose dependencies have passed their integration gate are ready.
 | W1-A | Formatting command/state engine | W0-B | Luna |
 | W1-B | Find/replace, spelling, counts and zoom | W0-B | Luna |
 | W1-C | Home ribbon, QAT, KeyTips and editing integration | W0-D, W1-A, W1-B | Luna, UI-exclusive |
+| W1-D | Writer iconography and first visual-polish pass | W1-C | Luna, UI-exclusive |
 | W2-A | Page settings and validation | W0-B | Luna |
 | W2-B | Versioned `.rkw` persistence | W0-C, W2-A | Luna, high-risk |
-| W2-C | Centred paper editing surface | W1-C, W2-A | Luna |
+| W2-C | Centred paper editing surface | W1-D, W2-A | Luna |
 | W2-D | Preview, pagination and printing | W2-C | Luna |
 | W2-E | Layout/View ribbon and preview integration | W2-B, W2-D | Luna, UI-exclusive |
-| W3-A | Images and hyperlinks | W1-C, W2-B | Luna |
-| W3-B | FlowDocument table core | W1-C, W2-B | Luna, high-risk |
+| W3-A | Images and hyperlinks | W1-D, W2-B | Luna |
+| W3-B | FlowDocument table core | W1-D, W2-B | Luna, high-risk |
 | W3-C | Table interaction and contextual Table Tools | W2-E, W3-B | Luna, UI-exclusive |
 | W3-D | Structured-content round-trip and RTF fixtures | W3-A, W3-C | Luna |
 | W4-A | Customization and appearance persistence | W3-D | Luna, UI-exclusive |
@@ -150,9 +154,9 @@ Only packets whose dependencies have passed their integration gate are ready.
 | W4-C | Manual GUI, DPI, RTL and performance acceptance | W4-B | Lead |
 | W5-A | Distribution decision | W4-C and sustained use | User and lead |
 
-Useful parallel groups after their dependencies pass are W0-C/W1-A/W1-B, W1-A/W1-B/W2-A, and
-W3-A/W3-B. Never parallelize two UI-exclusive packets. The lead may choose less concurrency when a
-packet is high risk or the worktree is already dirty.
+Useful parallel groups after their dependencies pass are W0-C/W1-A/W1-B, W1-A/W1-B/W2-A,
+W1-D/W2-A and W3-A/W3-B. Never parallelize two UI-exclusive packets. The lead may choose less
+concurrency when a packet is high risk or the worktree is already dirty.
 
 ## 5. W0 — Application shell and document lifetime
 
@@ -234,6 +238,27 @@ Format Painter or style-preview behaviour unless it is complete.
 
 **Exit:** automated state tests pass; lead verifies mouse and keyboard formatting, complete Home KeyTip
 traversal, QAT actions, minimized-ribbon behaviour and selection-state refresh in the real Writer app.
+
+### W1-D — Writer iconography and first visual-polish pass
+
+**Owns:** app-owned Writer icon resources, existing Home/QAT/status presentation and their focused
+integration checks. It may refine `MainWindow.xaml*` and Writer resource dictionaries exclusively, but
+must preserve all accepted W1-C command IDs, KeyTips, automation names, bindings and behaviour.
+
+**Deliver:** replace provisional or overly generic W1-C glyphs with a coherent vector family using
+consistent grids, stroke/fill weight and large/small variants. Give primary actions intentional visual
+weight, balance group density and alignment, make foreground/highlight and checked/mixed/disabled state
+cues legible, refine QAT silhouettes and status spacing, and establish reusable Writer-owned icon and
+layout conventions for later tabs. Use theme resources and vector geometry; do not hardcode a single
+palette, introduce raster assets, add fake commands/styles, or build a temporary page canvas that
+conflicts with W2-C.
+
+**Exit:** focused tests prove every W1-C command keeps its identity, KeyTip, automation name and state
+semantics; the solution gate remains green. The lead compares before/after screenshots on the actual
+Writer window at standard and narrow widths, checks normal/hover/pressed/checked/disabled, open-menu,
+minimized-ribbon and QAT states at representative 100/150/200% DPI, and obtains user visual approval.
+Application startup alone is not acceptance. W4 remains responsible for the final cross-theme,
+RTL/accessibility and whole-product consistency pass after W2/W3 add their surfaces.
 
 ## 7. W2 — Native format and paper model
 
@@ -397,11 +422,13 @@ At every accepted packet:
 
 If Writer reveals a genuine RibbonKit runtime gap:
 
-1. Reproduce it from Writer with a focused failing consumer test or minimal scenario.
-2. Show why an app-owned solution would violate WPF/RibbonKit architecture or duplicate library
+1. Record the observation and current app workaround in
+   `docs/12-RIBBONKIT-WRITER-CONSUMER-FRICTION-LOG.md`.
+2. Reproduce it from Writer with a focused failing consumer test or minimal scenario.
+3. Show why an app-owned solution would violate WPF/RibbonKit architecture or duplicate library
    responsibility.
-3. Stop the Writer packet and request approval for a separate additive runtime packet.
-4. If approved, add XML documentation, library tests, an appropriate Showcase scenario and any visual
+4. Stop the Writer packet and request approval for a separate additive runtime packet.
+5. If approved, add XML documentation, library tests, an appropriate Showcase scenario and any visual
    verification before resuming Writer.
 
 Never smuggle a runtime API change through a Writer packet merely because both projects share a

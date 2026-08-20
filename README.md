@@ -314,6 +314,7 @@ the control.
 | [Custom-control integration](docs/08-CUSTOM-CONTROL-INTEGRATION-PLAN.md) | Provisional post-v1 customization/QAT projection and theme-resource contract |
 | [Future themes](docs/09-FUTURE-THEMES-PLAN.md) | Sharp-edged Office 2021 bridge plus Aurora, Warm Sand, Graphite Copper and exploratory palettes |
 | [RibbonKit Writer](docs/10-RIBBONKIT-WRITER-PLAN.md) | Functional rich-text reference app with paper layout, pagination and contextual table editing |
+| [Writer consumer-friction log](docs/12-RIBBONKIT-WRITER-CONSUMER-FRICTION-LOG.md) | Evidence and app workarounds that may justify later RibbonKit runtime improvements |
 
 ## Post-v1 roadmap
 
@@ -330,7 +331,8 @@ RibbonKit Writer is implemented through W0-D and W1-A through W1-C: application/
 TXT/RTF persistence, atomic saves, recent files, a live Backstage/QAT file-command shell with
 dirty-title and unsaved-close protection, and an accessible Home-ribbon editing surface integrating
 selection-sensitive formatting, find/replace, native spelling, debounced statistics and bounded zoom.
-W2-A through W5 remain. See the [roadmap](docs/03-ROADMAP.md) and [design
+The planned W1-D iconography/first visual-polish pass and W2-A through W5 remain. See the
+[roadmap](docs/03-ROADMAP.md) and [design
 notes](04-DESIGN-NOTES.md) for detailed status.
 
 ## Contributing

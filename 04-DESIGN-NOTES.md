@@ -4896,8 +4896,9 @@ passed. No RibbonKit runtime or project-file change was required.
 - Final live visual tuning and approval of the Office 2010 Aero-inspired frame prototype (§3.97).
 - Touch density, richer automatic QAT projections, custom-control projection APIs and additional
   themes remain post-v1 candidates. Their plan documents are not implementation evidence.
-- RibbonKit Writer W2-A through W5 remain. W2-A is dependency-ready; W2-C also depends on W2-A, so
-  no later packet is implied by the accepted W1-C editing surface.
+- RibbonKit Writer W1-D and W2-A through W5 remain. W1-D is the dependency-ready app-owned iconography
+  and first visual-polish pass over the accepted W1-C surface; W2-A is also dependency-ready. W4 keeps
+  the final whole-product consistency pass after W2/W3. No implementation is implied by this plan.
 - Automatic `Icons.xaml` discovery is best-effort by design. Keep `Load Icons.xaml…` available
   for ambiguity, inaccessible paths, parse failures, or no match.
 

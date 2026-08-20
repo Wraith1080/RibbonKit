@@ -3,7 +3,8 @@
 > **Status:** approved post-v1 application plan. W0-A through W0-D and W1-A through W1-C are implemented: scaffold,
 > document lifetime, TXT/RTF persistence, atomic saves, recent files, the live Backstage/QAT
 > file-command shell, and the accessible Home-ribbon integration over formatting, find/replace, native
-> spelling, debounced statistics and bounded zoom. No later packet is implied.
+> spelling, debounced statistics and bounded zoom. W1-D is a planned, dependency-ready iconography and
+> first visual-polish pass; it is not implemented. No later packet is implied.
 > Live status remains in `04-DESIGN-NOTES.md` §5.
 > RibbonKit Writer is a separate functional sample, not another feature page inside
 > `RibbonKit.Showcase`.
@@ -216,7 +217,8 @@ Automation names.
 - Reuse `RibbonCustomizationSerializer` only for ribbon structure. Use an app-owned versioned settings
   file for theme/backdrop/window preferences.
 - Do not add a RibbonKit runtime API to solve an application-only need. If Writer exposes a genuine
-  library gap, document and test that gap separately before proposing an additive API.
+  library gap, record it in the [consumer-friction log](12-RIBBONKIT-WRITER-CONSUMER-FRICTION-LOG.md)
+  and test it separately before proposing an additive API.
 - Reuse an app-owned `Icons.xaml`; the deferred stock-icon insertion feature is not a prerequisite.
 
 ## 8. Delivery milestones
@@ -236,6 +238,8 @@ that a packet, agent or implementation currently exists.
 - Clipboard, undo/redo, font and paragraph formatting.
 - Selection-state synchronization, Find/Replace, spell-check and status counts.
 - Backstage, QAT, KeyTips and ScreenTips.
+- A coherent app-owned vector icon set and a first visual-hierarchy/density pass over the realized
+  Home ribbon, QAT and status surface before those visuals become the baseline for later tabs.
 
 ### W2 — Native format and paper model
 
@@ -253,6 +257,7 @@ that a packet, agent or implementation currently exists.
 
 - Ribbon customization and separate appearance persistence.
 - Theme/dark/backdrop choices appropriate for a real application.
+- A final consistency pass over W1-D and all icons, command hierarchies and surfaces added by W2/W3.
 - Accessibility, keyboard, RTL, DPI and reduced-motion passes.
 - Outside-debugger startup, resize, long-document and pagination performance checks.
 
@@ -281,6 +286,9 @@ Manual Windows acceptance should include:
 - Keyboard-only editing and complete KeyTip traversal, including contextual Table Tools.
 - 100/125/150/175/200% DPI, live monitor changes, light/dark themes and focused RTL text/table input.
 - Narrow-window ribbon reduction, minimized ribbon, QAT customization and Backstage document commands.
+- Before/after review of the actual Writer window: icon metaphors and stroke weight, primary/secondary
+  command hierarchy, group balance, colour/highlight state cues, disabled contrast, QAT legibility and
+  status-bar spacing must be visually approved rather than inferred from application startup.
 
 The project is complete only when it is comfortable to use for an ordinary multi-page note or letter,
 not merely when every ribbon button has a handler.

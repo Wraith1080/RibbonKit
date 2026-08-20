@@ -35,6 +35,7 @@ Last consolidated: 2026-08-13 from the repository Markdown files.
 ### Working conventions
 
 - Before changing a subsystem, read its section in `04-DESIGN-NOTES.md`; it records failure modes that are easy to reintroduce. Consult `docs/06-MERGE-AND-MODAL-PLAN.md`, `docs/05-MDI-EMULATION-PLAN.md`, or `src/RibbonKit.Design/SETUP-DESIGNTOOLS.md` when working in those areas.
+- During RibbonKit Writer work, record surprising control-library glue, timing workarounds, automation gaps, or testing exceptions in `docs/12-RIBBONKIT-WRITER-CONSUMER-FRICTION-LOG.md`. An entry is evidence for investigation, not permission to change `src/RibbonKit/**`; runtime work still requires a focused reproduction and separate user approval.
 - Keep changes narrowly scoped. Add or update a unit test, showcase scenario, and documentation where appropriate. Public APIs require XML documentation.
 - On this Windows workspace, verify proportionally with `dotnet build RibbonKit.sln` and `dotnet test RibbonKit.sln`. Do not repeat the design notes' stale claim that WPF cannot be built locally without first trying the current environment.
 - On a CI visual mismatch, download the failure-only `visual-snapshot-diagnostics` artifact and inspect its actual/diff PNGs before changing approvals or tolerances; the first failing matrix image does not prove later scenes passed.
