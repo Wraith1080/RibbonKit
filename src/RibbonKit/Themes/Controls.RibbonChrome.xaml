@@ -103,7 +103,8 @@
                 <ControlTemplate TargetType="{x:Type controls:Ribbon}">
                     <!-- The backstage overlay is hosted in the window's adorner layer
                          by the Ribbon class itself (see BackstageAdorner), not here. -->
-                    <Border Background="{TemplateBinding Background}">
+                    <Border x:Name="RibbonSurface"
+                            Background="{TemplateBinding Background}">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
@@ -229,6 +230,13 @@
                             <Setter TargetName="QatBelowHost" Property="Margin"
                                     Value="{DynamicResource RibbonKit.Metrics.QatExtenderMarginMessageBar}" />
                         </Trigger>
+                        <!-- Office 2010 Aero continues through the tab row. The ribbon body's own
+                             ContentHost remains opaque; clearing only this outer surface lets the
+                             tab-control compose the same fallback/material and tint as the title. -->
+                        <DataTrigger Binding="{Binding FrameAppearance, RelativeSource={RelativeSource AncestorType={x:Type controls:RibbonWindow}}}"
+                                     Value="Office2010Aero">
+                            <Setter TargetName="RibbonSurface" Property="Background" Value="Transparent" />
+                        </DataTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
@@ -261,6 +269,21 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
+
+                            <!-- Office 2010 lets Aero continue through this entire row. The
+                                 deterministic fallback and host-controlled tint match the title;
+                                 accepted Acrylic supplies its own textured blur directly. -->
+                            <Border x:Name="Office2010TabMaterialLayer"
+                                    Grid.ColumnSpan="4"
+                                    Background="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroFallback}"
+                                    IsHitTestVisible="False"
+                                    Visibility="Collapsed" />
+                            <Border x:Name="Office2010TabTintLayer"
+                                    Grid.ColumnSpan="4"
+                                    Background="{Binding AeroFrameTint, RelativeSource={RelativeSource AncestorType={x:Type controls:RibbonWindow}}}"
+                                    Opacity="{Binding AeroFrameTintIntensity, RelativeSource={RelativeSource AncestorType={x:Type controls:RibbonWindow}}}"
+                                    IsHitTestVisible="False"
+                                    Visibility="Collapsed" />
 
                             <!-- Compatibility fallback for custom Ribbon templates that omit the
                                  outer application-menu layer. The shipping template leaves this
@@ -316,12 +339,13 @@
                                           WindowChrome.IsHitTestVisibleInChrome="True"
                                           AutomationProperties.Name="{Binding EffectiveApplicationButtonHeader, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
                                           ToolTip="{Binding EffectiveApplicationButtonHeader, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
-                                          Margin="{DynamicResource RibbonKit.Metrics.ApplicationButtonMargin}"
                                           Content="{Binding EffectiveApplicationButtonHeader, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
                                           IsChecked="{Binding IsBackstageOpen, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}, Mode=TwoWay}">
                                 <ToggleButton.Style>
                                     <Style TargetType="{x:Type ToggleButton}">
                                         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.ApplicationButton.Foreground}" />
+                                        <Setter Property="Margin" Value="{DynamicResource RibbonKit.Metrics.ApplicationButtonMargin}" />
+                                        <Setter Property="Padding" Value="{DynamicResource RibbonKit.Metrics.ApplicationButtonPadding}" />
                                         <Setter Property="Template">
                                             <Setter.Value>
                                                 <ControlTemplate TargetType="{x:Type ToggleButton}">
@@ -350,7 +374,7 @@
                                                                         BorderThickness="{DynamicResource RibbonKit.Metrics.ApplicationButtonBorderThickness}"
                                                                         CornerRadius="{DynamicResource RibbonKit.Metrics.ApplicationButtonCornerRadius}"
                                                                         IsHitTestVisible="False" />
-                                                                <ContentPresenter Margin="{DynamicResource RibbonKit.Metrics.ApplicationButtonPadding}"
+                                                                <ContentPresenter Margin="{TemplateBinding Padding}"
                                                                                   HorizontalAlignment="Center"
                                                                                   VerticalAlignment="Center" />
                                                             </Grid>
@@ -829,6 +853,28 @@
                                 </Setter.Value>
                             </Setter>
                         </DataTrigger>
+                        <DataTrigger Binding="{Binding FrameAppearance, RelativeSource={RelativeSource AncestorType={x:Type controls:RibbonWindow}}}"
+                                     Value="Office2010Aero">
+                            <Setter TargetName="Office2010TabMaterialLayer" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="Office2010TabTintLayer" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="PART_ApplicationButton"
+                                    Property="Margin"
+                                    Value="{DynamicResource RibbonKit.Metrics.ApplicationButtonAeroMargin}" />
+                            <Setter TargetName="PART_ApplicationButton"
+                                    Property="Padding"
+                                    Value="{DynamicResource RibbonKit.Metrics.ApplicationButtonAeroPadding}" />
+                        </DataTrigger>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding FrameAppearance, RelativeSource={RelativeSource AncestorType={x:Type controls:RibbonWindow}}}"
+                                           Value="Office2010Aero" />
+                                <Condition Binding="{Binding ActiveBackdrop, RelativeSource={RelativeSource AncestorType={x:Type controls:RibbonWindow}}}"
+                                           Value="Acrylic" />
+                            </MultiDataTrigger.Conditions>
+                            <Setter TargetName="Office2010TabMaterialLayer"
+                                    Property="Opacity"
+                                    Value="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroMaterialTitleBackgroundOpacity}" />
+                        </MultiDataTrigger>
                         <!-- When the QAT sits below the ribbon, the card squares its bottom
                              corners and drops its bottom margin so the full-width QAT bar
                              connects flush underneath. -->

@@ -127,10 +127,10 @@
                         <Trigger SourceName="HeaderChrome" Property="IsMouseOver" Value="True">
                             <Setter TargetName="HeaderChrome" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Tab.HoverBackground}" />
-                            <!-- Gold hover border like a normal 2010 button. Brush only — the thickness
-                                 is already reserved on HeaderChrome above, so hover never shifts the tab. -->
+                            <!-- Theme-specific tab hover outline. Brush only — the thickness is
+                                 already reserved on HeaderChrome above, so hover never shifts the tab. -->
                             <Setter TargetName="HeaderChrome" Property="BorderBrush"
-                                    Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
+                                    Value="{DynamicResource RibbonKit.Brushes.Tab.HoverBorder}" />
                             <!-- Connect the hovered tab toward the body WITHOUT moving the tab. Instead
                                  of dropping the whole HeaderChrome 1px (which lowered the top edge and
                                  the label off the File-button line), we color the 1px ConnectFoot at the
@@ -143,7 +143,7 @@
                             <!-- Continue the tab's side borders 1px down through the foot so the
                                  hovered tab's outline meets the body without a break at the corners. -->
                             <Setter TargetName="ConnectFoot" Property="BorderBrush"
-                                    Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
+                                    Value="{DynamicResource RibbonKit.Brushes.Tab.HoverBorder}" />
                             <Setter TargetName="HoverIndicator" Property="Visibility" Value="Visible" />
                         </Trigger>
                         <Trigger Property="IsSelected" Value="True">
@@ -213,11 +213,11 @@
                             <Setter TargetName="HeaderChrome" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Tab.HoverBackground}" />
                             <Setter TargetName="HeaderChrome" Property="BorderBrush"
-                                    Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
+                                    Value="{DynamicResource RibbonKit.Brushes.Tab.HoverBorder}" />
                             <Setter TargetName="ConnectFoot" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Tab.ConnectFootHover}" />
                             <Setter TargetName="ConnectFoot" Property="BorderBrush"
-                                    Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
+                                    Value="{DynamicResource RibbonKit.Brushes.Tab.HoverBorder}" />
                             <Setter TargetName="HoverIndicator" Property="Visibility" Value="Visible" />
                         </MultiTrigger>
                         <Trigger Property="IsEnabled" Value="False">

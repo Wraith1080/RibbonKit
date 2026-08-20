@@ -106,9 +106,13 @@
 
                                 <!-- Window identity plus quick-access slot. The icon remains in
                                      the caption when Backstage hides only TitleBarContent. -->
-                                <StackPanel Grid.Column="0"
-                                            Orientation="Horizontal">
+                                <Grid Grid.Column="0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
                                     <Image x:Name="PART_WindowIcon"
+                                           Grid.Column="0"
                                            Width="16"
                                            Height="16"
                                            Margin="10,0,0,0"
@@ -117,11 +121,12 @@
                                            Source="{TemplateBinding Icon}"
                                            RenderOptions.BitmapScalingMode="HighQuality" />
                                     <ContentPresenter x:Name="TitleBarContentHost"
+                                                      Grid.Column="1"
                                                       Content="{TemplateBinding TitleBarContent}"
                                                       VerticalAlignment="Center"
                                                       Margin="6,0,6,0"
                                                       WindowChrome.IsHitTestVisibleInChrome="True" />
-                                </StackPanel>
+                                </Grid>
 
                                 <!-- Named part: the title sits in the star column between the
                                      quick-access slot and the caption buttons, so collapsing that
@@ -150,13 +155,26 @@
                                             <Setter Property="Foreground"
                                                     Value="{DynamicResource RibbonKit.Brushes.TitleBar.Foreground}" />
                                             <Setter Property="Background" Value="Transparent" />
+                                            <Setter Property="BorderBrush" Value="Transparent" />
+                                            <Setter Property="BorderThickness" Value="0" />
                                             <Setter Property="Template">
                                                 <Setter.Value>
                                                     <ControlTemplate TargetType="{x:Type Button}">
-                                                        <Border x:Name="Chrome" Background="{TemplateBinding Background}">
+                                                        <Grid>
+                                                            <Border x:Name="Chrome"
+                                                                    Background="{TemplateBinding Background}"
+                                                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                                                    SnapsToDevicePixels="True" />
+                                                            <Border x:Name="Office2010StateChrome"
+                                                                    Background="Transparent"
+                                                                    BorderBrush="Transparent"
+                                                                    BorderThickness="0"
+                                                                    SnapsToDevicePixels="True"
+                                                                    Visibility="Collapsed" />
                                                             <ContentPresenter HorizontalAlignment="Center"
                                                                               VerticalAlignment="Center" />
-                                                        </Border>
+                                                        </Grid>
                                                         <ControlTemplate.Triggers>
                                                             <Trigger Property="IsMouseOver" Value="True">
                                                                 <Setter TargetName="Chrome" Property="Background"
@@ -166,28 +184,62 @@
                                                                 <Setter TargetName="Chrome" Property="Background"
                                                                         Value="{DynamicResource RibbonKit.Brushes.CaptionButton.PressedBackground}" />
                                                             </Trigger>
-                                                            <MultiDataTrigger>
-                                                                <MultiDataTrigger.Conditions>
-                                                                    <Condition Binding="{Binding FrameAppearance, RelativeSource={RelativeSource AncestorType={x:Type controls:RibbonWindow}}}"
-                                                                               Value="Office2007Aero" />
-                                                                    <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}"
-                                                                               Value="True" />
-                                                                </MultiDataTrigger.Conditions>
+                                                            <MultiTrigger>
+                                                                <MultiTrigger.Conditions>
+                                                                    <Condition Property="Tag"
+                                                                               Value="{x:Static controls:RibbonWindowFrameAppearance.Office2007Aero}" />
+                                                                    <Condition Property="IsMouseOver" Value="True" />
+                                                                </MultiTrigger.Conditions>
                                                                 <Setter TargetName="Chrome"
                                                                         Property="Background"
                                                                         Value="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroCaptionHover}" />
-                                                            </MultiDataTrigger>
-                                                            <MultiDataTrigger>
-                                                                <MultiDataTrigger.Conditions>
-                                                                    <Condition Binding="{Binding FrameAppearance, RelativeSource={RelativeSource AncestorType={x:Type controls:RibbonWindow}}}"
-                                                                               Value="Office2007Aero" />
-                                                                    <Condition Binding="{Binding IsPressed, RelativeSource={RelativeSource Self}}"
-                                                                               Value="True" />
-                                                                </MultiDataTrigger.Conditions>
+                                                            </MultiTrigger>
+                                                            <MultiTrigger>
+                                                                <MultiTrigger.Conditions>
+                                                                    <Condition Property="Tag"
+                                                                               Value="{x:Static controls:RibbonWindowFrameAppearance.Office2007Aero}" />
+                                                                    <Condition Property="IsPressed" Value="True" />
+                                                                </MultiTrigger.Conditions>
                                                                 <Setter TargetName="Chrome"
                                                                         Property="Background"
                                                                         Value="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroCaptionPressed}" />
-                                                            </MultiDataTrigger>
+                                                            </MultiTrigger>
+                                                            <MultiTrigger>
+                                                                <MultiTrigger.Conditions>
+                                                                    <Condition Property="Tag"
+                                                                               Value="{x:Static controls:RibbonWindowFrameAppearance.Office2010Aero}" />
+                                                                    <Condition Property="IsMouseOver" Value="True" />
+                                                                </MultiTrigger.Conditions>
+                                                                <Setter TargetName="Chrome" Property="Visibility" Value="Collapsed" />
+                                                                <Setter TargetName="Office2010StateChrome" Property="Visibility" Value="Visible" />
+                                                                <Setter TargetName="Office2010StateChrome"
+                                                                        Property="Background"
+                                                                        Value="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroCaptionHover}" />
+                                                                <Setter TargetName="Office2010StateChrome"
+                                                                        Property="BorderBrush"
+                                                                        Value="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroCaptionHoverBorder}" />
+                                                                <Setter TargetName="Office2010StateChrome"
+                                                                        Property="BorderThickness"
+                                                                        Value="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroCaptionBorderThickness}" />
+                                                            </MultiTrigger>
+                                                            <MultiTrigger>
+                                                                <MultiTrigger.Conditions>
+                                                                    <Condition Property="Tag"
+                                                                               Value="{x:Static controls:RibbonWindowFrameAppearance.Office2010Aero}" />
+                                                                    <Condition Property="IsPressed" Value="True" />
+                                                                </MultiTrigger.Conditions>
+                                                                <Setter TargetName="Chrome" Property="Visibility" Value="Collapsed" />
+                                                                <Setter TargetName="Office2010StateChrome" Property="Visibility" Value="Visible" />
+                                                                <Setter TargetName="Office2010StateChrome"
+                                                                        Property="Background"
+                                                                        Value="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroCaptionPressed}" />
+                                                                <Setter TargetName="Office2010StateChrome"
+                                                                        Property="BorderBrush"
+                                                                        Value="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroCaptionPressedBorder}" />
+                                                                <Setter TargetName="Office2010StateChrome"
+                                                                        Property="BorderThickness"
+                                                                        Value="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroCaptionBorderThickness}" />
+                                                            </MultiTrigger>
                                                         </ControlTemplate.Triggers>
                                                     </ControlTemplate>
                                                 </Setter.Value>
@@ -202,14 +254,21 @@
                                             <Setter Property="Template">
                                                 <Setter.Value>
                                                     <ControlTemplate TargetType="{x:Type Button}">
-                                                        <Border x:Name="Chrome" Background="Transparent">
+                                                        <Grid>
+                                                            <Border x:Name="Chrome" Background="Transparent" />
+                                                            <Border x:Name="Office2010StateChrome"
+                                                                    Background="Transparent"
+                                                                    BorderBrush="Transparent"
+                                                                    BorderThickness="0"
+                                                                    SnapsToDevicePixels="True"
+                                                                    Visibility="Collapsed" />
                                                             <Path x:Name="Glyph"
                                                                   Data="M0,0 L9,9 M9,0 L0,9"
                                                                   Stroke="{TemplateBinding Foreground}"
                                                                   StrokeThickness="1"
                                                                   HorizontalAlignment="Center"
                                                                   VerticalAlignment="Center" />
-                                                        </Border>
+                                                        </Grid>
                                                         <ControlTemplate.Triggers>
                                                             <Trigger Property="IsMouseOver" Value="True">
                                                                 <Setter TargetName="Chrome" Property="Background"
@@ -221,6 +280,36 @@
                                                                         Value="{DynamicResource RibbonKit.Brushes.CaptionButton.ClosePressedBackground}" />
                                                                 <Setter TargetName="Glyph" Property="Stroke" Value="#FFFFFF" />
                                                             </Trigger>
+                                                            <MultiTrigger>
+                                                                <MultiTrigger.Conditions>
+                                                                    <Condition Property="Tag"
+                                                                               Value="{x:Static controls:RibbonWindowFrameAppearance.Office2010Aero}" />
+                                                                    <Condition Property="IsMouseOver" Value="True" />
+                                                                </MultiTrigger.Conditions>
+                                                                <Setter TargetName="Chrome" Property="Visibility" Value="Collapsed" />
+                                                                <Setter TargetName="Office2010StateChrome" Property="Visibility" Value="Visible" />
+                                                                <Setter TargetName="Office2010StateChrome" Property="Background"
+                                                                        Value="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroCaptionCloseHover}" />
+                                                                <Setter TargetName="Office2010StateChrome" Property="BorderBrush"
+                                                                        Value="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroCaptionCloseHoverBorder}" />
+                                                                <Setter TargetName="Office2010StateChrome" Property="BorderThickness"
+                                                                        Value="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroCaptionBorderThickness}" />
+                                                            </MultiTrigger>
+                                                            <MultiTrigger>
+                                                                <MultiTrigger.Conditions>
+                                                                    <Condition Property="Tag"
+                                                                               Value="{x:Static controls:RibbonWindowFrameAppearance.Office2010Aero}" />
+                                                                    <Condition Property="IsPressed" Value="True" />
+                                                                </MultiTrigger.Conditions>
+                                                                <Setter TargetName="Chrome" Property="Visibility" Value="Collapsed" />
+                                                                <Setter TargetName="Office2010StateChrome" Property="Visibility" Value="Visible" />
+                                                                <Setter TargetName="Office2010StateChrome" Property="Background"
+                                                                        Value="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroCaptionClosePressed}" />
+                                                                <Setter TargetName="Office2010StateChrome" Property="BorderBrush"
+                                                                        Value="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroCaptionClosePressedBorder}" />
+                                                                <Setter TargetName="Office2010StateChrome" Property="BorderThickness"
+                                                                        Value="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroCaptionBorderThickness}" />
+                                                            </MultiTrigger>
                                                         </ControlTemplate.Triggers>
                                                     </ControlTemplate>
                                                 </Setter.Value>
@@ -229,6 +318,7 @@
                                     </StackPanel.Resources>
                                     <Button x:Name="PART_MinimizeButton"
                                             Style="{StaticResource CaptionButtonStyle}"
+                                            Tag="{TemplateBinding FrameAppearance}"
                                             Command="{x:Static SystemCommands.MinimizeWindowCommand}"
                                             ToolTip="{localization:RibbonString Key=Minimize}">
                                         <Path Data="M0,0 H10"
@@ -237,6 +327,7 @@
                                     </Button>
                                     <Button x:Name="PART_MaximizeButton"
                                             Style="{StaticResource CaptionButtonStyle}"
+                                            Tag="{TemplateBinding FrameAppearance}"
                                             Command="{x:Static SystemCommands.MaximizeWindowCommand}"
                                             ToolTip="{localization:RibbonString Key=Maximize}">
                                         <Path Data="M0,0 H9 V9 H0 Z"
@@ -245,6 +336,7 @@
                                     </Button>
                                     <Button x:Name="PART_RestoreButton"
                                             Style="{StaticResource CaptionButtonStyle}"
+                                            Tag="{TemplateBinding FrameAppearance}"
                                             Command="{x:Static SystemCommands.RestoreWindowCommand}"
                                             ToolTip="{localization:RibbonString Key=RestoreDown}"
                                             Visibility="Collapsed">
@@ -254,6 +346,7 @@
                                     </Button>
                                     <Button x:Name="PART_CloseButton"
                                             Style="{StaticResource CloseCaptionButtonStyle}"
+                                            Tag="{TemplateBinding FrameAppearance}"
                                             Command="{x:Static SystemCommands.CloseWindowCommand}"
                                             ToolTip="{localization:RibbonString Key=Close}" />
                                 </StackPanel>
@@ -291,9 +384,10 @@
                                 BorderThickness="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroThickness}"
                                 Opacity="{TemplateBinding AeroFrameTintIntensity}" />
                         <Border BorderThickness="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroThickness}">
-                            <!-- The frame and title are one glass surface. Begin the vertical
-                                 inner bevel below the title instead of drawing two bright seams
-                                 beside the orb and Close button. -->
+                            <!-- The frame and exposed upper client chrome are one glass surface.
+                                 The generation token starts the vertical bevel below whichever
+                                 rows belong to that surface (title only in 2007; title + tabs in
+                                 2010) instead of drawing bright seams through them. -->
                             <Border x:Name="AeroFrameInnerHighlight"
                                     Margin="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroInnerHighlightMargin}"
                                     BorderBrush="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroInnerHighlight}"
@@ -322,6 +416,31 @@
                             <!-- An unavailable Acrylic backdrop changes only the material source.
                                  Keep the title and restored frame on one opaque Aero surface rather
                                  than revealing the ordinary Office 2007 title gradient. -->
+                            <Setter TargetName="TitleBarBackgroundLayer"
+                                    Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroFallback}" />
+                            <Setter TargetName="PART_Title"
+                                    Property="Foreground"
+                                    Value="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroTitleForeground}" />
+                            <Setter TargetName="PART_MinimizeButton"
+                                    Property="Foreground"
+                                    Value="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroTitleForeground}" />
+                            <Setter TargetName="PART_MaximizeButton"
+                                    Property="Foreground"
+                                    Value="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroTitleForeground}" />
+                            <Setter TargetName="PART_RestoreButton"
+                                    Property="Foreground"
+                                    Value="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroTitleForeground}" />
+                            <Setter TargetName="PART_CloseButton"
+                                    Property="Foreground"
+                                    Value="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroTitleForeground}" />
+                        </Trigger>
+                        <Trigger Property="FrameAppearance" Value="Office2010Aero">
+                            <Setter TargetName="AeroFrameHost"
+                                    Property="BorderThickness"
+                                    Value="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroThickness}" />
+                            <Setter TargetName="AeroFrameOverlay" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="AeroTitleVisual" Property="Visibility" Value="Visible" />
                             <Setter TargetName="TitleBarBackgroundLayer"
                                     Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroFallback}" />
@@ -390,6 +509,40 @@
                         </MultiTrigger>
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
+                                <Condition Property="FrameAppearance" Value="Office2010Aero" />
+                                <Condition Property="IsActive" Value="False" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="TitleBarBackgroundLayer"
+                                    Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroInactiveFallback}" />
+                            <Setter TargetName="AeroTitleReflectionLayer" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="AeroTitleGrainLayer" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="AeroFrameReflectionLayer" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="AeroFrameGrainLayer" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="PART_WindowIcon"
+                                    Property="Opacity"
+                                    Value="{DynamicResource RibbonKit.Metrics.WindowFrame.InactiveTitleBarOpacity}" />
+                            <Setter TargetName="TitleBarContentHost"
+                                    Property="Opacity"
+                                    Value="{DynamicResource RibbonKit.Metrics.WindowFrame.InactiveTitleBarOpacity}" />
+                            <Setter TargetName="PART_Title"
+                                    Property="Opacity"
+                                    Value="{DynamicResource RibbonKit.Metrics.WindowFrame.InactiveTitleBarOpacity}" />
+                            <Setter TargetName="PART_MinimizeButton"
+                                    Property="Opacity"
+                                    Value="{DynamicResource RibbonKit.Metrics.WindowFrame.InactiveTitleBarOpacity}" />
+                            <Setter TargetName="PART_MaximizeButton"
+                                    Property="Opacity"
+                                    Value="{DynamicResource RibbonKit.Metrics.WindowFrame.InactiveTitleBarOpacity}" />
+                            <Setter TargetName="PART_RestoreButton"
+                                    Property="Opacity"
+                                    Value="{DynamicResource RibbonKit.Metrics.WindowFrame.InactiveTitleBarOpacity}" />
+                            <Setter TargetName="PART_CloseButton"
+                                    Property="Opacity"
+                                    Value="{DynamicResource RibbonKit.Metrics.WindowFrame.InactiveTitleBarOpacity}" />
+                        </MultiTrigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
                                 <Condition Property="FrameAppearance" Value="Office2007Aero" />
                                 <Condition Property="IsActive" Value="False" />
                                 <Condition Property="IsTitleBarContentVisible" Value="True" />
@@ -404,7 +557,28 @@
                         </MultiTrigger>
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
+                                <Condition Property="FrameAppearance" Value="Office2010Aero" />
+                                <Condition Property="IsActive" Value="False" />
+                                <Condition Property="IsTitleBarContentVisible" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="TitleBarBand" Property="Opacity" Value="1" />
+                            <Setter TargetName="AeroTitleVisual"
+                                    Property="Opacity"
+                                    Value="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroInactiveOverlayOpacity}" />
+                        </MultiTrigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
                                 <Condition Property="FrameAppearance" Value="Office2007Aero" />
+                                <Condition Property="ActiveBackdrop" Value="Acrylic" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="AeroFrameHost" Property="BorderBrush" Value="Transparent" />
+                            <Setter TargetName="TitleBarBackgroundLayer"
+                                    Property="Opacity"
+                                    Value="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroMaterialTitleBackgroundOpacity}" />
+                        </MultiTrigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="FrameAppearance" Value="Office2010Aero" />
                                 <Condition Property="ActiveBackdrop" Value="Acrylic" />
                             </MultiTrigger.Conditions>
                             <Setter TargetName="AeroFrameHost" Property="BorderBrush" Value="Transparent" />
@@ -462,6 +636,16 @@
                                  title/rail material. DWM gives the outer frame a different inactive
                                  fallback, so apply the tokenized frame compensation that removes
                                  the remaining left/bottom strength step. -->
+                            <Setter TargetName="AeroFrameOverlay"
+                                    Property="Opacity"
+                                    Value="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroInactiveBackstageFrameOpacity}" />
+                        </MultiTrigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="FrameAppearance" Value="Office2010Aero" />
+                                <Condition Property="IsActive" Value="False" />
+                                <Condition Property="IsTitleBarContentVisible" Value="False" />
+                            </MultiTrigger.Conditions>
                             <Setter TargetName="AeroFrameOverlay"
                                     Property="Opacity"
                                     Value="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroInactiveBackstageFrameOpacity}" />

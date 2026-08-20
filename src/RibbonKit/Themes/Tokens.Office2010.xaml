@@ -35,15 +35,31 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.SurfaceBackground" Color="#FFFFFF" />
     <!-- Medium blue-grey outline around the ribbon body and the connected active tab. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Window.Background" Color="#FFFFFF" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroFallback" Color="Transparent" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroInactiveFallback" Color="Transparent" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroTint" Color="Transparent" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroInnerHighlight" Color="Transparent" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroReflection" Color="Transparent" />
+    <!-- Optional Office 2010 Aero frame. The tab row reuses this fallback and the host tint;
+         neither this appearance nor theme selection requests Acrylic by itself. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroFallback" Color="#9FBAD8" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroInactiveFallback" Color="#BEC8D3" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroTint" Color="#407FA8" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroInnerHighlight" Color="#A06C829D" />
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroReflection"
+                         StartPoint="0,0"
+                         EndPoint="1,1">
+        <GradientStop Offset="0" Color="#42FFFFFF" />
+        <GradientStop Offset="0.38" Color="#0FFFFFFF" />
+        <GradientStop Offset="0.72" Color="#00FFFFFF" />
+        <GradientStop Offset="1" Color="#20FFFFFF" />
+    </LinearGradientBrush>
     <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroGrain" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroTitleForeground" Color="#1E1E1E" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionHover" Color="#1F000000" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionPressed" Color="#33000000" />
+    <!-- Acrylic caption states: neutral translucent washes with crisp opaque outlines. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionHover" Color="#40FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionPressed" Color="#26000000" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionHoverBorder" Color="#FF8C8C8C" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionPressedBorder" Color="#FF666666" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionCloseHover" Color="#70E81123" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionClosePressed" Color="#A0B50D1D" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionCloseHoverBorder" Color="#FFE81123" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionClosePressedBorder" Color="#FF9F0A18" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Border" Color="#8DA5C4" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Primary" Color="#1E1E1E" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Secondary" Color="#5C6B7F" />
@@ -107,15 +123,15 @@
 
     <!-- Contextual-tab band tint (a light blue wash; the per-tab ContextualColor overrides it). -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ContextualBackground" Color="#DCE8F5" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ContextualHoverBackground" Color="#CBDDF0" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ContextualHoverBackground" Color="#80CBDDF0" />
 
     <!-- Dark-blue tab labels — a strong 2010 identity marker. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.Foreground" Color="#15428B" />
     <!-- Hover fill for chrome buttons sitting on the tab strip (File button, minimize toggle):
          a light glass highlight. -->
     <LinearGradientBrush x:Key="RibbonKit.Brushes.TabStrip.ControlHoverBackground" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Offset="0" Color="#F0F6FC" />
-        <GradientStop Offset="1" Color="#DDE9F6" />
+        <GradientStop Offset="0" Color="#7AF0F6FC" />
+        <GradientStop Offset="1" Color="#7ADDE9F6" />
     </LinearGradientBrush>
     <!-- Held (mouse-down): the same glass INVERTED — dark at the top, light at the foot — which
          is how 2010 draws a pressed surface (the light stops hitting the top face). -->
@@ -135,9 +151,11 @@
     <!-- Unselected tab hover: a soft amber glow, like the buttons but lighter. 2010 uses
          fills (never underlines), so both underline tokens stay Transparent. -->
     <LinearGradientBrush x:Key="RibbonKit.Brushes.Tab.HoverBackground" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Offset="0" Color="#FFF7DF" />
-        <GradientStop Offset="1" Color="#FBE9B0" />
+        <GradientStop Offset="0" Color="#A8FFF7DF" />
+        <GradientStop Offset="1" Color="#A8FBE9B0" />
     </LinearGradientBrush>
+    <!-- Keep the outline fully opaque over Acrylic; only the amber fill is translucent. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverBorder" Color="#FFD39E28" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverUnderline" Color="Transparent" />
     <!-- The active tab is a light "connected" tab that merges into the ribbon body top,
          outlined on top and sides so it reads as one piece with the body below. Its bottom
@@ -163,7 +181,7 @@
     <!-- ConnectFoot colours = the tab's bottom fill colour, so the 1px sliver continues the tab
          over the body border seamlessly. Hover = the amber hover gradient's low stop; selected =
          the body top colour (which is also the selected tab's bottom stop). -->
-    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ConnectFootHover" Color="#FBE9B0" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ConnectFootHover" Color="#A8FBE9B0" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ConnectFootSelected" Color="#F6F9FC" />
     <!-- Body-border notch (PART_ConnectNotch, in the tab control's BODY row): the ConnectFoot
          is clipped at the strip's bottom edge by PART_TabScroll, so cutting the body's #8DA5C4
@@ -175,10 +193,12 @@
          (no selection underline, no mute) — selection stays the connected active tab. -->
     <system:Double x:Key="RibbonKit.Metrics.ContextualUnderlineHeight">0</system:Double>
     <system:Double x:Key="RibbonKit.Metrics.ContextualUnselectedOpacity">1</system:Double>
-    <!-- The File button is a tab-row button (small inset), aligned with the tab tops. -->
+    <!-- The ordinary frame retains its small left inset. Aero alone reaches the frame/body rule;
+         its extra two DIPs of inner padding preserve the label and right-edge positions. -->
     <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonMargin">2,2,2,0</Thickness>
-    <!-- Wider than the 2024 default so the blue File tab reads as a broad block. -->
     <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonPadding">22,7,22,9</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonAeroMargin">0,2,2,0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonAeroPadding">24,7,22,9</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.TabStripMargin">2,2,4,0</Thickness>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Group.Separator" Color="#B9C8DC" />
     <!-- 1 = the separator is drawn, as it always has been in this theme. -->
@@ -382,15 +402,18 @@
     <Thickness x:Key="RibbonKit.Metrics.TitleBarQatMargin">2,0,6,0</Thickness>
     <system:Double x:Key="RibbonKit.Metrics.WindowFrame.CaptionHeight">34</system:Double>
     <system:Double x:Key="RibbonKit.Metrics.WindowFrame.InactiveTitleBarOpacity">1</system:Double>
-    <Thickness x:Key="RibbonKit.Metrics.WindowFrame.AeroThickness">0</Thickness>
-    <system:Double x:Key="RibbonKit.Metrics.WindowFrame.AeroTintIntensity">0</system:Double>
-    <Thickness x:Key="RibbonKit.Metrics.WindowFrame.AeroInnerHighlightMargin">0</Thickness>
-    <Thickness x:Key="RibbonKit.Metrics.WindowFrame.AeroInnerHighlightThickness">0</Thickness>
-    <system:Double x:Key="RibbonKit.Metrics.WindowFrame.AeroReflectionOpacity">0</system:Double>
+    <Thickness x:Key="RibbonKit.Metrics.WindowFrame.AeroThickness">6,0,6,6</Thickness>
+    <system:Double x:Key="RibbonKit.Metrics.WindowFrame.AeroTintIntensity">0.14</system:Double>
+    <!-- Caption (34 DIP) plus the live tab-header row (35 DIP). Starting the side bevel at this
+         real boundary keeps it flush with the ribbon-body top instead of one row above it. -->
+    <Thickness x:Key="RibbonKit.Metrics.WindowFrame.AeroInnerHighlightMargin">0,69,0,0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.WindowFrame.AeroInnerHighlightThickness">1,0,1,1</Thickness>
+    <system:Double x:Key="RibbonKit.Metrics.WindowFrame.AeroReflectionOpacity">0.30</system:Double>
     <system:Double x:Key="RibbonKit.Metrics.WindowFrame.AeroGrainOpacity">0</system:Double>
-    <system:Double x:Key="RibbonKit.Metrics.WindowFrame.AeroInactiveOverlayOpacity">1</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.WindowFrame.AeroInactiveOverlayOpacity">0.58</system:Double>
     <system:Double x:Key="RibbonKit.Metrics.WindowFrame.AeroInactiveBackstageFrameOpacity">1</system:Double>
-    <system:Double x:Key="RibbonKit.Metrics.WindowFrame.AeroMaterialTitleBackgroundOpacity">1</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.WindowFrame.AeroMaterialTitleBackgroundOpacity">0</system:Double>
+    <Thickness x:Key="RibbonKit.Metrics.WindowFrame.AeroCaptionBorderThickness">1</Thickness>
     <system:Double x:Key="RibbonKit.Metrics.ApplicationOrbSize">46</system:Double>
     <Thickness x:Key="RibbonKit.Metrics.ApplicationOrbMargin">2,0,6,0</Thickness>
 

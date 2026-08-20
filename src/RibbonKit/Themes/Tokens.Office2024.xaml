@@ -23,6 +23,12 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroTitleForeground" Color="#1A1A1A" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionHover" Color="#1F000000" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionPressed" Color="#33000000" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionHoverBorder" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionPressedBorder" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionCloseHover" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionClosePressed" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionCloseHoverBorder" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionClosePressedBorder" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Border" Color="#E0E0E0" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Primary" Color="#1A1A1A" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Secondary" Color="#616161" />
@@ -75,6 +81,7 @@
          card's white: opaque, and the same surface the tabs open into. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.ScrollButtonBackground" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverBackground" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverBorder" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverUnderline" Color="#B8B8B8" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedBackground" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedUnderline" Color="#2B579A" />
@@ -100,6 +107,8 @@
     <!-- Inner padding of the File button (drives its width). 2024 keeps the compact default;
          the pre-2024 themes widen it (their File tab reads as a broader block). -->
     <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonPadding">14,7,14,9</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonAeroMargin">8,4,2,0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonAeroPadding">14,7,14,9</Thickness>
     <!-- Top inset of the tab headers. Matches the File button's top so the two align;
          a theme can drop the top to 0 to let the tabs meet the title bar. -->
     <Thickness x:Key="RibbonKit.Metrics.TabStripMargin">2,4,4,0</Thickness>
@@ -241,6 +250,7 @@
     <system:Double x:Key="RibbonKit.Metrics.WindowFrame.AeroInactiveOverlayOpacity">1</system:Double>
     <system:Double x:Key="RibbonKit.Metrics.WindowFrame.AeroInactiveBackstageFrameOpacity">1</system:Double>
     <system:Double x:Key="RibbonKit.Metrics.WindowFrame.AeroMaterialTitleBackgroundOpacity">1</system:Double>
+    <Thickness x:Key="RibbonKit.Metrics.WindowFrame.AeroCaptionBorderThickness">0</Thickness>
     <system:Double x:Key="RibbonKit.Metrics.ApplicationOrbSize">46</system:Double>
     <Thickness x:Key="RibbonKit.Metrics.ApplicationOrbMargin">2,0,6,0</Thickness>
 

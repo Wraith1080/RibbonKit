@@ -68,7 +68,6 @@ public class Office2007WindowFrameTests
     }
 
     [Theory]
-    [InlineData("Tokens.Office2010.xaml")]
     [InlineData("Tokens.Office2013.xaml")]
     [InlineData("Tokens.Office2019.xaml")]
     [InlineData("Tokens.Office2024.xaml")]

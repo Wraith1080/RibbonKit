@@ -16,7 +16,7 @@ public class ShowcaseAppearancePreferencesTests
             Accent = "#107c41",
             DarkMode = true,
             AccentedTitleBar = true,
-            FrameAppearance = RibbonWindowFrameAppearance.Office2007Aero,
+            FrameAppearance = RibbonWindowFrameAppearance.Office2010Aero,
             UseAccentForAeroFrame = true,
             AeroFrameTintIntensity = 0.42,
             BackstageDesign = RibbonBackstageDesign.Classic2010,
@@ -33,7 +33,7 @@ public class ShowcaseAppearancePreferencesTests
         Assert.Equal("#FF107C41", restored.Accent);
         Assert.True(restored.DarkMode);
         Assert.True(restored.AccentedTitleBar);
-        Assert.Equal(RibbonWindowFrameAppearance.Office2007Aero, restored.FrameAppearance);
+        Assert.Equal(RibbonWindowFrameAppearance.Office2010Aero, restored.FrameAppearance);
         Assert.True(restored.UseAccentForAeroFrame);
         Assert.Equal(0.42, restored.AeroFrameTintIntensity);
         Assert.Equal(RibbonBackstageDesign.Classic2010, restored.BackstageDesign);
@@ -43,7 +43,7 @@ public class ShowcaseAppearancePreferencesTests
 
         Assert.Contains("\"theme\": \"Office2010\"", json, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("\"backdrop\": \"Acrylic\"", json, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("\"frameAppearance\": \"Office2007Aero\"", json, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("\"frameAppearance\": \"Office2010Aero\"", json, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("\"useAccentForAeroFrame\": true", json, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("\"aeroFrameTintIntensity\": 0.42", json, StringComparison.OrdinalIgnoreCase);
     }

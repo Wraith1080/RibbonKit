@@ -83,6 +83,12 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroTitleForeground" Color="#101010" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionHover" Color="#26000000" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionPressed" Color="#3D000000" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionHoverBorder" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionPressedBorder" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionCloseHover" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionClosePressed" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionCloseHoverBorder" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionClosePressedBorder" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Border" Color="#8DB2E3" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Primary" Color="#1E1E1E" />
     <!-- 2007 group labels are BLUE, not grey (unlike every later generation). -->
@@ -200,6 +206,7 @@
         <GradientStop Offset="0.38" Color="#FFE388" />
         <GradientStop Offset="1" Color="#FFF0BE" />
     </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverBorder" Color="#C1A877" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverUnderline" Color="Transparent" />
     <!-- The active tab merges into the ribbon body. Its bottom stop (#DBE6F5) is the body's own
          top colour (#DBE6F4) to within rounding, measured directly off a real 2007 window, so
@@ -234,6 +241,8 @@
          ApplicationButtonShape property. Until then the File tab renders as a compact blue block. -->
     <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonMargin">2,2,2,0</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonPadding">18,7,18,9</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonAeroMargin">2,2,2,0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonAeroPadding">18,7,18,9</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.TabStripMargin">2,2,4,0</Thickness>
     <!-- ⚠ TRIPLE DUTY. Despite the name this brush also paints the MENU SEPARATOR
          (Menus.xaml, RibbonKit.MenuSeparator) and the GALLERY ITEM HOVER BORDER
@@ -465,6 +474,7 @@
     <system:Double x:Key="RibbonKit.Metrics.WindowFrame.AeroInactiveOverlayOpacity">0.58</system:Double>
     <system:Double x:Key="RibbonKit.Metrics.WindowFrame.AeroInactiveBackstageFrameOpacity">1</system:Double>
     <system:Double x:Key="RibbonKit.Metrics.WindowFrame.AeroMaterialTitleBackgroundOpacity">0</system:Double>
+    <Thickness x:Key="RibbonKit.Metrics.WindowFrame.AeroCaptionBorderThickness">0</Thickness>
     <system:Double x:Key="RibbonKit.Metrics.ApplicationOrbSize">46</system:Double>
     <Thickness x:Key="RibbonKit.Metrics.ApplicationOrbMargin">6,-18,6,0</Thickness>
 

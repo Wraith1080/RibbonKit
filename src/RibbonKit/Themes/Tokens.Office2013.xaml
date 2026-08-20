@@ -23,6 +23,12 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroTitleForeground" Color="#444444" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionHover" Color="#1F000000" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionPressed" Color="#33000000" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionHoverBorder" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionPressedBorder" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionCloseHover" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionClosePressed" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionCloseHoverBorder" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionClosePressedBorder" Color="Transparent" />
     <!-- Prominent medium-gray outline around the ribbon body and the active tab. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Border" Color="#919191" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Primary" Color="#444444" />
@@ -66,6 +72,7 @@
          already used, so nothing changes here. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.ScrollButtonBackground" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverBackground" Color="#E8EEF7" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverBorder" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverUnderline" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedBackground" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedUnderline" Color="Transparent" />
@@ -97,6 +104,8 @@
     <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonMargin">0</Thickness>
     <!-- Wide solid accent block — the prominent 2013 File button. -->
     <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonPadding">24,7,24,9</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonAeroMargin">0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonAeroPadding">24,7,24,9</Thickness>
     <!-- Tabs sit flush to the top (no top inset) so they line up with the full-height
          File button and meet the title bar's lower edge — the colored title bar then
          connects straight into the tab row. -->
@@ -238,6 +247,7 @@
     <system:Double x:Key="RibbonKit.Metrics.WindowFrame.AeroInactiveOverlayOpacity">1</system:Double>
     <system:Double x:Key="RibbonKit.Metrics.WindowFrame.AeroInactiveBackstageFrameOpacity">1</system:Double>
     <system:Double x:Key="RibbonKit.Metrics.WindowFrame.AeroMaterialTitleBackgroundOpacity">1</system:Double>
+    <Thickness x:Key="RibbonKit.Metrics.WindowFrame.AeroCaptionBorderThickness">0</Thickness>
     <system:Double x:Key="RibbonKit.Metrics.ApplicationOrbSize">46</system:Double>
     <Thickness x:Key="RibbonKit.Metrics.ApplicationOrbMargin">2,0,6,0</Thickness>
 

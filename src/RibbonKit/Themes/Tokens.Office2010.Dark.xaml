@@ -6,6 +6,19 @@
          silver-gray ribbon with dark command text. The base theme still supplies
          its smooth amber interaction gels and every geometry/metric token. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Window.Background" Color="#B8B8B8" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroFallback" Color="#4E5962" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroInactiveFallback" Color="#656B70" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroTint" Color="#57788D" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroInnerHighlight" Color="#82FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroTitleForeground" Color="#F2F2F2" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionHover" Color="#36FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionPressed" Color="#30000000" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionHoverBorder" Color="#FFD8D8D8" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionPressedBorder" Color="#FFA0A0A0" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionCloseHover" Color="#78E81123" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionClosePressed" Color="#A8B50D1D" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionCloseHoverBorder" Color="#FFFF6472" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionClosePressedBorder" Color="#FFE81123" />
     <LinearGradientBrush x:Key="RibbonKit.Brushes.Ribbon.Background" StartPoint="0,0" EndPoint="0,1">
         <GradientStop Offset="0" Color="#686868" />
         <GradientStop Offset="1" Color="#585858" />
@@ -22,8 +35,8 @@
 
     <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.Foreground" Color="#F2F2F2" />
     <LinearGradientBrush x:Key="RibbonKit.Brushes.TabStrip.ControlHoverBackground" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Offset="0" Color="#919191" />
-        <GradientStop Offset="1" Color="#777777" />
+        <GradientStop Offset="0" Color="#80919191" />
+        <GradientStop Offset="1" Color="#80777777" />
     </LinearGradientBrush>
     <LinearGradientBrush x:Key="RibbonKit.Brushes.TabStrip.ControlPressedBackground" StartPoint="0,0" EndPoint="0,1">
         <GradientStop Offset="0" Color="#565656" />
@@ -34,16 +47,17 @@
         <GradientStop Offset="1" Color="#585858" />
     </LinearGradientBrush>
     <LinearGradientBrush x:Key="RibbonKit.Brushes.Tab.HoverBackground" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Offset="0" Color="#929292" />
-        <GradientStop Offset="1" Color="#797979" />
+        <GradientStop Offset="0" Color="#A0929292" />
+        <GradientStop Offset="1" Color="#A0797979" />
     </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverBorder" Color="#FFF0C85E" />
     <LinearGradientBrush x:Key="RibbonKit.Brushes.Tab.SelectedBackground" StartPoint="0,0" EndPoint="0,1">
         <GradientStop Offset="0" Color="#F2F2F2" />
         <GradientStop Offset="1" Color="#D5D7D8" />
     </LinearGradientBrush>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedForeground" Color="#202020" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedBorderBrush" Color="#565656" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ConnectFootHover" Color="#929292" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ConnectFootHover" Color="#A0929292" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ConnectFootSelected" Color="#D5D7D8" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ConnectNotch" Color="#D5D7D8" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Group.Separator" Color="#858585" />
