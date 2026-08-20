@@ -472,6 +472,9 @@
                                                         <Setter TargetName="Chrome" Property="Background"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
                                                     </Trigger>
+                                                    <Trigger Property="IsEnabled" Value="False">
+                                                        <Setter Property="Opacity" Value="0.4" />
+                                                    </Trigger>
                                                 </ControlTemplate.Triggers>
                                             </ControlTemplate>
                                         </Setter.Value>
@@ -501,6 +504,7 @@
                                AllowsTransparency="True"
                                StaysOpen="True"
                                Placement="Bottom"
+                               HorizontalOffset="-4"
                                PlacementTarget="{Binding ElementName=PART_CollapsedButton}"
                                IsOpen="{Binding IsChecked, ElementName=PART_CollapsedButton, Mode=TwoWay}">
                             <!-- AdornerDecorator wraps the host so the re-homed flyout content

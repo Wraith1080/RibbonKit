@@ -1,6 +1,9 @@
 using System.IO;
 using System.Linq;
+using System.Windows;
+using System.Windows.Controls;
 using System.Xml.Linq;
+using RibbonKit.Controls;
 using Xunit;
 
 namespace RibbonKit.Tests;
@@ -48,7 +51,6 @@ public class Office2007ClassicBackstageTests
         AssertSetter(design, "Classic2007ShellMaterial", "Visibility", "Visible");
         AssertSetter(design, "Classic2007ShellChrome", "Visibility", "Visible");
         AssertSetter(design, "Classic2007PaneDivider", "Visibility", "Visible");
-        AssertSetter(design, "Classic2007AeroJoinBevel", "Visibility", "Visible");
         AssertSetter(design, "PART_BackButton", "Visibility", "Collapsed");
         AssertSetter(design, "NavColumn", "Margin", "8,36,0,8");
         AssertSetter(design, "NavColumn", "Padding", "0,4,0,0");
@@ -84,8 +86,15 @@ public class Office2007ClassicBackstageTests
             (string?)paneDivider.Attribute("Background"));
         Assert.Equal("0,37,0,9", (string?)paneDivider.Attribute("Margin"));
         XElement aeroJoin = NamedElement(document, "Classic2007AeroJoinBevel");
-        Assert.Equal("#FFFFFFFF", (string?)aeroJoin.Attribute("BorderBrush"));
+        Assert.Equal(
+            "{DynamicResource RibbonKit.Brushes.WindowFrame.AeroInnerHighlight}",
+            (string?)aeroJoin.Attribute("BorderBrush"));
         Assert.Equal("1", (string?)aeroJoin.Attribute("BorderThickness"));
+        Assert.Equal("Collapsed", (string?)aeroJoin.Attribute("Visibility"));
+        Assert.DoesNotContain(
+            template.Descendants(Presentation + "MultiDataTrigger"),
+            trigger => HasBindingCondition(trigger, "Backstage.Design", "Classic2007")
+                && HasBindingCondition(trigger, "FrameAppearance", "Office2007Aero"));
 
         XElement translucent = Assert.Single(
             template.Descendants(Presentation + "MultiTrigger"),
@@ -101,6 +110,38 @@ public class Office2007ClassicBackstageTests
             document.Descendants(),
             element => (string?)element.Attribute(Xaml + "Name") == "Classic2007Orb");
     }
+
+    [Fact]
+    public void Classic2007_Aero_join_tracks_the_explicit_host_window_binding() => Sta.Run(() =>
+    {
+        var chrome = new FrameworkElementFactory(typeof(Border), "Classic2007AeroJoinBevel");
+        var backstage = new Backstage
+        {
+            Design = RibbonBackstageDesign.Classic2007,
+            Template = new ControlTemplate(typeof(Backstage)) { VisualTree = chrome },
+        };
+        var window = new RibbonWindow();
+
+        backstage.ApplyTemplate();
+        var join = Assert.IsType<Border>(
+            backstage.Template.FindName("Classic2007AeroJoinBevel", backstage));
+        backstage.SetHostFrameAppearanceSource(window);
+        Assert.Equal(Visibility.Collapsed, join.Visibility);
+
+        window.FrameAppearance = RibbonWindowFrameAppearance.Office2007Aero;
+        Sta.Drain();
+        Assert.Equal(Visibility.Visible, join.Visibility);
+
+        backstage.Design = RibbonBackstageDesign.Glass2007;
+        Assert.Equal(Visibility.Collapsed, join.Visibility);
+
+        backstage.Design = RibbonBackstageDesign.Classic2007;
+        Assert.Equal(Visibility.Visible, join.Visibility);
+
+        window.FrameAppearance = RibbonWindowFrameAppearance.Default;
+        Sta.Drain();
+        Assert.Equal(Visibility.Collapsed, join.Visibility);
+    });
 
     [Fact]
     public void Classic2007_navigation_uses_large_icons_and_gold_generation_states()
@@ -225,6 +266,14 @@ public class Office2007ClassicBackstageTests
         trigger
             .Descendants(Presentation + "Condition")
             .Any(condition => (string?)condition.Attribute("Property") == property
+                && (string?)condition.Attribute("Value") == value);
+
+    private static bool HasBindingCondition(XElement trigger, string pathFragment, string value) =>
+        trigger
+            .Descendants(Presentation + "Condition")
+            .Any(condition => ((string?)condition.Attribute("Binding"))?.Contains(
+                    pathFragment,
+                    System.StringComparison.Ordinal) == true
                 && (string?)condition.Attribute("Value") == value);
 
     private static XElement NamedElement(XDocument document, string name) =>

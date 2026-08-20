@@ -258,7 +258,7 @@
                         <Border x:Name="Classic2007AeroJoinBevel"
                                 Grid.ColumnSpan="2"
                                 Panel.ZIndex="3"
-                                BorderBrush="#FFFFFFFF"
+                                BorderBrush="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroInnerHighlight}"
                                 BorderThickness="1"
                                 IsHitTestVisible="False"
                                 SnapsToDevicePixels="True"
@@ -332,7 +332,6 @@
                             <Setter TargetName="Classic2007ShellMaterial" Property="Visibility" Value="Visible" />
                             <Setter TargetName="Classic2007ShellChrome" Property="Visibility" Value="Visible" />
                             <Setter TargetName="Classic2007PaneDivider" Property="Visibility" Value="Visible" />
-                            <Setter TargetName="Classic2007AeroJoinBevel" Property="Visibility" Value="Visible" />
                             <Setter TargetName="PART_BackButton" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="NavColumn" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Backstage.NavBackground}" />
@@ -352,7 +351,6 @@
                             <Setter TargetName="ContentArea" Property="BorderThickness" Value="0" />
                             <Setter TargetName="ContentArea" Property="CornerRadius" Value="0" />
                         </Trigger>
-
                         <!-- Translucent (reveal a window Mica/Acrylic backdrop behind the
                              backstage): clear the root fill so the material shows in the nav
                              column, where the Modern MultiTrigger below lays its translucent

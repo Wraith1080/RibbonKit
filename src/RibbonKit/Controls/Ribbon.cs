@@ -1983,12 +1983,14 @@ public class Ribbon : Control
     private void ReconcileBackstagePlacementChrome()
     {
         bool belowTabs = IsBelowTabsBackstagePlacementActive();
+        RibbonWindow? ribbonWindow = Window.GetWindow(this) as RibbonWindow;
         if (Backstage is Controls.Backstage backstage)
         {
             backstage.SetBelowTabsPlacement(belowTabs);
+            backstage.SetHostFrameAppearanceSource(ribbonWindow);
         }
 
-        if (Window.GetWindow(this) is RibbonWindow ribbonWindow)
+        if (ribbonWindow is not null)
         {
             // Full-content Backstage hides the title QAT. Word 2010 keeps the caption QAT and
             // tab row exposed above its File surface.
@@ -2537,16 +2539,27 @@ public class Ribbon : Control
             return _classicBackstageOrbProxy;
         }
 
-        string back = RibbonLocalization.GetString(RibbonString.Back);
         var proxy = new Button
         {
             Name = "PART_Classic2007OrbProxy",
             Content = string.Empty,
             ContentTemplate = orbTemplate,
             Focusable = true,
-            ToolTip = back,
         };
-        AutomationProperties.SetName(proxy, back);
+        var backBinding = new Binding($"[{RibbonString.Back}]")
+        {
+            Source = RibbonLocalizationBindingSource.Instance,
+            Mode = BindingMode.OneWay,
+        };
+        BindingOperations.SetBinding(proxy, ToolTipProperty, backBinding);
+        BindingOperations.SetBinding(
+            proxy,
+            AutomationProperties.NameProperty,
+            new Binding($"[{RibbonString.Back}]")
+            {
+                Source = RibbonLocalizationBindingSource.Instance,
+                Mode = BindingMode.OneWay,
+            });
         WindowChrome.SetIsHitTestVisibleInChrome(proxy, true);
         proxy.Template = CreateClassicBackstageOrbProxyTemplate();
 

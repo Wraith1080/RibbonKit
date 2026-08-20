@@ -2,6 +2,7 @@ using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Windows;
+using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Markup;
@@ -22,6 +23,43 @@ public class RibbonLocalizationTests
         "http://schemas.microsoft.com/winfx/2006/xaml";
     private static readonly XNamespace RibbonKitNamespace = "urn:ribbonkit";
 
+    [Fact]
+    public void Classic_orb_proxy_tooltip_and_automation_name_follow_live_localization() => Sta.Run(() =>
+    {
+        IRibbonLocalizationProvider? previous = RibbonLocalization.Provider;
+        try
+        {
+            RibbonLocalization.Provider = new PrefixProvider("first");
+            var ribbon = new Ribbon();
+            var template = new DataTemplate
+            {
+                VisualTree = new FrameworkElementFactory(typeof(Grid), "OrbGlyph"),
+            };
+
+            MethodInfo createProxy = typeof(Ribbon).GetMethod(
+                "GetOrCreateClassicBackstageOrbProxy",
+                BindingFlags.Instance | BindingFlags.NonPublic)
+                ?? throw new InvalidOperationException("Classic orb proxy factory was not found.");
+            var proxy = Assert.IsType<Button>(createProxy.Invoke(ribbon, [template]));
+
+            Assert.Equal("first:Back", proxy.ToolTip);
+            Assert.Equal("first:Back", AutomationProperties.GetName(proxy));
+            Assert.IsType<BindingExpression>(
+                BindingOperations.GetBindingExpression(proxy, ToolTipService.ToolTipProperty));
+            Assert.IsType<BindingExpression>(
+                BindingOperations.GetBindingExpression(proxy, AutomationProperties.NameProperty));
+
+            RibbonLocalization.Provider = new PrefixProvider("second");
+            Sta.Drain();
+
+            Assert.Equal("second:Back", proxy.ToolTip);
+            Assert.Equal("second:Back", AutomationProperties.GetName(proxy));
+        }
+        finally
+        {
+            RibbonLocalization.Provider = previous;
+        }
+    });
     [Fact]
     public void Embedded_resources_cover_every_declared_ribbon_string()
     {

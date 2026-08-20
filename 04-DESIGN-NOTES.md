@@ -4582,6 +4582,37 @@ its top margin now matches the real caption-plus-tab-row boundary, so it joins t
 and continues to the bottom frame without the extra row. Final live confirmation remains part of
 the prototype's user-review gate.
 
+### 3.98 Collapsed-group and Classic2007 follow-up fixes — 2026-08-20
+
+The collapsed-group flyout now applies the same negative-four-DIP horizontal compensation already
+used by the QAT overflow popup. Its visible border therefore begins at the collapsed button's left
+edge instead of beginning four DIPs to the right because of the popup host's shadow margin. The
+collapsed toggle's private template also gains the standard command disabled opacity (`0.4`). A
+disabled group remains non-interactive rather than opening a flyout of disabled commands, but its
+collapsed representation now communicates that state as clearly as the full group contents.
+
+The Classic2007 orb proxy no longer snapshots `RibbonString.Back` when it is first created. Both its
+tooltip and automation name bind to the shared live localization source, so replacing the provider
+or calling `RibbonLocalization.Refresh()` updates an already-realized proxy. The Classic2007 frame
+join is now visible only when the containing `RibbonWindow` actually uses `Office2007Aero`; ordinary
+frames no longer receive the stray top rule. The Aero join also consumes the generation's existing
+semi-transparent `WindowFrame.AeroInnerHighlight` brush instead of adding an opaque white edge, so
+it reads as one continuation of the frame rule rather than a heavier second stroke.
+
+The first implementation expressed that condition as an `AncestorType=RibbonWindow` binding in the
+Backstage template. Live follow-up showed why that was incorrect: the Backstage lives in the window
+adorner's separate branch, so the lookup returned no ancestor and left the rule collapsed even in
+Aero mode. `Ribbon` now gives `Backstage` an explicit one-way binding to the real host window's
+`FrameAppearance`; the private named frame part follows that state and the live Backstage design.
+This also keeps programmatic frame changes current while the surface is already open.
+
+Focused contracts cover popup compensation, disabled collapsed chrome, live proxy localization and
+the explicit live Aero-frame binding. A fresh-process Showcase pass inspected the
+collapsed/disabled group and both Classic2007 frame paths; the pre-test appearance preferences were
+restored afterward.
+Current gate: **355 logic tests plus one visual test covering 63 approved images**, with zero build
+warnings or errors.
+
 ## 4. Workflow / Session Conventions
 
 - Work from the current Windows checkout at
@@ -4614,6 +4645,8 @@ the prototype's user-review gate.
 - The post-v1 Office 2007 arc is complete through §3.94: corrected opaque baseline, optional
   Aero-inspired/Acrylic frame, `Glass2007`, `Classic2007`, shared orb proxy, five-scale geometry,
   and live mixed-monitor caption/resize/maximize/Snap Layout verification.
+- The focused §3.98 follow-up aligns collapsed flyouts, visibly disables their collapsed buttons,
+  keeps the Classic2007 Back tooltip live-localized, and limits its frame join to one Aero rule.
 - The Office 2010 `Classic2010` Backstage now begins below the live tab-header row (§3.95), leaving
   File, ribbon tabs, and title-bar QAT chrome exposed and interactive with a safe custom-template
   fallback. Its tab-strip handoff now includes the three-DIP File-bottom-colored seam, dimensional
@@ -4643,6 +4676,8 @@ the prototype's user-review gate.
   warnings/errors.
 - 2026-08-20: 350 logic tests, one visual test covering 63 approved images, and zero build
   warnings/errors; Office 2010 Aero live visual approval remains pending.
+- 2026-08-20 after §3.98: 355 logic tests, one visual test covering 63 approved images, and zero
+  build warnings/errors; Office 2010 Aero live visual approval remains pending.
 - Before quoting a current count or declaring a new change complete, rerun the proportional build
   and test commands. Inspect actual/diff PNG artifacts before changing visual baselines or
   tolerances.

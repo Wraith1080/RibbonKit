@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using RibbonKit.Animation;
@@ -40,9 +41,20 @@ public enum BackstageItemPlacement
 /// </para>
 /// </summary>
 [TemplatePart(Name = BackButtonPartName, Type = typeof(ButtonBase))]
+[TemplatePart(Name = Classic2007AeroJoinBevelPartName, Type = typeof(Border))]
 public class Backstage : TabControl
 {
     private const string BackButtonPartName = "PART_BackButton";
+    private const string Classic2007AeroJoinBevelPartName = "Classic2007AeroJoinBevel";
+
+    private static readonly DependencyProperty HostFrameAppearanceProperty =
+        DependencyProperty.Register(
+            "HostFrameAppearance",
+            typeof(RibbonWindowFrameAppearance),
+            typeof(Backstage),
+            new FrameworkPropertyMetadata(
+                RibbonWindowFrameAppearance.Default,
+                OnHostFrameAppearanceChanged));
 
     /// <summary>
     /// Identifies the <see cref="Design"/> attached dependency property. Registered as
@@ -77,6 +89,10 @@ public class Backstage : TabControl
 
     private ButtonBase? _backButton;
 
+    private Border? _classic2007AeroJoinBevel;
+
+    private RibbonWindow? _hostFrameAppearanceSource;
+
     private bool _isBelowTabsPlacement;
 
     private FrameworkElement? _contentArea;
@@ -86,6 +102,35 @@ public class Backstage : TabControl
     /// can move between its normal ribbon host and the Backstage adorner without an app restart.
     /// </summary>
     internal event EventHandler? DesignChanged;
+
+    /// <summary>
+    /// Binds private frame chrome to the real host window. The Backstage adorner is a separate
+    /// visual branch, so an AncestorType binding from its template cannot reliably find the window.
+    /// </summary>
+    internal void SetHostFrameAppearanceSource(RibbonWindow? window)
+    {
+        if (ReferenceEquals(_hostFrameAppearanceSource, window))
+        {
+            return;
+        }
+
+        _hostFrameAppearanceSource = window;
+        BindingOperations.ClearBinding(this, HostFrameAppearanceProperty);
+        if (window is null)
+        {
+            SetCurrentValue(HostFrameAppearanceProperty, RibbonWindowFrameAppearance.Default);
+            return;
+        }
+
+        BindingOperations.SetBinding(
+            this,
+            HostFrameAppearanceProperty,
+            new Binding(nameof(RibbonWindow.FrameAppearance))
+            {
+                Source = window,
+                Mode = BindingMode.OneWay,
+            });
+    }
 
     /// <summary>
     /// Applies the placement-owned Back button state without adding a public layout option.
@@ -170,8 +215,25 @@ public class Backstage : TabControl
     {
         if (dependencyObject is Backstage backstage && eventArgs.OldValue != eventArgs.NewValue)
         {
+            backstage.UpdateHostFrameChrome();
             backstage.DesignChanged?.Invoke(backstage, EventArgs.Empty);
         }
+    }
+
+    private static void OnHostFrameAppearanceChanged(
+        DependencyObject dependencyObject,
+        DependencyPropertyChangedEventArgs eventArgs) =>
+        ((Backstage)dependencyObject).UpdateHostFrameChrome();
+
+    private void UpdateHostFrameChrome()
+    {
+        _classic2007AeroJoinBevel?.SetCurrentValue(
+            VisibilityProperty,
+            Design == RibbonBackstageDesign.Classic2007
+                && (RibbonWindowFrameAppearance)GetValue(HostFrameAppearanceProperty)
+                    == RibbonWindowFrameAppearance.Office2007Aero
+                    ? Visibility.Visible
+                    : Visibility.Collapsed);
     }
 
     /// <summary>
@@ -205,12 +267,15 @@ public class Backstage : TabControl
         _contentArea = GetTemplateChild("ContentArea") as FrameworkElement;
 
         _backButton = GetTemplateChild(BackButtonPartName) as ButtonBase;
+        _classic2007AeroJoinBevel =
+            GetTemplateChild(Classic2007AeroJoinBevelPartName) as Border;
         if (_backButton is not null)
         {
             _backButton.Click += OnBackButtonClick;
         }
 
         UpdatePlacementChrome();
+        UpdateHostFrameChrome();
     }
 
     /// <summary>Esc leaves the backstage, matching Office.</summary>
