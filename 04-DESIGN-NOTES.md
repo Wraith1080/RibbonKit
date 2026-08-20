@@ -4769,6 +4769,44 @@ disabled-command rejection and TableCell paragraph formatting. W1-A deliberately
 or ribbon-XAML change; that real Writer integration remains W1-C. No RibbonKit runtime change was
 required.
 
+### 3.104 RibbonKit Writer W1-B editing utilities and status state — 2026-08-20
+
+Writer now has four app-owned editing utilities without changing the shell or shared ribbon. The
+ordinal `WriterFindReplaceService` defines explicit current/after-selection/document-start and wrap
+semantics, rejects empty queries, collects replace-all matches once and applies them from the end in
+one native undo unit. Its canonical FlowDocument snapshot preserves formatting boundaries, represents
+paragraph and soft-line breaks predictably, and inserts non-text barriers around embedded UI, images,
+Figures and Floaters so ordinary text searches cannot bridge across or delete them. Matches that cross
+a structural paragraph boundary can be selected for Find but are never replaced; the post-replacement
+caret follows the actual native range end for plain, multiline and surrogate-pair text.
+
+`WriterSpellCheckAdapter` only controls WPF's native spelling property, observes direct native changes,
+restores the original value on disposal and leaves selection, caret, IME and dictionaries to WPF.
+`WriterDocumentStatistics` publishes explicit Unicode word and text-element counts: spaces, tabs and
+soft line breaks count as characters, while structural paragraph breaks and embedded objects do not;
+objects still separate adjacent words. Text changes perform only constant-time generation and
+trailing-edge scheduling. A dispatcher-affine 250-ms callback is cancelled and replaced on each edit,
+and pending identity, document identity and generation checks reject stale work. `Refresh()` is the
+explicit seam when W1-C replaces `RichTextBox.Document`. `WriterZoomModel` is UI-independent state with
+a 25-400% range, 100% default, ten-point steps, finite-input rejection, clamping and change-only
+notifications.
+
+An independent max-effort review reproduced and drove corrections for an invalid default
+`DispatcherTimer` path, embedded-object deletion, replacement-caret overshoot, throttle rather than
+trailing-edge debounce behaviour, unenforced generations, duplicated List/TableCell separators and
+unobserved external spelling changes. Thirty STA/model tests now cover those regressions plus case and
+wrap options, empty and current selections, replace-all termination/undo, LineBreak/List/TableCell and
+cross-run text, empty documents, Unicode/apostrophe counts, document replacement, disposal and zoom
+bounds.
+
+The lead passed the focused W1-B suite **30/30 across five consecutive runs**, the full Writer suite
+**138/138**, and the full solution at **493 logic tests plus one visual test covering 63 approved
+images**, with zero build warnings/errors and a clean whitespace check. A separately shown native
+editor then passed real find/replace, embedded-object preservation, the default debounced count path
+(three words/seventeen characters), native spelling and 135% zoom together. W1-B deliberately makes no
+MainWindow or ribbon-XAML change; W1-C owns that integration and must call the statistics `Refresh()`
+seam after replacing the editor document. No RibbonKit runtime change was required.
+
 ## 4. Workflow / Session Conventions
 
 - Work from the current Windows checkout at
@@ -4813,9 +4851,10 @@ required.
   directly beneath tabs and both QAT placements (§3.97). Its automated gate is green; live
   fallback/Acrylic visual approval remains pending.
 - MDI milestones M0 and M4 are complete: floating children plus ribbon tab/caption merging.
-- RibbonKit Writer W0-A through W0-D and W1-A are complete through §3.103: the separate app/test
+- RibbonKit Writer W0-A through W0-D and W1-A/W1-B are complete through §3.104: the separate app/test
   scaffold, document lifetime, TXT/RTF/atomic/recent services, live Backstage/QAT file-command shell,
-  and formatting/selection-state engine are integrated at their packet boundaries.
+  formatting/selection-state engine, and non-UI find/spelling/statistics/zoom utilities are integrated
+  at their packet boundaries.
 
 ### Remaining or intentionally deferred
 
@@ -4825,9 +4864,8 @@ required.
 - Final live visual tuning and approval of the Office 2010 Aero-inspired frame prototype (§3.97).
 - Touch density, richer automatic QAT projections, custom-control projection APIs and additional
   themes remain post-v1 candidates. Their plan documents are not implementation evidence.
-- RibbonKit Writer W1-B through W5 remain. W1-B and W2-A are dependency-ready; W1-C now waits only
-  for W1-B because W0-D and W1-A are accepted. No later packet is implied by the W1-A editing
-  contracts.
+- RibbonKit Writer W1-C through W5 remain. W1-C and W2-A are dependency-ready now that W0-D and
+  W1-A/W1-B are accepted. No later packet is implied by the W1-B editing-utility contracts.
 - Automatic `Icons.xaml` discovery is best-effort by design. Keep `Load Icons.xaml…` available
   for ambiguity, inaccessible paths, parse failures, or no match.
 
@@ -4851,6 +4889,9 @@ required.
 - 2026-08-20 after §3.103: 463 logic tests, one visual test covering 63 approved images, and zero
   build warnings/errors; Writer passed 108/108 tests, W1-A passed 17/17 across five consecutive runs,
   and its separately shown native-editor formatting/state gate passed.
+- 2026-08-20 after §3.104: 493 logic tests, one visual test covering 63 approved images, and zero
+  build warnings/errors; Writer passed 138/138 tests, W1-B passed 30/30 across five consecutive runs,
+  and its separately shown native-editor utility/status gate passed.
 - Before quoting a current count or declaring a new change complete, rerun the proportional build
   and test commands. Inspect actual/diff PNG artifacts before changing visual baselines or
   tolerances.
