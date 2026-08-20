@@ -325,8 +325,9 @@ Version 1.0.0 is published through GitHub Releases. Package layout, metadata, So
 isolated consumer compilation, live packaged runtime behavior, Release performance, and the Visual
 Studio designer were verified for launch. The post-v1 Office 2007 frame and Backstage S7-S9 work is
 complete through design-notes §3.94; MDI
-milestones M1–M3, custom-control projections, future theme expansion and the RibbonKit Writer
-reference application remain post-v1 work. See the
+milestones M1–M3, custom-control projections and future theme expansion remain post-v1 work.
+RibbonKit Writer now has its W0-A application/test scaffold and empty editor surface; W0-B through
+W5 remain. See the
 [roadmap](docs/03-ROADMAP.md) and [design notes](04-DESIGN-NOTES.md) for detailed status.
 
 ## Contributing

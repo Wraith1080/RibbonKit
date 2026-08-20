@@ -2,7 +2,7 @@
 
 Each phase ends with the showcase app demonstrating everything built so far, tests green, and a tagged pre-release. Phases are sequential but small overlaps are fine.
 
-> **Progress (2026-08-13):** Phases 0–8 are complete and `v1.0.0` is published as a GitHub Release. Phase 6 closed with the user-verified live RTL popup/window pass in [`04-DESIGN-NOTES.md`](../04-DESIGN-NOTES.md) §3.61: all five themes ship with dark/black variants, per-monitor DPI is verified at 100/125/150/175/200%, and the deterministic 40-image theme/variant × DPI suite plus twenty-two focused scenes are green. Post-v1 Office 2007 frame and Backstage S7-S9 are complete through §3.94. MDI M0 and M4 are done while M1-M3 remain; custom-control projection/extensibility, future themes, and RibbonKit Writer remain candidate tracks.
+> **Progress (2026-08-20):** Phases 0–8 are complete and `v1.0.0` is published as a GitHub Release. Phase 6 closed with the user-verified live RTL popup/window pass in [`04-DESIGN-NOTES.md`](../04-DESIGN-NOTES.md) §3.61: all five themes ship with dark/black variants, per-monitor DPI is verified at 100/125/150/175/200%, and the deterministic 40-image theme/variant × DPI suite plus twenty-two focused scenes are green. Post-v1 Office 2007 frame and Backstage S7-S9 are complete through §3.94. MDI M0 and M4 are done while M1-M3 remain; custom-control projection/extensibility and future themes remain candidate tracks. RibbonKit Writer has begun with the verified W0-A application/test scaffold (§3.99); W0-B through W5 remain.
 >
 > Live DPI switching needed a fix outside the library: an app must declare **PerMonitorV2** in its own manifest or Windows bitmap-stretches it until restart. The showcase now does, and the README tells consumers to (§3.42).
 >
@@ -91,12 +91,15 @@ flagship), Warm Sand (non-white light), then Graphite Copper (warm professional 
 Aubergine and Polar Slate remain exploratory. Full intake and verification plan:
 [`docs/09-FUTURE-THEMES-PLAN.md`](09-FUTURE-THEMES-PLAN.md).
 
-**RibbonKit Writer** is the planned complex consumer/reference application: a separate functional
-rich-text editor rather than another Showcase page. Its scope includes `.txt`, `.rtf` and a native
+**RibbonKit Writer** is the complex consumer/reference application, now scaffolded through W0-A as a
+separate app and test project rather than another Showcase page. Its planned scope includes `.txt`, `.rtf` and a native
 paper-aware format, Backstage/QAT/customization, images and hyperlinks, paginated preview/printing,
 and native FlowDocument tables with contextual Table Tools. OLE embedding, DOCX compatibility and
 editable Word-style page layout are explicit non-goals. Full plan:
-[`docs/10-RIBBONKIT-WRITER-PLAN.md`](10-RIBBONKIT-WRITER-PLAN.md).
+[`docs/10-RIBBONKIT-WRITER-PLAN.md`](10-RIBBONKIT-WRITER-PLAN.md). The durable dependency packets,
+exclusive file ownership and later Luna dispatch gates are recorded separately in
+[`docs/11-RIBBONKIT-WRITER-LUNA-EXECUTION-PLAN.md`](11-RIBBONKIT-WRITER-LUNA-EXECUTION-PLAN.md); that
+execution decomposition is planning, not implementation evidence.
 
 Possible visual polish also includes an optional purpose-authored `MonochromeIcon` for QAT-capable
 commands and a non-Mica light/dark transition that captures the old opaque window chrome, swaps the

@@ -1,8 +1,11 @@
 # RibbonKit Writer — Functional Reference Application Plan
 
-> **Status:** approved post-v1 application plan. No implementation is implied by this document.
+> **Status:** approved post-v1 application plan. W0-A's application/test scaffold is implemented;
+> no later milestone is implied by this document. Live status remains in `04-DESIGN-NOTES.md` §5.
 > RibbonKit Writer is a separate functional sample, not another feature page inside
 > `RibbonKit.Showcase`.
+> The durable packet/dependency split for later Luna execution is in
+> [`11-RIBBONKIT-WRITER-LUNA-EXECUTION-PLAN.md`](11-RIBBONKIT-WRITER-LUNA-EXECUTION-PLAN.md).
 
 ## 1. Purpose
 
@@ -214,6 +217,10 @@ Automation names.
 - Reuse an app-owned `Icons.xaml`; the deferred stock-icon insertion feature is not a prerequisite.
 
 ## 8. Delivery milestones
+
+These product milestones are decomposed into bounded, dependency-gated implementation packets in the
+[Luna execution plan](11-RIBBONKIT-WRITER-LUNA-EXECUTION-PLAN.md). That decomposition does not imply
+that a packet, agent or implementation currently exists.
 
 ### W0 — Application shell and document lifetime
 

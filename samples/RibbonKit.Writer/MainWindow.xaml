@@ -1,0 +1,24 @@
+<rk:RibbonWindow x:Class="RibbonKit.Writer.MainWindow"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:rk="urn:ribbonkit"
+                 Title="RibbonKit Writer"
+                 Width="1100"
+                 Height="720"
+                 MinWidth="480"
+                 MinHeight="320"
+                 WindowStartupLocation="CenterScreen"
+                 UseLayoutRounding="True">
+    <DockPanel>
+        <rk:Ribbon DockPanel.Dock="Top" />
+        <RichTextBox x:Name="DocumentEditor"
+                     Background="White"
+                     BorderThickness="0"
+                     Padding="28,22"
+                     FontFamily="Segoe UI"
+                     FontSize="13"
+                     VerticalScrollBarVisibility="Auto">
+            <FlowDocument PagePadding="0" />
+        </RichTextBox>
+    </DockPanel>
+</rk:RibbonWindow>

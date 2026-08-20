@@ -4168,6 +4168,21 @@ in-place OLE would add executable-content, COM activation, focus, storage, bitne
 contracts unrelated to proving RibbonKit. Images and hyperlinks ship first; any later attachment is
 an inert Writer-owned file card, not an activated embedded application.
 
+### 3.87a RibbonKit Writer Luna execution decomposition — 2026-08-20
+
+`docs/11-RIBBONKIT-WRITER-LUNA-EXECUTION-PLAN.md` decomposes the approved W0-W5 product milestones
+into dependency-gated packets for later `gpt-5.6-luna` subagents. It deliberately creates no Writer
+project or branch and schedules no agent. The functional scope remains owned by
+`docs/10-RIBBONKIT-WRITER-PLAN.md`; §5 remains the live implementation-status authority.
+
+The execution contract keeps solution/project files and primary application/ribbon XAML under
+exclusive ownership, treats `src/RibbonKit/**` as read-only unless a separately approved runtime-gap
+packet proves a genuine library need, and makes the lead agent responsible for diff review, full
+build/tests and verification on the real Writer surface. Agent reports and plan checklists are not
+implementation evidence. Native `.rkw` loading, FlowDocument table mutation and final Windows
+acceptance have explicit higher-risk gates; W5 distribution remains a user/lead decision rather than
+a delegatable coding task.
+
 ### 3.88 Office 2007 opaque and Aero-inspired window-frame plan — 2026-08-12
 
 The deferred Office 2007 window frame now has a two-tier contract in
@@ -4613,6 +4628,25 @@ restored afterward.
 Current gate: **355 logic tests plus one visual test covering 63 approved images**, with zero build
 warnings or errors.
 
+### 3.99 RibbonKit Writer W0-A application scaffold — 2026-08-20
+
+The first dependency-ready Writer execution packet is complete on `codex/ribbonkit-writer`.
+`samples/RibbonKit.Writer` is a `net8.0-windows` WPF executable with a project reference to the
+runtime library, a PerMonitorV2 host manifest, Office 2024 application-scope tokens, an app-owned
+vector `Icons.xaml`, and a minimal `RibbonWindow` containing an empty ribbon shell and native
+`RichTextBox` editing surface. `tests/RibbonKit.Writer.Tests` is a separate xUnit project and begins
+with a scaffold contract proving that the main window derives from `RibbonWindow`. Both projects are
+wired into `RibbonKit.sln` under dedicated solution folders.
+
+The scaffold adds no file/document lifetime model, persistence, commands, Backstage content or
+placeholder feature buttons. W0-B remains the next dependency-ready packet; this entry is not
+evidence for any later Writer milestone.
+
+The lead gate rebuilt the full solution with zero warnings/errors and passed **356 logic tests plus
+one visual test covering 63 approved images**. The actual Writer executable opened a responsive
+1375×900 `RibbonKit Writer` window; UI Automation exposed `DocumentEditor` as a keyboard-focusable
+Document, live text entry succeeded, and the window closed normally.
+
 ## 4. Workflow / Session Conventions
 
 - Work from the current Windows checkout at
@@ -4657,6 +4691,8 @@ warnings or errors.
   directly beneath tabs and both QAT placements (§3.97). Its automated gate is green; live
   fallback/Acrylic visual approval remains pending.
 - MDI milestones M0 and M4 are complete: floating children plus ribbon tab/caption merging.
+- RibbonKit Writer W0-A is complete through §3.99: the separate app/test projects, PerMonitorV2
+  host, app-owned icon dictionary, minimal RibbonWindow/editor surface and live launch/input gate.
 
 ### Remaining or intentionally deferred
 
@@ -4664,9 +4700,10 @@ warnings or errors.
   a per-theme pass; tabbed-document mode and layout persistence.
 - Optional Ribbon Editor clear-to-default actions for scalar properties.
 - Final live visual tuning and approval of the Office 2010 Aero-inspired frame prototype (§3.97).
-- Touch density, richer automatic QAT projections, custom-control projection APIs, additional
-  themes, and RibbonKit Writer remain post-v1 candidates. Their plan documents are not
-  implementation evidence.
+- Touch density, richer automatic QAT projections, custom-control projection APIs and additional
+  themes remain post-v1 candidates. Their plan documents are not implementation evidence.
+- RibbonKit Writer W0-B through W5 remain; W0-A proves only the application/test scaffold and empty
+  editor surface.
 - Automatic `Icons.xaml` discovery is best-effort by design. Keep `Load Icons.xaml…` available
   for ambiguity, inaccessible paths, parse failures, or no match.
 
@@ -4678,6 +4715,8 @@ warnings or errors.
   warnings/errors; Office 2010 Aero live visual approval remains pending.
 - 2026-08-20 after §3.98: 355 logic tests, one visual test covering 63 approved images, and zero
   build warnings/errors; Office 2010 Aero live visual approval remains pending.
+- 2026-08-20 after §3.99: 356 logic tests, one visual test covering 63 approved images, and zero
+  build warnings/errors; Writer W0-A live launch and editor input passed.
 - Before quoting a current count or declaring a new change complete, rerun the proportional build
   and test commands. Inspect actual/diff PNG artifacts before changing visual baselines or
   tolerances.

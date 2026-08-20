@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>RibbonKit.Writer</RootNamespace>
+    <AssemblyName>RibbonKit.Writer</AssemblyName>
+    <Product>RibbonKit Writer</Product>
+    <IsPackable>false</IsPackable>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\RibbonKit\RibbonKit.csproj" />
+  </ItemGroup>
+
+</Project>
