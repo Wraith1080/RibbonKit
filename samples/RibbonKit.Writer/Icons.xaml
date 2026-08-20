@@ -9,4 +9,26 @@
             </GeometryDrawing>
         </DrawingImage.Drawing>
     </DrawingImage>
+    <DrawingImage x:Key="Icon.WriterSave">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Brush="#2E75B6">
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="#1E4E79" Thickness="1" />
+                    </GeometryDrawing.Pen>
+                    <GeometryDrawing.Geometry>
+                        <PathGeometry Figures="M2,2 L16,2 L22,8 L22,22 L2,22 Z M14,2 L14,8 L6,8 L6,2" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <GeometryDrawing Brush="#F8FBFF">
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="#1E4E79" Thickness="1" />
+                    </GeometryDrawing.Pen>
+                    <GeometryDrawing.Geometry>
+                        <RectangleGeometry Rect="6,14,12,8" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
 </ResourceDictionary>

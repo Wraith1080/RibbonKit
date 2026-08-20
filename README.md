@@ -326,9 +326,10 @@ isolated consumer compilation, live packaged runtime behavior, Release performan
 Studio designer were verified for launch. The post-v1 Office 2007 frame and Backstage S7-S9 work is
 complete through design-notes §3.94; MDI
 milestones M1–M3, custom-control projections and future theme expansion remain post-v1 work.
-RibbonKit Writer now has its W0-A application/test scaffold, empty editor surface and W0-B
-document-lifetime layer; W0-C through W5 remain. See the
-[roadmap](docs/03-ROADMAP.md) and [design notes](04-DESIGN-NOTES.md) for detailed status.
+RibbonKit Writer is implemented through W0-D: application/test scaffold, document lifetime, TXT/RTF
+persistence, atomic saves, recent files, and a live Backstage/QAT file-command shell with dirty-title
+and unsaved-close protection. W1 through W5 remain. See the [roadmap](docs/03-ROADMAP.md) and
+[design notes](04-DESIGN-NOTES.md) for detailed status.
 
 ## Contributing
 

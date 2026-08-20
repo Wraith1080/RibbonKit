@@ -4674,6 +4674,67 @@ The Writer project tests passed **25/25** five consecutive times. The full gate 
 logic tests plus one visual test covering 63 approved images**, with zero build warnings/errors and a
 clean `git diff --check`. W0-B changes no UI, so §3.99 remains the current live Writer surface gate.
 
+### 3.101 RibbonKit Writer W0-C TXT/RTF persistence and recent files — 2026-08-20
+
+Writer now implements the W0-B persistence contract for `.txt` and `.rtf` without coupling document
+IO to the window. Plain-text loading is Unicode/BOM aware and saving removes only the structural
+terminal paragraph break added by `FlowDocument`, so intentional final newlines survive repeated
+round trips without accumulating new ones. A queryable format-capability record makes loss of
+formatting, images, tables and page settings explicit before plain-text export. RTF uses WPF's native
+`TextRange`/`DataFormats.Rtf` path for representative formatting, rejects corrupt input, and remains
+explicitly best effort for advanced content. Native `.rkw` persistence still fails explicitly because
+its versioned, security-gated implementation belongs to W2-B.
+
+`AtomicFileWriter` serializes to a same-directory temporary file, durably flushes it, and only then
+replaces or creates the destination. Producer failure and cancellation after a partial temporary
+write leave an existing destination unchanged and clean temporary/backup artifacts. The recent-file
+service reuses that helper for versioned app-owned JSON, stores canonical absolute paths and UTC
+timestamps, orders newest first, de-duplicates paths case-insensitively, and applies a bounded
+capacity. Corrupt or unreadable state degrades to an empty list; recoverable write failure returns
+false and rolls back the in-memory candidate; cancellation propagates without losing the previous
+list. All defined Writer formats are retained so W2-B can add `.rkw` without reopening W0-C.
+
+Lead review required several correction passes plus a fresh Luna test-hardening pass to prove exact
+TXT newline behavior, dispatcher affinity, atomic failure/cancellation, recent-file reload ordering,
+failure isolation and the UI-thread deadlock regression. The accepted Writer suite passed **45/45**
+five consecutive times. The full gate then passed **400 logic tests plus one visual test covering 63
+approved images**, with zero build warnings/errors and a clean `git diff --check`. W0-C changes no UI,
+so §3.99 remains the current live Writer surface gate.
+
+### 3.102 RibbonKit Writer W0-D shell, Backstage and file-command integration — 2026-08-20
+
+Writer now exposes the W0-B/W0-C document and persistence contracts through a real application shell.
+`WriterShellViewModel` owns the observable dirty title, operation status, recent-file collection and
+New/Open/Save/Save As/Exit commands behind one non-reentrant operation gate. The `RibbonWindow` uses
+an ordinary Modern `Backstage` with recent documents and File actions, a compact Home/Document group,
+Ctrl+N/Ctrl+O/Ctrl+S/Ctrl+Shift+S bindings, and a below-ribbon QAT Save command with an app-owned
+vector glyph. Stable command IDs, KeyTips and Automation names/IDs cover the primary shell surface;
+recent rows bind their full paths as unique UI Automation identities.
+
+Native Open/Save dialogs keep the selected filter authoritative and normalize the destination
+extension to `.rtf` or `.txt`. Plain-text export requires an explicit fidelity confirmation and RTF
+status remains honest about advanced-content best effort. Successful explicit and implicit saves add
+recents without changing the document result when recent persistence is unavailable; Save-before-Open
+records the saved previous document before the newly opened target so the target remains newest.
+Cancelled or failed New/Open/Close transitions preserve the current document and report a
+non-misleading result. Dirty/path changes now update only the derived title; the editor replaces its
+`FlowDocument` only when the session actually changes `CurrentDocument`.
+
+Window close uses a cancel-first asynchronous decision followed by one guarded dispatcher close, so
+Cancel leaves the window usable and an approved close or Exit cannot re-enter the prompt. Production
+windows own their shell; the public injected-shell constructor leaves disposal with its caller. Shown,
+arranged STA integration tests exercise the realized Backstage recent button through its Automation
+peer, actual editor dirty/replacement behavior, command/gesture/QAT contracts, and clean/dirty/Exit
+close completion rather than detached XAML objects.
+
+The accepted Writer suite passed **91/91** across the lead's repeated focused runs, including **46
+W0-D shell cases**. The final full gate passed **446 logic tests plus one visual test covering 63
+approved images**, with zero build warnings/errors and a clean whitespace/CRLF check. On the actual
+1375×900 Writer surface, the lead opened Backstage, entered content, saved and reopened RTF, rejected
+then accepted the TXT fidelity warning, reopened TXT, confirmed the visible QAT Save glyph, cancelled
+a dirty close without losing the document, and then discarded to close. No RibbonKit runtime change
+was required.
+
 ## 4. Workflow / Session Conventions
 
 - Work from the current Windows checkout at
@@ -4718,8 +4779,9 @@ clean `git diff --check`. W0-B changes no UI, so §3.99 remains the current live
   directly beneath tabs and both QAT placements (§3.97). Its automated gate is green; live
   fallback/Acrylic visual approval remains pending.
 - MDI milestones M0 and M4 are complete: floating children plus ribbon tab/caption merging.
-- RibbonKit Writer W0-A/W0-B are complete through §3.100: the separate app/test scaffold and live
-  editor surface now have a tested, observable document-lifetime/session layer.
+- RibbonKit Writer W0-A through W0-D are complete through §3.102: the separate app/test scaffold,
+  document lifetime, TXT/RTF/atomic/recent services and live Backstage/QAT file-command shell are
+  integrated and verified on the real Writer surface.
 
 ### Remaining or intentionally deferred
 
@@ -4729,8 +4791,8 @@ clean `git diff --check`. W0-B changes no UI, so §3.99 remains the current live
 - Final live visual tuning and approval of the Office 2010 Aero-inspired frame prototype (§3.97).
 - Touch density, richer automatic QAT projections, custom-control projection APIs and additional
   themes remain post-v1 candidates. Their plan documents are not implementation evidence.
-- RibbonKit Writer W0-C through W5 remain. W0-C, W1-A, W1-B and W2-A are dependency-ready, but no
-  later packet is implied by the W0-B lifetime contracts.
+- RibbonKit Writer W1 through W5 remain. W1-A, W1-B and W2-A are dependency-ready; W1-C now waits only
+  for W1-A/W1-B because W0-D is accepted. No later packet is implied by the W0 shell contracts.
 - Automatic `Icons.xaml` discovery is best-effort by design. Keep `Load Icons.xaml…` available
   for ambiguity, inaccessible paths, parse failures, or no match.
 
@@ -4746,6 +4808,11 @@ clean `git diff --check`. W0-B changes no UI, so §3.99 remains the current live
   build warnings/errors; Writer W0-A live launch and editor input passed.
 - 2026-08-20 after §3.100: 380 logic tests, one visual test covering 63 approved images, and zero
   build warnings/errors; Writer W0-B passed 25/25 focused tests across five consecutive runs.
+- 2026-08-20 after §3.101: 400 logic tests, one visual test covering 63 approved images, and zero
+  build warnings/errors; Writer W0-C passed 45/45 focused tests across five consecutive runs.
+- 2026-08-20 after §3.102: 446 logic tests, one visual test covering 63 approved images, and zero
+  build warnings/errors; Writer passed 91/91 focused tests, including 46 W0-D shell cases, and the
+  native TXT/RTF/Backstage/QAT/dirty-close surface gate passed.
 - Before quoting a current count or declaring a new change complete, rerun the proportional build
   and test commands. Inspect actual/diff PNG artifacts before changing visual baselines or
   tolerances.

@@ -1,7 +1,7 @@
 # RibbonKit Writer — Luna Execution Plan
 
-> **Status:** durable execution decomposition created 2026-08-20. W0-A and W0-B are implemented, but
-> this document does not schedule future agents or imply that later Writer packets exist.
+> **Status:** durable execution decomposition created 2026-08-20. W0-A through W0-D are implemented,
+> but this document does not schedule future agents or imply that later Writer packets exist.
 > [`10-RIBBONKIT-WRITER-PLAN.md`](10-RIBBONKIT-WRITER-PLAN.md) owns product scope; current
 > implementation status remains in [`04-DESIGN-NOTES.md` §5](../04-DESIGN-NOTES.md#5-current-state--next-steps).
 
@@ -24,8 +24,9 @@ If those sources conflict, current user instructions and `AGENTS.md` win, follow
 live status. This plan must be corrected before execution rather than used to overwrite newer work.
 
 The Luna model choice is an execution constraint requested by the user, not a product dependency.
-Use the exact `gpt-5.6-luna` model when dispatching these packets. If it is unavailable in a future
-session, stop and ask for direction rather than silently substituting another model.
+Use the exact `gpt-5.6-luna` model at **max reasoning effort** when dispatching these packets. If that
+model or effort level is unavailable in a future session, stop and ask for direction rather than
+silently substituting another model or effort.
 
 ## 2. Execution contract
 
@@ -63,9 +64,10 @@ Each Luna worker receives exactly one packet and must:
 - return changed files, commands run, results, unresolved risks and any manual verification still
   needed. The worker must not commit or declare its milestone complete.
 
-Use Luna's `medium` reasoning effort by default. Use `high` for W2-B native-package safety and W3-B
-table mutation, where corrupt input or invalid FlowDocument structure has a larger failure cost. A
-failed packet returns to the lead for diagnosis; do not repeatedly retry it with broader scope.
+Use Luna's **max reasoning effort** for every packet. This applies equally to ordinary implementation,
+native-package safety and document-structure work; do not silently lower the effort for simpler
+packets. A failed packet returns to the lead for diagnosis; do not repeatedly retry it with broader
+scope.
 
 ### Stop and escalate when
 
@@ -418,7 +420,7 @@ Future turns may use one of these instructions:
 The lead should instantiate each worker prompt from this template:
 
 ```text
-You are implementing RibbonKit Writer packet <ID> with gpt-5.6-luna.
+You are implementing RibbonKit Writer packet <ID> with gpt-5.6-luna at max reasoning effort.
 
 Read repository AGENTS.md, 04-DESIGN-NOTES.md §5 and §3.87/§3.87a,
 docs/10-RIBBONKIT-WRITER-PLAN.md, and packet <ID> in

@@ -1,7 +1,9 @@
 # RibbonKit Writer — Functional Reference Application Plan
 
-> **Status:** approved post-v1 application plan. W0-A's scaffold and W0-B's document-lifetime layer
-> are implemented; no later packet is implied. Live status remains in `04-DESIGN-NOTES.md` §5.
+> **Status:** approved post-v1 application plan. W0-A through W0-D are implemented: scaffold,
+> document lifetime, TXT/RTF persistence, atomic saves, recent files and the live Backstage/QAT
+> file-command shell. No later packet is implied.
+> Live status remains in `04-DESIGN-NOTES.md` §5.
 > RibbonKit Writer is a separate functional sample, not another feature page inside
 > `RibbonKit.Showcase`.
 > The durable packet/dependency split for later Luna execution is in
