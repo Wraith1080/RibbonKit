@@ -1,7 +1,8 @@
 # RibbonKit Writer — Luna Execution Plan
 
-> **Status:** durable execution decomposition created 2026-08-20. W0-A through W0-D are implemented,
-> but this document does not schedule future agents or imply that later Writer packets exist.
+> **Status:** durable execution decomposition created 2026-08-20. W0-A through W0-D and W1-A are
+> implemented, but this document does not schedule future agents or imply that later Writer packets
+> exist.
 > [`10-RIBBONKIT-WRITER-PLAN.md`](10-RIBBONKIT-WRITER-PLAN.md) owns product scope; current
 > implementation status remains in [`04-DESIGN-NOTES.md` §5](../04-DESIGN-NOTES.md#5-current-state--next-steps).
 
@@ -136,12 +137,12 @@ Only packets whose dependencies have passed their integration gate are ready.
 | W1-B | Find/replace, spelling, counts and zoom | W0-B | Luna |
 | W1-C | Home ribbon, QAT, KeyTips and editing integration | W0-D, W1-A, W1-B | Luna, UI-exclusive |
 | W2-A | Page settings and validation | W0-B | Luna |
-| W2-B | Versioned `.rkw` persistence | W0-C, W2-A | Luna high-reasoning |
+| W2-B | Versioned `.rkw` persistence | W0-C, W2-A | Luna, high-risk |
 | W2-C | Centred paper editing surface | W1-C, W2-A | Luna |
 | W2-D | Preview, pagination and printing | W2-C | Luna |
 | W2-E | Layout/View ribbon and preview integration | W2-B, W2-D | Luna, UI-exclusive |
 | W3-A | Images and hyperlinks | W1-C, W2-B | Luna |
-| W3-B | FlowDocument table core | W1-C, W2-B | Luna high-reasoning |
+| W3-B | FlowDocument table core | W1-C, W2-B | Luna, high-risk |
 | W3-C | Table interaction and contextual Table Tools | W2-E, W3-B | Luna, UI-exclusive |
 | W3-D | Structured-content round-trip and RTF fixtures | W3-A, W3-C | Luna |
 | W4-A | Customization and appearance persistence | W3-D | Luna, UI-exclusive |

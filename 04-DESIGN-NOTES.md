@@ -4735,6 +4735,40 @@ then accepted the TXT fidelity warning, reopened TXT, confirmed the visible QAT 
 a dirty close without losing the document, and then discarded to close. No RibbonKit runtime change
 was required.
 
+### 3.103 RibbonKit Writer W1-A formatting command and selection-state engine — 2026-08-20
+
+Writer now has an app-owned `Editing` layer over the native `RichTextBox`. `WriterEditingCommands`
+provides stable routed commands for font family/size, solid foreground/highlight colours, alignment,
+indentation, paragraph spacing, bullets and numbering; standard WPF commands remain authoritative for
+clipboard, Select All and undo/redo. `WriterEditingAdapter` installs and removes the bindings without
+owning the document, selection, IME, clipboard storage or native undo stack. Disabled and read-only
+editors cannot be mutated through direct or routed adapter paths, while enabled read-only editors
+retain Copy and Select All.
+
+`WriterEditingState` distinguishes uniform, mixed, unset and explicitly unsupported projected values.
+State observation does not coerce a mixed selection or create an undo unit. Caret-only inspection uses
+adjacent native text formatting; paragraph state and mutation traverse only the selected structural
+range through `TextPointer.Paragraph`, including Section, ListItem and TableCell content rather than
+rescanning the whole document. Availability dependency-property changes and command requery refresh
+the immutable snapshot; `RefreshState()` remains the deterministic clipboard refresh seam. Imported
+gradient brushes stay untouched and report unsupported because Writer's W1 colour surface is solid
+colour only.
+
+Seventeen shown-STA tests cover empty, caret-only, uniform, mixed and default selections; routed and
+direct command enablement; disabled/read-only transitions; clipboard refresh; disposal/unsubscription;
+font, colour, alignment, indentation, spacing and list operations; Section/List/TableCell boundaries;
+invalid WPF values; mutation-free state reads; and grouped multi-paragraph undo. An independent
+max-effort review reproduced and drove corrections for disabled mutation, stale availability state,
+whole-document paragraph scans and incomplete container traversal before acceptance.
+
+The lead passed the focused W1-A suite **17/17 across five consecutive runs**, the full Writer suite
+**108/108**, and the full solution at **463 logic tests plus one visual test covering 63 approved
+images**, with zero build warnings/errors. A separately shown native editor then passed mixed-state
+detection, routed bold normalization, parameterized font/alignment formatting, grouped undo,
+disabled-command rejection and TableCell paragraph formatting. W1-A deliberately makes no MainWindow
+or ribbon-XAML change; that real Writer integration remains W1-C. No RibbonKit runtime change was
+required.
+
 ## 4. Workflow / Session Conventions
 
 - Work from the current Windows checkout at
@@ -4779,9 +4813,9 @@ was required.
   directly beneath tabs and both QAT placements (§3.97). Its automated gate is green; live
   fallback/Acrylic visual approval remains pending.
 - MDI milestones M0 and M4 are complete: floating children plus ribbon tab/caption merging.
-- RibbonKit Writer W0-A through W0-D are complete through §3.102: the separate app/test scaffold,
-  document lifetime, TXT/RTF/atomic/recent services and live Backstage/QAT file-command shell are
-  integrated and verified on the real Writer surface.
+- RibbonKit Writer W0-A through W0-D and W1-A are complete through §3.103: the separate app/test
+  scaffold, document lifetime, TXT/RTF/atomic/recent services, live Backstage/QAT file-command shell,
+  and formatting/selection-state engine are integrated at their packet boundaries.
 
 ### Remaining or intentionally deferred
 
@@ -4791,8 +4825,9 @@ was required.
 - Final live visual tuning and approval of the Office 2010 Aero-inspired frame prototype (§3.97).
 - Touch density, richer automatic QAT projections, custom-control projection APIs and additional
   themes remain post-v1 candidates. Their plan documents are not implementation evidence.
-- RibbonKit Writer W1 through W5 remain. W1-A, W1-B and W2-A are dependency-ready; W1-C now waits only
-  for W1-A/W1-B because W0-D is accepted. No later packet is implied by the W0 shell contracts.
+- RibbonKit Writer W1-B through W5 remain. W1-B and W2-A are dependency-ready; W1-C now waits only
+  for W1-B because W0-D and W1-A are accepted. No later packet is implied by the W1-A editing
+  contracts.
 - Automatic `Icons.xaml` discovery is best-effort by design. Keep `Load Icons.xaml…` available
   for ambiguity, inaccessible paths, parse failures, or no match.
 
@@ -4813,6 +4848,9 @@ was required.
 - 2026-08-20 after §3.102: 446 logic tests, one visual test covering 63 approved images, and zero
   build warnings/errors; Writer passed 91/91 focused tests, including 46 W0-D shell cases, and the
   native TXT/RTF/Backstage/QAT/dirty-close surface gate passed.
+- 2026-08-20 after §3.103: 463 logic tests, one visual test covering 63 approved images, and zero
+  build warnings/errors; Writer passed 108/108 tests, W1-A passed 17/17 across five consecutive runs,
+  and its separately shown native-editor formatting/state gate passed.
 - Before quoting a current count or declaring a new change complete, rerun the proportional build
   and test commands. Inspect actual/diff PNG artifacts before changing visual baselines or
   tolerances.
