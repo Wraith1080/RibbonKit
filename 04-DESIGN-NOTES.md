@@ -4647,6 +4647,33 @@ one visual test covering 63 approved images**. The actual Writer executable open
 1375×900 `RibbonKit Writer` window; UI Automation exposed `DocumentEditor` as a keyboard-focusable
 Document, live text entry succeeded, and the window closed normally.
 
+### 3.100 RibbonKit Writer W0-B document lifetime model — 2026-08-20
+
+Writer now has an app-owned, UI-independent document lifetime layer. `WriterDocument` owns a native
+`FlowDocument`, nullable path, explicit Rich Text/Plain Text/RibbonKit Writer format identity and
+dirty state. The document and `WriterDocumentSession` publish focused `INotifyPropertyChanged`
+notifications so the later shell can bind the dirty title and current identity without moving UI
+state into the model.
+
+The session coordinates New, Open, Save, Save As and close requests through three narrow contracts:
+document persistence, unsaved-change decisions and destination selection for an untitled Save. A
+candidate loaded by Open does not replace the current document until loading succeeds. Save and Save
+As commit clean/identity state only after persistence succeeds. Cancelled decisions, cancelled Save
+As destinations, persistence cancellation and ordinary load/save exceptions preserve the current
+document and dirty content; ordinary failures propagate while cancellation returns a non-destructive
+false result. Document page settings, real TXT/RTF IO, recent files, dialogs and window integration
+remain owned by later packets.
+
+The first Luna draft exposed two contract gaps during lead review: an untitled Save decision had no
+way to obtain a destination, and its asynchronous STA tests passed only because every fake completed
+synchronously. The accepted version adds a destination-provider boundary and a timeout-bounded STA
+runner with a live `DispatcherSynchronizationContext`. A final review added complete New/Open/Close
+decision coverage, strict path/format validation and observable state changes.
+
+The Writer project tests passed **25/25** five consecutive times. The full gate then passed **380
+logic tests plus one visual test covering 63 approved images**, with zero build warnings/errors and a
+clean `git diff --check`. W0-B changes no UI, so §3.99 remains the current live Writer surface gate.
+
 ## 4. Workflow / Session Conventions
 
 - Work from the current Windows checkout at
@@ -4691,8 +4718,8 @@ Document, live text entry succeeded, and the window closed normally.
   directly beneath tabs and both QAT placements (§3.97). Its automated gate is green; live
   fallback/Acrylic visual approval remains pending.
 - MDI milestones M0 and M4 are complete: floating children plus ribbon tab/caption merging.
-- RibbonKit Writer W0-A is complete through §3.99: the separate app/test projects, PerMonitorV2
-  host, app-owned icon dictionary, minimal RibbonWindow/editor surface and live launch/input gate.
+- RibbonKit Writer W0-A/W0-B are complete through §3.100: the separate app/test scaffold and live
+  editor surface now have a tested, observable document-lifetime/session layer.
 
 ### Remaining or intentionally deferred
 
@@ -4702,8 +4729,8 @@ Document, live text entry succeeded, and the window closed normally.
 - Final live visual tuning and approval of the Office 2010 Aero-inspired frame prototype (§3.97).
 - Touch density, richer automatic QAT projections, custom-control projection APIs and additional
   themes remain post-v1 candidates. Their plan documents are not implementation evidence.
-- RibbonKit Writer W0-B through W5 remain; W0-A proves only the application/test scaffold and empty
-  editor surface.
+- RibbonKit Writer W0-C through W5 remain. W0-C, W1-A, W1-B and W2-A are dependency-ready, but no
+  later packet is implied by the W0-B lifetime contracts.
 - Automatic `Icons.xaml` discovery is best-effort by design. Keep `Load Icons.xaml…` available
   for ambiguity, inaccessible paths, parse failures, or no match.
 
@@ -4717,6 +4744,8 @@ Document, live text entry succeeded, and the window closed normally.
   build warnings/errors; Office 2010 Aero live visual approval remains pending.
 - 2026-08-20 after §3.99: 356 logic tests, one visual test covering 63 approved images, and zero
   build warnings/errors; Writer W0-A live launch and editor input passed.
+- 2026-08-20 after §3.100: 380 logic tests, one visual test covering 63 approved images, and zero
+  build warnings/errors; Writer W0-B passed 25/25 focused tests across five consecutive runs.
 - Before quoting a current count or declaring a new change complete, rerun the proportional build
   and test commands. Inspect actual/diff PNG artifacts before changing visual baselines or
   tolerances.
