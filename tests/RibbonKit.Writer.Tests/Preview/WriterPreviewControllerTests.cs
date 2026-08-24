@@ -110,6 +110,43 @@ public sealed class WriterPreviewControllerTests
         });
     }
 
+    [Fact]
+    public void CloneFailureKeepsOlderSnapshotStaleUntilARefreshSucceeds()
+    {
+        StaTestHelper.Run(() =>
+        {
+            var document = new WriterDocument(new FlowDocument(new Paragraph(new Run("content"))));
+            var editor = new RichTextBox { Document = document.Content };
+            var scheduler = new ManualScheduler();
+            var cloneService = new WriterPreviewCloneService();
+            var attempts = 0;
+            using var controller = new WriterPreviewController(editor, document,
+                TimeSpan.Zero, scheduler, (content, settings) =>
+                {
+                    attempts++;
+                    if (attempts == 2)
+                        throw new InvalidOperationException("Synthetic clone failure.");
+                    return cloneService.CreateSnapshot(content, settings);
+                });
+
+            scheduler.RunNext();
+            var firstSnapshot = controller.Snapshot;
+            Assert.True(controller.TryGetCurrentSnapshot(out _));
+
+            controller.Refresh();
+            scheduler.RunNext();
+            Assert.True(controller.IsPending);
+            Assert.Same(firstSnapshot, controller.Snapshot);
+            Assert.False(controller.TryGetCurrentSnapshot(out _));
+
+            controller.Refresh();
+            scheduler.RunNext();
+            Assert.False(controller.IsPending);
+            Assert.True(controller.TryGetCurrentSnapshot(out var current));
+            Assert.NotSame(firstSnapshot, current);
+        });
+    }
+
     private static string SnapshotText(WriterPreviewController controller) =>
         new TextRange(controller.Snapshot!.SourceClone.ContentStart,
                 controller.Snapshot.SourceClone.ContentEnd).Text;

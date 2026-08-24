@@ -5005,6 +5005,39 @@ Microsoft Print to PDF output: A4 produced five clean 595.276 × 841.89-point pa
 specifically guards the raw-flow-paginator corruption found during the first A4 proof. W2-D is accepted and W2-E is
 dependency-ready but has not started. No `src/RibbonKit/**` change or new consumer-friction entry was required.
 
+### 3.111 RibbonKit Writer W2-E Page/View ribbon and preview integration — 2026-08-24
+
+Writer now exposes the accepted page-settings and fixed-preview contracts through app-owned Page and View tabs.
+Page offers A4/Letter/Legal size, portrait/landscape orientation, four margin presets, a transactional four-edge
+Custom Margins dialog and White/Ivory/Light Blue page colours. The dialog validates all physical edges immediately,
+disables Apply for invalid or non-fitting values, previews the current page orientation and commits one immutable
+`DocumentPageSettings` replacement only after Apply. Page changes update the one editor surface, preview rebuild and
+Backstage summary; page colour is carried by the isolated preview clone used for exact-paginator printing.
+
+View switches the same long-lived native `RichTextBox` among continuous editing, centred paper and fixed print
+preview without replacing its document or sacrificing selection and undo state. The accepted W2-D view supplies
+one-page, two-page and page-width modes, one-based navigation and active-mode zoom. Ribbon zoom moved from Home to
+View with its existing `Writer.Home.Editing.Zoom*` command identities, while the status-bar zoom remains global.
+Pending content/settings rebuilds clear the visible preview, disable both print commands and must satisfy
+`TryGetCurrentSnapshot` before and after the native print dialog, preventing an older paginator from being submitted.
+Document replacement also detaches the view before changing controller ownership, and teardown detaches the view
+before the owned XPS snapshot is disposed.
+
+Backstage now presents a compact primary Print action and outlined preview action with Writer vector icons instead
+of stretched generic buttons, plus the current paper/orientation/page-count/margin/colour summary. New and relocated
+actions retain command IDs, unique KeyTips, ScreenTips and automation names/IDs. External `UIAutomationClient`
+traversal of the actual 125%-scale Writer window still exposed the Page/View tabs but not their realized leaf
+commands; the working direct peers, pointer and KeyTip paths plus the remaining investigation are recorded as
+RKWF-006 without changing `src/RibbonKit/**`.
+
+The focused Page/View, preview and window-integration gate passes **20/20**. The actual Writer surface passed Page,
+Custom Margins valid/invalid/Cancel, View/preview, status zoom, keyboard tab selection, standard and 620-pixel narrow
+layouts, RTL and Backstage checks at 125% DPI. Integration tests prove Backstage and ribbon printing submit the exact
+fresh preview paginator, including coloured-page settings; W2-D's retained live A4/Letter Microsoft Print to PDF
+proof remains the device-output evidence. Independent read-only review identified and closed pending-overlay,
+automatic-zoom notification, clone-failure staleness and Backstage metadata gaps. W2-E is accepted and W2-F is
+dependency-ready. No RibbonKit runtime change was made.
+
 ## 4. Workflow / Session Conventions
 
 - Work from the current Windows checkout at
@@ -5049,7 +5082,7 @@ dependency-ready but has not started. No `src/RibbonKit/**` change or new consum
   directly beneath tabs and both QAT placements (§3.97). Its automated gate is green; live
   fallback/Acrylic visual approval remains pending.
 - MDI milestones M0 and M4 are complete: floating children plus ribbon tab/caption merging.
-- RibbonKit Writer W0-A through W0-D, W1-A through W1-D and W2-A through W2-D are complete through §3.110: the separate app/test
+- RibbonKit Writer W0-A through W0-D, W1-A through W1-D and W2-A through W2-E are complete through §3.111: the separate app/test
   scaffold, document lifetime, TXT/RTF/atomic/recent services, live Backstage/QAT file-command shell,
   formatting/selection-state engine, find/spelling/statistics/zoom utilities, and the accessible
   Home-ribbon/QAT editing surface are integrated at their packet boundaries. The accepted Writer-owned icon
@@ -5057,7 +5090,8 @@ dependency-ready but has not started. No `src/RibbonKit/**` change or new consum
   unit conversion, drift-free orientation and validated margins. The `.rkw` native format adds bounded,
   atomic, versioned persistence with a data-only text allowlist and page-setting round trips. The centred paper editor
   and stable fixed-page preview/print pipeline now share the same logical page inputs without sharing the live editor's
-  mutable paginator.
+  mutable paginator. App-owned Page/View tabs, transactional custom margins, page colour, view switching, relocated
+  ribbon zoom and icon-led Backstage print/summary actions expose those contracts while preserving one live editor.
 
 ### Remaining or intentionally deferred
 
@@ -5067,9 +5101,9 @@ dependency-ready but has not started. No `src/RibbonKit/**` change or new consum
 - Final live visual tuning and approval of the Office 2010 Aero-inspired frame prototype (§3.97).
 - Touch density, richer automatic QAT projections, custom-control projection APIs and additional
   themes remain post-v1 candidates. Their plan documents are not implementation evidence.
-- RibbonKit Writer W2-D is accepted through §3.110 on the available 125%-scale hardware. Both A4 and Letter preview/PDF
+- RibbonKit Writer W2-E is accepted through §3.111 on the available 125%-scale hardware. Both A4 and Letter preview/PDF
   paths passed, including all five output pages and the page-four corruption regression. Live mixed-monitor movement
-  remains a named W4-C hardware check because only one display is connected. W2-E through W5 remain; W2-E is
+  remains a named W4-C hardware check because only one display is connected. W2-F through W5 remain; W2-F is
   dependency-ready but has not started. W4 keeps the final whole-product consistency pass after W2/W3.
 - Automatic `Icons.xaml` discovery is best-effort by design. Keep `Load Icons.xaml…` available
   for ambiguity, inaccessible paths, parse failures, or no match.
@@ -5118,6 +5152,11 @@ dependency-ready but has not started. No `src/RibbonKit/**` change or new consum
   images. W2-D's 19 focused preview/printing tests and complete Writer suite **219/219** pass; A4 and Letter each
   produced five clean Microsoft Print to PDF pages from the same fixed paginator used by preview. The solution builds
   with zero warnings/errors and the unchanged RibbonKit/visual suites pass **355/355** and **1/1** respectively.
+- 2026-08-24 after §3.111 acceptance: the inventory is 586 logic tests plus one visual test covering 63 approved
+  images. W2-E's 20 focused Page/View, preview and window-integration tests and complete Writer suite **231/231** pass;
+  the solution builds with zero warnings/errors and the unchanged RibbonKit/visual suites pass **355/355** and
+  **1/1** respectively. Live Page/View, Custom Margins, preview, narrow/RTL, keyboard and Backstage surfaces passed at
+  125% DPI; external main-ribbon leaf traversal remains the RKWF-006 investigation.
 - Before quoting a current count or declaring a new change complete, rerun the proportional build
   and test commands. Inspect actual/diff PNG artifacts before changing visual baselines or
   tolerances.

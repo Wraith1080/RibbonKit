@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
 using System.Reflection;
 using System.Windows;
@@ -15,10 +16,14 @@ using RibbonKit.Controls;
 using RibbonKit.Writer.Editing;
 using RibbonKit.Writer;
 using RibbonKit.Writer.Models;
+using RibbonKit.Writer.Page;
+using RibbonKit.Writer.Preview;
+using RibbonKit.Writer.Printing;
 using RibbonKit.Writer.Services.Documents;
 using RibbonKit.Writer.Services.RecentFiles;
 using RibbonKit.Writer.Shell;
 using RibbonKit.Writer.Tests.Document;
+using RibbonKit.Writer.View;
 using Xunit;
 
 namespace RibbonKit.Writer.Tests.Shell;
@@ -49,6 +54,7 @@ public sealed class MainWindowIntegrationTests
             await Dispatcher.Yield(DispatcherPriority.Render);
             AssertWriterIconCatalog(fixture);
             await AssertEditingRibbonControlsAsync(fixture);
+            await AssertPageViewIntegrationAsync(fixture);
 
             var editingController = fixture.Window.EditingController;
             var stateParagraph = new Paragraph();
@@ -315,6 +321,222 @@ public sealed class MainWindowIntegrationTests
         fixture.Shell.CurrentDocument.MarkClean();
     }
 
+    private static async Task AssertPageViewIntegrationAsync(WindowFixture fixture)
+    {
+        fixture.Window.Width = 1500;
+        fixture.Window.UpdateLayout();
+        var window = fixture.Window;
+        var ribbon = fixture.Ribbon;
+        var editor = fixture.Editor;
+        var surface = Assert.IsType<WriterEditorSurface>(window.FindName("EditorSurface"));
+        var preview = Assert.IsType<WriterDocumentPreviewView>(window.FindName("PreviewView"));
+
+        var pageControls = new (string Name, string AutomationId, string CommandId)[]
+        {
+            ("PaperSizeButton", "PagePaperSize", "Writer.Page.Size"),
+            ("OrientationButton", "PageOrientation", "Writer.Page.Orientation"),
+            ("MarginsButton", "PageMargins", "Writer.Page.Margins.Choose"),
+            ("PageColorButton", "PageColor", "Writer.Page.Color")
+        };
+        var viewControls = new (string Name, string AutomationId, string CommandId)[]
+        {
+            ("ContinuousViewButton", "ViewContinuous", "Writer.View.Continuous"),
+            ("PaperViewButton", "ViewPaper", "Writer.View.Paper"),
+            ("PrintPreviewViewButton", "ViewPrintPreview", "Writer.View.PrintPreview"),
+            ("OnePageButton", "PreviewOnePage", "Writer.View.Preview.OnePage"),
+            ("TwoPagesButton", "PreviewTwoPages", "Writer.View.Preview.TwoPages"),
+            ("PageWidthButton", "PreviewPageWidth", "Writer.View.Preview.PageWidth"),
+            ("PreviousPageButton", "PreviewPreviousPage", "Writer.View.Preview.Previous"),
+            ("NextPageButton", "PreviewNextPage", "Writer.View.Preview.Next"),
+            ("PrintButton", "ViewPrint", "Writer.Print"),
+            ("ZoomOutButton", "ZoomOut", "Writer.Home.Editing.ZoomOut"),
+            ("ZoomResetButton", "ZoomReset", "Writer.Home.Editing.ZoomReset"),
+            ("ZoomInButton", "ZoomIn", "Writer.Home.Editing.ZoomIn")
+        };
+        foreach (var (name, automationId, commandId) in pageControls.Concat(viewControls))
+        {
+            var control = Assert.IsAssignableFrom<FrameworkElement>(window.FindName(name));
+            Assert.Equal(automationId, AutomationProperties.GetAutomationId(control));
+            Assert.False(string.IsNullOrWhiteSpace(AutomationProperties.GetName(control)));
+            Assert.Equal(commandId, Ribbon.GetCommandId(control));
+            Assert.False(string.IsNullOrWhiteSpace(KeyTip.GetKeys(control)));
+            AssertScreenTip(control);
+        }
+        Assert.Equal(pageControls.Length, pageControls.Select(item =>
+            KeyTip.GetKeys(Assert.IsAssignableFrom<FrameworkElement>(window.FindName(item.Name)))!)
+            .Distinct(StringComparer.OrdinalIgnoreCase).Count());
+        Assert.Equal(viewControls.Length, viewControls.Select(item =>
+            KeyTip.GetKeys(Assert.IsAssignableFrom<FrameworkElement>(window.FindName(item.Name)))!)
+            .Distinct(StringComparer.OrdinalIgnoreCase).Count());
+        foreach (var name in new[]
+        {
+            "PaperSizeA4", "PaperSizeLetter", "PaperSizeLegal", "OrientationPortrait",
+            "OrientationLandscape", "MarginsNormal", "MarginsNarrow", "MarginsModerate",
+            "MarginsWide", "CustomMargins", "PageColorWhite", "PageColorIvory", "PageColorBlue"
+        })
+        {
+            var item = Assert.IsType<RibbonMenuItem>(window.FindName(name));
+            Assert.False(string.IsNullOrWhiteSpace(Ribbon.GetCommandId(item)));
+            Assert.False(string.IsNullOrWhiteSpace(KeyTip.GetKeys(item)));
+            Assert.False(string.IsNullOrWhiteSpace(AutomationProperties.GetAutomationId(item)));
+            Assert.False(string.IsNullOrWhiteSpace(AutomationProperties.GetName(item)));
+        }
+        foreach (var (name, iconKey) in new[]
+        {
+            ("BackstagePrintButton", "Icon.WriterPrint"),
+            ("BackstagePreviewButton", "Icon.WriterPrintPreview")
+        })
+        {
+            var button = Assert.IsType<RibbonButton>(window.FindName(name));
+            var content = Assert.IsType<StackPanel>(button.Content);
+            var image = Assert.IsType<Image>(content.Children[0]);
+            Assert.Same(window.TryFindResource(iconKey), image.Source);
+            Assert.False(string.IsNullOrWhiteSpace(AutomationProperties.GetName(button)));
+            Assert.False(string.IsNullOrWhiteSpace(Ribbon.GetCommandId(button)));
+            Assert.False(string.IsNullOrWhiteSpace(KeyTip.GetKeys(button)));
+            AssertScreenTip(button);
+        }
+
+        Assert.Equal(3, ribbon.Tabs.Count);
+        var home = ribbon.Tabs.Single(tab => Equals(tab.Header, "Home"));
+        Assert.DoesNotContain(FindLogicalDescendants<FrameworkElement>(home), element =>
+            AutomationProperties.GetAutomationId(element) is "ZoomOut" or "ZoomReset" or "ZoomIn");
+        var view = ribbon.Tabs.Single(tab => Equals(tab.Header, "View"));
+        Assert.Equal(new[] { "Document Views", "Preview", "Zoom" },
+            view.Groups.Select(group => group.Header?.ToString()).ToArray());
+
+        var document = fixture.Shell.CurrentDocument;
+        var openingPreviewSnapshot = preview.Snapshot;
+        document.Content.Blocks.Clear();
+        var paragraph = new Paragraph(new Run("selection survives every Writer view"));
+        document.Content.Blocks.Add(paragraph);
+        editor.Selection.Select(paragraph.ContentStart.GetPositionAtOffset(1)!,
+            paragraph.ContentStart.GetPositionAtOffset(10)!);
+        var selectedText = editor.Selection.Text;
+        editor.AppendText(" undo");
+        Assert.True(editor.CanUndo);
+        editor.Selection.Select(paragraph.ContentStart.GetPositionAtOffset(1)!,
+            paragraph.ContentStart.GetPositionAtOffset(10)!);
+        var liveEditor = editor;
+        var liveDocument = editor.Document;
+
+        Toggle(Assert.IsType<RibbonToggleButton>(window.FindName("ContinuousViewButton")));
+        await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+        Assert.Equal(WriterViewMode.ContinuousEdit, window.CurrentViewMode);
+        Assert.Equal(WriterEditorViewMode.Continuous, surface.ViewMode);
+        Assert.Same(liveEditor, fixture.Editor);
+        Assert.Same(liveDocument, fixture.Editor.Document);
+        Assert.Equal(selectedText, editor.Selection.Text);
+        Assert.True(editor.CanUndo);
+
+        Toggle(Assert.IsType<RibbonToggleButton>(window.FindName("PaperViewButton")));
+        await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+        Assert.Equal(WriterViewMode.Paper, window.CurrentViewMode);
+        Assert.Equal(WriterEditorViewMode.Paper, surface.ViewMode);
+        Assert.Same(liveDocument, fixture.Editor.Document);
+        Assert.Equal(selectedText, editor.Selection.Text);
+        Assert.True(editor.CanUndo);
+
+        await WaitForAsync(() => preview.Snapshot is not null &&
+            !ReferenceEquals(openingPreviewSnapshot, preview.Snapshot));
+        Toggle(Assert.IsType<RibbonToggleButton>(window.FindName("PrintPreviewViewButton")));
+        await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+        Assert.Equal(WriterViewMode.PrintPreview, window.CurrentViewMode);
+        Assert.Equal(Visibility.Collapsed, surface.Visibility);
+        Assert.Equal(Visibility.Visible, preview.Visibility);
+        Assert.NotNull(preview.Snapshot);
+        Assert.Same(liveDocument, fixture.Editor.Document);
+        Assert.Equal(selectedText, editor.Selection.Text);
+        Assert.True(editor.CanUndo);
+
+        Toggle(Assert.IsType<RibbonToggleButton>(window.FindName("OnePageButton")));
+        Assert.Equal(WriterPreviewViewMode.OnePage, preview.ViewMode);
+        Toggle(Assert.IsType<RibbonToggleButton>(window.FindName("TwoPagesButton")));
+        Assert.Equal(WriterPreviewViewMode.TwoPages, preview.ViewMode);
+        Toggle(Assert.IsType<RibbonToggleButton>(window.FindName("PageWidthButton")));
+        Assert.Equal(WriterPreviewViewMode.PageWidth, preview.ViewMode);
+        var fittedZoom = preview.Zoom;
+        Click(Assert.IsType<RibbonButton>(window.FindName("ZoomInButton")));
+        Assert.Equal(WriterPreviewViewMode.OnePage, preview.ViewMode);
+        Assert.Equal(Math.Min(preview.MaxZoom, fittedZoom + 10), preview.Zoom, 3);
+        Click(Assert.IsType<RibbonButton>(window.FindName("ZoomResetButton")));
+        Assert.Equal(100, preview.Zoom, 3);
+
+        var firstSnapshot = preview.Snapshot;
+        var printDevice = new RecordingPrintDevice();
+        var printResult = window.TryPrintCurrentSnapshot(printDevice);
+        Assert.NotNull(printResult);
+        Assert.True(printResult.Submitted);
+        Assert.Same(firstSnapshot!.Paginator, printDevice.SubmittedPaginator);
+        editor.AppendText(" pending edit");
+        Assert.Null(window.TryPrintCurrentSnapshot(new RecordingPrintDevice()));
+        await WaitForAsync(() => preview.Snapshot is not null);
+        Assert.NotNull(preview.Snapshot);
+        Assert.NotSame(firstSnapshot, preview.Snapshot);
+
+        var pageSettingChanges = 0;
+        document.PropertyChanged += CountPageSettings;
+        ribbon.SelectedTab = ribbon.Tabs.Single(tab => Equals(tab.Header, "Page"));
+        window.UpdateLayout();
+        Click(Assert.IsType<RibbonMenuItem>(window.FindName("PaperSizeA4")));
+        Assert.Equal(DocumentPaperSize.A4, document.PageSettings.PaperSize);
+        Click(Assert.IsType<RibbonMenuItem>(window.FindName("OrientationLandscape")));
+        Assert.Equal(DocumentPageOrientation.Landscape, document.PageSettings.Orientation);
+        Click(Assert.IsType<RibbonMenuItem>(window.FindName("MarginsNarrow")));
+        Assert.Equal(WriterPageUi.CreateMargins(WriterMarginPreset.Narrow), document.PageSettings.Margins);
+        Assert.Equal(3, pageSettingChanges);
+        document.PropertyChanged -= CountPageSettings;
+
+        var custom = new DocumentPageMargins(40, 50, 60, 70);
+        var customReplacement = document.PageSettings.WithMargins(custom);
+        Assert.True(window.TryApplyPageSettings(customReplacement));
+        Assert.Same(customReplacement, document.PageSettings);
+        Assert.False(window.TryApplyPageSettings(customReplacement));
+
+        Click(Assert.IsType<RibbonMenuItem>(window.FindName("PageColorIvory")));
+        Assert.Equal(Color.FromRgb(255, 253, 240),
+            Assert.IsType<SolidColorBrush>(document.Content.Background).Color);
+        Assert.Equal(document.Content.Background, editor.Background);
+        var summary = Assert.IsType<TextBlock>(window.FindName("BackstagePageSummaryText")).Text;
+        Assert.Contains("A4", summary);
+        Assert.Contains("Landscape", summary);
+        Assert.Contains("Page colour: Ivory", summary);
+        await WaitForAsync(() => preview.Snapshot?.SourceClone.Background is SolidColorBrush brush &&
+            brush.Color == Color.FromRgb(255, 253, 240));
+        var colouredSnapshot = preview.Snapshot!;
+        Assert.Equal(document.PageSettings, colouredSnapshot.PageSettings);
+        var colouredPrintDevice = new RecordingPrintDevice();
+        Assert.True(window.TryPrintCurrentSnapshot(colouredPrintDevice)!.Submitted);
+        Assert.Same(colouredSnapshot.Paginator, colouredPrintDevice.SubmittedPaginator);
+
+        window.FlowDirection = FlowDirection.RightToLeft;
+        window.Width = 540;
+        window.UpdateLayout();
+        Assert.Equal(FlowDirection.RightToLeft, window.FlowDirection);
+        Assert.All(ribbon.Tabs, tab => Assert.NotNull(tab.Header));
+        window.FlowDirection = FlowDirection.LeftToRight;
+        window.Width = 1500;
+
+        Toggle(Assert.IsType<RibbonToggleButton>(window.FindName("PaperViewButton")));
+        await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+        Assert.Equal(WriterViewMode.Paper, window.CurrentViewMode);
+        Assert.Equal(Visibility.Visible, surface.Visibility);
+        Assert.Same(liveDocument, editor.Document);
+        Assert.Equal(selectedText, editor.Selection.Text);
+        Assert.True(editor.CanUndo);
+        document.Content.Blocks.Clear();
+        document.Content.Background = null;
+        editor.Background = Brushes.White;
+        document.MarkClean();
+        return;
+
+        void CountPageSettings(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(WriterDocument.PageSettings))
+                pageSettingChanges++;
+        }
+    }
+
     private static void AssertEditorFocusRestored(WindowFixture fixture)
     {
         // The visual-test host can own the OS foreground window when solution projects run in parallel.
@@ -336,7 +558,8 @@ public sealed class MainWindowIntegrationTests
         Assert.Same(ribbon, dock.Children[0]);
         Assert.Equal("Bottom", DockPanel.GetDock(dock.Children[1]).ToString());
         Assert.IsType<StatusBar>(dock.Children[1]);
-        var editorSurface = Assert.IsType<WriterEditorSurface>(dock.Children[2]);
+        var presentationHost = Assert.IsType<Grid>(dock.Children[2]);
+        var editorSurface = Assert.IsType<WriterEditorSurface>(presentationHost.Children[0]);
         Assert.Same(editor, editorSurface.Editor);
         Assert.Equal(WriterEditorViewMode.Paper, editorSurface.ViewMode);
         Assert.Equal("DocumentEditor", AutomationProperties.GetAutomationId(editor));
@@ -360,7 +583,9 @@ public sealed class MainWindowIntegrationTests
             AutomationProperties.GetName(item))));
         Assert.All(fileActions, item => Assert.NotNull(item.Command));
 
-        var home = Assert.Single(ribbon.Tabs);
+        Assert.Equal(new[] { "Home", "Page", "View" },
+            ribbon.Tabs.Select(tab => tab.Header?.ToString()).ToArray());
+        var home = ribbon.Tabs[0];
         Assert.Equal("Home", home.Header);
         Assert.Equal(new[] { "Clipboard", "Font", "Paragraph", "Editing" },
             home.Groups.Select(group => group.Header?.ToString()).ToArray());
@@ -386,10 +611,7 @@ public sealed class MainWindowIntegrationTests
             ("FindButton", "EditingFind", "Find", "Writer.Home.Editing.Find"),
             ("ReplaceButton", "EditingReplace", "Replace", "Writer.Home.Editing.Replace"),
             ("SelectAllButton", "EditingSelectAll", "Select All", "Writer.Home.Editing.SelectAll"),
-            ("SpellCheckButton", "EditingSpelling", "Spelling", "Writer.Home.Editing.Spelling"),
-            ("ZoomOutButton", "ZoomOut", "Zoom Out", "Writer.Home.Editing.ZoomOut"),
-            ("ZoomResetButton", "ZoomReset", "Reset Zoom", "Writer.Home.Editing.ZoomReset"),
-            ("ZoomInButton", "ZoomIn", "Zoom In", "Writer.Home.Editing.ZoomIn")
+            ("SpellCheckButton", "EditingSpelling", "Spelling", "Writer.Home.Editing.Spelling")
         };
         foreach (var (name, automationId, automationName, commandId) in expectedHome)
         {
@@ -404,6 +626,8 @@ public sealed class MainWindowIntegrationTests
         Assert.Equal(homeIds.Length, homeIds.Distinct(StringComparer.OrdinalIgnoreCase).Count());
         var homeKeys = expectedHome.Select(item => KeyTip.GetKeys(Assert.IsAssignableFrom<FrameworkElement>(window.FindName(item.Name)))!).ToArray();
         Assert.Equal(homeKeys.Length, homeKeys.Distinct(StringComparer.OrdinalIgnoreCase).Count());
+        Assert.DoesNotContain(home.Groups.SelectMany(group => FindVisualDescendants<FrameworkElement>(group)),
+            element => AutomationProperties.GetAutomationId(element) is "ZoomOut" or "ZoomReset" or "ZoomIn");
         var menuCommands = new (string Name, string CommandId)[]
         {
             ("TextColorAutomatic", "Writer.Home.Font.TextColor.Automatic"),
@@ -843,5 +1067,42 @@ public sealed class MainWindowIntegrationTests
             Task.FromResult<WriterDocument?>(new WriterDocument(new FlowDocument()));
         public Task<bool> SaveAsync(WriterDocument document, string path, WriterDocumentFormat format,
             CancellationToken cancellationToken) => Task.FromResult(true);
+    }
+
+    private static async Task WaitForAsync(Func<bool> condition)
+    {
+        for (var attempt = 0; attempt < 100; attempt++)
+        {
+            if (condition())
+                return;
+            await Task.Delay(10);
+            await Dispatcher.Yield(DispatcherPriority.Background);
+        }
+        Assert.True(condition(), "The expected Writer window state did not arrive within one second.");
+    }
+
+    private static void Click(ButtonBase button) =>
+        button.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent, button));
+
+    private static IEnumerable<T> FindLogicalDescendants<T>(DependencyObject root) where T : DependencyObject
+    {
+        foreach (var child in LogicalTreeHelper.GetChildren(root).OfType<DependencyObject>())
+        {
+            if (child is T match)
+                yield return match;
+            foreach (var descendant in FindLogicalDescendants<T>(child))
+                yield return descendant;
+        }
+    }
+
+    private sealed class RecordingPrintDevice : IWriterPrintDevice
+    {
+        public WriterPrintDeviceCapabilities? Capabilities => null;
+        public DocumentPaginator? SubmittedPaginator { get; private set; }
+
+        public void Submit(DocumentPaginator paginator, string documentName)
+        {
+            SubmittedPaginator = paginator;
+        }
     }
 }

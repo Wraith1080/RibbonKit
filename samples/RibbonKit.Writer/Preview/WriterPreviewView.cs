@@ -220,12 +220,12 @@ public sealed class WriterDocumentPreviewView : Grid
         _secondaryPageHost.Visibility = showSecondPage ? Visibility.Visible : Visibility.Collapsed;
 
         if (_viewMode is WriterPreviewViewMode.PageWidth or WriterPreviewViewMode.TwoPages)
-            UpdateAutomaticZoom();
+            UpdateAutomaticZoom(notify: false);
         else
             ApplyPageSizes();
     }
 
-    private void UpdateAutomaticZoom()
+    private void UpdateAutomaticZoom(bool notify = true)
     {
         if (_snapshot is null)
             return;
@@ -249,8 +249,12 @@ public sealed class WriterDocumentPreviewView : Grid
             zoom = widthForPages / _snapshot.PageSize.Width * 100;
         }
 
-        _zoom = Math.Clamp(zoom, MinimumZoom, MaximumZoom);
+        var nextZoom = Math.Clamp(zoom, MinimumZoom, MaximumZoom);
+        var changed = Math.Abs(_zoom - nextZoom) >= 0.01;
+        _zoom = nextZoom;
         ApplyPageSizes();
+        if (notify && changed)
+            StateChanged?.Invoke(this, EventArgs.Empty);
     }
 
     private void ApplyPageSizes()

@@ -158,6 +158,27 @@ remain read-only until actual/diff evidence justifies a deliberate change.
 - **Evidence still required:** a focused consumer prototype in Writer or Showcase covering horizontal group
   layouts, all ribbon sizes, collapsed flyouts, all themes, RTL, high DPI, customization and automation trees.
 
+### RKWF-006 — Main-ribbon leaf commands are absent from external UIA traversal
+
+- **First seen / packet:** 2026-08-24, Writer W2-E Page/View live verification.
+- **Status:** Open investigation; not yet a confirmed RibbonKit defect and no runtime change is approved.
+- **Consumer goal:** external UI Automation clients should discover the visible Page/View ribbon commands with
+  their assigned names, IDs, enabled state and Invoke/Toggle/ExpandCollapse patterns.
+- **Reproduction and evidence:** an exact-process `UIAutomationClient` traversal of the live 125%-scale Writer
+  window discovered the Page and View `TabItem` peers and ordinary status content, but none of the realized named
+  leaf controls in their groups. The same controls retain app-assigned automation metadata, expose working
+  in-process RibbonKit peers, and pass actual mouse and KeyTip activation.
+- **Friction:** Writer can preserve metadata and prove direct peer/action behavior, but it cannot make an external
+  accessibility client traverse children that the ribbon/group peer hierarchy does not publish.
+- **Current app-owned workaround:** keep explicit automation names/IDs, stable command IDs and KeyTips; cover
+  in-process peer semantics and separately exercise the real mouse/keyboard paths.
+- **Application impact:** external test clients and assistive technologies may not discover Page/View commands even
+  though sighted pointer and keyboard operation work.
+- **Smallest possible library direction:** isolate the `RibbonAutomationPeer`/`RibbonGroupAutomationPeer` child
+  hierarchy with a minimal consumer before considering an additive peer bridge. Do not special-case Writer.
+- **Evidence still required:** Inspect.exe or equivalent captures across expanded, narrow/collapsed and minimized
+  ribbon states, plus comparison with the Showcase and a second UIA client.
+
 ## 5. Closed observations
 
 None yet.

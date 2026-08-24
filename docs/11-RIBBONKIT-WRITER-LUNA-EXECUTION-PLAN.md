@@ -1,8 +1,8 @@
 # RibbonKit Writer — Luna Execution Plan
 
 > **Status:** durable execution decomposition created 2026-08-20. W0-A through W0-D, W1-A through W1-D and
-> W2-A through W2-D are accepted on the available hardware. Live mixed-monitor checking remains deferred to W4-C
-> because only one display is connected. W2-E is dependency-ready but has not started.
+> W2-A through W2-E are accepted on the available hardware. Live mixed-monitor checking remains deferred to W4-C
+> because only one display is connected. W2-F is dependency-ready but has not started.
 > This document does not schedule future agents or imply that any later Writer packet exists.
 > [`10-RIBBONKIT-WRITER-PLAN.md`](10-RIBBONKIT-WRITER-PLAN.md) owns product scope; current
 > implementation status remains in [`04-DESIGN-NOTES.md` §5](../04-DESIGN-NOTES.md#5-current-state--next-steps).
@@ -305,7 +305,8 @@ input and live DPI movement.
 ### W2-D — Preview, pagination and printing
 
 **Status (2026-08-24): accepted.** Preview and Microsoft Print to PDF use the same stable fixed paginator; A4 and
-Letter preview/output plus all five pages of each PDF passed the live gate. W2-E is dependency-ready.
+Letter preview/output plus all five pages of each PDF passed the live gate. W2-E consumed this contract and is
+accepted separately below.
 
 **Owns:** preview-clone service, paginator/print service, preview view and tests.
 
@@ -317,6 +318,10 @@ clamp printer imageable-area conflicts.
 Microsoft Print to PDF or an available printer. Opening a dialog is not proof of a correct print path.
 
 ### W2-E — Page/View integration
+
+**Status (2026-08-24): accepted.** The actual 125%-scale Writer surface passed Page/View switching, transactional
+custom margins, page colour, preview modes/navigation/zoom, narrow/RTL, keyboard and icon-led Backstage checks. The
+same long-lived editor and exact fresh W2-D paginator are retained. W2-F is dependency-ready.
 
 **Owns:** Page/View ribbon tabs and groups, view switching, zoom-command relocation and Backstage
 print/page-summary UI exclusively.

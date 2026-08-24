@@ -71,12 +71,15 @@ public sealed class WriterDocumentPreviewViewTests
             var scaledPageWidth = snapshot.PageSize.Width * view.Zoom / 100;
             Assert.InRange(view.Viewer.ViewportWidth - scaledPageWidth, 47, 49);
             var originalZoom = view.Zoom;
+            var stateChanges = 0;
+            view.StateChanged += (_, _) => stateChanges++;
             host.Width = 360;
             view.Width = 360;
             host.UpdateLayout();
             PumpDispatcher(view.Dispatcher);
             Assert.True(view.Zoom < originalZoom);
             Assert.True(view.Zoom < 80);
+            Assert.True(stateChanges > 0);
             scaledPageWidth = snapshot.PageSize.Width * view.Zoom / 100;
             Assert.InRange(view.Viewer.ViewportWidth - scaledPageWidth, 47, 49);
             host.Width = 2200;

@@ -18,7 +18,7 @@ namespace RibbonKit.Writer.Preview;
 public sealed class WriterPreviewController : IDisposable
 {
     private readonly IWriterPreviewScheduler _scheduler;
-    private readonly WriterPreviewCloneService _cloneService;
+    private readonly Func<FlowDocument, DocumentPageSettings, WriterPreviewSnapshot> _snapshotFactory;
     private readonly TimeSpan _debounce;
     private WriterDocument _document;
     private PendingRebuild? _pending;
@@ -30,6 +30,16 @@ public sealed class WriterPreviewController : IDisposable
     public WriterPreviewController(RichTextBox editor, WriterDocument document,
         TimeSpan? debounce = null, IWriterPreviewScheduler? scheduler = null,
         WriterPreviewCloneService? cloneService = null)
+        : this(editor, document, debounce,
+            scheduler ?? new WriterDispatcherPreviewScheduler(editor?.Dispatcher ??
+                throw new ArgumentNullException(nameof(editor))),
+            (cloneService ?? new WriterPreviewCloneService()).CreateSnapshot)
+    {
+    }
+
+    internal WriterPreviewController(RichTextBox editor, WriterDocument document,
+        TimeSpan? debounce, IWriterPreviewScheduler scheduler,
+        Func<FlowDocument, DocumentPageSettings, WriterPreviewSnapshot> snapshotFactory)
     {
         Editor = editor ?? throw new ArgumentNullException(nameof(editor));
         _document = document ?? throw new ArgumentNullException(nameof(document));
@@ -38,8 +48,8 @@ public sealed class WriterPreviewController : IDisposable
         if (_debounce < TimeSpan.Zero)
             throw new ArgumentOutOfRangeException(nameof(debounce), _debounce,
                 "The preview debounce delay cannot be negative.");
-        _scheduler = scheduler ?? new WriterDispatcherPreviewScheduler(editor.Dispatcher);
-        _cloneService = cloneService ?? new WriterPreviewCloneService();
+        _scheduler = scheduler ?? throw new ArgumentNullException(nameof(scheduler));
+        _snapshotFactory = snapshotFactory ?? throw new ArgumentNullException(nameof(snapshotFactory));
         Editor.TextChanged += OnEditorTextChanged;
         _document.PropertyChanged += OnDocumentPropertyChanged;
         RequestRebuild();
@@ -140,10 +150,20 @@ public sealed class WriterPreviewController : IDisposable
             pending.Identity != _pending.Identity || pending.Generation != _generation)
             return;
 
-        _pending = null;
         var currentDocument = _document;
         var currentContent = Editor.Document;
-        var snapshot = _cloneService.CreateSnapshot(currentContent, currentDocument.PageSettings);
+        WriterPreviewSnapshot snapshot;
+        try
+        {
+            snapshot = _snapshotFactory(currentContent, currentDocument.PageSettings);
+        }
+        catch
+        {
+            // Keep this generation pending so TryGetCurrentSnapshot cannot expose the older
+            // snapshot. A later content/settings change or explicit Refresh can retry safely.
+            return;
+        }
+        _pending = null;
         if (_disposed || pending.Generation != _generation || !ReferenceEquals(_document, currentDocument) ||
             !ReferenceEquals(Editor.Document, currentContent))
         {
