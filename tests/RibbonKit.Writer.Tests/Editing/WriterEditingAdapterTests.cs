@@ -13,7 +13,7 @@ namespace RibbonKit.Writer.Tests.Editing;
 public sealed class WriterEditingAdapterTests
 {
     [Fact]
-    public void EmptyDocumentReportsUnsetFormattingAndNativeCommandState()
+    public void EmptyDocumentReportsInsertionDefaultsAndNativeCommandState()
     {
         StaTestHelper.Run(() =>
         {
@@ -21,8 +21,13 @@ public sealed class WriterEditingAdapterTests
 
             Assert.False(fixture.Adapter.State.HasTextContext);
             Assert.Equal(WriterSelectionValueKind.Unset, fixture.Adapter.State.Bold.Kind);
-            Assert.Equal(WriterSelectionValueKind.Unset, fixture.Adapter.State.FontFamily.Kind);
-            Assert.Equal(WriterSelectionValueKind.Unset, fixture.Adapter.State.Alignment.Kind);
+            Assert.True(fixture.Adapter.State.FontFamily.IsUniform);
+            Assert.Equal(fixture.Editor.Document.FontFamily.Source,
+                fixture.Adapter.State.FontFamily.Value.Source);
+            Assert.True(fixture.Adapter.State.FontSize.IsUniform);
+            Assert.Equal(fixture.Editor.Document.FontSize, fixture.Adapter.State.FontSize.Value);
+            Assert.True(fixture.Adapter.State.Alignment.IsUniform);
+            Assert.Equal(TextAlignment.Left, fixture.Adapter.State.Alignment.Value);
             Assert.False(fixture.Adapter.State.CanCopy);
             Assert.False(fixture.Adapter.State.CanCut);
             Assert.False(fixture.Adapter.State.CanUndo);
@@ -31,6 +36,8 @@ public sealed class WriterEditingAdapterTests
             fixture.Adapter.ToggleBold();
             fixture.Adapter.SetAlignment(TextAlignment.Center);
             Assert.Equal(WriterSelectionValueKind.Unset, fixture.Adapter.State.Bold.Kind);
+            Assert.True(fixture.Adapter.State.Alignment.IsUniform);
+            Assert.Equal(TextAlignment.Center, fixture.Adapter.State.Alignment.Value);
         });
     }
 

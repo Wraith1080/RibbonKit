@@ -461,19 +461,21 @@
                                              ScreenTipTitle="Increase Indent" ScreenTipText="Move the selected paragraphs one step to the right."
                                              AutomationProperties.AutomationId="IncreaseIndent" AutomationProperties.Name="Increase Indent" />
                             <rk:RibbonButton x:Name="DecreaseIndentButton" Header="Decrease Indent" Size="Small" Icon="{StaticResource Icon.WriterIndentDecrease}"
-                                             rk:Ribbon.CommandId="Writer.Home.Paragraph.DecreaseIndent" rk:KeyTip.Keys="DI"
-                                             ScreenTipTitle="Decrease Indent" ScreenTipText="Move the selected paragraphs one step to the left."
-                                             AutomationProperties.AutomationId="DecreaseIndent" AutomationProperties.Name="Decrease Indent" />
-                            <rk:RibbonDropDownButton x:Name="ParagraphSpacingButton" Header="Paragraph Spacing" Size="Small" Icon="{StaticResource Icon.WriterParagraphSpacing}"
-                                                     rk:Ribbon.CommandId="Writer.Home.Paragraph.Spacing" rk:KeyTip.Keys="PS"
-                                                     ScreenTipTitle="Paragraph Spacing" ScreenTipText="Choose spacing before and after the selected paragraphs."
-                                                     AutomationProperties.AutomationId="ParagraphSpacing" AutomationProperties.Name="Paragraph Spacing">
-                                <rk:RibbonMenuItem x:Name="ParagraphSpacingCompact" Header="Compact (0 / 0 pt)" rk:Ribbon.CommandId="Writer.Home.Paragraph.Spacing.Compact" rk:KeyTip.Keys="C" AutomationProperties.AutomationId="ParagraphSpacingCompact" AutomationProperties.Name="Compact paragraph spacing" />
-                                <rk:RibbonMenuItem x:Name="ParagraphSpacingNormal" Header="Normal (0 / 6 pt)" rk:Ribbon.CommandId="Writer.Home.Paragraph.Spacing.Normal" rk:KeyTip.Keys="N" AutomationProperties.AutomationId="ParagraphSpacingNormal" AutomationProperties.Name="Normal paragraph spacing" />
-                                <rk:RibbonMenuItem x:Name="ParagraphSpacingOpen" Header="Open (6 / 12 pt)" rk:Ribbon.CommandId="Writer.Home.Paragraph.Spacing.Open" rk:KeyTip.Keys="O" AutomationProperties.AutomationId="ParagraphSpacingOpen" AutomationProperties.Name="Open paragraph spacing" />
-                            </rk:RibbonDropDownButton>
+                                              rk:Ribbon.CommandId="Writer.Home.Paragraph.DecreaseIndent" rk:KeyTip.Keys="DI"
+                                              ScreenTipTitle="Decrease Indent" ScreenTipText="Move the selected paragraphs one step to the left."
+                                              AutomationProperties.AutomationId="DecreaseIndent" AutomationProperties.Name="Decrease Indent" />
                         </StackPanel>
                     </StackPanel>
+                    <rk:RibbonDropDownButton x:Name="ParagraphSpacingButton" Header="Paragraph Spacing" Size="Large"
+                                              Icon="{StaticResource Icon.WriterParagraphSpacing}"
+                                              LargeIcon="{StaticResource Icon.WriterParagraphSpacing}"
+                                              rk:Ribbon.CommandId="Writer.Home.Paragraph.Spacing" rk:KeyTip.Keys="PS"
+                                              ScreenTipTitle="Paragraph Spacing" ScreenTipText="Choose spacing before and after the selected paragraphs."
+                                              AutomationProperties.AutomationId="ParagraphSpacing" AutomationProperties.Name="Paragraph Spacing">
+                        <rk:RibbonMenuItem x:Name="ParagraphSpacingCompact" Header="Compact (0 / 0 pt)" rk:Ribbon.CommandId="Writer.Home.Paragraph.Spacing.Compact" rk:KeyTip.Keys="C" AutomationProperties.AutomationId="ParagraphSpacingCompact" AutomationProperties.Name="Compact paragraph spacing" />
+                        <rk:RibbonMenuItem x:Name="ParagraphSpacingNormal" Header="Normal (0 / 6 pt)" rk:Ribbon.CommandId="Writer.Home.Paragraph.Spacing.Normal" rk:KeyTip.Keys="N" AutomationProperties.AutomationId="ParagraphSpacingNormal" AutomationProperties.Name="Normal paragraph spacing" />
+                        <rk:RibbonMenuItem x:Name="ParagraphSpacingOpen" Header="Open (6 / 12 pt)" rk:Ribbon.CommandId="Writer.Home.Paragraph.Spacing.Open" rk:KeyTip.Keys="O" AutomationProperties.AutomationId="ParagraphSpacingOpen" AutomationProperties.Name="Open paragraph spacing" />
+                    </rk:RibbonDropDownButton>
                 </rk:RibbonGroup>
                 <rk:RibbonGroup Header="Editing" rk:Ribbon.CommandId="Writer.Home.Editing" rk:KeyTip.Keys="ED" Icon="{StaticResource Icon.WriterFind}" AutomationProperties.AutomationId="EditingGroup" AutomationProperties.Name="Editing">
                     <StackPanel Margin="2,2,2,0" VerticalAlignment="Center">
@@ -505,9 +507,9 @@
                 <rk:RibbonGroup Header="Page Setup" rk:Ribbon.CommandId="Writer.Page.Setup" rk:KeyTip.Keys="PS"
                                 Icon="{StaticResource Icon.WriterPageSize}"
                                 AutomationProperties.AutomationId="PageSetupGroup" AutomationProperties.Name="Page Setup">
-                    <StackPanel Margin="2,2,2,0" VerticalAlignment="Center">
-                        <rk:RibbonDropDownButton x:Name="PaperSizeButton" Header="Paper Size" Size="Medium"
+                    <rk:RibbonDropDownButton x:Name="PaperSizeButton" Header="Paper Size" Size="Large"
                                                  Icon="{StaticResource Icon.WriterPageSize}"
+                                                 LargeIcon="{StaticResource Icon.WriterPageSize}"
                                                  rk:Ribbon.CommandId="Writer.Page.Size" rk:KeyTip.Keys="SZ"
                                                  ScreenTipTitle="Paper Size" ScreenTipText="Choose the logical paper size used by editing, preview, and printing."
                                                  AutomationProperties.AutomationId="PagePaperSize" AutomationProperties.Name="Paper Size">
@@ -520,9 +522,10 @@
                             <rk:RibbonMenuItem x:Name="PaperSizeLegal" Header="Legal (8.5 × 14 in)" Tag="Legal" Click="OnPaperSizeClick"
                                                rk:Ribbon.CommandId="Writer.Page.Size.Legal" rk:KeyTip.Keys="G"
                                                AutomationProperties.AutomationId="PaperSizeLegal" AutomationProperties.Name="Legal paper" />
-                        </rk:RibbonDropDownButton>
-                        <rk:RibbonDropDownButton x:Name="OrientationButton" Header="Orientation" Size="Medium"
+                    </rk:RibbonDropDownButton>
+                    <rk:RibbonDropDownButton x:Name="OrientationButton" Header="Orientation" Size="Large"
                                                  Icon="{StaticResource Icon.WriterPortrait}"
+                                                 LargeIcon="{StaticResource Icon.WriterPortrait}"
                                                  rk:Ribbon.CommandId="Writer.Page.Orientation" rk:KeyTip.Keys="OR"
                                                  ScreenTipTitle="Orientation" ScreenTipText="Switch the logical page between portrait and landscape without dimension drift."
                                                  AutomationProperties.AutomationId="PageOrientation" AutomationProperties.Name="Orientation">
@@ -532,8 +535,7 @@
                             <rk:RibbonMenuItem x:Name="OrientationLandscape" Header="Landscape" Tag="Landscape" Click="OnOrientationClick"
                                                rk:Ribbon.CommandId="Writer.Page.Orientation.Landscape" rk:KeyTip.Keys="L"
                                                AutomationProperties.AutomationId="OrientationLandscape" AutomationProperties.Name="Landscape orientation" />
-                        </rk:RibbonDropDownButton>
-                    </StackPanel>
+                    </rk:RibbonDropDownButton>
                 </rk:RibbonGroup>
                 <rk:RibbonGroup Header="Margins" rk:Ribbon.CommandId="Writer.Page.Margins" rk:KeyTip.Keys="M"
                                 Icon="{StaticResource Icon.WriterMargins}"

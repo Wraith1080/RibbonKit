@@ -10,24 +10,49 @@ public sealed class WriterDocumentSession : INotifyPropertyChanged
     private readonly IWriterDocumentPersistence _persistence;
     private readonly IUnsavedChangesDecider _decider;
     private readonly IWriterSaveDestinationProvider _destinationProvider;
+    private readonly WriterDocumentFormatTransitionPolicy _transitionPolicy;
+    private readonly IWriterFormatTransitionDecider _transitionDecider;
 
     public WriterDocumentSession(IWriterDocumentPersistence persistence, IUnsavedChangesDecider decider,
-        IWriterSaveDestinationProvider? destinationProvider = null)
+        IWriterSaveDestinationProvider? destinationProvider = null,
+        WriterDocumentProfile? defaultProfile = null,
+        IWriterFormatTransitionDecider? transitionDecider = null,
+        WriterDocumentFormatTransitionPolicy? transitionPolicy = null)
     {
         _persistence = persistence ?? throw new ArgumentNullException(nameof(persistence));
         _decider = decider ?? throw new ArgumentNullException(nameof(decider));
         _destinationProvider = destinationProvider ?? NullSaveDestinationProvider.Instance;
-        _currentDocument = CreateNewDocument();
+        DefaultProfile = WriterDocumentProfiles.EnsureCanonical(
+            defaultProfile ?? WriterDocumentProfiles.Default, nameof(defaultProfile));
+        _transitionPolicy = transitionPolicy ?? WriterDocumentFormatTransitionPolicy.Default;
+        _transitionDecider = transitionDecider ?? AllowFormatTransitionDecider.Instance;
+        _currentDocument = DefaultProfile.CreateUntitledDocument();
     }
 
     private WriterDocument _currentDocument;
+
+    /// <summary>Gets the profile used by no-argument <see cref="NewAsync()"/>.</summary>
+    public WriterDocumentProfile DefaultProfile { get; }
 
     public WriterDocument CurrentDocument => _currentDocument;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
     public Task<bool> NewAsync(CancellationToken cancellationToken = default) =>
-        ReplaceAsync(DocumentTransition.New, CreateNewDocument, cancellationToken);
+        NewAsync(DefaultProfile, cancellationToken);
+
+    /// <summary>Creates an untitled document with an explicit profile after the unsaved decision.</summary>
+    public Task<bool> NewAsync(WriterDocumentProfile profile,
+        CancellationToken cancellationToken = default)
+    {
+        WriterDocumentProfiles.EnsureCanonical(profile);
+        return ReplaceAsync(DocumentTransition.New, () => profile.CreateUntitledDocument(), cancellationToken);
+    }
+
+    /// <summary>Creates an untitled document with an explicit format identity.</summary>
+    public Task<bool> NewAsync(WriterDocumentFormat format,
+        CancellationToken cancellationToken = default) =>
+        NewAsync(WriterDocumentProfiles.ForFormat(format), cancellationToken);
 
     public async Task<bool> OpenAsync(string path, WriterDocumentFormat format,
         CancellationToken cancellationToken = default)
@@ -55,6 +80,14 @@ public sealed class WriterDocumentSession : INotifyPropertyChanged
         return true;
     }
 
+    /// <summary>Opens a document using an explicit profile identity.</summary>
+    public Task<bool> OpenAsync(string path, WriterDocumentProfile profile,
+        CancellationToken cancellationToken = default)
+    {
+        WriterDocumentProfiles.EnsureCanonical(profile);
+        return OpenAsync(path, profile.Format, cancellationToken);
+    }
+
     public Task<bool> SaveAsync(CancellationToken cancellationToken = default)
     {
         var path = CurrentDocument.Path;
@@ -68,6 +101,14 @@ public sealed class WriterDocumentSession : INotifyPropertyChanged
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
         ValidateFormat(format);
         return SaveToAsync(path, format, cancellationToken, commitIdentity: true);
+    }
+
+    /// <summary>Saves under an explicit profile, committing its identity only after success.</summary>
+    public Task<bool> SaveAsAsync(string path, WriterDocumentProfile profile,
+        CancellationToken cancellationToken = default)
+    {
+        WriterDocumentProfiles.EnsureCanonical(profile);
+        return SaveAsAsync(path, profile.Format, cancellationToken);
     }
 
     public async Task<bool> RequestCloseAsync(CancellationToken cancellationToken = default)
@@ -126,6 +167,9 @@ public sealed class WriterDocumentSession : INotifyPropertyChanged
     private async Task<bool> SaveToAsync(string path, WriterDocumentFormat format,
         CancellationToken cancellationToken, bool commitIdentity)
     {
+        if (!await ConfirmFormatTransitionAsync(format, cancellationToken).ConfigureAwait(true))
+            return false;
+
         try
         {
             if (!await _persistence.SaveAsync(CurrentDocument, path, format, cancellationToken).ConfigureAwait(true))
@@ -160,7 +204,33 @@ public sealed class WriterDocumentSession : INotifyPropertyChanged
             cancellationToken, commitIdentity: true).ConfigureAwait(true);
     }
 
-    private static WriterDocument CreateNewDocument() => new(new FlowDocument());
+    private async Task<bool> ConfirmFormatTransitionAsync(
+        WriterDocumentFormat targetFormat,
+        CancellationToken cancellationToken)
+    {
+        var transition = _transitionPolicy.Evaluate(CurrentDocument, targetFormat);
+        if (!transition.RequiresConfirmation)
+            return true;
+
+        WriterFormatTransitionDecision decision;
+        try
+        {
+            decision = await _transitionDecider.DecideAsync(
+                CurrentDocument, transition, cancellationToken).ConfigureAwait(true);
+        }
+        catch (OperationCanceledException)
+        {
+            return false;
+        }
+
+        return decision switch
+        {
+            WriterFormatTransitionDecision.Continue => true,
+            WriterFormatTransitionDecision.Cancel => false,
+            _ => throw new ArgumentOutOfRangeException(nameof(decision), decision,
+                "Unknown format-transition decision.")
+        };
+    }
 
     private void SetCurrentDocument(WriterDocument document)
     {
@@ -181,5 +251,14 @@ public sealed class WriterDocumentSession : INotifyPropertyChanged
         public static NullSaveDestinationProvider Instance { get; } = new();
         public Task<WriterSaveDestination?> GetDestinationAsync(WriterDocument document,
             CancellationToken cancellationToken) => Task.FromResult<WriterSaveDestination?>(null);
+    }
+
+    private sealed class AllowFormatTransitionDecider : IWriterFormatTransitionDecider
+    {
+        public static AllowFormatTransitionDecider Instance { get; } = new();
+
+        public Task<WriterFormatTransitionDecision> DecideAsync(WriterDocument document,
+            WriterDocumentFormatTransition transition, CancellationToken cancellationToken) =>
+            Task.FromResult(WriterFormatTransitionDecision.Continue);
     }
 }

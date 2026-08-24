@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Windows;
@@ -39,6 +40,7 @@ public sealed class MainWindowIntegrationTests
             fixture.Show();
             await PumpAsync();
             AssertRuntimeContract(fixture);
+            await AssertBackstageFileCommandsRestoreEditorFocusAsync(fixture);
             var surface = Assert.IsType<WriterEditorSurface>(fixture.Window.FindName("EditorSurface"));
             var settings = DocumentPageSettings.A4(DocumentPageOrientation.Landscape,
                 new DocumentPageMargins(42, 54, 42, 54));
@@ -338,6 +340,10 @@ public sealed class MainWindowIntegrationTests
             ("MarginsButton", "PageMargins", "Writer.Page.Margins.Choose"),
             ("PageColorButton", "PageColor", "Writer.Page.Color")
         };
+        Assert.Equal(RibbonControlSize.Large,
+            Assert.IsType<RibbonDropDownButton>(window.FindName("PaperSizeButton")).Size);
+        Assert.Equal(RibbonControlSize.Large,
+            Assert.IsType<RibbonDropDownButton>(window.FindName("OrientationButton")).Size);
         var viewControls = new (string Name, string AutomationId, string CommandId)[]
         {
             ("ContinuousViewButton", "ViewContinuous", "Writer.View.Continuous"),
@@ -593,6 +599,28 @@ public sealed class MainWindowIntegrationTests
             "The editor should retain keyboard or logical focus after the ribbon action.");
     }
 
+    private static async Task AssertBackstageFileCommandsRestoreEditorFocusAsync(WindowFixture fixture)
+    {
+        var backstage = Assert.IsType<Backstage>(fixture.Ribbon.Backstage);
+        foreach (var automationId in new[] { "FileNew", "FileOpen", "FileSave", "FileSaveAs" })
+        {
+            var item = backstage.Items.OfType<BackstageTabItem>().Single(candidate =>
+                AutomationProperties.GetAutomationId(candidate) == automationId);
+            fixture.Ribbon.IsBackstageOpen = true;
+            await PumpAsync();
+            FocusManager.SetFocusedElement(fixture.Window, fixture.Ribbon);
+            Assert.NotSame(fixture.Editor, FocusManager.GetFocusedElement(fixture.Window));
+
+            item.RaiseEvent(new RoutedEventArgs(BackstageTabItem.ClickEvent));
+            item.Command!.Execute(null);
+            await WaitForShellIdleAsync(fixture.Shell);
+            await PumpAsync();
+
+            Assert.False(fixture.Ribbon.IsBackstageOpen);
+            AssertEditorFocusRestored(fixture);
+        }
+    }
+
     private static void AssertRuntimeContract(WindowFixture fixture)
     {
         var window = fixture.Window;
@@ -610,6 +638,18 @@ public sealed class MainWindowIntegrationTests
         Assert.Equal(WriterEditorViewMode.Paper, editorSurface.ViewMode);
         Assert.Equal("DocumentEditor", AutomationProperties.GetAutomationId(editor));
         Assert.Equal("Document editor", AutomationProperties.GetName(editor));
+        AssertEditorFocusRestored(fixture);
+        var initialState = fixture.Window.EditingController.State;
+        Assert.True(initialState.FontFamily.IsUniform);
+        Assert.True(initialState.FontSize.IsUniform);
+        Assert.True(initialState.Alignment.IsUniform);
+        Assert.Equal(TextAlignment.Left, initialState.Alignment.Value);
+        Assert.Equal(editor.Document.FontFamily.Source,
+            Assert.IsType<RibbonComboBox>(window.FindName("FontFamilyCombo")).Text);
+        Assert.Equal(WriterEditingRibbonController.DipsToPoints(editor.Document.FontSize)
+                .ToString("0.##", CultureInfo.CurrentCulture),
+            Assert.IsType<RibbonComboBox>(window.FindName("FontSizeCombo")).Text);
+        Assert.True(Assert.IsType<RibbonToggleButton>(window.FindName("AlignLeftButton")).IsChecked);
         Assert.Equal("MainRibbon", AutomationProperties.GetAutomationId(ribbon));
         Assert.Equal("Main ribbon", AutomationProperties.GetName(ribbon));
         var status = Assert.IsType<StatusBar>(dock.Children[1]);
@@ -734,6 +774,9 @@ public sealed class MainWindowIntegrationTests
         var paste = Assert.IsType<RibbonButton>(window.FindName("PasteButton"));
         Assert.Equal(RibbonControlSize.Large, paste.Size);
         Assert.Same(fixture.Window.TryFindResource("Icon.WriterPaste.Large"), paste.LargeIcon);
+        var paragraphSpacing = Assert.IsType<RibbonDropDownButton>(window.FindName("ParagraphSpacingButton"));
+        Assert.Equal(RibbonControlSize.Large, paragraphSpacing.Size);
+        Assert.NotNull(paragraphSpacing.LargeIcon);
         Assert.Equal(new[] { "QatSave", "QatUndo", "QatRedo" },
             qatItems.Select(AutomationProperties.GetAutomationId).ToArray());
         Assert.Same(ApplicationCommands.Undo, Assert.IsType<RibbonButton>(qatItems[1]).Command);

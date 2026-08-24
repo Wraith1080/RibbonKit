@@ -5095,6 +5095,66 @@ Writer **234/234**, RibbonKit **355/355** and the unchanged visual test **1/1** 
 `src/RibbonKit/**` change was required. W0-E is the next dependency-ready Writer packet; W2-F is intentionally waiting
 for W0-F.
 
+### 3.111c Writer cold-start editing state and ribbon-density correction — 2026-08-24
+
+Further cold-start review found that the first Paper surface did not own keyboard focus, so a newly launched Writer
+could not accept typing until the user clicked the paper. Initialization intentionally avoided focusing the editor
+while the visual tree was incomplete but never completed the handoff. `MainWindow` now performs a one-shot
+post-`ContentRendered` focus request at Input priority, establishes both logical and keyboard focus on the long-lived
+`RichTextBox`, and refreshes its ribbon projection. It skips the handoff if the window is no longer visible, Backstage
+has opened or Print Preview owns the presentation. RKWF-010 records this app-owned startup boundary.
+
+The empty-caret formatting projection also previously suppressed every inline and paragraph value until a real text
+character existed. It now reads the native insertion-point font family and size, falling back to the document's
+effective defaults, and reads the current empty paragraph alignment. A brand-new document therefore shows its font,
+point size and checked Left alignment before the first keystroke without inserting content or dirtying the document;
+mixed and unsupported content states remain distinct.
+
+The Page tab's Paper Size and Orientation dropdowns are now large labelled controls alongside the already-large
+Margins and Page Color actions. Paragraph Spacing was removed from the trailing end of the compact paragraph row and
+is now a separate large labelled dropdown beside the two-row alignment/list/indent cluster. Existing command IDs,
+KeyTips, ScreenTips, automation metadata and app-owned vector artwork are retained.
+
+Backstage New, Open, Save and Save As now request the same editor-focus handoff after their asynchronous shell work
+finishes; recent-document activation follows it as well. The click closes Backstage and marks a pending return, the
+shell's `IsBusy` transition completes it after any unsaved/save/open dialog has closed, and a dispatcher fallback
+covers a command that completes before publishing a busy transition. Success, failure and cancellation all return
+to the editor, while Print Preview, an open Backstage or a closing/hidden window still prevents an inappropriate
+focus steal. The assertions remain inside the existing combined real-window case so WPF's non-freezable
+`WindowChrome` never crosses fresh STA threads; a separate first attempt reproduced the RKWF-008 harness failure.
+
+The focused insertion-state and real-window integration cases pass **2/2**. The complete solution builds with zero
+warnings/errors and passes Writer **234/234**, RibbonKit **355/355** and the unchanged visual test **1/1** over 63
+approved images. No `src/RibbonKit/**` change was required. Actual cold-start typing and the revised Home/Page group
+balance remain a live user check; W0-E remains the next dependency-ready packet.
+
+### 3.112 RibbonKit Writer W0-E document profiles and format-transition policy — 2026-08-24
+
+Writer now has three canonical creation profiles over the existing `WriterDocumentFormat` identity: Plain Text,
+Rich Text and RibbonKit Writer. One catalog owns their display identity, default `.txt`/`.rtf`/`.rkw` extension,
+persistence fidelity and derived content/page-metadata capability sets. Command capabilities distinguish operations
+that mutate persisted content from common editing, preview and print actions, so Plain Text disables font/paragraph
+formatting without unnecessarily losing preview or print. Profiles remain separate from future letter, note or report
+content templates.
+
+`WriterDocumentSession` accepts typed New, Open and Save As requests, keeps Rich Text as the compatible no-argument
+default, and validates profile instances at its boundaries. A centralized transition policy compares declared
+capability sets rather than enum ordering: same-format and capability-superset saves do not warn, while Rich Text to
+Plain Text reports formatting loss, RibbonKit Writer to Rich Text reports page-settings loss, and RibbonKit Writer to
+Plain Text reports both. Hyperlink/image/table loss flags are already part of the contract but remain unsupported
+until their W3 serializers are accepted. This analysis is deliberately profile-level rather than a document-tree
+claim.
+
+Loss confirmation occurs before persistence. Cancellation, a declined warning, a `false` persistence result,
+`OperationCanceledException`, or an ordinary persistence exception cannot commit a new path/profile; identity changes
+only after a successful save. The existing shell retains its legacy Plain Text-specific prompt only until W0-F, which
+must inject the generic transition decider and remove the duplicate warning owner in the same UI-exclusive packet.
+
+The focused W0-E profile/transition gate passes **25/25**. The complete solution builds with zero warnings/errors and
+passes Writer **259/259**, RibbonKit **355/355** and the unchanged visual test **1/1** over 63 approved images. W0-E
+did not edit `src/RibbonKit/**` or MainWindow/ribbon files. W0-F is the next dependency-ready packet; W2-F remains
+intentionally waiting for its capability-aware UI projection.
+
 ## 4. Workflow / Session Conventions
 
 - Work from the current Windows checkout at
@@ -5139,7 +5199,7 @@ for W0-F.
   directly beneath tabs and both QAT placements (§3.97). Its automated gate is green; live
   fallback/Acrylic visual approval remains pending.
 - MDI milestones M0 and M4 are complete: floating children plus ribbon tab/caption merging.
-- RibbonKit Writer W0-A through W0-D, W1-A through W1-D and W2-A through W2-E are complete through §3.111b: the separate app/test
+- RibbonKit Writer W0-A through W0-E, W1-A through W1-D and W2-A through W2-E are complete through §3.112: the separate app/test
   scaffold, document lifetime, TXT/RTF/atomic/recent services, live Backstage/QAT file-command shell,
   formatting/selection-state engine, find/spelling/statistics/zoom utilities, and the accessible
   Home-ribbon/QAT editing surface are integrated at their packet boundaries. The accepted Writer-owned icon
@@ -5149,6 +5209,8 @@ for W0-F.
   and stable fixed-page preview/print pipeline now share the same logical page inputs without sharing the live editor's
   mutable paginator. App-owned Page/View tabs, transactional custom margins, page colour, view switching, relocated
   ribbon zoom and icon-led Backstage print/summary actions expose those contracts while preserving one live editor.
+  Canonical Plain Text, Rich Text and RibbonKit Writer profiles now share one extension/capability catalog, typed-New
+  contract and capability-derived conversion policy with post-success-only identity commits.
 
 ### Remaining or intentionally deferred
 
@@ -5158,10 +5220,10 @@ for W0-F.
 - Final live visual tuning and approval of the Office 2010 Aero-inspired frame prototype (§3.97).
 - Touch density, richer automatic QAT projections, custom-control projection APIs and additional
   themes remain post-v1 candidates. Their plan documents are not implementation evidence.
-- RibbonKit Writer W2-E is accepted through §3.111b on the available 125%-scale hardware. Both A4 and Letter preview/PDF
+- RibbonKit Writer W2-E is accepted through §3.112 on the available 125%-scale hardware. Both A4 and Letter preview/PDF
   paths passed, including all five output pages and the page-four corruption regression. Live mixed-monitor movement
-  remains a named W4-C hardware check because only one display is connected. W0-E/W0-F now precede W2-F; W0-E is
-  dependency-ready and unstarted. W4 keeps the final whole-product consistency pass after W2/W3.
+  remains a named W4-C hardware check because only one display is connected. W0-F now precedes W2-F and is the next
+  dependency-ready packet. W4 keeps the final whole-product consistency pass after W2/W3.
 - Automatic `Icons.xaml` discovery is best-effort by design. Keep `Load Icons.xaml…` available
   for ambiguity, inaccessible paths, parse failures, or no match.
 
@@ -5221,6 +5283,12 @@ for W0-F.
 - 2026-08-24 after §3.111b correction: the inventory is 589 logic tests plus one visual test covering 63 approved
   images. Writer passes **234/234**, including the post-Loaded paper-margin regression; the solution builds with zero
   warnings/errors and RibbonKit/visual remain **355/355** and **1/1**. Cold-launch/DPI observation remains for W4-C.
+- 2026-08-24 after §3.111c correction: the inventory remains 589 logic tests plus one visual test covering 63 approved
+  images. Writer passes **234/234** with cold-start focus/insertion-default and large-control assertions folded into
+  existing cases; the solution builds with zero warnings/errors and RibbonKit/visual remain **355/355** and **1/1**.
+- 2026-08-24 after §3.112: the inventory is 614 logic tests plus one visual test covering 63 approved images. W0-E's
+  focused document-profile/transition gate passes **25/25** and Writer passes **259/259**; the solution builds with
+  zero warnings/errors and RibbonKit/visual remain **355/355** and **1/1**. W0-F is next and has not started.
 - Before quoting a current count or declaring a new change complete, rerun the proportional build
   and test commands. Inspect actual/diff PNG artifacts before changing visual baselines or
   tolerances.

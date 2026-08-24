@@ -234,6 +234,26 @@ remain read-only until actual/diff evidence justifies a deliberate change.
 - **Evidence still required:** repeat cold launches outside the debugger and include the startup caret/margin check in
   W4-C across the available DPI matrix.
 
+### RKWF-010 — Initial editor focus needs a post-render handoff
+
+- **First seen / packet:** 2026-08-24, Writer cold-start correction after W2-E.
+- **Status:** Resolved in the app; not a RibbonKit runtime defect.
+- **Consumer goal:** a normal cold launch should place the insertion caret in the document so typing works immediately
+  without clicking the paper.
+- **Reproduction and evidence:** startup called the initial Paper-mode transition with focus restoration disabled while
+  the window was not yet rendered, but no later owner completed the focus transfer. The paper was visible and enabled
+  while the ribbon/window retained focus.
+- **Current app-owned resolution:** after the first `ContentRendered`, Writer queues one Input-priority handoff that
+  assigns both logical and keyboard focus to the existing `RichTextBox` and refreshes insertion-state ribbon values.
+  New/Open/Save/Save As and recent-file activation reuse it after the shell leaves its busy state, including cancelled
+  dialogs. It does not run when Backstage or Print Preview has become the intended surface.
+- **Application impact:** ordinary cold launches accept typing immediately without replacing the editor/document or
+  altering undo, selection, IME, clipboard or preview state.
+- **Smallest possible library direction:** none. RibbonKit does not own the host application's initial document-focus
+  policy.
+- **Evidence still required:** repeat cold launches outside the debugger and confirm caret visibility plus immediate
+  Latin/IME/RTL input at W4-C DPI scales.
+
 ## 5. Closed observations
 
 None yet.

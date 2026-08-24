@@ -1,8 +1,8 @@
 # RibbonKit Writer — Functional Reference Application Plan
 
-> **Status:** approved post-v1 application plan. W0-A through W0-D, W1-A through W1-D and W2-A through
-> W2-E are accepted on the available hardware. W0-E/W0-F now own format-aware document profiles and
-> the pictured Backstage New surface; W0-E is next and W2-F waits for W0-F. Live mixed-monitor DPI
+> **Status:** approved post-v1 application plan. W0-A through W0-E, W1-A through W1-D and W2-A through
+> W2-E are accepted on the available hardware. W0-F now owns the pictured Backstage New surface and
+> capability projection; it is next and W2-F waits for it. Live mixed-monitor DPI
 > movement remains deferred to W4-C. No later implementation is implied.
 > Live status remains in `04-DESIGN-NOTES.md` §5.
 > RibbonKit Writer is a separate functional sample, not another feature page inside

@@ -47,6 +47,7 @@ public partial class MainWindow : RibbonWindow
     private bool _closing;
     private bool _allowClose;
     private bool _replacingDocument;
+    private bool _restoreEditorFocusAfterFileAction;
 
     public MainWindow()
     {
@@ -92,6 +93,7 @@ public partial class MainWindow : RibbonWindow
         PreviewView.StateChanged += OnPreviewViewStateChanged;
         ApplyWriterViewMode(CurrentViewMode, restoreEditorFocus: false);
         DocumentEditor.TextChanged += OnEditorTextChanged;
+        ContentRendered += OnInitialContentRendered;
         Closing += OnClosing;
         Closed += OnClosed;
     }
@@ -239,7 +241,10 @@ public partial class MainWindow : RibbonWindow
 
     private void OnShellPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(WriterShellViewModel.CurrentDocument)) ReplaceEditorDocument();
+        if (e.PropertyName == nameof(WriterShellViewModel.CurrentDocument))
+            ReplaceEditorDocument();
+        else if (e.PropertyName == nameof(WriterShellViewModel.IsBusy) && !Shell.IsBusy)
+            CompletePendingFileActionFocus();
     }
     private void ReplaceEditorDocument()
     {
@@ -287,6 +292,7 @@ public partial class MainWindow : RibbonWindow
     private void OnClosed(object? sender, EventArgs e)
     {
         _closing = false;
+        ContentRendered -= OnInitialContentRendered;
         Shell.PropertyChanged -= OnShellPropertyChanged;
         Shell.ExitRequested -= OnExitRequested;
         if (_backstageOpenDescriptor is not null)
@@ -320,6 +326,42 @@ public partial class MainWindow : RibbonWindow
         DocumentEditor.TextChanged -= OnEditorTextChanged;
         if (_ownsShell)
             Shell.Dispose();
+    }
+
+    private void OnInitialContentRendered(object? sender, EventArgs e)
+    {
+        ContentRendered -= OnInitialContentRendered;
+        QueueEditorFocus();
+    }
+
+    private void QueueEditorFocus()
+    {
+        _ = Dispatcher.BeginInvoke(DispatcherPriority.Input, new Action(() =>
+        {
+            if (!IsVisible || CurrentViewMode == WriterViewMode.PrintPreview || MainRibbon.IsBackstageOpen)
+                return;
+
+            FocusManager.SetFocusedElement(this, DocumentEditor);
+            DocumentEditor.Focus();
+            Keyboard.Focus(DocumentEditor);
+            EditingController.RefreshState();
+        }));
+    }
+
+    private void RequestEditorFocusAfterFileAction()
+    {
+        _restoreEditorFocusAfterFileAction = true;
+        _ = Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle,
+            new Action(CompletePendingFileActionFocus));
+    }
+
+    private void CompletePendingFileActionFocus()
+    {
+        if (!_restoreEditorFocusAfterFileAction || Shell.IsBusy)
+            return;
+
+        _restoreEditorFocusAfterFileAction = false;
+        QueueEditorFocus();
     }
 
     private void OnEditingStateChanged(object? sender, EventArgs e)
@@ -414,8 +456,21 @@ public partial class MainWindow : RibbonWindow
         }
     }
 
-    private void OnBackstageAction(object sender, RoutedEventArgs e) => MainRibbon.IsBackstageOpen = false;
-    private void OnRecentItemClick(object sender, RoutedEventArgs e) => MainRibbon.IsBackstageOpen = false;
+    private void OnBackstageAction(object sender, RoutedEventArgs e)
+    {
+        var automationId = sender is DependencyObject element
+            ? AutomationProperties.GetAutomationId(element)
+            : null;
+        if (automationId is "FileNew" or "FileOpen" or "FileSave" or "FileSaveAs")
+            RequestEditorFocusAfterFileAction();
+        MainRibbon.IsBackstageOpen = false;
+    }
+
+    private void OnRecentItemClick(object sender, RoutedEventArgs e)
+    {
+        RequestEditorFocusAfterFileAction();
+        MainRibbon.IsBackstageOpen = false;
+    }
 
     private void OnPreviewSnapshotChanged(object? sender, EventArgs e)
     {

@@ -37,8 +37,17 @@ public sealed record WriterSaveDestination
         Format = format;
     }
 
+    /// <summary>Creates a destination from an explicit creation profile.</summary>
+    public WriterSaveDestination(string path, WriterDocumentProfile profile)
+        : this(path, WriterDocumentProfiles.EnsureCanonical(profile).Format)
+    {
+    }
+
     public string Path { get; }
     public WriterDocumentFormat Format { get; }
+
+    /// <summary>Gets the canonical profile for the destination format.</summary>
+    public WriterDocumentProfile Profile => WriterDocumentProfiles.ForFormat(Format);
 }
 
 /// <summary>Chooses a destination for saving an untitled document.</summary>

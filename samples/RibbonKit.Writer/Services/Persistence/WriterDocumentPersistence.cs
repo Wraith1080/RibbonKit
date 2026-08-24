@@ -10,16 +10,8 @@ namespace RibbonKit.Writer.Services.Persistence;
 /// <summary>Versioned native, TXT and RTF persistence for Writer documents.</summary>
 public sealed class WriterDocumentPersistence : IWriterDocumentPersistence
 {
-    public static WriterPersistenceCapabilities GetCapabilities(WriterDocumentFormat format) => format switch
-    {
-        WriterDocumentFormat.PlainText => new(false, false, false, false,
-            "Plain text stores characters only; formatting, images, tables, and page settings are lost."),
-        WriterDocumentFormat.RichText => new(true, false, false, false,
-            "RTF preserves representative text formatting; advanced content is best effort."),
-        WriterDocumentFormat.RibbonKitWriter => new(true, false, false, true,
-            "RibbonKit Writer v1 preserves supported text formatting and page settings; images and tables arrive in W3."),
-        _ => throw new ArgumentOutOfRangeException(nameof(format), format, "Unknown Writer document format.")
-    };
+    public static WriterPersistenceCapabilities GetCapabilities(WriterDocumentFormat format) =>
+        WriterPersistenceCapabilityCatalog.Get(format);
 
     public async Task<WriterDocument?> LoadAsync(string path, WriterDocumentFormat format,
         CancellationToken cancellationToken)
@@ -123,13 +115,7 @@ public sealed class WriterDocumentPersistence : IWriterDocumentPersistence
         if (!Enum.IsDefined(format))
             throw new ArgumentOutOfRangeException(nameof(format), format, "Unknown Writer document format.");
         var extension = Path.GetExtension(path);
-        var expected = format switch
-        {
-            WriterDocumentFormat.PlainText => ".txt",
-            WriterDocumentFormat.RichText => ".rtf",
-            WriterDocumentFormat.RibbonKitWriter => ".rkw",
-            _ => throw new ArgumentOutOfRangeException(nameof(format), format, "Unknown Writer document format.")
-        };
+        var expected = format.GetDefaultExtension();
         if (!string.Equals(extension, expected, StringComparison.OrdinalIgnoreCase))
             throw new ArgumentException($"The destination must use the {expected} extension.", nameof(path));
     }

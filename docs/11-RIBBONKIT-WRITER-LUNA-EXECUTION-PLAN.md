@@ -1,9 +1,9 @@
 # RibbonKit Writer — Luna Execution Plan
 
-> **Status:** durable execution decomposition created 2026-08-20. W0-A through W0-D, W1-A through W1-D and
+> **Status:** durable execution decomposition created 2026-08-20. W0-A through W0-E, W1-A through W1-D and
 > W2-A through W2-E are accepted on the available hardware. Live mixed-monitor checking remains deferred to W4-C
-> because only one display is connected. W0-E is the next dependency-ready packet; W2-F now waits for
-> the format-aware New/profile projection in W0-F so its page and paragraph commands cannot bypass profile limits.
+> because only one display is connected. W0-F is the next dependency-ready packet; W2-F waits for
+> its format-aware New/profile projection so page and paragraph commands cannot bypass profile limits.
 > This document does not schedule future agents or imply that any later Writer packet exists.
 > [`10-RIBBONKIT-WRITER-PLAN.md`](10-RIBBONKIT-WRITER-PLAN.md) owns product scope; current
 > implementation status remains in [`04-DESIGN-NOTES.md` §5](../04-DESIGN-NOTES.md#5-current-state--next-steps).
@@ -211,6 +211,12 @@ unsaved prompt preserves the current document; the full solution build/tests pas
 
 ### W0-E — Document profiles and format-transition policy
 
+**Status (2026-08-24): accepted.** Canonical Plain Text, Rich Text and RibbonKit Writer profiles now own
+the shared format/extension and command/content/page-metadata capability matrix. Typed New and Save As use
+those profiles, capability-set comparison centralizes profile-level conversion warnings, and failed or cancelled
+conversions cannot change the active identity. W0-F must inject the single UI warning decider and remove the
+legacy Plain Text-specific warning rather than creating a second prompt path.
+
 **Owns:** document-profile/capability models, typed New/session contracts, format-transition policy and
 focused document/persistence tests. It does not edit the main window or ribbon XAML.
 
@@ -361,7 +367,7 @@ same long-lived editor and exact fresh W2-D paginator are retained. A same-day u
 only commands into a dedicated modal Print Preview tab, made View/preview/zoom commands large and labelled, replaced
 Undo/Redo-derived page navigation artwork, suspended pagination work during ordinary typing, removed Print from the
 ribbon and replaced the Windows picker's unsupported-preview pane with Writer-owned printer setup around the exact
-fixed paginator. W0-E is next; W2-F waits for W0-F's capability-aware command projection.
+fixed paginator. W0-E is accepted; W0-F is next and W2-F waits for its capability-aware command projection.
 
 **Owns:** Page/View ribbon tabs and groups, view switching, zoom-command relocation and Backstage
 print/page-summary UI exclusively.

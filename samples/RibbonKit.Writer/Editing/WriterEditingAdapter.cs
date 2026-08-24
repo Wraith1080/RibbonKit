@@ -431,10 +431,18 @@ public sealed class WriterEditingAdapter : IDisposable
         if (contextRange is not null)
             hasTextContext = HasTextCharacters(contextRange.Text);
 
+        var insertionOnly = !hasSelection && !hasTextContext;
         var paragraphs = hasTextContext ? GetSelectedParagraphs() : new List<Paragraph>();
+        var alignmentParagraphs = insertionOnly ? GetSelectedParagraphs() : paragraphs;
         var inline = contextRange is null || !hasTextContext;
-        var fontFamily = inline ? WriterSelectionValue<FontFamily>.Unset() : ReadInline<FontFamily>(contextRange!, TextElement.FontFamilyProperty, TryFontFamily);
-        var fontSize = inline ? WriterSelectionValue<double>.Unset() : ReadInline<double>(contextRange!, TextElement.FontSizeProperty, TryDouble);
+        var fontFamily = insertionOnly
+            ? ReadInsertionInline(TextElement.FontFamilyProperty, TryFontFamily, Editor.Document.FontFamily)
+            : inline ? WriterSelectionValue<FontFamily>.Unset() :
+                ReadInline<FontFamily>(contextRange!, TextElement.FontFamilyProperty, TryFontFamily);
+        var fontSize = insertionOnly
+            ? ReadInsertionInline(TextElement.FontSizeProperty, TryDouble, Editor.Document.FontSize)
+            : inline ? WriterSelectionValue<double>.Unset() :
+                ReadInline<double>(contextRange!, TextElement.FontSizeProperty, TryDouble);
         var bold = inline ? WriterSelectionValue<bool>.Unset() : ReadInline<bool>(contextRange!, TextElement.FontWeightProperty, TryBold);
         var italic = inline ? WriterSelectionValue<bool>.Unset() : ReadInline<bool>(contextRange!, TextElement.FontStyleProperty, TryItalic);
         var underline = inline ? WriterSelectionValue<bool>.Unset() : ReadInline<bool>(contextRange!, Inline.TextDecorationsProperty, TryUnderline);
@@ -442,7 +450,9 @@ public sealed class WriterEditingAdapter : IDisposable
             ReadInline<Color?>(contextRange!, TextElement.ForegroundProperty, TryColor, unsupportedValue: true);
         var highlight = inline ? WriterSelectionValue<Color?>.Unset() :
             ReadInline<Color?>(contextRange!, TextElement.BackgroundProperty, TryColor, unsupportedValue: true);
-        var alignment = ReadParagraph(paragraphs, p => p.TextAlignment);
+        var alignment = ReadParagraph(alignmentParagraphs, p => p.TextAlignment);
+        if (insertionOnly && alignment.Kind == WriterSelectionValueKind.Unset)
+            alignment = WriterSelectionValue<TextAlignment>.Uniform(Editor.Document.TextAlignment);
         var indentation = ReadParagraph(paragraphs, p => NormalizeLength(p.Margin.Left));
         var spacingBefore = ReadParagraph(paragraphs, p => NormalizeLength(p.Margin.Top));
         var spacingAfter = ReadParagraph(paragraphs, p => NormalizeLength(p.Margin.Bottom));
@@ -485,6 +495,15 @@ public sealed class WriterEditingAdapter : IDisposable
         if (convert(value, out var converted))
             return WriterSelectionValue<T>.Uniform(converted);
         return unsupportedValue ? WriterSelectionValue<T>.Unsupported() : WriterSelectionValue<T>.Mixed();
+    }
+
+    private WriterSelectionValue<T> ReadInsertionInline<T>(DependencyProperty property,
+        TryValue<T> convert, T fallback)
+    {
+        var value = ReadInline(Editor.Selection, property, convert);
+        return value.Kind == WriterSelectionValueKind.Unset
+            ? WriterSelectionValue<T>.Uniform(fallback)
+            : value;
     }
 
     private static WriterSelectionValue<T> ReadParagraph<T>(IReadOnlyList<Paragraph> paragraphs,
