@@ -1,8 +1,8 @@
 # RibbonKit Writer — Luna Execution Plan
 
 > **Status:** durable execution decomposition created 2026-08-20. W0-A through W0-D and W1-A through W1-C are
-> accepted through W1-D and W2-B. W2-C is dependency-ready, but no agent or implementation
-> for that packet is implied.
+> accepted through W1-D and W2-B. W2-C is implemented and independently reviewed; its final gate remains
+> open for live mixed-monitor DPI movement and one clean full-Writer rerun. W2-D has not started.
 > This document does not schedule future agents or imply that any later Writer packet exists.
 > [`10-RIBBONKIT-WRITER-PLAN.md`](10-RIBBONKIT-WRITER-PLAN.md) owns product scope; current
 > implementation status remains in [`04-DESIGN-NOTES.md` §5](../04-DESIGN-NOTES.md#5-current-state--next-steps).
@@ -146,9 +146,10 @@ Only packets whose dependencies have passed their integration gate are ready.
 | W2-C | Centred paper editing surface | W1-D, W2-A | Luna |
 | W2-D | Preview, pagination and printing | W2-C | Luna |
 | W2-E | Page/View ribbon and preview integration | W2-B, W2-D | Luna, UI-exclusive |
+| W2-F | Margin guides and interactive horizontal ruler | W2-E | Luna, UI-exclusive |
 | W3-A | Images and hyperlinks | W1-D, W2-B | Luna |
 | W3-B | FlowDocument table core | W1-D, W2-B | Luna, high-risk |
-| W3-C | Table interaction and contextual Table Tools | W2-E, W3-B | Luna, UI-exclusive |
+| W3-C | Table interaction and contextual Table Tools | W2-F, W3-B | Luna, UI-exclusive |
 | W3-D | Structured-content round-trip and RTF fixtures | W3-A, W3-C | Luna |
 | W4-A | Customization and appearance persistence | W3-D | Luna, UI-exclusive |
 | W4-B | Automated integration and hardening | W4-A | Luna |
@@ -156,7 +157,7 @@ Only packets whose dependencies have passed their integration gate are ready.
 | W5-A | Distribution decision | W4-C and sustained use | User and lead |
 
 Useful parallel groups after their dependencies pass are W0-C/W1-A/W1-B, W1-A/W1-B/W2-A,
-W1-D/W2-A and W3-A/W3-B. Never parallelize two UI-exclusive packets. The lead may choose less
+W1-D/W2-A, W3-A/W3-B and W2-F/W3-A/W3-B after W2-E. Never parallelize two UI-exclusive packets. The lead may choose less
 concurrency when a packet is high risk or the worktree is already dirty.
 
 ## 5. W0 — Application shell and document lifetime
@@ -317,15 +318,38 @@ Microsoft Print to PDF or an available printer. Opening a dialog is not proof of
 **Owns:** Page/View ribbon tabs and groups, view switching, zoom-command relocation and Backstage
 print/page-summary UI exclusively.
 
-**Deliver:** a Page tab for paper size, orientation, margins and page colour; a View tab for Continuous
-Edit, Paper and Print Layout/Preview switching, one/two-page/page-width modes and zoom. Move the existing
+**Deliver:** a Page tab for paper size, orientation, margin presets, a validated four-edge **Custom Margins…**
+dialog and page colour; a View tab for Continuous Edit, Paper and Print Layout/Preview switching,
+one/two-page/page-width modes and zoom. Custom-margin Cancel changes nothing; Apply commits one valid
+`DocumentPageSettings` replacement. Move the existing
 ribbon zoom controls from Home/Editing to View while retaining their command identities and the globally
 available status-bar zoom control. Do not leave duplicate ribbon zoom controls behind. All relocated and
 new commands retain stable keyboard and automation metadata.
 
 **Exit:** lead completes continuous/paper/preview switching without content, selection, undo or focus loss;
 paper-setting, zoom and PDF-print workflows pass from ribbon, status bar and Backstage; Home no longer owns
-ribbon zoom controls; full build/tests pass before W3 begins.
+ribbon zoom controls; full build/tests pass before W2-F or another UI-exclusive packet begins.
+
+### W2-F — Margin guides and interactive horizontal ruler
+
+**Owns:** the app-owned paper content-boundary overlay, horizontal ruler/control and coordinator, the
+corresponding View-tab toggles, transactional drag state and focused layout/interaction tests. It may edit
+the Page/View ribbon surface only while holding the UI lock.
+
+**Deliver:** an optional dotted content-boundary guide that follows the current page margins without
+entering document content, persistence, clipboard, undo or print output. Add a Paper-view horizontal ruler
+aligned with the paper, zoom and horizontal scroll position. It shows calibrated ticks, shaded margin zones
+and first-line, hanging, left and right paragraph-indent markers. Page-margin dragging previews locally,
+commits one validated `DocumentPageSettings` change on release and cancels on Escape/capture loss; paragraph
+indent dragging uses the editor's undoable formatting path. Ruler/guide visibility is app view state for
+W4-A persistence. Keep both out of Continuous/Preview when their geometry would be misleading. Do not add a
+vertical ruler, mirrored/gutter margins or inert tab-stop markers. Reuse the prepared `Margins`, `Ruler` and
+`Gridlines` resources unless live icon comparison justifies one dedicated margin-guide glyph.
+
+**Exit:** deterministic tests cover normal/custom margins, portrait/landscape, zoom, horizontal scrolling,
+RTL, high contrast, DPI rounding, mixed selections, drag commit/cancel/capture loss and undo/redo. The overlay
+is non-hit-testable and absent from cloned preview/print output. Lead verifies ruler/guide alignment and
+mouse/keyboard/UIA operation in the actual Writer window before W3-C begins.
 
 ## 8. W3 — Structured content
 

@@ -5,7 +5,9 @@
 > file-command shell, and the accessible Home-ribbon integration over formatting, find/replace, native
 > spelling, debounced statistics and bounded zoom. W1-D's app-owned vector iconography and first
 > visual-polish pass is accepted, W2-A's immutable page-settings model is complete and W2-B's
-> security-gated `.rkw` persistence is accepted. W2-C is dependency-ready; no later packet is implied.
+> security-gated `.rkw` persistence is accepted. W2-C's centred paper implementation is independently
+> reviewed; live mixed-monitor DPI movement and one clean full-Writer rerun remain before acceptance.
+> No later packet is implied.
 > Live status remains in `04-DESIGN-NOTES.md` §5.
 > RibbonKit Writer is a separate functional sample, not another feature page inside
 > `RibbonKit.Showcase`.
@@ -116,6 +118,8 @@ Writer should have three coordinated presentations of the same document.
 - A fixed-width white paper surface centred over a neutral workspace.
 - Width follows the selected logical paper size and zoom.
 - Visible inner spacing follows the selected margins.
+- An optional non-printing dotted content-boundary guide may outline the current margin rectangle. It
+  is view chrome only: it must not enter the `FlowDocument`, clipboard, undo history, native package or print output.
 - The editor remains one continuous scroll surface; it must not draw fake page breaks that disagree
   with the paginator.
 - Switching between Continuous Edit and Paper must re-present the same live editor/document without
@@ -132,11 +136,29 @@ Writer should have three coordinated presentations of the same document.
 - Rebuild preview after document or page-setting changes, but debounce expensive pagination while the
   user is typing.
 
-The Page tab should expose paper size, orientation, margins and page colour. The View tab should expose
-Continuous Edit, Paper and Print Layout/Preview switching plus one page, two pages, page width and zoom.
+The Page tab should expose paper size, orientation, margin presets, a validated **Custom Margins…** dialog
+and page colour. Custom margins edit all four physical edges with immediate validation and a small preview;
+Cancel leaves the document unchanged and Apply commits one `DocumentPageSettings` replacement. The View tab
+should expose Continuous Edit, Paper and Print Layout/Preview switching plus one page, two pages, page width,
+zoom, **Ruler** and **Margin Guides**.
 W2-E moves the ribbon zoom controls out of Home/Editing into View instead of duplicating them; the status-bar
 zoom readout/control remains available in every mode. Physical printer imageable-area limits must be reported
 or clamped at print time rather than silently changing the logical document margins.
+
+The ruler is a separate W2-F interaction packet after Page/View integration. Its first complete form is a
+horizontal Paper-view ruler aligned to the same page, zoom and horizontal scroll geometry as the editor. It
+shows calibrated ticks, shaded margin regions and first-line, hanging, left and right paragraph-indent markers.
+Dragging a page-margin edge previews the change without repeatedly dirtying the document, commits one validated
+page-setting update on release and rolls back on Escape or capture loss. Paragraph-indent drags use the native
+editing undo path and preserve mixed-selection semantics. Ruler and guide visibility are app/view preferences,
+not document content; W4-A may persist them with other Writer appearance settings.
+
+The dotted guide and ruler are hidden from preview and print, remain physically centred for RTL text, use
+theme/high-contrast resources, scale without pixel assumptions and do not intercept ordinary editor hit testing.
+The first ruler does not promise a vertical ruler, mirrored/gutter margins or editable tab stops. Tab stops remain
+deferred until Writer has a tested text-model and persistence contract rather than a decorative marker with no
+effect. Reuse the prepared `Margins`, `Ruler` and `Gridlines` icon family where semantics remain clear; add a
+dedicated margin-guide glyph only if live comparison shows `Gridlines` is misleading.
 
 ## 5. Table support
 
@@ -223,7 +245,7 @@ controls should disable with an explanation and preserve a valid fallback.
 
 - Paper size
 - Orientation
-- Margins
+- Margin presets and a validated **Custom Margins…** dialog
 - Page colour
 
 ### View
@@ -231,6 +253,7 @@ controls should disable with an explanation and preserve a valid fallback.
 - Continuous Edit/Paper/Print Layout
 - One page/two pages/page width
 - Zoom controls relocated from Home/Editing; keep the status-bar zoom control globally available
+- Ruler and non-printing margin-guide toggles; enabled only in presentations that support them
 - Spelling and status-bar visibility
 
 ### Contextual tabs
@@ -282,6 +305,7 @@ that a packet, agent or implementation currently exists.
 - Versioned `.rkw` round-trip.
 - Page settings with A4/Letter/Legal presets, orientation and margins.
 - Centred paper edit surface, paginated preview and printing.
+- Custom-margin UI, non-printing margin guides and a zoom/DPI-aware horizontal ruler.
 
 ### W3 — Structured content
 
@@ -310,6 +334,7 @@ Automated coverage should include:
 
 - `.txt`, `.rtf` and `.rkw` load/save/round-trip and corrupt-input behaviour.
 - Page-preset conversion, orientation swap, margin validation and schema migration.
+- Custom-margin commit/cancel, ruler drag rollback, guide geometry and paragraph-indent undo/redo.
 - Dirty-state transitions, atomic save failure and unsaved-close decisions.
 - Formatting command state over uniform, mixed and empty selections.
 - Table insertion, row/column mutation, merge/split and caret resolution.
@@ -321,6 +346,8 @@ Manual Windows acceptance should include:
 - Create, format, save, close and reopen a multi-page native document containing an image and table.
 - Export representative documents to RTF and text with clearly communicated fidelity changes.
 - Print preview and physical/PDF printing for A4 and Letter with normal and custom margins.
+- Margin-guide/ruler alignment while zooming and horizontally scrolling, including drag cancellation,
+  high contrast and focused RTL content.
 - Keyboard-only editing and complete KeyTip traversal, including contextual Table Tools.
 - 100/125/150/175/200% DPI, live monitor changes, light/dark themes and focused RTL text/table input.
 - Narrow-window ribbon reduction, minimized ribbon, QAT customization and Backstage document commands.

@@ -34,6 +34,19 @@ public sealed class MainWindowIntegrationTests
             fixture.Show();
             await PumpAsync();
             AssertRuntimeContract(fixture);
+            var surface = Assert.IsType<WriterEditorSurface>(fixture.Window.FindName("EditorSurface"));
+            var settings = DocumentPageSettings.A4(DocumentPageOrientation.Landscape,
+                new DocumentPageMargins(42, 54, 42, 54));
+            Assert.True(fixture.Shell.CurrentDocument.SetPageSettings(settings));
+            await Dispatcher.Yield(DispatcherPriority.Render);
+            Assert.Same(fixture.Editor, surface.Editor);
+            Assert.Equal(settings.WidthDip, fixture.Editor.Document.PageWidth);
+            Assert.Equal(settings.HeightDip, fixture.Editor.Document.PageHeight);
+            Assert.Equal(settings.Margins.LeftDip, fixture.Editor.Document.PagePadding.Left, 4);
+            Assert.Equal(settings.Margins.TopDip, fixture.Editor.Document.PagePadding.Top, 4);
+            Assert.Equal(settings.WidthDip, surface.PaperWidthDip, 4);
+            Assert.True(fixture.Shell.CurrentDocument.SetPageSettings(DocumentPageSettings.Letter()));
+            await Dispatcher.Yield(DispatcherPriority.Render);
             AssertWriterIconCatalog(fixture);
             await AssertEditingRibbonControlsAsync(fixture);
 
@@ -323,7 +336,9 @@ public sealed class MainWindowIntegrationTests
         Assert.Same(ribbon, dock.Children[0]);
         Assert.Equal("Bottom", DockPanel.GetDock(dock.Children[1]).ToString());
         Assert.IsType<StatusBar>(dock.Children[1]);
-        Assert.Same(editor, dock.Children[2]);
+        var editorSurface = Assert.IsType<WriterEditorSurface>(dock.Children[2]);
+        Assert.Same(editor, editorSurface.Editor);
+        Assert.Equal(WriterEditorViewMode.Paper, editorSurface.ViewMode);
         Assert.Equal("DocumentEditor", AutomationProperties.GetAutomationId(editor));
         Assert.Equal("Document editor", AutomationProperties.GetName(editor));
         Assert.Equal("MainRibbon", AutomationProperties.GetAutomationId(ribbon));

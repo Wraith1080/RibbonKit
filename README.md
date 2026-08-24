@@ -327,7 +327,7 @@ isolated consumer compilation, live packaged runtime behavior, Release performan
 Studio designer were verified for launch. The post-v1 Office 2007 frame and Backstage S7-S9 work is
 complete through design-notes §3.94; MDI
 milestones M1–M3, custom-control projections and future theme expansion remain post-v1 work.
-RibbonKit Writer is accepted through W0-D, W1-A through W1-D and W2-B: application/test scaffold, document lifetime,
+RibbonKit Writer is accepted through W0-D, W1-A through W1-D and W2-B, with W2-C's centred paper implementation independently reviewed: application/test scaffold, document lifetime,
 TXT/RTF persistence, atomic saves, recent files, a live Backstage/QAT file-command shell with
 dirty-title and unsaved-close protection, and an accessible Home-ribbon editing surface integrating
 selection-sensitive formatting, find/replace, native spelling, debounced statistics and bounded zoom.
@@ -339,7 +339,8 @@ recent rows without native button chrome. Writer's PerMonitorV2 manifest also ac
 Controls v6 for themed native message boxes. W2-A adds immutable A4, Letter, Legal and custom page settings,
 physical-unit conversions, drift-free orientation and validated margins. W2-B adds the bounded, versioned `.rkw`
 ZIP format with atomic replacement, strict manifest/settings schemas and a data-only allowlist for current text
-content; images and tables remain deferred to W3. W2-C through W5 remain. See the
+content; images and tables remain deferred to W3. W2-C still needs live mixed-monitor DPI movement and one clean
+full-Writer rerun before acceptance; W2-D through W5 remain. See the
 [roadmap](docs/03-ROADMAP.md) and [design
 notes](04-DESIGN-NOTES.md) for detailed status.
 

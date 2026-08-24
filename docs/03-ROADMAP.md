@@ -2,7 +2,7 @@
 
 Each phase ends with the showcase app demonstrating everything built so far, tests green, and a tagged pre-release. Phases are sequential but small overlaps are fine.
 
-> **Progress (2026-08-24):** Phases 0–8 are complete and `v1.0.0` is published as a GitHub Release. Phase 6 closed with the user-verified live RTL popup/window pass in [`04-DESIGN-NOTES.md`](../04-DESIGN-NOTES.md) §3.61: all five themes ship with dark/black variants, per-monitor DPI is verified at 100/125/150/175/200%, and the deterministic 40-image theme/variant × DPI suite plus twenty-two focused scenes are green. Post-v1 Office 2007 frame and Backstage S7-S9 are complete through §3.94. MDI M0 and M4 are done while M1-M3 remain; custom-control projection/extensibility and future themes remain candidate tracks. RibbonKit Writer has completed W0-A through W0-D, W1-A through W1-D and W2-B (§§3.99-3.108), including the live Backstage/QAT/Home integration, accepted app-owned iconography, immutable page settings and bounded versioned `.rkw` persistence. W2-C is dependency-ready, while later packets remain plans.
+> **Progress (2026-08-24):** Phases 0–8 are complete and `v1.0.0` is published as a GitHub Release. Phase 6 closed with the user-verified live RTL popup/window pass in [`04-DESIGN-NOTES.md`](../04-DESIGN-NOTES.md) §3.61: all five themes ship with dark/black variants, per-monitor DPI is verified at 100/125/150/175/200%, and the deterministic 40-image theme/variant × DPI suite plus twenty-two focused scenes are green. Post-v1 Office 2007 frame and Backstage S7-S9 are complete through §3.94. MDI M0 and M4 are done while M1-M3 remain; custom-control projection/extensibility and future themes remain candidate tracks. RibbonKit Writer has completed W0-A through W0-D, W1-A through W1-D and W2-B (§§3.99-3.108), including the live Backstage/QAT/Home integration, accepted app-owned iconography, immutable page settings and bounded versioned `.rkw` persistence. W2-C's centred paper implementation is independently reviewed; live mixed-monitor DPI movement and one clean full-Writer rerun remain before acceptance, while later packets remain plans.
 >
 > Live DPI switching needed a fix outside the library: an app must declare **PerMonitorV2** in its own manifest or Windows bitmap-stretches it until restart. The showcase now does, and the README tells consumers to (§3.42).
 >
@@ -92,12 +92,12 @@ Aubergine and Polar Slate remain exploratory. Full intake and verification plan:
 [`docs/09-FUTURE-THEMES-PLAN.md`](09-FUTURE-THEMES-PLAN.md).
 
 **RibbonKit Writer** is the complex consumer/reference application, accepted through W0-D, W1-A
-through W1-D and W2-B as a separate app/test project with document lifetime, TXT/RTF/native persistence, atomic saves,
+through W1-D and W2-B, with W2-C's centred paper implementation independently reviewed, as a separate app/test project with document lifetime, TXT/RTF/native persistence, atomic saves,
 recent files, a live Backstage/QAT file-command shell and an accessible Home-ribbon surface over the
 tested formatting, find/spelling/statistics and zoom services rather than another Showcase page. Its
 W1-D app-owned iconography and visual polish are accepted; W2-A supplies the immutable page-settings model and
-W2-B supplies the security-gated `.rkw` container for supported text content and page metadata. Its remaining
-scope includes the centred paper surface, Backstage/QAT customization, images and hyperlinks, paginated preview/printing,
+W2-B supplies the security-gated `.rkw` container for supported text content and page metadata. W2-C's final
+live mixed-monitor and full-rerun gate remains open. Later scope includes Backstage/QAT customization, images and hyperlinks, paginated preview/printing,
 and native FlowDocument tables with contextual Table Tools. OLE embedding, DOCX compatibility and
 editable Word-style page layout are explicit non-goals. Full plan:
 [`docs/10-RIBBONKIT-WRITER-PLAN.md`](10-RIBBONKIT-WRITER-PLAN.md). The durable dependency packets,

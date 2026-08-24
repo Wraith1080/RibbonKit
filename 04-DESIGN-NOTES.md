@@ -4945,6 +4945,40 @@ required.
 The final Writer suite passed **192/192** and the full solution passed **547 logic tests plus one visual test
 covering 63 approved images**, with zero build warnings/errors and a clean diff check.
 
+### 3.109 RibbonKit Writer W2-C centred paper editing surface — 2026-08-24
+
+W2-C adds an app-owned `WriterEditorSurface` around the one long-lived native `RichTextBox`. The actual Writer
+window now opens in Paper mode: the current document's logical width, height and physical margins are applied to
+`FlowDocument.PageWidth`, `PageHeight` and `PagePadding`, while a white paper surface is centred over the
+theme-aware companion workspace. Continuous mode restores the previous workspace-filling editor padding and
+unconstrained document layout. Switching presentation never replaces the editor or document, so native selection,
+caret, undo, IME, spelling, clipboard and automation ownership remain with the same WPF control.
+
+The existing editing controller continues to own the editor's single `LayoutTransform`. The paper host scales only
+its logical chrome dimensions, preventing double zoom. Paper mode uses one outer horizontal/vertical scroll surface
+and disables the editor's inner vertical scrollbar; Continuous mode restores the inverse arrangement. This keeps
+Letter/A4 paper and long continuous content reachable without nested vertical scrolling or fake page breaks.
+`MainWindow` also observes the current `WriterDocument.PageSettings`, detaches on document replacement/close and
+reapplies the model without marking the document dirty.
+
+Independent review caught and corrected two first-pass defects before acceptance: fitting paper was not guaranteed
+to centre through the viewport alignment, and paper taller than the window could be clipped below the viewport.
+Eight focused surface tests now cover hosted centring, Letter/A4 vertical reachability, zoomed horizontal overflow,
+long-content growth, real edit/undo and selection preservation, focus/editor-state preservation, page margins,
+document replacement and single-scale controller zoom. The real `MainWindow` integration test also proves live
+page-setting propagation. The focused W2-C plus window-integration gate passed **9/9** and the final application
+capture passed at the current **125%** desktop scale. The solution builds with zero warnings/errors; RibbonKit passed
+**355/355** and the visual suite passed its one test covering 63 approved images.
+
+The acceptance gate remains open for two environment-bound checks. Only one 125%-scale display is connected, so
+live mixed-monitor DPI movement cannot be performed. A full Writer pass reached **199/199** before the final
+theme-resource-only workspace polish and added long-content test; the final code then passed its 9 focused/integration
+tests and a separate **196/196** run excluding the four blocked cases, but Windows began rejecting the three
+pre-existing clipboard tests with
+`CLIPBRD_E_CANT_OPEN` and made the clipboard-sensitive full-window test exceed its ten-second harness timeout. This is
+not a W2-C assertion failure, but one clean **200/200** Writer rerun is still required before W2-C is accepted and W2-D
+becomes dependency-ready. No RibbonKit runtime change or new consumer-friction entry was required.
+
 ## 4. Workflow / Session Conventions
 
 - Work from the current Windows checkout at
@@ -5005,9 +5039,10 @@ covering 63 approved images**, with zero build warnings/errors and a clean diff 
 - Final live visual tuning and approval of the Office 2010 Aero-inspired frame prototype (§3.97).
 - Touch density, richer automatic QAT projections, custom-control projection APIs and additional
   themes remain post-v1 candidates. Their plan documents are not implementation evidence.
-- RibbonKit Writer W2-C through W5 remain. W2-C is dependency-ready after accepted W2-A/W2-B and
-  W1-D; W4 keeps the final whole-product consistency pass after W2/W3. No implementation is implied by
-  the remaining plan.
+- RibbonKit Writer W2-C's implementation and independent review are complete through §3.109, but its final gate
+  remains open for live mixed-monitor DPI movement and one clean full-Writer rerun after the external clipboard lock
+  clears. W2-D through W5 remain; W2-D has not started. W4 keeps the final whole-product consistency pass after
+  W2/W3.
 - Automatic `Icons.xaml` discovery is best-effort by design. Keep `Load Icons.xaml…` available
   for ambiguity, inaccessible paths, parse failures, or no match.
 
@@ -5047,6 +5082,11 @@ covering 63 approved images**, with zero build warnings/errors and a clean diff 
 - 2026-08-24 after §3.108: 547 logic tests, one visual test covering 63 approved images, and zero
   build warnings/errors; Writer passed 192/192 tests and W2-B's bounded, atomic, versioned `.rkw`
   persistence and data-only native-load safety gate passed.
+- 2026-08-24 after §3.109 implementation: the inventory is 555 logic tests plus one visual test covering
+  63 approved images. W2-C's final code passed its 9 focused/window-integration tests and a separate 196/196
+  Writer run excluding the four clipboard-blocked cases; RibbonKit's 355 tests and the visual test passed with
+  a zero-warning solution build. A single clean Writer
+  200/200 rerun and live mixed-monitor movement remain pending for the reasons recorded in §3.109.
 - Before quoting a current count or declaring a new change complete, rerun the proportional build
   and test commands. Inspect actual/diff PNG artifacts before changing visual baselines or
   tolerances.

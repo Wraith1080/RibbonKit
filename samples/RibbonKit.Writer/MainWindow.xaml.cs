@@ -9,6 +9,7 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using RibbonKit.Controls;
 using RibbonKit.Writer.Editing;
+using RibbonKit.Writer.Models;
 using RibbonKit.Writer.Services.Documents;
 using RibbonKit.Writer.Services.Persistence;
 using RibbonKit.Writer.Services.RecentFiles;
@@ -59,6 +60,7 @@ public partial class MainWindow : RibbonWindow
         if (shellDialogs is not null) shellDialogs.Owner = this;
         DataContext = Shell;
         RecentList.ItemsSource = Shell.RecentEntries;
+        EditorSurface.Attach(DocumentEditor, EditorViewport, PaperCanvas);
         _editingController = new WriterEditingRibbonController(DocumentEditor);
         _editingController.StateChanged += OnEditingStateChanged;
         _editingController.StatisticsChanged += OnEditingStatisticsChanged;
@@ -214,6 +216,10 @@ public partial class MainWindow : RibbonWindow
     }
     private void ReplaceEditorDocument()
     {
+        if (_observedDocument is not null)
+            _observedDocument.PropertyChanged -= OnCurrentDocumentPropertyChanged;
+        _observedDocument = Shell.CurrentDocument;
+        _observedDocument.PropertyChanged += OnCurrentDocumentPropertyChanged;
         _replacingDocument = true;
         try
         {
@@ -226,7 +232,18 @@ public partial class MainWindow : RibbonWindow
         {
             _replacingDocument = false;
         }
+        EditorSurface.SetDocument(Shell.CurrentDocument.Content);
+        EditorSurface.PageSettings = Shell.CurrentDocument.PageSettings;
+        EditorSurface.ZoomPercent = _editingController?.Zoom.Value ?? 100d;
         UpdateEditingStatusSurface();
+    }
+
+    private WriterDocument? _observedDocument;
+
+    private void OnCurrentDocumentPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(WriterDocument.PageSettings))
+            EditorSurface.PageSettings = Shell.CurrentDocument.PageSettings;
     }
     private void OnExitRequested(object? sender, EventArgs e) { _allowClose = true; Close(); }
     private void OnClosed(object? sender, EventArgs e)
@@ -234,6 +251,8 @@ public partial class MainWindow : RibbonWindow
         _closing = false;
         Shell.PropertyChanged -= OnShellPropertyChanged;
         Shell.ExitRequested -= OnExitRequested;
+        if (_observedDocument is not null)
+            _observedDocument.PropertyChanged -= OnCurrentDocumentPropertyChanged;
         if (_findReplaceDialog is not null)
         {
             _findReplaceDialog.Close();
@@ -260,7 +279,11 @@ public partial class MainWindow : RibbonWindow
 
     private void OnEditingStatisticsChanged(object? sender, EventArgs e) => UpdateEditingStatusSurface();
 
-    private void OnEditingZoomChanged(object? sender, EventArgs e) => UpdateEditingStatusSurface();
+    private void OnEditingZoomChanged(object? sender, EventArgs e)
+    {
+        EditorSurface.ZoomPercent = EditingController.Zoom.Value;
+        UpdateEditingStatusSurface();
+    }
 
     private void UpdateEditingStatusSurface()
     {
