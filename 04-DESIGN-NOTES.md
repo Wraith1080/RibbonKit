@@ -4839,6 +4839,81 @@ caret-only selection state, find/replace, spelling, live counts, zoom, minimized
 undo/redo, TXT/RTF document replacement, Save/Open/New and dirty-prompt Cancel/Discard paths all
 passed. No RibbonKit runtime or project-file change was required.
 
+### 3.106 RibbonKit Writer W1-D iconography and first visual-polish candidate — 2026-08-21
+
+Writer now uses one coherent app-owned vector family for all accepted W1-C commands. After the user
+rejected the first monochrome/accent-heavy draft as too basic, the lead redesigned the artwork directly
+as layered multicolor drawings rather than delegating another visual pass. The resources share a 24-unit
+geometry convention, rounded stroke treatment, a restrained Writer-owned semantic brush palette and
+purpose-sized large variants for primary actions. Paste now leads the Clipboard group at Large size,
+Cut/Copy form the supporting stack, and Font, Paragraph and Editing retain their accepted commands,
+IDs, KeyTips, ScreenTips, automation metadata and state behavior. QAT silhouettes and the status bar
+received the same restrained spacing and hierarchy pass without adding a fake document canvas ahead
+of W2-C.
+
+`Icons.xaml` now contains **101 vector resources**: 96 small/general icons plus five explicit Large
+variants. Sixty-seven reserves cover the planned file/Backstage, page-layout, preview/view, image/link,
+table-structure, Table Tools, appearance and general-action surfaces through W4. The catalog and reuse
+rules live beside the app in `samples/RibbonKit.Writer/ICON-CATALOG.md`; future packets should reuse these
+before drawing near-duplicates.
+
+The next live reviews found that the direct redesign had swung too far toward variation and then remained
+too bright and contrast-heavy. The implemented follow-up limits the complete catalog to dark-grey structure,
+one muted-blue action/detail accent and a muted amber reserved for semantic emphasis. Related commands now
+share a stable treatment: undo/redo, bold/italic/underline, all four alignments, bullets/numbering,
+find/replace and all three zoom actions. Their geometry communicates the operation; color communicates role
+instead of changing from sibling to sibling or group to group. Ordinary Home/QAT commands therefore share
+one ink/blue identity across Clipboard, Font, Paragraph and Editing.
+
+All reusable palette pens now use the same 1.4-unit round-cap/round-join treatment. Alignment, list, indent,
+paragraph, find and zoom drawings were converted from visually heavy filled bars or lenses to this shared
+stroke system; semantic underline/highlight accents use it too. Bold letterforms and filled directional
+silhouettes remain intentionally solid because their weight carries meaning rather than simulating a line.
+
+Backstage recent items remain real focusable WPF buttons for keyboard and Invoke semantics, but their
+native rectangular chrome is replaced by a Writer-owned row template. Each row now presents a document
+glyph, filename, containing folder, format and last-used time with trimming, a full-path tooltip and
+full-path automation help text; an explicit empty state covers a new installation. Computed presentation
+properties are excluded from the versioned recent-file JSON, so persistence compatibility is unchanged.
+
+An independent max-effort Luna review found no blocking defects and confirmed the packet boundary,
+dynamic-resource ownership and persistence shape. The actual Writer window passed standard and narrow
+layout inspection, recent-row hover and mouse activation, disabled commands, minimized-ribbon/QAT and
+Backstage reflow. External `UIAutomationClient` traversal repeatedly omitted the arbitrary recent-page
+button subtree even though direct peers and actual activation passed; this is recorded as open consumer
+evidence in `docs/12-RIBBONKIT-WRITER-CONSUMER-FRICTION-LOG.md` RKWF-004 rather than expanding W1-D into
+RibbonKit runtime work. Writer's existing PerMonitorV2 application manifest now also requests Windows
+Common Controls v6, so the real WPF `MessageBox` confirmation path uses current themed native buttons
+without replacing app dialog code. The final Writer suite passed **140/140** and the full solution passed **495
+logic tests plus one visual test covering 63 approved images**, with zero build warnings/errors and a
+clean diff check. No RibbonKit runtime or project-file change was required.
+
+The user accepted the final dark-grey, muted-blue and muted-amber live screenshots on 2026-08-24,
+closing W1-D's visual acceptance gate.
+
+### 3.107 RibbonKit Writer W2-A page-settings model — 2026-08-24
+
+W2-A adds a UI-independent, immutable `DocumentPageSettings` model without changing the live editor or
+RibbonKit runtime. Named A4, Letter and Legal factories use 96-DIP-per-inch physical conversion; custom
+paper accepts explicit portrait-basis dimensions. The model stores one canonical portrait basis and only
+projects `WidthDip`/`HeightDip` for orientation, so even repeated portrait/landscape toggles cannot accumulate
+floating-point drift. Margins are immutable values validated against the effective orientation and must leave
+positive content width and height. Failed preset, orientation, custom-size or margin updates throw before a
+replacement instance exists, preserving the prior valid settings.
+
+`DocumentLength` provides finite, non-negative inch/millimetre/DIP conversions and rejects converted overflow.
+The W2-A gate covers named physical sizes, conversion round trips, custom paper, immutable preset/margin updates,
+invalid dimensions, invalid margins, invalid enum values, orientation-dependent margin rejection and 1,000
+orientation toggles. W2-A remains deliberately disconnected from `FlowDocument` and persistence: W2-C owns
+applying settings to the editor/paper surface, while W2-B owns the versioned `.rkw` schema and safety boundary.
+
+The same visual review identified a missing first-class separator for command clusters inside a `RibbonGroup`.
+That consumer request is recorded as RKWF-005 in the Writer friction log for a separately approved
+`RibbonGroupSeparator` investigation. W2-A makes no changes under `src/RibbonKit/**`.
+
+The final Writer suite passed **169/169** and the full solution passed **524 logic tests plus one visual test
+covering 63 approved images**, with zero build warnings/errors.
+
 ## 4. Workflow / Session Conventions
 
 - Work from the current Windows checkout at
@@ -4855,7 +4930,7 @@ passed. No RibbonKit runtime or project-file change was required.
 
 ## 5. Current State & Next Steps
 
-> **Authoritative status as of 2026-08-21.** Historical checkpoints remain in §3, but status and
+> **Authoritative status as of 2026-08-24.** Historical checkpoints remain in §3, but status and
 > test counts quoted elsewhere should be reconciled against this section and rerun when current
 > evidence matters.
 
@@ -4883,10 +4958,12 @@ passed. No RibbonKit runtime or project-file change was required.
   directly beneath tabs and both QAT placements (§3.97). Its automated gate is green; live
   fallback/Acrylic visual approval remains pending.
 - MDI milestones M0 and M4 are complete: floating children plus ribbon tab/caption merging.
-- RibbonKit Writer W0-A through W0-D and W1-A through W1-C are complete through §3.105: the separate app/test
+- RibbonKit Writer W0-A through W0-D, W1-A through W1-D and W2-A are complete through §3.107: the separate app/test
   scaffold, document lifetime, TXT/RTF/atomic/recent services, live Backstage/QAT file-command shell,
   formatting/selection-state engine, find/spelling/statistics/zoom utilities, and the accessible
-  Home-ribbon/QAT editing surface are integrated at their packet boundaries.
+  Home-ribbon/QAT editing surface are integrated at their packet boundaries. The accepted Writer-owned icon
+  family and immutable page settings cover visual command identity plus A4/Letter/Legal/custom paper,
+  unit conversion, drift-free orientation and validated margins.
 
 ### Remaining or intentionally deferred
 
@@ -4896,9 +4973,9 @@ passed. No RibbonKit runtime or project-file change was required.
 - Final live visual tuning and approval of the Office 2010 Aero-inspired frame prototype (§3.97).
 - Touch density, richer automatic QAT projections, custom-control projection APIs and additional
   themes remain post-v1 candidates. Their plan documents are not implementation evidence.
-- RibbonKit Writer W1-D and W2-A through W5 remain. W1-D is the dependency-ready app-owned iconography
-  and first visual-polish pass over the accepted W1-C surface; W2-A is also dependency-ready. W4 keeps
-  the final whole-product consistency pass after W2/W3. No implementation is implied by this plan.
+- RibbonKit Writer W2-B through W5 remain. W2-B and W2-C are dependency-ready after accepted W2-A and
+  W1-D; W4 keeps the final whole-product consistency pass after W2/W3. No implementation is implied by
+  the remaining plan.
 - Automatic `Icons.xaml` discovery is best-effort by design. Keep `Load Icons.xaml…` available
   for ambiguity, inaccessible paths, parse failures, or no match.
 
@@ -4928,6 +5005,13 @@ passed. No RibbonKit runtime or project-file change was required.
 - 2026-08-21 after §3.105: 493 logic tests, one visual test covering 63 approved images, and zero
   build warnings/errors; Writer passed 138/138 tests and the actual mouse/keyboard, complete Home
   KeyTip, QAT/minimized-ribbon, selection-state, editing-utility and file-lifecycle surface gate passed.
+- 2026-08-24 after §3.106: 495 logic tests, one visual test covering 63 approved images, and zero
+  build warnings/errors; Writer passed 140/140 tests and its standard/narrow restrained iconography,
+  Backstage recent-row hover/activation, minimized-ribbon/QAT and themed native message-box surface
+  gate passed.
+- 2026-08-24 after §3.107: 524 logic tests, one visual test covering 63 approved images, and zero
+  build warnings/errors; Writer passed 169/169 tests, W1-D received user visual acceptance and W2-A's
+  immutable page presets, conversions, orientation and margin-validation gate passed.
 - Before quoting a current count or declaring a new change complete, rerun the proportional build
   and test commands. Inspect actual/diff PNG artifacts before changing visual baselines or
   tolerances.

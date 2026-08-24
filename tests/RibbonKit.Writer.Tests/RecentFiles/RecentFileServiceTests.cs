@@ -66,6 +66,26 @@ public sealed class RecentFileServiceTests
     }
 
     [Fact]
+    public void RecentEntryPresentationPropertiesAreDerivedWithoutChangingPersistenceShape()
+    {
+        var path = Path.Combine("C:\\Writer", "Drafts", "meeting-notes.rtf");
+        var entry = new RecentFileEntry(path, WriterDocumentFormat.RichText,
+            new DateTimeOffset(2026, 8, 21, 8, 30, 0, TimeSpan.Zero));
+
+        Assert.Equal("meeting-notes.rtf", entry.FileName);
+        Assert.EndsWith(Path.Combine("Writer", "Drafts"), entry.FolderPath,
+            StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("Rich Text", entry.FormatLabel);
+        Assert.StartsWith("Last used ", entry.LastUsedLabel, StringComparison.Ordinal);
+
+        var json = JsonSerializer.Serialize(entry);
+        Assert.DoesNotContain("FileName", json, StringComparison.Ordinal);
+        Assert.DoesNotContain("FolderPath", json, StringComparison.Ordinal);
+        Assert.DoesNotContain("FormatLabel", json, StringComparison.Ordinal);
+        Assert.DoesNotContain("LastUsedLabel", json, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void CorruptJsonAndUnknownVersionDegradeToEmpty()
     {
         using var directory = new TemporaryDirectory();

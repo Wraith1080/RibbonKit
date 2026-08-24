@@ -1,7 +1,8 @@
 # RibbonKit Writer — Luna Execution Plan
 
 > **Status:** durable execution decomposition created 2026-08-20. W0-A through W0-D and W1-A through W1-C are
-> implemented. W1-D is planned and dependency-ready, but no agent or implementation for it is implied.
+> accepted through W1-D and W2-A. W2-B and W2-C are dependency-ready, but no agent or implementation
+> for either packet is implied.
 > This document does not schedule future agents or imply that any later Writer packet exists.
 > [`10-RIBBONKIT-WRITER-PLAN.md`](10-RIBBONKIT-WRITER-PLAN.md) owns product scope; current
 > implementation status remains in [`04-DESIGN-NOTES.md` §5](../04-DESIGN-NOTES.md#5-current-state--next-steps).
@@ -144,7 +145,7 @@ Only packets whose dependencies have passed their integration gate are ready.
 | W2-B | Versioned `.rkw` persistence | W0-C, W2-A | Luna, high-risk |
 | W2-C | Centred paper editing surface | W1-D, W2-A | Luna |
 | W2-D | Preview, pagination and printing | W2-C | Luna |
-| W2-E | Layout/View ribbon and preview integration | W2-B, W2-D | Luna, UI-exclusive |
+| W2-E | Page/View ribbon and preview integration | W2-B, W2-D | Luna, UI-exclusive |
 | W3-A | Images and hyperlinks | W1-D, W2-B | Luna |
 | W3-B | FlowDocument table core | W1-D, W2-B | Luna, high-risk |
 | W3-C | Table interaction and contextual Table Tools | W2-E, W3-B | Luna, UI-exclusive |
@@ -292,9 +293,10 @@ fail closed with user-actionable errors; temporary files cannot silently replace
 **Owns:** paper editor host/control, its resources and focused layout tests. Main-window insertion is
 performed only while this packet holds the UI lock.
 
-**Deliver:** continuous `RichTextBox` editing centred on a neutral workspace, width/margins driven by
-the page model and zoom, with native caret, selection, IME, spelling and clipboard behaviour. Do not
-draw fake page breaks.
+**Deliver:** preserve the current continuous editor presentation and add a centred Paper presentation
+over the same live `RichTextBox`/document, with width and margins driven by the page model and zoom.
+Switching modes must preserve caret, selection, undo history, IME, spelling, clipboard state and focus.
+Do not draw fake page breaks.
 
 **Exit:** lead verifies editing and scrolling at multiple zooms and paper presets, including focused RTL
 input and live DPI movement.
@@ -310,15 +312,20 @@ clamp printer imageable-area conflicts.
 **Exit:** clone isolation and pagination-input tests pass; lead compares A4 and Letter preview with
 Microsoft Print to PDF or an available printer. Opening a dialog is not proof of a correct print path.
 
-### W2-E — Layout/View integration
+### W2-E — Page/View integration
 
-**Owns:** Layout/View ribbon groups, preview switching and Backstage print/page-summary UI exclusively.
+**Owns:** Page/View ribbon tabs and groups, view switching, zoom-command relocation and Backstage
+print/page-summary UI exclusively.
 
-**Deliver:** paper size, orientation, margins, page colour, Edit/Print Layout, view mode and zoom commands
-with stable command identities and keyboard metadata.
+**Deliver:** a Page tab for paper size, orientation, margins and page colour; a View tab for Continuous
+Edit, Paper and Print Layout/Preview switching, one/two-page/page-width modes and zoom. Move the existing
+ribbon zoom controls from Home/Editing to View while retaining their command identities and the globally
+available status-bar zoom control. Do not leave duplicate ribbon zoom controls behind. All relocated and
+new commands retain stable keyboard and automation metadata.
 
-**Exit:** lead completes paper-setting, preview and PDF-print workflows from both ribbon and Backstage;
-full build/tests pass before W3 begins.
+**Exit:** lead completes continuous/paper/preview switching without content, selection, undo or focus loss;
+paper-setting, zoom and PDF-print workflows pass from ribbon, status bar and Backstage; Home no longer owns
+ribbon zoom controls; full build/tests pass before W3 begins.
 
 ## 8. W3 — Structured content
 
@@ -368,14 +375,26 @@ without losing the current document; W3 manual acceptance and full solution test
 
 ### W4-A — Customization and appearance persistence
 
-**Owns:** app settings, Options UI and final customization integration exclusively.
+**Owns:** app settings, the **Settings**-captioned customization dialog, its app-owned **Appearance**
+page and final customization integration exclusively.
 
 **Deliver:** RibbonCustomizationSerializer only for ribbon structure; separate app-owned versioned
-settings for theme, backdrop, window and other appearance preferences; import/export/reset boundaries
-that cannot leak transient modal/merge state or document settings.
+settings for Office theme generation, light/dark-black palette, custom/default accent, accented title bar,
+Backstage design/translucency, supported DWM backdrop, compatible window-frame/application-button
+presentation, global ribbon animation level and respect-system-reduced-motion. Keep RibbonKit's built-in
+**Customize Ribbon** and **Quick Access Toolbar** pages, add the **Appearance** page, and caption the host
+dialog **Settings**; the page itself is not called Settings. Import/export/reset boundaries cannot leak
+transient modal/merge state, document settings or appearance state.
 
-**Exit:** tests prove separation among document, ribbon and appearance state; lead verifies restart,
-corrupt settings, reset and theme/backdrop behaviour.
+Appearance editing is transactional: live preview may update the app and the open dialog, Apply/OK validates
+and persists, Cancel restores the opening snapshot, and an Appearance-only defaults action does not reset
+ribbon/QAT customization. Compatibility-dependent choices remain discoverable but disabled with an
+explanation and a valid fallback rather than exposing a dead control.
+
+**Exit:** tests prove separation among document, ribbon and appearance state plus snapshot rollback,
+schema validation and unsupported-platform fallback. Lead verifies restart, corrupt settings, Appearance
+defaults, Cancel rollback, live dialog re-theming, every theme generation/palette, Backstage design,
+backdrop/frame compatibility, keyboard/UIA naming and reduced-motion behavior.
 
 ### W4-B — Automated integration and hardening
 

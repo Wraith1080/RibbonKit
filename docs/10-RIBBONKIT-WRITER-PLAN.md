@@ -1,10 +1,11 @@
 # RibbonKit Writer — Functional Reference Application Plan
 
-> **Status:** approved post-v1 application plan. W0-A through W0-D and W1-A through W1-C are implemented: scaffold,
+> **Status:** approved post-v1 application plan. W0-A through W0-D and W1-A through W1-C are accepted: scaffold,
 > document lifetime, TXT/RTF persistence, atomic saves, recent files, the live Backstage/QAT
 > file-command shell, and the accessible Home-ribbon integration over formatting, find/replace, native
-> spelling, debounced statistics and bounded zoom. W1-D is a planned, dependency-ready iconography and
-> first visual-polish pass; it is not implemented. No later packet is implied.
+> spelling, debounced statistics and bounded zoom. W1-D's app-owned vector iconography and first
+> visual-polish pass is accepted, and W2-A's immutable page-settings model is complete. W2-B and
+> W2-C are dependency-ready; no later packet is implied.
 > Live status remains in `04-DESIGN-NOTES.md` §5.
 > RibbonKit Writer is a separate functional sample, not another feature page inside
 > `RibbonKit.Showcase`.
@@ -103,16 +104,22 @@ silently replace the user's source file.
 
 ## 4. Paper-aware editing and pagination
 
-Writer should have two coordinated document views.
+Writer should have three coordinated presentations of the same document.
 
-### Edit view
+### Continuous Edit view
+
+- Preserve the current native, workspace-filling `RichTextBox` presentation for distraction-free editing.
+- Selection, caret, IME, spell-check and clipboard behaviour stay native to the same live editor.
+
+### Paper view
 
 - A fixed-width white paper surface centred over a neutral workspace.
 - Width follows the selected logical paper size and zoom.
 - Visible inner spacing follows the selected margins.
 - The editor remains one continuous scroll surface; it must not draw fake page breaks that disagree
   with the paginator.
-- Selection, caret, IME, spell-check and clipboard behaviour stay native to `RichTextBox`.
+- Switching between Continuous Edit and Paper must re-present the same live editor/document without
+  replacing content or losing selection, caret, undo history or focus.
 
 ### Print Layout / Preview
 
@@ -125,9 +132,11 @@ Writer should have two coordinated document views.
 - Rebuild preview after document or page-setting changes, but debounce expensive pagination while the
   user is typing.
 
-The Layout tab should expose paper size, orientation, margins and page colour. View should expose Edit,
-Print Layout, one page, two pages, page width and zoom actions. Physical printer imageable-area limits
-must be reported or clamped at print time rather than silently changing the logical document margins.
+The Page tab should expose paper size, orientation, margins and page colour. The View tab should expose
+Continuous Edit, Paper and Print Layout/Preview switching plus one page, two pages, page width and zoom.
+W2-E moves the ribbon zoom controls out of Home/Editing into View instead of duplicating them; the status-bar
+zoom readout/control remains available in every mode. Physical printer imageable-area limits must be reported
+or clamped at print time rather than silently changing the logical document margins.
 
 ## 5. Table support
 
@@ -166,7 +175,34 @@ effort and should have focused compatibility fixtures rather than broad promises
 - New, Open, Save and Save As
 - Print and paginated preview
 - Document information and page setup summary
-- Options/appearance and Exit
+- Settings and Exit
+
+### Settings dialog
+
+The extensible RibbonKit customization/options dialog should be presented to Writer users with the
+window caption **Settings**. Keep the built-in **Customize Ribbon** and **Quick Access Toolbar** pages,
+and add an app-owned **Appearance** page rather than naming the page itself Settings.
+
+The Appearance page should expose every supported RibbonKit appearance choice that Writer enables:
+
+- Office theme generation: 2024, 2019, 2013, 2010 and 2007.
+- The selected generation's light or dark/black palette, default or custom accent colour, and accented
+  title-bar choice.
+- Backstage design: Modern, Classic, Classic2010, Glass2007 and Classic2007, plus translucency where
+  the selected window material and theme support it.
+- Window backdrop: None, Mica, Acrylic or Tabbed/Mica Alt when supported by the current Windows build;
+  unsupported choices remain visible but explain why they cannot currently be applied.
+- Theme-compatible window frame and application-button presentation, including the Office 2007/2010
+  Aero-inspired frame options and Tab/Orb shape only where the selected theme supports them.
+- Ribbon animation level (None, Subtle or Expressive) and whether RibbonKit respects the Windows
+  reduced-motion preference.
+
+Appearance changes use an app-owned transactional preview: Apply/OK validates and persists them, while
+Cancel restores the opening snapshot. A dedicated appearance-default action may reset this page, but
+Ribbon customization Import/Export/Reset must not modify appearance, document page settings or content.
+Changing theme must re-theme the open Settings dialog without losing the selected page, keyboard focus
+or pending values. Do not expose dead switches merely to reproduce the Showcase; compatibility-dependent
+controls should disable with an explanation and preserve a valid fallback.
 
 ### Home
 
@@ -183,7 +219,7 @@ effort and should have focused compatibility fixtures rather than broad promises
 - Hyperlink
 - Date and time
 
-### Layout
+### Page
 
 - Paper size
 - Orientation
@@ -192,9 +228,9 @@ effort and should have focused compatibility fixtures rather than broad promises
 
 ### View
 
-- Edit/Print Layout
+- Continuous Edit/Paper/Print Layout
 - One page/two pages/page width
-- Zoom
+- Zoom controls relocated from Home/Editing; keep the status-bar zoom control globally available
 - Spelling and status-bar visibility
 
 ### Contextual tabs
@@ -255,8 +291,10 @@ that a packet, agent or implementation currently exists.
 
 ### W4 — Product integration and polish
 
-- Ribbon customization and separate appearance persistence.
-- Theme/dark/backdrop choices appropriate for a real application.
+- A **Settings**-captioned customization dialog with built-in ribbon/QAT pages and an app-owned
+  **Appearance** page.
+- Separate persistence for theme generation, dark/black palette, accent/title bar, Backstage design,
+  backdrop/frame/application-button presentation and ribbon motion preferences.
 - A final consistency pass over W1-D and all icons, command hierarchies and surfaces added by W2/W3.
 - Accessibility, keyboard, RTL, DPI and reduced-motion passes.
 - Outside-debugger startup, resize, long-document and pagination performance checks.

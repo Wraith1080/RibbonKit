@@ -112,6 +112,52 @@ remain read-only until actual/diff evidence justifies a deliberate change.
   buttons, projected QAT proxies and overflow proxies, including Invoke/Toggle, name, enabled state and
   source/proxy consistency.
 
+### RKWF-004 — Backstage custom page actions are absent from external UIA traversal
+
+- **First seen / packet:** 2026-08-21, Writer W1-D recent-document live verification.
+- **Status:** Open investigation; not yet a confirmed RibbonKit defect.
+- **Consumer goal:** arbitrary application content hosted by Backstage should retain its ordinary WPF
+  UI Automation peers after the surface is presented through the Backstage adorner.
+- **Reproduction and evidence:** the realized recent rows are ordinary focusable `Button` controls with
+  names, unique IDs, full-path help text and a working in-process Invoke pattern. Actual mouse activation
+  opens the document and closes Backstage. Repeated external `UIAutomationClient` traversal of the live
+  Backstage window exposed the navigation labels but no recent-row buttons or their text content.
+- **Friction:** Writer can prove its own button semantics and real interaction, but cannot make an external
+  accessibility client discover those actions without understanding or replacing the Backstage host peer.
+- **Current app-owned workaround:** keep native `Button` semantics, keyboard focus, automation metadata,
+  tooltips and in-process automation coverage; also verify the real mouse/keyboard path.
+- **Application impact:** external automation and assistive-technology clients may be unable to discover
+  actionable custom Backstage page content even though sighted pointer interaction works.
+- **Smallest possible library direction:** isolate whether the adorner/content-presenter peer boundary is
+  excluding the arbitrary page subtree, then add or bridge peers only if multiple external clients reproduce
+  the omission. Do not special-case Writer or recent documents.
+- **Evidence still required:** Inspect.exe or equivalent captures for Modern, Classic2010 and Classic2007
+  Backstage content, including ordinary buttons, lists and custom automation peers; confirm keyboard-client
+  discovery separately from actual focus movement.
+
+### RKWF-005 — Ribbon groups have no first-class in-group separator
+
+- **First seen / packet:** 2026-08-24, Writer W1-D visual review and W2 planning.
+- **Status:** Open additive-control candidate; no RibbonKit runtime work approved in this packet.
+- **Consumer goal:** visually partition related command clusters inside one `RibbonGroup` without creating
+  fake groups, hard-coded borders or layout-only command items.
+- **Reproduction and evidence:** the accepted Writer Home surface needs lighter divisions within command-dense
+  groups, but RibbonKit exposes only whole-group boundary chrome, menu separators and the application-menu
+  separator. None participates as an adaptive item inside a ribbon group.
+- **Friction:** an app-owned `Border` or `Separator` would need to reproduce theme tokens, large/medium/small
+  measurement, collapsed-group behavior, RTL placement, visibility and automation semantics that belong to
+  the ribbon item system.
+- **Current app-owned workaround:** rely on spacing and whole-group boundaries; do not introduce a one-theme
+  visual approximation into Writer.
+- **Application impact:** dense groups are harder to scan, while consumer-created dividers risk inconsistent
+  adaptive layout and theme behavior across Office generations.
+- **Smallest possible library direction:** investigate a lookless, non-command `RibbonGroupSeparator` control
+  with theme-owned chrome and explicit adaptive/RTL/collapsed behavior. It should remain absent from KeyTips,
+  QAT projection, customization command lists and UI Automation control content unless accessibility review
+  identifies a useful semantic role.
+- **Evidence still required:** a focused consumer prototype in Writer or Showcase covering horizontal group
+  layouts, all ribbon sizes, collapsed flyouts, all themes, RTL, high DPI, customization and automation trees.
+
 ## 5. Closed observations
 
 None yet.

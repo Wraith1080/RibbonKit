@@ -34,6 +34,7 @@ public sealed class MainWindowIntegrationTests
             fixture.Show();
             await PumpAsync();
             AssertRuntimeContract(fixture);
+            AssertWriterIconCatalog(fixture);
             await AssertEditingRibbonControlsAsync(fixture);
 
             var editingController = fixture.Window.EditingController;
@@ -95,18 +96,25 @@ public sealed class MainWindowIntegrationTests
             var recentList = FindVisualDescendants<ItemsControl>(backstage).Single(item =>
                 AutomationProperties.GetAutomationId(item) == "RecentList");
             var recentButtons = FindVisualDescendants<Button>(recentList)
-                .Where(button => fixture.RecentPaths.Contains(button.Content as string ?? ""))
+                .Where(button => button.CommandParameter is RecentFileEntry)
                 .ToArray();
             Assert.Equal(2, recentButtons.Length);
             Assert.Equal(2, recentButtons.Select(button =>
                 AutomationProperties.GetAutomationId(button)).Distinct(StringComparer.OrdinalIgnoreCase).Count());
             foreach (var button in recentButtons)
             {
-                var buttonPath = Assert.IsType<string>(button.Content);
-                Assert.Equal(buttonPath, AutomationProperties.GetAutomationId(button));
-                Assert.Equal(buttonPath, AutomationProperties.GetName(button));
+                var rowEntry = Assert.IsType<RecentFileEntry>(button.CommandParameter);
+                Assert.Same(rowEntry, button.Content);
+                Assert.Equal(rowEntry.Path, AutomationProperties.GetAutomationId(button));
+                Assert.Equal(rowEntry.FileName, AutomationProperties.GetName(button));
+                Assert.Equal(rowEntry.Path, AutomationProperties.GetHelpText(button));
+                Assert.NotNull(button.ContentTemplate);
+                var rowText = FindVisualDescendants<TextBlock>(button).Select(text => text.Text).ToArray();
+                Assert.Contains(rowEntry.FileName, rowText);
+                Assert.Contains(rowEntry.FolderPath, rowText);
+                Assert.Contains(rowEntry.FormatLabel, rowText);
+                Assert.Contains(rowEntry.LastUsedLabel, rowText);
                 Assert.Same(fixture.Shell.OpenRecentCommand, button.Command);
-                Assert.IsType<RecentFileEntry>(button.CommandParameter);
             }
 
             var recentButton = recentButtons[0];
@@ -164,6 +172,16 @@ public sealed class MainWindowIntegrationTests
             Assert.Same(originalContent, fixture.Editor.Document);
             Assert.Equal(originalText, TextOf(fixture.Editor.Document));
             Assert.True(originalDocument.IsDirty);
+
+            fixture.Shell.RecentEntries.Clear();
+            fixture.Ribbon.IsBackstageOpen = true;
+            await PumpAsync();
+            var emptyState = FindVisualDescendants<FrameworkElement>(backstage).Single(element =>
+                AutomationProperties.GetAutomationId(element) == "RecentEmptyState");
+            Assert.Equal(Visibility.Visible, emptyState.Visibility);
+            Assert.DoesNotContain(FindVisualDescendants<Button>(recentList),
+                button => button.CommandParameter is RecentFileEntry);
+            fixture.Ribbon.IsBackstageOpen = false;
 
             fixture.Dialogs.Decisions.Enqueue(UnsavedChangesDecision.Cancel);
             fixture.Window.Close();
@@ -408,6 +426,27 @@ public sealed class MainWindowIntegrationTests
         var saveResource = fixture.Window.TryFindResource("Icon.WriterSave");
         Assert.IsType<DrawingImage>(saveResource);
         Assert.Same(saveResource, qatSave.Icon);
+        foreach (var iconKey in new[]
+        {
+            "Icon.WriterDocument", "Icon.WriterSave", "Icon.WriterUndo", "Icon.WriterRedo",
+            "Icon.WriterPaste", "Icon.WriterCut", "Icon.WriterCopy", "Icon.WriterFont",
+            "Icon.WriterTextColor", "Icon.WriterHighlight", "Icon.WriterBold", "Icon.WriterItalic",
+            "Icon.WriterUnderline", "Icon.WriterAlignLeft", "Icon.WriterAlignCenter",
+            "Icon.WriterAlignRight", "Icon.WriterJustify", "Icon.WriterBullets", "Icon.WriterNumbering",
+            "Icon.WriterIndentIncrease", "Icon.WriterIndentDecrease", "Icon.WriterParagraphSpacing",
+            "Icon.WriterFind", "Icon.WriterReplace", "Icon.WriterSelectAll", "Icon.WriterSpellCheck",
+            "Icon.WriterZoomOut", "Icon.WriterZoomReset", "Icon.WriterZoomIn"
+        })
+            Assert.IsType<DrawingImage>(fixture.Window.TryFindResource(iconKey));
+        foreach (var iconKey in new[]
+        {
+            "Icon.WriterDocument.Large", "Icon.WriterSave.Large", "Icon.WriterPaste.Large",
+            "Icon.WriterUndo.Large", "Icon.WriterRedo.Large"
+        })
+            Assert.IsType<DrawingImage>(fixture.Window.TryFindResource(iconKey));
+        var paste = Assert.IsType<RibbonButton>(window.FindName("PasteButton"));
+        Assert.Equal(RibbonControlSize.Large, paste.Size);
+        Assert.Same(fixture.Window.TryFindResource("Icon.WriterPaste.Large"), paste.LargeIcon);
         Assert.Equal(new[] { "QatSave", "QatUndo", "QatRedo" },
             qatItems.Select(AutomationProperties.GetAutomationId).ToArray());
         Assert.Same(ApplicationCommands.Undo, Assert.IsType<RibbonButton>(qatItems[1]).Command);
@@ -425,6 +464,134 @@ public sealed class MainWindowIntegrationTests
         Assert.Contains(bindings, binding => binding.Key == Key.S &&
             binding.Modifiers == (ModifierKeys.Control | ModifierKeys.Shift) &&
             ReferenceEquals(binding.Command, fixture.Shell.SaveAsCommand));
+    }
+
+    private static void AssertWriterIconCatalog(WindowFixture fixture)
+    {
+        var iconDictionary = Assert.Single(fixture.Window.Resources.MergedDictionaries,
+            dictionary => dictionary.Source?.OriginalString.EndsWith("Icons.xaml", StringComparison.OrdinalIgnoreCase) == true);
+        var iconKeys = iconDictionary.Keys.OfType<string>()
+            .Where(key => key.StartsWith("Icon.Writer", StringComparison.Ordinal))
+            .ToArray();
+
+        Assert.True(iconKeys.Length >= 100, $"Expected at least 100 Writer icons, found {iconKeys.Length}.");
+        foreach (var key in new[]
+        {
+            "Icon.WriterNew", "Icon.WriterOpen", "Icon.WriterSaveAs", "Icon.WriterExportPdf",
+            "Icon.WriterPrint", "Icon.WriterPrintPreview", "Icon.WriterPageSize", "Icon.WriterPortrait",
+            "Icon.WriterLandscape", "Icon.WriterMargins", "Icon.WriterPageColor", "Icon.WriterColumns",
+            "Icon.WriterPageBreak", "Icon.WriterEditLayout", "Icon.WriterTwoPages", "Icon.WriterPageWidth",
+            "Icon.WriterImage", "Icon.WriterHyperlink", "Icon.WriterDateTime", "Icon.WriterTable",
+            "Icon.WriterAddRowAbove", "Icon.WriterAddColumnRight", "Icon.WriterDeleteRow",
+            "Icon.WriterMergeCells", "Icon.WriterSplitCells", "Icon.WriterDistributeColumns",
+            "Icon.WriterCellAlignMiddle", "Icon.WriterCellShading", "Icon.WriterBorders",
+            "Icon.WriterTheme", "Icon.WriterDarkMode", "Icon.WriterBackdrop", "Icon.WriterCustomizeRibbon",
+            "Icon.WriterOptions", "Icon.WriterWarning", "Icon.WriterInformation", "Icon.WriterError",
+            "Icon.WriterLock", "Icon.WriterImport", "Icon.WriterExport", "Icon.WriterReset"
+        })
+            Assert.IsType<DrawingImage>(fixture.Window.TryFindResource(key));
+
+        foreach (var key in new[]
+        {
+            "Icon.WriterDocument", "Icon.WriterSave", "Icon.WriterPaste", "Icon.WriterCopy",
+            "Icon.WriterTextColor", "Icon.WriterHighlight", "Icon.WriterFind", "Icon.WriterSpellCheck",
+            "Icon.WriterZoomIn", "Icon.WriterImage", "Icon.WriterTable", "Icon.WriterTheme"
+        })
+        {
+            var image = Assert.IsType<DrawingImage>(fixture.Window.TryFindResource(key));
+            var drawing = Assert.IsType<DrawingGroup>(image.Drawing);
+            Assert.True(drawing.Children.Count >= 2, $"{key} must retain layered color artwork.");
+        }
+
+        var chromaticBrushKeys = iconDictionary.Keys.OfType<string>()
+            .Where(key => key.StartsWith("Writer.Icon.Brush.", StringComparison.Ordinal))
+            .Except(new[]
+            {
+                "Writer.Icon.Brush.Ink", "Writer.Icon.Brush.Slate", "Writer.Icon.Brush.Paper",
+                "Writer.Icon.Brush.PaperShadow"
+            })
+            .OrderBy(key => key, StringComparer.Ordinal)
+            .ToArray();
+        Assert.Equal(new[]
+        {
+            "Writer.Icon.Brush.Amber", "Writer.Icon.Brush.Blue"
+        }, chromaticBrushKeys);
+        foreach (var brushKey in chromaticBrushKeys)
+            Assert.IsType<SolidColorBrush>(fixture.Window.TryFindResource(brushKey));
+
+        Assert.Equal("#FF3F4650",
+            Assert.IsType<SolidColorBrush>(fixture.Window.TryFindResource("Writer.Icon.Brush.Ink")).Color.ToString());
+        Assert.Equal("#FF607A96",
+            Assert.IsType<SolidColorBrush>(fixture.Window.TryFindResource("Writer.Icon.Brush.Blue")).Color.ToString());
+        Assert.Equal("#FFB28A4A",
+            Assert.IsType<SolidColorBrush>(fixture.Window.TryFindResource("Writer.Icon.Brush.Amber")).Color.ToString());
+
+        var pens = iconDictionary.Values.OfType<Pen>().ToArray();
+        Assert.Equal(5, pens.Length);
+        Assert.All(pens, pen =>
+        {
+            Assert.Equal(1.4, pen.Thickness);
+            Assert.Equal(PenLineCap.Round, pen.StartLineCap);
+            Assert.Equal(PenLineCap.Round, pen.EndLineCap);
+            Assert.Equal(PenLineJoin.Round, pen.LineJoin);
+        });
+
+        AssertSharedIconColors(fixture, "Icon.WriterUndo", "Icon.WriterRedo");
+        AssertSharedIconColors(fixture, "Icon.WriterBold", "Icon.WriterItalic", "Icon.WriterUnderline");
+        AssertSharedIconColors(fixture, "Icon.WriterAlignLeft", "Icon.WriterAlignCenter",
+            "Icon.WriterAlignRight", "Icon.WriterJustify");
+        AssertSharedIconColors(fixture, "Icon.WriterBullets", "Icon.WriterNumbering");
+        AssertSharedIconColors(fixture, "Icon.WriterFind", "Icon.WriterReplace");
+        AssertSharedIconColors(fixture, "Icon.WriterZoomOut", "Icon.WriterZoomReset", "Icon.WriterZoomIn");
+
+        var standardColors = new[]
+        {
+            Assert.IsType<SolidColorBrush>(fixture.Window.TryFindResource("Writer.Icon.Brush.Ink")).Color.ToString(),
+            Assert.IsType<SolidColorBrush>(fixture.Window.TryFindResource("Writer.Icon.Brush.Blue")).Color.ToString(),
+        }.OrderBy(color => color, StringComparer.Ordinal).ToArray();
+        foreach (var key in new[]
+        {
+            "Icon.WriterDocument", "Icon.WriterSave", "Icon.WriterUndo", "Icon.WriterRedo",
+            "Icon.WriterPaste", "Icon.WriterCut", "Icon.WriterCopy", "Icon.WriterFont",
+            "Icon.WriterBold", "Icon.WriterItalic", "Icon.WriterUnderline",
+            "Icon.WriterAlignLeft", "Icon.WriterAlignCenter", "Icon.WriterAlignRight", "Icon.WriterJustify",
+            "Icon.WriterBullets", "Icon.WriterNumbering", "Icon.WriterIndentIncrease",
+            "Icon.WriterIndentDecrease", "Icon.WriterParagraphSpacing", "Icon.WriterFind",
+            "Icon.WriterReplace", "Icon.WriterSelectAll", "Icon.WriterSpellCheck",
+            "Icon.WriterZoomOut", "Icon.WriterZoomReset", "Icon.WriterZoomIn"
+        })
+            Assert.Equal(standardColors, IconSemanticColors(fixture, key));
+    }
+
+    private static void AssertSharedIconColors(WindowFixture fixture, params string[] keys)
+    {
+        var expected = IconColors(fixture, keys[0]);
+        foreach (var key in keys.Skip(1))
+            Assert.Equal(expected, IconColors(fixture, key));
+    }
+
+    private static string[] IconColors(WindowFixture fixture, string key)
+    {
+        var image = Assert.IsType<DrawingImage>(fixture.Window.TryFindResource(key));
+        var drawing = Assert.IsType<DrawingGroup>(image.Drawing);
+        return drawing.Children.OfType<GeometryDrawing>()
+            .SelectMany(child => new[] { child.Brush, child.Pen?.Brush })
+            .OfType<SolidColorBrush>()
+            .Select(brush => brush.Color.ToString())
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(color => color, StringComparer.Ordinal)
+            .ToArray();
+    }
+
+    private static string[] IconSemanticColors(WindowFixture fixture, string key)
+    {
+        var palette = new HashSet<string>(new[]
+        {
+            "Writer.Icon.Brush.Ink", "Writer.Icon.Brush.Blue", "Writer.Icon.Brush.Amber"
+        }.Select(resourceKey =>
+            Assert.IsType<SolidColorBrush>(fixture.Window.TryFindResource(resourceKey)).Color.ToString()),
+            StringComparer.Ordinal);
+        return IconColors(fixture, key).Where(palette.Contains).ToArray();
     }
 
     private static void AssertScreenTip(FrameworkElement element)
@@ -542,7 +709,6 @@ public sealed class MainWindowIntegrationTests
                     var path = _directory.File($"recent-{index}.txt");
                     System.IO.File.WriteAllText(path, $"recent {index}");
                     Assert.True(service.TryAdd(path, WriterDocumentFormat.PlainText));
-                    RecentPaths.Add(path);
                 }
             }
             var session = new WriterDocumentSession(Persistence,
@@ -555,7 +721,6 @@ public sealed class MainWindowIntegrationTests
         public FakePersistence Persistence { get; }
         public WriterShellViewModel Shell { get; }
         public MainWindow Window { get; }
-        public List<string> RecentPaths { get; } = new();
         public Ribbon Ribbon => Assert.IsType<Ribbon>(Window.FindName("MainRibbon"));
         public RichTextBox Editor => Assert.IsType<RichTextBox>(Window.FindName("DocumentEditor"));
 

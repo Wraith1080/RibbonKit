@@ -14,6 +14,94 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Icons.xaml" />
             </ResourceDictionary.MergedDictionaries>
+            <Style x:Key="RecentDocumentButtonStyle" TargetType="{x:Type Button}">
+                <Setter Property="Focusable" Value="True" />
+                <Setter Property="HorizontalAlignment" Value="Stretch" />
+                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderBrush" Value="Transparent" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+                <Setter Property="Padding" Value="12,9" />
+                <Setter Property="Margin" Value="0,2,0,2" />
+                <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type Button}">
+                            <Border x:Name="Chrome"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                    Padding="{TemplateBinding Padding}">
+                                <ContentPresenter Content="{TemplateBinding Content}"
+                                                  ContentTemplate="{TemplateBinding ContentTemplate}"
+                                                  ContentStringFormat="{TemplateBinding ContentStringFormat}"
+                                                  HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                  RecognizesAccessKey="True" />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Chrome" Property="Background"
+                                            Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
+                                    <Setter TargetName="Chrome" Property="BorderBrush"
+                                            Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="Chrome" Property="Background"
+                                            Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
+                                    <Setter TargetName="Chrome" Property="BorderBrush"
+                                            Value="{DynamicResource RibbonKit.Brushes.Control.PressedBorder}" />
+                                </Trigger>
+                                <Trigger Property="IsKeyboardFocused" Value="True">
+                                    <Setter TargetName="Chrome" Property="BorderBrush"
+                                            Value="{DynamicResource RibbonKit.Brushes.Accent}" />
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter TargetName="Chrome" Property="Opacity" Value="0.45" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <DataTemplate x:Key="RecentDocumentTemplate">
+                <Grid MaxWidth="760">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="38" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Border Width="32" Height="36" Padding="7,6"
+                            Background="{DynamicResource RibbonKit.Brushes.Control.CompanionBackground}"
+                            BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}"
+                            BorderThickness="1"
+                            CornerRadius="{DynamicResource RibbonKit.Metrics.SmallControlCornerRadius}"
+                            VerticalAlignment="Center">
+                        <Image Source="{StaticResource Icon.WriterDocument}"
+                               Stretch="Uniform" />
+                    </Border>
+                    <StackPanel Grid.Column="1" Margin="12,0,12,0" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding FileName}"
+                                   FontSize="14" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}"
+                                   TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding FolderPath}"
+                                   Margin="0,2,0,0" FontSize="11"
+                                   Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
+                                   TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding FormatLabel}"
+                                   Margin="0,3,0,0" FontSize="10"
+                                   Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
+                    </StackPanel>
+                    <TextBlock Grid.Column="2" Text="{Binding LastUsedLabel}"
+                               Margin="8,0,0,0" MaxWidth="140" FontSize="10"
+                               Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
+                               TextTrimming="CharacterEllipsis"
+                               HorizontalAlignment="Right" VerticalAlignment="Center" />
+                </Grid>
+            </DataTemplate>
         </ResourceDictionary>
     </rk:RibbonWindow.Resources>
     <rk:RibbonWindow.InputBindings>
@@ -52,14 +140,58 @@
             <rk:Ribbon.Backstage>
                 <rk:Backstage Design="Modern" AutomationProperties.AutomationId="WriterBackstage" AutomationProperties.Name="File">
                     <rk:BackstageTabItem Header="Home" rk:KeyTip.Keys="H">
-                        <StackPanel Margin="32" AutomationProperties.AutomationId="RecentPage">
-                            <TextBlock Text="Recent documents" FontSize="28" Margin="0,0,0,12" />
-                            <TextBlock Text="TXT keeps characters only; formatting, images, tables, and page settings are lost. RTF preserves representative formatting; advanced content is best effort." TextWrapping="Wrap" MaxWidth="640" Margin="0,0,0,18" />
-                            <ItemsControl x:Name="RecentList" ItemsSource="{Binding RecentEntries}" AutomationProperties.AutomationId="RecentList" AutomationProperties.Name="Recent documents">
-                                <ItemsControl.ItemTemplate><DataTemplate>
-                                    <Button Content="{Binding Path}" Click="OnRecentItemClick" Command="{Binding DataContext.OpenRecentCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" AutomationProperties.AutomationId="{Binding Path}" AutomationProperties.Name="{Binding Path}" Margin="0,2" Padding="8,4" HorizontalAlignment="Left" />
-                                </DataTemplate></ItemsControl.ItemTemplate>
+                        <StackPanel Margin="32" HorizontalAlignment="Stretch" AutomationProperties.AutomationId="RecentPage">
+                            <TextBlock Text="Recent documents" FontSize="28" FontWeight="Light"
+                                       Foreground="{DynamicResource RibbonKit.Brushes.Accent}" Margin="0,0,0,10" />
+                            <TextBlock Text="Open a document to continue where you left off. TXT keeps characters only; RTF preserves representative formatting; advanced content is best effort."
+                                       TextWrapping="Wrap" MaxWidth="700"
+                                       Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" Margin="0,0,0,18" />
+                            <ItemsControl x:Name="RecentList" ItemsSource="{Binding RecentEntries}"
+                                          AutomationProperties.AutomationId="RecentList" AutomationProperties.Name="Recent documents">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Button Style="{StaticResource RecentDocumentButtonStyle}"
+                                                Content="{Binding}"
+                                                ContentTemplate="{StaticResource RecentDocumentTemplate}"
+                                                Click="OnRecentItemClick"
+                                                Command="{Binding DataContext.OpenRecentCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                CommandParameter="{Binding}"
+                                                AutomationProperties.AutomationId="{Binding Path}"
+                                                AutomationProperties.Name="{Binding FileName}"
+                                                AutomationProperties.HelpText="{Binding Path}"
+                                                ToolTip="{Binding Path}" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
                             </ItemsControl>
+                            <Border x:Name="RecentEmptyState" Margin="0,14,0,0" Padding="24,26"
+                                    MaxWidth="700" HorizontalAlignment="Stretch"
+                                    Background="{DynamicResource RibbonKit.Brushes.Control.SurfaceBackground}"
+                                    BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}"
+                                    BorderThickness="1"
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                    AutomationProperties.AutomationId="RecentEmptyState"
+                                    AutomationProperties.Name="No recent documents">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding RecentEntries.Count}" Value="0">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <StackPanel HorizontalAlignment="Center">
+                                    <Image Source="{StaticResource Icon.WriterDocument}" Width="28" Height="28"
+                                           HorizontalAlignment="Center" Margin="0,0,0,10" />
+                                    <TextBlock Text="No recent documents" FontSize="15" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}"
+                                               HorizontalAlignment="Center" />
+                                    <TextBlock Text="Open or save a document and it will appear here."
+                                               Margin="0,5,0,0" TextWrapping="Wrap" TextAlignment="Center"
+                                               Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
+                                </StackPanel>
+                            </Border>
                         </StackPanel>
                     </rk:BackstageTabItem>
                     <rk:BackstageTabItem Header="New" IsButton="True" rk:Ribbon.CommandId="Writer.New" rk:KeyTip.Keys="N" Click="OnBackstageAction" Command="{Binding NewCommand}" AutomationProperties.AutomationId="FileNew" AutomationProperties.Name="New" />
@@ -71,23 +203,31 @@
             </rk:Ribbon.Backstage>
             <rk:RibbonTab Header="Home" rk:Ribbon.CommandId="Writer.Home" rk:KeyTip.Keys="H" AutomationProperties.AutomationId="HomeTab" AutomationProperties.Name="Home">
                 <rk:RibbonGroup Header="Clipboard" rk:Ribbon.CommandId="Writer.Home.Clipboard" rk:KeyTip.Keys="CL" Icon="{StaticResource Icon.WriterPaste}" AutomationProperties.AutomationId="ClipboardGroup" AutomationProperties.Name="Clipboard">
-                    <StackPanel VerticalAlignment="Center">
-                        <rk:RibbonButton x:Name="PasteButton" Header="Paste" Size="Medium" Icon="{StaticResource Icon.WriterPaste}"
+                    <Grid Margin="2,2,2,0" VerticalAlignment="Center">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <rk:RibbonButton x:Name="PasteButton" Header="Paste" Size="Large"
+                                         Icon="{StaticResource Icon.WriterPaste}"
+                                         LargeIcon="{StaticResource Icon.WriterPaste.Large}"
                                          rk:Ribbon.CommandId="Writer.Home.Clipboard.Paste" rk:KeyTip.Keys="PV"
                                          ScreenTipTitle="Paste" ScreenTipText="Paste the clipboard contents at the caret (Ctrl+V)."
                                          AutomationProperties.AutomationId="HomePaste" AutomationProperties.Name="Paste" />
-                        <rk:RibbonButton x:Name="CutButton" Header="Cut" Size="Medium" Icon="{StaticResource Icon.WriterCut}"
-                                         rk:Ribbon.CommandId="Writer.Home.Clipboard.Cut" rk:KeyTip.Keys="CX"
-                                         ScreenTipTitle="Cut" ScreenTipText="Remove the selected text and place it on the clipboard (Ctrl+X)."
-                                         AutomationProperties.AutomationId="HomeCut" AutomationProperties.Name="Cut" />
-                        <rk:RibbonButton x:Name="CopyButton" Header="Copy" Size="Medium" Icon="{StaticResource Icon.WriterCopy}"
-                                         rk:Ribbon.CommandId="Writer.Home.Clipboard.Copy" rk:KeyTip.Keys="CP"
-                                         ScreenTipTitle="Copy" ScreenTipText="Copy the selected text to the clipboard (Ctrl+C)."
-                                         AutomationProperties.AutomationId="HomeCopy" AutomationProperties.Name="Copy" />
-                    </StackPanel>
+                        <StackPanel Grid.Column="1" Margin="4,0,0,0" VerticalAlignment="Center">
+                            <rk:RibbonButton x:Name="CutButton" Header="Cut" Size="Small" Icon="{StaticResource Icon.WriterCut}"
+                                             rk:Ribbon.CommandId="Writer.Home.Clipboard.Cut" rk:KeyTip.Keys="CX"
+                                             ScreenTipTitle="Cut" ScreenTipText="Remove the selected text and place it on the clipboard (Ctrl+X)."
+                                             AutomationProperties.AutomationId="HomeCut" AutomationProperties.Name="Cut" />
+                            <rk:RibbonButton x:Name="CopyButton" Header="Copy" Size="Small" Icon="{StaticResource Icon.WriterCopy}"
+                                             rk:Ribbon.CommandId="Writer.Home.Clipboard.Copy" rk:KeyTip.Keys="CP"
+                                             ScreenTipTitle="Copy" ScreenTipText="Copy the selected text to the clipboard (Ctrl+C)."
+                                             AutomationProperties.AutomationId="HomeCopy" AutomationProperties.Name="Copy" />
+                        </StackPanel>
+                    </Grid>
                 </rk:RibbonGroup>
                 <rk:RibbonGroup Header="Font" rk:Ribbon.CommandId="Writer.Home.Font" rk:KeyTip.Keys="FO" Icon="{StaticResource Icon.WriterFont}" AutomationProperties.AutomationId="FontGroup" AutomationProperties.Name="Font">
-                    <StackPanel VerticalAlignment="Center">
+                    <StackPanel Margin="2,2,2,0" VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                             <rk:RibbonComboBox x:Name="FontFamilyCombo" InputWidth="128" IsEditable="True"
                                                rk:Ribbon.CommandId="Writer.Home.Font.Family" rk:KeyTip.Keys="FF"
@@ -146,7 +286,7 @@
                     </StackPanel>
                 </rk:RibbonGroup>
                 <rk:RibbonGroup Header="Paragraph" rk:Ribbon.CommandId="Writer.Home.Paragraph" rk:KeyTip.Keys="PA" Icon="{StaticResource Icon.WriterAlignLeft}" AutomationProperties.AutomationId="ParagraphGroup" AutomationProperties.Name="Paragraph">
-                    <StackPanel VerticalAlignment="Center">
+                    <StackPanel Margin="2,2,2,0" VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                             <rk:RibbonToggleButton x:Name="AlignLeftButton" Header="Align Left" Size="Small" Icon="{StaticResource Icon.WriterAlignLeft}"
                                                    rk:Ribbon.CommandId="Writer.Home.Paragraph.AlignLeft" rk:KeyTip.Keys="AL"
@@ -194,7 +334,7 @@
                     </StackPanel>
                 </rk:RibbonGroup>
                 <rk:RibbonGroup Header="Editing" rk:Ribbon.CommandId="Writer.Home.Editing" rk:KeyTip.Keys="ED" Icon="{StaticResource Icon.WriterFind}" AutomationProperties.AutomationId="EditingGroup" AutomationProperties.Name="Editing">
-                    <StackPanel VerticalAlignment="Center">
+                    <StackPanel Margin="2,2,2,0" VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                             <rk:RibbonButton x:Name="FindButton" Header="Find" Size="Small" Icon="{StaticResource Icon.WriterFind}"
                                              rk:Ribbon.CommandId="Writer.Home.Editing.Find" rk:KeyTip.Keys="FD"
@@ -231,14 +371,18 @@
                 </rk:RibbonGroup>
             </rk:RibbonTab>
         </rk:Ribbon>
-        <StatusBar DockPanel.Dock="Bottom" AutomationProperties.AutomationId="Status" AutomationProperties.Name="Status">
-            <StackPanel Orientation="Horizontal">
-                <TextBlock x:Name="StatusMessage" Text="{Binding StatusText}" />
-                <TextBlock Text="  |  " />
+        <StatusBar DockPanel.Dock="Bottom" Padding="12,3"
+                   Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
+                   BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}"
+                   BorderThickness="0,1,0,0"
+                   AutomationProperties.AutomationId="Status" AutomationProperties.Name="Status">
+            <StackPanel Orientation="Horizontal" TextElement.Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}">
+                <TextBlock x:Name="StatusMessage" Text="{Binding StatusText}" FontWeight="SemiBold" />
+                <TextBlock Text="·" Margin="12,0" Opacity="0.65" />
                 <TextBlock x:Name="StatisticsText" Text="0 words, 0 characters" AutomationProperties.AutomationId="DocumentStatistics" AutomationProperties.Name="Document statistics" />
-                <TextBlock Text="  |  " />
+                <TextBlock Text="·" Margin="12,0" Opacity="0.65" />
                 <TextBlock x:Name="SpellCheckStatusText" Text="Spelling off" AutomationProperties.AutomationId="SpellingStatus" AutomationProperties.Name="Spelling status" />
-                <TextBlock Text="  |  " />
+                <TextBlock Text="·" Margin="12,0" Opacity="0.65" />
                 <TextBlock x:Name="ZoomText" Text="100%" AutomationProperties.AutomationId="ZoomStatus" AutomationProperties.Name="Zoom" />
             </StackPanel>
         </StatusBar>
