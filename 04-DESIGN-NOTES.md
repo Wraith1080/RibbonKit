@@ -4970,14 +4970,40 @@ page-setting propagation. The focused W2-C plus window-integration gate passed *
 capture passed at the current **125%** desktop scale. The solution builds with zero warnings/errors; RibbonKit passed
 **355/355** and the visual suite passed its one test covering 63 approved images.
 
-The acceptance gate remains open for two environment-bound checks. Only one 125%-scale display is connected, so
-live mixed-monitor DPI movement cannot be performed. A full Writer pass reached **199/199** before the final
-theme-resource-only workspace polish and added long-content test; the final code then passed its 9 focused/integration
-tests and a separate **196/196** run excluding the four blocked cases, but Windows began rejecting the three
-pre-existing clipboard tests with
-`CLIPBRD_E_CANT_OPEN` and made the clipboard-sensitive full-window test exceed its ten-second harness timeout. This is
-not a W2-C assertion failure, but one clean **200/200** Writer rerun is still required before W2-C is accepted and W2-D
-becomes dependency-ready. No RibbonKit runtime change or new consumer-friction entry was required.
+The clipboard lock later cleared and the unchanged final W2-C tree passed the complete Writer suite **200/200**.
+W2-C is therefore accepted on the available hardware and W2-D is dependency-ready. Only one 125%-scale display is
+connected, so live mixed-monitor movement could not be performed; that hardware-only check remains explicitly deferred
+to W4-C's cross-DPI acceptance rather than being represented as completed. No RibbonKit runtime change or new
+consumer-friction entry was required.
+
+### 3.110 RibbonKit Writer W2-D stable preview, pagination and printing — 2026-08-24
+
+W2-D adds an app-owned preview pipeline that clones the trusted live `FlowDocument`, reapplies its effective root
+formatting and the immutable page settings, and eagerly serializes the resulting one-column paginator into an owned
+in-memory XPS package. The published snapshot exposes the package's `FixedDocumentSequence` and stable fixed paginator;
+the mutable source clone remains internal. Preview and printing therefore consume the exact same isolated fixed pages
+without attaching the live editor document to another viewer. A fixed-sequence paginator's generic `PageSize` remains
+WPF's Letter-sized suggested metadata, so correctness is intentionally verified against each actual
+`GetPage(index).Size`, which matches A4, Letter and landscape settings.
+
+`WriterDocumentPreviewView` hosts real `DocumentPageView` instances inside a scrollable surface and supports one-page,
+two-page and page-width modes, one-based navigation, and bounded 10–500% zoom. `WriterPreviewController` debounces
+rebuilds, rejects stale generations and withholds the current snapshot while a rebuild is pending. Snapshot replacement
+is synchronous: a bound view must detach or replace its page views during `SnapshotChanged` before the controller
+disposes the prior XPS package. W2-E must likewise detach the view before disposing its controller.
+
+The print boundary merges and validates the selected `PrintTicket`, reports missing capabilities, all four printable-area
+margin conflicts and page-size mismatches as structured results, and supports report-only or reject behavior. A
+landscape snapshot uses a matching landscape ticket, and the print service submits the snapshot's exact paginator.
+Independent review also tightened stale-snapshot printing, nullable capability handling, zoom bounds, clone language
+fidelity and snapshot lifecycle ownership. A dedicated xUnit collection serializes the WPF XPS tests after parallel
+first-use exposed an intermittent framework parser race.
+
+The focused preview/printing gate passes **19/19**. The live 125%-scale proof compared both the preview and every page of
+Microsoft Print to PDF output: A4 produced five clean 595.276 × 841.89-point pages and Letter produced five clean
+612 × 792-point pages, with no device page-size or imageable-area conflict. The page-four reserialization regression
+specifically guards the raw-flow-paginator corruption found during the first A4 proof. W2-D is accepted and W2-E is
+dependency-ready but has not started. No `src/RibbonKit/**` change or new consumer-friction entry was required.
 
 ## 4. Workflow / Session Conventions
 
@@ -5023,13 +5049,15 @@ becomes dependency-ready. No RibbonKit runtime change or new consumer-friction e
   directly beneath tabs and both QAT placements (§3.97). Its automated gate is green; live
   fallback/Acrylic visual approval remains pending.
 - MDI milestones M0 and M4 are complete: floating children plus ribbon tab/caption merging.
-- RibbonKit Writer W0-A through W0-D, W1-A through W1-D and W2-B are complete through §3.108: the separate app/test
+- RibbonKit Writer W0-A through W0-D, W1-A through W1-D and W2-A through W2-D are complete through §3.110: the separate app/test
   scaffold, document lifetime, TXT/RTF/atomic/recent services, live Backstage/QAT file-command shell,
   formatting/selection-state engine, find/spelling/statistics/zoom utilities, and the accessible
   Home-ribbon/QAT editing surface are integrated at their packet boundaries. The accepted Writer-owned icon
   family and immutable page settings cover visual command identity plus A4/Letter/Legal/custom paper,
   unit conversion, drift-free orientation and validated margins. The `.rkw` native format adds bounded,
-  atomic, versioned persistence with a data-only text allowlist and page-setting round trips.
+  atomic, versioned persistence with a data-only text allowlist and page-setting round trips. The centred paper editor
+  and stable fixed-page preview/print pipeline now share the same logical page inputs without sharing the live editor's
+  mutable paginator.
 
 ### Remaining or intentionally deferred
 
@@ -5039,10 +5067,10 @@ becomes dependency-ready. No RibbonKit runtime change or new consumer-friction e
 - Final live visual tuning and approval of the Office 2010 Aero-inspired frame prototype (§3.97).
 - Touch density, richer automatic QAT projections, custom-control projection APIs and additional
   themes remain post-v1 candidates. Their plan documents are not implementation evidence.
-- RibbonKit Writer W2-C's implementation and independent review are complete through §3.109, but its final gate
-  remains open for live mixed-monitor DPI movement and one clean full-Writer rerun after the external clipboard lock
-  clears. W2-D through W5 remain; W2-D has not started. W4 keeps the final whole-product consistency pass after
-  W2/W3.
+- RibbonKit Writer W2-D is accepted through §3.110 on the available 125%-scale hardware. Both A4 and Letter preview/PDF
+  paths passed, including all five output pages and the page-four corruption regression. Live mixed-monitor movement
+  remains a named W4-C hardware check because only one display is connected. W2-E through W5 remain; W2-E is
+  dependency-ready but has not started. W4 keeps the final whole-product consistency pass after W2/W3.
 - Automatic `Icons.xaml` discovery is best-effort by design. Keep `Load Icons.xaml…` available
   for ambiguity, inaccessible paths, parse failures, or no match.
 
@@ -5082,11 +5110,14 @@ becomes dependency-ready. No RibbonKit runtime change or new consumer-friction e
 - 2026-08-24 after §3.108: 547 logic tests, one visual test covering 63 approved images, and zero
   build warnings/errors; Writer passed 192/192 tests and W2-B's bounded, atomic, versioned `.rkw`
   persistence and data-only native-load safety gate passed.
-- 2026-08-24 after §3.109 implementation: the inventory is 555 logic tests plus one visual test covering
-  63 approved images. W2-C's final code passed its 9 focused/window-integration tests and a separate 196/196
-  Writer run excluding the four clipboard-blocked cases; RibbonKit's 355 tests and the visual test passed with
-  a zero-warning solution build. A single clean Writer
-  200/200 rerun and live mixed-monitor movement remain pending for the reasons recorded in §3.109.
+- 2026-08-24 after §3.109 acceptance: the inventory is 555 logic tests plus one visual test covering
+  63 approved images. W2-C's final code passed its 9 focused/window-integration tests and then the complete Writer
+  suite **200/200** after the external clipboard lock cleared; RibbonKit's 355 tests and the visual test passed with
+  a zero-warning solution build. Live mixed-monitor movement remains deferred to W4-C because one display is available.
+- 2026-08-24 after §3.110 acceptance: the inventory is 574 logic tests plus one visual test covering 63 approved
+  images. W2-D's 19 focused preview/printing tests and complete Writer suite **219/219** pass; A4 and Letter each
+  produced five clean Microsoft Print to PDF pages from the same fixed paginator used by preview. The solution builds
+  with zero warnings/errors and the unchanged RibbonKit/visual suites pass **355/355** and **1/1** respectively.
 - Before quoting a current count or declaring a new change complete, rerun the proportional build
   and test commands. Inspect actual/diff PNG artifacts before changing visual baselines or
   tolerances.

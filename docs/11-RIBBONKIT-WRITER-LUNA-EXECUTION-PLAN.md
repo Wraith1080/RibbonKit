@@ -1,8 +1,8 @@
 # RibbonKit Writer — Luna Execution Plan
 
-> **Status:** durable execution decomposition created 2026-08-20. W0-A through W0-D and W1-A through W1-C are
-> accepted through W1-D and W2-B. W2-C is implemented and independently reviewed; its final gate remains
-> open for live mixed-monitor DPI movement and one clean full-Writer rerun. W2-D has not started.
+> **Status:** durable execution decomposition created 2026-08-20. W0-A through W0-D, W1-A through W1-D and
+> W2-A through W2-D are accepted on the available hardware. Live mixed-monitor checking remains deferred to W4-C
+> because only one display is connected. W2-E is dependency-ready but has not started.
 > This document does not schedule future agents or imply that any later Writer packet exists.
 > [`10-RIBBONKIT-WRITER-PLAN.md`](10-RIBBONKIT-WRITER-PLAN.md) owns product scope; current
 > implementation status remains in [`04-DESIGN-NOTES.md` §5](../04-DESIGN-NOTES.md#5-current-state--next-steps).
@@ -303,6 +303,9 @@ Do not draw fake page breaks.
 input and live DPI movement.
 
 ### W2-D — Preview, pagination and printing
+
+**Status (2026-08-24): accepted.** Preview and Microsoft Print to PDF use the same stable fixed paginator; A4 and
+Letter preview/output plus all five pages of each PDF passed the live gate. W2-E is dependency-ready.
 
 **Owns:** preview-clone service, paginator/print service, preview view and tests.
 
