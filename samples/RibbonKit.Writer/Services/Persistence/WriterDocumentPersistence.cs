@@ -7,7 +7,7 @@ using RibbonKit.Writer.Services.Documents;
 
 namespace RibbonKit.Writer.Services.Persistence;
 
-/// <summary>WPF-native TXT and RTF persistence for Writer documents.</summary>
+/// <summary>Versioned native, TXT and RTF persistence for Writer documents.</summary>
 public sealed class WriterDocumentPersistence : IWriterDocumentPersistence
 {
     public static WriterPersistenceCapabilities GetCapabilities(WriterDocumentFormat format) => format switch
@@ -16,8 +16,8 @@ public sealed class WriterDocumentPersistence : IWriterDocumentPersistence
             "Plain text stores characters only; formatting, images, tables, and page settings are lost."),
         WriterDocumentFormat.RichText => new(true, false, false, false,
             "RTF preserves representative text formatting; advanced content is best effort."),
-        WriterDocumentFormat.RibbonKitWriter => throw new NotSupportedException(
-            "RibbonKit Writer (.rkw) persistence is owned by W2-B."),
+        WriterDocumentFormat.RibbonKitWriter => new(true, false, false, true,
+            "RibbonKit Writer v1 preserves supported text formatting and page settings; images and tables arrive in W3."),
         _ => throw new ArgumentOutOfRangeException(nameof(format), format, "Unknown Writer document format.")
     };
 
@@ -26,16 +26,25 @@ public sealed class WriterDocumentPersistence : IWriterDocumentPersistence
     {
         Validate(path, format);
         cancellationToken.ThrowIfCancellationRequested();
-        var bytes = await File.ReadAllBytesAsync(path, cancellationToken);
+        var bytes = format == WriterDocumentFormat.RibbonKitWriter
+            ? await ReadNativePackageAsync(path, cancellationToken)
+            : await File.ReadAllBytesAsync(path, cancellationToken);
         cancellationToken.ThrowIfCancellationRequested();
-        var document = format switch
+        if (format == WriterDocumentFormat.RibbonKitWriter)
+        {
+            var package = WriterRkwPackage.Load(bytes);
+            cancellationToken.ThrowIfCancellationRequested();
+            return new WriterDocument(package.Content, path, format, package.PageSettings);
+        }
+
+        var content = format switch
         {
             WriterDocumentFormat.PlainText => LoadText(bytes),
             WriterDocumentFormat.RichText => LoadRtf(bytes),
-            _ => throw new NotSupportedException("Unsupported Writer document format.")
+            _ => throw new ArgumentOutOfRangeException(nameof(format), format, "Unknown Writer document format.")
         };
         cancellationToken.ThrowIfCancellationRequested();
-        return new WriterDocument(document, path, format);
+        return new WriterDocument(content, path, format);
     }
 
     public async Task<bool> SaveAsync(WriterDocument document, string path, WriterDocumentFormat format,
@@ -49,7 +58,8 @@ public sealed class WriterDocumentPersistence : IWriterDocumentPersistence
             WriterDocumentFormat.PlainText => Encoding.UTF8.GetBytes(CanonicalizeText(new TextRange(
                 document.Content.ContentStart, document.Content.ContentEnd).Text)),
             WriterDocumentFormat.RichText => SaveRtf(document.Content),
-            _ => throw new NotSupportedException("Unsupported Writer document format.")
+            WriterDocumentFormat.RibbonKitWriter => WriterRkwPackage.Save(document),
+            _ => throw new ArgumentOutOfRangeException(nameof(format), format, "Unknown Writer document format.")
         };
         cancellationToken.ThrowIfCancellationRequested();
         await AtomicFileWriter.WriteAsync(path, bytes, cancellationToken).ConfigureAwait(false);
@@ -63,6 +73,26 @@ public sealed class WriterDocumentPersistence : IWriterDocumentPersistence
         var document = new FlowDocument();
         document.Blocks.Add(new Paragraph(new Run(reader.ReadToEnd())));
         return document;
+    }
+
+    private static async Task<byte[]> ReadNativePackageAsync(string path,
+        CancellationToken cancellationToken)
+    {
+        await using var source = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read,
+            bufferSize: 81920, FileOptions.Asynchronous | FileOptions.SequentialScan);
+        if (source.Length > WriterRkwPackage.MaximumFileBytes)
+            throw new InvalidDataException("The native Writer package exceeds the file size limit.");
+
+        using var destination = new MemoryStream((int)source.Length);
+        var buffer = new byte[81920];
+        int read;
+        while ((read = await source.ReadAsync(buffer, cancellationToken)) > 0)
+        {
+            if (destination.Length + read > WriterRkwPackage.MaximumFileBytes)
+                throw new InvalidDataException("The native Writer package exceeds the file size limit.");
+            destination.Write(buffer, 0, read);
+        }
+        return destination.ToArray();
     }
 
     private static FlowDocument LoadRtf(byte[] bytes)
@@ -92,10 +122,14 @@ public sealed class WriterDocumentPersistence : IWriterDocumentPersistence
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
         if (!Enum.IsDefined(format))
             throw new ArgumentOutOfRangeException(nameof(format), format, "Unknown Writer document format.");
-        if (format == WriterDocumentFormat.RibbonKitWriter)
-            throw new NotSupportedException("RibbonKit Writer (.rkw) persistence is owned by W2-B.");
         var extension = Path.GetExtension(path);
-        var expected = format == WriterDocumentFormat.PlainText ? ".txt" : ".rtf";
+        var expected = format switch
+        {
+            WriterDocumentFormat.PlainText => ".txt",
+            WriterDocumentFormat.RichText => ".rtf",
+            WriterDocumentFormat.RibbonKitWriter => ".rkw",
+            _ => throw new ArgumentOutOfRangeException(nameof(format), format, "Unknown Writer document format.")
+        };
         if (!string.Equals(extension, expected, StringComparison.OrdinalIgnoreCase))
             throw new ArgumentException($"The destination must use the {expected} extension.", nameof(path));
     }

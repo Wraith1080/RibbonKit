@@ -8,7 +8,8 @@ namespace RibbonKit.Writer.Models;
 public sealed class WriterDocument : INotifyPropertyChanged
 {
     public WriterDocument(FlowDocument content, string? path = null,
-        WriterDocumentFormat format = WriterDocumentFormat.RichText)
+        WriterDocumentFormat format = WriterDocumentFormat.RichText,
+        DocumentPageSettings? pageSettings = null)
     {
         Content = content ?? throw new ArgumentNullException(nameof(content));
         if (path is not null)
@@ -16,6 +17,7 @@ public sealed class WriterDocument : INotifyPropertyChanged
         ValidateFormat(format);
         Path = path;
         Format = format;
+        PageSettings = pageSettings ?? DocumentPageSettings.Letter();
     }
 
     public FlowDocument Content { get; }
@@ -23,6 +25,9 @@ public sealed class WriterDocument : INotifyPropertyChanged
     public string? Path { get; private set; }
 
     public WriterDocumentFormat Format { get; private set; }
+
+    /// <summary>Gets the logical page settings persisted by the native Writer format.</summary>
+    public DocumentPageSettings PageSettings { get; private set; }
 
     public bool IsDirty { get; private set; }
 
@@ -33,6 +38,19 @@ public sealed class WriterDocument : INotifyPropertyChanged
     public void MarkDirty() => SetDirty(true);
 
     public void MarkClean() => SetDirty(false);
+
+    /// <summary>Replaces the logical page settings and marks the document dirty when they changed.</summary>
+    public bool SetPageSettings(DocumentPageSettings pageSettings)
+    {
+        ArgumentNullException.ThrowIfNull(pageSettings);
+        if (PageSettings == pageSettings)
+            return false;
+
+        PageSettings = pageSettings;
+        OnPropertyChanged(nameof(PageSettings));
+        MarkDirty();
+        return true;
+    }
 
     internal void CommitIdentity(string? path, WriterDocumentFormat format)
     {

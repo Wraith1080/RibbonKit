@@ -4914,6 +4914,37 @@ That consumer request is recorded as RKWF-005 in the Writer friction log for a s
 The final Writer suite passed **169/169** and the full solution passed **524 logic tests plus one visual test
 covering 63 approved images**, with zero build warnings/errors.
 
+### 3.108 RibbonKit Writer W2-B versioned native persistence — 2026-08-24
+
+W2-B makes `.rkw` a reachable Open/Save/Save As format and persists the document-owned page-settings model.
+The deterministic outer ZIP contains exactly `manifest.json`, `document-settings.json` and
+`content.xamlpackage`. The manifest identifies RibbonKit Writer, separates manifest/content/settings schema
+versions, records the minimum reader version and reserves an explicit required-feature list. Version 1 is a
+closed schema: unknown, duplicate or missing fields fail closed, and later migrations must add an explicit
+version-switch branch rather than guessing at unknown content. Page settings store named/custom portrait-basis
+dimensions, orientation and margins; named dimensions are revalidated against canonical presets.
+
+The native load boundary snapshots at most 64 MiB through one bounded file handle. Both ZIP layers require exact,
+case-sensitive part sets, reject duplicates/case collisions/unexpected paths and cap expanded content. Inner
+relationships and content types must match the WPF-generated text-package shape. `Document.xaml` is decoded as
+strict UTF-8, parsed with DTD/entity resolution disabled, bounded for depth/elements/attributes/text and checked
+against a presentation-namespace allowlist. Only current text primitives (`Section`, `Paragraph`, `List`,
+`ListItem`, `Run`, `Span`, `Bold`, `Italic`, `Underline` and `LineBreak`) and bounded primitive formatting values
+are manually reconstructed. Untrusted native content never reaches `XamlReader` or `TextRange.Load`; arbitrary
+CLR types, markup extensions, event hooks, external URIs, images and tables fail closed. W3 will deliberately
+extend this allowlist for its owned image/table structures instead of weakening the v1 boundary broadly.
+
+Save first creates WPF's trusted in-memory XamlPackage, runs that generated content back through the same safe
+reader and only then uses the existing same-directory atomic replacement. Unsupported current content,
+serialization failure and cancellation therefore cannot replace an existing destination. Dialog routing,
+recent-file identity and open/save status now distinguish `.rkw` from RTF/TXT. W2-B restores page settings as
+document metadata; W2-C remains responsible for applying them to `FlowDocument` and the centred paper surface,
+so no live editor/layout claim is made here. No `src/RibbonKit/**` change or new consumer-friction entry was
+required.
+
+The final Writer suite passed **192/192** and the full solution passed **547 logic tests plus one visual test
+covering 63 approved images**, with zero build warnings/errors and a clean diff check.
+
 ## 4. Workflow / Session Conventions
 
 - Work from the current Windows checkout at
@@ -4958,12 +4989,13 @@ covering 63 approved images**, with zero build warnings/errors.
   directly beneath tabs and both QAT placements (§3.97). Its automated gate is green; live
   fallback/Acrylic visual approval remains pending.
 - MDI milestones M0 and M4 are complete: floating children plus ribbon tab/caption merging.
-- RibbonKit Writer W0-A through W0-D, W1-A through W1-D and W2-A are complete through §3.107: the separate app/test
+- RibbonKit Writer W0-A through W0-D, W1-A through W1-D and W2-B are complete through §3.108: the separate app/test
   scaffold, document lifetime, TXT/RTF/atomic/recent services, live Backstage/QAT file-command shell,
   formatting/selection-state engine, find/spelling/statistics/zoom utilities, and the accessible
   Home-ribbon/QAT editing surface are integrated at their packet boundaries. The accepted Writer-owned icon
   family and immutable page settings cover visual command identity plus A4/Letter/Legal/custom paper,
-  unit conversion, drift-free orientation and validated margins.
+  unit conversion, drift-free orientation and validated margins. The `.rkw` native format adds bounded,
+  atomic, versioned persistence with a data-only text allowlist and page-setting round trips.
 
 ### Remaining or intentionally deferred
 
@@ -4973,7 +5005,7 @@ covering 63 approved images**, with zero build warnings/errors.
 - Final live visual tuning and approval of the Office 2010 Aero-inspired frame prototype (§3.97).
 - Touch density, richer automatic QAT projections, custom-control projection APIs and additional
   themes remain post-v1 candidates. Their plan documents are not implementation evidence.
-- RibbonKit Writer W2-B through W5 remain. W2-B and W2-C are dependency-ready after accepted W2-A and
+- RibbonKit Writer W2-C through W5 remain. W2-C is dependency-ready after accepted W2-A/W2-B and
   W1-D; W4 keeps the final whole-product consistency pass after W2/W3. No implementation is implied by
   the remaining plan.
 - Automatic `Icons.xaml` discovery is best-effort by design. Keep `Load Icons.xaml…` available
@@ -5012,6 +5044,9 @@ covering 63 approved images**, with zero build warnings/errors.
 - 2026-08-24 after §3.107: 524 logic tests, one visual test covering 63 approved images, and zero
   build warnings/errors; Writer passed 169/169 tests, W1-D received user visual acceptance and W2-A's
   immutable page presets, conversions, orientation and margin-validation gate passed.
+- 2026-08-24 after §3.108: 547 logic tests, one visual test covering 63 approved images, and zero
+  build warnings/errors; Writer passed 192/192 tests and W2-B's bounded, atomic, versioned `.rkw`
+  persistence and data-only native-load safety gate passed.
 - Before quoting a current count or declaring a new change complete, rerun the proportional build
   and test commands. Inspect actual/diff PNG artifacts before changing visual baselines or
   tolerances.

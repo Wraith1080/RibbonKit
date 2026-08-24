@@ -1,8 +1,8 @@
 # RibbonKit Writer — Luna Execution Plan
 
 > **Status:** durable execution decomposition created 2026-08-20. W0-A through W0-D and W1-A through W1-C are
-> accepted through W1-D and W2-A. W2-B and W2-C are dependency-ready, but no agent or implementation
-> for either packet is implied.
+> accepted through W1-D and W2-B. W2-C is dependency-ready, but no agent or implementation
+> for that packet is implied.
 > This document does not schedule future agents or imply that any later Writer packet exists.
 > [`10-RIBBONKIT-WRITER-PLAN.md`](10-RIBBONKIT-WRITER-PLAN.md) owns product scope; current
 > implementation status remains in [`04-DESIGN-NOTES.md` §5](../04-DESIGN-NOTES.md#5-current-state--next-steps).

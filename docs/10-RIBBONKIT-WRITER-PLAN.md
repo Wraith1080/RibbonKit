@@ -4,8 +4,8 @@
 > document lifetime, TXT/RTF persistence, atomic saves, recent files, the live Backstage/QAT
 > file-command shell, and the accessible Home-ribbon integration over formatting, find/replace, native
 > spelling, debounced statistics and bounded zoom. W1-D's app-owned vector iconography and first
-> visual-polish pass is accepted, and W2-A's immutable page-settings model is complete. W2-B and
-> W2-C are dependency-ready; no later packet is implied.
+> visual-polish pass is accepted, W2-A's immutable page-settings model is complete and W2-B's
+> security-gated `.rkw` persistence is accepted. W2-C is dependency-ready; no later packet is implied.
 > Live status remains in `04-DESIGN-NOTES.md` §5.
 > RibbonKit Writer is a separate functional sample, not another feature page inside
 > `RibbonKit.Showcase`.

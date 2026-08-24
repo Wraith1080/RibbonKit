@@ -404,10 +404,42 @@ public sealed class WriterShellViewModelTests
         });
     }
 
+    [Fact]
+    public async Task NativeSaveReportsNativeCompletion()
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            using var fixture = new ShellFixture();
+            fixture.Shell.MarkEditorDirty();
+            fixture.Dialogs.SaveSelection = new WriterSaveDestination(fixture.File("document.rkw"),
+                WriterDocumentFormat.RibbonKitWriter);
+
+            Assert.True(await fixture.Shell.SaveAsAsync());
+            Assert.Equal("Saved RibbonKit Writer document", fixture.Shell.StatusText);
+            Assert.Equal(WriterDocumentFormat.RibbonKitWriter, fixture.Shell.CurrentDocument.Format);
+        });
+    }
+
+    [Fact]
+    public async Task NativeOpenReportsNativeCompletion()
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            using var fixture = new ShellFixture();
+            fixture.Dialogs.OpenSelection = new WriterOpenSelection(fixture.File("document.rkw"),
+                WriterDocumentFormat.RibbonKitWriter);
+
+            Assert.True(await fixture.Shell.OpenAsync());
+            Assert.Equal("Opened RibbonKit Writer document", fixture.Shell.StatusText);
+            Assert.Equal(WriterDocumentFormat.RibbonKitWriter, fixture.Shell.CurrentDocument.Format);
+        });
+    }
+
     [Theory]
     [InlineData(null, 1, null, null)]
     [InlineData("draft", 1, "draft.rtf", WriterDocumentFormat.RichText)]
     [InlineData("draft", 2, "draft.txt", WriterDocumentFormat.PlainText)]
+    [InlineData("draft", 3, "draft.rkw", WriterDocumentFormat.RibbonKitWriter)]
     [InlineData("draft.rtf", 2, "draft.txt", WriterDocumentFormat.PlainText)]
     [InlineData("draft.txt", 1, "draft.rtf", WriterDocumentFormat.RichText)]
     public void SaveDialogSelectionKeepsFilterAndExtensionInAgreement(string? path, int filterIndex,

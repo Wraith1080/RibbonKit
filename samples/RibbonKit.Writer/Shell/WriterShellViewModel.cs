@@ -106,9 +106,12 @@ public sealed class WriterShellViewModel : INotifyPropertyChanged, IDisposable
     private async Task<bool> SaveAndRecentAsync(Func<Task<bool>> save, WriterSaveDestination destination)
     {
         if (!await save()) { StatusText = "Save failed; document unchanged"; return false; }
-        var status = destination.Format == WriterDocumentFormat.RichText
-            ? "Saved RTF (advanced content best effort)"
-            : "Saved TXT; formatting and page content are not preserved";
+        var status = destination.Format switch
+        {
+            WriterDocumentFormat.RibbonKitWriter => "Saved RibbonKit Writer document",
+            WriterDocumentFormat.RichText => "Saved RTF (advanced content best effort)",
+            _ => "Saved TXT; formatting and page content are not preserved"
+        };
         if (!AddRecent(destination))
             status = AppendRecentFailure(status);
         StatusText = status;
@@ -179,9 +182,12 @@ public sealed class WriterShellViewModel : INotifyPropertyChanged, IDisposable
         try
         {
             if (!await _session.OpenAsync(selected.Path, selected.Format, cancellationToken)) return false;
-            StatusText = selected.Format == WriterDocumentFormat.RichText
-                ? "Opened RTF (advanced content best effort)"
-                : "Opened TXT; formatting and page content are not present";
+            StatusText = selected.Format switch
+            {
+                WriterDocumentFormat.RibbonKitWriter => "Opened RibbonKit Writer document",
+                WriterDocumentFormat.RichText => "Opened RTF (advanced content best effort)",
+                _ => "Opened TXT; formatting and page content are not present"
+            };
             return true;
         }
         catch (Exception ex) { StatusText = "Open failed"; await _dialogs.ShowErrorAsync(ex.Message); return false; }

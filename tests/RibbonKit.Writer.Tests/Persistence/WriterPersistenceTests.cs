@@ -104,8 +104,8 @@ public sealed class WriterPersistenceTests
         {
             using var directory = new TemporaryDirectory();
             var service = new WriterDocumentPersistence();
-            await Assert.ThrowsAsync<NotSupportedException>(() => service.LoadAsync(
-                Path.Combine(directory.Path, "document.rkw"), WriterDocumentFormat.RibbonKitWriter, default));
+            await Assert.ThrowsAsync<ArgumentException>(() => service.LoadAsync(
+                Path.Combine(directory.Path, "document.rtf"), WriterDocumentFormat.RibbonKitWriter, default));
             await Assert.ThrowsAsync<ArgumentException>(() => service.LoadAsync(
                 Path.Combine(directory.Path, "document.rtf"), WriterDocumentFormat.PlainText, default));
             await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => service.LoadAsync(
@@ -119,6 +119,11 @@ public sealed class WriterPersistenceTests
             var richText = WriterDocumentPersistence.GetCapabilities(WriterDocumentFormat.RichText);
             Assert.True(richText.PreservesFormatting);
             Assert.False(richText.PreservesPageSettings);
+            var native = WriterDocumentPersistence.GetCapabilities(WriterDocumentFormat.RibbonKitWriter);
+            Assert.True(native.PreservesFormatting);
+            Assert.False(native.PreservesImages);
+            Assert.False(native.PreservesTables);
+            Assert.True(native.PreservesPageSettings);
         });
     }
 

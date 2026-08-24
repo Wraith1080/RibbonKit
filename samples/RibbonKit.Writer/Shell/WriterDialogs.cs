@@ -13,7 +13,7 @@ public sealed record WriterOpenSelection(string Path, WriterDocumentFormat Forma
 public static class WriterSaveDialogSelection
 {
     /// <summary>
-    /// Resolves the two Writer save filters without relying on the native dialog's automatic extension.
+    /// Resolves the Writer save filters without relying on the native dialog's automatic extension.
     /// The selected filter is authoritative, including when the typed extension is missing or differs.
     /// </summary>
     public static WriterSaveDestination? Resolve(string? selectedPath, int filterIndex)
@@ -25,10 +25,17 @@ public static class WriterSaveDialogSelection
         {
             1 => WriterDocumentFormat.RichText,
             2 => WriterDocumentFormat.PlainText,
+            3 => WriterDocumentFormat.RibbonKitWriter,
             _ => throw new ArgumentOutOfRangeException(nameof(filterIndex), filterIndex,
-                "Writer save filter index must be 1 (RTF) or 2 (TXT).")
+                "Writer save filter index must be 1 (RTF), 2 (TXT), or 3 (RKW).")
         };
-        var extension = format == WriterDocumentFormat.PlainText ? ".txt" : ".rtf";
+        var extension = format switch
+        {
+            WriterDocumentFormat.RichText => ".rtf",
+            WriterDocumentFormat.PlainText => ".txt",
+            WriterDocumentFormat.RibbonKitWriter => ".rkw",
+            _ => throw new ArgumentOutOfRangeException(nameof(format))
+        };
         var normalizedPath = string.Equals(Path.GetExtension(selectedPath), extension,
             StringComparison.OrdinalIgnoreCase)
             ? selectedPath
@@ -58,18 +65,27 @@ public sealed class WriterDialogService : IWriterDialogService
     public Task<WriterOpenSelection?> ShowOpenAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        var dialog = new OpenFileDialog { Filter = "Writer documents (*.rtf;*.txt)|*.rtf;*.txt|Rich Text (*.rtf)|*.rtf|Plain Text (*.txt)|*.txt", CheckFileExists = true };
+        var dialog = new OpenFileDialog { Filter = "Writer documents (*.rkw;*.rtf;*.txt)|*.rkw;*.rtf;*.txt|Rich Text (*.rtf)|*.rtf|Plain Text (*.txt)|*.txt|RibbonKit Writer (*.rkw)|*.rkw", CheckFileExists = true };
         if (dialog.ShowDialog(_owner) != true) return Task.FromResult<WriterOpenSelection?>(null);
-        return Task.FromResult<WriterOpenSelection?>(new WriterOpenSelection(dialog.FileName,
-            string.Equals(System.IO.Path.GetExtension(dialog.FileName), ".txt", StringComparison.OrdinalIgnoreCase)
-                ? WriterDocumentFormat.PlainText : WriterDocumentFormat.RichText));
+        var format = System.IO.Path.GetExtension(dialog.FileName).ToLowerInvariant() switch
+        {
+            ".txt" => WriterDocumentFormat.PlainText,
+            ".rkw" => WriterDocumentFormat.RibbonKitWriter,
+            _ => WriterDocumentFormat.RichText
+        };
+        return Task.FromResult<WriterOpenSelection?>(new WriterOpenSelection(dialog.FileName, format));
     }
 
     public Task<WriterSaveDestination?> ShowSaveAsync(WriterDocument document, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        var dialog = new SaveFileDialog { Filter = "Rich Text (*.rtf)|*.rtf|Plain Text (*.txt)|*.txt",
-            FilterIndex = document.Format == WriterDocumentFormat.PlainText ? 2 : 1,
+        var dialog = new SaveFileDialog { Filter = "Rich Text (*.rtf)|*.rtf|Plain Text (*.txt)|*.txt|RibbonKit Writer (*.rkw)|*.rkw",
+            FilterIndex = document.Format switch
+            {
+                WriterDocumentFormat.PlainText => 2,
+                WriterDocumentFormat.RibbonKitWriter => 3,
+                _ => 1
+            },
             AddExtension = false,
             FileName = document.Path is null ? "Untitled" : System.IO.Path.GetFileName(document.Path), OverwritePrompt = true };
         if (dialog.ShowDialog(_owner) != true) return Task.FromResult<WriterSaveDestination?>(null);

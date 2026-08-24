@@ -1,10 +1,28 @@
 using RibbonKit.Writer.Models;
+using System.Windows.Documents;
 using Xunit;
 
 namespace RibbonKit.Writer.Tests.Document;
 
 public sealed class DocumentPageSettingsTests
 {
+    [Fact]
+    public void WriterDocumentOwnsPageSettingsAndOnlyMarksRealChangesDirty()
+    {
+        var content = new FlowDocument();
+        var original = DocumentPageSettings.Letter();
+        var document = new WriterDocument(content, pageSettings: original);
+
+        Assert.False(document.SetPageSettings(original));
+        Assert.False(document.IsDirty);
+
+        var updated = DocumentPageSettings.A4(DocumentPageOrientation.Landscape,
+            new DocumentPageMargins(40, 50, 60, 70));
+        Assert.True(document.SetPageSettings(updated));
+        Assert.True(document.IsDirty);
+        Assert.Equal(updated, document.PageSettings);
+    }
+
     [Fact]
     public void NamedPresetsUseNinetySixDipPhysicalDimensions()
     {
