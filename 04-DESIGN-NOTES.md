@@ -5072,6 +5072,29 @@ The single full-window STA integration case retains one dispatcher/thread and ha
 its former global 10-second ceiling became flaky only when the 63-image visual project ran beside it. All other STA
 tests retain the 10-second default, and RKWF-008 records this bounded harness exception.
 
+### 3.111b Writer startup paper invariant and document-profile plan insertion — 2026-08-24
+
+User review found an intermittent cold-start state in which the paper remained correctly centred and sized but the
+first untitled `FlowDocument` retained zero `PagePadding`, placing its caret against the paper's top-left edge. New
+appeared to fix the problem because document replacement forced another complete surface application. The initial
+document/page model is assigned before the native `RichTextBox` completes its first Loaded/template pass, and the
+surface previously had no post-Loaded invariant. `WriterEditorSurface` now reapplies its current Paper/Continuous
+layout idempotently on Loaded without replacing the editor or document. A hosted-window regression deliberately
+resets all four margins after setup but before first load and requires the Loaded pass to restore them. RKWF-009
+records the bounded app-owned timing correction and the remaining cold-launch/DPI acceptance check.
+
+The proposed New chooser is recorded as document-profile work rather than conflated with content templates. W0-E
+now owns the non-UI Plain Text/Rich Text/RibbonKit Writer capability and format-transition policy, explicit typed-New
+contract, default extensions and loss decisions. W0-F then exclusively owns a pictured, labelled Backstage New page,
+Ctrl+N/default-profile behaviour and capability-aware ribbon/Page/View state. True letter, note or report templates
+may later sit inside a compatible profile. W2-F now depends on W0-F so ruler, page and paragraph commands cannot ship
+with a second ad hoc format gate; W3 packets consume the same W0-E capability contract.
+
+The focused editor-surface suite passes **9/9**. The complete solution builds with zero warnings/errors and passes
+Writer **234/234**, RibbonKit **355/355** and the unchanged visual test **1/1** over 63 approved images. No
+`src/RibbonKit/**` change was required. W0-E is the next dependency-ready Writer packet; W2-F is intentionally waiting
+for W0-F.
+
 ## 4. Workflow / Session Conventions
 
 - Work from the current Windows checkout at
@@ -5116,7 +5139,7 @@ tests retain the 10-second default, and RKWF-008 records this bounded harness ex
   directly beneath tabs and both QAT placements (§3.97). Its automated gate is green; live
   fallback/Acrylic visual approval remains pending.
 - MDI milestones M0 and M4 are complete: floating children plus ribbon tab/caption merging.
-- RibbonKit Writer W0-A through W0-D, W1-A through W1-D and W2-A through W2-E are complete through §3.111: the separate app/test
+- RibbonKit Writer W0-A through W0-D, W1-A through W1-D and W2-A through W2-E are complete through §3.111b: the separate app/test
   scaffold, document lifetime, TXT/RTF/atomic/recent services, live Backstage/QAT file-command shell,
   formatting/selection-state engine, find/spelling/statistics/zoom utilities, and the accessible
   Home-ribbon/QAT editing surface are integrated at their packet boundaries. The accepted Writer-owned icon
@@ -5135,10 +5158,10 @@ tests retain the 10-second default, and RKWF-008 records this bounded harness ex
 - Final live visual tuning and approval of the Office 2010 Aero-inspired frame prototype (§3.97).
 - Touch density, richer automatic QAT projections, custom-control projection APIs and additional
   themes remain post-v1 candidates. Their plan documents are not implementation evidence.
-- RibbonKit Writer W2-E is accepted through §3.111 on the available 125%-scale hardware. Both A4 and Letter preview/PDF
+- RibbonKit Writer W2-E is accepted through §3.111b on the available 125%-scale hardware. Both A4 and Letter preview/PDF
   paths passed, including all five output pages and the page-four corruption regression. Live mixed-monitor movement
-  remains a named W4-C hardware check because only one display is connected. W2-F through W5 remain; W2-F is
-  dependency-ready but has not started. W4 keeps the final whole-product consistency pass after W2/W3.
+  remains a named W4-C hardware check because only one display is connected. W0-E/W0-F now precede W2-F; W0-E is
+  dependency-ready and unstarted. W4 keeps the final whole-product consistency pass after W2/W3.
 - Automatic `Icons.xaml` discovery is best-effort by design. Keep `Load Icons.xaml…` available
   for ambiguity, inaccessible paths, parse failures, or no match.
 
@@ -5195,6 +5218,9 @@ tests retain the 10-second default, and RKWF-008 records this bounded harness ex
   images. Writer passes **233/233**, including the 8-test modal-preview, suspended-pagination, print-setup and window
   integration gate; the solution builds with zero warnings/errors and RibbonKit/visual remain **355/355** and
   **1/1**. The actual 125%-DPI View, modal preview and fitted Writer-owned Microsoft Print to PDF setup surfaces pass.
+- 2026-08-24 after §3.111b correction: the inventory is 589 logic tests plus one visual test covering 63 approved
+  images. Writer passes **234/234**, including the post-Loaded paper-margin regression; the solution builds with zero
+  warnings/errors and RibbonKit/visual remain **355/355** and **1/1**. Cold-launch/DPI observation remains for W4-C.
 - Before quoting a current count or declaring a new change complete, rerun the proportional build
   and test commands. Inspect actual/diff PNG artifacts before changing visual baselines or
   tolerances.

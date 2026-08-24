@@ -2,7 +2,8 @@
 
 > **Status:** durable execution decomposition created 2026-08-20. W0-A through W0-D, W1-A through W1-D and
 > W2-A through W2-E are accepted on the available hardware. Live mixed-monitor checking remains deferred to W4-C
-> because only one display is connected. W2-F is dependency-ready but has not started.
+> because only one display is connected. W0-E is the next dependency-ready packet; W2-F now waits for
+> the format-aware New/profile projection in W0-F so its page and paragraph commands cannot bypass profile limits.
 > This document does not schedule future agents or imply that any later Writer packet exists.
 > [`10-RIBBONKIT-WRITER-PLAN.md`](10-RIBBONKIT-WRITER-PLAN.md) owns product scope; current
 > implementation status remains in [`04-DESIGN-NOTES.md` §5](../04-DESIGN-NOTES.md#5-current-state--next-steps).
@@ -137,6 +138,8 @@ Only packets whose dependencies have passed their integration gate are ready.
 | W0-B | Document session and lifetime model | W0-A | Luna |
 | W0-C | TXT/RTF persistence and recent files | W0-B | Luna |
 | W0-D | Shell, Backstage and file-command integration | W0-C | Luna, UI-exclusive |
+| W0-E | Document profiles and format-transition policy | W0-C, W1-A, W2-B | Luna |
+| W0-F | New gallery and capability-aware command projection | W0-D, W0-E, W1-C, W2-E | Luna, UI-exclusive |
 | W1-A | Formatting command/state engine | W0-B | Luna |
 | W1-B | Find/replace, spelling, counts and zoom | W0-B | Luna |
 | W1-C | Home ribbon, QAT, KeyTips and editing integration | W0-D, W1-A, W1-B | Luna, UI-exclusive |
@@ -146,18 +149,18 @@ Only packets whose dependencies have passed their integration gate are ready.
 | W2-C | Centred paper editing surface | W1-D, W2-A | Luna |
 | W2-D | Preview, pagination and printing | W2-C | Luna |
 | W2-E | Page/View ribbon and preview integration | W2-B, W2-D | Luna, UI-exclusive |
-| W2-F | Margin guides and interactive horizontal ruler | W2-E | Luna, UI-exclusive |
-| W3-A | Images and hyperlinks | W1-D, W2-B | Luna |
-| W3-B | FlowDocument table core | W1-D, W2-B | Luna, high-risk |
-| W3-C | Table interaction and contextual Table Tools | W2-F, W3-B | Luna, UI-exclusive |
-| W3-D | Structured-content round-trip and RTF fixtures | W3-A, W3-C | Luna |
+| W2-F | Margin guides and interactive horizontal ruler | W0-F, W2-E | Luna, UI-exclusive |
+| W3-A | Images and hyperlinks | W0-E, W1-D, W2-B | Luna |
+| W3-B | FlowDocument table core | W0-E, W1-D, W2-B | Luna, high-risk |
+| W3-C | Table interaction and contextual Table Tools | W0-F, W2-F, W3-B | Luna, UI-exclusive |
+| W3-D | Structured-content round-trip and RTF fixtures | W0-E, W3-A, W3-C | Luna |
 | W4-A | Customization and appearance persistence | W3-D | Luna, UI-exclusive |
 | W4-B | Automated integration and hardening | W4-A | Luna |
 | W4-C | Manual GUI, DPI, RTL and performance acceptance | W4-B | Lead |
 | W5-A | Distribution decision | W4-C and sustained use | User and lead |
 
 Useful parallel groups after their dependencies pass are W0-C/W1-A/W1-B, W1-A/W1-B/W2-A,
-W1-D/W2-A, W3-A/W3-B and W2-F/W3-A/W3-B after W2-E. Never parallelize two UI-exclusive packets. The lead may choose less
+W1-D/W2-A, W3-A/W3-B and W2-F/W3-A/W3-B after W0-F. Never parallelize two UI-exclusive packets. The lead may choose less
 concurrency when a packet is high risk or the worktree is already dirty.
 
 ## 5. W0 — Application shell and document lifetime
@@ -205,6 +208,39 @@ basic status surface wired to W0-B/W0-C contracts.
 
 **Exit:** lead manually creates, edits, saves, closes and reopens TXT and RTF files; cancel at every
 unsaved prompt preserves the current document; the full solution build/tests pass.
+
+### W0-E — Document profiles and format-transition policy
+
+**Owns:** document-profile/capability models, typed New/session contracts, format-transition policy and
+focused document/persistence tests. It does not edit the main window or ribbon XAML.
+
+**Deliver:** make Plain Text, Rich Text and RibbonKit Writer explicit creation profiles over the existing
+`WriterDocumentFormat` identity. Define the commands, content and page metadata each profile can preserve,
+create untitled documents with an explicit initial format, map each profile to its default extension and
+centralize lower-fidelity conversion warnings. Save As may choose another supported format, but identity
+changes only after the save succeeds. Keep content templates such as letters or reports as a separate,
+future layer within a compatible profile.
+
+**Exit:** tests cover all three typed-New paths, capability matrices, default extensions, upgrade and
+downgrade decisions, cancelled/failed conversions and the invariant that failed saves cannot change the
+active document profile.
+
+### W0-F — New gallery and capability-aware command projection
+
+**Owns:** Writer shell/MainWindow/Backstage and primary ribbon resources exclusively, plus their UI
+integration tests. No `src/RibbonKit/**` change is permitted.
+
+**Deliver:** replace the Backstage New action with a keyboard/UIA-accessible page of three labelled cards:
+Plain Text, Rich Text and RibbonKit Writer. Each card uses an app-owned icon or small document preview and
+creates the corresponding untitled profile. Ctrl+N and one-click New use the configured default profile.
+Project profile capabilities into ribbon, Page/View, preview and future contextual command enabled state;
+do not merely grey individual leaf buttons while leaving an apparently active unsupported group. Save
+preselects the profile extension, while Save As keeps all supported formats available and surfaces the W0-E
+loss decision before committing a lower-fidelity identity.
+
+**Exit:** lead verifies all three New cards, Ctrl+N, unsaved-change cancellation, profile-specific group and
+command state, Save defaults, cross-format Save As, narrow/minimized ribbon, KeyTips, UIA names/states and a
+real reopen of each output. Full build/tests pass before W2-F or another UI-exclusive packet begins.
 
 ## 6. W1 — Functional rich-text editing
 
@@ -325,7 +361,7 @@ same long-lived editor and exact fresh W2-D paginator are retained. A same-day u
 only commands into a dedicated modal Print Preview tab, made View/preview/zoom commands large and labelled, replaced
 Undo/Redo-derived page navigation artwork, suspended pagination work during ordinary typing, removed Print from the
 ribbon and replaced the Windows picker's unsupported-preview pane with Writer-owned printer setup around the exact
-fixed paginator. W2-F is dependency-ready.
+fixed paginator. W0-E is next; W2-F waits for W0-F's capability-aware command projection.
 
 **Owns:** Page/View ribbon tabs and groups, view switching, zoom-command relocation and Backstage
 print/page-summary UI exclusively.
@@ -340,7 +376,7 @@ new commands retain stable keyboard and automation metadata.
 
 **Exit:** lead completes continuous/paper/preview switching without content, selection, undo or focus loss;
 paper-setting, zoom and PDF-print workflows pass from ribbon, status bar and Backstage; Home no longer owns
-ribbon zoom controls; full build/tests pass before W2-F or another UI-exclusive packet begins.
+ribbon zoom controls; full build/tests pass before the next UI-exclusive packet begins.
 
 ### W2-F — Margin guides and interactive horizontal ruler
 

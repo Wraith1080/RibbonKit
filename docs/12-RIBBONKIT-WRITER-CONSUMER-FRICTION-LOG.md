@@ -214,6 +214,26 @@ remain read-only until actual/diff evidence justifies a deliberate change.
 - **Evidence still required:** keep watching the case duration in full parallel solution runs; investigate subdivision
   only if WPF chrome ownership can remain on one dispatcher or the duration approaches the bounded allowance.
 
+### RKWF-009 — Initial paper margins need a post-Loaded invariant
+
+- **First seen / packet:** 2026-08-24, Writer W2-C startup correction after W2-E.
+- **Status:** Resolved in the app; not a RibbonKit runtime defect.
+- **Consumer goal:** the initial untitled document must enter Paper mode with its logical page margins already
+  applied, so the first caret never appears against the paper's top-left edge.
+- **Reproduction and evidence:** the real Writer window intermittently showed correct centred paper geometry but
+  zero `FlowDocument.PagePadding`; using New replaced the document and reapplied the margins. Initialization assigned
+  the document and page model before the native `RichTextBox` completed its first Loaded/template pass, with no
+  later surface invariant to repair a late reset.
+- **Current app-owned resolution:** `WriterEditorSurface` reapplies its selected presentation idempotently on Loaded.
+  A focused hosted-window regression resets `PagePadding` after setup but before first load and requires all four
+  logical margins to be restored by that first Loaded pass.
+- **Application impact:** one extra layout application occurs when the editor surface loads; it neither replaces the
+  editor/document nor changes selection, undo, clipboard, IME or preview ownership.
+- **Smallest possible library direction:** none. This is ordering between Writer's app-owned document model and its
+  app-owned editor surface.
+- **Evidence still required:** repeat cold launches outside the debugger and include the startup caret/margin check in
+  W4-C across the available DPI matrix.
+
 ## 5. Closed observations
 
 None yet.

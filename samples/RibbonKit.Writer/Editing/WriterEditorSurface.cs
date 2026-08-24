@@ -29,6 +29,12 @@ public sealed class WriterEditorSurface : Grid
     private double _zoomPercent = 100d;
     private WriterEditorViewMode _viewMode;
 
+    /// <summary>Initializes a Writer editor surface.</summary>
+    public WriterEditorSurface()
+    {
+        Loaded += OnLoaded;
+    }
+
     /// <summary>Gets or sets the current presentation mode.</summary>
     public WriterEditorViewMode ViewMode
     {
@@ -180,6 +186,14 @@ public sealed class WriterEditorSurface : Grid
         // The controller owns the editor's LayoutTransform. The host only scales its logical
         // paper dimensions so the single transform is not applied twice.
         RestoreFocus(hadFocus);
+    }
+
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        // The initial FlowDocument is assigned before the native RichTextBox has completed its
+        // first load/template pass. Reassert the selected presentation after that pass so a late
+        // native initialization cannot leave Paper mode with zero PagePadding until New is used.
+        ApplyLayout();
     }
 
     private void RestoreFocus(bool hadFocus)

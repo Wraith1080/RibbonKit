@@ -1,13 +1,9 @@
 # RibbonKit Writer — Functional Reference Application Plan
 
-> **Status:** approved post-v1 application plan. W0-A through W0-D and W1-A through W1-C are accepted: scaffold,
-> document lifetime, TXT/RTF persistence, atomic saves, recent files, the live Backstage/QAT
-> file-command shell, and the accessible Home-ribbon integration over formatting, find/replace, native
-> spelling, debounced statistics and bounded zoom. W1-D's app-owned vector iconography and first
-> visual-polish pass is accepted, W2-A's immutable page-settings model is complete and W2-B's
-> security-gated `.rkw` persistence is accepted. W2-C's centred paper implementation is independently
-> reviewed; live mixed-monitor DPI movement and one clean full-Writer rerun remain before acceptance.
-> No later packet is implied.
+> **Status:** approved post-v1 application plan. W0-A through W0-D, W1-A through W1-D and W2-A through
+> W2-E are accepted on the available hardware. W0-E/W0-F now own format-aware document profiles and
+> the pictured Backstage New surface; W0-E is next and W2-F waits for W0-F. Live mixed-monitor DPI
+> movement remains deferred to W4-C. No later implementation is implied.
 > Live status remains in `04-DESIGN-NOTES.md` §5.
 > RibbonKit Writer is a separate functional sample, not another feature page inside
 > `RibbonKit.Showcase`.
@@ -42,6 +38,7 @@ desktop-publishing engine.
 
 - `.txt` and `.rtf` open/save, with a native Writer format for complete fidelity.
 - New, Open, Save, Save As, Print, recent files and unsaved-change protection.
+- A format-aware New surface for Plain Text, Rich Text and RibbonKit Writer document profiles.
 - Clipboard, undo/redo, font family/size, bold/italic/underline, foreground/highlight colour.
 - Paragraph alignment, indentation, bullets and numbered lists.
 - Find/replace, spelling support, word/character count and zoom.
@@ -99,6 +96,19 @@ Format policy:
   `document-settings.json` and a small manifest. This is the fidelity format for paper settings,
   tables, images and future additive metadata. Loading must reject unsafe or unknown executable
   content rather than instantiate arbitrary application types.
+
+Treat these formats as document profiles when creating or editing a document, not as content templates.
+Plain Text exposes character-only editing and disables commands whose results cannot round-trip. Rich Text
+enables the supported font and paragraph formatting surface but keeps Writer-only page metadata and structured
+content unavailable. RibbonKit Writer exposes every feature currently implemented by Writer. A later template
+catalog may place letter, note or report content presets inside any compatible profile without conflating the
+template with its persistence format.
+
+Backstage New should present the three profiles as labelled, keyboard/UIA-accessible cards with an app-owned
+icon or small document preview. Creating a card commits that format as the untitled document's initial identity,
+so Save preselects its matching extension. Save As may select another supported type; the active identity changes
+only after a successful save, and moving to a lower-fidelity type requires a clear loss warning. Ctrl+N and any
+one-click New projection should create the configured default profile rather than opening an inert chooser.
 
 The serializer needs atomic save/replace, schema-version checks, corrupt/foreign-package handling and
 round-trip tests. Autosave/recovery should use a separate application-data location and must never
@@ -194,7 +204,8 @@ effort and should have focused compatibility fixtures rather than broad promises
 ### Backstage
 
 - Home/recent documents
-- New, Open, Save and Save As
+- A New page with pictured profile cards for Plain Text, Rich Text and RibbonKit Writer documents
+- Open, Save and Save As, with the current profile preselected but every supported type still available
 - Print and paginated preview
 - Document information and page setup summary
 - Settings and Exit
@@ -291,6 +302,8 @@ that a packet, agent or implementation currently exists.
 - Separate project, theme dictionaries, PerMonitorV2 manifest and RibbonWindow.
 - New/Open/Save/Save As for `.txt` and `.rtf`.
 - Dirty-state title, unsaved-close prompt, recent files and atomic saves.
+- Format-aware document profiles, conversion/loss policy and a pictured Backstage New gallery whose
+  selected profile controls supported commands and the default Save extension.
 
 ### W1 — Functional rich-text editing
 
@@ -333,6 +346,7 @@ that a packet, agent or implementation currently exists.
 Automated coverage should include:
 
 - `.txt`, `.rtf` and `.rkw` load/save/round-trip and corrupt-input behaviour.
+- Profile-specific New, command availability, default-extension selection and successful/failed format transitions.
 - Page-preset conversion, orientation swap, margin validation and schema migration.
 - Custom-margin commit/cancel, ruler drag rollback, guide geometry and paragraph-indent undo/redo.
 - Dirty-state transitions, atomic save failure and unsaved-close decisions.

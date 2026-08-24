@@ -98,6 +98,52 @@ public sealed class WriterEditorSurfaceTests
     }
 
     [Fact]
+    public void FirstLoadedPassReassertsPaperMarginsAfterLateDocumentInitialization()
+    {
+        StaTestHelper.Run(() =>
+        {
+            var settings = DocumentPageSettings.Letter(
+                margins: new DocumentPageMargins(48, 60, 48, 60));
+            var document = new FlowDocument { PagePadding = new Thickness(0) };
+            var editor = new RichTextBox { Document = document };
+            var surface = CreateSurface(editor);
+            surface.PageSettings = settings;
+            surface.ViewMode = WriterEditorViewMode.Paper;
+
+            // Model the late first-load reset seen in the real Writer window. Before the surface
+            // is loaded, native editor initialization can still replace the FlowDocument inset.
+            document.PagePadding = new Thickness(0);
+
+            var window = new Window
+            {
+                Content = surface,
+                Width = 1200,
+                Height = 900,
+                WindowStartupLocation = WindowStartupLocation.Manual,
+                Left = -10000,
+                Top = -10000,
+                ShowInTaskbar = false,
+                Opacity = 0.01
+            };
+            try
+            {
+                window.Show();
+                window.UpdateLayout();
+
+                Assert.Equal(settings.Margins.LeftDip, document.PagePadding.Left, 4);
+                Assert.Equal(settings.Margins.TopDip, document.PagePadding.Top, 4);
+                Assert.Equal(settings.Margins.RightDip, document.PagePadding.Right, 4);
+                Assert.Equal(settings.Margins.BottomDip, document.PagePadding.Bottom, 4);
+            }
+            finally
+            {
+                if (window.IsVisible)
+                    window.Close();
+            }
+        });
+    }
+
+    [Fact]
     public void ZoomedPaperUsesHorizontalViewportWithoutTakingOverVerticalEditorScrolling()
     {
         StaTestHelper.Run(() =>
