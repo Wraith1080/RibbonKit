@@ -32,7 +32,7 @@ public sealed class WriterShellViewModel : INotifyPropertyChanged, IDisposable
         _session.PropertyChanged += SessionChanged;
         _recents.Load();
         RefreshRecents();
-        NewCommand = new AsyncCommand(_ => NewAsync(), this);
+        NewCommand = new AsyncCommand(parameter => NewFromCommandAsync(parameter), this);
         OpenCommand = new AsyncCommand(_ => OpenAsync(), this);
         SaveCommand = new AsyncCommand(_ => SaveAsync(), this);
         SaveAsCommand = new AsyncCommand(_ => SaveAsAsync(), this);
@@ -65,6 +65,15 @@ public sealed class WriterShellViewModel : INotifyPropertyChanged, IDisposable
 
     public Task<bool> NewAsync(CancellationToken cancellationToken = default) =>
         RunAsync("New", () => RunTransitionAsync("New", () => _session.NewAsync(cancellationToken)));
+
+    /// <summary>Creates an untitled document with the selected canonical profile.</summary>
+    public Task<bool> NewAsync(WriterDocumentProfile profile,
+        CancellationToken cancellationToken = default)
+    {
+        WriterDocumentProfiles.EnsureCanonical(profile);
+        return RunAsync("New", () => RunTransitionAsync("New",
+            () => _session.NewAsync(profile, cancellationToken)));
+    }
     public Task<bool> SaveAsync(CancellationToken cancellationToken = default) => RunAsync("Save", () => SaveCoreAsync(false, cancellationToken));
     public Task<bool> SaveAsAsync(CancellationToken cancellationToken = default) => RunAsync("Save As", () => SaveCoreAsync(true, cancellationToken));
     public Task<bool> RequestCloseAsync(CancellationToken cancellationToken = default) =>
@@ -100,9 +109,20 @@ public sealed class WriterShellViewModel : INotifyPropertyChanged, IDisposable
     private async Task<WriterSaveDestination?> SelectSaveDestinationAsync(CancellationToken cancellationToken)
     {
         var destination = await _dialogs.ShowSaveAsync(_document, cancellationToken);
-        if (destination?.Format == WriterDocumentFormat.PlainText && !await _dialogs.ConfirmPlainTextFidelityAsync(cancellationToken)) return null;
         return destination;
     }
+
+    private Task<bool> NewFromCommandAsync(object? parameter) => parameter switch
+    {
+        WriterDocumentProfile profile => NewAsync(profile),
+        string profileName when string.Equals(profileName, nameof(WriterDocumentFormat.PlainText),
+            StringComparison.OrdinalIgnoreCase) => NewAsync(WriterDocumentProfiles.PlainText),
+        string profileName when string.Equals(profileName, nameof(WriterDocumentFormat.RibbonKitWriter),
+            StringComparison.OrdinalIgnoreCase) => NewAsync(WriterDocumentProfiles.RibbonKitWriter),
+        string profileName when string.Equals(profileName, nameof(WriterDocumentFormat.RichText),
+            StringComparison.OrdinalIgnoreCase) => NewAsync(WriterDocumentProfiles.RichText),
+        _ => NewAsync()
+    };
     private async Task<bool> SaveAndRecentAsync(Func<Task<bool>> save, WriterSaveDestination destination)
     {
         if (!await save()) { StatusText = "Save failed; document unchanged"; return false; }

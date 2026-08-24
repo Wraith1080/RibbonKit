@@ -50,7 +50,10 @@ public interface IWriterDialogService
     Task<WriterOpenSelection?> ShowOpenAsync(CancellationToken cancellationToken = default);
     Task<WriterSaveDestination?> ShowSaveAsync(WriterDocument document, CancellationToken cancellationToken = default);
     Task<UnsavedChangesDecision> ConfirmUnsavedAsync(WriterDocument document, DocumentTransition transition, CancellationToken cancellationToken = default);
-    Task<bool> ConfirmPlainTextFidelityAsync(CancellationToken cancellationToken = default);
+    /// <summary>Obtains the user's decision before a potentially lossy profile transition.</summary>
+    Task<WriterFormatTransitionDecision> ConfirmFormatTransitionAsync(
+        WriterDocument document, WriterDocumentFormatTransition transition,
+        CancellationToken cancellationToken = default);
     Task ShowErrorAsync(string message, CancellationToken cancellationToken = default);
     Task ShowInfoAsync(string message, CancellationToken cancellationToken = default);
 }
@@ -79,6 +82,7 @@ public sealed class WriterDialogService : IWriterDialogService
     public Task<WriterSaveDestination?> ShowSaveAsync(WriterDocument document, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        var profile = document.Format.GetProfile();
         var dialog = new SaveFileDialog { Filter = "Rich Text (*.rtf)|*.rtf|Plain Text (*.txt)|*.txt|RibbonKit Writer (*.rkw)|*.rkw",
             FilterIndex = document.Format switch
             {
@@ -87,7 +91,8 @@ public sealed class WriterDialogService : IWriterDialogService
                 _ => 1
             },
             AddExtension = false,
-            FileName = document.Path is null ? "Untitled" : System.IO.Path.GetFileName(document.Path), OverwritePrompt = true };
+            FileName = document.Path is null ? $"Untitled{profile.DefaultExtension}" : System.IO.Path.GetFileName(document.Path),
+            OverwritePrompt = true };
         if (dialog.ShowDialog(_owner) != true) return Task.FromResult<WriterSaveDestination?>(null);
         return Task.FromResult(WriterSaveDialogSelection.Resolve(dialog.FileName, dialog.FilterIndex));
     }
@@ -99,11 +104,20 @@ public sealed class WriterDialogService : IWriterDialogService
         return Task.FromResult(result == MessageBoxResult.Yes ? UnsavedChangesDecision.Save : result == MessageBoxResult.No ? UnsavedChangesDecision.Discard : UnsavedChangesDecision.Cancel);
     }
 
-    public Task<bool> ConfirmPlainTextFidelityAsync(CancellationToken cancellationToken = default)
+    public Task<WriterFormatTransitionDecision> ConfirmFormatTransitionAsync(
+        WriterDocument document, WriterDocumentFormatTransition transition,
+        CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        var result = MessageBox.Show(_owner, "Plain text loses formatting, images, tables, and page settings. Continue?", "Save as Plain Text", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-        return Task.FromResult(result == MessageBoxResult.Yes);
+        ArgumentNullException.ThrowIfNull(document);
+        ArgumentNullException.ThrowIfNull(transition);
+        var warning = transition.WarningMessage ??
+            $"Saving as {transition.TargetProfile.DisplayName} may reduce document fidelity. Continue?";
+        var result = MessageBox.Show(_owner, $"{warning} Continue?", "Save format warning",
+            MessageBoxButton.YesNo, MessageBoxImage.Warning);
+        return Task.FromResult(result == MessageBoxResult.Yes
+            ? WriterFormatTransitionDecision.Continue
+            : WriterFormatTransitionDecision.Cancel);
     }
 
     public Task ShowErrorAsync(string message, CancellationToken cancellationToken = default) { cancellationToken.ThrowIfCancellationRequested(); MessageBox.Show(_owner, message, "RibbonKit Writer", MessageBoxButton.OK, MessageBoxImage.Error); return Task.CompletedTask; }

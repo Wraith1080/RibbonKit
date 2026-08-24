@@ -347,7 +347,7 @@ public sealed class WriterShellViewModelTests
             fixture.Dialogs.PlainTextFidelity = false;
 
             Assert.False(await fixture.Shell.SaveAsAsync());
-            Assert.Equal("Save As cancelled", fixture.Shell.StatusText);
+            Assert.Equal("Save failed; document unchanged", fixture.Shell.StatusText);
             Assert.Empty(fixture.Persistence.Saves);
             Assert.Equal(1, fixture.Dialogs.PlainTextWarningCalls);
             Assert.True(fixture.Shell.CurrentDocument.IsDirty);
@@ -710,7 +710,8 @@ public sealed class WriterShellViewModelTests
             Dialogs = new FakeDialogs();
             Persistence = new FakePersistence();
             var session = new WriterDocumentSession(Persistence,
-                new WriterUnsavedChangesDecider(Dialogs), new WriterSaveDestinationProvider(Dialogs));
+                new WriterUnsavedChangesDecider(Dialogs), new WriterSaveDestinationProvider(Dialogs),
+                transitionDecider: new WriterFormatTransitionDecider(Dialogs));
             Shell = new WriterShellViewModel(session, new RecentFileService(RecentPath), Dialogs);
         }
 
@@ -780,10 +781,15 @@ public sealed class WriterShellViewModelTests
             return Task.FromResult(Decisions.Count == 0 ? UnsavedChangesDecision.Cancel : Decisions.Dequeue());
         }
 
-        public Task<bool> ConfirmPlainTextFidelityAsync(CancellationToken cancellationToken = default)
+        public Task<WriterFormatTransitionDecision> ConfirmFormatTransitionAsync(
+            WriterDocument document, WriterDocumentFormatTransition transition,
+            CancellationToken cancellationToken = default)
         {
-            PlainTextWarningCalls++;
-            return Task.FromResult(PlainTextFidelity);
+            if (transition.RequiresConfirmation)
+                PlainTextWarningCalls++;
+            return Task.FromResult(PlainTextFidelity
+                ? WriterFormatTransitionDecision.Continue
+                : WriterFormatTransitionDecision.Cancel);
         }
 
         public Task ShowErrorAsync(string message, CancellationToken cancellationToken = default)

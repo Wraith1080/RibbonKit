@@ -29,8 +29,143 @@ using Xunit;
 
 namespace RibbonKit.Writer.Tests.Shell;
 
+[CollectionDefinition("Writer UI", DisableParallelization = true)]
+public sealed class WriterUiCollectionDefinition
+{
+}
+
+[Collection("Writer UI")]
 public sealed class MainWindowIntegrationTests
 {
+    private static async Task AssertBackstageNewGalleryAsync(WindowFixture fixture)
+    {
+        var backstage = Assert.IsType<Backstage>(fixture.Ribbon.Backstage);
+        var newPage = backstage.Items.OfType<BackstageTabItem>().Single(item =>
+            AutomationProperties.GetAutomationId(item) == "FileNew");
+        Assert.False(newPage.IsButton);
+        Assert.Equal("New", AutomationProperties.GetName(newPage));
+
+        fixture.Ribbon.IsBackstageOpen = true;
+        newPage.IsSelected = true;
+        await PumpAsync();
+        Assert.IsType<Grid>(fixture.Window.FindName("NewProfilePage"));
+        var cardsScrollViewer = Assert.IsType<ScrollViewer>(
+            fixture.Window.FindName("NewProfileCardsScrollViewer"));
+        var cardsPanel = Assert.IsType<WrapPanel>(
+            fixture.Window.FindName("NewProfileCardsPanel"));
+        Assert.Equal(ScrollBarVisibility.Disabled,
+            ScrollViewer.GetHorizontalScrollBarVisibility(cardsScrollViewer));
+        Assert.Equal(ScrollBarVisibility.Auto,
+            ScrollViewer.GetVerticalScrollBarVisibility(cardsScrollViewer));
+        Assert.Equal(Orientation.Horizontal, cardsPanel.Orientation);
+
+        var cards = FindVisualDescendants<Button>(backstage)
+            .Where(button => AutomationProperties.GetAutomationId(button)
+                .StartsWith("New", StringComparison.Ordinal))
+            .ToArray();
+        Assert.Equal(3, cards.Length);
+        Assert.Equal(new[] { "Plain Text", "Rich Text", "RibbonKit Writer" },
+            cards.Select(AutomationProperties.GetName).ToArray());
+        Assert.Equal(new[] { "1", "2", "3" },
+            cards.Select(KeyTip.GetKeys).ToArray());
+        Assert.All(cards, card =>
+        {
+            Assert.True(card.Focusable);
+            Assert.True(card.IsTabStop);
+            Assert.InRange(card.ActualWidth, card.MinWidth, card.MaxWidth);
+            Assert.False(string.IsNullOrWhiteSpace(AutomationProperties.GetHelpText(card)));
+            Assert.Same(fixture.Shell.NewCommand, card.Command);
+            Assert.IsType<DrawingImage>(card.Content is StackPanel panel
+                ? ((Image)panel.Children[0]).Source
+                : null);
+        });
+
+        var savedWidth = fixture.Window.Width;
+        fixture.Window.Width = fixture.Window.MinWidth;
+        await PumpAsync();
+        Assert.True(cardsScrollViewer.ViewportWidth > 0);
+        Assert.True(cardsPanel.ActualHeight > 0);
+        Assert.All(cards, card => Assert.InRange(card.ActualWidth, card.MinWidth, card.MaxWidth));
+        fixture.Window.Width = savedWidth;
+        await PumpAsync();
+
+        var savedFlowDirection = newPage.FlowDirection;
+        newPage.FlowDirection = FlowDirection.RightToLeft;
+        await PumpAsync();
+        Assert.Equal(FlowDirection.RightToLeft, cardsPanel.FlowDirection);
+        Assert.All(cards, card => Assert.Equal(FlowDirection.RightToLeft, card.FlowDirection));
+        newPage.FlowDirection = savedFlowDirection;
+        await PumpAsync();
+
+        foreach (var (automationId, format) in new[]
+        {
+            ("NewPlainTextCard", WriterDocumentFormat.PlainText),
+            ("NewRichTextCard", WriterDocumentFormat.RichText),
+            ("NewRibbonKitWriterCard", WriterDocumentFormat.RibbonKitWriter)
+        })
+        {
+            fixture.Ribbon.IsBackstageOpen = true;
+            newPage.IsSelected = true;
+            await PumpAsync();
+            var card = FindVisualDescendants<Button>(backstage).Single(button =>
+                AutomationProperties.GetAutomationId(button) == automationId);
+            var peer = UIElementAutomationPeer.CreatePeerForElement(card)
+                ?? new ButtonAutomationPeer(card);
+            Assert.IsAssignableFrom<IInvokeProvider>(
+                peer.GetPattern(PatternInterface.Invoke)).Invoke();
+            await WaitForShellIdleAsync(fixture.Shell);
+            await PumpAsync();
+            Assert.False(fixture.Ribbon.IsBackstageOpen);
+            Assert.Equal(format, fixture.Window.CurrentProfile.Format);
+            Assert.True(fixture.Shell.CurrentDocument.IsUntitled);
+            AssertEditorFocusRestored(fixture);
+
+            if (format == WriterDocumentFormat.PlainText)
+            {
+                Assert.False(Assert.IsType<RibbonGroup>(fixture.Window.FindName("FontGroup")).IsEnabled);
+                Assert.False(Assert.IsType<RibbonGroup>(fixture.Window.FindName("ParagraphGroup")).IsEnabled);
+                Assert.False(Assert.IsType<RibbonGroup>(fixture.Window.FindName("PageSetupGroup")).IsEnabled);
+                Assert.False(Assert.IsType<RibbonGroup>(fixture.Window.FindName("MarginsGroup")).IsEnabled);
+                    Assert.False(Assert.IsType<RibbonGroup>(fixture.Window.FindName("PageBackgroundGroup")).IsEnabled);
+                    Assert.False(Assert.IsType<RibbonTab>(fixture.Window.FindName("PageTab")).IsEnabled);
+                    Assert.True(Assert.IsType<RibbonTab>(fixture.Window.FindName("ViewTab")).IsEnabled);
+                    Assert.True(Assert.IsType<RibbonTab>(fixture.Window.FindName("PrintPreviewTab")).IsEnabled);
+                    Assert.False(Assert.IsAssignableFrom<UIElement>(
+                        fixture.Window.FindName("BoldButton")).IsEnabled);
+                Assert.False(Assert.IsType<RibbonDropDownButton>(
+                    fixture.Window.FindName("PageColorButton")).IsEnabled);
+                Assert.True(fixture.Window.SupportsProfileCommand(
+                    WriterDocumentCommandCapabilities.Preview));
+                Assert.True(fixture.Window.SupportsProfileCommand(
+                    WriterDocumentCommandCapabilities.Printing));
+                Assert.True(Assert.IsType<RibbonButton>(
+                    fixture.Window.FindName("BackstagePreviewButton")).IsEnabled);
+            }
+        }
+
+        Assert.True(await fixture.Shell.NewAsync());
+        Assert.Equal(WriterDocumentFormat.RichText, fixture.Window.CurrentProfile.Format);
+
+        var original = fixture.Shell.CurrentDocument;
+        fixture.Editor.AppendText("unsaved");
+        fixture.Dialogs.Decisions.Enqueue(UnsavedChangesDecision.Cancel);
+        fixture.Ribbon.IsBackstageOpen = true;
+        newPage.IsSelected = true;
+        await PumpAsync();
+        var cancelCard = FindVisualDescendants<Button>(backstage).Single(button =>
+            AutomationProperties.GetAutomationId(button) == "NewPlainTextCard");
+        var cancelPeer = UIElementAutomationPeer.CreatePeerForElement(cancelCard)
+            ?? new ButtonAutomationPeer(cancelCard);
+        Assert.IsAssignableFrom<IInvokeProvider>(
+            cancelPeer.GetPattern(PatternInterface.Invoke)).Invoke();
+        await WaitForShellIdleAsync(fixture.Shell);
+        await PumpAsync();
+        Assert.Same(original, fixture.Shell.CurrentDocument);
+        Assert.True(original.IsDirty);
+        Assert.Equal(WriterDocumentFormat.RichText, fixture.Window.CurrentProfile.Format);
+        original.MarkClean();
+    }
+
     [Fact]
     public async Task MainWindowContractAndEditorLifecycleAreWiredOnTheRealTree()
     {
@@ -40,7 +175,9 @@ public sealed class MainWindowIntegrationTests
             fixture.Show();
             await PumpAsync();
             AssertRuntimeContract(fixture);
+            await AssertBackstageNewGalleryAsync(fixture);
             await AssertBackstageFileCommandsRestoreEditorFocusAsync(fixture);
+            Assert.True(await fixture.Shell.NewAsync(WriterDocumentProfiles.RibbonKitWriter));
             var surface = Assert.IsType<WriterEditorSurface>(fixture.Window.FindName("EditorSurface"));
             var settings = DocumentPageSettings.A4(DocumentPageOrientation.Landscape,
                 new DocumentPageMargins(42, 54, 42, 54));
@@ -108,6 +245,8 @@ public sealed class MainWindowIntegrationTests
             var fileOpen = backstage.Items.OfType<BackstageTabItem>().Single(item =>
                 AutomationProperties.GetAutomationId(item) == "FileOpen");
             fixture.Ribbon.IsBackstageOpen = true;
+            backstage.Items.OfType<BackstageTabItem>().Single(item =>
+                Equals(item.Header, "Home")).IsSelected = true;
             await PumpAsync();
             fileOpen.RaiseEvent(new RoutedEventArgs(BackstageTabItem.ClickEvent));
             Assert.False(fixture.Ribbon.IsBackstageOpen);
@@ -325,6 +464,8 @@ public sealed class MainWindowIntegrationTests
 
     private static async Task AssertPageViewIntegrationAsync(WindowFixture fixture)
     {
+        if (fixture.Window.CurrentProfile.Format != WriterDocumentFormat.RibbonKitWriter)
+            Assert.True(await fixture.Shell.NewAsync(WriterDocumentProfiles.RibbonKitWriter));
         fixture.Window.Width = 1500;
         fixture.Window.UpdateLayout();
         var window = fixture.Window;
@@ -529,6 +670,8 @@ public sealed class MainWindowIntegrationTests
         document.PropertyChanged += CountPageSettings;
         ribbon.SelectedTab = ribbon.Tabs.Single(tab => Equals(tab.Header, "Page"));
         window.UpdateLayout();
+        Assert.Equal(WriterDocumentFormat.RibbonKitWriter, window.CurrentProfile.Format);
+        Assert.True(Assert.IsType<RibbonGroup>(window.FindName("PageSetupGroup")).IsEnabled);
         Click(Assert.IsType<RibbonMenuItem>(window.FindName("PaperSizeA4")));
         Assert.Equal(DocumentPaperSize.A4, document.PageSettings.PaperSize);
         Click(Assert.IsType<RibbonMenuItem>(window.FindName("OrientationLandscape")));
@@ -602,7 +745,7 @@ public sealed class MainWindowIntegrationTests
     private static async Task AssertBackstageFileCommandsRestoreEditorFocusAsync(WindowFixture fixture)
     {
         var backstage = Assert.IsType<Backstage>(fixture.Ribbon.Backstage);
-        foreach (var automationId in new[] { "FileNew", "FileOpen", "FileSave", "FileSaveAs" })
+        foreach (var automationId in new[] { "FileOpen", "FileSave", "FileSaveAs" })
         {
             var item = backstage.Items.OfType<BackstageTabItem>().Single(candidate =>
                 AutomationProperties.GetAutomationId(candidate) == automationId);
@@ -619,6 +762,15 @@ public sealed class MainWindowIntegrationTests
             Assert.False(fixture.Ribbon.IsBackstageOpen);
             AssertEditorFocusRestored(fixture);
         }
+
+        // The focus contract is owned by the single IsBackstageOpen transition observer, so a
+        // close with no particular menu action receives the same restoration.
+        fixture.Ribbon.IsBackstageOpen = true;
+        await PumpAsync();
+        FocusManager.SetFocusedElement(fixture.Window, fixture.Ribbon);
+        fixture.Ribbon.IsBackstageOpen = false;
+        await PumpAsync();
+        AssertEditorFocusRestored(fixture);
     }
 
     private static void AssertRuntimeContract(WindowFixture fixture)
@@ -660,10 +812,14 @@ public sealed class MainWindowIntegrationTests
         Assert.Equal("WriterBackstage", AutomationProperties.GetAutomationId(backstage));
         Assert.Equal("File", AutomationProperties.GetName(backstage));
         Assert.Null(ribbon.ApplicationMenu);
+        var newPage = backstage.Items.OfType<BackstageTabItem>().Single(item =>
+            AutomationProperties.GetAutomationId(item) == "FileNew");
+        Assert.False(newPage.IsButton);
+        Assert.Null(newPage.Command);
         var fileActions = backstage.Items.OfType<BackstageTabItem>().Where(item => item.IsButton).ToArray();
-        Assert.Equal(new[] { "New", "Open", "Save", "Save As", "Exit" },
+        Assert.Equal(new[] { "Open", "Save", "Save As", "Exit" },
             fileActions.Select(item => item.Header?.ToString()).ToArray());
-        Assert.Equal(new[] { "FileNew", "FileOpen", "FileSave", "FileSaveAs", "FileExit" },
+        Assert.Equal(new[] { "FileOpen", "FileSave", "FileSaveAs", "FileExit" },
             fileActions.Select(AutomationProperties.GetAutomationId).ToArray());
         Assert.All(fileActions, item => Assert.False(string.IsNullOrWhiteSpace(
             AutomationProperties.GetName(item))));
@@ -1042,7 +1198,8 @@ public sealed class MainWindowIntegrationTests
                 }
             }
             var session = new WriterDocumentSession(Persistence,
-                new WriterUnsavedChangesDecider(Dialogs), new WriterSaveDestinationProvider(Dialogs));
+                new WriterUnsavedChangesDecider(Dialogs), new WriterSaveDestinationProvider(Dialogs),
+                transitionDecider: new WriterFormatTransitionDecider(Dialogs));
             Shell = new WriterShellViewModel(session, new RecentFileService(recentPath), Dialogs);
             Window = new MainWindow(Shell);
         }
@@ -1127,6 +1284,7 @@ public sealed class MainWindowIntegrationTests
         public WriterOpenSelection? OpenSelection { get; set; }
         public WriterSaveDestination? SaveSelection { get; set; }
         public bool PlainTextFidelity { get; set; }
+        public int PlainTextWarningCalls { get; private set; }
         public Queue<UnsavedChangesDecision> Decisions { get; } = new();
         public List<DocumentTransition> UnsavedTransitions { get; } = new();
         public Task<WriterOpenSelection?> ShowOpenAsync(CancellationToken cancellationToken = default) =>
@@ -1142,8 +1300,16 @@ public sealed class MainWindowIntegrationTests
             UnsavedTransitions.Add(transition);
             return Task.FromResult(Decisions.Count == 0 ? UnsavedChangesDecision.Cancel : Decisions.Dequeue());
         }
-        public Task<bool> ConfirmPlainTextFidelityAsync(CancellationToken cancellationToken = default) =>
-            Task.FromResult(PlainTextFidelity);
+        public Task<WriterFormatTransitionDecision> ConfirmFormatTransitionAsync(
+            WriterDocument document, WriterDocumentFormatTransition transition,
+            CancellationToken cancellationToken = default)
+        {
+            if (transition.RequiresConfirmation)
+                PlainTextWarningCalls++;
+            return Task.FromResult(PlainTextFidelity
+                ? WriterFormatTransitionDecision.Continue
+                : WriterFormatTransitionDecision.Cancel);
+        }
         public Task ShowErrorAsync(string message, CancellationToken cancellationToken = default) =>
             Task.CompletedTask;
         public Task ShowInfoAsync(string message, CancellationToken cancellationToken = default) =>

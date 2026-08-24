@@ -16,12 +16,19 @@ public sealed class WriterSaveDestinationProvider : IWriterSaveDestinationProvid
 {
     private readonly IWriterDialogService _dialogs;
     public WriterSaveDestinationProvider(IWriterDialogService dialogs) => _dialogs = dialogs;
-    public async Task<WriterSaveDestination?> GetDestinationAsync(WriterDocument document, CancellationToken cancellationToken)
-    {
-        var destination = await _dialogs.ShowSaveAsync(document, cancellationToken);
-        if (destination?.Format == WriterDocumentFormat.PlainText &&
-            !await _dialogs.ConfirmPlainTextFidelityAsync(cancellationToken))
-            return null;
-        return destination;
-    }
+    public Task<WriterSaveDestination?> GetDestinationAsync(WriterDocument document, CancellationToken cancellationToken) =>
+        _dialogs.ShowSaveAsync(document, cancellationToken);
+}
+
+/// <summary>Adapts the shell's generic format-warning dialog to the W0-E session contract.</summary>
+public sealed class WriterFormatTransitionDecider : IWriterFormatTransitionDecider
+{
+    private readonly IWriterDialogService _dialogs;
+
+    public WriterFormatTransitionDecider(IWriterDialogService dialogs) =>
+        _dialogs = dialogs ?? throw new ArgumentNullException(nameof(dialogs));
+
+    public Task<WriterFormatTransitionDecision> DecideAsync(WriterDocument document,
+        WriterDocumentFormatTransition transition, CancellationToken cancellationToken) =>
+        _dialogs.ConfirmFormatTransitionAsync(document, transition, cancellationToken);
 }

@@ -254,6 +254,34 @@ remain read-only until actual/diff evidence justifies a deliberate change.
 - **Evidence still required:** repeat cold launches outside the debugger and confirm caret visibility plus immediate
   Latin/IME/RTL input at W4-C DPI scales.
 
+### RKWF-011 — Backstage has no host-level close-completed callback
+
+- **First seen / packet:** 2026-08-24, Writer W0-F Backstage focus integration.
+- **Status:** Open additive runtime/documentation candidate; app-owned workaround accepted for Writer.
+- **Consumer goal:** restore editor focus after any Backstage dismissal without wiring every File action or guessing the
+  exit-animation duration.
+- **Reproduction and evidence:** `Ribbon.IsBackstageOpen` is the only general observable state, but it changes to
+  `false` when closing starts. The Backstage adorner and any Classic orb proxy remain until an internal
+  `RibbonMotion.PlayClose` completion callback removes them. `Backstage.BackRequested` covers only a request from the
+  Back button/Escape and also precedes teardown; no public Ribbon lifecycle event reports that animated teardown has
+  completed. `IsBackstageOpen` additionally represents `RibbonApplicationMenu`, whose popup lifecycle is separate.
+- **Friction:** a host can observe logical close initiation centrally, but cannot reliably distinguish it from visual
+  close completion across File-toggle, Back/Escape, KeyTip, programmatic, Classic2010 and Classic2007 paths.
+- **Current app-owned workaround:** Writer observes the single `IsBackstageOpen` dependency property, marks a pending
+  editor-focus return when it becomes false, defers once so a File command can enter its busy state, and completes the
+  return only after dialogs/commands finish. Preview, hidden/closing-window and intended-focus guards remain app-owned.
+- **Application impact:** the workaround removes per-command focus wiring, but it cannot use the exact adorner-removal
+  boundary and must continue coordinating its own asynchronous command state.
+- **Smallest possible library direction:** add a non-cancellable CLR `Ribbon.BackstageClosed` event raised once after
+  the exit animation completes, the Backstage adorner/proxy is removed, placement state is restored and the close was
+  not cancelled by a reopen. Do not raise it for `RibbonApplicationMenu` and do not make Ribbon own a focus target.
+  A non-cancellable `BackstageClosing` event may be considered separately for symmetry, but is too early for focus
+  restoration.
+- **Evidence still required:** focused realized-STA tests for File toggle, Back/Escape, KeyTips, programmatic close,
+  reduced motion, reopen-during-close, Classic2010 and Classic2007; define unload/deactivation behavior explicitly and
+  prove that application-menu dismissal does not raise the Backstage event. Add Showcase usage and public API/XML
+  documentation in any separately approved runtime packet.
+
 ## 5. Closed observations
 
 None yet.

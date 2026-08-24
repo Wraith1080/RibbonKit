@@ -1,9 +1,9 @@
 # RibbonKit Writer — Luna Execution Plan
 
-> **Status:** durable execution decomposition created 2026-08-20. W0-A through W0-E, W1-A through W1-D and
+> **Status:** durable execution decomposition created 2026-08-20. W0-A through W0-F, W1-A through W1-D and
 > W2-A through W2-E are accepted on the available hardware. Live mixed-monitor checking remains deferred to W4-C
-> because only one display is connected. W0-F is the next dependency-ready packet; W2-F waits for
-> its format-aware New/profile projection so page and paragraph commands cannot bypass profile limits.
+> because only one display is connected. W2-F is the next UI-exclusive packet; its format-aware command dependency
+> is now satisfied by W0-F. W3-A/W3-B remain separate non-UI packets and have not started.
 > This document does not schedule future agents or imply that any later Writer packet exists.
 > [`10-RIBBONKIT-WRITER-PLAN.md`](10-RIBBONKIT-WRITER-PLAN.md) owns product scope; current
 > implementation status remains in [`04-DESIGN-NOTES.md` §5](../04-DESIGN-NOTES.md#5-current-state--next-steps).
@@ -232,6 +232,13 @@ downgrade decisions, cancelled/failed conversions and the invariant that failed 
 active document profile.
 
 ### W0-F — New gallery and capability-aware command projection
+
+**Status (2026-08-24): accepted.** Backstage New now presents three pictured, labelled, keyboard/UIA-described
+profile cards with explicit KeyTips and a constrained wrapping/vertical-scroll layout. Typed New, default Ctrl+N,
+profile extension defaults, the single W0-E conversion decider and group/tab-level capability projection are wired
+without placing projection work on the typing/selection hot path. Writer observes one `IsBackstageOpen` transition
+for busy-aware focus return; RKWF-011 records the missing RibbonKit close-completed event without authorizing runtime
+work. Standard and 800×900 live surfaces, all three profile states and editor focus passed at the available scale.
 
 **Owns:** Writer shell/MainWindow/Backstage and primary ribbon resources exclusively, plus their UI
 integration tests. No `src/RibbonKit/**` change is permitted.

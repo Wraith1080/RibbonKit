@@ -5155,6 +5155,42 @@ passes Writer **259/259**, RibbonKit **355/355** and the unchanged visual test *
 did not edit `src/RibbonKit/**` or MainWindow/ribbon files. W0-F is the next dependency-ready packet; W2-F remains
 intentionally waiting for its capability-aware UI projection.
 
+### 3.113 RibbonKit Writer W0-F New gallery and capability-aware command projection — 2026-08-24
+
+Backstage New is now a page rather than an immediate generic New action. It presents Plain Text, Rich Text and
+RibbonKit Writer as three labelled cards with distinct app-owned vector document pictures, descriptions, extensions,
+automation names/help text and explicit `1`/`2`/`3` KeyTips. The content uses a constrained Grid plus a horizontal
+`WrapPanel` inside a vertical `ScrollViewer`: three compact cards fit at the standard width, while the 800×900 live
+surface wraps to a clean single column without sliced cards or a horizontal rail. Content templates remain a separate
+future layer.
+
+Each card routes the existing shell New command to the corresponding canonical W0-E profile. Ctrl+N and ordinary
+one-click New retain Rich Text as the configured default. Untitled Save now starts with the active profile's
+`.txt`/`.rtf`/`.rkw` extension while Save As keeps all three filters. The shell injects one generic W0-E transition
+decider; the former Plain Text-only warning owners were removed, so same-format/upgrades do not prompt and every
+lower-fidelity Save As uses one centralized warning before the session can commit identity.
+
+Profile capabilities are projected at tab/group boundaries as well as leaf state. Plain Text disables Font,
+Paragraph and the complete Page tab while retaining View, preview and print; Rich Text enables the supported
+formatting surface but keeps Writer-only Page work unavailable; RibbonKit Writer enables all currently implemented
+groups. The projection runs only during initialization, document replacement or a successful format identity change,
+not on the caret/selection/typing refresh path that previously exposed performance sensitivity.
+
+Writer now reuses its single `Ribbon.IsBackstageOpen` dependency-property observer for every Backstage focus return.
+When the property becomes false it marks one pending return, defers a dispatcher turn so a File command can enter
+`IsBusy`, and focuses the long-lived editor only after any dialog/command finishes and no modal preview, hidden or
+closing window owns focus. Per-New/Open/Save/Save As/recent focus requests are gone. RibbonKit has no public
+close-completed callback: the DP changes at exit-animation start and adorner/Classic-orb teardown completes only in an
+internal callback. RKWF-011 therefore proposes a non-cancellable `Ribbon.BackstageClosed` event after teardown while
+keeping focus ownership in the host; no `src/RibbonKit/**` change is authorized or present.
+
+The complete solution builds with zero warnings/errors and passes Writer **259/259**, RibbonKit **355/355** and the
+unchanged visual test **1/1** over 63 approved images. W0-F assertions are integrated into the existing shell/window
+facts, so the inventory remains 614 logic tests plus one visual test. Lead live checks at the available scale passed
+the standard and 800×900 New page, all three profile states, Ctrl+N default behavior and post-card editor focus.
+External Backstage-content UIA traversal remains RKWF-004 rather than a W0-F app defect. W2-F is the next
+UI-exclusive packet and has not started.
+
 ## 4. Workflow / Session Conventions
 
 - Work from the current Windows checkout at
@@ -5199,7 +5235,7 @@ intentionally waiting for its capability-aware UI projection.
   directly beneath tabs and both QAT placements (§3.97). Its automated gate is green; live
   fallback/Acrylic visual approval remains pending.
 - MDI milestones M0 and M4 are complete: floating children plus ribbon tab/caption merging.
-- RibbonKit Writer W0-A through W0-E, W1-A through W1-D and W2-A through W2-E are complete through §3.112: the separate app/test
+- RibbonKit Writer W0-A through W0-F, W1-A through W1-D and W2-A through W2-E are complete through §3.113: the separate app/test
   scaffold, document lifetime, TXT/RTF/atomic/recent services, live Backstage/QAT file-command shell,
   formatting/selection-state engine, find/spelling/statistics/zoom utilities, and the accessible
   Home-ribbon/QAT editing surface are integrated at their packet boundaries. The accepted Writer-owned icon
@@ -5210,7 +5246,9 @@ intentionally waiting for its capability-aware UI projection.
   mutable paginator. App-owned Page/View tabs, transactional custom margins, page colour, view switching, relocated
   ribbon zoom and icon-led Backstage print/summary actions expose those contracts while preserving one live editor.
   Canonical Plain Text, Rich Text and RibbonKit Writer profiles now share one extension/capability catalog, typed-New
-  contract and capability-derived conversion policy with post-success-only identity commits.
+  contract and capability-derived conversion policy with post-success-only identity commits. A pictured, responsive
+  Backstage New gallery projects those capabilities onto whole tabs/groups, default Save extensions and one generic
+  downgrade decision while centrally restoring editor focus after Backstage commands.
 
 ### Remaining or intentionally deferred
 
@@ -5220,10 +5258,10 @@ intentionally waiting for its capability-aware UI projection.
 - Final live visual tuning and approval of the Office 2010 Aero-inspired frame prototype (§3.97).
 - Touch density, richer automatic QAT projections, custom-control projection APIs and additional
   themes remain post-v1 candidates. Their plan documents are not implementation evidence.
-- RibbonKit Writer W2-E is accepted through §3.112 on the available 125%-scale hardware. Both A4 and Letter preview/PDF
+- RibbonKit Writer W2-E is accepted through §3.113 on the available 125%-scale hardware. Both A4 and Letter preview/PDF
   paths passed, including all five output pages and the page-four corruption regression. Live mixed-monitor movement
-  remains a named W4-C hardware check because only one display is connected. W0-F now precedes W2-F and is the next
-  dependency-ready packet. W4 keeps the final whole-product consistency pass after W2/W3.
+  remains a named W4-C hardware check because only one display is connected. W0-F is accepted and W2-F is the next
+  UI-exclusive packet. W4 keeps the final whole-product consistency pass after W2/W3.
 - Automatic `Icons.xaml` discovery is best-effort by design. Keep `Load Icons.xaml…` available
   for ambiguity, inaccessible paths, parse failures, or no match.
 
@@ -5289,6 +5327,10 @@ intentionally waiting for its capability-aware UI projection.
 - 2026-08-24 after §3.112: the inventory is 614 logic tests plus one visual test covering 63 approved images. W0-E's
   focused document-profile/transition gate passes **25/25** and Writer passes **259/259**; the solution builds with
   zero warnings/errors and RibbonKit/visual remain **355/355** and **1/1**. W0-F is next and has not started.
+- 2026-08-24 after §3.113: the inventory remains 614 logic tests plus one visual test covering 63 approved images.
+  Writer passes **259/259** with W0-F assertions folded into existing shell/window facts; the solution builds with
+  zero warnings/errors and RibbonKit/visual remain **355/355** and **1/1**. Standard and 800×900 live New/profile
+  surfaces passed at the available scale; W2-F is next and has not started.
 - Before quoting a current count or declaring a new change complete, rerun the proportional build
   and test commands. Inspect actual/diff PNG artifacts before changing visual baselines or
   tolerances.

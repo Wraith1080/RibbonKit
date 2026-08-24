@@ -47,12 +47,14 @@ public partial class MainWindow : RibbonWindow
     private bool _closing;
     private bool _allowClose;
     private bool _replacingDocument;
-    private bool _restoreEditorFocusAfterFileAction;
+    private bool _restoreEditorFocusAfterBackstageClose;
 
     public MainWindow()
     {
         var dialogs = new WriterDialogService();
-        var session = new WriterDocumentSession(new WriterDocumentPersistence(), new WriterUnsavedChangesDecider(dialogs), new WriterSaveDestinationProvider(dialogs));
+        var session = new WriterDocumentSession(new WriterDocumentPersistence(),
+            new WriterUnsavedChangesDecider(dialogs), new WriterSaveDestinationProvider(dialogs),
+            transitionDecider: new WriterFormatTransitionDecider(dialogs));
         Shell = new WriterShellViewModel(session, new RecentFileService(), dialogs);
         _ownsShell = true;
         InitializeShell(dialogs);
@@ -107,7 +109,8 @@ public partial class MainWindow : RibbonWindow
             backstage.DataContext = Shell;
             foreach (var item in backstage.Items.OfType<BackstageTabItem>())
             {
-                item.Command = CommandFor(AutomationProperties.GetAutomationId(item)) ?? item.Command;
+                if (item.IsButton)
+                    item.Command = CommandFor(AutomationProperties.GetAutomationId(item)) ?? item.Command;
             }
             // Backstage is moved into an adorner when opened, so its detached content does not
             // inherit the window DataContext. Wire the recent list at the same boundary as the
@@ -116,6 +119,17 @@ public partial class MainWindow : RibbonWindow
                          .Where(control => AutomationProperties.GetAutomationId(control) == "RecentList"))
             {
                 recentList.ItemsSource = Shell.RecentEntries;
+            }
+
+            // Backstage content is realized in a detached adorner when the File surface opens.
+            // Wire the card commands at the same boundary so keyboard/UIA invocation does not
+            // depend on a DataContext bridge surviving that reparenting.
+            foreach (var card in FindLogicalDescendants<Button>(backstage)
+                         .Where(button => AutomationProperties.GetAutomationId(button)
+                             .StartsWith("New", StringComparison.Ordinal)))
+            {
+                card.Command = Shell.NewCommand;
+                card.CommandParameter = card.Tag;
             }
         }
         foreach (var item in MainRibbon.QuickAccessItems.OfType<FrameworkElement>())
@@ -216,6 +230,7 @@ public partial class MainWindow : RibbonWindow
         editing.BindAction(PreviewZoomResetButton, ResetCurrentZoom);
         editing.BindAction(PreviewZoomInButton, () => AdjustCurrentZoom(10));
         UpdateEditingStatusSurface();
+        ApplyProfileCapabilityProjection();
     }
 
     private ICommand? CommandFor(string? automationId) => automationId switch
@@ -244,7 +259,7 @@ public partial class MainWindow : RibbonWindow
         if (e.PropertyName == nameof(WriterShellViewModel.CurrentDocument))
             ReplaceEditorDocument();
         else if (e.PropertyName == nameof(WriterShellViewModel.IsBusy) && !Shell.IsBusy)
-            CompletePendingFileActionFocus();
+            CompleteBackstageCloseFocus();
     }
     private void ReplaceEditorDocument()
     {
@@ -275,23 +290,29 @@ public partial class MainWindow : RibbonWindow
         UpdatePageSummary();
         UpdatePreviewState();
         UpdateEditingStatusSurface();
+        ApplyProfileCapabilityProjection();
     }
 
     private WriterDocument? _observedDocument;
 
     private void OnCurrentDocumentPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(WriterDocument.PageSettings))
+        if (e.PropertyName is nameof(WriterDocument.PageSettings) or nameof(WriterDocument.Format))
         {
-            EditorSurface.PageSettings = Shell.CurrentDocument.PageSettings;
-            MarkPreviewPending();
-            UpdatePageSummary();
+            if (e.PropertyName == nameof(WriterDocument.PageSettings))
+            {
+                EditorSurface.PageSettings = Shell.CurrentDocument.PageSettings;
+                MarkPreviewPending();
+                UpdatePageSummary();
+            }
+            ApplyProfileCapabilityProjection();
         }
     }
     private void OnExitRequested(object? sender, EventArgs e) { _allowClose = true; Close(); }
     private void OnClosed(object? sender, EventArgs e)
     {
         _closing = false;
+        _restoreEditorFocusAfterBackstageClose = false;
         ContentRendered -= OnInitialContentRendered;
         Shell.PropertyChanged -= OnShellPropertyChanged;
         Shell.ExitRequested -= OnExitRequested;
@@ -338,7 +359,8 @@ public partial class MainWindow : RibbonWindow
     {
         _ = Dispatcher.BeginInvoke(DispatcherPriority.Input, new Action(() =>
         {
-            if (!IsVisible || CurrentViewMode == WriterViewMode.PrintPreview || MainRibbon.IsBackstageOpen)
+            if (!IsVisible || _closing || CurrentViewMode == WriterViewMode.PrintPreview
+                || MainRibbon.IsBackstageOpen || MainRibbon.IsModal)
                 return;
 
             FocusManager.SetFocusedElement(this, DocumentEditor);
@@ -346,22 +368,6 @@ public partial class MainWindow : RibbonWindow
             Keyboard.Focus(DocumentEditor);
             EditingController.RefreshState();
         }));
-    }
-
-    private void RequestEditorFocusAfterFileAction()
-    {
-        _restoreEditorFocusAfterFileAction = true;
-        _ = Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle,
-            new Action(CompletePendingFileActionFocus));
-    }
-
-    private void CompletePendingFileActionFocus()
-    {
-        if (!_restoreEditorFocusAfterFileAction || Shell.IsBusy)
-            return;
-
-        _restoreEditorFocusAfterFileAction = false;
-        QueueEditorFocus();
     }
 
     private void OnEditingStateChanged(object? sender, EventArgs e)
@@ -458,17 +464,19 @@ public partial class MainWindow : RibbonWindow
 
     private void OnBackstageAction(object sender, RoutedEventArgs e)
     {
-        var automationId = sender is DependencyObject element
-            ? AutomationProperties.GetAutomationId(element)
-            : null;
-        if (automationId is "FileNew" or "FileOpen" or "FileSave" or "FileSaveAs")
-            RequestEditorFocusAfterFileAction();
+        MainRibbon.IsBackstageOpen = false;
+    }
+
+    private void OnNewProfileCardClick(object sender, RoutedEventArgs e)
+    {
+        // The command executes through ButtonBase; this handler only closes the page. The
+        // IsBackstageOpen observer owns the common focus return for cards and every other File
+        // surface action.
         MainRibbon.IsBackstageOpen = false;
     }
 
     private void OnRecentItemClick(object sender, RoutedEventArgs e)
     {
-        RequestEditorFocusAfterFileAction();
         MainRibbon.IsBackstageOpen = false;
     }
 
@@ -500,12 +508,16 @@ public partial class MainWindow : RibbonWindow
 
     private void OnBackstagePreviewClick(object sender, RoutedEventArgs e)
     {
+        if (!SupportsProfileCommand(WriterDocumentCommandCapabilities.Preview))
+            return;
         MainRibbon.IsBackstageOpen = false;
         EnterPrintPreview();
     }
 
     private void EnterPrintPreview()
     {
+        if (!SupportsProfileCommand(WriterDocumentCommandCapabilities.Preview))
+            return;
         if (CurrentViewMode != WriterViewMode.PrintPreview)
             _viewModeBeforePrintPreview = CurrentViewMode;
         MainRibbon.EnterModal(PrintPreviewTab);
@@ -526,7 +538,28 @@ public partial class MainWindow : RibbonWindow
     private void OnBackstageSelectionChanged(object sender, SelectionChangedEventArgs e) =>
         UpdatePreviewDemand();
 
-    private void OnBackstageOpenChanged(object? sender, EventArgs e) => UpdatePreviewDemand();
+    private void OnBackstageOpenChanged(object? sender, EventArgs e)
+    {
+        UpdatePreviewDemand();
+        if (MainRibbon.IsBackstageOpen || _closing || !IsVisible || MainRibbon.IsModal)
+            return;
+
+        // IsBackstageOpen changes before the adorner has finished closing. Defer once so a
+        // command launched from the page can enter IsBusy, then complete on the common shell
+        // idle edge instead of asking every File action to restore focus independently.
+        _restoreEditorFocusAfterBackstageClose = true;
+        _ = Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle,
+            new Action(CompleteBackstageCloseFocus));
+    }
+
+    private void CompleteBackstageCloseFocus()
+    {
+        if (!_restoreEditorFocusAfterBackstageClose || Shell.IsBusy)
+            return;
+
+        _restoreEditorFocusAfterBackstageClose = false;
+        QueueEditorFocus();
+    }
 
     private void UpdatePreviewDemand()
     {
@@ -616,17 +649,111 @@ public partial class MainWindow : RibbonWindow
     private void UpdatePreviewState()
     {
         var previewActive = CurrentViewMode == WriterViewMode.PrintPreview;
-        OnePageButton.IsEnabled = previewActive;
-        TwoPagesButton.IsEnabled = previewActive;
-        PageWidthButton.IsEnabled = previewActive;
-        PreviousPageButton.IsEnabled = previewActive && PreviewView.CanGoToPreviousPage;
-        NextPageButton.IsEnabled = previewActive && PreviewView.CanGoToNextPage;
-        BackstagePrintButton.IsEnabled = _previewController is not null &&
+        var profile = Shell.CurrentDocument.Format.GetProfile();
+        var supportsPreview = profile.Supports(WriterDocumentCommandCapabilities.Preview);
+        var supportsPrinting = profile.Supports(WriterDocumentCommandCapabilities.Printing);
+        OnePageButton.IsEnabled = supportsPreview && previewActive;
+        TwoPagesButton.IsEnabled = supportsPreview && previewActive;
+        PageWidthButton.IsEnabled = supportsPreview && previewActive;
+        PreviousPageButton.IsEnabled = supportsPreview && previewActive && PreviewView.CanGoToPreviousPage;
+        NextPageButton.IsEnabled = supportsPreview && previewActive && PreviewView.CanGoToNextPage;
+        BackstagePrintButton.IsEnabled = supportsPrinting && _previewController is not null &&
             _previewController.TryGetCurrentSnapshot(out _);
+        BackstagePreviewButton.IsEnabled = supportsPreview;
         PreviewPageText.Text = previewActive && PreviewView.PageCount > 0
             ? $"· Page {PreviewView.CurrentPageNumber:N0} of {PreviewView.PageCount:N0}"
             : string.Empty;
         UpdateViewButtons();
+    }
+
+    /// <summary>Gets the active profile projected onto the Writer shell.</summary>
+    internal WriterDocumentProfile CurrentProfile =>
+        Shell.CurrentDocument.Format.GetProfile();
+
+    /// <summary>Gets whether the active profile exposes a command capability.</summary>
+    internal bool SupportsProfileCommand(WriterDocumentCommandCapabilities capability) =>
+        CurrentProfile.Supports(capability);
+
+    private void ApplyProfileCapabilityProjection()
+    {
+        if (!IsInitialized)
+            return;
+
+        var profile = CurrentProfile;
+        var formatting = profile.Supports(WriterDocumentCommandCapabilities.CharacterFormatting
+            | WriterDocumentCommandCapabilities.ParagraphFormatting);
+        var pageSettings = profile.Supports(WriterDocumentCommandCapabilities.PageSettings);
+        var preview = profile.Supports(WriterDocumentCommandCapabilities.Preview);
+        var printing = profile.Supports(WriterDocumentCommandCapabilities.Printing);
+
+        // Keep unsupported work visibly unavailable at the group boundary. Leaf controls are
+        // also projected so UIA clients do not see an enabled child inside a disabled group.
+        FontGroup.IsEnabled = formatting;
+        ParagraphGroup.IsEnabled = formatting;
+        PageSetupGroup.IsEnabled = pageSettings;
+        MarginsGroup.IsEnabled = pageSettings;
+        PageBackgroundGroup.IsEnabled = pageSettings;
+        PageTab.IsEnabled = pageSettings;
+        ViewTab.IsEnabled = preview;
+        DocumentViewsGroup.IsEnabled = preview;
+        ViewZoomGroup.IsEnabled = preview;
+        PrintPreviewTab.IsEnabled = preview;
+        PreviewLayoutGroup.IsEnabled = preview;
+        PreviewNavigationGroup.IsEnabled = preview;
+        PreviewZoomGroup.IsEnabled = preview;
+
+        foreach (var control in new UIElement[]
+        {
+            FontFamilyCombo, FontSizeCombo, BoldButton, ItalicButton, UnderlineButton,
+            TextColorButton, HighlightColorButton, AlignLeftButton, AlignCenterButton,
+            AlignRightButton, AlignJustifyButton, BulletsButton, NumberingButton,
+            IncreaseIndentButton, DecreaseIndentButton, ParagraphSpacingButton,
+            PaperSizeButton, OrientationButton, MarginsButton, PageColorButton,
+            OnePageButton, TwoPagesButton, PageWidthButton, PreviousPageButton,
+            NextPageButton, PreviewZoomOutButton, PreviewZoomResetButton, PreviewZoomInButton,
+            BackstagePrintButton, BackstagePreviewButton
+        })
+        {
+            if (control is null)
+                continue;
+            var formattingControl = ReferenceEquals(control, FontFamilyCombo)
+                || ReferenceEquals(control, FontSizeCombo)
+                || ReferenceEquals(control, BoldButton)
+                || ReferenceEquals(control, ItalicButton)
+                || ReferenceEquals(control, UnderlineButton)
+                || ReferenceEquals(control, TextColorButton)
+                || ReferenceEquals(control, HighlightColorButton)
+                || ReferenceEquals(control, AlignLeftButton)
+                || ReferenceEquals(control, AlignCenterButton)
+                || ReferenceEquals(control, AlignRightButton)
+                || ReferenceEquals(control, AlignJustifyButton)
+                || ReferenceEquals(control, BulletsButton)
+                || ReferenceEquals(control, NumberingButton)
+                || ReferenceEquals(control, IncreaseIndentButton)
+                || ReferenceEquals(control, DecreaseIndentButton)
+                || ReferenceEquals(control, ParagraphSpacingButton);
+            var pageControl = ReferenceEquals(control, PaperSizeButton)
+                || ReferenceEquals(control, OrientationButton)
+                || ReferenceEquals(control, MarginsButton)
+                || ReferenceEquals(control, PageColorButton);
+            var previewControl = ReferenceEquals(control, OnePageButton)
+                || ReferenceEquals(control, TwoPagesButton)
+                || ReferenceEquals(control, PageWidthButton)
+                || ReferenceEquals(control, PreviousPageButton)
+                || ReferenceEquals(control, NextPageButton)
+                || ReferenceEquals(control, PreviewZoomOutButton)
+                || ReferenceEquals(control, PreviewZoomResetButton)
+                || ReferenceEquals(control, PreviewZoomInButton);
+            var allowed = formattingControl ? formatting
+                : pageControl ? pageSettings
+                : previewControl ? preview
+                : ReferenceEquals(control, BackstagePrintButton) ? printing
+                : ReferenceEquals(control, BackstagePreviewButton) ? preview
+                : true;
+            control.IsEnabled = allowed;
+        }
+
+        UpdatePreviewState();
     }
 
     private void MarkPreviewPending()
@@ -681,6 +808,8 @@ public partial class MainWindow : RibbonWindow
     internal bool TryApplyPageSettings(DocumentPageSettings settings)
     {
         ArgumentNullException.ThrowIfNull(settings);
+        if (!SupportsProfileCommand(WriterDocumentCommandCapabilities.PageSettings))
+            return false;
         try
         {
             return Shell.CurrentDocument.SetPageSettings(settings);
@@ -716,6 +845,8 @@ public partial class MainWindow : RibbonWindow
 
     internal bool ApplyPageColor(Color color)
     {
+        if (!SupportsProfileCommand(WriterDocumentCommandCapabilities.PageSettings))
+            return false;
         var current = Shell.CurrentDocument.Content.Background as SolidColorBrush;
         if (current?.Color == color)
             return false;
@@ -777,6 +908,8 @@ public partial class MainWindow : RibbonWindow
 
     private void OnPrintClick(object sender, RoutedEventArgs e)
     {
+        if (!SupportsProfileCommand(WriterDocumentCommandCapabilities.Printing))
+            return;
         if (_previewController is null || !_previewController.TryGetCurrentSnapshot(out _))
         {
             MessageBox.Show(this, "The preview is still updating. Wait for the current pages before printing.",
