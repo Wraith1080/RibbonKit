@@ -35,11 +35,15 @@ public partial class MainWindow : RibbonWindow
     /// <summary>Gets the active Writer document presentation.</summary>
     public WriterViewMode CurrentViewMode { get; private set; } = WriterViewMode.Paper;
 
+    internal bool IsPreviewRebuildEnabled => _previewController?.IsRebuildEnabled == true;
+
     private readonly bool _ownsShell;
     private WriterEditingRibbonController? _editingController;
     private WriterPreviewController? _previewController;
     private readonly WriterPrintService _printService = new();
     private WriterFindReplaceDialog? _findReplaceDialog;
+    private DependencyPropertyDescriptor? _backstageOpenDescriptor;
+    private WriterViewMode _viewModeBeforePrintPreview = WriterViewMode.Paper;
     private bool _closing;
     private bool _allowClose;
     private bool _replacingDocument;
@@ -67,6 +71,9 @@ public partial class MainWindow : RibbonWindow
     private void InitializeShell(WriterDialogService? shellDialogs)
     {
         InitializeComponent();
+        _backstageOpenDescriptor = DependencyPropertyDescriptor.FromProperty(
+            Ribbon.IsBackstageOpenProperty, typeof(Ribbon));
+        _backstageOpenDescriptor.AddValueChanged(MainRibbon, OnBackstageOpenChanged);
         if (shellDialogs is not null) shellDialogs.Owner = this;
         DataContext = Shell;
         RecentList.ItemsSource = Shell.RecentEntries;
@@ -81,6 +88,7 @@ public partial class MainWindow : RibbonWindow
         ReplaceEditorDocument();
         _previewController = new WriterPreviewController(DocumentEditor, Shell.CurrentDocument);
         _previewController.SnapshotChanged += OnPreviewSnapshotChanged;
+        _previewController.SetRebuildEnabled(false);
         PreviewView.StateChanged += OnPreviewViewStateChanged;
         ApplyWriterViewMode(CurrentViewMode, restoreEditorFocus: false);
         DocumentEditor.TextChanged += OnEditorTextChanged;
@@ -202,6 +210,9 @@ public partial class MainWindow : RibbonWindow
         editing.BindAction(ZoomOutButton, () => AdjustCurrentZoom(-10));
         editing.BindAction(ZoomResetButton, ResetCurrentZoom);
         editing.BindAction(ZoomInButton, () => AdjustCurrentZoom(10));
+        editing.BindAction(PreviewZoomOutButton, () => AdjustCurrentZoom(-10));
+        editing.BindAction(PreviewZoomResetButton, ResetCurrentZoom);
+        editing.BindAction(PreviewZoomInButton, () => AdjustCurrentZoom(10));
         UpdateEditingStatusSurface();
     }
 
@@ -278,6 +289,11 @@ public partial class MainWindow : RibbonWindow
         _closing = false;
         Shell.PropertyChanged -= OnShellPropertyChanged;
         Shell.ExitRequested -= OnExitRequested;
+        if (_backstageOpenDescriptor is not null)
+        {
+            _backstageOpenDescriptor.RemoveValueChanged(MainRibbon, OnBackstageOpenChanged);
+            _backstageOpenDescriptor = null;
+        }
         if (_observedDocument is not null)
             _observedDocument.PropertyChanged -= OnCurrentDocumentPropertyChanged;
         if (_findReplaceDialog is not null)
@@ -425,13 +441,49 @@ public partial class MainWindow : RibbonWindow
     private void OnPaperViewClick(object sender, RoutedEventArgs e) =>
         ApplyWriterViewMode(WriterViewMode.Paper, restoreEditorFocus: true);
 
-    private void OnPrintPreviewViewClick(object sender, RoutedEventArgs e) =>
-        ApplyWriterViewMode(WriterViewMode.PrintPreview, restoreEditorFocus: false);
+    private void OnPrintPreviewViewClick(object sender, RoutedEventArgs e) => EnterPrintPreview();
 
     private void OnBackstagePreviewClick(object sender, RoutedEventArgs e)
     {
         MainRibbon.IsBackstageOpen = false;
-        ApplyWriterViewMode(WriterViewMode.PrintPreview, restoreEditorFocus: false);
+        EnterPrintPreview();
+    }
+
+    private void EnterPrintPreview()
+    {
+        if (CurrentViewMode != WriterViewMode.PrintPreview)
+            _viewModeBeforePrintPreview = CurrentViewMode;
+        MainRibbon.EnterModal(PrintPreviewTab);
+    }
+
+    private void OnRibbonModalEntered(object sender, RibbonModalEventArgs e)
+    {
+        if (ReferenceEquals(e.Tab, PrintPreviewTab))
+            ApplyWriterViewMode(WriterViewMode.PrintPreview, restoreEditorFocus: false);
+    }
+
+    private void OnRibbonModalExited(object sender, RibbonModalEventArgs e)
+    {
+        if (ReferenceEquals(e.Tab, PrintPreviewTab))
+            ApplyWriterViewMode(_viewModeBeforePrintPreview, restoreEditorFocus: true);
+    }
+
+    private void OnBackstageSelectionChanged(object sender, SelectionChangedEventArgs e) =>
+        UpdatePreviewDemand();
+
+    private void OnBackstageOpenChanged(object? sender, EventArgs e) => UpdatePreviewDemand();
+
+    private void UpdatePreviewDemand()
+    {
+        if (_previewController is null)
+            return;
+        var needsPreview = CurrentViewMode == WriterViewMode.PrintPreview ||
+            MainRibbon.IsBackstageOpen && PrintBackstageTab.IsSelected;
+        _previewController.SetRebuildEnabled(needsPreview);
+        if (needsPreview && !_previewController.TryGetCurrentSnapshot(out _))
+            MarkPreviewPending();
+        else
+            UpdatePreviewState();
     }
 
     internal void ApplyWriterViewMode(WriterViewMode mode, bool restoreEditorFocus = true)
@@ -442,6 +494,7 @@ public partial class MainWindow : RibbonWindow
         CurrentViewMode = mode;
         if (mode == WriterViewMode.PrintPreview)
         {
+            _previewController?.SetRebuildEnabled(true);
             EditorSurface.Visibility = Visibility.Collapsed;
             PreviewView.Visibility = Visibility.Visible;
             if (_previewController is null || !_previewController.TryGetCurrentSnapshot(out var snapshot))
@@ -470,6 +523,7 @@ public partial class MainWindow : RibbonWindow
             }
         }
 
+        UpdatePreviewDemand();
         UpdateViewButtons();
         UpdatePreviewState();
         UpdateEditingStatusSurface();
@@ -478,19 +532,16 @@ public partial class MainWindow : RibbonWindow
     private void OnOnePageClick(object sender, RoutedEventArgs e)
     {
         PreviewView.ViewMode = WriterPreviewViewMode.OnePage;
-        ApplyWriterViewMode(WriterViewMode.PrintPreview, restoreEditorFocus: false);
     }
 
     private void OnTwoPagesClick(object sender, RoutedEventArgs e)
     {
         PreviewView.ViewMode = WriterPreviewViewMode.TwoPages;
-        ApplyWriterViewMode(WriterViewMode.PrintPreview, restoreEditorFocus: false);
     }
 
     private void OnPageWidthClick(object sender, RoutedEventArgs e)
     {
         PreviewView.ViewMode = WriterPreviewViewMode.PageWidth;
-        ApplyWriterViewMode(WriterViewMode.PrintPreview, restoreEditorFocus: false);
     }
 
     private void OnPreviousPageClick(object sender, RoutedEventArgs e) => PreviewView.GoToPreviousPage();
@@ -515,10 +566,8 @@ public partial class MainWindow : RibbonWindow
         PageWidthButton.IsEnabled = previewActive;
         PreviousPageButton.IsEnabled = previewActive && PreviewView.CanGoToPreviousPage;
         NextPageButton.IsEnabled = previewActive && PreviewView.CanGoToNextPage;
-        PrintButton.IsEnabled = PreviewPendingOverlay.Visibility != Visibility.Visible &&
-            _previewController is not null && !_previewController.IsPending &&
-            _previewController.Snapshot is not null;
-        BackstagePrintButton.IsEnabled = PrintButton.IsEnabled;
+        BackstagePrintButton.IsEnabled = _previewController is not null &&
+            _previewController.TryGetCurrentSnapshot(out _);
         PreviewPageText.Text = previewActive && PreviewView.PageCount > 0
             ? $"· Page {PreviewView.CurrentPageNumber:N0} of {PreviewView.PageCount:N0}"
             : string.Empty;
@@ -527,7 +576,6 @@ public partial class MainWindow : RibbonWindow
 
     private void MarkPreviewPending()
     {
-        PrintButton.IsEnabled = false;
         BackstagePrintButton.IsEnabled = false;
         if (CurrentViewMode == WriterViewMode.PrintPreview)
         {
@@ -683,22 +731,41 @@ public partial class MainWindow : RibbonWindow
 
         MainRibbon.IsBackstageOpen = false;
         var settings = Shell.CurrentDocument.PageSettings;
-        var dialog = new PrintDialog
-        {
-            PrintTicket = new PrintTicket
-            {
-                PageMediaSize = new PageMediaSize(settings.PortraitWidthDip, settings.PortraitHeightDip),
-                PageOrientation = settings.Orientation == DocumentPageOrientation.Landscape
-                    ? PageOrientation.Landscape
-                    : PageOrientation.Portrait
-            }
-        };
-        if (dialog.ShowDialog() != true)
-            return;
-
+        var queues = new List<PrintQueue>();
         try
         {
-            var device = new WriterPrintDialogDevice(dialog);
+            using var server = new LocalPrintServer();
+            queues.AddRange(server.GetPrintQueues().Cast<PrintQueue>()
+                .OrderBy(queue => queue.FullName, StringComparer.CurrentCultureIgnoreCase));
+            if (queues.Count == 0)
+            {
+                MessageBox.Show(this, "Windows did not report an installed printer.",
+                    "Print", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            string? defaultPrinterName = null;
+            try
+            {
+                using var defaultQueue = LocalPrintServer.GetDefaultPrintQueue();
+                defaultPrinterName = defaultQueue?.FullName;
+            }
+            catch (PrintSystemException)
+            {
+                // A default is optional; the first available queue remains selectable.
+            }
+
+            if (_previewController is null || !_previewController.TryGetCurrentSnapshot(out var openingSnapshot))
+                return;
+            var setup = new WriterPrintSetupDialog(openingSnapshot,
+                queues.Select(queue => new WriterPrinterChoice(queue)).ToArray(), defaultPrinterName)
+            {
+                Owner = this,
+                FlowDirection = FlowDirection
+            };
+            if (setup.ShowDialog() != true || setup.SelectedPrinter?.Queue is not PrintQueue selectedQueue)
+                return;
+
             if (_previewController is null || !_previewController.TryGetCurrentSnapshot(out var snapshot))
             {
                 MessageBox.Show(this, "The document changed while print setup was open. Update preview and print again.",
@@ -706,6 +773,8 @@ public partial class MainWindow : RibbonWindow
                 return;
             }
 
+            var dialog = CreateConfiguredPrintDialog(selectedQueue, settings);
+            var device = new WriterPrintDialogDevice(dialog);
             var analysis = _printService.Analyze(snapshot, device.Capabilities);
             if (analysis.HasConflicts && MessageBox.Show(this, FormatPrintConflicts(analysis),
                     "Printer limits", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
@@ -722,7 +791,25 @@ public partial class MainWindow : RibbonWindow
         {
             MessageBox.Show(this, exception.Message, "Print", MessageBoxButton.OK, MessageBoxImage.Error);
         }
+        finally
+        {
+            foreach (var queue in queues)
+                queue.Dispose();
+        }
     }
+
+    private static PrintDialog CreateConfiguredPrintDialog(PrintQueue queue,
+        DocumentPageSettings settings) => new()
+    {
+        PrintQueue = queue,
+        PrintTicket = new PrintTicket
+        {
+            PageMediaSize = new PageMediaSize(settings.PortraitWidthDip, settings.PortraitHeightDip),
+            PageOrientation = settings.Orientation == DocumentPageOrientation.Landscape
+                ? PageOrientation.Landscape
+                : PageOrientation.Portrait
+        }
+    };
 
     internal WriterPrintResult? TryPrintCurrentSnapshot(IWriterPrintDevice device,
         WriterPrintConflictBehavior conflictBehavior = WriterPrintConflictBehavior.ReportOnly)

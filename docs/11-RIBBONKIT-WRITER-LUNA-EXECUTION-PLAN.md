@@ -321,7 +321,11 @@ Microsoft Print to PDF or an available printer. Opening a dialog is not proof of
 
 **Status (2026-08-24): accepted.** The actual 125%-scale Writer surface passed Page/View switching, transactional
 custom margins, page colour, preview modes/navigation/zoom, narrow/RTL, keyboard and icon-led Backstage checks. The
-same long-lived editor and exact fresh W2-D paginator are retained. W2-F is dependency-ready.
+same long-lived editor and exact fresh W2-D paginator are retained. A same-day user-review correction moved preview-
+only commands into a dedicated modal Print Preview tab, made View/preview/zoom commands large and labelled, replaced
+Undo/Redo-derived page navigation artwork, suspended pagination work during ordinary typing, removed Print from the
+ribbon and replaced the Windows picker's unsupported-preview pane with Writer-owned printer setup around the exact
+fixed paginator. W2-F is dependency-ready.
 
 **Owns:** Page/View ribbon tabs and groups, view switching, zoom-command relocation and Backstage
 print/page-summary UI exclusively.

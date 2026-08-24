@@ -22,6 +22,8 @@ public sealed class WriterPreviewController : IDisposable
     private readonly TimeSpan _debounce;
     private WriterDocument _document;
     private PendingRebuild? _pending;
+    private bool _rebuildRequired;
+    private bool _isRebuildEnabled = true;
     private long _generation;
     private long _nextIdentity;
     private bool _disposed;
@@ -65,13 +67,43 @@ public sealed class WriterPreviewController : IDisposable
     public WriterPreviewSnapshot? Snapshot { get; private set; }
 
     /// <summary>Gets whether a trailing-edge rebuild is pending.</summary>
-    public bool IsPending => _pending is not null;
+    public bool IsPending => _rebuildRequired || _pending is not null;
+
+    /// <summary>Gets whether dirty preview state is currently allowed to schedule pagination work.</summary>
+    public bool IsRebuildEnabled => _isRebuildEnabled;
 
     /// <summary>Gets the current rebuild generation.</summary>
     public long Generation => _generation;
 
     /// <summary>Raised when a fresh preview snapshot is published.</summary>
     public event EventHandler? SnapshotChanged;
+
+    /// <summary>
+    /// Enables or suspends pagination work. Changes remain stale while suspended and coalesce into
+    /// one rebuild when preview or Backstage printing next needs current pages.
+    /// </summary>
+    public void SetRebuildEnabled(bool enabled)
+    {
+        ThrowIfDisposed();
+        if (_isRebuildEnabled == enabled)
+            return;
+
+        _isRebuildEnabled = enabled;
+        if (!enabled)
+        {
+            if (_pending is not null)
+            {
+                var pending = _pending;
+                _pending = null;
+                pending.Dispose();
+                _rebuildRequired = true;
+            }
+            return;
+        }
+
+        if (_rebuildRequired || Snapshot is null)
+            ScheduleRebuild();
+    }
 
     /// <summary>Replaces the observed Writer document and requests one debounced rebuild.</summary>
     public void SetDocument(WriterDocument document)
@@ -101,7 +133,7 @@ public sealed class WriterPreviewController : IDisposable
     {
         ThrowIfDisposed();
         snapshot = Snapshot;
-        return _pending is null && snapshot is not null;
+        return !_rebuildRequired && _pending is null && snapshot is not null;
     }
 
     /// <summary>Stops observing, releases the current snapshot, and ignores queued callbacks.</summary>
@@ -132,6 +164,7 @@ public sealed class WriterPreviewController : IDisposable
     {
         ThrowIfDisposed();
         _generation++;
+        _rebuildRequired = true;
         if (_pending is not null)
         {
             var previous = _pending;
@@ -139,6 +172,14 @@ public sealed class WriterPreviewController : IDisposable
             previous.Dispose();
         }
 
+        if (!_isRebuildEnabled)
+            return;
+
+        ScheduleRebuild();
+    }
+
+    private void ScheduleRebuild()
+    {
         var pending = new PendingRebuild(++_nextIdentity, _generation);
         _pending = pending;
         pending.Registration = _scheduler.Schedule(_debounce, () => CompleteRebuild(pending));
@@ -171,6 +212,7 @@ public sealed class WriterPreviewController : IDisposable
             return;
         }
 
+        _rebuildRequired = false;
         var previousSnapshot = Snapshot;
         Snapshot = snapshot;
         try

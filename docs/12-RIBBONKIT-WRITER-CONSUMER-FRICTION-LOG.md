@@ -179,6 +179,41 @@ remain read-only until actual/diff evidence justifies a deliberate change.
 - **Evidence still required:** Inspect.exe or equivalent captures across expanded, narrow/collapsed and minimized
   ribbon states, plus comparison with the Showcase and a second UIA client.
 
+### RKWF-007 — Windows WPF print picker cannot host Writer's existing fixed preview
+
+- **First seen / packet:** 2026-08-24, Writer W2-E user-review correction.
+- **Status:** Resolved in the app; not a RibbonKit runtime defect.
+- **Consumer goal:** select a printer while seeing the exact fixed paginator that Writer will submit.
+- **Reproduction and evidence:** `System.Windows.Controls.PrintDialog.ShowDialog()` opened the current Windows print
+  picker with a large empty pane stating that the app did not support print preview, even though Writer already owned
+  a stable `FixedDocumentSequence`. WPF's public flow returns the selected queue/ticket from `ShowDialog` and accepts
+  the paginator later through `PrintDocument`; it offers no paginator input for that Windows preview pane.
+- **Friction:** the OS message contradicted Writer's working preview and made the accepted same-paginator contract look
+  broken. It could not be corrected from ribbon templates or by changing the existing preview view.
+- **Current app-owned resolution:** Backstage Print opens `WriterPrintSetupDialog`, which selects from installed queues,
+  fits the exact current snapshot in a Writer preview, detaches it on close and submits through the existing validated
+  `WriterPrintDialogDevice`/`WriterPrintService` path without showing the unsupported Windows pane.
+- **Application impact:** Writer currently exposes its streamlined printer/page summary rather than every advanced
+  driver-specific option from the Windows picker. Page size, orientation and margins remain on Writer's Page tab.
+- **Smallest possible library direction:** none. Keep this app-owned unless a future reusable print-setup control is
+  explicitly scoped outside RibbonKit's ribbon-control responsibilities.
+- **Evidence still required:** later W4-C physical-printer coverage should include a non-PDF driver with unusual
+  capabilities and confirm that its queue/ticket validation and conflict report remain correct.
+
+### RKWF-008 — The single real-window STA integration case needs a parallel-load timeout allowance
+
+- **First seen / packet:** 2026-08-24, Writer W2-E user-review correction full gate.
+- **Status:** Bounded test-harness exception; no product or RibbonKit defect.
+- **Reproduction and evidence:** the complete Writer suite passed alone in nine seconds, but the one intentionally
+  combined `MainWindow`/`WindowChrome` STA case exceeded the helper's ten-second ceiling when the 63-image visual
+  project ran concurrently. The same assertions passed after the harness allowed that case twenty seconds.
+- **Friction:** splitting the case across fresh STA threads previously triggered WPF `WindowChrome` cross-thread
+  ownership failures, while increasing the global timeout would weaken feedback for every small STA test.
+- **Current app-owned resolution:** `StaTestHelper.RunAsync` accepts an optional timeout; only the combined real-window
+  case requests twenty seconds. The default remains ten seconds and production code is unchanged.
+- **Evidence still required:** keep watching the case duration in full parallel solution runs; investigate subdivision
+  only if WPF chrome ownership can remain on one dispatcher or the duration approaches the bounded allowance.
+
 ## 5. Closed observations
 
 None yet.

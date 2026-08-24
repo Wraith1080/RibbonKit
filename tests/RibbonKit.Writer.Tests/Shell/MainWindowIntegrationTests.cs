@@ -219,7 +219,7 @@ public sealed class MainWindowIntegrationTests
             await AssertExitCloseAsync(UnsavedChangesDecision.Save);
             await AssertExitCloseAsync(UnsavedChangesDecision.Discard);
             await AssertCleanCloseAsync();
-        });
+        }, TimeSpan.FromSeconds(20));
     }
 
     private static async Task AssertEditingRibbonControlsAsync(WindowFixture fixture)
@@ -343,17 +343,22 @@ public sealed class MainWindowIntegrationTests
             ("ContinuousViewButton", "ViewContinuous", "Writer.View.Continuous"),
             ("PaperViewButton", "ViewPaper", "Writer.View.Paper"),
             ("PrintPreviewViewButton", "ViewPrintPreview", "Writer.View.PrintPreview"),
+            ("ZoomOutButton", "ZoomOut", "Writer.Home.Editing.ZoomOut"),
+            ("ZoomResetButton", "ZoomReset", "Writer.Home.Editing.ZoomReset"),
+            ("ZoomInButton", "ZoomIn", "Writer.Home.Editing.ZoomIn")
+        };
+        var previewControls = new (string Name, string AutomationId, string CommandId)[]
+        {
             ("OnePageButton", "PreviewOnePage", "Writer.View.Preview.OnePage"),
             ("TwoPagesButton", "PreviewTwoPages", "Writer.View.Preview.TwoPages"),
             ("PageWidthButton", "PreviewPageWidth", "Writer.View.Preview.PageWidth"),
             ("PreviousPageButton", "PreviewPreviousPage", "Writer.View.Preview.Previous"),
             ("NextPageButton", "PreviewNextPage", "Writer.View.Preview.Next"),
-            ("PrintButton", "ViewPrint", "Writer.Print"),
-            ("ZoomOutButton", "ZoomOut", "Writer.Home.Editing.ZoomOut"),
-            ("ZoomResetButton", "ZoomReset", "Writer.Home.Editing.ZoomReset"),
-            ("ZoomInButton", "ZoomIn", "Writer.Home.Editing.ZoomIn")
+            ("PreviewZoomOutButton", "PreviewZoomOut", "Writer.Home.Editing.ZoomOut"),
+            ("PreviewZoomResetButton", "PreviewZoomReset", "Writer.Home.Editing.ZoomReset"),
+            ("PreviewZoomInButton", "PreviewZoomIn", "Writer.Home.Editing.ZoomIn")
         };
-        foreach (var (name, automationId, commandId) in pageControls.Concat(viewControls))
+        foreach (var (name, automationId, commandId) in pageControls.Concat(viewControls).Concat(previewControls))
         {
             var control = Assert.IsAssignableFrom<FrameworkElement>(window.FindName(name));
             Assert.Equal(automationId, AutomationProperties.GetAutomationId(control));
@@ -366,6 +371,9 @@ public sealed class MainWindowIntegrationTests
             KeyTip.GetKeys(Assert.IsAssignableFrom<FrameworkElement>(window.FindName(item.Name)))!)
             .Distinct(StringComparer.OrdinalIgnoreCase).Count());
         Assert.Equal(viewControls.Length, viewControls.Select(item =>
+            KeyTip.GetKeys(Assert.IsAssignableFrom<FrameworkElement>(window.FindName(item.Name)))!)
+            .Distinct(StringComparer.OrdinalIgnoreCase).Count());
+        Assert.Equal(previewControls.Length, previewControls.Select(item =>
             KeyTip.GetKeys(Assert.IsAssignableFrom<FrameworkElement>(window.FindName(item.Name)))!)
             .Distinct(StringComparer.OrdinalIgnoreCase).Count());
         foreach (var name in new[]
@@ -397,13 +405,39 @@ public sealed class MainWindowIntegrationTests
             AssertScreenTip(button);
         }
 
-        Assert.Equal(3, ribbon.Tabs.Count);
+        Assert.Equal(4, ribbon.Tabs.Count);
         var home = ribbon.Tabs.Single(tab => Equals(tab.Header, "Home"));
         Assert.DoesNotContain(FindLogicalDescendants<FrameworkElement>(home), element =>
             AutomationProperties.GetAutomationId(element) is "ZoomOut" or "ZoomReset" or "ZoomIn");
         var view = ribbon.Tabs.Single(tab => Equals(tab.Header, "View"));
-        Assert.Equal(new[] { "Document Views", "Preview", "Zoom" },
+        Assert.Equal(new[] { "Document Views", "Zoom" },
             view.Groups.Select(group => group.Header?.ToString()).ToArray());
+        var printPreviewTab = Assert.IsType<RibbonTab>(window.FindName("PrintPreviewTab"));
+        Assert.True(printPreviewTab.IsModal);
+        Assert.Equal(Visibility.Collapsed, printPreviewTab.Visibility);
+        Assert.Equal(new[] { "Preview Layout", "Navigation", "Zoom" },
+            printPreviewTab.Groups.Select(group => group.Header?.ToString()).ToArray());
+        Assert.Null(window.FindName("PrintButton"));
+        foreach (var name in viewControls.Select(item => item.Name)
+                     .Concat(previewControls.Select(item => item.Name)))
+        {
+            var size = window.FindName(name) switch
+            {
+                RibbonButton button => button.Size,
+                RibbonToggleButton toggle => toggle.Size,
+                var control => throw new Xunit.Sdk.XunitException(
+                    $"{name} was not a sized ribbon control: {control?.GetType().Name ?? "null"}.")
+            };
+            Assert.Equal(RibbonControlSize.Large, size);
+        }
+        Assert.Same(window.TryFindResource("Icon.WriterPreviousPage"),
+            Assert.IsType<RibbonButton>(window.FindName("PreviousPageButton")).Icon);
+        Assert.Same(window.TryFindResource("Icon.WriterNextPage"),
+            Assert.IsType<RibbonButton>(window.FindName("NextPageButton")).Icon);
+        Assert.NotSame(window.TryFindResource("Icon.WriterUndo"),
+            Assert.IsType<RibbonButton>(window.FindName("PreviousPageButton")).Icon);
+        Assert.NotSame(window.TryFindResource("Icon.WriterRedo"),
+            Assert.IsType<RibbonButton>(window.FindName("NextPageButton")).Icon);
 
         var document = fixture.Shell.CurrentDocument;
         var openingPreviewSnapshot = preview.Snapshot;
@@ -437,10 +471,15 @@ public sealed class MainWindowIntegrationTests
         Assert.Equal(selectedText, editor.Selection.Text);
         Assert.True(editor.CanUndo);
 
+        Assert.False(window.IsPreviewRebuildEnabled);
+        Assert.Null(preview.Snapshot);
+        Toggle(Assert.IsType<RibbonToggleButton>(window.FindName("PrintPreviewViewButton")));
         await WaitForAsync(() => preview.Snapshot is not null &&
             !ReferenceEquals(openingPreviewSnapshot, preview.Snapshot));
-        Toggle(Assert.IsType<RibbonToggleButton>(window.FindName("PrintPreviewViewButton")));
         await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+        Assert.True(ribbon.IsModal);
+        Assert.Same(printPreviewTab, ribbon.ModalTab);
+        Assert.True(window.IsPreviewRebuildEnabled);
         Assert.Equal(WriterViewMode.PrintPreview, window.CurrentViewMode);
         Assert.Equal(Visibility.Collapsed, surface.Visibility);
         Assert.Equal(Visibility.Visible, preview.Visibility);
@@ -456,10 +495,10 @@ public sealed class MainWindowIntegrationTests
         Toggle(Assert.IsType<RibbonToggleButton>(window.FindName("PageWidthButton")));
         Assert.Equal(WriterPreviewViewMode.PageWidth, preview.ViewMode);
         var fittedZoom = preview.Zoom;
-        Click(Assert.IsType<RibbonButton>(window.FindName("ZoomInButton")));
+        Click(Assert.IsType<RibbonButton>(window.FindName("PreviewZoomInButton")));
         Assert.Equal(WriterPreviewViewMode.OnePage, preview.ViewMode);
         Assert.Equal(Math.Min(preview.MaxZoom, fittedZoom + 10), preview.Zoom, 3);
-        Click(Assert.IsType<RibbonButton>(window.FindName("ZoomResetButton")));
+        Click(Assert.IsType<RibbonButton>(window.FindName("PreviewZoomResetButton")));
         Assert.Equal(100, preview.Zoom, 3);
 
         var firstSnapshot = preview.Snapshot;
@@ -473,6 +512,12 @@ public sealed class MainWindowIntegrationTests
         await WaitForAsync(() => preview.Snapshot is not null);
         Assert.NotNull(preview.Snapshot);
         Assert.NotSame(firstSnapshot, preview.Snapshot);
+
+        Assert.True(ribbon.ExitModal());
+        await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+        Assert.False(ribbon.IsModal);
+        Assert.False(window.IsPreviewRebuildEnabled);
+        Assert.Equal(WriterViewMode.Paper, window.CurrentViewMode);
 
         var pageSettingChanges = 0;
         document.PropertyChanged += CountPageSettings;
@@ -501,6 +546,7 @@ public sealed class MainWindowIntegrationTests
         Assert.Contains("A4", summary);
         Assert.Contains("Landscape", summary);
         Assert.Contains("Page colour: Ivory", summary);
+        Toggle(Assert.IsType<RibbonToggleButton>(window.FindName("PrintPreviewViewButton")));
         await WaitForAsync(() => preview.Snapshot?.SourceClone.Background is SolidColorBrush brush &&
             brush.Color == Color.FromRgb(255, 253, 240));
         var colouredSnapshot = preview.Snapshot!;
@@ -517,7 +563,7 @@ public sealed class MainWindowIntegrationTests
         window.FlowDirection = FlowDirection.LeftToRight;
         window.Width = 1500;
 
-        Toggle(Assert.IsType<RibbonToggleButton>(window.FindName("PaperViewButton")));
+        Assert.True(ribbon.ExitModal());
         await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
         Assert.Equal(WriterViewMode.Paper, window.CurrentViewMode);
         Assert.Equal(Visibility.Visible, surface.Visibility);
@@ -583,8 +629,10 @@ public sealed class MainWindowIntegrationTests
             AutomationProperties.GetName(item))));
         Assert.All(fileActions, item => Assert.NotNull(item.Command));
 
-        Assert.Equal(new[] { "Home", "Page", "View" },
+        Assert.Equal(new[] { "Home", "Page", "View", "Print Preview" },
             ribbon.Tabs.Select(tab => tab.Header?.ToString()).ToArray());
+        Assert.True(ribbon.Tabs[3].IsModal);
+        Assert.Equal(Visibility.Collapsed, ribbon.Tabs[3].Visibility);
         var home = ribbon.Tabs[0];
         Assert.Equal("Home", home.Header);
         Assert.Equal(new[] { "Clipboard", "Font", "Paragraph", "Editing" },

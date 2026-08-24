@@ -5038,6 +5038,40 @@ proof remains the device-output evidence. Independent read-only review identifie
 automatic-zoom notification, clone-failure staleness and Backstage metadata gaps. W2-E is accepted and W2-F is
 dependency-ready. No RibbonKit runtime change was made.
 
+### 3.111a Writer W2-E modal-preview, typing-performance and print-setup correction — 2026-08-24
+
+User review of the accepted W2-E surface found four concrete UX problems: View used icon-only-looking small stacks,
+preview-only commands remained visibly disabled during editing, Previous/Next reused Undo/Redo artwork, and the
+Windows 11 WPF print picker displayed an empty pane claiming that the app did not support print preview. Writer now
+uses RibbonKit's existing modal-tab contract instead. The ordinary View tab has three large labelled Document Views
+commands and three large labelled Zoom commands. Entering Print Preview activates a dedicated modal tab, hides File
+and ordinary tabs, exposes large One Page/Two Pages/Page Width, distinct document-arrow Previous/Next and preview
+zoom commands, and uses the built-in Close Print Preview affordance to restore the prior Continuous or Paper view.
+Print remains exclusively in Backstage.
+
+Preview pagination is now demand-driven. `WriterPreviewController` still observes every document/settings change and
+immediately makes an older snapshot ineligible for printing, but while ordinary editing is active it does not create,
+cancel or run debounce timers and does not clone/XPS-paginate on the UI thread. Repeated typing coalesces as dirty
+state; entering modal preview or selecting Backstage Print schedules one trailing-edge rebuild. Leaving those surfaces
+suspends any pending work without exposing the older snapshot. This removes the visible print-enabled flicker and the
+correlated typing stalls while preserving the strict `TryGetCurrentSnapshot` print gate.
+
+Backstage Print now opens a Writer-owned print setup window rather than the Windows WPF picker. It enumerates the
+installed queues, selects the default printer, shows page setup and fits the exact current fixed paginator in a real
+preview pane with navigation. Accepting still creates a validated WPF `PrintTicket`, analyzes device limits and submits
+the same snapshot paginator through `WriterPrintService`; cancel detaches the preview without disposing the
+controller-owned snapshot. The standard WPF `PrintDialog` does not accept a paginator until after `ShowDialog`, which
+is why Windows could not populate its integrated preview pane; RKWF-007 records the app-owned resolution.
+
+The focused correction gate passes **8/8** and the complete Writer suite passes **233/233**. At the actual 125%-DPI
+surface, large labelled View controls, modal entry/close, preview layout/navigation/zoom, distinct disabled navigation
+glyphs and the fitted Microsoft Print to PDF setup preview passed. No Save dialog or print job was triggered during
+this correction pass; W2-D's retained five-page A4/Letter PDF proof and the exact-paginator integration tests remain
+the output evidence. No `src/RibbonKit/**` change was required and W2-F remains dependency-ready but unstarted.
+The single full-window STA integration case retains one dispatcher/thread and has a case-specific 20-second ceiling;
+its former global 10-second ceiling became flaky only when the 63-image visual project ran beside it. All other STA
+tests retain the 10-second default, and RKWF-008 records this bounded harness exception.
+
 ## 4. Workflow / Session Conventions
 
 - Work from the current Windows checkout at
@@ -5157,6 +5191,10 @@ dependency-ready. No RibbonKit runtime change was made.
   the solution builds with zero warnings/errors and the unchanged RibbonKit/visual suites pass **355/355** and
   **1/1** respectively. Live Page/View, Custom Margins, preview, narrow/RTL, keyboard and Backstage surfaces passed at
   125% DPI; external main-ribbon leaf traversal remains the RKWF-006 investigation.
+- 2026-08-24 after §3.111a correction: the inventory is 588 logic tests plus one visual test covering 63 approved
+  images. Writer passes **233/233**, including the 8-test modal-preview, suspended-pagination, print-setup and window
+  integration gate; the solution builds with zero warnings/errors and RibbonKit/visual remain **355/355** and
+  **1/1**. The actual 125%-DPI View, modal preview and fitted Writer-owned Microsoft Print to PDF setup surfaces pass.
 - Before quoting a current count or declaring a new change complete, rerun the proportional build
   and test commands. Inspect actual/diff PNG artifacts before changing visual baselines or
   tolerances.

@@ -13,7 +13,7 @@ internal static class StaTestHelper
         return Task.CompletedTask;
     }).GetAwaiter().GetResult();
 
-    public static Task RunAsync(Func<Task> action)
+    public static Task RunAsync(Func<Task> action, TimeSpan? timeout = null)
     {
         ArgumentNullException.ThrowIfNull(action);
         var completion = new TaskCompletionSource<object?>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -21,7 +21,7 @@ internal static class StaTestHelper
         var thread = new Thread(() => RunOnSta(action, completion, dispatcherReady)) { IsBackground = true };
         thread.SetApartmentState(ApartmentState.STA);
         thread.Start();
-        return WaitForCompletionAsync(completion, thread, dispatcherReady.Task);
+        return WaitForCompletionAsync(completion, thread, dispatcherReady.Task, timeout ?? Timeout);
     }
 
     private static void RunOnSta(Func<Task> action, TaskCompletionSource<object?> completion,
@@ -40,17 +40,17 @@ internal static class StaTestHelper
     }
 
     private static async Task WaitForCompletionAsync(TaskCompletionSource<object?> completion, Thread thread,
-        Task<Dispatcher> dispatcherTask)
+        Task<Dispatcher> dispatcherTask, TimeSpan timeout)
     {
-        var completed = await Task.WhenAny(completion.Task, Task.Delay(Timeout)).ConfigureAwait(false);
+        var completed = await Task.WhenAny(completion.Task, Task.Delay(timeout)).ConfigureAwait(false);
         if (completed != completion.Task)
         {
             if (dispatcherTask.IsCompletedSuccessfully)
                 dispatcherTask.Result.BeginInvokeShutdown(DispatcherPriority.Normal);
-            throw new TimeoutException($"STA test did not complete within {Timeout}.");
+            throw new TimeoutException($"STA test did not complete within {timeout}.");
         }
         await completion.Task.ConfigureAwait(false);
-        if (!thread.Join(Timeout))
+        if (!thread.Join(timeout))
             throw new TimeoutException("STA test dispatcher did not shut down.");
     }
 }

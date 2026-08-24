@@ -211,6 +211,7 @@
     </rk:RibbonWindow.InputBindings>
     <DockPanel AutomationProperties.AutomationId="WriterWindow">
         <rk:Ribbon x:Name="MainRibbon" DockPanel.Dock="Top" QuickAccessPosition="BelowRibbon"
+                   ModalEntered="OnRibbonModalEntered" ModalExited="OnRibbonModalExited"
                    AutomationProperties.AutomationId="MainRibbon" AutomationProperties.Name="Main ribbon">
             <rk:Ribbon.QuickAccessItems>
                 <rk:RibbonButton x:Name="QatSave" Header="Save" Size="Small" Icon="{StaticResource Icon.WriterSave}"
@@ -227,7 +228,9 @@
                                  AutomationProperties.AutomationId="QatRedo" AutomationProperties.Name="Redo" />
             </rk:Ribbon.QuickAccessItems>
             <rk:Ribbon.Backstage>
-                <rk:Backstage Design="Modern" AutomationProperties.AutomationId="WriterBackstage" AutomationProperties.Name="File">
+                <rk:Backstage x:Name="WriterBackstage" Design="Modern"
+                              SelectionChanged="OnBackstageSelectionChanged"
+                              AutomationProperties.AutomationId="WriterBackstage" AutomationProperties.Name="File">
                     <rk:BackstageTabItem Header="Home" rk:KeyTip.Keys="H">
                         <StackPanel Margin="32" HorizontalAlignment="Stretch" AutomationProperties.AutomationId="RecentPage">
                             <TextBlock Text="Recent documents" FontSize="28" FontWeight="Light"
@@ -287,7 +290,7 @@
                     <rk:BackstageTabItem Header="Open" IsButton="True" rk:Ribbon.CommandId="Writer.Open" rk:KeyTip.Keys="O" Click="OnBackstageAction" Command="{Binding OpenCommand}" AutomationProperties.AutomationId="FileOpen" AutomationProperties.Name="Open" />
                     <rk:BackstageTabItem Header="Save" IsButton="True" rk:Ribbon.CommandId="Writer.Save" rk:KeyTip.Keys="S" Click="OnBackstageAction" Command="{Binding SaveCommand}" AutomationProperties.AutomationId="FileSave" AutomationProperties.Name="Save" />
                     <rk:BackstageTabItem Header="Save As" IsButton="True" rk:Ribbon.CommandId="Writer.SaveAs" rk:KeyTip.Keys="A" Click="OnBackstageAction" Command="{Binding SaveAsCommand}" AutomationProperties.AutomationId="FileSaveAs" AutomationProperties.Name="Save As" />
-                    <rk:BackstageTabItem Header="Print" rk:KeyTip.Keys="P"
+                    <rk:BackstageTabItem x:Name="PrintBackstageTab" Header="Print" rk:KeyTip.Keys="P"
                                          AutomationProperties.AutomationId="FilePrintPage" AutomationProperties.Name="Print and page setup">
                         <Grid Margin="32" MaxWidth="820" HorizontalAlignment="Stretch">
                             <Grid.ColumnDefinitions>
@@ -583,75 +586,97 @@
                 <rk:RibbonGroup Header="Document Views" rk:Ribbon.CommandId="Writer.View.DocumentViews" rk:KeyTip.Keys="DV"
                                 Icon="{StaticResource Icon.WriterEditLayout}"
                                 AutomationProperties.AutomationId="DocumentViewsGroup" AutomationProperties.Name="Document Views">
-                    <StackPanel Margin="2,2,2,0" VerticalAlignment="Center">
-                        <rk:RibbonToggleButton x:Name="ContinuousViewButton" Header="Continuous Edit" Size="Small"
-                                               Icon="{StaticResource Icon.WriterEditLayout}" Click="OnContinuousViewClick"
-                                               rk:Ribbon.CommandId="Writer.View.Continuous" rk:KeyTip.Keys="C"
-                                               ScreenTipTitle="Continuous Edit" ScreenTipText="Use the workspace-filling live editor without changing its document."
-                                               AutomationProperties.AutomationId="ViewContinuous" AutomationProperties.Name="Continuous Edit" />
-                        <rk:RibbonToggleButton x:Name="PaperViewButton" Header="Paper" Size="Small"
-                                               Icon="{StaticResource Icon.WriterDocument}" Click="OnPaperViewClick"
-                                               rk:Ribbon.CommandId="Writer.View.Paper" rk:KeyTip.Keys="P"
-                                               ScreenTipTitle="Paper View" ScreenTipText="Centre the same live editor on the logical paper."
-                                               AutomationProperties.AutomationId="ViewPaper" AutomationProperties.Name="Paper View" />
-                        <rk:RibbonToggleButton x:Name="PrintPreviewViewButton" Header="Print Layout" Size="Small"
-                                               Icon="{StaticResource Icon.WriterPrintPreview}" Click="OnPrintPreviewViewClick"
-                                               rk:Ribbon.CommandId="Writer.View.PrintPreview" rk:KeyTip.Keys="R"
-                                               ScreenTipTitle="Print Layout / Preview" ScreenTipText="Show stable fixed pages from the same paginator used for printing."
-                                               AutomationProperties.AutomationId="ViewPrintPreview" AutomationProperties.Name="Print Layout and Preview" />
-                    </StackPanel>
-                </rk:RibbonGroup>
-                <rk:RibbonGroup Header="Preview" rk:Ribbon.CommandId="Writer.View.Preview" rk:KeyTip.Keys="PV"
-                                Icon="{StaticResource Icon.WriterPrintPreview}"
-                                AutomationProperties.AutomationId="PreviewGroup" AutomationProperties.Name="Preview">
-                    <StackPanel Margin="2,2,2,0" VerticalAlignment="Center">
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                            <rk:RibbonToggleButton x:Name="OnePageButton" Header="One Page" Size="Small" Icon="{StaticResource Icon.WriterPrintPreview}"
-                                                   Click="OnOnePageClick" rk:Ribbon.CommandId="Writer.View.Preview.OnePage" rk:KeyTip.Keys="O"
-                                                   ScreenTipTitle="One Page" ScreenTipText="Show one preview page at the current zoom."
-                                                   AutomationProperties.AutomationId="PreviewOnePage" AutomationProperties.Name="One Page" />
-                            <rk:RibbonToggleButton x:Name="TwoPagesButton" Header="Two Pages" Size="Small" Icon="{StaticResource Icon.WriterTwoPages}"
-                                                   Click="OnTwoPagesClick" rk:Ribbon.CommandId="Writer.View.Preview.TwoPages" rk:KeyTip.Keys="T"
-                                                   ScreenTipTitle="Two Pages" ScreenTipText="Fit up to two adjacent preview pages."
-                                                   AutomationProperties.AutomationId="PreviewTwoPages" AutomationProperties.Name="Two Pages" />
-                            <rk:RibbonToggleButton x:Name="PageWidthButton" Header="Page Width" Size="Small" Icon="{StaticResource Icon.WriterPageWidth}"
-                                                   Click="OnPageWidthClick" rk:Ribbon.CommandId="Writer.View.Preview.PageWidth" rk:KeyTip.Keys="W"
-                                                   ScreenTipTitle="Page Width" ScreenTipText="Fit the preview page width to the available viewport."
-                                                   AutomationProperties.AutomationId="PreviewPageWidth" AutomationProperties.Name="Page Width" />
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal">
-                            <rk:RibbonButton x:Name="PreviousPageButton" Header="Previous" Size="Small" Icon="{StaticResource Icon.WriterUndo}"
-                                             Click="OnPreviousPageClick" rk:Ribbon.CommandId="Writer.View.Preview.Previous" rk:KeyTip.Keys="B"
-                                             ScreenTipTitle="Previous Page" ScreenTipText="Move to the previous preview page."
-                                             AutomationProperties.AutomationId="PreviewPreviousPage" AutomationProperties.Name="Previous Page" />
-                            <rk:RibbonButton x:Name="NextPageButton" Header="Next" Size="Small" Icon="{StaticResource Icon.WriterRedo}"
-                                             Click="OnNextPageClick" rk:Ribbon.CommandId="Writer.View.Preview.Next" rk:KeyTip.Keys="N"
-                                             ScreenTipTitle="Next Page" ScreenTipText="Move to the next preview page."
-                                             AutomationProperties.AutomationId="PreviewNextPage" AutomationProperties.Name="Next Page" />
-                            <rk:RibbonButton x:Name="PrintButton" Header="Print" Size="Small" Icon="{StaticResource Icon.WriterPrint}"
-                                             Click="OnPrintClick" rk:Ribbon.CommandId="Writer.Print" rk:KeyTip.Keys="PT"
-                                             ScreenTipTitle="Print" ScreenTipText="Print the exact current preview paginator after checking device limits."
-                                             AutomationProperties.AutomationId="ViewPrint" AutomationProperties.Name="Print" />
-                        </StackPanel>
-                    </StackPanel>
+                    <rk:RibbonToggleButton x:Name="ContinuousViewButton" Header="Continuous Edit" Size="Large"
+                                           Icon="{StaticResource Icon.WriterEditLayout}" LargeIcon="{StaticResource Icon.WriterEditLayout}"
+                                           Click="OnContinuousViewClick" rk:Ribbon.CommandId="Writer.View.Continuous" rk:KeyTip.Keys="C"
+                                           ScreenTipTitle="Continuous Edit" ScreenTipText="Use the workspace-filling live editor without changing its document."
+                                           AutomationProperties.AutomationId="ViewContinuous" AutomationProperties.Name="Continuous Edit" />
+                    <rk:RibbonToggleButton x:Name="PaperViewButton" Header="Paper" Size="Large"
+                                           Icon="{StaticResource Icon.WriterDocument}" LargeIcon="{StaticResource Icon.WriterDocument}"
+                                           Click="OnPaperViewClick" rk:Ribbon.CommandId="Writer.View.Paper" rk:KeyTip.Keys="P"
+                                           ScreenTipTitle="Paper View" ScreenTipText="Centre the same live editor on the logical paper."
+                                           AutomationProperties.AutomationId="ViewPaper" AutomationProperties.Name="Paper View" />
+                    <rk:RibbonToggleButton x:Name="PrintPreviewViewButton" Header="Print Preview" Size="Large"
+                                           Icon="{StaticResource Icon.WriterPrintPreview}" LargeIcon="{StaticResource Icon.WriterPrintPreview}"
+                                           Click="OnPrintPreviewViewClick" rk:Ribbon.CommandId="Writer.View.PrintPreview" rk:KeyTip.Keys="R"
+                                           ScreenTipTitle="Print Preview" ScreenTipText="Enter the dedicated preview mode using the exact paginator used for printing."
+                                           AutomationProperties.AutomationId="ViewPrintPreview" AutomationProperties.Name="Print Preview" />
                 </rk:RibbonGroup>
                 <rk:RibbonGroup Header="Zoom" rk:Ribbon.CommandId="Writer.View.Zoom" rk:KeyTip.Keys="Z"
                                 Icon="{StaticResource Icon.WriterZoomReset}"
                                 AutomationProperties.AutomationId="ZoomGroup" AutomationProperties.Name="Zoom">
-                    <StackPanel Margin="2,2,2,0" VerticalAlignment="Center">
-                        <rk:RibbonButton x:Name="ZoomOutButton" Header="Zoom Out" Size="Small" Icon="{StaticResource Icon.WriterZoomOut}"
-                                         rk:Ribbon.CommandId="Writer.Home.Editing.ZoomOut" rk:KeyTip.Keys="ZO"
-                                         ScreenTipTitle="Zoom Out" ScreenTipText="Reduce the current document view zoom by ten percent."
-                                         AutomationProperties.AutomationId="ZoomOut" AutomationProperties.Name="Zoom Out" />
-                        <rk:RibbonButton x:Name="ZoomResetButton" Header="100%" Size="Small" Icon="{StaticResource Icon.WriterZoomReset}"
-                                         rk:Ribbon.CommandId="Writer.Home.Editing.ZoomReset" rk:KeyTip.Keys="ZR"
-                                         ScreenTipTitle="Reset Zoom" ScreenTipText="Restore the current document view zoom to 100 percent."
-                                         AutomationProperties.AutomationId="ZoomReset" AutomationProperties.Name="Reset Zoom" />
-                        <rk:RibbonButton x:Name="ZoomInButton" Header="Zoom In" Size="Small" Icon="{StaticResource Icon.WriterZoomIn}"
-                                         rk:Ribbon.CommandId="Writer.Home.Editing.ZoomIn" rk:KeyTip.Keys="ZI"
-                                         ScreenTipTitle="Zoom In" ScreenTipText="Increase the current document view zoom by ten percent."
-                                         AutomationProperties.AutomationId="ZoomIn" AutomationProperties.Name="Zoom In" />
-                    </StackPanel>
+                    <rk:RibbonButton x:Name="ZoomOutButton" Header="Zoom Out" Size="Large"
+                                     Icon="{StaticResource Icon.WriterZoomOut}" LargeIcon="{StaticResource Icon.WriterZoomOut}"
+                                     rk:Ribbon.CommandId="Writer.Home.Editing.ZoomOut" rk:KeyTip.Keys="ZO"
+                                     ScreenTipTitle="Zoom Out" ScreenTipText="Reduce the current document view zoom by ten percent."
+                                     AutomationProperties.AutomationId="ZoomOut" AutomationProperties.Name="Zoom Out" />
+                    <rk:RibbonButton x:Name="ZoomResetButton" Header="100%" Size="Large"
+                                     Icon="{StaticResource Icon.WriterZoomReset}" LargeIcon="{StaticResource Icon.WriterZoomReset}"
+                                     rk:Ribbon.CommandId="Writer.Home.Editing.ZoomReset" rk:KeyTip.Keys="ZR"
+                                     ScreenTipTitle="Reset Zoom" ScreenTipText="Restore the current document view zoom to 100 percent."
+                                     AutomationProperties.AutomationId="ZoomReset" AutomationProperties.Name="Reset Zoom" />
+                    <rk:RibbonButton x:Name="ZoomInButton" Header="Zoom In" Size="Large"
+                                     Icon="{StaticResource Icon.WriterZoomIn}" LargeIcon="{StaticResource Icon.WriterZoomIn}"
+                                     rk:Ribbon.CommandId="Writer.Home.Editing.ZoomIn" rk:KeyTip.Keys="ZI"
+                                     ScreenTipTitle="Zoom In" ScreenTipText="Increase the current document view zoom by ten percent."
+                                     AutomationProperties.AutomationId="ZoomIn" AutomationProperties.Name="Zoom In" />
+                </rk:RibbonGroup>
+            </rk:RibbonTab>
+            <rk:RibbonTab x:Name="PrintPreviewTab" Header="Print Preview"
+                          rk:Ribbon.CommandId="Writer.PrintPreview" IsModal="True" CanClose="True"
+                          CloseButtonText="Close Print Preview" Visibility="Collapsed"
+                          AutomationProperties.AutomationId="PrintPreviewTab" AutomationProperties.Name="Print Preview">
+                <rk:RibbonGroup Header="Preview Layout" rk:Ribbon.CommandId="Writer.View.Preview" rk:KeyTip.Keys="L"
+                                Icon="{StaticResource Icon.WriterPrintPreview}"
+                                AutomationProperties.AutomationId="PreviewGroup" AutomationProperties.Name="Preview Layout">
+                    <rk:RibbonToggleButton x:Name="OnePageButton" Header="One Page" Size="Large"
+                                           Icon="{StaticResource Icon.WriterOnePage}" LargeIcon="{StaticResource Icon.WriterOnePage}"
+                                           Click="OnOnePageClick" rk:Ribbon.CommandId="Writer.View.Preview.OnePage" rk:KeyTip.Keys="O"
+                                           ScreenTipTitle="One Page" ScreenTipText="Show one preview page at the current zoom."
+                                           AutomationProperties.AutomationId="PreviewOnePage" AutomationProperties.Name="One Page" />
+                    <rk:RibbonToggleButton x:Name="TwoPagesButton" Header="Two Pages" Size="Large"
+                                           Icon="{StaticResource Icon.WriterTwoPages}" LargeIcon="{StaticResource Icon.WriterTwoPages}"
+                                           Click="OnTwoPagesClick" rk:Ribbon.CommandId="Writer.View.Preview.TwoPages" rk:KeyTip.Keys="T"
+                                           ScreenTipTitle="Two Pages" ScreenTipText="Fit up to two adjacent preview pages."
+                                           AutomationProperties.AutomationId="PreviewTwoPages" AutomationProperties.Name="Two Pages" />
+                    <rk:RibbonToggleButton x:Name="PageWidthButton" Header="Page Width" Size="Large"
+                                           Icon="{StaticResource Icon.WriterPageWidth}" LargeIcon="{StaticResource Icon.WriterPageWidth}"
+                                           Click="OnPageWidthClick" rk:Ribbon.CommandId="Writer.View.Preview.PageWidth" rk:KeyTip.Keys="W"
+                                           ScreenTipTitle="Page Width" ScreenTipText="Fit the preview page width to the available viewport."
+                                           AutomationProperties.AutomationId="PreviewPageWidth" AutomationProperties.Name="Page Width" />
+                </rk:RibbonGroup>
+                <rk:RibbonGroup Header="Navigation" rk:Ribbon.CommandId="Writer.View.Preview.Navigation" rk:KeyTip.Keys="N"
+                                Icon="{StaticResource Icon.WriterNextPage}"
+                                AutomationProperties.AutomationId="PreviewNavigationGroup" AutomationProperties.Name="Preview Navigation">
+                    <rk:RibbonButton x:Name="PreviousPageButton" Header="Previous Page" Size="Large"
+                                     Icon="{StaticResource Icon.WriterPreviousPage}" LargeIcon="{StaticResource Icon.WriterPreviousPage}"
+                                     Click="OnPreviousPageClick" rk:Ribbon.CommandId="Writer.View.Preview.Previous" rk:KeyTip.Keys="B"
+                                     ScreenTipTitle="Previous Page" ScreenTipText="Move to the previous preview page."
+                                     AutomationProperties.AutomationId="PreviewPreviousPage" AutomationProperties.Name="Previous Page" />
+                    <rk:RibbonButton x:Name="NextPageButton" Header="Next Page" Size="Large"
+                                     Icon="{StaticResource Icon.WriterNextPage}" LargeIcon="{StaticResource Icon.WriterNextPage}"
+                                     Click="OnNextPageClick" rk:Ribbon.CommandId="Writer.View.Preview.Next" rk:KeyTip.Keys="N"
+                                     ScreenTipTitle="Next Page" ScreenTipText="Move to the next preview page."
+                                     AutomationProperties.AutomationId="PreviewNextPage" AutomationProperties.Name="Next Page" />
+                </rk:RibbonGroup>
+                <rk:RibbonGroup Header="Zoom" rk:Ribbon.CommandId="Writer.PrintPreview.Zoom" rk:KeyTip.Keys="Z"
+                                Icon="{StaticResource Icon.WriterZoomReset}"
+                                AutomationProperties.AutomationId="PreviewZoomGroup" AutomationProperties.Name="Preview Zoom">
+                    <rk:RibbonButton x:Name="PreviewZoomOutButton" Header="Zoom Out" Size="Large"
+                                     Icon="{StaticResource Icon.WriterZoomOut}" LargeIcon="{StaticResource Icon.WriterZoomOut}"
+                                     rk:Ribbon.CommandId="Writer.Home.Editing.ZoomOut" rk:KeyTip.Keys="ZO"
+                                     ScreenTipTitle="Zoom Out" ScreenTipText="Reduce preview zoom by ten percent."
+                                     AutomationProperties.AutomationId="PreviewZoomOut" AutomationProperties.Name="Zoom Out" />
+                    <rk:RibbonButton x:Name="PreviewZoomResetButton" Header="100%" Size="Large"
+                                     Icon="{StaticResource Icon.WriterZoomReset}" LargeIcon="{StaticResource Icon.WriterZoomReset}"
+                                     rk:Ribbon.CommandId="Writer.Home.Editing.ZoomReset" rk:KeyTip.Keys="ZR"
+                                     ScreenTipTitle="Reset Zoom" ScreenTipText="Restore preview zoom to 100 percent."
+                                     AutomationProperties.AutomationId="PreviewZoomReset" AutomationProperties.Name="Reset Zoom" />
+                    <rk:RibbonButton x:Name="PreviewZoomInButton" Header="Zoom In" Size="Large"
+                                     Icon="{StaticResource Icon.WriterZoomIn}" LargeIcon="{StaticResource Icon.WriterZoomIn}"
+                                     rk:Ribbon.CommandId="Writer.Home.Editing.ZoomIn" rk:KeyTip.Keys="ZI"
+                                     ScreenTipTitle="Zoom In" ScreenTipText="Increase preview zoom by ten percent."
+                                     AutomationProperties.AutomationId="PreviewZoomIn" AutomationProperties.Name="Zoom In" />
                 </rk:RibbonGroup>
             </rk:RibbonTab>
         </rk:Ribbon>

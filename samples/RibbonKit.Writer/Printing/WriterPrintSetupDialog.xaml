@@ -1,0 +1,85 @@
+<Window x:Class="RibbonKit.Writer.Printing.WriterPrintSetupDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:preview="clr-namespace:RibbonKit.Writer.Preview"
+        Title="Print" Width="920" Height="680" MinWidth="720" MinHeight="520"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
+        AutomationProperties.AutomationId="WriterPrintSetup"
+        AutomationProperties.Name="RibbonKit Writer print setup">
+    <Grid Background="{DynamicResource RibbonKit.Brushes.Control.CompanionBackground}">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="290" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <Border Padding="28" Background="{DynamicResource RibbonKit.Brushes.Control.SurfaceBackground}"
+                BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}" BorderThickness="0,0,1,0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <StackPanel>
+                    <TextBlock Text="Print" FontSize="26" FontWeight="Light"
+                               Foreground="{DynamicResource RibbonKit.Brushes.Accent}" />
+                    <TextBlock Text="Printer" Margin="0,28,0,6" FontWeight="SemiBold" />
+                    <ComboBox x:Name="PrinterBox" DisplayMemberPath="DisplayName" MinHeight="34"
+                              AutomationProperties.AutomationId="PrintPrinter"
+                              AutomationProperties.Name="Printer" />
+                    <TextBlock Text="Page setup" Margin="0,24,0,6" FontWeight="SemiBold" />
+                    <TextBlock x:Name="PageSummaryText" TextWrapping="Wrap"
+                               Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
+                               AutomationProperties.AutomationId="PrintPageSummary"
+                               AutomationProperties.Name="Page setup summary" />
+                    <Border Margin="0,24,0,0" Padding="12"
+                            Background="{DynamicResource RibbonKit.Brushes.Control.CompanionBackground}"
+                            BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}" BorderThickness="1">
+                        <TextBlock Text="The preview on the right is the exact fixed paginator Writer will send to the selected printer."
+                                   TextWrapping="Wrap"
+                                   Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
+                    </Border>
+                </StackPanel>
+                <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="Cancel" Width="90" Height="34" Margin="0,0,10,0" IsCancel="True"
+                            AutomationProperties.AutomationId="PrintCancel" AutomationProperties.Name="Cancel printing" />
+                    <Button x:Name="PrintButton" Content="Print" Width="100" Height="34" IsDefault="True"
+                            Background="{DynamicResource RibbonKit.Brushes.Dialog.PrimaryBackground}"
+                            BorderBrush="{DynamicResource RibbonKit.Brushes.Dialog.PrimaryBorder}"
+                            Foreground="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}"
+                            FontWeight="SemiBold"
+                            Click="OnPrint" AutomationProperties.AutomationId="PrintSubmit"
+                            AutomationProperties.Name="Print document" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Column="1" Margin="22">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <preview:WriterDocumentPreviewView x:Name="Preview"
+                                               AutomationProperties.AutomationId="PrintSetupPreview"
+                                               AutomationProperties.Name="Print preview" />
+            <Grid Grid.Row="1" Margin="0,14,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Button x:Name="PreviousButton" Content="←  Previous page" HorizontalAlignment="Right"
+                        MinWidth="120" Click="OnPrevious"
+                        AutomationProperties.AutomationId="PrintPreviewPrevious"
+                        AutomationProperties.Name="Previous page" />
+                <TextBlock x:Name="PagePositionText" Grid.Column="1" MinWidth="110" Margin="14,0"
+                           TextAlignment="Center" VerticalAlignment="Center"
+                           AutomationProperties.AutomationId="PrintPreviewPosition"
+                           AutomationProperties.Name="Preview page position" />
+                <Button x:Name="NextButton" Grid.Column="2" Content="Next page  →" HorizontalAlignment="Left"
+                        MinWidth="120" Click="OnNext"
+                        AutomationProperties.AutomationId="PrintPreviewNext"
+                        AutomationProperties.Name="Next page" />
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>

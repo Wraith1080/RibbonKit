@@ -1,7 +1,7 @@
 # RibbonKit Writer icon catalog
 
-> **Status:** app-owned W1-D artwork. `Icons.xaml` currently contains 101 vector `DrawingImage`
-> resources: 96 small/general resources and five explicit Large variants. RibbonKit itself does not
+> **Status:** app-owned W1-D artwork. `Icons.xaml` currently contains 103 vector `DrawingImage`
+> resources: 98 small/general resources and five explicit Large variants. RibbonKit itself does not
 > own or synthesize these icons.
 
 ## Conventions
@@ -37,7 +37,7 @@ Large variants currently exist for `Document`, `Save`, `Paste`, `Undo` and `Redo
 |---|---|
 | File and Backstage | `New`, `Open`, `SaveAs`, `CloseDocument`, `ExportPdf`, `Print`, `PrintPreview`, `Properties`, `Recent` |
 | Page layout | `PageSize`, `Portrait`, `Landscape`, `Margins`, `PageColor`, `Columns`, `PageBreak` |
-| View | `EditLayout`, `PrintLayout`, `OnePage`, `TwoPages`, `PageWidth`, `FullScreen`, `Ruler`, `Gridlines` |
+| View | `EditLayout`, `PrintLayout`, `OnePage`, `TwoPages`, `PageWidth`, `PreviousPage`, `NextPage`, `FullScreen`, `Ruler`, `Gridlines` |
 | Insert | `Image`, `Hyperlink`, `RemoveLink`, `DateTime`, `Table` |
 | Table structure | `AddRowAbove`, `AddRowBelow`, `AddColumnLeft`, `AddColumnRight`, `DeleteRow`, `DeleteColumn`, `MergeCells`, `SplitCells`, `DistributeRows`, `DistributeColumns` |
 | Table presentation | `CellAlignTop`, `CellAlignMiddle`, `CellAlignBottom`, `CellShading`, `Borders` |

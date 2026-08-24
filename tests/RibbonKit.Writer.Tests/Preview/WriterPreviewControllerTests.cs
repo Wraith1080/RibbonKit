@@ -147,6 +147,40 @@ public sealed class WriterPreviewControllerTests
         });
     }
 
+    [Fact]
+    public void SuspendedControllerCoalescesTypingWithoutSchedulingPagination()
+    {
+        StaTestHelper.Run(() =>
+        {
+            var document = new WriterDocument(new FlowDocument(new Paragraph(new Run("start"))));
+            var editor = new RichTextBox { Document = document.Content };
+            var scheduler = new ManualScheduler();
+            using var controller = new WriterPreviewController(editor, document,
+                TimeSpan.FromMilliseconds(250), scheduler);
+            scheduler.RunNext();
+            var openingSnapshot = controller.Snapshot;
+
+            controller.SetRebuildEnabled(false);
+            editor.AppendText(" one");
+            editor.AppendText(" two");
+            editor.AppendText(" three");
+
+            Assert.False(controller.IsRebuildEnabled);
+            Assert.True(controller.IsPending);
+            Assert.Equal(0, scheduler.PendingCount);
+            Assert.Same(openingSnapshot, controller.Snapshot);
+            Assert.False(controller.TryGetCurrentSnapshot(out _));
+
+            controller.SetRebuildEnabled(true);
+            Assert.True(controller.IsRebuildEnabled);
+            Assert.Equal(1, scheduler.PendingCount);
+            scheduler.RunNext();
+            Assert.True(controller.TryGetCurrentSnapshot(out var current));
+            Assert.NotSame(openingSnapshot, current);
+            Assert.Contains("three", SnapshotText(controller));
+        });
+    }
+
     private static string SnapshotText(WriterPreviewController controller) =>
         new TextRange(controller.Snapshot!.SourceClone.ContentStart,
                 controller.Snapshot.SourceClone.ContentEnd).Text;
