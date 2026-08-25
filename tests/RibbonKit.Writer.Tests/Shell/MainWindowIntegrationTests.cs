@@ -492,7 +492,9 @@ public sealed class MainWindowIntegrationTests
             ("PrintPreviewViewButton", "ViewPrintPreview", "Writer.View.PrintPreview"),
             ("ZoomOutButton", "ZoomOut", "Writer.Home.Editing.ZoomOut"),
             ("ZoomResetButton", "ZoomReset", "Writer.Home.Editing.ZoomReset"),
-            ("ZoomInButton", "ZoomIn", "Writer.Home.Editing.ZoomIn")
+            ("ZoomInButton", "ZoomIn", "Writer.Home.Editing.ZoomIn"),
+            ("RulerToggleButton", "ViewRuler", "Writer.View.Show.Ruler"),
+            ("MarginGuidesToggleButton", "ViewMarginGuides", "Writer.View.Show.MarginGuides")
         };
         var previewControls = new (string Name, string AutomationId, string CommandId)[]
         {
@@ -557,7 +559,7 @@ public sealed class MainWindowIntegrationTests
         Assert.DoesNotContain(FindLogicalDescendants<FrameworkElement>(home), element =>
             AutomationProperties.GetAutomationId(element) is "ZoomOut" or "ZoomReset" or "ZoomIn");
         var view = ribbon.Tabs.Single(tab => Equals(tab.Header, "View"));
-        Assert.Equal(new[] { "Document Views", "Zoom" },
+        Assert.Equal(new[] { "Document Views", "Zoom", "Show" },
             view.Groups.Select(group => group.Header?.ToString()).ToArray());
         var printPreviewTab = Assert.IsType<RibbonTab>(window.FindName("PrintPreviewTab"));
         Assert.True(printPreviewTab.IsModal);

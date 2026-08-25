@@ -4,11 +4,14 @@ using System.IO.Compression;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Markup;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using System.Xml;
 using System.Xml.Linq;
+using RibbonKit.Writer.Editing;
 
 namespace RibbonKit.Writer.Services.Persistence;
 
@@ -23,10 +26,14 @@ internal static partial class WriterRkwContentSerializer
     private const int MaximumXmlDepth = 128;
     private const int MaximumXmlElements = 100_000;
     private const int MaximumAttributesPerElement = 96;
+    private const int MaximumImageCount = 512;
+    private const int MaximumImageBytes = 16 * 1024 * 1024;
+    private const long MaximumImagePixels = 32 * 1024 * 1024;
     private const string PresentationNamespace = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
     private const string RelationshipsNamespace = "http://schemas.openxmlformats.org/package/2006/relationships";
     private const string ContentTypesNamespace = "http://schemas.openxmlformats.org/package/2006/content-types";
     private const string EntryRelationshipType = "http://schemas.microsoft.com/wpf/2005/10/xaml/entry";
+    private const string ComponentRelationshipType = "http://schemas.microsoft.com/wpf/2005/10/xaml/component";
     private static readonly UTF8Encoding StrictUtf8 = new(false, true);
 
     private static readonly HashSet<string> RequiredParts = new(StringComparer.Ordinal)
@@ -39,17 +46,19 @@ internal static partial class WriterRkwContentSerializer
     private static readonly HashSet<string> AllowedElements = new(StringComparer.Ordinal)
     {
         "Section", "Paragraph", "List", "ListItem",
-        "Run", "Span", "Bold", "Italic", "Underline", "LineBreak"
+        "Run", "Span", "Bold", "Italic", "Underline", "LineBreak",
+        "Hyperlink", "InlineUIContainer", "Image", "Image.Source", "BitmapImage"
     };
 
-    private static readonly HashSet<string> AllowedAttributes = new(StringComparer.Ordinal)
-    {
-        "FontFamily", "FontStyle", "FontWeight", "FontStretch", "FontSize",
-        "Foreground", "Background", "FlowDirection", "TextDecorations", "BaselineAlignment",
-        "TextAlignment", "LineHeight", "LineStackingStrategy", "IsHyphenationEnabled",
-        "Margin", "Padding", "TextIndent", "KeepTogether", "KeepWithNext",
-        "MinOrphanLines", "MinWidowLines", "MarkerStyle", "MarkerOffset", "StartIndex"
-    };
+    private static readonly IReadOnlyDictionary<string, string> ImageContentTypes =
+        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["png"] = "image/png",
+            ["jpg"] = "image/jpeg",
+            ["jpeg"] = "image/jpeg",
+            ["gif"] = "image/gif",
+            ["bmp"] = "image/bmp"
+        };
 
     internal static byte[] Save(FlowDocument document)
     {
@@ -74,16 +83,29 @@ internal static partial class WriterRkwContentSerializer
             using var archive = new ZipArchive(packageStream, ZipArchiveMode.Read, leaveOpen: false);
             var entries = ValidateEntries(archive);
             ValidateRelationships(ReadEntry(entries["_rels/.rels"], 16 * 1024));
-            ValidateContentTypes(ReadEntry(entries["[Content_Types].xml"], 16 * 1024));
+            var imageParts = entries
+                .Where(pair => TryGetImagePart(pair.Key, out _))
+                .ToDictionary(pair => pair.Key, pair => ReadEntry(pair.Value, MaximumImageBytes),
+                    StringComparer.Ordinal);
+            foreach (var imagePart in imageParts)
+            {
+                if (!TryGetImagePart(imagePart.Key, out var extension)
+                    || !WriterImageCodecValidation.IsAllowedSignature(imagePart.Value, extension))
+                    throw new InvalidDataException("A native image has an unsupported codec signature.");
+            }
+            ValidateDocumentRelationships(entries, imageParts.Keys);
+            ValidateContentTypes(ReadEntry(entries["[Content_Types].xml"], 16 * 1024),
+                imageParts.Keys);
             var xaml = ReadEntry(entries["Xaml/Document.xaml"], MaximumXamlBytes);
-            return BuildDocument(ParseAndValidateXaml(xaml));
+            return BuildDocument(ParseAndValidateXaml(xaml), imageParts);
         }
         catch (InvalidDataException)
         {
             throw;
         }
         catch (Exception exception) when (exception is IOException or XmlException
-                                         or DecoderFallbackException or ArgumentException)
+                                         or DecoderFallbackException or ArgumentException or FileFormatException
+                                         or InvalidOperationException or NotSupportedException)
         {
             throw new InvalidDataException("The native content package is corrupt or unsafe.", exception);
         }
@@ -91,25 +113,32 @@ internal static partial class WriterRkwContentSerializer
 
     private static Dictionary<string, ZipArchiveEntry> ValidateEntries(ZipArchive archive)
     {
-        if (archive.Entries.Count != RequiredParts.Count)
-            throw new InvalidDataException("The native content package contains unexpected parts.");
+        if (archive.Entries.Count < RequiredParts.Count
+            || archive.Entries.Count > RequiredParts.Count + MaximumImageCount + 1)
+            throw new InvalidDataException("The native content package contains an invalid number of parts.");
 
         var entries = new Dictionary<string, ZipArchiveEntry>(StringComparer.Ordinal);
         var collisionNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         long totalLength = 0;
         foreach (var entry in archive.Entries)
         {
-            if (!RequiredParts.Contains(entry.FullName) || !collisionNames.Add(entry.FullName)
+            if ((!RequiredParts.Contains(entry.FullName)
+                    && entry.FullName != "Xaml/_rels/Document.xaml.rels"
+                    && !TryGetImagePart(entry.FullName, out _))
+                || !collisionNames.Add(entry.FullName)
                 || !entries.TryAdd(entry.FullName, entry))
                 throw new InvalidDataException("The native content package contains an invalid or duplicate part.");
-            if (entry.Length < 0 || entry.Length > MaximumPackageBytes)
+            var maximumPartBytes = TryGetImagePart(entry.FullName, out _)
+                ? MaximumImageBytes
+                : MaximumPackageBytes;
+            if (entry.Length < 0 || entry.Length > maximumPartBytes)
                 throw new InvalidDataException("A native content part exceeds its size limit.");
             totalLength = checked(totalLength + entry.Length);
             if (totalLength > MaximumPackageBytes)
                 throw new InvalidDataException("The native content package exceeds its expanded size limit.");
         }
 
-        if (!RequiredParts.SetEquals(entries.Keys))
+        if (!RequiredParts.IsSubsetOf(entries.Keys))
             throw new InvalidDataException("The native content package is missing a required part.");
         return entries;
     }
@@ -132,6 +161,26 @@ internal static partial class WriterRkwContentSerializer
         return destination.ToArray();
     }
 
+    private static bool TryGetImagePart(string name, out string extension)
+    {
+        extension = string.Empty;
+        if (!name.StartsWith("Xaml/Image", StringComparison.Ordinal)
+            || name.Contains('\\') || name.Contains("..", StringComparison.Ordinal))
+            return false;
+
+        var fileName = name[5..];
+        var dot = fileName.IndexOf('.');
+        if (dot <= "Image".Length || dot == fileName.Length - 1
+            || fileName.IndexOf('.', dot + 1) >= 0)
+            return false;
+        var ordinalText = fileName["Image".Length..dot];
+        if (!int.TryParse(ordinalText, NumberStyles.None, CultureInfo.InvariantCulture, out var ordinal)
+            || ordinal is < 1 or > MaximumImageCount)
+            return false;
+        extension = fileName[(dot + 1)..].ToLowerInvariant();
+        return ImageContentTypes.ContainsKey(extension);
+    }
+
     private static void ValidateRelationships(byte[] bytes)
     {
         var document = ParseXml(bytes, 16 * 1024);
@@ -149,11 +198,59 @@ internal static partial class WriterRkwContentSerializer
                 || attribute.Name.Namespace != XNamespace.None)
             || relationship.Attribute("Type")?.Value != EntryRelationshipType
             || relationship.Attribute("Target")?.Value != "/Xaml/Document.xaml"
-            || string.IsNullOrWhiteSpace(relationship.Attribute("Id")?.Value))
+            || !IsSafeRelationshipId(relationship.Attribute("Id")?.Value))
             throw new InvalidDataException("The native content entry relationship is unsafe or unsupported.");
     }
 
-    private static void ValidateContentTypes(byte[] bytes)
+    private static void ValidateDocumentRelationships(
+        IReadOnlyDictionary<string, ZipArchiveEntry> entries,
+        IReadOnlyCollection<string> imagePartNames)
+    {
+        var hasRelationships = entries.TryGetValue("Xaml/_rels/Document.xaml.rels", out var relationshipEntry);
+        if (imagePartNames.Count == 0)
+        {
+            if (hasRelationships)
+                throw new InvalidDataException("The native content package has orphaned image relationships.");
+            return;
+        }
+        if (!hasRelationships)
+            throw new InvalidDataException("The native content package is missing image relationships.");
+
+        var document = ParseXml(ReadEntry(relationshipEntry!, 64 * 1024), 64 * 1024);
+        XNamespace ns = RelationshipsNamespace;
+        if (document.Root?.Name != ns + "Relationships")
+            throw new InvalidDataException("The native image relationship part is invalid.");
+
+        var relationships = document.Root.Elements().ToArray();
+        if (relationships.Length != imagePartNames.Count
+            || relationships.Any(element => element.Name != ns + "Relationship"))
+            throw new InvalidDataException("The native image relationship part is incomplete.");
+
+        var expected = imagePartNames.ToHashSet(StringComparer.Ordinal);
+        var ids = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var relationship in relationships)
+        {
+            var allowedAttributes = new HashSet<string>(StringComparer.Ordinal) { "Type", "Target", "Id" };
+            if (relationship.Attributes().Any(attribute => attribute.IsNamespaceDeclaration
+                    || !allowedAttributes.Contains(attribute.Name.LocalName)
+                    || attribute.Name.Namespace != XNamespace.None))
+                throw new InvalidDataException("The native image relationship part contains unsupported attributes.");
+
+            var target = relationship.Attribute("Target")?.Value;
+            var id = relationship.Attribute("Id")?.Value;
+            if (relationship.Attribute("Type")?.Value != ComponentRelationshipType
+                || !IsSafeRelationshipId(id) || !ids.Add(id!)
+                || target is null || !target.StartsWith("/Xaml/", StringComparison.Ordinal)
+                || target.Contains("\\", StringComparison.Ordinal)
+                || target.Contains("..", StringComparison.Ordinal)
+                || !expected.Remove(target[1..]))
+                throw new InvalidDataException("The native image relationship part is unsafe.");
+        }
+        if (expected.Count != 0)
+            throw new InvalidDataException("The native image relationship part has unreferenced images.");
+    }
+
+    private static void ValidateContentTypes(byte[] bytes, IReadOnlyCollection<string> imagePartNames)
     {
         var document = ParseXml(bytes, 16 * 1024);
         XNamespace ns = ContentTypesNamespace;
@@ -161,21 +258,47 @@ internal static partial class WriterRkwContentSerializer
             throw new InvalidDataException("The native content type part is invalid.");
 
         var defaults = document.Root.Elements().ToArray();
-        if (defaults.Length != 2 || defaults.Any(element => element.Name != ns + "Default"))
+        if (defaults.Length < 2 || defaults.Any(element => element.Name != ns + "Default"))
             throw new InvalidDataException("The native content package declares unsupported content types.");
-        var pairs = defaults.Select(element => (
-                Extension: element.Attribute("Extension")?.Value,
-                ContentType: element.Attribute("ContentType")?.Value))
-            .ToHashSet();
-        (string? Extension, string? ContentType)[] requiredPairs =
-        [
-            ("xaml", "application/vnd.ms-wpf.xaml+xml"),
-            ("rels", "application/vnd.openxmlformats-package.relationships+xml")
-        ];
-        if (!pairs.SetEquals(requiredPairs))
+        var pairs = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var element in defaults)
+        {
+            if (element.Attributes().Count() != 2)
+                throw new InvalidDataException("The native content type part contains unexpected data.");
+            var extension = element.Attribute("Extension")?.Value;
+            var contentType = element.Attribute("ContentType")?.Value;
+            if (extension is null or { Length: 0 } || contentType is null or { Length: 0 }
+                || extension.Length > 16 || contentType.Length > 128
+                || !pairs.TryAdd(extension, contentType))
+                throw new InvalidDataException("The native content type part contains duplicate or invalid data.");
+        }
+        if (!pairs.TryGetValue("xaml", out var xamlType)
+            || xamlType != "application/vnd.ms-wpf.xaml+xml"
+            || !pairs.TryGetValue("rels", out var relsType)
+            || relsType != "application/vnd.openxmlformats-package.relationships+xml")
             throw new InvalidDataException("The native content package declares unsupported content types.");
-        if (defaults.Any(element => element.Attributes().Count() != 2))
-            throw new InvalidDataException("The native content type part contains unexpected data.");
+
+        var actualImageExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var imagePartName in imagePartNames)
+        {
+            if (!TryGetImagePart(imagePartName, out var extension))
+                throw new InvalidDataException("The native content package contains an invalid image part.");
+            actualImageExtensions.Add(extension);
+        }
+
+        var declaredImageExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var extension in pairs.Keys)
+        {
+            if (extension.Equals("xaml", StringComparison.OrdinalIgnoreCase)
+                || extension.Equals("rels", StringComparison.OrdinalIgnoreCase))
+                continue;
+            if (!ImageContentTypes.TryGetValue(extension, out var expectedType)
+                || pairs[extension] != expectedType)
+                throw new InvalidDataException("The native content package declares an invalid image type.");
+            declaredImageExtensions.Add(extension);
+        }
+        if (!declaredImageExtensions.SetEquals(actualImageExtensions))
+            throw new InvalidDataException("The native content package image declarations do not match its image parts.");
     }
 
     private static XDocument ParseAndValidateXaml(byte[] bytes)
@@ -254,22 +377,34 @@ internal static partial class WriterRkwContentSerializer
         {
             if (attribute.IsNamespaceDeclaration)
             {
-                if (attribute.Name.LocalName != "xmlns" || attribute.Value != PresentationNamespace)
+                if (element.Name.LocalName != "Section"
+                    || attribute.Name.LocalName != "xmlns" || attribute.Value != PresentationNamespace)
                     throw new InvalidDataException("The native document contains an unsupported XML namespace.");
                 continue;
             }
             if (attribute.Name.Namespace == XNamespace.Xml)
             {
-                if (attribute.Name.LocalName is not ("space" or "lang"))
+                if (attribute.Name.LocalName is not ("space" or "lang")
+                    || !AllowsTextAttributes(element.Name.LocalName))
                     throw new InvalidDataException("The native document contains an unsupported XML attribute.");
                 continue;
             }
             if (attribute.Name.Namespace != XNamespace.None)
                 throw new InvalidDataException("The native document contains an unsupported namespaced attribute.");
-            if (!AllowedAttributes.Contains(attribute.Name.LocalName)
-                && !attribute.Name.LocalName.StartsWith("Typography.", StringComparison.Ordinal)
-                && !attribute.Name.LocalName.StartsWith("NumberSubstitution.", StringComparison.Ordinal))
+            if (!IsAllowedAttribute(element.Name.LocalName, attribute.Name.LocalName))
                 throw new InvalidDataException($"Unsupported native document attribute '{attribute.Name.LocalName}'.");
+            if (attribute.Name.LocalName == "NavigateUri")
+            {
+                if (!TryParseSafeUri(attribute.Value, out _))
+                    throw new InvalidDataException("The native document contains an unsafe hyperlink URI.");
+                continue;
+            }
+            if (attribute.Name.LocalName == "UriSource")
+            {
+                if (!TryNormalizeImageReference(attribute.Value, out _))
+                    throw new InvalidDataException("The native document contains an unsafe image URI.");
+                continue;
+            }
             if (attribute.Value.Length > 512 || attribute.Value.Contains('{') || attribute.Value.Contains('}')
                 || attribute.Value.Contains("://", StringComparison.Ordinal)
                 || attribute.Value.Contains('\\'))
@@ -277,17 +412,22 @@ internal static partial class WriterRkwContentSerializer
         }
     }
 
-    private static FlowDocument BuildDocument(XDocument source)
+    private static FlowDocument BuildDocument(XDocument source,
+        IReadOnlyDictionary<string, byte[]> imageParts)
     {
         var document = new FlowDocument();
+        var usedImageParts = new HashSet<string>(StringComparer.Ordinal);
         ApplyTextProperties(source.Root!, document);
         ApplyBlockProperties(source.Root!, document);
-        foreach (var block in BuildBlocks(source.Root!))
+        foreach (var block in BuildBlocks(source.Root!, imageParts, usedImageParts))
             document.Blocks.Add(block);
+        if (!usedImageParts.SetEquals(imageParts.Keys))
+            throw new InvalidDataException("The native content package contains unreferenced image data.");
         return document;
     }
 
-    private static IEnumerable<Block> BuildBlocks(XElement parent)
+    private static IEnumerable<Block> BuildBlocks(XElement parent,
+        IReadOnlyDictionary<string, byte[]> imageParts, ISet<string> usedImageParts)
     {
         foreach (var node in parent.Nodes())
         {
@@ -301,36 +441,39 @@ internal static partial class WriterRkwContentSerializer
                 throw new InvalidDataException("The native document contains unsupported block content.");
             yield return element.Name.LocalName switch
             {
-                "Paragraph" => BuildParagraph(element),
-                "List" => BuildList(element),
-                "Section" => BuildSection(element),
+                "Paragraph" => BuildParagraph(element, imageParts, usedImageParts),
+                "List" => BuildList(element, imageParts, usedImageParts),
+                "Section" => BuildSection(element, imageParts, usedImageParts),
                 _ => throw new InvalidDataException($"Element '{element.Name.LocalName}' is not valid block content.")
             };
         }
     }
 
-    private static Paragraph BuildParagraph(XElement element)
+    private static Paragraph BuildParagraph(XElement element,
+        IReadOnlyDictionary<string, byte[]> imageParts, ISet<string> usedImageParts)
     {
         var paragraph = new Paragraph();
         ApplyTextProperties(element, paragraph);
         ApplyBlockProperties(element, paragraph);
         ApplyParagraphProperties(element, paragraph);
-        foreach (var inline in BuildInlines(element))
+        foreach (var inline in BuildInlines(element, imageParts, usedImageParts))
             paragraph.Inlines.Add(inline);
         return paragraph;
     }
 
-    private static Section BuildSection(XElement element)
+    private static Section BuildSection(XElement element,
+        IReadOnlyDictionary<string, byte[]> imageParts, ISet<string> usedImageParts)
     {
         var section = new Section();
         ApplyTextProperties(element, section);
         ApplyBlockProperties(element, section);
-        foreach (var block in BuildBlocks(element))
+        foreach (var block in BuildBlocks(element, imageParts, usedImageParts))
             section.Blocks.Add(block);
         return section;
     }
 
-    private static List BuildList(XElement element)
+    private static List BuildList(XElement element,
+        IReadOnlyDictionary<string, byte[]> imageParts, ISet<string> usedImageParts)
     {
         var list = new List();
         ApplyTextProperties(element, list);
@@ -348,7 +491,7 @@ internal static partial class WriterRkwContentSerializer
                 throw new InvalidDataException("A native list contains unsupported content.");
             var item = new ListItem();
             ApplyTextProperties(child, item);
-            foreach (var block in BuildBlocks(child))
+            foreach (var block in BuildBlocks(child, imageParts, usedImageParts))
                 item.Blocks.Add(block);
             list.ListItems.Add(item);
         }
@@ -357,7 +500,8 @@ internal static partial class WriterRkwContentSerializer
         return list;
     }
 
-    private static IEnumerable<Inline> BuildInlines(XElement parent)
+    private static IEnumerable<Inline> BuildInlines(XElement parent,
+        IReadOnlyDictionary<string, byte[]> imageParts, ISet<string> usedImageParts)
     {
         foreach (var node in parent.Nodes())
         {
@@ -373,11 +517,13 @@ internal static partial class WriterRkwContentSerializer
             Inline inline = element.Name.LocalName switch
             {
                 "Run" => BuildRun(element),
-                "Span" => BuildSpan(element, new Span()),
-                "Bold" => BuildSpan(element, new Bold()),
-                "Italic" => BuildSpan(element, new Italic()),
-                "Underline" => BuildSpan(element, new Underline()),
+                "Span" => BuildSpan(element, new Span(), imageParts, usedImageParts),
+                "Bold" => BuildSpan(element, new Bold(), imageParts, usedImageParts),
+                "Italic" => BuildSpan(element, new Italic(), imageParts, usedImageParts),
+                "Underline" => BuildSpan(element, new Underline(), imageParts, usedImageParts),
                 "LineBreak" => BuildLineBreak(element),
+                "Hyperlink" => BuildHyperlink(element, imageParts, usedImageParts),
+                "InlineUIContainer" => BuildInlineUiContainer(element, imageParts, usedImageParts),
                 _ => throw new InvalidDataException($"Element '{element.Name.LocalName}' is not valid inline content.")
             };
             yield return inline;
@@ -394,11 +540,12 @@ internal static partial class WriterRkwContentSerializer
         return run;
     }
 
-    private static Span BuildSpan(XElement element, Span span)
+    private static Span BuildSpan(XElement element, Span span,
+        IReadOnlyDictionary<string, byte[]> imageParts, ISet<string> usedImageParts)
     {
         ApplyTextProperties(element, span);
         ApplyInlineProperties(element, span);
-        foreach (var inline in BuildInlines(element))
+        foreach (var inline in BuildInlines(element, imageParts, usedImageParts))
             span.Inlines.Add(inline);
         return span;
     }
@@ -411,6 +558,190 @@ internal static partial class WriterRkwContentSerializer
         ApplyTextProperties(element, lineBreak);
         return lineBreak;
     }
+
+    private static Hyperlink BuildHyperlink(XElement element,
+        IReadOnlyDictionary<string, byte[]> imageParts, ISet<string> usedImageParts)
+    {
+        if (!TryAttribute(element, "NavigateUri", out var value)
+            || !TryParseSafeUri(value, out var uri)
+            || element.Descendants().Any(child => child.Name.LocalName == "Hyperlink"))
+            throw new InvalidDataException("The native document contains an invalid hyperlink URI.");
+
+        var hyperlink = new Hyperlink { NavigateUri = uri };
+        ApplyTextProperties(element, hyperlink);
+        ApplyInlineProperties(element, hyperlink);
+        foreach (var inline in BuildInlines(element, imageParts, usedImageParts))
+            hyperlink.Inlines.Add(inline);
+        return hyperlink;
+    }
+
+    private static InlineUIContainer BuildInlineUiContainer(XElement element,
+        IReadOnlyDictionary<string, byte[]> imageParts, ISet<string> usedImageParts)
+    {
+        if (element.Nodes().OfType<XText>().Any(text => !string.IsNullOrWhiteSpace(text.Value)))
+            throw new InvalidDataException("An inline UI container contains unsupported text.");
+        var children = element.Elements().ToArray();
+        if (children.Length != 1 || children[0].Name.LocalName != "Image")
+            throw new InvalidDataException("Only one inert image is supported in an inline UI container.");
+
+        var container = new InlineUIContainer(BuildImage(children[0], imageParts, usedImageParts));
+        ApplyInlineProperties(element, container);
+        return container;
+    }
+
+    private static Image BuildImage(XElement element,
+        IReadOnlyDictionary<string, byte[]> imageParts, ISet<string> usedImageParts)
+    {
+        if (element.Nodes().OfType<XText>().Any(text => !string.IsNullOrWhiteSpace(text.Value)))
+            throw new InvalidDataException("A native image contains unsupported text.");
+        var sourceProperties = element.Elements().ToArray();
+        if (sourceProperties.Length != 1 || sourceProperties[0].Name.LocalName != "Image.Source"
+            || sourceProperties[0].Nodes().OfType<XText>()
+                .Any(text => !string.IsNullOrWhiteSpace(text.Value)))
+            throw new InvalidDataException("A native image must have one packaged source.");
+        var bitmapElement = sourceProperties[0].Elements().ToArray();
+        if (bitmapElement.Length != 1 || bitmapElement[0].Name.LocalName != "BitmapImage"
+            || bitmapElement[0].Nodes().OfType<XText>().Any(text => !string.IsNullOrWhiteSpace(text.Value)))
+            throw new InvalidDataException("A native image has an unsupported source graph.");
+
+        var bitmapSource = bitmapElement[0];
+        if (!TryAttribute(bitmapSource, "UriSource", out var uriSource)
+            || !TryNormalizeImageReference(uriSource, out var partName)
+            || !imageParts.TryGetValue(partName, out var bytes))
+            throw new InvalidDataException("A native image source is missing or unsafe.");
+        if (TryAttribute(bitmapSource, "CacheOption", out var cacheOption) && cacheOption != "OnLoad")
+            throw new InvalidDataException("Native images must use an on-load cache option.");
+        if (TryAttribute(bitmapSource, "CreateOptions", out var createOptions)
+            && createOptions != "PreservePixelFormat")
+            throw new InvalidDataException("Native images must preserve their decoded pixel format.");
+        if (!TryGetImagePart(partName, out var extension)
+            || !WriterImageCodecValidation.TryReadDimensions(bytes, out var width, out var height)
+            || !WriterImageCodecValidation.IsAllowedSignature(bytes, extension)
+            || !WriterImageCodecValidation.IsWithinLimits(width, height,
+                MaximumImagePixels, 8192))
+            throw new InvalidDataException("A native image exceeds its decoded size limit.");
+        usedImageParts.Add(partName);
+
+        BitmapImage bitmap;
+        try
+        {
+            using var stream = new MemoryStream(bytes, writable: false);
+            bitmap = new BitmapImage();
+            bitmap.BeginInit();
+            bitmap.CacheOption = BitmapCacheOption.OnLoad;
+            bitmap.StreamSource = stream;
+            bitmap.EndInit();
+            if (!WriterImageCodecValidation.IsWithinLimits(bitmap.PixelWidth, bitmap.PixelHeight,
+                MaximumImagePixels, 8192))
+                throw new InvalidDataException("A native image exceeds its decoded size limit.");
+            bitmap.Freeze();
+        }
+        catch (InvalidDataException)
+        {
+            throw;
+        }
+        catch (Exception exception) when (exception is ArgumentException or FileFormatException
+                                             or IOException or InvalidOperationException
+                                             or NotSupportedException or OverflowException
+                                             or OutOfMemoryException
+                                             or System.Runtime.InteropServices.ExternalException)
+        {
+            throw new InvalidDataException("A native image cannot be decoded safely.", exception);
+        }
+
+        var image = new Image
+        {
+            Source = bitmap,
+            Stretch = Stretch.Uniform,
+            IsHitTestVisible = false,
+            SnapsToDevicePixels = true
+        };
+        ApplyImageProperty(element, image, "Width", minimum: 0.01, maximum: 8192);
+        ApplyImageProperty(element, image, "Height", minimum: 0.01, maximum: 8192);
+        ApplyImageProperty(element, image, "MaxWidth", minimum: 0, maximum: 8192);
+        ApplyImageProperty(element, image, "MaxHeight", minimum: 0, maximum: 8192);
+        ApplyImageProperty(element, image, "MinWidth", minimum: 0, maximum: 8192);
+        ApplyImageProperty(element, image, "MinHeight", minimum: 0, maximum: 8192);
+        if (TryAttribute(element, "Stretch", out var stretch))
+            image.Stretch = ParseEnum<Stretch>(stretch, "image stretch");
+        if (TryAttribute(element, "SnapsToDevicePixels", out var snaps))
+            image.SnapsToDevicePixels = ParseBoolean(snaps, "SnapsToDevicePixels");
+        return image;
+    }
+
+    private static void ApplyImageProperty(XElement element, Image image, string name,
+        double minimum, double maximum)
+    {
+        if (!TryAttribute(element, name, out var value))
+            return;
+        var description = name switch
+        {
+            "Width" => "image width",
+            "Height" => "image height",
+            "MaxWidth" => "image maximum width",
+            "MaxHeight" => "image maximum height",
+            "MinWidth" => "image minimum width",
+            "MinHeight" => "image minimum height",
+            _ => "image dimension"
+        };
+        var parsed = ParseDouble(value, minimum, maximum, description);
+        switch (name)
+        {
+            case "Width": image.Width = parsed; break;
+            case "Height": image.Height = parsed; break;
+            case "MaxWidth": image.MaxWidth = parsed; break;
+            case "MaxHeight": image.MaxHeight = parsed; break;
+            case "MinWidth": image.MinWidth = parsed; break;
+            case "MinHeight": image.MinHeight = parsed; break;
+        }
+    }
+
+    private static bool IsAllowedAttribute(string elementName, string attributeName)
+    {
+        if (AllowsTextAttributes(elementName)
+            && (attributeName.StartsWith("Typography.", StringComparison.Ordinal)
+                || attributeName.StartsWith("NumberSubstitution.", StringComparison.Ordinal)))
+            return true;
+
+        return elementName switch
+        {
+            "Section" => attributeName is "FontFamily" or "FontStyle" or "FontWeight"
+                or "FontStretch" or "FontSize" or "Foreground" or "Background"
+                or "FlowDirection" or "TextAlignment" or "LineHeight"
+                or "LineStackingStrategy" or "IsHyphenationEnabled" or "Margin" or "Padding",
+            "Paragraph" => attributeName is "FontFamily" or "FontStyle" or "FontWeight"
+                or "FontStretch" or "FontSize" or "Foreground" or "Background"
+                or "FlowDirection" or "TextAlignment" or "LineHeight"
+                or "LineStackingStrategy" or "IsHyphenationEnabled" or "Margin" or "Padding" or "TextIndent"
+                or "KeepTogether" or "KeepWithNext" or "MinOrphanLines" or "MinWidowLines",
+            "List" => attributeName is "FontFamily" or "FontStyle" or "FontWeight"
+                or "FontStretch" or "FontSize" or "Foreground" or "Background"
+                or "FlowDirection" or "TextAlignment" or "LineHeight"
+                or "LineStackingStrategy" or "IsHyphenationEnabled" or "Margin" or "Padding" or "MarkerStyle"
+                or "MarkerOffset" or "StartIndex",
+            "ListItem" => attributeName is "FontFamily" or "FontStyle" or "FontWeight"
+                or "FontStretch" or "FontSize" or "Foreground" or "Background"
+                or "FlowDirection",
+            "Run" or "Span" or "Bold" or "Italic" or "Underline" or "LineBreak" =>
+                attributeName is "FontFamily" or "FontStyle" or "FontWeight"
+                or "FontStretch" or "FontSize" or "Foreground" or "Background"
+                or "FlowDirection" or "BaselineAlignment" or "TextDecorations",
+            "Hyperlink" => attributeName is "FontFamily" or "FontStyle" or "FontWeight"
+                or "FontStretch" or "FontSize" or "Foreground" or "Background"
+                or "FlowDirection" or "BaselineAlignment" or "TextDecorations"
+                or "NavigateUri",
+            "InlineUIContainer" => attributeName is "BaselineAlignment" or "TextDecorations",
+            "Image" => attributeName is "Width" or "Height" or "MaxWidth" or "MaxHeight"
+                or "MinWidth" or "MinHeight" or "Stretch" or "SnapsToDevicePixels",
+            "Image.Source" => false,
+            "BitmapImage" => attributeName is "UriSource" or "CacheOption" or "CreateOptions",
+            _ => false
+        };
+    }
+
+    private static bool AllowsTextAttributes(string elementName) => elementName is
+        "Section" or "Paragraph" or "List" or "ListItem" or "Run" or "Span"
+        or "Bold" or "Italic" or "Underline" or "LineBreak" or "Hyperlink";
 
     private static void ApplyTextProperties(XElement source, DependencyObject target)
     {
@@ -449,6 +780,9 @@ internal static partial class WriterRkwContentSerializer
         if (TryAttribute(source, "LineStackingStrategy", out var lineStacking))
             target.SetValue(Block.LineStackingStrategyProperty,
                 ParseEnum<LineStackingStrategy>(lineStacking, "line stacking strategy"));
+        if (TryAttribute(source, "IsHyphenationEnabled", out var hyphenation))
+            target.SetValue(Block.IsHyphenationEnabledProperty,
+                ParseBoolean(hyphenation, "IsHyphenationEnabled"));
         if (TryAttribute(source, "Margin", out var margin))
             target.SetValue(Block.MarginProperty, ParseThickness(margin, "block margin"));
         if (TryAttribute(source, "Padding", out var padding))
@@ -481,6 +815,33 @@ internal static partial class WriterRkwContentSerializer
     {
         value = element.Attribute(name)?.Value ?? string.Empty;
         return element.Attribute(name) is not null;
+    }
+
+    private static bool TryParseSafeUri(string value, out Uri uri)
+        => WriterHyperlinkService.TryParseUri(value, out uri);
+
+    private static bool TryNormalizeImageReference(string value, out string partName)
+    {
+        partName = string.Empty;
+        if (value.Length is 0 or > 128 || !value.StartsWith("./", StringComparison.Ordinal)
+            || value.Contains('\\') || value.IndexOf('/', 2) >= 0
+            || value.Contains("://", StringComparison.Ordinal)
+            || value.Contains("..", StringComparison.Ordinal))
+            return false;
+        value = value[2..];
+        if (!TryGetImagePart("Xaml/" + value, out _))
+            return false;
+        partName = "Xaml/" + value;
+        return true;
+    }
+
+    private static bool IsSafeRelationshipId(string? value)
+    {
+        if (value is null || value.Length is 0 or > 128
+            || !(char.IsLetter(value[0]) || value[0] == '_'))
+            return false;
+        return value.Skip(1).All(static character => char.IsLetterOrDigit(character)
+            || character is '_' or '-' or '.');
     }
 
     private static bool ParseBoolean(string value, string description) => value switch

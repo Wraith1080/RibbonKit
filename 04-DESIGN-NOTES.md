@@ -5191,6 +5191,78 @@ the standard and 800×900 New page, all three profile states, Ctrl+N default beh
 External Backstage-content UIA traversal remains RKWF-004 rather than a W0-F app defect. W2-F is the next
 UI-exclusive packet and has not started.
 
+### 3.114 RibbonKit Writer W2-F margin guides and interactive horizontal ruler — 2026-08-25
+
+Paper view now owns a non-printing horizontal ruler and an optional content-boundary guide without adding either
+surface to the `FlowDocument`, clipboard, native persistence, preview clone, paginator or print output. The ruler
+uses the live paper canvas origin plus one document zoom scale, so its ticks, shaded margin zones and first-line,
+hanging, left and right paragraph markers follow paper centring and horizontal scrolling. Continuous editing and
+modal Print Preview hide both adornments. View exposes large labelled Ruler and Margin Guides toggles with stable
+command IDs, KeyTips, ScreenTips and automation metadata; their state remains app view state for W4-A persistence.
+
+Page-margin dragging keeps a visual-only candidate and commits one validated immutable `DocumentPageSettings`
+replacement on release. Paragraph-marker dragging is likewise deferred until release and then applies one native
+editor undo unit. Escape, capture loss, view/profile/document/page changes, visibility changes, unload and disposal
+cancel active work. Cancellation never writes paragraph properties, so inherited/`NaN` values, selection, dirty
+state and undo history remain untouched. Mixed paragraph selections suppress the marker projection instead of
+presenting the first paragraph as uniform. The guide is non-hit-testable, clipped to the editor row and uses a
+slightly translucent neutral secondary-text gray; High Contrast switches ruler and guide drawing to system brushes.
+
+The focused ruler/drag gate passes **22/22** and the complete Writer suite passes **281/281**. The solution builds
+with zero warnings/errors and the unchanged RibbonKit/visual suites pass **355/355** and **1/1** respectively. A
+clean live launch at the available 125% scale confirmed immediate editor focus, paper/ruler alignment, the lighter
+neutral-gray guide, clipping above the status bar, View KeyTip toggles and Paper/Continuous visibility restoration.
+External UI Automation still reaches the View tab but not its realized Ruler/Margin Guides leaves; that remains the
+bounded RKWF-006 library investigation rather than permission for a `src/RibbonKit/**` change. W2-F is accepted;
+W3-A images/hyperlinks and W3-B simple FlowDocument table core are the next dependency-ready packets.
+
+### 3.115 RibbonKit Writer W3-A portable images, hyperlinks and date/time — 2026-08-26
+
+Writer now has app-owned structured-inline services without adding Picture Tools or other ribbon UI. Portable
+PNG/JPEG/GIF/BMP insertion decodes from bounded on-load streams, freezes the bitmap, keeps the inline container inert
+and rejects invalid signatures, dimensions and pixel counts before WPF performs the full decode. The shared header
+validator and native `.rkw` reader enforce the same 16 MiB, 8192-pixel-edge and 32-megapixel limits. Empty documents
+gain their first paragraph atomically, and insertion/removal participates in the native editor undo stack.
+
+Hyperlink creation, edit and removal accept only bounded absolute HTTP, HTTPS and conservative `mailto` targets.
+Encoded controls, credentials, external file/package targets and other schemes fail without mutation. URI edits
+replace the inline inside one native change scope because WPF does not record a direct `NavigateUri` dependency-
+property assignment in undo history. Date/time insertion requires an explicit value/format and supports deterministic
+culture input while retaining a current-culture default for application use.
+
+Native persistence remains data-only. The allowlist reconstructs only the approved `Hyperlink` and inert image shape,
+requires internal image relationships, exact image content-type declarations and safe URI values, and rejects missing,
+extra, case-colliding, external, corrupt, oversized or decoder-invalid parts before object use. Save preflights the
+same 61 MiB expanded-package ceiling enforced by Load, so a successful native Save is guaranteed to reopen under the
+same limits. The native capability catalog now advertises portable image/hyperlink fidelity and downgrade warnings
+include both losses.
+
+The combined W3-A/native-persistence gate passes **47/47**. Independent security review closed hyperlink undo,
+encoded-URI, corrupt-image, predecode-dimension, content-type and save/load-size findings. W3-A is accepted; its
+dialog/ribbon presentation remains a later UI integration seam rather than part of this non-UI packet.
+
+### 3.116 RibbonKit Writer W3-B simple FlowDocument table core — 2026-08-26
+
+Writer now has an app-owned `WriterTableService` for 1×1 through 8×8 insertion, caret/cell/range discovery, row and
+column insertion/deletion, rectangular merge, spanned-cell split, final-cell Tab row creation, alignment, padding,
+border/background, bounded sizing and row/column distribution. Span-based occupancy validation rejects gaps,
+overlaps, empty row groups, foreign references, excessive grids and partial ranges before mutation. Failed and no-op
+operations leave the tree, selection, `TextChanged` count and undo history unchanged; semantic empty-cell placeholders
+normalize to one valid paragraph while meaningfully formatted empty blocks remain intact.
+
+Realized `RichTextBox` tests established the undo boundary. Row/cell structural and formatting mutations use one
+native `BeginChange` unit. WPF does not record isolated `Table.Columns` collection/property edits, so column metadata
+operations deep-clone and replace the containing table inside the same native unit, then resolve fresh references and
+restore a logical caret. The clone contract is intentionally bounded to package-serializable FlowDocument content;
+unsupported custom/external objects fail before replacement, and structural commands intentionally collapse a
+non-empty selection to the resulting caret. Row height remains a documented symmetric-padding approximation because
+WPF exposes no native fixed `TableRow.Height`.
+
+The focused W3-B gate passes **24/24**, including native undo/redo, unequal row groups, spanned final Tab, empty and
+formatted-empty merge/split, exact-range no-ops, rollback, clone fidelity and grid limits. W3-B is accepted. Table
+picker/keyboard routing/contextual Table Tools belong to W3-C, while table `.rkw`/RTF fidelity remains W3-D; the native
+capability catalog therefore still reports `PreservesTables=false`. No `src/RibbonKit/**` change was required.
+
 ## 4. Workflow / Session Conventions
 
 - Work from the current Windows checkout at
@@ -5207,7 +5279,7 @@ UI-exclusive packet and has not started.
 
 ## 5. Current State & Next Steps
 
-> **Authoritative status as of 2026-08-24.** Historical checkpoints remain in §3, but status and
+> **Authoritative status as of 2026-08-25.** Historical checkpoints remain in §3, but status and
 > test counts quoted elsewhere should be reconciled against this section and rerun when current
 > evidence matters.
 
@@ -5248,7 +5320,9 @@ UI-exclusive packet and has not started.
   Canonical Plain Text, Rich Text and RibbonKit Writer profiles now share one extension/capability catalog, typed-New
   contract and capability-derived conversion policy with post-success-only identity commits. A pictured, responsive
   Backstage New gallery projects those capabilities onto whole tabs/groups, default Save extensions and one generic
-  downgrade decision while centrally restoring editor focus after Backstage commands.
+  downgrade decision while centrally restoring editor focus after Backstage commands. Paper view now adds a calibrated
+  ruler and non-printing margin guides. Portable images/hyperlinks/date-time and the simple FlowDocument table core are
+  implemented behind app-owned, undoable services with strict native-package safety and structural invariants.
 
 ### Remaining or intentionally deferred
 
@@ -5258,10 +5332,12 @@ UI-exclusive packet and has not started.
 - Final live visual tuning and approval of the Office 2010 Aero-inspired frame prototype (§3.97).
 - Touch density, richer automatic QAT projections, custom-control projection APIs and additional
   themes remain post-v1 candidates. Their plan documents are not implementation evidence.
-- RibbonKit Writer W2-E is accepted through §3.113 on the available 125%-scale hardware. Both A4 and Letter preview/PDF
+- RibbonKit Writer W3-A/W3-B are accepted through §3.116; W2-F remains accepted on the available 125%-scale hardware.
+  Both A4 and Letter preview/PDF
   paths passed, including all five output pages and the page-four corruption regression. Live mixed-monitor movement
-  remains a named W4-C hardware check because only one display is connected. W0-F is accepted and W2-F is the next
-  UI-exclusive packet. W4 keeps the final whole-product consistency pass after W2/W3.
+  remains a named W4-C hardware check because only one display is connected. W3-C contextual Table Tools is the next
+  UI-exclusive packet; W3-D owns the later structured round-trip/RTF matrix. W4 keeps the final whole-product
+  consistency pass after W2/W3.
 - Automatic `Icons.xaml` discovery is best-effort by design. Keep `Load Icons.xaml…` available
   for ambiguity, inaccessible paths, parse failures, or no match.
 
@@ -5331,6 +5407,16 @@ UI-exclusive packet and has not started.
   Writer passes **259/259** with W0-F assertions folded into existing shell/window facts; the solution builds with
   zero warnings/errors and RibbonKit/visual remain **355/355** and **1/1**. Standard and 800×900 live New/profile
   surfaces passed at the available scale; W2-F is next and has not started.
+- 2026-08-25 after §3.114: the inventory is 636 logic tests plus one visual test covering 63 approved images. W2-F's
+  focused ruler/drag gate passes **22/22** and Writer passes **281/281**; the solution builds with zero warnings/errors
+  and RibbonKit/visual remain **355/355** and **1/1**. The actual Paper/Continuous, immediate-focus, ruler alignment,
+  neutral-gray guide, clipping and View KeyTip surfaces passed at the available 125% scale. External leaf traversal
+  remains the RKWF-006 investigation and mixed-monitor/DPI movement remains deferred to W4-C hardware verification.
+- 2026-08-26 after §§3.115-3.116: the inventory is 688 logic tests plus one visual test covering 63 approved images.
+  The combined W3-A/W3-B security, persistence and table-core gate passes **71/71**, and Writer passes **333/333** on
+  repeated runs after its realized-window tests joined the serialized Writer UI collection. The solution builds with
+  zero warnings/errors and RibbonKit/visual remain **355/355** and **1/1**. No RibbonKit runtime gap or change was
+  required; W3-C owns the next live ribbon/table interaction surface.
 - Before quoting a current count or declaring a new change complete, rerun the proportional build
   and test commands. Inspect actual/diff PNG artifacts before changing visual baselines or
   tolerances.

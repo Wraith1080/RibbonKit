@@ -121,7 +121,8 @@ public sealed class WriterPersistenceTests
             Assert.False(richText.PreservesPageSettings);
             var native = WriterDocumentPersistence.GetCapabilities(WriterDocumentFormat.RibbonKitWriter);
             Assert.True(native.PreservesFormatting);
-            Assert.False(native.PreservesImages);
+            Assert.True(native.PreservesImages);
+            Assert.True(native.PreservesHyperlinks);
             Assert.False(native.PreservesTables);
             Assert.True(native.PreservesPageSettings);
         });

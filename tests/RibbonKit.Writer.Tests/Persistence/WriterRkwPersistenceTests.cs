@@ -180,6 +180,98 @@ public sealed class WriterRkwPersistenceTests
     }
 
     [Theory]
+    [InlineData("https://user:password@example.com/secret")]
+    [InlineData("https://example.com/a b")]
+    [InlineData("file:///C:/secret.txt")]
+    [InlineData("javascript:alert(1)")]
+    public async Task UnsafeStructuredHyperlinkUrisAreRejected(string uri)
+    {
+        var xaml = $"<Section xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\"><Paragraph><Hyperlink NavigateUri=\"{uri}\"><Run>link</Run></Hyperlink></Paragraph></Section>";
+        await AssertInvalidContentAsync(RkwPackageFixture.CreateInnerXamlPackage(xaml));
+    }
+
+    [Fact]
+    public async Task ExternalImageAndUnsafeUiElementShapesAreRejected()
+    {
+        const string prefix = "<Section xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\"><Paragraph>";
+        const string suffix = "</Paragraph></Section>";
+        await AssertInvalidContentAsync(RkwPackageFixture.CreateInnerXamlPackage(
+            prefix + "<InlineUIContainer><Button /></InlineUIContainer>" + suffix));
+        await AssertInvalidContentAsync(RkwPackageFixture.CreateInnerXamlPackage(
+            prefix + "<InlineUIContainer><Image><Image.Source><BitmapImage UriSource=\"https://example.invalid/image.png\" /></Image.Source></Image></InlineUIContainer>" + suffix));
+
+        var xaml = prefix + "<InlineUIContainer><Image><Image.Source><BitmapImage UriSource=\"./Image1.png\" CacheOption=\"OnLoad\" /></Image.Source></Image></InlineUIContainer>" + suffix;
+        var inner = RkwPackageFixture.CreateOuterPackage(new[]
+        {
+            RkwPackageFixture.XamlEntry(xaml),
+            RkwPackageFixture.RelationshipsEntry(),
+            RkwPackageFixture.ContentTypesEntry(
+                "<Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\"><Default Extension=\"rels\" ContentType=\"application/vnd.openxmlformats-package.relationships+xml\" /><Default Extension=\"xaml\" ContentType=\"application/vnd.ms-wpf.xaml+xml\" /><Default Extension=\"png\" ContentType=\"text/plain\" /></Types>"),
+            ("Xaml/Image1.png", new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A }),
+            ("Xaml/_rels/Document.xaml.rels", RkwPackageFixture.Utf8(
+                "<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\"><Relationship Id=\"rImage\" Type=\"http://schemas.microsoft.com/wpf/2005/10/xaml/component\" Target=\"/Xaml/Image1.png\" /></Relationships>"))
+        });
+        await AssertInvalidContentAsync(inner);
+    }
+
+    [Fact]
+    public async Task ImageContentTypeDeclarationsMustMatchImagePartsExactly()
+    {
+        const string prefix = "<Section xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\"><Paragraph>";
+        const string suffix = "</Paragraph></Section>";
+        const string imageXaml = prefix + "<InlineUIContainer><Image><Image.Source><BitmapImage UriSource=\"./Image1.png\" CacheOption=\"OnLoad\" /></Image.Source></Image></InlineUIContainer>" + suffix;
+        const string imageRelationships = "<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\"><Relationship Id=\"rImage\" Type=\"http://schemas.microsoft.com/wpf/2005/10/xaml/component\" Target=\"/Xaml/Image1.png\" /></Relationships>";
+        const string missingImageDeclaration = "<Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\"><Default Extension=\"rels\" ContentType=\"application/vnd.openxmlformats-package.relationships+xml\" /><Default Extension=\"xaml\" ContentType=\"application/vnd.ms-wpf.xaml+xml\" /></Types>";
+        const string extraImageDeclaration = "<Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\"><Default Extension=\"rels\" ContentType=\"application/vnd.openxmlformats-package.relationships+xml\" /><Default Extension=\"xaml\" ContentType=\"application/vnd.ms-wpf.xaml+xml\" /><Default Extension=\"png\" ContentType=\"image/png\" /><Default Extension=\"gif\" ContentType=\"image/gif\" /></Types>";
+        const string caseCollision = "<Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\"><Default Extension=\"rels\" ContentType=\"application/vnd.openxmlformats-package.relationships+xml\" /><Default Extension=\"xaml\" ContentType=\"application/vnd.ms-wpf.xaml+xml\" /><Default Extension=\"png\" ContentType=\"image/png\" /><Default Extension=\"PNG\" ContentType=\"image/png\" /></Types>";
+
+        var image = new byte[]
+        {
+            0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,
+            0, 0, 0, 13, 0x49, 0x48, 0x44, 0x52,
+            0, 0, 0, 1, 0, 0, 0, 1, 8, 6, 0, 0, 0
+        };
+
+        foreach (var contentTypes in new[] { missingImageDeclaration, extraImageDeclaration, caseCollision })
+        {
+            var inner = RkwPackageFixture.CreateOuterPackage(new[]
+            {
+                RkwPackageFixture.XamlEntry(imageXaml),
+                RkwPackageFixture.RelationshipsEntry(),
+                RkwPackageFixture.ContentTypesEntry(contentTypes),
+                ("Xaml/Image1.png", image),
+                ("Xaml/_rels/Document.xaml.rels", RkwPackageFixture.Utf8(imageRelationships))
+            });
+            await AssertInvalidContentAsync(inner);
+        }
+
+        var extraOnly = RkwPackageFixture.CreateOuterPackage(new[]
+        {
+            RkwPackageFixture.XamlEntry(),
+            RkwPackageFixture.RelationshipsEntry(),
+            RkwPackageFixture.ContentTypesEntry(extraImageDeclaration)
+        });
+        await AssertInvalidContentAsync(extraOnly);
+    }
+
+    [Fact]
+    public async Task ValidSignatureCorruptPngIsWrappedAsInvalidData()
+    {
+        const string xaml = "<Section xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\"><Paragraph><InlineUIContainer><Image><Image.Source><BitmapImage UriSource=\"./Image1.png\" CacheOption=\"OnLoad\" /></Image.Source></Image></InlineUIContainer></Paragraph></Section>";
+        var inner = RkwPackageFixture.CreateOuterPackage(new[]
+        {
+            RkwPackageFixture.XamlEntry(xaml),
+            RkwPackageFixture.RelationshipsEntry(),
+            RkwPackageFixture.ContentTypesEntry(
+                "<Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\"><Default Extension=\"rels\" ContentType=\"application/vnd.openxmlformats-package.relationships+xml\" /><Default Extension=\"xaml\" ContentType=\"application/vnd.ms-wpf.xaml+xml\" /><Default Extension=\"png\" ContentType=\"image/png\" /></Types>"),
+            ("Xaml/Image1.png", CreateCorruptPngWithValidHeader()),
+            ("Xaml/_rels/Document.xaml.rels", RkwPackageFixture.Utf8(
+                "<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\"><Relationship Id=\"rImage\" Type=\"http://schemas.microsoft.com/wpf/2005/10/xaml/component\" Target=\"/Xaml/Image1.png\" /></Relationships>"))
+        });
+        await AssertInvalidContentAsync(inner);
+    }
+
+    [Theory]
     [InlineData("{\"schemaVersion\":1,\"paperSize\":\"Letter\",\"portraitWidthDip\":999,\"portraitHeightDip\":1056,\"orientation\":\"Portrait\",\"marginsDip\":{\"left\":96,\"top\":96,\"right\":96,\"bottom\":96}}")]
     [InlineData("{\"schemaVersion\":1,\"paperSize\":\"Custom\",\"portraitWidthDip\":600,\"portraitHeightDip\":900,\"orientation\":\"Portrait\",\"marginsDip\":{\"left\":300,\"top\":0,\"right\":300,\"bottom\":0}}")]
     [InlineData("{\"schemaVersion\":1,\"paperSize\":\"Letter\",\"paperSize\":\"Letter\",\"portraitWidthDip\":816,\"portraitHeightDip\":1056,\"orientation\":\"Portrait\",\"marginsDip\":{\"left\":96,\"top\":96,\"right\":96,\"bottom\":96}}")]
@@ -261,6 +353,37 @@ public sealed class WriterRkwPersistenceTests
         });
     }
 
+    [Fact]
+    public async Task OversizedExpandedPackageIsRejectedBeforeSessionReplacement()
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            using var directory = new TemporaryDirectory();
+            var validPath = Path.Combine(directory.Path, "valid.rkw");
+            var oversizedPath = Path.Combine(directory.Path, "oversized.rkw");
+            var persistence = new WriterDocumentPersistence();
+            await persistence.SaveAsync(
+                new WriterDocument(new FlowDocument(new Paragraph(new Run("valid")))), validPath,
+                WriterDocumentFormat.RibbonKitWriter, default);
+            RkwPackageFixture.WriteOuterPackage(oversizedPath, new[]
+            {
+                RkwPackageFixture.ManifestEntry(),
+                RkwPackageFixture.SettingsEntry(),
+                ("content.xamlpackage", new byte[WriterRkwPackage.MaximumExpandedBytes])
+            });
+
+            var session = new WriterDocumentSession(persistence, new DiscardUnsavedChangesDecider());
+            Assert.True(await session.OpenAsync(validPath, WriterDocumentFormat.RibbonKitWriter));
+            var current = session.CurrentDocument;
+
+            await Assert.ThrowsAsync<InvalidDataException>(() =>
+                session.OpenAsync(oversizedPath, WriterDocumentFormat.RibbonKitWriter));
+
+            Assert.Same(current, session.CurrentDocument);
+            Assert.Equal(validPath, session.CurrentDocument.Path);
+        });
+    }
+
     private static async Task AssertInvalidAsync(
         IEnumerable<(string Name, byte[] Content)> entries)
     {
@@ -292,6 +415,20 @@ public sealed class WriterRkwPersistenceTests
 
     private static string Text(FlowDocument document) =>
         new TextRange(document.ContentStart, document.ContentEnd).Text;
+
+    private static byte[] CreateCorruptPngWithValidHeader()
+    {
+        var bytes = new byte[29];
+        new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A }.CopyTo(bytes, 0);
+        bytes[11] = 13;
+        bytes[12] = 0x49;
+        bytes[13] = 0x48;
+        bytes[14] = 0x44;
+        bytes[15] = 0x52;
+        bytes[19] = 1;
+        bytes[23] = 1;
+        return bytes;
+    }
 
     private sealed class TemporaryDirectory : IDisposable
     {

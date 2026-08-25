@@ -166,8 +166,9 @@ remain read-only until actual/diff evidence justifies a deliberate change.
   their assigned names, IDs, enabled state and Invoke/Toggle/ExpandCollapse patterns.
 - **Reproduction and evidence:** an exact-process `UIAutomationClient` traversal of the live 125%-scale Writer
   window discovered the Page and View `TabItem` peers and ordinary status content, but none of the realized named
-  leaf controls in their groups. The same controls retain app-assigned automation metadata, expose working
-  in-process RibbonKit peers, and pass actual mouse and KeyTip activation.
+  leaf controls in their groups. W2-F repeated the result: the View tab was reachable, but its realized `ViewRuler`
+  and `ViewMarginGuides` toggle leaves were not. The same controls retain app-assigned automation metadata, expose
+  working in-process RibbonKit peers, and pass actual mouse and KeyTip activation.
 - **Friction:** Writer can preserve metadata and prove direct peer/action behavior, but it cannot make an external
   accessibility client traverse children that the ribbon/group peer hierarchy does not publish.
 - **Current app-owned workaround:** keep explicit automation names/IDs, stable command IDs and KeyTips; cover
@@ -281,6 +282,25 @@ remain read-only until actual/diff evidence justifies a deliberate change.
   reduced motion, reopen-during-close, Classic2010 and Classic2007; define unload/deactivation behavior explicitly and
   prove that application-menu dismissal does not raise the Backstage event. Add Showcase usage and public API/XML
   documentation in any separately approved runtime packet.
+
+### RKWF-012 — Realized native-undo tests must serialize visible WPF window ownership
+
+- **First seen / packet:** 2026-08-26, Writer W3-B FlowDocument table core.
+- **Status:** Resolved in the Writer test harness; not a RibbonKit runtime defect.
+- **Consumer goal:** prove that structural table commands enter the actual `RichTextBox` undo stack without making
+  unrelated focus-sensitive editor tests intermittent.
+- **Reproduction and evidence:** direct FlowDocument table mutations reported native undo only when the editor was
+  hosted in a shown Window. Running the new realized tests in parallel with the existing editor-surface focus case
+  intermittently moved process keyboard focus and failed that unrelated assertion; isolated runs passed.
+- **Current app-owned resolution:** the W3-A structured-content and W3-B table suites join the existing non-parallel
+  `Writer UI` xUnit collection. After rebuilding, the complete 333-test Writer suite passed repeated runs and the
+  full solution gate while retaining real-window native undo evidence.
+- **Application impact:** production code is unchanged. Only focus-owning WPF integration tests are serialized; pure
+  geometry, model and persistence tests remain parallelizable.
+- **Smallest possible library direction:** none. Process-global Windows focus and WPF native undo realization belong
+  to the consumer test environment, not RibbonKit.
+- **Evidence still required:** keep the collection bounded to tests that truly show/focus Windows, and watch full-run
+  duration before moving additional tests into it.
 
 ## 5. Closed observations
 

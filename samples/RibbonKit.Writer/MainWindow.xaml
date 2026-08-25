@@ -758,6 +758,20 @@
                                      ScreenTipTitle="Zoom In" ScreenTipText="Increase the current document view zoom by ten percent."
                                      AutomationProperties.AutomationId="ZoomIn" AutomationProperties.Name="Zoom In" />
                 </rk:RibbonGroup>
+                <rk:RibbonGroup x:Name="ViewDisplayGroup" Header="Show" rk:Ribbon.CommandId="Writer.View.Show" rk:KeyTip.Keys="S"
+                                Icon="{StaticResource Icon.WriterRuler}"
+                                AutomationProperties.AutomationId="ViewDisplayGroup" AutomationProperties.Name="Show">
+                    <rk:RibbonToggleButton x:Name="RulerToggleButton" Header="Ruler" Size="Large"
+                                           Icon="{StaticResource Icon.WriterRuler}" LargeIcon="{StaticResource Icon.WriterRuler}"
+                                           Click="OnRulerToggleClick" rk:Ribbon.CommandId="Writer.View.Show.Ruler" rk:KeyTip.Keys="RU"
+                                           ScreenTipTitle="Ruler" ScreenTipText="Show the calibrated horizontal ruler in Paper view."
+                                           AutomationProperties.AutomationId="ViewRuler" AutomationProperties.Name="Ruler" />
+                    <rk:RibbonToggleButton x:Name="MarginGuidesToggleButton" Header="Margin Guides" Size="Large"
+                                           Icon="{StaticResource Icon.WriterGridlines}" LargeIcon="{StaticResource Icon.WriterGridlines}"
+                                           Click="OnMarginGuidesToggleClick" rk:Ribbon.CommandId="Writer.View.Show.MarginGuides" rk:KeyTip.Keys="MG"
+                                           ScreenTipTitle="Margin Guides" ScreenTipText="Show non-printing dotted guides at the page content boundary."
+                                           AutomationProperties.AutomationId="ViewMarginGuides" AutomationProperties.Name="Margin Guides" />
+                </rk:RibbonGroup>
             </rk:RibbonTab>
             <rk:RibbonTab x:Name="PrintPreviewTab" Header="Print Preview"
                           rk:Ribbon.CommandId="Writer.PrintPreview" IsModal="True" CanClose="True"
@@ -851,7 +865,11 @@
                                          ViewMode="Paper"
                                          Focusable="False"
                                          Background="{DynamicResource RibbonKit.Brushes.Control.CompanionBackground}">
-                <ScrollViewer x:Name="EditorViewport"
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <ScrollViewer x:Name="EditorViewport" Grid.Row="1"
                               HorizontalScrollBarVisibility="Disabled"
                               VerticalScrollBarVisibility="Disabled"
                               Background="{DynamicResource RibbonKit.Brushes.Control.CompanionBackground}">
@@ -870,6 +888,14 @@
                         </RichTextBox>
                     </Border>
                 </ScrollViewer>
+                <editing:WriterMarginGuide x:Name="MarginGuide" Grid.Row="1" Panel.ZIndex="20"
+                                           IsHitTestVisible="False"
+                                           AutomationProperties.AutomationId="MarginGuide"
+                                           AutomationProperties.Name="Non-printing margin guide" />
+                <editing:WriterRuler x:Name="HorizontalRuler" Grid.Row="0" Panel.ZIndex="30"
+                                     FlowDirection="LeftToRight"
+                                     AutomationProperties.AutomationId="WriterRuler"
+                                     AutomationProperties.Name="Horizontal ruler" />
             </editing:WriterEditorSurface>
             <preview:WriterDocumentPreviewView x:Name="PreviewView" Visibility="Collapsed"
                                                AutomationProperties.AutomationId="DocumentPreview"

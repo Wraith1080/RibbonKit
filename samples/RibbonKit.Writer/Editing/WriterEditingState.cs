@@ -115,6 +115,10 @@ public sealed class WriterEditingState
         WriterSelectionValue<Color?> highlight,
         WriterSelectionValue<TextAlignment> alignment,
         WriterSelectionValue<double> indentation,
+        WriterSelectionValue<double> textIndentation,
+        WriterSelectionValue<double> firstLineIndentation,
+        WriterSelectionValue<double> hangingIndentation,
+        WriterSelectionValue<double> rightIndentation,
         WriterSelectionValue<double> spacingBefore,
         WriterSelectionValue<double> spacingAfter,
         WriterSelectionValue<WriterListKind> listKind)
@@ -139,6 +143,10 @@ public sealed class WriterEditingState
         Highlight = highlight;
         Alignment = alignment;
         Indentation = indentation;
+        TextIndentation = textIndentation;
+        FirstLineIndentation = firstLineIndentation;
+        HangingIndentation = hangingIndentation;
+        RightIndentation = rightIndentation;
         SpacingBefore = spacingBefore;
         SpacingAfter = spacingAfter;
         ListKind = listKind;
@@ -204,6 +212,18 @@ public sealed class WriterEditingState
     /// <summary>Gets the selected left-indentation state in device-independent units.</summary>
     public WriterSelectionValue<double> Indentation { get; }
 
+    /// <summary>Gets the selected signed WPF <c>TextIndent</c> state in device-independent units.</summary>
+    public WriterSelectionValue<double> TextIndentation { get; }
+
+    /// <summary>Gets the selected positive first-line indentation component in device-independent units.</summary>
+    public WriterSelectionValue<double> FirstLineIndentation { get; }
+
+    /// <summary>Gets the selected positive hanging indentation component in device-independent units.</summary>
+    public WriterSelectionValue<double> HangingIndentation { get; }
+
+    /// <summary>Gets the selected right paragraph indentation in device-independent units.</summary>
+    public WriterSelectionValue<double> RightIndentation { get; }
+
     /// <summary>Gets the selected paragraph-spacing-before state in device-independent units.</summary>
     public WriterSelectionValue<double> SpacingBefore { get; }
 
@@ -233,6 +253,10 @@ public sealed class WriterEditingState
         WriterSelectionValue<Color?>.Unset(),
         WriterSelectionValue<Color?>.Unset(),
         WriterSelectionValue<TextAlignment>.Unset(),
+        WriterSelectionValue<double>.Unset(),
+        WriterSelectionValue<double>.Unset(),
+        WriterSelectionValue<double>.Unset(),
+        WriterSelectionValue<double>.Unset(),
         WriterSelectionValue<double>.Unset(),
         WriterSelectionValue<double>.Unset(),
         WriterSelectionValue<double>.Unset(),

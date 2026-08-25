@@ -48,6 +48,8 @@ public partial class MainWindow : RibbonWindow
     private bool _allowClose;
     private bool _replacingDocument;
     private bool _restoreEditorFocusAfterBackstageClose;
+    private bool _rulerVisible = true;
+    private bool _marginGuidesVisible = true;
 
     public MainWindow()
     {
@@ -82,6 +84,14 @@ public partial class MainWindow : RibbonWindow
         RecentList.ItemsSource = Shell.RecentEntries;
         EditorSurface.Attach(DocumentEditor, EditorViewport, PaperCanvas);
         _editingController = new WriterEditingRibbonController(DocumentEditor);
+        MarginGuide.Attach(DocumentEditor, EditorViewport, PaperCanvas);
+        HorizontalRuler.Attach(DocumentEditor, EditorViewport, PaperCanvas, _editingController.Editing);
+        HorizontalRuler.PageSettings = Shell.CurrentDocument.PageSettings;
+        MarginGuide.PageSettings = Shell.CurrentDocument.PageSettings;
+        HorizontalRuler.PageSettingsPreviewChanged += OnRulerPageSettingsPreviewChanged;
+        HorizontalRuler.PageSettingsCommitted += OnRulerPageSettingsCommitted;
+        HorizontalRuler.PageSettingsDragCancelled += OnRulerPageSettingsDragCancelled;
+        HorizontalRuler.ParagraphIndentDragCompleted += OnParagraphIndentDragCompleted;
         _editingController.StateChanged += OnEditingStateChanged;
         _editingController.StatisticsChanged += OnEditingStatisticsChanged;
         _editingController.ZoomChanged += OnEditingZoomChanged;
@@ -263,6 +273,8 @@ public partial class MainWindow : RibbonWindow
     }
     private void ReplaceEditorDocument()
     {
+        HorizontalRuler.CancelActiveDrags();
+        MarginGuide.ClearPreview();
         if (_observedDocument is not null)
             _observedDocument.PropertyChanged -= OnCurrentDocumentPropertyChanged;
         _observedDocument = Shell.CurrentDocument;
@@ -282,6 +294,10 @@ public partial class MainWindow : RibbonWindow
         EditorSurface.SetDocument(Shell.CurrentDocument.Content);
         EditorSurface.PageSettings = Shell.CurrentDocument.PageSettings;
         EditorSurface.ZoomPercent = _editingController?.Zoom.Value ?? 100d;
+        HorizontalRuler.PageSettings = Shell.CurrentDocument.PageSettings;
+        HorizontalRuler.ZoomPercent = _editingController?.Zoom.Value ?? 100d;
+        MarginGuide.PageSettings = Shell.CurrentDocument.PageSettings;
+        MarginGuide.ZoomPercent = _editingController?.Zoom.Value ?? 100d;
         DocumentEditor.Background = Shell.CurrentDocument.Content.Background ?? Brushes.White;
         PreviewView.SetSnapshot(null);
         _previewController?.SetDocument(Shell.CurrentDocument);
@@ -302,6 +318,8 @@ public partial class MainWindow : RibbonWindow
             if (e.PropertyName == nameof(WriterDocument.PageSettings))
             {
                 EditorSurface.PageSettings = Shell.CurrentDocument.PageSettings;
+                HorizontalRuler.PageSettings = Shell.CurrentDocument.PageSettings;
+                MarginGuide.PageSettings = Shell.CurrentDocument.PageSettings;
                 MarkPreviewPending();
                 UpdatePageSummary();
             }
@@ -328,6 +346,12 @@ public partial class MainWindow : RibbonWindow
             _findReplaceDialog.Close();
             _findReplaceDialog = null;
         }
+        HorizontalRuler.PageSettingsPreviewChanged -= OnRulerPageSettingsPreviewChanged;
+        HorizontalRuler.PageSettingsCommitted -= OnRulerPageSettingsCommitted;
+        HorizontalRuler.PageSettingsDragCancelled -= OnRulerPageSettingsDragCancelled;
+        HorizontalRuler.ParagraphIndentDragCompleted -= OnParagraphIndentDragCompleted;
+        HorizontalRuler.Dispose();
+        MarginGuide.Dispose();
         PreviewView.SetSnapshot(null);
         PreviewView.StateChanged -= OnPreviewViewStateChanged;
         if (_previewController is not null)
@@ -381,6 +405,8 @@ public partial class MainWindow : RibbonWindow
     private void OnEditingZoomChanged(object? sender, EventArgs e)
     {
         EditorSurface.ZoomPercent = EditingController.Zoom.Value;
+        HorizontalRuler.ZoomPercent = EditingController.Zoom.Value;
+        MarginGuide.ZoomPercent = EditingController.Zoom.Value;
         UpdateEditingStatusSurface();
     }
 
@@ -504,6 +530,59 @@ public partial class MainWindow : RibbonWindow
     private void OnPaperViewClick(object sender, RoutedEventArgs e) =>
         ApplyWriterViewMode(WriterViewMode.Paper, restoreEditorFocus: true);
 
+    private void OnRulerToggleClick(object sender, RoutedEventArgs e)
+    {
+        _rulerVisible = RulerToggleButton.IsChecked == true;
+        ApplyRulerVisibility();
+        RestoreEditorFocusAfterViewCommand();
+    }
+
+    private void OnMarginGuidesToggleClick(object sender, RoutedEventArgs e)
+    {
+        _marginGuidesVisible = MarginGuidesToggleButton.IsChecked == true;
+        ApplyRulerVisibility();
+        RestoreEditorFocusAfterViewCommand();
+    }
+
+    private void ApplyRulerVisibility()
+    {
+        var paper = CurrentViewMode == WriterViewMode.Paper;
+        HorizontalRuler.IsPaperView = paper;
+        HorizontalRuler.IsRulerVisible = _rulerVisible;
+        MarginGuide.IsPaperView = paper;
+        MarginGuide.IsGuideVisible = _marginGuidesVisible;
+        MarginGuide.Visibility = paper && _marginGuidesVisible
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+    }
+
+    private void OnRulerPageSettingsPreviewChanged(object? sender,
+        WriterRulerPageSettingsEventArgs e) => MarginGuide.PreviewPageSettings = e.Settings;
+
+    private void OnRulerPageSettingsCommitted(object? sender,
+        WriterRulerPageSettingsEventArgs e)
+    {
+        MarginGuide.ClearPreview();
+        if (!SupportsProfileCommand(WriterDocumentCommandCapabilities.PageSettings) ||
+            !TryApplyPageSettings(e.Settings))
+        {
+            // A profile transition or a host validation failure must leave the ruler at the last
+            // committed model value; the drag itself never dirties the document incrementally.
+            HorizontalRuler.PageSettings = Shell.CurrentDocument.PageSettings;
+            MarginGuide.PageSettings = Shell.CurrentDocument.PageSettings;
+        }
+        RestoreEditorFocusAfterViewCommand();
+    }
+
+    private void OnRulerPageSettingsDragCancelled(object? sender, EventArgs e)
+    {
+        MarginGuide.ClearPreview();
+        RestoreEditorFocusAfterViewCommand();
+    }
+
+    private void OnParagraphIndentDragCompleted(object? sender, EventArgs e) =>
+        RestoreEditorFocusAfterViewCommand();
+
     private void OnPrintPreviewViewClick(object sender, RoutedEventArgs e) => EnterPrintPreview();
 
     private void OnBackstagePreviewClick(object sender, RoutedEventArgs e)
@@ -585,6 +664,9 @@ public partial class MainWindow : RibbonWindow
             _previewController?.SetRebuildEnabled(true);
             EditorSurface.Visibility = Visibility.Collapsed;
             PreviewView.Visibility = Visibility.Visible;
+            ApplyRulerVisibility();
+            HorizontalRuler.CancelPageSettingsPreview();
+            MarginGuide.ClearPreview();
             if (_previewController is null || !_previewController.TryGetCurrentSnapshot(out var snapshot))
             {
                 PreviewView.SetSnapshot(null);
@@ -604,11 +686,15 @@ public partial class MainWindow : RibbonWindow
                 ? WriterEditorViewMode.Continuous
                 : WriterEditorViewMode.Paper;
             EditorSurface.Visibility = Visibility.Visible;
-            if (restoreEditorFocus)
+            var paper = mode == WriterViewMode.Paper;
+            ApplyRulerVisibility();
+            if (!paper)
             {
-                _ = Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle,
-                    new Action(() => DocumentEditor.Focus()));
+                HorizontalRuler.CancelPageSettingsPreview();
+                MarginGuide.ClearPreview();
             }
+            if (restoreEditorFocus)
+                QueueEditorFocus();
         }
 
         UpdatePreviewDemand();
@@ -644,6 +730,8 @@ public partial class MainWindow : RibbonWindow
         OnePageButton.IsChecked = PreviewView.ViewMode == WriterPreviewViewMode.OnePage;
         TwoPagesButton.IsChecked = PreviewView.ViewMode == WriterPreviewViewMode.TwoPages;
         PageWidthButton.IsChecked = PreviewView.ViewMode == WriterPreviewViewMode.PageWidth;
+        RulerToggleButton.IsChecked = _rulerVisible;
+        MarginGuidesToggleButton.IsChecked = _marginGuidesVisible;
     }
 
     private void UpdatePreviewState()
@@ -701,6 +789,9 @@ public partial class MainWindow : RibbonWindow
         PreviewLayoutGroup.IsEnabled = preview;
         PreviewNavigationGroup.IsEnabled = preview;
         PreviewZoomGroup.IsEnabled = preview;
+        ViewDisplayGroup.IsEnabled = preview;
+        HorizontalRuler.CanEditMargins = pageSettings;
+        HorizontalRuler.CanEditParagraphs = formatting;
 
         foreach (var control in new UIElement[]
         {
@@ -711,6 +802,7 @@ public partial class MainWindow : RibbonWindow
             PaperSizeButton, OrientationButton, MarginsButton, PageColorButton,
             OnePageButton, TwoPagesButton, PageWidthButton, PreviousPageButton,
             NextPageButton, PreviewZoomOutButton, PreviewZoomResetButton, PreviewZoomInButton,
+            RulerToggleButton, MarginGuidesToggleButton,
             BackstagePrintButton, BackstagePreviewButton
         })
         {
@@ -744,6 +836,9 @@ public partial class MainWindow : RibbonWindow
                 || ReferenceEquals(control, PreviewZoomOutButton)
                 || ReferenceEquals(control, PreviewZoomResetButton)
                 || ReferenceEquals(control, PreviewZoomInButton);
+            previewControl = previewControl
+                || ReferenceEquals(control, RulerToggleButton)
+                || ReferenceEquals(control, MarginGuidesToggleButton);
             var allowed = formattingControl ? formatting
                 : pageControl ? pageSettings
                 : previewControl ? preview
@@ -902,9 +997,7 @@ public partial class MainWindow : RibbonWindow
         RestoreEditorFocusAfterViewCommand();
     }
 
-    private void RestoreEditorFocusAfterViewCommand() =>
-        _ = Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle,
-            new Action(() => DocumentEditor.Focus()));
+    private void RestoreEditorFocusAfterViewCommand() => QueueEditorFocus();
 
     private void OnPrintClick(object sender, RoutedEventArgs e)
     {

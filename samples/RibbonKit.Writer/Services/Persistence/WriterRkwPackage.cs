@@ -16,7 +16,7 @@ internal static class WriterRkwPackage
 {
     internal const int MaximumFileBytes = 64 * 1024 * 1024;
     private const int MaximumMetadataBytes = 64 * 1024;
-    private const int MaximumExpandedBytes = 61 * 1024 * 1024;
+    internal const int MaximumExpandedBytes = 61 * 1024 * 1024;
     private const string ManifestPart = "manifest.json";
     private const string SettingsPart = "document-settings.json";
     private const string ContentPart = "content.xamlpackage";
@@ -34,6 +34,7 @@ internal static class WriterRkwPackage
         _ = WriterRkwContentSerializer.Load(contentBytes);
         var manifestBytes = WriteManifest();
         var settingsBytes = WriteSettings(document.PageSettings);
+        EnsureExpandedSize(manifestBytes.LongLength + settingsBytes.LongLength + contentBytes.LongLength);
 
         using var stream = new MemoryStream();
         using (var archive = new ZipArchive(stream, ZipArchiveMode.Create, leaveOpen: true))
@@ -92,12 +93,17 @@ internal static class WriterRkwPackage
             if (entry.Length < 0 || entry.Length > WriterRkwContentSerializer.MaximumPackageBytes)
                 throw new InvalidDataException($"Package part '{entry.FullName}' exceeds its size limit.");
             totalLength = checked(totalLength + entry.Length);
-            if (totalLength > MaximumExpandedBytes)
-                throw new InvalidDataException("The native Writer package exceeds its expanded size limit.");
+            EnsureExpandedSize(totalLength);
         }
         if (!RequiredParts.SetEquals(entries.Keys))
             throw new InvalidDataException("The native Writer package is missing a required part.");
         return entries;
+    }
+
+    private static void EnsureExpandedSize(long totalLength)
+    {
+        if (totalLength < 0 || totalLength > MaximumExpandedBytes)
+            throw new InvalidDataException("The native Writer package exceeds its expanded size limit.");
     }
 
     private static byte[] ReadEntry(ZipArchiveEntry entry, int maximumBytes)

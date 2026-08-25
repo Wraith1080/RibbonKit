@@ -37,10 +37,13 @@ public static class WriterPersistenceCapabilityCatalog
             "RTF preserves representative text formatting; advanced content is best effort."),
         WriterDocumentFormat.RibbonKitWriter => new(
             PreservesFormatting: true,
-            PreservesImages: false,
+            PreservesImages: true,
             PreservesTables: false,
             PreservesPageSettings: true,
-            "RibbonKit Writer v1 preserves supported text formatting and page settings; images, hyperlinks and tables arrive in W3."),
+            "RibbonKit Writer preserves supported text formatting, portable images, hyperlinks and page settings; tables remain a later structured-content slice.")
+        {
+            PreservesHyperlinks = true
+        },
         _ => throw new ArgumentOutOfRangeException(nameof(format), format,
             "Unknown Writer document format.")
     };

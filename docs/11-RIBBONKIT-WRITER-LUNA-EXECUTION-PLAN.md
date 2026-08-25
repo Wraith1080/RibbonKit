@@ -1,9 +1,9 @@
 # RibbonKit Writer — Luna Execution Plan
 
 > **Status:** durable execution decomposition created 2026-08-20. W0-A through W0-F, W1-A through W1-D and
-> W2-A through W2-E are accepted on the available hardware. Live mixed-monitor checking remains deferred to W4-C
-> because only one display is connected. W2-F is the next UI-exclusive packet; its format-aware command dependency
-> is now satisfied by W0-F. W3-A/W3-B remain separate non-UI packets and have not started.
+> W2-A through W2-F plus W3-A and W3-B are accepted on the available hardware. Live mixed-monitor checking remains
+> deferred to W4-C because only one display is connected. W3-C contextual Table Tools is the next UI-exclusive packet;
+> W3-D structured round-trip/RTF compatibility follows it.
 > This document does not schedule future agents or imply that any later Writer packet exists.
 > [`10-RIBBONKIT-WRITER-PLAN.md`](10-RIBBONKIT-WRITER-PLAN.md) owns product scope; current
 > implementation status remains in [`04-DESIGN-NOTES.md` §5](../04-DESIGN-NOTES.md#5-current-state--next-steps).
@@ -416,6 +416,10 @@ mouse/keyboard/UIA operation in the actual Writer window before W3-C begins.
 
 ### W3-A — Images and hyperlinks
 
+**Status (2026-08-26): accepted.** Portable images, safe/undoable hyperlinks, deterministic date/time insertion and
+the bounded data-only native persistence extension pass the focused security/round-trip gate. UI presentation remains
+outside this non-UI packet.
+
 **Owns:** image/hyperlink insertion and editing services, dialogs/view models, persistence fixtures and
 tests. Picture Tools remain absent unless selection, sizing and removal are reliable.
 
@@ -426,6 +430,9 @@ introducing OLE or executable attachments.
 invalid image/URI input fails safely.
 
 ### W3-B — FlowDocument table core
+
+**Status (2026-08-26): accepted.** The app-owned structural service passes its span/occupancy/caret/failure/native-
+undo gate. Contextual ribbon interaction remains W3-C and table persistence/RTF compatibility remains W3-D.
 
 **Owns:** table discovery, selection and mutation helpers plus table tests; no contextual-ribbon edits.
 

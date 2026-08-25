@@ -35,10 +35,11 @@ public sealed class WriterDocumentProfileTests
         WriterDocumentCommandCapabilities.CharacterFormatting | WriterDocumentCommandCapabilities.ParagraphFormatting,
         WriterDocumentContentCapabilities.CharacterFormatting | WriterDocumentContentCapabilities.ParagraphFormatting,
         WriterDocumentPageMetadataCapabilities.None)]
-    [InlineData(WriterDocumentFormat.RibbonKitWriter, true, false, false, true,
+    [InlineData(WriterDocumentFormat.RibbonKitWriter, true, true, false, true,
         WriterDocumentCommandCapabilities.CharacterFormatting | WriterDocumentCommandCapabilities.ParagraphFormatting
             | WriterDocumentCommandCapabilities.PageSettings,
-        WriterDocumentContentCapabilities.CharacterFormatting | WriterDocumentContentCapabilities.ParagraphFormatting,
+        WriterDocumentContentCapabilities.CharacterFormatting | WriterDocumentContentCapabilities.ParagraphFormatting
+            | WriterDocumentContentCapabilities.Images | WriterDocumentContentCapabilities.Hyperlinks,
         WriterDocumentPageMetadataCapabilities.PageSettings)]
     public void CapabilityMatrixMatchesPersistenceFacts(
         WriterDocumentFormat format,
@@ -54,7 +55,8 @@ public sealed class WriterDocumentProfileTests
         Assert.Equal(preservesFormatting, profile.Capabilities.Persistence.PreservesFormatting);
         Assert.Equal(preservesImages, profile.Capabilities.Persistence.PreservesImages);
         Assert.Equal(preservesTables, profile.Capabilities.Persistence.PreservesTables);
-        Assert.False(profile.Capabilities.Persistence.PreservesHyperlinks);
+        Assert.Equal(preservesImages && format == WriterDocumentFormat.RibbonKitWriter,
+            profile.Capabilities.Persistence.PreservesHyperlinks);
         Assert.Equal(preservesPageSettings, profile.Capabilities.Persistence.PreservesPageSettings);
         Assert.True(profile.Supports(requiredCommands));
         Assert.True(profile.Supports(

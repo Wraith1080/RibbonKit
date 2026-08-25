@@ -22,10 +22,12 @@ public sealed class WriterDocumentFormatTransitionPolicyTests
     [InlineData(WriterDocumentFormat.RichText, WriterDocumentFormat.PlainText,
         WriterDocumentFormatTransitionKind.Downgrade, WriterDocumentDataLoss.Formatting, true)]
     [InlineData(WriterDocumentFormat.RibbonKitWriter, WriterDocumentFormat.RichText,
-        WriterDocumentFormatTransitionKind.Downgrade, WriterDocumentDataLoss.PageSettings, true)]
+        WriterDocumentFormatTransitionKind.Downgrade,
+        WriterDocumentDataLoss.Images | WriterDocumentDataLoss.Hyperlinks | WriterDocumentDataLoss.PageSettings, true)]
     [InlineData(WriterDocumentFormat.RibbonKitWriter, WriterDocumentFormat.PlainText,
         WriterDocumentFormatTransitionKind.Downgrade,
-        WriterDocumentDataLoss.Formatting | WriterDocumentDataLoss.PageSettings, true)]
+        WriterDocumentDataLoss.Formatting | WriterDocumentDataLoss.Images | WriterDocumentDataLoss.Hyperlinks
+            | WriterDocumentDataLoss.PageSettings, true)]
     [InlineData(WriterDocumentFormat.RibbonKitWriter, WriterDocumentFormat.RibbonKitWriter,
         WriterDocumentFormatTransitionKind.Same, WriterDocumentDataLoss.None, false)]
     public void PolicyClassifiesUpgradeDowngradeAndLoss(
@@ -54,9 +56,10 @@ public sealed class WriterDocumentFormatTransitionPolicyTests
     {
         var transition = WriterDocumentFormatTransitionPolicy.Default.Evaluate(
             WriterDocumentFormat.RibbonKitWriter, WriterDocumentFormat.PlainText);
-        Assert.Equal(new[] { "formatting", "page settings" }, transition.LossDescriptions);
+        Assert.Equal(new[] { "formatting", "images", "hyperlinks", "page settings" },
+            transition.LossDescriptions);
         Assert.Equal(
-            "Saving as Plain Text will not preserve formatting and page settings.",
+            "Saving as Plain Text will not preserve formatting, images, hyperlinks, and page settings.",
             transition.WarningMessage);
     }
 

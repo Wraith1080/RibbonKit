@@ -144,6 +144,119 @@ public sealed class WriterEditingAdapter : IDisposable
         ApplyParagraphMargins(margin => margin with { Left = indentation });
     }
 
+    /// <summary>
+    /// Sets the left, first-line and right indentation on all paragraphs touched by the current
+    /// selection through one native undo unit.
+    /// </summary>
+    public void SetParagraphIndentation(double left, double firstLine, double right)
+    {
+        ValidateDimension(left, nameof(left));
+        ValidateTextIndent(firstLine, nameof(firstLine));
+        ValidateDimension(right, nameof(right));
+        if (!CanFormat)
+            return;
+
+        using (BeginChange())
+        {
+            var paragraphs = GetSelectedParagraphs();
+            if (paragraphs.Count == 0)
+            {
+                var range = new TextRange(Editor.Selection.Start, Editor.Selection.End);
+                var margin = ReadThickness(range.GetPropertyValue(Paragraph.MarginProperty));
+                range.ApplyPropertyValue(Paragraph.MarginProperty,
+                    margin with { Left = left, Right = right });
+                range.ApplyPropertyValue(Paragraph.TextIndentProperty, firstLine);
+            }
+            else
+            {
+                foreach (var paragraph in paragraphs)
+                {
+                    var range = new TextRange(paragraph.ContentStart, paragraph.ContentEnd);
+                    var margin = NormalizeThickness(paragraph.Margin);
+                    range.ApplyPropertyValue(Paragraph.MarginProperty,
+                        margin with { Left = left, Right = right });
+                    range.ApplyPropertyValue(Paragraph.TextIndentProperty, firstLine);
+                }
+            }
+        }
+        RefreshState();
+    }
+
+    /// <summary>
+    /// Begins a paragraph-indent drag over the current selection. Updates made through the returned
+    /// session stay inside one native undo unit until it is committed.
+    /// </summary>
+    public WriterParagraphIndentDrag? BeginParagraphIndentDrag(WriterRulerIndentMarker marker,
+        double contentWidthDip)
+    {
+        ThrowIfDisposed();
+        if (!Enum.IsDefined(marker))
+            throw new ArgumentOutOfRangeException(nameof(marker), marker, "Unknown ruler marker.");
+        if (!CanFormat)
+            return null;
+        if (!double.IsFinite(contentWidthDip) || contentWidthDip <= 0)
+            throw new ArgumentOutOfRangeException(nameof(contentWidthDip), contentWidthDip,
+                "Content width must be finite and positive.");
+
+        var paragraphs = GetSelectedParagraphs()
+            .Select(static paragraph => new WriterParagraphIndentDrag.ParagraphSnapshot(paragraph))
+            .ToArray();
+        if (paragraphs.Length == 0)
+            return null;
+        return new WriterParagraphIndentDrag(this, marker, paragraphs, contentWidthDip);
+    }
+
+    /// <summary>Commits a deferred ruler drag through one native editor change scope.</summary>
+    internal void CommitParagraphIndentDrag(WriterParagraphIndentDrag drag)
+    {
+        ArgumentNullException.ThrowIfNull(drag);
+        ThrowIfDisposed();
+        if (!CanFormat)
+            return;
+        using (BeginChange())
+            drag.ApplyCommittedValues();
+        RefreshState();
+    }
+
+    /// <summary>Gets whether the selected paragraphs have mixed ruler indentation values.</summary>
+    internal bool HasMixedRulerIndentation
+    {
+        get
+        {
+            var paragraphs = GetSelectedParagraphs();
+            if (paragraphs.Count < 2)
+                return false;
+
+            var firstMargin = NormalizeThickness(paragraphs[0].Margin);
+            var firstTextIndent = NormalizeLength(paragraphs[0].TextIndent);
+            var firstRight = firstMargin.Right;
+            foreach (var paragraph in paragraphs.Skip(1))
+            {
+                var margin = NormalizeThickness(paragraph.Margin);
+                if (!NearlyEqual(firstMargin.Left, margin.Left) ||
+                    !NearlyEqual(firstRight, margin.Right) ||
+                    !NearlyEqual(firstTextIndent, NormalizeLength(paragraph.TextIndent)))
+                    return true;
+            }
+            return false;
+        }
+    }
+
+    /// <summary>Reads the current uniform paragraph indentation for ruler marker projection.</summary>
+    public WriterRulerIndentation ReadRulerIndentation()
+    {
+        var paragraphs = GetSelectedParagraphs();
+        if (paragraphs.Count == 0)
+            return WriterRulerIndentation.Empty;
+        var paragraph = paragraphs[0];
+        var textIndent = NormalizeLength(paragraph.TextIndent);
+        return new WriterRulerIndentation(
+            NormalizeLength(paragraph.Margin.Left),
+            textIndent,
+            Math.Max(0, -textIndent),
+            NormalizeLength(paragraph.Margin.Right));
+    }
+
     /// <summary>Increases the left indentation of each touched paragraph.</summary>
     public void IncreaseIndentation() => AdjustIndentation(IndentationStep);
 
@@ -454,6 +567,12 @@ public sealed class WriterEditingAdapter : IDisposable
         if (insertionOnly && alignment.Kind == WriterSelectionValueKind.Unset)
             alignment = WriterSelectionValue<TextAlignment>.Uniform(Editor.Document.TextAlignment);
         var indentation = ReadParagraph(paragraphs, p => NormalizeLength(p.Margin.Left));
+        var textIndentation = ReadParagraph(paragraphs, p => NormalizeLength(p.TextIndent));
+        var firstLineIndentation = ReadParagraph(paragraphs,
+            p => Math.Max(0, NormalizeLength(p.TextIndent)));
+        var hangingIndentation = ReadParagraph(paragraphs,
+            p => Math.Max(0, -NormalizeLength(p.TextIndent)));
+        var rightIndentation = ReadParagraph(paragraphs, p => NormalizeLength(p.Margin.Right));
         var spacingBefore = ReadParagraph(paragraphs, p => NormalizeLength(p.Margin.Top));
         var spacingAfter = ReadParagraph(paragraphs, p => NormalizeLength(p.Margin.Bottom));
         var listKind = ReadListKind(paragraphs);
@@ -479,6 +598,10 @@ public sealed class WriterEditingAdapter : IDisposable
             highlight,
             alignment,
             indentation,
+            textIndentation,
+            firstLineIndentation,
+            hangingIndentation,
+            rightIndentation,
             spacingBefore,
             spacingAfter,
             listKind);
@@ -919,6 +1042,13 @@ public sealed class WriterEditingAdapter : IDisposable
             throw new ArgumentOutOfRangeException(parameterName, value, "The dimension must be finite and non-negative.");
     }
 
+    private static void ValidateTextIndent(double value, string parameterName)
+    {
+        if (!double.IsFinite(value) || !Paragraph.TextIndentProperty.IsValidValue(value))
+            throw new ArgumentOutOfRangeException(parameterName, value,
+                "The first-line indentation must be a finite WPF paragraph value.");
+    }
+
     private static bool IsValidDimension(double value, out double normalized)
     {
         normalized = value;
@@ -942,4 +1072,7 @@ public sealed class WriterEditingAdapter : IDisposable
         NormalizeLength(thickness.Bottom));
 
     private static double NormalizeLength(double value) => double.IsNaN(value) ? 0 : value;
+
+    private static bool NearlyEqual(double first, double second) =>
+        Math.Abs(first - second) <= 0.0001;
 }
