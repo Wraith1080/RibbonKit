@@ -1,9 +1,10 @@
 # RibbonKit Writer — Luna Execution Plan
 
 > **Status:** durable execution decomposition created 2026-08-20. W0-A through W0-F, W1-A through W1-D and
-> W2-A through W2-F plus W3-A and W3-B are accepted on the available hardware. Live mixed-monitor checking remains
-> deferred to W4-C because only one display is connected. W3-C contextual Table Tools is the next UI-exclusive packet;
-> W3-D structured round-trip/RTF compatibility follows it.
+> W2-A through W2-F plus W3-A through W3-C are accepted on the available hardware, including the 2026-08-26 W3-C
+> corrective UI pass and its 2026-08-27 full regression/live visual reacceptance. Live mixed-monitor checking remains
+> deferred to W4-C because only one display is connected. W1-E Home formatting completion is the next UI-exclusive
+> packet, while W3-D round-trip/RTF compatibility is dependency-ready; neither has started.
 > This document does not schedule future agents or imply that any later Writer packet exists.
 > [`10-RIBBONKIT-WRITER-PLAN.md`](10-RIBBONKIT-WRITER-PLAN.md) owns product scope; current
 > implementation status remains in [`04-DESIGN-NOTES.md` §5](../04-DESIGN-NOTES.md#5-current-state--next-steps).
@@ -144,6 +145,7 @@ Only packets whose dependencies have passed their integration gate are ready.
 | W1-B | Find/replace, spelling, counts and zoom | W0-B | Luna |
 | W1-C | Home ribbon, QAT, KeyTips and editing integration | W0-D, W1-A, W1-B | Luna, UI-exclusive |
 | W1-D | Writer iconography and first visual-polish pass | W1-C | Luna, UI-exclusive |
+| W1-E | Home formatting completion and dialogs | W0-F, W1-C, W1-D | Luna, UI-exclusive |
 | W2-A | Page settings and validation | W0-B | Luna |
 | W2-B | Versioned `.rkw` persistence | W0-C, W2-A | Luna, high-risk |
 | W2-C | Centred paper editing surface | W1-D, W2-A | Luna |
@@ -152,7 +154,7 @@ Only packets whose dependencies have passed their integration gate are ready.
 | W2-F | Margin guides and interactive horizontal ruler | W0-F, W2-E | Luna, UI-exclusive |
 | W3-A | Images and hyperlinks | W0-E, W1-D, W2-B | Luna |
 | W3-B | FlowDocument table core | W0-E, W1-D, W2-B | Luna, high-risk |
-| W3-C | Table interaction and contextual Table Tools | W0-F, W2-F, W3-B | Luna, UI-exclusive |
+| W3-C | Insert tab, structured-content interaction and contextual Table Tools | W0-F, W2-F, W3-A, W3-B | Luna, UI-exclusive |
 | W3-D | Structured-content round-trip and RTF fixtures | W0-E, W3-A, W3-C | Luna |
 | W4-A | Customization and appearance persistence | W3-D | Luna, UI-exclusive |
 | W4-B | Automated integration and hardening | W4-A | Luna |
@@ -311,6 +313,34 @@ minimized-ribbon and QAT states at representative 100/150/200% DPI, and obtains 
 Application startup alone is not acceptance. W4 remains responsible for the final cross-theme,
 RTL/accessibility and whole-product consistency pass after W2/W3 add their surfaces.
 
+### W1-E — Home formatting completion and dialogs
+
+**Owns:** the Home Font group, any app-owned Font/Paragraph dialogs, colour/highlight popups, the conditional Styles
+surface and their command/state/UI tests exclusively. It may refine Home ribbon layout and Writer-owned icons while
+holding the UI lock, but must preserve accepted command identities and profile-capability projection.
+
+**Deliver:** replace the static five-font list with a cached installed-font source and a virtualized/searchable popup
+whose items render in their own font face; retain editable entry and honest current/mixed state. Expand size choices to
+the conventional Office set while accepting validated finite custom values in the engine's supported range; add
+grow/shrink only with deterministic step tests. Convert text/highlight colour into last-used primary actions plus
+roomier theme/standard/recent swatch galleries, Automatic/No Color and an accessible **More Colors…** standard/custom
+dialog. Add a Font group launcher and transactional sample-preview dialog for supported character properties. Audit
+the promised Paste split button, Styles gallery, Clear Formatting and Paragraph dialog rather than silently omitting
+them; implement only complete commands with correct native undo, selection-state and persistence behaviour. Route
+Tab/Shift+Tab while the editor owns focus so paragraph boundaries and paragraph selections indent/outdent and valid
+list positions change nesting rather than moving focus into ribbon chrome. Do not solve this with an unconditional
+`AcceptsTab`: define deterministic mid-paragraph/literal-tab behaviour and retain a documented keyboard focus-exit
+path. Plain Text must not expose rich paragraph formatting, and table-cell Tab routing remains exclusively W3-C.
+
+**Exit:** tests cover installed-font enumeration failures/fallback, popup virtualization and own-face preview,
+recommended/recent/current fonts, typed and listed sizes, invalid input, last-used colours, theme/standard/recent and
+custom colours, Automatic/No Color, dialog Apply/OK/Cancel, mixed selections, one native undo unit, profile enablement,
+KeyTips, ScreenTips and UIA. Tab routing tests cover empty and populated paragraphs, paragraph selections, first and
+nested list items, mid-paragraph/literal-tab behaviour, Plain Text versus RTF/RKW, undo/redo, retained caret/editor
+focus, and the keyboard focus-exit path; popups, dialogs, Backstage and preview must not be intercepted. Lead verifies
+standard/narrow/minimized ribbon, keyboard-only operation, high contrast, RTL and representative
+100/125/150/175/200% DPI in the real Writer window. No unsupported Word effect may appear.
+
 ## 7. W2 — Native format and paper model
 
 ### W2-A — Document page settings
@@ -443,15 +473,28 @@ row/column distribution. Every operation must leave a valid document tree and pr
 **Exit:** structural invariants and edge cases pass STA tests, including spans, first/last row/column,
 empty cells, invalid selections and undo/redo. Do not compensate for a broken algorithm in UI code.
 
-### W3-C — Table interaction and contextual Table Tools
+### W3-C — Insert tab, structured-content interaction and contextual Table Tools
 
-**Owns:** table grid picker, keyboard routing and contextual Table Tools UI exclusively.
+**Status:** accepted through `04-DESIGN-NOTES.md` §3.117, including the 2026-08-26 corrective UI pass and its
+2026-08-27 full regression/live visual reacceptance. W3-D remains unstarted and still owns table round-trip/RTF
+compatibility.
 
-**Deliver:** Layout groups for rows/columns, merge/split, size and alignment; restrained Design controls
-for supported border/background choices; correct contextual visibility and KeyTip traversal.
+**Owns:** the Insert tab, image/hyperlink/date-time command presentation, table grid picker, table keyboard routing
+and contextual Table Tools UI exclusively.
 
-**Exit:** lead verifies insertion, Tab/Shift+Tab, mutation, contextual-tab visibility and caret recovery
-using mouse and keyboard, including a table spanning preview pages and focused RTL cell input.
+**Deliver:** large labelled Picture, Hyperlink and Date and Time commands wired to the accepted W3-A services and
+accessible app-owned dialogs; a 1×1–3×8 quick table gallery plus separated Custom Table entry for the supported
+1×1–8×8 range wired to W3-B; Layout groups for rows/columns, merge/split,
+size and alignment; restrained Design controls for supported border/background choices; correct contextual visibility,
+profile gating and KeyTip traversal. Inside tables, Tab/Shift+Tab navigate cells, with deterministic final-cell row
+creation; provide an explicit literal-tab path inside a cell and ensure this takes precedence over W1-E paragraph
+indent routing. Picture Tools remain deferred until image selection, sizing and removal are reliable enough for a
+real contextual workflow.
+
+**Exit:** lead verifies Picture/Hyperlink/Date-Time and table insertion, forward/reverse cell navigation, final-cell
+row creation, literal-tab entry, mutation, contextual-tab visibility and caret recovery using mouse and keyboard,
+including a table spanning preview pages and focused RTL cell input. All Insert commands retain stable IDs, KeyTips,
+ScreenTips, UIA names/patterns and profile-capability state.
 
 ### W3-D — Structured-content round-trip and compatibility fixtures
 

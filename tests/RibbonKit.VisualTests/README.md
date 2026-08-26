@@ -21,8 +21,8 @@ an open dropdown, and both halves of an open split button. These are determinist
 shared state brushes because `IsMouseOver` cannot be forced reliably on the disconnected visual tree.
 A second focused Office 2010 snapshot renders the real `Classic2010` Backstage shell, including its
 square radial selection marker and content drop shadow. Two more focused snapshots render the complete
-Office 2007 Black and Office 2010 Black application menus. Together with the 40-image matrix and RTL
-smoke scenes, the suite contains 47 approved PNGs.
+Office 2007 Black and Office 2010 Black application menus. Later focused application-menu, Backstage, merged-tab and
+window-frame scenes extend the same corpus; the suite currently contains 63 approved PNGs.
 
 `RenderTargetBitmap`'s 96-DPI setting does not override the DPI WPF assigns to a disconnected visual
 tree. The harness explicitly assigns each scene's root DPI with `VisualTreeHelper.SetRootDpi` before

@@ -40,7 +40,14 @@ public enum WriterDocumentCommandCapabilities
     Preview = 1 << 8,
 
     /// <summary>Print the current document.</summary>
-    Printing = 1 << 9
+    Printing = 1 << 9,
+
+    /// <summary>
+    /// Edit native FlowDocument tables in the live editor. This capability is deliberately
+    /// independent from <see cref="WriterPersistenceCapabilities.PreservesTables"/> while the
+    /// later structured-content round-trip packet is pending.
+    /// </summary>
+    TableEditing = 1 << 10
 }
 
 /// <summary>Content features that a Writer document profile can preserve.</summary>
@@ -334,7 +341,8 @@ public static class WriterDocumentProfiles
         ".rkw",
         WriterDocumentProfileCapabilities.Create(
             WriterDocumentPersistence.GetCapabilities(WriterDocumentFormat.RibbonKitWriter),
-            FormattedCommands | WriterDocumentCommandCapabilities.PageSettings));
+            FormattedCommands | WriterDocumentCommandCapabilities.PageSettings
+                | WriterDocumentCommandCapabilities.TableEditing));
 
     /// <summary>All profiles in stable New-gallery order.</summary>
     public static IReadOnlyList<WriterDocumentProfile> All { get; } =

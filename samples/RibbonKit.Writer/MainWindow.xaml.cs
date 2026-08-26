@@ -84,6 +84,7 @@ public partial class MainWindow : RibbonWindow
         RecentList.ItemsSource = Shell.RecentEntries;
         EditorSurface.Attach(DocumentEditor, EditorViewport, PaperCanvas);
         _editingController = new WriterEditingRibbonController(DocumentEditor);
+        InitializeStructuredContent();
         MarginGuide.Attach(DocumentEditor, EditorViewport, PaperCanvas);
         HorizontalRuler.Attach(DocumentEditor, EditorViewport, PaperCanvas, _editingController.Editing);
         HorizontalRuler.PageSettings = Shell.CurrentDocument.PageSettings;
@@ -291,6 +292,7 @@ public partial class MainWindow : RibbonWindow
         {
             _replacingDocument = false;
         }
+        _tableInteractionController?.Refresh();
         EditorSurface.SetDocument(Shell.CurrentDocument.Content);
         EditorSurface.PageSettings = Shell.CurrentDocument.PageSettings;
         EditorSurface.ZoomPercent = _editingController?.Zoom.Value ?? 100d;
@@ -360,6 +362,7 @@ public partial class MainWindow : RibbonWindow
             _previewController.Dispose();
             _previewController = null;
         }
+        DisposeStructuredContent();
         if (_editingController is not null)
         {
             _editingController.StateChanged -= OnEditingStateChanged;
@@ -391,6 +394,7 @@ public partial class MainWindow : RibbonWindow
             DocumentEditor.Focus();
             Keyboard.Focus(DocumentEditor);
             EditingController.RefreshState();
+            _tableInteractionController?.Refresh();
         }));
     }
 
@@ -398,6 +402,7 @@ public partial class MainWindow : RibbonWindow
     {
         UpdateEditingStatusSurface();
         _findReplaceDialog?.SetCanReplace(EditingController.FindReplace.CanMutate);
+        ApplyStructuredContentCapabilityProjection();
     }
 
     private void OnEditingStatisticsChanged(object? sender, EventArgs e) => UpdateEditingStatusSurface();
@@ -522,6 +527,7 @@ public partial class MainWindow : RibbonWindow
     {
         UpdatePreviewState();
         UpdateEditingStatusSurface();
+        RefreshStructuredContentState();
     }
 
     private void OnContinuousViewClick(object sender, RoutedEventArgs e) =>
@@ -701,6 +707,7 @@ public partial class MainWindow : RibbonWindow
         UpdateViewButtons();
         UpdatePreviewState();
         UpdateEditingStatusSurface();
+        RefreshStructuredContentState();
     }
 
     private void OnOnePageClick(object sender, RoutedEventArgs e)
@@ -849,6 +856,7 @@ public partial class MainWindow : RibbonWindow
         }
 
         UpdatePreviewState();
+        ApplyStructuredContentCapabilityProjection();
     }
 
     private void MarkPreviewPending()
@@ -1081,16 +1089,16 @@ public partial class MainWindow : RibbonWindow
 
     private static PrintDialog CreateConfiguredPrintDialog(PrintQueue queue,
         DocumentPageSettings settings) => new()
-    {
-        PrintQueue = queue,
-        PrintTicket = new PrintTicket
         {
-            PageMediaSize = new PageMediaSize(settings.PortraitWidthDip, settings.PortraitHeightDip),
-            PageOrientation = settings.Orientation == DocumentPageOrientation.Landscape
+            PrintQueue = queue,
+            PrintTicket = new PrintTicket
+            {
+                PageMediaSize = new PageMediaSize(settings.PortraitWidthDip, settings.PortraitHeightDip),
+                PageOrientation = settings.Orientation == DocumentPageOrientation.Landscape
                 ? PageOrientation.Landscape
                 : PageOrientation.Portrait
-        }
-    };
+            }
+        };
 
     internal WriterPrintResult? TryPrintCurrentSnapshot(IWriterPrintDevice device,
         WriterPrintConflictBehavior conflictBehavior = WriterPrintConflictBehavior.ReportOnly)

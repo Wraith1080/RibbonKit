@@ -302,6 +302,29 @@ remain read-only until actual/diff evidence justifies a deliberate change.
 - **Evidence still required:** keep the collection bounded to tests that truly show/focus Windows, and watch full-run
   duration before moving additional tests into it.
 
+### RKWF-013 — InRibbonGallery popup background can remain unresolved in its popup HWND
+
+- **First seen / packet:** 2026-08-26, Writer W3-C live table-picker acceptance.
+- **Status:** App-owned workaround accepted; open RibbonKit investigation with no runtime change approved.
+- **Consumer goal:** an expanded `InRibbonGallery` should paint an opaque theme/high-contrast popup surface before its
+  shared presenter is re-homed, so underlying ribbon commands never show through the tile grid.
+- **Reproduction and evidence:** in the real 125%-scale Writer window, `PART_PopupHost.Background` remained null even
+  though the shared template declares `RibbonKit.Brushes.Ribbon.ContentBackground`. The 8-column table grid rendered,
+  but the File/Home ribbon content was visible between tiles. Direct inspection confirmed the null background; the
+  final standard and RTL captures became opaque after the app supplied the resolved brush.
+- **Friction:** the consumer cannot set the popup host through public `InRibbonGallery` API. It must apply the template,
+  find the declared part by name and assign a brush after initialization.
+- **Current app-owned workaround:** Writer assigns the current ribbon-content brush directly to `PART_PopupHost`, or
+  `SystemColors.WindowBrush` in High Contrast. A real-tree assertion requires a non-null surface, while mouse/keyboard
+  and popup re-homing continue through the unchanged RibbonKit control.
+- **Application impact:** without the workaround, the table picker is visually ambiguous and can expose unrelated
+  controls beneath its choices; with it, standard and RTL popup captures are opaque and input behavior is unchanged.
+- **Smallest possible library direction:** reproduce the unresolved DynamicResource in a minimal consumer, then make
+  the popup host resolve/reapply the theme-owned background when its separate HWND opens. Preserve every theme,
+  High Contrast, re-homing, reduced motion and runtime resource refresh; do not special-case Writer.
+- **Evidence still required:** a focused Showcase/runtime reproduction across Office generations, light/dark,
+  standard/collapsed groups, RTL, 100-200% DPI and High Contrast without the Writer override.
+
 ## 5. Closed observations
 
 None yet.

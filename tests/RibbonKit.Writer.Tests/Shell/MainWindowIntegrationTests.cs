@@ -126,12 +126,12 @@ public sealed class MainWindowIntegrationTests
                 Assert.False(Assert.IsType<RibbonGroup>(fixture.Window.FindName("ParagraphGroup")).IsEnabled);
                 Assert.False(Assert.IsType<RibbonGroup>(fixture.Window.FindName("PageSetupGroup")).IsEnabled);
                 Assert.False(Assert.IsType<RibbonGroup>(fixture.Window.FindName("MarginsGroup")).IsEnabled);
-                    Assert.False(Assert.IsType<RibbonGroup>(fixture.Window.FindName("PageBackgroundGroup")).IsEnabled);
-                    Assert.False(Assert.IsType<RibbonTab>(fixture.Window.FindName("PageTab")).IsEnabled);
-                    Assert.True(Assert.IsType<RibbonTab>(fixture.Window.FindName("ViewTab")).IsEnabled);
-                    Assert.True(Assert.IsType<RibbonTab>(fixture.Window.FindName("PrintPreviewTab")).IsEnabled);
-                    Assert.False(Assert.IsAssignableFrom<UIElement>(
-                        fixture.Window.FindName("BoldButton")).IsEnabled);
+                Assert.False(Assert.IsType<RibbonGroup>(fixture.Window.FindName("PageBackgroundGroup")).IsEnabled);
+                Assert.False(Assert.IsType<RibbonTab>(fixture.Window.FindName("PageTab")).IsEnabled);
+                Assert.True(Assert.IsType<RibbonTab>(fixture.Window.FindName("ViewTab")).IsEnabled);
+                Assert.True(Assert.IsType<RibbonTab>(fixture.Window.FindName("PrintPreviewTab")).IsEnabled);
+                Assert.False(Assert.IsAssignableFrom<UIElement>(
+                    fixture.Window.FindName("BoldButton")).IsEnabled);
                 Assert.False(Assert.IsType<RibbonDropDownButton>(
                     fixture.Window.FindName("PageColorButton")).IsEnabled);
                 Assert.True(fixture.Window.SupportsProfileCommand(
@@ -141,6 +141,19 @@ public sealed class MainWindowIntegrationTests
                 Assert.True(Assert.IsType<RibbonButton>(
                     fixture.Window.FindName("BackstagePreviewButton")).IsEnabled);
             }
+
+            var nativeStructuredContent = format == WriterDocumentFormat.RibbonKitWriter;
+            Assert.True(Assert.IsType<RibbonTab>(fixture.Window.FindName("InsertTab")).IsEnabled);
+            Assert.True(Assert.IsType<RibbonButton>(fixture.Window.FindName("InsertDateTimeButton")).IsEnabled);
+            Assert.Equal(nativeStructuredContent,
+                Assert.IsType<RibbonButton>(fixture.Window.FindName("InsertPictureButton")).IsEnabled);
+            Assert.Equal(nativeStructuredContent,
+                Assert.IsType<RibbonButton>(fixture.Window.FindName("InsertHyperlinkButton")).IsEnabled);
+            Assert.Equal(nativeStructuredContent,
+                Assert.IsType<InRibbonGallery>(fixture.Window.FindName("TableGridPicker")).IsEnabled);
+            Assert.Equal(nativeStructuredContent, fixture.Window.CurrentProfile.Supports(
+                WriterDocumentCommandCapabilities.TableEditing));
+            Assert.False(fixture.Window.CurrentProfile.Capabilities.PreservesTables);
         }
 
         Assert.True(await fixture.Shell.NewAsync());
@@ -194,6 +207,7 @@ public sealed class MainWindowIntegrationTests
             AssertWriterIconCatalog(fixture);
             await AssertEditingRibbonControlsAsync(fixture);
             await AssertPageViewIntegrationAsync(fixture);
+            await AssertStructuredContentIntegrationAsync(fixture);
 
             var editingController = fixture.Window.EditingController;
             var stateParagraph = new Paragraph();
@@ -217,11 +231,14 @@ public sealed class MainWindowIntegrationTests
             editingController.RefreshState();
             Assert.False(editingController.State.CanFormat);
             Assert.False(Assert.IsType<RibbonToggleButton>(fixture.Window.FindName("BoldButton")).IsEnabled);
+            Assert.False(Assert.IsType<RibbonTab>(fixture.Window.FindName("InsertTab")).IsEnabled);
+            Assert.False(Assert.IsType<RibbonButton>(fixture.Window.FindName("InsertDateTimeButton")).IsEnabled);
             fixture.Editor.IsReadOnly = false;
             fixture.Editor.IsEnabled = false;
             editingController.RefreshState();
             Assert.False(editingController.State.IsEnabled);
             Assert.False(Assert.IsType<RibbonButton>(fixture.Window.FindName("CopyButton")).IsEnabled);
+            Assert.False(Assert.IsType<RibbonTab>(fixture.Window.FindName("InsertTab")).IsEnabled);
             fixture.Editor.IsEnabled = true;
             fixture.Editor.Document.Blocks.Clear();
             fixture.Shell.CurrentDocument.MarkClean();
@@ -361,6 +378,213 @@ public sealed class MainWindowIntegrationTests
             await AssertExitCloseAsync(UnsavedChangesDecision.Discard);
             await AssertCleanCloseAsync();
         }, TimeSpan.FromSeconds(20));
+    }
+
+    private static async Task AssertStructuredContentIntegrationAsync(WindowFixture fixture)
+    {
+        var window = fixture.Window;
+        var editor = fixture.Editor;
+        var insertTab = Assert.IsType<RibbonTab>(window.FindName("InsertTab"));
+        var tableToolsTab = Assert.IsType<RibbonTab>(window.FindName("TableToolsTab"));
+        Assert.Equal(new[] { "Table", "Illustrations", "Links", "Text" },
+            insertTab.Groups.Select(group => group.Header?.ToString()).ToArray());
+        Assert.True(tableToolsTab.IsContextual);
+        Assert.Equal(Visibility.Collapsed, tableToolsTab.Visibility);
+        Assert.Equal(new[] { "Rows & Columns", "Merge", "Cell Size", "Alignment", "Design" },
+            tableToolsTab.Groups.Select(group => group.Header?.ToString()).ToArray());
+        Assert.False(string.IsNullOrWhiteSpace(Ribbon.GetCommandId(insertTab)));
+        Assert.False(string.IsNullOrWhiteSpace(KeyTip.GetKeys(insertTab)));
+        Assert.False(string.IsNullOrWhiteSpace(AutomationProperties.GetHelpText(tableToolsTab)));
+
+        var insertButtons = new[]
+        {
+            "InsertPictureButton", "InsertHyperlinkButton", "InsertDateTimeButton"
+        }.Select(name => Assert.IsType<RibbonButton>(window.FindName(name))).ToArray();
+        Assert.All(insertButtons, button =>
+        {
+            Assert.Equal(RibbonControlSize.Large, button.Size);
+            Assert.False(string.IsNullOrWhiteSpace(Ribbon.GetCommandId(button)));
+            Assert.False(string.IsNullOrWhiteSpace(KeyTip.GetKeys(button)));
+            Assert.False(string.IsNullOrWhiteSpace(AutomationProperties.GetAutomationId(button)));
+            Assert.False(string.IsNullOrWhiteSpace(AutomationProperties.GetName(button)));
+            AssertScreenTip(button);
+        });
+
+        var picker = Assert.IsType<InRibbonGallery>(window.FindName("TableGridPicker"));
+        Assert.Equal(25, picker.Items.Count);
+        Assert.Equal(FlowDirection.LeftToRight, picker.FlowDirection);
+        Assert.Equal("Writer.Insert.Table.Grid", Ribbon.GetCommandId(picker));
+        Assert.Equal("TG", KeyTip.GetKeys(picker));
+        Assert.Contains("not yet preserved", AutomationProperties.GetHelpText(picker),
+            StringComparison.OrdinalIgnoreCase);
+        var pickerItems = picker.Items.Cast<RibbonGalleryItem>().ToArray();
+        var quickItems = pickerItems.Take(24).ToArray();
+        Assert.Equal(new WriterTableGridChoice(1, 1), Assert.IsType<WriterTableGridChoice>(quickItems[0].Tag));
+        Assert.Equal(new WriterTableGridChoice(3, 8), Assert.IsType<WriterTableGridChoice>(quickItems[^1].Tag));
+        Assert.Equal(24, quickItems.Select(Ribbon.GetCommandId).Distinct(StringComparer.Ordinal).Count());
+        Assert.All(quickItems, item =>
+        {
+            var invokeButton = Assert.IsType<Button>(item.Content);
+            Assert.IsType<WriterTableGridCellPreview>(invokeButton.Content);
+            Assert.IsType<RibbonScreenTip>(item.ToolTip);
+            Assert.False(invokeButton.IsHitTestVisible);
+            Assert.False(string.IsNullOrWhiteSpace(AutomationProperties.GetAutomationId(invokeButton)));
+            Assert.False(string.IsNullOrWhiteSpace(AutomationProperties.GetName(invokeButton)));
+            Assert.False(string.IsNullOrWhiteSpace(Ribbon.GetCommandId(item)));
+            Assert.False(string.IsNullOrWhiteSpace(AutomationProperties.GetAutomationId(item)));
+            Assert.False(string.IsNullOrWhiteSpace(AutomationProperties.GetName(item)));
+            Assert.Contains("W3-D", AutomationProperties.GetHelpText(item), StringComparison.Ordinal);
+        });
+        var footer = Assert.IsType<StackPanel>(pickerItems[^1].Content);
+        Assert.IsType<Separator>(footer.Children[0]);
+        var customTable = Assert.IsType<Button>(footer.Children[1]);
+        Assert.Equal("Writer.Insert.Table.Custom", Ribbon.GetCommandId(customTable));
+        Assert.Equal("InsertCustomTableSize", AutomationProperties.GetAutomationId(customTable));
+        Assert.Equal("Custom Table", AutomationProperties.GetName(customTable));
+        Assert.True(customTable.IsHitTestVisible);
+        Assert.True(customTable.Focusable);
+        Assert.True(customTable.IsTabStop);
+        picker.RaiseEvent(new RibbonGalleryPreviewEventArgs(
+            RibbonGallery.ItemPreviewEvent, picker, quickItems[10]));
+        Assert.Contains(quickItems, item =>
+            Assert.IsType<WriterTableGridCellPreview>(
+                Assert.IsType<Button>(item.Content).Content).IsHighlighted);
+        picker.RaiseEvent(new RibbonGalleryPreviewEventArgs(
+            RibbonGallery.ItemPreviewEvent, picker, pickerItems[^1]));
+        Assert.DoesNotContain(quickItems, item =>
+            Assert.IsType<WriterTableGridCellPreview>(
+                Assert.IsType<Button>(item.Content).Content).IsHighlighted);
+        var customEnter = new KeyEventArgs(Keyboard.PrimaryDevice,
+            PresentationSource.FromVisual(window), 0, Key.Enter)
+        {
+            RoutedEvent = Keyboard.PreviewKeyDownEvent
+        };
+        customTable.RaiseEvent(customEnter);
+        Assert.False(customEnter.Handled);
+        Assert.IsType<RibbonScreenTip>(picker.ToolTip);
+        picker.ApplyTemplate();
+        var pickerPopupHost = Assert.IsType<Border>(
+            picker.Template.FindName("PART_PopupHost", picker));
+        Assert.NotNull(pickerPopupHost.Background);
+
+        var tableCommands = new[]
+        {
+            "InsertTableRowAboveButton", "InsertTableRowBelowButton",
+            "InsertTableColumnLeftButton", "InsertTableColumnRightButton",
+            "DeleteTableRowButton", "DeleteTableColumnButton", "MergeTableCellsButton",
+            "SplitTableCellButton", "InsertTableLiteralTabButton", "TableRowHeightButton",
+            "TableColumnWidthButton", "DistributeTableRowsButton",
+            "DistributeTableColumnsButton", "TableAlignmentButton", "TableBordersButton",
+            "TableBackgroundButton"
+        }.Select(name => Assert.IsAssignableFrom<FrameworkElement>(window.FindName(name))).ToArray();
+        Assert.Equal(tableCommands.Length,
+            tableCommands.Select(KeyTip.GetKeys).Distinct(StringComparer.OrdinalIgnoreCase).Count());
+        Assert.All(tableCommands, command =>
+        {
+            Assert.False(string.IsNullOrWhiteSpace(Ribbon.GetCommandId(command)));
+            Assert.False(string.IsNullOrWhiteSpace(KeyTip.GetKeys(command)));
+            Assert.False(string.IsNullOrWhiteSpace(AutomationProperties.GetAutomationId(command)));
+            Assert.False(string.IsNullOrWhiteSpace(AutomationProperties.GetName(command)));
+            AssertScreenTip(command);
+        });
+
+        Assert.True(window.CurrentProfile.Supports(WriterDocumentCommandCapabilities.TableEditing));
+        Assert.False(window.CurrentProfile.Capabilities.PreservesTables);
+        var document = fixture.Shell.CurrentDocument;
+        document.Content.Blocks.Clear();
+        var paragraph = new Paragraph(new Run("table anchor"));
+        document.Content.Blocks.Add(paragraph);
+        editor.Selection.Select(paragraph.ContentStart, paragraph.ContentStart);
+        document.MarkClean();
+
+        var twoByThree = quickItems.Single(item =>
+            Assert.IsType<WriterTableGridChoice>(item.Tag) == new WriterTableGridChoice(2, 3));
+        var invokeButton = Assert.IsType<Button>(twoByThree.Content);
+        var pickerPeer = UIElementAutomationPeer.CreatePeerForElement(invokeButton)
+            ?? new ButtonAutomationPeer(invokeButton);
+        var pickerInvoke = Assert.IsAssignableFrom<IInvokeProvider>(
+            pickerPeer.GetPattern(PatternInterface.Invoke));
+        pickerInvoke.Invoke();
+        await PumpAsync();
+        var table = Assert.Single(document.Content.Blocks.OfType<Table>());
+        Assert.Equal(2, table.RowGroups[0].Rows.Count);
+        Assert.All(table.RowGroups[0].Rows, row => Assert.Equal(3, row.Cells.Count));
+        Assert.NotNull(table.BorderBrush);
+        Assert.All(table.RowGroups[0].Rows.Cast<TableRow>()
+            .SelectMany(row => row.Cells.Cast<TableCell>()), cell =>
+        {
+            Assert.NotNull(cell.BorderBrush);
+            Assert.Equal(new Thickness(0.5), cell.BorderThickness);
+        });
+        Assert.True(window.TableInteractionController.IsInTable);
+        Assert.Equal(Visibility.Visible, tableToolsTab.Visibility);
+        Assert.True(tableToolsTab.IsEnabled);
+        Assert.True(document.IsDirty);
+        Assert.True(Assert.IsType<RibbonButton>(window.FindName("DeleteTableRowButton")).IsEnabled);
+        Assert.True(Assert.IsType<RibbonButton>(window.FindName("DeleteTableColumnButton")).IsEnabled);
+
+        var insertRowBelow = Assert.IsType<RibbonButton>(window.FindName("InsertTableRowBelowButton"));
+        Click(insertRowBelow);
+        SetShellBusy(fixture.Shell, true);
+        await Dispatcher.Yield(DispatcherPriority.ContextIdle);
+        Assert.Equal(2, table.RowGroups[0].Rows.Count);
+        SetShellBusy(fixture.Shell, false);
+
+        Click(insertRowBelow);
+        await Dispatcher.Yield(DispatcherPriority.ContextIdle);
+        await PumpAsync();
+        Assert.Equal(3, table.RowGroups[0].Rows.Count);
+        AssertEditorFocusRestored(fixture);
+
+        editor.Selection.Select(paragraph.ContentEnd, paragraph.ContentEnd);
+        window.TableInteractionController.Refresh();
+        await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+        Assert.Equal(Visibility.Collapsed, tableToolsTab.Visibility);
+
+        document.Content.Blocks.Clear();
+        var singleCellAnchor = new Paragraph();
+        document.Content.Blocks.Add(singleCellAnchor);
+        editor.Selection.Select(singleCellAnchor.ContentStart, singleCellAnchor.ContentStart);
+        Assert.True(window.TryInsertTable(1, 1));
+        await Dispatcher.Yield(DispatcherPriority.ContextIdle);
+        Assert.False(Assert.IsType<RibbonButton>(window.FindName("DeleteTableRowButton")).IsEnabled);
+        Assert.False(Assert.IsType<RibbonButton>(window.FindName("DeleteTableColumnButton")).IsEnabled);
+
+        var unevenTable = new Table();
+        var wideGroup = new TableRowGroup();
+        var wideRow = new TableRow();
+        wideRow.Cells.Add(new TableCell(new Paragraph()));
+        wideRow.Cells.Add(new TableCell(new Paragraph()));
+        wideGroup.Rows.Add(wideRow);
+        var narrowGroup = new TableRowGroup();
+        var narrowRow = new TableRow();
+        var narrowCell = new TableCell(new Paragraph());
+        narrowRow.Cells.Add(narrowCell);
+        narrowGroup.Rows.Add(narrowRow);
+        unevenTable.RowGroups.Add(wideGroup);
+        unevenTable.RowGroups.Add(narrowGroup);
+        document.Content.Blocks.Clear();
+        document.Content.Blocks.Add(unevenTable);
+        editor.Selection.Select(narrowCell.ContentStart, narrowCell.ContentStart);
+        window.TableInteractionController.Refresh();
+        var deleteColumn = Assert.IsType<RibbonButton>(window.FindName("DeleteTableColumnButton"));
+        Assert.False(deleteColumn.IsEnabled);
+        editor.Selection.Select(wideRow.Cells[0].ContentStart, wideRow.Cells[0].ContentStart);
+        window.TableInteractionController.Refresh();
+        Assert.False(deleteColumn.IsEnabled);
+        editor.Selection.Select(wideRow.Cells[1].ContentStart, wideRow.Cells[1].ContentStart);
+        window.TableInteractionController.Refresh();
+        Assert.True(deleteColumn.IsEnabled);
+        Click(deleteColumn);
+        await Dispatcher.Yield(DispatcherPriority.ContextIdle);
+        await PumpAsync();
+        var reducedUnevenTable = Assert.Single(document.Content.Blocks.OfType<Table>());
+        Assert.All(reducedUnevenTable.RowGroups.Cast<TableRowGroup>(), group =>
+            Assert.All(group.Rows.Cast<TableRow>(), row => Assert.Single(row.Cells)));
+
+        document.Content.Blocks.Clear();
+        document.Content.Blocks.Add(new Paragraph());
+        document.MarkClean();
     }
 
     private static async Task AssertEditingRibbonControlsAsync(WindowFixture fixture)
@@ -554,7 +778,7 @@ public sealed class MainWindowIntegrationTests
             AssertScreenTip(button);
         }
 
-        Assert.Equal(4, ribbon.Tabs.Count);
+        Assert.Equal(6, ribbon.Tabs.Count);
         var home = ribbon.Tabs.Single(tab => Equals(tab.Header, "Home"));
         Assert.DoesNotContain(FindLogicalDescendants<FrameworkElement>(home), element =>
             AutomationProperties.GetAutomationId(element) is "ZoomOut" or "ZoomReset" or "ZoomIn");
@@ -619,6 +843,19 @@ public sealed class MainWindowIntegrationTests
         Assert.Same(liveDocument, fixture.Editor.Document);
         Assert.Equal(selectedText, editor.Selection.Text);
         Assert.True(editor.CanUndo);
+
+        var ruler = Assert.IsType<WriterRuler>(window.FindName("HorizontalRuler"));
+        var editorTopSeparator = Assert.IsType<Border>(window.FindName("EditorTopSeparator"));
+        Assert.Equal(Visibility.Visible, ruler.Visibility);
+        Assert.Equal(Visibility.Collapsed, editorTopSeparator.Visibility);
+        Toggle(Assert.IsType<RibbonToggleButton>(window.FindName("RulerToggleButton")));
+        await Dispatcher.Yield(DispatcherPriority.DataBind);
+        Assert.Equal(Visibility.Collapsed, ruler.Visibility);
+        Assert.Equal(Visibility.Visible, editorTopSeparator.Visibility);
+        Toggle(Assert.IsType<RibbonToggleButton>(window.FindName("RulerToggleButton")));
+        await Dispatcher.Yield(DispatcherPriority.DataBind);
+        Assert.Equal(Visibility.Visible, ruler.Visibility);
+        Assert.Equal(Visibility.Collapsed, editorTopSeparator.Visibility);
 
         Assert.False(window.IsPreviewRebuildEnabled);
         Assert.Null(preview.Snapshot);
@@ -827,10 +1064,10 @@ public sealed class MainWindowIntegrationTests
             AutomationProperties.GetName(item))));
         Assert.All(fileActions, item => Assert.NotNull(item.Command));
 
-        Assert.Equal(new[] { "Home", "Page", "View", "Print Preview" },
+        Assert.Equal(new[] { "Home", "Insert", "Table Tools", "Page", "View", "Print Preview" },
             ribbon.Tabs.Select(tab => tab.Header?.ToString()).ToArray());
-        Assert.True(ribbon.Tabs[3].IsModal);
-        Assert.Equal(Visibility.Collapsed, ribbon.Tabs[3].Visibility);
+        Assert.True(ribbon.Tabs[5].IsModal);
+        Assert.Equal(Visibility.Collapsed, ribbon.Tabs[5].Visibility);
         var home = ribbon.Tabs[0];
         Assert.Equal("Home", home.Header);
         Assert.Equal(new[] { "Clipboard", "Font", "Paragraph", "Editing" },
@@ -1140,6 +1377,13 @@ public sealed class MainWindowIntegrationTests
             await Task.Delay(10);
         }
         Assert.False(shell.IsBusy);
+    }
+
+    private static void SetShellBusy(WriterShellViewModel shell, bool value)
+    {
+        var property = typeof(WriterShellViewModel).GetProperty(nameof(WriterShellViewModel.IsBusy));
+        Assert.NotNull(property);
+        property.SetValue(shell, value);
     }
 
     private static async Task AssertExitCloseAsync(UnsavedChangesDecision decision)

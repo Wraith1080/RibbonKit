@@ -41,14 +41,25 @@ public sealed class WriterTableService : IDisposable
 
     /// <summary>
     /// Inserts a native table at the paragraph containing the current caret and moves the caret to
-    /// the first cell. Dimensions are limited to the approved 1×1 through 8×8 picker range.
+    /// the first cell. Dimensions are limited to Writer's supported 1×1 through 8×8 table range.
     /// </summary>
     /// <param name="rows">The number of rows to create.</param>
     /// <param name="columns">The number of columns to create.</param>
     /// <returns>The created table, or <see langword="null"/> when insertion is unavailable.</returns>
-    public Table? InsertTable(int rows, int columns)
+    public Table? InsertTable(int rows, int columns) =>
+        InsertTable(rows, columns, SystemColors.ControlDarkBrush);
+
+    /// <summary>
+    /// Inserts a native table with a visible outer frame and cell grid at the current caret.
+    /// </summary>
+    /// <param name="rows">The number of rows to create.</param>
+    /// <param name="columns">The number of columns to create.</param>
+    /// <param name="borderBrush">The brush used for the outer frame and cell grid.</param>
+    /// <returns>The created table, or <see langword="null"/> when insertion is unavailable.</returns>
+    public Table? InsertTable(int rows, int columns, Brush borderBrush)
     {
         ThrowIfDisposed();
+        ArgumentNullException.ThrowIfNull(borderBrush);
         if (rows is < 1 or > 8)
             throw new ArgumentOutOfRangeException(nameof(rows), rows, "Rows must be between 1 and 8.");
         if (columns is < 1 or > 8)
@@ -61,7 +72,7 @@ public sealed class WriterTableService : IDisposable
         WriterTableCellReference? caret = null;
         if (!Mutate(() =>
         {
-            if (!TryInsertTableAtCaret(rows, columns, out created))
+            if (!TryInsertTableAtCaret(rows, columns, borderBrush, out created))
                 return false;
             var group = created!.RowGroups[0];
             var cell = group.Rows[0].Cells[0];
@@ -645,6 +656,38 @@ public sealed class WriterTableService : IDisposable
         });
     }
 
+    /// <summary>Sets the outer table frame and every cell border in one mutation.</summary>
+    public bool SetAllTableBorders(Table table, Brush? brush, Thickness tableThickness,
+        Thickness cellThickness)
+    {
+        ThrowIfDisposed();
+        ArgumentNullException.ThrowIfNull(table);
+        ValidateThickness(tableThickness, nameof(tableThickness));
+        ValidateThickness(cellThickness, nameof(cellThickness));
+        return Mutate(() =>
+        {
+            if (!IsTableInDocument(table))
+                return false;
+            var cells = table.RowGroups.Cast<TableRowGroup>()
+                .SelectMany(static group => group.Rows.Cast<TableRow>())
+                .SelectMany(static row => row.Cells.Cast<TableCell>())
+                .ToArray();
+            if (Equals(table.BorderBrush, brush) && table.BorderThickness == tableThickness
+                && cells.All(cell => Equals(cell.BorderBrush, brush)
+                    && cell.BorderThickness == cellThickness))
+                return false;
+
+            table.BorderBrush = brush;
+            table.BorderThickness = tableThickness;
+            foreach (var cell in cells)
+            {
+                cell.BorderBrush = brush;
+                cell.BorderThickness = cellThickness;
+            }
+            return true;
+        });
+    }
+
     /// <summary>Sets a table column's width.</summary>
     public bool SetColumnWidth(Table table, int column, GridLength width)
     {
@@ -862,9 +905,13 @@ public sealed class WriterTableService : IDisposable
         _disposed = true;
     }
 
-    private bool TryInsertTableAtCaret(int rows, int columns, out Table? table)
+    private bool TryInsertTableAtCaret(int rows, int columns, Brush borderBrush, out Table? table)
     {
-        table = new Table();
+        table = new Table
+        {
+            BorderBrush = borderBrush,
+            BorderThickness = new Thickness(1)
+        };
         for (var column = 0; column < columns; column++)
             table.Columns.Add(new TableColumn());
         var group = new TableRowGroup();
@@ -872,7 +919,7 @@ public sealed class WriterTableService : IDisposable
         {
             var tableRow = new TableRow();
             for (var column = 0; column < columns; column++)
-                tableRow.Cells.Add(CreateEmptyCell());
+                tableRow.Cells.Add(CreateEmptyCell(borderBrush, new Thickness(0.5)));
             group.Rows.Add(tableRow);
         }
         table.RowGroups.Add(group);
@@ -1181,6 +1228,7 @@ public sealed class WriterTableService : IDisposable
     private static void AddMissingCells(ICollection<WriterTableCellPlacement> placements,
         IReadOnlyList<TableRow> rows, int firstRow, int width, int rowCount)
     {
+        var styleCandidates = placements.ToArray();
         var endRow = checked(firstRow + rowCount);
         for (var row = firstRow; row < endRow; row++)
         {
@@ -1189,9 +1237,23 @@ public sealed class WriterTableService : IDisposable
                 if (placements.Any(item => item.Row <= row && item.RowSpan > row - item.Row &&
                         item.Column <= column && item.ColumnSpan > column - item.Column))
                     continue;
-                placements.Add(new WriterTableCellPlacement(CreateEmptyCell(), row, column, 1, 1));
+                var styleSource = styleCandidates
+                    .OrderBy(item => DistanceFromSpan(item.Row, item.RowSpan, row))
+                    .ThenBy(item => DistanceFromSpan(item.Column, item.ColumnSpan, column))
+                    .Select(static item => item.Cell)
+                    .FirstOrDefault();
+                var cell = styleSource is null ? CreateEmptyCell() : CreateCellLike(styleSource);
+                placements.Add(new WriterTableCellPlacement(cell, row, column, 1, 1));
             }
         }
+    }
+
+    private static int DistanceFromSpan(int start, int span, int value)
+    {
+        if (value < start)
+            return start - value;
+        var end = checked(start + span);
+        return value >= end ? value - end + 1 : 0;
     }
 
     private static void NormalizeGroup(Table table, TableRowGroup group)
@@ -1368,7 +1430,16 @@ public sealed class WriterTableService : IDisposable
         return true;
     }
 
-    private static TableCell CreateEmptyCell() => new(new Paragraph(new Run()));
+    private static TableCell CreateEmptyCell(Brush? borderBrush = null,
+        Thickness? borderThickness = null)
+    {
+        var cell = new TableCell(new Paragraph(new Run()));
+        if (borderBrush is not null)
+            cell.BorderBrush = borderBrush;
+        if (borderThickness is { } thickness)
+            cell.BorderThickness = thickness;
+        return cell;
+    }
 
     private static TableCell CreateCellLike(TableCell source)
     {

@@ -637,6 +637,190 @@
                     </StackPanel>
                 </rk:RibbonGroup>
             </rk:RibbonTab>
+            <rk:RibbonTab x:Name="InsertTab" Header="Insert" rk:Ribbon.CommandId="Writer.Insert" rk:KeyTip.Keys="I"
+                          AutomationProperties.AutomationId="InsertTab" AutomationProperties.Name="Insert">
+                <rk:RibbonGroup x:Name="InsertTablesGroup" Header="Table" rk:Ribbon.CommandId="Writer.Insert.Table"
+                                rk:KeyTip.Keys="TB" Icon="{StaticResource Icon.WriterTable}"
+                                AutomationProperties.AutomationId="InsertTablesGroup" AutomationProperties.Name="Table"
+                                AutomationProperties.HelpText="Insert a native table. Table round-trip remains a later W3-D capability.">
+                    <rk:InRibbonGallery x:Name="TableGridPicker" Width="278" Height="54"
+                                        FlowDirection="LeftToRight"
+                                        SelectionChanged="OnTableGridSelectionChanged"
+                                        ItemPreview="OnTableGridItemPreview"
+                                        ItemPreviewCancelled="OnTableGridItemPreviewCancelled"
+                                        PreviewKeyDown="OnTableGridPreviewKeyDown"
+                                        rk:Ribbon.CommandId="Writer.Insert.Table.Grid" rk:KeyTip.Keys="TG"
+                                        AutomationProperties.AutomationId="InsertTableGrid"
+                                        AutomationProperties.Name="Table grid picker"
+                                        AutomationProperties.HelpText="Use arrow keys for a quick table up to 3 by 8, or choose Custom Table for another supported size. Tables are not yet preserved when saving.">
+                        <rk:InRibbonGallery.ToolTip>
+                            <rk:RibbonScreenTip Title="Insert Table"
+                                                Description="Choose a quick 1 × 1 through 3 × 8 table, or enter another supported size with Custom Table. Saving tables remains deferred to W3-D." />
+                        </rk:InRibbonGallery.ToolTip>
+                    </rk:InRibbonGallery>
+                </rk:RibbonGroup>
+                <rk:RibbonGroup x:Name="InsertIllustrationsGroup" Header="Illustrations" rk:Ribbon.CommandId="Writer.Insert.Illustrations"
+                                rk:KeyTip.Keys="IL" Icon="{StaticResource Icon.WriterImage}"
+                                AutomationProperties.AutomationId="InsertIllustrationsGroup" AutomationProperties.Name="Illustrations">
+                    <rk:RibbonButton x:Name="InsertPictureButton" Header="Picture" Size="Large"
+                                     SizeDefinition="Large, Medium, Small"
+                                     Icon="{StaticResource Icon.WriterImage}" LargeIcon="{StaticResource Icon.WriterImage}"
+                                     Click="OnInsertPictureClick" rk:Ribbon.CommandId="Writer.Insert.Picture" rk:KeyTip.Keys="PI"
+                                     ScreenTipTitle="Picture" ScreenTipText="Insert a portable PNG, JPEG, GIF or BMP image into the document."
+                                     AutomationProperties.AutomationId="InsertPicture" AutomationProperties.Name="Picture" />
+                </rk:RibbonGroup>
+                <rk:RibbonGroup x:Name="InsertLinksGroup" Header="Links" rk:Ribbon.CommandId="Writer.Insert.Links"
+                                rk:KeyTip.Keys="LK" Icon="{StaticResource Icon.WriterHyperlink}"
+                                AutomationProperties.AutomationId="InsertLinksGroup" AutomationProperties.Name="Links">
+                    <rk:RibbonButton x:Name="InsertHyperlinkButton" Header="Hyperlink" Size="Large"
+                                     SizeDefinition="Large, Medium, Small"
+                                     Icon="{StaticResource Icon.WriterHyperlink}" LargeIcon="{StaticResource Icon.WriterHyperlink}"
+                                     Click="OnInsertHyperlinkClick" rk:Ribbon.CommandId="Writer.Insert.Hyperlink" rk:KeyTip.Keys="HY"
+                                     ScreenTipTitle="Hyperlink" ScreenTipText="Insert or edit a safe HTTP, HTTPS or mailto hyperlink."
+                                     AutomationProperties.AutomationId="InsertHyperlink" AutomationProperties.Name="Hyperlink" />
+                </rk:RibbonGroup>
+                <rk:RibbonGroup x:Name="InsertTextGroup" Header="Text" rk:Ribbon.CommandId="Writer.Insert.Text"
+                                rk:KeyTip.Keys="TX" Icon="{StaticResource Icon.WriterDateTime}"
+                                AutomationProperties.AutomationId="InsertTextGroup" AutomationProperties.Name="Text">
+                    <rk:RibbonButton x:Name="InsertDateTimeButton" Header="Date and Time" Size="Large"
+                                     SizeDefinition="Large, Medium, Small"
+                                     Icon="{StaticResource Icon.WriterDateTime}" LargeIcon="{StaticResource Icon.WriterDateTime}"
+                                     Click="OnInsertDateTimeClick" rk:Ribbon.CommandId="Writer.Insert.DateTime" rk:KeyTip.Keys="DT"
+                                     ScreenTipTitle="Date and Time" ScreenTipText="Insert a formatted, editable date and time value."
+                                     AutomationProperties.AutomationId="InsertDateTime" AutomationProperties.Name="Date and Time" />
+                </rk:RibbonGroup>
+            </rk:RibbonTab>
+            <rk:RibbonTab x:Name="TableToolsTab" Header="Table Tools" IsContextual="True"
+                          ContextualColor="#107C41" Visibility="Collapsed"
+                          rk:Ribbon.CommandId="Writer.TableTools" rk:KeyTip.Keys="TT"
+                          AutomationProperties.AutomationId="TableToolsTab" AutomationProperties.Name="Table Tools"
+                          AutomationProperties.HelpText="Contextual commands for the table cell containing the editor caret. Table round-trip remains a later W3-D capability.">
+                <rk:RibbonGroup x:Name="TableRowsColumnsGroup" Header="Rows &amp; Columns" rk:Ribbon.CommandId="Writer.TableTools.RowsColumns"
+                                rk:KeyTip.Keys="RC" Icon="{StaticResource Icon.WriterColumns}"
+                                AutomationProperties.AutomationId="TableRowsColumnsGroup" AutomationProperties.Name="Rows and Columns">
+                    <rk:RibbonButton x:Name="InsertTableRowAboveButton" Header="Row Above" Size="Large" SizeDefinition="Large, Medium, Small"
+                                     Icon="{StaticResource Icon.WriterAddRowAbove}" LargeIcon="{StaticResource Icon.WriterAddRowAbove}"
+                                     Click="OnInsertTableRowAboveClick" rk:Ribbon.CommandId="Writer.TableTools.Rows.InsertAbove" rk:KeyTip.Keys="RA"
+                                     ScreenTipTitle="Insert Row Above" ScreenTipText="Insert one row above the current table cell."
+                                     AutomationProperties.AutomationId="TableInsertRowAbove" AutomationProperties.Name="Insert row above" />
+                    <rk:RibbonButton x:Name="InsertTableRowBelowButton" Header="Row Below" Size="Large" SizeDefinition="Large, Medium, Small"
+                                     Icon="{StaticResource Icon.WriterAddRowBelow}" LargeIcon="{StaticResource Icon.WriterAddRowBelow}"
+                                     Click="OnInsertTableRowBelowClick" rk:Ribbon.CommandId="Writer.TableTools.Rows.InsertBelow" rk:KeyTip.Keys="RB"
+                                     ScreenTipTitle="Insert Row Below" ScreenTipText="Insert one row below the current table cell."
+                                     AutomationProperties.AutomationId="TableInsertRowBelow" AutomationProperties.Name="Insert row below" />
+                    <rk:RibbonButton x:Name="InsertTableColumnLeftButton" Header="Column Left" Size="Large" SizeDefinition="Large, Medium, Small"
+                                     Icon="{StaticResource Icon.WriterAddColumnLeft}" LargeIcon="{StaticResource Icon.WriterAddColumnLeft}"
+                                     Click="OnInsertTableColumnLeftClick" rk:Ribbon.CommandId="Writer.TableTools.Columns.InsertLeft" rk:KeyTip.Keys="CL"
+                                     ScreenTipTitle="Insert Column Left" ScreenTipText="Insert one column to the left of the current table cell."
+                                     AutomationProperties.AutomationId="TableInsertColumnLeft" AutomationProperties.Name="Insert column left" />
+                    <rk:RibbonButton x:Name="InsertTableColumnRightButton" Header="Column Right" Size="Large" SizeDefinition="Large, Medium, Small"
+                                     Icon="{StaticResource Icon.WriterAddColumnRight}" LargeIcon="{StaticResource Icon.WriterAddColumnRight}"
+                                     Click="OnInsertTableColumnRightClick" rk:Ribbon.CommandId="Writer.TableTools.Columns.InsertRight" rk:KeyTip.Keys="CR"
+                                     ScreenTipTitle="Insert Column Right" ScreenTipText="Insert one column to the right of the current table cell."
+                                     AutomationProperties.AutomationId="TableInsertColumnRight" AutomationProperties.Name="Insert column right" />
+                    <rk:RibbonButton x:Name="DeleteTableRowButton" Header="Delete Row" Size="Large" SizeDefinition="Large, Medium, Small"
+                                     Icon="{StaticResource Icon.WriterDeleteRow}" LargeIcon="{StaticResource Icon.WriterDeleteRow}"
+                                     Click="OnDeleteTableRowClick" rk:Ribbon.CommandId="Writer.TableTools.Rows.Delete" rk:KeyTip.Keys="DR"
+                                     ScreenTipTitle="Delete Row" ScreenTipText="Delete the row containing the current table cell."
+                                     AutomationProperties.AutomationId="TableDeleteRow" AutomationProperties.Name="Delete row" />
+                    <rk:RibbonButton x:Name="DeleteTableColumnButton" Header="Delete Column" Size="Large" SizeDefinition="Large, Medium, Small"
+                                     Icon="{StaticResource Icon.WriterDeleteColumn}" LargeIcon="{StaticResource Icon.WriterDeleteColumn}"
+                                     Click="OnDeleteTableColumnClick" rk:Ribbon.CommandId="Writer.TableTools.Columns.Delete" rk:KeyTip.Keys="DC"
+                                     ScreenTipTitle="Delete Column" ScreenTipText="Delete the column containing the current table cell."
+                                     AutomationProperties.AutomationId="TableDeleteColumn" AutomationProperties.Name="Delete column" />
+                </rk:RibbonGroup>
+                <rk:RibbonGroup x:Name="TableMergeGroup" Header="Merge" rk:Ribbon.CommandId="Writer.TableTools.Merge"
+                                rk:KeyTip.Keys="ME" Icon="{StaticResource Icon.WriterMergeCells}"
+                                AutomationProperties.AutomationId="TableMergeGroup" AutomationProperties.Name="Merge">
+                    <rk:RibbonButton x:Name="MergeTableCellsButton" Header="Merge Cells" Size="Large" SizeDefinition="Large, Medium, Small"
+                                     Icon="{StaticResource Icon.WriterMergeCells}" LargeIcon="{StaticResource Icon.WriterMergeCells}"
+                                     Click="OnMergeTableCellsClick" rk:Ribbon.CommandId="Writer.TableTools.MergeCells" rk:KeyTip.Keys="MC"
+                                     ScreenTipTitle="Merge Cells" ScreenTipText="Merge the selected rectangular table cells into one cell."
+                                     AutomationProperties.AutomationId="TableMergeCells" AutomationProperties.Name="Merge cells" />
+                    <rk:RibbonButton x:Name="SplitTableCellButton" Header="Split Cell" Size="Large" SizeDefinition="Large, Medium, Small"
+                                     Icon="{StaticResource Icon.WriterSplitCells}" LargeIcon="{StaticResource Icon.WriterSplitCells}"
+                                     Click="OnSplitTableCellClick" rk:Ribbon.CommandId="Writer.TableTools.SplitCell" rk:KeyTip.Keys="SC"
+                                     ScreenTipTitle="Split Cell" ScreenTipText="Split the spanned cell into its logical rows and columns."
+                                     AutomationProperties.AutomationId="TableSplitCell" AutomationProperties.Name="Split cell" />
+                    <rk:RibbonButton x:Name="InsertTableLiteralTabButton" Header="Literal Tab" Size="Large" SizeDefinition="Large, Medium, Small"
+                                     Icon="{StaticResource Icon.WriterTable}" LargeIcon="{StaticResource Icon.WriterTable}"
+                                     Click="OnInsertTableLiteralTabClick" rk:Ribbon.CommandId="Writer.TableTools.InsertLiteralTab" rk:KeyTip.Keys="LT"
+                                     ScreenTipTitle="Literal Tab" ScreenTipText="Insert a tab character in the current cell. Ctrl+Tab is the keyboard shortcut."
+                                     AutomationProperties.AutomationId="TableLiteralTab" AutomationProperties.Name="Insert literal tab" />
+                </rk:RibbonGroup>
+                <rk:RibbonGroup x:Name="TableSizeGroup" Header="Cell Size" rk:Ribbon.CommandId="Writer.TableTools.Size"
+                                rk:KeyTip.Keys="SI" Icon="{StaticResource Icon.WriterDistributeColumns}"
+                                AutomationProperties.AutomationId="TableSizeGroup" AutomationProperties.Name="Cell Size">
+                    <rk:RibbonDropDownButton x:Name="TableRowHeightButton" Header="Row Height" Size="Large"
+                                             SizeDefinition="Large, Medium, Small"
+                                             Icon="{StaticResource Icon.WriterDistributeRows}" LargeIcon="{StaticResource Icon.WriterDistributeRows}"
+                                             rk:Ribbon.CommandId="Writer.TableTools.Size.RowHeight" rk:KeyTip.Keys="RH"
+                                             ScreenTipTitle="Row Height" ScreenTipText="Apply a supported minimum height to the current table row."
+                                             AutomationProperties.AutomationId="TableRowHeight" AutomationProperties.Name="Row height">
+                        <rk:RibbonMenuItem Header="Compact" Tag="24" Click="OnTableRowHeightClick" rk:Ribbon.CommandId="Writer.TableTools.Size.RowHeight.Compact" rk:KeyTip.Keys="C" AutomationProperties.AutomationId="TableRowHeightCompact" AutomationProperties.Name="Compact row height" />
+                        <rk:RibbonMenuItem Header="Standard" Tag="32" Click="OnTableRowHeightClick" rk:Ribbon.CommandId="Writer.TableTools.Size.RowHeight.Standard" rk:KeyTip.Keys="S" AutomationProperties.AutomationId="TableRowHeightStandard" AutomationProperties.Name="Standard row height" />
+                        <rk:RibbonMenuItem Header="Tall" Tag="48" Click="OnTableRowHeightClick" rk:Ribbon.CommandId="Writer.TableTools.Size.RowHeight.Tall" rk:KeyTip.Keys="T" AutomationProperties.AutomationId="TableRowHeightTall" AutomationProperties.Name="Tall row height" />
+                    </rk:RibbonDropDownButton>
+                    <rk:RibbonDropDownButton x:Name="TableColumnWidthButton" Header="Column Width" Size="Large"
+                                             SizeDefinition="Large, Medium, Small"
+                                             Icon="{StaticResource Icon.WriterColumns}" LargeIcon="{StaticResource Icon.WriterColumns}"
+                                             rk:Ribbon.CommandId="Writer.TableTools.Size.ColumnWidth" rk:KeyTip.Keys="CW"
+                                             ScreenTipTitle="Column Width" ScreenTipText="Apply a supported fixed width to the current table column."
+                                             AutomationProperties.AutomationId="TableColumnWidth" AutomationProperties.Name="Column width">
+                        <rk:RibbonMenuItem Header="Narrow" Tag="80" Click="OnTableColumnWidthClick" rk:Ribbon.CommandId="Writer.TableTools.Size.ColumnWidth.Narrow" rk:KeyTip.Keys="N" AutomationProperties.AutomationId="TableColumnWidthNarrow" AutomationProperties.Name="Narrow column width" />
+                        <rk:RibbonMenuItem Header="Standard" Tag="120" Click="OnTableColumnWidthClick" rk:Ribbon.CommandId="Writer.TableTools.Size.ColumnWidth.Standard" rk:KeyTip.Keys="S" AutomationProperties.AutomationId="TableColumnWidthStandard" AutomationProperties.Name="Standard column width" />
+                        <rk:RibbonMenuItem Header="Wide" Tag="160" Click="OnTableColumnWidthClick" rk:Ribbon.CommandId="Writer.TableTools.Size.ColumnWidth.Wide" rk:KeyTip.Keys="W" AutomationProperties.AutomationId="TableColumnWidthWide" AutomationProperties.Name="Wide column width" />
+                    </rk:RibbonDropDownButton>
+                    <rk:RibbonButton x:Name="DistributeTableRowsButton" Header="Distribute Rows" Size="Large" SizeDefinition="Large, Medium, Small"
+                                     Icon="{StaticResource Icon.WriterDistributeRows}" LargeIcon="{StaticResource Icon.WriterDistributeRows}"
+                                     Click="OnDistributeTableRowsClick" rk:Ribbon.CommandId="Writer.TableTools.Size.DistributeRows" rk:KeyTip.Keys="ER"
+                                     ScreenTipTitle="Distribute Rows" ScreenTipText="Give the selected table rows equal minimum height."
+                                     AutomationProperties.AutomationId="TableDistributeRows" AutomationProperties.Name="Distribute rows" />
+                    <rk:RibbonButton x:Name="DistributeTableColumnsButton" Header="Distribute Columns" Size="Large" SizeDefinition="Large, Medium, Small"
+                                     Icon="{StaticResource Icon.WriterDistributeColumns}" LargeIcon="{StaticResource Icon.WriterDistributeColumns}"
+                                     Click="OnDistributeTableColumnsClick" rk:Ribbon.CommandId="Writer.TableTools.Size.DistributeColumns" rk:KeyTip.Keys="EC"
+                                     ScreenTipTitle="Distribute Columns" ScreenTipText="Give the selected table columns equal width."
+                                     AutomationProperties.AutomationId="TableDistributeColumns" AutomationProperties.Name="Distribute columns" />
+                </rk:RibbonGroup>
+                <rk:RibbonGroup x:Name="TableAlignmentGroup" Header="Alignment" rk:Ribbon.CommandId="Writer.TableTools.Alignment"
+                                rk:KeyTip.Keys="AL" Icon="{StaticResource Icon.WriterAlignCenter}"
+                                AutomationProperties.AutomationId="TableAlignmentGroup" AutomationProperties.Name="Alignment">
+                    <rk:RibbonDropDownButton x:Name="TableAlignmentButton" Header="Cell Alignment" Size="Large"
+                                             SizeDefinition="Large, Medium, Small"
+                                             Icon="{StaticResource Icon.WriterAlignCenter}" LargeIcon="{StaticResource Icon.WriterAlignCenter}"
+                                             rk:Ribbon.CommandId="Writer.TableTools.Alignment.Cell" rk:KeyTip.Keys="CA"
+                                             ScreenTipTitle="Cell Alignment" ScreenTipText="Align text in the current table cell."
+                                             AutomationProperties.AutomationId="TableCellAlignment" AutomationProperties.Name="Cell alignment">
+                        <rk:RibbonMenuItem Header="Left" Tag="Left" Click="OnTableAlignmentClick" rk:Ribbon.CommandId="Writer.TableTools.Alignment.Left" rk:KeyTip.Keys="L" AutomationProperties.AutomationId="TableAlignLeft" AutomationProperties.Name="Align cell text left" />
+                        <rk:RibbonMenuItem Header="Center" Tag="Center" Click="OnTableAlignmentClick" rk:Ribbon.CommandId="Writer.TableTools.Alignment.Center" rk:KeyTip.Keys="C" AutomationProperties.AutomationId="TableAlignCenter" AutomationProperties.Name="Center cell text" />
+                        <rk:RibbonMenuItem Header="Right" Tag="Right" Click="OnTableAlignmentClick" rk:Ribbon.CommandId="Writer.TableTools.Alignment.Right" rk:KeyTip.Keys="R" AutomationProperties.AutomationId="TableAlignRight" AutomationProperties.Name="Align cell text right" />
+                        <rk:RibbonMenuItem Header="Justify" Tag="Justify" Click="OnTableAlignmentClick" rk:Ribbon.CommandId="Writer.TableTools.Alignment.Justify" rk:KeyTip.Keys="J" AutomationProperties.AutomationId="TableAlignJustify" AutomationProperties.Name="Justify cell text" />
+                    </rk:RibbonDropDownButton>
+                </rk:RibbonGroup>
+                <rk:RibbonGroup x:Name="TableDesignGroup" Header="Design" rk:Ribbon.CommandId="Writer.TableTools.Design"
+                                rk:KeyTip.Keys="DE" Icon="{StaticResource Icon.WriterBorders}"
+                                AutomationProperties.AutomationId="TableDesignGroup" AutomationProperties.Name="Design"
+                                AutomationProperties.HelpText="Restrained border and background presets only; full table styles are deferred.">
+                    <rk:RibbonDropDownButton x:Name="TableBordersButton" Header="Borders" Size="Large"
+                                             SizeDefinition="Large, Medium, Small"
+                                             Icon="{StaticResource Icon.WriterBorders}" LargeIcon="{StaticResource Icon.WriterBorders}"
+                                             rk:Ribbon.CommandId="Writer.TableTools.Design.Borders" rk:KeyTip.Keys="BO"
+                                             ScreenTipTitle="Borders" ScreenTipText="Apply supported neutral borders to the current table."
+                                             AutomationProperties.AutomationId="TableBorders" AutomationProperties.Name="Table borders">
+                        <rk:RibbonMenuItem Header="All Borders" Tag="All" Click="OnTableBordersClick" rk:Ribbon.CommandId="Writer.TableTools.Design.Borders.All" rk:KeyTip.Keys="A" AutomationProperties.AutomationId="TableBordersAll" AutomationProperties.Name="All borders" />
+                        <rk:RibbonMenuItem Header="No Borders" Tag="None" Click="OnTableBordersClick" rk:Ribbon.CommandId="Writer.TableTools.Design.Borders.None" rk:KeyTip.Keys="N" AutomationProperties.AutomationId="TableBordersNone" AutomationProperties.Name="No borders" />
+                    </rk:RibbonDropDownButton>
+                    <rk:RibbonDropDownButton x:Name="TableBackgroundButton" Header="Background" Size="Large"
+                                             SizeDefinition="Large, Medium, Small"
+                                             Icon="{StaticResource Icon.WriterCellShading}" LargeIcon="{StaticResource Icon.WriterCellShading}"
+                                             rk:Ribbon.CommandId="Writer.TableTools.Design.Background" rk:KeyTip.Keys="BG"
+                                             ScreenTipTitle="Background" ScreenTipText="Apply a supported neutral background to the current table."
+                                             AutomationProperties.AutomationId="TableBackground" AutomationProperties.Name="Table background">
+                        <rk:RibbonMenuItem Header="No Color" Tag="None" Click="OnTableBackgroundClick" rk:Ribbon.CommandId="Writer.TableTools.Design.Background.None" rk:KeyTip.Keys="N" AutomationProperties.AutomationId="TableBackgroundNone" AutomationProperties.Name="No table background" />
+                        <rk:RibbonMenuItem Header="Soft Accent" Tag="Accent" Click="OnTableBackgroundClick" rk:Ribbon.CommandId="Writer.TableTools.Design.Background.Accent" rk:KeyTip.Keys="A" AutomationProperties.AutomationId="TableBackgroundAccent" AutomationProperties.Name="Soft accent table background" />
+                    </rk:RibbonDropDownButton>
+                </rk:RibbonGroup>
+            </rk:RibbonTab>
             <rk:RibbonTab x:Name="PageTab" Header="Page" rk:Ribbon.CommandId="Writer.Page" rk:KeyTip.Keys="P"
                           AutomationProperties.AutomationId="PageTab" AutomationProperties.Name="Page">
                 <rk:RibbonGroup x:Name="PageSetupGroup" Header="Page Setup" rk:Ribbon.CommandId="Writer.Page.Setup" rk:KeyTip.Keys="PS"
@@ -892,6 +1076,23 @@
                                            IsHitTestVisible="False"
                                            AutomationProperties.AutomationId="MarginGuide"
                                            AutomationProperties.Name="Non-printing margin guide" />
+                <Border x:Name="EditorTopSeparator" Grid.Row="1" Panel.ZIndex="25"
+                        Height="1" VerticalAlignment="Top" IsHitTestVisible="False"
+                        Background="{DynamicResource RibbonKit.Brushes.Ribbon.Border}"
+                        AutomationProperties.AutomationId="EditorTopSeparator"
+                        AutomationProperties.Name="Ribbon and document separator">
+                    <Border.Style>
+                        <Style TargetType="{x:Type Border}">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Visibility, ElementName=HorizontalRuler}"
+                                             Value="Collapsed">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                </Border>
                 <editing:WriterRuler x:Name="HorizontalRuler" Grid.Row="0" Panel.ZIndex="30"
                                      FlowDirection="LeftToRight"
                                      AutomationProperties.AutomationId="WriterRuler"

@@ -28,6 +28,14 @@ public sealed class WriterTableServiceTests
             Assert.Equal(8, table.RowGroups[0].Rows.Count);
             Assert.Equal(8, table.Columns.Count);
             Assert.All(table.RowGroups[0].Rows, row => Assert.Equal(8, row.Cells.Count));
+            Assert.NotNull(table.BorderBrush);
+            Assert.Equal(new Thickness(1), table.BorderThickness);
+            Assert.All(table.RowGroups[0].Rows.Cast<TableRow>()
+                .SelectMany(row => row.Cells.Cast<TableCell>()), cell =>
+            {
+                Assert.NotNull(cell.BorderBrush);
+                Assert.Equal(new Thickness(0.5), cell.BorderThickness);
+            });
             Assert.True(service.TryGetCell(editor.Selection.Start, out var current));
             Assert.Equal(0, current.Row);
             Assert.Equal(0, current.Column);
@@ -101,19 +109,23 @@ public sealed class WriterTableServiceTests
 
             Assert.True(service.InsertRows(reference, 1, WriterTableInsertPlacement.Before));
             Assert.Equal(4, table.RowGroups[0].Rows.Count);
+            AssertAllCellBorders(table);
             Assert.True(service.TryGetCell(editor.Selection.Start, out var insertedRowCaret));
             Assert.Equal(1, insertedRowCaret.Row);
 
             Assert.True(service.InsertColumns(insertedRowCaret, 2, WriterTableInsertPlacement.After));
             table = editor.Document.Blocks.OfType<Table>().Single();
             Assert.Equal(5, table.Columns.Count);
+            AssertAllCellBorders(table);
             Assert.True(service.TryGetCell(editor.Selection.Start, out insertedRowCaret));
             Assert.True(service.DeleteRows(insertedRowCaret));
             Assert.Equal(3, table.RowGroups[0].Rows.Count);
+            AssertAllCellBorders(table);
             Assert.True(service.TryGetCell(editor.Selection.Start, out var afterDeleteRow));
             Assert.True(service.DeleteColumns(afterDeleteRow, 1));
             table = editor.Document.Blocks.OfType<Table>().Single();
             Assert.Equal(4, table.Columns.Count);
+            AssertAllCellBorders(table);
             AssertValidGrid(table);
         });
     }
@@ -200,6 +212,7 @@ public sealed class WriterTableServiceTests
 
             Assert.True(service.TryHandleFinalCellTab());
             Assert.Equal(3, table.RowGroups[0].Rows.Count);
+            AssertAllCellBorders(table);
             Assert.True(service.TryGetCell(editor.Selection.Start, out var reference));
             Assert.Equal(2, reference.Row);
             Assert.Equal(0, reference.Column);
@@ -597,6 +610,8 @@ public sealed class WriterTableServiceTests
             Assert.True(service.SetCellPadding(reference, new Thickness(2, 3, 4, 5)));
             Assert.True(service.SetCellBorder(reference, Brushes.Red, new Thickness(1)));
             Assert.True(service.SetCellBackground(reference, Brushes.Yellow));
+            Assert.True(service.SetAllTableBorders(table, Brushes.Blue, new Thickness(1),
+                new Thickness(0.5)));
             Assert.True(service.SetColumnWidth(table, 0, new GridLength(120)));
             table = editor.Document.Blocks.OfType<Table>().Single();
             Assert.True(service.TryGetCell(table.RowGroups[0].Rows[0].Cells[0], out reference));
@@ -612,8 +627,11 @@ public sealed class WriterTableServiceTests
             Assert.Equal(2, cell.Padding.Left);
             Assert.Equal(4, cell.Padding.Right);
             Assert.True(cell.Padding.Top + cell.Padding.Bottom >= 5);
-            Assert.Equal(Brushes.Red.Color, Assert.IsType<SolidColorBrush>(cell.BorderBrush).Color);
-            Assert.Equal(new Thickness(1), cell.BorderThickness);
+            Assert.Equal(Brushes.Blue.Color, Assert.IsType<SolidColorBrush>(cell.BorderBrush).Color);
+            Assert.Equal(new Thickness(0.5), cell.BorderThickness);
+            Assert.Equal(Brushes.Blue.Color,
+                Assert.IsType<SolidColorBrush>(table.BorderBrush).Color);
+            Assert.Equal(new Thickness(1), table.BorderThickness);
             Assert.Equal(Brushes.Yellow.Color, Assert.IsType<SolidColorBrush>(cell.Background).Color);
             Assert.Equal(new GridLength(120), table.Columns[0].Width);
             Assert.Equal(new GridLength(120), table.Columns[1].Width);
@@ -922,6 +940,17 @@ public sealed class WriterTableServiceTests
                 }
             }
         }
+    }
+
+    private static void AssertAllCellBorders(Table table)
+    {
+        Assert.All(table.RowGroups.Cast<TableRowGroup>()
+            .SelectMany(group => group.Rows.Cast<TableRow>())
+            .SelectMany(row => row.Cells.Cast<TableCell>()), cell =>
+        {
+            Assert.NotNull(cell.BorderBrush);
+            Assert.Equal(new Thickness(0.5), cell.BorderThickness);
+        });
     }
 
     private static void AssertSingleEmptyParagraph(TableCell cell)

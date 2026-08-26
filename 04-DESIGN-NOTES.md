@@ -5263,6 +5263,57 @@ formatted-empty merge/split, exact-range no-ops, rollback, clone fidelity and gr
 picker/keyboard routing/contextual Table Tools belong to W3-C, while table `.rkw`/RTF fidelity remains W3-D; the native
 capability catalog therefore still reports `PreservesTables=false`. No `src/RibbonKit/**` change was required.
 
+### 3.117 RibbonKit Writer W3-C Insert, table interaction and contextual Table Tools — 2026-08-26
+
+Writer now projects the accepted W3-A/W3-B services onto a complete Insert surface. Large labelled Picture,
+Hyperlink and Date and Time commands open accessible app-owned dialogs with validation, default actions, RTL owner
+direction and editor-focus recovery. The Table group owns a compact 1×1 through 3×8 quick gallery plus a separated
+Custom Table button for validated 1×1 through 8×8 manual entry, with stable command IDs, rich ScreenTips,
+per-choice automation names and standard WPF Invoke providers. Mouse, two-dimensional keyboard and UIA commit paths
+converge on one insertion boundary so the gallery finishes its input route before its shared strip/popup presenter is
+re-homed.
+
+Table-cell PreviewKeyDown routing now precedes the later W1-E paragraph Tab path. Tab and Shift+Tab navigate a
+deterministic span-aware order, the visual bottom-right occupant remains the final-cell row-creation target, and
+Ctrl+Tab plus the Table Tools Literal Tab command insert an actual tab inside one cell. The live profile/editor gate
+leaves routing unhandled when table editing is unavailable. Deferred commands also re-check the current document and
+`Shell.IsBusy`, preventing a queued mutation from landing during Save or after document replacement.
+
+The contextual Table Tools tab appears only while the caret/selection is in a table and exposes the supported
+row/column, merge/split, sizing, distribution, alignment, border and background operations. Enablement mirrors W3-B
+failure rules, including final-row/final-column and unequal-row-group constraints; commands restore a valid caret and
+editor focus after success or rejection. Large dropdowns participate in adaptive sizing, and standard, narrow,
+minimized and RTL ribbon states remain usable. RKW alone advertises the new `TableEditing` command capability, while
+all profiles continue to report `PreservesTables=false`; the UI explicitly identifies W3-D as the persistence owner.
+
+Live inspection found that `InRibbonGallery`'s popup-host dynamic background remained unresolved in its separate HWND,
+allowing ribbon content to show through. Writer applies the current ribbon-content brush (or the system Window brush
+in High Contrast) directly to that app-owned popup instance and records the reusable control gap as RKWF-013. The
+gallery itself stays locally LTR to avoid the generic template's empty RTL strip, while physical arrow semantics still
+follow the Writer window. No `src/RibbonKit/**` file changed.
+
+The focused W3-C gate passes **19/19** and the complete Writer suite passes **341/341**. RibbonKit remains **355/355**,
+the visual suite remains **1/1** over 63 approved images, and the solution builds with zero warnings/errors. A real
+125%-scale Writer window passed Picture mouse launch, Hyperlink/Date-Time keyboard launch, insertion and focus recovery;
+mouse and keyboard table-grid commits; Tab/Shift+Tab/Ctrl+Tab/final-row behavior; contextual tools; 620-DIP narrow,
+minimized and RTL layouts; and a three-page table preview. Mixed-monitor movement remains W4-C hardware work, external
+leaf traversal remains RKWF-006, and a live Windows High Contrast switch was unavailable for this pass. W3-C is
+accepted; W1-E and W3-D have not started.
+
+A user visual follow-up on 2026-08-26 found four app-owned presentation defects in that accepted surface: star-sized
+dialog rows stretched the Date/Time format and Hyperlink display-text controls, Writer dialogs retained normal-window
+maximize/resize chrome, the ruler-hidden editor lacked a ribbon/content separator, and table insertion plus All
+Borders styled only the outer table with a nearly white separator brush. The corrective pass replaces those dialog
+rows with compact shared grids and fixed dialog chrome, adds a one-DIP editor separator only while the ruler is
+collapsed, limits the quick gallery to three rows with a separated Custom Table dialog, and applies a theme-aware
+secondary-text brush to both the outer frame and every cell border. The Writer test project builds with zero
+warnings/errors and seven directly affected tests pass. The postponed complete gate was run on 2026-08-27 after a
+live follow-up also centered the Custom Table action buttons: Writer passes **343/343**, RibbonKit remains
+**355/355**, the visual suite passes **1/1** over 63 approved images, and the solution builds with zero
+warnings/errors. The real available 125%-scale Writer window confirms compact fixed Picture, Hyperlink, Date/Time
+and Custom Table dialogs; the ruler-hidden separator; exactly three quick gallery rows plus the separated custom
+action; visible default inner borders; and the No Borders to All Borders transition. The corrective pass is accepted.
+
 ## 4. Workflow / Session Conventions
 
 - Work from the current Windows checkout at
@@ -5279,7 +5330,7 @@ capability catalog therefore still reports `PreservesTables=false`. No `src/Ribb
 
 ## 5. Current State & Next Steps
 
-> **Authoritative status as of 2026-08-25.** Historical checkpoints remain in §3, but status and
+> **Authoritative status as of 2026-08-26.** Historical checkpoints remain in §3, but status and
 > test counts quoted elsewhere should be reconciled against this section and rerun when current
 > evidence matters.
 
@@ -5322,7 +5373,9 @@ capability catalog therefore still reports `PreservesTables=false`. No `src/Ribb
   Backstage New gallery projects those capabilities onto whole tabs/groups, default Save extensions and one generic
   downgrade decision while centrally restoring editor focus after Backstage commands. Paper view now adds a calibrated
   ruler and non-printing margin guides. Portable images/hyperlinks/date-time and the simple FlowDocument table core are
-  implemented behind app-owned, undoable services with strict native-package safety and structural invariants.
+  implemented behind app-owned, undoable services with strict native-package safety and structural invariants. W3-C
+  now supplies their Insert/dialog presentation, mouse/keyboard/UIA table picker, table-cell routing and contextual
+  Table Tools surface through §3.117 without claiming table persistence.
 
 ### Remaining or intentionally deferred
 
@@ -5332,12 +5385,19 @@ capability catalog therefore still reports `PreservesTables=false`. No `src/Ribb
 - Final live visual tuning and approval of the Office 2010 Aero-inspired frame prototype (§3.97).
 - Touch density, richer automatic QAT projections, custom-control projection APIs and additional
   themes remain post-v1 candidates. Their plan documents are not implementation evidence.
-- RibbonKit Writer W3-A/W3-B are accepted through §3.116; W2-F remains accepted on the available 125%-scale hardware.
+- RibbonKit Writer W3-A through W3-C are accepted through §3.117, including the 2026-08-26 W3-C corrective UI pass
+  and its 2026-08-27 full regression/live visual reacceptance. W2-F remains accepted on the available 125%-scale
+  hardware.
   Both A4 and Letter preview/PDF
   paths passed, including all five output pages and the page-four corruption regression. Live mixed-monitor movement
-  remains a named W4-C hardware check because only one display is connected. W3-C contextual Table Tools is the next
-  UI-exclusive packet; W3-D owns the later structured round-trip/RTF matrix. W4 keeps the final whole-product
-  consistency pass after W2/W3.
+  remains a named W4-C hardware check because only one display is connected. W1-E Home formatting completion remains
+  the next UI-exclusive packet, while W3-D structured-content round-trip is now dependency-ready; neither has started.
+  W1-E owns installed-
+  font preview/search, the complete validated size path, richer colour/highlight galleries and More Colors, supported
+  Font/Paragraph dialog launchers, the audit of missing Styles/Paste-split behaviour, and capability-aware editor
+  Tab/Shift+Tab paragraph/list indentation with explicit literal-tab and keyboard focus-exit behaviour. W3-C owns the
+  accepted Insert tab plus contextual Table Tools and its distinct table-cell Tab navigation contract. W3-D owns the later
+  structured round-trip/RTF matrix. W4 keeps the final whole-product consistency pass after W2/W3.
 - Automatic `Icons.xaml` discovery is best-effort by design. Keep `Load Icons.xaml…` available
   for ambiguity, inaccessible paths, parse failures, or no match.
 
@@ -5417,6 +5477,18 @@ capability catalog therefore still reports `PreservesTables=false`. No `src/Ribb
   repeated runs after its realized-window tests joined the serialized Writer UI collection. The solution builds with
   zero warnings/errors and RibbonKit/visual remain **355/355** and **1/1**. No RibbonKit runtime gap or change was
   required; W3-C owns the next live ribbon/table interaction surface.
+- 2026-08-26 after §3.117: the inventory is 696 logic tests plus one visual test covering 63 approved images. W3-C's
+  focused gate passes **19/19**, Writer passes **341/341**, RibbonKit remains **355/355**, and the visual suite remains
+  **1/1** with a zero-warning solution build. The real 125%-scale Writer window passed app-owned Picture,
+  Hyperlink/Date-Time dialog insertion and focus recovery; mouse/keyboard/UIA table-grid paths; table Tab routing;
+  contextual tools; standard, 620-DIP narrow, minimized and RTL layouts; and a three-page table preview. RKWF-013
+  records the app-owned opaque gallery-popup workaround; no RibbonKit runtime file changed. Mixed-monitor movement,
+  external leaf traversal and a live High Contrast switch remain bounded follow-up evidence.
+- 2026-08-27 after the §3.117 corrective follow-up: the inventory is 698 logic tests plus one visual test covering
+  63 approved images. Writer passes **343/343**, RibbonKit passes **355/355**, the visual suite passes **1/1**, and
+  the solution build has zero warnings/errors. The real available 125%-scale Writer window passed all four corrected
+  surfaces: compact fixed insert dialogs, ruler-hidden separation, the three-row quick gallery plus Custom Table,
+  and visible default/All Borders cell grids after a live No Borders transition. No `src/RibbonKit/**` file changed.
 - Before quoting a current count or declaring a new change complete, rerun the proportional build
   and test commands. Inspect actual/diff PNG artifacts before changing visual baselines or
   tolerances.

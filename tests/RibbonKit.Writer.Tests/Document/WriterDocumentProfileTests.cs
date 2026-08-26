@@ -37,7 +37,7 @@ public sealed class WriterDocumentProfileTests
         WriterDocumentPageMetadataCapabilities.None)]
     [InlineData(WriterDocumentFormat.RibbonKitWriter, true, true, false, true,
         WriterDocumentCommandCapabilities.CharacterFormatting | WriterDocumentCommandCapabilities.ParagraphFormatting
-            | WriterDocumentCommandCapabilities.PageSettings,
+            | WriterDocumentCommandCapabilities.PageSettings | WriterDocumentCommandCapabilities.TableEditing,
         WriterDocumentContentCapabilities.CharacterFormatting | WriterDocumentContentCapabilities.ParagraphFormatting
             | WriterDocumentContentCapabilities.Images | WriterDocumentContentCapabilities.Hyperlinks,
         WriterDocumentPageMetadataCapabilities.PageSettings)]
@@ -65,6 +65,19 @@ public sealed class WriterDocumentProfileTests
         Assert.True(profile.Preserves(requiredPageMetadata));
         Assert.Equal(profile.Capabilities.Persistence,
             WriterDocumentPersistence.GetCapabilities(format));
+    }
+
+    [Fact]
+    public void LiveTableEditingDoesNotAdvertiseTableRoundTripBeforeW3D()
+    {
+        Assert.False(WriterDocumentProfiles.PlainText.Supports(
+            WriterDocumentCommandCapabilities.TableEditing));
+        Assert.False(WriterDocumentProfiles.RichText.Supports(
+            WriterDocumentCommandCapabilities.TableEditing));
+        Assert.True(WriterDocumentProfiles.RibbonKitWriter.Supports(
+            WriterDocumentCommandCapabilities.TableEditing));
+        Assert.False(WriterDocumentProfiles.RibbonKitWriter.Capabilities.PreservesTables);
+        Assert.False(WriterDocumentProfiles.RibbonKitWriter.PersistenceCapabilities.PreservesTables);
     }
 
     [Theory]

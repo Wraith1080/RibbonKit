@@ -1,8 +1,9 @@
 # RibbonKit Writer — Functional Reference Application Plan
 
-> **Status:** approved post-v1 application plan. W0-A through W0-F, W1-A through W1-D and W2-A through
-> W2-E are accepted on the available hardware. The pictured Backstage New surface and capability projection
-> are complete; W2-F is the next UI-exclusive packet. Live mixed-monitor DPI
+> **Status:** approved post-v1 application plan. W0-A through W0-F, W1-A through W1-D, W2-A through W2-F,
+> and W3-A through W3-C are accepted on the available hardware, including the 2026-08-26 W3-C corrective UI pass
+> and its 2026-08-27 full regression/live visual reacceptance. W1-E Home formatting completion is the next
+> UI-exclusive packet, while W3-D structured-content round-trip is dependency-ready; neither has started. Live mixed-monitor DPI
 > movement remains deferred to W4-C. No later implementation is implied.
 > Live status remains in `04-DESIGN-NOTES.md` §5.
 > RibbonKit Writer is a separate functional sample, not another feature page inside
@@ -180,7 +181,7 @@ Table → TableRowGroup → TableRow → TableCell → Block content
 
 The first complete table slice should include:
 
-- Insert grid picker, initially 1×1 through 8×8.
+- Compact 1×1 through 3×8 quick grid picker plus a separated Custom Table action for validated 1×1 through 8×8 entry.
 - Sensible default column widths, cell padding and theme-neutral borders.
 - Tab/Shift+Tab cell navigation; Tab from the final cell adds a row.
 - Insert row above/below and column left/right.
@@ -240,9 +241,24 @@ controls should disable with an explanation and preserve a valid fallback.
 ### Home
 
 - Clipboard: Paste split button, Cut, Copy, Format Painter if proven useful
-- Font: family/size combos, bold/italic/underline, text colour and highlight
+- Font: an installed-font picker whose popup previews each family in its own face, remains searchable/editable,
+  and retains the current/mixed selection even when it is outside a short recent/recommended section. The size
+  picker offers the conventional Office range plus validated arbitrary entry and grow/shrink commands.
+- Font colour and highlight use split/drop-down behaviour: the primary action reapplies the last colour, while a
+  spacious keyboard/UIA-accessible popup provides Automatic/No Color, theme and standard palettes, recent colours,
+  larger swatches and a **More Colors…** dialog. The foreground indicator must remain visible on the command icon.
+- The Font group dialog launcher opens an app-owned transactional dialog for the character properties Writer
+  genuinely supports, including an actual sample preview and honest mixed/unset states. Apply/OK creates one undo
+  unit; Cancel leaves the document and history unchanged. Do not imitate unsupported Word effects with dead controls.
 - Paragraph: alignment, lists, indent and spacing
-- Styles: a small live-preview gallery for Normal, Title and headings
+- Editor keyboard routing: while the document editor owns focus, Tab/Shift+Tab at a paragraph or list boundary
+  performs indent/outdent (including list nesting where valid) instead of transferring focus to another control.
+  Literal-tab entry and an accessible, documented way to leave the editor by keyboard must remain explicit; table
+  cells use the separate W3-C navigation contract rather than this paragraph path.
+- Paragraph should be audited for a matching dialog-launcher path for indents, special first-line/hanging values,
+  spacing and line spacing; add it only with complete validation, preview, undo and mixed-selection behaviour.
+- Styles: a small live-preview gallery for Normal, Title and headings, only after style application, selection state,
+  undo and native persistence are reliable.
 - Editing: Find, Replace and Select
 
 ### Insert
@@ -312,6 +328,10 @@ that a packet, agent or implementation currently exists.
 - Backstage, QAT, KeyTips and ScreenTips.
 - A coherent app-owned vector icon set and a first visual-hierarchy/density pass over the realized
   Home ribbon, QAT and status surface before those visuals become the baseline for later tabs.
+- A second Home-formatting completion pass covering installed-font preview/search, the full validated size range,
+  richer colour/highlight galleries and More Colors, a transactional Font dialog with sample preview, and an audit
+  of promised-but-absent Styles, Paste split and paragraph-dialog behaviour without adding placeholder commands.
+  This pass also owns capability-aware Tab/Shift+Tab paragraph and list indentation without trapping keyboard focus.
 
 ### W2 — Native format and paper model
 
@@ -323,7 +343,7 @@ that a packet, agent or implementation currently exists.
 ### W3 — Structured content
 
 - Images and hyperlinks.
-- Table insertion and contextual Table Tools editing.
+- An Insert tab for Table, Picture, Hyperlink and Date and Time, plus contextual Table Tools editing.
 - Native-format round-trips and RTF compatibility fixtures.
 
 ### W4 — Product integration and polish

@@ -1,0 +1,56 @@
+<Window x:Class="RibbonKit.Writer.Editing.WriterHyperlinkDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Insert Hyperlink" Width="560" SizeToContent="Height" ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False" UseLayoutRounding="True"
+        AutomationProperties.AutomationId="InsertHyperlinkDialog"
+        AutomationProperties.Name="Insert Hyperlink">
+    <Grid Margin="22">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <TextBlock Text="Use an absolute HTTP, HTTPS or conservative mailto link. File and executable targets are rejected."
+                   TextWrapping="Wrap" Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
+        <Grid Grid.Row="1" Margin="0,18,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="130" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <TextBlock Text="Address:" VerticalAlignment="Center" />
+            <TextBox x:Name="AddressBox" Grid.Column="1" VerticalContentAlignment="Center"
+                     TextChanged="OnInputChanged"
+                     AutomationProperties.AutomationId="HyperlinkAddress"
+                     AutomationProperties.Name="Hyperlink address" />
+            <TextBlock Grid.Row="1" Text="Display text:" VerticalAlignment="Center" Margin="0,10,12,0" />
+            <TextBox x:Name="DisplayTextBox" Grid.Row="1" Grid.Column="1" Margin="0,10,0,0"
+                     VerticalContentAlignment="Center" AcceptsReturn="False"
+                     TextChanged="OnInputChanged"
+                     AutomationProperties.AutomationId="HyperlinkDisplayText"
+                     AutomationProperties.Name="Hyperlink display text" />
+        </Grid>
+        <Grid Grid.Row="2" Margin="0,16,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock x:Name="ValidationText" Margin="0,0,12,0" VerticalAlignment="Center" TextWrapping="Wrap"
+                       Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}"
+                       AutomationProperties.LiveSetting="Polite"
+                       AutomationProperties.AutomationId="HyperlinkValidation"
+                       AutomationProperties.Name="Hyperlink validation" />
+            <Button x:Name="InsertButton" Grid.Column="1" Content="Insert" Width="92" IsDefault="True"
+                    Click="OnInsert" AutomationProperties.AutomationId="InsertHyperlink"
+                    AutomationProperties.Name="Insert hyperlink" />
+            <Button Grid.Column="2" Content="Cancel" Width="92" Margin="10,0,0,0" IsCancel="True"
+                    AutomationProperties.AutomationId="CancelHyperlink"
+                    AutomationProperties.Name="Cancel hyperlink insertion" />
+        </Grid>
+    </Grid>
+</Window>
