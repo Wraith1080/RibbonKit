@@ -21,6 +21,7 @@ public partial class MainWindow
     private readonly WriterDateTimeService _writerDateTimeService = new();
     private WriterTableInteractionController? _tableInteractionController;
     private WriterStructuredContextResolver? _structuredContextResolver;
+    private WriterPictureInteractionController? _pictureInteractionController;
     private Button? _customTableSizeButton;
     private bool _updatingTableGridSelection;
 
@@ -28,6 +29,11 @@ public partial class MainWindow
     internal WriterTableInteractionController TableInteractionController =>
         _tableInteractionController ??
         throw new InvalidOperationException("The Writer table interaction controller has not been initialized.");
+
+    /// <summary>Gets the app-owned explicit picture-selection and resize controller.</summary>
+    internal WriterPictureInteractionController PictureInteractionController =>
+        _pictureInteractionController ??
+        throw new InvalidOperationException("The Writer picture interaction controller has not been initialized.");
 
     private void InitializeStructuredContent()
     {
@@ -41,6 +47,9 @@ public partial class MainWindow
         DocumentEditor.PreviewKeyDown += OnEditorPictureRemovalPreviewKeyDown;
         _structuredContextResolver = new WriterStructuredContextResolver(
             DocumentEditor, _tableInteractionController.Tables);
+        _pictureInteractionController = new WriterPictureInteractionController(
+            DocumentEditor, _writerImageService);
+        _pictureInteractionController.StateChanged += OnPictureInteractionStateChanged;
         PopulateTableGridPicker();
         ApplyTableGridPopupSurface();
         ApplyStructuredContentCapabilityProjection();
@@ -81,6 +90,12 @@ public partial class MainWindow
         EditingController.Editing.RedoCompleted -= OnEditingRedoCompleted;
         EditingController.Editing.UndoExtension = null;
         DocumentEditor.PreviewKeyDown -= OnEditorPictureRemovalPreviewKeyDown;
+        if (_pictureInteractionController is not null)
+        {
+            _pictureInteractionController.StateChanged -= OnPictureInteractionStateChanged;
+            _pictureInteractionController.Dispose();
+            _pictureInteractionController = null;
+        }
         _tableInteractionController.StateChanged -= OnTableInteractionStateChanged;
         _tableInteractionController.Dispose();
         _tableInteractionController = null;
@@ -217,6 +232,11 @@ public partial class MainWindow
         WriterStructuredContextSnapshot snapshot)
     {
         var pictureMenu = CreateContextSubmenu("Picture", "WriterContextPicture");
+        pictureMenu.Items.Add(CreateContextAction(context, snapshot, "Fit to Page Width",
+            "WriterContextPictureFitWidth", CanUsePictureContext, ExecuteFitPictureContext));
+        pictureMenu.Items.Add(CreateContextAction(context, snapshot, "Original Size",
+            "WriterContextPictureOriginalSize", CanUsePictureContext, ExecuteOriginalPictureContext));
+        pictureMenu.Items.Add(new Separator());
         pictureMenu.Items.Add(CreateContextAction(context, snapshot, "Remove Picture",
             "WriterContextPictureRemove", CanUsePictureContext, ExecuteRemovePictureContext));
         context.AddSeparator();
@@ -328,7 +348,36 @@ public partial class MainWindow
     {
         if (!CanUsePictureContext(snapshot) || snapshot.Picture is null)
             return;
+        _pictureInteractionController?.ClearSelection();
         if (_writerImageService.TryRemoveImage(DocumentEditor, snapshot.Picture))
+            CompleteStructuredContentMutation();
+    }
+
+    private void ExecuteFitPictureContext(WriterStructuredContextSnapshot snapshot)
+    {
+        if (!CanUsePictureContext(snapshot) || snapshot.Picture is null
+            || !WriterInlineInsertion.TryGetImage(snapshot.Picture, out var image)
+            || _pictureInteractionController?.SelectPicture(snapshot.Picture) != true)
+            return;
+        var size = GetPictureDisplayedSize(image);
+        var maximum = _pictureInteractionController.MaximumSize;
+        var scale = Math.Min(maximum.Width / size.Width, maximum.Height / size.Height);
+        if (_pictureInteractionController.TrySetSize(size.Width * scale, size.Height * scale))
+            CompleteStructuredContentMutation();
+    }
+
+    private void ExecuteOriginalPictureContext(WriterStructuredContextSnapshot snapshot)
+    {
+        if (!CanUsePictureContext(snapshot) || snapshot.Picture is null
+            || !WriterInlineInsertion.TryGetImage(snapshot.Picture, out var image)
+            || image.Source is null
+            || _pictureInteractionController?.SelectPicture(snapshot.Picture) != true)
+            return;
+        var maximum = _pictureInteractionController.MaximumSize;
+        var scale = Math.Min(1d, Math.Min(maximum.Width / image.Source.Width,
+            maximum.Height / image.Source.Height));
+        if (_pictureInteractionController.TrySetSize(image.Source.Width * scale,
+                image.Source.Height * scale))
             CompleteStructuredContentMutation();
     }
 
@@ -344,10 +393,14 @@ public partial class MainWindow
     {
         if (_writerImageService.TryRestoreAfterUndo(DocumentEditor))
             MarkPreviewPending();
+        _pictureInteractionController?.Refresh();
     }
 
-    private void OnEditingRedoCompleted(object? sender, EventArgs e) =>
+    private void OnEditingRedoCompleted(object? sender, EventArgs e)
+    {
         _writerImageService.NotifyRedo(DocumentEditor);
+        _pictureInteractionController?.Refresh();
+    }
 
     private void OnEditorPictureRemovalPreviewKeyDown(object sender, KeyEventArgs e)
     {
@@ -361,6 +414,7 @@ public partial class MainWindow
             return;
 
         e.Handled = true;
+        _pictureInteractionController?.ClearSelection();
         CompleteStructuredContentMutation();
     }
 
@@ -927,6 +981,9 @@ public partial class MainWindow
     private void OnTableInteractionStateChanged(object? sender, EventArgs e) =>
         RefreshStructuredContentState();
 
+    private void OnPictureInteractionStateChanged(object? sender, EventArgs e) =>
+        RefreshStructuredContentState();
+
     private void RefreshStructuredContentState()
     {
         if (!IsInitialized || _tableInteractionController is null)
@@ -942,6 +999,20 @@ public partial class MainWindow
         TableSizeGroup.IsEnabled = canEdit;
         TableAlignmentGroup.IsEnabled = canEdit;
         TableDesignGroup.IsEnabled = canEdit;
+
+        var hasPicture = CurrentViewMode != WriterViewMode.PrintPreview
+            && _pictureInteractionController?.HasSelection == true;
+        var canEditPicture = hasPicture && DocumentEditor.IsEnabled && !DocumentEditor.IsReadOnly
+            && CurrentProfile.Preserves(WriterDocumentContentCapabilities.Images);
+        if (!hasPicture && ReferenceEquals(MainRibbon.SelectedTab, PictureToolsTab))
+            MainRibbon.SelectedTab = HomeTab;
+        PictureToolsTab.Visibility = hasPicture ? Visibility.Visible : Visibility.Collapsed;
+        PictureToolsTab.IsEnabled = canEditPicture;
+        PictureSizeGroup.IsEnabled = canEditPicture;
+        PictureActionsGroup.IsEnabled = canEditPicture;
+        ApplyPictureSizeButton.IsEnabled = canEditPicture;
+        RemoveSelectedPictureButton.IsEnabled = canEditPicture;
+        UpdatePictureSizeFields();
 
         InsertTableRowAboveButton.IsEnabled = canEdit;
         InsertTableRowBelowButton.IsEnabled = canEdit;
@@ -1017,6 +1088,54 @@ public partial class MainWindow
         InsertTablesGroup.IsEnabled = canTable;
         TableGridPicker.IsEnabled = canTable;
         RefreshStructuredContentState();
+    }
+
+    private void OnApplyPictureSizeClick(object sender, RoutedEventArgs e)
+    {
+        if (_pictureInteractionController is null
+            || !double.TryParse(PictureWidthBox.Text, NumberStyles.Float,
+                CultureInfo.CurrentCulture, out var width)
+            || !double.TryParse(PictureHeightBox.Text, NumberStyles.Float,
+                CultureInfo.CurrentCulture, out var height)
+            || !_pictureInteractionController.TrySetSize(width, height))
+        {
+            UpdatePictureSizeFields();
+            return;
+        }
+        CompleteStructuredContentMutation();
+    }
+
+    private void OnPictureSizeBoxPreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter)
+            return;
+        OnApplyPictureSizeClick(sender, e);
+        e.Handled = true;
+    }
+
+    private void OnRemoveSelectedPictureClick(object sender, RoutedEventArgs e)
+    {
+        if (_pictureInteractionController?.TryRemoveSelectedPicture() == true)
+            CompleteStructuredContentMutation();
+    }
+
+    private void UpdatePictureSizeFields()
+    {
+        if (_pictureInteractionController?.SelectedImage is not { } image)
+            return;
+        var size = GetPictureDisplayedSize(image);
+        PictureWidthBox.Text = size.Width.ToString("0.##", CultureInfo.CurrentCulture);
+        PictureHeightBox.Text = size.Height.ToString("0.##", CultureInfo.CurrentCulture);
+    }
+
+    private static Size GetPictureDisplayedSize(Image image)
+    {
+        var width = double.IsFinite(image.Width) ? image.Width
+            : image.ActualWidth > 0 ? image.ActualWidth : image.Source?.Width ?? 0;
+        var height = double.IsFinite(image.Height) ? image.Height
+            : image.ActualHeight > 0 ? image.ActualHeight : image.Source?.Height ?? 0;
+        return new Size(Math.Max(WriterPictureResizeGeometry.MinimumDimension, width),
+            Math.Max(WriterPictureResizeGeometry.MinimumDimension, height));
     }
 }
 

@@ -478,7 +478,7 @@
                     <rk:BackstageTabItem Header="Exit" IsButton="True" Placement="Bottom" rk:Ribbon.CommandId="Writer.Exit" rk:KeyTip.Keys="X" Click="OnBackstageAction" Command="{Binding ExitCommand}" AutomationProperties.AutomationId="FileExit" AutomationProperties.Name="Exit" />
                 </rk:Backstage>
             </rk:Ribbon.Backstage>
-            <rk:RibbonTab Header="Home" rk:Ribbon.CommandId="Writer.Home" rk:KeyTip.Keys="H" AutomationProperties.AutomationId="HomeTab" AutomationProperties.Name="Home">
+            <rk:RibbonTab x:Name="HomeTab" Header="Home" rk:Ribbon.CommandId="Writer.Home" rk:KeyTip.Keys="H" AutomationProperties.AutomationId="HomeTab" AutomationProperties.Name="Home">
                 <rk:RibbonGroup x:Name="ClipboardGroup" Header="Clipboard" rk:Ribbon.CommandId="Writer.Home.Clipboard" rk:KeyTip.Keys="CL" Icon="{StaticResource Icon.WriterPaste}" AutomationProperties.AutomationId="ClipboardGroup" AutomationProperties.Name="Clipboard">
                     <Grid Margin="2,2,2,0" VerticalAlignment="Center">
                         <Grid.ColumnDefinitions>
@@ -858,6 +858,58 @@
                         <rk:RibbonMenuItem Header="No Color" Tag="None" Click="OnTableBackgroundClick" rk:Ribbon.CommandId="Writer.TableTools.Design.Background.None" rk:KeyTip.Keys="N" AutomationProperties.AutomationId="TableBackgroundNone" AutomationProperties.Name="No table background" />
                         <rk:RibbonMenuItem Header="Soft Accent" Tag="Accent" Click="OnTableBackgroundClick" rk:Ribbon.CommandId="Writer.TableTools.Design.Background.Accent" rk:KeyTip.Keys="A" AutomationProperties.AutomationId="TableBackgroundAccent" AutomationProperties.Name="Soft accent table background" />
                     </rk:RibbonDropDownButton>
+                </rk:RibbonGroup>
+            </rk:RibbonTab>
+            <rk:RibbonTab x:Name="PictureToolsTab" Header="Picture Tools" IsContextual="True"
+                          ContextualColor="#C43E1C" Visibility="Collapsed"
+                          rk:Ribbon.CommandId="Writer.PictureTools" rk:KeyTip.Keys="PT"
+                          AutomationProperties.AutomationId="PictureToolsTab" AutomationProperties.Name="Picture Tools"
+                          AutomationProperties.HelpText="Contextual size and removal commands for the explicitly selected picture.">
+                <rk:RibbonGroup x:Name="PictureSizeGroup" Header="Size" rk:Ribbon.CommandId="Writer.PictureTools.Size"
+                                rk:KeyTip.Keys="SZ" Icon="{StaticResource Icon.WriterPageSize}"
+                                AutomationProperties.AutomationId="PictureSizeGroup" AutomationProperties.Name="Picture size">
+                    <Grid x:Name="PictureDimensionsPanel" VerticalAlignment="Center" Margin="0,0,4,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <TextBlock x:Name="PictureWidthLabel" Grid.Row="0" Grid.Column="0" Text="Width"
+                                   Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}"
+                                   VerticalAlignment="Center" Margin="2,0,6,0" />
+                        <rk:RibbonTextBox x:Name="PictureWidthBox" Grid.Row="0" Grid.Column="1"
+                                          InputWidth="72" MaxLength="10"
+                                          PreviewKeyDown="OnPictureSizeBoxPreviewKeyDown"
+                                          rk:Ribbon.CommandId="Writer.PictureTools.Size.Width" rk:KeyTip.Keys="W"
+                                          ScreenTipTitle="Picture Width" ScreenTipText="Enter a width in device-independent pixels, then choose Apply Size."
+                                          AutomationProperties.AutomationId="PictureWidth" AutomationProperties.Name="Picture width" />
+                        <TextBlock x:Name="PictureHeightLabel" Grid.Row="1" Grid.Column="0" Text="Height"
+                                   Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}"
+                                   VerticalAlignment="Center" Margin="2,0,6,0" />
+                        <rk:RibbonTextBox x:Name="PictureHeightBox" Grid.Row="1" Grid.Column="1"
+                                          InputWidth="72" MaxLength="10"
+                                          PreviewKeyDown="OnPictureSizeBoxPreviewKeyDown"
+                                          rk:Ribbon.CommandId="Writer.PictureTools.Size.Height" rk:KeyTip.Keys="H"
+                                          ScreenTipTitle="Picture Height" ScreenTipText="Enter a height in device-independent pixels, then choose Apply Size."
+                                          AutomationProperties.AutomationId="PictureHeight" AutomationProperties.Name="Picture height" />
+                    </Grid>
+                    <rk:RibbonButton x:Name="ApplyPictureSizeButton" Header="Apply Size" Size="Large" SizeDefinition="Large, Medium, Small"
+                                     Icon="{StaticResource Icon.WriterPageSize}" LargeIcon="{StaticResource Icon.WriterPageSize}"
+                                     Click="OnApplyPictureSizeClick" rk:Ribbon.CommandId="Writer.PictureTools.Size.Apply" rk:KeyTip.Keys="A"
+                                     ScreenTipTitle="Apply Picture Size" ScreenTipText="Commit the entered picture dimensions as one Undo unit."
+                                     AutomationProperties.AutomationId="ApplyPictureSize" AutomationProperties.Name="Apply picture size" />
+                </rk:RibbonGroup>
+                <rk:RibbonGroup x:Name="PictureActionsGroup" Header="Picture" rk:Ribbon.CommandId="Writer.PictureTools.Actions"
+                                rk:KeyTip.Keys="AC" Icon="{StaticResource Icon.WriterImage}"
+                                AutomationProperties.AutomationId="PictureActionsGroup" AutomationProperties.Name="Picture actions">
+                    <rk:RibbonButton x:Name="RemoveSelectedPictureButton" Header="Remove Picture" Size="Large" SizeDefinition="Large, Medium, Small"
+                                     Icon="{StaticResource Icon.WriterDelete}" LargeIcon="{StaticResource Icon.WriterDelete}"
+                                     Click="OnRemoveSelectedPictureClick" rk:Ribbon.CommandId="Writer.PictureTools.Remove" rk:KeyTip.Keys="R"
+                                     ScreenTipTitle="Remove Picture" ScreenTipText="Remove the selected picture. Undo restores it."
+                                     AutomationProperties.AutomationId="RemoveSelectedPicture" AutomationProperties.Name="Remove picture" />
                 </rk:RibbonGroup>
             </rk:RibbonTab>
             <rk:RibbonTab x:Name="PageTab" Header="Page" rk:Ribbon.CommandId="Writer.Page" rk:KeyTip.Keys="P"

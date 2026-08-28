@@ -5475,6 +5475,41 @@ W3-E2 still owns explicit picture selection, a real Picture Tools tab, non-print
 direct resizing across zoom/scroll/view/RTL/DPI. Those features and the complete W3-E live acceptance matrix remain
 pending before W4-A may begin.
 
+### 3.122 RibbonKit Writer W3-E2a explicit picture selection, Picture Tools and resizing — 2026-08-29
+
+The first bounded W3-E2 slice is complete without beginning table adorners. `WriterPictureInteractionController` owns
+an exact `FlowDocument`/`InlineUIContainer` picture target, selects it from a click hit or exact native picture range and
+keeps it stable while focus moves into ribbon controls. A final editor selection outside the picture, true deletion,
+document replacement or target invalidation clears the target. The real contextual Picture Tools tab exposes only
+implemented width, height, Apply Size and Remove Picture operations; its keyboard/KeyTip/UIA path shares the same
+transaction as pointer sizing. Context-menu Original Size and Fit to Page Width actions use that path as well. A valid
+picture keeps Picture Tools selected through the resize replacement; true removal collapses it to deterministic Home.
+
+`WriterPictureResizeAdorner` is a visual-layer-only, automation-peer-free `Adorner` with four corner and four edge
+handles. Corner geometry preserves aspect ratio, edge geometry changes one axis, all paths enforce a 12-DIP minimum and
+the current page/editor content bounds, and handle rectangles align at 100/125/150/175/200% DPI. The adorner remains
+outside the `FlowDocument`, so preview/print clones, `.rkw` content and UI Automation contain no interaction chrome.
+Because it adorns the realized `Image`, the frame follows Paper/Continuous layout, zoom transforms, scrolling and RTL
+without a second coordinate model. Pointer moves preview only the live image properties; they do not create text-change,
+dirty or Undo units. Escape, capture loss and view change restore the opening dependency-property geometry.
+
+The 2026-08-29 live follow-up maps every handle to its physical resize cursor (`NWSE`, `NESW`, `WE` or `NS`) and places
+the Picture Tools Width/Height inputs in an aligned two-column, two-row grid beside Apply Size. A second follow-up keeps each visible handle at 8
+DIP while expanding its invisible mouse target to 16 DIP; nearest-handle resolution keeps overlapping targets
+deterministic on very small pictures. Refreshed visual confirmation of the polish changes remains pending.
+
+Mouse release and ribbon sizing commit one native text-container replacement unit. `WriterImageService` records inert
+opening/committed snapshots around that replacement and extends the existing RKWF-015 empty-placeholder repair to both
+Undo and Redo, retaining older history and exact dimensions after save-close-reopen. Existing context-menu and
+Delete/Backspace picture-removal Undo/Redo coverage remains green. No `src/RibbonKit/**` file changed and no runtime gap
+was found.
+
+The focused W3-E2a gate passes **34/34**. The complete Writer inventory passes **434/434** in one run (including the
+historically process-global focus case without needing a split), RibbonKit passes **355/355**, visual passes **1/1** over
+63 approved images, and the solution build has zero warnings/errors. Live pointer/ribbon acceptance in the actual Writer
+window remains pending. The rest of W3-E2 still owns table selection, its selection/row/column/overall resize grips,
+bounded table resize transactions and the complete W3-E live matrix; W3-E is not complete.
+
 ## 4. Workflow / Session Conventions
 
 - Work from the current Windows checkout at
@@ -5538,7 +5573,9 @@ pending before W4-A may begin.
   now supplies their Insert/dialog presentation, mouse/keyboard/UIA table picker, table-cell routing and contextual
   Table Tools surface through §3.117. W3-D now adds strict native table round-trip, content-schema-v2 migration and
   explicit TXT/RTF compatibility loss fixtures through §3.120. The bounded W3-E1 foundation in §3.121 adds stable
-  structured-object context menus and app-owned contextual-state publication without claiming Picture Tools/resizing.
+  structured-object context menus and app-owned contextual-state publication. The bounded W3-E2a slice in §3.122 adds
+  explicit picture selection, the real size/remove-only Picture Tools tab and non-printing direct picture resizing with
+  transactional Undo/Redo, without claiming table adorners or complete W3-E acceptance.
 
 ### Remaining or intentionally deferred
 
@@ -5559,8 +5596,9 @@ pending before W4-A may begin.
   no complete named-style/persistence contract, so no placeholder gallery was added. W3-C owns the accepted Insert tab
   plus contextual Table Tools and its distinct table-cell Tab navigation contract. W3-D owns the accepted strict native
   table round-trip/schema-v2 and TXT/RTF compatibility matrix. W3-E has begun with the bounded §3.121 context-menu and
-  contextual-state foundation. W3-E2 still owns explicit picture/table selection, Picture Tools and direct resizing
-  handles; W4-A remains blocked on complete W3-E. Planned W2-G then owns a high-risk true editable-pagination architecture
+  contextual-state foundation, and §3.122 completes the automated W3-E2a picture-selection/Picture Tools/direct-resize
+  slice. Live W3-E2a acceptance plus table selection and direct table resize grips remain; W4-A remains blocked on
+  complete W3-E. Planned W2-G then owns a high-risk true editable-pagination architecture
   and delivery packet; it must keep one authoritative document and may not fake page gaps. W4-B waits for both W4-A
   and W2-G. W2-G has not started, and the remaining W3-E2/live matrix is still pending.
 - Automatic `Icons.xaml` discovery is best-effort by design. Keep `Load Icons.xaml…` available
@@ -5679,6 +5717,10 @@ pending before W4-A may begin.
   loaded-picture undo correction, the proportional rerun passed **400/400** together plus the process-focus case
   **1/1** in isolation. RibbonKit passes **355/355**, visual passes **1/1**, and the solution build has zero
   warnings/errors. W3-E2 and the full W3-E live matrix remain pending.
+- 2026-08-29 after §3.122: the inventory is 789 logic tests plus one visual test covering 63 approved images. The focused
+  W3-E2a gate passes **34/34**, Writer passes **434/434** in one run, RibbonKit passes **355/355**, visual passes **1/1**,
+  and the solution build has zero warnings/errors. Actual Writer pointer/ribbon acceptance, table adorners and the full
+  W3-E live matrix remain pending.
 - Before quoting a current count or declaring a new change complete, rerun the proportional build
   and test commands. Inspect actual/diff PNG artifacts before changing visual baselines or
   tolerances.

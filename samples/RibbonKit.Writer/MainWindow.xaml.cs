@@ -83,6 +83,7 @@ public partial class MainWindow : RibbonWindow
     private void InitializeShell(WriterDialogService? shellDialogs)
     {
         InitializeComponent();
+        MoveContextualTabsToEnd();
         _backstageOpenDescriptor = DependencyPropertyDescriptor.FromProperty(
             Ribbon.IsBackstageOpenProperty, typeof(Ribbon));
         _backstageOpenDescriptor.AddValueChanged(MainRibbon, OnBackstageOpenChanged);
@@ -117,6 +118,12 @@ public partial class MainWindow : RibbonWindow
         ContentRendered += OnInitialContentRendered;
         Closing += OnClosing;
         Closed += OnClosed;
+    }
+
+    private void MoveContextualTabsToEnd()
+    {
+        foreach (var tab in MainRibbon.Tabs.Where(tab => tab.IsContextual).ToArray())
+            MainRibbon.Tabs.Move(MainRibbon.Tabs.IndexOf(tab), MainRibbon.Tabs.Count - 1);
     }
 
     private void WireRibbonCommands()
@@ -298,6 +305,7 @@ public partial class MainWindow : RibbonWindow
     }
     private void ReplaceEditorDocument()
     {
+        _pictureInteractionController?.ReplaceDocument(Shell.CurrentDocument.Content);
         _writerImageService.ResetUndoHistory(Shell.CurrentDocument.Content);
         HorizontalRuler.CancelActiveDrags();
         MarginGuide.ClearPreview();
@@ -695,6 +703,8 @@ public partial class MainWindow : RibbonWindow
         if (!Enum.IsDefined(mode))
             throw new ArgumentOutOfRangeException(nameof(mode), mode, "Unknown Writer view mode.");
 
+        if (mode != CurrentViewMode)
+            _pictureInteractionController?.CancelActiveResize();
         CurrentViewMode = mode;
         if (mode == WriterViewMode.PrintPreview)
         {

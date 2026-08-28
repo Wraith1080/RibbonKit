@@ -388,6 +388,7 @@ public sealed class MainWindowIntegrationTests
         var editor = fixture.Editor;
         var insertTab = Assert.IsType<RibbonTab>(window.FindName("InsertTab"));
         var tableToolsTab = Assert.IsType<RibbonTab>(window.FindName("TableToolsTab"));
+        var pictureToolsTab = Assert.IsType<RibbonTab>(window.FindName("PictureToolsTab"));
         Assert.Equal(new[] { "Table", "Illustrations", "Links", "Text" },
             insertTab.Groups.Select(group => group.Header?.ToString()).ToArray());
         Assert.True(tableToolsTab.IsContextual);
@@ -397,6 +398,17 @@ public sealed class MainWindowIntegrationTests
         Assert.False(string.IsNullOrWhiteSpace(Ribbon.GetCommandId(insertTab)));
         Assert.False(string.IsNullOrWhiteSpace(KeyTip.GetKeys(insertTab)));
         Assert.False(string.IsNullOrWhiteSpace(AutomationProperties.GetHelpText(tableToolsTab)));
+        Assert.True(pictureToolsTab.IsContextual);
+        Assert.Equal(Visibility.Collapsed, pictureToolsTab.Visibility);
+        Assert.Equal(new[] { "Size", "Picture" },
+            pictureToolsTab.Groups.Select(group => group.Header?.ToString()).ToArray());
+        Assert.False(string.IsNullOrWhiteSpace(Ribbon.GetCommandId(pictureToolsTab)));
+        Assert.False(string.IsNullOrWhiteSpace(KeyTip.GetKeys(pictureToolsTab)));
+        Assert.False(string.IsNullOrWhiteSpace(AutomationProperties.GetHelpText(pictureToolsTab)));
+        var firstContextualIndex = fixture.Ribbon.Tabs.IndexOf(
+            fixture.Ribbon.Tabs.First(tab => tab.IsContextual));
+        Assert.All(fixture.Ribbon.Tabs.Take(firstContextualIndex), tab => Assert.False(tab.IsContextual));
+        Assert.All(fixture.Ribbon.Tabs.Skip(firstContextualIndex), tab => Assert.True(tab.IsContextual));
 
         var insertButtons = new[]
         {
@@ -623,13 +635,49 @@ public sealed class MainWindowIntegrationTests
         {
             NavigateUri = new Uri("https://example.test")
         };
-        var picture = new InlineUIContainer(new Image());
+        var picture = new InlineUIContainer(new Image { Width = 120, Height = 80 });
         objectParagraph.Inlines.Add(ordinaryRun);
         objectParagraph.Inlines.Add(hyperlink);
         objectParagraph.Inlines.Add(new Run(" "));
         objectParagraph.Inlines.Add(picture);
         document.Content.Blocks.Clear();
         document.Content.Blocks.Add(objectParagraph);
+
+        Assert.True(window.PictureInteractionController.SelectPicture(picture));
+        Assert.Equal(Visibility.Visible, pictureToolsTab.Visibility);
+        Assert.True(pictureToolsTab.IsEnabled);
+        fixture.Ribbon.SelectedTab = pictureToolsTab;
+        var pictureWidth = Assert.IsType<RibbonTextBox>(window.FindName("PictureWidthBox"));
+        var pictureHeight = Assert.IsType<RibbonTextBox>(window.FindName("PictureHeightBox"));
+        var pictureDimensions = Assert.IsType<Grid>(
+            window.FindName("PictureDimensionsPanel"));
+        Assert.Equal(2, pictureDimensions.ColumnDefinitions.Count);
+        Assert.Equal(2, pictureDimensions.RowDefinitions.Count);
+        Assert.Same(pictureDimensions, pictureWidth.Parent);
+        Assert.Same(pictureDimensions, pictureHeight.Parent);
+        Assert.Equal(1, Grid.GetColumn(pictureWidth));
+        Assert.Equal(1, Grid.GetColumn(pictureHeight));
+        Assert.Equal(0, Grid.GetRow(pictureWidth));
+        Assert.Equal(1, Grid.GetRow(pictureHeight));
+        Assert.Equal("120", pictureWidth.Text);
+        Assert.Equal("80", pictureHeight.Text);
+        pictureWidth.Focus();
+        await PumpAsync();
+        Assert.True(window.PictureInteractionController.HasSelection);
+        Assert.Equal(Visibility.Visible, pictureToolsTab.Visibility);
+        Assert.Same(pictureToolsTab, fixture.Ribbon.SelectedTab);
+        pictureWidth.Text = "160";
+        pictureHeight.Text = "80";
+        Click(Assert.IsType<RibbonButton>(window.FindName("ApplyPictureSizeButton")));
+        await PumpAsync();
+        Assert.True(window.PictureInteractionController.HasSelection);
+        Assert.Equal(Visibility.Visible, pictureToolsTab.Visibility);
+        Assert.Same(pictureToolsTab, fixture.Ribbon.SelectedTab);
+        picture = window.PictureInteractionController.SelectedContainer!;
+        Assert.NotNull(picture);
+        Assert.True(WriterInlineInsertion.TryGetImage(picture, out var resizedPicture));
+        Assert.Equal(160, resizedPicture.Width, 6);
+        Assert.Equal(80, resizedPicture.Height, 6);
 
         var hyperlinkRun = Assert.IsType<Run>(hyperlink.Inlines.FirstInline);
         var hyperlinkCaret = hyperlinkRun.ContentStart.GetPositionAtOffset(1,
@@ -650,6 +698,8 @@ public sealed class MainWindowIntegrationTests
         var removePicture = FindMenuItem(pictureMenu.Items, "Remove Picture");
         removePicture.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent, removePicture));
         Assert.Null(picture.Parent);
+        Assert.Equal(Visibility.Collapsed, pictureToolsTab.Visibility);
+        Assert.Same(Assert.IsType<RibbonTab>(window.FindName("HomeTab")), fixture.Ribbon.SelectedTab);
         Assert.True(editor.CanUndo);
         Assert.True(window.EditingController.State.CanUndo);
         Assert.True(window.EditingController.TryExecute(ApplicationCommands.Undo));
@@ -974,7 +1024,7 @@ public sealed class MainWindowIntegrationTests
             AssertScreenTip(button);
         }
 
-        Assert.Equal(6, ribbon.Tabs.Count);
+        Assert.Equal(7, ribbon.Tabs.Count);
         var home = ribbon.Tabs.Single(tab => Equals(tab.Header, "Home"));
         Assert.DoesNotContain(FindLogicalDescendants<FrameworkElement>(home), element =>
             AutomationProperties.GetAutomationId(element) is "ZoomOut" or "ZoomReset" or "ZoomIn");
@@ -1281,10 +1331,10 @@ public sealed class MainWindowIntegrationTests
             AutomationProperties.GetName(item))));
         Assert.All(fileActions, item => Assert.NotNull(item.Command));
 
-        Assert.Equal(new[] { "Home", "Insert", "Table Tools", "Page", "View", "Print Preview" },
+        Assert.Equal(new[] { "Home", "Insert", "Page", "View", "Print Preview", "Table Tools", "Picture Tools" },
             ribbon.Tabs.Select(tab => tab.Header?.ToString()).ToArray());
-        Assert.True(ribbon.Tabs[5].IsModal);
-        Assert.Equal(Visibility.Collapsed, ribbon.Tabs[5].Visibility);
+        Assert.True(ribbon.Tabs[4].IsModal);
+        Assert.Equal(Visibility.Collapsed, ribbon.Tabs[4].Visibility);
         var home = ribbon.Tabs[0];
         Assert.Equal("Home", home.Header);
         Assert.Equal(new[] { "Clipboard", "Font", "Paragraph", "Editing" },

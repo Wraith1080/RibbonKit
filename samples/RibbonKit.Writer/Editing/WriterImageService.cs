@@ -38,6 +38,7 @@ public sealed class WriterImageService : IWriterEditingUndoExtension
     private const int MaximumTrackedRemovals = 64;
     private readonly List<RemovedImageUndoRecord> _removedImages = [];
     private readonly List<RemovedImageUndoRecord> _customRedo = [];
+    private readonly List<ResizedImageUndoRecord> _resizedImages = [];
     private FlowDocument? _undoDocument;
     private int _textChangeSuppression;
 
@@ -190,6 +191,70 @@ public sealed class WriterImageService : IWriterEditingUndoExtension
     }
 
     /// <summary>
+    /// Replaces one live picture with a committed dimension snapshot inside one native undo unit.
+    /// Pointer preview property changes are restored before the structural commit, so Undo returns
+    /// to the exact opening geometry and Redo returns to the committed geometry.
+    /// </summary>
+    internal bool TryResizeImage(RichTextBox editor, InlineUIContainer container,
+        Image openingSnapshot, double width, double height,
+        out InlineUIContainer replacement)
+    {
+        ArgumentNullException.ThrowIfNull(editor);
+        ArgumentNullException.ThrowIfNull(container);
+        ArgumentNullException.ThrowIfNull(openingSnapshot);
+        replacement = null!;
+        if (!editor.IsEnabled || editor.IsReadOnly || !IsValidDimension(width)
+            || !IsValidDimension(height)
+            || !WriterInlineInsertion.TryGetImage(container, out var liveImage)
+            || !WriterInlineInsertion.IsInlineInDocument(editor.Document, container)
+            || WriterInlineInsertion.GetOwnerCollection(container) is not { } owner)
+            return false;
+
+        var index = owner.Cast<Inline>().TakeWhile(inline => !ReferenceEquals(inline, container)).Count();
+        if (index >= owner.Count)
+            return false;
+        var ownerObject = container.Parent!;
+        var committedSnapshot = CloneImageElement(liveImage);
+        committedSnapshot.Width = width;
+        committedSnapshot.Height = height;
+        RestoreDimension(liveImage, openingSnapshot, FrameworkElement.WidthProperty);
+        RestoreDimension(liveImage, openingSnapshot, FrameworkElement.HeightProperty);
+        replacement = new InlineUIContainer(CloneImageElement(committedSnapshot))
+        {
+            BaselineAlignment = container.BaselineAlignment
+        };
+
+        try
+        {
+            editor.BeginChange();
+            owner.InsertBefore(container, replacement);
+            owner.Remove(container);
+        }
+        catch (InvalidOperationException)
+        {
+            if (replacement.Parent is not null)
+                owner.Remove(replacement);
+            RestoreDimension(liveImage, committedSnapshot, FrameworkElement.WidthProperty);
+            RestoreDimension(liveImage, committedSnapshot, FrameworkElement.HeightProperty);
+            replacement = null!;
+            return false;
+        }
+        finally
+        {
+            editor.EndChange();
+        }
+
+        if (!ReferenceEquals(_undoDocument, editor.Document))
+            ResetUndoHistory(editor.Document);
+        _resizedImages.Add(new ResizedImageUndoRecord(editor.Document, ownerObject, index,
+            CloneImageElement(openingSnapshot), CloneImageElement(committedSnapshot), replacement));
+        if (_resizedImages.Count > MaximumTrackedRemovals)
+            _resizedImages.RemoveRange(0, _resizedImages.Count - MaximumTrackedRemovals);
+        editor.Selection.Select(replacement.ElementStart, replacement.ElementEnd);
+        return true;
+    }
+
+    /// <summary>
     /// Repairs WPF's empty-Grid placeholder when native Undo recreates a removed image container
     /// without its UIElement child.
     /// </summary>
@@ -225,7 +290,7 @@ public sealed class WriterImageService : IWriterEditingUndoExtension
             _customRedo.Add(record);
             return true;
         }
-        return false;
+        return TryRepairResizeAfterUndo(editor);
     }
 
     /// <summary>Updates tracked picture state after WPF reapplies one native redo unit.</summary>
@@ -242,14 +307,19 @@ public sealed class WriterImageService : IWriterEditingUndoExtension
             if (record.RestoredContainer?.Parent is null)
                 record.RestoredContainer = null;
         }
+        TryRepairResizeAfterRedo(editor);
     }
 
     /// <summary>Invalidates repaired redo state after a new editor-owned change.</summary>
     internal void NotifyTextChanged(RichTextBox editor)
     {
         ArgumentNullException.ThrowIfNull(editor);
-        if (_textChangeSuppression == 0 && _customRedo.Count > 0)
-            _customRedo.Clear();
+        if (_textChangeSuppression == 0)
+        {
+            if (_customRedo.Count > 0)
+                _customRedo.Clear();
+            _resizedImages.RemoveAll(record => record.IsUndone);
+        }
     }
 
     /// <summary>Clears picture-removal state at a document-lifetime boundary.</summary>
@@ -257,6 +327,7 @@ public sealed class WriterImageService : IWriterEditingUndoExtension
     {
         _removedImages.Clear();
         _customRedo.Clear();
+        _resizedImages.Clear();
         _undoDocument = document;
     }
 
@@ -390,6 +461,63 @@ public sealed class WriterImageService : IWriterEditingUndoExtension
     private static bool IsValidDimension(double? value) => value is null
         || (double.IsFinite(value.Value) && value.Value > 0 && value.Value <= 8192);
 
+    private bool TryRepairResizeAfterUndo(RichTextBox editor)
+    {
+        for (var index = _resizedImages.Count - 1; index >= 0; index--)
+        {
+            var record = _resizedImages[index];
+            if (record.IsUndone || !ReferenceEquals(record.Document, editor.Document)
+                || record.CommittedContainer.Parent is not null
+                || GetOwnerCollection(record.Owner) is not { } owner
+                || record.Index < 0 || record.Index >= owner.Count
+                || owner.ElementAt(record.Index) is not InlineUIContainer candidate)
+                continue;
+            var repaired = RepairCandidate(candidate, record.OpeningSnapshot);
+            record.UndoneContainer = candidate;
+            record.IsUndone = true;
+            return repaired;
+        }
+        return false;
+    }
+
+    private void TryRepairResizeAfterRedo(RichTextBox editor)
+    {
+        for (var index = _resizedImages.Count - 1; index >= 0; index--)
+        {
+            var record = _resizedImages[index];
+            if (!record.IsUndone || !ReferenceEquals(record.Document, editor.Document)
+                || record.UndoneContainer?.Parent is not null
+                || GetOwnerCollection(record.Owner) is not { } owner
+                || record.Index < 0 || record.Index >= owner.Count
+                || owner.ElementAt(record.Index) is not InlineUIContainer candidate)
+                continue;
+            RepairCandidate(candidate, record.CommittedSnapshot);
+            record.CommittedContainer = candidate;
+            record.UndoneContainer = null;
+            record.IsUndone = false;
+            return;
+        }
+    }
+
+    private static bool RepairCandidate(InlineUIContainer candidate, Image snapshot)
+    {
+        if (candidate.Child is Image)
+            return false;
+        if (candidate.Child is not Grid { Children.Count: 0 } placeholder)
+            return false;
+        placeholder.Children.Add(CloneImageElement(snapshot));
+        return true;
+    }
+
+    private static void RestoreDimension(Image target, Image snapshot, DependencyProperty property)
+    {
+        var value = snapshot.ReadLocalValue(property);
+        if (value == DependencyProperty.UnsetValue)
+            target.ClearValue(property);
+        else
+            target.SetValue(property, value);
+    }
+
     private static InlineCollection? GetOwnerCollection(DependencyObject owner) => owner switch
     {
         Paragraph paragraph => paragraph.Inlines,
@@ -438,5 +566,23 @@ public sealed class WriterImageService : IWriterEditingUndoExtension
         internal Image ImageSnapshot { get; } = imageSnapshot;
         internal InlineUIContainer? RestoredContainer { get; set; }
         internal bool IsRestored => RestoredContainer is not null;
+    }
+
+    private sealed class ResizedImageUndoRecord(
+        FlowDocument document,
+        DependencyObject owner,
+        int index,
+        Image openingSnapshot,
+        Image committedSnapshot,
+        InlineUIContainer committedContainer)
+    {
+        internal FlowDocument Document { get; } = document;
+        internal DependencyObject Owner { get; } = owner;
+        internal int Index { get; } = index;
+        internal Image OpeningSnapshot { get; } = openingSnapshot;
+        internal Image CommittedSnapshot { get; } = committedSnapshot;
+        internal InlineUIContainer CommittedContainer { get; set; } = committedContainer;
+        internal InlineUIContainer? UndoneContainer { get; set; }
+        internal bool IsUndone { get; set; }
     }
 }

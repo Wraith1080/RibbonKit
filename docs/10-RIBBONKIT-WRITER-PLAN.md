@@ -10,8 +10,10 @@
 > suppresses transient contextual-tab publication during app-owned table mutations. Its app-owned picture-removal
 > bridge also preserves context-menu and Delete/Backspace undo/redo for images opened from native Recent documents,
 > including preview and save/reopen.
-> Direct picture/table selection,
-> Picture Tools and resize adorners remain W3-E2 and are not implied by that foundation. W2-G is a planned high-risk true editable-pagination packet after
+> The bounded W3-E2a picture slice now adds explicit document-bound picture selection, a real size/remove-only
+> Picture Tools tab and a non-printing eight-handle resize adorner with one-unit Undo/Redo. Its automated gate is
+> accepted; live Writer acceptance remains pending. Table selection/resizing adorners and the full W3-E live matrix
+> remain in the rest of W3-E2. W2-G is a planned high-risk true editable-pagination packet after
 > W3-E; it must prove a real editing architecture and may not simulate pages with decorative breaks. Live mixed-monitor
 > DPI movement remains deferred to W4-C. No later
 > implementation is implied.

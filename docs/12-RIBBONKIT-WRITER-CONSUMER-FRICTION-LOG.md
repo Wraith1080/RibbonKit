@@ -369,7 +369,9 @@ remain read-only until actual/diff evidence justifies a deliberate change.
   child then cleared WPF's redo chain; leaving the repaired `Grid` in the live document caused XamlPackage save to
   replace the picture with a space.
 - **Current app-owned correction:** Writer captures a bounded inert image snapshot before removal, repairs WPF's empty
-  placeholder after Undo, and supplies the matching redo only after native redo units have been traversed. Unmodified
+  placeholder after Undo, and supplies the matching redo only after native redo units have been traversed. W3-E2a reuses
+  that bounded snapshot/placeholder strategy for its one-unit image-container replacement on resize, preserving exact
+  opening and committed dimensions without serializing interaction state. Unmodified
   Delete/Backspace route through the same transaction only for an exact picture selection or the matching directional
   caret boundary; ordinary text deletion remains native. Persistence and preview normalize an isolated clone back to
   the approved direct-image graph, leaving the live undo history untouched. Realized coverage opens through Recent,
@@ -380,8 +382,35 @@ remain read-only until actual/diff evidence justifies a deliberate change.
   services and does not broaden the data-only `.rkw` allowlist.
 - **Smallest possible library direction:** none. The affected object graph is owned by the native WPF `RichTextBox` and
   Writer persistence, not a RibbonKit control or service.
-- **Evidence still required:** repeat the exact user workflow in the visible Writer window and retain multi-picture,
-  nested-span/table-cell, repeated undo/redo and save/reopen regression coverage as W3-E grows.
+- **Evidence still required:** repeat the exact removal and direct-resize workflows in the visible Writer window and
+  retain multi-picture, nested-span/table-cell, repeated undo/redo and save/reopen regression coverage as W3-E grows.
+
+### RKWF-016 — Revealing a contextual tab can leave the active-tab marker at its previous coordinate
+
+- **First seen / packet:** 2026-08-29, Writer W3-E2a live Picture Tools follow-up.
+- **Status:** Open RibbonKit runtime investigation; app-owned ordering workaround accepted for Writer. No runtime
+  change is approved.
+- **Consumer goal:** revealing or hiding a contextual tab must keep the selected-tab marker aligned with the selected
+  normal tab, including when the contextual tab occupies an earlier collection position.
+- **Reproduction and evidence:** with Page selected, Picture Tools was located between Insert and Page in Writer's tab
+  collection. Selecting a picture revealed Picture Tools and shifted Page to the right. Page content and selected text
+  remained active, but the selection underline stayed at Page's former coordinate beneath Picture Tools. The user
+  supplied a live screenshot of this contradictory state.
+- **Friction:** the ribbon's selected content and header state can be correct while its animated active marker points
+  at a different tab after contextual visibility changes the positions of later headers. This makes an ordinary
+  contextual-tab insertion look like a selection change even though no selection change occurred.
+- **Current app-owned workaround:** immediately after XAML initialization, Writer moves every `IsContextual` tab to a
+  stable trailing segment of `MainRibbon.Tabs`. Revealing Table Tools or Picture Tools can therefore no longer shift a
+  selected normal tab to its right. This masks the marker-refresh gap; it does not correct RibbonKit's layout response.
+- **Application impact:** without the ordering constraint, users can see Page content while the active marker appears
+  under Picture Tools, obscuring which commands are currently displayed and undermining contextual-tab trust.
+- **Smallest possible library direction:** reproduce the collection/visibility transition in the Showcase, then make
+  the ribbon refresh the sliding underline after selected-header layout coordinates settle following tab collection,
+  visibility or layout changes. Preserve normal/contextual styling, animation and reduced-motion behavior without
+  requiring consumers to order contextual tabs last.
+- **Evidence still required:** a minimal ribbon with normal tabs on both sides of a middle contextual tab; select the
+  right-side normal tab and repeatedly toggle contextual visibility. Verify the realized marker at 100-200% DPI, RTL,
+  reduced motion, all Office themes, tab merging and customization reorder before proposing `src/RibbonKit/**` work.
 
 ## 5. Closed observations
 
