@@ -1,0 +1,130 @@
+<Window x:Class="RibbonKit.Writer.Editing.WriterColorDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:rk="clr-namespace:RibbonKit.Controls;assembly=RibbonKit"
+        Title="Color" Width="600" MinWidth="600" MaxWidth="600"
+        SizeToContent="Height" ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False" UseLayoutRounding="True"
+        Background="{DynamicResource RibbonKit.Brushes.Control.SurfaceBackground}"
+        Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}"
+        AutomationProperties.AutomationId="WriterColorDialog"
+        AutomationProperties.Name="Color">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.OptionsDialog.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        <Style x:Key="ColorSectionStyle" TargetType="{x:Type Border}">
+            <Setter Property="Padding" Value="14" />
+            <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Control.CompanionBackground}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Ribbon.Border}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="{DynamicResource RibbonKit.Metrics.GroupCornerRadius}" />
+        </Style>
+        <Style x:Key="ColorSectionHeaderStyle" TargetType="{x:Type TextBlock}">
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+        </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="Choose a standard or recent color, or enter an exact Hex/RGB value."
+                   Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
+                   TextWrapping="Wrap" />
+
+        <Border Grid.Row="1" Margin="0,14,0,0" Style="{StaticResource ColorSectionStyle}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <TextBlock Text="Palette" Style="{StaticResource ColorSectionHeaderStyle}" />
+                <WrapPanel x:Name="PalettePanel" Grid.Row="1" Margin="0,10,0,0"
+                           AutomationProperties.AutomationId="ColorPalette"
+                           AutomationProperties.Name="Color palette" />
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="2" Margin="0,12,0,0" Style="{StaticResource ColorSectionStyle}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <TextBlock Text="Custom color" Style="{StaticResource ColorSectionHeaderStyle}" />
+                <Grid Grid.Row="1" Margin="0,10,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <rk:RibbonTextBox x:Name="HexBox" Header="Hex" InputWidth="142" MaxLength="7"
+                                      TextChanged="OnHexChanged"
+                                      AutomationProperties.AutomationId="ColorHex"
+                                      AutomationProperties.Name="Hex color" />
+                    <rk:RibbonTextBox x:Name="RedBox" Grid.Column="1" Header="R" InputWidth="58"
+                                      Margin="12,0,0,0" MaxLength="3" TextChanged="OnRgbChanged"
+                                      AutomationProperties.AutomationId="ColorRed"
+                                      AutomationProperties.Name="Red channel" />
+                    <rk:RibbonTextBox x:Name="GreenBox" Grid.Column="2" Header="G" InputWidth="58"
+                                      Margin="12,0,0,0" MaxLength="3" TextChanged="OnRgbChanged"
+                                      AutomationProperties.AutomationId="ColorGreen"
+                                      AutomationProperties.Name="Green channel" />
+                    <rk:RibbonTextBox x:Name="BlueBox" Grid.Column="3" Header="B" InputWidth="58"
+                                      Margin="12,0,0,0" MaxLength="3" TextChanged="OnRgbChanged"
+                                      AutomationProperties.AutomationId="ColorBlue"
+                                      AutomationProperties.Name="Blue channel" />
+                </Grid>
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="3" Margin="0,12,0,0" Style="{StaticResource ColorSectionStyle}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Border x:Name="PreviewSwatch" Width="68" Height="48"
+                        BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}" BorderThickness="1"
+                        CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}" />
+                <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center">
+                    <TextBlock Text="Selected color" Style="{StaticResource ColorSectionHeaderStyle}" />
+                    <TextBlock x:Name="SelectedColorText" Margin="0,4,0,0"
+                               Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="4" Margin="0,14,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock x:Name="ValidationText" TextWrapping="Wrap" VerticalAlignment="Center"
+                       Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}"
+                       AutomationProperties.LiveSetting="Polite"
+                       AutomationProperties.AutomationId="ColorValidation"
+                       AutomationProperties.Name="Color validation" />
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <Button x:Name="OkButton" Content="OK" IsDefault="True"
+                        Style="{DynamicResource OptionsDialogPrimaryButtonStyle}"
+                        Click="OnOk" AutomationProperties.AutomationId="OkColor"
+                        AutomationProperties.Name="Accept color" />
+                <Button Content="Cancel" Margin="10,0,0,0" IsCancel="True"
+                        Style="{DynamicResource OptionsDialogActionButtonStyle}"
+                        AutomationProperties.AutomationId="CancelColor"
+                        AutomationProperties.Name="Cancel color" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>

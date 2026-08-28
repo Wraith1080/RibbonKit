@@ -607,15 +607,30 @@ public sealed class MainWindowIntegrationTests
 
         var fontFamily = Assert.IsType<RibbonComboBox>(fixture.Window.FindName("FontFamilyCombo"));
         fontFamily.IsDropDownOpen = true;
-        fontFamily.SelectedIndex = 2;
+        fontFamily.SelectedItem = Assert.Single(fontFamily.Items.OfType<WriterFontChoice>(),
+            choice => string.Equals(choice.SourceName, "Arial", StringComparison.OrdinalIgnoreCase));
         fontFamily.IsDropDownOpen = false;
         await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
         fixture.Window.EditingController.RefreshState();
         Assert.Equal("Arial", fixture.Window.EditingController.State.FontFamily.Value.Source);
 
+        fontFamily.ApplyTemplate();
+        var editableFontBox = Assert.IsType<TextBox>(fontFamily.Template.FindName(
+            "PART_EditableTextBox", fontFamily));
+        Assert.True(editableFontBox.Focus());
+        fontFamily.Text = "Ari";
+        fixture.Window.EditingController.RefreshState();
+        Assert.Equal("Ari", fontFamily.Text);
+        fontFamily.Text = "Arial";
+        Assert.True(fixture.Editor.Focus());
+        await Dispatcher.Yield(DispatcherPriority.ContextIdle);
+        fixture.Window.EditingController.RefreshState();
+        Assert.Equal("Arial", fixture.Window.EditingController.State.FontFamily.Value.Source);
+
         var fontSize = Assert.IsType<RibbonComboBox>(fixture.Window.FindName("FontSizeCombo"));
         fontSize.IsDropDownOpen = true;
-        fontSize.SelectedIndex = 3;
+        fontSize.SelectedItem = Assert.Single(fontSize.Items.OfType<ComboBoxItem>(),
+            item => string.Equals(item.Content?.ToString(), "12", StringComparison.Ordinal));
         fontSize.IsDropDownOpen = false;
         await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
         fixture.Window.EditingController.RefreshState();
@@ -630,13 +645,18 @@ public sealed class MainWindowIntegrationTests
         Assert.Equal(WriterEditingRibbonController.PointsToDips(16),
             fixture.Window.EditingController.State.FontSize.Value, 3);
 
-        Invoke(Assert.IsType<RibbonMenuItem>(fixture.Window.FindName("TextColorBlue")));
+        var textColor = Assert.IsType<RibbonSplitButton>(fixture.Window.FindName("TextColorButton"));
+        Invoke(Assert.Single(textColor.Items.OfType<RibbonMenuItem>(),
+            item => string.Equals(item.Header, "Blue", StringComparison.Ordinal)));
         await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
         fixture.Window.EditingController.RefreshState();
-        Assert.Equal(Colors.Blue, fixture.Window.EditingController.State.Foreground.Value);
+        Assert.Equal(Color.FromRgb(0x00, 0x70, 0xC0),
+            fixture.Window.EditingController.State.Foreground.Value);
         AssertEditorFocusRestored(fixture);
 
-        Invoke(Assert.IsType<RibbonMenuItem>(fixture.Window.FindName("HighlightYellow")));
+        var highlightColor = Assert.IsType<RibbonSplitButton>(fixture.Window.FindName("HighlightColorButton"));
+        Invoke(Assert.Single(highlightColor.Items.OfType<RibbonMenuItem>(),
+            item => string.Equals(item.Header, "Yellow", StringComparison.Ordinal)));
         await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
         fixture.Window.EditingController.RefreshState();
         Assert.Equal(Colors.Yellow, fixture.Window.EditingController.State.Highlight.Value);
@@ -667,7 +687,7 @@ public sealed class MainWindowIntegrationTests
         fixture.Window.EditingController.RefreshState();
         Assert.False(Assert.IsType<RibbonButton>(fixture.Window.FindName("ReplaceButton")).IsEnabled);
         Assert.True(Assert.IsType<RibbonButton>(fixture.Window.FindName("FindButton")).IsEnabled);
-        Assert.False(Assert.IsType<RibbonDropDownButton>(
+        Assert.False(Assert.IsType<RibbonSplitButton>(
             fixture.Window.FindName("TextColorButton")).IsEnabled);
         Assert.False(Assert.IsType<RibbonDropDownButton>(
             fixture.Window.FindName("ParagraphSpacingButton")).IsEnabled);
@@ -1040,6 +1060,24 @@ public sealed class MainWindowIntegrationTests
         Assert.Equal(WriterEditingRibbonController.DipsToPoints(editor.Document.FontSize)
                 .ToString("0.##", CultureInfo.CurrentCulture),
             Assert.IsType<RibbonComboBox>(window.FindName("FontSizeCombo")).Text);
+        var paragraphDialog = window.CreateParagraphDialog();
+        try
+        {
+            Assert.Equal("0", Assert.IsAssignableFrom<ComboBox>(
+                paragraphDialog.FindName("LeftIndentBox")).Text);
+            Assert.Equal("0", Assert.IsAssignableFrom<ComboBox>(
+                paragraphDialog.FindName("RightIndentBox")).Text);
+            Assert.Equal("0", Assert.IsAssignableFrom<ComboBox>(
+                paragraphDialog.FindName("SpacingBeforeBox")).Text);
+            Assert.Equal("0", Assert.IsAssignableFrom<ComboBox>(
+                paragraphDialog.FindName("SpacingAfterBox")).Text);
+            Assert.Equal("None", Assert.IsAssignableFrom<ComboBox>(
+                paragraphDialog.FindName("SpecialBox")).Text);
+        }
+        finally
+        {
+            paragraphDialog.Close();
+        }
         Assert.True(Assert.IsType<RibbonToggleButton>(window.FindName("AlignLeftButton")).IsChecked);
         Assert.Equal("MainRibbon", AutomationProperties.GetAutomationId(ribbon));
         Assert.Equal("Main ribbon", AutomationProperties.GetName(ribbon));
@@ -1114,12 +1152,9 @@ public sealed class MainWindowIntegrationTests
         var menuCommands = new (string Name, string CommandId)[]
         {
             ("TextColorAutomatic", "Writer.Home.Font.TextColor.Automatic"),
-            ("TextColorBlack", "Writer.Home.Font.TextColor.Black"),
-            ("TextColorBlue", "Writer.Home.Font.TextColor.Blue"),
-            ("TextColorRed", "Writer.Home.Font.TextColor.Red"),
+            ("TextColorMoreColors", "Writer.Home.Font.TextColor.More"),
             ("HighlightNone", "Writer.Home.Font.Highlight.None"),
-            ("HighlightYellow", "Writer.Home.Font.Highlight.Yellow"),
-            ("HighlightGreen", "Writer.Home.Font.Highlight.Green"),
+            ("HighlightMoreColors", "Writer.Home.Font.Highlight.More"),
             ("ParagraphSpacingCompact", "Writer.Home.Paragraph.Spacing.Compact"),
             ("ParagraphSpacingNormal", "Writer.Home.Paragraph.Spacing.Normal"),
             ("ParagraphSpacingOpen", "Writer.Home.Paragraph.Spacing.Open")
@@ -1131,9 +1166,11 @@ public sealed class MainWindowIntegrationTests
             Assert.False(string.IsNullOrWhiteSpace(AutomationProperties.GetName(item)));
             Assert.False(string.IsNullOrWhiteSpace(AutomationProperties.GetAutomationId(item)));
             Assert.False(string.IsNullOrWhiteSpace(KeyTip.GetKeys(item)));
-            if (!name.StartsWith("ParagraphSpacing", StringComparison.Ordinal))
-                Assert.NotNull(item.Command);
         }
+        var textColor = Assert.IsType<RibbonSplitButton>(window.FindName("TextColorButton"));
+        var highlightColor = Assert.IsType<RibbonSplitButton>(window.FindName("HighlightColorButton"));
+        Assert.True(textColor.Items.OfType<RibbonMenuItem>().Count() >= 10);
+        Assert.True(highlightColor.Items.OfType<RibbonMenuItem>().Count() >= 10);
         var fontFamily = Assert.IsType<RibbonComboBox>(window.FindName("FontFamilyCombo"));
         var fontSize = Assert.IsType<RibbonComboBox>(window.FindName("FontSizeCombo"));
         Assert.False(string.IsNullOrWhiteSpace(fontFamily.ScreenTipTitle));
@@ -1166,8 +1203,9 @@ public sealed class MainWindowIntegrationTests
             "Icon.WriterUndo.Large", "Icon.WriterRedo.Large"
         })
             Assert.IsType<DrawingImage>(fixture.Window.TryFindResource(iconKey));
-        var paste = Assert.IsType<RibbonButton>(window.FindName("PasteButton"));
+        var paste = Assert.IsType<RibbonSplitButton>(window.FindName("PasteButton"));
         Assert.Equal(RibbonControlSize.Large, paste.Size);
+        Assert.Equal(RibbonSplitButtonLayout.Vertical, paste.Layout);
         Assert.Same(fixture.Window.TryFindResource("Icon.WriterPaste.Large"), paste.LargeIcon);
         var paragraphSpacing = Assert.IsType<RibbonDropDownButton>(window.FindName("ParagraphSpacingButton"));
         Assert.Equal(RibbonControlSize.Large, paragraphSpacing.Size);

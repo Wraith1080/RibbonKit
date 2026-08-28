@@ -3,8 +3,12 @@
 > **Status:** durable execution decomposition created 2026-08-20. W0-A through W0-F, W1-A through W1-D and
 > W2-A through W2-F plus W3-A through W3-C are accepted on the available hardware, including the 2026-08-26 W3-C
 > corrective UI pass and its 2026-08-27 full regression/live visual reacceptance. Live mixed-monitor checking remains
-> deferred to W4-C because only one display is connected. W1-E Home formatting completion is the next UI-exclusive
-> packet, while W3-D round-trip/RTF compatibility is dependency-ready; neither has started.
+> deferred to W4-C because only one display is connected. W1-E Home formatting implementation and its automated Debug
+> gate are complete; the corrective app-owned RibbonKit-themed Font/Color/Paragraph pass has passed its refreshed full
+> Debug gate and awaits live visual reacceptance.
+> W3-D round-trip/RTF compatibility is dependency-ready but has not started. W3-E is planned after
+> W1-E and W3-D for context-aware structured-object menus, stable contextual state and direct picture/table resizing.
+> W2-G is planned after W3-E as a high-risk true editable-pagination packet; it may not fake page breaks.
 > This document does not schedule future agents or imply that any later Writer packet exists.
 > [`10-RIBBONKIT-WRITER-PLAN.md`](10-RIBBONKIT-WRITER-PLAN.md) owns product scope; current
 > implementation status remains in [`04-DESIGN-NOTES.md` §5](../04-DESIGN-NOTES.md#5-current-state--next-steps).
@@ -152,12 +156,14 @@ Only packets whose dependencies have passed their integration gate are ready.
 | W2-D | Preview, pagination and printing | W2-C | Luna |
 | W2-E | Page/View ribbon and preview integration | W2-B, W2-D | Luna, UI-exclusive |
 | W2-F | Margin guides and interactive horizontal ruler | W0-F, W2-E | Luna, UI-exclusive |
+| W2-G | True editable pagination architecture and delivery | W3-E | Luna, high-risk, UI-exclusive |
 | W3-A | Images and hyperlinks | W0-E, W1-D, W2-B | Luna |
 | W3-B | FlowDocument table core | W0-E, W1-D, W2-B | Luna, high-risk |
 | W3-C | Insert tab, structured-content interaction and contextual Table Tools | W0-F, W2-F, W3-A, W3-B | Luna, UI-exclusive |
 | W3-D | Structured-content round-trip and RTF fixtures | W0-E, W3-A, W3-C | Luna |
-| W4-A | Customization and appearance persistence | W3-D | Luna, UI-exclusive |
-| W4-B | Automated integration and hardening | W4-A | Luna |
+| W3-E | Structured-object context, Picture Tools and direct resizing | W1-E, W3-D | Luna, UI-exclusive |
+| W4-A | Customization and appearance persistence | W3-E | Luna, UI-exclusive |
+| W4-B | Automated integration and hardening | W4-A, W2-G | Luna |
 | W4-C | Manual GUI, DPI, RTL and performance acceptance | W4-B | Lead |
 | W5-A | Distribution decision | W4-C and sustained use | User and lead |
 
@@ -315,9 +321,11 @@ RTL/accessibility and whole-product consistency pass after W2/W3 add their surfa
 
 ### W1-E — Home formatting completion and dialogs
 
-**Owns:** the Home Font group, any app-owned Font/Paragraph dialogs, colour/highlight popups, the conditional Styles
-surface and their command/state/UI tests exclusively. It may refine Home ribbon layout and Writer-owned icons while
-holding the UI lock, but must preserve accepted command identities and profile-capability projection.
+**Owns:** the Home Font group, app-owned RibbonKit-themed Font/Color/Paragraph dialogs,
+colour/highlight popups, the conditional Styles
+surface, the modern base editor context menu and their command/state/UI tests exclusively. It may refine Home ribbon
+layout and Writer-owned icons while holding the UI lock, but must preserve accepted command identities and
+profile-capability projection.
 
 **Deliver:** replace the static five-font list with a cached installed-font source and a virtualized/searchable popup
 whose items render in their own font face; retain editable entry and honest current/mixed state. Expand size choices to
@@ -331,13 +339,21 @@ Tab/Shift+Tab while the editor owns focus so paragraph boundaries and paragraph 
 list positions change nesting rather than moving focus into ribbon chrome. Do not solve this with an unconditional
 `AcceptsTab`: define deterministic mid-paragraph/literal-tab behaviour and retain a documented keyboard focus-exit
 path. Plain Text must not expose rich paragraph formatting, and table-cell Tab routing remains exclusively W3-C.
+Replace the stock WPF editor menu with a Writer-owned modern context menu that snapshots the invocation target before
+popup focus moves, preserves native spelling suggestions/actions, and projects Undo/Redo, Cut/Copy/Paste, Select All,
+Clear Formatting and supported Font/Paragraph launchers through the existing command/capability state. Provide a
+bounded extension contract for later table, picture and hyperlink rows; W1-E must not guess structured-object actions
+or introduce a mini formatting toolbar.
 
 **Exit:** tests cover installed-font enumeration failures/fallback, popup virtualization and own-face preview,
 recommended/recent/current fonts, typed and listed sizes, invalid input, last-used colours, theme/standard/recent and
-custom colours, Automatic/No Color, dialog Apply/OK/Cancel, mixed selections, one native undo unit, profile enablement,
+custom colours, Automatic/No Color, Font-dialog Apply/OK/Cancel, mixed selections, one native undo unit,
+profile enablement,
 KeyTips, ScreenTips and UIA. Tab routing tests cover empty and populated paragraphs, paragraph selections, first and
 nested list items, mid-paragraph/literal-tab behaviour, Plain Text versus RTF/RKW, undo/redo, retained caret/editor
 focus, and the keyboard focus-exit path; popups, dialogs, Backstage and preview must not be intercepted. Lead verifies
+ordinary text, spelling-error and unsupported-profile context menus using mouse, Shift+F10 and the Context Menu key;
+opening or navigating the menu must preserve the intended selection and editor command target. Lead also verifies
 standard/narrow/minimized ribbon, keyboard-only operation, high contrast, RTL and representative
 100/125/150/175/200% DPI in the real Writer window. No unsupported Word effect may appear.
 
@@ -442,6 +458,28 @@ RTL, high contrast, DPI rounding, mixed selections, drag commit/cancel/capture l
 is non-hit-testable and absent from cloned preview/print output. Lead verifies ruler/guide alignment and
 mouse/keyboard/UIA operation in the actual Writer window before W3-C begins.
 
+### W2-G — True editable pagination architecture and delivery
+
+**Owns:** a genuinely page-by-page editable Paper presentation and the reflow/virtualization architecture required
+to support it. It begins only after W3-E stabilizes table/picture selection, contextual state and resizing; it does
+not replace the accepted W2-D preview/print paginator or weaken its output contract.
+
+**Deliver:** first prove the editing architecture in a bounded prototype before replacing W2-C. Keep one authoritative
+document and paginator-consistent page geometry; do not split content into independently owned RichTextBoxes, inject
+blank paragraphs, or draw decorative breaks. Caret and range selection must cross page boundaries while IME,
+spell-check, clipboard, drag/drop, native undo/redo and command routing remain coherent. Reflow must follow paper size,
+margins, zoom, font/paragraph changes and structured-object edits without losing the current editing target. Tables,
+images, hyperlinks, W3-E adorners, margin guides and the horizontal ruler must follow page/scroll/DPI/RTL geometry,
+while non-printing chrome stays out of `.rkw`, RTF, clipboard, preview and print. Virtualize or debounce long-document
+layout from measured evidence. If stock WPF primitives cannot satisfy the proof, stop with the measured limitation
+and an implementation design; never ship fake editable pages as a partial result.
+
+**Exit:** focused tests cover cross-page typing/deletion, selection, undo/redo, IME composition boundaries, spelling,
+clipboard, page-setting reflow, tables/images crossing or moving between pages, zoom/scroll/DPI/RTL, focus recovery and
+document replacement. Compare editable page count and break positions against the accepted preview paginator for a
+deterministic corpus. The lead verifies ordinary multi-page authoring and long-document responsiveness in the actual
+Writer window before W4-B hardening.
+
 ## 8. W3 — Structured content
 
 ### W3-A — Images and hyperlinks
@@ -477,7 +515,8 @@ empty cells, invalid selections and undo/redo. Do not compensate for a broken al
 
 **Status:** accepted through `04-DESIGN-NOTES.md` §3.117, including the 2026-08-26 corrective UI pass and its
 2026-08-27 full regression/live visual reacceptance. W3-D remains unstarted and still owns table round-trip/RTF
-compatibility.
+compatibility. A later user-observed contextual-tab flicker during Table Tools command execution is assigned to W3-E;
+it does not authorize a RibbonKit runtime change without a focused reproduction.
 
 **Owns:** the Insert tab, image/hyperlink/date-time command presentation, table grid picker, table keyboard routing
 and contextual Table Tools UI exclusively.
@@ -503,8 +542,48 @@ ScreenTips, UIA names/patterns and profile-capability state.
 **Deliver:** representative documents containing formatted text, images, hyperlinks, page settings and
 tables; documented fidelity loss for TXT/RTF; schema migration fixtures.
 
-**Exit:** save-close-reopen preserves all native content and settings; corrupt and partial packages fail
-without losing the current document; W3 manual acceptance and full solution tests pass.
+**Exit:** save-close-reopen preserves all native content and settings; corrupt and partial packages fail without
+losing the current document; the W3-D persistence/compatibility gate and full solution tests pass. Final structured-
+object interaction and W3 manual acceptance remain W3-E.
+
+### W3-E — Structured-object context, Picture Tools and direct resizing
+
+**Owns:** structured-object hit testing and selection state, the W1-E context-menu extension rows, Picture Tools,
+table/picture selection adorners, direct resizing and contextual-tab stability exclusively. It may refine Writer-owned
+structured-content commands and icons while holding the UI lock; it must not change RibbonKit runtime code unless a
+separate minimal reproduction proves a library defect and the user approves that runtime packet.
+
+**Deliver:** classify each context-menu invocation from a stable editor target snapshot. Ordinary text retains the
+W1-E menu; a table target adds only valid table actions such as row/column insertion or deletion, merge/split,
+borders/background, sizing and table deletion; a picture target adds supported picture actions such as size,
+replace/remove and properties; a hyperlink may add edit/open/remove when its safety contract permits. Reuse shared
+text commands rather than cloning menus, preserve native spelling rows where applicable and recompute enabled state
+against the captured document/selection before executing.
+
+Introduce explicit picture selection and a real Picture Tools tab only for implemented size/remove/replace behavior.
+Use non-printing `AdornerLayer` overlays for picture edge/corner handles and a table selection grip, row/column boundary
+grips and an overall size grip. Picture corner drags preserve aspect ratio and edge drags change one axis. Table drags
+reuse W3-B's bounded column-width and documented row-height-approximation semantics, respect content minimums and must
+not imply a fixed WPF `TableRow.Height` that does not exist. Geometry follows Paper/Continuous presentation, zoom,
+scrolling, RTL and per-monitor DPI. A drag previews without repeatedly dirtying the document, commits one bounded
+native undo unit on release and restores the opening geometry on Escape, capture loss, document replacement, view
+change or invalidation. Enforce minimum dimensions and page/editor bounds without corrupting FlowDocument structure;
+keep ribbon or keyboard/UIA size alternatives for users who cannot operate pointer handles. Do not add wrapping, crop,
+correction or rotation controls unless the underlying document and persistence contracts genuinely support them.
+
+Stabilize contextual state across focus transfer into Table/Picture Tools and their popups. Suppress transient
+selection publications while an app-owned structural replacement is in flight, execute against the captured valid
+object context, then publish one final state. Keep the selected contextual tab when the committed caret/object remains
+valid; collapse it and choose a deterministic normal-tab fallback only when deletion, document replacement, undo or
+the final selection truly leaves that object. This is currently an app-owned Writer correction, not confirmed
+RibbonKit friction.
+
+**Exit:** deterministic tests cover text/table/picture/hyperlink menu composition and command state, mouse and
+Shift+F10/Context Menu invocation, stale-target rejection, spelling coexistence, profile gating, undo/redo and focus
+restoration. Realized tests cover Table Tools command execution without a Home-tab flash, popup/dropdown commands,
+true object deletion fallback and rapid repeated mutations. Resize tests cover all handles, bounds, aspect behavior,
+zoom/scroll/view changes, RTL, 100/125/150/175/200% DPI, capture loss, Escape, undo/redo, save-close-reopen and absence
+from preview/print/UIA noise. Lead verifies the actual Writer window before W4-A begins.
 
 ## 9. W4-W5 — Product integration, hardening and decision
 

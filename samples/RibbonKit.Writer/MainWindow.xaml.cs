@@ -42,6 +42,9 @@ public partial class MainWindow : RibbonWindow
     private WriterPreviewController? _previewController;
     private readonly WriterPrintService _printService = new();
     private WriterFindReplaceDialog? _findReplaceDialog;
+    private WriterParagraphKeyboardController? _paragraphKeyboardController;
+    private WriterEditorContextMenuController? _editorContextMenuController;
+    private readonly WriterColorPalette _colorPalette = new();
     private DependencyPropertyDescriptor? _backstageOpenDescriptor;
     private WriterViewMode _viewModeBeforePrintPreview = WriterViewMode.Paper;
     private bool _closing;
@@ -85,6 +88,7 @@ public partial class MainWindow : RibbonWindow
         EditorSurface.Attach(DocumentEditor, EditorViewport, PaperCanvas);
         _editingController = new WriterEditingRibbonController(DocumentEditor);
         InitializeStructuredContent();
+        InitializeEditingInteractions();
         MarginGuide.Attach(DocumentEditor, EditorViewport, PaperCanvas);
         HorizontalRuler.Attach(DocumentEditor, EditorViewport, PaperCanvas, _editingController.Editing);
         HorizontalRuler.PageSettings = Shell.CurrentDocument.PageSettings;
@@ -192,6 +196,8 @@ public partial class MainWindow : RibbonWindow
         editing.BindCommand(QatUndo, ApplicationCommands.Undo);
         editing.BindCommand(QatRedo, ApplicationCommands.Redo);
         editing.BindCommand(PasteButton, ApplicationCommands.Paste);
+        editing.BindCommand(PasteKeepFormatting, ApplicationCommands.Paste);
+        editing.BindCommand(PasteTextOnly, WriterEditingCommands.PasteTextOnly);
         editing.BindCommand(CutButton, ApplicationCommands.Cut);
         editing.BindCommand(CopyButton, ApplicationCommands.Copy);
         editing.BindFontFamily(FontFamilyCombo);
@@ -202,15 +208,29 @@ public partial class MainWindow : RibbonWindow
             state => WriterEditingRibbonController.Checked(state.Italic, true));
         editing.BindToggle(UnderlineButton, EditingCommands.ToggleUnderline,
             state => WriterEditingRibbonController.Checked(state.Underline, true));
+        editing.BindCommand(GrowFontButton, WriterEditingCommands.GrowFont);
+        editing.BindCommand(ShrinkFontButton, WriterEditingCommands.ShrinkFont);
+        editing.BindCommand(ClearFormattingButton, WriterEditingCommands.ClearFormatting);
         editing.BindAvailability(TextColorButton, state => state.CanFormat);
-        editing.BindCommand(TextColorAutomatic, WriterEditingCommands.ApplyForeground, null);
-        editing.BindCommand(TextColorBlack, WriterEditingCommands.ApplyForeground, Colors.Black);
-        editing.BindCommand(TextColorBlue, WriterEditingCommands.ApplyForeground, Colors.Blue);
-        editing.BindCommand(TextColorRed, WriterEditingCommands.ApplyForeground, Colors.Red);
+        editing.BindAction(TextColorAutomatic,
+            () => ApplyPaletteColor(WriterColorTarget.Foreground, null), state => state.CanFormat);
+        PopulateColorMenu(TextColorButton, TextColorMoreColors, WriterColorTarget.Foreground);
+        editing.BindAction(TextColorButton,
+            () => ApplyPaletteColor(WriterColorTarget.Foreground,
+                _colorPalette.GetPrimaryColor(WriterColorTarget.Foreground)),
+            state => state.CanFormat, restoreEditorFocus: true);
+        editing.BindAction(TextColorMoreColors, () => ShowMoreColors(isHighlight: false),
+            state => state.CanFormat);
         editing.BindAvailability(HighlightColorButton, state => state.CanFormat);
-        editing.BindCommand(HighlightNone, WriterEditingCommands.ApplyHighlight, null);
-        editing.BindCommand(HighlightYellow, WriterEditingCommands.ApplyHighlight, Colors.Yellow);
-        editing.BindCommand(HighlightGreen, WriterEditingCommands.ApplyHighlight, Colors.LightGreen);
+        editing.BindAction(HighlightNone,
+            () => ApplyPaletteColor(WriterColorTarget.Highlight, null), state => state.CanFormat);
+        PopulateColorMenu(HighlightColorButton, HighlightMoreColors, WriterColorTarget.Highlight);
+        editing.BindAction(HighlightColorButton,
+            () => ApplyPaletteColor(WriterColorTarget.Highlight,
+                _colorPalette.GetPrimaryColor(WriterColorTarget.Highlight)),
+            state => state.CanFormat, restoreEditorFocus: true);
+        editing.BindAction(HighlightMoreColors, () => ShowMoreColors(isHighlight: true),
+            state => state.CanFormat);
         editing.BindToggle(AlignLeftButton, WriterEditingCommands.SetAlignment,
             state => WriterEditingRibbonController.Checked(state.Alignment, TextAlignment.Left), TextAlignment.Left);
         editing.BindToggle(AlignCenterButton, WriterEditingCommands.SetAlignment,
@@ -362,6 +382,10 @@ public partial class MainWindow : RibbonWindow
             _previewController.Dispose();
             _previewController = null;
         }
+        _editorContextMenuController?.Dispose();
+        _editorContextMenuController = null;
+        _paragraphKeyboardController?.Dispose();
+        _paragraphKeyboardController = null;
         DisposeStructuredContent();
         if (_editingController is not null)
         {
@@ -761,6 +785,211 @@ public partial class MainWindow : RibbonWindow
         UpdateViewButtons();
     }
 
+    private void InitializeEditingInteractions()
+    {
+        _paragraphKeyboardController = new WriterParagraphKeyboardController(
+            DocumentEditor,
+            TableInteractionController,
+            NavigateFromEditor);
+        _editorContextMenuController = new WriterEditorContextMenuController(DocumentEditor)
+        {
+            FontDialogRequested = _ => ShowFontDialog(),
+            ParagraphDialogRequested = _ => ShowParagraphDialog()
+        };
+    }
+
+    private bool NavigateFromEditor(WriterEditorFocusDirection direction)
+    {
+        var navigation = direction == WriterEditorFocusDirection.Backward
+            ? FocusNavigationDirection.Previous
+            : FocusNavigationDirection.Next;
+        if (MainRibbon.MoveFocus(new TraversalRequest(navigation)))
+            return true;
+        return MainRibbon.Focus();
+    }
+
+    private void OnFontDialogLauncher(object sender, RoutedEventArgs e)
+    {
+        ShowFontDialog();
+        e.Handled = true;
+    }
+
+    private void OnParagraphDialogLauncher(object sender, RoutedEventArgs e)
+    {
+        ShowParagraphDialog();
+        e.Handled = true;
+    }
+
+    private void ShowMoreColors(bool isHighlight)
+    {
+        var target = isHighlight ? WriterColorTarget.Highlight : WriterColorTarget.Foreground;
+        var stateColor = target == WriterColorTarget.Foreground
+            ? EditingController.State.Foreground
+            : EditingController.State.Highlight;
+        var initial = _colorPalette.GetPrimaryColor(target)
+            ?? (stateColor.IsUniform ? stateColor.Value : null)
+            ?? (isHighlight ? Colors.Yellow : Colors.Black);
+        var dialog = new WriterColorDialog(initial, _colorPalette.RecentColors, this);
+        if (dialog.ShowDialog() == true && dialog.Result.HasValue)
+            ApplyPaletteColor(target, dialog.Result.Value);
+    }
+
+    private void PopulateColorMenu(RibbonSplitButton button, RibbonMenuItem moreColors,
+        WriterColorTarget target)
+    {
+        var insertIndex = Math.Max(1, button.Items.IndexOf(moreColors) - 1);
+        foreach (var entry in _colorPalette.GetEntries(target).Skip(1))
+        {
+            if (!entry.Color.HasValue)
+                continue;
+            var color = entry.Color.Value;
+            var item = new RibbonMenuItem
+            {
+                Header = entry.DisplayName,
+                Icon = CreateColorSwatch(color)
+            };
+            Ribbon.SetCommandId(item, $"Writer.Home.Font.{target}.{entry.Key}");
+            AutomationProperties.SetAutomationId(item, $"{target}Color{entry.Key}");
+            AutomationProperties.SetName(item, $"{entry.DisplayName} {target.ToString().ToLowerInvariant()} color");
+            button.Items.Insert(insertIndex++, item);
+            EditingController.BindAction(item, () => ApplyPaletteColor(target, color),
+                state => state.CanFormat);
+        }
+    }
+
+    private static ImageSource CreateColorSwatch(Color color)
+    {
+        var drawing = new GeometryDrawing(
+            new SolidColorBrush(color),
+            new Pen(SystemColors.ControlDarkBrush, 1),
+            new RectangleGeometry(new Rect(1, 1, 14, 14)));
+        var image = new DrawingImage(drawing);
+        if (image.CanFreeze)
+            image.Freeze();
+        return image;
+    }
+
+    private void ShowFontDialog()
+    {
+        var state = EditingController.State;
+        var sizePoints = state.FontSize.IsUniform &&
+            WriterFontSizePolicy.TryDipToPoints(state.FontSize.Value, out var points)
+                ? points
+                : (double?)null;
+        var initial = new WriterFontDialogResult(
+            state.FontFamily.IsUniform ? state.FontFamily.Value : DocumentEditor.Document.FontFamily,
+            sizePoints ?? 11d,
+            state.Italic.IsUniform && state.Italic.Value ? FontStyles.Italic : FontStyles.Normal,
+            state.Bold.IsUniform && state.Bold.Value ? FontWeights.Bold : FontWeights.Normal,
+            state.Underline.IsUniform && state.Underline.Value,
+            state.Foreground.IsUniform ? state.Foreground.Value ?? Colors.Black : Colors.Black);
+        var dialog = new WriterFontDialog(initial, EditingController.FontCatalog, this);
+        WriterFontDialogResult? lastApplied = null;
+        dialog.Applied += (_, _) =>
+        {
+            if (dialog.Result is null)
+                return;
+            lastApplied = dialog.Result;
+            ApplyFontDialogSelection(dialog.Result);
+        };
+        if (dialog.ShowDialog() == true && dialog.Result is not null &&
+            (lastApplied is null || !WriterFontDialog.AreEquivalent(lastApplied, dialog.Result)))
+        {
+            ApplyFontDialogSelection(dialog.Result);
+        }
+    }
+
+    private void ApplyFontDialogSelection(WriterFontDialogResult selection)
+    {
+        EditingController.Editing.ApplyFontDialogValues(
+            selection.Family,
+            WriterFontSizePolicy.PointsToDip(selection.SizePoints),
+            selection.Style,
+            selection.Weight,
+            selection.Color,
+            selection.Underline);
+        EditingController.FontCatalog.RememberRecent(selection.Family);
+        QueueEditorFocus();
+    }
+
+    private void ShowParagraphDialog()
+    {
+        var dialog = CreateParagraphDialog();
+        WriterParagraphDialogResult? lastApplied = null;
+        dialog.Applied += (_, _) =>
+        {
+            if (dialog.Result is null)
+                return;
+            lastApplied = dialog.Result;
+            ApplyParagraphDialogResult(dialog.Result);
+        };
+        if (dialog.ShowDialog() == true && dialog.Result is not null && dialog.Result != lastApplied)
+            ApplyParagraphDialogResult(dialog.Result);
+    }
+
+    internal WriterParagraphDialog CreateParagraphDialog()
+    {
+        var state = EditingController.State;
+        var useDocumentDefaults = !state.HasTextContext;
+        double? specialPoints = state.FirstLineIndentation.IsUniform && state.HangingIndentation.IsUniform
+            ? ParagraphDipsToPoints(Math.Max(
+                state.FirstLineIndentation.Value,
+                state.HangingIndentation.Value))
+            : useDocumentDefaults ? 0d : null;
+        bool? hanging = specialPoints.HasValue && state.HangingIndentation.IsUniform
+            ? state.HangingIndentation.Value > 0
+            : useDocumentDefaults ? false : null;
+        return new WriterParagraphDialog(
+            state.Alignment.IsUniform
+                ? state.Alignment.Value
+                : useDocumentDefaults ? DocumentEditor.Document.TextAlignment : null,
+            ToOptionalPoints(state.Indentation) ?? (useDocumentDefaults ? 0d : null),
+            ToOptionalPoints(state.RightIndentation) ?? (useDocumentDefaults ? 0d : null),
+            specialPoints,
+            hanging,
+            ToOptionalPoints(state.SpacingBefore) ?? (useDocumentDefaults ? 0d : null),
+            ToOptionalPoints(state.SpacingAfter) ?? (useDocumentDefaults ? 0d : null),
+            this);
+    }
+
+    private void ApplyParagraphDialogResult(WriterParagraphDialogResult result)
+    {
+        var firstLine = result.SpecialBy.HasValue && result.Hanging.HasValue
+            ? ParagraphPointsToDips(result.SpecialBy.Value) * (result.Hanging.Value ? -1 : 1)
+            : (double?)null;
+        EditingController.Editing.ApplyParagraphDialogValues(
+            result.Alignment,
+            ToOptionalDips(result.LeftIndent),
+            firstLine,
+            ToOptionalDips(result.RightIndent),
+            ToOptionalDips(result.SpacingBefore),
+            ToOptionalDips(result.SpacingAfter));
+        QueueEditorFocus();
+    }
+
+    private void ApplyPaletteColor(WriterColorTarget target, Color? color)
+    {
+        _colorPalette.SetLastUsed(target, color);
+        if (target == WriterColorTarget.Foreground)
+            EditingController.Editing.ApplyForeground(color);
+        else
+            EditingController.Editing.ApplyHighlight(color);
+        QueueEditorFocus();
+    }
+
+    private static double? ToOptionalPoints(WriterSelectionValue<double> value) =>
+        value.IsUniform && double.IsFinite(value.Value)
+            ? ParagraphDipsToPoints(value.Value)
+            : null;
+
+    private static double? ToOptionalDips(double? points) => points.HasValue
+        ? ParagraphPointsToDips(points.Value)
+        : null;
+
+    private static double ParagraphDipsToPoints(double dips) => dips * 72d / 96d;
+
+    private static double ParagraphPointsToDips(double points) => points * 96d / 72d;
+
     /// <summary>Gets the active profile projected onto the Writer shell.</summary>
     internal WriterDocumentProfile CurrentProfile =>
         Shell.CurrentDocument.Format.GetProfile();
@@ -803,6 +1032,7 @@ public partial class MainWindow : RibbonWindow
         foreach (var control in new UIElement[]
         {
             FontFamilyCombo, FontSizeCombo, BoldButton, ItalicButton, UnderlineButton,
+            GrowFontButton, ShrinkFontButton, ClearFormattingButton,
             TextColorButton, HighlightColorButton, AlignLeftButton, AlignCenterButton,
             AlignRightButton, AlignJustifyButton, BulletsButton, NumberingButton,
             IncreaseIndentButton, DecreaseIndentButton, ParagraphSpacingButton,
@@ -820,6 +1050,9 @@ public partial class MainWindow : RibbonWindow
                 || ReferenceEquals(control, BoldButton)
                 || ReferenceEquals(control, ItalicButton)
                 || ReferenceEquals(control, UnderlineButton)
+                || ReferenceEquals(control, GrowFontButton)
+                || ReferenceEquals(control, ShrinkFontButton)
+                || ReferenceEquals(control, ClearFormattingButton)
                 || ReferenceEquals(control, TextColorButton)
                 || ReferenceEquals(control, HighlightColorButton)
                 || ReferenceEquals(control, AlignLeftButton)

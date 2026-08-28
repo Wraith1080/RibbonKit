@@ -5314,6 +5314,85 @@ warnings/errors. The real available 125%-scale Writer window confirms compact fi
 and Custom Table dialogs; the ruler-hidden separator; exactly three quick gallery rows plus the separated custom
 action; visible default inner borders; and the No Borders to All Borders transition. The corrective pass is accepted.
 
+### 3.118 RibbonKit Writer structured-object interaction planning correction — 2026-08-27
+
+A later user review identified three connected usability gaps that were not explicit in the original Writer packet
+split. The native `RichTextBox` still supplies its dated default context menu; a Table Tools command can appear to
+flash back to Home while table structure is being replaced; and inserted pictures/tables have ribbon sizing commands
+but no direct selection or resize handles. This section records packet ownership only; no implementation or acceptance
+claim changes in this planning correction.
+
+W1-E now owns a modern Writer editor context-menu base. It captures the invocation target before popup focus moves,
+keeps native spelling suggestions/actions, projects the supported text/clipboard/Font/Paragraph commands and exposes
+one bounded extension seam. W3-E adds context-aware rows: a table target receives only valid table operations, a
+picture receives supported picture operations, and a hyperlink may receive its safe edit/open/remove operations.
+Ordinary text must not inherit object-only commands, and structured objects must retain the shared text operations
+that remain semantically valid.
+
+The Table Tools flash is currently classified as an app-owned state-publication problem, not a confirmed RibbonKit
+runtime defect. `WriterTableInteractionController` publishes every transient native selection change, while
+`RefreshStructuredContentState` immediately collapses `TableToolsTab` whenever the intermediate selection cannot be
+resolved to a table. A structural replacement can therefore remove the old table, publish an outside-table state,
+restore the caret into the replacement and publish the table state again; RibbonKit is expected to choose a normal
+tab when its selected contextual tab is actually collapsed. W3-E must hold a stable object/context snapshot while
+focus is in contextual ribbon or menu chrome, suppress transient projection during an app-owned mutation and publish
+one final state. It keeps Table Tools selected when the committed result remains in the table, but collapses it after
+real deletion, document replacement, undo or a committed selection outside the object. RKWF-014 records the evidence
+boundary; a RibbonKit change remains prohibited unless a minimal consumer reproduces a fallback while the contextual
+tab never becomes hidden.
+
+W3-E also owns direct structured-object manipulation after W1-E and W3-D. Non-printing adorners provide picture
+edge/corner handles and a table selection grip, row/column boundary grips and an overall size grip. Picture corners
+preserve aspect ratio while edges change one axis; table grips reuse W3-B's bounded column-width and documented
+row-height approximation rather than pretending WPF exposes a fixed `TableRow.Height`. They track zoom, scrolling,
+view mode, RTL and per-monitor DPI, preview locally during a drag, commit one native undo unit on release and roll back
+on Escape or capture loss. Picture Tools becomes real only for supported size/replace/remove behavior. The overlays
+never enter the FlowDocument package, preview, print or ordinary automation content, and keyboard/ribbon alternatives
+remain available. Crop, correction, rotation, wrapping and other Word-only affordances remain absent until
+corresponding document and persistence contracts exist.
+
+### 3.119 RibbonKit Writer W1-E Home formatting completion — 2026-08-27
+
+W1-E completes the supported Home editing workflow without adding Word-only formatting promises. The Font family
+source now caches installed families with deterministic fallback and recent choices, keeps editable entry, virtualizes
+its popup and previews each family in its own face. Point sizes use the conventional list plus validated finite custom
+values, and deterministic Grow Font/Shrink Font commands step through the same policy. Paste is a real split action
+with Keep Source Formatting and Keep Text Only, while Clear Formatting removes direct character formatting without
+rewriting paragraph structure.
+
+Text colour and highlight are last-used split actions backed by named theme/standard/recent swatches, Automatic or No
+Color and an app-owned exact-value Color dialog. The Font launcher uses an app-owned Font dialog for the supported
+family, style, size, underline and colour values, including non-closing Apply. The host suppresses a redundant final
+OK application when it matches the last Apply so one user choice does not create a second undo action. User inspection
+showed that the temporary Windows common dialogs could not match RibbonKit input/button shape or theme colouring, so
+the final dialogs are WPF surfaces composed from `RibbonComboBox`, `RibbonTextBox`, `RibbonCheckBox` and the shared
+Options-dialog action styles. Their cards, previews, borders and text use dynamic RibbonKit resources, with no
+WinForms/Drawing project dependency.
+
+The Paragraph launcher is likewise a fixed-width, content-height app-owned dialog. A corrective 2026-08-28 pass
+replaced the data-form presentation with grouped General, Indentation, Spacing and live Preview cards; editable
+RibbonKit ComboBoxes retain custom values and visible point units. An empty document now opens with normal zero/None
+values rather than mixed blanks, while genuinely mixed formatting may remain unset. Content-height sizing removes the
+earlier 125%-DPI clipping risk. Font-family ribbon synchronization also now preserves an active editable/dropdown
+session, so typing a search prefix is not overwritten by the editor's current value.
+
+Editor Tab handling is capability-aware and yields first to W3-C table-cell routing. At paragraph boundaries Tab and
+Shift+Tab indent or outdent, Ctrl+Tab inserts a literal tab, plain mid-paragraph Tab remains literal, Shift+Tab at a
+mid-paragraph caret is left unhandled, and F6/Shift+F6 use the explicit focus-exit seam. The Writer-owned modern context
+menu captures and restores its target before popup focus moves, preserves spelling suggestions and supported actions,
+projects shared text/clipboard/Font/Paragraph commands and exposes one bounded W3-E extension seam. It intentionally
+does not guess table, picture or hyperlink rows. The Styles audit found no complete named-style and persistence
+contract, so no decorative or non-persistent Styles gallery was added.
+
+The implementation stays under `samples/RibbonKit.Writer/**` and its tests; no `src/RibbonKit/**` file changes.
+Independent Luna review of the original W1-E slice found no confirmed product-code defect in Apply/OK suppression, Color cancel/black
+handling, native ownership, context-target restoration or table-Tab bypass. Its two test-hygiene findings were fixed:
+the new clipboard test restores prior clipboard data and all shown context-menu test windows close deterministically.
+The refreshed complete Debug gate passes Writer **384/384**, RibbonKit **355/355** and the visual suite **1/1** over 63
+approved images after a zero-warning/error solution build. Live visual reacceptance of the themed Font/Color dialogs, corrected
+Paragraph dialog and representative ribbon/context-menu states remains pending, so W1-E is not yet marked visually
+accepted.
+
 ## 4. Workflow / Session Conventions
 
 - Work from the current Windows checkout at
@@ -5330,7 +5409,7 @@ action; visible default inner borders; and the No Borders to All Borders transit
 
 ## 5. Current State & Next Steps
 
-> **Authoritative status as of 2026-08-26.** Historical checkpoints remain in §3, but status and
+> **Authoritative status as of 2026-08-27.** Historical checkpoints remain in §3, but status and
 > test counts quoted elsewhere should be reconciled against this section and rerun when current
 > evidence matters.
 
@@ -5390,14 +5469,16 @@ action; visible default inner borders; and the No Borders to All Borders transit
   hardware.
   Both A4 and Letter preview/PDF
   paths passed, including all five output pages and the page-four corruption regression. Live mixed-monitor movement
-  remains a named W4-C hardware check because only one display is connected. W1-E Home formatting completion remains
-  the next UI-exclusive packet, while W3-D structured-content round-trip is now dependency-ready; neither has started.
-  W1-E owns installed-
-  font preview/search, the complete validated size path, richer colour/highlight galleries and More Colors, supported
-  Font/Paragraph dialog launchers, the audit of missing Styles/Paste-split behaviour, and capability-aware editor
-  Tab/Shift+Tab paragraph/list indentation with explicit literal-tab and keyboard focus-exit behaviour. W3-C owns the
-  accepted Insert tab plus contextual Table Tools and its distinct table-cell Tab navigation contract. W3-D owns the later
-  structured round-trip/RTF matrix. W4 keeps the final whole-product consistency pass after W2/W3.
+  remains a named W4-C hardware check because only one display is connected. W1-E Home formatting implementation and
+  its automated Debug gate are complete through §3.119; live reacceptance of the themed Font/Color dialogs, corrected
+  Paragraph dialog and representative ribbon/context-menu states remains pending. Its Styles audit intentionally found
+  no complete named-style/persistence contract, so no placeholder gallery was added. W3-C owns the accepted Insert tab
+  plus contextual Table Tools and its distinct table-cell Tab navigation contract. W3-D owns the later structured
+  round-trip/RTF matrix and is dependency-ready but has not started. The planned W3-E packet in §3.118 then
+  owns context-specific table/picture menu rows, stable contextual-tab state and direct picture/table selection and
+  resizing handles; W4-A now waits for W3-E. Planned W2-G then owns a high-risk true editable-pagination architecture
+  and delivery packet; it must keep one authoritative document and may not fake page gaps. W4-B waits for both W4-A
+  and W2-G. W3-D, W3-E and W2-G have not started.
 - Automatic `Icons.xaml` discovery is best-effort by design. Keep `Load Icons.xaml…` available
   for ambiguity, inaccessible paths, parse failures, or no match.
 
@@ -5489,6 +5570,16 @@ action; visible default inner borders; and the No Borders to All Borders transit
   the solution build has zero warnings/errors. The real available 125%-scale Writer window passed all four corrected
   surfaces: compact fixed insert dialogs, ruler-hidden separation, the three-row quick gallery plus Custom Table,
   and visible default/All Borders cell grids after a live No Borders transition. No `src/RibbonKit/**` file changed.
+- 2026-08-27 after §3.119 implementation: the inventory is 736 logic tests plus one visual test covering 63 approved
+  images. Writer passes **381/381**, RibbonKit passes **355/355**, the visual suite passes **1/1**, and the Debug solution
+  build has zero warnings/errors. Independent Luna review findings were resolved. Live reacceptance of the native
+  Font/Color dialogs, corrected Paragraph dialog and representative ribbon/context-menu states remains pending.
+- 2026-08-28 after the §3.119 corrective dialog/search pass: the inventory is 739 logic tests plus one visual test
+  covering 63 approved images. Writer passes **384/384**, RibbonKit passes **355/355**, the visual suite passes **1/1**,
+  and the Debug solution build has zero warnings/errors. Writer now uses RibbonKit-themed app-owned Font, Color and
+  Paragraph dialogs with no WinForms dependency; live visual reacceptance of those dialogs remains pending. The newly
+  planned W2-G packet owns true editable pagination after W3-E and explicitly rejects decorative or content-injected
+  fake page breaks.
 - Before quoting a current count or declaring a new change complete, rerun the proportional build
   and test commands. Inspect actual/diff PNG artifacts before changing visual baselines or
   tolerances.

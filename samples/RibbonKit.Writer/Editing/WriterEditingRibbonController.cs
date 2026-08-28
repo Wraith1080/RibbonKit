@@ -36,7 +36,6 @@ public static class WriterRibbonCommands
 /// </remarks>
 public sealed class WriterEditingRibbonController : IDisposable
 {
-    private const double DipsPerPoint = 96d / 72d;
     private readonly List<Action> _unbinders = new();
     private readonly List<Action> _stateUpdaters = new();
     private readonly List<(Window Window, CommandBinding Binding)> _windowCommandBindings = new();
@@ -48,6 +47,7 @@ public sealed class WriterEditingRibbonController : IDisposable
     {
         Editor = editor ?? throw new ArgumentNullException(nameof(editor));
         Editing = new WriterEditingAdapter(editor);
+        FontCatalog = new WriterFontCatalog(dispatcher: editor.Dispatcher);
         FindReplace = new WriterFindReplaceService(editor);
         SpellCheck = new WriterSpellCheckAdapter(editor);
         Statistics = new WriterDocumentStatistics(editor);
@@ -66,6 +66,9 @@ public sealed class WriterEditingRibbonController : IDisposable
 
     /// <summary>Gets the W1-A selection and command-state adapter.</summary>
     public WriterEditingAdapter Editing { get; }
+
+    /// <summary>Gets the cached installed-font source used by Writer's font picker.</summary>
+    public WriterFontCatalog FontCatalog { get; }
 
     /// <summary>Gets the W1-B find and replace service.</summary>
     public WriterFindReplaceService FindReplace { get; }
@@ -133,6 +136,27 @@ public sealed class WriterEditingRibbonController : IDisposable
         ApplyState();
     }
 
+    /// <summary>
+    /// Binds the primary half of a split button to the editor without relying on keyboard focus as
+    /// the routed-command target.
+    /// </summary>
+    public void BindCommand(RibbonSplitButton control, ICommand command, object? parameter = null)
+    {
+        ThrowIfDisposed();
+        ArgumentNullException.ThrowIfNull(control);
+        ArgumentNullException.ThrowIfNull(command);
+
+        RoutedEventHandler handler = (_, _) =>
+        {
+            if (!_disposed && Editing.TryExecute(command, parameter))
+                RestoreEditorFocusDeferred();
+        };
+        control.Click += handler;
+        _unbinders.Add(() => control.Click -= handler);
+        _stateUpdaters.Add(() => control.IsEnabled = Editing.CanExecute(command, parameter));
+        ApplyState();
+    }
+
     /// <summary>Binds a command and a selection-state projection to a toggle button.</summary>
     public void BindToggle(RibbonToggleButton control, ICommand command,
         Func<WriterEditingState, bool?> checkedValue, object? parameter = null)
@@ -147,6 +171,30 @@ public sealed class WriterEditingRibbonController : IDisposable
     /// <summary>Binds an action that is available while the native editor is enabled.</summary>
     public void BindAction(ButtonBase control, Action action, Func<WriterEditingState, bool>? canExecute = null,
         bool restoreEditorFocus = false)
+    {
+        ThrowIfDisposed();
+        ArgumentNullException.ThrowIfNull(control);
+        ArgumentNullException.ThrowIfNull(action);
+        canExecute ??= static state => state.IsEnabled;
+
+        RoutedEventHandler handler = (_, _) =>
+        {
+            if (!_disposed && canExecute(State))
+            {
+                action();
+                if (restoreEditorFocus)
+                    RestoreEditorFocusDeferred();
+            }
+        };
+        control.Click += handler;
+        _unbinders.Add(() => control.Click -= handler);
+        _stateUpdaters.Add(() => control.IsEnabled = canExecute(State));
+        ApplyState();
+    }
+
+    /// <summary>Binds an application action to the primary half of a split button.</summary>
+    public void BindAction(RibbonSplitButton control, Action action,
+        Func<WriterEditingState, bool>? canExecute = null, bool restoreEditorFocus = false)
     {
         ThrowIfDisposed();
         ArgumentNullException.ThrowIfNull(control);
@@ -206,16 +254,21 @@ public sealed class WriterEditingRibbonController : IDisposable
     {
         ThrowIfDisposed();
         ArgumentNullException.ThrowIfNull(combo);
-        EventHandler dropDownClosed = (_, _) => CommitFontFamily(SelectedText(combo));
+        ApplyFontCatalog(combo);
+        EventHandler dropDownClosed = (_, _) => CommitFontFamily(combo, SelectedText(combo));
         KeyEventHandler keyDown = (_, e) =>
         {
             if (e.Key == Key.Enter)
             {
-                CommitFontFamily(combo.Text);
+                CommitFontFamily(combo, combo.Text);
                 e.Handled = true;
             }
         };
-        KeyboardFocusChangedEventHandler lostFocus = (_, _) => CommitFontFamily(combo.Text);
+        KeyboardFocusChangedEventHandler lostFocus = (_, _) =>
+        {
+            if (!combo.IsKeyboardFocusWithin)
+                CommitFontFamily(combo, combo.Text);
+        };
         combo.DropDownClosed += dropDownClosed;
         combo.KeyDown += keyDown;
         combo.LostKeyboardFocus += lostFocus;
@@ -228,6 +281,8 @@ public sealed class WriterEditingRibbonController : IDisposable
         _stateUpdaters.Add(() =>
         {
             combo.IsEnabled = State.CanFormat;
+            if (ShouldPreserveComboEdit(combo))
+                return;
             if (State.FontFamily.IsUniform)
                 combo.Text = State.FontFamily.Value.Source;
             else
@@ -253,7 +308,11 @@ public sealed class WriterEditingRibbonController : IDisposable
                 e.Handled = true;
             }
         };
-        KeyboardFocusChangedEventHandler lostFocus = (_, _) => CommitFontSize(combo.Text);
+        KeyboardFocusChangedEventHandler lostFocus = (_, _) =>
+        {
+            if (!combo.IsKeyboardFocusWithin)
+                CommitFontSize(combo.Text);
+        };
         combo.DropDownClosed += dropDownClosed;
         combo.KeyDown += keyDown;
         combo.LostKeyboardFocus += lostFocus;
@@ -266,6 +325,8 @@ public sealed class WriterEditingRibbonController : IDisposable
         _stateUpdaters.Add(() =>
         {
             combo.IsEnabled = State.CanFormat;
+            if (ShouldPreserveComboEdit(combo))
+                return;
             if (State.FontSize.IsUniform)
                 combo.Text = DipsToPoints(State.FontSize.Value).ToString("0.##", CultureInfo.CurrentCulture);
             else
@@ -313,10 +374,10 @@ public sealed class WriterEditingRibbonController : IDisposable
     }
 
     /// <summary>Converts typographic points to WPF device-independent pixels.</summary>
-    public static double PointsToDips(double points) => points * DipsPerPoint;
+    public static double PointsToDips(double points) => WriterFontSizePolicy.PointsToDip(points);
 
     /// <summary>Converts WPF device-independent pixels to typographic points.</summary>
-    public static double DipsToPoints(double dips) => dips / DipsPerPoint;
+    public static double DipsToPoints(double dips) => WriterFontSizePolicy.DipToPoints(dips);
 
     /// <summary>Installs a window command binding for a Writer action.</summary>
     public void BindWindowCommand(Window window, ICommand command, ExecutedRoutedEventHandler execute,
@@ -368,7 +429,7 @@ public sealed class WriterEditingRibbonController : IDisposable
         Editing.Dispose();
     }
 
-    private void CommitFontFamily(string text)
+    private void CommitFontFamily(RibbonComboBox combo, string text)
     {
         if (_applyingState || string.IsNullOrWhiteSpace(text) || !State.CanFormat)
             return;
@@ -378,6 +439,8 @@ public sealed class WriterEditingRibbonController : IDisposable
         if (Editing.CanExecute(WriterEditingCommands.ApplyFontFamily, text.Trim()))
         {
             Editing.TryExecute(WriterEditingCommands.ApplyFontFamily, text.Trim());
+            FontCatalog.RememberRecent(new FontFamily(text.Trim()));
+            ApplyFontCatalog(combo);
             RestoreEditorFocusDeferred();
         }
         ApplyState();
@@ -386,15 +449,22 @@ public sealed class WriterEditingRibbonController : IDisposable
     private static string SelectedText(ComboBox combo) => combo.SelectedItem switch
     {
         ComboBoxItem { Content: not null } item => item.Content.ToString() ?? combo.Text,
+        WriterFontChoice choice => choice.DisplayName,
         not null => combo.SelectedItem.ToString() ?? combo.Text,
         _ => combo.Text
     };
+
+    internal static bool ShouldPreserveComboEdit(ComboBox combo)
+    {
+        ArgumentNullException.ThrowIfNull(combo);
+        return combo.IsKeyboardFocusWithin || combo.IsDropDownOpen;
+    }
 
     private void CommitFontSize(string text)
     {
         if (_applyingState || string.IsNullOrWhiteSpace(text) || !State.CanFormat)
             return;
-        if (!double.TryParse(text.Trim(), NumberStyles.Float, CultureInfo.CurrentCulture, out var size))
+        if (!WriterFontSizePolicy.TryParsePoints(text.Trim(), CultureInfo.CurrentCulture, out var size))
             return;
         var sizeInDips = PointsToDips(size);
         if (State.FontSize.IsUniform && Math.Abs(State.FontSize.Value - sizeInDips) < 0.001)
@@ -405,6 +475,12 @@ public sealed class WriterEditingRibbonController : IDisposable
             RestoreEditorFocusDeferred();
         }
         ApplyState();
+    }
+
+    private void ApplyFontCatalog(RibbonComboBox combo)
+    {
+        var current = State.FontFamily.IsUniform ? State.FontFamily.Value : null;
+        combo.ItemsSource = FontCatalog.CreateProjection(current).Items;
     }
 
     private void OnEditingStateChanged(object? sender, EventArgs e)

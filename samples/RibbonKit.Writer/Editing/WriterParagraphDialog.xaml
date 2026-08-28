@@ -1,0 +1,261 @@
+<Window x:Class="RibbonKit.Writer.Editing.WriterParagraphDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:rk="clr-namespace:RibbonKit.Controls;assembly=RibbonKit"
+        xmlns:sys="clr-namespace:System;assembly=System.Runtime"
+        Title="Paragraph" Width="680" MinWidth="680" MaxWidth="680"
+        SizeToContent="Height" ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False" UseLayoutRounding="True"
+        Background="{DynamicResource RibbonKit.Brushes.Control.SurfaceBackground}"
+        Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}"
+        AutomationProperties.AutomationId="WriterParagraphDialog"
+        AutomationProperties.Name="Paragraph">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.OptionsDialog.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        <x:Array x:Key="IndentPointPresets" Type="{x:Type sys:String}">
+            <sys:String>0</sys:String>
+            <sys:String>6</sys:String>
+            <sys:String>12</sys:String>
+            <sys:String>18</sys:String>
+            <sys:String>24</sys:String>
+            <sys:String>36</sys:String>
+            <sys:String>48</sys:String>
+            <sys:String>72</sys:String>
+        </x:Array>
+        <x:Array x:Key="SpacingPointPresets" Type="{x:Type sys:String}">
+            <sys:String>0</sys:String>
+            <sys:String>3</sys:String>
+            <sys:String>6</sys:String>
+            <sys:String>8</sys:String>
+            <sys:String>10</sys:String>
+            <sys:String>12</sys:String>
+            <sys:String>18</sys:String>
+            <sys:String>24</sys:String>
+        </x:Array>
+        <Style x:Key="ParagraphSectionStyle" TargetType="{x:Type Border}">
+            <Setter Property="Padding" Value="14" />
+            <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Control.CompanionBackground}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Ribbon.Border}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="{DynamicResource RibbonKit.Metrics.GroupCornerRadius}" />
+        </Style>
+        <Style x:Key="ParagraphSectionHeaderStyle" TargetType="{x:Type TextBlock}">
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+        </Style>
+        <Style x:Key="ParagraphFieldLabelStyle" TargetType="{x:Type TextBlock}">
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+        </Style>
+        <Style x:Key="ParagraphUnitStyle" TargetType="{x:Type TextBlock}">
+            <Setter Property="Text" Value="pt" />
+            <Setter Property="Margin" Value="8,0,0,0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
+            <Setter Property="AutomationProperties.Name" Value="Points" />
+        </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid x:Name="LayoutRoot" Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="Adjust alignment, indentation and spacing for the selected paragraph. Mixed values remain blank."
+                   TextWrapping="Wrap"
+                   Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
+                   AutomationProperties.AutomationId="ParagraphDescription"
+                   AutomationProperties.Name="Paragraph dialog description" />
+
+        <Border Grid.Row="1" Margin="0,14,0,0" Style="{StaticResource ParagraphSectionStyle}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <TextBlock Text="General" Style="{StaticResource ParagraphSectionHeaderStyle}" />
+                <Grid Grid.Row="1" Margin="0,10,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="100" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Alignment" Style="{StaticResource ParagraphFieldLabelStyle}" />
+                    <rk:RibbonComboBox x:Name="AlignmentBox" Grid.Column="1" InputWidth="472"
+                                       SelectionChanged="OnSelectionChanged"
+                                       AutomationProperties.AutomationId="ParagraphAlignment"
+                                       AutomationProperties.Name="Paragraph alignment">
+                        <ComboBoxItem Tag="Left" Content="Left" />
+                        <ComboBoxItem Tag="Center" Content="Center" />
+                        <ComboBoxItem Tag="Right" Content="Right" />
+                        <ComboBoxItem Tag="Justify" Content="Justify" />
+                    </rk:RibbonComboBox>
+                </Grid>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="2" Margin="0,12,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="3*" />
+                <ColumnDefinition Width="12" />
+                <ColumnDefinition Width="2*" />
+            </Grid.ColumnDefinitions>
+
+            <Border Style="{StaticResource ParagraphSectionStyle}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="36" />
+                        <RowDefinition Height="36" />
+                        <RowDefinition Height="36" />
+                    </Grid.RowDefinitions>
+                    <TextBlock Text="Indentation" Style="{StaticResource ParagraphSectionHeaderStyle}" />
+
+                    <TextBlock Grid.Row="1" Text="Left" Style="{StaticResource ParagraphFieldLabelStyle}" />
+                    <rk:RibbonComboBox x:Name="LeftIndentBox" Grid.Row="1" Margin="78,0,32,0"
+                                       InputWidth="208" IsEditable="True" IsTextSearchEnabled="False"
+                                       StaysOpenOnEdit="True" ItemsSource="{StaticResource IndentPointPresets}"
+                                       SelectionChanged="OnSelectionChanged"
+                                       AutomationProperties.AutomationId="ParagraphLeftIndent"
+                                       AutomationProperties.Name="Left indent in points" />
+                    <TextBlock x:Name="LeftIndentUnit" Grid.Row="1" HorizontalAlignment="Right"
+                               Style="{StaticResource ParagraphUnitStyle}" />
+
+                    <TextBlock Grid.Row="2" Text="Right" Style="{StaticResource ParagraphFieldLabelStyle}" />
+                    <rk:RibbonComboBox x:Name="RightIndentBox" Grid.Row="2" Margin="78,0,32,0"
+                                       InputWidth="208" IsEditable="True" IsTextSearchEnabled="False"
+                                       StaysOpenOnEdit="True" ItemsSource="{StaticResource IndentPointPresets}"
+                                       SelectionChanged="OnSelectionChanged"
+                                       AutomationProperties.AutomationId="ParagraphRightIndent"
+                                       AutomationProperties.Name="Right indent in points" />
+                    <TextBlock x:Name="RightIndentUnit" Grid.Row="2" HorizontalAlignment="Right"
+                               Style="{StaticResource ParagraphUnitStyle}" />
+
+                    <TextBlock Grid.Row="3" Text="Special" Style="{StaticResource ParagraphFieldLabelStyle}" />
+                    <StackPanel Grid.Row="3" Margin="78,0,0,0" Orientation="Horizontal">
+                        <rk:RibbonComboBox x:Name="SpecialBox" InputWidth="118"
+                                           SelectionChanged="OnSpecialChanged"
+                                           AutomationProperties.AutomationId="ParagraphSpecialIndent"
+                                           AutomationProperties.Name="Special indentation">
+                            <ComboBoxItem Tag="None" Content="None" />
+                            <ComboBoxItem Tag="FirstLine" Content="First line" />
+                            <ComboBoxItem Tag="Hanging" Content="Hanging" />
+                        </rk:RibbonComboBox>
+                        <rk:RibbonComboBox x:Name="SpecialByBox" Margin="8,0,0,0" InputWidth="72"
+                                           IsEditable="True" IsTextSearchEnabled="False" StaysOpenOnEdit="True"
+                                           ItemsSource="{StaticResource IndentPointPresets}"
+                                           SelectionChanged="OnSelectionChanged"
+                                           AutomationProperties.AutomationId="ParagraphSpecialBy"
+                                           AutomationProperties.Name="Special indentation by points" />
+                        <TextBlock x:Name="SpecialByUnit" Style="{StaticResource ParagraphUnitStyle}" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <Border Grid.Column="2" Style="{StaticResource ParagraphSectionStyle}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="36" />
+                        <RowDefinition Height="36" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <TextBlock Text="Spacing" Style="{StaticResource ParagraphSectionHeaderStyle}" />
+
+                    <TextBlock Grid.Row="1" Text="Before" Style="{StaticResource ParagraphFieldLabelStyle}" />
+                    <rk:RibbonComboBox x:Name="SpacingBeforeBox" Grid.Row="1" Margin="62,0,32,0"
+                                       InputWidth="112" IsEditable="True" IsTextSearchEnabled="False"
+                                       StaysOpenOnEdit="True" ItemsSource="{StaticResource SpacingPointPresets}"
+                                       SelectionChanged="OnSelectionChanged"
+                                       AutomationProperties.AutomationId="ParagraphSpacingBefore"
+                                       AutomationProperties.Name="Spacing before in points" />
+                    <TextBlock x:Name="SpacingBeforeUnit" Grid.Row="1" HorizontalAlignment="Right"
+                               Style="{StaticResource ParagraphUnitStyle}" />
+
+                    <TextBlock Grid.Row="2" Text="After" Style="{StaticResource ParagraphFieldLabelStyle}" />
+                    <rk:RibbonComboBox x:Name="SpacingAfterBox" Grid.Row="2" Margin="62,0,32,0"
+                                       InputWidth="112" IsEditable="True" IsTextSearchEnabled="False"
+                                       StaysOpenOnEdit="True" ItemsSource="{StaticResource SpacingPointPresets}"
+                                       SelectionChanged="OnSelectionChanged"
+                                       AutomationProperties.AutomationId="ParagraphSpacingAfter"
+                                       AutomationProperties.Name="Spacing after in points" />
+                    <TextBlock x:Name="SpacingAfterUnit" Grid.Row="2" HorizontalAlignment="Right"
+                               Style="{StaticResource ParagraphUnitStyle}" />
+
+                    <TextBlock Grid.Row="3" Margin="0,8,0,0"
+                               Text="Points (pt)&#x0a;1 pt = 1/72 inch"
+                               Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
+                               TextWrapping="Wrap" />
+                </Grid>
+            </Border>
+        </Grid>
+
+        <Border Grid.Row="3" Margin="0,12,0,0" Style="{StaticResource ParagraphSectionStyle}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <TextBlock Text="Preview" Style="{StaticResource ParagraphSectionHeaderStyle}" />
+                <Border x:Name="PreviewSurface" Grid.Row="1" Height="112" Margin="0,10,0,0" Padding="12,8"
+                        Background="{DynamicResource RibbonKit.Brushes.Control.SurfaceBackground}"
+                        BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}" BorderThickness="1"
+                        CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}">
+                    <Grid ClipToBounds="True">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <TextBlock Text="Previous paragraph" FontSize="10"
+                                   Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
+                        <Border x:Name="PreviewParagraphChrome" Grid.Row="1" Padding="8,5"
+                                Background="{DynamicResource RibbonKit.Brushes.Control.CheckedBackground}"
+                                CornerRadius="{DynamicResource RibbonKit.Metrics.SmallControlCornerRadius}">
+                            <StackPanel x:Name="PreviewText">
+                                <TextBlock x:Name="PreviewFirstLine" Text="The selected paragraph shows its"
+                                           TextTrimming="CharacterEllipsis"
+                                           Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+                                <TextBlock x:Name="PreviewContinuation" Text="alignment, indentation and spacing here."
+                                           TextTrimming="CharacterEllipsis"
+                                           Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+                            </StackPanel>
+                        </Border>
+                        <TextBlock Grid.Row="2" Text="Following paragraph" FontSize="10"
+                                   Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
+                    </Grid>
+                </Border>
+            </Grid>
+        </Border>
+
+        <TextBlock x:Name="ValidationText" Grid.Row="4" Margin="0,10,0,0"
+                   TextWrapping="Wrap" VerticalAlignment="Center"
+                   Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}"
+                   AutomationProperties.LiveSetting="Polite"
+                   AutomationProperties.AutomationId="ParagraphValidation"
+                   AutomationProperties.Name="Paragraph validation" />
+
+        <StackPanel Grid.Row="5" Margin="0,14,0,0" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button x:Name="ApplyButton" Content="Apply" Margin="0,0,10,0"
+                    Style="{DynamicResource OptionsDialogActionButtonStyle}"
+                    Click="OnApply" AutomationProperties.AutomationId="ApplyParagraph"
+                    AutomationProperties.Name="Apply paragraph changes" />
+            <Button x:Name="OkButton" Content="OK" IsDefault="True"
+                    Style="{DynamicResource OptionsDialogPrimaryButtonStyle}"
+                    Click="OnOk" AutomationProperties.AutomationId="OkParagraph"
+                    AutomationProperties.Name="Accept paragraph changes" />
+            <Button x:Name="CancelButton" Content="Cancel" Margin="10,0,0,0" IsCancel="True"
+                    Style="{DynamicResource OptionsDialogActionButtonStyle}"
+                    AutomationProperties.AutomationId="CancelParagraph"
+                    AutomationProperties.Name="Cancel paragraph changes" />
+        </StackPanel>
+    </Grid>
+</Window>

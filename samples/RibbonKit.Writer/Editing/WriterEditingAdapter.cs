@@ -109,6 +109,22 @@ public sealed class WriterEditingAdapter : IDisposable
         ApplyInlineProperty(TextElement.FontSizeProperty, size);
     }
 
+    /// <summary>Moves a uniform selection to the next conventional Writer point size.</summary>
+    public void GrowFont()
+    {
+        if (!TryGetAdjustedFontSize(grow: true, out var sizeInDips))
+            return;
+        ApplyFontSize(sizeInDips);
+    }
+
+    /// <summary>Moves a uniform selection to the previous conventional Writer point size.</summary>
+    public void ShrinkFont()
+    {
+        if (!TryGetAdjustedFontSize(grow: false, out var sizeInDips))
+            return;
+        ApplyFontSize(sizeInDips);
+    }
+
     /// <summary>Toggles bold without choosing a value merely because the selection is mixed.</summary>
     public void ToggleBold() => ApplyInlineProperty(TextElement.FontWeightProperty,
         State.Bold.IsUniform && State.Bold.Value ? FontWeights.Normal : FontWeights.Bold);
@@ -304,6 +320,128 @@ public sealed class WriterEditingAdapter : IDisposable
         RefreshState();
     }
 
+    /// <summary>Pastes Unicode clipboard text without carrying source formatting.</summary>
+    public void PasteTextOnly()
+    {
+        if (!CanPasteTextOnly)
+            return;
+
+        string text;
+        try
+        {
+            text = Clipboard.GetText(TextDataFormat.UnicodeText);
+        }
+        catch (ExternalException)
+        {
+            return;
+        }
+        catch (InvalidOperationException)
+        {
+            return;
+        }
+
+        using (BeginChange())
+        {
+            var range = new TextRange(Editor.Selection.Start, Editor.Selection.End);
+            range.Text = text;
+            Editor.Selection.Select(range.End, range.End);
+        }
+        RefreshState();
+    }
+
+    /// <summary>
+    /// Removes direct character formatting while preserving the selected text and paragraph
+    /// structure. Paragraph alignment, indentation, lists, and spacing are intentionally retained.
+    /// </summary>
+    public void ClearFormatting()
+    {
+        if (!CanFormat)
+            return;
+
+        using (BeginChange())
+        {
+            var range = new TextRange(Editor.Selection.Start, Editor.Selection.End);
+            range.ApplyPropertyValue(TextElement.FontFamilyProperty, Editor.Document.FontFamily);
+            range.ApplyPropertyValue(TextElement.FontSizeProperty, Editor.Document.FontSize);
+            range.ApplyPropertyValue(TextElement.FontWeightProperty, FontWeights.Normal);
+            range.ApplyPropertyValue(TextElement.FontStyleProperty, FontStyles.Normal);
+            range.ApplyPropertyValue(TextElement.FontStretchProperty, FontStretches.Normal);
+            range.ApplyPropertyValue(Inline.TextDecorationsProperty, null);
+            range.ApplyPropertyValue(TextElement.ForegroundProperty, Editor.Document.Foreground);
+            range.ApplyPropertyValue(TextElement.BackgroundProperty, null);
+        }
+        RefreshState();
+    }
+
+    /// <summary>Applies the non-null values committed by the transactional Font dialog.</summary>
+    public void ApplyFontDialogValues(FontFamily? family, double? sizeInDips, FontStyle? style,
+        FontWeight? weight, Color? foreground, bool? underline)
+    {
+        if (sizeInDips.HasValue && !IsValidFontSize(sizeInDips.Value, out _))
+            throw new ArgumentOutOfRangeException(nameof(sizeInDips));
+        if (!CanFormat)
+            return;
+
+        using (BeginChange())
+        {
+            var range = new TextRange(Editor.Selection.Start, Editor.Selection.End);
+            if (family is not null)
+                range.ApplyPropertyValue(TextElement.FontFamilyProperty, family);
+            if (sizeInDips.HasValue)
+                range.ApplyPropertyValue(TextElement.FontSizeProperty, sizeInDips.Value);
+            if (style.HasValue)
+                range.ApplyPropertyValue(TextElement.FontStyleProperty, style.Value);
+            if (weight.HasValue)
+                range.ApplyPropertyValue(TextElement.FontWeightProperty, weight.Value);
+            if (foreground.HasValue)
+                range.ApplyPropertyValue(TextElement.ForegroundProperty, new SolidColorBrush(foreground.Value));
+            if (underline.HasValue)
+                range.ApplyPropertyValue(Inline.TextDecorationsProperty,
+                    underline.Value ? TextDecorations.Underline : null);
+        }
+        RefreshState();
+    }
+
+    /// <summary>Applies the non-null values committed by the transactional Paragraph dialog.</summary>
+    public void ApplyParagraphDialogValues(TextAlignment? alignment, double? left, double? firstLine,
+        double? right, double? spacingBefore, double? spacingAfter)
+    {
+        if (left.HasValue) ValidateDimension(left.Value, nameof(left));
+        if (firstLine.HasValue) ValidateTextIndent(firstLine.Value, nameof(firstLine));
+        if (right.HasValue) ValidateDimension(right.Value, nameof(right));
+        if (spacingBefore.HasValue) ValidateDimension(spacingBefore.Value, nameof(spacingBefore));
+        if (spacingAfter.HasValue) ValidateDimension(spacingAfter.Value, nameof(spacingAfter));
+        if (alignment.HasValue && !Enum.IsDefined(alignment.Value))
+            throw new ArgumentOutOfRangeException(nameof(alignment));
+        if (!CanFormat)
+            return;
+
+        using (BeginChange())
+        {
+            var paragraphs = GetSelectedParagraphs();
+            if (paragraphs.Count == 0)
+                paragraphs.Add(Editor.Selection.Start.Paragraph!);
+            foreach (var paragraph in paragraphs.Where(static paragraph => paragraph is not null))
+            {
+                var range = new TextRange(paragraph.ContentStart, paragraph.ContentEnd);
+                if (alignment.HasValue)
+                    range.ApplyPropertyValue(Paragraph.TextAlignmentProperty, alignment.Value);
+                if (left.HasValue || right.HasValue || spacingBefore.HasValue || spacingAfter.HasValue)
+                {
+                    var margin = NormalizeThickness(paragraph.Margin);
+                    range.ApplyPropertyValue(Paragraph.MarginProperty, new Thickness(
+                        left ?? margin.Left,
+                        spacingBefore ?? margin.Top,
+                        right ?? margin.Right,
+                        spacingAfter ?? margin.Bottom));
+                }
+                if (firstLine.HasValue)
+                    range.ApplyPropertyValue(Paragraph.TextIndentProperty, firstLine.Value);
+            }
+        }
+        RefreshState();
+    }
+
     /// <summary>Undoes the latest native editor undo unit.</summary>
     public void Undo()
     {
@@ -343,6 +481,8 @@ public sealed class WriterEditingAdapter : IDisposable
         AddBinding(ApplicationCommands.Copy, (_, e) => Copy(), (_, e) => e.CanExecute = CanCopy);
         AddBinding(ApplicationCommands.Cut, (_, e) => Cut(), (_, e) => e.CanExecute = CanCut);
         AddBinding(ApplicationCommands.Paste, (_, e) => Paste(), (_, e) => e.CanExecute = CanPaste);
+        AddBinding(WriterEditingCommands.PasteTextOnly, (_, e) => PasteTextOnly(),
+            (_, e) => e.CanExecute = CanPasteTextOnly);
         AddBinding(ApplicationCommands.Undo, (_, e) => Undo(), (_, e) => e.CanExecute = CanUndo);
         AddBinding(ApplicationCommands.Redo, (_, e) => Redo(), (_, e) => e.CanExecute = CanRedo);
         AddBinding(ApplicationCommands.SelectAll, (_, e) =>
@@ -358,6 +498,10 @@ public sealed class WriterEditingAdapter : IDisposable
             (_, e) => e.CanExecute = CanFormat && CanParseFontFamily(e.Parameter));
         AddBinding(WriterEditingCommands.ApplyFontSize, (_, e) => ApplyFontSize(ParseFontSize(e.Parameter)),
             (_, e) => e.CanExecute = CanFormat && CanParseFontSize(e.Parameter));
+        AddBinding(WriterEditingCommands.GrowFont, (_, e) => GrowFont(),
+            (_, e) => e.CanExecute = CanAdjustFontSize(grow: true));
+        AddBinding(WriterEditingCommands.ShrinkFont, (_, e) => ShrinkFont(),
+            (_, e) => e.CanExecute = CanAdjustFontSize(grow: false));
         AddBinding(WriterEditingCommands.ApplyForeground, (_, e) => ApplyForeground(e.Parameter),
             (_, e) => e.CanExecute = CanFormat && CanParseBrush(e.Parameter));
         AddBinding(WriterEditingCommands.ApplyHighlight, (_, e) => ApplyHighlight(e.Parameter),
@@ -380,6 +524,8 @@ public sealed class WriterEditingAdapter : IDisposable
             (_, e) => e.CanExecute = CanFormat);
         AddBinding(WriterEditingCommands.ToggleNumbering, (_, e) => ToggleNativeList(EditingCommands.ToggleNumbering),
             (_, e) => e.CanExecute = CanFormat);
+        AddBinding(WriterEditingCommands.ClearFormatting, (_, e) => ClearFormatting(),
+            (_, e) => e.CanExecute = CanFormat);
     }
 
     private bool CanExecuteCore(ICommand command, object? parameter)
@@ -390,6 +536,8 @@ public sealed class WriterEditingAdapter : IDisposable
             return CanCut;
         if (command == ApplicationCommands.Paste)
             return CanPaste;
+        if (command == WriterEditingCommands.PasteTextOnly)
+            return CanPasteTextOnly;
         if (command == ApplicationCommands.Undo)
             return CanUndo;
         if (command == ApplicationCommands.Redo)
@@ -399,8 +547,12 @@ public sealed class WriterEditingAdapter : IDisposable
         if (command == EditingCommands.ToggleBold || command == EditingCommands.ToggleItalic ||
             command == EditingCommands.ToggleUnderline || command == WriterEditingCommands.IncreaseIndentation ||
             command == WriterEditingCommands.DecreaseIndentation || command == WriterEditingCommands.ToggleBullets ||
-            command == WriterEditingCommands.ToggleNumbering)
+            command == WriterEditingCommands.ToggleNumbering || command == WriterEditingCommands.ClearFormatting)
             return CanFormat;
+        if (command == WriterEditingCommands.GrowFont)
+            return CanAdjustFontSize(grow: true);
+        if (command == WriterEditingCommands.ShrinkFont)
+            return CanAdjustFontSize(grow: false);
         if (command == WriterEditingCommands.ApplyFontFamily)
             return CanFormat && CanParseFontFamily(parameter);
         if (command == WriterEditingCommands.ApplyFontSize)
@@ -421,6 +573,7 @@ public sealed class WriterEditingAdapter : IDisposable
         if (command == ApplicationCommands.Copy) Copy();
         else if (command == ApplicationCommands.Cut) Cut();
         else if (command == ApplicationCommands.Paste) Paste();
+        else if (command == WriterEditingCommands.PasteTextOnly) PasteTextOnly();
         else if (command == ApplicationCommands.Undo) Undo();
         else if (command == ApplicationCommands.Redo) Redo();
         else if (command == ApplicationCommands.SelectAll && CanSelectAll)
@@ -430,6 +583,8 @@ public sealed class WriterEditingAdapter : IDisposable
         else if (command == EditingCommands.ToggleUnderline) ToggleUnderline();
         else if (command == WriterEditingCommands.ApplyFontFamily) ApplyFontFamily(ParseFontFamily(parameter));
         else if (command == WriterEditingCommands.ApplyFontSize) ApplyFontSize(ParseFontSize(parameter));
+        else if (command == WriterEditingCommands.GrowFont) GrowFont();
+        else if (command == WriterEditingCommands.ShrinkFont) ShrinkFont();
         else if (command == WriterEditingCommands.ApplyForeground) ApplyForeground(parameter);
         else if (command == WriterEditingCommands.ApplyHighlight) ApplyHighlight(parameter);
         else if (command == WriterEditingCommands.SetAlignment) SetAlignment(ParseAlignment(parameter));
@@ -442,6 +597,7 @@ public sealed class WriterEditingAdapter : IDisposable
             SetParagraphSpacingAfter(ParseDimension(parameter, nameof(parameter)));
         else if (command == WriterEditingCommands.ToggleBullets) ToggleNativeList(EditingCommands.ToggleBullets);
         else if (command == WriterEditingCommands.ToggleNumbering) ToggleNativeList(EditingCommands.ToggleNumbering);
+        else if (command == WriterEditingCommands.ClearFormatting) ClearFormatting();
     }
 
     private void AddBinding(ICommand command, ExecutedRoutedEventHandler execute,
@@ -732,6 +888,7 @@ public sealed class WriterEditingAdapter : IDisposable
     private bool CanCopy => Editor.IsEnabled && HasSelection;
     private bool CanCut => CanFormat && HasSelection;
     private bool CanPaste => CanFormat && CanReadClipboard();
+    private bool CanPasteTextOnly => CanFormat && CanReadPlainTextClipboard();
     private bool CanSelectAll => Editor.IsEnabled && HasDocumentText();
     private bool CanUndo => CanFormat && Editor.CanUndo;
     private bool CanRedo => CanFormat && Editor.CanRedo;
@@ -762,6 +919,42 @@ public sealed class WriterEditingAdapter : IDisposable
         {
             return Clipboard.ContainsData(DataFormats.Rtf) || Clipboard.ContainsData(DataFormats.Xaml) ||
                 Clipboard.ContainsData(DataFormats.XamlPackage) || Clipboard.ContainsText();
+        }
+        catch (ExternalException)
+        {
+            return false;
+        }
+        catch (InvalidOperationException)
+        {
+            return false;
+        }
+    }
+
+    private bool CanAdjustFontSize(bool grow) =>
+        CanFormat && TryGetAdjustedFontSize(grow, out _);
+
+    private bool TryGetAdjustedFontSize(bool grow, out double sizeInDips)
+    {
+        sizeInDips = default;
+        if (!State.FontSize.IsUniform ||
+            !WriterFontSizePolicy.TryDipToPoints(State.FontSize.Value, out var currentPoints))
+            return false;
+
+        var changed = grow
+            ? WriterFontSizePolicy.TryGrow(currentPoints, out var adjustedPoints)
+            : WriterFontSizePolicy.TryShrink(currentPoints, out adjustedPoints);
+        if (!changed)
+            return false;
+
+        sizeInDips = WriterFontSizePolicy.PointsToDip(adjustedPoints);
+        return true;
+    }
+
+    private static bool CanReadPlainTextClipboard()
+    {
+        try
+        {
+            return Clipboard.ContainsText(TextDataFormat.UnicodeText) || Clipboard.ContainsText();
         }
         catch (ExternalException)
         {

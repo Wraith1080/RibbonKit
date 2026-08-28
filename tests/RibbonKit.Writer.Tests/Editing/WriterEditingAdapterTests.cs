@@ -10,6 +10,7 @@ using Xunit;
 
 namespace RibbonKit.Writer.Tests.Editing;
 
+[Collection("Writer UI")]
 public sealed class WriterEditingAdapterTests
 {
     [Fact]
@@ -447,6 +448,79 @@ public sealed class WriterEditingAdapterTests
             Assert.False(fixture.Adapter.State.Underline.Value);
             Assert.Null(fixture.Adapter.State.Foreground.Value);
             Assert.Null(fixture.Adapter.State.Highlight.Value);
+        });
+    }
+
+    [Fact]
+    public void ClearFormattingPreservesParagraphStructureAndIsUndoable()
+    {
+        StaTestHelper.Run(() =>
+        {
+            var run = new Run("formatted")
+            {
+                FontFamily = new FontFamily("Arial"),
+                FontSize = 30,
+                FontWeight = FontWeights.Bold,
+                FontStyle = FontStyles.Italic,
+                TextDecorations = TextDecorations.Underline,
+                Foreground = Brushes.DarkRed,
+                Background = Brushes.Gold
+            };
+            var paragraph = new Paragraph(run)
+            {
+                TextAlignment = TextAlignment.Center,
+                Margin = new Thickness(24, 3, 12, 9)
+            };
+            using var fixture = CreateFixture(new FlowDocument(paragraph));
+            fixture.Editor.Selection.Select(run.ContentStart, run.ContentEnd);
+
+            Assert.True(fixture.Adapter.TryExecute(WriterEditingCommands.ClearFormatting));
+
+            Assert.Equal(TextAlignment.Center, paragraph.TextAlignment);
+            Assert.Equal(new Thickness(24, 3, 12, 9), paragraph.Margin);
+            Assert.True(fixture.Adapter.State.Bold.IsUniform && !fixture.Adapter.State.Bold.Value);
+            Assert.True(fixture.Adapter.State.Italic.IsUniform && !fixture.Adapter.State.Italic.Value);
+            Assert.True(fixture.Adapter.State.Underline.IsUniform && !fixture.Adapter.State.Underline.Value);
+            Assert.Null(fixture.Adapter.State.Highlight.Value);
+
+            fixture.Adapter.Undo();
+            Assert.True(fixture.Adapter.State.Bold.Value);
+            Assert.True(fixture.Adapter.State.Italic.Value);
+            Assert.True(fixture.Adapter.State.Underline.Value);
+            Assert.Equal(Colors.Gold, fixture.Adapter.State.Highlight.Value);
+        });
+    }
+
+    [Fact]
+    public void PasteTextOnlyUsesPlainClipboardTextAsOneUndoableEdit()
+    {
+        StaTestHelper.Run(() =>
+        {
+            var originalClipboard = Clipboard.GetDataObject();
+            try
+            {
+                Clipboard.Clear();
+                Clipboard.SetText("plain paste");
+                using var fixture = CreateFixture(new FlowDocument(new Paragraph(new Run("replace me"))));
+                fixture.Editor.SelectAll();
+
+                Assert.True(fixture.Adapter.CanExecute(WriterEditingCommands.PasteTextOnly));
+                Assert.True(fixture.Adapter.TryExecute(WriterEditingCommands.PasteTextOnly));
+                Assert.Contains("plain paste", new TextRange(fixture.Editor.Document.ContentStart,
+                    fixture.Editor.Document.ContentEnd).Text);
+                Assert.True(fixture.Editor.CanUndo);
+
+                fixture.Adapter.Undo();
+                Assert.Contains("replace me", new TextRange(fixture.Editor.Document.ContentStart,
+                    fixture.Editor.Document.ContentEnd).Text);
+            }
+            finally
+            {
+                if (originalClipboard is null)
+                    Clipboard.Clear();
+                else
+                    Clipboard.SetDataObject(originalClipboard, copy: true);
+            }
         });
     }
 

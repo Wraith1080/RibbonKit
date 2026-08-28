@@ -2,9 +2,15 @@
 
 > **Status:** approved post-v1 application plan. W0-A through W0-F, W1-A through W1-D, W2-A through W2-F,
 > and W3-A through W3-C are accepted on the available hardware, including the 2026-08-26 W3-C corrective UI pass
-> and its 2026-08-27 full regression/live visual reacceptance. W1-E Home formatting completion is the next
-> UI-exclusive packet, while W3-D structured-content round-trip is dependency-ready; neither has started. Live mixed-monitor DPI
-> movement remains deferred to W4-C. No later implementation is implied.
+> and its 2026-08-27 full regression/live visual reacceptance. W1-E Home formatting implementation and its automated
+> Debug gate are complete; the corrective app-owned RibbonKit-themed Font/Color/Paragraph pass has passed its refreshed
+> full Debug gate and awaits live visual reacceptance.
+> W3-D structured-content round-trip is dependency-ready but has not started. W3-E is a
+> planned later structured-object interaction packet for context-aware menus, stable contextual state and direct
+> picture/table resizing after W1-E and W3-D. W2-G is now a planned high-risk true editable-pagination packet after
+> W3-E; it must prove a real editing architecture and may not simulate pages with decorative breaks. Live mixed-monitor
+> DPI movement remains deferred to W4-C. No later
+> implementation is implied.
 > Live status remains in `04-DESIGN-NOTES.md` §5.
 > RibbonKit Writer is a separate functional sample, not another feature page inside
 > `RibbonKit.Showcase`.
@@ -57,8 +63,9 @@ desktop-publishing engine.
 - Macros, mail merge, tracked changes, comments, collaboration or cloud sync.
 - A Word-compatible layout engine, section model, footnotes, citations, headers/footers or automatic
   tables of contents in the first version.
-- Editable page-by-page WYSIWYG layout. WPF `RichTextBox` remains a continuous editing surface;
-  pagination is a preview and print concern.
+- Word-compatible page-by-page WYSIWYG is not part of the accepted W2-C surface. A bounded W2-G packet now owns
+  investigation and delivery of true editable pages after structured-object behavior is stable. It must preserve
+  native-quality editing behavior and may not present fake breaks that disagree with pagination.
 - Making Writer-specific document concepts part of RibbonKit's runtime public API.
 
 OLE is intentionally excluded even though a FlowDocument can host WPF `UIElement` content. OLE would
@@ -135,6 +142,11 @@ Writer should have three coordinated presentations of the same document.
   with the paginator.
 - Switching between Continuous Edit and Paper must re-present the same live editor/document without
   replacing content or losing selection, caret, undo history or focus.
+
+This describes the accepted W2-C implementation. Planned W2-G may replace Paper with a genuinely paginated editing
+presentation only after an architecture proof preserves cross-page caret/selection, IME, spell-check, clipboard,
+undo/redo and structured objects. Independent RichTextBoxes, injected blank blocks and decorative page gaps are not
+acceptable substitutes for one authoritative document and paginator-consistent reflow.
 
 ### Print Layout / Preview
 
@@ -259,6 +271,12 @@ controls should disable with an explanation and preserve a valid fallback.
   spacing and line spacing; add it only with complete validation, preview, undo and mixed-selection behaviour.
 - Styles: a small live-preview gallery for Normal, Title and headings, only after style application, selection state,
   undo and native persistence are reliable.
+- Editor context menu: replace the stock WPF surface with a Writer-owned modern menu whose ordinary-text path owns
+  Undo/Redo, Cut/Copy/Paste, Select All, Clear Formatting and the supported Font/Paragraph launchers. Build the menu
+  from a context snapshot taken where it opens so moving focus into the popup does not discard the editor target or
+  selection. Preserve native spelling suggestions and supported spelling actions, live command enablement, profile
+  gating, Shift+F10/the Context Menu key, RTL, High Contrast and keyboard/UIA operation. W1-E owns this base menu and
+  its extension seam; W3-E adds table-, picture- and hyperlink-specific rows without duplicating the text commands.
 - Editing: Find, Replace and Select
 
 ### Insert
@@ -286,8 +304,18 @@ controls should disable with an explanation and preserve a valid fallback.
 ### Contextual tabs
 
 - **Table Tools** when the caret is in a table.
-- **Picture Tools** only after image selection, sizing and removal are reliable. Do not expose dead
-  crop/correction commands merely to imitate Word.
+- Contextual identity must remain stable while focus moves from the editor into its ribbon tab or context menu and
+  while an app-owned mutation emits transient selection changes. Collapse a contextual tab or choose a fallback tab
+  only after the committed result is genuinely outside that object; never keep stale table/picture context after
+  document replacement, deletion or undo.
+- **Picture Tools** only after image selection, sizing and removal are reliable. Do not expose dead crop/correction
+  commands merely to imitate Word.
+- W3-E adds non-printing, zoom/scroll/DPI-aware selection adorners: picture edge/corner resize handles and a table
+  selection grip plus row/column boundary and overall size grips. Picture corner handles preserve aspect ratio while
+  edge handles change one axis; table grips reuse the bounded column-width and row-height-approximation contracts and
+  respect content minimums. Dragging previews locally, commits one native undo unit on release and rolls back on Escape
+  or capture loss. Ribbon size controls and keyboard/UIA alternatives remain available; handles must not serialize
+  into `.rkw`, appear in preview/print or steal the stable structured-object context.
 
 Every persistable command should have a stable `Ribbon.CommandId`; keyboard-relevant commands should
 have explicit or reliably derived KeyTips, ScreenTips, standard WPF commands where available and UI
@@ -331,7 +359,8 @@ that a packet, agent or implementation currently exists.
 - A second Home-formatting completion pass covering installed-font preview/search, the full validated size range,
   richer colour/highlight galleries and More Colors, a transactional Font dialog with sample preview, and an audit
   of promised-but-absent Styles, Paste split and paragraph-dialog behaviour without adding placeholder commands.
-  This pass also owns capability-aware Tab/Shift+Tab paragraph and list indentation without trapping keyboard focus.
+  This pass also owns capability-aware Tab/Shift+Tab paragraph and list indentation without trapping keyboard focus,
+  plus the modern base editor context menu and its context-extension contract.
 
 ### W2 — Native format and paper model
 
@@ -339,12 +368,17 @@ that a packet, agent or implementation currently exists.
 - Page settings with A4/Letter/Legal presets, orientation and margins.
 - Centred paper edit surface, paginated preview and printing.
 - Custom-margin UI, non-printing margin guides and a zoom/DPI-aware horizontal ruler.
+- A later W2-G true editable-pagination packet, gated behind stable table/picture interaction and an architecture
+  proof rather than simulated page breaks.
 
 ### W3 — Structured content
 
 - Images and hyperlinks.
 - An Insert tab for Table, Picture, Hyperlink and Date and Time, plus contextual Table Tools editing.
 - Native-format round-trips and RTF compatibility fixtures.
+- A structured-object interaction pass that keeps Table/Picture Tools stable across ribbon focus and transient native
+  selection events, adds context-specific table/picture menu actions, and provides direct picture/table selection and
+  resizing handles with transactional undo and non-printing adorners.
 
 ### W4 — Product integration and polish
 
@@ -372,6 +406,10 @@ Automated coverage should include:
 - Dirty-state transitions, atomic save failure and unsaved-close decisions.
 - Formatting command state over uniform, mixed and empty selections.
 - Table insertion, row/column mutation, merge/split and caret resolution.
+- Context-menu composition and command state for ordinary text, spelling errors, hyperlinks, tables and pictures,
+  including stale-target rejection when the document or selection changes while the menu is open.
+- Picture/table adorner geometry and resize transactions across zoom, scroll, view changes, bounds, Escape/capture
+  loss, undo/redo and save-close-reopen; preview and print must contain no interaction chrome.
 - Preview clone isolation and deterministic pagination inputs.
 - Separation of ribbon customization, document settings and application appearance.
 
@@ -383,6 +421,10 @@ Manual Windows acceptance should include:
 - Margin-guide/ruler alignment while zooming and horizontally scrolling, including drag cancellation,
   high contrast and focused RTL content.
 - Keyboard-only editing and complete KeyTip traversal, including contextual Table Tools.
+- Mouse and keyboard context-menu invocation over text, misspellings, hyperlinks, table cells/borders and pictures;
+  each target shows only its valid extra commands without losing the editor selection.
+- Direct picture/table selection and resizing at representative zoom/DPI values, including a Table/Picture Tools
+  command that retains its contextual page through focus transfer and transient mutation events.
 - 100/125/150/175/200% DPI, live monitor changes, light/dark themes and focused RTL text/table input.
 - Narrow-window ribbon reduction, minimized ribbon, QAT customization and Backstage document commands.
 - Before/after review of the actual Writer window: icon metaphors and stroke weight, primary/secondary

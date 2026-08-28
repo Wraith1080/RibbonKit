@@ -325,6 +325,38 @@ remain read-only until actual/diff evidence justifies a deliberate change.
 - **Evidence still required:** a focused Showcase/runtime reproduction across Office generations, light/dark,
   standard/collapsed groups, RTL, 100-200% DPI and High Contrast without the Writer override.
 
+### RKWF-014 — Transient Writer selection can collapse the active contextual tab during a table command
+
+- **First seen / packet:** 2026-08-27 user follow-up after Writer W3-C acceptance; assigned to planned W3-E.
+- **Status:** Open Writer-owned corrective investigation; not a confirmed RibbonKit defect and no runtime change is
+  approved.
+- **Consumer goal:** invoking a command from Table Tools should keep that contextual page visually stable when the
+  committed result and caret remain in the table, even if the native mutation temporarily replaces table structure or
+  transfers focus into ribbon/popup chrome.
+- **Reproduction and evidence:** the user observed Table Tools quickly switch to Home and return while clicking one of
+  its commands. Current code publishes `WriterTableInteractionController.StateChanged` for every native selection
+  change and immediately maps an unresolved intermediate selection to `TableToolsTab.Visibility=Collapsed`. Structural
+  table services can replace document elements and restore the caret within one logical command, creating a credible
+  outside-table then inside-table publication sequence. No trace yet proves that RibbonKit changes tabs while Table
+  Tools remains continuously visible.
+- **Friction:** a contextual ribbon consumer must distinguish durable editor context from transient WPF selection and
+  focus states. Publishing every intermediate state makes the ribbon react correctly to state that should never have
+  become user-visible.
+- **Current app-owned workaround:** none accepted yet. W3-E will capture a stable table/picture context before focus
+  leaves the editor, suppress contextual projection during an app-owned mutation, reject stale document/object
+  snapshots and publish one final state after caret recovery. Real deletion or a committed outside-object selection
+  must still collapse the contextual tab and choose a deterministic normal-tab fallback.
+- **Application impact:** the flash makes Table Tools appear unreliable and can disorient keyboard users even when the
+  requested command succeeds. An unconditional always-visible tab would instead expose stale or unsafe commands.
+- **Smallest possible library direction:** none at present. Treat RibbonKit's fallback selection as correct when the
+  host actually collapses the selected contextual tab. Consider runtime work only if a minimal consumer shows an
+  unwanted fallback while contextual visibility remains continuously true, or if multiple consumers require a
+  narrowly defined contextual-selection transaction API.
+- **Evidence still required:** instrument visibility, selected-tab, editor selection, document generation and command
+  boundaries in the real Writer window; cover ordinary buttons, dropdown items, popup focus, row/column replacement,
+  merge/split, table deletion, undo/redo, reduced motion and keyboard/KeyTip invocation. Repeat in a minimal Showcase
+  contextual tab before proposing any `src/RibbonKit/**` change.
+
 ## 5. Closed observations
 
 None yet.

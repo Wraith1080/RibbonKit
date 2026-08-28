@@ -17,6 +17,12 @@ public static class WriterEditingCommands
     /// <summary>Applies a numeric font size in device-independent units.</summary>
     public static RoutedUICommand ApplyFontSize { get; } = Create("Apply Font Size", nameof(ApplyFontSize));
 
+    /// <summary>Moves the current font size to the next conventional Writer size.</summary>
+    public static RoutedUICommand GrowFont { get; } = Create("Grow Font", nameof(GrowFont));
+
+    /// <summary>Moves the current font size to the previous conventional Writer size.</summary>
+    public static RoutedUICommand ShrinkFont { get; } = Create("Shrink Font", nameof(ShrinkFont));
+
     /// <summary>Applies a foreground Color, SolidColorBrush, supported colour string, or null.</summary>
     public static RoutedUICommand ApplyForeground { get; } = Create("Apply Foreground", nameof(ApplyForeground));
 
@@ -46,6 +52,12 @@ public static class WriterEditingCommands
 
     /// <summary>Toggles a numbered list for the selected paragraphs.</summary>
     public static RoutedUICommand ToggleNumbering { get; } = Create("Toggle Numbering", nameof(ToggleNumbering));
+
+    /// <summary>Removes direct character formatting while preserving text and paragraph structure.</summary>
+    public static RoutedUICommand ClearFormatting { get; } = Create("Clear Formatting", nameof(ClearFormatting));
+
+    /// <summary>Pastes clipboard text without source formatting.</summary>
+    public static RoutedUICommand PasteTextOnly { get; } = Create("Paste Text Only", nameof(PasteTextOnly));
 
     private static RoutedUICommand Create(string text, string name) =>
         new(text, name, typeof(WriterEditingCommands));

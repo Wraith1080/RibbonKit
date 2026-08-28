@@ -485,12 +485,21 @@
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <rk:RibbonButton x:Name="PasteButton" Header="Paste" Size="Large"
+                        <rk:RibbonSplitButton x:Name="PasteButton" Header="Paste" Size="Large" Layout="Vertical"
                                          Icon="{StaticResource Icon.WriterPaste}"
                                          LargeIcon="{StaticResource Icon.WriterPaste.Large}"
                                          rk:Ribbon.CommandId="Writer.Home.Clipboard.Paste" rk:KeyTip.Keys="PV"
                                          ScreenTipTitle="Paste" ScreenTipText="Paste the clipboard contents at the caret (Ctrl+V)."
-                                         AutomationProperties.AutomationId="HomePaste" AutomationProperties.Name="Paste" />
+                                         AutomationProperties.AutomationId="HomePaste" AutomationProperties.Name="Paste">
+                            <rk:RibbonMenuItem x:Name="PasteKeepFormatting" Header="Keep Source Formatting"
+                                               rk:Ribbon.CommandId="Writer.Home.Clipboard.Paste.KeepFormatting"
+                                               AutomationProperties.AutomationId="PasteKeepFormatting"
+                                               AutomationProperties.Name="Paste with source formatting" />
+                            <rk:RibbonMenuItem x:Name="PasteTextOnly" Header="Keep Text Only"
+                                               rk:Ribbon.CommandId="Writer.Home.Clipboard.Paste.TextOnly"
+                                               AutomationProperties.AutomationId="PasteTextOnly"
+                                               AutomationProperties.Name="Paste text only" />
+                        </rk:RibbonSplitButton>
                         <StackPanel Grid.Column="1" Margin="4,0,0,0" VerticalAlignment="Center">
                             <rk:RibbonButton x:Name="CutButton" Header="Cut" Size="Small" Icon="{StaticResource Icon.WriterCut}"
                                              rk:Ribbon.CommandId="Writer.Home.Clipboard.Cut" rk:KeyTip.Keys="CX"
@@ -503,30 +512,47 @@
                         </StackPanel>
                     </Grid>
                 </rk:RibbonGroup>
-                <rk:RibbonGroup x:Name="FontGroup" Header="Font" rk:Ribbon.CommandId="Writer.Home.Font" rk:KeyTip.Keys="FO" Icon="{StaticResource Icon.WriterFont}" AutomationProperties.AutomationId="FontGroup" AutomationProperties.Name="Font">
+                <rk:RibbonGroup x:Name="FontGroup" Header="Font" rk:Ribbon.CommandId="Writer.Home.Font" rk:KeyTip.Keys="FO" Icon="{StaticResource Icon.WriterFont}"
+                                ShowDialogLauncher="True" DialogLauncherClick="OnFontDialogLauncher"
+                                AutomationProperties.AutomationId="FontGroup" AutomationProperties.Name="Font">
                     <StackPanel Margin="2,2,2,0" VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                             <rk:RibbonComboBox x:Name="FontFamilyCombo" InputWidth="128" IsEditable="True"
+                                               IsTextSearchEnabled="True"
+                                               TextSearch.TextPath="DisplayName"
+                                               ScrollViewer.CanContentScroll="True"
+                                               VirtualizingStackPanel.IsVirtualizing="True"
+                                               VirtualizingStackPanel.VirtualizationMode="Recycling"
                                                rk:Ribbon.CommandId="Writer.Home.Font.Family" rk:KeyTip.Keys="FF"
-                                               ScreenTipTitle="Font family" ScreenTipText="Choose the font family for the selection."
+                                               ScreenTipTitle="Font family" ScreenTipText="Search installed fonts and apply one to the selection."
                                                AutomationProperties.AutomationId="FontFamily" AutomationProperties.Name="Font family">
-                                <ComboBoxItem Content="Segoe UI" />
-                                <ComboBoxItem Content="Calibri" />
-                                <ComboBoxItem Content="Arial" />
-                                <ComboBoxItem Content="Times New Roman" />
-                                <ComboBoxItem Content="Consolas" />
+                                <rk:RibbonComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding DisplayName}" FontFamily="{Binding FontFamily}"
+                                                   TextTrimming="CharacterEllipsis" />
+                                    </DataTemplate>
+                                </rk:RibbonComboBox.ItemTemplate>
                             </rk:RibbonComboBox>
                             <rk:RibbonComboBox x:Name="FontSizeCombo" InputWidth="48" Margin="4,0,0,0" IsEditable="True"
                                                rk:Ribbon.CommandId="Writer.Home.Font.Size" rk:KeyTip.Keys="FS"
                                                ScreenTipTitle="Font size" ScreenTipText="Choose the text size in points."
                                                AutomationProperties.AutomationId="FontSize" AutomationProperties.Name="Font size">
+                                <ComboBoxItem Content="8" />
                                 <ComboBoxItem Content="9" />
                                 <ComboBoxItem Content="10" />
                                 <ComboBoxItem Content="11" />
                                 <ComboBoxItem Content="12" />
                                 <ComboBoxItem Content="14" />
+                                <ComboBoxItem Content="16" />
                                 <ComboBoxItem Content="18" />
+                                <ComboBoxItem Content="20" />
+                                <ComboBoxItem Content="22" />
                                 <ComboBoxItem Content="24" />
+                                <ComboBoxItem Content="26" />
+                                <ComboBoxItem Content="28" />
+                                <ComboBoxItem Content="36" />
+                                <ComboBoxItem Content="48" />
+                                <ComboBoxItem Content="72" />
                             </rk:RibbonComboBox>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
@@ -542,27 +568,40 @@
                                                    rk:Ribbon.CommandId="Writer.Home.Font.Underline" rk:KeyTip.Keys="FU"
                                                    ScreenTipTitle="Underline" ScreenTipText="Underline the selected text (Ctrl+U)."
                                                    AutomationProperties.AutomationId="HomeUnderline" AutomationProperties.Name="Underline" />
-                            <rk:RibbonDropDownButton x:Name="TextColorButton" Header="Text Color" Size="Small" Icon="{StaticResource Icon.WriterTextColor}"
+                            <rk:RibbonButton x:Name="GrowFontButton" Header="Grow Font" Size="Small" Icon="{StaticResource Icon.WriterPlus}"
+                                             rk:Ribbon.CommandId="Writer.Home.Font.Grow" rk:KeyTip.Keys="FG"
+                                             ScreenTipTitle="Grow Font" ScreenTipText="Move to the next conventional font size."
+                                             AutomationProperties.AutomationId="GrowFont" AutomationProperties.Name="Grow Font" />
+                            <rk:RibbonButton x:Name="ShrinkFontButton" Header="Shrink Font" Size="Small" Icon="{StaticResource Icon.WriterMinus}"
+                                             rk:Ribbon.CommandId="Writer.Home.Font.Shrink" rk:KeyTip.Keys="FK"
+                                             ScreenTipTitle="Shrink Font" ScreenTipText="Move to the previous conventional font size."
+                                             AutomationProperties.AutomationId="ShrinkFont" AutomationProperties.Name="Shrink Font" />
+                            <rk:RibbonButton x:Name="ClearFormattingButton" Header="Clear Formatting" Size="Small" Icon="{StaticResource Icon.WriterReset}"
+                                             rk:Ribbon.CommandId="Writer.Home.Font.ClearFormatting" rk:KeyTip.Keys="FC"
+                                             ScreenTipTitle="Clear Formatting" ScreenTipText="Remove direct character formatting while retaining paragraph layout."
+                                             AutomationProperties.AutomationId="ClearFormatting" AutomationProperties.Name="Clear Formatting" />
+                            <rk:RibbonSplitButton x:Name="TextColorButton" Header="Text Color" Size="Small" Icon="{StaticResource Icon.WriterTextColor}"
                                                      rk:Ribbon.CommandId="Writer.Home.Font.TextColor" rk:KeyTip.Keys="TC"
-                                                     ScreenTipTitle="Text Color" ScreenTipText="Choose a solid text color for the selection."
+                                                     ScreenTipTitle="Text Color" ScreenTipText="Apply the last-used color or choose another solid color."
                                                      AutomationProperties.AutomationId="TextColor" AutomationProperties.Name="Text Color">
                                 <rk:RibbonMenuItem x:Name="TextColorAutomatic" Header="Automatic" rk:Ribbon.CommandId="Writer.Home.Font.TextColor.Automatic" rk:KeyTip.Keys="A" AutomationProperties.AutomationId="TextColorAutomatic" AutomationProperties.Name="Automatic text color" />
-                                <rk:RibbonMenuItem x:Name="TextColorBlack" Header="Black" rk:Ribbon.CommandId="Writer.Home.Font.TextColor.Black" rk:KeyTip.Keys="B" AutomationProperties.AutomationId="TextColorBlack" AutomationProperties.Name="Black text" />
-                                <rk:RibbonMenuItem x:Name="TextColorBlue" Header="Blue" rk:Ribbon.CommandId="Writer.Home.Font.TextColor.Blue" rk:KeyTip.Keys="U" AutomationProperties.AutomationId="TextColorBlue" AutomationProperties.Name="Blue text" />
-                                <rk:RibbonMenuItem x:Name="TextColorRed" Header="Red" rk:Ribbon.CommandId="Writer.Home.Font.TextColor.Red" rk:KeyTip.Keys="R" AutomationProperties.AutomationId="TextColorRed" AutomationProperties.Name="Red text" />
-                            </rk:RibbonDropDownButton>
-                            <rk:RibbonDropDownButton x:Name="HighlightColorButton" Header="Highlight" Size="Small" Icon="{StaticResource Icon.WriterHighlight}"
+                                <Separator />
+                                <rk:RibbonMenuItem x:Name="TextColorMoreColors" Header="More Colors..." rk:Ribbon.CommandId="Writer.Home.Font.TextColor.More" rk:KeyTip.Keys="M" AutomationProperties.AutomationId="TextColorMoreColors" AutomationProperties.Name="More text colors" />
+                            </rk:RibbonSplitButton>
+                            <rk:RibbonSplitButton x:Name="HighlightColorButton" Header="Highlight" Size="Small" Icon="{StaticResource Icon.WriterHighlight}"
                                                      rk:Ribbon.CommandId="Writer.Home.Font.Highlight" rk:KeyTip.Keys="TH"
-                                                     ScreenTipTitle="Text Highlight" ScreenTipText="Choose a solid highlight color for the selection."
+                                                     ScreenTipTitle="Text Highlight" ScreenTipText="Apply the last-used highlight or choose another solid color."
                                                      AutomationProperties.AutomationId="HighlightColor" AutomationProperties.Name="Text Highlight">
                                 <rk:RibbonMenuItem x:Name="HighlightNone" Header="No Color" rk:Ribbon.CommandId="Writer.Home.Font.Highlight.None" rk:KeyTip.Keys="N" AutomationProperties.AutomationId="HighlightNone" AutomationProperties.Name="No highlight color" />
-                                <rk:RibbonMenuItem x:Name="HighlightYellow" Header="Yellow" rk:Ribbon.CommandId="Writer.Home.Font.Highlight.Yellow" rk:KeyTip.Keys="Y" AutomationProperties.AutomationId="HighlightYellow" AutomationProperties.Name="Yellow highlight" />
-                                <rk:RibbonMenuItem x:Name="HighlightGreen" Header="Green" rk:Ribbon.CommandId="Writer.Home.Font.Highlight.Green" rk:KeyTip.Keys="G" AutomationProperties.AutomationId="HighlightGreen" AutomationProperties.Name="Green highlight" />
-                            </rk:RibbonDropDownButton>
+                                <Separator />
+                                <rk:RibbonMenuItem x:Name="HighlightMoreColors" Header="More Colors..." rk:Ribbon.CommandId="Writer.Home.Font.Highlight.More" rk:KeyTip.Keys="M" AutomationProperties.AutomationId="HighlightMoreColors" AutomationProperties.Name="More highlight colors" />
+                            </rk:RibbonSplitButton>
                         </StackPanel>
                     </StackPanel>
                 </rk:RibbonGroup>
-                <rk:RibbonGroup x:Name="ParagraphGroup" Header="Paragraph" rk:Ribbon.CommandId="Writer.Home.Paragraph" rk:KeyTip.Keys="PA" Icon="{StaticResource Icon.WriterAlignLeft}" AutomationProperties.AutomationId="ParagraphGroup" AutomationProperties.Name="Paragraph">
+                <rk:RibbonGroup x:Name="ParagraphGroup" Header="Paragraph" rk:Ribbon.CommandId="Writer.Home.Paragraph" rk:KeyTip.Keys="PA" Icon="{StaticResource Icon.WriterAlignLeft}"
+                                ShowDialogLauncher="True" DialogLauncherClick="OnParagraphDialogLauncher"
+                                AutomationProperties.AutomationId="ParagraphGroup" AutomationProperties.Name="Paragraph">
                     <StackPanel Margin="2,2,2,0" VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                             <rk:RibbonToggleButton x:Name="AlignLeftButton" Header="Align Left" Size="Small" Icon="{StaticResource Icon.WriterAlignLeft}"
