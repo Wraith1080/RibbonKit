@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
+using RibbonKit.Controls;
 using RibbonKit.Writer.Models;
 using RibbonKit.Writer.Preview;
 using RibbonKit.Writer.Printing;
@@ -15,7 +16,7 @@ namespace RibbonKit.Writer.Tests.Printing;
 public sealed class WriterPrintSetupDialogTests
 {
     [Fact]
-    public void DialogHostsTheExactWriterPreviewAndNeverClaimsPreviewIsUnsupported()
+    public void DialogUsesWriterThemeAndHostsTheExactPreviewWithoutUnsupportedClaim()
     {
         StaTestHelper.Run(() =>
         {
@@ -40,6 +41,28 @@ public sealed class WriterPrintSetupDialogTests
                 Assert.Same(snapshot.Paginator, preview.PrimaryPageView.DocumentPaginator);
                 Assert.Contains("A4", Assert.IsType<TextBlock>(
                     dialog.FindName("PageSummaryText")).Text);
+                Assert.Same(dialog.TryFindResource("RibbonKit.Brushes.Control.SurfaceBackground"),
+                    dialog.Background);
+                var printer = Assert.IsType<RibbonComboBox>(dialog.FindName("PrinterBox"));
+                var printerHost = Assert.IsType<Grid>(dialog.FindName("PrinterFieldHost"));
+                var printerBounds = printer.TransformToAncestor(printerHost)
+                    .TransformBounds(new Rect(printer.RenderSize));
+                Assert.True(printerBounds.Right <= printerHost.ActualWidth + 0.5,
+                    $"Printer field right {printerBounds.Right:0.##}, host right {printerHost.ActualWidth:0.##}.");
+                var settingsLayout = Assert.IsType<Grid>(dialog.FindName("PrintSettingsLayout"));
+                var actionButtons = Assert.IsType<StackPanel>(dialog.FindName("PrintActionButtons"));
+                var actionBounds = actionButtons.TransformToAncestor(settingsLayout)
+                    .TransformBounds(new Rect(actionButtons.RenderSize));
+                Assert.InRange(Math.Abs(
+                    actionBounds.Left + actionBounds.Width / 2 - settingsLayout.ActualWidth / 2), 0, 0.5);
+                Assert.Same(dialog.TryFindResource("OptionsDialogActionButtonStyle"),
+                    Assert.IsType<Button>(dialog.FindName("CancelButton")).Style);
+                Assert.Same(dialog.TryFindResource("OptionsDialogPrimaryButtonStyle"),
+                    Assert.IsType<Button>(dialog.FindName("PrintButton")).Style);
+                Assert.Same(dialog.TryFindResource("OptionsDialogActionButtonStyle"),
+                    Assert.IsType<Button>(dialog.FindName("PreviousButton")).Style);
+                Assert.Same(dialog.TryFindResource("OptionsDialogActionButtonStyle"),
+                    Assert.IsType<Button>(dialog.FindName("NextButton")).Style);
                 var text = string.Join(" ", FindText(dialog));
                 Assert.DoesNotContain("doesn't support print preview", text,
                     StringComparison.OrdinalIgnoreCase);

@@ -1,11 +1,22 @@
 <Window x:Class="RibbonKit.Writer.Printing.WriterPrintSetupDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:rk="clr-namespace:RibbonKit.Controls;assembly=RibbonKit"
         xmlns:preview="clr-namespace:RibbonKit.Writer.Preview"
         Title="Print" Width="920" Height="680" MinWidth="720" MinHeight="520"
-        WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False" UseLayoutRounding="True"
+        Background="{DynamicResource RibbonKit.Brushes.Control.SurfaceBackground}"
+        Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}"
         AutomationProperties.AutomationId="WriterPrintSetup"
         AutomationProperties.Name="RibbonKit Writer print setup">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.OptionsDialog.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
     <Grid Background="{DynamicResource RibbonKit.Brushes.Control.CompanionBackground}">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="290" />
@@ -14,7 +25,7 @@
 
         <Border Padding="28" Background="{DynamicResource RibbonKit.Brushes.Control.SurfaceBackground}"
                 BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}" BorderThickness="0,0,1,0">
-            <Grid>
+            <Grid x:Name="PrintSettingsLayout">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*" />
                     <RowDefinition Height="Auto" />
@@ -23,9 +34,12 @@
                     <TextBlock Text="Print" FontSize="26" FontWeight="Light"
                                Foreground="{DynamicResource RibbonKit.Brushes.Accent}" />
                     <TextBlock Text="Printer" Margin="0,28,0,6" FontWeight="SemiBold" />
-                    <ComboBox x:Name="PrinterBox" DisplayMemberPath="DisplayName" MinHeight="34"
-                              AutomationProperties.AutomationId="PrintPrinter"
-                              AutomationProperties.Name="Printer" />
+                    <Grid x:Name="PrinterFieldHost">
+                        <rk:RibbonComboBox x:Name="PrinterBox" DisplayMemberPath="DisplayName"
+                                           InputWidth="{Binding ActualWidth, ElementName=PrinterFieldHost}"
+                                           AutomationProperties.AutomationId="PrintPrinter"
+                                           AutomationProperties.Name="Printer" />
+                    </Grid>
                     <TextBlock Text="Page setup" Margin="0,24,0,6" FontWeight="SemiBold" />
                     <TextBlock x:Name="PageSummaryText" TextWrapping="Wrap"
                                Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
@@ -39,14 +53,13 @@
                                    Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
                     </Border>
                 </StackPanel>
-                <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Content="Cancel" Width="90" Height="34" Margin="0,0,10,0" IsCancel="True"
+                <StackPanel x:Name="PrintActionButtons" Grid.Row="1" Orientation="Horizontal"
+                            HorizontalAlignment="Center">
+                    <Button x:Name="CancelButton" Content="Cancel" Margin="0,0,10,0" IsCancel="True"
+                            Style="{DynamicResource OptionsDialogActionButtonStyle}"
                             AutomationProperties.AutomationId="PrintCancel" AutomationProperties.Name="Cancel printing" />
-                    <Button x:Name="PrintButton" Content="Print" Width="100" Height="34" IsDefault="True"
-                            Background="{DynamicResource RibbonKit.Brushes.Dialog.PrimaryBackground}"
-                            BorderBrush="{DynamicResource RibbonKit.Brushes.Dialog.PrimaryBorder}"
-                            Foreground="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}"
-                            FontWeight="SemiBold"
+                    <Button x:Name="PrintButton" Content="Print" IsDefault="True"
+                            Style="{DynamicResource OptionsDialogPrimaryButtonStyle}"
                             Click="OnPrint" AutomationProperties.AutomationId="PrintSubmit"
                             AutomationProperties.Name="Print document" />
                 </StackPanel>
@@ -68,7 +81,8 @@
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
                 <Button x:Name="PreviousButton" Content="←  Previous page" HorizontalAlignment="Right"
-                        MinWidth="120" Click="OnPrevious"
+                        MinWidth="120" Style="{DynamicResource OptionsDialogActionButtonStyle}"
+                        Click="OnPrevious"
                         AutomationProperties.AutomationId="PrintPreviewPrevious"
                         AutomationProperties.Name="Previous page" />
                 <TextBlock x:Name="PagePositionText" Grid.Column="1" MinWidth="110" Margin="14,0"
@@ -76,7 +90,8 @@
                            AutomationProperties.AutomationId="PrintPreviewPosition"
                            AutomationProperties.Name="Preview page position" />
                 <Button x:Name="NextButton" Grid.Column="2" Content="Next page  →" HorizontalAlignment="Left"
-                        MinWidth="120" Click="OnNext"
+                        MinWidth="120" Style="{DynamicResource OptionsDialogActionButtonStyle}"
+                        Click="OnNext"
                         AutomationProperties.AutomationId="PrintPreviewNext"
                         AutomationProperties.Name="Next page" />
             </Grid>

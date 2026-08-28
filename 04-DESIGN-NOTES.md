@@ -5410,6 +5410,12 @@ A small live-review addendum replaces the hue indicator's fractional-DPI-sensiti
 layout-driven vertical centring. Print Preview now has the same one-DIP dynamic ribbon-border handoff used when the
 paper editor's ruler is hidden. Realized WPF tests cover hue-centre geometry and the preview separator's collapsed,
 visible and modal-exit lifecycle; the separator itself was committed separately at `46f9ede` before this packet.
+The Writer-owned print setup also now follows the app's themed-dialog contract: dynamic surface/text tokens, the
+shared action-button styles and `RibbonComboBox` printer selector replace its remaining stock WPF chrome. Its exact
+fixed-paginator preview and native queue/ticket/driver submission path are unchanged, and the existing realized test
+now covers those theme resources without increasing the test inventory. The printer input takes its width from its
+realized host instead of assuming the rail's nominal width, preserving the divider and avoiding right-edge clipping
+under fractional DPI rounding.
 
 W3-D closes the native table-persistence gap without passing untrusted XAML to `XamlReader` or `TextRange.Load`.
 The data-only reader now admits only bounded `Table`, column, row-group, row and cell shapes; reconstructs supported
