@@ -6,8 +6,10 @@
 > deferred to W4-C because only one display is connected. W1-E Home formatting implementation and its automated Debug
 > gate are complete; the corrective app-owned RibbonKit-themed Font/Color/Paragraph pass has passed its refreshed full
 > Debug gate and awaits live visual reacceptance.
-> W3-D round-trip/TXT/RTF compatibility is accepted through design-notes §3.120. W3-E is planned next after
-> W1-E live reacceptance for context-aware structured-object menus, stable contextual state and direct picture/table resizing.
+> W3-D round-trip/TXT/RTF compatibility is accepted through design-notes §3.120. W3-E has begun with the bounded
+> W3-E1 structured-context/menu and contextual-publication foundation, including the app-owned loaded-picture
+> context-menu/keyboard undo/redo and snapshot-normalization correction; W3-E2 still owns direct picture/table selection,
+> Picture Tools and resizing.
 > W2-G is planned after W3-E as a high-risk true editable-pagination packet; it may not fake page breaks.
 > This document does not schedule future agents or imply that any later Writer packet exists.
 > [`10-RIBBONKIT-WRITER-PLAN.md`](10-RIBBONKIT-WRITER-PLAN.md) owns product scope; current
@@ -557,6 +559,11 @@ losing the current document; the W3-D persistence/compatibility gate and full so
 object interaction and W3 manual acceptance remain W3-E.
 
 ### W3-E — Structured-object context, Picture Tools and direct resizing
+
+**Current status:** W3-E1 implements the stable document/object snapshot, W1-E menu composition, stale-target guards,
+object removal/table mutation paths and app-owned table-state refresh deferral. W3-E2 remains pending for explicit
+picture selection, Picture Tools and direct picture/table adorners and resizing. W3-E is not complete until the full
+exit matrix below and live acceptance pass.
 
 **Owns:** structured-object hit testing and selection state, the W1-E context-menu extension rows, Picture Tools,
 table/picture selection adorners, direct resizing and contextual-tab stability exclusively. It may refine Writer-owned

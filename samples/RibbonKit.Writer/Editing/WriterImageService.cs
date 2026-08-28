@@ -33,8 +33,14 @@ public sealed record WriterImageInsertionOptions
 /// persistence can package the image bytes rather than retaining a path to the source file.
 /// OLE, XAML object graphs and executable attachments are not accepted.
 /// </remarks>
-public sealed class WriterImageService
+public sealed class WriterImageService : IWriterEditingUndoExtension
 {
+    private const int MaximumTrackedRemovals = 64;
+    private readonly List<RemovedImageUndoRecord> _removedImages = [];
+    private readonly List<RemovedImageUndoRecord> _customRedo = [];
+    private FlowDocument? _undoDocument;
+    private int _textChangeSuppression;
+
     /// <summary>Default image limits used by the file and stream overloads.</summary>
     public static WriterImageInsertionOptions DefaultOptions { get; } = new();
 
@@ -158,9 +164,141 @@ public sealed class WriterImageService
     {
         ArgumentNullException.ThrowIfNull(editor);
         ArgumentNullException.ThrowIfNull(container);
-        return container.Child is Image
-            && WriterInlineInsertion.IsInlineInDocument(editor.Document, container)
-            && WriterInlineInsertion.TryRemoveInline(editor, container);
+        if (!WriterInlineInsertion.TryGetImage(container, out var image)
+            || !WriterInlineInsertion.IsInlineInDocument(editor.Document, container)
+            || WriterInlineInsertion.GetOwnerCollection(container) is not { } owner)
+            return false;
+
+        var index = owner.Cast<Inline>().TakeWhile(inline => !ReferenceEquals(inline, container)).Count();
+        if (index >= owner.Count)
+            return false;
+        var record = new RemovedImageUndoRecord(editor.Document, container.Parent!, index,
+            CloneImageElement(image));
+        if (!WriterInlineInsertion.TryRemoveInline(editor, container))
+            return false;
+
+        if (!ReferenceEquals(_undoDocument, editor.Document))
+            ResetUndoHistory(editor.Document);
+        var obsolete = _removedImages.Where(existing =>
+            ReferenceEquals(existing.RestoredContainer, container)).ToArray();
+        _removedImages.RemoveAll(existing => obsolete.Contains(existing));
+        _customRedo.RemoveAll(existing => obsolete.Contains(existing));
+        _removedImages.Add(record);
+        if (_removedImages.Count > MaximumTrackedRemovals)
+            _removedImages.RemoveRange(0, _removedImages.Count - MaximumTrackedRemovals);
+        return true;
+    }
+
+    /// <summary>
+    /// Repairs WPF's empty-Grid placeholder when native Undo recreates a removed image container
+    /// without its UIElement child.
+    /// </summary>
+    internal bool TryRestoreAfterUndo(RichTextBox editor)
+    {
+        ArgumentNullException.ThrowIfNull(editor);
+        if (!ReferenceEquals(_undoDocument, editor.Document))
+        {
+            ResetUndoHistory(editor.Document);
+            return false;
+        }
+
+        for (var index = _removedImages.Count - 1; index >= 0; index--)
+        {
+            var record = _removedImages[index];
+            if (record.IsRestored || !ReferenceEquals(record.Document, editor.Document)
+                || GetOwnerCollection(record.Owner) is not { } owner
+                || record.Index < 0 || record.Index >= owner.Count
+                || owner.ElementAt(record.Index) is not InlineUIContainer candidate)
+                continue;
+
+            if (candidate.Child is Image)
+            {
+                record.RestoredContainer = candidate;
+                return false;
+            }
+            if (candidate.Child is not Grid { Children.Count: 0 })
+                continue;
+
+            var placeholder = (Grid)candidate.Child;
+            placeholder.Children.Add(CloneImageElement(record.ImageSnapshot));
+            record.RestoredContainer = candidate;
+            _customRedo.Add(record);
+            return true;
+        }
+        return false;
+    }
+
+    /// <summary>Updates tracked picture state after WPF reapplies one native redo unit.</summary>
+    internal void NotifyRedo(RichTextBox editor)
+    {
+        ArgumentNullException.ThrowIfNull(editor);
+        if (!ReferenceEquals(_undoDocument, editor.Document))
+        {
+            ResetUndoHistory(editor.Document);
+            return;
+        }
+        foreach (var record in _removedImages.Where(record => record.IsRestored))
+        {
+            if (record.RestoredContainer?.Parent is null)
+                record.RestoredContainer = null;
+        }
+    }
+
+    /// <summary>Invalidates repaired redo state after a new editor-owned change.</summary>
+    internal void NotifyTextChanged(RichTextBox editor)
+    {
+        ArgumentNullException.ThrowIfNull(editor);
+        if (_textChangeSuppression == 0 && _customRedo.Count > 0)
+            _customRedo.Clear();
+    }
+
+    /// <summary>Clears picture-removal state at a document-lifetime boundary.</summary>
+    internal void ResetUndoHistory(FlowDocument? document = null)
+    {
+        _removedImages.Clear();
+        _customRedo.Clear();
+        _undoDocument = document;
+    }
+
+    bool IWriterEditingUndoExtension.CanRedo(RichTextBox editor) =>
+        ReferenceEquals(_undoDocument, editor.Document)
+        && _customRedo.Any(record => record.RestoredContainer?.Parent is not null);
+
+    bool IWriterEditingUndoExtension.TryRedo(RichTextBox editor)
+    {
+        if (!ReferenceEquals(_undoDocument, editor.Document))
+            return false;
+        while (_customRedo.Count > 0)
+        {
+            var index = _customRedo.Count - 1;
+            var record = _customRedo[index];
+            _customRedo.RemoveAt(index);
+            if (record.RestoredContainer is not { Parent: not null } container
+                || !WriterInlineInsertion.IsInlineInDocument(editor.Document, container))
+                continue;
+
+            _textChangeSuppression++;
+            try
+            {
+                if (!WriterInlineInsertion.TryRemoveInline(editor, container))
+                    return false;
+                record.RestoredContainer = null;
+                return true;
+            }
+            finally
+            {
+                _textChangeSuppression--;
+            }
+        }
+        return false;
+    }
+
+    void IWriterEditingUndoExtension.BeginHistoryTraversal() => _textChangeSuppression++;
+
+    void IWriterEditingUndoExtension.EndHistoryTraversal()
+    {
+        if (_textChangeSuppression > 0)
+            _textChangeSuppression--;
     }
 
     /// <summary>Creates a frozen portable bitmap from encoded image bytes.</summary>
@@ -251,4 +389,54 @@ public sealed class WriterImageService
 
     private static bool IsValidDimension(double? value) => value is null
         || (double.IsFinite(value.Value) && value.Value > 0 && value.Value <= 8192);
+
+    private static InlineCollection? GetOwnerCollection(DependencyObject owner) => owner switch
+    {
+        Paragraph paragraph => paragraph.Inlines,
+        Span span => span.Inlines,
+        _ => null
+    };
+
+    internal static Image CloneImageElement(Image source)
+    {
+        var clone = new Image { IsHitTestVisible = false };
+        foreach (var property in new[]
+                 {
+                     Image.SourceProperty,
+                     Image.StretchProperty,
+                     Image.StretchDirectionProperty,
+                     FrameworkElement.WidthProperty,
+                     FrameworkElement.HeightProperty,
+                     FrameworkElement.MinWidthProperty,
+                     FrameworkElement.MinHeightProperty,
+                     FrameworkElement.MaxWidthProperty,
+                     FrameworkElement.MaxHeightProperty,
+                     FrameworkElement.HorizontalAlignmentProperty,
+                     FrameworkElement.VerticalAlignmentProperty,
+                     FrameworkElement.MarginProperty,
+                     FrameworkElement.FlowDirectionProperty,
+                     UIElement.OpacityProperty,
+                     UIElement.SnapsToDevicePixelsProperty
+                 })
+        {
+            var value = source.ReadLocalValue(property);
+            if (value != DependencyProperty.UnsetValue)
+                clone.SetValue(property, value);
+        }
+        return clone;
+    }
+
+    private sealed class RemovedImageUndoRecord(
+        FlowDocument document,
+        DependencyObject owner,
+        int index,
+        Image imageSnapshot)
+    {
+        internal FlowDocument Document { get; } = document;
+        internal DependencyObject Owner { get; } = owner;
+        internal int Index { get; } = index;
+        internal Image ImageSnapshot { get; } = imageSnapshot;
+        internal InlineUIContainer? RestoredContainer { get; set; }
+        internal bool IsRestored => RestoredContainer is not null;
+    }
 }

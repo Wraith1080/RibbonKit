@@ -5438,6 +5438,43 @@ RibbonKit **355/355** and visual **1/1** over 63 approved images. The solution b
 Writer project build itself is zero-warning. No `src/RibbonKit/**` file changed. W3-E remains the next structured-object
 packet after the pending W1-E live visual reacceptance; W2-G still waits for W3-E.
 
+### 3.121 RibbonKit Writer W3-E1 structured-context and contextual-state foundation — 2026-08-28
+
+W3-E has begun with one bounded foundation; this is not completion of the full packet in §3.118. The W1-E context-menu
+extension now classifies a document-bound target as ordinary text, table, picture or hyperlink without replacing the
+shared text/spelling rows. Table targets add capability-checked insert/delete, merge/split, cell-size,
+borders/background and true table-deletion actions; pictures expose only the implemented remove action; hyperlinks
+expose edit/remove. Every callback revalidates the captured document and exact live object immediately before restoring
+the native selection and executing. Replaced documents and removed/replaced objects therefore reject stale popup work.
+
+`WriterTableInteractionController` now defers state publication through an app-owned structural mutation and emits one
+final projection after caret recovery. Realized Writer-window coverage keeps the selected Table Tools tab through row
+insertion, but collapses it and selects a normal fallback after true table deletion. Table deletion leaves a valid caret
+paragraph and is one native undo/redo unit. Picture removal is likewise covered through the realized context-menu and
+editing-controller Undo/Redo route, addressing the live report that removal appeared irreversible. A follow-up using
+the first Backstage Recent document exposed WPF's loaded-content variant: native Undo recreated the removed
+`InlineUIContainer` with an empty `Grid` instead of its `Image`, then discarded native Redo when the child was replaced.
+Writer now retains bounded app-owned removal metadata, repairs that empty placeholder without adding a second native
+undo unit, and supplies the paired redo only after WPF's native redo chain is exhausted. Older text undo/redo units keep
+their original order. Unmodified Delete and Backspace are intercepted only when the selection is exactly the picture or
+the caret is on the matching forward/backward picture boundary; ordinary text and opposite-direction deletion remain
+native. Save and preview use an isolated normalized clone so this live undo bridge never leaks into `.rkw`
+content or fixed pagination; the repaired picture is covered through preview plus save/reopen. Nested table, section/list
+and figure/floater traversal keeps structured targets and deletion ownership within the live document.
+
+The original focused controller/resolver/table gate passed **17/17** and the complete Debug suites passed Writer
+**401/401**, RibbonKit **355/355** and visual **1/1** over 63 approved images. After the loaded-picture correction, the
+exact realized Recent/menu/keyboard/history/preview/save-reopen path passes, as do the direct image undo, directional
+Delete/Backspace and preview regressions.
+The proportional rerun passed Writer **400/400** in the combined non-focus run plus the one process-focus test **1/1**
+in isolation; that split avoids its known process-global keyboard-focus interference. RibbonKit remains **355/355**,
+visual remains **1/1**, and the solution build has zero warnings/errors. No
+`src/RibbonKit/**` file changed, so RKWF-014 remains an app-owned correction rather than a RibbonKit runtime defect.
+The loaded-picture undo exception is recorded separately as RKWF-015 and likewise requires no runtime change.
+W3-E2 still owns explicit picture selection, a real Picture Tools tab, non-printing picture/table adorners and bounded
+direct resizing across zoom/scroll/view/RTL/DPI. Those features and the complete W3-E live acceptance matrix remain
+pending before W4-A may begin.
+
 ## 4. Workflow / Session Conventions
 
 - Work from the current Windows checkout at
@@ -5500,7 +5537,8 @@ packet after the pending W1-E live visual reacceptance; W2-G still waits for W3-
   implemented behind app-owned, undoable services with strict native-package safety and structural invariants. W3-C
   now supplies their Insert/dialog presentation, mouse/keyboard/UIA table picker, table-cell routing and contextual
   Table Tools surface through §3.117. W3-D now adds strict native table round-trip, content-schema-v2 migration and
-  explicit TXT/RTF compatibility loss fixtures through §3.120.
+  explicit TXT/RTF compatibility loss fixtures through §3.120. The bounded W3-E1 foundation in §3.121 adds stable
+  structured-object context menus and app-owned contextual-state publication without claiming Picture Tools/resizing.
 
 ### Remaining or intentionally deferred
 
@@ -5520,11 +5558,11 @@ packet after the pending W1-E live visual reacceptance; W2-G still waits for W3-
   Paragraph dialog and representative ribbon/context-menu states remains pending. Its Styles audit intentionally found
   no complete named-style/persistence contract, so no placeholder gallery was added. W3-C owns the accepted Insert tab
   plus contextual Table Tools and its distinct table-cell Tab navigation contract. W3-D owns the accepted strict native
-  table round-trip/schema-v2 and TXT/RTF compatibility matrix. The planned W3-E packet in §3.118 next
-  owns context-specific table/picture menu rows, stable contextual-tab state and direct picture/table selection and
-  resizing handles; W4-A now waits for W3-E. Planned W2-G then owns a high-risk true editable-pagination architecture
+  table round-trip/schema-v2 and TXT/RTF compatibility matrix. W3-E has begun with the bounded §3.121 context-menu and
+  contextual-state foundation. W3-E2 still owns explicit picture/table selection, Picture Tools and direct resizing
+  handles; W4-A remains blocked on complete W3-E. Planned W2-G then owns a high-risk true editable-pagination architecture
   and delivery packet; it must keep one authoritative document and may not fake page gaps. W4-B waits for both W4-A
-  and W2-G. W3-E and W2-G have not started; W3-E still waits for the pending W1-E live visual reacceptance.
+  and W2-G. W2-G has not started, and the remaining W3-E2/live matrix is still pending.
 - Automatic `Icons.xaml` discovery is best-effort by design. Keep `Load Icons.xaml…` available
   for ambiguity, inaccessible paths, parse failures, or no match.
 
@@ -5636,6 +5674,11 @@ packet after the pending W1-E live visual reacceptance; W2-G still waits for W3-
   12 design-tools copy warnings are caused only by the DLL being held open by Visual Studio process 33288, while the
   Writer project build is zero-warning. W3-D's native table/schema-v2 and TXT/RTF compatibility gate is accepted; the
   hue/preview addendum has realized regression coverage, and W1-E live visual reacceptance remains pending.
+- 2026-08-28 after §3.121: the inventory is 756 logic tests plus one visual test covering 63 approved images. The W3-E1
+  focused structured-context/state gate passes **17/17**. The original full Writer gate passed **401/401**; after the
+  loaded-picture undo correction, the proportional rerun passed **400/400** together plus the process-focus case
+  **1/1** in isolation. RibbonKit passes **355/355**, visual passes **1/1**, and the solution build has zero
+  warnings/errors. W3-E2 and the full W3-E live matrix remain pending.
 - Before quoting a current count or declaring a new change complete, rerun the proportional build
   and test commands. Inspect actual/diff PNG artifacts before changing visual baselines or
   tolerances.

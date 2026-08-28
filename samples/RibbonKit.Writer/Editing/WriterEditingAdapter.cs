@@ -11,6 +11,14 @@ using System.ComponentModel;
 
 namespace RibbonKit.Writer.Editing;
 
+internal interface IWriterEditingUndoExtension
+{
+    bool CanRedo(RichTextBox editor);
+    bool TryRedo(RichTextBox editor);
+    void BeginHistoryTraversal();
+    void EndHistoryTraversal();
+}
+
 /// <summary>
 /// Coordinates Writer-owned formatting commands over a native <see cref="RichTextBox"/>.
 /// </summary>
@@ -31,6 +39,8 @@ public sealed class WriterEditingAdapter : IDisposable
     private readonly DependencyPropertyDescriptor? _isReadOnlyDescriptor;
     private bool _disposed;
     private bool _refreshingState;
+
+    internal IWriterEditingUndoExtension? UndoExtension { get; set; }
 
     /// <summary>Creates an adapter over an existing native editor.</summary>
     /// <param name="editor">The editor whose document and selection remain application-owned.</param>
@@ -466,7 +476,16 @@ public sealed class WriterEditingAdapter : IDisposable
     {
         if (!CanUndo)
             return;
-        Editor.Undo();
+        UndoExtension?.BeginHistoryTraversal();
+        try
+        {
+            Editor.Undo();
+            UndoCompleted?.Invoke(this, EventArgs.Empty);
+        }
+        finally
+        {
+            UndoExtension?.EndHistoryTraversal();
+        }
         RefreshState();
     }
 
@@ -475,9 +494,36 @@ public sealed class WriterEditingAdapter : IDisposable
     {
         if (!CanRedo)
             return;
-        Editor.Redo();
+        var changed = false;
+        UndoExtension?.BeginHistoryTraversal();
+        try
+        {
+            if (Editor.CanRedo)
+            {
+                Editor.Redo();
+                changed = true;
+            }
+            else
+            {
+                changed = UndoExtension?.TryRedo(Editor) == true;
+            }
+            if (changed)
+                RedoCompleted?.Invoke(this, EventArgs.Empty);
+        }
+        finally
+        {
+            UndoExtension?.EndHistoryTraversal();
+        }
+        if (!changed)
+            return;
         RefreshState();
     }
+
+    /// <summary>Raised after WPF completes one native undo operation.</summary>
+    public event EventHandler? UndoCompleted;
+
+    /// <summary>Raised after WPF completes one native redo operation.</summary>
+    public event EventHandler? RedoCompleted;
 
     /// <summary>Removes the adapter's event handlers and command bindings.</summary>
     public void Dispose()
@@ -917,7 +963,8 @@ public sealed class WriterEditingAdapter : IDisposable
     private bool CanPasteTextOnly => CanFormat && CanReadPlainTextClipboard();
     private bool CanSelectAll => Editor.IsEnabled && HasDocumentText();
     private bool CanUndo => CanFormat && Editor.CanUndo;
-    private bool CanRedo => CanFormat && Editor.CanRedo;
+    private bool CanRedo => CanFormat
+        && (Editor.CanRedo || UndoExtension?.CanRedo(Editor) == true);
     private bool HasSelection => Editor.Selection.Start.CompareTo(Editor.Selection.End) != 0;
 
     private bool HasDocumentText()

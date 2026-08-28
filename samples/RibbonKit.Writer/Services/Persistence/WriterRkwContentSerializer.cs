@@ -68,12 +68,29 @@ internal static partial class WriterRkwContentSerializer
     internal static byte[] Save(FlowDocument document)
     {
         ArgumentNullException.ThrowIfNull(document);
+        var snapshot = CreateNormalizedSnapshot(document);
         using var stream = new MemoryStream();
-        new TextRange(document.ContentStart, document.ContentEnd)
+        new TextRange(snapshot.ContentStart, snapshot.ContentEnd)
             .Save(stream, DataFormats.XamlPackage);
         if (stream.Length > MaximumPackageBytes)
             throw new InvalidDataException("The document content exceeds the native package limit.");
         return stream.ToArray();
+    }
+
+    private static FlowDocument CreateNormalizedSnapshot(FlowDocument document)
+    {
+        if (!WriterImageSnapshotNormalizer.RequiresNormalization(document))
+            return document;
+
+        var clone = new FlowDocument();
+        using var stream = new MemoryStream();
+        new TextRange(document.ContentStart, document.ContentEnd)
+            .Save(stream, DataFormats.XamlPackage);
+        stream.Position = 0;
+        new TextRange(clone.ContentStart, clone.ContentEnd)
+            .Load(stream, DataFormats.XamlPackage);
+        WriterImageSnapshotNormalizer.NormalizeClone(document, clone);
+        return clone;
     }
 
     internal static FlowDocument Load(byte[] packageBytes, bool allowTables)

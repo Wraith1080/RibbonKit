@@ -21,6 +21,7 @@ using RibbonKit.Writer.Page;
 using RibbonKit.Writer.Preview;
 using RibbonKit.Writer.Printing;
 using RibbonKit.Writer.Services.Documents;
+using RibbonKit.Writer.Services.Persistence;
 using RibbonKit.Writer.Services.RecentFiles;
 using RibbonKit.Writer.Shell;
 using RibbonKit.Writer.Tests.Document;
@@ -276,8 +277,8 @@ public sealed class MainWindowIntegrationTests
             var recentButtons = FindVisualDescendants<Button>(recentList)
                 .Where(button => button.CommandParameter is RecentFileEntry)
                 .ToArray();
-            Assert.Equal(2, recentButtons.Length);
-            Assert.Equal(2, recentButtons.Select(button =>
+            Assert.Equal(3, recentButtons.Length);
+            Assert.Equal(3, recentButtons.Select(button =>
                 AutomationProperties.GetAutomationId(button)).Distinct(StringComparer.OrdinalIgnoreCase).Count());
             foreach (var button in recentButtons)
             {
@@ -597,6 +598,25 @@ public sealed class MainWindowIntegrationTests
         Assert.All(reducedUnevenTable.RowGroups.Cast<TableRowGroup>(), group =>
             Assert.All(group.Rows.Cast<TableRow>(), row => Assert.Single(row.Cells)));
 
+        var deleteTargetCell = reducedUnevenTable.RowGroups[0].Rows[0].Cells[0];
+        editor.Selection.Select(deleteTargetCell.ContentStart, deleteTargetCell.ContentStart);
+        window.TableInteractionController.Refresh();
+        fixture.Ribbon.SelectedTab = tableToolsTab;
+        window.EditorContextMenuController.Refresh();
+        var deleteTableMenu = FindMenuItem(
+            FindMenuItem(window.EditorContextMenuController.Menu.Items, "Table").Items,
+            "Delete");
+        var deleteWholeTable = FindMenuItem(deleteTableMenu.Items, "Table");
+        deleteWholeTable.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent, deleteWholeTable));
+        await PumpAsync();
+        Assert.Empty(document.Content.Blocks.OfType<Table>());
+        Assert.Equal(Visibility.Collapsed, tableToolsTab.Visibility);
+        Assert.NotSame(tableToolsTab, fixture.Ribbon.SelectedTab);
+        Assert.True(window.EditingController.TryExecute(ApplicationCommands.Undo));
+        Assert.Single(document.Content.Blocks.OfType<Table>());
+        Assert.True(window.EditingController.TryExecute(ApplicationCommands.Redo));
+        Assert.Empty(document.Content.Blocks.OfType<Table>());
+
         var objectParagraph = new Paragraph();
         var ordinaryRun = new Run("ordinary ");
         var hyperlink = new Hyperlink(new Run("link"))
@@ -630,6 +650,14 @@ public sealed class MainWindowIntegrationTests
         var removePicture = FindMenuItem(pictureMenu.Items, "Remove Picture");
         removePicture.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent, removePicture));
         Assert.Null(picture.Parent);
+        Assert.True(editor.CanUndo);
+        Assert.True(window.EditingController.State.CanUndo);
+        Assert.True(window.EditingController.TryExecute(ApplicationCommands.Undo));
+        Assert.Single(objectParagraph.Inlines.OfType<InlineUIContainer>());
+        Assert.True(editor.CanRedo);
+        Assert.True(window.EditingController.State.CanRedo);
+        Assert.True(window.EditingController.TryExecute(ApplicationCommands.Redo));
+        Assert.Empty(objectParagraph.Inlines.OfType<InlineUIContainer>());
 
         editor.Selection.Select(ordinaryRun.ContentStart, ordinaryRun.ContentEnd);
         window.EditorContextMenuController.Refresh();
@@ -641,7 +669,92 @@ public sealed class MainWindowIntegrationTests
 
         document.Content.Blocks.Clear();
         document.Content.Blocks.Add(new Paragraph());
+        editor.IsUndoEnabled = false;
+        editor.IsUndoEnabled = true;
         document.MarkClean();
+        fixture.Editor.SelectAll();
+        var imageBytes = Convert.FromBase64String(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=");
+        Assert.True(new WriterImageService().TryInsertImage(fixture.Editor, imageBytes,
+            new WriterImageInsertionOptions { WidthDip = 120, HeightDip = 80 }));
+        var recentPath = fixture.File("recent-picture.rkw");
+        var persistence = new WriterDocumentPersistence();
+        Assert.True(await persistence.SaveAsync(fixture.Shell.CurrentDocument, recentPath,
+            WriterDocumentFormat.RibbonKitWriter, default));
+        fixture.Shell.CurrentDocument.MarkClean();
+        fixture.Persistence.LoadHandler = persistence.LoadAsync;
+        Assert.True(await fixture.Shell.OpenRecentAsync(new RecentFileEntry(recentPath,
+            WriterDocumentFormat.RibbonKitWriter, DateTimeOffset.UtcNow)));
+        await PumpAsync();
+
+        var loadedPicture = Assert.Single(
+            WriterInlineInsertion.EnumerateImages(fixture.Editor.Document));
+        fixture.Editor.AppendText("undo anchor");
+        fixture.Editor.Selection.Select(loadedPicture.ElementStart, loadedPicture.ElementEnd);
+        window.EditorContextMenuController.Refresh();
+        var loadedPictureMenu = FindMenuItem(
+            window.EditorContextMenuController.Menu.Items, "Picture");
+        var removeLoadedPicture = FindMenuItem(loadedPictureMenu.Items, "Remove Picture");
+        removeLoadedPicture.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent, removeLoadedPicture));
+        Assert.Empty(WriterInlineInsertion.EnumerateImages(fixture.Editor.Document));
+        Assert.True(window.EditingController.TryExecute(ApplicationCommands.Undo));
+        Assert.Single(WriterInlineInsertion.EnumerateImages(fixture.Editor.Document));
+        Assert.True(window.EditingController.TryExecute(ApplicationCommands.Undo));
+        Assert.DoesNotContain("undo anchor", TextOf(fixture.Editor.Document));
+        Assert.Single(WriterInlineInsertion.EnumerateImages(fixture.Editor.Document));
+        Assert.True(window.EditingController.TryExecute(ApplicationCommands.Redo));
+        Assert.Contains("undo anchor", TextOf(fixture.Editor.Document));
+        Assert.Single(WriterInlineInsertion.EnumerateImages(fixture.Editor.Document));
+        Assert.True(window.EditingController.TryExecute(ApplicationCommands.Redo));
+        Assert.Empty(WriterInlineInsertion.EnumerateImages(fixture.Editor.Document));
+        Assert.True(window.EditingController.TryExecute(ApplicationCommands.Undo));
+        Assert.Single(WriterInlineInsertion.EnumerateImages(fixture.Editor.Document));
+
+        var keyboardPicture = Assert.Single(
+            WriterInlineInsertion.EnumerateImages(fixture.Editor.Document));
+        fixture.Editor.Selection.Select(keyboardPicture.ElementStart, keyboardPicture.ElementEnd);
+        var deletePictureKey = new KeyEventArgs(Keyboard.PrimaryDevice,
+            PresentationSource.FromVisual(window), 0, Key.Delete)
+        {
+            RoutedEvent = Keyboard.PreviewKeyDownEvent
+        };
+        fixture.Editor.RaiseEvent(deletePictureKey);
+        Assert.True(deletePictureKey.Handled);
+        Assert.Empty(WriterInlineInsertion.EnumerateImages(fixture.Editor.Document));
+        Assert.True(window.EditingController.TryExecute(ApplicationCommands.Undo));
+        keyboardPicture = Assert.Single(
+            WriterInlineInsertion.EnumerateImages(fixture.Editor.Document));
+        var afterPicture = keyboardPicture.ElementEnd.GetInsertionPosition(
+            LogicalDirection.Forward);
+        fixture.Editor.Selection.Select(afterPicture, afterPicture);
+        var backspacePictureKey = new KeyEventArgs(Keyboard.PrimaryDevice,
+            PresentationSource.FromVisual(window), 0, Key.Back)
+        {
+            RoutedEvent = Keyboard.PreviewKeyDownEvent
+        };
+        fixture.Editor.RaiseEvent(backspacePictureKey);
+        Assert.True(backspacePictureKey.Handled);
+        Assert.Empty(WriterInlineInsertion.EnumerateImages(fixture.Editor.Document));
+        Assert.True(window.EditingController.TryExecute(ApplicationCommands.Undo));
+        Assert.Single(WriterInlineInsertion.EnumerateImages(fixture.Editor.Document));
+        using (var preview = new WriterPreviewCloneService().CreateSnapshot(
+                   fixture.Editor.Document, fixture.Shell.CurrentDocument.PageSettings))
+        {
+            var previewPicture = Assert.Single(
+                WriterInlineInsertion.EnumerateImages(preview.SourceClone));
+            Assert.IsType<Image>(previewPicture.Child);
+        }
+        var restoredPath = fixture.File("recent-picture-restored.rkw");
+        Assert.True(await persistence.SaveAsync(fixture.Shell.CurrentDocument, restoredPath,
+            WriterDocumentFormat.RibbonKitWriter, default));
+        var restored = await persistence.LoadAsync(restoredPath,
+            WriterDocumentFormat.RibbonKitWriter, default);
+        Assert.NotNull(restored);
+        Assert.Single(WriterInlineInsertion.EnumerateImages(restored!.Content));
+
+        fixture.Shell.CurrentDocument.Content.Blocks.Clear();
+        fixture.Shell.CurrentDocument.Content.Blocks.Add(new Paragraph());
+        fixture.Shell.CurrentDocument.MarkClean();
     }
 
     private static async Task AssertEditingRibbonControlsAsync(WindowFixture fixture)

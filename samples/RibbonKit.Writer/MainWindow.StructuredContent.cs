@@ -35,6 +35,10 @@ public partial class MainWindow
             DocumentEditor,
             () => CanEditTables);
         _tableInteractionController.StateChanged += OnTableInteractionStateChanged;
+        EditingController.Editing.UndoExtension = _writerImageService;
+        EditingController.Editing.UndoCompleted += OnEditingUndoCompleted;
+        EditingController.Editing.RedoCompleted += OnEditingRedoCompleted;
+        DocumentEditor.PreviewKeyDown += OnEditorPictureRemovalPreviewKeyDown;
         _structuredContextResolver = new WriterStructuredContextResolver(
             DocumentEditor, _tableInteractionController.Tables);
         PopulateTableGridPicker();
@@ -73,6 +77,10 @@ public partial class MainWindow
 
         if (_tableInteractionController is null)
             return;
+        EditingController.Editing.UndoCompleted -= OnEditingUndoCompleted;
+        EditingController.Editing.RedoCompleted -= OnEditingRedoCompleted;
+        EditingController.Editing.UndoExtension = null;
+        DocumentEditor.PreviewKeyDown -= OnEditorPictureRemovalPreviewKeyDown;
         _tableInteractionController.StateChanged -= OnTableInteractionStateChanged;
         _tableInteractionController.Dispose();
         _tableInteractionController = null;
@@ -330,6 +338,30 @@ public partial class MainWindow
             return;
         if (_writerHyperlinkService.TryRemove(DocumentEditor, snapshot.Hyperlink))
             CompleteStructuredContentMutation();
+    }
+
+    private void OnEditingUndoCompleted(object? sender, EventArgs e)
+    {
+        if (_writerImageService.TryRestoreAfterUndo(DocumentEditor))
+            MarkPreviewPending();
+    }
+
+    private void OnEditingRedoCompleted(object? sender, EventArgs e) =>
+        _writerImageService.NotifyRedo(DocumentEditor);
+
+    private void OnEditorPictureRemovalPreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Handled || e.KeyboardDevice.Modifiers != ModifierKeys.None
+            || e.Key is not (Key.Delete or Key.Back))
+            return;
+
+        var picture = WriterInlineInsertion.FindImageForKeyboardRemoval(
+            DocumentEditor, backward: e.Key == Key.Back);
+        if (picture is null || !_writerImageService.TryRemoveImage(DocumentEditor, picture))
+            return;
+
+        e.Handled = true;
+        CompleteStructuredContentMutation();
     }
 
     private void PopulateTableGridPicker()

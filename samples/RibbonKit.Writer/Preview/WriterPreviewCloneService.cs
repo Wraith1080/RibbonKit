@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Xps.Packaging;
+using RibbonKit.Writer.Editing;
 using RibbonKit.Writer.Models;
 
 namespace RibbonKit.Writer.Preview;
@@ -33,6 +34,7 @@ public sealed class WriterPreviewCloneService
             var cloneRange = new TextRange(clone.ContentStart, clone.ContentEnd);
             cloneRange.Load(xamlPackage, DataFormats.XamlPackage);
         }
+        WriterImageSnapshotNormalizer.NormalizeClone(source, clone);
 
         CopyFlowDocumentFormatting(source, clone);
         ApplyPageSettings(clone, pageSettings);

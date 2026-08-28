@@ -165,6 +165,30 @@ internal static class WriterInlineInsertion
         return FindImage(editor.Document, editor.Selection.Start, editor.Selection.End);
     }
 
+    internal static InlineUIContainer? FindImageForKeyboardRemoval(
+        RichTextBox editor, bool backward)
+    {
+        ArgumentNullException.ThrowIfNull(editor);
+        var start = editor.Selection.Start;
+        var end = editor.Selection.End;
+        if (start.CompareTo(end) > 0)
+            (start, end) = (end, start);
+
+        foreach (var container in EnumerateImages(editor.Document))
+        {
+            if (start.CompareTo(end) != 0)
+            {
+                if (MatchesPictureSelection(start, end, container))
+                    return container;
+                continue;
+            }
+
+            if (MatchesPictureBoundary(start, container, backward))
+                return container;
+        }
+        return null;
+    }
+
     internal static InlineUIContainer? FindImage(
         FlowDocument document,
         TextPointer start,
@@ -176,7 +200,7 @@ internal static class WriterInlineInsertion
         for (DependencyObject? current = start.Parent; current is not null;
              current = GetParent(current))
         {
-            if (current is InlineUIContainer container && container.Child is Image)
+            if (current is InlineUIContainer container && TryGetImage(container, out _))
                 return container;
         }
 
@@ -196,7 +220,7 @@ internal static class WriterInlineInsertion
         {
             Hyperlink hyperlink => EnumerateHyperlinks(document)
                 .Any(candidate => ReferenceEquals(candidate, hyperlink)),
-            InlineUIContainer container when container.Child is Image => EnumerateImages(document)
+            InlineUIContainer container when TryGetImage(container, out _) => EnumerateImages(document)
                 .Any(candidate => ReferenceEquals(candidate, container)),
             _ => false
         };
@@ -206,11 +230,28 @@ internal static class WriterInlineInsertion
         pointer.CompareTo(inline.ElementStart) >= 0
         && pointer.CompareTo(inline.ElementEnd) <= 0;
 
+    private static bool MatchesPictureSelection(TextPointer start, TextPointer end,
+        InlineUIContainer container) =>
+        MatchesAny(start, container.ElementStart, container.ContentStart,
+            container.ElementStart.GetInsertionPosition(LogicalDirection.Forward))
+        && MatchesAny(end, container.ElementEnd, container.ContentEnd,
+            container.ElementEnd.GetInsertionPosition(LogicalDirection.Backward));
+
+    private static bool MatchesPictureBoundary(TextPointer caret, InlineUIContainer container,
+        bool backward) => backward
+        ? MatchesAny(caret, container.ElementEnd, container.ContentEnd,
+            container.ElementEnd.GetInsertionPosition(LogicalDirection.Forward))
+        : MatchesAny(caret, container.ElementStart, container.ContentStart,
+            container.ElementStart.GetInsertionPosition(LogicalDirection.Backward));
+
+    private static bool MatchesAny(TextPointer pointer, params TextPointer[] candidates) =>
+        candidates.Any(candidate => pointer.CompareTo(candidate) == 0);
+
     internal static bool TryRemoveInline(RichTextBox editor, Inline inline)
     {
         ArgumentNullException.ThrowIfNull(editor);
         ArgumentNullException.ThrowIfNull(inline);
-        if (!editor.IsEnabled || editor.IsReadOnly)
+        if (!editor.IsEnabled || editor.IsReadOnly || GetOwnerCollection(inline) is null)
             return false;
 
         using (BeginChange(editor))
@@ -248,10 +289,28 @@ internal static class WriterInlineInsertion
                 continue;
             foreach (var inline in EnumerateInlines(paragraph.Inlines))
             {
-                if (inline is InlineUIContainer container && container.Child is Image)
+                if (inline is InlineUIContainer container && TryGetImage(container, out _))
                     yield return container;
             }
         }
+    }
+
+    internal static bool TryGetImage(InlineUIContainer container, out Image image)
+    {
+        ArgumentNullException.ThrowIfNull(container);
+        if (container.Child is Image direct)
+        {
+            image = direct;
+            return true;
+        }
+        if (container.Child is Grid { Children.Count: 1 } grid
+            && grid.Children[0] is Image restored)
+        {
+            image = restored;
+            return true;
+        }
+        image = null!;
+        return false;
     }
 
     private static bool TryInsert(Paragraph paragraph, TextPointer pointer, Inline inline)

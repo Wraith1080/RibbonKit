@@ -328,8 +328,8 @@ remain read-only until actual/diff evidence justifies a deliberate change.
 ### RKWF-014 — Transient Writer selection can collapse the active contextual tab during a table command
 
 - **First seen / packet:** 2026-08-27 user follow-up after Writer W3-C acceptance; assigned to planned W3-E.
-- **Status:** Open Writer-owned corrective investigation; not a confirmed RibbonKit defect and no runtime change is
-  approved.
+- **Status:** Corrected in the Writer-owned W3-E1 foundation; live repeated-command observation remains pending. This
+  is not a confirmed RibbonKit defect and no runtime change is approved.
 - **Consumer goal:** invoking a command from Table Tools should keep that contextual page visually stable when the
   committed result and caret remain in the table, even if the native mutation temporarily replaces table structure or
   transfers focus into ribbon/popup chrome.
@@ -342,20 +342,46 @@ remain read-only until actual/diff evidence justifies a deliberate change.
 - **Friction:** a contextual ribbon consumer must distinguish durable editor context from transient WPF selection and
   focus states. Publishing every intermediate state makes the ribbon react correctly to state that should never have
   become user-visible.
-- **Current app-owned workaround:** none accepted yet. W3-E will capture a stable table/picture context before focus
-  leaves the editor, suppress contextual projection during an app-owned mutation, reject stale document/object
-  snapshots and publish one final state after caret recovery. Real deletion or a committed outside-object selection
-  must still collapse the contextual tab and choose a deterministic normal-tab fallback.
+- **Current app-owned correction:** W3-E1 captures a document-bound table/picture/hyperlink snapshot before popup
+  focus moves, revalidates the exact live object before execution and defers table-state refresh while an app-owned
+  structural mutation emits intermediate selection/text events. The final state publishes once after caret recovery;
+  realized coverage keeps Table Tools selected after row insertion and collapses it after true table deletion. Stale
+  document/object targets are rejected.
 - **Application impact:** the flash makes Table Tools appear unreliable and can disorient keyboard users even when the
   requested command succeeds. An unconditional always-visible tab would instead expose stale or unsafe commands.
 - **Smallest possible library direction:** none at present. Treat RibbonKit's fallback selection as correct when the
   host actually collapses the selected contextual tab. Consider runtime work only if a minimal consumer shows an
   unwanted fallback while contextual visibility remains continuously true, or if multiple consumers require a
   narrowly defined contextual-selection transaction API.
-- **Evidence still required:** instrument visibility, selected-tab, editor selection, document generation and command
-  boundaries in the real Writer window; cover ordinary buttons, dropdown items, popup focus, row/column replacement,
-  merge/split, table deletion, undo/redo, reduced motion and keyboard/KeyTip invocation. Repeat in a minimal Showcase
-  contextual tab before proposing any `src/RibbonKit/**` change.
+- **Evidence still required:** repeat ordinary buttons, dropdown items, popup focus, row/column replacement,
+  merge/split, table deletion, undo/redo, reduced motion and keyboard/KeyTip invocation in the real Writer window.
+  Repeat in a minimal Showcase contextual tab before proposing any `src/RibbonKit/**` change.
+
+### RKWF-015 — Native Undo can restore a loaded image container without its image child
+
+- **First seen / packet:** 2026-08-28 user follow-up during Writer W3-E1.
+- **Status:** Corrected in Writer; ordinary WPF embedded-content behaviour, not a RibbonKit runtime defect.
+- **Consumer goal:** removing a packaged picture through the structured context menu must be one reversible operation,
+  even when the document was opened from Backstage Recent rather than created during the current editor session.
+- **Reproduction and evidence:** with the first Recent `.rkw` document, removing the first-line picture paused briefly
+  and native Undo appeared to do nothing. A focused reproduction showed that WPF did restore the
+  `InlineUIContainer`, but its child was an empty `Grid` instead of the deserialized `Image`. Assigning a new direct
+  child then cleared WPF's redo chain; leaving the repaired `Grid` in the live document caused XamlPackage save to
+  replace the picture with a space.
+- **Current app-owned correction:** Writer captures a bounded inert image snapshot before removal, repairs WPF's empty
+  placeholder after Undo, and supplies the matching redo only after native redo units have been traversed. Unmodified
+  Delete/Backspace route through the same transaction only for an exact picture selection or the matching directional
+  caret boundary; ordinary text deletion remains native. Persistence and preview normalize an isolated clone back to
+  the approved direct-image graph, leaving the live undo history untouched. Realized coverage opens through Recent,
+  removes through the actual menu and both keyboard keys, traverses older text history, redoes/removes again, previews,
+  and saves/reopens the restored picture.
+- **Application impact:** without the bridge, Undo consumes a unit without a visual restoration and a naïve repair can
+  either destroy Redo or silently omit the picture on save. The correction stays inside Writer editing and snapshot
+  services and does not broaden the data-only `.rkw` allowlist.
+- **Smallest possible library direction:** none. The affected object graph is owned by the native WPF `RichTextBox` and
+  Writer persistence, not a RibbonKit control or service.
+- **Evidence still required:** repeat the exact user workflow in the visible Writer window and retain multi-picture,
+  nested-span/table-cell, repeated undo/redo and save/reopen regression coverage as W3-E grows.
 
 ## 5. Closed observations
 

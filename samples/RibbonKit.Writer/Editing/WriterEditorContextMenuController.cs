@@ -606,7 +606,8 @@ public sealed class WriterEditorContextMenuController : IDisposable
         ICommand command) : ICommand
     {
         public bool CanExecute(object? parameter) =>
-            target.IsValid && CanExecuteTargeted(command, parameter, owner._editor);
+            target.IsValidFor(owner._editor)
+            && CanExecuteTargeted(command, parameter, owner._editor);
 
         public void Execute(object? parameter)
         {

@@ -298,6 +298,7 @@ public partial class MainWindow : RibbonWindow
     }
     private void ReplaceEditorDocument()
     {
+        _writerImageService.ResetUndoHistory(Shell.CurrentDocument.Content);
         HorizontalRuler.CancelActiveDrags();
         MarginGuide.ClearPreview();
         if (_observedDocument is not null)
@@ -490,6 +491,7 @@ public partial class MainWindow : RibbonWindow
 
     private void OnEditorTextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
     {
+        _writerImageService.NotifyTextChanged(DocumentEditor);
         if (_replacingDocument || !ReferenceEquals(DocumentEditor.Document, Shell.CurrentDocument.Content)) return;
         Shell.MarkEditorDirty();
         MarkPreviewPending();

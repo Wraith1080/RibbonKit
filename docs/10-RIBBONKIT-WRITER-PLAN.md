@@ -6,8 +6,12 @@
 > Debug gate are complete; the corrective app-owned RibbonKit-themed Font/Color/Paragraph pass has passed its refreshed
 > full Debug gate and awaits live visual reacceptance.
 > W3-D structured-content round-trip and TXT/RTF compatibility fixtures are accepted through design-notes §3.120.
-> W3-E is the next planned structured-object interaction packet for context-aware menus, stable contextual state and
-> direct picture/table resizing after W1-E live reacceptance. W2-G is a planned high-risk true editable-pagination packet after
+> W3-E has begun: the bounded W3-E1 foundation now supplies document-bound structured-object context menus and
+> suppresses transient contextual-tab publication during app-owned table mutations. Its app-owned picture-removal
+> bridge also preserves context-menu and Delete/Backspace undo/redo for images opened from native Recent documents,
+> including preview and save/reopen.
+> Direct picture/table selection,
+> Picture Tools and resize adorners remain W3-E2 and are not implied by that foundation. W2-G is a planned high-risk true editable-pagination packet after
 > W3-E; it must prove a real editing architecture and may not simulate pages with decorative breaks. Live mixed-monitor
 > DPI movement remains deferred to W4-C. No later
 > implementation is implied.

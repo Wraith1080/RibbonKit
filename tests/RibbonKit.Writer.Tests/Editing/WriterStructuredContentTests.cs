@@ -217,6 +217,56 @@ public sealed class WriterStructuredContentTests
     }
 
     [Fact]
+    public void PictureRemovalUsesOneNativeUndoAndRedoUnit()
+    {
+        StaTestHelper.Run(() =>
+        {
+            using var fixture = CreateEditor("x");
+            var paragraph = Assert.IsType<Paragraph>(fixture.Editor.Document.Blocks.First());
+            fixture.Editor.SelectAll();
+            var service = new WriterImageService();
+            Assert.True(service.TryInsertImage(fixture.Editor, CreatePng(4, 3),
+                new WriterImageInsertionOptions
+                {
+                    WidthDip = 40,
+                    HeightDip = 30
+                }));
+            var picture = Assert.Single(paragraph.Inlines.OfType<InlineUIContainer>());
+            Assert.Single(paragraph.Inlines);
+            fixture.Editor.Selection.Select(picture.ElementStart, picture.ElementEnd);
+            Assert.Same(picture,
+                WriterInlineInsertion.FindImageForKeyboardRemoval(fixture.Editor, backward: false));
+            Assert.Same(picture,
+                WriterInlineInsertion.FindImageForKeyboardRemoval(fixture.Editor, backward: true));
+            var before = picture.ElementStart.GetInsertionPosition(LogicalDirection.Backward);
+            fixture.Editor.Selection.Select(before, before);
+            Assert.Same(picture,
+                WriterInlineInsertion.FindImageForKeyboardRemoval(fixture.Editor, backward: false));
+            Assert.Null(WriterInlineInsertion.FindImageForKeyboardRemoval(
+                fixture.Editor, backward: true));
+            var after = picture.ElementEnd.GetInsertionPosition(LogicalDirection.Forward);
+            fixture.Editor.Selection.Select(after, after);
+            Assert.Same(picture,
+                WriterInlineInsertion.FindImageForKeyboardRemoval(fixture.Editor, backward: true));
+            Assert.Null(WriterInlineInsertion.FindImageForKeyboardRemoval(
+                fixture.Editor, backward: false));
+            fixture.Editor.IsUndoEnabled = false;
+            fixture.Editor.IsUndoEnabled = true;
+
+            Assert.True(service.TryRemoveImage(fixture.Editor, picture));
+            Assert.Empty(paragraph.Inlines.OfType<InlineUIContainer>());
+            Assert.True(fixture.Editor.CanUndo);
+
+            fixture.Editor.Undo();
+            Assert.Single(paragraph.Inlines.OfType<InlineUIContainer>());
+            Assert.True(fixture.Editor.CanRedo);
+
+            fixture.Editor.Redo();
+            Assert.Empty(paragraph.Inlines.OfType<InlineUIContainer>());
+        });
+    }
+
+    [Fact]
     public void EmptyDocumentInsertionCreatesUndoableParagraph()
     {
         StaTestHelper.Run(() =>
