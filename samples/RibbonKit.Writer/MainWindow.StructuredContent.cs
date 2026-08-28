@@ -20,6 +20,7 @@ public partial class MainWindow
     private readonly WriterHyperlinkService _writerHyperlinkService = new();
     private readonly WriterDateTimeService _writerDateTimeService = new();
     private WriterTableInteractionController? _tableInteractionController;
+    private WriterStructuredContextResolver? _structuredContextResolver;
     private Button? _customTableSizeButton;
     private bool _updatingTableGridSelection;
 
@@ -34,6 +35,8 @@ public partial class MainWindow
             DocumentEditor,
             () => CanEditTables);
         _tableInteractionController.StateChanged += OnTableInteractionStateChanged;
+        _structuredContextResolver = new WriterStructuredContextResolver(
+            DocumentEditor, _tableInteractionController.Tables);
         PopulateTableGridPicker();
         ApplyTableGridPopupSurface();
         ApplyStructuredContentCapabilityProjection();
@@ -73,6 +76,260 @@ public partial class MainWindow
         _tableInteractionController.StateChanged -= OnTableInteractionStateChanged;
         _tableInteractionController.Dispose();
         _tableInteractionController = null;
+        _structuredContextResolver = null;
+    }
+
+    private void AttachStructuredContextMenu(WriterEditorContextMenuController controller) =>
+        controller.ExtensionsRequested += OnEditorContextMenuExtensionsRequested;
+
+    private void DetachStructuredContextMenu()
+    {
+        if (_editorContextMenuController is not null)
+        {
+            _editorContextMenuController.ExtensionsRequested -=
+                OnEditorContextMenuExtensionsRequested;
+        }
+    }
+
+    private void OnEditorContextMenuExtensionsRequested(
+        object? sender,
+        WriterEditorContextMenuExtensionContext context)
+    {
+        if (_structuredContextResolver is null)
+            return;
+        var snapshot = _structuredContextResolver.Capture(context.Target);
+        switch (snapshot.Kind)
+        {
+            case WriterStructuredContextKind.Table:
+                AddTableContextMenu(context, snapshot);
+                break;
+            case WriterStructuredContextKind.Picture:
+                AddPictureContextMenu(context, snapshot);
+                break;
+            case WriterStructuredContextKind.Hyperlink:
+                AddHyperlinkContextMenu(context, snapshot);
+                break;
+        }
+    }
+
+    private void AddTableContextMenu(
+        WriterEditorContextMenuExtensionContext context,
+        WriterStructuredContextSnapshot snapshot)
+    {
+        var tableMenu = CreateContextSubmenu("Table", "WriterContextTable");
+        var insertMenu = CreateContextSubmenu("Insert", "WriterContextTableInsert");
+        insertMenu.Items.Add(CreateContextAction(context, snapshot, "Row Above",
+            "WriterContextTableRowAbove", CanUseTableContext, current =>
+                ExecuteTableCellContext(current, (tables, cell) =>
+                    tables.InsertRows(cell, placement: WriterTableInsertPlacement.Before))));
+        insertMenu.Items.Add(CreateContextAction(context, snapshot, "Row Below",
+            "WriterContextTableRowBelow", CanUseTableContext, current =>
+                ExecuteTableCellContext(current, (tables, cell) =>
+                    tables.InsertRows(cell, placement: WriterTableInsertPlacement.After))));
+        insertMenu.Items.Add(CreateContextAction(context, snapshot, "Column Left",
+            "WriterContextTableColumnLeft", CanUseTableContext, current =>
+                ExecuteTableCellContext(current, (tables, cell) =>
+                    tables.InsertColumns(cell, placement: WriterTableInsertPlacement.Before))));
+        insertMenu.Items.Add(CreateContextAction(context, snapshot, "Column Right",
+            "WriterContextTableColumnRight", CanUseTableContext, current =>
+                ExecuteTableCellContext(current, (tables, cell) =>
+                    tables.InsertColumns(cell, placement: WriterTableInsertPlacement.After))));
+        tableMenu.Items.Add(insertMenu);
+
+        var deleteMenu = CreateContextSubmenu("Delete", "WriterContextTableDelete");
+        deleteMenu.Items.Add(CreateContextAction(context, snapshot, "Row",
+            "WriterContextTableDeleteRow", CanDeleteTableRowContext, current =>
+                ExecuteTableCellContext(current, (tables, cell) => tables.DeleteRows(cell))));
+        deleteMenu.Items.Add(CreateContextAction(context, snapshot, "Column",
+            "WriterContextTableDeleteColumn", CanDeleteTableColumnContext, current =>
+                ExecuteTableCellContext(current, (tables, cell) => tables.DeleteColumns(cell))));
+        deleteMenu.Items.Add(CreateContextAction(context, snapshot, "Table",
+            "WriterContextTableDeleteTable", CanUseTableContext, ExecuteDeleteTableContext));
+        tableMenu.Items.Add(deleteMenu);
+        tableMenu.Items.Add(new Separator());
+        tableMenu.Items.Add(CreateContextAction(context, snapshot, "Merge Cells",
+            "WriterContextTableMerge", CanMergeTableContext, current =>
+                ExecuteTableContext(current, tables => tables.TryMergeSelection(out _))));
+        tableMenu.Items.Add(CreateContextAction(context, snapshot, "Split Cell",
+            "WriterContextTableSplit", CanSplitTableContext, current =>
+                ExecuteTableContext(current, tables => tables.TrySplitCurrentCell())));
+
+        var sizeMenu = CreateContextSubmenu("Cell Size", "WriterContextTableSize");
+        foreach (var (header, height) in new[]
+                 {
+                     ("Compact Row", 24d), ("Standard Row", 32d), ("Tall Row", 48d)
+                 })
+        {
+            sizeMenu.Items.Add(CreateContextAction(context, snapshot, header,
+                $"WriterContextTable{header.Replace(" ", string.Empty)}", CanUseTableContext,
+                current => ExecuteTableCellContext(current,
+                    (tables, cell) => tables.SetRowHeight(cell, height))));
+        }
+        foreach (var (header, width) in new[]
+                 {
+                     ("Narrow Column", 80d), ("Standard Column", 120d), ("Wide Column", 160d)
+                 })
+        {
+            sizeMenu.Items.Add(CreateContextAction(context, snapshot, header,
+                $"WriterContextTable{header.Replace(" ", string.Empty)}", CanUseTableContext,
+                current => ExecuteTableCellContext(current,
+                    (tables, cell) => tables.SetCellWidth(cell,
+                        new GridLength(width, GridUnitType.Pixel)))));
+        }
+        tableMenu.Items.Add(sizeMenu);
+
+        var bordersMenu = CreateContextSubmenu("Borders", "WriterContextTableBorders");
+        bordersMenu.Items.Add(CreateContextAction(context, snapshot, "All Borders",
+            "WriterContextTableBordersAll", CanUseTableContext, current =>
+                ExecuteTableContext(current, tables => tables.SetAllTableBorders(
+                    current.Table!, GetTableBorderBrush(), new Thickness(1), new Thickness(0.5)))));
+        bordersMenu.Items.Add(CreateContextAction(context, snapshot, "No Borders",
+            "WriterContextTableBordersNone", CanUseTableContext, current =>
+                ExecuteTableContext(current, tables => tables.SetAllTableBorders(
+                    current.Table!, null, new Thickness(0), new Thickness(0)))));
+        tableMenu.Items.Add(bordersMenu);
+
+        var backgroundMenu = CreateContextSubmenu("Background", "WriterContextTableBackground");
+        backgroundMenu.Items.Add(CreateContextAction(context, snapshot, "No Color",
+            "WriterContextTableBackgroundNone", CanUseTableContext, current =>
+                ExecuteTableContext(current,
+                    tables => tables.SetTableBackground(current.Table!, null))));
+        backgroundMenu.Items.Add(CreateContextAction(context, snapshot, "Soft Accent",
+            "WriterContextTableBackgroundAccent", CanUseTableContext, current =>
+                ExecuteTableContext(current, tables => tables.SetTableBackground(
+                    current.Table!, GetTableBackgroundBrush()))));
+        tableMenu.Items.Add(backgroundMenu);
+
+        context.AddSeparator();
+        context.AddItem(tableMenu);
+    }
+
+    private void AddPictureContextMenu(
+        WriterEditorContextMenuExtensionContext context,
+        WriterStructuredContextSnapshot snapshot)
+    {
+        var pictureMenu = CreateContextSubmenu("Picture", "WriterContextPicture");
+        pictureMenu.Items.Add(CreateContextAction(context, snapshot, "Remove Picture",
+            "WriterContextPictureRemove", CanUsePictureContext, ExecuteRemovePictureContext));
+        context.AddSeparator();
+        context.AddItem(pictureMenu);
+    }
+
+    private void AddHyperlinkContextMenu(
+        WriterEditorContextMenuExtensionContext context,
+        WriterStructuredContextSnapshot snapshot)
+    {
+        var hyperlinkMenu = CreateContextSubmenu("Hyperlink", "WriterContextHyperlink");
+        hyperlinkMenu.Items.Add(CreateContextAction(context, snapshot, "Edit Hyperlink...",
+            "WriterContextHyperlinkEdit", CanUseHyperlinkContext, _ =>
+            {
+                ShowHyperlinkDialog();
+                QueueStructuredContentEditorFocus();
+            }));
+        hyperlinkMenu.Items.Add(CreateContextAction(context, snapshot, "Remove Hyperlink",
+            "WriterContextHyperlinkRemove", CanUseHyperlinkContext, ExecuteRemoveHyperlinkContext));
+        context.AddSeparator();
+        context.AddItem(hyperlinkMenu);
+    }
+
+    private MenuItem CreateContextAction(
+        WriterEditorContextMenuExtensionContext context,
+        WriterStructuredContextSnapshot snapshot,
+        string header,
+        string automationId,
+        Func<WriterStructuredContextSnapshot, bool> canExecute,
+        Action<WriterStructuredContextSnapshot> execute)
+    {
+        var item = context.CreateCallbackItem(header,
+            _ => canExecute(snapshot), _ => execute(snapshot));
+        AutomationProperties.SetAutomationId(item, automationId);
+        AutomationProperties.SetName(item, header.TrimEnd('.'));
+        return item;
+    }
+
+    private static MenuItem CreateContextSubmenu(string header, string automationId)
+    {
+        var item = new MenuItem { Header = header };
+        AutomationProperties.SetAutomationId(item, automationId);
+        AutomationProperties.SetName(item, header);
+        return item;
+    }
+
+    private bool CanUseTableContext(WriterStructuredContextSnapshot snapshot) =>
+        !_closing && !Shell.IsBusy && CanEditTables
+        && _structuredContextResolver?.IsCurrent(snapshot) == true;
+
+    private bool CanDeleteTableRowContext(WriterStructuredContextSnapshot snapshot) =>
+        CanUseTableContext(snapshot)
+        && _structuredContextResolver!.TryGetTableCell(snapshot, out var cell)
+        && cell.RowGroup.Rows.Count > 1;
+
+    private bool CanDeleteTableColumnContext(WriterStructuredContextSnapshot snapshot) =>
+        CanUseTableContext(snapshot)
+        && _structuredContextResolver!.TryGetTableCell(snapshot, out var cell)
+        && CanDeleteCurrentTableColumn(cell);
+
+    private bool CanMergeTableContext(WriterStructuredContextSnapshot snapshot) =>
+        CanUseTableContext(snapshot)
+        && _structuredContextResolver!.TryGetTableRange(snapshot, out var range)
+        && (range.RowCount > 1 || range.ColumnCount > 1);
+
+    private bool CanSplitTableContext(WriterStructuredContextSnapshot snapshot) =>
+        CanUseTableContext(snapshot)
+        && _structuredContextResolver!.TryGetTableCell(snapshot, out var cell)
+        && (cell.RowSpan > 1 || cell.ColumnSpan > 1);
+
+    private bool CanUsePictureContext(WriterStructuredContextSnapshot snapshot) =>
+        !_closing && !Shell.IsBusy && DocumentEditor.IsEnabled && !DocumentEditor.IsReadOnly
+        && CurrentProfile.Preserves(WriterDocumentContentCapabilities.Images)
+        && _structuredContextResolver?.IsCurrent(snapshot) == true;
+
+    private bool CanUseHyperlinkContext(WriterStructuredContextSnapshot snapshot) =>
+        !_closing && !Shell.IsBusy && DocumentEditor.IsEnabled && !DocumentEditor.IsReadOnly
+        && CurrentProfile.Preserves(WriterDocumentContentCapabilities.Hyperlinks)
+        && _structuredContextResolver?.IsCurrent(snapshot) == true;
+
+    private void ExecuteTableCellContext(
+        WriterStructuredContextSnapshot snapshot,
+        Func<WriterTableService, WriterTableCellReference, bool> mutation)
+    {
+        if (!CanUseTableContext(snapshot))
+            return;
+        _ = MutateTable(tables =>
+            _structuredContextResolver?.TryGetTableCell(snapshot, out var cell) == true
+            && mutation(tables, cell));
+    }
+
+    private void ExecuteTableContext(
+        WriterStructuredContextSnapshot snapshot,
+        Func<WriterTableService, bool> mutation)
+    {
+        if (!CanUseTableContext(snapshot))
+            return;
+        _ = MutateTable(mutation);
+    }
+
+    private void ExecuteDeleteTableContext(WriterStructuredContextSnapshot snapshot)
+    {
+        if (!CanUseTableContext(snapshot) || snapshot.Table is null)
+            return;
+        _ = MutateTable(tables => tables.DeleteTable(snapshot.Table));
+    }
+
+    private void ExecuteRemovePictureContext(WriterStructuredContextSnapshot snapshot)
+    {
+        if (!CanUsePictureContext(snapshot) || snapshot.Picture is null)
+            return;
+        if (_writerImageService.TryRemoveImage(DocumentEditor, snapshot.Picture))
+            CompleteStructuredContentMutation();
+    }
+
+    private void ExecuteRemoveHyperlinkContext(WriterStructuredContextSnapshot snapshot)
+    {
+        if (!CanUseHyperlinkContext(snapshot) || snapshot.Hyperlink is null)
+            return;
+        if (_writerHyperlinkService.TryRemove(DocumentEditor, snapshot.Hyperlink))
+            CompleteStructuredContentMutation();
     }
 
     private void PopulateTableGridPicker()
@@ -370,6 +627,12 @@ public partial class MainWindow
 
     private void OnInsertHyperlinkClick(object sender, RoutedEventArgs e)
     {
+        ShowHyperlinkDialog();
+        QueueStructuredContentEditorFocus();
+    }
+
+    private void ShowHyperlinkDialog()
+    {
         if (!CurrentProfile.Preserves(WriterDocumentContentCapabilities.Hyperlinks))
             return;
         var existing = WriterInlineInsertion.FindHyperlink(DocumentEditor);
@@ -387,7 +650,6 @@ public partial class MainWindow
             MessageBox.Show(this, "Writer could not insert or update that hyperlink at the current selection.",
                 "Hyperlink", MessageBoxButton.OK, MessageBoxImage.Information);
         }
-        QueueStructuredContentEditorFocus();
     }
 
     private void OnInsertDateTimeClick(object sender, RoutedEventArgs e)
@@ -561,10 +823,13 @@ public partial class MainWindow
     {
         if (!CanEditTables || _tableInteractionController is null)
             return false;
-        var changed = mutation(_tableInteractionController.Tables);
-        if (changed)
-            CompleteStructuredContentMutation();
-        return changed;
+        using (_tableInteractionController.DeferRefresh())
+        {
+            var changed = mutation(_tableInteractionController.Tables);
+            if (changed)
+                CompleteStructuredContentMutation();
+            return changed;
+        }
     }
 
     private Brush GetTableBorderBrush() => SystemParameters.HighContrast

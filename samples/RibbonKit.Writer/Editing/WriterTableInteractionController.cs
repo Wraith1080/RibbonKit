@@ -18,6 +18,8 @@ public sealed class WriterTableInteractionController : IDisposable
 {
     private readonly RichTextBox _editor;
     private readonly Func<bool> _canRouteTableKeyboard;
+    private int _refreshDeferralCount;
+    private bool _refreshPending;
     private bool _disposed;
 
     /// <summary>Creates a table interaction controller over a live native editor.</summary>
@@ -63,6 +65,27 @@ public sealed class WriterTableInteractionController : IDisposable
     public void Refresh()
     {
         ThrowIfDisposed();
+        if (_refreshDeferralCount > 0)
+        {
+            _refreshPending = true;
+            return;
+        }
+        RefreshCore();
+    }
+
+    /// <summary>
+    /// Holds the last committed table projection while one app-owned structural mutation emits
+    /// transient native selection and text events.
+    /// </summary>
+    internal IDisposable DeferRefresh()
+    {
+        ThrowIfDisposed();
+        _refreshDeferralCount++;
+        return new RefreshDeferral(this);
+    }
+
+    private void RefreshCore()
+    {
         CurrentCell = Tables.TryGetCellAtCaret(out var current) ? current : null;
         CurrentTable = CurrentCell?.Table;
         CanSplit = CurrentCell is { RowSpan: > 1 } or { ColumnSpan: > 1 };
@@ -123,7 +146,8 @@ public sealed class WriterTableInteractionController : IDisposable
             _editor.Selection.Select(end, end);
         }
 
-        return Tables.TryHandleFinalCellTab();
+        using (DeferRefresh())
+            return Tables.TryHandleFinalCellTab();
     }
 
     /// <summary>
@@ -239,6 +263,28 @@ public sealed class WriterTableInteractionController : IDisposable
     private bool IsAtCellEnd(TableCell cell) => IsAtCellEnd(cell, _editor.Selection.Start);
 
     private static bool AlwaysAllowTableKeyboard() => true;
+
+    private void EndRefreshDeferral()
+    {
+        if (_refreshDeferralCount <= 0)
+            return;
+        _refreshDeferralCount--;
+        if (_refreshDeferralCount != 0 || !_refreshPending || _disposed)
+            return;
+        _refreshPending = false;
+        RefreshCore();
+    }
+
+    private sealed class RefreshDeferral(WriterTableInteractionController owner) : IDisposable
+    {
+        private WriterTableInteractionController? _owner = owner;
+
+        public void Dispose()
+        {
+            var current = Interlocked.Exchange(ref _owner, null);
+            current?.EndRefreshDeferral();
+        }
+    }
 
     private void ThrowIfDisposed() => ObjectDisposedException.ThrowIf(_disposed, this);
 }

@@ -10,10 +10,21 @@ namespace RibbonKit.Writer.Editing;
 /// <summary>Stable selection and spelling state captured before a Writer context menu opens.</summary>
 public sealed class WriterEditorContextMenuTarget
 {
+    private readonly FlowDocument? _document;
+
     /// <summary>Creates a target from two pointers in the same live FlowDocument.</summary>
     public WriterEditorContextMenuTarget(
         TextPointer start,
         TextPointer end,
+        SpellingError? spellingError = null)
+        : this(start, end, document: null, spellingError)
+    {
+    }
+
+    internal WriterEditorContextMenuTarget(
+        TextPointer start,
+        TextPointer end,
+        FlowDocument? document,
         SpellingError? spellingError = null)
     {
         ArgumentNullException.ThrowIfNull(start);
@@ -30,6 +41,7 @@ public sealed class WriterEditorContextMenuTarget
         }
 
         SpellingError = spellingError;
+        _document = document;
     }
 
     /// <summary>Gets the normalized selection start.</summary>
@@ -82,7 +94,7 @@ public sealed class WriterEditorContextMenuTarget
     public bool TryRestore(RichTextBox editor)
     {
         ArgumentNullException.ThrowIfNull(editor);
-        if (!IsValid)
+        if (!IsValidFor(editor))
             return false;
 
         try
@@ -99,6 +111,13 @@ public sealed class WriterEditorContextMenuTarget
             return false;
         }
     }
+
+    /// <summary>Gets whether this target still belongs to the editor document that captured it.</summary>
+    public bool IsValidFor(RichTextBox editor)
+    {
+        ArgumentNullException.ThrowIfNull(editor);
+        return IsValid && (_document is null || ReferenceEquals(editor.Document, _document));
+    }
 }
 
 /// <summary>
@@ -109,6 +128,8 @@ public sealed class WriterEditorContextMenuExtensionContext : EventArgs
 {
     private readonly Func<string, ICommand, object?, MenuItem> _commandFactory;
     private readonly Func<string, Action<WriterEditorContextMenuTarget>, MenuItem> _callbackFactory;
+    private readonly Func<string, Func<WriterEditorContextMenuTarget, bool>,
+        Action<WriterEditorContextMenuTarget>, MenuItem> _guardedCallbackFactory;
     private readonly List<object> _items = new();
 
     internal WriterEditorContextMenuExtensionContext(
@@ -116,13 +137,16 @@ public sealed class WriterEditorContextMenuExtensionContext : EventArgs
         RichTextBox editor,
         WriterEditorContextMenuTarget target,
         Func<string, ICommand, object?, MenuItem> commandFactory,
-        Func<string, Action<WriterEditorContextMenuTarget>, MenuItem> callbackFactory)
+        Func<string, Action<WriterEditorContextMenuTarget>, MenuItem> callbackFactory,
+        Func<string, Func<WriterEditorContextMenuTarget, bool>,
+            Action<WriterEditorContextMenuTarget>, MenuItem> guardedCallbackFactory)
     {
         Menu = menu;
         Editor = editor;
         Target = target;
         _commandFactory = commandFactory;
         _callbackFactory = callbackFactory;
+        _guardedCallbackFactory = guardedCallbackFactory;
     }
 
     /// <summary>Gets the menu being populated.</summary>
@@ -157,6 +181,19 @@ public sealed class WriterEditorContextMenuExtensionContext : EventArgs
         string header,
         Action<WriterEditorContextMenuTarget> callback) =>
         _callbackFactory(header, callback);
+
+    /// <summary>
+    /// Creates a callback item that revalidates the captured target immediately before execution.
+    /// </summary>
+    public MenuItem CreateCallbackItem(
+        string header,
+        Func<WriterEditorContextMenuTarget, bool> canExecute,
+        Action<WriterEditorContextMenuTarget> callback)
+    {
+        ArgumentNullException.ThrowIfNull(canExecute);
+        ArgumentNullException.ThrowIfNull(callback);
+        return _guardedCallbackFactory(header, canExecute, callback);
+    }
 
     internal IReadOnlyList<object> Items => _items;
 }
@@ -397,7 +434,8 @@ public sealed class WriterEditorContextMenuController : IDisposable
         if (start.CompareTo(end) > 0)
             (start, end) = (end, start);
 
-        return new WriterEditorContextMenuTarget(start, end, FindSpellingError(start, end));
+        return new WriterEditorContextMenuTarget(start, end, _editor.Document,
+            FindSpellingError(start, end));
     }
 
     private void RebuildMenu(WriterEditorContextMenuTarget target)
@@ -451,7 +489,9 @@ public sealed class WriterEditorContextMenuController : IDisposable
             _editor,
             target,
             (header, command, parameter) => CreateCommandItem(header, command, parameter, target),
-            (header, callback) => CreateCallbackItem(header, target, callback));
+            (header, callback) => CreateCallbackItem(header, target, callback),
+            (header, canExecute, callback) =>
+                CreateCallbackItem(header, target, callback, canExecute));
         ExtensionsRequested?.Invoke(this, extensions);
         foreach (var item in extensions.Items)
             _menu.Items.Add(item);
@@ -485,20 +525,28 @@ public sealed class WriterEditorContextMenuController : IDisposable
     private MenuItem CreateCallbackItem(
         string header,
         WriterEditorContextMenuTarget target,
-        Action<WriterEditorContextMenuTarget>? callback)
+        Action<WriterEditorContextMenuTarget>? callback,
+        Func<WriterEditorContextMenuTarget, bool>? canExecute = null)
     {
         var item = new MenuItem
         {
             Header = header,
-            CommandTarget = _editor,
-            IsEnabled = callback is not null
+            CommandTarget = _editor
         };
-        if (callback is not null)
+        if (callback is null)
+            item.IsEnabled = false;
+        else
         {
+            item.Command = new TargetedCallbackGuardCommand(this, target, canExecute);
             item.Click += (_, _) =>
             {
-                if (TryRestoreTarget(target))
-                    callback(target);
+                if (!TargetedCallbackGuardCommand.CanInvoke(
+                        this, target, canExecute, out var canInvoke)
+                    || !canInvoke || !TryRestoreTarget(target)
+                    || !TargetedCallbackGuardCommand.CanInvoke(
+                        this, target, canExecute, out canInvoke) || !canInvoke)
+                    return;
+                callback(target);
             };
         }
 
@@ -585,6 +633,43 @@ public sealed class WriterEditorContextMenuController : IDisposable
                 routed.Execute(parameter, editor);
             else
                 command.Execute(parameter);
+        }
+    }
+
+    private sealed class TargetedCallbackGuardCommand(
+        WriterEditorContextMenuController owner,
+        WriterEditorContextMenuTarget target,
+        Func<WriterEditorContextMenuTarget, bool>? canExecute) : ICommand
+    {
+        public bool CanExecute(object? parameter) =>
+            CanInvoke(owner, target, canExecute, out var canInvoke) && canInvoke;
+
+        internal static bool CanInvoke(
+            WriterEditorContextMenuController owner,
+            WriterEditorContextMenuTarget target,
+            Func<WriterEditorContextMenuTarget, bool>? canExecute,
+            out bool canInvoke)
+        {
+            canInvoke = false;
+            if (!target.IsValidFor(owner._editor))
+                return false;
+            try
+            {
+                canInvoke = canExecute?.Invoke(target) ?? true;
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        public void Execute(object? parameter) { }
+
+        public event EventHandler? CanExecuteChanged
+        {
+            add { }
+            remove { }
         }
     }
 

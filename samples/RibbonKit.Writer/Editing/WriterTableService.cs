@@ -160,9 +160,19 @@ public sealed class WriterTableService : IDisposable
     public bool TryGetSelectionRange(out WriterTableRange range)
     {
         ThrowIfDisposed();
+        return TryGetSelectionRange(Editor.Selection.Start, Editor.Selection.End, out range);
+    }
+
+    /// <summary>Resolves a captured range to a table rectangle without changing editor selection.</summary>
+    public bool TryGetSelectionRange(
+        TextPointer? start,
+        TextPointer? end,
+        out WriterTableRange range)
+    {
+        ThrowIfDisposed();
         range = default;
-        if (!TryGetCell(Editor.Selection.Start, out var first) ||
-            !TryGetCell(Editor.Selection.End, out var last) ||
+        if (!TryGetCell(start, out var first) ||
+            !TryGetCell(end, out var last) ||
             !ReferenceEquals(first.Table, last.Table) ||
             !ReferenceEquals(first.RowGroup, last.RowGroup))
             return false;
@@ -176,6 +186,30 @@ public sealed class WriterTableService : IDisposable
     {
         ThrowIfDisposed();
         return TryGetCell(Editor.Selection.Start, out reference);
+    }
+
+    /// <summary>
+    /// Deletes one captured live table and replaces its block slot with an empty caret paragraph.
+    /// </summary>
+    public bool DeleteTable(Table table)
+    {
+        ThrowIfDisposed();
+        ArgumentNullException.ThrowIfNull(table);
+        Paragraph? caretParagraph = null;
+        return Mutate(() =>
+        {
+            if (!IsTableInDocument(table))
+                return false;
+            caretParagraph = new Paragraph(new Run());
+            return ReplaceTableWithBlock(table, caretParagraph);
+        }, () =>
+        {
+            if (caretParagraph is null)
+                throw new InvalidOperationException("The table deletion caret was not created.");
+            var caret = caretParagraph.ContentStart.GetInsertionPosition(LogicalDirection.Forward);
+            Editor.Selection.Select(caret, caret);
+            Editor.Focus();
+        });
     }
 
     /// <summary>Inserts rows relative to the supplied cell.</summary>
@@ -1361,6 +1395,39 @@ public sealed class WriterTableService : IDisposable
     }
 
     private static bool ReplaceTable(Table original, Table replacement)
+    {
+        switch (original.Parent)
+        {
+            case FlowDocument document:
+                document.Blocks.InsertBefore(original, replacement);
+                document.Blocks.Remove(original);
+                return true;
+            case TableCell cell:
+                cell.Blocks.InsertBefore(original, replacement);
+                cell.Blocks.Remove(original);
+                return true;
+            case Section section:
+                section.Blocks.InsertBefore(original, replacement);
+                section.Blocks.Remove(original);
+                return true;
+            case ListItem item:
+                item.Blocks.InsertBefore(original, replacement);
+                item.Blocks.Remove(original);
+                return true;
+            case Figure figure:
+                figure.Blocks.InsertBefore(original, replacement);
+                figure.Blocks.Remove(original);
+                return true;
+            case Floater floater:
+                floater.Blocks.InsertBefore(original, replacement);
+                floater.Blocks.Remove(original);
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private static bool ReplaceTableWithBlock(Table original, Block replacement)
     {
         switch (original.Parent)
         {

@@ -265,6 +265,40 @@ public sealed class WriterEditorContextMenuControllerTests
         });
     }
 
+    [Fact]
+    public void CapturedTargetAndGuardedCallbackRejectDocumentReplacement()
+    {
+        StaTestHelper.Run(() =>
+        {
+            var run = new Run("stale target");
+            var editor = new RichTextBox
+            {
+                Document = new FlowDocument(new Paragraph(run))
+            };
+            var invoked = false;
+            MenuItem? guarded = null;
+            using var controller = new WriterEditorContextMenuController(editor);
+            controller.ExtensionsRequested += (_, context) =>
+            {
+                guarded = context.CreateCallbackItem("Guarded Object Action",
+                    target => target.IsValidFor(editor), _ => invoked = true);
+                context.AddItem(guarded);
+            };
+            editor.Selection.Select(run.ContentStart, run.ContentEnd);
+            controller.Refresh();
+            var target = Assert.IsType<WriterEditorContextMenuTarget>(controller.CurrentTarget);
+            Assert.NotNull(guarded?.Command);
+
+            editor.Document = new FlowDocument(new Paragraph(new Run("replacement")));
+
+            Assert.False(target.IsValidFor(editor));
+            Assert.False(target.TryRestore(editor));
+            Assert.False(guarded!.Command!.CanExecute(guarded.CommandParameter));
+            guarded.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent, guarded));
+            Assert.False(invoked);
+        });
+    }
+
     private static MenuItem FindItem(ContextMenu menu, string header) =>
         menu.Items.OfType<MenuItem>().Single(item => Equals(item.Header?.ToString(), header));
 

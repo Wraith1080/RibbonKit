@@ -150,7 +150,17 @@ public sealed class WriterImageService
     {
         ArgumentNullException.ThrowIfNull(editor);
         var container = WriterInlineInsertion.FindImage(editor);
-        return container is not null && WriterInlineInsertion.TryRemoveInline(editor, container);
+        return container is not null && TryRemoveImage(editor, container);
+    }
+
+    /// <summary>Removes one captured image only while it still belongs to the live editor document.</summary>
+    public bool TryRemoveImage(RichTextBox editor, InlineUIContainer container)
+    {
+        ArgumentNullException.ThrowIfNull(editor);
+        ArgumentNullException.ThrowIfNull(container);
+        return container.Child is Image
+            && WriterInlineInsertion.IsInlineInDocument(editor.Document, container)
+            && WriterInlineInsertion.TryRemoveInline(editor, container);
     }
 
     /// <summary>Creates a frozen portable bitmap from encoded image bytes.</summary>

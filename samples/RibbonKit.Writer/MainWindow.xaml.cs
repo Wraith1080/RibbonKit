@@ -37,6 +37,10 @@ public partial class MainWindow : RibbonWindow
 
     internal bool IsPreviewRebuildEnabled => _previewController?.IsRebuildEnabled == true;
 
+    internal WriterEditorContextMenuController EditorContextMenuController =>
+        _editorContextMenuController ??
+        throw new InvalidOperationException("The Writer context-menu controller has not been initialized.");
+
     private readonly bool _ownsShell;
     private WriterEditingRibbonController? _editingController;
     private WriterPreviewController? _previewController;
@@ -382,6 +386,7 @@ public partial class MainWindow : RibbonWindow
             _previewController.Dispose();
             _previewController = null;
         }
+        DetachStructuredContextMenu();
         _editorContextMenuController?.Dispose();
         _editorContextMenuController = null;
         _paragraphKeyboardController?.Dispose();
@@ -796,6 +801,7 @@ public partial class MainWindow : RibbonWindow
             FontDialogRequested = _ => ShowFontDialog(),
             ParagraphDialogRequested = _ => ShowParagraphDialog()
         };
+        AttachStructuredContextMenu(_editorContextMenuController);
     }
 
     private bool NavigateFromEditor(WriterEditorFocusDirection direction)

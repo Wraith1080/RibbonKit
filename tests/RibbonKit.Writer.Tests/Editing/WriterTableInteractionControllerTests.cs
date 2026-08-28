@@ -230,6 +230,79 @@ public sealed class WriterTableInteractionControllerTests
         });
     }
 
+    [Fact]
+    public void RefreshDeferralHoldsCommittedTableStateUntilFinalSelectionPublishes()
+    {
+        StaTestHelper.Run(() =>
+        {
+            var outside = new Paragraph(new Run("outside"));
+            var editor = new RichTextBox { Document = new FlowDocument(outside) };
+            using var controller = new WriterTableInteractionController(editor);
+            var window = HostEditor(editor);
+            try
+            {
+                window.Show();
+                window.UpdateLayout();
+                editor.Selection.Select(outside.ContentStart, outside.ContentStart);
+                var table = Assert.IsType<Table>(controller.Tables.InsertTable(1, 1));
+                var cell = table.RowGroups[0].Rows[0].Cells[0];
+                editor.Selection.Select(cell.ContentStart, cell.ContentStart);
+                controller.Refresh();
+                Assert.True(controller.IsInTable);
+                var changes = 0;
+                controller.StateChanged += (_, _) => changes++;
+
+                using (controller.DeferRefresh())
+                {
+                    editor.Selection.Select(outside.ContentStart, outside.ContentStart);
+                    controller.Refresh();
+                    Assert.True(controller.IsInTable);
+                    Assert.Equal(0, changes);
+                }
+
+                Assert.False(controller.IsInTable);
+                Assert.Equal(1, changes);
+            }
+            finally
+            {
+                window.Close();
+            }
+        });
+    }
+
+    [Fact]
+    public void DeleteTableLeavesCaretParagraphAndIsOneNativeUndoUnit()
+    {
+        StaTestHelper.Run(() =>
+        {
+            var anchor = new Paragraph(new Run("anchor"));
+            var editor = new RichTextBox { Document = new FlowDocument(anchor) };
+            using var controller = new WriterTableInteractionController(editor);
+            var window = HostEditor(editor);
+            try
+            {
+                window.Show();
+                window.UpdateLayout();
+                editor.Selection.Select(anchor.ContentStart, anchor.ContentStart);
+                var table = Assert.IsType<Table>(controller.Tables.InsertTable(1, 1));
+                editor.IsUndoEnabled = false;
+                editor.IsUndoEnabled = true;
+
+                Assert.True(controller.Tables.DeleteTable(table));
+
+                Assert.DoesNotContain(editor.Document.Blocks, block => block is Table);
+                Assert.IsType<Paragraph>(editor.Selection.Start.Paragraph);
+                Assert.True(editor.CanUndo);
+                Assert.True(editor.Undo());
+                Assert.Single(editor.Document.Blocks.OfType<Table>());
+            }
+            finally
+            {
+                window.Close();
+            }
+        });
+    }
+
     private static TableCell Cell(string text, int rowSpan = 1) => new(new Paragraph(new Run(text)))
     {
         RowSpan = rowSpan

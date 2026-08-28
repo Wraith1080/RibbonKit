@@ -131,8 +131,18 @@ internal static class WriterInlineInsertion
     internal static Hyperlink? FindHyperlink(RichTextBox editor)
     {
         ArgumentNullException.ThrowIfNull(editor);
-        var selection = editor.Selection;
-        for (DependencyObject? current = selection.Start.Parent; current is not null;
+        return FindHyperlink(editor.Document, editor.Selection.Start, editor.Selection.End);
+    }
+
+    internal static Hyperlink? FindHyperlink(
+        FlowDocument document,
+        TextPointer start,
+        TextPointer end)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+        ArgumentNullException.ThrowIfNull(start);
+        ArgumentNullException.ThrowIfNull(end);
+        for (DependencyObject? current = start.Parent; current is not null;
              current = GetParent(current))
         {
             if (current is Hyperlink hyperlink)
@@ -141,10 +151,9 @@ internal static class WriterInlineInsertion
 
         // A selection can start on a structural boundary whose Parent is the Paragraph. Look for a
         // link whose content range contains that boundary before falling back to the end pointer.
-        foreach (var hyperlink in EnumerateHyperlinks(editor.Document))
+        foreach (var hyperlink in EnumerateHyperlinks(document))
         {
-            if (ContainsPointer(hyperlink, selection.Start)
-                || ContainsPointer(hyperlink, selection.End))
+            if (ContainsPointer(hyperlink, start) || ContainsPointer(hyperlink, end))
                 return hyperlink;
         }
         return null;
@@ -153,20 +162,44 @@ internal static class WriterInlineInsertion
     internal static InlineUIContainer? FindImage(RichTextBox editor)
     {
         ArgumentNullException.ThrowIfNull(editor);
-        for (DependencyObject? current = editor.Selection.Start.Parent; current is not null;
+        return FindImage(editor.Document, editor.Selection.Start, editor.Selection.End);
+    }
+
+    internal static InlineUIContainer? FindImage(
+        FlowDocument document,
+        TextPointer start,
+        TextPointer end)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+        ArgumentNullException.ThrowIfNull(start);
+        ArgumentNullException.ThrowIfNull(end);
+        for (DependencyObject? current = start.Parent; current is not null;
              current = GetParent(current))
         {
             if (current is InlineUIContainer container && container.Child is Image)
                 return container;
         }
 
-        foreach (var container in EnumerateImages(editor.Document))
+        foreach (var container in EnumerateImages(document))
         {
-            if (ContainsPointer(container, editor.Selection.Start)
-                || ContainsPointer(container, editor.Selection.End))
+            if (ContainsPointer(container, start) || ContainsPointer(container, end))
                 return container;
         }
         return null;
+    }
+
+    internal static bool IsInlineInDocument(FlowDocument document, Inline inline)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+        ArgumentNullException.ThrowIfNull(inline);
+        return inline switch
+        {
+            Hyperlink hyperlink => EnumerateHyperlinks(document)
+                .Any(candidate => ReferenceEquals(candidate, hyperlink)),
+            InlineUIContainer container when container.Child is Image => EnumerateImages(document)
+                .Any(candidate => ReferenceEquals(candidate, container)),
+            _ => false
+        };
     }
 
     private static bool ContainsPointer(Inline inline, TextPointer pointer) =>
@@ -395,6 +428,30 @@ internal static class WriterInlineInsertion
                 foreach (var item in list.ListItems)
                 foreach (var nested in EnumerateBlocks(item.Blocks))
                     yield return nested;
+            }
+            else if (block is Table table)
+            {
+                foreach (var group in table.RowGroups)
+                foreach (var row in group.Rows)
+                foreach (var cell in row.Cells)
+                foreach (var nested in EnumerateBlocks(cell.Blocks))
+                    yield return nested;
+            }
+            else if (block is Paragraph paragraph)
+            {
+                foreach (var inline in EnumerateInlines(paragraph.Inlines))
+                {
+                    var nestedBlocks = inline switch
+                    {
+                        Figure figure => figure.Blocks,
+                        Floater floater => floater.Blocks,
+                        _ => null
+                    };
+                    if (nestedBlocks is null)
+                        continue;
+                    foreach (var nested in EnumerateBlocks(nestedBlocks))
+                        yield return nested;
+                }
             }
         }
     }

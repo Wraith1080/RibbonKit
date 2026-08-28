@@ -113,7 +113,15 @@ public sealed class WriterHyperlinkService
     {
         ArgumentNullException.ThrowIfNull(editor);
         var hyperlink = WriterInlineInsertion.FindHyperlink(editor);
-        if (hyperlink is null)
+        return hyperlink is not null && TryRemove(editor, hyperlink);
+    }
+
+    /// <summary>Removes one captured live hyperlink while retaining its visible inline content.</summary>
+    public bool TryRemove(RichTextBox editor, Hyperlink hyperlink)
+    {
+        ArgumentNullException.ThrowIfNull(editor);
+        ArgumentNullException.ThrowIfNull(hyperlink);
+        if (!WriterInlineInsertion.IsInlineInDocument(editor.Document, hyperlink))
             return false;
         var collection = WriterInlineInsertion.GetOwnerCollection(hyperlink);
         if (collection is null || !editor.IsEnabled || editor.IsReadOnly)

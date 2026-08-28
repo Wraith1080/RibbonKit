@@ -525,17 +525,30 @@ public sealed class MainWindowIntegrationTests
         Assert.True(Assert.IsType<RibbonButton>(window.FindName("DeleteTableRowButton")).IsEnabled);
         Assert.True(Assert.IsType<RibbonButton>(window.FindName("DeleteTableColumnButton")).IsEnabled);
 
+        window.EditorContextMenuController.Refresh();
+        var tableContextMenu = FindMenuItem(window.EditorContextMenuController.Menu.Items, "Table");
+        var tableInsertMenu = FindMenuItem(tableContextMenu.Items, "Insert");
+        var contextRowBelow = FindMenuItem(tableInsertMenu.Items, "Row Below");
+        Assert.NotNull(contextRowBelow.Command);
+        Assert.True(contextRowBelow.Command!.CanExecute(contextRowBelow.CommandParameter));
+        Assert.NotNull(FindMenuItem(tableContextMenu.Items, "Delete"));
+        Assert.NotNull(FindMenuItem(tableContextMenu.Items, "Cell Size"));
+        Assert.NotNull(FindMenuItem(tableContextMenu.Items, "Borders"));
+        Assert.NotNull(FindMenuItem(tableContextMenu.Items, "Background"));
+
         var insertRowBelow = Assert.IsType<RibbonButton>(window.FindName("InsertTableRowBelowButton"));
+        fixture.Ribbon.SelectedTab = tableToolsTab;
         Click(insertRowBelow);
         SetShellBusy(fixture.Shell, true);
         await Dispatcher.Yield(DispatcherPriority.ContextIdle);
         Assert.Equal(2, table.RowGroups[0].Rows.Count);
+        Assert.Same(tableToolsTab, fixture.Ribbon.SelectedTab);
         SetShellBusy(fixture.Shell, false);
 
-        Click(insertRowBelow);
-        await Dispatcher.Yield(DispatcherPriority.ContextIdle);
+        contextRowBelow.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent, contextRowBelow));
         await PumpAsync();
         Assert.Equal(3, table.RowGroups[0].Rows.Count);
+        Assert.Same(tableToolsTab, fixture.Ribbon.SelectedTab);
         AssertEditorFocusRestored(fixture);
 
         editor.Selection.Select(paragraph.ContentEnd, paragraph.ContentEnd);
@@ -583,6 +596,48 @@ public sealed class MainWindowIntegrationTests
         var reducedUnevenTable = Assert.Single(document.Content.Blocks.OfType<Table>());
         Assert.All(reducedUnevenTable.RowGroups.Cast<TableRowGroup>(), group =>
             Assert.All(group.Rows.Cast<TableRow>(), row => Assert.Single(row.Cells)));
+
+        var objectParagraph = new Paragraph();
+        var ordinaryRun = new Run("ordinary ");
+        var hyperlink = new Hyperlink(new Run("link"))
+        {
+            NavigateUri = new Uri("https://example.test")
+        };
+        var picture = new InlineUIContainer(new Image());
+        objectParagraph.Inlines.Add(ordinaryRun);
+        objectParagraph.Inlines.Add(hyperlink);
+        objectParagraph.Inlines.Add(new Run(" "));
+        objectParagraph.Inlines.Add(picture);
+        document.Content.Blocks.Clear();
+        document.Content.Blocks.Add(objectParagraph);
+
+        var hyperlinkRun = Assert.IsType<Run>(hyperlink.Inlines.FirstInline);
+        var hyperlinkCaret = hyperlinkRun.ContentStart.GetPositionAtOffset(1,
+            LogicalDirection.Forward);
+        editor.Selection.Select(hyperlinkCaret, hyperlinkCaret);
+        window.EditorContextMenuController.Refresh();
+        var hyperlinkMenu = FindMenuItem(window.EditorContextMenuController.Menu.Items, "Hyperlink");
+        Assert.NotNull(FindMenuItem(hyperlinkMenu.Items, "Edit Hyperlink..."));
+        var removeHyperlink = FindMenuItem(hyperlinkMenu.Items, "Remove Hyperlink");
+        removeHyperlink.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent, removeHyperlink));
+        Assert.Null(hyperlink.Parent);
+        Assert.Contains("link", new TextRange(objectParagraph.ContentStart,
+            objectParagraph.ContentEnd).Text);
+
+        editor.Selection.Select(picture.ElementStart, picture.ElementEnd);
+        window.EditorContextMenuController.Refresh();
+        var pictureMenu = FindMenuItem(window.EditorContextMenuController.Menu.Items, "Picture");
+        var removePicture = FindMenuItem(pictureMenu.Items, "Remove Picture");
+        removePicture.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent, removePicture));
+        Assert.Null(picture.Parent);
+
+        editor.Selection.Select(ordinaryRun.ContentStart, ordinaryRun.ContentEnd);
+        window.EditorContextMenuController.Refresh();
+        var ordinaryHeaders = window.EditorContextMenuController.Menu.Items.OfType<MenuItem>()
+            .Select(item => item.Header?.ToString()).ToArray();
+        Assert.DoesNotContain("Table", ordinaryHeaders);
+        Assert.DoesNotContain("Picture", ordinaryHeaders);
+        Assert.DoesNotContain("Hyperlink", ordinaryHeaders);
 
         document.Content.Blocks.Clear();
         document.Content.Blocks.Add(new Paragraph());
@@ -1635,6 +1690,9 @@ public sealed class MainWindowIntegrationTests
 
     private static void Click(ButtonBase button) =>
         button.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent, button));
+
+    private static MenuItem FindMenuItem(ItemCollection items, string header) =>
+        items.OfType<MenuItem>().Single(item => Equals(item.Header?.ToString(), header));
 
     private static IEnumerable<T> FindLogicalDescendants<T>(DependencyObject root) where T : DependencyObject
     {
