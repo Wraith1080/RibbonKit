@@ -1,6 +1,8 @@
 using System.Text;
 using System.IO;
+using System.Windows;
 using System.Windows.Documents;
+using System.Windows.Media;
 using RibbonKit.Writer.Models;
 using RibbonKit.Writer.Services.Persistence;
 using Xunit;
@@ -74,6 +76,71 @@ public sealed class WriterPersistenceTests
     }
 
     [Fact]
+    public async Task StructuredContentCompatibilityFixturesExposeRtfAndTextFidelityLoss()
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            using var directory = new TemporaryDirectory();
+            var rtfPath = Path.Combine(directory.Path, "structured.rtf");
+            var textPath = Path.Combine(directory.Path, "structured.txt");
+            var table = new Table
+            {
+                CellSpacing = 2,
+                BorderBrush = Brushes.Blue,
+                BorderThickness = new Thickness(1)
+            };
+            table.Columns.Add(new TableColumn { Width = new GridLength(120) });
+            table.Columns.Add(new TableColumn { Width = new GridLength(80) });
+            var group = new TableRowGroup();
+            group.Rows.Add(new TableRow
+            {
+                Cells =
+                {
+                    new TableCell(new Paragraph(new Run("Merged heading")))
+                    {
+                        ColumnSpan = 2,
+                        Padding = new Thickness(2, 3, 4, 5),
+                        Background = Brushes.LightBlue
+                    }
+                }
+            });
+            table.RowGroups.Add(group);
+            var content = new FlowDocument();
+            content.Blocks.Add(new Paragraph(new Bold(new Run("Before"))));
+            content.Blocks.Add(table);
+            content.Blocks.Add(new Paragraph(new Run("After")));
+            var source = new WriterDocument(content, pageSettings: DocumentPageSettings.A4());
+            var persistence = new WriterDocumentPersistence();
+
+            Assert.True(await persistence.SaveAsync(source, rtfPath,
+                WriterDocumentFormat.RichText, default));
+            var rtf = Assert.IsType<WriterDocument>(await persistence.LoadAsync(rtfPath,
+                WriterDocumentFormat.RichText, default));
+            var rtfTable = Assert.Single(rtf.Content.Blocks.OfType<Table>());
+            var rtfCell = Assert.Single(rtfTable.RowGroups[0].Rows[0].Cells.Cast<TableCell>());
+            Assert.Equal("Merged heading", new TextRange(
+                rtfCell.ContentStart, rtfCell.ContentEnd).Text.Trim());
+            Assert.Equal(1, rtfCell.ColumnSpan);
+            Assert.NotEqual(new Thickness(1), rtfTable.BorderThickness);
+            Assert.NotEqual(source.PageSettings, rtf.PageSettings);
+
+            Assert.True(await persistence.SaveAsync(source, textPath,
+                WriterDocumentFormat.PlainText, default));
+            var text = Assert.IsType<WriterDocument>(await persistence.LoadAsync(textPath,
+                WriterDocumentFormat.PlainText, default));
+            Assert.Empty(text.Content.Blocks.OfType<Table>());
+            var flattened = new TextRange(text.Content.ContentStart, text.Content.ContentEnd).Text;
+            Assert.Contains("Before", flattened);
+            Assert.Contains("Merged heading", flattened);
+            Assert.Contains("After", flattened);
+            Assert.False(WriterDocumentPersistence.GetCapabilities(
+                WriterDocumentFormat.RichText).PreservesTables);
+            Assert.False(WriterDocumentPersistence.GetCapabilities(
+                WriterDocumentFormat.PlainText).PreservesTables);
+        });
+    }
+
+    [Fact]
     public async Task MissingRtfThrowsFileNotFound()
     {
         await StaTestHelper.RunAsync(async () =>
@@ -123,7 +190,7 @@ public sealed class WriterPersistenceTests
             Assert.True(native.PreservesFormatting);
             Assert.True(native.PreservesImages);
             Assert.True(native.PreservesHyperlinks);
-            Assert.False(native.PreservesTables);
+            Assert.True(native.PreservesTables);
             Assert.True(native.PreservesPageSettings);
         });
     }

@@ -112,7 +112,7 @@ public partial class MainWindow
                     ToolTip = new RibbonScreenTip
                     {
                         Title = $"{rows} × {columns} table",
-                        Description = "Insert this live table. Saving tables remains deferred to W3-D."
+                        Description = "Insert this live table. RibbonKit Writer files preserve its supported structure and formatting."
                     }
                 };
                 item.PreviewMouseLeftButtonUp += OnTableGridItemMouseUp;
@@ -120,7 +120,7 @@ public partial class MainWindow
                 AutomationProperties.SetAutomationId(item, $"InsertTable{rows}x{columns}");
                 AutomationProperties.SetName(item, $"{rows} by {columns} table");
                 AutomationProperties.SetHelpText(item,
-                    $"Insert a live table with {rows} rows and {columns} columns. Saving tables remains deferred to W3-D.");
+                    $"Insert a live table with {rows} rows and {columns} columns. RibbonKit Writer files preserve its supported structure and formatting.");
                 TableGridPicker.Items.Add(item);
             }
         }
@@ -337,7 +337,7 @@ public partial class MainWindow
                 && itemChoice.Columns <= choice.Columns;
         }
         AutomationProperties.SetHelpText(TableGridPicker,
-            $"Selected {choice.Rows} by {choice.Columns} table. Press Enter to insert. Tables are not yet preserved when saving.");
+            $"Selected {choice.Rows} by {choice.Columns} table. Press Enter to insert. RibbonKit Writer files preserve supported tables.");
     }
 
     private void ClearTableGridHighlight()
@@ -347,7 +347,7 @@ public partial class MainWindow
                      .Select(button => button.Content).OfType<WriterTableGridCellPreview>())
             preview.IsHighlighted = false;
         AutomationProperties.SetHelpText(TableGridPicker,
-            "Use arrow keys for a quick table up to 3 by 8, or choose Custom Table for another supported size. Tables are not yet preserved when saving.");
+            "Use arrow keys for a quick table up to 3 by 8, or choose Custom Table for another supported size. RibbonKit Writer files preserve supported tables.");
     }
 
     private void OnInsertPictureClick(object sender, RoutedEventArgs e)

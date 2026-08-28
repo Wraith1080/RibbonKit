@@ -5404,6 +5404,34 @@ approved images after a zero-warning/error solution build. Live visual reaccepta
 Paragraph dialog and representative ribbon/context-menu states remains pending, so W1-E is not yet marked visually
 accepted.
 
+### 3.120 RibbonKit Writer final formatting/preview polish and W3-D structured-content round-trip — 2026-08-28
+
+A small live-review addendum replaces the hue indicator's fractional-DPI-sensitive one-DIP canvas offset with
+layout-driven vertical centring. Print Preview now has the same one-DIP dynamic ribbon-border handoff used when the
+paper editor's ruler is hidden. Realized WPF tests cover hue-centre geometry and the preview separator's collapsed,
+visible and modal-exit lifecycle; the separator itself was committed separately at `46f9ede` before this packet.
+
+W3-D closes the native table-persistence gap without passing untrusted XAML to `XamlReader` or `TextRange.Load`.
+The data-only reader now admits only bounded `Table`, column, row-group, row and cell shapes; reconstructs supported
+text/block, width, spacing, span, padding, background and border properties; recursively reads the already-allowed
+paragraph/list/image/hyperlink content inside cells; and validates each realized grid with W3-B's occupancy rules.
+Tables, rows, columns and spans are capped at the same 1024 discovered-dimension ceiling, while foreign controls,
+invalid spans, overlapping grids, unsafe attributes and oversized shapes fail before the current document can change.
+
+New saves retain outer-manifest schema v1 and settings schema v1 but declare reader/content schema v2. The reader still
+loads representative v1 content, rejects inconsistent version combinations and rejects table markup that falsely claims
+content schema v1. A combined fixture survives save-close-reopen and a second save/reopen with formatted text, a safe
+hyperlink, a packaged image, custom page settings and a styled two-column table with a merged heading. The native
+capability catalog now truthfully reports `PreservesTables=true`; format-transition warnings consequently include tables
+when saving native content as RTF or TXT. Compatibility fixtures show the bounded loss: TXT flattens table content to
+characters, while WPF RTF retains representative table text but loses the tested merge geometry and exact outer frame.
+
+The focused W3-D/profile/transition gate passes **63/63** and the complete Debug suites pass Writer **396/396**,
+RibbonKit **355/355** and visual **1/1** over 63 approved images. The solution build succeeds with zero errors; its only
+12 warnings are retry/copy warnings for `RibbonKit.DesignTools.dll` held open by Visual Studio process 33288. The
+Writer project build itself is zero-warning. No `src/RibbonKit/**` file changed. W3-E remains the next structured-object
+packet after the pending W1-E live visual reacceptance; W2-G still waits for W3-E.
+
 ## 4. Workflow / Session Conventions
 
 - Work from the current Windows checkout at
@@ -5420,7 +5448,7 @@ accepted.
 
 ## 5. Current State & Next Steps
 
-> **Authoritative status as of 2026-08-27.** Historical checkpoints remain in §3, but status and
+> **Authoritative status as of 2026-08-28.** Historical checkpoints remain in §3, but status and
 > test counts quoted elsewhere should be reconciled against this section and rerun when current
 > evidence matters.
 
@@ -5465,7 +5493,8 @@ accepted.
   ruler and non-printing margin guides. Portable images/hyperlinks/date-time and the simple FlowDocument table core are
   implemented behind app-owned, undoable services with strict native-package safety and structural invariants. W3-C
   now supplies their Insert/dialog presentation, mouse/keyboard/UIA table picker, table-cell routing and contextual
-  Table Tools surface through §3.117 without claiming table persistence.
+  Table Tools surface through §3.117. W3-D now adds strict native table round-trip, content-schema-v2 migration and
+  explicit TXT/RTF compatibility loss fixtures through §3.120.
 
 ### Remaining or intentionally deferred
 
@@ -5475,7 +5504,7 @@ accepted.
 - Final live visual tuning and approval of the Office 2010 Aero-inspired frame prototype (§3.97).
 - Touch density, richer automatic QAT projections, custom-control projection APIs and additional
   themes remain post-v1 candidates. Their plan documents are not implementation evidence.
-- RibbonKit Writer W3-A through W3-C are accepted through §3.117, including the 2026-08-26 W3-C corrective UI pass
+- RibbonKit Writer W3-A through W3-D are accepted through §3.120, including the 2026-08-26 W3-C corrective UI pass
   and its 2026-08-27 full regression/live visual reacceptance. W2-F remains accepted on the available 125%-scale
   hardware.
   Both A4 and Letter preview/PDF
@@ -5484,12 +5513,12 @@ accepted.
   its automated Debug gate are complete through §3.119; live reacceptance of the themed Font/Color dialogs, corrected
   Paragraph dialog and representative ribbon/context-menu states remains pending. Its Styles audit intentionally found
   no complete named-style/persistence contract, so no placeholder gallery was added. W3-C owns the accepted Insert tab
-  plus contextual Table Tools and its distinct table-cell Tab navigation contract. W3-D owns the later structured
-  round-trip/RTF matrix and is dependency-ready but has not started. The planned W3-E packet in §3.118 then
+  plus contextual Table Tools and its distinct table-cell Tab navigation contract. W3-D owns the accepted strict native
+  table round-trip/schema-v2 and TXT/RTF compatibility matrix. The planned W3-E packet in §3.118 next
   owns context-specific table/picture menu rows, stable contextual-tab state and direct picture/table selection and
   resizing handles; W4-A now waits for W3-E. Planned W2-G then owns a high-risk true editable-pagination architecture
   and delivery packet; it must keep one authoritative document and may not fake page gaps. W4-B waits for both W4-A
-  and W2-G. W3-D, W3-E and W2-G have not started.
+  and W2-G. W3-E and W2-G have not started; W3-E still waits for the pending W1-E live visual reacceptance.
 - Automatic `Icons.xaml` discovery is best-effort by design. Keep `Load Icons.xaml…` available
   for ambiguity, inaccessible paths, parse failures, or no match.
 
@@ -5596,6 +5625,11 @@ accepted.
   Debug solution build has zero warnings/errors. The quick colour menu now exposes only base colours; More Colors has
   an HSV field/hue strip; and Font supports single/double strikethrough plus superscript/subscript with native undo and
   strictly validated `.rkw` round-trip. Refreshed live visual acceptance remains pending.
+- 2026-08-28 after §3.120: the inventory is 751 logic tests plus one visual test covering 63 approved images. Writer
+  passes **396/396**, RibbonKit passes **355/355** and visual passes **1/1**. The solution build succeeds with zero errors;
+  12 design-tools copy warnings are caused only by the DLL being held open by Visual Studio process 33288, while the
+  Writer project build is zero-warning. W3-D's native table/schema-v2 and TXT/RTF compatibility gate is accepted; the
+  hue/preview addendum has realized regression coverage, and W1-E live visual reacceptance remains pending.
 - Before quoting a current count or declaring a new change complete, rerun the proportional build
   and test commands. Inspect actual/diff PNG artifacts before changing visual baselines or
   tolerances.

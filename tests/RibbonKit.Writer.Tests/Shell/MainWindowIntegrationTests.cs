@@ -153,7 +153,8 @@ public sealed class MainWindowIntegrationTests
                 Assert.IsType<InRibbonGallery>(fixture.Window.FindName("TableGridPicker")).IsEnabled);
             Assert.Equal(nativeStructuredContent, fixture.Window.CurrentProfile.Supports(
                 WriterDocumentCommandCapabilities.TableEditing));
-            Assert.False(fixture.Window.CurrentProfile.Capabilities.PreservesTables);
+            Assert.Equal(nativeStructuredContent,
+                fixture.Window.CurrentProfile.Capabilities.PreservesTables);
         }
 
         Assert.True(await fixture.Shell.NewAsync());
@@ -415,7 +416,7 @@ public sealed class MainWindowIntegrationTests
         Assert.Equal(FlowDirection.LeftToRight, picker.FlowDirection);
         Assert.Equal("Writer.Insert.Table.Grid", Ribbon.GetCommandId(picker));
         Assert.Equal("TG", KeyTip.GetKeys(picker));
-        Assert.Contains("not yet preserved", AutomationProperties.GetHelpText(picker),
+        Assert.Contains("preserve", AutomationProperties.GetHelpText(picker),
             StringComparison.OrdinalIgnoreCase);
         var pickerItems = picker.Items.Cast<RibbonGalleryItem>().ToArray();
         var quickItems = pickerItems.Take(24).ToArray();
@@ -433,7 +434,8 @@ public sealed class MainWindowIntegrationTests
             Assert.False(string.IsNullOrWhiteSpace(Ribbon.GetCommandId(item)));
             Assert.False(string.IsNullOrWhiteSpace(AutomationProperties.GetAutomationId(item)));
             Assert.False(string.IsNullOrWhiteSpace(AutomationProperties.GetName(item)));
-            Assert.Contains("W3-D", AutomationProperties.GetHelpText(item), StringComparison.Ordinal);
+            Assert.Contains("preserve", AutomationProperties.GetHelpText(item),
+                StringComparison.OrdinalIgnoreCase);
         });
         var footer = Assert.IsType<StackPanel>(pickerItems[^1].Content);
         Assert.IsType<Separator>(footer.Children[0]);
@@ -489,7 +491,7 @@ public sealed class MainWindowIntegrationTests
         });
 
         Assert.True(window.CurrentProfile.Supports(WriterDocumentCommandCapabilities.TableEditing));
-        Assert.False(window.CurrentProfile.Capabilities.PreservesTables);
+        Assert.True(window.CurrentProfile.Capabilities.PreservesTables);
         var document = fixture.Shell.CurrentDocument;
         document.Content.Blocks.Clear();
         var paragraph = new Paragraph(new Run("table anchor"));
@@ -717,6 +719,12 @@ public sealed class MainWindowIntegrationTests
         var editor = fixture.Editor;
         var surface = Assert.IsType<WriterEditorSurface>(window.FindName("EditorSurface"));
         var preview = Assert.IsType<WriterDocumentPreviewView>(window.FindName("PreviewView"));
+        var previewTopSeparator = Assert.IsType<Border>(window.FindName("PreviewTopSeparator"));
+        Assert.Equal(Visibility.Collapsed, previewTopSeparator.Visibility);
+        Assert.Equal(1, previewTopSeparator.Height);
+        Assert.False(previewTopSeparator.IsHitTestVisible);
+        Assert.True(DependencyPropertyHelper.GetValueSource(
+            previewTopSeparator, Border.BackgroundProperty).IsExpression);
 
         var pageControls = new (string Name, string AutomationId, string CommandId)[]
         {
@@ -889,6 +897,7 @@ public sealed class MainWindowIntegrationTests
         Assert.Equal(WriterViewMode.PrintPreview, window.CurrentViewMode);
         Assert.Equal(Visibility.Collapsed, surface.Visibility);
         Assert.Equal(Visibility.Visible, preview.Visibility);
+        Assert.Equal(Visibility.Visible, previewTopSeparator.Visibility);
         Assert.NotNull(preview.Snapshot);
         Assert.Same(liveDocument, fixture.Editor.Document);
         Assert.Equal(selectedText, editor.Selection.Text);
@@ -924,6 +933,7 @@ public sealed class MainWindowIntegrationTests
         Assert.False(ribbon.IsModal);
         Assert.False(window.IsPreviewRebuildEnabled);
         Assert.Equal(WriterViewMode.Paper, window.CurrentViewMode);
+        Assert.Equal(Visibility.Collapsed, previewTopSeparator.Visibility);
 
         var pageSettingChanges = 0;
         document.PropertyChanged += CountPageSettings;
@@ -975,6 +985,7 @@ public sealed class MainWindowIntegrationTests
         await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
         Assert.Equal(WriterViewMode.Paper, window.CurrentViewMode);
         Assert.Equal(Visibility.Visible, surface.Visibility);
+        Assert.Equal(Visibility.Collapsed, previewTopSeparator.Visibility);
         Assert.Same(liveDocument, editor.Document);
         Assert.Equal(selectedText, editor.Selection.Text);
         Assert.True(editor.CanUndo);

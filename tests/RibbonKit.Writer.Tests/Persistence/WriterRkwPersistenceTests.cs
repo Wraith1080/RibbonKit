@@ -2,8 +2,10 @@ using System.IO;
 using System.IO.Compression;
 using System.Text.Json;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using RibbonKit.Writer.Editing;
 using RibbonKit.Writer.Models;
 using RibbonKit.Writer.Services.Documents;
@@ -114,6 +116,168 @@ public sealed class WriterRkwPersistenceTests
     }
 
     [Fact]
+    public async Task NativePackageSaveCloseReopenPreservesRepresentativeStructuredDocument()
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            using var directory = new TemporaryDirectory();
+            var firstPath = Path.Combine(directory.Path, "structured-first.rkw");
+            var reopenedPath = Path.Combine(directory.Path, "structured-reopened.rkw");
+            var intro = new Paragraph();
+            intro.Inlines.Add(new Bold(new Run("Formatted")) { Foreground = Brushes.DarkBlue });
+            intro.Inlines.Add(new Run(" "));
+            intro.Inlines.Add(new Hyperlink(new Run("safe link"))
+            {
+                NavigateUri = new Uri("https://example.com/document")
+            });
+            intro.Inlines.Add(new Run(" "));
+            intro.Inlines.Add(new InlineUIContainer(new Image
+            {
+                Source = CreateBitmap(3, 2), Width = 30, Height = 20
+            }));
+
+            var table = new Table
+            {
+                CellSpacing = 2,
+                BorderBrush = Brushes.DarkSlateBlue,
+                BorderThickness = new Thickness(1),
+                Background = Brushes.WhiteSmoke
+            };
+            table.Columns.Add(new TableColumn { Width = new GridLength(120) });
+            table.Columns.Add(new TableColumn { Width = new GridLength(80) });
+            var group = new TableRowGroup();
+            var heading = new TableCell(new Paragraph(new Run("Heading")))
+            {
+                ColumnSpan = 2,
+                TextAlignment = TextAlignment.Center,
+                Padding = new Thickness(2, 3, 4, 5),
+                BorderBrush = Brushes.CornflowerBlue,
+                BorderThickness = new Thickness(0.5),
+                Background = Brushes.LightBlue
+            };
+            group.Rows.Add(new TableRow { Cells = { heading } });
+            group.Rows.Add(new TableRow
+            {
+                Cells =
+                {
+                    new TableCell(new Paragraph(new Run("Left"))),
+                    new TableCell(new Paragraph(new Run("Right")))
+                }
+            });
+            table.RowGroups.Add(group);
+
+            var content = new FlowDocument();
+            content.Blocks.Add(intro);
+            content.Blocks.Add(table);
+            var settings = DocumentPageSettings.CreateCustom(700, 1000,
+                DocumentPageOrientation.Landscape, new DocumentPageMargins(30, 40, 50, 60));
+            var persistence = new WriterDocumentPersistence();
+
+            Assert.True(await persistence.SaveAsync(new WriterDocument(content, pageSettings: settings),
+                firstPath, WriterDocumentFormat.RibbonKitWriter, default));
+            var firstLoad = Assert.IsType<WriterDocument>(await persistence.LoadAsync(firstPath,
+                WriterDocumentFormat.RibbonKitWriter, default));
+            Assert.True(await persistence.SaveAsync(firstLoad, reopenedPath,
+                WriterDocumentFormat.RibbonKitWriter, default));
+            var reopened = Assert.IsType<WriterDocument>(await persistence.LoadAsync(reopenedPath,
+                WriterDocumentFormat.RibbonKitWriter, default));
+
+            Assert.Equal(settings, reopened.PageSettings);
+            var loadedIntro = Assert.IsType<Paragraph>(reopened.Content.Blocks.FirstBlock);
+            Assert.Equal(FontWeights.Bold,
+                Assert.IsAssignableFrom<Inline>(loadedIntro.Inlines.FirstInline).FontWeight);
+            var loadedLink = Assert.Single(loadedIntro.Inlines.OfType<Hyperlink>());
+            Assert.Equal("https://example.com/document", loadedLink.NavigateUri!.AbsoluteUri.TrimEnd('/'));
+            var loadedImage = Assert.IsType<Image>(Assert.Single(
+                loadedIntro.Inlines.OfType<InlineUIContainer>()).Child);
+            Assert.Equal(30, loadedImage.Width);
+            Assert.Equal(20, loadedImage.Height);
+
+            var loadedTable = Assert.IsType<Table>(loadedIntro.NextBlock);
+            Assert.Equal(2, loadedTable.Columns.Count);
+            Assert.Equal(new GridLength(120), loadedTable.Columns[0].Width);
+            Assert.Equal(new GridLength(80), loadedTable.Columns[1].Width);
+            Assert.Equal(2, loadedTable.CellSpacing);
+            Assert.Equal(new Thickness(1), loadedTable.BorderThickness);
+            Assert.Equal(Colors.DarkSlateBlue,
+                Assert.IsType<SolidColorBrush>(loadedTable.BorderBrush).Color);
+            var loadedGroup = Assert.Single(loadedTable.RowGroups.Cast<TableRowGroup>());
+            Assert.Equal(2, loadedGroup.Rows.Count);
+            var loadedHeading = Assert.Single(loadedGroup.Rows[0].Cells.Cast<TableCell>());
+            Assert.Equal(2, loadedHeading.ColumnSpan);
+            Assert.Equal(TextAlignment.Center, loadedHeading.TextAlignment);
+            Assert.Equal(new Thickness(2, 3, 4, 5), loadedHeading.Padding);
+            Assert.Equal(new Thickness(0.5), loadedHeading.BorderThickness);
+            Assert.Equal("Heading", new TextRange(
+                loadedHeading.ContentStart, loadedHeading.ContentEnd).Text.Trim());
+            Assert.Equal(new[] { "Left", "Right" }, loadedGroup.Rows[1].Cells.Cast<TableCell>()
+                .Select(cell => new TextRange(cell.ContentStart, cell.ContentEnd).Text.Trim()));
+        });
+    }
+
+    [Fact]
+    public async Task ContentSchemaTwoOwnsTablesAndVersionOneFixtureRemainsReadable()
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            using var directory = new TemporaryDirectory();
+            var versionOnePath = Path.Combine(directory.Path, "version-one.rkw");
+            var migratedPath = Path.Combine(directory.Path, "migrated.rkw");
+            RkwPackageFixture.WriteOuterPackage(versionOnePath, new[]
+            {
+                RkwPackageFixture.ManifestEntry(),
+                RkwPackageFixture.SettingsEntry(),
+                RkwPackageFixture.ContentEntry("<Section xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\"><Paragraph><Run>version one</Run></Paragraph></Section>")
+            });
+            var persistence = new WriterDocumentPersistence();
+            var versionOne = Assert.IsType<WriterDocument>(await persistence.LoadAsync(versionOnePath,
+                WriterDocumentFormat.RibbonKitWriter, default));
+            Assert.Equal("version one", Text(versionOne.Content).Trim());
+            Assert.True(await persistence.SaveAsync(versionOne, migratedPath,
+                WriterDocumentFormat.RibbonKitWriter, default));
+            using (var archive = new ZipArchive(File.OpenRead(migratedPath), ZipArchiveMode.Read))
+            using (var manifest = JsonDocument.Parse(Read(archive.GetEntry("manifest.json")!)))
+            {
+                Assert.Equal(1, manifest.RootElement.GetProperty("schemaVersion").GetInt32());
+                Assert.Equal(2, manifest.RootElement.GetProperty("minimumReaderVersion").GetInt32());
+                Assert.Equal(2, manifest.RootElement.GetProperty("contentSchemaVersion").GetInt32());
+                Assert.Equal(1, manifest.RootElement.GetProperty("settingsSchemaVersion").GetInt32());
+            }
+
+            const string tableXaml = "<Section xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\"><Table><Table.Columns><TableColumn Width=\"100\" /></Table.Columns><TableRowGroup><TableRow><TableCell><Paragraph><Run>cell</Run></Paragraph></TableCell></TableRow></TableRowGroup></Table></Section>";
+            await AssertInvalidContentAsync(RkwPackageFixture.CreateInnerXamlPackage(tableXaml));
+
+            var versionTwoPath = Path.Combine(directory.Path, "version-two-table.rkw");
+            RkwPackageFixture.WriteOuterPackage(versionTwoPath, new[]
+            {
+                ("manifest.json", RkwPackageFixture.Utf8("{\"format\":\"RibbonKit.Writer\",\"schemaVersion\":1,\"minimumReaderVersion\":2,\"contentSchemaVersion\":2,\"settingsSchemaVersion\":1,\"requiredFeatures\":[]}")),
+                RkwPackageFixture.SettingsEntry(),
+                ("content.xamlpackage", RkwPackageFixture.CreateInnerXamlPackage(tableXaml))
+            });
+            var versionTwo = Assert.IsType<WriterDocument>(await persistence.LoadAsync(versionTwoPath,
+                WriterDocumentFormat.RibbonKitWriter, default));
+            Assert.IsType<Table>(versionTwo.Content.Blocks.FirstBlock);
+        });
+    }
+
+    [Theory]
+    [InlineData("<Table><TableRowGroup><TableRow><TableCell ColumnSpan=\"1025\"><Paragraph /></TableCell></TableRow></TableRowGroup></Table>")]
+    [InlineData("<Table><TableRowGroup><TableRow><TableCell><Button /></TableCell></TableRow></TableRowGroup></Table>")]
+    [InlineData("<Table><TableRowGroup><TableRow><TableCell><Paragraph /></TableCell><TableCell RowSpan=\"2\"><Paragraph /></TableCell></TableRow></TableRowGroup></Table>")]
+    public async Task NativePackageRejectsUnsafeOrInvalidTableGraphs(string table)
+    {
+        var xaml = "<Section xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\">" +
+            table + "</Section>";
+        var manifest = RkwPackageFixture.Utf8("{\"format\":\"RibbonKit.Writer\",\"schemaVersion\":1,\"minimumReaderVersion\":2,\"contentSchemaVersion\":2,\"settingsSchemaVersion\":1,\"requiredFeatures\":[]}");
+        await AssertInvalidAsync(new[]
+        {
+            ("manifest.json", manifest),
+            RkwPackageFixture.SettingsEntry(),
+            ("content.xamlpackage", RkwPackageFixture.CreateInnerXamlPackage(xaml))
+        });
+    }
+
+    [Fact]
     public async Task SavedPackageHasOnlyVersionedRequiredParts()
     {
         await StaTestHelper.RunAsync(async () =>
@@ -131,6 +295,9 @@ public sealed class WriterRkwPersistenceTests
             using var manifest = JsonDocument.Parse(Read(archive.GetEntry("manifest.json")!));
             Assert.Equal("RibbonKit.Writer", manifest.RootElement.GetProperty("format").GetString());
             Assert.Equal(1, manifest.RootElement.GetProperty("schemaVersion").GetInt32());
+            Assert.Equal(2, manifest.RootElement.GetProperty("minimumReaderVersion").GetInt32());
+            Assert.Equal(2, manifest.RootElement.GetProperty("contentSchemaVersion").GetInt32());
+            Assert.Equal(1, manifest.RootElement.GetProperty("settingsSchemaVersion").GetInt32());
             Assert.Empty(manifest.RootElement.GetProperty("requiredFeatures").EnumerateArray());
             using var settings = JsonDocument.Parse(Read(archive.GetEntry("document-settings.json")!));
             Assert.Equal("Letter", settings.RootElement.GetProperty("paperSize").GetString());
@@ -172,6 +339,8 @@ public sealed class WriterRkwPersistenceTests
     [Theory]
     [InlineData("{\"format\":\"Other\",\"schemaVersion\":1,\"minimumReaderVersion\":1,\"contentSchemaVersion\":1,\"settingsSchemaVersion\":1,\"requiredFeatures\":[]}")]
     [InlineData("{\"format\":\"RibbonKit.Writer\",\"schemaVersion\":2,\"minimumReaderVersion\":1,\"contentSchemaVersion\":1,\"settingsSchemaVersion\":1,\"requiredFeatures\":[]}")]
+    [InlineData("{\"format\":\"RibbonKit.Writer\",\"schemaVersion\":1,\"minimumReaderVersion\":1,\"contentSchemaVersion\":2,\"settingsSchemaVersion\":1,\"requiredFeatures\":[]}")]
+    [InlineData("{\"format\":\"RibbonKit.Writer\",\"schemaVersion\":1,\"minimumReaderVersion\":3,\"contentSchemaVersion\":2,\"settingsSchemaVersion\":1,\"requiredFeatures\":[]}")]
     [InlineData("{\"format\":\"RibbonKit.Writer\",\"format\":\"RibbonKit.Writer\",\"schemaVersion\":1,\"minimumReaderVersion\":1,\"contentSchemaVersion\":1,\"settingsSchemaVersion\":1,\"requiredFeatures\":[]}")]
     public async Task WrongVersionIdentityAndDuplicateManifestPropertiesAreRejected(string manifest)
     {
@@ -478,6 +647,22 @@ public sealed class WriterRkwPersistenceTests
         bytes[19] = 1;
         bytes[23] = 1;
         return bytes;
+    }
+
+    private static BitmapSource CreateBitmap(int width, int height)
+    {
+        var pixels = new byte[width * height * 4];
+        for (var index = 0; index < pixels.Length; index += 4)
+        {
+            pixels[index] = 220;
+            pixels[index + 1] = 100;
+            pixels[index + 2] = 40;
+            pixels[index + 3] = 255;
+        }
+        var bitmap = BitmapSource.Create(width, height, 96, 96, PixelFormats.Bgra32, null,
+            pixels, width * 4);
+        bitmap.Freeze();
+        return bitmap;
     }
 
     private sealed class TemporaryDirectory : IDisposable

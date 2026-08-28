@@ -35,11 +35,12 @@ public sealed class WriterDocumentProfileTests
         WriterDocumentCommandCapabilities.CharacterFormatting | WriterDocumentCommandCapabilities.ParagraphFormatting,
         WriterDocumentContentCapabilities.CharacterFormatting | WriterDocumentContentCapabilities.ParagraphFormatting,
         WriterDocumentPageMetadataCapabilities.None)]
-    [InlineData(WriterDocumentFormat.RibbonKitWriter, true, true, false, true,
+    [InlineData(WriterDocumentFormat.RibbonKitWriter, true, true, true, true,
         WriterDocumentCommandCapabilities.CharacterFormatting | WriterDocumentCommandCapabilities.ParagraphFormatting
             | WriterDocumentCommandCapabilities.PageSettings | WriterDocumentCommandCapabilities.TableEditing,
         WriterDocumentContentCapabilities.CharacterFormatting | WriterDocumentContentCapabilities.ParagraphFormatting
-            | WriterDocumentContentCapabilities.Images | WriterDocumentContentCapabilities.Hyperlinks,
+            | WriterDocumentContentCapabilities.Images | WriterDocumentContentCapabilities.Hyperlinks
+            | WriterDocumentContentCapabilities.Tables,
         WriterDocumentPageMetadataCapabilities.PageSettings)]
     public void CapabilityMatrixMatchesPersistenceFacts(
         WriterDocumentFormat format,
@@ -68,7 +69,7 @@ public sealed class WriterDocumentProfileTests
     }
 
     [Fact]
-    public void LiveTableEditingDoesNotAdvertiseTableRoundTripBeforeW3D()
+    public void NativeProfileAdvertisesAcceptedTableEditingAndRoundTrip()
     {
         Assert.False(WriterDocumentProfiles.PlainText.Supports(
             WriterDocumentCommandCapabilities.TableEditing));
@@ -76,8 +77,8 @@ public sealed class WriterDocumentProfileTests
             WriterDocumentCommandCapabilities.TableEditing));
         Assert.True(WriterDocumentProfiles.RibbonKitWriter.Supports(
             WriterDocumentCommandCapabilities.TableEditing));
-        Assert.False(WriterDocumentProfiles.RibbonKitWriter.Capabilities.PreservesTables);
-        Assert.False(WriterDocumentProfiles.RibbonKitWriter.PersistenceCapabilities.PreservesTables);
+        Assert.True(WriterDocumentProfiles.RibbonKitWriter.Capabilities.PreservesTables);
+        Assert.True(WriterDocumentProfiles.RibbonKitWriter.PersistenceCapabilities.PreservesTables);
     }
 
     [Theory]

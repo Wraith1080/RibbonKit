@@ -11,6 +11,8 @@ internal readonly record struct WriterRkwPackageData(
     FlowDocument Content,
     DocumentPageSettings PageSettings);
 
+internal readonly record struct WriterRkwManifestData(int ContentSchemaVersion);
+
 /// <summary>Reads and writes the bounded, versioned RibbonKit Writer native package.</summary>
 internal static class WriterRkwPackage
 {
@@ -21,7 +23,10 @@ internal static class WriterRkwPackage
     private const string SettingsPart = "document-settings.json";
     private const string ContentPart = "content.xamlpackage";
     private const string FormatIdentity = "RibbonKit.Writer";
-    private const int CurrentSchemaVersion = 1;
+    private const int CurrentReaderVersion = 2;
+    private const int CurrentManifestSchemaVersion = 1;
+    private const int CurrentContentSchemaVersion = 2;
+    private const int CurrentSettingsSchemaVersion = 1;
     private static readonly HashSet<string> RequiredParts = new(StringComparer.Ordinal)
     {
         ManifestPart, SettingsPart, ContentPart
@@ -31,7 +36,7 @@ internal static class WriterRkwPackage
     {
         ArgumentNullException.ThrowIfNull(document);
         var contentBytes = WriterRkwContentSerializer.Save(document.Content);
-        _ = WriterRkwContentSerializer.Load(contentBytes);
+        _ = WriterRkwContentSerializer.Load(contentBytes, allowTables: true);
         var manifestBytes = WriteManifest();
         var settingsBytes = WriteSettings(document.PageSettings);
         EnsureExpandedSize(manifestBytes.LongLength + settingsBytes.LongLength + contentBytes.LongLength);
@@ -59,10 +64,11 @@ internal static class WriterRkwPackage
             using var stream = new MemoryStream(packageBytes, writable: false);
             using var archive = new ZipArchive(stream, ZipArchiveMode.Read, leaveOpen: false);
             var entries = ValidateEntries(archive);
-            ValidateManifest(ReadEntry(entries[ManifestPart], MaximumMetadataBytes));
+            var manifest = ReadManifest(ReadEntry(entries[ManifestPart], MaximumMetadataBytes));
             var pageSettings = ReadSettings(ReadEntry(entries[SettingsPart], MaximumMetadataBytes));
             var content = WriterRkwContentSerializer.Load(
-                ReadEntry(entries[ContentPart], WriterRkwContentSerializer.MaximumPackageBytes));
+                ReadEntry(entries[ContentPart], WriterRkwContentSerializer.MaximumPackageBytes),
+                allowTables: manifest.ContentSchemaVersion >= 2);
             return new WriterRkwPackageData(content, pageSettings);
         }
         catch (InvalidDataException)
@@ -131,10 +137,10 @@ internal static class WriterRkwPackage
         {
             writer.WriteStartObject();
             writer.WriteString("format", FormatIdentity);
-            writer.WriteNumber("schemaVersion", CurrentSchemaVersion);
-            writer.WriteNumber("minimumReaderVersion", CurrentSchemaVersion);
-            writer.WriteNumber("contentSchemaVersion", CurrentSchemaVersion);
-            writer.WriteNumber("settingsSchemaVersion", CurrentSchemaVersion);
+            writer.WriteNumber("schemaVersion", CurrentManifestSchemaVersion);
+            writer.WriteNumber("minimumReaderVersion", CurrentReaderVersion);
+            writer.WriteNumber("contentSchemaVersion", CurrentContentSchemaVersion);
+            writer.WriteNumber("settingsSchemaVersion", CurrentSettingsSchemaVersion);
             writer.WriteStartArray("requiredFeatures");
             writer.WriteEndArray();
             writer.WriteEndObject();
@@ -142,7 +148,7 @@ internal static class WriterRkwPackage
         return stream.ToArray();
     }
 
-    private static void ValidateManifest(byte[] bytes)
+    private static WriterRkwManifestData ReadManifest(byte[] bytes)
     {
         using var document = ParseJson(bytes, "manifest");
         var root = RequireObject(document.RootElement, "manifest");
@@ -150,29 +156,32 @@ internal static class WriterRkwPackage
         switch (schemaVersion)
         {
             case 1:
-                ValidateManifestVersion1(root);
-                return;
+                return ReadManifestVersion1(root);
             default:
                 throw new InvalidDataException("The native Writer package uses an unsupported manifest version.");
         }
     }
 
-    private static void ValidateManifestVersion1(JsonElement root)
+    private static WriterRkwManifestData ReadManifestVersion1(JsonElement root)
     {
         RequireProperties(root,
             ["format", "schemaVersion", "minimumReaderVersion", "contentSchemaVersion",
                 "settingsSchemaVersion", "requiredFeatures"]);
         if (RequireString(root, "format") != FormatIdentity)
             throw new InvalidDataException("The package is not a RibbonKit Writer document.");
-        if (RequireInt(root, "schemaVersion") != CurrentSchemaVersion
-            || RequireInt(root, "minimumReaderVersion") != CurrentSchemaVersion
-            || RequireInt(root, "contentSchemaVersion") != CurrentSchemaVersion
-            || RequireInt(root, "settingsSchemaVersion") != CurrentSchemaVersion)
+        var minimumReaderVersion = RequireInt(root, "minimumReaderVersion");
+        var contentSchemaVersion = RequireInt(root, "contentSchemaVersion");
+        if (RequireInt(root, "schemaVersion") != CurrentManifestSchemaVersion
+            || minimumReaderVersion is < 1 or > CurrentReaderVersion
+            || contentSchemaVersion is < 1 or > CurrentContentSchemaVersion
+            || minimumReaderVersion < contentSchemaVersion
+            || RequireInt(root, "settingsSchemaVersion") != CurrentSettingsSchemaVersion)
             throw new InvalidDataException("The native Writer package uses an unsupported mandatory version.");
 
         var features = root.GetProperty("requiredFeatures");
         if (features.ValueKind != JsonValueKind.Array || features.GetArrayLength() != 0)
             throw new InvalidDataException("The native Writer package requires unsupported features.");
+        return new WriterRkwManifestData(contentSchemaVersion);
     }
 
     private static byte[] WriteSettings(DocumentPageSettings settings)
@@ -181,7 +190,7 @@ internal static class WriterRkwPackage
         using (var writer = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = true }))
         {
             writer.WriteStartObject();
-            writer.WriteNumber("schemaVersion", CurrentSchemaVersion);
+            writer.WriteNumber("schemaVersion", CurrentSettingsSchemaVersion);
             writer.WriteString("paperSize", settings.PaperSize.ToString());
             writer.WriteNumber("portraitWidthDip", settings.PortraitWidthDip);
             writer.WriteNumber("portraitHeightDip", settings.PortraitHeightDip);
@@ -214,7 +223,7 @@ internal static class WriterRkwPackage
         RequireProperties(root,
             ["schemaVersion", "paperSize", "portraitWidthDip", "portraitHeightDip",
                 "orientation", "marginsDip"]);
-        if (RequireInt(root, "schemaVersion") != CurrentSchemaVersion)
+        if (RequireInt(root, "schemaVersion") != CurrentSettingsSchemaVersion)
             throw new InvalidDataException("The document settings use an unsupported version.");
         if (!Enum.TryParse<DocumentPaperSize>(RequireString(root, "paperSize"), false, out var paperSize)
             || !Enum.IsDefined(paperSize))

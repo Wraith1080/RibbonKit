@@ -29,6 +29,7 @@ internal static partial class WriterRkwContentSerializer
     private const int MaximumImageCount = 512;
     private const int MaximumImageBytes = 16 * 1024 * 1024;
     private const long MaximumImagePixels = 32 * 1024 * 1024;
+    private const int MaximumTableDimension = 1024;
     private const string PresentationNamespace = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
     private const string RelationshipsNamespace = "http://schemas.openxmlformats.org/package/2006/relationships";
     private const string ContentTypesNamespace = "http://schemas.openxmlformats.org/package/2006/content-types";
@@ -46,6 +47,7 @@ internal static partial class WriterRkwContentSerializer
     private static readonly HashSet<string> AllowedElements = new(StringComparer.Ordinal)
     {
         "Section", "Paragraph", "List", "ListItem",
+        "Table", "Table.Columns", "TableColumn", "TableRowGroup", "TableRow", "TableCell",
         "Run", "Span", "Bold", "Italic", "Underline", "LineBreak",
         "Hyperlink", "InlineUIContainer", "Image", "Image.Source", "BitmapImage",
         "Run.TextDecorations", "Span.TextDecorations", "Bold.TextDecorations",
@@ -74,7 +76,7 @@ internal static partial class WriterRkwContentSerializer
         return stream.ToArray();
     }
 
-    internal static FlowDocument Load(byte[] packageBytes)
+    internal static FlowDocument Load(byte[] packageBytes, bool allowTables)
     {
         ArgumentNullException.ThrowIfNull(packageBytes);
         if (packageBytes.Length is 0 or > MaximumPackageBytes)
@@ -100,7 +102,7 @@ internal static partial class WriterRkwContentSerializer
             ValidateContentTypes(ReadEntry(entries["[Content_Types].xml"], 16 * 1024),
                 imageParts.Keys);
             var xaml = ReadEntry(entries["Xaml/Document.xaml"], MaximumXamlBytes);
-            return BuildDocument(ParseAndValidateXaml(xaml), imageParts);
+            return BuildDocument(ParseAndValidateXaml(xaml, allowTables), imageParts);
         }
         catch (InvalidDataException)
         {
@@ -304,7 +306,7 @@ internal static partial class WriterRkwContentSerializer
             throw new InvalidDataException("The native content package image declarations do not match its image parts.");
     }
 
-    private static XDocument ParseAndValidateXaml(byte[] bytes)
+    private static XDocument ParseAndValidateXaml(byte[] bytes, bool allowTables)
     {
         var document = ParseXml(bytes, MaximumXamlBytes);
         if (document.Root is null || document.Root.Name != XName.Get("Section", PresentationNamespace))
@@ -319,7 +321,7 @@ internal static partial class WriterRkwContentSerializer
             var (element, depth) = stack.Pop();
             if (++elementCount > MaximumXmlElements || depth > MaximumXmlDepth)
                 throw new InvalidDataException("The native document XML exceeds its complexity limit.");
-            ValidateElement(element);
+            ValidateElement(element, allowTables);
             foreach (var node in element.Nodes())
             {
                 switch (node)
@@ -369,10 +371,12 @@ internal static partial class WriterRkwContentSerializer
         return XDocument.Load(reader, LoadOptions.PreserveWhitespace);
     }
 
-    private static void ValidateElement(XElement element)
+    private static void ValidateElement(XElement element, bool allowTables)
     {
         if (element.Name.NamespaceName != PresentationNamespace || !AllowedElements.Contains(element.Name.LocalName))
             throw new InvalidDataException($"Unsupported native document element '{element.Name}'.");
+        if (!allowTables && IsTableElement(element.Name.LocalName))
+            throw new InvalidDataException("The native document uses tables without the required content schema.");
         if (element.Attributes().Count() > MaximumAttributesPerElement)
             throw new InvalidDataException("A native document element has too many attributes.");
 
@@ -448,6 +452,7 @@ internal static partial class WriterRkwContentSerializer
                 "Paragraph" => BuildParagraph(element, imageParts, usedImageParts),
                 "List" => BuildList(element, imageParts, usedImageParts),
                 "Section" => BuildSection(element, imageParts, usedImageParts),
+                "Table" => BuildTable(element, imageParts, usedImageParts),
                 _ => throw new InvalidDataException($"Element '{element.Name.LocalName}' is not valid block content.")
             };
         }
@@ -502,6 +507,128 @@ internal static partial class WriterRkwContentSerializer
         if (element.Nodes().OfType<XText>().Any(text => !string.IsNullOrWhiteSpace(text.Value)))
             throw new InvalidDataException("A native list contains text outside a list item.");
         return list;
+    }
+
+    private static Table BuildTable(XElement element,
+        IReadOnlyDictionary<string, byte[]> imageParts, ISet<string> usedImageParts)
+    {
+        var table = new Table();
+        ApplyTextProperties(element, table);
+        ApplyBlockProperties(element, table);
+        if (TryAttribute(element, "CellSpacing", out var cellSpacing))
+            table.CellSpacing = ParseDouble(cellSpacing, 0, 10000, "table cell spacing");
+        if (TryAttribute(element, "BorderBrush", out var borderBrush))
+            table.BorderBrush = ParseBrush(borderBrush);
+        if (TryAttribute(element, "BorderThickness", out var borderThickness))
+            table.BorderThickness = ParseThickness(borderThickness, "table border thickness");
+
+        var columnsProperties = element.Elements()
+            .Where(child => child.Name.LocalName == "Table.Columns")
+            .ToArray();
+        if (columnsProperties.Length > 1)
+            throw new InvalidDataException("A native table has duplicate column metadata.");
+        if (columnsProperties.Length == 1)
+            BuildTableColumns(columnsProperties[0], table);
+
+        var groups = element.Elements()
+            .Where(child => child.Name.LocalName != "Table.Columns")
+            .ToArray();
+        if (groups.Length is 0 or > MaximumTableDimension
+            || groups.Any(child => child.Name.LocalName != "TableRowGroup"))
+            throw new InvalidDataException("A native table must contain bounded row groups.");
+        if (element.Nodes().OfType<XText>().Any(text => !string.IsNullOrWhiteSpace(text.Value)))
+            throw new InvalidDataException("A native table contains text outside its rows.");
+
+        var totalRows = 0;
+        foreach (var groupElement in groups)
+        {
+            var group = BuildTableRowGroup(groupElement, imageParts, usedImageParts);
+            totalRows = checked(totalRows + group.Rows.Count);
+            if (totalRows > MaximumTableDimension)
+                throw new InvalidDataException("A native table has too many rows.");
+            table.RowGroups.Add(group);
+        }
+
+        foreach (var group in table.RowGroups.Cast<TableRowGroup>())
+        {
+            if (!WriterTableGrid.TryBuild(table, group, out var grid)
+                || grid.ColumnCount > MaximumTableDimension)
+                throw new InvalidDataException("A native table has an invalid or oversized cell grid.");
+        }
+        return table;
+    }
+
+    private static void BuildTableColumns(XElement element, Table table)
+    {
+        if (element.Nodes().OfType<XText>().Any(text => !string.IsNullOrWhiteSpace(text.Value)))
+            throw new InvalidDataException("Native table column metadata contains text.");
+        var columns = element.Elements().ToArray();
+        if (columns.Length > MaximumTableDimension
+            || columns.Any(child => child.Name.LocalName != "TableColumn"))
+            throw new InvalidDataException("Native table column metadata is invalid or oversized.");
+        foreach (var columnElement in columns)
+        {
+            if (columnElement.Nodes().Any())
+                throw new InvalidDataException("A native table column cannot contain content.");
+            var column = new TableColumn();
+            if (TryAttribute(columnElement, "Width", out var width))
+                column.Width = ParseGridLength(width);
+            table.Columns.Add(column);
+        }
+    }
+
+    private static TableRowGroup BuildTableRowGroup(XElement element,
+        IReadOnlyDictionary<string, byte[]> imageParts, ISet<string> usedImageParts)
+    {
+        var group = new TableRowGroup();
+        ApplyTextProperties(element, group);
+        var rows = element.Elements().ToArray();
+        if (rows.Length is 0 or > MaximumTableDimension
+            || rows.Any(child => child.Name.LocalName != "TableRow")
+            || element.Nodes().OfType<XText>().Any(text => !string.IsNullOrWhiteSpace(text.Value)))
+            throw new InvalidDataException("A native table row group is empty, invalid or oversized.");
+        foreach (var rowElement in rows)
+            group.Rows.Add(BuildTableRow(rowElement, imageParts, usedImageParts));
+        return group;
+    }
+
+    private static TableRow BuildTableRow(XElement element,
+        IReadOnlyDictionary<string, byte[]> imageParts, ISet<string> usedImageParts)
+    {
+        var row = new TableRow();
+        ApplyTextProperties(element, row);
+        var cells = element.Elements().ToArray();
+        if (cells.Length is 0 or > MaximumTableDimension
+            || cells.Any(child => child.Name.LocalName != "TableCell")
+            || element.Nodes().OfType<XText>().Any(text => !string.IsNullOrWhiteSpace(text.Value)))
+            throw new InvalidDataException("A native table row is empty, invalid or oversized.");
+        foreach (var cellElement in cells)
+            row.Cells.Add(BuildTableCell(cellElement, imageParts, usedImageParts));
+        return row;
+    }
+
+    private static TableCell BuildTableCell(XElement element,
+        IReadOnlyDictionary<string, byte[]> imageParts, ISet<string> usedImageParts)
+    {
+        var cell = new TableCell();
+        ApplyTextProperties(element, cell);
+        if (TryAttribute(element, "TextAlignment", out var textAlignment))
+            cell.TextAlignment = ParseEnum<TextAlignment>(textAlignment, "table cell text alignment");
+        if (TryAttribute(element, "Padding", out var padding))
+            cell.Padding = ParseThickness(padding, "table cell padding");
+        if (TryAttribute(element, "BorderBrush", out var borderBrush))
+            cell.BorderBrush = ParseBrush(borderBrush);
+        if (TryAttribute(element, "BorderThickness", out var borderThickness))
+            cell.BorderThickness = ParseThickness(borderThickness, "table cell border thickness");
+        if (TryAttribute(element, "ColumnSpan", out var columnSpan))
+            cell.ColumnSpan = ParseInt(columnSpan, 1, MaximumTableDimension, "table cell column span");
+        if (TryAttribute(element, "RowSpan", out var rowSpan))
+            cell.RowSpan = ParseInt(rowSpan, 1, MaximumTableDimension, "table cell row span");
+        foreach (var block in BuildBlocks(element, imageParts, usedImageParts))
+            cell.Blocks.Add(block);
+        if (cell.Blocks.Count == 0)
+            throw new InvalidDataException("A native table cell must contain block content.");
+        return cell;
     }
 
     private static IEnumerable<Inline> BuildInlines(XElement parent,
@@ -731,6 +858,20 @@ internal static partial class WriterRkwContentSerializer
             "ListItem" => attributeName is "FontFamily" or "FontStyle" or "FontWeight"
                 or "FontStretch" or "FontSize" or "Foreground" or "Background"
                 or "FlowDirection",
+            "Table" => attributeName is "FontFamily" or "FontStyle" or "FontWeight"
+                or "FontStretch" or "FontSize" or "Foreground" or "Background"
+                or "FlowDirection" or "TextAlignment" or "LineHeight"
+                or "LineStackingStrategy" or "IsHyphenationEnabled" or "Margin" or "Padding"
+                or "CellSpacing" or "BorderBrush" or "BorderThickness",
+            "Table.Columns" => false,
+            "TableColumn" => attributeName is "Width",
+            "TableRowGroup" or "TableRow" => attributeName is "FontFamily" or "FontStyle"
+                or "FontWeight" or "FontStretch" or "FontSize" or "Foreground"
+                or "Background" or "FlowDirection",
+            "TableCell" => attributeName is "FontFamily" or "FontStyle" or "FontWeight"
+                or "FontStretch" or "FontSize" or "Foreground" or "Background"
+                or "FlowDirection" or "TextAlignment" or "Padding" or "BorderBrush"
+                or "BorderThickness" or "ColumnSpan" or "RowSpan",
             "Run" or "Span" or "Bold" or "Italic" or "Underline" or "LineBreak" =>
                 attributeName is "FontFamily" or "FontStyle" or "FontWeight"
                 or "FontStretch" or "FontSize" or "Foreground" or "Background"
@@ -755,7 +896,11 @@ internal static partial class WriterRkwContentSerializer
 
     private static bool AllowsTextAttributes(string elementName) => elementName is
         "Section" or "Paragraph" or "List" or "ListItem" or "Run" or "Span"
-        or "Bold" or "Italic" or "Underline" or "LineBreak" or "Hyperlink";
+        or "Bold" or "Italic" or "Underline" or "LineBreak" or "Hyperlink"
+        or "Table" or "TableRowGroup" or "TableRow" or "TableCell";
+
+    private static bool IsTableElement(string elementName) => elementName is
+        "Table" or "Table.Columns" or "TableColumn" or "TableRowGroup" or "TableRow" or "TableCell";
 
     private static void ApplyTextProperties(XElement source, DependencyObject target)
     {
@@ -1015,6 +1160,22 @@ internal static partial class WriterRkwContentSerializer
             2 => new Thickness(values[0], values[1], values[0], values[1]),
             _ => new Thickness(values[0], values[1], values[2], values[3])
         };
+    }
+
+    private static GridLength ParseGridLength(string value)
+    {
+        if (value == "Auto")
+            return GridLength.Auto;
+        if (value.EndsWith('*'))
+        {
+            var weightText = value[..^1];
+            var weight = weightText.Length == 0
+                ? 1
+                : ParseDouble(weightText, 0.000001, 10000, "table column star width");
+            return new GridLength(weight, GridUnitType.Star);
+        }
+        return new GridLength(ParseDouble(value, 0, 100000, "table column width"),
+            GridUnitType.Pixel);
     }
 
     private static TextDecorationCollection ParseTextDecorations(string value)

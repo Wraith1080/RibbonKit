@@ -5,9 +5,9 @@
 > and its 2026-08-27 full regression/live visual reacceptance. W1-E Home formatting implementation and its automated
 > Debug gate are complete; the corrective app-owned RibbonKit-themed Font/Color/Paragraph pass has passed its refreshed
 > full Debug gate and awaits live visual reacceptance.
-> W3-D structured-content round-trip is dependency-ready but has not started. W3-E is a
-> planned later structured-object interaction packet for context-aware menus, stable contextual state and direct
-> picture/table resizing after W1-E and W3-D. W2-G is now a planned high-risk true editable-pagination packet after
+> W3-D structured-content round-trip and TXT/RTF compatibility fixtures are accepted through design-notes §3.120.
+> W3-E is the next planned structured-object interaction packet for context-aware menus, stable contextual state and
+> direct picture/table resizing after W1-E live reacceptance. W2-G is a planned high-risk true editable-pagination packet after
 > W3-E; it must prove a real editing architecture and may not simulate pages with decorative breaks. Live mixed-monitor
 > DPI movement remains deferred to W4-C. No later
 > implementation is implied.

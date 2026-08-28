@@ -681,7 +681,7 @@
                 <rk:RibbonGroup x:Name="InsertTablesGroup" Header="Table" rk:Ribbon.CommandId="Writer.Insert.Table"
                                 rk:KeyTip.Keys="TB" Icon="{StaticResource Icon.WriterTable}"
                                 AutomationProperties.AutomationId="InsertTablesGroup" AutomationProperties.Name="Table"
-                                AutomationProperties.HelpText="Insert a native table. Table round-trip remains a later W3-D capability.">
+                                AutomationProperties.HelpText="Insert a native table whose supported structure and formatting are preserved in RibbonKit Writer files.">
                     <rk:InRibbonGallery x:Name="TableGridPicker" Width="278" Height="54"
                                         FlowDirection="LeftToRight"
                                         SelectionChanged="OnTableGridSelectionChanged"
@@ -691,10 +691,10 @@
                                         rk:Ribbon.CommandId="Writer.Insert.Table.Grid" rk:KeyTip.Keys="TG"
                                         AutomationProperties.AutomationId="InsertTableGrid"
                                         AutomationProperties.Name="Table grid picker"
-                                        AutomationProperties.HelpText="Use arrow keys for a quick table up to 3 by 8, or choose Custom Table for another supported size. Tables are not yet preserved when saving.">
+                                        AutomationProperties.HelpText="Use arrow keys for a quick table up to 3 by 8, or choose Custom Table for another supported size. RibbonKit Writer files preserve supported tables.">
                         <rk:InRibbonGallery.ToolTip>
                             <rk:RibbonScreenTip Title="Insert Table"
-                                                Description="Choose a quick 1 × 1 through 3 × 8 table, or enter another supported size with Custom Table. Saving tables remains deferred to W3-D." />
+                                                Description="Choose a quick 1 × 1 through 3 × 8 table, or enter another supported size with Custom Table. RibbonKit Writer files preserve supported tables." />
                         </rk:InRibbonGallery.ToolTip>
                     </rk:InRibbonGallery>
                 </rk:RibbonGroup>
@@ -733,7 +733,7 @@
                           ContextualColor="#107C41" Visibility="Collapsed"
                           rk:Ribbon.CommandId="Writer.TableTools" rk:KeyTip.Keys="TT"
                           AutomationProperties.AutomationId="TableToolsTab" AutomationProperties.Name="Table Tools"
-                          AutomationProperties.HelpText="Contextual commands for the table cell containing the editor caret. Table round-trip remains a later W3-D capability.">
+                          AutomationProperties.HelpText="Contextual commands for the table cell containing the editor caret. RibbonKit Writer files preserve supported table structure and formatting.">
                 <rk:RibbonGroup x:Name="TableRowsColumnsGroup" Header="Rows &amp; Columns" rk:Ribbon.CommandId="Writer.TableTools.RowsColumns"
                                 rk:KeyTip.Keys="RC" Icon="{StaticResource Icon.WriterColumns}"
                                 AutomationProperties.AutomationId="TableRowsColumnsGroup" AutomationProperties.Name="Rows and Columns">

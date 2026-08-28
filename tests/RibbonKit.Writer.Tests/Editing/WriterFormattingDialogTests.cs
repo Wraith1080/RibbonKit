@@ -255,11 +255,18 @@ public sealed class WriterFormattingDialogTests
                 color.UpdateLayout();
                 var colorRoot = Assert.IsType<Grid>(color.FindName("LayoutRoot"));
                 var cancel = Assert.IsType<Button>(color.FindName("CancelButton"));
+                var hueSurface = Assert.IsType<Border>(color.FindName("HueSurface"));
+                var hueIndicator = Assert.IsType<Border>(color.FindName("HueIndicator"));
                 var cancelBounds = cancel.TransformToAncestor(colorRoot)
                     .TransformBounds(new Rect(cancel.RenderSize));
+                var hueIndicatorBounds = hueIndicator.TransformToAncestor(hueSurface)
+                    .TransformBounds(new Rect(hueIndicator.RenderSize));
                 Assert.True(cancelBounds.Bottom <= colorRoot.ActualHeight + 0.5);
                 Assert.True(colorRoot.ActualHeight + colorRoot.Margin.Top + colorRoot.Margin.Bottom + 0.5 >=
                             colorRoot.DesiredSize.Height);
+                Assert.InRange(Math.Abs(
+                    (hueIndicatorBounds.Top + hueIndicatorBounds.Height / 2) - hueSurface.ActualHeight / 2),
+                    0, 0.5);
             }
             finally
             {

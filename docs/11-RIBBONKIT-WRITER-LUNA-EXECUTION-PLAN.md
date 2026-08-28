@@ -6,8 +6,8 @@
 > deferred to W4-C because only one display is connected. W1-E Home formatting implementation and its automated Debug
 > gate are complete; the corrective app-owned RibbonKit-themed Font/Color/Paragraph pass has passed its refreshed full
 > Debug gate and awaits live visual reacceptance.
-> W3-D round-trip/RTF compatibility is dependency-ready but has not started. W3-E is planned after
-> W1-E and W3-D for context-aware structured-object menus, stable contextual state and direct picture/table resizing.
+> W3-D round-trip/TXT/RTF compatibility is accepted through design-notes §3.120. W3-E is planned next after
+> W1-E live reacceptance for context-aware structured-object menus, stable contextual state and direct picture/table resizing.
 > W2-G is planned after W3-E as a high-risk true editable-pagination packet; it may not fake page breaks.
 > This document does not schedule future agents or imply that any later Writer packet exists.
 > [`10-RIBBONKIT-WRITER-PLAN.md`](10-RIBBONKIT-WRITER-PLAN.md) owns product scope; current
@@ -539,6 +539,13 @@ including a table spanning preview pages and focused RTL cell input. All Insert 
 ScreenTips, UIA names/patterns and profile-capability state.
 
 ### W3-D — Structured-content round-trip and compatibility fixtures
+
+**Status (2026-08-28): accepted.** Native `.rkw` content schema v2 strictly round-trips supported tables alongside
+formatted text, packaged images, safe hyperlinks and page settings; the outer manifest and settings schemas remain v1,
+and v1 text-content fixtures still load. Inconsistent version declarations, v1 table injection, invalid spans/grids and
+unsafe child objects are rejected before document-session replacement. TXT flattens tables to characters and RTF retains
+representative table text while demonstrably losing merged geometry and exact outer styling, so both continue to advertise
+table fidelity loss. The complete Debug gate passes Writer 396/396, RibbonKit 355/355 and visual 1/1 over 63 images.
 
 **Owns:** cross-feature `.rkw` fixtures, RTF compatibility fixtures and integration tests.
 

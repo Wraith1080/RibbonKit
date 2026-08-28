@@ -38,9 +38,9 @@ public static class WriterPersistenceCapabilityCatalog
         WriterDocumentFormat.RibbonKitWriter => new(
             PreservesFormatting: true,
             PreservesImages: true,
-            PreservesTables: false,
+            PreservesTables: true,
             PreservesPageSettings: true,
-            "RibbonKit Writer preserves supported text formatting, portable images, hyperlinks and page settings; tables remain a later structured-content slice.")
+            "RibbonKit Writer preserves supported text formatting, portable images, hyperlinks, tables and page settings.")
         {
             PreservesHyperlinks = true
         },

@@ -43,9 +43,9 @@ public enum WriterDocumentCommandCapabilities
     Printing = 1 << 9,
 
     /// <summary>
-    /// Edit native FlowDocument tables in the live editor. This capability is deliberately
-    /// independent from <see cref="WriterPersistenceCapabilities.PreservesTables"/> while the
-    /// later structured-content round-trip packet is pending.
+    /// Edit native FlowDocument tables in the live editor. This command capability remains
+    /// independent from <see cref="WriterPersistenceCapabilities.PreservesTables"/> so formats
+    /// can describe editing and persistence separately.
     /// </summary>
     TableEditing = 1 << 10
 }
