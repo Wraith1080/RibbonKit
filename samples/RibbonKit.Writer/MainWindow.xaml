@@ -1140,6 +1140,12 @@
             <preview:WriterDocumentPreviewView x:Name="PreviewView" Visibility="Collapsed"
                                                AutomationProperties.AutomationId="DocumentPreview"
                                                AutomationProperties.Name="Print layout preview" />
+            <Border x:Name="PreviewTopSeparator" Panel.ZIndex="25"
+                    Height="1" VerticalAlignment="Top" IsHitTestVisible="False"
+                    Background="{DynamicResource RibbonKit.Brushes.Ribbon.Border}"
+                    Visibility="{Binding Visibility, ElementName=PreviewView}"
+                    AutomationProperties.AutomationId="PreviewTopSeparator"
+                    AutomationProperties.Name="Ribbon and print preview separator" />
             <Border x:Name="PreviewPendingOverlay" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center"
                     Padding="20,12" Background="{DynamicResource RibbonKit.Brushes.Control.SurfaceBackground}"
                     BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}" BorderThickness="1"
