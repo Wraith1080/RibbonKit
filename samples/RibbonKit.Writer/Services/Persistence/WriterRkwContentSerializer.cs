@@ -47,7 +47,10 @@ internal static partial class WriterRkwContentSerializer
     {
         "Section", "Paragraph", "List", "ListItem",
         "Run", "Span", "Bold", "Italic", "Underline", "LineBreak",
-        "Hyperlink", "InlineUIContainer", "Image", "Image.Source", "BitmapImage"
+        "Hyperlink", "InlineUIContainer", "Image", "Image.Source", "BitmapImage",
+        "Run.TextDecorations", "Span.TextDecorations", "Bold.TextDecorations",
+        "Italic.TextDecorations", "Underline.TextDecorations", "Hyperlink.TextDecorations",
+        "InlineUIContainer.TextDecorations", "TextDecorationCollection", "TextDecoration"
     };
 
     private static readonly IReadOnlyDictionary<string, string> ImageContentTypes =
@@ -377,7 +380,7 @@ internal static partial class WriterRkwContentSerializer
         {
             if (attribute.IsNamespaceDeclaration)
             {
-                if (element.Name.LocalName != "Section"
+                if (element.Name.LocalName is not ("Section" or "TextDecorationCollection")
                     || attribute.Name.LocalName != "xmlns" || attribute.Value != PresentationNamespace)
                     throw new InvalidDataException("The native document contains an unsupported XML namespace.");
                 continue;
@@ -410,6 +413,7 @@ internal static partial class WriterRkwContentSerializer
                 || attribute.Value.Contains('\\'))
                 throw new InvalidDataException("The native document contains an unsafe attribute value.");
         }
+        ValidateTextDecorationShape(element);
     }
 
     private static FlowDocument BuildDocument(XDocument source,
@@ -513,6 +517,8 @@ internal static partial class WriterRkwContentSerializer
             }
             if (node is not XElement element)
                 throw new InvalidDataException("The native document contains unsupported inline content.");
+            if (element.Name.LocalName.EndsWith(".TextDecorations", StringComparison.Ordinal))
+                continue;
 
             Inline inline = element.Name.LocalName switch
             {
@@ -532,7 +538,8 @@ internal static partial class WriterRkwContentSerializer
 
     private static Run BuildRun(XElement element)
     {
-        if (element.Elements().Any())
+        if (element.Elements().Any(child =>
+                child.Name.LocalName != "Run.TextDecorations"))
             throw new InvalidDataException("A native Run cannot contain child elements.");
         var run = new Run(string.Concat(element.Nodes().OfType<XText>().Select(text => text.Value)));
         ApplyTextProperties(element, run);
@@ -580,7 +587,9 @@ internal static partial class WriterRkwContentSerializer
     {
         if (element.Nodes().OfType<XText>().Any(text => !string.IsNullOrWhiteSpace(text.Value)))
             throw new InvalidDataException("An inline UI container contains unsupported text.");
-        var children = element.Elements().ToArray();
+        var children = element.Elements()
+            .Where(child => child.Name.LocalName != "InlineUIContainer.TextDecorations")
+            .ToArray();
         if (children.Length != 1 || children[0].Name.LocalName != "Image")
             throw new InvalidDataException("Only one inert image is supported in an inline UI container.");
 
@@ -731,6 +740,11 @@ internal static partial class WriterRkwContentSerializer
                 or "FlowDirection" or "BaselineAlignment" or "TextDecorations"
                 or "NavigateUri",
             "InlineUIContainer" => attributeName is "BaselineAlignment" or "TextDecorations",
+            "Run.TextDecorations" or "Span.TextDecorations" or "Bold.TextDecorations"
+                or "Italic.TextDecorations" or "Underline.TextDecorations"
+                or "Hyperlink.TextDecorations" or "InlineUIContainer.TextDecorations"
+                or "TextDecorationCollection" => false,
+            "TextDecoration" => attributeName is "Location",
             "Image" => attributeName is "Width" or "Height" or "MaxWidth" or "MaxHeight"
                 or "MinWidth" or "MinHeight" or "Stretch" or "SnapsToDevicePixels",
             "Image.Source" => false,
@@ -809,6 +823,67 @@ internal static partial class WriterRkwContentSerializer
             inline.BaselineAlignment = ParseEnum<BaselineAlignment>(baselineAlignment, "baseline alignment");
         if (TryAttribute(source, "TextDecorations", out var decorations))
             inline.TextDecorations = ParseTextDecorations(decorations);
+        var propertyName = source.Name.LocalName + ".TextDecorations";
+        var propertyElements = source.Elements()
+            .Where(element => element.Name.LocalName == propertyName)
+            .ToArray();
+        if (propertyElements.Length > 1 ||
+            (propertyElements.Length == 1 && TryAttribute(source, "TextDecorations", out _)))
+            throw new InvalidDataException("A native inline has duplicate text decorations.");
+        if (propertyElements.Length == 1)
+            inline.TextDecorations = ParseTextDecorationProperty(propertyElements[0]);
+    }
+
+    private static TextDecorationCollection ParseTextDecorationProperty(XElement propertyElement)
+    {
+        var collection = propertyElement.Elements().Single();
+        var result = new TextDecorationCollection();
+        foreach (var element in collection.Elements())
+        {
+            if (!TryAttribute(element, "Location", out var location))
+                throw new InvalidDataException("A native text decoration is missing its location.");
+            result.Add(location switch
+            {
+                "Underline" => TextDecorations.Underline[0],
+                "Strikethrough" => TextDecorations.Strikethrough[0],
+                "OverLine" => TextDecorations.OverLine[0],
+                "Baseline" => TextDecorations.Baseline[0],
+                _ => throw new InvalidDataException("The native document has unsupported text decorations.")
+            });
+        }
+        return result;
+    }
+
+    private static void ValidateTextDecorationShape(XElement element)
+    {
+        var name = element.Name.LocalName;
+        if (name.EndsWith(".TextDecorations", StringComparison.Ordinal))
+        {
+            var expectedOwner = name[..name.IndexOf('.')];
+            var children = element.Elements().ToArray();
+            if (element.Parent?.Name.LocalName != expectedOwner || children.Length != 1 ||
+                children[0].Name.LocalName != "TextDecorationCollection" ||
+                element.Nodes().OfType<XText>().Any(text => !string.IsNullOrWhiteSpace(text.Value)))
+                throw new InvalidDataException("A native text-decoration property has an invalid shape.");
+            return;
+        }
+        if (name == "TextDecorationCollection")
+        {
+            var children = element.Elements().ToArray();
+            if (element.Parent?.Name.LocalName.EndsWith(".TextDecorations", StringComparison.Ordinal) != true ||
+                children.Length is < 1 or > 4 || children.Any(child => child.Name.LocalName != "TextDecoration") ||
+                element.Nodes().OfType<XText>().Any(text => !string.IsNullOrWhiteSpace(text.Value)))
+                throw new InvalidDataException("A native text-decoration collection has an invalid shape.");
+            return;
+        }
+        if (name == "TextDecoration" &&
+            (element.Parent?.Name.LocalName != "TextDecorationCollection" || element.Elements().Any() ||
+             element.Nodes().OfType<XText>().Any(text => !string.IsNullOrWhiteSpace(text.Value)) ||
+             !TryAttribute(element, "Location", out var location) ||
+             location is not ("Underline" or "Strikethrough" or "OverLine" or "Baseline")))
+        {
+            throw new InvalidDataException("A native text decoration has an invalid shape.");
+        }
     }
 
     private static bool TryAttribute(XElement element, string name, out string value)

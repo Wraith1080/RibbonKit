@@ -5376,6 +5376,17 @@ values rather than mixed blanks, while genuinely mixed formatting may remain uns
 earlier 125%-DPI clipping risk. Font-family ribbon synchronization also now preserves an active editable/dropdown
 session, so typing a search prefix is not overwritten by the editor's current value.
 
+A second 2026-08-28 live follow-up simplifies each quick colour popup to Automatic/No Color plus ten base standard
+colours; accent/background entries and light/dark variants are removed. More Colors retains exact Hex/RGB entry and
+adds a compact keyboard- and pointer-operable saturation/brightness field with a hue strip. The Font dialog's family
+field now uses a bounded grid column with additional trailing space at the observed DPI. Its Effects card adds
+underline, mutually exclusive single/double strikethrough and mutually exclusive superscript/subscript with a live
+preview. These are real selection properties rather than decorative controls: they publish selection state, commit in
+one native undo change and clear/undo correctly. Double strikethrough uses a deterministic two-line composition of
+WPF's predefined Strikethrough and Baseline decorations. The strict `.rkw` reader now accepts only the exact bounded
+`TextDecorationCollection` property graph emitted by XamlPackage, rejects custom pens/locations/object children and
+round-trips those effects with `BaselineAlignment`; no arbitrary XAML loading or RibbonKit runtime change is involved.
+
 Editor Tab handling is capability-aware and yields first to W3-C table-cell routing. At paragraph boundaries Tab and
 Shift+Tab indent or outdent, Ctrl+Tab inserts a literal tab, plain mid-paragraph Tab remains literal, Shift+Tab at a
 mid-paragraph caret is left unhandled, and F6/Shift+F6 use the explicit focus-exit seam. The Writer-owned modern context
@@ -5388,7 +5399,7 @@ The implementation stays under `samples/RibbonKit.Writer/**` and its tests; no `
 Independent Luna review of the original W1-E slice found no confirmed product-code defect in Apply/OK suppression, Color cancel/black
 handling, native ownership, context-target restoration or table-Tab bypass. Its two test-hygiene findings were fixed:
 the new clipboard test restores prior clipboard data and all shown context-menu test windows close deterministically.
-The refreshed complete Debug gate passes Writer **384/384**, RibbonKit **355/355** and the visual suite **1/1** over 63
+The refreshed complete Debug gate passes Writer **388/388**, RibbonKit **355/355** and the visual suite **1/1** over 63
 approved images after a zero-warning/error solution build. Live visual reacceptance of the themed Font/Color dialogs, corrected
 Paragraph dialog and representative ribbon/context-menu states remains pending, so W1-E is not yet marked visually
 accepted.
@@ -5580,6 +5591,11 @@ accepted.
   Paragraph dialogs with no WinForms dependency; live visual reacceptance of those dialogs remains pending. The newly
   planned W2-G packet owns true editable pagination after W3-E and explicitly rejects decorative or content-injected
   fake page breaks.
+- 2026-08-28 after the second §3.119 live follow-up: the inventory is 743 logic tests plus one visual test covering
+  63 approved images. Writer passes **388/388**, RibbonKit passes **355/355**, the visual suite passes **1/1**, and the
+  Debug solution build has zero warnings/errors. The quick colour menu now exposes only base colours; More Colors has
+  an HSV field/hue strip; and Font supports single/double strikethrough plus superscript/subscript with native undo and
+  strictly validated `.rkw` round-trip. Refreshed live visual acceptance remains pending.
 - Before quoting a current count or declaring a new change complete, rerun the proportional build
   and test commands. Inspect actual/diff PNG artifacts before changing visual baselines or
   tolerances.

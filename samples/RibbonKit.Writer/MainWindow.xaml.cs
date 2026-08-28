@@ -882,6 +882,12 @@ public partial class MainWindow : RibbonWindow
             state.Italic.IsUniform && state.Italic.Value ? FontStyles.Italic : FontStyles.Normal,
             state.Bold.IsUniform && state.Bold.Value ? FontWeights.Bold : FontWeights.Normal,
             state.Underline.IsUniform && state.Underline.Value,
+            state.Strikethrough.IsUniform
+                ? state.Strikethrough.Value
+                : WriterStrikethroughStyle.None,
+            state.BaselineEffect.IsUniform
+                ? state.BaselineEffect.Value
+                : WriterBaselineEffect.Normal,
             state.Foreground.IsUniform ? state.Foreground.Value ?? Colors.Black : Colors.Black);
         var dialog = new WriterFontDialog(initial, EditingController.FontCatalog, this);
         WriterFontDialogResult? lastApplied = null;
@@ -907,7 +913,9 @@ public partial class MainWindow : RibbonWindow
             selection.Style,
             selection.Weight,
             selection.Color,
-            selection.Underline);
+            selection.Underline,
+            selection.Strikethrough,
+            selection.BaselineEffect);
         EditingController.FontCatalog.RememberRecent(selection.Family);
         QueueEditorFocus();
     }

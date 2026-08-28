@@ -13,6 +13,8 @@ public sealed record WriterFontDialogResult(
     FontStyle Style,
     FontWeight Weight,
     bool Underline,
+    WriterStrikethroughStyle Strikethrough,
+    WriterBaselineEffect BaselineEffect,
     Color Color);
 
 /// <summary>A RibbonKit-themed Writer font dialog with transactional Apply/OK behavior.</summary>
@@ -24,6 +26,7 @@ public partial class WriterFontDialog : Window
     private readonly List<ComboBox> _editableFields = new();
     private Color _selectedColor;
     private bool _initialized;
+    private bool _updatingEffects;
 
     /// <summary>Creates a font dialog from one complete initial value.</summary>
     public WriterFontDialog(
@@ -47,7 +50,13 @@ public partial class WriterFontDialog : Window
         FontFamilyBox.Text = initial.Family.Source;
         FontStyleBox.SelectedIndex = StyleIndex(initial.Style, initial.Weight);
         FontSizeBox.Text = initial.SizePoints.ToString("0.##", CultureInfo.CurrentCulture);
+        _updatingEffects = true;
         UnderlineBox.IsChecked = initial.Underline;
+        StrikethroughBox.IsChecked = initial.Strikethrough == WriterStrikethroughStyle.Single;
+        DoubleStrikethroughBox.IsChecked = initial.Strikethrough == WriterStrikethroughStyle.Double;
+        SuperscriptBox.IsChecked = initial.BaselineEffect == WriterBaselineEffect.Superscript;
+        SubscriptBox.IsChecked = initial.BaselineEffect == WriterBaselineEffect.Subscript;
+        _updatingEffects = false;
         _selectedColor = initial.Color;
 
         _editableFields.AddRange(new ComboBox[] { FontFamilyBox, FontSizeBox });
@@ -73,12 +82,40 @@ public partial class WriterFontDialog : Window
                first.Style == second.Style &&
                first.Weight == second.Weight &&
                first.Underline == second.Underline &&
+               first.Strikethrough == second.Strikethrough &&
+               first.BaselineEffect == second.BaselineEffect &&
                first.Color == second.Color;
     }
 
     private void OnEditableTextChanged(object? sender, EventArgs e) => UpdateState();
 
-    private void OnInputChanged(object sender, RoutedEventArgs e) => UpdateState();
+    private void OnInputChanged(object sender, RoutedEventArgs e)
+    {
+        if (!_updatingEffects)
+            UpdateState();
+    }
+
+    private void OnStrikethroughChanged(object sender, RoutedEventArgs e) =>
+        SelectExclusiveEffect(DoubleStrikethroughBox);
+
+    private void OnDoubleStrikethroughChanged(object sender, RoutedEventArgs e) =>
+        SelectExclusiveEffect(StrikethroughBox);
+
+    private void OnSuperscriptChanged(object sender, RoutedEventArgs e) =>
+        SelectExclusiveEffect(SubscriptBox);
+
+    private void OnSubscriptChanged(object sender, RoutedEventArgs e) =>
+        SelectExclusiveEffect(SuperscriptBox);
+
+    private void SelectExclusiveEffect(System.Windows.Controls.Primitives.ToggleButton counterpart)
+    {
+        if (_updatingEffects)
+            return;
+        _updatingEffects = true;
+        counterpart.IsChecked = false;
+        _updatingEffects = false;
+        UpdateState();
+    }
 
     private void OnChooseColor(object sender, RoutedEventArgs e)
     {
@@ -122,8 +159,10 @@ public partial class WriterFontDialog : Window
         PreviewText.FontSize = WriterFontSizePolicy.PointsToDip(result.SizePoints);
         PreviewText.FontStyle = result.Style;
         PreviewText.FontWeight = result.Weight;
-        PreviewText.TextDecorations = result.Underline ? TextDecorations.Underline : null;
         PreviewText.Foreground = CreateBrush(result.Color);
+        PreviewRun.TextDecorations = WriterFontEffects.CreateDecorations(
+            result.Underline, result.Strikethrough);
+        PreviewRun.BaselineAlignment = WriterFontEffects.ToBaselineAlignment(result.BaselineEffect);
     }
 
     private bool TryBuildResult(out WriterFontDialogResult result, out string message)
@@ -164,6 +203,16 @@ public partial class WriterFontDialog : Window
             style,
             weight,
             UnderlineBox.IsChecked == true,
+            DoubleStrikethroughBox.IsChecked == true
+                ? WriterStrikethroughStyle.Double
+                : StrikethroughBox.IsChecked == true
+                    ? WriterStrikethroughStyle.Single
+                    : WriterStrikethroughStyle.None,
+            SuperscriptBox.IsChecked == true
+                ? WriterBaselineEffect.Superscript
+                : SubscriptBox.IsChecked == true
+                    ? WriterBaselineEffect.Subscript
+                    : WriterBaselineEffect.Normal,
             _selectedColor);
         message = string.Empty;
         return true;

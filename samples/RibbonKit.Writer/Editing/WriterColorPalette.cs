@@ -110,33 +110,19 @@ public sealed class WriterColorPalette
     public const int DefaultRecentLimit = 8;
 
     private static readonly IReadOnlyList<WriterColorEntry> DefaultTheme =
-        CreateReadOnlyEntries(
-            new WriterColorEntry("theme-text-1", "Text 1", Color.FromRgb(0x00, 0x00, 0x00), WriterColorEntryKind.Theme),
-            new WriterColorEntry("theme-text-2", "Text 2", Color.FromRgb(0x59, 0x59, 0x59), WriterColorEntryKind.Theme),
-            new WriterColorEntry("theme-background-1", "Background 1", Color.FromRgb(0xFF, 0xFF, 0xFF), WriterColorEntryKind.Theme),
-            new WriterColorEntry("theme-background-2", "Background 2", Color.FromRgb(0xF2, 0xF2, 0xF2), WriterColorEntryKind.Theme),
-            new WriterColorEntry("theme-accent-1", "Accent 1", Color.FromRgb(0x44, 0x72, 0xC4), WriterColorEntryKind.Theme),
-            new WriterColorEntry("theme-accent-2", "Accent 2", Color.FromRgb(0xED, 0x7D, 0x31), WriterColorEntryKind.Theme),
-            new WriterColorEntry("theme-accent-3", "Accent 3", Color.FromRgb(0xA5, 0xA5, 0xA5), WriterColorEntryKind.Theme),
-            new WriterColorEntry("theme-accent-4", "Accent 4", Color.FromRgb(0xFF, 0xC0, 0x00), WriterColorEntryKind.Theme),
-            new WriterColorEntry("theme-accent-5", "Accent 5", Color.FromRgb(0x5B, 0x9B, 0xD5), WriterColorEntryKind.Theme),
-            new WriterColorEntry("theme-accent-6", "Accent 6", Color.FromRgb(0x70, 0xAD, 0x47), WriterColorEntryKind.Theme));
+        Array.Empty<WriterColorEntry>();
 
     private static readonly IReadOnlyList<WriterColorEntry> DefaultStandard =
         CreateReadOnlyEntries(
             new WriterColorEntry("standard-black", "Black", Color.FromRgb(0x00, 0x00, 0x00), WriterColorEntryKind.Standard),
-            new WriterColorEntry("standard-dark-gray", "Dark Gray", Color.FromRgb(0x66, 0x66, 0x66), WriterColorEntryKind.Standard),
             new WriterColorEntry("standard-gray", "Gray", Color.FromRgb(0x99, 0x99, 0x99), WriterColorEntryKind.Standard),
-            new WriterColorEntry("standard-light-gray", "Light Gray", Color.FromRgb(0xCC, 0xCC, 0xCC), WriterColorEntryKind.Standard),
             new WriterColorEntry("standard-white", "White", Color.FromRgb(0xFF, 0xFF, 0xFF), WriterColorEntryKind.Standard),
-            new WriterColorEntry("standard-dark-red", "Dark Red", Color.FromRgb(0x9C, 0x00, 0x06), WriterColorEntryKind.Standard),
             new WriterColorEntry("standard-red", "Red", Color.FromRgb(0xFF, 0x00, 0x00), WriterColorEntryKind.Standard),
             new WriterColorEntry("standard-orange", "Orange", Color.FromRgb(0xF7, 0x96, 0x46), WriterColorEntryKind.Standard),
             new WriterColorEntry("standard-yellow", "Yellow", Color.FromRgb(0xFF, 0xFF, 0x00), WriterColorEntryKind.Standard),
             new WriterColorEntry("standard-green", "Green", Color.FromRgb(0x00, 0xB0, 0x50), WriterColorEntryKind.Standard),
             new WriterColorEntry("standard-cyan", "Cyan", Color.FromRgb(0x00, 0xB0, 0xF0), WriterColorEntryKind.Standard),
             new WriterColorEntry("standard-blue", "Blue", Color.FromRgb(0x00, 0x70, 0xC0), WriterColorEntryKind.Standard),
-            new WriterColorEntry("standard-dark-blue", "Dark Blue", Color.FromRgb(0x00, 0x20, 0x60), WriterColorEntryKind.Standard),
             new WriterColorEntry("standard-purple", "Purple", Color.FromRgb(0x70, 0x30, 0xA0), WriterColorEntryKind.Standard));
 
     private readonly IReadOnlyList<WriterColorEntry> _themeColors;

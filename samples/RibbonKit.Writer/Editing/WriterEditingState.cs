@@ -111,6 +111,8 @@ public sealed class WriterEditingState
         WriterSelectionValue<bool> bold,
         WriterSelectionValue<bool> italic,
         WriterSelectionValue<bool> underline,
+        WriterSelectionValue<WriterStrikethroughStyle> strikethrough,
+        WriterSelectionValue<WriterBaselineEffect> baselineEffect,
         WriterSelectionValue<Color?> foreground,
         WriterSelectionValue<Color?> highlight,
         WriterSelectionValue<TextAlignment> alignment,
@@ -139,6 +141,8 @@ public sealed class WriterEditingState
         Bold = bold;
         Italic = italic;
         Underline = underline;
+        Strikethrough = strikethrough;
+        BaselineEffect = baselineEffect;
         Foreground = foreground;
         Highlight = highlight;
         Alignment = alignment;
@@ -200,6 +204,12 @@ public sealed class WriterEditingState
     /// <summary>Gets the selected underline state.</summary>
     public WriterSelectionValue<bool> Underline { get; }
 
+    /// <summary>Gets the selected single/double strikethrough state.</summary>
+    public WriterSelectionValue<WriterStrikethroughStyle> Strikethrough { get; }
+
+    /// <summary>Gets the selected normal/superscript/subscript state.</summary>
+    public WriterSelectionValue<WriterBaselineEffect> BaselineEffect { get; }
+
     /// <summary>Gets the selected foreground colour, or a non-uniform state for mixed/unsupported brushes.</summary>
     public WriterSelectionValue<Color?> Foreground { get; }
 
@@ -250,6 +260,8 @@ public sealed class WriterEditingState
         WriterSelectionValue<bool>.Unset(),
         WriterSelectionValue<bool>.Unset(),
         WriterSelectionValue<bool>.Unset(),
+        WriterSelectionValue<WriterStrikethroughStyle>.Unset(),
+        WriterSelectionValue<WriterBaselineEffect>.Unset(),
         WriterSelectionValue<Color?>.Unset(),
         WriterSelectionValue<Color?>.Unset(),
         WriterSelectionValue<TextAlignment>.Unset(),

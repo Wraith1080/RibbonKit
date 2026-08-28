@@ -32,7 +32,7 @@
         </ResourceDictionary>
     </Window.Resources>
 
-    <Grid Margin="24">
+    <Grid x:Name="LayoutRoot" Margin="24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -46,7 +46,8 @@
                    TextWrapping="Wrap"
                    Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
 
-        <Border Grid.Row="1" Margin="0,14,0,0" Style="{StaticResource FontSectionStyle}">
+        <Border x:Name="TypefaceSection" Grid.Row="1" Margin="0,14,0,0"
+                Style="{StaticResource FontSectionStyle}">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -55,20 +56,26 @@
                 </Grid.RowDefinitions>
                 <TextBlock Text="Typeface" Style="{StaticResource FontSectionHeaderStyle}" />
 
-                <TextBlock Grid.Row="1" Text="Font family" Style="{StaticResource FontLabelStyle}" />
-                <rk:RibbonComboBox x:Name="FontFamilyBox" Grid.Row="1" Margin="104,0,0,0"
-                                   InputWidth="486" IsEditable="True" IsTextSearchEnabled="True"
-                                   TextSearch.TextPath="DisplayName"
-                                   SelectionChanged="OnInputChanged"
-                                   AutomationProperties.AutomationId="FontDialogFamily"
-                                   AutomationProperties.Name="Font family">
-                    <rk:RibbonComboBox.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding DisplayName}" FontFamily="{Binding FontFamily}"
-                                       TextTrimming="CharacterEllipsis" />
-                        </DataTemplate>
-                    </rk:RibbonComboBox.ItemTemplate>
-                </rk:RibbonComboBox>
+                <Grid Grid.Row="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="104" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Font family" Style="{StaticResource FontLabelStyle}" />
+                    <rk:RibbonComboBox x:Name="FontFamilyBox" Grid.Column="1"
+                                       InputWidth="474" IsEditable="True" IsTextSearchEnabled="True"
+                                       TextSearch.TextPath="DisplayName"
+                                       SelectionChanged="OnInputChanged"
+                                       AutomationProperties.AutomationId="FontDialogFamily"
+                                       AutomationProperties.Name="Font family">
+                        <rk:RibbonComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding DisplayName}" FontFamily="{Binding FontFamily}"
+                                           TextTrimming="CharacterEllipsis" />
+                            </DataTemplate>
+                        </rk:RibbonComboBox.ItemTemplate>
+                    </rk:RibbonComboBox>
+                </Grid>
 
                 <Grid Grid.Row="2" Margin="0,8,0,0">
                     <Grid.ColumnDefinitions>
@@ -117,6 +124,7 @@
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <StackPanel>
@@ -125,8 +133,27 @@
                                        Checked="OnInputChanged" Unchecked="OnInputChanged"
                                        AutomationProperties.AutomationId="FontDialogUnderline"
                                        AutomationProperties.Name="Underline" />
+                    <rk:RibbonCheckBox x:Name="StrikethroughBox" Header="Strikethrough" Margin="0,6,0,0"
+                                       Checked="OnStrikethroughChanged" Unchecked="OnInputChanged"
+                                       AutomationProperties.AutomationId="FontDialogStrikethrough"
+                                       AutomationProperties.Name="Strikethrough" />
+                    <rk:RibbonCheckBox x:Name="DoubleStrikethroughBox" Header="Double strikethrough" Margin="0,6,0,0"
+                                       Checked="OnDoubleStrikethroughChanged" Unchecked="OnInputChanged"
+                                       AutomationProperties.AutomationId="FontDialogDoubleStrikethrough"
+                                       AutomationProperties.Name="Double strikethrough" />
                 </StackPanel>
-                <StackPanel Grid.Column="1">
+                <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                    <TextBlock Text="Position" Style="{StaticResource FontSectionHeaderStyle}" />
+                    <rk:RibbonCheckBox x:Name="SuperscriptBox" Header="Superscript" Margin="0,10,0,0"
+                                       Checked="OnSuperscriptChanged" Unchecked="OnInputChanged"
+                                       AutomationProperties.AutomationId="FontDialogSuperscript"
+                                       AutomationProperties.Name="Superscript" />
+                    <rk:RibbonCheckBox x:Name="SubscriptBox" Header="Subscript" Margin="0,6,0,0"
+                                       Checked="OnSubscriptChanged" Unchecked="OnInputChanged"
+                                       AutomationProperties.AutomationId="FontDialogSubscript"
+                                       AutomationProperties.Name="Subscript" />
+                </StackPanel>
+                <StackPanel Grid.Column="2">
                     <TextBlock Text="Font color" Style="{StaticResource FontSectionHeaderStyle}" />
                     <Button x:Name="ColorButton" Margin="0,8,0,0"
                             Style="{DynamicResource OptionsDialogActionButtonStyle}"
@@ -156,8 +183,10 @@
                         Background="{DynamicResource RibbonKit.Brushes.Control.SurfaceBackground}"
                         BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}" BorderThickness="1"
                         CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}">
-                    <TextBlock x:Name="PreviewText" Text="Aa Bb Cc 123" FontSize="28"
-                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    <TextBlock x:Name="PreviewText" FontSize="28"
+                               HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Run x:Name="PreviewRun" Text="Aa Bb Cc 123" />
+                    </TextBlock>
                 </Border>
             </Grid>
         </Border>
@@ -178,7 +207,7 @@
                     Style="{DynamicResource OptionsDialogPrimaryButtonStyle}"
                     Click="OnOk" AutomationProperties.AutomationId="OkFont"
                     AutomationProperties.Name="Accept font changes" />
-            <Button Content="Cancel" Margin="10,0,0,0" IsCancel="True"
+            <Button x:Name="CancelButton" Content="Cancel" Margin="10,0,0,0" IsCancel="True"
                     Style="{DynamicResource OptionsDialogActionButtonStyle}"
                     AutomationProperties.AutomationId="CancelFont"
                     AutomationProperties.Name="Cancel font changes" />

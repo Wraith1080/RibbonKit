@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Windows;
 using System.Windows.Documents;
 using System.Windows.Media;
+using RibbonKit.Writer.Editing;
 using RibbonKit.Writer.Models;
 using RibbonKit.Writer.Services.Documents;
 using RibbonKit.Writer.Services.Persistence;
@@ -14,6 +15,55 @@ namespace RibbonKit.Writer.Tests.Persistence;
 
 public sealed class WriterRkwPersistenceTests
 {
+    [Fact]
+    public async Task NativePackageRoundTripsFontDialogStrikeAndBaselineEffects()
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            using var directory = new TemporaryDirectory();
+            var path = Path.Combine(directory.Path, "font-effects.rkw");
+            var run = new Run("effects")
+            {
+                TextDecorations = WriterFontEffects.CreateDecorations(
+                    underline: true, WriterStrikethroughStyle.Double),
+                BaselineAlignment = BaselineAlignment.Superscript
+            };
+            var source = new WriterDocument(new FlowDocument(new Paragraph(run)));
+            var persistence = new WriterDocumentPersistence();
+
+            Assert.True(await persistence.SaveAsync(source, path,
+                WriterDocumentFormat.RibbonKitWriter, default));
+            var loaded = await persistence.LoadAsync(path,
+                WriterDocumentFormat.RibbonKitWriter, default);
+
+            var paragraph = Assert.IsType<Paragraph>(loaded!.Content.Blocks.FirstBlock);
+            var inline = Assert.IsAssignableFrom<Inline>(paragraph.Inlines.FirstInline);
+            Assert.Equal(BaselineAlignment.Superscript, inline.BaselineAlignment);
+            Assert.Contains(inline.TextDecorations, decoration =>
+                decoration.Location == TextDecorationLocation.Underline);
+            Assert.Equal(WriterStrikethroughStyle.Double,
+                WriterFontEffects.ReadStrikethrough(inline.TextDecorations));
+        });
+    }
+
+    [Fact]
+    public async Task NativePackageRejectsUnsafeTextDecorationGraphs()
+    {
+        const string prefix = "<Section xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\"><Paragraph><Run><Run.TextDecorations><TextDecorationCollection>";
+        const string suffix = "</TextDecorationCollection></Run.TextDecorations>effects</Run></Paragraph></Section>";
+        foreach (var decoration in new[]
+                 {
+                     "<TextDecoration Location=\"DropShadow\" />",
+                     "<TextDecoration Location=\"Strikethrough\" PenOffset=\"2\" />",
+                     "<Button />"
+                 })
+        {
+            await AssertInvalidContentAsync(RkwPackageFixture.CreateInnerXamlPackage(
+                prefix + decoration + suffix));
+        }
+    }
+
+
     [Fact]
     public async Task NativePackageRoundTripsAllowedFormattingListsAndPageSettings()
     {

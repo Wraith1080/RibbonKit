@@ -185,6 +185,15 @@ public sealed class WriterFormattingModelsTests
         Assert.Equal(noColor, palette.HighlightPrimaryAction);
         Assert.Equal(automatic, palette.GetEntries(WriterColorTarget.Foreground).First());
         Assert.Equal(noColor, palette.GetEntries(WriterColorTarget.Highlight).First());
+        Assert.Empty(WriterColorPalette.DefaultThemeColors);
+        Assert.DoesNotContain(WriterColorPalette.DefaultStandardColors, entry =>
+            entry.DisplayName.Contains("Accent", StringComparison.OrdinalIgnoreCase) ||
+            entry.DisplayName.Contains("Background", StringComparison.OrdinalIgnoreCase) ||
+            entry.DisplayName.Contains("Light", StringComparison.OrdinalIgnoreCase) ||
+            entry.DisplayName.Contains("Dark", StringComparison.OrdinalIgnoreCase));
+        Assert.Equal(
+            new[] { "Black", "Gray", "White", "Red", "Orange", "Yellow", "Green", "Cyan", "Blue", "Purple" },
+            WriterColorPalette.DefaultStandardColors.Select(entry => entry.DisplayName));
     }
 
     [Fact]

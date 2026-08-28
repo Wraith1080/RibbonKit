@@ -367,6 +367,7 @@ public sealed class WriterEditingAdapter : IDisposable
             range.ApplyPropertyValue(TextElement.FontStyleProperty, FontStyles.Normal);
             range.ApplyPropertyValue(TextElement.FontStretchProperty, FontStretches.Normal);
             range.ApplyPropertyValue(Inline.TextDecorationsProperty, null);
+            range.ApplyPropertyValue(Inline.BaselineAlignmentProperty, BaselineAlignment.Baseline);
             range.ApplyPropertyValue(TextElement.ForegroundProperty, Editor.Document.Foreground);
             range.ApplyPropertyValue(TextElement.BackgroundProperty, null);
         }
@@ -375,10 +376,15 @@ public sealed class WriterEditingAdapter : IDisposable
 
     /// <summary>Applies the non-null values committed by the transactional Font dialog.</summary>
     public void ApplyFontDialogValues(FontFamily? family, double? sizeInDips, FontStyle? style,
-        FontWeight? weight, Color? foreground, bool? underline)
+        FontWeight? weight, Color? foreground, bool? underline,
+        WriterStrikethroughStyle? strikethrough, WriterBaselineEffect? baselineEffect)
     {
         if (sizeInDips.HasValue && !IsValidFontSize(sizeInDips.Value, out _))
             throw new ArgumentOutOfRangeException(nameof(sizeInDips));
+        if (strikethrough.HasValue && !Enum.IsDefined(strikethrough.Value))
+            throw new ArgumentOutOfRangeException(nameof(strikethrough));
+        if (baselineEffect.HasValue && !Enum.IsDefined(baselineEffect.Value))
+            throw new ArgumentOutOfRangeException(nameof(baselineEffect));
         if (!CanFormat)
             return;
 
@@ -395,9 +401,22 @@ public sealed class WriterEditingAdapter : IDisposable
                 range.ApplyPropertyValue(TextElement.FontWeightProperty, weight.Value);
             if (foreground.HasValue)
                 range.ApplyPropertyValue(TextElement.ForegroundProperty, new SolidColorBrush(foreground.Value));
-            if (underline.HasValue)
+            if (underline.HasValue || strikethrough.HasValue)
+            {
+                var currentDecorations = range.GetPropertyValue(Inline.TextDecorationsProperty)
+                    as TextDecorationCollection;
+                var resolvedUnderline = underline ?? (currentDecorations?.Any(decoration =>
+                    decoration.Location == TextDecorationLocation.Underline) == true);
+                var resolvedStrike = strikethrough ??
+                    WriterFontEffects.ReadStrikethrough(currentDecorations);
                 range.ApplyPropertyValue(Inline.TextDecorationsProperty,
-                    underline.Value ? TextDecorations.Underline : null);
+                    WriterFontEffects.CreateDecorations(resolvedUnderline, resolvedStrike));
+            }
+            if (baselineEffect.HasValue)
+            {
+                range.ApplyPropertyValue(Inline.BaselineAlignmentProperty,
+                    WriterFontEffects.ToBaselineAlignment(baselineEffect.Value));
+            }
         }
         RefreshState();
     }
@@ -715,6 +734,11 @@ public sealed class WriterEditingAdapter : IDisposable
         var bold = inline ? WriterSelectionValue<bool>.Unset() : ReadInline<bool>(contextRange!, TextElement.FontWeightProperty, TryBold);
         var italic = inline ? WriterSelectionValue<bool>.Unset() : ReadInline<bool>(contextRange!, TextElement.FontStyleProperty, TryItalic);
         var underline = inline ? WriterSelectionValue<bool>.Unset() : ReadInline<bool>(contextRange!, Inline.TextDecorationsProperty, TryUnderline);
+        var strikethrough = inline ? WriterSelectionValue<WriterStrikethroughStyle>.Unset() :
+            ReadInline<WriterStrikethroughStyle>(contextRange!, Inline.TextDecorationsProperty, TryStrikethrough);
+        var baselineEffect = inline ? WriterSelectionValue<WriterBaselineEffect>.Unset() :
+            ReadInline<WriterBaselineEffect>(contextRange!, Inline.BaselineAlignmentProperty,
+                WriterFontEffects.TryReadBaselineEffect, unsupportedValue: true);
         var foreground = inline ? WriterSelectionValue<Color?>.Unset() :
             ReadInline<Color?>(contextRange!, TextElement.ForegroundProperty, TryColor, unsupportedValue: true);
         var highlight = inline ? WriterSelectionValue<Color?>.Unset() :
@@ -750,6 +774,8 @@ public sealed class WriterEditingAdapter : IDisposable
             bold,
             italic,
             underline,
+            strikethrough,
+            baselineEffect,
             foreground,
             highlight,
             alignment,
@@ -1071,6 +1097,22 @@ public sealed class WriterEditingAdapter : IDisposable
         if (input is TextDecorationCollection decorations)
         {
             value = decorations.Any(decoration => decoration.Location == TextDecorationLocation.Underline);
+            return true;
+        }
+        value = default;
+        return false;
+    }
+
+    private static bool TryStrikethrough(object? input, out WriterStrikethroughStyle value)
+    {
+        if (input is null)
+        {
+            value = WriterStrikethroughStyle.None;
+            return true;
+        }
+        if (input is TextDecorationCollection decorations)
+        {
+            value = WriterFontEffects.ReadStrikethrough(decorations);
             return true;
         }
         value = default;

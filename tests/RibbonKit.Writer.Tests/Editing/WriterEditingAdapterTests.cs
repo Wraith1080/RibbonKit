@@ -78,7 +78,9 @@ public sealed class WriterEditingAdapterTests
             {
                 FontWeight = FontWeights.Bold,
                 FontStyle = FontStyles.Italic,
-                TextDecorations = TextDecorations.Underline,
+                TextDecorations = WriterFontEffects.CreateDecorations(
+                    underline: true, WriterStrikethroughStyle.Double),
+                BaselineAlignment = BaselineAlignment.Superscript,
                 Foreground = Brushes.DarkBlue,
                 Background = Brushes.LightYellow
             };
@@ -90,6 +92,8 @@ public sealed class WriterEditingAdapterTests
             Assert.True(state.Bold.IsUniform && state.Bold.Value);
             Assert.True(state.Italic.IsUniform && state.Italic.Value);
             Assert.True(state.Underline.IsUniform && state.Underline.Value);
+            Assert.Equal(WriterStrikethroughStyle.Double, state.Strikethrough.Value);
+            Assert.Equal(WriterBaselineEffect.Superscript, state.BaselineEffect.Value);
             Assert.Equal(Colors.DarkBlue, state.Foreground.Value);
             Assert.Equal(Colors.LightYellow, state.Highlight.Value);
             Assert.True(state.CanCopy);
@@ -462,7 +466,9 @@ public sealed class WriterEditingAdapterTests
                 FontSize = 30,
                 FontWeight = FontWeights.Bold,
                 FontStyle = FontStyles.Italic,
-                TextDecorations = TextDecorations.Underline,
+                TextDecorations = WriterFontEffects.CreateDecorations(
+                    underline: true, WriterStrikethroughStyle.Double),
+                BaselineAlignment = BaselineAlignment.Superscript,
                 Foreground = Brushes.DarkRed,
                 Background = Brushes.Gold
             };
@@ -481,13 +487,52 @@ public sealed class WriterEditingAdapterTests
             Assert.True(fixture.Adapter.State.Bold.IsUniform && !fixture.Adapter.State.Bold.Value);
             Assert.True(fixture.Adapter.State.Italic.IsUniform && !fixture.Adapter.State.Italic.Value);
             Assert.True(fixture.Adapter.State.Underline.IsUniform && !fixture.Adapter.State.Underline.Value);
+            Assert.Equal(WriterStrikethroughStyle.None, fixture.Adapter.State.Strikethrough.Value);
+            Assert.Equal(WriterBaselineEffect.Normal, fixture.Adapter.State.BaselineEffect.Value);
             Assert.Null(fixture.Adapter.State.Highlight.Value);
 
             fixture.Adapter.Undo();
             Assert.True(fixture.Adapter.State.Bold.Value);
             Assert.True(fixture.Adapter.State.Italic.Value);
             Assert.True(fixture.Adapter.State.Underline.Value);
+            Assert.Equal(WriterStrikethroughStyle.Double, fixture.Adapter.State.Strikethrough.Value);
+            Assert.Equal(WriterBaselineEffect.Superscript, fixture.Adapter.State.BaselineEffect.Value);
             Assert.Equal(Colors.Gold, fixture.Adapter.State.Highlight.Value);
+        });
+    }
+
+    [Fact]
+    public void FontDialogEffectsApplyAsOneUndoableSelectionChange()
+    {
+        StaTestHelper.Run(() =>
+        {
+            var run = new Run("effects");
+            using var fixture = CreateFixture(new FlowDocument(new Paragraph(run)));
+            fixture.Editor.Selection.Select(run.ContentStart, run.ContentEnd);
+
+            fixture.Adapter.ApplyFontDialogValues(
+                family: null,
+                sizeInDips: null,
+                style: null,
+                weight: null,
+                foreground: null,
+                underline: true,
+                strikethrough: WriterStrikethroughStyle.Double,
+                baselineEffect: WriterBaselineEffect.Superscript);
+
+            Assert.True(fixture.Adapter.State.Underline.IsUniform &&
+                        fixture.Adapter.State.Underline.Value);
+            Assert.Equal(WriterStrikethroughStyle.Double,
+                fixture.Adapter.State.Strikethrough.Value);
+            Assert.Equal(WriterBaselineEffect.Superscript,
+                fixture.Adapter.State.BaselineEffect.Value);
+            Assert.True(fixture.Editor.CanUndo);
+
+            fixture.Adapter.Undo();
+            Assert.Equal(WriterStrikethroughStyle.None,
+                fixture.Adapter.State.Strikethrough.Value);
+            Assert.Equal(WriterBaselineEffect.Normal,
+                fixture.Adapter.State.BaselineEffect.Value);
         });
     }
 

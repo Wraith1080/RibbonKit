@@ -255,10 +255,14 @@ controls should disable with an explanation and preserve a valid fallback.
 - Clipboard: Paste split button, Cut, Copy, Format Painter if proven useful
 - Font: an installed-font picker whose popup previews each family in its own face, remains searchable/editable,
   and retains the current/mixed selection even when it is outside a short recent/recommended section. The size
-  picker offers the conventional Office range plus validated arbitrary entry and grow/shrink commands.
+  picker offers the conventional Office range plus validated arbitrary entry and grow/shrink commands. The Font
+  dialog supports underline, single/double strikethrough and mutually exclusive superscript/subscript only where
+  state, undo and native-format round-trip are complete.
 - Font colour and highlight use split/drop-down behaviour: the primary action reapplies the last colour, while a
-  spacious keyboard/UIA-accessible popup provides Automatic/No Color, theme and standard palettes, recent colours,
-  larger swatches and a **More Colors…** dialog. The foreground indicator must remain visible on the command icon.
+  concise keyboard/UIA-accessible popup provides Automatic/No Color, one base swatch per standard colour and recent
+  colours without accent/background or light/dark variants. **More Colors…** provides a pointer/keyboard-operable
+  saturation/brightness field and hue strip alongside exact Hex/RGB entry. The foreground indicator must remain
+  visible on the command icon.
 - The Font group dialog launcher opens an app-owned transactional dialog for the character properties Writer
   genuinely supports, including an actual sample preview and honest mixed/unset states. Apply/OK creates one undo
   unit; Cancel leaves the document and history unchanged. Do not imitate unsupported Word effects with dead controls.

@@ -330,9 +330,11 @@ profile-capability projection.
 **Deliver:** replace the static five-font list with a cached installed-font source and a virtualized/searchable popup
 whose items render in their own font face; retain editable entry and honest current/mixed state. Expand size choices to
 the conventional Office set while accepting validated finite custom values in the engine's supported range; add
-grow/shrink only with deterministic step tests. Convert text/highlight colour into last-used primary actions plus
-roomier theme/standard/recent swatch galleries, Automatic/No Color and an accessible **More Colors…** standard/custom
-dialog. Add a Font group launcher and transactional sample-preview dialog for supported character properties. Audit
+grow/shrink only with deterministic step tests. Convert text/highlight colour into last-used primary actions plus a
+concise base-standard/recent popup without accent/background or light/dark variants, Automatic/No Color and an
+accessible **More Colors…** dialog with an HSV field/hue strip plus exact Hex/RGB entry. Add a Font group launcher and
+transactional sample-preview dialog for supported character properties, including underline, single/double
+strikethrough and mutually exclusive superscript/subscript with complete state, undo and native-format round-trip. Audit
 the promised Paste split button, Styles gallery, Clear Formatting and Paragraph dialog rather than silently omitting
 them; implement only complete commands with correct native undo, selection-state and persistence behaviour. Route
 Tab/Shift+Tab while the editor owns focus so paragraph boundaries and paragraph selections indent/outdent and valid
@@ -346,8 +348,9 @@ bounded extension contract for later table, picture and hyperlink rows; W1-E mus
 or introduce a mini formatting toolbar.
 
 **Exit:** tests cover installed-font enumeration failures/fallback, popup virtualization and own-face preview,
-recommended/recent/current fonts, typed and listed sizes, invalid input, last-used colours, theme/standard/recent and
-custom colours, Automatic/No Color, Font-dialog Apply/OK/Cancel, mixed selections, one native undo unit,
+recommended/recent/current fonts, typed and listed sizes, invalid input, last-used colours, base-standard/recent and
+custom colours, HSV conversion/pointer-field layout, Automatic/No Color, Font-dialog Apply/OK/Cancel, supported text
+effects, mixed selections, one native undo unit and safe native-format round-trip,
 profile enablement,
 KeyTips, ScreenTips and UIA. Tab routing tests cover empty and populated paragraphs, paragraph selections, first and
 nested list items, mid-paragraph/literal-tab behaviour, Plain Text versus RTF/RKW, undo/redo, retained caret/editor

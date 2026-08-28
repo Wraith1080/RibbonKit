@@ -97,6 +97,8 @@ public sealed class WriterFormattingDialogTests
                 FontStyles.Normal,
                 FontWeights.Normal,
                 Underline: false,
+                WriterStrikethroughStyle.None,
+                WriterBaselineEffect.Normal,
                 Color.FromRgb(0x12, 0x34, 0x56));
             var catalog = new WriterFontCatalog(
                 () => [new FontFamily("Segoe UI")]);
@@ -114,6 +116,14 @@ public sealed class WriterFormattingDialogTests
                 var size = Assert.IsAssignableFrom<ComboBox>(dialog.FindName("FontSizeBox"));
                 var underline = Assert.IsAssignableFrom<System.Windows.Controls.Primitives.ToggleButton>(
                     dialog.FindName("UnderlineBox"));
+                var strike = Assert.IsAssignableFrom<System.Windows.Controls.Primitives.ToggleButton>(
+                    dialog.FindName("StrikethroughBox"));
+                var doubleStrike = Assert.IsAssignableFrom<System.Windows.Controls.Primitives.ToggleButton>(
+                    dialog.FindName("DoubleStrikethroughBox"));
+                var superscript = Assert.IsAssignableFrom<System.Windows.Controls.Primitives.ToggleButton>(
+                    dialog.FindName("SuperscriptBox"));
+                var subscript = Assert.IsAssignableFrom<System.Windows.Controls.Primitives.ToggleButton>(
+                    dialog.FindName("SubscriptBox"));
                 var ok = Assert.IsType<Button>(dialog.FindName("OkButton"));
                 Assert.NotNull(ok.Style);
                 Assert.Contains(family.Items.Cast<WriterFontChoice>(), choice =>
@@ -125,7 +135,12 @@ public sealed class WriterFormattingDialogTests
                 size.Text = "18";
                 style.SelectedIndex = 3;
                 underline.IsChecked = true;
+                strike.IsChecked = true;
+                doubleStrike.IsChecked = true;
+                superscript.IsChecked = true;
                 Assert.True(ok.IsEnabled);
+                Assert.False(strike.IsChecked);
+                Assert.False(subscript.IsChecked);
 
                 Assert.True(ShowHiddenModal(dialog, () =>
                     ok.RaiseEvent(new RoutedEventArgs(Button.ClickEvent))));
@@ -135,6 +150,8 @@ public sealed class WriterFormattingDialogTests
                 Assert.Equal(FontStyles.Italic, result.Style);
                 Assert.Equal(FontWeights.Bold, result.Weight);
                 Assert.True(result.Underline);
+                Assert.Equal(WriterStrikethroughStyle.Double, result.Strikethrough);
+                Assert.Equal(WriterBaselineEffect.Superscript, result.BaselineEffect);
                 Assert.Equal(initial.Color, result.Color);
                 Assert.True(WriterFontDialog.AreEquivalent(result,
                     result with { Family = new FontFamily("SEGOE UI"), SizePoints = 18.004 }));
@@ -156,6 +173,11 @@ public sealed class WriterFormattingDialogTests
             Assert.Equal(Color.FromRgb(0x12, 0x34, 0x56), parsed);
             Assert.False(WriterColorDialog.TryParseHex("123456", out _));
             Assert.False(WriterColorDialog.TryParseHex("#GG0000", out _));
+            Assert.Equal(Colors.Red, WriterColorDialog.FromHsv(0, 1, 1));
+            Assert.Equal(Colors.Lime, WriterColorDialog.FromHsv(120, 1, 1));
+            Assert.Equal(Colors.Blue, WriterColorDialog.FromHsv(240, 1, 1));
+            WriterColorDialog.ToHsv(parsed, out var hue, out var saturation, out var brightness);
+            Assert.Equal(parsed, WriterColorDialog.FromHsv(hue, saturation, brightness));
 
             var dialog = new WriterColorDialog(Colors.Black);
             try
@@ -164,7 +186,10 @@ public sealed class WriterFormattingDialogTests
                 Assert.Equal(SizeToContent.Height, dialog.SizeToContent);
                 Assert.IsType<RibbonKit.Controls.RibbonTextBox>(dialog.FindName("HexBox"));
                 Assert.IsType<RibbonKit.Controls.RibbonTextBox>(dialog.FindName("RedBox"));
-                Assert.NotEmpty(Assert.IsType<WrapPanel>(dialog.FindName("PalettePanel")).Children);
+                Assert.IsType<Border>(dialog.FindName("SaturationValueSurface"));
+                Assert.IsType<Border>(dialog.FindName("HueSurface"));
+                Assert.InRange(Assert.IsType<WrapPanel>(dialog.FindName("PalettePanel")).Children.Count,
+                    1, 10);
 
                 var hex = Assert.IsAssignableFrom<TextBox>(dialog.FindName("HexBox"));
                 var ok = Assert.IsType<Button>(dialog.FindName("OkButton"));
@@ -179,6 +204,67 @@ public sealed class WriterFormattingDialogTests
             finally
             {
                 dialog.Close();
+            }
+        });
+    }
+
+    [Fact]
+    public void ThemedFontAndColorDialogsKeepControlsInsideTheirDpiSizedClientArea()
+    {
+        StaTestHelper.Run(() =>
+        {
+            var catalog = new WriterFontCatalog(() => [new FontFamily("Segoe UI")]);
+            var font = new WriterFontDialog(
+                new WriterFontDialogResult(
+                    new FontFamily("Segoe UI"), 11, FontStyles.Normal, FontWeights.Normal,
+                    false, WriterStrikethroughStyle.None, WriterBaselineEffect.Normal, Colors.Black),
+                catalog)
+            {
+                Left = -10000,
+                Top = -10000,
+                Opacity = 0,
+                ShowInTaskbar = false
+            };
+            var color = new WriterColorDialog(Colors.Blue)
+            {
+                Left = -10000,
+                Top = -10000,
+                Opacity = 0,
+                ShowInTaskbar = false
+            };
+            try
+            {
+                font.Show();
+                font.UpdateLayout();
+                font.Dispatcher.Invoke(DispatcherPriority.ApplicationIdle, new Action(() => { }));
+                font.UpdateLayout();
+                var fontRoot = Assert.IsType<Grid>(font.FindName("LayoutRoot"));
+                var typeface = Assert.IsType<Border>(font.FindName("TypefaceSection"));
+                var family = Assert.IsAssignableFrom<ComboBox>(font.FindName("FontFamilyBox"));
+                var familyBounds = family.TransformToAncestor(fontRoot)
+                    .TransformBounds(new Rect(family.RenderSize));
+                var typefaceBounds = typeface.TransformToAncestor(fontRoot)
+                    .TransformBounds(new Rect(typeface.RenderSize));
+                Assert.True(familyBounds.Right <= typefaceBounds.Right - typeface.Padding.Right + 0.5,
+                    $"Font family right {familyBounds.Right:0.##}, card content right " +
+                    $"{typefaceBounds.Right - typeface.Padding.Right:0.##}.");
+
+                color.Show();
+                color.UpdateLayout();
+                color.Dispatcher.Invoke(DispatcherPriority.ApplicationIdle, new Action(() => { }));
+                color.UpdateLayout();
+                var colorRoot = Assert.IsType<Grid>(color.FindName("LayoutRoot"));
+                var cancel = Assert.IsType<Button>(color.FindName("CancelButton"));
+                var cancelBounds = cancel.TransformToAncestor(colorRoot)
+                    .TransformBounds(new Rect(cancel.RenderSize));
+                Assert.True(cancelBounds.Bottom <= colorRoot.ActualHeight + 0.5);
+                Assert.True(colorRoot.ActualHeight + colorRoot.Margin.Top + colorRoot.Margin.Bottom + 0.5 >=
+                            colorRoot.DesiredSize.Height);
+            }
+            finally
+            {
+                color.Close();
+                font.Close();
             }
         });
     }
