@@ -46,6 +46,7 @@
                    QuickAccessPosition="BelowRibbon"
                    QuickAccessCustomizeRequested="OnCustomizeQuickAccess"
                    RibbonCustomizeRequested="OnCustomizeRibbon"
+                   BackstageClosed="OnBackstageClosed"
                    ModalEntered="OnRibbonModalEntered"
                    ModalExited="OnRibbonModalExited"
                    d:IsBackstageOpen="false">
@@ -557,21 +558,33 @@
                             </rk:RibbonComboBox>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
-                        <rk:RibbonToggleButton Size="Small"
-                                               rk:Ribbon.CommandId="cmd.bold"
-                                               Icon="{StaticResource Icon.Bold}"
-                                               ScreenTipTitle="Bold (Ctrl+B)"
-                                               ScreenTipText="Make your text bold." />
-                        <rk:RibbonToggleButton Size="Small"
-                                               rk:Ribbon.CommandId="cmd.italic"
-                                               Icon="{StaticResource Icon.Italic}"
-                                               ScreenTipTitle="Italic (Ctrl+I)"
-                                               ScreenTipText="Italicize your text." />
-                        <rk:RibbonToggleButton Size="Small"
-                                               rk:Ribbon.CommandId="cmd.underline"
-                                               Icon="{StaticResource Icon.Underline}"
-                                               ScreenTipTitle="Underline (Ctrl+U)"
-                                               ScreenTipText="Underline your text." />
+                            <rk:RibbonToggleButton Size="Small"
+                                                   rk:Ribbon.CommandId="cmd.bold"
+                                                   Icon="{StaticResource Icon.Bold}"
+                                                   ScreenTipTitle="Bold (Ctrl+B)"
+                                                   ScreenTipText="Make your text bold." />
+                            <rk:RibbonToggleButton Size="Small"
+                                                   rk:Ribbon.CommandId="cmd.italic"
+                                                   Icon="{StaticResource Icon.Italic}"
+                                                   ScreenTipTitle="Italic (Ctrl+I)"
+                                                   ScreenTipText="Italicize your text." />
+                            <rk:RibbonToggleButton Size="Small"
+                                                   rk:Ribbon.CommandId="cmd.underline"
+                                                   Icon="{StaticResource Icon.Underline}"
+                                                   ScreenTipTitle="Underline (Ctrl+U)"
+                                                   ScreenTipText="Underline your text." />
+                            <!-- Compact-row use: constrain only the height; adaptive width and theme
+                                 chrome still come from RibbonGroupSeparator. -->
+                            <rk:RibbonGroupSeparator x:Name="FontCompactSeparator"
+                                                     Height="20" />
+                            <rk:RibbonToggleButton x:Name="SuperscriptButton"
+                                                   Header="Superscript"
+                                                   Size="Small"
+                                                   rk:Ribbon.CommandId="cmd.superscript"
+                                                   rk:KeyTip.Keys="SP"
+                                                   Icon="{StaticResource Icon.Superscript}"
+                                                   ScreenTipTitle="Superscript"
+                                                   ScreenTipText="Place the selected text slightly above the baseline." />
                         </StackPanel>
                     </StackPanel>
                 </rk:RibbonGroup>
@@ -715,6 +728,15 @@
                                            Unchecked="OnPictureDeselected"
                                            ScreenTipTitle="Select Picture"
                                            ScreenTipText="Toggle to show or hide the Picture Format contextual tab." />
+                    <rk:RibbonGroupSeparator x:Name="IllustrationsGroupSeparator" />
+                    <rk:RibbonButton x:Name="ScreenshotButton"
+                                     Header="Screenshot"
+                                     rk:Ribbon.CommandId="cmd.screenshot"
+                                     LargeIcon="{StaticResource Icon.Picture}"
+                                     Icon="{StaticResource Icon.Picture}"
+                                     SizeDefinition="Large, Medium, Small"
+                                     ScreenTipTitle="Screenshot"
+                                     ScreenTipText="Insert a capture of an available window or a screen clipping." />
                 </rk:RibbonGroup>
                 <rk:RibbonGroup Header="Links" rk:Ribbon.CommandId="group.insert.links" Icon="{StaticResource Icon.Link}">
                     <rk:RibbonButton Header="Link"
@@ -765,7 +787,30 @@
                                      SizeDefinition="Large, Medium, Small"
                                      ScreenTipTitle="Zoom"
                                      ScreenTipText="Zoom the document to a specific level." />
+                    <rk:RibbonGroupSeparator x:Name="ViewZoomGroupSeparator" />
+                    <StackPanel VerticalAlignment="Center">
+                        <rk:RibbonButton x:Name="ActualSizeButton"
+                                         Header="100%"
+                                         Size="Medium"
+                                         rk:Ribbon.CommandId="cmd.zoom.actualSize"
+                                         Icon="{StaticResource Icon.Zoom}"
+                                         ScreenTipTitle="100%"
+                                         ScreenTipText="Return the document to its actual-size zoom level." />
+                        <rk:RibbonButton x:Name="PageWidthButton"
+                                         Header="Page Width"
+                                         Size="Medium"
+                                         rk:Ribbon.CommandId="cmd.zoom.pageWidth"
+                                         Icon="{StaticResource Icon.Zoom}"
+                                         ScreenTipTitle="Page Width"
+                                         ScreenTipText="Fit the page width to the available document area." />
+                    </StackPanel>
                 </rk:RibbonGroup>
+            </rk:RibbonTab>
+
+            <!-- Showcase configuration and diagnostic surfaces live together here so View
+                 remains a compact, document-oriented tab. Existing group command IDs stay
+                 unchanged so command identity and QAT references remain stable. -->
+            <rk:RibbonTab Header="Ribbon Lab" rk:Ribbon.CommandId="tab.ribbonLab">
                 <!-- Runtime theme switch — same templates, different token dictionary -->
                 <rk:RibbonGroup Header="Theme" rk:Ribbon.CommandId="group.view.theme" Icon="{StaticResource Icon.Palette}">
                     <rk:RibbonButton Header="Office 2024"

@@ -52,6 +52,7 @@ Legend: ✅ done · 🚧 in progress · 📋 planned
 | Live-preview event contract | ✅ |
 | `RibbonCheckBox` / `RibbonRadioButton` | ✅ |
 | `RibbonTextBox` (editable + read-only) | ✅ |
+| `RibbonGroupSeparator` — themed, adaptive in-group command-cluster divider | ✅ |
 | Arbitrary application controls/panels inside `RibbonGroup` (`IRibbonSizeAware` opt-in for adaptive sizing) | ✅ |
 
 ### Application-level

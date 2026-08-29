@@ -1,9 +1,12 @@
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Threading;
 using RibbonKit.Animation;
+using RibbonKit.Theming;
 
 namespace RibbonKit.Controls;
 
@@ -53,6 +56,8 @@ public class InRibbonGallery : RibbonGallery
     private const string ScrollViewerPartName = "PART_ScrollViewer";
     private const string LineUpPartName = "PART_LineUp";
     private const string LineDownPartName = "PART_LineDown";
+    private const string RibbonContentBackgroundResourceKey =
+        "RibbonKit.Brushes.Ribbon.ContentBackground";
 
     /// <summary>Identifies the <see cref="IsDropDownOpen"/> dependency property.</summary>
     public static readonly DependencyProperty IsDropDownOpenProperty =
@@ -101,11 +106,23 @@ public class InRibbonGallery : RibbonGallery
         // Self-heal: if the gallery is pulled out of the tree while expanded (e.g.
         // its host group flyout closes and re-homes its content), close the popup so
         // the items presenter returns to the strip instead of staying orphaned.
+        Loaded += OnGalleryLoaded;
         Unloaded += OnGalleryUnloaded;
+    }
+
+    private void OnGalleryLoaded(object sender, RoutedEventArgs e)
+    {
+        ThemeManager.Changed -= OnThemeConfigurationChanged;
+        ThemeManager.Changed += OnThemeConfigurationChanged;
+        SystemParameters.StaticPropertyChanged -= OnSystemParametersChanged;
+        SystemParameters.StaticPropertyChanged += OnSystemParametersChanged;
     }
 
     private void OnGalleryUnloaded(object sender, RoutedEventArgs e)
     {
+        ThemeManager.Changed -= OnThemeConfigurationChanged;
+        SystemParameters.StaticPropertyChanged -= OnSystemParametersChanged;
+
         if (IsDropDownOpen)
         {
             SetCurrentValue(IsDropDownOpenProperty, false);
@@ -320,6 +337,8 @@ public class InRibbonGallery : RibbonGallery
     /// </summary>
     private void OnPopupOpened(object? sender, EventArgs e)
     {
+        ResolvePopupHostBackground();
+
         if (_scrollViewer is null)
         {
             return;
@@ -341,6 +360,43 @@ public class InRibbonGallery : RibbonGallery
                 _scrollViewer.InvalidateMeasure();
                 _scrollViewer.UpdateLayout();
             }));
+    }
+
+    private void OnThemeConfigurationChanged(object? sender, EventArgs e)
+    {
+        if (IsDropDownOpen)
+        {
+            ResolvePopupHostBackground();
+        }
+    }
+
+    private void OnSystemParametersChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (IsDropDownOpen
+            && (string.IsNullOrEmpty(e.PropertyName)
+                || e.PropertyName == nameof(SystemParameters.HighContrast)))
+        {
+            ResolvePopupHostBackground();
+        }
+    }
+
+    /// <summary>
+    /// Resolves the popup surface from the gallery while it is still connected to the host's
+    /// resource scope. A Popup owns a separate HWND, where the template's DynamicResource can
+    /// otherwise remain unresolved and leave the card transparent.
+    /// </summary>
+    private void ResolvePopupHostBackground()
+    {
+        if (_popupHost is null)
+        {
+            return;
+        }
+
+        Brush background = SystemParameters.HighContrast
+            ? SystemColors.WindowBrush
+            : TryFindResource(RibbonContentBackgroundResourceKey) as Brush
+                ?? SystemColors.WindowBrush;
+        _popupHost.SetCurrentValue(Border.BackgroundProperty, background);
     }
 
     /// <summary>

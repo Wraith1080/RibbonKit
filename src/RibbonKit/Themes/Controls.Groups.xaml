@@ -554,4 +554,38 @@
         </Setter>
     </Style>
 
+    <!-- A visual partition INSIDE one group. Unlike the whole-group boundary above, this stays
+         visible in Office 2007: it separates command clusters rather than pretending adjacent
+         2007 group boxes have a divider. Symmetric spacing makes RTL placement entirely
+         layout-owned, and the size triggers let it participate in group width probing. -->
+    <Style TargetType="{x:Type controls:RibbonGroupSeparator}">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="IsHitTestVisible" Value="False" />
+        <Setter Property="Width" Value="9" />
+        <Setter Property="Height" Value="52" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type controls:RibbonGroupSeparator}">
+                    <Grid Background="Transparent"
+                          SnapsToDevicePixels="True">
+                        <Rectangle Width="1"
+                                   Margin="0,4"
+                                   HorizontalAlignment="Center"
+                                   Fill="{DynamicResource RibbonKit.Brushes.Group.Separator}" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="SizeState" Value="Medium">
+                            <Setter Property="Width" Value="7" />
+                            <Setter Property="Height" Value="40" />
+                        </Trigger>
+                        <Trigger Property="SizeState" Value="Small">
+                            <Setter Property="Width" Value="5" />
+                            <Setter Property="Height" Value="28" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
 </ResourceDictionary>

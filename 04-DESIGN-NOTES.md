@@ -5577,6 +5577,65 @@ and `git diff --check` is clean. The full Writer/RibbonKit/visual/solution gates
 `src/RibbonKit/**` file changed. Live table-grip acceptance and the remaining W3-E mouse/keyboard/UIA, zoom/DPI/RTL,
 span/multi-row-group, save/reopen and preview/print matrix remain pending; W3-E is not yet accepted.
 
+### 3.124 Writer-promoted RibbonKit friction corrections — 2026-08-29
+
+Four Writer observations now have focused runtime reproductions and the smallest shared-control corrections.
+`RibbonGroupSeparator` is the first theme-owned visual partition that can sit inside a horizontal group layout.
+It is lookless and non-interactive, participates in `IRibbonSizeAware` measurement at 9/7/5 DIPs for
+large/medium/small, and maps a collapsed group back to large because the full content is re-homed into the flyout.
+Symmetric chrome follows RTL without bespoke placement logic. KeyTips, QAT projection, customization command
+discovery and UI Automation all continue to treat it as decoration. Writer uses the control between its Paragraph
+command clusters, and the isolated net472 Ribbon Editor now creates it by string name instead of inserting a stock
+WPF `Separator`. The Showcase adds three complementary examples: a compact height-constrained separator before
+Superscript in Home/Font, a full-height direct-child separator before Screenshot in Insert/Illustrations, and a
+full-height separator between View/Zoom's large command and its stacked 100% / Page Width cluster. A focused static
+contract pins those examples and the new vector Superscript icon without coupling visual snapshots to the executable
+Showcase XAML.
+
+`InRibbonGallery` resolves its popup background from the connected gallery when the popup HWND opens rather than
+trusting resource lookup inside the detached popup branch. It falls back to `SystemColors.WindowBrush`, uses that
+brush explicitly in High Contrast, and re-resolves an open surface after RibbonKit theme or system High Contrast
+notifications. Writer no longer applies its template, finds `PART_PopupHost` or assigns that private part directly.
+
+`RibbonTabControl` now observes its `RibbonTab` collection and each tab's effective visibility. An add, remove, move,
+reset or visibility transition coalesces one Loaded-priority refresh after layout, keeping both the Office 2024
+sliding marker and the Office 2010/2013 connected-tab notch under the selected header. Writer therefore retains the
+authored Home, Insert, contextual Table/Picture Tools, Page, View and Print Preview order; its startup relocation of
+all contextual tabs to a trailing segment is removed.
+
+`Ribbon.BackstageClosed` is a new non-cancellable completion event. It is raised only after a real Backstage's close
+animation, adorner/proxy teardown, placement reset and motion cleanup. A close generation prevents a stale animation
+callback from winning after close/reopen/reclose; `RibbonApplicationMenu` dismissal never raises the event. Writer
+still owns preview demand, command busy state and intended focus, but begins its guarded editor-focus return from the
+exact completion boundary instead of the early `IsBackstageOpen=false` transition. The Showcase reports the event in
+its status bar, and the public API carries XML documentation.
+
+The focused friction/example gate passes **9/9** across the adaptive/decorative separator contract, its three
+Showcase arrangements, opaque popup, contextual marker, Modern/Classic2010/Classic2007 Backstage closure, reopen
+cancellation and application-menu
+exclusion. The Writer real-tree integration case passes **1/1** with both former app workarounds removed and the
+Paragraph prototype present. Live theme/DPI/RTL/High Contrast separator, popup and marker coverage plus File-toggle,
+Back/Escape and KeyTip closure remain the proportional acceptance work; automated success is not live visual
+acceptance. The complete Debug gate passes RibbonKit **364/364**, Writer **439/439** and visual **1/1** over 63
+approved images after a zero-warning/error solution build; `git diff --check` is clean apart from line-ending
+normalization notices.
+
+### 3.125 Showcase Ribbon Lab split and Office 2010 inactive frame continuity — 2026-08-29
+
+The Showcase's former View tab mixed the single document-view group with seven configuration and diagnostic
+groups. View now contains only Zoom. Theme, Aero Frame, Accent, Motion, Inputs, Backstage and Application move
+together to a new Ribbon Lab tab. Existing group command IDs remain unchanged so the layout split does not
+change command identity or QAT references; a previously saved per-tab group arrangement naturally cannot transfer
+those groups from their former parent tab. A static integration contract pins the two tab inventories.
+
+The Office 2010 Aero title already changed to the inactive fallback and attenuated only its live tint when its
+`RibbonWindow` lost activation, but the tab-header row retained the active fallback/tint composition. The tab-row
+template now uses the same inactive fallback and wraps its bound tint in a visual whose opacity can be attenuated by
+the existing inactive-overlay metric. This preserves Acrylic's independent material opacity and changes no layout or
+input surface. The focused template contract pins the inactive fallback and tint handoff. The complete Debug gate
+passes RibbonKit **365/365**, Writer **439/439** and visual **1/1** over 63 approved images after a zero-warning/error
+solution build. Live active-to-inactive color continuity remains a separate visual acceptance check.
+
 ## 4. Workflow / Session Conventions
 
 - Work from the current Windows checkout at
@@ -5593,7 +5652,7 @@ span/multi-row-group, save/reopen and preview/print matrix remain pending; W3-E 
 
 ## 5. Current State & Next Steps
 
-> **Authoritative status as of 2026-08-28.** Historical checkpoints remain in §3, but status and
+> **Authoritative status as of 2026-08-29.** Historical checkpoints remain in §3, but status and
 > test counts quoted elsewhere should be reconciled against this section and rerun when current
 > evidence matters.
 
@@ -5792,6 +5851,14 @@ span/multi-row-group, save/reopen and preview/print matrix remain pending; W3-E 
   gate passes **3/3**, the existing real-tree MainWindow case passes **1/1**, and the Writer project builds with zero
   warnings/errors. The complete Writer/RibbonKit/visual/solution gates were intentionally not rerun, so §3.122 remains
   the latest full inventory checkpoint. Live table-grip and complete W3-E acceptance remain pending.
+- 2026-08-29 after §3.124 and its Showcase examples: the inventory is **803 logic tests plus one visual test covering
+  63 approved images**. RibbonKit passes **364/364**, Writer passes **439/439**, visual passes **1/1**, and the Debug
+  solution build has zero warnings/errors. The four Writer-promoted corrections have focused realized coverage, but
+  their documented live
+  theme/DPI/RTL/High Contrast and Backstage-close interaction matrix remains pending.
+- 2026-08-29 after §3.125: the inventory is **804 logic tests plus one visual test covering 63 approved images**.
+  RibbonKit passes **365/365**, Writer passes **439/439**, visual passes **1/1**, and the Debug solution build has zero
+  warnings/errors. Live Office 2010 Aero active/inactive color-continuity acceptance remains pending.
 - Before quoting a current count or declaring a new change complete, rerun the proportional build
   and test commands. Inspect actual/diff PNG artifacts before changing visual baselines or
   tolerances.

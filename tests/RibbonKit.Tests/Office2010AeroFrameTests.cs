@@ -193,9 +193,11 @@ public sealed class Office2010AeroFrameTests
         AssertSetter(transparentSurface, "RibbonSurface", "Background", "Transparent");
 
         XElement material = NamedElement(chrome, "Office2010TabMaterialLayer");
+        XElement tintVisual = NamedElement(chrome, "Office2010TabTintVisual");
         XElement tint = NamedElement(chrome, "Office2010TabTintLayer");
         Assert.Equal("Collapsed", (string?)material.Attribute("Visibility"));
         Assert.Equal("Collapsed", (string?)tint.Attribute("Visibility"));
+        Assert.Equal("False", (string?)tintVisual.Attribute("IsHitTestVisible"));
         Assert.Equal(
             "{DynamicResource RibbonKit.Brushes.WindowFrame.AeroFallback}",
             (string?)material.Attribute("Background"));
@@ -241,6 +243,20 @@ public sealed class Office2010AeroFrameTests
             "Office2010TabMaterialLayer",
             "Opacity",
             "{DynamicResource RibbonKit.Metrics.WindowFrame.AeroMaterialTitleBackgroundOpacity}");
+        XElement inactive = Assert.Single(
+            tabTemplate.Descendants(Presentation + "MultiDataTrigger"),
+            trigger => HasBindingCondition(trigger, "FrameAppearance", "Office2010Aero")
+                && HasBindingCondition(trigger, "IsActive", "False"));
+        AssertSetter(
+            inactive,
+            "Office2010TabMaterialLayer",
+            "Background",
+            "{DynamicResource RibbonKit.Brushes.WindowFrame.AeroInactiveFallback}");
+        AssertSetter(
+            inactive,
+            "Office2010TabTintVisual",
+            "Opacity",
+            "{DynamicResource RibbonKit.Metrics.WindowFrame.AeroInactiveOverlayOpacity}");
 
         XDocument groups = LoadTheme("Controls.Groups.xaml");
         XElement groupsTabTemplate = Assert.Single(

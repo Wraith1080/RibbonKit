@@ -8,15 +8,22 @@ RibbonKit.Controls.RibbonWindow.FrameAppearance.get -> RibbonKit.Controls.Ribbon
 RibbonKit.Controls.RibbonWindow.FrameAppearance.set -> void
 RibbonKit.Controls.RibbonTabControl.IsBackstageActive.get -> bool
 RibbonKit.Controls.RibbonTab.IsBackstageActive.get -> bool
+RibbonKit.Controls.Ribbon.BackstageClosed -> System.EventHandler?
+RibbonKit.Controls.RibbonGroupSeparator
+RibbonKit.Controls.RibbonGroupSeparator.RibbonGroupSeparator() -> void
+RibbonKit.Controls.RibbonGroupSeparator.SizeState.get -> RibbonKit.RibbonGroupSizeState
 RibbonKit.Controls.RibbonWindowFrameAppearance
 RibbonKit.Controls.RibbonWindowFrameAppearance.Default = 0 -> RibbonKit.Controls.RibbonWindowFrameAppearance
 RibbonKit.Controls.RibbonWindowFrameAppearance.Office2007Aero = 1 -> RibbonKit.Controls.RibbonWindowFrameAppearance
 RibbonKit.Controls.RibbonWindowFrameAppearance.Office2010Aero = 2 -> RibbonKit.Controls.RibbonWindowFrameAppearance
 RibbonKit.RibbonBackstageDesign.Classic2007 = 4 -> RibbonKit.RibbonBackstageDesign
 RibbonKit.RibbonBackstageDesign.Glass2007 = 3 -> RibbonKit.RibbonBackstageDesign
+override RibbonKit.Controls.RibbonTabControl.ClearContainerForItemOverride(System.Windows.DependencyObject! element, object! item) -> void
+override RibbonKit.Controls.RibbonTabControl.PrepareContainerForItemOverride(System.Windows.DependencyObject! element, object! item) -> void
 static readonly RibbonKit.Controls.RibbonWindow.ActiveBackdropProperty -> System.Windows.DependencyProperty!
 static readonly RibbonKit.Controls.RibbonWindow.AeroFrameTintIntensityProperty -> System.Windows.DependencyProperty!
 static readonly RibbonKit.Controls.RibbonWindow.AeroFrameTintProperty -> System.Windows.DependencyProperty!
 static readonly RibbonKit.Controls.RibbonWindow.FrameAppearanceProperty -> System.Windows.DependencyProperty!
 static readonly RibbonKit.Controls.RibbonTabControl.IsBackstageActiveProperty -> System.Windows.DependencyProperty!
 static readonly RibbonKit.Controls.RibbonTab.IsBackstageActiveProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonGroupSeparator.SizeStateProperty -> System.Windows.DependencyProperty!

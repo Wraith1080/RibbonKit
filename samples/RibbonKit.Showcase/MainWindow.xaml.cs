@@ -370,6 +370,9 @@ public partial class MainWindow : RibbonWindow
         StatusReady.Content = $"Application menu: {label}";
     }
 
+    private void OnBackstageClosed(object? sender, EventArgs e) =>
+        StatusReady.Content = "Backstage closed";
+
     // Ordinary WPF controls inside arbitrary Backstage/application-menu content can opt into the
     // current surface's KeyTip level with rk:KeyTip.Keys; invocation remains the control's native
     // Click/command behavior.
