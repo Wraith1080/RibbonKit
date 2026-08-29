@@ -405,10 +405,9 @@ public sealed class MainWindowIntegrationTests
         Assert.False(string.IsNullOrWhiteSpace(Ribbon.GetCommandId(pictureToolsTab)));
         Assert.False(string.IsNullOrWhiteSpace(KeyTip.GetKeys(pictureToolsTab)));
         Assert.False(string.IsNullOrWhiteSpace(AutomationProperties.GetHelpText(pictureToolsTab)));
-        var firstContextualIndex = fixture.Ribbon.Tabs.IndexOf(
-            fixture.Ribbon.Tabs.First(tab => tab.IsContextual));
-        Assert.All(fixture.Ribbon.Tabs.Take(firstContextualIndex), tab => Assert.False(tab.IsContextual));
-        Assert.All(fixture.Ribbon.Tabs.Skip(firstContextualIndex), tab => Assert.True(tab.IsContextual));
+        var pageTab = Assert.IsType<RibbonTab>(window.FindName("PageTab"));
+        Assert.True(fixture.Ribbon.Tabs.IndexOf(tableToolsTab) < fixture.Ribbon.Tabs.IndexOf(pageTab));
+        Assert.True(fixture.Ribbon.Tabs.IndexOf(pictureToolsTab) < fixture.Ribbon.Tabs.IndexOf(pageTab));
 
         var insertButtons = new[]
         {
@@ -480,7 +479,15 @@ public sealed class MainWindowIntegrationTests
         picker.ApplyTemplate();
         var pickerPopupHost = Assert.IsType<Border>(
             picker.Template.FindName("PART_PopupHost", picker));
+        pickerPopupHost.Background = null;
+        var selectedTab = fixture.Ribbon.SelectedTab;
+        fixture.Ribbon.SelectedTab = insertTab;
+        await PumpAsync();
+        picker.IsDropDownOpen = true;
+        await PumpAsync();
         Assert.NotNull(pickerPopupHost.Background);
+        picker.IsDropDownOpen = false;
+        fixture.Ribbon.SelectedTab = selectedTab;
 
         var tableCommands = new[]
         {
@@ -1331,10 +1338,10 @@ public sealed class MainWindowIntegrationTests
             AutomationProperties.GetName(item))));
         Assert.All(fileActions, item => Assert.NotNull(item.Command));
 
-        Assert.Equal(new[] { "Home", "Insert", "Page", "View", "Print Preview", "Table Tools", "Picture Tools" },
+        Assert.Equal(new[] { "Home", "Insert", "Table Tools", "Picture Tools", "Page", "View", "Print Preview" },
             ribbon.Tabs.Select(tab => tab.Header?.ToString()).ToArray());
-        Assert.True(ribbon.Tabs[4].IsModal);
-        Assert.Equal(Visibility.Collapsed, ribbon.Tabs[4].Visibility);
+        var previewTab = Assert.Single(ribbon.Tabs, tab => tab.IsModal);
+        Assert.Equal(Visibility.Collapsed, previewTab.Visibility);
         var home = ribbon.Tabs[0];
         Assert.Equal("Home", home.Header);
         Assert.Equal(new[] { "Clipboard", "Font", "Paragraph", "Editing" },
@@ -1439,6 +1446,13 @@ public sealed class MainWindowIntegrationTests
         var paragraphSpacing = Assert.IsType<RibbonDropDownButton>(window.FindName("ParagraphSpacingButton"));
         Assert.Equal(RibbonControlSize.Large, paragraphSpacing.Size);
         Assert.NotNull(paragraphSpacing.LargeIcon);
+        var paragraphSeparator = Assert.IsType<RibbonGroupSeparator>(
+            window.FindName("ParagraphGroupSeparator"));
+        Assert.False(paragraphSeparator.Focusable);
+        Assert.False(paragraphSeparator.IsHitTestVisible);
+        Assert.True(string.IsNullOrWhiteSpace(KeyTip.GetKeys(paragraphSeparator)));
+        Assert.Null(UIElementAutomationPeer.CreatePeerForElement(paragraphSeparator));
+        Assert.False(ribbon.AddToQuickAccess(paragraphSeparator));
         Assert.Equal(new[] { "QatSave", "QatUndo", "QatRedo" },
             qatItems.Select(AutomationProperties.GetAutomationId).ToArray());
         Assert.Same(ApplicationCommands.Undo, Assert.IsType<RibbonButton>(qatItems[1]).Command);

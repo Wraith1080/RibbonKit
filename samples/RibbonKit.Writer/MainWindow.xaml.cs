@@ -83,10 +83,10 @@ public partial class MainWindow : RibbonWindow
     private void InitializeShell(WriterDialogService? shellDialogs)
     {
         InitializeComponent();
-        MoveContextualTabsToEnd();
         _backstageOpenDescriptor = DependencyPropertyDescriptor.FromProperty(
             Ribbon.IsBackstageOpenProperty, typeof(Ribbon));
         _backstageOpenDescriptor.AddValueChanged(MainRibbon, OnBackstageOpenChanged);
+        MainRibbon.BackstageClosed += OnBackstageClosed;
         if (shellDialogs is not null) shellDialogs.Owner = this;
         DataContext = Shell;
         RecentList.ItemsSource = Shell.RecentEntries;
@@ -118,12 +118,6 @@ public partial class MainWindow : RibbonWindow
         ContentRendered += OnInitialContentRendered;
         Closing += OnClosing;
         Closed += OnClosed;
-    }
-
-    private void MoveContextualTabsToEnd()
-    {
-        foreach (var tab in MainRibbon.Tabs.Where(tab => tab.IsContextual).ToArray())
-            MainRibbon.Tabs.Move(MainRibbon.Tabs.IndexOf(tab), MainRibbon.Tabs.Count - 1);
     }
 
     private void WireRibbonCommands()
@@ -370,6 +364,7 @@ public partial class MainWindow : RibbonWindow
         ContentRendered -= OnInitialContentRendered;
         Shell.PropertyChanged -= OnShellPropertyChanged;
         Shell.ExitRequested -= OnExitRequested;
+        MainRibbon.BackstageClosed -= OnBackstageClosed;
         if (_backstageOpenDescriptor is not null)
         {
             _backstageOpenDescriptor.RemoveValueChanged(MainRibbon, OnBackstageOpenChanged);
@@ -666,12 +661,15 @@ public partial class MainWindow : RibbonWindow
     private void OnBackstageOpenChanged(object? sender, EventArgs e)
     {
         UpdatePreviewDemand();
-        if (MainRibbon.IsBackstageOpen || _closing || !IsVisible || MainRibbon.IsModal)
+    }
+
+    private void OnBackstageClosed(object? sender, EventArgs e)
+    {
+        if (_closing || !IsVisible || MainRibbon.IsModal)
             return;
 
-        // IsBackstageOpen changes before the adorner has finished closing. Defer once so a
-        // command launched from the page can enter IsBusy, then complete on the common shell
-        // idle edge instead of asking every File action to restore focus independently.
+        // The library reports the exact adorner-removal boundary. Defer one app input cycle only
+        // so a File command can enter IsBusy, then complete on the common shell idle edge.
         _restoreEditorFocusAfterBackstageClose = true;
         _ = Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle,
             new Action(CompleteBackstageCloseFocus));

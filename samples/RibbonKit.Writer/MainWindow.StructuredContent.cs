@@ -54,23 +54,7 @@ public partial class MainWindow
             DocumentEditor, _writerImageService);
         _pictureInteractionController.StateChanged += OnPictureInteractionStateChanged;
         PopulateTableGridPicker();
-        ApplyTableGridPopupSurface();
         ApplyStructuredContentCapabilityProjection();
-    }
-
-    private void ApplyTableGridPopupSurface()
-    {
-        // The shared InRibbonGallery popup lives in a separate HWND. Its template-level dynamic
-        // background can remain unresolved there, exposing ribbon content behind the grid. Keep
-        // this app-owned workaround until RKWF-013 is resolved in an approved RibbonKit packet.
-        TableGridPicker.ApplyTemplate();
-        if (TableGridPicker.Template.FindName("PART_PopupHost", TableGridPicker) is Border popupHost)
-        {
-            popupHost.Background = SystemParameters.HighContrast
-                ? SystemColors.WindowBrush
-                : TryFindResource("RibbonKit.Brushes.Ribbon.ContentBackground") as Brush
-                    ?? SystemColors.WindowBrush;
-        }
     }
 
     private void DisposeStructuredContent()

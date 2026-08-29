@@ -640,6 +640,7 @@
                                               AutomationProperties.AutomationId="DecreaseIndent" AutomationProperties.Name="Decrease Indent" />
                         </StackPanel>
                     </StackPanel>
+                    <rk:RibbonGroupSeparator x:Name="ParagraphGroupSeparator" />
                     <rk:RibbonDropDownButton x:Name="ParagraphSpacingButton" Header="Paragraph Spacing" Size="Large"
                                               Icon="{StaticResource Icon.WriterParagraphSpacing}"
                                               LargeIcon="{StaticResource Icon.WriterParagraphSpacing}"

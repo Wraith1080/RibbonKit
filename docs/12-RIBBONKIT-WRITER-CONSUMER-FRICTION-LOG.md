@@ -138,7 +138,7 @@ remain read-only until actual/diff evidence justifies a deliberate change.
 ### RKWF-005 — Ribbon groups have no first-class in-group separator
 
 - **First seen / packet:** 2026-08-24, Writer W1-D visual review and W2 planning.
-- **Status:** Open additive-control candidate; no RibbonKit runtime work approved in this packet.
+- **Status:** Corrected in RibbonKit on 2026-08-29; live theme/DPI matrix remains pending.
 - **Consumer goal:** visually partition related command clusters inside one `RibbonGroup` without creating
   fake groups, hard-coded borders or layout-only command items.
 - **Reproduction and evidence:** the accepted Writer Home surface needs lighter divisions within command-dense
@@ -147,16 +147,23 @@ remain read-only until actual/diff evidence justifies a deliberate change.
 - **Friction:** an app-owned `Border` or `Separator` would need to reproduce theme tokens, large/medium/small
   measurement, collapsed-group behavior, RTL placement, visibility and automation semantics that belong to
   the ribbon item system.
-- **Current app-owned workaround:** rely on spacing and whole-group boundaries; do not introduce a one-theme
-  visual approximation into Writer.
+- **Current resolution:** the lookless `RibbonGroupSeparator` uses shared theme chrome, adapts its desired
+  width and height across large/medium/small group states and returns to its large presentation with content
+  re-homed into a collapsed flyout. Writer uses it between Paragraph command clusters. The Showcase now
+  demonstrates a height-constrained separator inside Font's compact button row, a full-height direct-child
+  separator in Insert/Illustrations and a separator between a large View/Zoom command and a stacked medium
+  command cluster.
 - **Application impact:** dense groups are harder to scan, while consumer-created dividers risk inconsistent
   adaptive layout and theme behavior across Office generations.
-- **Smallest possible library direction:** investigate a lookless, non-command `RibbonGroupSeparator` control
-  with theme-owned chrome and explicit adaptive/RTL/collapsed behavior. It should remain absent from KeyTips,
-  QAT projection, customization command lists and UI Automation control content unless accessibility review
-  identifies a useful semantic role.
-- **Evidence still required:** a focused consumer prototype in Writer or Showcase covering horizontal group
-  layouts, all ribbon sizes, collapsed flyouts, all themes, RTL, high DPI, customization and automation trees.
+- **Implemented library direction:** `RibbonGroupSeparator` is a non-focusable, non-hit-test control whose
+  symmetric template follows RTL layout naturally. It implements `IRibbonSizeAware`, exposes a read-only
+  effective `SizeState`, and is deliberately excluded from KeyTips, QAT projection, customization command
+  discovery and UI Automation control content. The Ribbon Editor now inserts this type instead of a stock WPF
+  separator.
+- **Evidence still required:** focused realized coverage now proves horizontal LTR/RTL placement, all effective
+  size states, collapsed-to-large behavior, theme-brush resolution and exclusion from command/accessibility
+  surfaces; a structural Showcase contract pins all three authored examples and their neighboring commands.
+  Repeat the Writer/Showcase prototypes through all themes, 100-200% DPI, RTL and an actual collapsed flyout.
 
 ### RKWF-006 — Main-ribbon leaf commands are absent from external UIA traversal
 
@@ -258,7 +265,7 @@ remain read-only until actual/diff evidence justifies a deliberate change.
 ### RKWF-011 — Backstage has no host-level close-completed callback
 
 - **First seen / packet:** 2026-08-24, Writer W0-F Backstage focus integration.
-- **Status:** Open additive runtime/documentation candidate; app-owned workaround accepted for Writer.
+- **Status:** Corrected in RibbonKit on 2026-08-29; live multi-path acceptance remains pending.
 - **Consumer goal:** restore editor focus after any Backstage dismissal without wiring every File action or guessing the
   exit-animation duration.
 - **Reproduction and evidence:** `Ribbon.IsBackstageOpen` is the only general observable state, but it changes to
@@ -268,20 +275,20 @@ remain read-only until actual/diff evidence justifies a deliberate change.
   completed. `IsBackstageOpen` additionally represents `RibbonApplicationMenu`, whose popup lifecycle is separate.
 - **Friction:** a host can observe logical close initiation centrally, but cannot reliably distinguish it from visual
   close completion across File-toggle, Back/Escape, KeyTip, programmatic, Classic2010 and Classic2007 paths.
-- **Current app-owned workaround:** Writer observes the single `IsBackstageOpen` dependency property, marks a pending
-  editor-focus return when it becomes false, defers once so a File command can enter its busy state, and completes the
-  return only after dialogs/commands finish. Preview, hidden/closing-window and intended-focus guards remain app-owned.
-- **Application impact:** the workaround removes per-command focus wiring, but it cannot use the exact adorner-removal
-  boundary and must continue coordinating its own asynchronous command state.
-- **Smallest possible library direction:** add a non-cancellable CLR `Ribbon.BackstageClosed` event raised once after
+- **Current resolution:** `Ribbon.BackstageClosed` is a non-cancellable CLR event raised only after the real Backstage
+  adorner, Classic orb proxy and placement state have been torn down. Writer now starts its guarded focus return from
+  that completion event; its preview-demand observer and dialog/busy/intended-focus policy remain app-owned.
+- **Application impact:** hosts can now use the exact adorner-removal boundary without per-command focus wiring;
+  asynchronous command, dialog and intended-focus policy remains correctly owned by the application.
+- **Implemented library direction:** a non-cancellable CLR `Ribbon.BackstageClosed` event is raised once after
   the exit animation completes, the Backstage adorner/proxy is removed, placement state is restored and the close was
   not cancelled by a reopen. Do not raise it for `RibbonApplicationMenu` and do not make Ribbon own a focus target.
   A non-cancellable `BackstageClosing` event may be considered separately for symmetry, but is too early for focus
   restoration.
-- **Evidence still required:** focused realized-STA tests for File toggle, Back/Escape, KeyTips, programmatic close,
-  reduced motion, reopen-during-close, Classic2010 and Classic2007; define unload/deactivation behavior explicitly and
-  prove that application-menu dismissal does not raise the Backstage event. Add Showcase usage and public API/XML
-  documentation in any separately approved runtime packet.
+- **Evidence still required:** realized-STA coverage now proves programmatic/reduced-motion closure for Modern,
+  Classic2010 and Classic2007, reopen cancellation and exclusion of `RibbonApplicationMenu`; Showcase usage and
+  public API/XML documentation are present. Live File-toggle, Back/Escape and KeyTip paths plus unload/deactivation
+  observation remain before visual acceptance.
 
 ### RKWF-012 — Realized native-undo tests must serialize visible WPF window ownership
 
@@ -305,7 +312,7 @@ remain read-only until actual/diff evidence justifies a deliberate change.
 ### RKWF-013 — InRibbonGallery popup background can remain unresolved in its popup HWND
 
 - **First seen / packet:** 2026-08-26, Writer W3-C live table-picker acceptance.
-- **Status:** App-owned workaround accepted; open RibbonKit investigation with no runtime change approved.
+- **Status:** Corrected in RibbonKit on 2026-08-29; live popup matrix remains pending.
 - **Consumer goal:** an expanded `InRibbonGallery` should paint an opaque theme/high-contrast popup surface before its
   shared presenter is re-homed, so underlying ribbon commands never show through the tile grid.
 - **Reproduction and evidence:** in the real 125%-scale Writer window, `PART_PopupHost.Background` remained null even
@@ -314,14 +321,14 @@ remain read-only until actual/diff evidence justifies a deliberate change.
   final standard and RTL captures became opaque after the app supplied the resolved brush.
 - **Friction:** the consumer cannot set the popup host through public `InRibbonGallery` API. It must apply the template,
   find the declared part by name and assign a brush after initialization.
-- **Current app-owned workaround:** Writer assigns the current ribbon-content brush directly to `PART_PopupHost`, or
-  `SystemColors.WindowBrush` in High Contrast. A real-tree assertion requires a non-null surface, while mouse/keyboard
-  and popup re-homing continue through the unchanged RibbonKit control.
-- **Application impact:** without the workaround, the table picker is visually ambiguous and can expose unrelated
-  controls beneath its choices; with it, standard and RTL popup captures are opaque and input behavior is unchanged.
-- **Smallest possible library direction:** reproduce the unresolved DynamicResource in a minimal consumer, then make
-  the popup host resolve/reapply the theme-owned background when its separate HWND opens. Preserve every theme,
-  High Contrast, re-homing, reduced motion and runtime resource refresh; do not special-case Writer.
+- **Current resolution:** `InRibbonGallery` resolves the theme-owned content background from the connected gallery
+  when its popup HWND opens, uses the system Window brush in High Contrast, and refreshes an open surface after theme
+  or High Contrast changes. Writer's template-part lookup and direct background assignment have been removed.
+- **Application impact:** the popup is now opaque without private template-part access; gallery selection, re-homing
+  and input behavior remain unchanged.
+- **Implemented library direction:** the focused realized consumer reproduces the unresolved surface; the gallery now
+  resolves/reapplies the theme-owned popup background from its connected resource scope when the separate HWND opens.
+  High Contrast uses the system Window brush, and open popups follow runtime theme/High Contrast notifications.
 - **Evidence still required:** a focused Showcase/runtime reproduction across Office generations, light/dark,
   standard/collapsed groups, RTL, 100-200% DPI and High Contrast without the Writer override.
 
@@ -388,8 +395,7 @@ remain read-only until actual/diff evidence justifies a deliberate change.
 ### RKWF-016 — Revealing a contextual tab can leave the active-tab marker at its previous coordinate
 
 - **First seen / packet:** 2026-08-29, Writer W3-E2a live Picture Tools follow-up.
-- **Status:** Open RibbonKit runtime investigation; app-owned ordering workaround accepted for Writer. No runtime
-  change is approved.
+- **Status:** Corrected in RibbonKit on 2026-08-29; live theme/DPI matrix remains pending.
 - **Consumer goal:** revealing or hiding a contextual tab must keep the selected-tab marker aligned with the selected
   normal tab, including when the contextual tab occupies an earlier collection position.
 - **Reproduction and evidence:** with Page selected, Picture Tools was located between Insert and Page in Writer's tab
@@ -399,18 +405,18 @@ remain read-only until actual/diff evidence justifies a deliberate change.
 - **Friction:** the ribbon's selected content and header state can be correct while its animated active marker points
   at a different tab after contextual visibility changes the positions of later headers. This makes an ordinary
   contextual-tab insertion look like a selection change even though no selection change occurred.
-- **Current app-owned workaround:** immediately after XAML initialization, Writer moves every `IsContextual` tab to a
-  stable trailing segment of `MainRibbon.Tabs`. Revealing Table Tools or Picture Tools can therefore no longer shift a
-  selected normal tab to its right. This masks the marker-refresh gap; it does not correct RibbonKit's layout response.
+- **Current resolution:** `RibbonTabControl` observes tab collection and visibility changes and coalesces a
+  post-layout refresh of both selection visuals. Writer keeps Table Tools and Picture Tools in their authored middle
+  positions; its startup reordering workaround has been removed.
 - **Application impact:** without the ordering constraint, users can see Page content while the active marker appears
   under Picture Tools, obscuring which commands are currently displayed and undermining contextual-tab trust.
-- **Smallest possible library direction:** reproduce the collection/visibility transition in the Showcase, then make
-  the ribbon refresh the sliding underline after selected-header layout coordinates settle following tab collection,
-  visibility or layout changes. Preserve normal/contextual styling, animation and reduced-motion behavior without
-  requiring consumers to order contextual tabs last.
-- **Evidence still required:** a minimal ribbon with normal tabs on both sides of a middle contextual tab; select the
-  right-side normal tab and repeatedly toggle contextual visibility. Verify the realized marker at 100-200% DPI, RTL,
-  reduced motion, all Office themes, tab merging and customization reorder before proposing `src/RibbonKit/**` work.
+- **Implemented library direction:** the realized regression keeps normal tabs on both sides of a hidden contextual
+  tab, reveals it while the right-side normal tab stays selected, and requires the shared marker to move to the new
+  header coordinate. The existing Showcase contextual-tab surface exercises the same authored ordering; the control
+  refreshes the sliding underline and connected-tab notch after collection or visibility layout settles.
+- **Evidence still required:** the focused normal/contextual/normal realized case now passes. Repeat visibility toggles
+  at 100-200% DPI, RTL, reduced motion and all Office themes, then cover tab merging and customization reorder in the
+  live acceptance pass.
 
 ### RKWF-017 — Empty trailing table cells can briefly lack usable text geometry after replacement
 
