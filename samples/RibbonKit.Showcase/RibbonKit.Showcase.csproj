@@ -2,7 +2,9 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <TargetFramework>net6.0-windows</TargetFramework>
+    <!-- Intentional legacy compatibility target for Windows 7 validation. -->
+    <CheckEolTargetFramework>false</CheckEolTargetFramework>
     <UseWPF>true</UseWPF>
     <RootNamespace>RibbonKit.Showcase</RootNamespace>
     <IsPackable>false</IsPackable>

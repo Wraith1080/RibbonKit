@@ -13,7 +13,11 @@ public static class RibbonSizeDefinition
     /// <exception cref="ArgumentException">The string is empty or contains an unknown token.</exception>
     public static RibbonControlSize[] Parse(string definition)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(definition);
+        ArgumentNullException.ThrowIfNull(definition);
+        if (string.IsNullOrWhiteSpace(definition))
+        {
+            throw new ArgumentException("Value cannot be empty or whitespace.", nameof(definition));
+        }
 
         var parts = definition.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
         if (parts.Length == 0)
