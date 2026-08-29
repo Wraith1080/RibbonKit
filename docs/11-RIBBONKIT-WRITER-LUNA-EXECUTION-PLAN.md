@@ -10,7 +10,8 @@
 > W3-E1 structured-context/menu and contextual-publication foundation, including the app-owned loaded-picture
 > context-menu/keyboard undo/redo and snapshot-normalization correction. The bounded W3-E2a picture slice has now
 > passed its automated gate with explicit selection, a real size/remove-only Picture Tools tab and non-printing direct
-> picture resizing. Live picture acceptance, table selection/resizing adorners and the full W3-E matrix remain pending.
+> picture resizing. The bounded W3-E2b table-selection and column/row/overall-resize implementation passes its minimal
+> focused gate. Live table-grip acceptance and the full W3-E matrix remain pending.
 > W2-G is planned after W3-E as a high-risk true editable-pagination packet; it may not fake page breaks.
 > This document does not schedule future agents or imply that any later Writer packet exists.
 > [`10-RIBBONKIT-WRITER-PLAN.md`](10-RIBBONKIT-WRITER-PLAN.md) owns product scope; current
@@ -564,8 +565,9 @@ object interaction and W3 manual acceptance remain W3-E.
 **Current status:** W3-E1 implements the stable document/object snapshot, W1-E menu composition, stale-target guards,
 object removal/table mutation paths and app-owned table-state refresh deferral. The bounded W3-E2a slice implements
 explicit document-bound picture selection, the real size/remove-only Picture Tools tab and non-printing picture edge/
-corner resizing with transactional native Undo/Redo. Its automated gate is accepted; live picture acceptance, table
-selection/resizing adorners and the full exit matrix below remain pending, so W3-E is not complete.
+corner resizing with transactional native Undo/Redo. W3-E2b now implements the corresponding table selection frame,
+column/row boundary grips, overall resize grip and one-unit table replacement commit. Its deliberately minimal focused
+gate passes; live table-grip acceptance and the full exit matrix below remain pending, so W3-E is not complete.
 
 **Owns:** structured-object hit testing and selection state, the W1-E context-menu extension rows, Picture Tools,
 table/picture selection adorners, direct resizing and contextual-tab stability exclusively. It may refine Writer-owned

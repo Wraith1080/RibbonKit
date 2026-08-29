@@ -20,6 +20,7 @@ public partial class MainWindow
     private readonly WriterHyperlinkService _writerHyperlinkService = new();
     private readonly WriterDateTimeService _writerDateTimeService = new();
     private WriterTableInteractionController? _tableInteractionController;
+    private WriterTableResizeController? _tableResizeController;
     private WriterStructuredContextResolver? _structuredContextResolver;
     private WriterPictureInteractionController? _pictureInteractionController;
     private Button? _customTableSizeButton;
@@ -41,6 +42,8 @@ public partial class MainWindow
             DocumentEditor,
             () => CanEditTables);
         _tableInteractionController.StateChanged += OnTableInteractionStateChanged;
+        _tableResizeController = new WriterTableResizeController(DocumentEditor,
+            _tableInteractionController, CompleteStructuredContentMutation);
         EditingController.Editing.UndoExtension = _writerImageService;
         EditingController.Editing.UndoCompleted += OnEditingUndoCompleted;
         EditingController.Editing.RedoCompleted += OnEditingRedoCompleted;
@@ -96,6 +99,8 @@ public partial class MainWindow
             _pictureInteractionController.Dispose();
             _pictureInteractionController = null;
         }
+        _tableResizeController?.Dispose();
+        _tableResizeController = null;
         _tableInteractionController.StateChanged -= OnTableInteractionStateChanged;
         _tableInteractionController.Dispose();
         _tableInteractionController = null;
@@ -878,6 +883,27 @@ public partial class MainWindow
             tables.SetCellAlignment(cell, alignment)));
     }
 
+    private void OnTableHorizontalAlignmentClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement { Tag: string tag }
+            || !Enum.TryParse<WriterTableHorizontalAlignment>(tag, out var alignment))
+            return;
+        QueueStructuredContentAction(() => MutateCurrentTable((tables, table) =>
+        {
+            if (!WriterTableLayoutResolver.TryCreate(DocumentEditor,
+                    TableInteractionController.GetOrderedCells(table),
+                    TableInteractionController.CurrentCell?.GroupIndex ?? 0, out var layout))
+                return false;
+            var pageWidth = DocumentEditor.Document.PageWidth;
+            var padding = DocumentEditor.Document.PagePadding;
+            var availableWidth = double.IsFinite(pageWidth)
+                ? pageWidth - padding.Left - padding.Right
+                : DocumentEditor.ActualWidth - DocumentEditor.Padding.Left - DocumentEditor.Padding.Right;
+            return tables.SetTableHorizontalAlignment(table, alignment,
+                layout.Bounds.Width / layout.ProjectionScaleX, availableWidth);
+        }));
+    }
+
     private void OnTableBordersClick(object sender, RoutedEventArgs e)
     {
         if (sender is not FrameworkElement { Tag: string tag })
@@ -992,6 +1018,7 @@ public partial class MainWindow
         var inTable = CurrentViewMode != WriterViewMode.PrintPreview
             && _tableInteractionController.IsInTable;
         var canEdit = inTable && CanEditTables;
+        _tableResizeController?.SetEnabled(canEdit);
         TableToolsTab.Visibility = inTable ? Visibility.Visible : Visibility.Collapsed;
         TableToolsTab.IsEnabled = canEdit;
         TableRowsColumnsGroup.IsEnabled = canEdit;
@@ -1030,6 +1057,7 @@ public partial class MainWindow
         TableRowHeightButton.IsEnabled = canEdit;
         TableColumnWidthButton.IsEnabled = canEdit;
         TableAlignmentButton.IsEnabled = canEdit;
+        TableHorizontalAlignmentButton.IsEnabled = canEdit;
         TableBordersButton.IsEnabled = canEdit;
         TableBackgroundButton.IsEnabled = canEdit;
 

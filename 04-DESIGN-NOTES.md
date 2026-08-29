@@ -5510,6 +5510,73 @@ historically process-global focus case without needing a split), RibbonKit passe
 window remains pending. The rest of W3-E2 still owns table selection, its selection/row/column/overall resize grips,
 bounded table resize transactions and the complete W3-E live matrix; W3-E is not complete.
 
+### 3.123 RibbonKit Writer W3-E2b table selection and direct resizing — 2026-08-29
+
+The bounded table half of W3-E2 is now implemented as app-owned Writer interaction chrome. A
+`WriterTableResizeController` follows the exact live table resolved by `WriterTableInteractionController` and attaches
+one automation-peer-free adorner to the editor layer. Its top-left selection grip selects the table range, top boundary
+grips resize logical columns, left boundary grips resize logical rows and the bottom-right grip scales the overall
+table. The frame and handles stay outside the `FlowDocument`, `.rkw`, preview, print and UI Automation trees.
+
+`WriterTableLayoutResolver` derives realized table, row and column boundaries from live cell text geometry rather than
+inventing a second document layout. Explicit pixel `TableColumn.Width` values remain authoritative; Auto columns use
+the realized boundaries. The adorner is invalidated from table-state, editor-size and scroll changes, follows
+Paper/Continuous presentation and uses DPI-aligned 8-DIP handles with 18-DIP invisible hit targets. Column cursors are
+horizontal, row cursors vertical and the overall grip uses the physical diagonal cursor.
+
+Column preview changes only native column metadata and is restored before commit. WPF records direct
+`TableCell.Padding` changes in native Undo even outside an explicit change scope, so row preview deliberately moves only
+the adorner geometry; release computes the final symmetric-padding approximation without touching the document during
+pointer movement. Escape, capture loss, view change and document replacement restore the exact opening column/padding
+state. Release restores that opening state and `WriterTableService.ApplyResize` performs one cloned-table replacement,
+preserving the caret and producing one native Undo unit for column, row or combined overall sizing. Columns enforce a
+24-DIP content minimum, rows a 12-DIP realized minimum and overall width the current page/editor content bound.
+
+The first live 125%-scale review showed the frame ending early, and an initial DPI projection overcorrected it past the
+table edge. The actual defect was boundary inference: an internal boundary averaged the previous empty cell's content
+end with the next cell's content start, placing grips near cell midpoints. Boundaries now prefer the next logical cell's
+realized start, explicit pixel `TableColumn.Width` remains authoritative without a DPI multiplier, and only the
+editor's deliberate zoom `LayoutTransform` participates in projection. Auto final columns reuse the median realized
+preceding width when their empty content end cannot describe the cell edge. Pointer deltas are transformed back through
+zoom before changing native widths or padding.
+
+A second live review exposed the post-commit form of the same WPF timing gap: immediately after cloned-table replacement,
+an empty trailing cell can temporarily return no usable character rectangle. Deriving logical column count from only
+realized cells therefore omitted the valid last column and ended the frame one cell early after resize. Logical row and
+column counts now come from the native table structure; realized character rectangles supply coordinates only, with
+explicit column metadata/fallback interpolation filling a temporarily unrealized edge.
+
+The next live screenshot showed a smaller but cumulative post-resize drift: every explicit-width handle was roughly one
+native `Table.CellSpacing` unit left of its rendered boundary. `TableColumn.Width` does not include that spacing even
+though WPF contributes it once per laid-out column. Explicit boundary projection now adds the table's finite,
+non-negative cell spacing for every column; resize math and persisted width values remain spacing-free native column
+widths.
+
+The overall bottom-right grip initially mixed two preview mechanisms: height was projected immediately from pointer
+delta while width waited for native `TableColumn` re-layout. WPF can defer that layout while the adorner owns mouse
+capture, making the frame appear to preview only one direction. Overall preview now scales both boundary arrays from
+the immutable opening snapshot on every mouse move, so its bottom-right corner follows the bounded pointer X/Y
+directly; native column metadata remains the release-time commit source. Maximum content width also excludes the
+rendered per-column cell-spacing contribution.
+
+The first two-axis correction still performed a live-layout availability check before entering that opening-snapshot
+branch. Horizontal preview remained visible through the native column-width mutation, but when reflow temporarily
+returned no realized table layout the synthetic frame—including its vertical movement—was skipped. The overall branch
+now runs before any live-layout query and remains fully opening-snapshot-driven until release. A focused regression
+forces the live resolver to return null mid-drag and pins simultaneous X/Y movement.
+
+Table placement is intentionally separate from cell-text alignment. Table Tools now exposes Left, Center and Right
+table alignment, implemented as Writer-owned horizontal `Table.Margin` placement against the current document content
+width. It preserves the table/cell `TextAlignment`, vertical margins, native undo and `.rkw` persistence. The existing
+Cell Alignment menu continues to affect text in the current cell only.
+
+At the user-requested minimal verification level, the focused table-resize geometry/adorner/Undo plus table-placement
+gate passes **5/5**,
+the existing real-tree MainWindow integration case passes **1/1**, the Writer project builds with zero warnings/errors
+and `git diff --check` is clean. The full Writer/RibbonKit/visual/solution gates were intentionally not rerun. No
+`src/RibbonKit/**` file changed. Live table-grip acceptance and the remaining W3-E mouse/keyboard/UIA, zoom/DPI/RTL,
+span/multi-row-group, save/reopen and preview/print matrix remain pending; W3-E is not yet accepted.
+
 ## 4. Workflow / Session Conventions
 
 - Work from the current Windows checkout at
@@ -5596,9 +5663,9 @@ bounded table resize transactions and the complete W3-E live matrix; W3-E is not
   no complete named-style/persistence contract, so no placeholder gallery was added. W3-C owns the accepted Insert tab
   plus contextual Table Tools and its distinct table-cell Tab navigation contract. W3-D owns the accepted strict native
   table round-trip/schema-v2 and TXT/RTF compatibility matrix. W3-E has begun with the bounded §3.121 context-menu and
-  contextual-state foundation, and §3.122 completes the automated W3-E2a picture-selection/Picture Tools/direct-resize
-  slice. Live W3-E2a acceptance plus table selection and direct table resize grips remain; W4-A remains blocked on
-  complete W3-E. Planned W2-G then owns a high-risk true editable-pagination architecture
+  contextual-state foundation, §3.122 completes the automated W3-E2a picture-selection/Picture Tools/direct-resize
+  slice, and §3.123 adds the minimally tested W3-E2b table-selection/direct-resize implementation. The full W3-E live
+  acceptance matrix remains; W4-A remains blocked on complete W3-E. Planned W2-G then owns a high-risk true editable-pagination architecture
   and delivery packet; it must keep one authoritative document and may not fake page gaps. W4-B waits for both W4-A
   and W2-G. W2-G has not started, and the remaining W3-E2/live matrix is still pending.
 - Automatic `Icons.xaml` discovery is best-effort by design. Keep `Load Icons.xaml…` available
@@ -5721,6 +5788,10 @@ bounded table resize transactions and the complete W3-E live matrix; W3-E is not
   W3-E2a gate passes **34/34**, Writer passes **434/434** in one run, RibbonKit passes **355/355**, visual passes **1/1**,
   and the solution build has zero warnings/errors. Actual Writer pointer/ribbon acceptance, table adorners and the full
   W3-E live matrix remain pending.
+- 2026-08-29 after §3.123 implementation: at the explicitly requested minimal verification level, the new table-resize
+  gate passes **3/3**, the existing real-tree MainWindow case passes **1/1**, and the Writer project builds with zero
+  warnings/errors. The complete Writer/RibbonKit/visual/solution gates were intentionally not rerun, so §3.122 remains
+  the latest full inventory checkpoint. Live table-grip and complete W3-E acceptance remain pending.
 - Before quoting a current count or declaring a new change complete, rerun the proportional build
   and test commands. Inspect actual/diff PNG artifacts before changing visual baselines or
   tolerances.

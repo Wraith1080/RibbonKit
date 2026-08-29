@@ -640,6 +640,33 @@ public sealed class WriterTableServiceTests
     }
 
     [Fact]
+    public void TableHorizontalAlignmentChangesPlacementWithoutChangingCellTextAlignment()
+    {
+        StaTestHelper.Run(() =>
+        {
+            var (_, table, service) = CreateTable(1, 2);
+            table.TextAlignment = TextAlignment.Right;
+            var cell = table.RowGroups[0].Rows[0].Cells[0];
+            cell.TextAlignment = TextAlignment.Center;
+
+            Assert.True(service.SetTableHorizontalAlignment(table,
+                WriterTableHorizontalAlignment.Center, tableWidth: 240, availableWidth: 600));
+
+            Assert.Equal(180, table.Margin.Left);
+            Assert.Equal(0, table.Margin.Right);
+            Assert.True(double.IsNaN(table.Margin.Top));
+            Assert.True(double.IsNaN(table.Margin.Bottom));
+            Assert.Equal(TextAlignment.Right, table.TextAlignment);
+            Assert.Equal(TextAlignment.Center, cell.TextAlignment);
+            Assert.False(service.SetTableHorizontalAlignment(table,
+                WriterTableHorizontalAlignment.Center, tableWidth: 240, availableWidth: 600));
+            Assert.True(service.SetTableHorizontalAlignment(table,
+                WriterTableHorizontalAlignment.Right, tableWidth: 240, availableWidth: 600));
+            Assert.Equal(360, table.Margin.Left);
+        });
+    }
+
+    [Fact]
     public void ColumnClonePreservesSupportedCellContentNestedTableImageHyperlinkAndResources()
     {
         StaTestHelper.Run(() =>

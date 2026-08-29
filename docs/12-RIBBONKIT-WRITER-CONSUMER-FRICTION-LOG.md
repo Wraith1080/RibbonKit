@@ -412,6 +412,28 @@ remain read-only until actual/diff evidence justifies a deliberate change.
   right-side normal tab and repeatedly toggle contextual visibility. Verify the realized marker at 100-200% DPI, RTL,
   reduced motion, all Office themes, tab merging and customization reorder before proposing `src/RibbonKit/**` work.
 
+### RKWF-017 — Empty trailing table cells can briefly lack usable text geometry after replacement
+
+- **First seen / packet:** 2026-08-29, Writer W3-E2b live direct-table-resize follow-up.
+- **Status:** Corrected in Writer; native WPF document-layout timing, not a confirmed RibbonKit runtime defect.
+- **Consumer goal:** direct-selection chrome must continue to cover every logical table row and column immediately
+  after a resize commits through cloned native-table replacement.
+- **Reproduction and evidence:** before resize, all empty cells produced enough character geometry for the Writer
+  adorner. After the one-Undo replacement, an empty trailing cell could temporarily produce no usable character
+  rectangle while the rendered table itself still contained the column. The adorner derived its logical column count
+  from only the realized subset and visibly ended one cell before the table edge.
+- **Current app-owned correction:** Writer derives logical row/column counts from the native table grid and uses live
+  character rectangles only for coordinates. Explicit `TableColumn.Width` metadata and bounded interpolation cover a
+  temporarily unrealized edge; subsequent layout passes naturally replace the fallback with realized geometry. When
+  explicit widths are projected, Writer also adds one native `Table.CellSpacing` contribution per column: WPF renders
+  that spacing outside `TableColumn.Width`, so omitting it creates cumulative handle drift after resize.
+- **Application impact:** without the structural count, selection and resize chrome becomes misleading precisely after
+  the user completes a resize, and the bottom-right handle can target the wrong table extent.
+- **Smallest possible library direction:** none. The chrome and geometry resolver are Writer-owned consumers of native
+  `FlowDocument` tables; no RibbonKit control participates in the document layout.
+- **Evidence still required:** repeat multi-row, 1-8 column, spanned-cell, zoom/DPI, RTL, undo/redo and save/reopen
+  cases in the visible Writer window.
+
 ## 5. Closed observations
 
 None yet.

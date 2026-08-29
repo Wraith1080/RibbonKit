@@ -12,8 +12,9 @@
 > including preview and save/reopen.
 > The bounded W3-E2a picture slice now adds explicit document-bound picture selection, a real size/remove-only
 > Picture Tools tab and a non-printing eight-handle resize adorner with one-unit Undo/Redo. Its automated gate is
-> accepted; live Writer acceptance remains pending. Table selection/resizing adorners and the full W3-E live matrix
-> remain in the rest of W3-E2. W2-G is a planned high-risk true editable-pagination packet after
+> accepted. The bounded W3-E2b implementation now adds a non-printing table selection adorner with column, row and
+> overall resize grips plus one-unit Undo; its minimal focused gate passes. Live table-grip acceptance and the full
+> W3-E matrix remain pending. W2-G is a planned high-risk true editable-pagination packet after
 > W3-E; it must prove a real editing architecture and may not simulate pages with decorative breaks. Live mixed-monitor
 > DPI movement remains deferred to W4-C. No later
 > implementation is implied.

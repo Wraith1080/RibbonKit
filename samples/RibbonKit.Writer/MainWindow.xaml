@@ -835,6 +835,16 @@
                         <rk:RibbonMenuItem Header="Right" Tag="Right" Click="OnTableAlignmentClick" rk:Ribbon.CommandId="Writer.TableTools.Alignment.Right" rk:KeyTip.Keys="R" AutomationProperties.AutomationId="TableAlignRight" AutomationProperties.Name="Align cell text right" />
                         <rk:RibbonMenuItem Header="Justify" Tag="Justify" Click="OnTableAlignmentClick" rk:Ribbon.CommandId="Writer.TableTools.Alignment.Justify" rk:KeyTip.Keys="J" AutomationProperties.AutomationId="TableAlignJustify" AutomationProperties.Name="Justify cell text" />
                     </rk:RibbonDropDownButton>
+                    <rk:RibbonDropDownButton x:Name="TableHorizontalAlignmentButton" Header="Table Alignment" Size="Large"
+                                             SizeDefinition="Large, Medium, Small"
+                                             Icon="{StaticResource Icon.WriterAlignCenter}" LargeIcon="{StaticResource Icon.WriterAlignCenter}"
+                                             rk:Ribbon.CommandId="Writer.TableTools.Alignment.Table" rk:KeyTip.Keys="TA"
+                                             ScreenTipTitle="Table Alignment" ScreenTipText="Place the table at the left, center, or right of the page without changing cell text alignment."
+                                             AutomationProperties.AutomationId="TableHorizontalAlignment" AutomationProperties.Name="Table alignment">
+                        <rk:RibbonMenuItem Header="Left" Tag="Left" Click="OnTableHorizontalAlignmentClick" rk:Ribbon.CommandId="Writer.TableTools.Alignment.Table.Left" rk:KeyTip.Keys="L" AutomationProperties.AutomationId="TablePositionLeft" AutomationProperties.Name="Align table left" />
+                        <rk:RibbonMenuItem Header="Center" Tag="Center" Click="OnTableHorizontalAlignmentClick" rk:Ribbon.CommandId="Writer.TableTools.Alignment.Table.Center" rk:KeyTip.Keys="C" AutomationProperties.AutomationId="TablePositionCenter" AutomationProperties.Name="Center table" />
+                        <rk:RibbonMenuItem Header="Right" Tag="Right" Click="OnTableHorizontalAlignmentClick" rk:Ribbon.CommandId="Writer.TableTools.Alignment.Table.Right" rk:KeyTip.Keys="R" AutomationProperties.AutomationId="TablePositionRight" AutomationProperties.Name="Align table right" />
+                    </rk:RibbonDropDownButton>
                 </rk:RibbonGroup>
                 <rk:RibbonGroup x:Name="TableDesignGroup" Header="Design" rk:Ribbon.CommandId="Writer.TableTools.Design"
                                 rk:KeyTip.Keys="DE" Icon="{StaticResource Icon.WriterBorders}"

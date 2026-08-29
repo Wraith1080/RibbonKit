@@ -673,6 +673,40 @@ public sealed class WriterTableService : IDisposable
         });
     }
 
+    /// <summary>Places a table horizontally without changing text alignment inside its cells.</summary>
+    public bool SetTableHorizontalAlignment(Table table, WriterTableHorizontalAlignment alignment,
+        double tableWidth, double availableWidth)
+    {
+        ThrowIfDisposed();
+        ArgumentNullException.ThrowIfNull(table);
+        if (!Enum.IsDefined(alignment))
+            throw new ArgumentOutOfRangeException(nameof(alignment), alignment,
+                "Unknown table alignment.");
+        if (!double.IsFinite(tableWidth) || tableWidth <= 0)
+            throw new ArgumentOutOfRangeException(nameof(tableWidth));
+        if (!double.IsFinite(availableWidth) || availableWidth <= 0)
+            throw new ArgumentOutOfRangeException(nameof(availableWidth));
+
+        var remaining = Math.Max(0, availableWidth - tableWidth);
+        var left = alignment switch
+        {
+            WriterTableHorizontalAlignment.Left => 0,
+            WriterTableHorizontalAlignment.Center => remaining / 2d,
+            WriterTableHorizontalAlignment.Right => remaining,
+            _ => throw new ArgumentOutOfRangeException(nameof(alignment))
+        };
+        return Mutate(() =>
+        {
+            if (!IsTableInDocument(table))
+                return false;
+            var margin = new Thickness(left, table.Margin.Top, 0, table.Margin.Bottom);
+            if (table.Margin == margin)
+                return false;
+            table.Margin = margin;
+            return true;
+        });
+    }
+
     /// <summary>Sets a table's border brush and thickness.</summary>
     public bool SetTableBorder(Table table, Brush? brush, Thickness thickness)
     {
@@ -780,6 +814,73 @@ public sealed class WriterTableService : IDisposable
             for (var i = current.Column; i < cellColumnEnd; i++)
                 replacement.Columns[i].Width = width;
             if (!ReplaceTable(reference.Table, replacement))
+                return false;
+            if (active.IsValid)
+                caret = FindLogicalCaret(replacement, active.GroupIndex, active.Row, active.Column);
+            return true;
+        }, () => SetCaret(caret));
+    }
+
+    internal bool ApplyResize(Table table, IReadOnlyDictionary<int, double> columnWidths,
+        IReadOnlyList<WriterTableCellPaddingAdjustment> cellPaddings)
+    {
+        ThrowIfDisposed();
+        ArgumentNullException.ThrowIfNull(table);
+        ArgumentNullException.ThrowIfNull(columnWidths);
+        ArgumentNullException.ThrowIfNull(cellPaddings);
+        foreach (var pair in columnWidths)
+        {
+            if (pair.Key < 0 || !double.IsFinite(pair.Value) || pair.Value <= 0)
+                throw new ArgumentOutOfRangeException(nameof(columnWidths));
+        }
+        foreach (var adjustment in cellPaddings)
+        {
+            if (adjustment.GroupIndex < 0 || adjustment.Row < 0 || adjustment.Column < 0)
+                throw new ArgumentOutOfRangeException(nameof(cellPaddings));
+            ValidateThickness(adjustment.Padding, nameof(cellPaddings));
+        }
+
+        WriterTableCellReference? caret = null;
+        return Mutate(() =>
+        {
+            if (!IsTableInDocument(table) || !TryGetLogicalTableWidth(table, out var logicalWidth)
+                || columnWidths.Keys.Any(column => column >= logicalWidth))
+                return false;
+            var active = TryGetCell(Editor.Selection.Start, out var activeReference)
+                && ReferenceEquals(activeReference.Table, table) ? activeReference : default;
+            var replacement = CloneTable(table);
+            var changed = false;
+            if (columnWidths.Count > 0)
+            {
+                EnsureColumns(replacement, logicalWidth);
+                foreach (var pair in columnWidths)
+                {
+                    var width = new GridLength(pair.Value, GridUnitType.Pixel);
+                    if (replacement.Columns[pair.Key].Width == width)
+                        continue;
+                    replacement.Columns[pair.Key].Width = width;
+                    changed = true;
+                }
+            }
+
+            foreach (var adjustment in cellPaddings)
+            {
+                if (adjustment.GroupIndex >= replacement.RowGroups.Count)
+                    return false;
+                var group = replacement.RowGroups[adjustment.GroupIndex];
+                if (!WriterTableGrid.TryBuild(replacement, group, out var grid))
+                    return false;
+                var placement = grid.Placements.FirstOrDefault(item =>
+                    item.Row == adjustment.Row && item.Column == adjustment.Column);
+                if (placement is null)
+                    return false;
+                if (placement.Cell.Padding == adjustment.Padding)
+                    continue;
+                placement.Cell.Padding = adjustment.Padding;
+                changed = true;
+            }
+
+            if (!changed || !ReplaceTable(table, replacement))
                 return false;
             if (active.IsValid)
                 caret = FindLogicalCaret(replacement, active.GroupIndex, active.Row, active.Column);

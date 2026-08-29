@@ -1,6 +1,20 @@
+using System.Windows;
 using System.Windows.Documents;
 
 namespace RibbonKit.Writer.Editing;
+
+/// <summary>Specifies horizontal placement of a table within the document content area.</summary>
+public enum WriterTableHorizontalAlignment
+{
+    /// <summary>Places the table against the leading content edge.</summary>
+    Left,
+
+    /// <summary>Centers the table between the content edges.</summary>
+    Center,
+
+    /// <summary>Places the table against the trailing content edge.</summary>
+    Right
+}
 
 /// <summary>Chooses which side of a resolved table cell receives inserted rows or columns.</summary>
 public enum WriterTableInsertPlacement
@@ -136,3 +150,6 @@ public readonly record struct WriterTableOperationResult(bool Succeeded,
     /// <summary>Gets a successful result targeting the supplied cell.</summary>
     public static WriterTableOperationResult Success(WriterTableCellReference cell) => new(true, cell);
 }
+
+internal readonly record struct WriterTableCellPaddingAdjustment(
+    int GroupIndex, int Row, int Column, Thickness Padding);

@@ -306,6 +306,7 @@ public partial class MainWindow : RibbonWindow
     private void ReplaceEditorDocument()
     {
         _pictureInteractionController?.ReplaceDocument(Shell.CurrentDocument.Content);
+        _tableResizeController?.ReplaceDocument();
         _writerImageService.ResetUndoHistory(Shell.CurrentDocument.Content);
         HorizontalRuler.CancelActiveDrags();
         MarginGuide.ClearPreview();
@@ -704,7 +705,10 @@ public partial class MainWindow : RibbonWindow
             throw new ArgumentOutOfRangeException(nameof(mode), mode, "Unknown Writer view mode.");
 
         if (mode != CurrentViewMode)
+        {
             _pictureInteractionController?.CancelActiveResize();
+            _tableResizeController?.CancelActiveResize();
+        }
         CurrentViewMode = mode;
         if (mode == WriterViewMode.PrintPreview)
         {
