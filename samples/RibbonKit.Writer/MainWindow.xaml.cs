@@ -813,7 +813,8 @@ public partial class MainWindow : RibbonWindow
         _editorContextMenuController = new WriterEditorContextMenuController(DocumentEditor)
         {
             FontDialogRequested = _ => ShowFontDialog(),
-            ParagraphDialogRequested = _ => ShowParagraphDialog()
+            ParagraphDialogRequested = _ => ShowParagraphDialog(),
+            StructuredSelectionHitTest = TableInteractionController.Tables.IsPointerInsideTableSelection
         };
         AttachStructuredContextMenu(_editorContextMenuController);
     }

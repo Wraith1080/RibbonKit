@@ -16,6 +16,19 @@ public enum WriterTableHorizontalAlignment
     Right
 }
 
+/// <summary>Specifies vertical placement of content within a table cell's padded height.</summary>
+public enum WriterTableCellVerticalAlignment
+{
+    /// <summary>Places cell content at the top.</summary>
+    Top,
+
+    /// <summary>Centers cell content vertically.</summary>
+    Center,
+
+    /// <summary>Places cell content at the bottom.</summary>
+    Bottom
+}
+
 /// <summary>Chooses which side of a resolved table cell receives inserted rows or columns.</summary>
 public enum WriterTableInsertPlacement
 {

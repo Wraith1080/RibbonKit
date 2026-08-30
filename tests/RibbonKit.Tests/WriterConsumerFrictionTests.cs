@@ -218,6 +218,43 @@ public sealed class WriterConsumerFrictionTests
     });
 
     [Fact]
+    public void In_ribbon_gallery_popup_uses_system_window_background_without_theme_tokens() => Sta.Run(() =>
+    {
+        var gallery = new InRibbonGallery
+        {
+            Width = 240d,
+            Height = 72d,
+        };
+        gallery.Items.Add(new RibbonGalleryItem { Content = "First" });
+        Window window = TestWindow(gallery, new Size(260d, 100d));
+
+        try
+        {
+            window.Show();
+            Sta.Drain(DispatcherPriority.Render);
+            gallery.UpdateLayout();
+
+            // This STA owns no WPF Application and the window deliberately supplies no RibbonKit
+            // token dictionary, reproducing a tokenless consumer without disturbing the Showcase.
+            Assert.Null(gallery.TryFindResource(RibbonContentBackgroundKey));
+
+            var popupHost = Assert.IsType<Border>(
+                gallery.Template.FindName("PART_PopupHost", gallery));
+            popupHost.Background = null;
+
+            gallery.IsDropDownOpen = true;
+            Sta.Drain(DispatcherPriority.Render);
+
+            Assert.Same(SystemColors.WindowBrush, popupHost.Background);
+            gallery.IsDropDownOpen = false;
+        }
+        finally
+        {
+            window.Close();
+        }
+    });
+
+    [Fact]
     public void In_ribbon_gallery_refreshes_the_closed_strip_before_its_first_post_dpi_popup_open() => Sta.Run(() =>
     {
         var gallery = new InRibbonGallery

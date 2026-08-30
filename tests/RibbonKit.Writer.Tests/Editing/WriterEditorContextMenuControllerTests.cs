@@ -266,6 +266,30 @@ public sealed class WriterEditorContextMenuControllerTests
     }
 
     [Fact]
+    public void StructuredHitTestCanPreserveASelectionOutsideItsRawTextBounds()
+    {
+        StaTestHelper.Run(() =>
+        {
+            var run = new Run("one two three");
+            var editor = new RichTextBox
+            {
+                Document = new FlowDocument(new Paragraph(run))
+            };
+            using var controller = new WriterEditorContextMenuController(editor)
+            {
+                StructuredSelectionHitTest = (_, _, _) => true
+            };
+            var start = run.ContentStart;
+            var end = start.GetPositionAtOffset(3, LogicalDirection.Forward)!;
+            var rawOutside = run.ContentEnd;
+
+            Assert.False(WriterEditorContextMenuController.IsPointerInsideSelection(
+                rawOutside, start, end));
+            Assert.True(controller.ShouldPreserveSelection(rawOutside, start, end));
+        });
+    }
+
+    [Fact]
     public void CapturedTargetAndGuardedCallbackRejectDocumentReplacement()
     {
         StaTestHelper.Run(() =>

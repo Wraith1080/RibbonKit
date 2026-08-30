@@ -80,8 +80,8 @@ internal sealed class WriterStructuredContextResolver
         }
 
         if (_tables.TryGetCell(target.Start, out var first)
-            && _tables.TryGetCell(target.End, out var last)
-            && ReferenceEquals(first.Table, last.Table))
+            && _tables.TryGetSelectionRange(target.Start, target.End, out var range)
+            && ReferenceEquals(first.Table, range.Table))
         {
             return new WriterStructuredContextSnapshot(document, target,
                 WriterStructuredContextKind.Table, first.Table, first.Cell);

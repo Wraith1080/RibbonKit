@@ -138,8 +138,9 @@ remain read-only until actual/diff evidence justifies a deliberate change.
 ### RKWF-005 — Ribbon groups have no first-class in-group separator
 
 - **First seen / packet:** 2026-08-24, Writer W1-D visual review and W2 planning.
-- **Status:** Corrected in RibbonKit on 2026-08-29; user-verified through every theme/light-dark variant,
-  actual collapsed flyouts, RTL and the 100-200% DPI matrix by 2026-08-30. High Contrast remains pending.
+- **Status:** Corrected in RibbonKit on 2026-08-29; user-verified through every supported theme/light-dark variant,
+  actual collapsed flyouts, RTL and the 100-200% DPI matrix by 2026-08-30. High Contrast is not an RKWF-005
+  acceptance requirement because RibbonKit does not currently claim a whole-ribbon Windows contrast-theme mode.
 - **Consumer goal:** visually partition related command clusters inside one `RibbonGroup` without creating
   fake groups, hard-coded borders or layout-only command items.
 - **Reproduction and evidence:** the accepted Writer Home surface needs lighter divisions within command-dense
@@ -164,8 +165,8 @@ remain read-only until actual/diff evidence justifies a deliberate change.
 - **Evidence still required:** focused realized coverage now proves horizontal LTR/RTL placement, all effective
   size states, collapsed-to-large behavior, theme-brush resolution and exclusion from command/accessibility
   surfaces; structural Showcase contracts pin the authored examples and their neighboring commands. The user has
-  accepted every theme/light-dark variant, actual collapsed flyouts, RTL placement and 100-200% DPI. High Contrast
-  remains.
+  accepted every supported theme/light-dark variant, actual collapsed flyouts, RTL placement and 100-200% DPI.
+  Whole-ribbon Windows contrast-theme support is separate future accessibility work rather than a separator defect.
 
 ### RKWF-006 — Main-ribbon leaf commands are absent from external UIA traversal
 
@@ -267,7 +268,9 @@ remain read-only until actual/diff evidence justifies a deliberate change.
 ### RKWF-011 — Backstage has no host-level close-completed callback
 
 - **First seen / packet:** 2026-08-24, Writer W0-F Backstage focus integration.
-- **Status:** Corrected in RibbonKit on 2026-08-29; live multi-path acceptance remains pending.
+- **Status:** Corrected in RibbonKit on 2026-08-29 and live-accepted on 2026-08-30. The user confirmed
+  that the host behavior occurs after the Backstage close animation finishes, matching the intended
+  close-completed boundary.
 - **Consumer goal:** restore editor focus after any Backstage dismissal without wiring every File action or guessing the
   exit-animation duration.
 - **Reproduction and evidence:** `Ribbon.IsBackstageOpen` is the only general observable state, but it changes to
@@ -287,10 +290,10 @@ remain read-only until actual/diff evidence justifies a deliberate change.
   not cancelled by a reopen. Do not raise it for `RibbonApplicationMenu` and do not make Ribbon own a focus target.
   A non-cancellable `BackstageClosing` event may be considered separately for symmetry, but is too early for focus
   restoration.
-- **Evidence still required:** realized-STA coverage now proves programmatic/reduced-motion closure for Modern,
-  Classic2010 and Classic2007, reopen cancellation and exclusion of `RibbonApplicationMenu`; Showcase usage and
-  public API/XML documentation are present. Live File-toggle, Back/Escape and KeyTip paths plus unload/deactivation
-  observation remain before visual acceptance.
+- **Evidence still required:** none for the consumer friction. Realized-STA coverage proves
+  programmatic/reduced-motion closure for Modern, Classic2010 and Classic2007, reopen cancellation and exclusion of
+  `RibbonApplicationMenu`; Showcase usage and public API/XML documentation are present. The user's live acceptance
+  confirms that host behavior begins only after the close animation completes.
 
 ### RKWF-012 — Realized native-undo tests must serialize visible WPF window ownership
 
@@ -315,7 +318,8 @@ remain read-only until actual/diff evidence justifies a deliberate change.
 
 - **First seen / packet:** 2026-08-26, Writer W3-C live table-picker acceptance.
 - **Status:** Corrected in RibbonKit on 2026-08-29; user-verified through every theme/light-dark variant and the
-  100-200% DPI matrix by 2026-08-30. Collapsed-group, RTL and High Contrast coverage remain pending.
+  100-200% DPI matrix by 2026-08-30. The tokenless system-background fallback is focused-tested; collapsed/RTL do
+  not change that brush-resolution contract, and whole-ribbon High Contrast is not currently supported.
 - **Consumer goal:** an expanded `InRibbonGallery` should paint an opaque theme/high-contrast popup surface before its
   shared presenter is re-homed, so underlying ribbon commands never show through the tile grid.
 - **Reproduction and evidence:** in the real 125%-scale Writer window, `PART_PopupHost.Background` remained null even
@@ -333,7 +337,11 @@ remain read-only until actual/diff evidence justifies a deliberate change.
   resolves/reapplies the theme-owned popup background from its connected resource scope when the separate HWND opens.
   High Contrast uses the system Window brush, and open popups follow runtime theme/High Contrast notifications.
 - **Evidence still required:** the user has accepted every Office generation/light-dark variant and 100-200% DPI
-  without the Writer override. Repeat in a collapsed group, RTL and High Contrast.
+  without the Writer override. A focused tokenless-consumer case now proves that opening a popup with no
+  `RibbonKit.Brushes.Ribbon.ContentBackground` resource uses `SystemColors.WindowBrush`; the existing scoped-theme
+  case separately proves recovery of the connected gallery's resolved brush after the detached popup host loses it.
+  No tokenless whole-Showcase visual check is required because RibbonKit otherwise requires a theme token dictionary,
+  and complete Windows contrast-theme support is not currently claimed.
 
 ### RKWF-014 — Transient Writer selection can collapse the active contextual tab during a table command
 
@@ -572,6 +580,44 @@ remain read-only until actual/diff evidence justifies a deliberate change.
   pages and the OK/Cancel/Close exceptions. The reviewed Office 2024 RTL QAT approval changed only the four expected
   buttons and then only its available-list scrollbar; the zero-warning Release build, RibbonKit **392/392**, visual
   **1/1**, and Writer **439/439** pass.
+
+### RKWF-020 — FlowDocument table selection endpoints can resolve to an adjacent cell
+
+- **First seen / packet:** 2026-08-30, Writer W3-E2b live table-selection follow-up.
+- **Status:** Corrected in Writer; native WPF text-pointer affinity, not a RibbonKit runtime defect.
+- **Consumer goal:** whole-table selection, rectangular merge and context-menu invocation must address the same cells
+  regardless of drag direction, without absorbing the cell beyond an exclusive selection end.
+- **Reproduction and evidence:** the table selection grip left the rightmost cell unhighlighted; merging a horizontal
+  selection also merged its next cell; and right-click after right-to-left or bottom-to-top selection collapsed the
+  range. `TextSelection.End` is exclusive, and at a table boundary its parent/ordinary lookup can identify the next
+  cell even though that cell is not part of the visible selection.
+- **Current app-owned correction:** Writer orders endpoints and compares a non-empty end with the containing cell's
+  first real insertion position. When WPF places the exclusive end inside the next cell's structural wrappers but no
+  later than that insertion position, Writer uses the preceding physical cell. That normalized rectangle is carried
+  through ribbon/context-menu execution. Whole-table selection still ends at the final cell's `ElementEnd`, and
+  normalized cell containment protects right-click selection. Partial-span merge rejection remains unchanged.
+- **Application impact:** selection chrome, merge scope and context actions now share one deterministic structural
+  range for forward and reverse drags.
+- **Smallest possible library direction:** none. RibbonKit only hosts the commands; native `RichTextBox`, Writer's
+  table service and its context-menu target resolver own these document pointers.
+- **Evidence still required:** repeat forward/reverse row, column and rectangle selections with empty/formatted cells,
+  spans, RTL, right-click menu execution and undo/redo in the visible Writer window.
+
+### RKWF-021 — Table insertion rectangles move with cell text alignment
+
+- **First seen / packet:** 2026-08-30, Writer W3-E2b live alignment follow-up.
+- **Status:** Corrected in Writer; native WPF document geometry, not a RibbonKit runtime defect.
+- **Consumer goal:** table resize chrome must remain on native grid edges when cell text alignment changes, and cell
+  alignment commands must format every cell in the selected rectangle.
+- **Reproduction and evidence:** centering/right-aligning the first cell moved its empty insertion rectangle and the
+  Writer adorner's right edge; selecting multiple cells and invoking horizontal or vertical alignment changed only the
+  caret cell because both handlers used `MutateCurrentCell`.
+- **Current app-owned correction:** anchor the adorner at `Table.ElementStart` plus `CellSpacing`, derive its perimeter
+  from resolved grid boundaries, and route both alignment menus through one normalized `WriterTableRange` mutation.
+- **Smallest possible library direction:** none. RibbonKit raises the menu click; Writer owns native `TableCell`
+  formatting and FlowDocument geometry projection.
+- **Evidence still required:** visible left/center/right and top/center/bottom checks over single cells, columns,
+  rectangles, spans, RTL and undo/redo.
 
 ## 5. Closed observations
 

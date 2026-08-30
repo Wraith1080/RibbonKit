@@ -5618,11 +5618,15 @@ The focused friction/example gate passes **9/9** across the adaptive/decorative 
 Showcase arrangements, opaque popup, contextual marker, Modern/Classic2010/Classic2007 Backstage closure, reopen
 cancellation and application-menu
 exclusion. The Writer real-tree integration case passes **1/1** with both former app workarounds removed and the
-Paragraph prototype present. Live theme/DPI/RTL/High Contrast separator, popup and marker coverage plus File-toggle,
+Paragraph prototype present. Live theme/DPI/RTL separator, popup and marker coverage plus File-toggle,
 Back/Escape and KeyTip closure remain the proportional acceptance work; automated success is not live visual
 acceptance. The complete Debug gate passes RibbonKit **364/364**, Writer **439/439** and visual **1/1** over 63
 approved images after a zero-warning/error solution build; `git diff --check` is clean apart from line-ending
 normalization notices.
+
+High Contrast was later removed from the bounded separator acceptance matrix: RibbonKit does not currently claim a
+whole-ribbon Windows contrast-theme mode. The system-color fallbacks introduced by the RKWF-013 gallery correction
+and RKWF-019 scrollbar remain targeted behavior rather than evidence of full-surface support.
 
 ### 3.125 Showcase Ribbon Lab split and Office 2010 inactive frame continuity — 2026-08-29
 
@@ -5814,6 +5818,57 @@ All ten dictionaries carry both new brush keys. Static coverage pins modern nont
 realized Office 2024 case pins fill, border, thickness and radius. The inspected RTL QAT diff changed only its four
 ordinary buttons. The focused gate is **21/21**; the zero-warning Release build, RibbonKit **392/392**, Writer
 **439/439**, and refreshed visual suite **1/1** pass. Live modern-theme acceptance remains pending.
+
+### 3.129 RibbonKit Writer table selection normalization and vertical cell alignment — 2026-08-30
+
+Four live table reports exposed one missing command and one shared structural-selection defect. WPF table selections
+use an exclusive text end whose parent/affinity can resolve to the next physical cell. Writer had passed both raw
+endpoints through ordinary cell discovery, so the selection grip omitted the final cell visually, a two-cell merge
+could absorb its horizontal neighbor, and right-clicking a reverse-dragged rectangle could collapse the selection
+before the context snapshot was captured.
+
+Structural range discovery now normalizes endpoint order and resolves a non-empty end against the containing cell's
+first real insertion position. WPF can project a two-cell highlight with its exclusive end inside the next cell's
+paragraph/run wrappers but exactly at that insertion position; Writer therefore steps to the preceding physical cell
+because no content in the containing cell is selected. Merge carries that normalized rectangle through deferred ribbon
+and context-menu execution. The merge engine retains its stricter partial-span rejection. The
+top-left grip selects through the last cell's `ElementEnd`, and table-aware context-menu hit testing preserves a
+selection whenever the click resolves inside its normalized cell rectangle, including right-to-left and bottom-to-top
+drag direction. Generic text selection keeps the existing half-open pointer rule.
+
+Table Tools also exposes a separate Vertical Alignment dropdown using the already prepared Top/Middle/Bottom icons.
+Native `FlowDocument.TableCell` has no vertical-alignment property, so Writer redistributes the cell's existing total
+vertical padding while preserving horizontal padding and total padded height: all below content for Top, split for
+Center, and all above content for Bottom. This matches the existing bounded row-height/padding model and remains native
+undo/persistence data rather than serializing app-only state.
+
+The earlier focused table-service, resize-adorner and context-menu slice passed **41/41**. After the final live endpoint
+representation was identified from the supplied recording, only its exact merge regression was rerun and passes
+**1/1** per the requested minimal-test loop. Coverage includes forward/reverse endpoints,
+rightmost structural selection, neighbor-safe merge, structured right-click preservation, vertical-padding
+redistribution and the prior span-safety cases. The real-tree MainWindow integration case passes **1/1**. Full Writer,
+RibbonKit, visual and solution gates were not rerun; live confirmation of the four reported interactions remains
+pending. No `src/RibbonKit/**` file changed.
+
+### 3.130 RibbonKit Writer alignment range and stable table adorners — 2026-08-30
+
+Two live alignment recordings exposed distinct Writer-owned assumptions. First, an empty cell's insertion rectangle
+moves horizontally with its paragraph `TextAlignment`. The resize resolver had allowed those rectangles to influence
+the table origin and perimeter, so centering or right-aligning the first cell displaced the adorner even though the
+native table grid stayed fixed. The resolver now anchors the grid at `Table.ElementStart` plus native `CellSpacing`,
+uses that fixed first boundary while projecting explicit column widths, and derives the perimeter from resolved row and
+column boundaries rather than the union of text rectangles.
+
+Second, the Table Tools horizontal and vertical cell-alignment handlers used the caret cell even when the native table
+selection covered a rectangle. Both commands now capture the normalized `WriterTableRange` and mutate every native
+cell intersecting its logical matrix exactly once, preserving one native undo unit and leaving cells outside the range
+untouched.
+
+Per the live correction loop's minimal-test request, only the two exact regressions were run: the realized 3x8 explicit-
+width table retains identical bounds and row/column boundaries after first-cell centering, and a 2x2 selection within a
+2x3 table receives both horizontal and vertical alignment without changing its third column. The focused result is
+**2/2**. Full Writer, RibbonKit, visual and solution gates were not rerun; live confirmation remains pending. No
+`src/RibbonKit/**` file changed.
 
 ## 4. Workflow / Session Conventions
 
@@ -6040,8 +6095,8 @@ ordinary buttons. The focused gate is **21/21**; the zero-warning Release build,
   warnings/errors. Live Office 2010 Aero active/inactive color-continuity acceptance remains pending.
 - 2026-08-30 after §3.126: the inventory remains **804 logic tests plus one visual test covering 63 approved images**.
   The existing focused localization test passes **1/1** and the Showcase Debug build has zero warnings/errors. The
-  separator has user-accepted theme-switching and collapsed-flyout coverage; RTL, 100-200% DPI and High Contrast
-  remain pending.
+  separator has user-accepted theme-switching and collapsed-flyout coverage; RTL and 100-200% DPI remained pending
+  at that checkpoint. High Contrast is separate future whole-surface accessibility work, not an RKWF-005 gate.
 - 2026-08-30 after §3.127: the inventory is **806 logic tests plus one visual test covering 63 approved images**.
   RibbonKit passes **367/367**, Writer passes **439/439**, visual passes **1/1**, and the Debug solution build has zero
   warnings/errors. RKWF-005/013/016 have the later user-accepted theme/light-dark and 100-200% DPI coverage recorded

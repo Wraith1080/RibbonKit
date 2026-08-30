@@ -241,6 +241,57 @@ public sealed class WriterTableServiceTests
     }
 
     [Fact]
+    public void StructuralSelectionUsesInwardEndpointsForReverseHitTestingAndMerge()
+    {
+        StaTestHelper.Run(() =>
+        {
+            var (editor, table, service) = CreateTable(1, 3);
+            var row = table.RowGroups[0].Rows[0];
+            var first = row.Cells[0];
+            var second = row.Cells[1];
+            var third = row.Cells[2];
+            var start = first.ContentStart;
+            var structuralEnd = second.ElementEnd;
+            var adjacentStart = third.ContentStart;
+
+            Assert.True(service.TryGetSelectionRange(start, structuralEnd, out var forward));
+            Assert.Equal(0, forward.StartColumn);
+            Assert.Equal(1, forward.EndColumn);
+            Assert.True(service.TryGetSelectionRange(structuralEnd, start, out var reverse));
+            Assert.Equal(forward, reverse);
+            Assert.True(service.TryGetSelectionRange(start, adjacentStart, out var mouseDrag));
+            Assert.Equal(forward, mouseDrag);
+            Assert.True(service.IsPointerInsideTableSelection(second.ContentStart, structuralEnd, start));
+            Assert.False(service.IsPointerInsideTableSelection(third.ContentStart, structuralEnd, start));
+
+            editor.Selection.Select(start, adjacentStart);
+            Assert.True(service.TryGetSelectionRange(out var reshapedAtCommandTime));
+            Assert.Equal(mouseDrag, reshapedAtCommandTime);
+            Assert.True(service.TryMergeSelection(out var merged));
+            Assert.Equal(2, merged.ColumnSpan);
+            Assert.Equal(2, row.Cells.Count);
+            Assert.Same(third, row.Cells[1]);
+            AssertValidGrid(table);
+        });
+    }
+
+    [Fact]
+    public void FullTableStructuralEndIncludesTheRightmostCell()
+    {
+        StaTestHelper.Run(() =>
+        {
+            var (_, table, service) = CreateTable(2, 3);
+            var first = table.RowGroups[0].Rows[0].Cells[0];
+            var last = table.RowGroups[0].Rows[1].Cells[2];
+
+            Assert.True(service.TryGetSelectionRange(first.ContentStart, last.ElementEnd,
+                out var range));
+            Assert.Equal(2, range.RowCount);
+            Assert.Equal(3, range.ColumnCount);
+        });
+    }
+
+    [Fact]
     public void SameCellMergeIsRejectedWithoutNativeHistoryOrTreeChange()
     {
         StaTestHelper.Run(() =>
@@ -636,6 +687,58 @@ public sealed class WriterTableServiceTests
             Assert.Equal(new GridLength(120), table.Columns[0].Width);
             Assert.Equal(new GridLength(120), table.Columns[1].Width);
             Assert.Equal(Brushes.WhiteSmoke.Color, Assert.IsType<SolidColorBrush>(table.Background).Color);
+        });
+    }
+
+    [Fact]
+    public void CellVerticalAlignmentRedistributesPaddingWithoutChangingHeightOrHorizontalPadding()
+    {
+        StaTestHelper.Run(() =>
+        {
+            var (_, table, service) = CreateTable(1, 1);
+            var cell = table.RowGroups[0].Rows[0].Cells[0];
+            cell.Padding = new Thickness(2, 3, 4, 9);
+            Assert.True(service.TryGetCell(cell, out var reference));
+
+            Assert.True(service.SetCellVerticalAlignment(reference,
+                WriterTableCellVerticalAlignment.Bottom));
+            Assert.Equal(new Thickness(2, 12, 4, 0), cell.Padding);
+            Assert.True(service.SetCellVerticalAlignment(reference,
+                WriterTableCellVerticalAlignment.Center));
+            Assert.Equal(new Thickness(2, 6, 4, 6), cell.Padding);
+            Assert.True(service.SetCellVerticalAlignment(reference,
+                WriterTableCellVerticalAlignment.Top));
+            Assert.Equal(new Thickness(2, 0, 4, 12), cell.Padding);
+        });
+    }
+
+    [Fact]
+    public void SelectedRangeAlignmentFormatsEveryCoveredCellOnly()
+    {
+        StaTestHelper.Run(() =>
+        {
+            var (_, table, service) = CreateTable(2, 3);
+            var group = table.RowGroups[0];
+            foreach (var cell in group.Rows.SelectMany(row => row.Cells))
+                cell.Padding = new Thickness(2, 0, 4, 12);
+            Assert.True(service.TryGetSelectionRange(group.Rows[0].Cells[0].ContentStart,
+                group.Rows[1].Cells[1].ElementEnd, out var range));
+
+            Assert.True(service.SetCellAlignment(range, TextAlignment.Right));
+            Assert.True(service.SetCellVerticalAlignment(range,
+                WriterTableCellVerticalAlignment.Center));
+
+            for (var row = 0; row < 2; row++)
+            {
+                Assert.All(group.Rows[row].Cells.Take(2), cell =>
+                {
+                    Assert.Equal(TextAlignment.Right, cell.TextAlignment);
+                    Assert.Equal(new Thickness(2, 6, 4, 6), cell.Padding);
+                });
+                var unselected = group.Rows[row].Cells[2];
+                Assert.NotEqual(TextAlignment.Right, unselected.TextAlignment);
+                Assert.Equal(new Thickness(2, 0, 4, 12), unselected.Padding);
+            }
         });
     }
 

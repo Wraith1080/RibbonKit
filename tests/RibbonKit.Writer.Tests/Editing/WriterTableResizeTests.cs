@@ -157,6 +157,14 @@ public sealed class WriterTableResizeTests
             Assert.DoesNotContain(nameof(WriterTableResizeAdorner),
                 System.Windows.Markup.XamlWriter.Save(editor.Document), StringComparison.Ordinal);
 
+            adorner.SelectTableForTesting();
+            Assert.True(interaction.TryGetSelectionRange(out var fullTable));
+            Assert.Equal(2, fullTable.RowCount);
+            Assert.Equal(2, fullTable.ColumnCount);
+            Assert.Equal(0, editor.Selection.End.CompareTo(
+                table.RowGroups[0].Rows[1].Cells[1].ElementEnd));
+            interaction.MoveCaret(interaction.GetOrderedCells(table)[0]);
+
             Assert.True(adorner.BeginDragForTesting(
                 new WriterTableResizeHandle(WriterTableResizeHandleKind.Column, 0), new Point()));
             adorner.UpdateDragForTesting(new Point(30, 0));
@@ -202,6 +210,50 @@ public sealed class WriterTableResizeTests
             var restored = Assert.Single(editor.Document.Blocks.OfType<Table>());
             Assert.Equal(100, restored.Columns[0].Width.Value, 6);
             Assert.Equal(openingPadding, restored.RowGroups[0].Rows[0].Cells[0].Padding);
+        });
+    }
+
+    [Fact]
+    public void CellTextAlignmentDoesNotMoveRealizedTableBoundaries()
+    {
+        StaTestHelper.Run(() =>
+        {
+            var editor = new RichTextBox
+            {
+                Document = new FlowDocument(new Paragraph(new Run("before")))
+            };
+            using var interaction = new WriterTableInteractionController(editor);
+            var paragraph = Assert.IsType<Paragraph>(editor.Document.Blocks.First());
+            editor.Selection.Select(paragraph.ContentStart, paragraph.ContentStart);
+            var table = Assert.IsType<Table>(interaction.Tables.InsertTable(3, 8));
+            foreach (var column in table.Columns)
+                column.Width = new GridLength(120, GridUnitType.Pixel);
+            interaction.MoveCaret(interaction.GetOrderedCells(table)[0]);
+
+            var decorator = new AdornerDecorator { Child = editor };
+            using var window = new TestWindow(decorator) { Width = 930, Height = 426 };
+            window.Show();
+            window.UpdateLayout();
+            var cells = interaction.GetOrderedCells(table);
+            Assert.True(WriterTableLayoutResolver.TryCreate(editor, cells, 0, out var before));
+            Assert.True(interaction.Tables.TryGetCell(table.RowGroups[0].Rows[0].Cells[0],
+                out var first));
+
+            Assert.True(interaction.Tables.SetCellAlignment(first, TextAlignment.Center));
+            window.UpdateLayout();
+            window.Dispatcher.Invoke(DispatcherPriority.Render, new Action(() => { }));
+            Assert.True(WriterTableLayoutResolver.TryCreate(editor, cells, 0, out var after));
+
+            Assert.Equal(before.Bounds.Left, after.Bounds.Left, 6);
+            Assert.Equal(before.Bounds.Top, after.Bounds.Top, 6);
+            Assert.Equal(before.Bounds.Right, after.Bounds.Right, 6);
+            Assert.Equal(before.Bounds.Bottom, after.Bounds.Bottom, 6);
+            Assert.Equal(before.ColumnBoundaries.Count, after.ColumnBoundaries.Count);
+            for (var index = 0; index < before.ColumnBoundaries.Count; index++)
+                Assert.Equal(before.ColumnBoundaries[index], after.ColumnBoundaries[index], 6);
+            Assert.Equal(before.RowBoundaries.Count, after.RowBoundaries.Count);
+            for (var index = 0; index < before.RowBoundaries.Count; index++)
+                Assert.Equal(before.RowBoundaries[index], after.RowBoundaries[index], 6);
         });
     }
 

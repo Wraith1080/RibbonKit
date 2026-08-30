@@ -195,7 +195,10 @@ internal sealed class WriterTableResizeController : IDisposable
         var cells = _interaction.GetOrderedCells(table);
         if (cells.Count == 0)
             return;
-        _editor.Selection.Select(cells[0].Cell.ContentStart, cells[^1].Cell.ContentEnd);
+        // ContentEnd is an exclusive text boundary and WPF can associate it with the next cell.
+        // ElementEnd includes the final structural cell marker, so the rightmost cell is visibly
+        // and logically part of the table selection.
+        _editor.Selection.Select(cells[0].Cell.ContentStart, cells[^1].Cell.ElementEnd);
         _editor.Focus();
         _interaction.Refresh();
     }
@@ -236,16 +239,21 @@ internal static class WriterTableLayoutResolver
         if (realized.Count == 0)
             return false;
 
-        var rawLeft = realized.Min(item => item.Bounds.Left);
-        var rawTop = realized.Min(item => item.Bounds.Top);
+        var table = cells[0].Table;
+        var columnSpacing = double.IsFinite(table.CellSpacing)
+            ? Math.Max(0, table.CellSpacing)
+            : 0;
+        var hasTableOrigin = TryGetTableOrigin(table, columnSpacing, out var tableOrigin);
+        var rawLeft = hasTableOrigin ? tableOrigin.X : realized.Min(item => item.Bounds.Left);
+        var rawTop = hasTableOrigin ? tableOrigin.Y : realized.Min(item => item.Bounds.Top);
         var transform = editor.LayoutTransform?.Value ?? Matrix.Identity;
         var scaleX = Math.Max(0.001, Math.Abs(transform.M11));
         var scaleY = Math.Max(0.001, Math.Abs(transform.M22));
         realized = realized.Select(item => (item.Cell,
             ProjectRect(item.Bounds, new Point(rawLeft, rawTop), scaleX, scaleY))).ToList();
 
-        var left = realized.Min(item => item.Bounds.Left);
-        var top = realized.Min(item => item.Bounds.Top);
+        var left = rawLeft;
+        var top = rawTop;
         var right = realized.Max(item => item.Bounds.Right);
         var bottom = realized.Max(item => item.Bounds.Bottom);
         // Logical shape must come from the document tree. Immediately after a cloned-table
@@ -263,10 +271,6 @@ internal static class WriterTableLayoutResolver
             item => item.Cell.Column, item => item.Cell.LastColumn,
             item => item.Bounds.Left, item => item.Bounds.Right, left, right,
             WriterTableResizeGeometry.MinimumColumnWidth);
-        var table = realized[0].Cell.Table;
-        var columnSpacing = double.IsFinite(table.CellSpacing)
-            ? Math.Max(0, table.CellSpacing)
-            : 0;
         for (var column = 0; column < columnCount && column < table.Columns.Count; column++)
         {
             if (table.Columns[column].Width.IsAbsolute)
@@ -295,8 +299,13 @@ internal static class WriterTableLayoutResolver
             item => item.Cell.Row, item => item.Cell.LastRow,
             item => item.Bounds.Top, item => item.Bounds.Bottom,
             groupCells.Min(item => item.Bounds.Top), groupCells.Max(item => item.Bounds.Bottom), 1d);
-        right = Math.Max(right, columns[^1]);
-        bottom = Math.Max(bottom, rows[^1]);
+        // Character rectangles describe insertion positions, not cell edges. Center/right text
+        // alignment can extend their raw union beyond the table even though the grid did not move.
+        // The resolved logical boundaries are the stable source for the adorner perimeter.
+        left = columns[0];
+        right = columns[^1];
+        top = rows[0];
+        bottom = rows[^1];
         layout = new WriterTableLayoutSnapshot(new Rect(left, top,
             Math.Max(1, right - left), Math.Max(1, bottom - top)), columns, rows, rowGroupIndex,
             scaleX, scaleY);
@@ -328,6 +337,12 @@ internal static class WriterTableLayoutResolver
         var known = new bool[count + 1];
         for (var i = 0; i < values.Length; i++)
         {
+            if (i == 0)
+            {
+                values[i] = minimum;
+                known[i] = true;
+                continue;
+            }
             var candidates = starts[i].Count > 0 ? starts[i] : ends[i];
             if (candidates.Count == 0)
                 continue;
@@ -351,6 +366,23 @@ internal static class WriterTableLayoutResolver
         for (var i = 1; i < values.Length; i++)
             values[i] = Math.Max(values[i], values[i - 1] + minimumSpacing);
         return values;
+    }
+
+    private static bool TryGetTableOrigin(Table table, double cellSpacing, out Point origin)
+    {
+        origin = default;
+        try
+        {
+            var rect = table.ElementStart.GetCharacterRect(LogicalDirection.Forward);
+            if (rect.IsEmpty || !double.IsFinite(rect.Left) || !double.IsFinite(rect.Top))
+                return false;
+            origin = new Point(rect.Left + cellSpacing, rect.Top + cellSpacing);
+            return true;
+        }
+        catch (InvalidOperationException)
+        {
+            return false;
+        }
     }
 
     private static bool TryGetCellBounds(TableCell cell, out Rect bounds)
@@ -431,6 +463,8 @@ internal sealed class WriterTableResizeAdorner : Adorner
     internal void UpdateDragForTesting(Point point) => Preview(point - _openingPointer);
 
     internal void CompleteDragForTesting() => CompleteDrag();
+
+    internal void SelectTableForTesting() => _selectTable();
 
     internal void SimulateCaptureLossForTesting() => CancelDrag();
 

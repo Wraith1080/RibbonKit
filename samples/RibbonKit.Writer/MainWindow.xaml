@@ -836,6 +836,16 @@
                         <rk:RibbonMenuItem Header="Right" Tag="Right" Click="OnTableAlignmentClick" rk:Ribbon.CommandId="Writer.TableTools.Alignment.Right" rk:KeyTip.Keys="R" AutomationProperties.AutomationId="TableAlignRight" AutomationProperties.Name="Align cell text right" />
                         <rk:RibbonMenuItem Header="Justify" Tag="Justify" Click="OnTableAlignmentClick" rk:Ribbon.CommandId="Writer.TableTools.Alignment.Justify" rk:KeyTip.Keys="J" AutomationProperties.AutomationId="TableAlignJustify" AutomationProperties.Name="Justify cell text" />
                     </rk:RibbonDropDownButton>
+                    <rk:RibbonDropDownButton x:Name="TableVerticalAlignmentButton" Header="Vertical Alignment" Size="Large"
+                                             SizeDefinition="Large, Medium, Small"
+                                             Icon="{StaticResource Icon.WriterCellAlignMiddle}" LargeIcon="{StaticResource Icon.WriterCellAlignMiddle}"
+                                             rk:Ribbon.CommandId="Writer.TableTools.Alignment.Vertical" rk:KeyTip.Keys="VA"
+                                             ScreenTipTitle="Vertical Alignment" ScreenTipText="Place content at the top, center, or bottom of the current cell while preserving its height."
+                                             AutomationProperties.AutomationId="TableCellVerticalAlignment" AutomationProperties.Name="Cell vertical alignment">
+                        <rk:RibbonMenuItem Header="Top" Tag="Top" Click="OnTableVerticalAlignmentClick" rk:Ribbon.CommandId="Writer.TableTools.Alignment.Vertical.Top" rk:KeyTip.Keys="T" AutomationProperties.AutomationId="TableAlignTop" AutomationProperties.Name="Align cell content to top" />
+                        <rk:RibbonMenuItem Header="Center" Tag="Center" Click="OnTableVerticalAlignmentClick" rk:Ribbon.CommandId="Writer.TableTools.Alignment.Vertical.Center" rk:KeyTip.Keys="C" AutomationProperties.AutomationId="TableAlignMiddle" AutomationProperties.Name="Center cell content vertically" />
+                        <rk:RibbonMenuItem Header="Bottom" Tag="Bottom" Click="OnTableVerticalAlignmentClick" rk:Ribbon.CommandId="Writer.TableTools.Alignment.Vertical.Bottom" rk:KeyTip.Keys="B" AutomationProperties.AutomationId="TableAlignBottom" AutomationProperties.Name="Align cell content to bottom" />
+                    </rk:RibbonDropDownButton>
                     <rk:RibbonDropDownButton x:Name="TableHorizontalAlignmentButton" Header="Table Alignment" Size="Large"
                                              SizeDefinition="Large, Medium, Small"
                                              Icon="{StaticResource Icon.WriterAlignCenter}" LargeIcon="{StaticResource Icon.WriterAlignCenter}"

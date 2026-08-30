@@ -161,7 +161,9 @@ public partial class MainWindow
         tableMenu.Items.Add(new Separator());
         tableMenu.Items.Add(CreateContextAction(context, snapshot, "Merge Cells",
             "WriterContextTableMerge", CanMergeTableContext, current =>
-                ExecuteTableContext(current, tables => tables.TryMergeSelection(out _))));
+                ExecuteTableContext(current, tables =>
+                    _structuredContextResolver?.TryGetTableRange(current, out var range) == true
+                    && tables.TryMergeCells(range, out _))));
         tableMenu.Items.Add(CreateContextAction(context, snapshot, "Split Cell",
             "WriterContextTableSplit", CanSplitTableContext, current =>
                 ExecuteTableContext(current, tables => tables.TrySplitCurrentCell())));
@@ -813,8 +815,12 @@ public partial class MainWindow
     private void OnDeleteTableColumnClick(object sender, RoutedEventArgs e) =>
         QueueStructuredContentAction(() => MutateCurrentCell((tables, cell) => tables.DeleteColumns(cell)));
 
-    private void OnMergeTableCellsClick(object sender, RoutedEventArgs e) =>
-        QueueStructuredContentAction(() => MutateTable(tables => tables.TryMergeSelection(out _)));
+    private void OnMergeTableCellsClick(object sender, RoutedEventArgs e)
+    {
+        if (_tableInteractionController?.TryGetSelectionRange(out var range) != true)
+            return;
+        QueueStructuredContentAction(() => MutateTable(tables => tables.TryMergeCells(range, out _)));
+    }
 
     private void OnSplitTableCellClick(object sender, RoutedEventArgs e) =>
         QueueStructuredContentAction(() => MutateTable(tables => tables.TrySplitCurrentCell()));
@@ -861,10 +867,21 @@ public partial class MainWindow
     private void OnTableAlignmentClick(object sender, RoutedEventArgs e)
     {
         if (sender is not FrameworkElement { Tag: string tag }
-            || !Enum.TryParse<TextAlignment>(tag, out var alignment))
+            || !Enum.TryParse<TextAlignment>(tag, out var alignment)
+            || _tableInteractionController?.TryGetSelectionRange(out var range) != true)
             return;
-        QueueStructuredContentAction(() => MutateCurrentCell((tables, cell) =>
-            tables.SetCellAlignment(cell, alignment)));
+        QueueStructuredContentAction(() => MutateTable(tables =>
+            tables.SetCellAlignment(range, alignment)));
+    }
+
+    private void OnTableVerticalAlignmentClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement { Tag: string tag }
+            || !Enum.TryParse<WriterTableCellVerticalAlignment>(tag, out var alignment)
+            || _tableInteractionController?.TryGetSelectionRange(out var range) != true)
+            return;
+        QueueStructuredContentAction(() => MutateTable(tables =>
+            tables.SetCellVerticalAlignment(range, alignment)));
     }
 
     private void OnTableHorizontalAlignmentClick(object sender, RoutedEventArgs e)
@@ -1041,6 +1058,7 @@ public partial class MainWindow
         TableRowHeightButton.IsEnabled = canEdit;
         TableColumnWidthButton.IsEnabled = canEdit;
         TableAlignmentButton.IsEnabled = canEdit;
+        TableVerticalAlignmentButton.IsEnabled = canEdit;
         TableHorizontalAlignmentButton.IsEnabled = canEdit;
         TableBordersButton.IsEnabled = canEdit;
         TableBackgroundButton.IsEnabled = canEdit;
@@ -1070,11 +1088,8 @@ public partial class MainWindow
 
     private bool IsSelectionInsideOneTableCell()
     {
-        if (_tableInteractionController is null
-            || !_tableInteractionController.Tables.TryGetCell(DocumentEditor.Selection.Start, out var first)
-            || !_tableInteractionController.Tables.TryGetCell(DocumentEditor.Selection.End, out var last))
-            return false;
-        return ReferenceEquals(first.Cell, last.Cell);
+        return _tableInteractionController?.Tables.TryGetSelectionRange(out var range) == true
+            && range.RowCount == 1 && range.ColumnCount == 1;
     }
 
     private void ApplyStructuredContentCapabilityProjection()
