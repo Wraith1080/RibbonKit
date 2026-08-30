@@ -182,6 +182,78 @@ public sealed class MainWindowIntegrationTests
     }
 
     [Fact]
+    public async Task CenteredTableReflowsAcrossPaperAndContinuousWithoutDirtyingOrReplacingUndo()
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            using var fixture = new WindowFixture();
+            fixture.Show();
+            Assert.True(await fixture.Shell.NewAsync(WriterDocumentProfiles.RibbonKitWriter));
+            await PumpAsync();
+            var window = fixture.Window;
+            var editor = fixture.Editor;
+            var document = fixture.Shell.CurrentDocument;
+            document.Content.Blocks.Clear();
+            var anchor = new Paragraph();
+            document.Content.Blocks.Add(anchor);
+            editor.Selection.Select(anchor.ContentStart, anchor.ContentStart);
+            var tables = window.TableInteractionController.Tables;
+            var table = Assert.IsType<Table>(tables.InsertTable(1, 2));
+            table.Columns[0].Width = new GridLength(100);
+            table.Columns[1].Width = new GridLength(130);
+            window.TableInteractionController.MoveCaret(
+                window.TableInteractionController.GetOrderedCells(table)[0]);
+            window.TableInteractionController.Refresh();
+            await PumpAsync();
+
+            Assert.True(WriterTableLayoutResolver.TryCreate(editor,
+                window.TableInteractionController.GetOrderedCells(table), 0, out var paperLayout));
+            var padding = document.Content.PagePadding;
+            var availableWidth = document.Content.PageWidth - padding.Left - padding.Right;
+            var tableWidth = paperLayout.Bounds.Width / paperLayout.ProjectionScaleX;
+            Assert.True(tables.SetTableHorizontalAlignment(table,
+                WriterTableHorizontalAlignment.Center, tableWidth, availableWidth));
+            WriterTableMarginProjection.Project(table, WriterTableHorizontalAlignment.Center,
+                tableWidth, availableWidth);
+            await PumpAsync();
+            var paperMargin = table.Margin;
+            Assert.Equal(paperMargin.Left, paperMargin.Right, 6);
+
+            editor.IsUndoEnabled = false;
+            editor.IsUndoEnabled = true;
+            var cellParagraph = table.RowGroups[0].Rows[0].Cells[0].Blocks
+                .OfType<Paragraph>().Single();
+            editor.Selection.Select(cellParagraph.ContentStart, cellParagraph.ContentEnd);
+            editor.Selection.Text = "history";
+            Assert.True(editor.CanUndo);
+            document.MarkClean();
+
+            Toggle(Assert.IsType<RibbonToggleButton>(window.FindName("ContinuousViewButton")));
+            await PumpAsync();
+
+            var continuousMargin = table.Margin;
+            Assert.Equal(WriterViewMode.ContinuousEdit, window.CurrentViewMode);
+            Assert.Equal(continuousMargin.Left, continuousMargin.Right, 6);
+            Assert.NotEqual(paperMargin.Left, continuousMargin.Left);
+            Assert.True(editor.CanUndo);
+            Assert.False(document.IsDirty);
+            Assert.True(editor.Undo());
+            await PumpAsync();
+            Assert.Equal(continuousMargin.Left, table.Margin.Left, 6);
+            Assert.Equal(continuousMargin.Right, table.Margin.Right, 6);
+            Assert.NotEqual("history", new TextRange(cellParagraph.ContentStart,
+                cellParagraph.ContentEnd).Text.Trim());
+
+            Toggle(Assert.IsType<RibbonToggleButton>(window.FindName("PaperViewButton")));
+            await PumpAsync();
+
+            Assert.Equal(WriterViewMode.Paper, window.CurrentViewMode);
+            Assert.Equal(paperMargin.Left, table.Margin.Left, 6);
+            Assert.Equal(paperMargin.Right, table.Margin.Right, 6);
+        });
+    }
+
+    [Fact]
     public async Task MainWindowContractAndEditorLifecycleAreWiredOnTheRealTree()
     {
         await StaTestHelper.RunAsync(async () =>
@@ -1146,7 +1218,8 @@ public sealed class MainWindowIntegrationTests
         var printResult = window.TryPrintCurrentSnapshot(printDevice);
         Assert.NotNull(printResult);
         Assert.True(printResult.Submitted);
-        Assert.Same(firstSnapshot!.Paginator, printDevice.SubmittedPaginator);
+        Assert.Same(firstSnapshot!.PrintPaginator, printDevice.SubmittedPaginator);
+        Assert.NotSame(firstSnapshot.Paginator, printDevice.SubmittedPaginator);
         editor.AppendText(" pending edit");
         Assert.Null(window.TryPrintCurrentSnapshot(new RecordingPrintDevice()));
         await WaitForAsync(() => preview.Snapshot is not null);
@@ -1196,7 +1269,8 @@ public sealed class MainWindowIntegrationTests
         Assert.Equal(document.PageSettings, colouredSnapshot.PageSettings);
         var colouredPrintDevice = new RecordingPrintDevice();
         Assert.True(window.TryPrintCurrentSnapshot(colouredPrintDevice)!.Submitted);
-        Assert.Same(colouredSnapshot.Paginator, colouredPrintDevice.SubmittedPaginator);
+        Assert.Same(colouredSnapshot.PrintPaginator, colouredPrintDevice.SubmittedPaginator);
+        Assert.NotSame(colouredSnapshot.Paginator, colouredPrintDevice.SubmittedPaginator);
 
         window.FlowDirection = FlowDirection.RightToLeft;
         window.Width = 540;

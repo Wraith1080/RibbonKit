@@ -49,9 +49,6 @@ public sealed class WriterTableResizeTests
             WriterTableResizeAdorner.GetCursor(
                 new WriterTableResizeHandle(WriterTableResizeHandleKind.Overall)));
 
-        var projected = WriterTableLayoutResolver.ProjectRect(new Rect(120, 40, 624, 24),
-            new Point(120, 40), 1.25, 1.25);
-        Assert.Equal(new Rect(120, 40, 780, 30), projected);
     }
 
     [Fact]
@@ -254,6 +251,44 @@ public sealed class WriterTableResizeTests
             Assert.Equal(before.RowBoundaries.Count, after.RowBoundaries.Count);
             for (var index = 0; index < before.RowBoundaries.Count; index++)
                 Assert.Equal(before.RowBoundaries[index], after.RowBoundaries[index], 6);
+        });
+    }
+
+    [Theory]
+    [InlineData(0.5)]
+    [InlineData(1.5)]
+    [InlineData(2.0)]
+    public void ZoomTransformKeepsTableAdornerGeometryInEditorCoordinates(double scale)
+    {
+        StaTestHelper.Run(() =>
+        {
+            var editor = new RichTextBox
+            {
+                Document = new FlowDocument(new Paragraph(new Run("before"))),
+                LayoutTransform = new ScaleTransform(scale, scale)
+            };
+            using var interaction = new WriterTableInteractionController(editor);
+            var paragraph = Assert.IsType<Paragraph>(editor.Document.Blocks.First());
+            editor.Selection.Select(paragraph.ContentStart, paragraph.ContentStart);
+            var table = Assert.IsType<Table>(interaction.Tables.InsertTable(2, 2));
+            table.Columns[0].Width = new GridLength(100, GridUnitType.Pixel);
+            table.Columns[1].Width = new GridLength(120, GridUnitType.Pixel);
+            interaction.MoveCaret(interaction.GetOrderedCells(table)[0]);
+
+            var decorator = new AdornerDecorator { Child = editor };
+            using var window = new TestWindow(decorator);
+            window.Show();
+            window.UpdateLayout();
+            window.Dispatcher.Invoke(DispatcherPriority.Render, new Action(() => { }));
+
+            Assert.True(WriterTableLayoutResolver.TryCreate(editor,
+                interaction.GetOrderedCells(table), 0, out var layout));
+            Assert.Equal(1, layout.ProjectionScaleX, 6);
+            Assert.Equal(1, layout.ProjectionScaleY, 6);
+            Assert.Equal(100 + table.CellSpacing,
+                layout.ColumnBoundaries[1] - layout.ColumnBoundaries[0], 6);
+            Assert.Equal(120 + table.CellSpacing,
+                layout.ColumnBoundaries[2] - layout.ColumnBoundaries[1], 6);
         });
     }
 

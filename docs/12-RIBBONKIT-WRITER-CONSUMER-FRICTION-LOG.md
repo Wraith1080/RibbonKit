@@ -346,7 +346,7 @@ remain read-only until actual/diff evidence justifies a deliberate change.
 ### RKWF-014 — Transient Writer selection can collapse the active contextual tab during a table command
 
 - **First seen / packet:** 2026-08-27 user follow-up after Writer W3-C acceptance; assigned to planned W3-E.
-- **Status:** Corrected in the Writer-owned W3-E1 foundation; live repeated-command observation remains pending. This
+- **Status:** Corrected and live-accepted in the Writer-owned W3-E1 foundation. This
   is not a confirmed RibbonKit defect and no runtime change is approved.
 - **Consumer goal:** invoking a command from Table Tools should keep that contextual page visually stable when the
   committed result and caret remain in the table, even if the native mutation temporarily replaces table structure or
@@ -371,9 +371,8 @@ remain read-only until actual/diff evidence justifies a deliberate change.
   host actually collapses the selected contextual tab. Consider runtime work only if a minimal consumer shows an
   unwanted fallback while contextual visibility remains continuously true, or if multiple consumers require a
   narrowly defined contextual-selection transaction API.
-- **Evidence still required:** repeat ordinary buttons, dropdown items, popup focus, row/column replacement,
-  merge/split, table deletion, undo/redo, reduced motion and keyboard/KeyTip invocation in the real Writer window.
-  Repeat in a minimal Showcase contextual tab before proposing any `src/RibbonKit/**` change.
+- **Acceptance:** the W3-E live matrix passed ordinary/dropdown table actions, structural mutations, true deletion,
+  Undo/Redo and contextual-tab stability without the Home-tab flash. No `src/RibbonKit/**` change was required.
 
 ### RKWF-015 — Native Undo can restore a loaded image container without its image child
 
@@ -400,8 +399,8 @@ remain read-only until actual/diff evidence justifies a deliberate change.
   services and does not broaden the data-only `.rkw` allowlist.
 - **Smallest possible library direction:** none. The affected object graph is owned by the native WPF `RichTextBox` and
   Writer persistence, not a RibbonKit control or service.
-- **Evidence still required:** repeat the exact removal and direct-resize workflows in the visible Writer window and
-  retain multi-picture, nested-span/table-cell, repeated undo/redo and save/reopen regression coverage as W3-E grows.
+- **Acceptance:** visible loaded-picture removal, keyboard/context-menu paths, direct resize, repeated Undo/Redo and
+  save/reopen passed during W3-E. Retain the focused multi-picture/nested-container regressions.
 
 ### RKWF-016 — Revealing a contextual tab can leave the active-tab marker at its previous coordinate
 
@@ -449,8 +448,8 @@ remain read-only until actual/diff evidence justifies a deliberate change.
   the user completes a resize, and the bottom-right handle can target the wrong table extent.
 - **Smallest possible library direction:** none. The chrome and geometry resolver are Writer-owned consumers of native
   `FlowDocument` tables; no RibbonKit control participates in the document layout.
-- **Evidence still required:** repeat multi-row, 1-8 column, spanned-cell, zoom/DPI, RTL, undo/redo and save/reopen
-  cases in the visible Writer window.
+- **Acceptance:** multi-row/column, spans, resizing, zoom/view geometry, Undo/Redo and save/reopen passed the completed
+  W3-E live matrix. The later zoom-specific correction is recorded in RKWF-023.
 
 ### RKWF-018 — Live DPI transition can stale InRibbonGallery scrolling and side-button hit geometry
 
@@ -600,8 +599,8 @@ remain read-only until actual/diff evidence justifies a deliberate change.
   range for forward and reverse drags.
 - **Smallest possible library direction:** none. RibbonKit only hosts the commands; native `RichTextBox`, Writer's
   table service and its context-menu target resolver own these document pointers.
-- **Evidence still required:** repeat forward/reverse row, column and rectangle selections with empty/formatted cells,
-  spans, RTL, right-click menu execution and undo/redo in the visible Writer window.
+- **Acceptance:** forward/reverse row, column and rectangle selection, merge scope, spans, right-click execution and
+  Undo/Redo passed the completed W3-E live matrix.
 
 ### RKWF-021 — Table insertion rectangles move with cell text alignment
 
@@ -616,8 +615,88 @@ remain read-only until actual/diff evidence justifies a deliberate change.
   from resolved grid boundaries, and route both alignment menus through one normalized `WriterTableRange` mutation.
 - **Smallest possible library direction:** none. RibbonKit raises the menu click; Writer owns native `TableCell`
   formatting and FlowDocument geometry projection.
-- **Evidence still required:** visible left/center/right and top/center/bottom checks over single cells, columns,
-  rectangles, spans, RTL and undo/redo.
+- **Acceptance:** horizontal and vertical alignment over single cells and selected ranges, with spans and Undo/Redo,
+  passed the completed W3-E live matrix; table placement remains the separate RKWF-022/RKWF-024 contract.
+
+### RKWF-022 — Locally setting table placement can materialize inherited Auto margins
+
+- **First seen / packet:** 2026-08-30, Writer W3-E2 live save/reopen follow-up.
+- **Status:** Corrected in Writer; native WPF dependency-property defaults, not a confirmed RibbonKit runtime defect.
+- **Consumer goal:** Left/Center/Right table placement must remain native, undoable and saveable without weakening the
+  strict `.rkw` block-margin validator.
+- **Reproduction and evidence:** resized table geometry saved and reopened correctly. After any table-placement command,
+  save failed with `The native document has an invalid block margin value.` WPF exposes untouched `Table.Margin`
+  components as `Auto`/`NaN`; copying the vertical defaults into a newly local `Thickness` serialized `Auto` values.
+- **Current app-owned correction:** preserve finite top/bottom margins, materialize inherited non-finite defaults as
+  zero, and encode semantic placement with finite left/right remainder margins. The strict package parser continues
+  to reject non-finite persisted margins.
+- **Application impact:** changing table placement no longer makes an otherwise valid native document unsaveable;
+  resize persistence and table/cell text alignment remain unchanged.
+- **Smallest possible library direction:** none. RibbonKit raises the placement command; Writer owns FlowDocument table
+  margins and `.rkw` persistence.
+- **Acceptance:** focused service and three-placement persistence coverage passes **4/4** independently of the full
+  gates. The user confirmed the corrected alignment save-close-reopen path in the fresh visible Writer build; ordinary
+  resized geometry had already passed the same live persistence check.
+
+### RKWF-023 — Adorner-local table geometry must not reapply the editor zoom transform
+
+- **First seen / packet:** 2026-08-30, Writer W3-E2 remaining live-acceptance batch.
+- **Status:** Corrected in Writer; WPF adorner coordinate ownership, not a confirmed RibbonKit runtime defect.
+- **Consumer goal:** table frames and grips must remain on native grid edges at every Writer zoom in Paper and
+  Continuous views.
+- **Reproduction and evidence:** at non-100% zoom, the frame and handles drifted from the table in both editing views.
+  Native text rectangles and adorner rendering already share the adorned `RichTextBox`'s local coordinates, while
+  WPF applies its `LayoutTransform` to the complete editor/adorner pair. Writer multiplied the resolved table geometry
+  by that scale again.
+- **Current app-owned correction:** keep resolved boundaries and drag deltas in the shared local coordinate space;
+  leave the single visual zoom transform to WPF. Existing DPI alignment remains independent.
+- **Application impact:** zoom no longer double-projects table chrome or drag math; accepted unzoomed resize,
+  cancellation, Undo/Redo and persistence behavior remains unchanged.
+- **Smallest possible library direction:** none. RibbonKit does not own Writer's editor transform or document adorner.
+- **Acceptance:** focused realized 50/150/200% plus prior resize transaction coverage passes **4/4**. The user confirmed
+  that table frames and grips align perfectly in both Paper and Continuous views.
+
+### RKWF-024 — WPF tables have no semantic horizontal placement across changing widths
+
+- **First seen / packet:** 2026-08-30, Writer W3-E remaining live-acceptance batch.
+- **Status:** Corrected and live-accepted in Writer.
+- **Consumer goal:** Left/Center/Right must remain the same semantic table placement when switching between fixed Paper
+  content width and the fluid Continuous viewport, without dirtying the document or replacing accepted Undo/Redo.
+- **Reproduction and evidence:** Center in Paper remained at its Paper-calculated numeric left margin in Continuous;
+  centering there calculated a different left margin that displaced the table after returning to Paper. WPF `Table`
+  exposes block margins but no horizontal-placement property, and `Auto` left/right margins all realized at the same
+  origin. Changing `Table.Margin` in a realized `RichTextBox` raises `TextChanged` and adds an undo unit; the internal
+  no-undo change scope clears earlier history.
+- **Current app-owned correction:** persist the unused width on both margin sides so the ratio encodes Left, Center or
+  Right. Reproject that ratio at view/viewport changes, suppressing dirty publication for the projection only. A
+  bounded net8 WPF bridge removes only the newly appended projection unit and restores the captured Redo stack;
+  explicit placement remains normally undoable and saveable.
+- **Application impact:** placement is width-semantic rather than view-coordinate-specific, and view changes preserve
+  the existing edit-history head.
+- **Smallest possible library direction:** none. RibbonKit raises the placement command; Writer owns the native table,
+  editor view widths and undo boundary.
+- **Acceptance:** focused service/persistence/history coverage passes **6/6** and the realized cross-view case passes
+  **1/1**. The user confirmed the fresh Writer build preserves semantic placement across Paper and Continuous; prior
+  alignment save/reopen and Undo/Redo checks remain accepted.
+
+### RKWF-025 — Re-serializing fixed XPS bitmap resources can terminate virtual printing
+
+- **First seen / packet:** 2026-08-30, Writer W3-E remaining live-acceptance batch.
+- **Status:** Corrected and live-accepted in Writer.
+- **Consumer goal:** preview and virtual printing must use the same isolated content/page inputs, including portable
+  pictures, without touching the live editor or terminating Writer.
+- **Reproduction and evidence:** Microsoft Print to PDF worked for text-only documents but terminated Writer when the
+  document contained a picture. Writer was submitting the preview's in-memory `FixedDocumentSequence` paginator, so
+  WPF serialized already-packaged bitmap resources a second time into the device XPS spool.
+- **Current app-owned correction:** keep the fixed paginator for stable preview/navigation, but submit the same
+  snapshot clone's flow paginator to the printer. Bitmap resources are then serialized once into the spool; page
+  settings, isolation and imageable-area reporting stay shared.
+- **Application impact:** pictured print/PDF no longer depends on copying bitmap resources out of an in-memory fixed
+  package; text-only printing and preview remain unchanged.
+- **Smallest possible library direction:** none. RibbonKit only hosts Backstage; Writer owns preview and print devices.
+- **Acceptance:** the pictured spool and print-service cases pass **2/2**, and the existing real-window print lifecycle
+  passes **1/1**. The user confirmed the fresh Writer build exports a document containing a picture through Microsoft
+  Print to PDF without terminating Writer.
 
 ## 5. Closed observations
 

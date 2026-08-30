@@ -12,17 +12,19 @@ namespace RibbonKit.Writer.Preview;
 /// </summary>
 /// <remarks>
 /// The document is a clone of the live editor document. Its flow paginator is serialized before
-/// any viewer can access pages, producing one stable fixed paginator that is reused by preview and
-/// printing. Dispose a snapshot after every consumer has released it.
+/// any viewer can access pages, producing stable fixed pages for preview. Printing uses the same
+/// isolated flow clone so bitmap resources are serialized only once into the device spool.
 /// </remarks>
 public sealed class WriterPreviewSnapshot : IDisposable
 {
     internal WriterPreviewSnapshot(FlowDocument document, DocumentPaginator paginator,
+        DocumentPaginator printPaginator,
         DocumentPageSettings pageSettings, XpsDocument xpsDocument, Package package,
         Stream backingStream, Uri packageUri, FixedDocumentSequence fixedDocument)
     {
         SourceClone = document ?? throw new ArgumentNullException(nameof(document));
         Paginator = paginator ?? throw new ArgumentNullException(nameof(paginator));
+        PrintPaginator = printPaginator ?? throw new ArgumentNullException(nameof(printPaginator));
         PageSettings = pageSettings ?? throw new ArgumentNullException(nameof(pageSettings));
         _xpsDocument = xpsDocument ?? throw new ArgumentNullException(nameof(xpsDocument));
         _package = package ?? throw new ArgumentNullException(nameof(package));
@@ -37,14 +39,17 @@ public sealed class WriterPreviewSnapshot : IDisposable
     private readonly Uri _packageUri;
     private bool _disposed;
 
-    /// <summary>Gets the stable fixed document consumed by preview and printing.</summary>
+    /// <summary>Gets the stable fixed document consumed by preview.</summary>
     public FixedDocumentSequence Document { get; }
 
     /// <summary>Gets the isolated flow clone used only to create the fixed document.</summary>
     internal FlowDocument SourceClone { get; }
 
-    /// <summary>Gets the exact paginator used to create and print this snapshot.</summary>
+    /// <summary>Gets the stable fixed paginator consumed by preview.</summary>
     public DocumentPaginator Paginator { get; }
+
+    /// <summary>Gets the isolated flow paginator submitted to the printer.</summary>
+    internal DocumentPaginator PrintPaginator { get; }
 
     /// <summary>Gets the logical page settings applied to the snapshot.</summary>
     public DocumentPageSettings PageSettings { get; }
@@ -58,7 +63,7 @@ public sealed class WriterPreviewSnapshot : IDisposable
     /// <summary>Gets the logical content height after margins.</summary>
     public double ContentHeightDip => PageSettings.ContentHeightDip;
 
-    /// <summary>Releases the in-memory fixed-layout package after preview and printing release it.</summary>
+    /// <summary>Releases the in-memory fixed-layout package after snapshot consumers release it.</summary>
     public void Dispose()
     {
         if (_disposed)

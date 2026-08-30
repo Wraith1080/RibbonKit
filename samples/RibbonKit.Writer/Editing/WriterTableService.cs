@@ -817,18 +817,20 @@ public sealed class WriterTableService : IDisposable
             throw new ArgumentOutOfRangeException(nameof(availableWidth));
 
         var remaining = Math.Max(0, availableWidth - tableWidth);
-        var left = alignment switch
+        var (left, right) = alignment switch
         {
-            WriterTableHorizontalAlignment.Left => 0,
-            WriterTableHorizontalAlignment.Center => remaining / 2d,
-            WriterTableHorizontalAlignment.Right => remaining,
+            WriterTableHorizontalAlignment.Left => (0d, remaining),
+            WriterTableHorizontalAlignment.Center => (remaining / 2d, remaining / 2d),
+            WriterTableHorizontalAlignment.Right => (remaining, 0d),
             _ => throw new ArgumentOutOfRangeException(nameof(alignment))
         };
         return Mutate(() =>
         {
             if (!IsTableInDocument(table))
                 return false;
-            var margin = new Thickness(left, table.Margin.Top, 0, table.Margin.Bottom);
+            var top = double.IsFinite(table.Margin.Top) ? table.Margin.Top : 0;
+            var bottom = double.IsFinite(table.Margin.Bottom) ? table.Margin.Bottom : 0;
+            var margin = new Thickness(left, top, right, bottom);
             if (table.Margin == margin)
                 return false;
             table.Margin = margin;

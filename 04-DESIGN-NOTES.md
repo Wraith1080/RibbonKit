@@ -5870,6 +5870,88 @@ width table retains identical bounds and row/column boundaries after first-cell 
 **2/2**. Full Writer, RibbonKit, visual and solution gates were not rerun; live confirmation remains pending. No
 `src/RibbonKit/**` file changed.
 
+### 3.131 RibbonKit Writer table-placement persistence — 2026-08-30
+
+The live W3-E2 save/reopen check confirmed that resized table geometry persists correctly, but selecting any Table
+Tools Left/Center/Right placement made the next `.rkw` save fail with an invalid block-margin value. Native WPF
+`Table.Margin` defaults to `Auto`/`NaN` components while it has no local value. The placement service copied its
+untouched vertical components into a newly local `Thickness`, so XAML emitted `Auto` even though only the finite left
+placement was intended. Writer's strict native-package validator correctly rejects that non-finite margin.
+
+The Writer-owned placement mutation now preserves finite top/bottom margins and materializes inherited non-finite
+defaults as zero before setting the local margin. The later §3.133 correction supersedes the original one-sided
+offset: finite left/right margins now encode Left, Center or Right placement so the intent survives both `.rkw`
+round-trip and view-width changes. Table/cell text alignment is unchanged. Focused coverage exercises the service
+contract plus Left, Center and Right placement through real `.rkw` save/load. Full Writer, RibbonKit, visual and
+solution gates were not rerun. The user confirmed the corrected alignment save/reopen path in the fresh Writer build;
+ordinary resized geometry had already passed the same live save/reopen check. No `src/RibbonKit/**` file changed.
+
+### 3.132 RibbonKit Writer table-adorners under editor zoom — 2026-08-30
+
+The remaining W3-E live batch found the table frame and grips drifting away from native grid edges when Writer zoom
+changed in either Paper or Continuous view. `TextPointer.GetCharacterRect` and the Writer adorner both operate in the
+adorned `RichTextBox`'s local coordinate space; WPF then applies the editor's `LayoutTransform` to the complete
+editor/adorner pair. The table resolver had additionally multiplied its inferred boundaries by that same zoom, so the
+chrome was projected twice while the table was projected once.
+
+The Writer-owned resolver now keeps table geometry and pointer deltas in the shared local coordinate space and leaves
+the single visual zoom transform to WPF. Realized 50%, 150% and 200% cases plus the existing resize rollback/commit
+regression pass **4/4**. Full Writer, RibbonKit, visual and solution gates were not rerun. The user accepted grip/frame
+alignment in both Paper and Continuous views. The separately reported semantic placement and pictured-PDF failures
+are corrected in §§3.133-3.134 and await their combined live confirmation. No `src/RibbonKit/**` file changed.
+
+### 3.133 RibbonKit Writer semantic table placement across editing views — 2026-08-31
+
+Paper uses a finite page content width while Continuous uses the live editor viewport. The original table-placement
+command persisted only a left offset calculated from whichever view was active, so Center and Right were coordinates,
+not semantic placements: switching views kept the stale coordinate, and re-centering there displaced the table after
+returning to Paper. Native WPF `Table` has no horizontal-placement property and `Auto` block margins do not align it.
+
+Writer now persists the unused horizontal remainder across both finite margin sides: Left is `(0, remainder)`, Center
+splits the remainder evenly, and Right is `(remainder, 0)`. A Writer-owned projection recomputes those margins after a
+Paper/Continuous or viewport-width change. WPF records even a presentation reflow as a native edit; its internal
+`BeginChangeNoUndo` path also clears existing history. The bounded net8 Writer bridge therefore snapshots the native
+undo count and redo stack, applies only the margin projection, removes only the unit that projection appended, and
+restores Redo. MainWindow suppresses dirty/preview invalidation only while that projection is active. Explicit Table
+Tools placement remains a normal undoable mutation.
+
+The focused service/persistence/undo gate passes **6/6**, and the realized MainWindow view-width regression passes
+**1/1**: Center receives equal margins at both widths, returns to the original Paper margins, does not mark a clean
+document dirty, and preserves the preceding native Undo/Redo history. Full gates were not run. The user confirmed the
+corrected cross-view placement in the fresh Writer build. No `src/RibbonKit/**` file changed.
+
+### 3.134 RibbonKit Writer pictured virtual-printer submission — 2026-08-31
+
+The accepted preview pipeline eagerly serializes an isolated `FlowDocument` clone into an in-memory fixed XPS package.
+Submitting that fixed paginator to Microsoft Print to PDF performs a second XPS serialization. Text-only fixed pages
+survived that path, but fixed pages containing bitmap package resources caused the process to terminate during the
+device spool write.
+
+The snapshot now retains two paginator surfaces over the same isolated clone and page settings: the stable fixed
+paginator remains the preview/navigation surface, while the clone's flow paginator is submitted to physical or virtual
+printers. Thus preview remains immutable and printing never touches the live editor, but a picture is serialized only
+once into the device spool instead of being copied out of an already fixed package. Printer imageable-area analysis and
+logical margins are unchanged.
+
+The focused pictured-spool and print-service contract cases pass **2/2**, and the existing real MainWindow lifecycle
+case passes **1/1** with both ordinary and coloured-page snapshots submitting the isolated print paginator. Full gates
+were not run. The user confirmed that Microsoft Print to PDF containing a picture completes correctly in the fresh
+Writer build. No `src/RibbonKit/**` file changed.
+
+### 3.135 RibbonKit Writer W3-E live acceptance closure — 2026-08-31
+
+The user completed the remaining W3-E live matrix in the actual Writer window. Structured context menus, contextual
+Table/Picture Tools stability, picture selection/removal/direct resize, table selection and merge scope, cell-range
+horizontal/vertical alignment, Left/Center/Right table placement, row/column/overall resize, Escape cancellation,
+Undo/Redo, save-close-reopen, Paper/Continuous zoom geometry, preview chrome exclusion and pictured Microsoft Print
+to PDF all passed. The only batch failures were the zoom double-projection, cross-view placement coordinate and fixed-
+XPS bitmap spool path corrected in §§3.132-3.134; their fresh-build rechecks passed.
+
+Per the user's explicit minimal-testing direction, closure relies on the focused **8/8** combined regression, the
+realized cross-view **1/1**, the existing real-window print lifecycle **1/1**, the zero-warning Writer build and the
+completed live matrix. Full Writer/RibbonKit/visual/solution gates were intentionally not rerun, so no new full-suite
+inventory is claimed. W3-E is accepted. W4-A and W2-G have not begun. No `src/RibbonKit/**` file changed.
+
 ## 4. Workflow / Session Conventions
 
 - Work from the current Windows checkout at
@@ -5886,7 +5968,7 @@ width table retains identical bounds and row/column boundaries after first-cell 
 
 ## 5. Current State & Next Steps
 
-> **Authoritative status as of 2026-08-30.** Historical checkpoints remain in §3, but status and
+> **Authoritative status as of 2026-08-31.** Historical checkpoints remain in §3, but status and
 > test counts quoted elsewhere should be reconciled against this section and rerun when current
 > evidence matters.
 
@@ -5921,8 +6003,8 @@ width table retains identical bounds and row/column boundaries after first-cell 
   family and immutable page settings cover visual command identity plus A4/Letter/Legal/custom paper,
   unit conversion, drift-free orientation and validated margins. The `.rkw` native format adds bounded,
   atomic, versioned persistence with a data-only text allowlist and page-setting round trips. The centred paper editor
-  and stable fixed-page preview/print pipeline now share the same logical page inputs without sharing the live editor's
-  mutable paginator. App-owned Page/View tabs, transactional custom margins, page colour, view switching, relocated
+  and stable fixed-preview/isolated-flow print pipeline now share the same logical page inputs without sharing the live
+  editor's mutable paginator. App-owned Page/View tabs, transactional custom margins, page colour, view switching, relocated
   ribbon zoom and icon-led Backstage print/summary actions expose those contracts while preserving one live editor.
   Canonical Plain Text, Rich Text and RibbonKit Writer profiles now share one extension/capability catalog, typed-New
   contract and capability-derived conversion policy with post-success-only identity commits. A pictured, responsive
@@ -5935,7 +6017,8 @@ width table retains identical bounds and row/column boundaries after first-cell 
   explicit TXT/RTF compatibility loss fixtures through §3.120. The bounded W3-E1 foundation in §3.121 adds stable
   structured-object context menus and app-owned contextual-state publication. The bounded W3-E2a slice in §3.122 adds
   explicit picture selection, the real size/remove-only Picture Tools tab and non-printing direct picture resizing with
-  transactional Undo/Redo, without claiming table adorners or complete W3-E acceptance.
+  transactional Undo/Redo. W3-E is accepted through §3.135, including table selection/merge/range alignment, direct
+  table resizing, semantic cross-view placement, zoom-stable adorners and pictured virtual printing.
 
 ### Remaining or intentionally deferred
 
@@ -5955,12 +6038,9 @@ width table retains identical bounds and row/column boundaries after first-cell 
   Paragraph dialog and representative ribbon/context-menu states remains pending. Its Styles audit intentionally found
   no complete named-style/persistence contract, so no placeholder gallery was added. W3-C owns the accepted Insert tab
   plus contextual Table Tools and its distinct table-cell Tab navigation contract. W3-D owns the accepted strict native
-  table round-trip/schema-v2 and TXT/RTF compatibility matrix. W3-E has begun with the bounded §3.121 context-menu and
-  contextual-state foundation, §3.122 completes the automated W3-E2a picture-selection/Picture Tools/direct-resize
-  slice, and §3.123 adds the minimally tested W3-E2b table-selection/direct-resize implementation. The full W3-E live
-  acceptance matrix remains; W4-A remains blocked on complete W3-E. Planned W2-G then owns a high-risk true editable-pagination architecture
-  and delivery packet; it must keep one authoritative document and may not fake page gaps. W4-B waits for both W4-A
-  and W2-G. W2-G has not started, and the remaining W3-E2/live matrix is still pending.
+  table round-trip/schema-v2 and TXT/RTF compatibility matrix. W3-E is accepted through §3.135. Planned W2-G owns a
+  high-risk true editable-pagination architecture and delivery packet; it must keep one authoritative document and may
+  not fake page gaps. W4-A and W2-G have not started, and W4-B waits for both.
 - Automatic `Icons.xaml` discovery is best-effort by design. Keep `Load Icons.xaml…` available
   for ambiguity, inaccessible paths, parse failures, or no match.
 

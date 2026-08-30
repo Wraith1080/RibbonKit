@@ -323,6 +323,7 @@ public partial class MainWindow : RibbonWindow
         _tableInteractionController?.Refresh();
         EditorSurface.SetDocument(Shell.CurrentDocument.Content);
         EditorSurface.PageSettings = Shell.CurrentDocument.PageSettings;
+        QueueTablePlacementProjection();
         EditorSurface.ZoomPercent = _editingController?.Zoom.Value ?? 100d;
         HorizontalRuler.PageSettings = Shell.CurrentDocument.PageSettings;
         HorizontalRuler.ZoomPercent = _editingController?.Zoom.Value ?? 100d;
@@ -496,6 +497,9 @@ public partial class MainWindow : RibbonWindow
     private void OnEditorTextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
     {
         _writerImageService.NotifyTextChanged(DocumentEditor);
+        if (_projectingTablePlacement)
+            return;
+        QueueTablePlacementProjection();
         if (_replacingDocument || !ReferenceEquals(DocumentEditor.Document, Shell.CurrentDocument.Content)) return;
         Shell.MarkEditorDirty();
         MarkPreviewPending();
@@ -735,6 +739,7 @@ public partial class MainWindow : RibbonWindow
                 ? WriterEditorViewMode.Continuous
                 : WriterEditorViewMode.Paper;
             EditorSurface.Visibility = Visibility.Visible;
+            QueueTablePlacementProjection();
             var paper = mode == WriterViewMode.Paper;
             ApplyRulerVisibility();
             if (!paper)

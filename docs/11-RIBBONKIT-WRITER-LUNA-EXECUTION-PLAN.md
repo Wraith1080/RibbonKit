@@ -6,12 +6,10 @@
 > deferred to W4-C because only one display is connected. W1-E Home formatting implementation and its automated Debug
 > gate are complete; the corrective app-owned RibbonKit-themed Font/Color/Paragraph pass has passed its refreshed full
 > Debug gate and awaits live visual reacceptance.
-> W3-D round-trip/TXT/RTF compatibility is accepted through design-notes §3.120. W3-E has begun with the bounded
-> W3-E1 structured-context/menu and contextual-publication foundation, including the app-owned loaded-picture
-> context-menu/keyboard undo/redo and snapshot-normalization correction. The bounded W3-E2a picture slice has now
-> passed its automated gate with explicit selection, a real size/remove-only Picture Tools tab and non-printing direct
-> picture resizing. The bounded W3-E2b table-selection and column/row/overall-resize implementation passes its minimal
-> focused gate. Live table-grip acceptance and the full W3-E matrix remain pending.
+> W3-D round-trip/TXT/RTF compatibility is accepted through design-notes §3.120. W3-E is accepted through §3.135:
+> structured context and contextual-state stability, picture/table selection and direct resizing, range alignment,
+> semantic cross-view table placement, zoom-stable adorners, persistence/Undo/Redo and pictured PDF printing passed
+> the completed live matrix. Its final closure intentionally used focused tests rather than new full-suite gates.
 > W2-G is planned after W3-E as a high-risk true editable-pagination packet; it may not fake page breaks.
 > This document does not schedule future agents or imply that any later Writer packet exists.
 > [`10-RIBBONKIT-WRITER-PLAN.md`](10-RIBBONKIT-WRITER-PLAN.md) owns product scope; current
@@ -406,14 +404,16 @@ input and live DPI movement.
 
 ### W2-D — Preview, pagination and printing
 
-**Status (2026-08-24): accepted.** Preview and Microsoft Print to PDF use the same stable fixed paginator; A4 and
-Letter preview/output plus all five pages of each PDF passed the live gate. W2-E consumed this contract and is
-accepted separately below.
+**Status (2026-08-24): accepted; pictured-print correction accepted 2026-08-31.** Preview and print
+retain the same isolated snapshot clone and page settings. Preview uses stable fixed pages; printing submits the
+clone's flow paginator so bitmap resources are serialized only once into the device spool. The original A4 and Letter
+preview/output plus all five pages of each PDF passed the live gate. W2-E consumed this contract and is accepted
+separately below.
 
 **Owns:** preview-clone service, paginator/print service, preview view and tests.
 
 **Deliver:** isolated preview document, deterministic page inputs, one/two-page/page-width modes,
-navigation, debounced rebuild and printing from the same page settings/paginator. Report or explicitly
+navigation, debounced rebuild and printing from the same isolated snapshot inputs. Report or explicitly
 clamp printer imageable-area conflicts.
 
 **Exit:** clone isolation and pagination-input tests pass; lead compares A4 and Letter preview with
@@ -423,11 +423,12 @@ Microsoft Print to PDF or an available printer. Opening a dialog is not proof of
 
 **Status (2026-08-24): accepted.** The actual 125%-scale Writer surface passed Page/View switching, transactional
 custom margins, page colour, preview modes/navigation/zoom, narrow/RTL, keyboard and icon-led Backstage checks. The
-same long-lived editor and exact fresh W2-D paginator are retained. A same-day user-review correction moved preview-
+same long-lived editor and exact fresh W2-D snapshot inputs are retained. A same-day user-review correction moved preview-
 only commands into a dedicated modal Print Preview tab, made View/preview/zoom commands large and labelled, replaced
 Undo/Redo-derived page navigation artwork, suspended pagination work during ordinary typing, removed Print from the
-ribbon and replaced the Windows picker's unsupported-preview pane with Writer-owned printer setup around the exact
-fixed paginator. W0-E is accepted; W0-F is next and W2-F waits for its capability-aware command projection.
+ribbon and replaced the Windows picker's unsupported-preview pane with Writer-owned printer setup around the stable
+fixed preview. The later pictured-print correction submits that snapshot's isolated flow paginator to the device.
+W0-E is accepted; W0-F is next and W2-F waits for its capability-aware command projection.
 
 **Owns:** Page/View ribbon tabs and groups, view switching, zoom-command relocation and Backstage
 print/page-summary UI exclusively.
@@ -562,12 +563,11 @@ object interaction and W3 manual acceptance remain W3-E.
 
 ### W3-E — Structured-object context, Picture Tools and direct resizing
 
-**Current status:** W3-E1 implements the stable document/object snapshot, W1-E menu composition, stale-target guards,
-object removal/table mutation paths and app-owned table-state refresh deferral. The bounded W3-E2a slice implements
-explicit document-bound picture selection, the real size/remove-only Picture Tools tab and non-printing picture edge/
-corner resizing with transactional native Undo/Redo. W3-E2b now implements the corresponding table selection frame,
-column/row boundary grips, overall resize grip and one-unit table replacement commit. Its deliberately minimal focused
-gate passes; live table-grip acceptance and the full exit matrix below remain pending, so W3-E is not complete.
+**Current status:** accepted 2026-08-31 through design-notes §3.135. W3-E1 supplies the stable document/object snapshot,
+menu composition, stale-target guards, mutation paths and deferred contextual publication. W3-E2 supplies explicit
+picture/table selection, Picture Tools, non-printing picture/table adorners and bounded direct resizing. The completed
+live matrix also accepts selection/merge scope, range alignment, semantic cross-view placement, zoom, cancellation,
+Undo/Redo, save/reopen, preview exclusion and pictured PDF output. W4-A and W2-G have not begun.
 
 **Owns:** structured-object hit testing and selection state, the W1-E context-menu extension rows, Picture Tools,
 table/picture selection adorners, direct resizing and contextual-tab stability exclusively. It may refine Writer-owned

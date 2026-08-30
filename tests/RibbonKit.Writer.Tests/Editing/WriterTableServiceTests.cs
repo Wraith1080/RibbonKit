@@ -756,9 +756,9 @@ public sealed class WriterTableServiceTests
                 WriterTableHorizontalAlignment.Center, tableWidth: 240, availableWidth: 600));
 
             Assert.Equal(180, table.Margin.Left);
-            Assert.Equal(0, table.Margin.Right);
-            Assert.True(double.IsNaN(table.Margin.Top));
-            Assert.True(double.IsNaN(table.Margin.Bottom));
+            Assert.Equal(180, table.Margin.Right);
+            Assert.Equal(0, table.Margin.Top);
+            Assert.Equal(0, table.Margin.Bottom);
             Assert.Equal(TextAlignment.Right, table.TextAlignment);
             Assert.Equal(TextAlignment.Center, cell.TextAlignment);
             Assert.False(service.SetTableHorizontalAlignment(table,
@@ -766,6 +766,85 @@ public sealed class WriterTableServiceTests
             Assert.True(service.SetTableHorizontalAlignment(table,
                 WriterTableHorizontalAlignment.Right, tableWidth: 240, availableWidth: 600));
             Assert.Equal(360, table.Margin.Left);
+        });
+    }
+
+    [Fact]
+    public void TablePlacementReflowPreservesExistingNativeEditHistory()
+    {
+        StaTestHelper.Run(() =>
+        {
+            var created = CreateTable(1, 2);
+            using var service = created.Service;
+            var editor = created.Editor;
+            var table = created.Table;
+            var window = HostEditor(editor);
+            try
+            {
+                window.Show();
+                window.UpdateLayout();
+                Assert.True(service.SetTableHorizontalAlignment(table,
+                    WriterTableHorizontalAlignment.Center, 240, 600));
+                editor.IsUndoEnabled = false;
+                editor.IsUndoEnabled = true;
+                var paragraph = table.RowGroups[0].Rows[0].Cells[0].Blocks
+                    .OfType<Paragraph>().Single();
+                editor.Selection.Select(paragraph.ContentStart, paragraph.ContentEnd);
+                editor.Selection.Text = "edited";
+                Assert.True(editor.CanUndo);
+                var changed = 0;
+                editor.TextChanged += (_, _) => changed++;
+
+                WriterTableMarginProjection.ProjectWithoutUndo(editor.Document, table, 240, 800);
+
+                Assert.Equal(new Thickness(280, 0, 280, 0), table.Margin);
+                Assert.True(editor.CanUndo);
+                Assert.True(editor.Undo());
+                Assert.Equal(new Thickness(280, 0, 280, 0), table.Margin);
+                Assert.NotEqual("edited", new TextRange(paragraph.ContentStart,
+                    paragraph.ContentEnd).Text.Trim());
+                Assert.True(editor.CanRedo);
+
+                WriterTableMarginProjection.ProjectWithoutUndo(editor.Document, table, 240, 700);
+
+                Assert.Equal(new Thickness(230, 0, 230, 0), table.Margin);
+                Assert.True(editor.CanRedo);
+                Assert.True(editor.Redo());
+                Assert.Equal(new Thickness(230, 0, 230, 0), table.Margin);
+                Assert.Equal("edited", new TextRange(paragraph.ContentStart,
+                    paragraph.ContentEnd).Text.Trim());
+            }
+            finally
+            {
+                window.Close();
+            }
+        });
+    }
+
+    [Fact]
+    public void FullWidthPlacementIntentSurvivesAWidthReduction()
+    {
+        StaTestHelper.Run(() =>
+        {
+            foreach (var alignment in Enum.GetValues<WriterTableHorizontalAlignment>())
+            {
+                var created = CreateTable(1, 2);
+                using var service = created.Service;
+                var table = created.Table;
+                Assert.True(service.SetTableHorizontalAlignment(table, alignment, 600, 600));
+                WriterTableMarginProjection.Project(table, alignment, 600, 600);
+
+                WriterTableMarginProjection.Project(table, 400, 600);
+
+                var expected = alignment switch
+                {
+                    WriterTableHorizontalAlignment.Left => new Thickness(0, 0, 200, 0),
+                    WriterTableHorizontalAlignment.Center => new Thickness(100, 0, 100, 0),
+                    WriterTableHorizontalAlignment.Right => new Thickness(200, 0, 0, 0),
+                    _ => throw new ArgumentOutOfRangeException()
+                };
+                Assert.Equal(expected, table.Margin);
+            }
         });
     }
 

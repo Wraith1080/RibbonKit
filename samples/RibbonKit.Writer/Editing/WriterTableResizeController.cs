@@ -246,11 +246,11 @@ internal static class WriterTableLayoutResolver
         var hasTableOrigin = TryGetTableOrigin(table, columnSpacing, out var tableOrigin);
         var rawLeft = hasTableOrigin ? tableOrigin.X : realized.Min(item => item.Bounds.Left);
         var rawTop = hasTableOrigin ? tableOrigin.Y : realized.Min(item => item.Bounds.Top);
-        var transform = editor.LayoutTransform?.Value ?? Matrix.Identity;
-        var scaleX = Math.Max(0.001, Math.Abs(transform.M11));
-        var scaleY = Math.Max(0.001, Math.Abs(transform.M22));
-        realized = realized.Select(item => (item.Cell,
-            ProjectRect(item.Bounds, new Point(rawLeft, rawTop), scaleX, scaleY))).ToList();
+        // TextPointer rectangles and adorner rendering both use the adorned RichTextBox's local
+        // coordinate space. Its LayoutTransform is applied to the complete editor/adorner pair by
+        // WPF, so projecting these coordinates again would double-apply Writer zoom.
+        const double scaleX = 1d;
+        const double scaleY = 1d;
 
         var left = rawLeft;
         var top = rawTop;
@@ -311,11 +311,6 @@ internal static class WriterTableLayoutResolver
             scaleX, scaleY);
         return true;
     }
-
-    internal static Rect ProjectRect(Rect rect, Point anchor, double scaleX, double scaleY) =>
-        new(anchor.X + (rect.X - anchor.X) * scaleX,
-            anchor.Y + (rect.Y - anchor.Y) * scaleY,
-            rect.Width * scaleX, rect.Height * scaleY);
 
     private static double[] BuildBoundaries<T>(int count, IReadOnlyList<T> items,
         Func<T, int> firstIndex, Func<T, int> lastIndex,

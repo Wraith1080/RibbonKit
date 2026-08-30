@@ -25,6 +25,8 @@ public partial class MainWindow
     private WriterPictureInteractionController? _pictureInteractionController;
     private Button? _customTableSizeButton;
     private bool _updatingTableGridSelection;
+    private bool _tablePlacementProjectionQueued;
+    private bool _projectingTablePlacement;
 
     /// <summary>Gets the app-owned bridge between table services and the live Writer surface.</summary>
     internal WriterTableInteractionController TableInteractionController =>
@@ -44,6 +46,7 @@ public partial class MainWindow
         _tableInteractionController.StateChanged += OnTableInteractionStateChanged;
         _tableResizeController = new WriterTableResizeController(DocumentEditor,
             _tableInteractionController, CompleteStructuredContentMutation);
+        DocumentEditor.SizeChanged += OnTablePlacementViewportChanged;
         EditingController.Editing.UndoExtension = _writerImageService;
         EditingController.Editing.UndoCompleted += OnEditingUndoCompleted;
         EditingController.Editing.RedoCompleted += OnEditingRedoCompleted;
@@ -77,6 +80,7 @@ public partial class MainWindow
         EditingController.Editing.RedoCompleted -= OnEditingRedoCompleted;
         EditingController.Editing.UndoExtension = null;
         DocumentEditor.PreviewKeyDown -= OnEditorPictureRemovalPreviewKeyDown;
+        DocumentEditor.SizeChanged -= OnTablePlacementViewportChanged;
         if (_pictureInteractionController is not null)
         {
             _pictureInteractionController.StateChanged -= OnPictureInteractionStateChanged;
@@ -900,8 +904,57 @@ public partial class MainWindow
             var availableWidth = double.IsFinite(pageWidth)
                 ? pageWidth - padding.Left - padding.Right
                 : DocumentEditor.ActualWidth - DocumentEditor.Padding.Left - DocumentEditor.Padding.Right;
-            return tables.SetTableHorizontalAlignment(table, alignment,
-                layout.Bounds.Width / layout.ProjectionScaleX, availableWidth);
+            var tableWidth = layout.Bounds.Width / layout.ProjectionScaleX;
+            var changed = tables.SetTableHorizontalAlignment(table, alignment,
+                tableWidth, availableWidth);
+            if (changed)
+                WriterTableMarginProjection.Project(table, alignment, tableWidth, availableWidth);
+            return changed;
+        }));
+    }
+
+    private void OnTablePlacementViewportChanged(object sender, SizeChangedEventArgs e) =>
+        QueueTablePlacementProjection();
+
+    private void QueueTablePlacementProjection()
+    {
+        if (_tablePlacementProjectionQueued || _tableInteractionController is null
+            || CurrentViewMode == WriterViewMode.PrintPreview)
+            return;
+        _tablePlacementProjectionQueued = true;
+        _ = Dispatcher.BeginInvoke(DispatcherPriority.Render, new Action(() =>
+        {
+            _tablePlacementProjectionQueued = false;
+            if (_closing || !IsVisible || _tableInteractionController is null
+                || CurrentViewMode == WriterViewMode.PrintPreview)
+                return;
+
+            var pageWidth = DocumentEditor.Document.PageWidth;
+            var padding = DocumentEditor.Document.PagePadding;
+            var availableWidth = double.IsFinite(pageWidth)
+                ? pageWidth - padding.Left - padding.Right
+                : DocumentEditor.ActualWidth - DocumentEditor.Padding.Left
+                    - DocumentEditor.Padding.Right;
+            if (!double.IsFinite(availableWidth) || availableWidth <= 0)
+                return;
+
+            _projectingTablePlacement = true;
+            try
+            {
+                foreach (var table in DocumentEditor.Document.Blocks.OfType<Table>())
+                {
+                    if (WriterTableLayoutResolver.TryCreate(DocumentEditor,
+                            TableInteractionController.GetOrderedCells(table), 0, out var layout))
+                    {
+                        WriterTableMarginProjection.ProjectWithoutUndo(DocumentEditor.Document,
+                            table, layout.Bounds.Width / layout.ProjectionScaleX, availableWidth);
+                    }
+                }
+            }
+            finally
+            {
+                _projectingTablePlacement = false;
+            }
         }));
     }
 
