@@ -604,6 +604,42 @@ public class RibbonLocalizationTests
         Assert.Null(documentInput.Attribute("FlowDirection"));
         Assert.Equal("Left", (string?)documentInput.Attribute("TextAlignment"));
         Assert.Equal("en-US", (string?)documentInput.Attribute("Language"));
+
+        XElement popupGroup = Assert.Single(
+            document.Descendants(RibbonKitNamespace + "RibbonGroup"),
+            element => (string?)element.Attribute(RibbonKitNamespace + "Ribbon.CommandId")
+                == "loc.group.popups");
+        XElement[] popupItems = popupGroup.Elements().ToArray();
+        XElement separator = Assert.Single(
+            popupItems,
+            element => element.Name == RibbonKitNamespace + "RibbonGroupSeparator"
+                && (string?)element.Attribute(Xaml + "Name") == "RtlPopupGroupSeparator");
+        int separatorIndex = Array.IndexOf(popupItems, separator);
+        Assert.Equal(
+            "loc.command.paste",
+            (string?)popupItems[separatorIndex - 1].Attribute(RibbonKitNamespace + "Ribbon.CommandId"));
+        Assert.Equal(
+            "loc.command.select",
+            (string?)popupItems[separatorIndex + 1].Attribute(RibbonKitNamespace + "Ribbon.CommandId"));
+
+        XElement scrollingGroup = Assert.Single(
+            document.Descendants(RibbonKitNamespace + "RibbonGroup"),
+            element => (string?)element.Attribute(RibbonKitNamespace + "Ribbon.CommandId")
+                == "loc.group.scrolling");
+        XElement[] scrollBars = scrollingGroup
+            .Descendants(RibbonKitNamespace + "RibbonScrollBar")
+            .ToArray();
+        Assert.Equal(2, scrollBars.Length);
+        Assert.Contains(
+            scrollBars,
+            element => (string?)element.Attribute(Xaml + "Name") == "RtlVerticalScrollBar"
+                && element.Attribute("Orientation") is null
+                && element.Attribute("FlowDirection") is null);
+        Assert.Contains(
+            scrollBars,
+            element => (string?)element.Attribute(Xaml + "Name") == "RtlHorizontalScrollBar"
+                && (string?)element.Attribute("Orientation") == "Horizontal"
+                && element.Attribute("FlowDirection") is null);
     }
 
     [Fact]

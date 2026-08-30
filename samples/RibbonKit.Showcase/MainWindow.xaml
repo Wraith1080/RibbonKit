@@ -805,12 +805,6 @@
                                          ScreenTipText="Fit the page width to the available document area." />
                     </StackPanel>
                 </rk:RibbonGroup>
-            </rk:RibbonTab>
-
-            <!-- Showcase configuration and diagnostic surfaces live together here so View
-                 remains a compact, document-oriented tab. Existing group command IDs stay
-                 unchanged so command identity and QAT references remain stable. -->
-            <rk:RibbonTab Header="Ribbon Lab" rk:Ribbon.CommandId="tab.ribbonLab">
                 <!-- Runtime theme switch — same templates, different token dictionary -->
                 <rk:RibbonGroup Header="Theme" rk:Ribbon.CommandId="group.view.theme" Icon="{StaticResource Icon.Palette}">
                     <rk:RibbonButton Header="Office 2024"
@@ -849,6 +843,196 @@
                                      ScreenTipTitle="Office 2007 theme"
                                      ScreenTipText="Apply the Office 2007 Blue theme (hard-crease glass gels, valley gradients on the title bar and ribbon body, flat light-blue tab strip)." />
                 </rk:RibbonGroup>
+                <!-- Accent customization: title-bar accent toggle + swappable accent color -->
+                <rk:RibbonGroup Header="Accent" rk:Ribbon.CommandId="group.view.accent" Icon="{StaticResource Icon.ColorDrop}">
+                    <rk:RibbonToggleButton x:Name="DarkModeToggle"
+                                           Header="Dark Mode"
+                                           Size="Large"
+                                           LargeIcon="{StaticResource Icon.Mica}"
+                                           Icon="{StaticResource Icon.Mica}"
+                                           Checked="OnToggleDarkMode"
+                                           Unchecked="OnToggleDarkMode"
+                                           ScreenTipTitle="Dark mode"
+                                           ScreenTipText="Use this generation's dark palette: Black for Office 2007/2010, Dark Gray for 2013, and modern dark for 2019/2024." />
+                    <rk:RibbonToggleButton x:Name="AccentedTitleBarToggle"
+                                           Header="Colored Title Bar"
+                                           Size="Large"
+                                           LargeIcon="{StaticResource Icon.ColorDrop}"
+                                           Icon="{StaticResource Icon.ColorDrop}"
+                                           Checked="OnToggleAccentTitleBar"
+                                           Unchecked="OnToggleAccentTitleBar"
+                                           ScreenTipTitle="Colored title bar"
+                                           ScreenTipText="Color the title bar with the accent color (best in the Office 2024 theme)." />
+                    <!-- Accent swatches as a gallery: pick a color to recolor the theme -->
+                    <rk:InRibbonGallery x:Name="AccentGallery"
+                                        Width="150"
+                                        VerticalAlignment="Center"
+                                        SelectionChanged="OnAccentGalleryChanged">
+                        <rk:RibbonGalleryItem Tag="reset" ToolTip="Theme default accent">
+                            <Border Width="40" Height="22" CornerRadius="3"
+                                    BorderThickness="1" BorderBrush="#B0B0B0" Background="Transparent">
+                                <TextBlock Text="Auto" FontSize="9" Foreground="#616161"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                        </rk:RibbonGalleryItem>
+                        <rk:RibbonGalleryItem Tag="#0F6CBD" ToolTip="Blue">
+                            <Border Width="40" Height="22" CornerRadius="3" Background="#0F6CBD" />
+                        </rk:RibbonGalleryItem>
+                        <rk:RibbonGalleryItem Tag="#107C41" ToolTip="Green">
+                            <Border Width="40" Height="22" CornerRadius="3" Background="#107C41" />
+                        </rk:RibbonGalleryItem>
+                        <rk:RibbonGalleryItem Tag="#038387" ToolTip="Teal">
+                            <Border Width="40" Height="22" CornerRadius="3" Background="#038387" />
+                        </rk:RibbonGalleryItem>
+                        <rk:RibbonGalleryItem Tag="#8764B8" ToolTip="Purple">
+                            <Border Width="40" Height="22" CornerRadius="3" Background="#8764B8" />
+                        </rk:RibbonGalleryItem>
+                        <rk:RibbonGalleryItem Tag="#C43E96" ToolTip="Magenta">
+                            <Border Width="40" Height="22" CornerRadius="3" Background="#C43E96" />
+                        </rk:RibbonGalleryItem>
+                        <rk:RibbonGalleryItem Tag="#CA5010" ToolTip="Orange">
+                            <Border Width="40" Height="22" CornerRadius="3" Background="#CA5010" />
+                        </rk:RibbonGalleryItem>
+                        <rk:RibbonGalleryItem Tag="#D13438" ToolTip="Red">
+                            <Border Width="40" Height="22" CornerRadius="3" Background="#D13438" />
+                        </rk:RibbonGalleryItem>
+                        <!-- Enough swatches to force the popup's vertical overflow path, making
+                             the themed gallery scrollbar directly testable in the Showcase. -->
+                        <rk:RibbonGalleryItem Tag="#001F5B" ToolTip="Navy">
+                            <Border Width="40" Height="22" CornerRadius="3" Background="#001F5B" />
+                        </rk:RibbonGalleryItem>
+                        <rk:RibbonGalleryItem Tag="#4F46E5" ToolTip="Indigo">
+                            <Border Width="40" Height="22" CornerRadius="3" Background="#4F46E5" />
+                        </rk:RibbonGalleryItem>
+                        <rk:RibbonGalleryItem Tag="#7C3AED" ToolTip="Violet">
+                            <Border Width="40" Height="22" CornerRadius="3" Background="#7C3AED" />
+                        </rk:RibbonGalleryItem>
+                        <rk:RibbonGalleryItem Tag="#E83E8C" ToolTip="Pink">
+                            <Border Width="40" Height="22" CornerRadius="3" Background="#E83E8C" />
+                        </rk:RibbonGalleryItem>
+                        <rk:RibbonGalleryItem Tag="#7F1D1D" ToolTip="Maroon">
+                            <Border Width="40" Height="22" CornerRadius="3" Background="#7F1D1D" />
+                        </rk:RibbonGalleryItem>
+                        <rk:RibbonGalleryItem Tag="#795548" ToolTip="Brown">
+                            <Border Width="40" Height="22" CornerRadius="3" Background="#795548" />
+                        </rk:RibbonGalleryItem>
+                        <rk:RibbonGalleryItem Tag="#B8860B" ToolTip="Gold">
+                            <Border Width="40" Height="22" CornerRadius="3" Background="#B8860B" />
+                        </rk:RibbonGalleryItem>
+                        <rk:RibbonGalleryItem Tag="#65A30D" ToolTip="Lime">
+                            <Border Width="40" Height="22" CornerRadius="3" Background="#65A30D" />
+                        </rk:RibbonGalleryItem>
+                        <rk:RibbonGalleryItem Tag="#047857" ToolTip="Emerald">
+                            <Border Width="40" Height="22" CornerRadius="3" Background="#047857" />
+                        </rk:RibbonGalleryItem>
+                        <rk:RibbonGalleryItem Tag="#0891B2" ToolTip="Cyan">
+                            <Border Width="40" Height="22" CornerRadius="3" Background="#0891B2" />
+                        </rk:RibbonGalleryItem>
+                        <rk:RibbonGalleryItem Tag="#4682B4" ToolTip="Steel blue">
+                            <Border Width="40" Height="22" CornerRadius="3" Background="#4682B4" />
+                        </rk:RibbonGalleryItem>
+                        <rk:RibbonGalleryItem Tag="#475569" ToolTip="Slate">
+                            <Border Width="40" Height="22" CornerRadius="3" Background="#475569" />
+                        </rk:RibbonGalleryItem>
+                        <rk:RibbonGalleryItem Tag="#374151" ToolTip="Charcoal">
+                            <Border Width="40" Height="22" CornerRadius="3" Background="#374151" />
+                        </rk:RibbonGalleryItem>
+                        <rk:RibbonGalleryItem Tag="#6B7D2A" ToolTip="Olive">
+                            <Border Width="40" Height="22" CornerRadius="3" Background="#6B7D2A" />
+                        </rk:RibbonGalleryItem>
+                        <rk:RibbonGalleryItem Tag="#F97360" ToolTip="Coral">
+                            <Border Width="40" Height="22" CornerRadius="3" Background="#F97360" />
+                        </rk:RibbonGalleryItem>
+                        <rk:RibbonGalleryItem Tag="#0D9488" ToolTip="Turquoise">
+                            <Border Width="40" Height="22" CornerRadius="3" Background="#0D9488" />
+                        </rk:RibbonGalleryItem>
+                    </rk:InRibbonGallery>
+                </rk:RibbonGroup>
+                <!-- Backstage design: modern (2024) light rail vs classic (2013) accent column -->
+                <rk:RibbonGroup Header="Backstage" rk:Ribbon.CommandId="group.view.backstage" Icon="{StaticResource Icon.Backstage}">
+                    <rk:RibbonToggleButton x:Name="MicaToggle"
+                                           Header="Mica"
+                                           Size="Large"
+                                           LargeIcon="{StaticResource Icon.Mica}"
+                                           Icon="{StaticResource Icon.Mica}"
+                                           Checked="OnToggleMica"
+                                           Unchecked="OnToggleMica"
+                                           ScreenTipTitle="Mica backdrop (Windows 11)"
+                                           ScreenTipText="Apply the Windows 11 Mica material behind the window and the backstage. Requires Windows 11 22H2+." />
+                    <rk:RibbonToggleButton x:Name="AcrylicToggle"
+                                           Header="Acrylic"
+                                           Size="Large"
+                                           LargeIcon="{StaticResource Icon.Acrylic}"
+                                           Icon="{StaticResource Icon.Acrylic}"
+                                           Checked="OnToggleAcrylic"
+                                           Unchecked="OnToggleAcrylic"
+                                           ScreenTipTitle="Acrylic backdrop (Windows 11)"
+                                           ScreenTipText="Apply the Windows 11 Acrylic material — a translucent blur of whatever is behind the window. Replaces Mica when both are toggled. Requires Windows 11 22H2+." />
+                    <rk:RibbonToggleButton x:Name="ApplicationMenuToggle"
+                                           Header="2007 Menu"
+                                           Size="Large"
+                                           LargeIcon="{StaticResource Icon.Backstage}"
+                                           Icon="{StaticResource Icon.Backstage}"
+                                           Checked="OnToggleApplicationMenu"
+                                           Unchecked="OnToggleApplicationMenu"
+                                           ScreenTipTitle="Office 2007 application menu"
+                                           ScreenTipText="Swap the File button's surface from the backstage overlay to the Office 2007 two-pane application menu — a drop-down rendered behind the orb. Switching to the Office 2007 theme turns this on for you." />
+                    <rk:RibbonToggleButton x:Name="BackstageTranslucentToggle"
+                                           Header="Translucent Backstage"
+                                           Size="Large"
+                                           LargeIcon="{StaticResource Icon.Mica}"
+                                           Icon="{StaticResource Icon.Mica}"
+                                           Checked="OnToggleBackstageTranslucent"
+                                           Unchecked="OnToggleBackstageTranslucent"
+                                           ScreenTipTitle="Translucent backstage"
+                                           ScreenTipText="Make the backstage a frosted-acrylic panel: it turns semi-transparent and strongly blurs whatever is behind it. Open the File menu to see it." />
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <StackPanel>
+                            <rk:RibbonButton Header="2013 Rail"
+                                Tag="Classic"
+                                Size="Medium"
+                                Icon="{StaticResource Icon.Backstage}"
+                                Click="OnSelectBackstageDesign"
+                                ScreenTipTitle="Classic backstage (Office 2013)"
+                                ScreenTipText="Solid accent nav column in light palettes, or matching neutral gray in dark/Black palettes." />
+                            <rk:RibbonButton Header="2024 Rail"
+                                Tag="Modern"
+                                Size="Medium"
+                                Icon="{StaticResource Icon.Backstage}"
+                                Click="OnSelectBackstageDesign"
+                                ScreenTipTitle="Modern backstage (Office 2024)"
+                                ScreenTipText="Neutral rail with an accent selection bar; it follows light or dark mode." />
+                            <rk:RibbonButton Header="2010 Glass"
+                                Tag="Classic2010"
+                                Size="Medium"
+                                Icon="{StaticResource Icon.Backstage}"
+                                Click="OnSelectBackstageDesign"
+                                ScreenTipTitle="Office 2010 backstage"
+                                ScreenTipText="Light glass nav with a glossy selected marker; dark/Black palettes use matching grayscale glass." />
+                        </StackPanel>
+                        <StackPanel Margin="6,0,0,0">
+                            <rk:RibbonButton Header="2007 Modern"
+                                Tag="Glass2007"
+                                Size="Medium"
+                                Icon="{StaticResource Icon.Backstage}"
+                                Click="OnSelectBackstageDesign"
+                                ScreenTipTitle="RibbonKit modern Office 2007 backstage"
+                                ScreenTipText="The preserved modern 2007 glass rail. It has an opaque fallback and reveals Acrylic only when Translucent Backstage is also enabled." />
+                            <rk:RibbonButton Header="2007 Classic"
+                                Tag="Classic2007"
+                                Size="Medium"
+                                Icon="{StaticResource Icon.Backstage}"
+                                Click="OnSelectBackstageDesign"
+                                ScreenTipTitle="RibbonKit classic Office 2007 backstage"
+                                ScreenTipText="An opaque silver-blue framed shell with gold command states and a denser document dashboard inspired by Office 2007." />
+                        </StackPanel>
+                    </StackPanel>
+                </rk:RibbonGroup>
+            </rk:RibbonTab>
+
+            <!-- Extended control demonstrations and diagnostic surfaces live here. Existing
+                 group command IDs stay unchanged so command identity and QAT references remain stable. -->
+            <rk:RibbonTab Header="Ribbon Lab" rk:Ribbon.CommandId="tab.ribbonLab">
                 <rk:RibbonGroup x:Name="AeroFrameGroup"
                                 Header="Aero Frame"
                                 rk:Ribbon.CommandId="group.view.office2007frame"
@@ -940,61 +1124,6 @@
                         </StackPanel>
                     </StackPanel>
                 </rk:RibbonGroup>
-                <!-- Accent customization: title-bar accent toggle + swappable accent color -->
-                <rk:RibbonGroup Header="Accent" rk:Ribbon.CommandId="group.view.accent" Icon="{StaticResource Icon.ColorDrop}">
-                    <rk:RibbonToggleButton x:Name="DarkModeToggle"
-                                           Header="Dark Mode"
-                                           Size="Large"
-                                           LargeIcon="{StaticResource Icon.Mica}"
-                                           Icon="{StaticResource Icon.Mica}"
-                                           Checked="OnToggleDarkMode"
-                                           Unchecked="OnToggleDarkMode"
-                                           ScreenTipTitle="Dark mode"
-                                           ScreenTipText="Use this generation's dark palette: Black for Office 2007/2010, Dark Gray for 2013, and modern dark for 2019/2024." />
-                    <rk:RibbonToggleButton x:Name="AccentedTitleBarToggle"
-                                           Header="Colored Title Bar"
-                                           Size="Large"
-                                           LargeIcon="{StaticResource Icon.ColorDrop}"
-                                           Icon="{StaticResource Icon.ColorDrop}"
-                                           Checked="OnToggleAccentTitleBar"
-                                           Unchecked="OnToggleAccentTitleBar"
-                                           ScreenTipTitle="Colored title bar"
-                                           ScreenTipText="Color the title bar with the accent color (best in the Office 2024 theme)." />
-                    <!-- Accent swatches as a gallery: pick a color to recolor the theme -->
-                    <rk:InRibbonGallery x:Name="AccentGallery"
-                                        Width="150"
-                                        VerticalAlignment="Center"
-                                        SelectionChanged="OnAccentGalleryChanged">
-                        <rk:RibbonGalleryItem Tag="reset" ToolTip="Theme default accent">
-                            <Border Width="40" Height="22" CornerRadius="3"
-                                    BorderThickness="1" BorderBrush="#B0B0B0" Background="Transparent">
-                                <TextBlock Text="Auto" FontSize="9" Foreground="#616161"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
-                            </Border>
-                        </rk:RibbonGalleryItem>
-                        <rk:RibbonGalleryItem Tag="#0F6CBD" ToolTip="Blue">
-                            <Border Width="40" Height="22" CornerRadius="3" Background="#0F6CBD" />
-                        </rk:RibbonGalleryItem>
-                        <rk:RibbonGalleryItem Tag="#107C41" ToolTip="Green">
-                            <Border Width="40" Height="22" CornerRadius="3" Background="#107C41" />
-                        </rk:RibbonGalleryItem>
-                        <rk:RibbonGalleryItem Tag="#038387" ToolTip="Teal">
-                            <Border Width="40" Height="22" CornerRadius="3" Background="#038387" />
-                        </rk:RibbonGalleryItem>
-                        <rk:RibbonGalleryItem Tag="#8764B8" ToolTip="Purple">
-                            <Border Width="40" Height="22" CornerRadius="3" Background="#8764B8" />
-                        </rk:RibbonGalleryItem>
-                        <rk:RibbonGalleryItem Tag="#C43E96" ToolTip="Magenta">
-                            <Border Width="40" Height="22" CornerRadius="3" Background="#C43E96" />
-                        </rk:RibbonGalleryItem>
-                        <rk:RibbonGalleryItem Tag="#CA5010" ToolTip="Orange">
-                            <Border Width="40" Height="22" CornerRadius="3" Background="#CA5010" />
-                        </rk:RibbonGalleryItem>
-                        <rk:RibbonGalleryItem Tag="#D13438" ToolTip="Red">
-                            <Border Width="40" Height="22" CornerRadius="3" Background="#D13438" />
-                        </rk:RibbonGalleryItem>
-                    </rk:InRibbonGallery>
-                </rk:RibbonGroup>
                 <!-- Global animation level (per-action overrides available in the API) -->
                 <rk:RibbonGroup Header="Motion" rk:Ribbon.CommandId="group.view.motion" Icon="{StaticResource Icon.Motion}">
                     <rk:RibbonButton Header="No Motion"
@@ -1073,83 +1202,44 @@
                         </StackPanel>
                     </StackPanel>
                 </rk:RibbonGroup>
-                <!-- Backstage design: modern (2024) light rail vs classic (2013) accent column -->
-                <rk:RibbonGroup Header="Backstage" rk:Ribbon.CommandId="group.view.backstage" Icon="{StaticResource Icon.Backstage}">
-                    <rk:RibbonToggleButton x:Name="MicaToggle"
-                                           Header="Mica"
-                                           Size="Large"
-                                           LargeIcon="{StaticResource Icon.Mica}"
-                                           Icon="{StaticResource Icon.Mica}"
-                                           Checked="OnToggleMica"
-                                           Unchecked="OnToggleMica"
-                                           ScreenTipTitle="Mica backdrop (Windows 11)"
-                                           ScreenTipText="Apply the Windows 11 Mica material behind the window and the backstage. Requires Windows 11 22H2+." />
-                    <rk:RibbonToggleButton x:Name="AcrylicToggle"
-                                           Header="Acrylic"
-                                           Size="Large"
-                                           LargeIcon="{StaticResource Icon.Acrylic}"
-                                           Icon="{StaticResource Icon.Acrylic}"
-                                           Checked="OnToggleAcrylic"
-                                           Unchecked="OnToggleAcrylic"
-                                           ScreenTipTitle="Acrylic backdrop (Windows 11)"
-                                           ScreenTipText="Apply the Windows 11 Acrylic material — a translucent blur of whatever is behind the window. Replaces Mica when both are toggled. Requires Windows 11 22H2+." />
-                    <rk:RibbonToggleButton x:Name="ApplicationMenuToggle"
-                                           Header="2007 Menu"
-                                           Size="Large"
-                                           LargeIcon="{StaticResource Icon.Backstage}"
-                                           Icon="{StaticResource Icon.Backstage}"
-                                           Checked="OnToggleApplicationMenu"
-                                           Unchecked="OnToggleApplicationMenu"
-                                           ScreenTipTitle="Office 2007 application menu"
-                                           ScreenTipText="Swap the File button's surface from the backstage overlay to the Office 2007 two-pane application menu — a drop-down rendered behind the orb. Switching to the Office 2007 theme turns this on for you." />
-                    <rk:RibbonToggleButton x:Name="BackstageTranslucentToggle"
-                                           Header="Translucent Backstage"
-                                           Size="Large"
-                                           LargeIcon="{StaticResource Icon.Mica}"
-                                           Icon="{StaticResource Icon.Mica}"
-                                           Checked="OnToggleBackstageTranslucent"
-                                           Unchecked="OnToggleBackstageTranslucent"
-                                           ScreenTipTitle="Translucent backstage"
-                                           ScreenTipText="Make the backstage a frosted-acrylic panel: it turns semi-transparent and strongly blurs whatever is behind it. Open the File menu to see it." />
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <StackPanel>
-                            <rk:RibbonButton Header="2013 Rail"
-                                Tag="Classic"
-                                Size="Medium"
-                                Icon="{StaticResource Icon.Backstage}"
-                                Click="OnSelectBackstageDesign"
-                                ScreenTipTitle="Classic backstage (Office 2013)"
-                                ScreenTipText="Solid accent nav column in light palettes, or matching neutral gray in dark/Black palettes." />
-                            <rk:RibbonButton Header="2024 Rail"
-                                Tag="Modern"
-                                Size="Medium"
-                                Icon="{StaticResource Icon.Backstage}"
-                                Click="OnSelectBackstageDesign"
-                                ScreenTipTitle="Modern backstage (Office 2024)"
-                                ScreenTipText="Neutral rail with an accent selection bar; it follows light or dark mode." />
-                            <rk:RibbonButton Header="2010 Glass"
-                                Tag="Classic2010"
-                                Size="Medium"
-                                Icon="{StaticResource Icon.Backstage}"
-                                Click="OnSelectBackstageDesign"
-                                ScreenTipTitle="Office 2010 backstage"
-                                ScreenTipText="Light glass nav with a glossy selected marker; dark/Black palettes use matching grayscale glass." />
+                <rk:RibbonGroup Header="Scrolling"
+                                rk:Ribbon.CommandId="group.ribbonLab.scrolling"
+                                Icon="{StaticResource Icon.Gear}"
+                                CanResize="False">
+                    <StackPanel Orientation="Horizontal"
+                                Margin="6,0"
+                                VerticalAlignment="Center">
+                        <StackPanel HorizontalAlignment="Center">
+                            <TextBlock Text="Vertical"
+                                       FontSize="10"
+                                       Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
+                                       HorizontalAlignment="Center"
+                                       Margin="0,0,0,2" />
+                            <rk:RibbonScrollBar Height="56"
+                                                Minimum="0"
+                                                Maximum="100"
+                                                Value="35"
+                                                ViewportSize="25"
+                                                SmallChange="5"
+                                                LargeChange="20"
+                                                AutomationProperties.Name="Themed vertical scrollbar" />
                         </StackPanel>
-                        <StackPanel Margin="6,0,0,0">
-                            <rk:RibbonButton Header="2007 Modern"
-                                Tag="Glass2007"
-                                Size="Medium"
-                                Icon="{StaticResource Icon.Backstage}"
-                                Click="OnSelectBackstageDesign"
-                                ScreenTipTitle="RibbonKit modern Office 2007 backstage"
-                                ScreenTipText="The preserved modern 2007 glass rail. It has an opaque fallback and reveals Acrylic only when Translucent Backstage is also enabled." />
-                            <rk:RibbonButton Header="2007 Classic"
-                                Tag="Classic2007"
-                                Size="Medium"
-                                Icon="{StaticResource Icon.Backstage}"
-                                Click="OnSelectBackstageDesign"
-                                ScreenTipTitle="RibbonKit classic Office 2007 backstage"
-                                ScreenTipText="An opaque silver-blue framed shell with gold command states and a denser document dashboard inspired by Office 2007." />
+                        <StackPanel Margin="12,0,0,0"
+                                    VerticalAlignment="Center">
+                            <TextBlock Text="Horizontal"
+                                       FontSize="10"
+                                       Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
+                                       HorizontalAlignment="Center"
+                                       Margin="0,0,0,5" />
+                            <rk:RibbonScrollBar Orientation="Horizontal"
+                                                Width="132"
+                                                Minimum="0"
+                                                Maximum="100"
+                                                Value="45"
+                                                ViewportSize="30"
+                                                SmallChange="5"
+                                                LargeChange="20"
+                                                AutomationProperties.Name="Themed horizontal scrollbar" />
                         </StackPanel>
                     </StackPanel>
                 </rk:RibbonGroup>

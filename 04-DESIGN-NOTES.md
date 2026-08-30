@@ -386,7 +386,7 @@ is kept as a library API, just unused by the sample.)
   (Office-style) and scroll the single-row strip to the selected tile so you'd see the pick
   once the popup was gone. It was implemented via `OnSelectionChanged` (deferred close) +
   a `ScrollSelectedItemIntoView` on close. **It repeatedly broke popup hit-testing** and was
-  backed out — `InRibbonGallery.cs` is now the original pre-feature version.
+  backed out — `InRibbonGallery.cs` was restored to the original pre-feature version at that point.
   - **Why it's fragile (for whoever retries this):** the strip and the popup share ONE
     `ScrollViewer` that re-homes between them. Scrolling that scroller for the strip (whose
     viewport is a single ~54px row) leaves it in a state that corrupts the popup's
@@ -401,6 +401,10 @@ is kept as a library API, just unused by the sample.)
   - **If retried:** don't scroll the shared re-homed scroller. Give the popup its **own**
     items presenter (don't re-home), or reset/relayout on the popup's `Opened` event once the
     content is actually laid out — not synchronously right after the re-home.
+  - **2026-08-30 follow-up (RKWF-018):** the durable variant keeps separate permanent strip
+    and popup scrollers and re-homes only the one items presenter. Thus no viewport/clip object
+    crosses the Popup HWND/DPI boundary; focused post-DPI open/close cases pass, with live
+    mixed-DPI acceptance still pending.
 - **Tab underline hover flicker (2024) fixed.** The hover trigger is scoped to
   `SourceName="HeaderChrome"`, but the three indicator rectangles (`HoverIndicator`,
   `SelectionIndicator`, `ContextualSelectionIndicator`) are *siblings* overlaying it. A
@@ -5628,6 +5632,12 @@ together to a new Ribbon Lab tab. Existing group command IDs remain unchanged so
 change command identity or QAT references; a previously saved per-tab group arrangement naturally cannot transfer
 those groups from their former parent tab. A static integration contract pins the two tab inventories.
 
+A 2026-08-30 Showcase follow-up refines that split around user intent rather than treating every configuration
+surface as a lab feature. View now owns Zoom plus the Theme, Accent and Backstage presentation groups. Ribbon Lab
+retains Aero Frame, Motion, Inputs, Scrolling and Application as its extended-control and diagnostic surfaces. The
+groups moved intact, including their command IDs and event handlers, and the static inventory contract reflects the
+new ownership.
+
 The Office 2010 Aero title already changed to the inactive fallback and attenuated only its live tint when its
 `RibbonWindow` lost activation, but the tab-header row retained the active fallback/tint composition. The tab-row
 template now uses the same inactive fallback and wraps its bound tint in a visual whose opacity can be attenuated by
@@ -5635,6 +5645,175 @@ the existing inactive-overlay metric. This preserves Acrylic's independent mater
 input surface. The focused template contract pins the inactive fallback and tint handoff. The complete Debug gate
 passes RibbonKit **365/365**, Writer **439/439** and visual **1/1** over 63 approved images after a zero-warning/error
 solution build. Live active-to-inactive color continuity remains a separate visual acceptance check.
+
+### 3.126 Localization/RTL separator acceptance surface — 2026-08-30
+
+The user accepted `RibbonGroupSeparator` through live theme switching and an actual collapsed-group flyout; RTL,
+DPI and High Contrast remain. The Localization/RTL lab now places a named direct-child separator between Paste and
+Select in Popup Checks. Its existing local flow-direction toggle makes the physical reorder visible without changing
+the main Showcase window, and the checklist calls out that the separator must remain between the two commands. The
+existing localization structural test now pins that authored neighborhood. The focused test passes **1/1** and the
+Showcase Debug project builds with zero warnings/errors. The complete solution gate was not repeated because runtime
+code and the test inventory are unchanged.
+
+### 3.127 Live-DPI InRibbonGallery viewport and side-button correction — 2026-08-30
+
+After the user accepted RKWF-005, RKWF-013 and RKWF-016 through all themes/light-dark variants and the complete
+100-200% DPI matrix (plus collapsed-flyout and RTL coverage for the separator), a different live-transition defect
+appeared in the Showcase Styles gallery. The popup was closed while the per-monitor-v2 window changed DPI. On the
+first subsequent interaction, the lower expand glyph could behave like scroll-down and the strip could show an empty
+page until opening Snipping Tool induced a later activation/layout/render pass.
+
+The gallery already repaired its shared strip/popup `ScrollViewer` once on popup open, but it did not observe its
+owner Window's DPI transition while closed. It now retains a lifecycle-safe owner subscription, stops an old scroll
+animation, resets to a safe offset synchronously, and performs generation-guarded Loaded and Render remeasure passes.
+After closed-strip layout settles it restores the selected row without animation; a later popup open still starts at
+offset zero. A synchronous metric refresh at up/down invocation prevents an old viewport from supplying the page
+distance. Transient collapsed-group re-homing retains the known owner through its unload/load pair, while a gallery
+that remains removed detaches at ApplicationIdle.
+
+The fixed 17-DIP vertical `StackPanel` is replaced by three equal, layout-rounded Grid rows. Each button template now
+has a full transparent root hit surface, leaving its inset border as visual chrome only. That first correction passed
+its two focused regressions but failed its live recheck: recordings at 200% and 125% showed the popup's transparent
+window/shadow rectangle still covering part of the main-window button column, and a 150%-to-125% transition could
+still leave the returned strip blank. The missing boundary was between HWNDs, not within the button template;
+transparent Popup pixels still intercept input before WPF can hit-test the underlying button.
+
+The first HWND-boundary correction width-bound the Popup child to `PART_ContentHost`. Its next live check revealed why
+that was also the wrong constraint: after a DPI transition it clipped deterministically, and the narrower card wrapped
+a gallery authored for three columns after only two tiles. The Popup remains explicitly anchored to the content host,
+but now keeps its natural measured width. A custom placement aligns the whole popup-window edge with the content/button
+boundary and lets the extra width expand leftward in LTR or rightward in RTL. Shadow accommodation therefore stays
+away from all three buttons without squeezing the gallery card. The close path still stops any animation, requests
+offset zero before re-homing, and synchronously commits a freshly measured strip viewport at zero after re-homing; a
+later selected-item reveal remains deferred until valid strip geometry exists.
+
+Five realized cases now cover closed downward-DPI open, natural three-column popup layout plus HWND/button separation
+in LTR and RTL, immediate popup-page clearing on close, and left/center/right hit ownership for all button rows. The
+complete Debug gate passes RibbonKit **370/370**, Writer **439/439** and visual **1/1** over 63 approved images after a
+zero-warning/error solution build. This Packet 1 correction still requires live mixed-DPI acceptance. The themed
+scrollbar proposal remains deferred until then.
+
+The next live check accepted the natural three-column geometry, popup/button separation and input behavior; one blank
+closed-strip frame still waited for an unrelated redraw after DPI. A generation-guarded ContextIdle pass was added to
+commit layout once more and explicitly invalidate the presenter, scroller, active host, gallery and every realized
+tile. A focused item proved that extra render occurs, but the next live check still produced the clipped strip. The
+attempt therefore demonstrates only repaint scheduling, not a fix, and repeated invalidation is exhausted.
+
+WPF's Popup lifecycle supports the narrower diagnosis: closing hides its separate window synchronously, queues repaint
+for the underlying window and schedules destruction; a quick reopen can cancel pending destruction. Some popup-window
+lifetime is therefore transiently retained, but the captured tiny selected-border corner means the gallery visual is
+back in the main tree rather than merely hidden or bitmap-cached. The stronger suspect was the one `ScrollViewer`
+whose viewport/clip state crossed the main and popup HWND/DPI contexts.
+
+The default template now implements the host-specific boundary: `PART_ScrollViewer` stays permanently under the
+main-window `PART_ContentHost`, `PART_PopupScrollViewer` stays permanently under the Popup's `PART_PopupHost`, and only
+`PART_ItemsPresenter` moves between their `Content` slots. The failed final Render/ContextIdle invalidation workaround
+was removed because it repainted the same stale clip rather than correcting ownership. A compatibility fallback keeps
+the original whole-content re-home working for custom templates without the two new optional parts. The accepted
+custom placement, natural three-column width, reduced horizontal gap, mirrored RTL direction and `VerticalOffset=-8`
+are unchanged. Eight focused gallery cases pin the two-scroller ownership, post-DPI first open, paging isolation,
+three-column geometry and input behavior. The zero-warning/error solution build plus RibbonKit **371/371**, visual
+**1/1**, and Writer **439/439** pass. The user subsequently accepted the formerly failing first-open/close redraw in
+the live 150%-to-125% and 200% mixed-DPI paths, closing RKWF-018 and Packet 1.
+
+### 3.128 Theme-aware scrollbar control and gallery overflow — 2026-08-30
+
+Packet 2 replaces the gallery popup's OS-native overflow chrome without replacing WPF scrolling behavior. The public
+lookless `RibbonScrollBar : ScrollBar` inherits native range commands, keyboard/mouse handling, horizontal/vertical
+orientation, RTL behavior and the `ScrollBarAutomationPeer` RangeValue contract. Its shared vertical and horizontal
+templates use vector arrows, native `Track`/`Thumb` parts, explicit hover/drag/pressed states and a system-colour High
+Contrast fallback. Eight scrollbar brushes plus six geometry metrics are defined in every Office 2007-2024 light/dark
+token dictionary; the older generations remain wider and squarer than the modern palettes.
+
+Gallery `ScrollViewer`s still own ordinary generated `ScrollBar` controls. A local implicit style applies the same
+`RibbonKit.ScrollBarStyle` to those generated parts, so `RibbonGallery` and the popup-only
+`PART_PopupScrollViewer` gain the themed chrome while RKWF-018's permanent strip/popup viewport ownership remains
+untouched. A realized-window test caught that a deferred gallery template could not resolve a `StaticResource` from an
+earlier sibling aggregate dictionary. The aggregator still lists every `Controls.*` part directly, while Galleries
+also imports the one scrollbar-template source into its deferred resource scope and keeps a small same-file adapter
+style; this preserves the designer rule that `BasedOn` chains never cross part files without duplicating templates.
+Ribbon Lab carries standalone vertical/horizontal examples, and its Accent gallery has enough swatches to force the
+real popup overflow path. The package toolbox allowlist exposes `RibbonScrollBar`, and the README lists the public
+control. The Localization/RTL lab also hosts both orientations under its live mirroring toggle. Six focused cases
+cover lookless/native inheritance, commands and thumb-to-range propagation, RangeValue
+automation, all theme tokens, both orientations, Showcase structure, and a realized overflowing popup whose generated
+scrollbar uses the custom template and drives the popup viewport.
+
+The preliminary live pass exposed three visual geometry defects: 12-15 DIP rails were too narrow, the `Auto` arrow
+rows/columns collapsed to the small vector glyph rather than a full button, and `Margin` applied directly to `Thumb`
+interfered with `Track`'s calculated pill geometry. The corrected template uses 16-DIP modern and 18-DIP 2007/2010
+rails, forces each arrow button to a full thickness square, and moves vertical/horizontal inset to an inner `Pill`
+border. `ButtonCornerRadius`, `ThumbCornerRadius`, and `RailCornerRadius` are independent public dependency/attached
+properties, allowing any chrome to be square without replacing the template and also reaching native scrollbars generated by
+gallery `ScrollViewer`s. Office 2007/2010 thumb states use outlined multi-stop gradients for their generation-specific
+glass/gel treatment; Office 2013-2024 remain flat. The focused cases also pin square button geometry, public and
+attached radius values, gallery theme defaults, and the legacy gradient
+resources.
+
+The next live capture showed that removing longitudinal inset was insufficient: a compact 125%-DPI probe measured a
+22.4-DIP Thumb whose native proportional `Track` slot and layout clip were only 8 DIP. WPF's proportional path ignores
+`Thumb.MinHeight` and instead clamps with half of the locally resolved system scrollbar-button metric. Thus the style
+minimum enlarged the child behind the clip without enlarging its visible or draggable slot. The internal
+`RibbonScrollBarTrack : Track` maps the active `MinThumbLength` token into Track-local vertical/horizontal system
+resource keys, allowing native Track to calculate the correct slot, density, drag mapping and page-button lengths.
+No application-wide system resource or ScrollBar range behavior changes. The Thumb no longer carries a conflicting
+minimum or any inner inset, so the Pill uses the entire vertical rail width or horizontal rail height as requested.
+
+The labeled Showcase example remains 56 DIP tall, which preserves the wider rail without pushing its bottom line
+button beneath the generation-dependent group footer.
+The new `RailCornerRadius` dependency/attached property defaults to each theme's button radius, so the track background
+does not expose sharp corners behind rounded hover chrome. Office 2007/2010 line buttons also use an outlined normal
+gradient to remain visibly actionable before hover; modern themes retain transparent normal button chrome. A realized
+compact Office 2010 and Office 2024 cases at the current fractional desktop DPI prove that layout slot, Pill and hit
+geometry agree without a layout clip; both line buttons remain inside the rounded rail host, and generation-specific
+normal/radius resources apply. The user live-accepted the corrected full-width thumb and compact vertical behavior,
+then requested that the flat Office 2013 and Office 2019 generations remain completely square. Their light/dark
+button, thumb and rail radius tokens are now all zero, with four dedicated theme cases preventing drift. Sixteen
+focused cases pass. The zero-warning Release solution build, RibbonKit **387/387**, visual **1/1**, and Writer
+**439/439** pass; only the final Office 2013/2019 square-token visual recheck remains.
+
+An adoption pilot now reuses the shared templates on the native `ScrollBar` instances generated by only the two
+overflow panes in `RibbonCustomizePage`. `Controls.Customize.xaml` imports the scrollbar template dictionary into its
+own deferred-template scope and defines a small same-file adapter; the implicit style lives inside the Customize Ribbon
+control template, so `RibbonQuickAccessPage`, app-owned options pages and Backstage content remain unchanged. A
+realized Office 2010 test forces both the available-command list and ribbon-structure tree to overflow, verifies the
+shared line-button/Track template and generation radii, and proves line scrolling changes each viewport. The focused
+scrollbar gate is now **18/18**. The Release solution build has zero warnings/errors; RibbonKit passes **389/389**,
+visual passes **1/1**, and Writer passes **439/439**. The user live-accepted this scoped Customize Ribbon scrollbar
+pilot as visually successful. The sibling QAT and optional Backstage surfaces stay outside this decision gate.
+
+The requested follow-ups first gave all ten ordinary Customize Ribbon action/reorder buttons a Button-targeted
+counterpart of the scrollbar line-button chrome, then promoted that treatment into the dialog's existing shared
+`OptionsDialogActionButtonStyle`. QAT customization, Customize Ribbon, both Cancel buttons, and all compact
+reorder/import/export actions now receive the same generation-aware normal background/border, hover/pressed states
+and scrollbar button-radius token while preserving their established dimensions, content, keyboard focus and disabled
+opacity. The primary OK style still overrides the base with its colored gel template, and the title-bar Close style
+retains its Windows-red caption hover. WPF cannot assign the `RepeatButton` template object directly to `Button`, so
+the shared action style contains the equivalent Button-targeted template rather than changing the accepted scrollbar.
+The realized Office 2010 case pins the gel brush, border and two-DIP radius; the structural contract pins both built-in
+pages and the OK/Cancel/Close exceptions. The reviewed Office 2024 RTL QAT snapshot changed only those four ordinary
+buttons and its approval was refreshed. The full Release counts remain **389/389**, **439/439**, and **1/1** with zero
+build warnings/errors; live visual acceptance of the dialog-wide treatment remains pending.
+
+The next live review caught that the QAT page's two list boxes had not joined the scrollbar pilot. Its control-template
+resources now apply the same local generated-`ScrollBar` adapter already used by Customize Ribbon, without changing
+either `ListBox`, its items or scrolling ownership. A new realized Office 2010 case forces both available/current QAT
+lists to overflow, verifies shared template parts and theme radii, and proves each viewport responds to line scrolling.
+The Office 2024 RTL QAT diff was inspected before approval: only the available-list scrollbar changed to the full-width
+RibbonKit thumb and arrow buttons. The focused gate is **19/19**; the zero-warning Release build, RibbonKit **390/390**,
+Writer **439/439**, and refreshed visual suite **1/1** pass. Live QAT scrollbar acceptance remains pending.
+
+Live Office 2024 review then exposed an important scale distinction: the transparent normal-state brush that suits a
+small scrollbar arrow makes a full dialog action disappear into the form. The shared action style now consumes two
+dedicated `Dialog.ActionBackground`/`Dialog.ActionBorder` tokens and a one-DIP outline. Office 2007/2010 duplicate the
+accepted scrollbar gel and outline exactly; Office 2013/2019/2024 light/dark define simple nontransparent flat fills
+and visible generation-appropriate borders. Scrollbar tokens remain unchanged, so their modern arrows stay quiet.
+The action template still uses the scrollbar button-radius token, preserving square 2013/2019 and rounded 2024 chrome.
+All ten dictionaries carry both new brush keys. Static coverage pins modern nontransparency and legacy gradients; a
+realized Office 2024 case pins fill, border, thickness and radius. The inspected RTL QAT diff changed only its four
+ordinary buttons. The focused gate is **21/21**; the zero-warning Release build, RibbonKit **392/392**, Writer
+**439/439**, and refreshed visual suite **1/1** pass. Live modern-theme acceptance remains pending.
 
 ## 4. Workflow / Session Conventions
 
@@ -5652,7 +5831,7 @@ solution build. Live active-to-inactive color continuity remains a separate visu
 
 ## 5. Current State & Next Steps
 
-> **Authoritative status as of 2026-08-29.** Historical checkpoints remain in §3, but status and
+> **Authoritative status as of 2026-08-30.** Historical checkpoints remain in §3, but status and
 > test counts quoted elsewhere should be reconciled against this section and rerun when current
 > evidence matters.
 
@@ -5859,6 +6038,21 @@ solution build. Live active-to-inactive color continuity remains a separate visu
 - 2026-08-29 after §3.125: the inventory is **804 logic tests plus one visual test covering 63 approved images**.
   RibbonKit passes **365/365**, Writer passes **439/439**, visual passes **1/1**, and the Debug solution build has zero
   warnings/errors. Live Office 2010 Aero active/inactive color-continuity acceptance remains pending.
+- 2026-08-30 after §3.126: the inventory remains **804 logic tests plus one visual test covering 63 approved images**.
+  The existing focused localization test passes **1/1** and the Showcase Debug build has zero warnings/errors. The
+  separator has user-accepted theme-switching and collapsed-flyout coverage; RTL, 100-200% DPI and High Contrast
+  remain pending.
+- 2026-08-30 after §3.127: the inventory is **806 logic tests plus one visual test covering 63 approved images**.
+  RibbonKit passes **367/367**, Writer passes **439/439**, visual passes **1/1**, and the Debug solution build has zero
+  warnings/errors. RKWF-005/013/016 have the later user-accepted theme/light-dark and 100-200% DPI coverage recorded
+  in the friction log; RKWF-018 later passed its real mixed-DPI transition recheck, so Packet 2 may begin.
+- 2026-08-30 after §3.128: the inventory is **831 logic tests plus one visual test covering 63 approved images**.
+  RibbonKit passes **392/392**, Writer passes **439/439**, visual passes **1/1**, and the Release solution build has zero
+  warnings/errors. The themed scrollbar/dialog gate's twenty-one focused cases, Track-level minimum, full-width vertical Pill, contained bottom button,
+  independent rail/button/thumb radius API, and realized popup overflow path pass; live cross-theme, DPI, RTL and High
+  Contrast geometry is user-accepted. The scoped Customize Ribbon scrollbar comparison is also live-accepted; the
+  QAT scrollbar, final Office 2013/2019 square-token visual recheck, and modern visible action-button chrome comparison
+  remain pending live confirmation.
 - Before quoting a current count or declaring a new change complete, rerun the proportional build
   and test commands. Inspect actual/diff PNG artifacts before changing visual baselines or
   tolerances.

@@ -20,44 +20,37 @@
         <Setter Property="Padding" Value="14,6" />
         <Setter Property="Focusable" Value="True" />
         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
-        <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}" />
+        <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Dialog.ActionBackground}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Dialog.ActionBorder}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="controls:RibbonScrollBar.ButtonCornerRadius"
+                Value="{DynamicResource RibbonKit.Metrics.ScrollBar.ButtonCornerRadius}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type Button}">
-                    <!-- The Padding is applied to the CONTENT (not the Chrome), so the accent
-                         wash + border fill the WHOLE button edge-to-edge — otherwise only the
-                         inner (un-padded) area would light up on hover. -->
                     <Border x:Name="Chrome"
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="1"
-                            CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="{Binding Path=(controls:RibbonScrollBar.ButtonCornerRadius), RelativeSource={RelativeSource TemplatedParent}}"
                             SnapsToDevicePixels="True">
-                        <Grid>
-                            <!-- Accent-follow hover/press: a translucent wash of the CURRENT
-                                 accent over the white button gives a light tint of whatever the
-                                 accent is (light green for a green accent, etc.) — never a fixed
-                                 blue. Opacity, not a baked colour, so it tracks accent changes. -->
-                            <Border x:Name="Wash"
-                                    Background="{DynamicResource RibbonKit.Brushes.Accent}"
-                                    CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
-                                    Opacity="0" />
-                            <ContentPresenter Margin="{TemplateBinding Padding}"
-                                              HorizontalAlignment="Center"
-                                              VerticalAlignment="Center" />
-                        </Grid>
+                        <ContentPresenter Margin="{TemplateBinding Padding}"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          RecognizesAccessKey="True" />
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Wash" Property="Opacity" Value="0.16" />
-                            <Setter TargetName="Chrome" Property="BorderBrush"
-                                    Value="{DynamicResource RibbonKit.Brushes.Accent}" />
+                            <Setter Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
+                            <Setter Property="BorderBrush"
+                                    Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="Wash" Property="Opacity" Value="0.30" />
-                            <Setter TargetName="Chrome" Property="BorderBrush"
-                                    Value="{DynamicResource RibbonKit.Brushes.Accent}" />
+                            <Setter Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
+                            <Setter Property="BorderBrush"
+                                    Value="{DynamicResource RibbonKit.Brushes.Control.PressedBorder}" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.4" />

@@ -138,7 +138,8 @@ remain read-only until actual/diff evidence justifies a deliberate change.
 ### RKWF-005 — Ribbon groups have no first-class in-group separator
 
 - **First seen / packet:** 2026-08-24, Writer W1-D visual review and W2 planning.
-- **Status:** Corrected in RibbonKit on 2026-08-29; live theme/DPI matrix remains pending.
+- **Status:** Corrected in RibbonKit on 2026-08-29; user-verified through every theme/light-dark variant,
+  actual collapsed flyouts, RTL and the 100-200% DPI matrix by 2026-08-30. High Contrast remains pending.
 - **Consumer goal:** visually partition related command clusters inside one `RibbonGroup` without creating
   fake groups, hard-coded borders or layout-only command items.
 - **Reproduction and evidence:** the accepted Writer Home surface needs lighter divisions within command-dense
@@ -151,8 +152,8 @@ remain read-only until actual/diff evidence justifies a deliberate change.
   width and height across large/medium/small group states and returns to its large presentation with content
   re-homed into a collapsed flyout. Writer uses it between Paragraph command clusters. The Showcase now
   demonstrates a height-constrained separator inside Font's compact button row, a full-height direct-child
-  separator in Insert/Illustrations and a separator between a large View/Zoom command and a stacked medium
-  command cluster.
+  separator in Insert/Illustrations, a separator between a large View/Zoom command and a stacked medium
+  command cluster, and a direct-child separator between Paste and Select in the Localization/RTL lab.
 - **Application impact:** dense groups are harder to scan, while consumer-created dividers risk inconsistent
   adaptive layout and theme behavior across Office generations.
 - **Implemented library direction:** `RibbonGroupSeparator` is a non-focusable, non-hit-test control whose
@@ -162,8 +163,9 @@ remain read-only until actual/diff evidence justifies a deliberate change.
   separator.
 - **Evidence still required:** focused realized coverage now proves horizontal LTR/RTL placement, all effective
   size states, collapsed-to-large behavior, theme-brush resolution and exclusion from command/accessibility
-  surfaces; a structural Showcase contract pins all three authored examples and their neighboring commands.
-  Repeat the Writer/Showcase prototypes through all themes, 100-200% DPI, RTL and an actual collapsed flyout.
+  surfaces; structural Showcase contracts pin the authored examples and their neighboring commands. The user has
+  accepted every theme/light-dark variant, actual collapsed flyouts, RTL placement and 100-200% DPI. High Contrast
+  remains.
 
 ### RKWF-006 — Main-ribbon leaf commands are absent from external UIA traversal
 
@@ -312,7 +314,8 @@ remain read-only until actual/diff evidence justifies a deliberate change.
 ### RKWF-013 — InRibbonGallery popup background can remain unresolved in its popup HWND
 
 - **First seen / packet:** 2026-08-26, Writer W3-C live table-picker acceptance.
-- **Status:** Corrected in RibbonKit on 2026-08-29; live popup matrix remains pending.
+- **Status:** Corrected in RibbonKit on 2026-08-29; user-verified through every theme/light-dark variant and the
+  100-200% DPI matrix by 2026-08-30. Collapsed-group, RTL and High Contrast coverage remain pending.
 - **Consumer goal:** an expanded `InRibbonGallery` should paint an opaque theme/high-contrast popup surface before its
   shared presenter is re-homed, so underlying ribbon commands never show through the tile grid.
 - **Reproduction and evidence:** in the real 125%-scale Writer window, `PART_PopupHost.Background` remained null even
@@ -329,8 +332,8 @@ remain read-only until actual/diff evidence justifies a deliberate change.
 - **Implemented library direction:** the focused realized consumer reproduces the unresolved surface; the gallery now
   resolves/reapplies the theme-owned popup background from its connected resource scope when the separate HWND opens.
   High Contrast uses the system Window brush, and open popups follow runtime theme/High Contrast notifications.
-- **Evidence still required:** a focused Showcase/runtime reproduction across Office generations, light/dark,
-  standard/collapsed groups, RTL, 100-200% DPI and High Contrast without the Writer override.
+- **Evidence still required:** the user has accepted every Office generation/light-dark variant and 100-200% DPI
+  without the Writer override. Repeat in a collapsed group, RTL and High Contrast.
 
 ### RKWF-014 — Transient Writer selection can collapse the active contextual tab during a table command
 
@@ -395,7 +398,8 @@ remain read-only until actual/diff evidence justifies a deliberate change.
 ### RKWF-016 — Revealing a contextual tab can leave the active-tab marker at its previous coordinate
 
 - **First seen / packet:** 2026-08-29, Writer W3-E2a live Picture Tools follow-up.
-- **Status:** Corrected in RibbonKit on 2026-08-29; live theme/DPI matrix remains pending.
+- **Status:** Corrected in RibbonKit on 2026-08-29; user-verified through every theme/light-dark variant and the
+  100-200% DPI matrix by 2026-08-30. RTL, reduced motion, merging and customization reorder remain pending.
 - **Consumer goal:** revealing or hiding a contextual tab must keep the selected-tab marker aligned with the selected
   normal tab, including when the contextual tab occupies an earlier collection position.
 - **Reproduction and evidence:** with Page selected, Picture Tools was located between Insert and Page in Writer's tab
@@ -414,9 +418,9 @@ remain read-only until actual/diff evidence justifies a deliberate change.
   tab, reveals it while the right-side normal tab stays selected, and requires the shared marker to move to the new
   header coordinate. The existing Showcase contextual-tab surface exercises the same authored ordering; the control
   refreshes the sliding underline and connected-tab notch after collection or visibility layout settles.
-- **Evidence still required:** the focused normal/contextual/normal realized case now passes. Repeat visibility toggles
-  at 100-200% DPI, RTL, reduced motion and all Office themes, then cover tab merging and customization reorder in the
-  live acceptance pass.
+- **Evidence still required:** the focused normal/contextual/normal realized case passes, and the user has accepted
+  visibility toggles through every Office generation/light-dark variant and 100-200% DPI. Repeat RTL and reduced
+  motion, then cover tab merging and customization reorder.
 
 ### RKWF-017 — Empty trailing table cells can briefly lack usable text geometry after replacement
 
@@ -439,6 +443,135 @@ remain read-only until actual/diff evidence justifies a deliberate change.
   `FlowDocument` tables; no RibbonKit control participates in the document layout.
 - **Evidence still required:** repeat multi-row, 1-8 column, spanned-cell, zoom/DPI, RTL, undo/redo and save/reopen
   cases in the visible Writer window.
+
+### RKWF-018 — Live DPI transition can stale InRibbonGallery scrolling and side-button hit geometry
+
+- **First seen / packet:** 2026-08-30, Showcase Styles gallery after the RKWF-005/013/016 live matrix.
+- **Status:** Corrected and user-verified on 2026-08-30. Natural width, three-column layout, popup/button separation,
+  button behavior, the `-8` vertical placement and the first post-DPI open/close redraw all passed live. The default
+  template keeps separate permanent strip/popup scrollers and moves only the items presenter across hosts.
+- **Consumer goal:** after moving an active per-monitor-v2 window to a different DPI, the closed gallery strip must
+  remain populated and the first click on each side button must invoke that exact button; opening afterward must show
+  a freshly measured popup at its first item.
+- **Reproduction and evidence:** after a live transition, especially above 150%, the lower expand button sometimes
+  behaved like scroll-down and the strip could page to a completely empty viewport. Opening Snipping Tool caused a
+  later activation/layout/render pass that immediately repaired the gallery. The supplied screenshot captured the
+  empty Styles strip with all three side glyphs still visible. The popup was closed during the DPI transition and was
+  opened only afterward. Two follow-up recordings then showed the initial correction was insufficient: at 200% the
+  transparent popup-window/shadow rectangle visibly covered the left portion of the side-button column, while a
+  normal 125% run still produced partial button response and an empty strip. The blank state also reproduced on a
+  downward 150%-to-125% transition. Constraining the popup window to the narrow content-column width then stopped the
+  HWND overlap, but the next live check exposed a deterministic post-DPI clip and forced a gallery authored for three
+  columns to wrap after two items. Natural-width edge placement then passed live for geometry and interaction, leaving
+  one purely visual symptom: the closed strip could retain a blank/stale frame until another window action repainted it.
+  A generation-guarded final layout plus explicit realized-item invalidation still did not eliminate that live state.
+  The first open/close cycle after a DPI transition can fail while the immediate second cycle works, meaning the first
+  cross-HWND layout is itself priming or repairing state used by the second.
+- **Friction:** `InRibbonGallery` shares one `ScrollViewer` and items presenter between its one-row strip and popup.
+  Popup opening already refreshed the re-homed viewport once, but the closed strip did not observe its owner window's
+  DPI transition. Its fixed-height side-button stack also left the inset visual border as the only transparent hit
+  surface, creating dead edge gutters at fractional device scales. More importantly, the expanded surface is a
+  separate transparent Popup HWND: its margin/shadow accommodation extended that rectangular input window over the
+  main-window side buttons, and transparent pixels in one HWND cannot pass clicks through to controls in another.
+  Closing after browsing a later popup page also re-homed the presenter before the old vertical offset was committed
+  back to a valid strip offset, allowing a blank frame. WPF does hide its separate popup window synchronously and may
+  keep it alive until asynchronous destruction (or cancel that destruction on a quick reopen), but the captured tiny
+  selected-border corner shows this failure is not merely a hidden popup or cached bitmap: the live item visual has
+  returned and is being clipped by stale geometry carried with the re-homed scroller.
+- **Current partial resolution:** the gallery tracks its owning Window while loaded, stops stale scroll animations and resets
+  to a safe offset synchronously on DPI change, then performs generation-guarded Loaded and Render layout passes.
+  A closed strip restores its selected row after the new metrics settle; a subsequently opened popup starts at offset
+  zero with a fresh viewport. The three buttons now occupy equal layout-rounded Grid rows whose full roots are
+  transparent hit surfaces; inset chrome no longer defines input geometry. Scroll commands refresh metrics before
+  calculating their next page. The Popup remains anchored to the content host but no longer inherits its narrow fixed
+  width. A custom placement uses the popup's natural measured size, aligns its outer edge with the content/button
+  boundary, and expands away from the buttons: leftward in LTR and rightward in RTL. Thus three authored columns remain
+  on one row without putting any part of the popup HWND over the buttons. On close it clears the popup-page offset
+  before re-homing, then synchronously lays out the returned strip at offset zero before any deferred selected-row
+  reveal. The attempted final Render/ContextIdle invalidation proved an additional render was requested, but live
+  evidence showed that repaint still consumed the wrong clip, so that workaround was removed. The default template
+  now leaves `PART_ScrollViewer` permanently under `PART_ContentHost` in the main HWND and
+  `PART_PopupScrollViewer` permanently under `PART_PopupHost` in the Popup HWND. Only `PART_ItemsPresenter` moves.
+  Each viewport therefore retains its own DPI, extent and clip state. The visible card keeps its reduced horizontal
+  gap, and the accepted `VerticalOffset=-8` compensates for the popup child's existing top margin/target inset.
+  Horizontal placement mirrors in RTL.
+- **Application impact:** popup geometry/button input and the post-DPI first-open redraw are corrected.
+- **Implemented and next library direction:** the owner subscription survives transient collapsed-group unload/reload
+  re-homing and detaches after a genuine removal. Host-specific scrollers are now the default-template boundary; a
+  compatibility fallback retains the original whole-content re-home for custom templates that do not yet expose the
+  two new optional parts. Focused gallery regressions pass **8/8**, including the invariant that neither scroller
+  changes host during a downward post-DPI open/close cycle. The zero-warning/error solution build, RibbonKit
+  **371/371**, visual **1/1**, and Writer **439/439** pass. The future themed-scrollbar slice remains separate.
+- **Evidence still required:** none for Packet 1. The user accepted the previously failing first-open/close sequence
+  after mixed-DPI changes, including the 150%-to-125% and 200% cases; preserve the regression matrix for future work.
+
+### RKWF-019 — Gallery overflow falls back to OS-native scrollbar chrome
+
+- **First seen / packet:** 2026-08-30, Showcase Styles gallery after RKWF-018; Packet 2.
+- **Status:** Core gallery geometry and the scoped Customize Ribbon scrollbar pilot are live-accepted. QAT list-box
+  scrollbars are implemented and await live confirmation; the final Office 2013/2019 square-token adjustment and
+  modern dialog-action normal-state follow-up also await visual comparison.
+- **Consumer goal:** gallery overflow should remain visually continuous with the active RibbonKit Office-generation
+  palette while retaining ordinary WPF range, keyboard, mouse, wheel and accessibility semantics.
+- **Reproduction and evidence:** opening an `InRibbonGallery` with enough rows to exceed its 340-DIP popup cap realized
+  the operating system's default vertical scrollbar inside an otherwise RibbonKit-themed popup.
+- **Friction:** the native chrome changed independently of RibbonKit theme and dark-mode switches. Replacing scrolling
+  logic inside each gallery would risk the just-accepted DPI/viewport correction and duplicate mature WPF behavior.
+- **Current resolution:** the public lookless `RibbonScrollBar : ScrollBar` preserves native range commands, both
+  orientations, RTL mirroring and the inherited RangeValue automation peer. One shared template set supplies vector
+  arrows, page tracks, thumbs, pressed/hover states and a High Contrast fallback. Eight palette brushes and six
+  metrics are present in every light/dark Office 2007-2024 token dictionary. `RibbonGallery` and the popup-only
+  `InRibbonGallery` viewport apply a same-file adapter that reuses those shared templates on the native `ScrollBar`
+  instances generated by their `ScrollViewer`s, without replacing either viewport or moving it across HWNDs. Ribbon
+  Lab includes standalone vertical/horizontal examples, and its Accent gallery has enough swatches to force the real
+  popup overflow path. The dedicated Localization/RTL lab includes both orientations under its live mirroring toggle.
+  A later adoption pilot first applied the same shared template to the generated scrollbars in `RibbonCustomizePage`'s
+  available-command list and ribbon-structure tree. The user accepted that page-local scrollbar treatment as visually
+  successful. Follow-up then put the same implicit adapter inside `RibbonQuickAccessPage`, covering its available and
+  current lists while app-owned options pages and optional Backstage content remain unchanged. The Button-targeted counterpart was then
+  promoted into `OptionsDialogActionButtonStyle`, so QAT customization, Customize Ribbon, main/edit Cancel and every
+  compact action share the scrollbar-derived interaction template and radius token. Primary OK keeps its colored gel
+  override and caption Close keeps its Windows-red hover; app-owned page content remains opt-in. Because transparent
+  modern scrollbar-button normal tokens made full action buttons blend into the form, the shared action style now uses
+  dedicated dialog normal-background/border tokens: legacy themes keep the same gel, while 2013/2019/2024 use visible
+  flat fills and one-DIP outlines without changing their scrollbar arrows.
+- **Preliminary visual correction:** the first live pass found the 12-15 DIP rails squeezed, arrow rows sized only to
+  their 7-by-4 vector content, and the vertical thumb pill compressed. The rail is now 16 DIP for Office 2013-2024
+  and 18 DIP for Office 2007/2010, both line buttons reserve a full square, and orientation-specific padding moved
+  from `Thumb.Margin` into the thumb template's inner border. That preserves `Track`'s calculated thumb geometry.
+  Public `ButtonCornerRadius`, `ThumbCornerRadius`, and `RailCornerRadius` properties (also usable as attached
+  properties on generated native scrollbars) independently allow square or rounded chrome. Office 2007/2010 thumbs use outlined
+  multi-stop glass/gel gradients; later generations retain their flatter palettes.
+- **Second preliminary visual correction:** the first inner-inset correction still removed one DIP from each end of
+  a short vertical thumb, which left its rounded outline looking like two disconnected caps. Removing the longitudinal
+  inset preserved the Thumb's desired size, but the next live capture proved that only a small cap was still rendered.
+  The
+  Showcase's labeled vertical sample returned to a 56-DIP height so its bottom button stays above the group footer;
+  rail width remains 16/18 DIP. `RailCornerRadius` is now an independent public/attached property with theme defaults
+  matching the button radius, preventing the track background's sharp corners from showing behind rounded hover
+  chrome. Office 2007/2010 line buttons also receive a visible outlined gradient in their normal state, while modern
+  themes retain the quieter transparent default.
+- **Track-level correction:** the compact 125% geometry probe found a 22.4-DIP Thumb arranged into an 8-DIP native
+  `Track` slot with an 8-DIP layout clip. WPF's proportional-scrollbar path derives its minimum from half of the local
+  system scrollbar-button resource, not `Thumb.MinHeight`, so the earlier minimum enlarged only the child behind the
+  clip. The internal `RibbonScrollBarTrack` now maps the active theme's minimum-thumb token into those two Track-local
+  system resource keys. Native Track therefore calculates the correct slot, value density, drag area and page-button
+  lengths itself. No process-wide system resource is changed. The Thumb no longer has a conflicting minimum or any
+  inset: its Pill fills the complete vertical rail width or horizontal rail height. Compact Office 2010 and Office
+  2024 realized cases pin equal layout-slot/Pill geometry and the absence of a layout clip. After live acceptance of
+  that geometry, the Office 2013 and Office 2019 light/dark button, thumb and rail radius tokens were all set to zero;
+  four focused theme cases prevent either flat generation from regaining rounded scrollbar chrome.
+- **Application impact:** overflow chrome now follows RibbonKit rather than the host OS theme; scrolling behavior and
+  RKWF-018's two-scroller ownership boundary remain unchanged.
+- **Evidence still required:** inspect standalone vertical/horizontal controls and overflowing galleries in every
+  Office generation/light-dark variant, then check pointer arrows, track paging, thumb dragging, wheel/keyboard,
+  100-200% DPI, RTL horizontal direction and High Contrast. The user accepted the corrected full-width thumb and
+  compact vertical behavior and the Customize Ribbon scrollbar pilot; the final Office 2013/2019 square-token visual
+  recheck remains. Compare the dialog-wide ordinary-button treatment in all modern light/dark themes. Automated
+  focused coverage is **21/21**, including realized overflow/scrolling in both lists on both built-in pages, Office 2010 gel/radius chrome, modern visible normal chrome, both built-in
+  pages and the OK/Cancel/Close exceptions. The reviewed Office 2024 RTL QAT approval changed only the four expected
+  buttons and then only its available-list scrollbar; the zero-warning Release build, RibbonKit **392/392**, visual
+  **1/1**, and Writer **439/439** pass.
 
 ## 5. Closed observations
 

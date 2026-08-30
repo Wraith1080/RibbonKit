@@ -75,7 +75,7 @@ public sealed class WriterConsumerFrictionTests
     }
 
     [Fact]
-    public void Showcase_keeps_document_view_commands_separate_from_ribbon_diagnostics()
+    public void Showcase_keeps_presentation_settings_separate_from_extended_ribbon_demos()
     {
         XDocument window = XDocument.Load(IOPath.Combine(
             RepositoryRoot(),
@@ -93,12 +93,12 @@ public sealed class WriterConsumerFrictionTests
             .Select(group => (string?)group.Attribute("Header"))
             .ToArray();
 
-        Assert.Equal(new[] { "Zoom" }, GroupHeaders(Tab("tab.view")));
+        Assert.Equal(new[] { "Zoom", "Theme", "Accent", "Backstage" }, GroupHeaders(Tab("tab.view")));
 
         XElement ribbonLab = Tab("tab.ribbonLab");
         Assert.Equal("Ribbon Lab", (string?)ribbonLab.Attribute("Header"));
         Assert.Equal(
-            new[] { "Theme", "Aero Frame", "Accent", "Motion", "Inputs", "Backstage", "Application" },
+            new[] { "Aero Frame", "Motion", "Inputs", "Scrolling", "Application" },
             GroupHeaders(ribbonLab));
     }
 
@@ -210,6 +210,383 @@ public sealed class WriterConsumerFrictionTests
 
             Assert.Same(expected, popupHost.Background);
             gallery.IsDropDownOpen = false;
+        }
+        finally
+        {
+            window.Close();
+        }
+    });
+
+    [Fact]
+    public void In_ribbon_gallery_refreshes_the_closed_strip_before_its_first_post_dpi_popup_open() => Sta.Run(() =>
+    {
+        var gallery = new InRibbonGallery
+        {
+            Width = 240d,
+            Height = 54d,
+        };
+        for (int index = 0; index < 36; index++)
+        {
+            gallery.Items.Add(new RibbonGalleryItem
+            {
+                Content = $"Style {index + 1}",
+                Width = 72d,
+                Height = 48d,
+            });
+        }
+
+        var window = new DpiTestWindow
+        {
+            Width = 280d,
+            Height = 120d,
+            Left = -10000d,
+            Top = -10000d,
+            ShowActivated = false,
+            ShowInTaskbar = false,
+            WindowStyle = WindowStyle.None,
+            Content = gallery,
+        };
+
+        try
+        {
+            window.Show();
+            Sta.Drain(DispatcherPriority.Render);
+            gallery.ApplyTemplate();
+
+            var scrollViewer = Assert.IsType<ScrollViewer>(
+                gallery.Template.FindName("PART_ScrollViewer", gallery));
+            var popupScrollViewer = Assert.IsType<ScrollViewer>(
+                gallery.Template.FindName("PART_PopupScrollViewer", gallery));
+            Assert.True(scrollViewer.ScrollableHeight > 0d);
+
+            scrollViewer.ScrollToVerticalOffset(scrollViewer.ScrollableHeight);
+            scrollViewer.UpdateLayout();
+            Assert.True(scrollViewer.VerticalOffset > 0d);
+
+            window.SimulateDpiChange(new DpiScale(1d, 1d), new DpiScale(2d, 2d));
+            Sta.Drain(DispatcherPriority.Loaded);
+            Sta.Drain(DispatcherPriority.Render);
+
+            Assert.False(gallery.IsDropDownOpen);
+            Assert.Equal(0d, scrollViewer.VerticalOffset, precision: 6);
+
+            gallery.IsDropDownOpen = true;
+            Sta.Drain(DispatcherPriority.Loaded);
+            Sta.Drain(DispatcherPriority.Render);
+
+            Assert.True(gallery.IsDropDownOpen);
+            Assert.Equal(0d, popupScrollViewer.VerticalOffset, precision: 6);
+            Assert.True(popupScrollViewer.ViewportHeight > gallery.ActualHeight);
+            Assert.True(popupScrollViewer.ExtentHeight > popupScrollViewer.ViewportHeight);
+        }
+        finally
+        {
+            gallery.IsDropDownOpen = false;
+            window.Close();
+        }
+    });
+
+    [Fact]
+    public void In_ribbon_gallery_keeps_host_specific_scrollers_across_post_dpi_open_cycle() => Sta.Run(() =>
+    {
+        var gallery = new InRibbonGallery
+        {
+            Width = 240d,
+            Height = 54d,
+            SelectedIndex = 0,
+        };
+        for (int index = 0; index < 12; index++)
+        {
+            gallery.Items.Add(new RibbonGalleryItem
+            {
+                Content = $"Style {index + 1}",
+                Width = 72d,
+                Height = 48d,
+            });
+        }
+
+        var window = new DpiTestWindow
+        {
+            Width = 280d,
+            Height = 120d,
+            Left = -10000d,
+            Top = -10000d,
+            ShowActivated = false,
+            ShowInTaskbar = false,
+            WindowStyle = WindowStyle.None,
+            Content = gallery,
+        };
+
+        try
+        {
+            window.Show();
+            Sta.Drain(DispatcherPriority.Render);
+            gallery.ApplyTemplate();
+
+            var stripScrollViewer = Assert.IsType<ScrollViewer>(
+                gallery.Template.FindName("PART_ScrollViewer", gallery));
+            var popupScrollViewer = Assert.IsType<ScrollViewer>(
+                gallery.Template.FindName("PART_PopupScrollViewer", gallery));
+            var itemsPresenter = Assert.IsType<ItemsPresenter>(
+                gallery.Template.FindName("PART_ItemsPresenter", gallery));
+            var contentHost = Assert.IsType<Decorator>(
+                gallery.Template.FindName("PART_ContentHost", gallery));
+            var popupHost = Assert.IsType<Border>(
+                gallery.Template.FindName("PART_PopupHost", gallery));
+
+            Assert.NotSame(stripScrollViewer, popupScrollViewer);
+            Assert.Same(stripScrollViewer, contentHost.Child);
+            Assert.Same(popupScrollViewer, popupHost.Child);
+            Assert.Same(itemsPresenter, stripScrollViewer.Content);
+            Assert.Null(popupScrollViewer.Content);
+
+            window.SimulateDpiChange(new DpiScale(1.5d, 1.5d), new DpiScale(1.25d, 1.25d));
+            Sta.Drain(DispatcherPriority.Loaded);
+            Sta.Drain(DispatcherPriority.Render);
+
+            gallery.IsDropDownOpen = true;
+            Sta.Drain(DispatcherPriority.Loaded);
+            Sta.Drain(DispatcherPriority.Render);
+            Assert.Same(stripScrollViewer, contentHost.Child);
+            Assert.Same(popupScrollViewer, popupHost.Child);
+            Assert.Null(stripScrollViewer.Content);
+            Assert.Same(itemsPresenter, popupScrollViewer.Content);
+
+            gallery.IsDropDownOpen = false;
+            Assert.Same(stripScrollViewer, contentHost.Child);
+            Assert.Same(popupScrollViewer, popupHost.Child);
+            Assert.Same(itemsPresenter, stripScrollViewer.Content);
+            Assert.Null(popupScrollViewer.Content);
+        }
+        finally
+        {
+            window.Close();
+        }
+    });
+
+    [Fact]
+    public void In_ribbon_gallery_side_buttons_own_their_complete_hit_rows() => Sta.Run(() =>
+    {
+        var gallery = new InRibbonGallery
+        {
+            Width = 240d,
+            Height = 54d,
+        };
+        gallery.Items.Add(new RibbonGalleryItem { Content = "Normal", Width = 72d, Height = 48d });
+        var window = new DpiTestWindow
+        {
+            Width = 260d,
+            Height = 80d,
+            Left = -10000d,
+            Top = -10000d,
+            ShowActivated = false,
+            ShowInTaskbar = false,
+            WindowStyle = WindowStyle.None,
+            Content = gallery,
+        };
+
+        try
+        {
+            window.Show();
+            Sta.Drain(DispatcherPriority.Render);
+            gallery.ApplyTemplate();
+            gallery.UpdateLayout();
+
+            window.SimulateDpiChange(new DpiScale(1d, 1d), new DpiScale(2d, 2d));
+            Sta.Drain(DispatcherPriority.Loaded);
+            Sta.Drain(DispatcherPriority.Render);
+
+            ButtonBase[] buttons =
+            {
+                Assert.IsAssignableFrom<ButtonBase>(gallery.Template.FindName("PART_LineUp", gallery)),
+                Assert.IsAssignableFrom<ButtonBase>(gallery.Template.FindName("PART_LineDown", gallery)),
+                Assert.IsAssignableFrom<ButtonBase>(gallery.Template.FindName("PART_ExpandToggle", gallery)),
+            };
+
+            foreach (ButtonBase button in buttons)
+            {
+                Rect bounds = button
+                    .TransformToAncestor(gallery)
+                    .TransformBounds(new Rect(button.RenderSize));
+                Assert.True(bounds.Width > 0d);
+                Assert.True(bounds.Height > 0d);
+
+                foreach (double x in new[] { bounds.Left + 0.1d, bounds.Left + (bounds.Width / 2d), bounds.Right - 0.1d })
+                {
+                    Point point = new(x, bounds.Top + (bounds.Height / 2d));
+                    DependencyObject hit = Assert.IsAssignableFrom<DependencyObject>(gallery.InputHitTest(point));
+                    Assert.True(
+                        IsDescendantOrSelf(hit, button),
+                        $"Hit at {point} resolved to {hit.GetType().Name} instead of {button.Name}.");
+                }
+            }
+        }
+        finally
+        {
+            window.Close();
+        }
+    });
+
+    [Theory]
+    [InlineData(FlowDirection.LeftToRight)]
+    [InlineData(FlowDirection.RightToLeft)]
+    public void In_ribbon_gallery_popup_window_stops_before_the_side_button_column(
+        FlowDirection flowDirection) => Sta.Run(() =>
+    {
+        var gallery = new InRibbonGallery
+        {
+            Width = 240d,
+            Height = 54d,
+            FlowDirection = flowDirection,
+        };
+        for (int index = 0; index < 36; index++)
+        {
+            gallery.Items.Add(new RibbonGalleryItem
+            {
+                Content = $"Style {index + 1}",
+                Width = 72d,
+                Height = 48d,
+            });
+        }
+
+        var window = new DpiTestWindow
+        {
+            Width = 280d,
+            Height = 120d,
+            Left = 100d,
+            Top = 100d,
+            ShowActivated = false,
+            ShowInTaskbar = false,
+            WindowStyle = WindowStyle.None,
+            Content = gallery,
+        };
+
+        try
+        {
+            window.Show();
+            Sta.Drain(DispatcherPriority.Render);
+            gallery.ApplyTemplate();
+
+            // Match the reported sequence: the popup is closed during a downward DPI
+            // transition, then is opened from the strip's expand button.
+            window.SimulateDpiChange(new DpiScale(2d, 2d), new DpiScale(1.25d, 1.25d));
+            Sta.Drain(DispatcherPriority.Render);
+            gallery.IsDropDownOpen = true;
+            Sta.Drain(DispatcherPriority.Render);
+
+            var popupHost = Assert.IsType<Border>(
+                gallery.Template.FindName("PART_PopupHost", gallery));
+            var popup = Assert.IsType<Popup>(
+                gallery.Template.FindName("PART_Popup", gallery));
+            var contentHost = Assert.IsType<Decorator>(
+                gallery.Template.FindName("PART_ContentHost", gallery));
+            var expand = Assert.IsAssignableFrom<ButtonBase>(
+                gallery.Template.FindName("PART_ExpandToggle", gallery));
+            FrameworkElement popupRoot = TopmostVisual(popupHost);
+
+            double popupX0 = popupRoot.PointToScreen(default).X;
+            double popupX1 = popupRoot.PointToScreen(new Point(popupRoot.RenderSize.Width, 0d)).X;
+            double popupWindowLeft = Math.Min(popupX0, popupX1);
+            double popupWindowRight = Math.Max(popupX0, popupX1);
+            double buttonX0 = expand.PointToScreen(default).X;
+            double buttonX1 = expand.PointToScreen(new Point(expand.RenderSize.Width, 0d)).X;
+            double sideButtonsLeft = Math.Min(buttonX0, buttonX1);
+            double sideButtonsRight = Math.Max(buttonX0, buttonX1);
+
+            if (flowDirection == FlowDirection.LeftToRight)
+            {
+                Assert.True(
+                    popupWindowRight <= sideButtonsLeft + 0.5d,
+                    $"Popup window ends at {popupWindowRight:F2}, beyond side buttons starting at {sideButtonsLeft:F2}.");
+            }
+            else
+            {
+                Assert.True(
+                    popupWindowLeft >= sideButtonsRight - 0.5d,
+                    $"Popup window starts at {popupWindowLeft:F2}, before side buttons ending at {sideButtonsRight:F2}.");
+            }
+
+            double contentX0 = contentHost.PointToScreen(default).X;
+            double contentX1 = contentHost.PointToScreen(new Point(contentHost.RenderSize.Width, 0d)).X;
+            double contentLeft = Math.Min(contentX0, contentX1);
+            double contentRight = Math.Max(contentX0, contentX1);
+            double popupHostX0 = popupHost.PointToScreen(default).X;
+            double popupHostX1 = popupHost.PointToScreen(new Point(popupHost.RenderSize.Width, 0d)).X;
+            double popupHostLeft = Math.Min(popupHostX0, popupHostX1);
+            double popupHostRight = Math.Max(popupHostX0, popupHostX1);
+            double horizontalInset = flowDirection == FlowDirection.LeftToRight
+                ? contentRight - popupHostRight
+                : popupHostLeft - contentLeft;
+            if (flowDirection == FlowDirection.LeftToRight)
+            {
+                Assert.InRange(horizontalInset, 3.5d, 5.5d);
+            }
+            Assert.Equal(-8d, popup.VerticalOffset, precision: 6);
+
+            FrameworkElement[] firstRow = gallery.Items
+                .Cast<object>()
+                .Take(3)
+                .Select(item => Assert.IsAssignableFrom<FrameworkElement>(
+                    gallery.ItemContainerGenerator.ContainerFromItem(item)))
+                .ToArray();
+            Point[] origins = firstRow
+                .Select(item => item.TransformToAncestor(popupHost).Transform(default))
+                .ToArray();
+
+            Assert.Equal(origins[0].Y, origins[1].Y, precision: 6);
+            Assert.Equal(origins[0].Y, origins[2].Y, precision: 6);
+            Assert.Equal(3, origins.Select(origin => origin.X).Distinct().Count());
+        }
+        finally
+        {
+            gallery.IsDropDownOpen = false;
+            window.Close();
+        }
+    });
+
+    [Fact]
+    public void In_ribbon_gallery_close_does_not_leave_the_popup_scroll_page_in_the_strip() => Sta.Run(() =>
+    {
+        var gallery = new InRibbonGallery
+        {
+            Width = 240d,
+            Height = 54d,
+        };
+        for (int index = 0; index < 36; index++)
+        {
+            gallery.Items.Add(new RibbonGalleryItem
+            {
+                Content = $"Style {index + 1}",
+                Width = 72d,
+                Height = 48d,
+            });
+        }
+
+        Window window = TestWindow(gallery, new Size(280d, 120d));
+        try
+        {
+            window.Show();
+            Sta.Drain(DispatcherPriority.Render);
+            gallery.ApplyTemplate();
+            var stripScrollViewer = Assert.IsType<ScrollViewer>(
+                gallery.Template.FindName("PART_ScrollViewer", gallery));
+            var popupScrollViewer = Assert.IsType<ScrollViewer>(
+                gallery.Template.FindName("PART_PopupScrollViewer", gallery));
+
+            gallery.IsDropDownOpen = true;
+            Sta.Drain(DispatcherPriority.Render);
+            popupScrollViewer.ScrollToVerticalOffset(popupScrollViewer.ScrollableHeight);
+            popupScrollViewer.UpdateLayout();
+            Assert.True(popupScrollViewer.VerticalOffset > 0d);
+
+            gallery.IsDropDownOpen = false;
+
+            // Popup paging remains owned by the popup viewport; the presenter returns
+            // to the main-window strip without bringing that offset or clip with it.
+            Assert.Equal(0d, popupScrollViewer.VerticalOffset, precision: 6);
+            Assert.Equal(0d, stripScrollViewer.VerticalOffset, precision: 6);
+            Sta.Drain(DispatcherPriority.Render);
+            Assert.Equal(0d, stripScrollViewer.VerticalOffset, precision: 6);
         }
         finally
         {
@@ -392,6 +769,36 @@ public sealed class WriterConsumerFrictionTests
         WindowStyle = WindowStyle.None,
         Content = content,
     };
+
+    private static bool IsDescendantOrSelf(DependencyObject candidate, DependencyObject ancestor)
+    {
+        for (DependencyObject? current = candidate; current is not null; current = VisualTreeHelper.GetParent(current))
+        {
+            if (ReferenceEquals(current, ancestor))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static FrameworkElement TopmostVisual(Visual visual)
+    {
+        Visual current = visual;
+        while (VisualTreeHelper.GetParent(current) is Visual parent)
+        {
+            current = parent;
+        }
+
+        return Assert.IsAssignableFrom<FrameworkElement>(current);
+    }
+
+    private sealed class DpiTestWindow : Window
+    {
+        public void SimulateDpiChange(DpiScale oldDpi, DpiScale newDpi) =>
+            OnDpiChanged(oldDpi, newDpi);
+    }
 
     private static ControlTemplate MarkerTemplate() => Assert.IsType<ControlTemplate>(XamlReader.Parse(
         """
