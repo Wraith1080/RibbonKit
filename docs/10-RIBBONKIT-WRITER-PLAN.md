@@ -10,10 +10,11 @@
 > §3.136: Writer now has a **Settings** dialog containing its transactional **Appearance** page plus RibbonKit's
 > built-in ribbon and QAT pages, with separate versioned appearance and structural-layout files. Its focused 6/6 gate
 > and proportional follow-up regressions/zero-warning Writer builds pass, and the 2026-08-31 actual-window correction
-> sequence is accepted. W2-G remains a
-> planned high-risk true editable-pagination packet; it must prove a real editing architecture and may not simulate
-> pages with decorative breaks. Live mixed-monitor DPI movement remains deferred to W4-C. No later implementation is
-> implied.
+> sequence is accepted. W2-G's bounded stock-WPF feasibility proof is complete through design-notes §3.137: native
+> cross-page editing and paginator-consistent break metadata are viable, but stock WPF does not provide a stable
+> editable paged viewer. Production Paper remains unchanged; the next bounded slice is a public clone-backed page-
+> geometry map spike. Decorative breaks remain prohibited. Live mixed-monitor DPI movement remains deferred to W4-C.
+> No later implementation is implied.
 > Live status remains in `04-DESIGN-NOTES.md` §5.
 > RibbonKit Writer is a separate functional sample, not another feature page inside
 > `RibbonKit.Showcase`.

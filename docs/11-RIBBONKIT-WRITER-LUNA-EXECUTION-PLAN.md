@@ -12,7 +12,9 @@
 > the completed live matrix. Its final closure intentionally used focused tests rather than new full-suite gates.
 > W4-A is accepted through §3.136: its focused 6/6 gate, proportional follow-up regressions and zero-warning Writer
 > builds pass, and the 2026-08-31 actual-window Settings/persistence/appearance-polish sequence is accepted.
-> W2-G is planned after W3-E as a high-risk true editable-pagination packet; it may not fake page breaks.
+> W2-G's bounded stock-WPF feasibility proof is complete through design-notes §3.137. Native cross-page editing and
+> paginator-consistent break metadata are viable, but stock viewers cannot supply a stable editable paged surface.
+> Production Paper remains unchanged; a public clone-backed page-geometry map spike is the next bounded slice.
 > This document does not schedule future agents or imply that any later Writer packet exists.
 > [`10-RIBBONKIT-WRITER-PLAN.md`](10-RIBBONKIT-WRITER-PLAN.md) owns product scope; current
 > implementation status remains in [`04-DESIGN-NOTES.md` §5](../04-DESIGN-NOTES.md#5-current-state--next-steps).
@@ -469,6 +471,12 @@ is non-hit-testable and absent from cloned preview/print output. Lead verifies r
 mouse/keyboard/UIA operation in the actual Writer window before W3-C begins.
 
 ### W2-G — True editable pagination architecture and delivery
+
+**Status (2026-08-31): feasibility slice complete; production replacement not started.** The authoritative live
+`FlowDocument` retains native cross-page selection/edit/Undo and matches W2-D paginator page-start offsets, but
+`RichTextBox` is bottomless and `FlowDocumentPageViewer` is read-only. Realizing both over the same live document
+crashed inside WPF layout. See design-notes §3.137. The next bounded slice is an isolated public page-geometry map
+spike; it must stop if public APIs cannot map source offsets and page-local hit testing without `MS.Internal` access.
 
 **Owns:** a genuinely page-by-page editable Paper presentation and the reflow/virtualization architecture required
 to support it. It begins only after W3-E stabilizes table/picture selection, contextual state and resizing; it does

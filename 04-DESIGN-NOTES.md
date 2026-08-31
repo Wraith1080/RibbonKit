@@ -6094,6 +6094,43 @@ and repeated zero-warning Writer builds; the final one-property card alignment w
 or build at the user's request. Full Writer/RibbonKit/visual/solution suites were intentionally not rerun, so no new
 full-suite inventory is claimed.
 
+### 3.137 RibbonKit Writer W2-G editable-pagination feasibility — 2026-08-31
+
+The bounded W2-G architecture proof stops before any production Paper-view replacement. A deterministic 180-paragraph
+Letter corpus establishes the useful half of stock WPF's contract: the live `FlowDocument` attached to one
+`RichTextBox` can also supply a `DynamicDocumentPaginator`; a range can cross the paginator's first page boundary,
+replacement typing/deletion remains in the native Undo/Redo stack, and after Undo the live page count and every page-
+start symbol offset match the accepted W2-D isolated preview/print-input paginator. One authoritative document can
+therefore own editing semantics and paginator-consistent break metadata.
+
+Stock WPF does not provide the corresponding editable paged presentation. The `RichTextBox` renders through its
+internal bottomless `FlowDocumentView`, contains no `DocumentPageView`, and lays the same multipage corpus as one
+continuous surface without repeated per-page margins. `FlowDocumentPageViewer` supplies real finite pages and a range
+`TextSelection`, but exposes no caret or native Undo surface and its Delete, Paste, Undo and Redo command routes remain
+disabled. Assigning the same live document to both controls succeeds as an object reference, but realizing them
+together produced a framework `NullReferenceException` in `FlowDocumentPage.UpdateViewport`; the poisoned follow-up
+layout then terminated the test host with an invalid `ScrollViewer` size. That intentionally destabilizing case is
+recorded as measured prototype evidence rather than retained as a passing regression.
+
+The feasibility decision is therefore **no for a stock-WPF production replacement**. The accepted W2-C Paper surface
+and W2-D preview/print pipeline are unchanged, no runnable Writer code was added, and no `src/RibbonKit/**` file changed.
+The retained focused characterization passes **3/3**; no full suite, standalone build or application launch was run.
+
+Any later implementation must be a composite editing architecture, not a different arrangement of stock viewers. The
+long-lived `RichTextBox` remains the sole authoritative document, selection, command, IME, spelling and Undo owner. An
+isolated, disposable pagination clone may supply non-authoritative page visuals only. A generation-stamped page map
+must translate source symbol offsets and structured-object identities to page-local rectangles and hit-test results;
+the paged surface must project caret, selection and W3-E chrome back to that owner, invalidate stale generations after
+edits/reflow and never persist its cache. This requires a supported bidirectional geometry seam; WPF's public paginator
+currently exposes page starts but not a complete editable text-view map, so relying on `MS.Internal` text services or
+the crashing shared formatter is prohibited.
+
+The next bounded W2-G slice is a **public page-geometry map spike**, still isolated from production Paper. For plain
+paragraphs first, prove source-offset to page/local-caret-rectangle and page-point to source-offset mapping against an
+isolated clone, then repeat with one page-spanning table and image while measuring rebuild latency. Stop if public WPF
+APIs cannot provide stable bidirectional geometry or if the clone map cannot preserve source identity; in that case the
+next decision is a supported document-editor/layout engine or a purpose-built editor, not simulated WPF page gaps.
+
 ## 4. Workflow / Session Conventions
 
 - Work from the current Windows checkout at
@@ -6183,8 +6220,9 @@ full-suite inventory is claimed.
   table round-trip/schema-v2 and TXT/RTF compatibility matrix. W3-E is accepted through §3.135. W4-A is accepted
   through §3.136 with its focused 6/6 gate, proportional follow-up regressions, zero-warning Writer builds and the
   completed 2026-08-31 actual-window correction sequence.
-  Planned W2-G owns a high-risk true editable-pagination architecture and delivery packet; it must keep one
-  authoritative document and may not fake page gaps. W4-B now waits only for W2-G completion.
+  W2-G's bounded stock-WPF feasibility proof is complete through §3.137. It preserves native cross-page editing and
+  paginator-consistent breaks, but stock viewers cannot provide a stable editable paged surface; production Paper is
+  unchanged. A public page-geometry map spike is the next bounded W2-G slice. W4-B still waits for W2-G completion.
 - Automatic `Icons.xaml` discovery is best-effort by design. Keep `Load Icons.xaml…` available
   for ambiguity, inaccessible paths, parse failures, or no match.
 
