@@ -6014,7 +6014,7 @@ Per the user's minimal-testing direction, the focused persistence, schema, separ
 and Appearance-page automation gate passes **6/6**. A fresh Debug Writer build succeeds with zero warnings/errors and
 the actual executable reaches its main window. Full Writer/RibbonKit/visual/solution gates were intentionally not run.
 Live Settings, restart, corrupt-file, Apply/Cancel, every generation/palette/Backstage/frame/backdrop combination and
-reduced-motion review remain the W4-A acceptance boundary; W4-A is implemented but not yet live-accepted.
+reduced-motion review formed the W4-A acceptance boundary at this implementation checkpoint.
 
 The user then confirmed the Settings defaults, disabled compatibility choices, Cancel rollback, Apply behavior and
 restart persistence. The follow-up visual polish gives every Backstage navigation item a vector silhouette, corrects
@@ -6022,7 +6022,7 @@ Settings to an even-odd gear with a true center cutout, and adds one Writer W id
 and app-owned Office 2007 Orb mark. The Orb keeps RibbonKit's themed sphere and interaction states; a post-render
 Writer hook replaces only the glyph template and Classic2007's existing proxy reuses it. RKWF-026 records the missing
 host-level glyph hook. The focused realized icon/identity regression passes **1/1**; fresh-window icon acceptance is
-the remaining boundary for this follow-up.
+recorded by the later W4-A live correction sequence and closure below.
 
 The first live icon pass was rejected: its reuse of layered ribbon artwork ignored Backstage's single-color opacity
 mask, so New, Save and Save As collapsed into nearly identical blocks and Open/Print lost useful structure. Five
@@ -6082,6 +6082,14 @@ The first maximized-window review exposed a separate WPF alignment trap: Writer 
 the capped Home description/recent-row content, New description and complete Print page on stretch alignment. WPF
 centred each capped child in the widening layout slot, so its left edge drifted right as the window grew. Those capped
 surfaces are now explicitly left-aligned; the intentional fixed Backstage content padding remains unchanged.
+
+The final Print-page review confirmed that its right-side surface was intended as a compact page-setup summary card,
+not a full-height preview pane. Top-aligning that app-owned border removes the accidental default WPF stretch without
+changing its content or column layout. The user accepted the resulting actual window and explicitly closed W4-A on
+2026-08-31. Closure retains the original focused **6/6** appearance gate, the proportional focused follow-up checks
+and repeated zero-warning Writer builds; the final one-property card alignment was live-accepted without another test
+or build at the user's request. Full Writer/RibbonKit/visual/solution suites were intentionally not rerun, so no new
+full-suite inventory is claimed.
 
 ## 4. Workflow / Session Conventions
 
@@ -6169,10 +6177,11 @@ surfaces are now explicitly left-aligned; the intentional fixed Backstage conten
   Paragraph dialog and representative ribbon/context-menu states remains pending. Its Styles audit intentionally found
   no complete named-style/persistence contract, so no placeholder gallery was added. W3-C owns the accepted Insert tab
   plus contextual Table Tools and its distinct table-cell Tab navigation contract. W3-D owns the accepted strict native
-  table round-trip/schema-v2 and TXT/RTF compatibility matrix. W3-E is accepted through §3.135. W4-A is implemented
-  through §3.136 with its focused 6/6 gate and zero-warning Writer build; its actual-window acceptance remains pending.
+  table round-trip/schema-v2 and TXT/RTF compatibility matrix. W3-E is accepted through §3.135. W4-A is accepted
+  through §3.136 with its focused 6/6 gate, proportional follow-up regressions, zero-warning Writer builds and the
+  completed 2026-08-31 actual-window correction sequence.
   Planned W2-G owns a high-risk true editable-pagination architecture and delivery packet; it must keep one
-  authoritative document and may not fake page gaps. W4-B waits for W4-A acceptance and W2-G completion.
+  authoritative document and may not fake page gaps. W4-B now waits only for W2-G completion.
 - Automatic `Icons.xaml` discovery is best-effort by design. Keep `Load Icons.xaml…` available
   for ambiguity, inaccessible paths, parse failures, or no match.
 
