@@ -342,6 +342,7 @@
                                                           VerticalScrollBarVisibility="Auto"
                                                           HorizontalScrollBarVisibility="Disabled"
                                                           Focusable="False"
+                                                          Margin="0,0,1,0"
                                                           Padding="24,0,24,14">
                                                 <ContentPresenter Content="{Binding SelectedPage.Content, RelativeSource={RelativeSource TemplatedParent}}" />
                                             </ScrollViewer>

@@ -1,7 +1,7 @@
 # RibbonKit Writer icon catalog
 
-> **Status:** app-owned W1-D artwork. `Icons.xaml` currently contains 103 vector `DrawingImage`
-> resources: 98 small/general resources and five explicit Large variants. RibbonKit itself does not
+> **Status:** app-owned W1-D artwork. `Icons.xaml` currently contains 110 vector `DrawingImage`
+> resources: 105 small/general resources and five explicit Large variants. RibbonKit itself does not
 > own or synthesize these icons.
 
 ## Conventions
@@ -31,17 +31,30 @@
 
 Large variants currently exist for `Document`, `Save`, `Paste`, `Undo` and `Redo`.
 
+## Current Backstage resources
+
+`Home`, `BackstageNew`, `BackstageOpen`, `BackstageSave`, `BackstageSaveAs`, `BackstagePrint`,
+`Options` and `Exit` are the eight navigation silhouettes. The five `Backstage*` resources are
+deliberately separate from the layered ribbon artwork because Backstage renders icons as a single
+foreground-tinted opacity mask. Their page-plus, open-folder, cut-out floppy, floppy-pencil and
+printer silhouettes keep their semantic differences after tinting. The open folder has a closed rear
+outline behind its front flap, while the Save As pencil has its own transparent center stripe. The gear uses an even-odd center
+cutout so its hub cannot become a solid dot. `Assets/Writer.svg` is the application-identity master; the reproducible
+`Assets/Writer.ico` contains nine PNG frames from 16 through 256 pixels. The same W mark is used by
+Writer's Office 2007 Orb template, filled with the identity's `#3F94DF` to `#145AA6` blue gradient
+so it remains distinct from the pale Orb sphere.
+
 ## Prepared reserve
 
 | Feature area | Resource suffixes after `Icon.Writer` |
 |---|---|
-| File and Backstage | `New`, `Open`, `SaveAs`, `CloseDocument`, `ExportPdf`, `Print`, `PrintPreview`, `Properties`, `Recent` |
+| File and Backstage | `CloseDocument`, `ExportPdf`, `PrintPreview`, `Properties`, `Recent` |
 | Page layout | `PageSize`, `Portrait`, `Landscape`, `Margins`, `PageColor`, `Columns`, `PageBreak` |
 | View | `EditLayout`, `PrintLayout`, `OnePage`, `TwoPages`, `PageWidth`, `PreviousPage`, `NextPage`, `FullScreen`, `Ruler`, `Gridlines` |
 | Insert | `Image`, `Hyperlink`, `RemoveLink`, `DateTime`, `Table` |
 | Table structure | `AddRowAbove`, `AddRowBelow`, `AddColumnLeft`, `AddColumnRight`, `DeleteRow`, `DeleteColumn`, `MergeCells`, `SplitCells`, `DistributeRows`, `DistributeColumns` |
 | Table presentation | `CellAlignTop`, `CellAlignMiddle`, `CellAlignBottom`, `CellShading`, `Borders` |
-| Appearance | `Theme`, `DarkMode`, `Backdrop`, `CustomizeRibbon`, `Options` |
+| Appearance | `Theme`, `DarkMode`, `Backdrop`, `CustomizeRibbon` |
 | General actions | `Refresh`, `Delete`, `Check`, `Warning`, `Information`, `Error`, `Lock`, `Unlock`, `Import`, `Export`, `Reset`, `Plus`, `Minus`, `Close`, `ArrowUp`, `ArrowDown`, `ArrowLeft`, `ArrowRight` |
 
 Reserve artwork is deliberately present before its command surfaces. Future packets should reuse the closest

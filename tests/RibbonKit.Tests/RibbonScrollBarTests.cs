@@ -687,6 +687,144 @@ public sealed class RibbonScrollBarTests
     });
 
     [Fact]
+    public void Options_dialog_content_overflow_realizes_the_shared_scrollbar_and_scrolls() => Sta.Run(() =>
+    {
+        var dialog = new RibbonOptionsDialog
+        {
+            Width = 640d,
+            Height = 420d,
+            Left = -10000d,
+            Top = -10000d,
+            ShowActivated = false,
+            ShowInTaskbar = false,
+        };
+        dialog.Resources.MergedDictionaries.Add(new ResourceDictionary
+        {
+            Source = new Uri(
+                "/RibbonKit;component/Themes/Tokens.Office2010.xaml",
+                UriKind.RelativeOrAbsolute),
+        });
+        var page = new RibbonOptionsPage
+        {
+            Header = "Tall page",
+            Content = new Border { Height = 900d },
+        };
+        dialog.Pages.Add(page);
+        dialog.SelectedPage = page;
+
+        try
+        {
+            dialog.Show();
+            Sta.Drain(DispatcherPriority.Loaded);
+            Sta.Drain(DispatcherPriority.Render);
+
+            var contentScroll = Assert.IsType<ScrollViewer>(
+                dialog.Template.FindName("PART_ContentScroll", dialog));
+            Assert.Equal(new Thickness(0d, 0d, 1d, 0d), contentScroll.Margin);
+            ScrollBar scrollBar = Assert.Single(
+                VisualDescendants<ScrollBar>(contentScroll),
+                candidate => candidate.Orientation == Orientation.Vertical);
+
+            Style generatedStyle = Assert.IsType<Style>(contentScroll.Resources[typeof(ScrollBar)]);
+            Style sharedStyle = Assert.IsType<Style>(
+                contentScroll.FindResource("RibbonKit.ScrollBarStyle"));
+            Assert.Same(sharedStyle, generatedStyle);
+            Assert.Same(generatedStyle, scrollBar.Style);
+            Assert.Equal(Visibility.Visible, scrollBar.Visibility);
+            Assert.NotNull(scrollBar.Template.FindName("DecreaseButton", scrollBar));
+            Assert.NotNull(scrollBar.Template.FindName("IncreaseButton", scrollBar));
+            Assert.NotNull(scrollBar.Template.FindName("PART_Track", scrollBar));
+            Assert.Equal(new CornerRadius(2d), RibbonScrollBar.GetButtonCornerRadius(scrollBar));
+            Assert.Equal(new CornerRadius(3d), RibbonScrollBar.GetThumbCornerRadius(scrollBar));
+            Assert.Equal(new CornerRadius(2d), RibbonScrollBar.GetRailCornerRadius(scrollBar));
+            Assert.True(contentScroll.ScrollableHeight > 0d);
+
+            double before = contentScroll.VerticalOffset;
+            ScrollBar.LineDownCommand.Execute(null, scrollBar);
+            Sta.Drain(DispatcherPriority.Render);
+            Assert.True(contentScroll.VerticalOffset > before);
+        }
+        finally
+        {
+            dialog.Close();
+        }
+    });
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Ribbon_combo_box_popup_overflow_realizes_the_shared_scrollbar_and_scrolls(bool isEditable) => Sta.Run(() =>
+    {
+        var comboBox = new RibbonComboBox
+        {
+            Width = 180d,
+            IsEditable = isEditable,
+            MaxDropDownHeight = 120d,
+            ItemsSource = Enumerable.Range(1, 60).Select(index => $"Item {index}").ToArray(),
+        };
+        var window = new Window
+        {
+            Width = 240d,
+            Height = 100d,
+            Left = -10000d,
+            Top = -10000d,
+            ShowActivated = false,
+            ShowInTaskbar = false,
+            WindowStyle = WindowStyle.None,
+            Content = comboBox,
+        };
+        window.Resources.MergedDictionaries.Add(new ResourceDictionary
+        {
+            Source = new Uri(
+                "/RibbonKit;component/Themes/Tokens.Office2010.xaml",
+                UriKind.RelativeOrAbsolute),
+        });
+
+        try
+        {
+            window.Show();
+            Sta.Drain(DispatcherPriority.Loaded);
+            comboBox.IsDropDownOpen = true;
+            Sta.Drain(DispatcherPriority.Render);
+
+            var editableTextBox = Assert.IsType<TextBox>(
+                comboBox.Template.FindName("PART_EditableTextBox", comboBox));
+            Assert.Equal(isEditable ? Visibility.Visible : Visibility.Hidden, editableTextBox.Visibility);
+
+            var popup = Assert.IsType<Popup>(comboBox.Template.FindName("PART_Popup", comboBox));
+            var popupRoot = Assert.IsType<Border>(popup.Child);
+            var popupScrollViewer = Assert.Single(VisualDescendants<ScrollViewer>(popupRoot));
+            ScrollBar scrollBar = Assert.Single(
+                VisualDescendants<ScrollBar>(popupScrollViewer),
+                candidate => candidate.Orientation == Orientation.Vertical);
+
+            Style generatedStyle = Assert.IsType<Style>(popupScrollViewer.Resources[typeof(ScrollBar)]);
+            Style sharedStyle = Assert.IsType<Style>(
+                popupScrollViewer.FindResource("RibbonKit.ScrollBarStyle"));
+            Assert.Same(sharedStyle, generatedStyle);
+            Assert.Same(generatedStyle, scrollBar.Style);
+            Assert.Equal(Visibility.Visible, scrollBar.Visibility);
+            Assert.NotNull(scrollBar.Template.FindName("DecreaseButton", scrollBar));
+            Assert.NotNull(scrollBar.Template.FindName("IncreaseButton", scrollBar));
+            Assert.NotNull(scrollBar.Template.FindName("PART_Track", scrollBar));
+            Assert.Equal(new CornerRadius(2d), RibbonScrollBar.GetButtonCornerRadius(scrollBar));
+            Assert.Equal(new CornerRadius(3d), RibbonScrollBar.GetThumbCornerRadius(scrollBar));
+            Assert.Equal(new CornerRadius(2d), RibbonScrollBar.GetRailCornerRadius(scrollBar));
+            Assert.True(popupScrollViewer.ScrollableHeight > 0d);
+
+            double before = popupScrollViewer.VerticalOffset;
+            ScrollBar.LineDownCommand.Execute(null, scrollBar);
+            Sta.Drain(DispatcherPriority.Render);
+            Assert.True(popupScrollViewer.VerticalOffset > before);
+        }
+        finally
+        {
+            comboBox.IsDropDownOpen = false;
+            window.Close();
+        }
+    });
+
+    [Fact]
     public void Office_2024_dialog_action_button_has_visible_flat_normal_chrome() => Sta.Run(() =>
     {
         var resources = new ResourceDictionary

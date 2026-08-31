@@ -19,6 +19,7 @@ using RibbonKit.Writer.Services.Persistence;
 using RibbonKit.Writer.Services.RecentFiles;
 using RibbonKit.Writer.Shell;
 using RibbonKit.Writer.View;
+using RibbonKit.Writer.Appearance;
 
 namespace RibbonKit.Writer;
 
@@ -83,6 +84,8 @@ public partial class MainWindow : RibbonWindow
     private void InitializeShell(WriterDialogService? shellDialogs)
     {
         InitializeComponent();
+        InitializeWriterIdentity();
+        InitializeWriterSettings();
         _backstageOpenDescriptor = DependencyPropertyDescriptor.FromProperty(
             Ribbon.IsBackstageOpenProperty, typeof(Ribbon));
         _backstageOpenDescriptor.AddValueChanged(MainRibbon, OnBackstageOpenChanged);
@@ -398,6 +401,8 @@ public partial class MainWindow : RibbonWindow
         _paragraphKeyboardController?.Dispose();
         _paragraphKeyboardController = null;
         DisposeStructuredContent();
+        DisposeWriterIdentity();
+        DisposeWriterSettings();
         if (_editingController is not null)
         {
             _editingController.StateChanged -= OnEditingStateChanged;

@@ -5,6 +5,7 @@
                  xmlns:editing="clr-namespace:RibbonKit.Writer.Editing"
                  xmlns:preview="clr-namespace:RibbonKit.Writer.Preview"
                  Title="{Binding Title}"
+                 Icon="Assets/Writer.ico"
                  Width="1100"
                  Height="720"
                  MinWidth="480"
@@ -206,7 +207,7 @@
                 </Setter>
             </Style>
             <DataTemplate x:Key="RecentDocumentTemplate">
-                <Grid MaxWidth="760">
+                <Grid MaxWidth="760" HorizontalAlignment="Left">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="38" />
                         <ColumnDefinition Width="*" />
@@ -259,7 +260,9 @@
         <KeyBinding x:Name="FindKeyBinding" Key="F" Modifiers="Control" />
         <KeyBinding x:Name="ReplaceKeyBinding" Key="H" Modifiers="Control" />
     </rk:RibbonWindow.InputBindings>
-    <DockPanel AutomationProperties.AutomationId="WriterWindow">
+    <DockPanel x:Name="WriterContentRoot"
+               Background="{DynamicResource RibbonKit.Brushes.Window.Background}"
+               AutomationProperties.AutomationId="WriterWindow">
         <rk:Ribbon x:Name="MainRibbon" DockPanel.Dock="Top" QuickAccessPosition="BelowRibbon"
                    ModalEntered="OnRibbonModalEntered" ModalExited="OnRibbonModalExited"
                    AutomationProperties.AutomationId="MainRibbon" AutomationProperties.Name="Main ribbon">
@@ -281,32 +284,58 @@
                 <rk:Backstage x:Name="WriterBackstage" Design="Modern"
                               SelectionChanged="OnBackstageSelectionChanged"
                               AutomationProperties.AutomationId="WriterBackstage" AutomationProperties.Name="File">
-                    <rk:BackstageTabItem Header="Home" rk:KeyTip.Keys="H">
-                        <StackPanel Margin="32" HorizontalAlignment="Stretch" AutomationProperties.AutomationId="RecentPage">
-                            <TextBlock Text="Recent documents" FontSize="28" FontWeight="Light"
+                    <rk:Backstage.Resources>
+                        <ResourceDictionary>
+                            <ResourceDictionary.MergedDictionaries>
+                                <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.ScrollBars.xaml" />
+                            </ResourceDictionary.MergedDictionaries>
+                            <Style x:Key="WriterBackstageScrollBarStyle"
+                                   TargetType="{x:Type ScrollBar}"
+                                   BasedOn="{StaticResource RibbonKit.ScrollBarStyle}" />
+                        </ResourceDictionary>
+                    </rk:Backstage.Resources>
+                    <rk:BackstageTabItem Header="Home" Icon="{StaticResource Icon.WriterHome}" rk:KeyTip.Keys="H">
+                        <Grid x:Name="RecentPage" Margin="32" HorizontalAlignment="Stretch" AutomationProperties.AutomationId="RecentPage">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Text="Recent documents" FontSize="28" FontWeight="Light"
                                        Foreground="{DynamicResource RibbonKit.Brushes.Accent}" Margin="0,0,0,10" />
-                            <TextBlock Text="Open a document to continue where you left off. TXT keeps characters only; RTF preserves representative formatting; advanced content is best effort."
-                                       TextWrapping="Wrap" MaxWidth="700"
+                            <TextBlock x:Name="RecentPageDescription" Grid.Row="1" Text="Open a document to continue where you left off. TXT keeps characters only; RTF preserves representative formatting; advanced content is best effort."
+                                       TextWrapping="Wrap" MaxWidth="700" HorizontalAlignment="Left"
                                        Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" Margin="0,0,0,18" />
-                            <ItemsControl x:Name="RecentList" ItemsSource="{Binding RecentEntries}"
-                                          AutomationProperties.AutomationId="RecentList" AutomationProperties.Name="Recent documents">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Button Style="{StaticResource RecentDocumentButtonStyle}"
-                                                Content="{Binding}"
-                                                ContentTemplate="{StaticResource RecentDocumentTemplate}"
-                                                Click="OnRecentItemClick"
-                                                Command="{Binding DataContext.OpenRecentCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                CommandParameter="{Binding}"
-                                                AutomationProperties.AutomationId="{Binding Path}"
-                                                AutomationProperties.Name="{Binding FileName}"
-                                                AutomationProperties.HelpText="{Binding Path}"
-                                                ToolTip="{Binding Path}" />
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                            <Border x:Name="RecentEmptyState" Margin="0,14,0,0" Padding="24,26"
-                                    MaxWidth="700" HorizontalAlignment="Stretch"
+                            <ScrollViewer x:Name="RecentDocumentsScrollViewer" Grid.Row="2"
+                                          HorizontalScrollBarVisibility="Disabled"
+                                          VerticalScrollBarVisibility="Auto"
+                                          CanContentScroll="False"
+                                          AutomationProperties.AutomationId="RecentDocumentsScrollViewer"
+                                          AutomationProperties.Name="Recent documents list">
+                                <ScrollViewer.Resources>
+                                    <Style TargetType="{x:Type ScrollBar}"
+                                           BasedOn="{StaticResource WriterBackstageScrollBarStyle}" />
+                                </ScrollViewer.Resources>
+                                <ItemsControl x:Name="RecentList" ItemsSource="{Binding RecentEntries}"
+                                              AutomationProperties.AutomationId="RecentList" AutomationProperties.Name="Recent documents">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Button Style="{StaticResource RecentDocumentButtonStyle}"
+                                                    Content="{Binding}"
+                                                    ContentTemplate="{StaticResource RecentDocumentTemplate}"
+                                                    Click="OnRecentItemClick"
+                                                    Command="{Binding DataContext.OpenRecentCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                    CommandParameter="{Binding}"
+                                                    AutomationProperties.AutomationId="{Binding Path}"
+                                                    AutomationProperties.Name="{Binding FileName}"
+                                                    AutomationProperties.HelpText="{Binding Path}"
+                                                    ToolTip="{Binding Path}" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                            <Border x:Name="RecentEmptyState" Grid.Row="2" Margin="0,14,0,0" Padding="24,26"
+                                    MaxWidth="700" HorizontalAlignment="Left"
                                     Background="{DynamicResource RibbonKit.Brushes.Control.SurfaceBackground}"
                                     BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}"
                                     BorderThickness="1"
@@ -334,9 +363,9 @@
                                                Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
                                 </StackPanel>
                             </Border>
-                        </StackPanel>
+                        </Grid>
                     </rk:BackstageTabItem>
-                    <rk:BackstageTabItem x:Name="NewBackstageTab" Header="New" rk:Ribbon.CommandId="Writer.New" rk:KeyTip.Keys="N"
+                    <rk:BackstageTabItem x:Name="NewBackstageTab" Header="New" Icon="{StaticResource Icon.WriterBackstageNew}" rk:Ribbon.CommandId="Writer.New" rk:KeyTip.Keys="N"
                                          AutomationProperties.AutomationId="FileNew" AutomationProperties.Name="New">
                         <Grid x:Name="NewProfilePage" Margin="32" HorizontalAlignment="Stretch"
                               AutomationProperties.AutomationId="NewProfilePage"
@@ -348,8 +377,8 @@
                             </Grid.RowDefinitions>
                             <TextBlock Grid.Row="0" Text="Create a new document" FontSize="28" FontWeight="Light"
                                        Foreground="{DynamicResource RibbonKit.Brushes.Accent}" Margin="0,0,0,8" />
-                            <TextBlock Grid.Row="1" Text="Choose the profile that matches the fidelity and compatibility you need."
-                                       TextWrapping="Wrap" MaxWidth="760"
+                            <TextBlock x:Name="NewProfileDescription" Grid.Row="1" Text="Choose the profile that matches the fidelity and compatibility you need."
+                                       TextWrapping="Wrap" MaxWidth="760" HorizontalAlignment="Left"
                                        Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" Margin="0,0,0,22" />
                             <ScrollViewer x:Name="NewProfileCardsScrollViewer" Grid.Row="2"
                                           HorizontalScrollBarVisibility="Disabled"
@@ -359,6 +388,10 @@
                                           VerticalAlignment="Stretch"
                                           AutomationProperties.AutomationId="NewProfileCardsScrollViewer"
                                           AutomationProperties.Name="New document profile cards">
+                                <ScrollViewer.Resources>
+                                    <Style TargetType="{x:Type ScrollBar}"
+                                           BasedOn="{StaticResource WriterBackstageScrollBarStyle}" />
+                                </ScrollViewer.Resources>
                                 <WrapPanel x:Name="NewProfileCardsPanel" Orientation="Horizontal"
                                            HorizontalAlignment="Left">
                                 <Button x:Name="PlainTextCard" Tag="PlainText" Style="{StaticResource NewProfileCardStyle}"
@@ -422,12 +455,12 @@
                             </ScrollViewer>
                         </Grid>
                     </rk:BackstageTabItem>
-                    <rk:BackstageTabItem Header="Open" IsButton="True" rk:Ribbon.CommandId="Writer.Open" rk:KeyTip.Keys="O" Click="OnBackstageAction" Command="{Binding OpenCommand}" AutomationProperties.AutomationId="FileOpen" AutomationProperties.Name="Open" />
-                    <rk:BackstageTabItem Header="Save" IsButton="True" rk:Ribbon.CommandId="Writer.Save" rk:KeyTip.Keys="S" Click="OnBackstageAction" Command="{Binding SaveCommand}" AutomationProperties.AutomationId="FileSave" AutomationProperties.Name="Save" />
-                    <rk:BackstageTabItem Header="Save As" IsButton="True" rk:Ribbon.CommandId="Writer.SaveAs" rk:KeyTip.Keys="A" Click="OnBackstageAction" Command="{Binding SaveAsCommand}" AutomationProperties.AutomationId="FileSaveAs" AutomationProperties.Name="Save As" />
-                    <rk:BackstageTabItem x:Name="PrintBackstageTab" Header="Print" rk:KeyTip.Keys="P"
+                    <rk:BackstageTabItem Header="Open" Icon="{StaticResource Icon.WriterBackstageOpen}" IsButton="True" rk:Ribbon.CommandId="Writer.Open" rk:KeyTip.Keys="O" Click="OnBackstageAction" Command="{Binding OpenCommand}" AutomationProperties.AutomationId="FileOpen" AutomationProperties.Name="Open" />
+                    <rk:BackstageTabItem Header="Save" Icon="{StaticResource Icon.WriterBackstageSave}" IsButton="True" rk:Ribbon.CommandId="Writer.Save" rk:KeyTip.Keys="S" Click="OnBackstageAction" Command="{Binding SaveCommand}" AutomationProperties.AutomationId="FileSave" AutomationProperties.Name="Save" />
+                    <rk:BackstageTabItem Header="Save As" Icon="{StaticResource Icon.WriterBackstageSaveAs}" IsButton="True" rk:Ribbon.CommandId="Writer.SaveAs" rk:KeyTip.Keys="A" Click="OnBackstageAction" Command="{Binding SaveAsCommand}" AutomationProperties.AutomationId="FileSaveAs" AutomationProperties.Name="Save As" />
+                    <rk:BackstageTabItem x:Name="PrintBackstageTab" Header="Print" Icon="{StaticResource Icon.WriterBackstagePrint}" rk:KeyTip.Keys="P"
                                          AutomationProperties.AutomationId="FilePrintPage" AutomationProperties.Name="Print and page setup">
-                        <Grid Margin="32" MaxWidth="820" HorizontalAlignment="Stretch">
+                        <Grid x:Name="PrintBackstagePage" Margin="32" MaxWidth="820" HorizontalAlignment="Left">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="280" />
                                 <ColumnDefinition Width="*" />
@@ -459,6 +492,7 @@
                                 </rk:RibbonButton>
                             </StackPanel>
                             <Border Grid.Column="1" Margin="32,0,0,0" Padding="24"
+                                    VerticalAlignment="Top"
                                     Background="{DynamicResource RibbonKit.Brushes.Control.SurfaceBackground}"
                                     BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}" BorderThickness="1"
                                     CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}">
@@ -475,7 +509,13 @@
                             </Border>
                         </Grid>
                     </rk:BackstageTabItem>
-                    <rk:BackstageTabItem Header="Exit" IsButton="True" Placement="Bottom" rk:Ribbon.CommandId="Writer.Exit" rk:KeyTip.Keys="X" Click="OnBackstageAction" Command="{Binding ExitCommand}" AutomationProperties.AutomationId="FileExit" AutomationProperties.Name="Exit" />
+                    <rk:BackstageTabItem Header="Settings" IsButton="True" Placement="Bottom"
+                                         rk:Ribbon.CommandId="Writer.Settings" rk:KeyTip.Keys="T"
+                                         Click="OnBackstageSettings"
+                                         Icon="{StaticResource Icon.WriterOptions}"
+                                         AutomationProperties.AutomationId="FileSettings"
+                                         AutomationProperties.Name="Settings" />
+                    <rk:BackstageTabItem Header="Exit" Icon="{StaticResource Icon.WriterExit}" IsButton="True" Placement="Bottom" rk:Ribbon.CommandId="Writer.Exit" rk:KeyTip.Keys="X" Click="OnBackstageAction" Command="{Binding ExitCommand}" AutomationProperties.AutomationId="FileExit" AutomationProperties.Name="Exit" />
                 </rk:Backstage>
             </rk:Ribbon.Backstage>
             <rk:RibbonTab x:Name="HomeTab" Header="Home" rk:Ribbon.CommandId="Writer.Home" rk:KeyTip.Keys="H" AutomationProperties.AutomationId="HomeTab" AutomationProperties.Name="Home">
@@ -1157,6 +1197,24 @@
             </Grid>
         </StatusBar>
         <Grid x:Name="DocumentPresentationHost">
+            <Grid.Resources>
+                <ResourceDictionary>
+                    <ResourceDictionary.MergedDictionaries>
+                        <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.ScrollBars.xaml" />
+                    </ResourceDictionary.MergedDictionaries>
+                    <!-- Keep ScrollViewer/RichTextBox ownership intact while applying RibbonKit chrome
+                         to Paper, Continuous and Print Preview's generated native scrollbars. -->
+                    <Style TargetType="{x:Type ScrollBar}"
+                           BasedOn="{StaticResource RibbonKit.ScrollBarStyle}">
+                        <Setter Property="Margin" Value="0,0,1,0" />
+                        <Style.Triggers>
+                            <Trigger Property="Orientation" Value="Horizontal">
+                                <Setter Property="Margin" Value="0" />
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </ResourceDictionary>
+            </Grid.Resources>
             <editing:WriterEditorSurface x:Name="EditorSurface"
                                          ViewMode="Paper"
                                          Focusable="False"

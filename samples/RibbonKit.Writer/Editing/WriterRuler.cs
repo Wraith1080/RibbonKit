@@ -53,6 +53,7 @@ public sealed class WriterRuler : FrameworkElement, IDisposable
     private double _zoomPercent = 100d;
     private bool _isPaperView;
     private bool _isRulerVisible = true;
+    private bool _isSurfaceTransparent;
     private bool _canEditMargins = true;
     private bool _canEditParagraphs = true;
     private WriterRulerLayout _layout = WriterRulerGeometry.Create(
@@ -120,6 +121,31 @@ public sealed class WriterRuler : FrameworkElement, IDisposable
             Visibility = value && _isPaperView ? Visibility.Visible : Visibility.Collapsed;
             InvalidateVisual();
         }
+    }
+
+    /// <summary>Gets or sets whether the ruler's base surface reveals its host material.</summary>
+    public bool IsSurfaceTransparent
+    {
+        get => _isSurfaceTransparent;
+        set
+        {
+            if (_isSurfaceTransparent == value)
+                return;
+            _isSurfaceTransparent = value;
+            InvalidateVisual();
+        }
+    }
+
+    /// <summary>Redraws theme-resource-backed ruler chrome after the host changes appearance.</summary>
+    /// <remarks>
+    /// The ruler resolves its brushes while drawing rather than through dependency-property resource
+    /// references, so replacing theme or accent dictionaries does not otherwise invalidate it.
+    /// </remarks>
+    public void RefreshAppearance()
+    {
+        if (_disposed)
+            return;
+        InvalidateVisual();
     }
 
     /// <summary>Gets or sets whether the editor is currently in Paper view.</summary>
@@ -344,7 +370,9 @@ public sealed class WriterRuler : FrameworkElement, IDisposable
         var highContrast = SystemParameters.HighContrast;
         var background = highContrast
             ? SystemColors.WindowBrush
-            : ResolveBrush("RibbonKit.Brushes.Control.SurfaceBackground", SystemColors.ControlBrush);
+            : _isSurfaceTransparent
+                ? Brushes.Transparent
+                : ResolveBrush("RibbonKit.Brushes.Control.SurfaceBackground", SystemColors.ControlBrush);
         var border = highContrast
             ? SystemColors.WindowTextBrush
             : ResolveBrush("RibbonKit.Brushes.Ribbon.Border", SystemColors.ControlDarkBrush);

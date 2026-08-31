@@ -10,6 +10,8 @@
 > structured context and contextual-state stability, picture/table selection and direct resizing, range alignment,
 > semantic cross-view table placement, zoom-stable adorners, persistence/Undo/Redo and pictured PDF printing passed
 > the completed live matrix. Its final closure intentionally used focused tests rather than new full-suite gates.
+> W4-A is accepted through §3.136: its focused 6/6 gate, proportional follow-up regressions and zero-warning Writer
+> builds pass, and the 2026-08-31 actual-window Settings/persistence/appearance-polish sequence is accepted.
 > W2-G is planned after W3-E as a high-risk true editable-pagination packet; it may not fake page breaks.
 > This document does not schedule future agents or imply that any later Writer packet exists.
 > [`10-RIBBONKIT-WRITER-PLAN.md`](10-RIBBONKIT-WRITER-PLAN.md) owns product scope; current
@@ -567,7 +569,7 @@ object interaction and W3 manual acceptance remain W3-E.
 menu composition, stale-target guards, mutation paths and deferred contextual publication. W3-E2 supplies explicit
 picture/table selection, Picture Tools, non-printing picture/table adorners and bounded direct resizing. The completed
 live matrix also accepts selection/merge scope, range alignment, semantic cross-view placement, zoom, cancellation,
-Undo/Redo, save/reopen, preview exclusion and pictured PDF output. W4-A and W2-G have not begun.
+Undo/Redo, save/reopen, preview exclusion and pictured PDF output. W4-A is accepted; W2-G has not begun.
 
 **Owns:** structured-object hit testing and selection state, the W1-E context-menu extension rows, Picture Tools,
 table/picture selection adorners, direct resizing and contextual-tab stability exclusively. It may refine Writer-owned
@@ -609,6 +611,12 @@ from preview/print/UIA noise. Lead verifies the actual Writer window before W4-A
 ## 9. W4-W5 — Product integration, hardening and decision
 
 ### W4-A — Customization and appearance persistence
+
+**Current status:** accepted 2026-08-31 through design-notes §3.136. The app-owned versioned appearance store,
+separate ribbon-layout store, transactional Appearance page, Settings-captioned merged options dialog, compatibility
+fallbacks and live application plumbing are present. Focused tests pass **6/6**, proportional follow-up regressions
+and zero-warning Writer builds pass, and the lead accepted the actual-window defaults, disabled compatibility choices,
+Cancel rollback, Apply/restart persistence, theme/material behavior and final visual correction sequence.
 
 **Owns:** app settings, the **Settings**-captioned customization dialog, its app-owned **Appearance**
 page and final customization integration exclusively.

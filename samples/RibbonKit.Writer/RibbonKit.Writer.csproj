@@ -9,10 +9,15 @@
     <Product>RibbonKit Writer</Product>
     <IsPackable>false</IsPackable>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\Writer.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\RibbonKit\RibbonKit.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\Writer.ico" />
   </ItemGroup>
 
 </Project>

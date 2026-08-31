@@ -1,0 +1,177 @@
+<UserControl x:Class="RibbonKit.Writer.Appearance.WriterAppearancePage"
+             x:ClassModifier="internal"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:rk="clr-namespace:RibbonKit;assembly=RibbonKit"
+             xmlns:animation="clr-namespace:RibbonKit.Animation;assembly=RibbonKit"
+             xmlns:controls="clr-namespace:RibbonKit.Controls;assembly=RibbonKit"
+             xmlns:interop="clr-namespace:RibbonKit.Interop;assembly=RibbonKit"
+             xmlns:theming="clr-namespace:RibbonKit.Theming;assembly=RibbonKit"
+             MinWidth="440"
+             AutomationProperties.AutomationId="WriterAppearancePage"
+             AutomationProperties.Name="Appearance settings">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.OptionsDialog.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <StackPanel MaxWidth="600" HorizontalAlignment="Left">
+        <TextBlock Margin="0,0,0,18" TextWrapping="Wrap"
+                   Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
+                   Text="Preview Writer's theme, File surface, window material, and motion. Apply or OK saves these separately from document and ribbon customization." />
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="190" />
+                <ColumnDefinition Width="280" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.Row="0" VerticalAlignment="Center" Text="Office generation" />
+            <ComboBox x:Name="ThemeCombo" Grid.Row="0" Grid.Column="1" Margin="0,0,0,8"
+                      SelectionChanged="OnValueChanged"
+                      AutomationProperties.AutomationId="AppearanceTheme"
+                      AutomationProperties.Name="Office theme generation">
+                <ComboBoxItem Content="Office 2024" Tag="{x:Static theming:RibbonTheme.Office2024}" />
+                <ComboBoxItem Content="Office 2019" Tag="{x:Static theming:RibbonTheme.Office2019}" />
+                <ComboBoxItem Content="Office 2013" Tag="{x:Static theming:RibbonTheme.Office2013}" />
+                <ComboBoxItem Content="Office 2010" Tag="{x:Static theming:RibbonTheme.Office2010}" />
+                <ComboBoxItem Content="Office 2007" Tag="{x:Static theming:RibbonTheme.Office2007}" />
+            </ComboBox>
+
+            <TextBlock Grid.Row="1" VerticalAlignment="Center" Text="Palette" />
+            <ComboBox x:Name="PaletteCombo" Grid.Row="1" Grid.Column="1" Margin="0,0,0,8"
+                      SelectionChanged="OnValueChanged"
+                      AutomationProperties.AutomationId="AppearancePalette"
+                      AutomationProperties.Name="Light or dark palette">
+                <ComboBoxItem Content="Light" Tag="False" />
+                <ComboBoxItem Content="Dark / Black" Tag="True" />
+            </ComboBox>
+
+            <TextBlock Grid.Row="2" VerticalAlignment="Center" Text="Accent" />
+            <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,8">
+                <CheckBox x:Name="CustomAccentCheck" VerticalAlignment="Center" Content="Custom"
+                          Checked="OnAccentModeChanged" Unchecked="OnAccentModeChanged"
+                          AutomationProperties.AutomationId="AppearanceCustomAccent"
+                          AutomationProperties.Name="Use custom accent" />
+                <Button x:Name="AccentButton" Margin="12,0,0,0" Padding="10,4"
+                        Style="{DynamicResource OptionsDialogActionButtonStyle}"
+                        Click="OnChooseAccent" Content="#FF2B579A"
+                        AutomationProperties.AutomationId="AppearanceAccentColor"
+                        AutomationProperties.Name="Choose accent color" />
+            </StackPanel>
+
+            <TextBlock Grid.Row="3" VerticalAlignment="Center" Text="Title bar" />
+            <CheckBox x:Name="AccentedTitleBarCheck" Grid.Row="3" Grid.Column="1" Margin="0,0,0,8"
+                      Content="Use accent color" Checked="OnValueChanged" Unchecked="OnValueChanged"
+                      AutomationProperties.AutomationId="AppearanceAccentedTitleBar"
+                      AutomationProperties.Name="Use accented title bar" />
+
+            <TextBlock Grid.Row="4" VerticalAlignment="Center" Text="Backstage design" />
+            <ComboBox x:Name="BackstageCombo" Grid.Row="4" Grid.Column="1" Margin="0,0,0,8"
+                      SelectionChanged="OnValueChanged"
+                      AutomationProperties.AutomationId="AppearanceBackstageDesign"
+                      AutomationProperties.Name="Backstage design">
+                <ComboBoxItem Content="Modern" Tag="{x:Static rk:RibbonBackstageDesign.Modern}" />
+                <ComboBoxItem Content="Classic" Tag="{x:Static rk:RibbonBackstageDesign.Classic}" />
+                <ComboBoxItem Content="Classic 2010" Tag="{x:Static rk:RibbonBackstageDesign.Classic2010}" />
+                <ComboBoxItem Content="Glass 2007" Tag="{x:Static rk:RibbonBackstageDesign.Glass2007}" />
+                <ComboBoxItem Content="Classic 2007" Tag="{x:Static rk:RibbonBackstageDesign.Classic2007}" />
+            </ComboBox>
+
+            <TextBlock Grid.Row="5" VerticalAlignment="Center" Text="Window backdrop" />
+            <ComboBox x:Name="BackdropCombo" Grid.Row="5" Grid.Column="1" Margin="0,0,0,8"
+                      SelectionChanged="OnValueChanged"
+                      AutomationProperties.AutomationId="AppearanceBackdrop"
+                      AutomationProperties.Name="Window backdrop">
+                <ComboBoxItem Content="None" Tag="{x:Static interop:RibbonBackdrop.None}" />
+                <ComboBoxItem Content="Mica" Tag="{x:Static interop:RibbonBackdrop.Mica}" />
+                <ComboBoxItem Content="Acrylic" Tag="{x:Static interop:RibbonBackdrop.Acrylic}" />
+                <ComboBoxItem Content="Tabbed / Mica Alt" Tag="{x:Static interop:RibbonBackdrop.Tabbed}" />
+            </ComboBox>
+
+            <TextBlock Grid.Row="6" VerticalAlignment="Center" Text="Window frame" />
+            <ComboBox x:Name="FrameCombo" Grid.Row="6" Grid.Column="1" Margin="0,0,0,8"
+                      SelectionChanged="OnValueChanged"
+                      AutomationProperties.AutomationId="AppearanceFrame"
+                      AutomationProperties.Name="Window frame presentation">
+                <ComboBoxItem Content="Theme default" Tag="{x:Static controls:RibbonWindowFrameAppearance.Default}" />
+                <ComboBoxItem Content="Office 2007 Aero" Tag="{x:Static controls:RibbonWindowFrameAppearance.Office2007Aero}" />
+                <ComboBoxItem Content="Office 2010 Aero" Tag="{x:Static controls:RibbonWindowFrameAppearance.Office2010Aero}" />
+            </ComboBox>
+
+            <TextBlock Grid.Row="7" VerticalAlignment="Center" Text="Application button" />
+            <ComboBox x:Name="ApplicationButtonCombo" Grid.Row="7" Grid.Column="1" Margin="0,0,0,8"
+                      SelectionChanged="OnValueChanged"
+                      AutomationProperties.AutomationId="AppearanceApplicationButton"
+                      AutomationProperties.Name="Application button presentation">
+                <ComboBoxItem Content="File tab" Tag="{x:Static rk:RibbonApplicationButtonShape.Tab}" />
+                <ComboBoxItem Content="Office orb" Tag="{x:Static rk:RibbonApplicationButtonShape.Orb}" />
+            </ComboBox>
+
+            <TextBlock Grid.Row="8" VerticalAlignment="Center" Text="Ribbon motion" />
+            <ComboBox x:Name="AnimationCombo" Grid.Row="8" Grid.Column="1" Margin="0,0,0,8"
+                      SelectionChanged="OnValueChanged"
+                      AutomationProperties.AutomationId="AppearanceAnimation"
+                      AutomationProperties.Name="Ribbon animation level">
+                <ComboBoxItem Content="None" Tag="{x:Static animation:RibbonAnimationLevel.None}" />
+                <ComboBoxItem Content="Subtle" Tag="{x:Static animation:RibbonAnimationLevel.Subtle}" />
+                <ComboBoxItem Content="Expressive" Tag="{x:Static animation:RibbonAnimationLevel.Expressive}" />
+            </ComboBox>
+
+            <TextBlock Grid.Row="9" VerticalAlignment="Top" Text="Additional choices" />
+            <StackPanel Grid.Row="9" Grid.Column="1">
+                <CheckBox x:Name="BackstageTranslucentCheck" Content="Translucent Backstage"
+                          Checked="OnValueChanged" Unchecked="OnValueChanged"
+                          AutomationProperties.AutomationId="AppearanceBackstageTranslucent"
+                          AutomationProperties.Name="Use translucent Backstage" />
+                <CheckBox x:Name="RespectReducedMotionCheck" Margin="0,5,0,0"
+                          Content="Respect Windows reduced motion"
+                          Checked="OnValueChanged" Unchecked="OnValueChanged"
+                          AutomationProperties.AutomationId="AppearanceRespectReducedMotion"
+                          AutomationProperties.Name="Respect Windows reduced motion" />
+                <CheckBox x:Name="ShowRulerCheck" Margin="0,5,0,0" Content="Show ruler in Paper view"
+                          Checked="OnValueChanged" Unchecked="OnValueChanged"
+                          AutomationProperties.AutomationId="AppearanceShowRuler"
+                          AutomationProperties.Name="Show ruler" />
+                <CheckBox x:Name="ShowMarginGuidesCheck" Margin="0,5,0,0" Content="Show margin guides in Paper view"
+                          Checked="OnValueChanged" Unchecked="OnValueChanged"
+                          AutomationProperties.AutomationId="AppearanceShowMarginGuides"
+                          AutomationProperties.Name="Show margin guides" />
+            </StackPanel>
+        </Grid>
+
+        <Border Margin="0,16,0,0" Padding="10" CornerRadius="3"
+                Background="{DynamicResource RibbonKit.Brushes.Control.CompanionBackground}">
+            <TextBlock x:Name="CompatibilityText" TextWrapping="Wrap"
+                       Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
+                       AutomationProperties.AutomationId="AppearanceCompatibility"
+                       AutomationProperties.Name="Compatibility explanation" />
+        </Border>
+
+        <StackPanel Margin="0,16,0,0" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button x:Name="AppearanceDefaultsButton" Margin="0,0,8,0" Padding="12,5" Content="Appearance defaults"
+                    Style="{DynamicResource OptionsDialogActionButtonStyle}"
+                    Click="OnDefaults" AutomationProperties.AutomationId="AppearanceDefaults"
+                    AutomationProperties.Name="Restore appearance defaults" />
+            <Button x:Name="AppearanceApplyButton" Padding="16,5" Content="Apply appearance" Click="OnApply"
+                    Style="{DynamicResource OptionsDialogPrimaryButtonStyle}"
+                    AutomationProperties.AutomationId="AppearanceApply"
+                    AutomationProperties.Name="Apply appearance settings" />
+        </StackPanel>
+    </StackPanel>
+</UserControl>

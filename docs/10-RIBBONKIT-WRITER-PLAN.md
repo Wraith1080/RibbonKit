@@ -6,18 +6,14 @@
 > Debug gate are complete; the corrective app-owned RibbonKit-themed Font/Color/Paragraph pass has passed its refreshed
 > full Debug gate and awaits live visual reacceptance.
 > W3-D structured-content round-trip and TXT/RTF compatibility fixtures are accepted through design-notes §3.120.
-> W3-E has begun: the bounded W3-E1 foundation now supplies document-bound structured-object context menus and
-> suppresses transient contextual-tab publication during app-owned table mutations. Its app-owned picture-removal
-> bridge also preserves context-menu and Delete/Backspace undo/redo for images opened from native Recent documents,
-> including preview and save/reopen.
-> The bounded W3-E2a picture slice now adds explicit document-bound picture selection, a real size/remove-only
-> Picture Tools tab and a non-printing eight-handle resize adorner with one-unit Undo/Redo. Its automated gate is
-> accepted. The bounded W3-E2b implementation now adds a non-printing table selection adorner with column, row and
-> overall resize grips plus one-unit Undo; its minimal focused gate passes. Live table-grip acceptance and the full
-> W3-E matrix remain pending. W2-G is a planned high-risk true editable-pagination packet after
-> W3-E; it must prove a real editing architecture and may not simulate pages with decorative breaks. Live mixed-monitor
-> DPI movement remains deferred to W4-C. No later
-> implementation is implied.
+> W3-E is accepted through design-notes §3.135. W4-A customization and appearance persistence is accepted through
+> §3.136: Writer now has a **Settings** dialog containing its transactional **Appearance** page plus RibbonKit's
+> built-in ribbon and QAT pages, with separate versioned appearance and structural-layout files. Its focused 6/6 gate
+> and proportional follow-up regressions/zero-warning Writer builds pass, and the 2026-08-31 actual-window correction
+> sequence is accepted. W2-G remains a
+> planned high-risk true editable-pagination packet; it must prove a real editing architecture and may not simulate
+> pages with decorative breaks. Live mixed-monitor DPI movement remains deferred to W4-C. No later implementation is
+> implied.
 > Live status remains in `04-DESIGN-NOTES.md` §5.
 > RibbonKit Writer is a separate functional sample, not another feature page inside
 > `RibbonKit.Showcase`.

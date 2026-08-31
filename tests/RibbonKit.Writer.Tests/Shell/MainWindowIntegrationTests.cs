@@ -254,6 +254,188 @@ public sealed class MainWindowIntegrationTests
     }
 
     [Fact]
+    public async Task WriterIdentityAndBackstageNavigationIconsAreAppOwned()
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            using var fixture = new WindowFixture();
+            fixture.Show();
+            await PumpAsync();
+
+            Assert.NotNull(fixture.Window.Icon);
+            Assert.True(fixture.Window.HasWriterOrbTemplate());
+            var identityBrush = Assert.IsType<LinearGradientBrush>(
+                fixture.Window.TryFindResource("Writer.Brushes.IdentityMark"));
+            Assert.Equal(new[]
+            {
+                Color.FromRgb(0x3F, 0x94, 0xDF),
+                Color.FromRgb(0x14, 0x5A, 0xA6)
+            }, identityBrush.GradientStops.Select(stop => stop.Color).ToArray());
+
+            var backstage = Assert.IsType<Backstage>(fixture.Ribbon.Backstage);
+            var expectedIcons = new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                ["Home"] = "Icon.WriterHome",
+                ["New"] = "Icon.WriterBackstageNew",
+                ["Open"] = "Icon.WriterBackstageOpen",
+                ["Save"] = "Icon.WriterBackstageSave",
+                ["Save As"] = "Icon.WriterBackstageSaveAs",
+                ["Print"] = "Icon.WriterBackstagePrint",
+                ["Settings"] = "Icon.WriterOptions",
+                ["Exit"] = "Icon.WriterExit"
+            };
+
+            var items = backstage.Items.OfType<BackstageTabItem>().ToArray();
+            Assert.Equal(expectedIcons.Count, items.Length);
+            foreach (var item in items)
+            {
+                string header = Assert.IsType<string>(item.Header);
+                string resourceKey = expectedIcons[header];
+                Assert.Same(fixture.Window.TryFindResource(resourceKey), item.Icon);
+            }
+
+            var gear = Assert.IsType<DrawingImage>(fixture.Window.TryFindResource("Icon.WriterOptions"));
+            var gearDrawing = Assert.IsType<GeometryDrawing>(gear.Drawing);
+            Assert.True(gearDrawing.Geometry.FillContains(new Point(12, 3)));
+            Assert.False(gearDrawing.Geometry.FillContains(new Point(12, 12)));
+
+            var open = Assert.IsType<DrawingImage>(fixture.Window.TryFindResource("Icon.WriterBackstageOpen"));
+            var openDrawing = Assert.IsType<DrawingGroup>(open.Drawing);
+            var openBack = Assert.IsType<GeometryDrawing>(openDrawing.Children[0]);
+            Assert.True(openBack.Geometry.FillContains(new Point(3, 10)));
+
+            var saveAs = Assert.IsType<DrawingImage>(fixture.Window.TryFindResource("Icon.WriterBackstageSaveAs"));
+            var saveAsDrawing = Assert.IsType<DrawingGroup>(saveAs.Drawing);
+            var pencil = Assert.IsType<GeometryDrawing>(saveAsDrawing.Children[1]);
+            Assert.True(pencil.Geometry.FillContains(new Point(20.5, 9.5)));
+            Assert.False(pencil.Geometry.FillContains(new Point(18, 13)));
+        });
+    }
+
+    [Fact]
+    public async Task MainContentScrollBarsUseSharedRibbonKitChrome()
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            using var fixture = new WindowFixture();
+            fixture.Show();
+            await PumpAsync();
+
+            var host = Assert.IsType<Grid>(fixture.Window.FindName("DocumentPresentationHost"));
+            var sharedStyle = Assert.IsType<Style>(
+                host.FindResource("RibbonKit.ScrollBarStyle"));
+            var scopedStyle = Assert.IsType<Style>(host.FindResource(typeof(ScrollBar)));
+            Assert.Same(sharedStyle, scopedStyle.BasedOn);
+
+            var viewport = Assert.IsType<ScrollViewer>(fixture.Window.FindName("EditorViewport"));
+            var scrollBars = FindVisualDescendants<ScrollBar>(viewport).ToArray();
+            Assert.NotEmpty(scrollBars);
+            Assert.All(scrollBars, scrollBar => Assert.Same(scopedStyle, scrollBar.Style));
+            Assert.All(scrollBars.Where(scrollBar => scrollBar.Orientation == Orientation.Vertical),
+                scrollBar => Assert.Equal(new Thickness(0, 0, 1, 0), scrollBar.Margin));
+            Assert.All(scrollBars.Where(scrollBar => scrollBar.Orientation == Orientation.Horizontal),
+                scrollBar => Assert.Equal(new Thickness(0), scrollBar.Margin));
+
+            var preview = Assert.IsType<WriterDocumentPreviewView>(
+                fixture.Window.FindName("PreviewView"));
+            var inheritedPreviewStyle = Assert.IsType<Style>(
+                preview.Viewer.FindResource(typeof(ScrollBar)));
+            Assert.Same(scopedStyle, inheritedPreviewStyle);
+        });
+    }
+
+    [Fact]
+    public async Task BackstageRecentAndNewScrollBarsUseSharedRibbonKitChrome()
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            using var fixture = new WindowFixture(withRecentFile: true);
+            fixture.Show();
+            await PumpAsync();
+
+            var backstage = Assert.IsType<Backstage>(fixture.Ribbon.Backstage);
+            fixture.Ribbon.IsBackstageOpen = true;
+            backstage.Items.OfType<BackstageTabItem>().Single(item =>
+                Equals(item.Header, "Home")).IsSelected = true;
+            await PumpAsync();
+
+            var recentScroll = Assert.IsType<ScrollViewer>(
+                fixture.Window.FindName("RecentDocumentsScrollViewer"));
+            AssertBackstageScrollBarChrome(recentScroll);
+
+            backstage.Items.OfType<BackstageTabItem>().Single(item =>
+                Equals(item.Header, "New")).IsSelected = true;
+            await PumpAsync();
+
+            var newScroll = Assert.IsType<ScrollViewer>(
+                fixture.Window.FindName("NewProfileCardsScrollViewer"));
+            AssertBackstageScrollBarChrome(newScroll);
+        });
+    }
+
+    [Fact]
+    public async Task BackstagePageContentStaysLeftAnchoredAsWindowWidens()
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            using var fixture = new WindowFixture(withRecentFile: true);
+            fixture.Show();
+            await PumpAsync();
+
+            var backstage = Assert.IsType<Backstage>(fixture.Ribbon.Backstage);
+            fixture.Ribbon.IsBackstageOpen = true;
+            await PumpAsync();
+
+            var home = backstage.Items.OfType<BackstageTabItem>().Single(item =>
+                Equals(item.Header, "Home"));
+            home.IsSelected = true;
+            await PumpAsync();
+            var recentPage = Assert.IsType<Grid>(fixture.Window.FindName("RecentPage"));
+            var recentDescription = Assert.IsType<TextBlock>(
+                fixture.Window.FindName("RecentPageDescription"));
+            var recentList = Assert.IsType<ItemsControl>(fixture.Window.FindName("RecentList"));
+            var recentButton = FindVisualDescendants<Button>(recentList).First(button =>
+                button.CommandParameter is RecentFileEntry);
+            var recentContent = FindVisualDescendants<Grid>(recentButton).Single(grid =>
+                Math.Abs(grid.MaxWidth - 760) < 0.01);
+            double recentDescriptionLeft = LeftWithin(recentDescription, recentPage);
+            double recentContentLeft = LeftWithin(recentContent, recentPage);
+
+            var newPageItem = backstage.Items.OfType<BackstageTabItem>().Single(item =>
+                Equals(item.Header, "New"));
+            newPageItem.IsSelected = true;
+            await PumpAsync();
+            var newPage = Assert.IsType<Grid>(fixture.Window.FindName("NewProfilePage"));
+            var newDescription = Assert.IsType<TextBlock>(
+                fixture.Window.FindName("NewProfileDescription"));
+            double newDescriptionLeft = LeftWithin(newDescription, newPage);
+
+            var printPageItem = backstage.Items.OfType<BackstageTabItem>().Single(item =>
+                Equals(item.Header, "Print"));
+            printPageItem.IsSelected = true;
+            await PumpAsync();
+            var printPage = Assert.IsType<Grid>(fixture.Window.FindName("PrintBackstagePage"));
+            double printPageLeft = LeftWithin(printPage, backstage);
+
+            fixture.Window.Width = 1800;
+            await PumpAsync();
+
+            home.IsSelected = true;
+            await PumpAsync();
+            Assert.Equal(recentDescriptionLeft, LeftWithin(recentDescription, recentPage), 3);
+            Assert.Equal(recentContentLeft, LeftWithin(recentContent, recentPage), 3);
+
+            newPageItem.IsSelected = true;
+            await PumpAsync();
+            Assert.Equal(newDescriptionLeft, LeftWithin(newDescription, newPage), 3);
+
+            printPageItem.IsSelected = true;
+            await PumpAsync();
+            Assert.Equal(printPageLeft, LeftWithin(printPage, backstage), 3);
+        });
+    }
+
+    [Fact]
     public async Task MainWindowContractAndEditorLifecycleAreWiredOnTheRealTree()
     {
         await StaTestHelper.RunAsync(async () =>
@@ -1342,6 +1524,23 @@ public sealed class MainWindowIntegrationTests
         AssertEditorFocusRestored(fixture);
     }
 
+    private static void AssertBackstageScrollBarChrome(ScrollViewer scrollViewer)
+    {
+        var sharedStyle = Assert.IsType<Style>(
+            scrollViewer.FindResource("RibbonKit.ScrollBarStyle"));
+        var scopedStyle = Assert.IsType<Style>(
+            scrollViewer.Resources[typeof(ScrollBar)]);
+        Assert.Same(sharedStyle, scopedStyle.BasedOn?.BasedOn);
+
+        var scrollBars = FindVisualDescendants<ScrollBar>(scrollViewer).ToArray();
+        Assert.NotEmpty(scrollBars);
+        Assert.All(scrollBars, scrollBar => Assert.Same(scopedStyle, scrollBar.Style));
+        Assert.All(scrollBars, scrollBar => Assert.Equal(new Thickness(0), scrollBar.Margin));
+    }
+
+    private static double LeftWithin(FrameworkElement element, Visual ancestor) =>
+        element.TransformToAncestor(ancestor).Transform(new Point()).X;
+
     private static void AssertRuntimeContract(WindowFixture fixture)
     {
         var window = fixture.Window;
@@ -1554,10 +1753,12 @@ public sealed class MainWindowIntegrationTests
             .Where(key => key.StartsWith("Icon.Writer", StringComparison.Ordinal))
             .ToArray();
 
-        Assert.True(iconKeys.Length >= 100, $"Expected at least 100 Writer icons, found {iconKeys.Length}.");
+        Assert.True(iconKeys.Length >= 110, $"Expected at least 110 Writer icons, found {iconKeys.Length}.");
         foreach (var key in new[]
         {
             "Icon.WriterNew", "Icon.WriterOpen", "Icon.WriterSaveAs", "Icon.WriterExportPdf",
+            "Icon.WriterBackstageNew", "Icon.WriterBackstageOpen", "Icon.WriterBackstageSave",
+            "Icon.WriterBackstageSaveAs", "Icon.WriterBackstagePrint",
             "Icon.WriterPrint", "Icon.WriterPrintPreview", "Icon.WriterPageSize", "Icon.WriterPortrait",
             "Icon.WriterLandscape", "Icon.WriterMargins", "Icon.WriterPageColor", "Icon.WriterColumns",
             "Icon.WriterPageBreak", "Icon.WriterEditLayout", "Icon.WriterTwoPages", "Icon.WriterPageWidth",
@@ -1566,7 +1767,7 @@ public sealed class MainWindowIntegrationTests
             "Icon.WriterMergeCells", "Icon.WriterSplitCells", "Icon.WriterDistributeColumns",
             "Icon.WriterCellAlignMiddle", "Icon.WriterCellShading", "Icon.WriterBorders",
             "Icon.WriterTheme", "Icon.WriterDarkMode", "Icon.WriterBackdrop", "Icon.WriterCustomizeRibbon",
-            "Icon.WriterOptions", "Icon.WriterWarning", "Icon.WriterInformation", "Icon.WriterError",
+            "Icon.WriterHome", "Icon.WriterOptions", "Icon.WriterExit", "Icon.WriterWarning", "Icon.WriterInformation", "Icon.WriterError",
             "Icon.WriterLock", "Icon.WriterImport", "Icon.WriterExport", "Icon.WriterReset"
         })
             Assert.IsType<DrawingImage>(fixture.Window.TryFindResource(key));

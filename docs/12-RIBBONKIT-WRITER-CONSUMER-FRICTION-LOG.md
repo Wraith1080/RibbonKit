@@ -542,6 +542,9 @@ remain read-only until actual/diff evidence justifies a deliberate change.
   modern scrollbar-button normal tokens made full action buttons blend into the form, the shared action style now uses
   dedicated dialog normal-background/border tokens: legacy themes keep the same gel, while 2013/2019/2024 use visible
   flat fills and one-DIP outlines without changing their scrollbar arrows.
+  The dialog's outer `PART_ContentScroll` now also supplies the exact keyed `RibbonKit.ScrollBarStyle` as its native
+  generated-`ScrollBar` style. It preserves a custom template's pre-existing implicit scrollbar style and does not
+  change ScrollViewer ownership, fill-page disabling or the built-in pages' independently scrolling list boxes.
 - **Preliminary visual correction:** the first live pass found the 12-15 DIP rails squeezed, arrow rows sized only to
   their 7-by-4 vector content, and the vertical thumb pill compressed. The rail is now 16 DIP for Office 2013-2024
   and 18 DIP for Office 2007/2010, both line buttons reserve a full square, and orientation-specific padding moved
@@ -575,7 +578,8 @@ remain read-only until actual/diff evidence justifies a deliberate change.
   100-200% DPI, RTL horizontal direction and High Contrast. The user accepted the corrected full-width thumb and
   compact vertical behavior and the Customize Ribbon scrollbar pilot; the final Office 2013/2019 square-token visual
   recheck remains. Compare the dialog-wide ordinary-button treatment in all modern light/dark themes. Automated
-  focused coverage is **21/21**, including realized overflow/scrolling in both lists on both built-in pages, Office 2010 gel/radius chrome, modern visible normal chrome, both built-in
+  focused coverage is **22/22**, including realized overflow/scrolling in both lists on both built-in pages, the outer
+  Options content viewport, Office 2010 gel/radius chrome, modern visible normal chrome, both built-in
   pages and the OK/Cancel/Close exceptions. The reviewed Office 2024 RTL QAT approval changed only the four expected
   buttons and then only its available-list scrollbar; the zero-warning Release build, RibbonKit **392/392**, visual
   **1/1**, and Writer **439/439** pass.
@@ -697,6 +701,91 @@ remain read-only until actual/diff evidence justifies a deliberate change.
 - **Acceptance:** the pictured spool and print-service cases pass **2/2**, and the existing real-window print lifecycle
   passes **1/1**. The user confirmed the fresh Writer build exports a document containing a picture through Microsoft
   Print to PDF without terminating Writer.
+
+### RKWF-026 — Ribbon has no host-level Office Orb glyph override
+
+- **First seen / packet:** 2026-08-31, Writer W4-A application-identity follow-up.
+- **Status:** App-owned workaround; runtime direction is not approved.
+- **Consumer goal:** use one Writer identity in the executable/title bar and in the Office 2007 application Orb,
+  including Classic2007's shared-chrome Backstage proxy.
+- **Reproduction and evidence:** setting `RibbonWindow.Icon` supplies the executable/window image but does not affect
+  the application button. RibbonKit's shared Orb template owns a fixed four-square glyph and exposes no host template
+  or image property for replacing only that mark.
+- **Current app-owned workaround:** Writer supplies a themed Orb `DataTemplate` and injects it into the realized
+  application button's `Orb` presenter after render and after appearance changes. Classic2007 already reuses that
+  presenter's template, so the proxy inherits Writer's mark without duplicating its transition logic. The mark uses
+  Writer's fixed blue identity gradient rather than white, which blended into the pale Office 2007 Orb sphere.
+- **Application impact:** the application and Office 2007 Orb share a recognizable W identity while RibbonKit still
+  owns Orb size, surface, ring, shadow, hover, pressed and Backstage-open states. No `src/RibbonKit/**` file changes.
+- **Smallest possible library direction:** an optional host-level Orb content template or image source that defaults
+  to the existing chrome and is also consumed by the Classic2007 proxy.
+- **Evidence still required:** actual-window review of the fresh Writer build; the focused realized identity and
+  eight-item Backstage icon regression passes independently.
+
+The first live navigation-icon review showed that reusing layered ribbon images was not sufficient: Backstage's
+foreground opacity mask flattened New, Save and Save As into nearly identical document blocks and erased most Print
+detail. Writer now uses five dedicated mask-native silhouettes for New, Open, Save, Save As and Print; the general
+ribbon artwork remains unchanged.
+
+### RKWF-027 — Options dialog content scroller does not consume RibbonKit's native ScrollBar style
+
+- **First seen / packet:** 2026-08-31, Writer W4-A final Appearance-page review.
+- **Status:** RibbonKit container candidate; separate runtime approval required.
+- **Consumer goal:** arbitrary custom pages hosted by `RibbonOptionsDialog` should receive the same generation-aware
+  scrollbar chrome already used by RibbonKit controls.
+- **Reproduction and evidence:** Writer's `WriterAppearancePage` contains no `ScrollViewer`. The visible right-side
+  scrollbar is generated by `RibbonOptionsDialog`'s `PART_ContentScroll` in `Controls.OptionsDialog.xaml`. RibbonKit
+  already exposes the keyed `RibbonKit.ScrollBarStyle` specifically for native `ScrollBar` instances generated by a
+  `ScrollViewer`, but the container does not apply it to that internal scrollbar.
+- **Current app-owned workaround:** none for the scrollbar. A page cannot reach or safely restyle the container's
+  generated scrollbar. Writer explicitly merges `Controls.OptionsDialog.xaml` into its custom page before applying
+  the existing dialog action-button styles to its own Accent, Defaults and Apply buttons; a bare dynamic style
+  reference is insufficient because the custom-control theme dictionary is not automatically in page scope.
+- **Application impact:** custom page content and buttons follow the RibbonKit theme, while the dialog-owned content
+  scrollbar retains OS-native chrome.
+- **Smallest possible library direction:** add an implicit native `ScrollBar` style, based on
+  `RibbonKit.ScrollBarStyle`, inside `PART_ContentScroll.Resources`; verify built-in fill pages remain unaffected.
+- **Evidence still required:** focused `RibbonOptionsDialog` realization across the theme matrix plus actual-window
+  comparison. No `src/RibbonKit/**` change is approved by this entry.
+
+### RKWF-028 — Manually drawn consumer chrome needs explicit invalidation after appearance changes
+
+- **First seen / packet:** 2026-08-31, Writer W4-A ruler-material follow-up.
+- **Status:** closed app-owned integration detail; no RibbonKit runtime change required.
+- **Consumer goal:** Writer's ruler markers, ticks, border and margin zones must immediately follow live theme/accent
+  preview, Apply and Cancel rollback.
+- **Reproduction and evidence:** `WriterRuler.OnRender` resolves RibbonKit brush resources manually. Replacing the
+  application theme or accent dictionaries does not create a dependency-property resource change on that custom
+  `FrameworkElement`, so its previous rendering can remain until an unrelated layout invalidation occurs.
+- **App-owned correction:** `WriterRuler.RefreshAppearance()` invalidates only the visual. Writer calls it once at the
+  end of the shared appearance pipeline, after theme, accent, backdrop and dark-chrome updates. Geometry and document
+  state are untouched.
+- **Verification:** a focused realized-control regression proves the refresh invalidates the ruler while retaining the
+  same geometry; actual-window accent preview and Cancel rollback remain the visual acceptance boundary.
+
+### RKWF-029 — RibbonComboBox popup viewport retains the native OS scrollbar
+
+- **First seen / packet:** 2026-08-31, Writer W4-A scrollbar-consistency follow-up.
+- **Status:** closed; corrected in the shared RibbonKit template and live-accepted in Writer.
+- **Consumer goal:** font-family, font-size and every other `RibbonComboBox` popup should use RibbonKit's
+  generation-aware scrollbar chrome while retaining native ComboBox scrolling behavior.
+- **Reproduction and evidence:** the shared `RibbonComboBox` template in `Controls.DropDowns.xaml` already themes the
+  popup border, background and item states, but its popup contains a bare native `ScrollViewer`. The generated vertical
+  `ScrollBar` consequently keeps OS chrome instead of consuming the existing keyed `RibbonKit.ScrollBarStyle`.
+- **Current app-owned workaround:** none. Styling only Writer's two font controls would duplicate a shared-template
+  responsibility and leave the same inconsistency in every other RibbonKit consumer.
+- **RibbonKit correction:** the existing popup `ScrollViewer` is now the optional `PART_PopupScrollViewer`.
+  `RibbonComboBox.OnApplyTemplate` preserves any implicit native scrollbar style supplied by a custom template, then
+  resolves the exact keyed `RibbonKit.ScrollBarStyle` or imports its existing dictionary into only that deferred
+  viewport and registers the same style object under the native `ScrollBar` type key. No second adapter/template or
+  theme-specific value was added. Native ComboBox, ScrollViewer and `ItemsPresenter` ownership, popup geometry,
+  editable trigger, item chrome and selection states are unchanged.
+- **Verification:** the focused realized Office 2010 theory forces vertical overflow for both editable and
+  non-editable `RibbonComboBox` instances, proves the generated native scrollbar receives the exact shared keyed style,
+  pins its shared template parts and generation radii, and proves `LineDown` moves the popup viewport: **2/2 passed**.
+  `dotnet build src/RibbonKit/RibbonKit.csproj -c Release --no-restore` built `net8.0-windows` and `net9.0-windows`
+  with **0 warnings / 0 errors**. A fresh Release Writer launch exited normally after opening the relevant font
+  controls; the user confirmed the overflowing font-combo scrollbar “looks great.”
 
 ## 5. Closed observations
 
