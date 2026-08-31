@@ -142,6 +142,36 @@ public sealed class WriterPictureInteractionController : IDisposable
         return CommitResize(opening, bounded);
     }
 
+    internal bool BeginExternalResize(WriterPictureResizeHandle handle)
+    {
+        ThrowIfDisposed();
+        if (!Enum.IsDefined(handle) || !IsSelectionCurrent())
+            return false;
+        AttachAdorner();
+        if (_adorner is null)
+            return false;
+        _adorner.BeginDragForTesting(handle, new Point());
+        return _adorner.IsDragging;
+    }
+
+    internal void UpdateExternalResize(Vector delta)
+    {
+        ThrowIfDisposed();
+        if (_adorner?.IsDragging == true && double.IsFinite(delta.X) && double.IsFinite(delta.Y))
+            _adorner.UpdateDragForTesting(new Point(delta.X, delta.Y));
+    }
+
+    internal bool CompleteExternalResize()
+    {
+        ThrowIfDisposed();
+        if (_adorner?.IsDragging != true)
+            return false;
+        _adorner.CompleteDragForTesting();
+        return HasSelection;
+    }
+
+    internal void CancelExternalResize() => _adorner?.CancelDrag();
+
     /// <summary>Removes the explicitly selected picture through the established image undo bridge.</summary>
     public bool TryRemoveSelectedPicture()
     {

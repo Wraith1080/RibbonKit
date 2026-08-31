@@ -10,11 +10,14 @@
 > §3.136: Writer now has a **Settings** dialog containing its transactional **Appearance** page plus RibbonKit's
 > built-in ribbon and QAT pages, with separate versioned appearance and structural-layout files. Its focused 6/6 gate
 > and proportional follow-up regressions/zero-warning Writer builds pass, and the 2026-08-31 actual-window correction
-> sequence is accepted. W2-G's bounded stock-WPF feasibility proof is complete through design-notes §3.137: native
-> cross-page editing and paginator-consistent break metadata are viable, but stock WPF does not provide a stable
-> editable paged viewer. Production Paper remains unchanged; the next bounded slice is a public clone-backed page-
-> geometry map spike. Decorative breaks remain prohibited. Live mixed-monitor DPI movement remains deferred to W4-C.
-> No later implementation is implied.
+> sequence is accepted. W2-G's first two private production batches are complete through design-notes §3.148. The
+> focused 6/6 production tests and combined 30/30 pagination gate pass, and the Release app has live LTR evidence for
+> cross-page editing, native history/clipboard/spelling/focus, page reflow, ruler/guides, page-local table-overall and
+> picture resizing, and empty document replacement. It remains an opt-in
+> diagnostic; default Paper is unchanged. Genuine OS IME and production RTL are explicitly deferred as one later paired
+> slice. Decorative breaks remain prohibited.
+> Live mixed-monitor DPI movement remains deferred to W4-C. No later
+> implementation is implied.
 > Live status remains in `04-DESIGN-NOTES.md` §5.
 > RibbonKit Writer is a separate functional sample, not another feature page inside
 > `RibbonKit.Showcase`.
@@ -147,10 +150,11 @@ Writer should have three coordinated presentations of the same document.
 - Switching between Continuous Edit and Paper must re-present the same live editor/document without
   replacing content or losing selection, caret, undo history or focus.
 
-This describes the accepted W2-C implementation. Planned W2-G may replace Paper with a genuinely paginated editing
-presentation only after an architecture proof preserves cross-page caret/selection, IME, spell-check, clipboard,
-undo/redo and structured objects. Independent RichTextBoxes, injected blank blocks and decorative page gaps are not
-acceptable substitutes for one authoritative document and paginator-consistent reflow.
+This describes the accepted W2-C default. W2-G now has a private opt-in clone-backed production diagnostic with one
+authoritative live editor, accepted-paginator parity, page-local W3-E resize delegation and LTR live evidence, but it
+does not replace Paper by default.
+Independent RichTextBoxes, injected blank blocks and decorative page gaps remain prohibited. Production RTL and genuine
+OS IME are deferred together and are not implied by the diagnostic.
 
 ### Print Layout / Preview
 

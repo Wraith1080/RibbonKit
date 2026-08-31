@@ -12,9 +12,12 @@
 > the completed live matrix. Its final closure intentionally used focused tests rather than new full-suite gates.
 > W4-A is accepted through §3.136: its focused 6/6 gate, proportional follow-up regressions and zero-warning Writer
 > builds pass, and the 2026-08-31 actual-window Settings/persistence/appearance-polish sequence is accepted.
-> W2-G's bounded stock-WPF feasibility proof is complete through design-notes §3.137. Native cross-page editing and
-> paginator-consistent break metadata are viable, but stock viewers cannot supply a stable editable paged surface.
-> Production Paper remains unchanged; a public clone-backed page-geometry map spike is the next bounded slice.
+> W2-G's first two private production batches are complete through design-notes §3.148. The focused 6/6 production
+> tests, combined 30/30 pagination gate and zero-warning Release Writer build pass. Actual-window LTR cross-page editing,
+> native history/clipboard/spelling/focus, page-setting reflow, ruler/guides, page-local table-overall and picture resize,
+> and empty document replacement are positive. Genuine OS
+> IME and production RTL are explicitly deferred together. The compositor remains opt-in and production Paper remains
+> unchanged.
 > This document does not schedule future agents or imply that any later Writer packet exists.
 > [`10-RIBBONKIT-WRITER-PLAN.md`](10-RIBBONKIT-WRITER-PLAN.md) owns product scope; current
 > implementation status remains in [`04-DESIGN-NOTES.md` §5](../04-DESIGN-NOTES.md#5-current-state--next-steps).
@@ -472,11 +475,21 @@ mouse/keyboard/UIA operation in the actual Writer window before W3-C begins.
 
 ### W2-G — True editable pagination architecture and delivery
 
-**Status (2026-08-31): feasibility slice complete; production replacement not started.** The authoritative live
-`FlowDocument` retains native cross-page selection/edit/Undo and matches W2-D paginator page-start offsets, but
-`RichTextBox` is bottomless and `FlowDocumentPageViewer` is read-only. Realizing both over the same live document
-crashed inside WPF layout. See design-notes §3.137. The next bounded slice is an isolated public page-geometry map
-spike; it must stop if public APIs cannot map source offsets and page-local hit testing without `MS.Internal` access.
+**Status (2026-09-01): second opt-in production hardening batch complete; qualified LTR hardening go; default replacement not
+started.** The
+authoritative live `FlowDocument` retains native cross-page selection/edit/Undo and matches W2-D paginator page-start
+offsets, while an isolated clone provides supported bidirectional page-local text geometry, structured image hits and
+paragraph caret/selection overlays. Visible/adjacent mapping runs on a separate STA with current/adjacent virtualization,
+latest-only pending coalescing, cooperative active cancellation and UI generation rejection. Generation-stamped page
+events restore the live editor's focus/command ownership; reflow preserves live anchors; native spelling and clipboard
+remain editor-owned. Synthetic text composition routes correctly, while real OS IME is still a manual gate. See design-
+notes §§3.137–3.148. Page-spanning table/image/hyperlink anchors follow paginator reflow, W3-E table/picture chrome stays
+outside serialized content, RTL/zoom/DPI/scroll transforms invert to exact source offsets, and document replacement plus
+page-window handoff reject stale geometry immediately. The private production engine and clone-backed diagnostic now
+exercise those contracts in the Release app; default Paper remains unchanged. Genuine OS IME and production RTL are
+deferred as one paired packet. Page-local table-overall and eight-handle picture resize delegation, ruler/margin guides,
+and actual-window empty document replacement now pass. The next bounded work is immutable table row/column boundary
+geometry, the remaining W3-E table handles, and diagnostic UIA plus zoom/DPI hit-target hardening.
 
 **Owns:** a genuinely page-by-page editable Paper presentation and the reflow/virtualization architecture required
 to support it. It begins only after W3-E stabilizes table/picture selection, contextual state and resizing; it does
@@ -496,7 +509,8 @@ and an implementation design; never ship fake editable pages as a partial result
 clipboard, page-setting reflow, tables/images crossing or moving between pages, zoom/scroll/DPI/RTL, focus recovery and
 document replacement. Compare editable page count and break positions against the accepted preview paginator for a
 deterministic corpus. The lead verifies ordinary multi-page authoring and long-document responsiveness in the actual
-Writer window before W4-B hardening.
+Writer window before W4-B hardening. The current opt-in LTR batch satisfies the non-IME/RTL subset only; the user has
+explicitly deferred genuine IME and production RTL together, so W2-G is not closed and default Paper is not authorized.
 
 ## 8. W3 — Structured content
 
@@ -577,7 +591,8 @@ object interaction and W3 manual acceptance remain W3-E.
 menu composition, stale-target guards, mutation paths and deferred contextual publication. W3-E2 supplies explicit
 picture/table selection, Picture Tools, non-printing picture/table adorners and bounded direct resizing. The completed
 live matrix also accepts selection/merge scope, range alignment, semantic cross-view placement, zoom, cancellation,
-Undo/Redo, save/reopen, preview exclusion and pictured PDF output. W4-A is accepted; W2-G has not begun.
+Undo/Redo, save/reopen, preview exclusion and pictured PDF output. W4-A is accepted; W2-G now has the opt-in production
+diagnostic recorded in design-notes §3.147, without a default-Paper replacement.
 
 **Owns:** structured-object hit testing and selection state, the W1-E context-menu extension rows, Picture Tools,
 table/picture selection adorners, direct resizing and contextual-tab stability exclusively. It may refine Writer-owned

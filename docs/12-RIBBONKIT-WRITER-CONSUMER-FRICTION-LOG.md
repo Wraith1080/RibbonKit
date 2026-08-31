@@ -787,6 +787,44 @@ ribbon artwork remains unchanged.
   with **0 warnings / 0 errors**. A fresh Release Writer launch exited normally after opening the relevant font
   controls; the user confirmed the overflowing font-combo scrollbar “looks great.”
 
+### RKWF-030 — FlowDocumentPageViewer geometry is fitted-view local, not paginator-page local
+
+- **First seen / packet:** 2026-09-01, Writer W2-G opt-in paginated diagnostic.
+- **Status:** closed app-owned integration detail; no RibbonKit runtime change required.
+- **Consumer goal:** project clone-backed caret, selection and structured-object geometry over page images rendered from
+  the accepted preview/print paginator, while all interaction maps back to one live editor.
+- **Reproduction and evidence:** `TextPointer.GetCharacterRect`, `Image.TranslatePoint` and public hit testing were
+  measured inside a realized `FlowDocumentPageViewer`. Its `DocumentPageView` is fitted to the hidden host, while the
+  compositor PNG uses the paginator's full logical page dimensions. Publishing those rectangles unchanged displaced a
+  live picture hit: page point `347,741` was tested against fitted bounds `192,569,143×120`.
+- **App-owned correction:** normalize every insertion and structured-object rectangle from the realized page-view size
+  to the accepted paginator page size before publishing immutable values. The corrected picture frame aligns with the
+  rendered image; clicking it selects the exact live `InlineUIContainer`, exposes Picture Tools and restores native
+  editor focus. Table and text overlays use the same conversion.
+- **Smallest possible library direction:** none. This is WPF document-viewer geometry owned by Writer's compositor;
+  RibbonKit only hosts the commands and contextual tab.
+- **Verification:** the production geometry test uses the same page-spanning seed shape as the live gate, the combined
+  pagination filter passes **27/27**, and the corrected Release surface was verified at 125% DPI.
+
+### RKWF-031 — An empty FlowDocument can publish a page without insertion geometry
+
+- **First seen / packet:** 2026-09-01, Writer W2-G page-local resize/page-chrome hardening.
+- **Status:** closed app-owned lifecycle edge; no RibbonKit runtime change required.
+- **Consumer goal:** replace the authoritative document with a normal empty New document while the opt-in compositor's
+  periodic caret overlay remains safe.
+- **Reproduction and evidence:** a clean Ctrl+N changed the diagnostic to the new document, then the process terminated
+  in `WriterPaginatedDiagnosticSurface.AddCaretOverlay`. The accepted paginator correctly reported one page, but the
+  empty clone supplied no public insertion rectangles; `Enumerable.MinBy` therefore threw `Sequence contains no
+  elements` on the next overlay timer tick.
+- **App-owned correction:** treat insertion geometry as an optional immutable set. The caret projection uses an
+  empty-safe ordered lookup and simply renders no caret until a source insertion rectangle exists; document identity,
+  page count and the genuine empty page remain publishable.
+- **Smallest possible library direction:** none. This is an empty WPF document-geometry condition inside Writer's
+  private compositor, not RibbonKit command or control behavior.
+- **Verification:** the production replacement regression now uses an actually empty document, explicitly proves one
+  page with zero insertion rectangles, and refreshes overlays without failure. The actual Release rerun remained
+  responsive at document identity 2, generation 3, page 1/1; the combined pagination gate passes **30/30**.
+
 ## 5. Closed observations
 
 None yet.

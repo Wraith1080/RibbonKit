@@ -12,6 +12,7 @@ using RibbonKit.Controls;
 using RibbonKit.Writer.Editing;
 using RibbonKit.Writer.Models;
 using RibbonKit.Writer.Page;
+using RibbonKit.Writer.Pagination;
 using RibbonKit.Writer.Preview;
 using RibbonKit.Writer.Printing;
 using RibbonKit.Writer.Services.Documents;
@@ -116,6 +117,7 @@ public partial class MainWindow : RibbonWindow
         _previewController.SnapshotChanged += OnPreviewSnapshotChanged;
         _previewController.SetRebuildEnabled(false);
         PreviewView.StateChanged += OnPreviewViewStateChanged;
+        InitializePaginationDiagnostic();
         ApplyWriterViewMode(CurrentViewMode, restoreEditorFocus: false);
         DocumentEditor.TextChanged += OnEditorTextChanged;
         ContentRendered += OnInitialContentRendered;
@@ -325,6 +327,7 @@ public partial class MainWindow : RibbonWindow
         }
         _tableInteractionController?.Refresh();
         EditorSurface.SetDocument(Shell.CurrentDocument.Content);
+        _paginationDiagnosticController?.ReplaceDocument(Shell.CurrentDocument.Content);
         EditorSurface.PageSettings = Shell.CurrentDocument.PageSettings;
         QueueTablePlacementProjection();
         EditorSurface.ZoomPercent = _editingController?.Zoom.Value ?? 100d;
@@ -341,6 +344,7 @@ public partial class MainWindow : RibbonWindow
         UpdatePreviewState();
         UpdateEditingStatusSurface();
         ApplyProfileCapabilityProjection();
+        RefreshPaginationDiagnosticChrome();
     }
 
     private WriterDocument? _observedDocument;
@@ -354,6 +358,9 @@ public partial class MainWindow : RibbonWindow
                 EditorSurface.PageSettings = Shell.CurrentDocument.PageSettings;
                 HorizontalRuler.PageSettings = Shell.CurrentDocument.PageSettings;
                 MarginGuide.PageSettings = Shell.CurrentDocument.PageSettings;
+                _paginationDiagnosticController?.SetPageSettings(
+                    Shell.CurrentDocument.PageSettings);
+                RefreshPaginationDiagnosticChrome();
                 MarkPreviewPending();
                 UpdatePageSummary();
             }
@@ -387,6 +394,7 @@ public partial class MainWindow : RibbonWindow
         HorizontalRuler.ParagraphIndentDragCompleted -= OnParagraphIndentDragCompleted;
         HorizontalRuler.Dispose();
         MarginGuide.Dispose();
+        DisposePaginationDiagnostic();
         PreviewView.SetSnapshot(null);
         PreviewView.StateChanged -= OnPreviewViewStateChanged;
         if (_previewController is not null)
@@ -443,6 +451,7 @@ public partial class MainWindow : RibbonWindow
         UpdateEditingStatusSurface();
         _findReplaceDialog?.SetCanReplace(EditingController.FindReplace.CanMutate);
         ApplyStructuredContentCapabilityProjection();
+        RefreshPaginationDiagnosticChrome();
     }
 
     private void OnEditingStatisticsChanged(object? sender, EventArgs e) => UpdateEditingStatusSurface();
@@ -450,8 +459,10 @@ public partial class MainWindow : RibbonWindow
     private void OnEditingZoomChanged(object? sender, EventArgs e)
     {
         EditorSurface.ZoomPercent = EditingController.Zoom.Value;
+        _paginationDiagnosticController?.SetZoom(EditingController.Zoom.Value);
         HorizontalRuler.ZoomPercent = EditingController.Zoom.Value;
         MarginGuide.ZoomPercent = EditingController.Zoom.Value;
+        RefreshPaginationDiagnosticChrome();
         UpdateEditingStatusSurface();
     }
 
@@ -604,6 +615,7 @@ public partial class MainWindow : RibbonWindow
         MarginGuide.Visibility = paper && _marginGuidesVisible
             ? Visibility.Visible
             : Visibility.Collapsed;
+        RefreshPaginationDiagnosticChrome();
     }
 
     private void OnRulerPageSettingsPreviewChanged(object? sender,
@@ -721,6 +733,7 @@ public partial class MainWindow : RibbonWindow
         {
             _previewController?.SetRebuildEnabled(true);
             EditorSurface.Visibility = Visibility.Collapsed;
+            PaginationDiagnosticHost.Visibility = Visibility.Collapsed;
             PreviewView.Visibility = Visibility.Visible;
             ApplyRulerVisibility();
             HorizontalRuler.CancelPageSettingsPreview();
@@ -744,6 +757,7 @@ public partial class MainWindow : RibbonWindow
                 ? WriterEditorViewMode.Continuous
                 : WriterEditorViewMode.Paper;
             EditorSurface.Visibility = Visibility.Visible;
+            ApplyPaginationDiagnosticVisibility(mode);
             QueueTablePlacementProjection();
             var paper = mode == WriterViewMode.Paper;
             ApplyRulerVisibility();
@@ -1229,6 +1243,7 @@ public partial class MainWindow : RibbonWindow
         brush.Freeze();
         Shell.CurrentDocument.Content.Background = brush;
         DocumentEditor.Background = brush;
+        _paginationDiagnosticController?.RefreshFormatting();
         Shell.CurrentDocument.MarkDirty();
         _previewController?.Refresh();
         MarkPreviewPending();
