@@ -1,6 +1,7 @@
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:system="clr-namespace:System;assembly=System.Runtime">
 
     <!-- Office 2013 Dark Gray. Geometry remains the base theme's square, outlined,
          connected-tab design; this overlay changes palette tokens only. -->
@@ -11,6 +12,22 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Border" Color="#737373" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Primary" Color="#F2F2F2" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Secondary" Color="#CCCCCC" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScrollBar.Track" Color="#3B3B3B" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScrollBar.ButtonBackground" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScrollBar.ButtonBorder" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Dialog.ActionBackground" Color="#444444" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Dialog.ActionBorder" Color="#777777" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScrollBar.Thumb" Color="#707070" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScrollBar.ThumbHover" Color="#8A8A8A" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScrollBar.ThumbPressed" Color="#A0A0A0" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScrollBar.ThumbBorder" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScrollBar.Glyph" Color="#CCCCCC" />
+    <system:Double x:Key="RibbonKit.Metrics.ScrollBar.Thickness">16</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.ScrollBar.MinThumbLength">20</system:Double>
+    <CornerRadius x:Key="RibbonKit.Metrics.ScrollBar.ButtonCornerRadius">0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.ScrollBar.ThumbCornerRadius">0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.ScrollBar.RailCornerRadius">0</CornerRadius>
+    <Thickness x:Key="RibbonKit.Metrics.ScrollBar.ThumbBorderThickness">0</Thickness>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Input.Glyph" Color="#FFFFFF" />
 
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.HoverBackground" Color="#4A4A4A" />

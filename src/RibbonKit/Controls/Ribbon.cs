@@ -346,6 +346,17 @@ public class Ribbon : Control
         (ObservableCollection<object>)GetValue(QuickAccessItemsProperty);
 
     /// <summary>
+    /// Raised after a real Backstage has finished closing and its animated adorner and temporary
+    /// presentation chrome have been removed.
+    /// </summary>
+    /// <remarks>
+    /// This is a non-cancellable completion notification. It is not raised when
+    /// <see cref="ApplicationMenu"/> is the active File surface, or when a pending Backstage close
+    /// is cancelled by reopening it before teardown completes.
+    /// </remarks>
+    public event EventHandler? BackstageClosed;
+
+    /// <summary>
     /// Where <see cref="QuickAccessItems"/> render: in the tab strip row (default) or
     /// in a full-width row below the ribbon, like classic Office's
     /// "Show Quick Access Toolbar below the Ribbon".
@@ -1648,6 +1659,7 @@ public class Ribbon : Control
     // Backstage close is animated (slide out), so the adorner is removed only after the
     // exit animation; this guards against a re-open racing the pending removal.
     private bool _backstageClosing;
+    private int _backstageCloseGeneration;
 
     private static void OnIsBackstageOpenChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
@@ -1809,6 +1821,7 @@ public class Ribbon : Control
 
         if (open)
         {
+            _backstageCloseGeneration++;
             _backstageClosing = false;
 
             // Reopening while a close animation is still running: reuse the existing overlay
@@ -1870,6 +1883,7 @@ public class Ribbon : Control
             // Slide the backstage back out through the logical leading edge, then remove
             // the adorner once the exit animation finishes.
             _backstageClosing = true;
+            int closeGeneration = ++_backstageCloseGeneration;
             BackstageAdorner adorner = _backstageAdorner;
             FrameworkElement? content = Backstage as FrameworkElement;
             if (UsesClassicBackstageOrbProxy())
@@ -1900,7 +1914,7 @@ public class Ribbon : Control
                 {
                     // A re-open may have cancelled the close mid-flight; only tear down if
                     // we're still closing.
-                    if (!_backstageClosing)
+                    if (!_backstageClosing || closeGeneration != _backstageCloseGeneration)
                     {
                         return;
                     }
@@ -1918,6 +1932,7 @@ public class Ribbon : Control
                         backstage.SetBelowTabsPlacement(false);
                     }
                     RibbonMotion.Rest(content);
+                    BackstageClosed?.Invoke(this, EventArgs.Empty);
                 });
         }
     }

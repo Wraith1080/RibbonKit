@@ -127,6 +127,25 @@
         </DrawingImage.Drawing>
     </DrawingImage>
 
+    <!-- Superscript: baseline x with a raised 2. -->
+    <DrawingImage x:Key="Icon.Superscript">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Brush="Transparent" Geometry="M0,0 H24 V24 H0 Z" />
+                <GeometryDrawing Geometry="M5,9 L13,19 M13,9 L5,19">
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="#5A6270" Thickness="2.2" StartLineCap="Round" EndLineCap="Round" />
+                    </GeometryDrawing.Pen>
+                </GeometryDrawing>
+                <GeometryDrawing Geometry="M15,5 C15,2.5 20,2.5 20,5 C20,6.5 18.5,7.5 15.5,10 H20">
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="#0F6CBD" Thickness="1.8" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+                    </GeometryDrawing.Pen>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
     <DrawingImage x:Key="Icon.Find">
         <DrawingImage.Drawing>
             <DrawingGroup>

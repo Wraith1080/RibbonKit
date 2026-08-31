@@ -93,6 +93,47 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Primary" Color="#1E1E1E" />
     <!-- 2007 group labels are BLUE, not grey (unlike every later generation). -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Secondary" Color="#15428B" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScrollBar.Track" Color="#EAF2FB" />
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.ScrollBar.ButtonBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#FBFDFF" />
+        <GradientStop Offset="0.48" Color="#E1EDF9" />
+        <GradientStop Offset="0.54" Color="#BCD3EA" />
+        <GradientStop Offset="1" Color="#E9F2FB" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScrollBar.ButtonBorder" Color="#7D9EC0" />
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Dialog.ActionBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#FBFDFF" />
+        <GradientStop Offset="0.48" Color="#E1EDF9" />
+        <GradientStop Offset="0.54" Color="#BCD3EA" />
+        <GradientStop Offset="1" Color="#E9F2FB" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Dialog.ActionBorder" Color="#7D9EC0" />
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.ScrollBar.Thumb" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#F4FAFF" />
+        <GradientStop Offset="0.46" Color="#C7DCF3" />
+        <GradientStop Offset="0.52" Color="#8FB6DE" />
+        <GradientStop Offset="1" Color="#C9DDF3" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.ScrollBar.ThumbHover" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#FFF9D9" />
+        <GradientStop Offset="0.46" Color="#FFDF7A" />
+        <GradientStop Offset="0.52" Color="#E9AA30" />
+        <GradientStop Offset="1" Color="#FFE9A2" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.ScrollBar.ThumbPressed" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#FBE58C" />
+        <GradientStop Offset="0.46" Color="#E9A62A" />
+        <GradientStop Offset="0.52" Color="#C77F13" />
+        <GradientStop Offset="1" Color="#F1C75A" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScrollBar.ThumbBorder" Color="#4F7DAA" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScrollBar.Glyph" Color="#15428B" />
+    <system:Double x:Key="RibbonKit.Metrics.ScrollBar.Thickness">18</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.ScrollBar.MinThumbLength">18</system:Double>
+    <CornerRadius x:Key="RibbonKit.Metrics.ScrollBar.ButtonCornerRadius">2</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.ScrollBar.ThumbCornerRadius">3</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.ScrollBar.RailCornerRadius">2</CornerRadius>
+    <Thickness x:Key="RibbonKit.Metrics.ScrollBar.ThumbBorderThickness">1</Thickness>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Input.Glyph" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Accent" Color="#1E5A9C" />
 

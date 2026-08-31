@@ -1,0 +1,46 @@
+<Window x:Class="RibbonKit.Writer.Editing.WriterFindReplaceDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Find and Replace"
+        Width="420"
+        SizeToContent="Height"
+        MinWidth="360"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        AutomationProperties.AutomationId="WriterFindReplaceDialog"
+        AutomationProperties.Name="Find and replace">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <TextBlock Grid.Row="0" Grid.Column="0" Text="Find:" Margin="0,0,12,8" VerticalAlignment="Center" />
+        <TextBox x:Name="QueryBox" Grid.Row="0" Grid.Column="1" MinWidth="240" Margin="0,0,0,8"
+                 AutomationProperties.AutomationId="FindQuery" AutomationProperties.Name="Find text" />
+        <TextBlock x:Name="ReplacementLabel" Grid.Row="1" Grid.Column="0" Text="Replace with:" Margin="0,0,12,8" VerticalAlignment="Center" />
+        <TextBox x:Name="ReplacementBox" Grid.Row="1" Grid.Column="1" Margin="0,0,0,8"
+                 AutomationProperties.AutomationId="ReplaceText" AutomationProperties.Name="Replacement text" />
+        <CheckBox x:Name="MatchCaseBox" Grid.Row="2" Grid.Column="1" Content="Match case" Margin="0,0,0,12"
+                  AutomationProperties.AutomationId="FindMatchCase" AutomationProperties.Name="Match case" />
+        <StackPanel Grid.Row="3" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button x:Name="FindNextButton" Content="Find Next" Click="OnFindNext" IsDefault="True" Margin="4,0,0,0" Padding="12,5"
+                    AutomationProperties.AutomationId="FindNext" AutomationProperties.Name="Find next" />
+            <Button x:Name="ReplaceButton" Content="Replace" Click="OnReplace" Margin="4,0,0,0" Padding="12,5"
+                    AutomationProperties.AutomationId="ReplaceCurrent" AutomationProperties.Name="Replace current" />
+            <Button x:Name="ReplaceAllButton" Content="Replace All" Click="OnReplaceAll" Margin="4,0,0,0" Padding="12,5"
+                    AutomationProperties.AutomationId="ReplaceAll" AutomationProperties.Name="Replace all" />
+            <Button Content="Close" Click="OnClose" IsCancel="True" Margin="4,0,0,0" Padding="12,5"
+                    AutomationProperties.AutomationId="FindClose" AutomationProperties.Name="Close" />
+        </StackPanel>
+        <TextBlock x:Name="ResultText" Grid.Row="4" Grid.ColumnSpan="2" Margin="0,12,0,0" TextWrapping="Wrap"
+                   AutomationProperties.AutomationId="FindResult" AutomationProperties.Name="Find result" />
+    </Grid>
+</Window>

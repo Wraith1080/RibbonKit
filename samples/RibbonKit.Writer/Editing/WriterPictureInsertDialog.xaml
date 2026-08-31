@@ -1,0 +1,44 @@
+<Window x:Class="RibbonKit.Writer.Editing.WriterPictureInsertDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Insert Picture" Width="600" SizeToContent="Height" ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False" UseLayoutRounding="True"
+        AutomationProperties.AutomationId="InsertPictureDialog"
+        AutomationProperties.Name="Insert Picture">
+    <Grid Margin="22">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <TextBlock Text="Choose a portable PNG, JPEG, GIF or BMP image. Writer validates the file before decoding it."
+                   TextWrapping="Wrap" Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
+        <Grid Grid.Row="1" Margin="0,18,0,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBox x:Name="PathBox" Margin="0,0,10,0" VerticalContentAlignment="Center"
+                     TextChanged="OnPathChanged"
+                     AutomationProperties.AutomationId="PicturePath"
+                     AutomationProperties.Name="Picture file path" />
+            <Button x:Name="BrowseButton" Grid.Column="1" Content="Browse…" Width="92"
+                    Click="OnBrowse" AutomationProperties.AutomationId="BrowsePicture"
+                    AutomationProperties.Name="Browse for picture" />
+        </Grid>
+        <TextBlock x:Name="ValidationText" Grid.Row="2" MinHeight="24" TextWrapping="Wrap"
+                   Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}"
+                   AutomationProperties.LiveSetting="Polite"
+                   AutomationProperties.AutomationId="PictureValidation"
+                   AutomationProperties.Name="Picture validation" />
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+            <Button x:Name="InsertButton" Content="Insert" Width="92" IsDefault="True"
+                    Click="OnInsert" AutomationProperties.AutomationId="InsertPicture"
+                    AutomationProperties.Name="Insert picture" />
+            <Button Content="Cancel" Width="92" Margin="10,0,0,0" IsCancel="True"
+                    AutomationProperties.AutomationId="CancelPicture"
+                    AutomationProperties.Name="Cancel picture insertion" />
+        </StackPanel>
+    </Grid>
+</Window>

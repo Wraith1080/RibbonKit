@@ -1,0 +1,1289 @@
+<rk:RibbonWindow x:Class="RibbonKit.Writer.MainWindow"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:rk="urn:ribbonkit"
+                 xmlns:editing="clr-namespace:RibbonKit.Writer.Editing"
+                 xmlns:preview="clr-namespace:RibbonKit.Writer.Preview"
+                 Title="{Binding Title}"
+                 Icon="Assets/Writer.ico"
+                 Width="1100"
+                 Height="720"
+                 MinWidth="480"
+                 MinHeight="320"
+                 WindowStartupLocation="CenterScreen"
+                 UseLayoutRounding="True">
+    <rk:RibbonWindow.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Icons.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <Style x:Key="RecentDocumentButtonStyle" TargetType="{x:Type Button}">
+                <Setter Property="Focusable" Value="True" />
+                <Setter Property="HorizontalAlignment" Value="Stretch" />
+                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderBrush" Value="Transparent" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+                <Setter Property="Padding" Value="12,9" />
+                <Setter Property="Margin" Value="0,2,0,2" />
+                <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type Button}">
+                            <Border x:Name="Chrome"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                    Padding="{TemplateBinding Padding}">
+                                <ContentPresenter Content="{TemplateBinding Content}"
+                                                  ContentTemplate="{TemplateBinding ContentTemplate}"
+                                                  ContentStringFormat="{TemplateBinding ContentStringFormat}"
+                                                  HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                  RecognizesAccessKey="True" />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Chrome" Property="Background"
+                                            Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
+                                    <Setter TargetName="Chrome" Property="BorderBrush"
+                                            Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="Chrome" Property="Background"
+                                            Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
+                                    <Setter TargetName="Chrome" Property="BorderBrush"
+                                            Value="{DynamicResource RibbonKit.Brushes.Control.PressedBorder}" />
+                                </Trigger>
+                                <Trigger Property="IsKeyboardFocused" Value="True">
+                                    <Setter TargetName="Chrome" Property="BorderBrush"
+                                            Value="{DynamicResource RibbonKit.Brushes.Accent}" />
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter TargetName="Chrome" Property="Opacity" Value="0.45" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style x:Key="StatusZoomButtonStyle" TargetType="{x:Type Button}">
+                <Setter Property="MinWidth" Value="25" />
+                <Setter Property="Height" Value="22" />
+                <Setter Property="Padding" Value="4,0" />
+                <Setter Property="Margin" Value="3,0" />
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Ribbon.Border}" />
+                <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+            </Style>
+            <Style x:Key="BackstagePrimaryActionButtonStyle" TargetType="{x:Type Button}">
+                <Setter Property="Width" Value="210" />
+                <Setter Property="Height" Value="48" />
+                <Setter Property="HorizontalAlignment" Value="Left" />
+                <Setter Property="HorizontalContentAlignment" Value="Left" />
+                <Setter Property="Padding" Value="16,0" />
+                <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Dialog.PrimaryBackground}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Dialog.PrimaryBorder}" />
+                <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="FontSize" Value="14" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type Button}">
+                            <Border x:Name="Chrome" Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                    Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                  VerticalAlignment="Center" RecognizesAccessKey="True" />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource RibbonKit.Brushes.ApplicationButton.HoverBackground}" />
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource RibbonKit.Brushes.ApplicationButton.PressedBackground}" />
+                                </Trigger>
+                                <Trigger Property="IsKeyboardFocused" Value="True">
+                                    <Setter TargetName="Chrome" Property="BorderThickness" Value="2" />
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter TargetName="Chrome" Property="Opacity" Value="0.45" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style x:Key="BackstageSecondaryActionButtonStyle" TargetType="{x:Type Button}">
+                <Setter Property="Width" Value="210" />
+                <Setter Property="Height" Value="38" />
+                <Setter Property="HorizontalAlignment" Value="Left" />
+                <Setter Property="HorizontalContentAlignment" Value="Left" />
+                <Setter Property="Padding" Value="15,0" />
+                <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Control.SurfaceBackground}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Ribbon.Border}" />
+                <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type Button}">
+                            <Border x:Name="Chrome" Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                    Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                  VerticalAlignment="Center" RecognizesAccessKey="True" />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
+                                    <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
+                                    <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Control.PressedBorder}" />
+                                </Trigger>
+                                <Trigger Property="IsKeyboardFocused" Value="True">
+                                    <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Accent}" />
+                                    <Setter TargetName="Chrome" Property="BorderThickness" Value="2" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style x:Key="NewProfileCardStyle" TargetType="{x:Type Button}">
+                <Setter Property="Width" Value="220" />
+                <Setter Property="MinHeight" Value="224" />
+                <Setter Property="Margin" Value="0,0,14,14" />
+                <Setter Property="Padding" Value="18" />
+                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                <Setter Property="VerticalContentAlignment" Value="Stretch" />
+                <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Control.SurfaceBackground}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Ribbon.Border}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type Button}">
+                            <Border x:Name="Chrome" Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                    Padding="{TemplateBinding Padding}">
+                                <ContentPresenter Content="{TemplateBinding Content}"
+                                                  ContentTemplate="{TemplateBinding ContentTemplate}"
+                                                  HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Chrome" Property="Background"
+                                            Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
+                                    <Setter TargetName="Chrome" Property="BorderBrush"
+                                            Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="Chrome" Property="Background"
+                                            Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
+                                    <Setter TargetName="Chrome" Property="BorderBrush"
+                                            Value="{DynamicResource RibbonKit.Brushes.Control.PressedBorder}" />
+                                </Trigger>
+                                <Trigger Property="IsKeyboardFocused" Value="True">
+                                    <Setter TargetName="Chrome" Property="BorderBrush"
+                                            Value="{DynamicResource RibbonKit.Brushes.Accent}" />
+                                    <Setter TargetName="Chrome" Property="BorderThickness" Value="2" />
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter TargetName="Chrome" Property="Opacity" Value="0.45" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <DataTemplate x:Key="RecentDocumentTemplate">
+                <Grid MaxWidth="760" HorizontalAlignment="Left">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="38" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Border Width="32" Height="36" Padding="7,6"
+                            Background="{DynamicResource RibbonKit.Brushes.Control.CompanionBackground}"
+                            BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}"
+                            BorderThickness="1"
+                            CornerRadius="{DynamicResource RibbonKit.Metrics.SmallControlCornerRadius}"
+                            VerticalAlignment="Center">
+                        <Image Source="{StaticResource Icon.WriterDocument}"
+                               Stretch="Uniform" />
+                    </Border>
+                    <StackPanel Grid.Column="1" Margin="12,0,12,0" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding FileName}"
+                                   FontSize="14" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}"
+                                   TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding FolderPath}"
+                                   Margin="0,2,0,0" FontSize="11"
+                                   Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
+                                   TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding FormatLabel}"
+                                   Margin="0,3,0,0" FontSize="10"
+                                   Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
+                    </StackPanel>
+                    <TextBlock Grid.Column="2" Text="{Binding LastUsedLabel}"
+                               Margin="8,0,0,0" MaxWidth="140" FontSize="10"
+                               Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
+                               TextTrimming="CharacterEllipsis"
+                               HorizontalAlignment="Right" VerticalAlignment="Center" />
+                </Grid>
+            </DataTemplate>
+        </ResourceDictionary>
+    </rk:RibbonWindow.Resources>
+    <rk:RibbonWindow.InputBindings>
+        <KeyBinding x:Name="NewKeyBinding" Key="N" Modifiers="Control" />
+        <KeyBinding x:Name="OpenKeyBinding" Key="O" Modifiers="Control" />
+        <KeyBinding x:Name="SaveKeyBinding" Key="S" Modifiers="Control" />
+        <KeyBinding x:Name="SaveAsKeyBinding" Key="S" Modifiers="Control+Shift" />
+        <KeyBinding x:Name="UndoKeyBinding" Key="Z" Modifiers="Control" />
+        <KeyBinding x:Name="RedoKeyBinding" Key="Y" Modifiers="Control" />
+        <KeyBinding x:Name="CutKeyBinding" Key="X" Modifiers="Control" />
+        <KeyBinding x:Name="CopyKeyBinding" Key="C" Modifiers="Control" />
+        <KeyBinding x:Name="PasteKeyBinding" Key="V" Modifiers="Control" />
+        <KeyBinding x:Name="BoldKeyBinding" Key="B" Modifiers="Control" />
+        <KeyBinding x:Name="ItalicKeyBinding" Key="I" Modifiers="Control" />
+        <KeyBinding x:Name="UnderlineKeyBinding" Key="U" Modifiers="Control" />
+        <KeyBinding x:Name="FindKeyBinding" Key="F" Modifiers="Control" />
+        <KeyBinding x:Name="ReplaceKeyBinding" Key="H" Modifiers="Control" />
+    </rk:RibbonWindow.InputBindings>
+    <DockPanel x:Name="WriterContentRoot"
+               Background="{DynamicResource RibbonKit.Brushes.Window.Background}"
+               AutomationProperties.AutomationId="WriterWindow">
+        <rk:Ribbon x:Name="MainRibbon" DockPanel.Dock="Top" QuickAccessPosition="BelowRibbon"
+                   ModalEntered="OnRibbonModalEntered" ModalExited="OnRibbonModalExited"
+                   AutomationProperties.AutomationId="MainRibbon" AutomationProperties.Name="Main ribbon">
+            <rk:Ribbon.QuickAccessItems>
+                <rk:RibbonButton x:Name="QatSave" Header="Save" Size="Small" Icon="{StaticResource Icon.WriterSave}"
+                                 rk:Ribbon.CommandId="Writer.Save" rk:KeyTip.Keys="QS"
+                                 ScreenTipTitle="Save" ScreenTipText="Save the current document (Ctrl+S)."
+                                 AutomationProperties.AutomationId="QatSave" AutomationProperties.Name="Save" />
+                <rk:RibbonButton x:Name="QatUndo" Header="Undo" Size="Small" Icon="{StaticResource Icon.WriterUndo}"
+                                 rk:Ribbon.CommandId="Writer.Undo" rk:KeyTip.Keys="QU"
+                                 ScreenTipTitle="Undo" ScreenTipText="Undo the last editing action (Ctrl+Z)."
+                                 AutomationProperties.AutomationId="QatUndo" AutomationProperties.Name="Undo" />
+                <rk:RibbonButton x:Name="QatRedo" Header="Redo" Size="Small" Icon="{StaticResource Icon.WriterRedo}"
+                                 rk:Ribbon.CommandId="Writer.Redo" rk:KeyTip.Keys="QR"
+                                 ScreenTipTitle="Redo" ScreenTipText="Redo the last undone editing action (Ctrl+Y)."
+                                 AutomationProperties.AutomationId="QatRedo" AutomationProperties.Name="Redo" />
+            </rk:Ribbon.QuickAccessItems>
+            <rk:Ribbon.Backstage>
+                <rk:Backstage x:Name="WriterBackstage" Design="Modern"
+                              SelectionChanged="OnBackstageSelectionChanged"
+                              AutomationProperties.AutomationId="WriterBackstage" AutomationProperties.Name="File">
+                    <rk:Backstage.Resources>
+                        <ResourceDictionary>
+                            <ResourceDictionary.MergedDictionaries>
+                                <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.ScrollBars.xaml" />
+                            </ResourceDictionary.MergedDictionaries>
+                            <Style x:Key="WriterBackstageScrollBarStyle"
+                                   TargetType="{x:Type ScrollBar}"
+                                   BasedOn="{StaticResource RibbonKit.ScrollBarStyle}" />
+                        </ResourceDictionary>
+                    </rk:Backstage.Resources>
+                    <rk:BackstageTabItem Header="Home" Icon="{StaticResource Icon.WriterHome}" rk:KeyTip.Keys="H">
+                        <Grid x:Name="RecentPage" Margin="32" HorizontalAlignment="Stretch" AutomationProperties.AutomationId="RecentPage">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Text="Recent documents" FontSize="28" FontWeight="Light"
+                                       Foreground="{DynamicResource RibbonKit.Brushes.Accent}" Margin="0,0,0,10" />
+                            <TextBlock x:Name="RecentPageDescription" Grid.Row="1" Text="Open a document to continue where you left off. TXT keeps characters only; RTF preserves representative formatting; advanced content is best effort."
+                                       TextWrapping="Wrap" MaxWidth="700" HorizontalAlignment="Left"
+                                       Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" Margin="0,0,0,18" />
+                            <ScrollViewer x:Name="RecentDocumentsScrollViewer" Grid.Row="2"
+                                          HorizontalScrollBarVisibility="Disabled"
+                                          VerticalScrollBarVisibility="Auto"
+                                          CanContentScroll="False"
+                                          AutomationProperties.AutomationId="RecentDocumentsScrollViewer"
+                                          AutomationProperties.Name="Recent documents list">
+                                <ScrollViewer.Resources>
+                                    <Style TargetType="{x:Type ScrollBar}"
+                                           BasedOn="{StaticResource WriterBackstageScrollBarStyle}" />
+                                </ScrollViewer.Resources>
+                                <ItemsControl x:Name="RecentList" ItemsSource="{Binding RecentEntries}"
+                                              AutomationProperties.AutomationId="RecentList" AutomationProperties.Name="Recent documents">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Button Style="{StaticResource RecentDocumentButtonStyle}"
+                                                    Content="{Binding}"
+                                                    ContentTemplate="{StaticResource RecentDocumentTemplate}"
+                                                    Click="OnRecentItemClick"
+                                                    Command="{Binding DataContext.OpenRecentCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                    CommandParameter="{Binding}"
+                                                    AutomationProperties.AutomationId="{Binding Path}"
+                                                    AutomationProperties.Name="{Binding FileName}"
+                                                    AutomationProperties.HelpText="{Binding Path}"
+                                                    ToolTip="{Binding Path}" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                            <Border x:Name="RecentEmptyState" Grid.Row="2" Margin="0,14,0,0" Padding="24,26"
+                                    MaxWidth="700" HorizontalAlignment="Left"
+                                    Background="{DynamicResource RibbonKit.Brushes.Control.SurfaceBackground}"
+                                    BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}"
+                                    BorderThickness="1"
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                    AutomationProperties.AutomationId="RecentEmptyState"
+                                    AutomationProperties.Name="No recent documents">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding RecentEntries.Count}" Value="0">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <StackPanel HorizontalAlignment="Center">
+                                    <Image Source="{StaticResource Icon.WriterDocument}" Width="28" Height="28"
+                                           HorizontalAlignment="Center" Margin="0,0,0,10" />
+                                    <TextBlock Text="No recent documents" FontSize="15" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}"
+                                               HorizontalAlignment="Center" />
+                                    <TextBlock Text="Open or save a document and it will appear here."
+                                               Margin="0,5,0,0" TextWrapping="Wrap" TextAlignment="Center"
+                                               Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </rk:BackstageTabItem>
+                    <rk:BackstageTabItem x:Name="NewBackstageTab" Header="New" Icon="{StaticResource Icon.WriterBackstageNew}" rk:Ribbon.CommandId="Writer.New" rk:KeyTip.Keys="N"
+                                         AutomationProperties.AutomationId="FileNew" AutomationProperties.Name="New">
+                        <Grid x:Name="NewProfilePage" Margin="32" HorizontalAlignment="Stretch"
+                              AutomationProperties.AutomationId="NewProfilePage"
+                              AutomationProperties.Name="New document profiles">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Text="Create a new document" FontSize="28" FontWeight="Light"
+                                       Foreground="{DynamicResource RibbonKit.Brushes.Accent}" Margin="0,0,0,8" />
+                            <TextBlock x:Name="NewProfileDescription" Grid.Row="1" Text="Choose the profile that matches the fidelity and compatibility you need."
+                                       TextWrapping="Wrap" MaxWidth="760" HorizontalAlignment="Left"
+                                       Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" Margin="0,0,0,22" />
+                            <ScrollViewer x:Name="NewProfileCardsScrollViewer" Grid.Row="2"
+                                          HorizontalScrollBarVisibility="Disabled"
+                                          VerticalScrollBarVisibility="Auto"
+                                          CanContentScroll="False"
+                                          HorizontalAlignment="Stretch"
+                                          VerticalAlignment="Stretch"
+                                          AutomationProperties.AutomationId="NewProfileCardsScrollViewer"
+                                          AutomationProperties.Name="New document profile cards">
+                                <ScrollViewer.Resources>
+                                    <Style TargetType="{x:Type ScrollBar}"
+                                           BasedOn="{StaticResource WriterBackstageScrollBarStyle}" />
+                                </ScrollViewer.Resources>
+                                <WrapPanel x:Name="NewProfileCardsPanel" Orientation="Horizontal"
+                                           HorizontalAlignment="Left">
+                                <Button x:Name="PlainTextCard" Tag="PlainText" Style="{StaticResource NewProfileCardStyle}"
+                                        Click="OnNewProfileCardClick" Command="{Binding NewCommand}"
+                                        CommandParameter="PlainText" Focusable="True" IsTabStop="True"
+                                        rk:KeyTip.Keys="1"
+                                        AutomationProperties.AutomationId="NewPlainTextCard"
+                                        AutomationProperties.Name="Plain Text"
+                                        AutomationProperties.HelpText="Create an untitled Plain Text document. Characters are preserved; formatting and page settings are not.">
+                                    <StackPanel>
+                                        <Image Source="{StaticResource Icon.WriterProfilePlainText}" Width="64" Height="76"
+                                               HorizontalAlignment="Left" Stretch="Uniform" Margin="0,0,0,16" />
+                                        <TextBlock Text="Plain Text" FontSize="18" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+                                        <TextBlock Text="Characters only" Margin="0,8,0,0"
+                                                   Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
+                                        <TextBlock Text="Best for lightweight .txt files. Preview and print remain available."
+                                                   TextWrapping="Wrap" Margin="0,8,0,0"
+                                                   Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
+                                    </StackPanel>
+                                </Button>
+                                <Button x:Name="RichTextCard" Tag="RichText" Style="{StaticResource NewProfileCardStyle}"
+                                        Click="OnNewProfileCardClick" Command="{Binding NewCommand}"
+                                        CommandParameter="RichText" Focusable="True" IsTabStop="True"
+                                        rk:KeyTip.Keys="2"
+                                        AutomationProperties.AutomationId="NewRichTextCard"
+                                        AutomationProperties.Name="Rich Text"
+                                        AutomationProperties.HelpText="Create an untitled Rich Text document with interoperable formatting.">
+                                    <StackPanel>
+                                        <Image Source="{StaticResource Icon.WriterProfileRichText}" Width="64" Height="76"
+                                               HorizontalAlignment="Left" Stretch="Uniform" Margin="0,0,0,16" />
+                                        <TextBlock Text="Rich Text" FontSize="18" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+                                        <TextBlock Text="Interoperable formatting" Margin="0,8,0,0"
+                                                   Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
+                                        <TextBlock Text="Best for .rtf exchange while keeping common text formatting."
+                                                   TextWrapping="Wrap" Margin="0,8,0,0"
+                                                   Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
+                                    </StackPanel>
+                                </Button>
+                                <Button x:Name="RibbonKitWriterCard" Tag="RibbonKitWriter" Style="{StaticResource NewProfileCardStyle}"
+                                        Click="OnNewProfileCardClick" Command="{Binding NewCommand}"
+                                        CommandParameter="RibbonKitWriter" Focusable="True" IsTabStop="True"
+                                        rk:KeyTip.Keys="3"
+                                        AutomationProperties.AutomationId="NewRibbonKitWriterCard"
+                                        AutomationProperties.Name="RibbonKit Writer"
+                                        AutomationProperties.HelpText="Create an untitled native RibbonKit Writer document with page settings and full supported fidelity.">
+                                    <StackPanel>
+                                        <Image Source="{StaticResource Icon.WriterProfileNative}" Width="64" Height="76"
+                                               HorizontalAlignment="Left" Stretch="Uniform" Margin="0,0,0,16" />
+                                        <TextBlock Text="RibbonKit Writer" FontSize="18" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+                                        <TextBlock Text="Native Writer fidelity" Margin="0,8,0,0"
+                                                   Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
+                                        <TextBlock Text="Best for .rkw files with supported page settings and formatting."
+                                                   TextWrapping="Wrap" Margin="0,8,0,0"
+                                                   Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
+                                    </StackPanel>
+                                </Button>
+                                </WrapPanel>
+                            </ScrollViewer>
+                        </Grid>
+                    </rk:BackstageTabItem>
+                    <rk:BackstageTabItem Header="Open" Icon="{StaticResource Icon.WriterBackstageOpen}" IsButton="True" rk:Ribbon.CommandId="Writer.Open" rk:KeyTip.Keys="O" Click="OnBackstageAction" Command="{Binding OpenCommand}" AutomationProperties.AutomationId="FileOpen" AutomationProperties.Name="Open" />
+                    <rk:BackstageTabItem Header="Save" Icon="{StaticResource Icon.WriterBackstageSave}" IsButton="True" rk:Ribbon.CommandId="Writer.Save" rk:KeyTip.Keys="S" Click="OnBackstageAction" Command="{Binding SaveCommand}" AutomationProperties.AutomationId="FileSave" AutomationProperties.Name="Save" />
+                    <rk:BackstageTabItem Header="Save As" Icon="{StaticResource Icon.WriterBackstageSaveAs}" IsButton="True" rk:Ribbon.CommandId="Writer.SaveAs" rk:KeyTip.Keys="A" Click="OnBackstageAction" Command="{Binding SaveAsCommand}" AutomationProperties.AutomationId="FileSaveAs" AutomationProperties.Name="Save As" />
+                    <rk:BackstageTabItem x:Name="PrintBackstageTab" Header="Print" Icon="{StaticResource Icon.WriterBackstagePrint}" rk:KeyTip.Keys="P"
+                                         AutomationProperties.AutomationId="FilePrintPage" AutomationProperties.Name="Print and page setup">
+                        <Grid x:Name="PrintBackstagePage" Margin="32" MaxWidth="820" HorizontalAlignment="Left">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="280" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="Print" FontSize="28" FontWeight="Light"
+                                           Foreground="{DynamicResource RibbonKit.Brushes.Accent}" Margin="0,0,0,16" />
+                                <rk:RibbonButton x:Name="BackstagePrintButton" Style="{StaticResource BackstagePrimaryActionButtonStyle}"
+                                                 Margin="0,0,0,10" Click="OnPrintClick"
+                                                 rk:Ribbon.CommandId="Writer.Print" rk:KeyTip.Keys="P"
+                                                 ScreenTipTitle="Print" ScreenTipText="Print the exact current preview paginator after checking printer limits."
+                                                 AutomationProperties.AutomationId="BackstagePrint"
+                                                 AutomationProperties.Name="Print document">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Image Source="{StaticResource Icon.WriterPrint}" Width="24" Height="24" Margin="0,0,12,0" />
+                                        <TextBlock Text="Print…" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </rk:RibbonButton>
+                                <rk:RibbonButton x:Name="BackstagePreviewButton" Style="{StaticResource BackstageSecondaryActionButtonStyle}"
+                                                 Click="OnBackstagePreviewClick"
+                                                 rk:Ribbon.CommandId="Writer.View.PrintPreview" rk:KeyTip.Keys="V"
+                                                 ScreenTipTitle="Print Preview" ScreenTipText="Close Backstage and show stable fixed preview pages."
+                                                 AutomationProperties.AutomationId="BackstagePrintPreview"
+                                                 AutomationProperties.Name="Open print preview">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Image Source="{StaticResource Icon.WriterPrintPreview}" Width="20" Height="20" Margin="0,0,12,0" />
+                                        <TextBlock Text="Open print preview" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </rk:RibbonButton>
+                            </StackPanel>
+                            <Border Grid.Column="1" Margin="32,0,0,0" Padding="24"
+                                    VerticalAlignment="Top"
+                                    Background="{DynamicResource RibbonKit.Brushes.Control.SurfaceBackground}"
+                                    BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}" BorderThickness="1"
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}">
+                                <StackPanel>
+                                    <Image Source="{StaticResource Icon.WriterPageSize}" Width="34" Height="34"
+                                           HorizontalAlignment="Left" Margin="0,0,0,12" />
+                                    <TextBlock Text="Page setup" FontSize="18" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+                                    <TextBlock x:Name="BackstagePageSummaryText" Margin="0,10,0,0" TextWrapping="Wrap"
+                                               Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
+                                               AutomationProperties.AutomationId="BackstagePageSummary"
+                                               AutomationProperties.Name="Page setup summary" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </rk:BackstageTabItem>
+                    <rk:BackstageTabItem Header="Settings" IsButton="True" Placement="Bottom"
+                                         rk:Ribbon.CommandId="Writer.Settings" rk:KeyTip.Keys="T"
+                                         Click="OnBackstageSettings"
+                                         Icon="{StaticResource Icon.WriterOptions}"
+                                         AutomationProperties.AutomationId="FileSettings"
+                                         AutomationProperties.Name="Settings" />
+                    <rk:BackstageTabItem Header="Exit" Icon="{StaticResource Icon.WriterExit}" IsButton="True" Placement="Bottom" rk:Ribbon.CommandId="Writer.Exit" rk:KeyTip.Keys="X" Click="OnBackstageAction" Command="{Binding ExitCommand}" AutomationProperties.AutomationId="FileExit" AutomationProperties.Name="Exit" />
+                </rk:Backstage>
+            </rk:Ribbon.Backstage>
+            <rk:RibbonTab x:Name="HomeTab" Header="Home" rk:Ribbon.CommandId="Writer.Home" rk:KeyTip.Keys="H" AutomationProperties.AutomationId="HomeTab" AutomationProperties.Name="Home">
+                <rk:RibbonGroup x:Name="ClipboardGroup" Header="Clipboard" rk:Ribbon.CommandId="Writer.Home.Clipboard" rk:KeyTip.Keys="CL" Icon="{StaticResource Icon.WriterPaste}" AutomationProperties.AutomationId="ClipboardGroup" AutomationProperties.Name="Clipboard">
+                    <Grid Margin="2,2,2,0" VerticalAlignment="Center">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <rk:RibbonSplitButton x:Name="PasteButton" Header="Paste" Size="Large" Layout="Vertical"
+                                         Icon="{StaticResource Icon.WriterPaste}"
+                                         LargeIcon="{StaticResource Icon.WriterPaste.Large}"
+                                         rk:Ribbon.CommandId="Writer.Home.Clipboard.Paste" rk:KeyTip.Keys="PV"
+                                         ScreenTipTitle="Paste" ScreenTipText="Paste the clipboard contents at the caret (Ctrl+V)."
+                                         AutomationProperties.AutomationId="HomePaste" AutomationProperties.Name="Paste">
+                            <rk:RibbonMenuItem x:Name="PasteKeepFormatting" Header="Keep Source Formatting"
+                                               rk:Ribbon.CommandId="Writer.Home.Clipboard.Paste.KeepFormatting"
+                                               AutomationProperties.AutomationId="PasteKeepFormatting"
+                                               AutomationProperties.Name="Paste with source formatting" />
+                            <rk:RibbonMenuItem x:Name="PasteTextOnly" Header="Keep Text Only"
+                                               rk:Ribbon.CommandId="Writer.Home.Clipboard.Paste.TextOnly"
+                                               AutomationProperties.AutomationId="PasteTextOnly"
+                                               AutomationProperties.Name="Paste text only" />
+                        </rk:RibbonSplitButton>
+                        <StackPanel Grid.Column="1" Margin="4,0,0,0" VerticalAlignment="Center">
+                            <rk:RibbonButton x:Name="CutButton" Header="Cut" Size="Small" Icon="{StaticResource Icon.WriterCut}"
+                                             rk:Ribbon.CommandId="Writer.Home.Clipboard.Cut" rk:KeyTip.Keys="CX"
+                                             ScreenTipTitle="Cut" ScreenTipText="Remove the selected text and place it on the clipboard (Ctrl+X)."
+                                             AutomationProperties.AutomationId="HomeCut" AutomationProperties.Name="Cut" />
+                            <rk:RibbonButton x:Name="CopyButton" Header="Copy" Size="Small" Icon="{StaticResource Icon.WriterCopy}"
+                                             rk:Ribbon.CommandId="Writer.Home.Clipboard.Copy" rk:KeyTip.Keys="CP"
+                                             ScreenTipTitle="Copy" ScreenTipText="Copy the selected text to the clipboard (Ctrl+C)."
+                                             AutomationProperties.AutomationId="HomeCopy" AutomationProperties.Name="Copy" />
+                        </StackPanel>
+                    </Grid>
+                </rk:RibbonGroup>
+                <rk:RibbonGroup x:Name="FontGroup" Header="Font" rk:Ribbon.CommandId="Writer.Home.Font" rk:KeyTip.Keys="FO" Icon="{StaticResource Icon.WriterFont}"
+                                ShowDialogLauncher="True" DialogLauncherClick="OnFontDialogLauncher"
+                                AutomationProperties.AutomationId="FontGroup" AutomationProperties.Name="Font">
+                    <StackPanel Margin="2,2,2,0" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                            <rk:RibbonComboBox x:Name="FontFamilyCombo" InputWidth="128" IsEditable="True"
+                                               IsTextSearchEnabled="True"
+                                               TextSearch.TextPath="DisplayName"
+                                               ScrollViewer.CanContentScroll="True"
+                                               VirtualizingStackPanel.IsVirtualizing="True"
+                                               VirtualizingStackPanel.VirtualizationMode="Recycling"
+                                               rk:Ribbon.CommandId="Writer.Home.Font.Family" rk:KeyTip.Keys="FF"
+                                               ScreenTipTitle="Font family" ScreenTipText="Search installed fonts and apply one to the selection."
+                                               AutomationProperties.AutomationId="FontFamily" AutomationProperties.Name="Font family">
+                                <rk:RibbonComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding DisplayName}" FontFamily="{Binding FontFamily}"
+                                                   TextTrimming="CharacterEllipsis" />
+                                    </DataTemplate>
+                                </rk:RibbonComboBox.ItemTemplate>
+                            </rk:RibbonComboBox>
+                            <rk:RibbonComboBox x:Name="FontSizeCombo" InputWidth="48" Margin="4,0,0,0" IsEditable="True"
+                                               rk:Ribbon.CommandId="Writer.Home.Font.Size" rk:KeyTip.Keys="FS"
+                                               ScreenTipTitle="Font size" ScreenTipText="Choose the text size in points."
+                                               AutomationProperties.AutomationId="FontSize" AutomationProperties.Name="Font size">
+                                <ComboBoxItem Content="8" />
+                                <ComboBoxItem Content="9" />
+                                <ComboBoxItem Content="10" />
+                                <ComboBoxItem Content="11" />
+                                <ComboBoxItem Content="12" />
+                                <ComboBoxItem Content="14" />
+                                <ComboBoxItem Content="16" />
+                                <ComboBoxItem Content="18" />
+                                <ComboBoxItem Content="20" />
+                                <ComboBoxItem Content="22" />
+                                <ComboBoxItem Content="24" />
+                                <ComboBoxItem Content="26" />
+                                <ComboBoxItem Content="28" />
+                                <ComboBoxItem Content="36" />
+                                <ComboBoxItem Content="48" />
+                                <ComboBoxItem Content="72" />
+                            </rk:RibbonComboBox>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <rk:RibbonToggleButton x:Name="BoldButton" Header="Bold" Size="Small" Icon="{StaticResource Icon.WriterBold}"
+                                                   rk:Ribbon.CommandId="Writer.Home.Font.Bold" rk:KeyTip.Keys="FB"
+                                                   ScreenTipTitle="Bold" ScreenTipText="Make the selected text bold (Ctrl+B)."
+                                                   AutomationProperties.AutomationId="HomeBold" AutomationProperties.Name="Bold" />
+                            <rk:RibbonToggleButton x:Name="ItalicButton" Header="Italic" Size="Small" Icon="{StaticResource Icon.WriterItalic}"
+                                                   rk:Ribbon.CommandId="Writer.Home.Font.Italic" rk:KeyTip.Keys="FI"
+                                                   ScreenTipTitle="Italic" ScreenTipText="Italicize the selected text (Ctrl+I)."
+                                                   AutomationProperties.AutomationId="HomeItalic" AutomationProperties.Name="Italic" />
+                            <rk:RibbonToggleButton x:Name="UnderlineButton" Header="Underline" Size="Small" Icon="{StaticResource Icon.WriterUnderline}"
+                                                   rk:Ribbon.CommandId="Writer.Home.Font.Underline" rk:KeyTip.Keys="FU"
+                                                   ScreenTipTitle="Underline" ScreenTipText="Underline the selected text (Ctrl+U)."
+                                                   AutomationProperties.AutomationId="HomeUnderline" AutomationProperties.Name="Underline" />
+                            <rk:RibbonButton x:Name="GrowFontButton" Header="Grow Font" Size="Small" Icon="{StaticResource Icon.WriterPlus}"
+                                             rk:Ribbon.CommandId="Writer.Home.Font.Grow" rk:KeyTip.Keys="FG"
+                                             ScreenTipTitle="Grow Font" ScreenTipText="Move to the next conventional font size."
+                                             AutomationProperties.AutomationId="GrowFont" AutomationProperties.Name="Grow Font" />
+                            <rk:RibbonButton x:Name="ShrinkFontButton" Header="Shrink Font" Size="Small" Icon="{StaticResource Icon.WriterMinus}"
+                                             rk:Ribbon.CommandId="Writer.Home.Font.Shrink" rk:KeyTip.Keys="FK"
+                                             ScreenTipTitle="Shrink Font" ScreenTipText="Move to the previous conventional font size."
+                                             AutomationProperties.AutomationId="ShrinkFont" AutomationProperties.Name="Shrink Font" />
+                            <rk:RibbonButton x:Name="ClearFormattingButton" Header="Clear Formatting" Size="Small" Icon="{StaticResource Icon.WriterReset}"
+                                             rk:Ribbon.CommandId="Writer.Home.Font.ClearFormatting" rk:KeyTip.Keys="FC"
+                                             ScreenTipTitle="Clear Formatting" ScreenTipText="Remove direct character formatting while retaining paragraph layout."
+                                             AutomationProperties.AutomationId="ClearFormatting" AutomationProperties.Name="Clear Formatting" />
+                            <rk:RibbonSplitButton x:Name="TextColorButton" Header="Text Color" Size="Small" Icon="{StaticResource Icon.WriterTextColor}"
+                                                     rk:Ribbon.CommandId="Writer.Home.Font.TextColor" rk:KeyTip.Keys="TC"
+                                                     ScreenTipTitle="Text Color" ScreenTipText="Apply the last-used color or choose another solid color."
+                                                     AutomationProperties.AutomationId="TextColor" AutomationProperties.Name="Text Color">
+                                <rk:RibbonMenuItem x:Name="TextColorAutomatic" Header="Automatic" rk:Ribbon.CommandId="Writer.Home.Font.TextColor.Automatic" rk:KeyTip.Keys="A" AutomationProperties.AutomationId="TextColorAutomatic" AutomationProperties.Name="Automatic text color" />
+                                <Separator />
+                                <rk:RibbonMenuItem x:Name="TextColorMoreColors" Header="More Colors..." rk:Ribbon.CommandId="Writer.Home.Font.TextColor.More" rk:KeyTip.Keys="M" AutomationProperties.AutomationId="TextColorMoreColors" AutomationProperties.Name="More text colors" />
+                            </rk:RibbonSplitButton>
+                            <rk:RibbonSplitButton x:Name="HighlightColorButton" Header="Highlight" Size="Small" Icon="{StaticResource Icon.WriterHighlight}"
+                                                     rk:Ribbon.CommandId="Writer.Home.Font.Highlight" rk:KeyTip.Keys="TH"
+                                                     ScreenTipTitle="Text Highlight" ScreenTipText="Apply the last-used highlight or choose another solid color."
+                                                     AutomationProperties.AutomationId="HighlightColor" AutomationProperties.Name="Text Highlight">
+                                <rk:RibbonMenuItem x:Name="HighlightNone" Header="No Color" rk:Ribbon.CommandId="Writer.Home.Font.Highlight.None" rk:KeyTip.Keys="N" AutomationProperties.AutomationId="HighlightNone" AutomationProperties.Name="No highlight color" />
+                                <Separator />
+                                <rk:RibbonMenuItem x:Name="HighlightMoreColors" Header="More Colors..." rk:Ribbon.CommandId="Writer.Home.Font.Highlight.More" rk:KeyTip.Keys="M" AutomationProperties.AutomationId="HighlightMoreColors" AutomationProperties.Name="More highlight colors" />
+                            </rk:RibbonSplitButton>
+                        </StackPanel>
+                    </StackPanel>
+                </rk:RibbonGroup>
+                <rk:RibbonGroup x:Name="ParagraphGroup" Header="Paragraph" rk:Ribbon.CommandId="Writer.Home.Paragraph" rk:KeyTip.Keys="PA" Icon="{StaticResource Icon.WriterAlignLeft}"
+                                ShowDialogLauncher="True" DialogLauncherClick="OnParagraphDialogLauncher"
+                                AutomationProperties.AutomationId="ParagraphGroup" AutomationProperties.Name="Paragraph">
+                    <StackPanel Margin="2,2,2,0" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                            <rk:RibbonToggleButton x:Name="AlignLeftButton" Header="Align Left" Size="Small" Icon="{StaticResource Icon.WriterAlignLeft}"
+                                                   rk:Ribbon.CommandId="Writer.Home.Paragraph.AlignLeft" rk:KeyTip.Keys="AL"
+                                                   ScreenTipTitle="Align Left" ScreenTipText="Align the selected paragraphs to the left."
+                                                   AutomationProperties.AutomationId="AlignLeft" AutomationProperties.Name="Align Left" />
+                            <rk:RibbonToggleButton x:Name="AlignCenterButton" Header="Center" Size="Small" Icon="{StaticResource Icon.WriterAlignCenter}"
+                                                   rk:Ribbon.CommandId="Writer.Home.Paragraph.AlignCenter" rk:KeyTip.Keys="AC"
+                                                   ScreenTipTitle="Center" ScreenTipText="Center the selected paragraphs."
+                                                   AutomationProperties.AutomationId="AlignCenter" AutomationProperties.Name="Center" />
+                            <rk:RibbonToggleButton x:Name="AlignRightButton" Header="Align Right" Size="Small" Icon="{StaticResource Icon.WriterAlignRight}"
+                                                   rk:Ribbon.CommandId="Writer.Home.Paragraph.AlignRight" rk:KeyTip.Keys="AR"
+                                                   ScreenTipTitle="Align Right" ScreenTipText="Align the selected paragraphs to the right."
+                                                   AutomationProperties.AutomationId="AlignRight" AutomationProperties.Name="Align Right" />
+                            <rk:RibbonToggleButton x:Name="AlignJustifyButton" Header="Justify" Size="Small" Icon="{StaticResource Icon.WriterJustify}"
+                                                   rk:Ribbon.CommandId="Writer.Home.Paragraph.AlignJustify" rk:KeyTip.Keys="AJ"
+                                                   ScreenTipTitle="Justify" ScreenTipText="Justify the selected paragraphs."
+                                                   AutomationProperties.AutomationId="AlignJustify" AutomationProperties.Name="Justify" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <rk:RibbonToggleButton x:Name="BulletsButton" Header="Bullets" Size="Small" Icon="{StaticResource Icon.WriterBullets}"
+                                                   rk:Ribbon.CommandId="Writer.Home.Paragraph.Bullets" rk:KeyTip.Keys="BL"
+                                                   ScreenTipTitle="Bullets" ScreenTipText="Toggle a bulleted list for the selected paragraphs."
+                                                   AutomationProperties.AutomationId="ParagraphBullets" AutomationProperties.Name="Bullets" />
+                            <rk:RibbonToggleButton x:Name="NumberingButton" Header="Numbering" Size="Small" Icon="{StaticResource Icon.WriterNumbering}"
+                                                   rk:Ribbon.CommandId="Writer.Home.Paragraph.Numbering" rk:KeyTip.Keys="NU"
+                                                   ScreenTipTitle="Numbering" ScreenTipText="Toggle a numbered list for the selected paragraphs."
+                                                   AutomationProperties.AutomationId="ParagraphNumbering" AutomationProperties.Name="Numbering" />
+                            <rk:RibbonButton x:Name="IncreaseIndentButton" Header="Increase Indent" Size="Small" Icon="{StaticResource Icon.WriterIndentIncrease}"
+                                             rk:Ribbon.CommandId="Writer.Home.Paragraph.IncreaseIndent" rk:KeyTip.Keys="II"
+                                             ScreenTipTitle="Increase Indent" ScreenTipText="Move the selected paragraphs one step to the right."
+                                             AutomationProperties.AutomationId="IncreaseIndent" AutomationProperties.Name="Increase Indent" />
+                            <rk:RibbonButton x:Name="DecreaseIndentButton" Header="Decrease Indent" Size="Small" Icon="{StaticResource Icon.WriterIndentDecrease}"
+                                              rk:Ribbon.CommandId="Writer.Home.Paragraph.DecreaseIndent" rk:KeyTip.Keys="DI"
+                                              ScreenTipTitle="Decrease Indent" ScreenTipText="Move the selected paragraphs one step to the left."
+                                              AutomationProperties.AutomationId="DecreaseIndent" AutomationProperties.Name="Decrease Indent" />
+                        </StackPanel>
+                    </StackPanel>
+                    <rk:RibbonGroupSeparator x:Name="ParagraphGroupSeparator" />
+                    <rk:RibbonDropDownButton x:Name="ParagraphSpacingButton" Header="Paragraph Spacing" Size="Large"
+                                              Icon="{StaticResource Icon.WriterParagraphSpacing}"
+                                              LargeIcon="{StaticResource Icon.WriterParagraphSpacing}"
+                                              rk:Ribbon.CommandId="Writer.Home.Paragraph.Spacing" rk:KeyTip.Keys="PS"
+                                              ScreenTipTitle="Paragraph Spacing" ScreenTipText="Choose spacing before and after the selected paragraphs."
+                                              AutomationProperties.AutomationId="ParagraphSpacing" AutomationProperties.Name="Paragraph Spacing">
+                        <rk:RibbonMenuItem x:Name="ParagraphSpacingCompact" Header="Compact (0 / 0 pt)" rk:Ribbon.CommandId="Writer.Home.Paragraph.Spacing.Compact" rk:KeyTip.Keys="C" AutomationProperties.AutomationId="ParagraphSpacingCompact" AutomationProperties.Name="Compact paragraph spacing" />
+                        <rk:RibbonMenuItem x:Name="ParagraphSpacingNormal" Header="Normal (0 / 6 pt)" rk:Ribbon.CommandId="Writer.Home.Paragraph.Spacing.Normal" rk:KeyTip.Keys="N" AutomationProperties.AutomationId="ParagraphSpacingNormal" AutomationProperties.Name="Normal paragraph spacing" />
+                        <rk:RibbonMenuItem x:Name="ParagraphSpacingOpen" Header="Open (6 / 12 pt)" rk:Ribbon.CommandId="Writer.Home.Paragraph.Spacing.Open" rk:KeyTip.Keys="O" AutomationProperties.AutomationId="ParagraphSpacingOpen" AutomationProperties.Name="Open paragraph spacing" />
+                    </rk:RibbonDropDownButton>
+                </rk:RibbonGroup>
+                <rk:RibbonGroup x:Name="EditingGroup" Header="Editing" rk:Ribbon.CommandId="Writer.Home.Editing" rk:KeyTip.Keys="ED" Icon="{StaticResource Icon.WriterFind}" AutomationProperties.AutomationId="EditingGroup" AutomationProperties.Name="Editing">
+                    <StackPanel Margin="2,2,2,0" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                            <rk:RibbonButton x:Name="FindButton" Header="Find" Size="Small" Icon="{StaticResource Icon.WriterFind}"
+                                             rk:Ribbon.CommandId="Writer.Home.Editing.Find" rk:KeyTip.Keys="FD"
+                                             ScreenTipTitle="Find" ScreenTipText="Find text in the current document (Ctrl+F)."
+                                             AutomationProperties.AutomationId="EditingFind" AutomationProperties.Name="Find" />
+                            <rk:RibbonButton x:Name="ReplaceButton" Header="Replace" Size="Small" Icon="{StaticResource Icon.WriterReplace}"
+                                             rk:Ribbon.CommandId="Writer.Home.Editing.Replace" rk:KeyTip.Keys="RP"
+                                             ScreenTipTitle="Replace" ScreenTipText="Find and replace text in the current document (Ctrl+H)."
+                                             AutomationProperties.AutomationId="EditingReplace" AutomationProperties.Name="Replace" />
+                            <rk:RibbonButton x:Name="SelectAllButton" Header="Select All" Size="Small" Icon="{StaticResource Icon.WriterSelectAll}"
+                                             rk:Ribbon.CommandId="Writer.Home.Editing.SelectAll" rk:KeyTip.Keys="SA"
+                                             ScreenTipTitle="Select All" ScreenTipText="Select all document content."
+                                             AutomationProperties.AutomationId="EditingSelectAll" AutomationProperties.Name="Select All" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <rk:RibbonToggleButton x:Name="SpellCheckButton" Header="Spelling" Size="Small" Icon="{StaticResource Icon.WriterSpellCheck}"
+                                                   rk:Ribbon.CommandId="Writer.Home.Editing.Spelling" rk:KeyTip.Keys="SP"
+                                                   ScreenTipTitle="Spelling" ScreenTipText="Toggle native WPF spelling underlines."
+                                                   AutomationProperties.AutomationId="EditingSpelling" AutomationProperties.Name="Spelling" />
+                        </StackPanel>
+                    </StackPanel>
+                </rk:RibbonGroup>
+            </rk:RibbonTab>
+            <rk:RibbonTab x:Name="InsertTab" Header="Insert" rk:Ribbon.CommandId="Writer.Insert" rk:KeyTip.Keys="I"
+                          AutomationProperties.AutomationId="InsertTab" AutomationProperties.Name="Insert">
+                <rk:RibbonGroup x:Name="InsertTablesGroup" Header="Table" rk:Ribbon.CommandId="Writer.Insert.Table"
+                                rk:KeyTip.Keys="TB" Icon="{StaticResource Icon.WriterTable}"
+                                AutomationProperties.AutomationId="InsertTablesGroup" AutomationProperties.Name="Table"
+                                AutomationProperties.HelpText="Insert a native table whose supported structure and formatting are preserved in RibbonKit Writer files.">
+                    <rk:InRibbonGallery x:Name="TableGridPicker" Width="278" Height="54"
+                                        FlowDirection="LeftToRight"
+                                        SelectionChanged="OnTableGridSelectionChanged"
+                                        ItemPreview="OnTableGridItemPreview"
+                                        ItemPreviewCancelled="OnTableGridItemPreviewCancelled"
+                                        PreviewKeyDown="OnTableGridPreviewKeyDown"
+                                        rk:Ribbon.CommandId="Writer.Insert.Table.Grid" rk:KeyTip.Keys="TG"
+                                        AutomationProperties.AutomationId="InsertTableGrid"
+                                        AutomationProperties.Name="Table grid picker"
+                                        AutomationProperties.HelpText="Use arrow keys for a quick table up to 3 by 8, or choose Custom Table for another supported size. RibbonKit Writer files preserve supported tables.">
+                        <rk:InRibbonGallery.ToolTip>
+                            <rk:RibbonScreenTip Title="Insert Table"
+                                                Description="Choose a quick 1 × 1 through 3 × 8 table, or enter another supported size with Custom Table. RibbonKit Writer files preserve supported tables." />
+                        </rk:InRibbonGallery.ToolTip>
+                    </rk:InRibbonGallery>
+                </rk:RibbonGroup>
+                <rk:RibbonGroup x:Name="InsertIllustrationsGroup" Header="Illustrations" rk:Ribbon.CommandId="Writer.Insert.Illustrations"
+                                rk:KeyTip.Keys="IL" Icon="{StaticResource Icon.WriterImage}"
+                                AutomationProperties.AutomationId="InsertIllustrationsGroup" AutomationProperties.Name="Illustrations">
+                    <rk:RibbonButton x:Name="InsertPictureButton" Header="Picture" Size="Large"
+                                     SizeDefinition="Large, Medium, Small"
+                                     Icon="{StaticResource Icon.WriterImage}" LargeIcon="{StaticResource Icon.WriterImage}"
+                                     Click="OnInsertPictureClick" rk:Ribbon.CommandId="Writer.Insert.Picture" rk:KeyTip.Keys="PI"
+                                     ScreenTipTitle="Picture" ScreenTipText="Insert a portable PNG, JPEG, GIF or BMP image into the document."
+                                     AutomationProperties.AutomationId="InsertPicture" AutomationProperties.Name="Picture" />
+                </rk:RibbonGroup>
+                <rk:RibbonGroup x:Name="InsertLinksGroup" Header="Links" rk:Ribbon.CommandId="Writer.Insert.Links"
+                                rk:KeyTip.Keys="LK" Icon="{StaticResource Icon.WriterHyperlink}"
+                                AutomationProperties.AutomationId="InsertLinksGroup" AutomationProperties.Name="Links">
+                    <rk:RibbonButton x:Name="InsertHyperlinkButton" Header="Hyperlink" Size="Large"
+                                     SizeDefinition="Large, Medium, Small"
+                                     Icon="{StaticResource Icon.WriterHyperlink}" LargeIcon="{StaticResource Icon.WriterHyperlink}"
+                                     Click="OnInsertHyperlinkClick" rk:Ribbon.CommandId="Writer.Insert.Hyperlink" rk:KeyTip.Keys="HY"
+                                     ScreenTipTitle="Hyperlink" ScreenTipText="Insert or edit a safe HTTP, HTTPS or mailto hyperlink."
+                                     AutomationProperties.AutomationId="InsertHyperlink" AutomationProperties.Name="Hyperlink" />
+                </rk:RibbonGroup>
+                <rk:RibbonGroup x:Name="InsertTextGroup" Header="Text" rk:Ribbon.CommandId="Writer.Insert.Text"
+                                rk:KeyTip.Keys="TX" Icon="{StaticResource Icon.WriterDateTime}"
+                                AutomationProperties.AutomationId="InsertTextGroup" AutomationProperties.Name="Text">
+                    <rk:RibbonButton x:Name="InsertDateTimeButton" Header="Date and Time" Size="Large"
+                                     SizeDefinition="Large, Medium, Small"
+                                     Icon="{StaticResource Icon.WriterDateTime}" LargeIcon="{StaticResource Icon.WriterDateTime}"
+                                     Click="OnInsertDateTimeClick" rk:Ribbon.CommandId="Writer.Insert.DateTime" rk:KeyTip.Keys="DT"
+                                     ScreenTipTitle="Date and Time" ScreenTipText="Insert a formatted, editable date and time value."
+                                     AutomationProperties.AutomationId="InsertDateTime" AutomationProperties.Name="Date and Time" />
+                </rk:RibbonGroup>
+            </rk:RibbonTab>
+            <rk:RibbonTab x:Name="TableToolsTab" Header="Table Tools" IsContextual="True"
+                          ContextualColor="#107C41" Visibility="Collapsed"
+                          rk:Ribbon.CommandId="Writer.TableTools" rk:KeyTip.Keys="TT"
+                          AutomationProperties.AutomationId="TableToolsTab" AutomationProperties.Name="Table Tools"
+                          AutomationProperties.HelpText="Contextual commands for the table cell containing the editor caret. RibbonKit Writer files preserve supported table structure and formatting.">
+                <rk:RibbonGroup x:Name="TableRowsColumnsGroup" Header="Rows &amp; Columns" rk:Ribbon.CommandId="Writer.TableTools.RowsColumns"
+                                rk:KeyTip.Keys="RC" Icon="{StaticResource Icon.WriterColumns}"
+                                AutomationProperties.AutomationId="TableRowsColumnsGroup" AutomationProperties.Name="Rows and Columns">
+                    <rk:RibbonButton x:Name="InsertTableRowAboveButton" Header="Row Above" Size="Large" SizeDefinition="Large, Medium, Small"
+                                     Icon="{StaticResource Icon.WriterAddRowAbove}" LargeIcon="{StaticResource Icon.WriterAddRowAbove}"
+                                     Click="OnInsertTableRowAboveClick" rk:Ribbon.CommandId="Writer.TableTools.Rows.InsertAbove" rk:KeyTip.Keys="RA"
+                                     ScreenTipTitle="Insert Row Above" ScreenTipText="Insert one row above the current table cell."
+                                     AutomationProperties.AutomationId="TableInsertRowAbove" AutomationProperties.Name="Insert row above" />
+                    <rk:RibbonButton x:Name="InsertTableRowBelowButton" Header="Row Below" Size="Large" SizeDefinition="Large, Medium, Small"
+                                     Icon="{StaticResource Icon.WriterAddRowBelow}" LargeIcon="{StaticResource Icon.WriterAddRowBelow}"
+                                     Click="OnInsertTableRowBelowClick" rk:Ribbon.CommandId="Writer.TableTools.Rows.InsertBelow" rk:KeyTip.Keys="RB"
+                                     ScreenTipTitle="Insert Row Below" ScreenTipText="Insert one row below the current table cell."
+                                     AutomationProperties.AutomationId="TableInsertRowBelow" AutomationProperties.Name="Insert row below" />
+                    <rk:RibbonButton x:Name="InsertTableColumnLeftButton" Header="Column Left" Size="Large" SizeDefinition="Large, Medium, Small"
+                                     Icon="{StaticResource Icon.WriterAddColumnLeft}" LargeIcon="{StaticResource Icon.WriterAddColumnLeft}"
+                                     Click="OnInsertTableColumnLeftClick" rk:Ribbon.CommandId="Writer.TableTools.Columns.InsertLeft" rk:KeyTip.Keys="CL"
+                                     ScreenTipTitle="Insert Column Left" ScreenTipText="Insert one column to the left of the current table cell."
+                                     AutomationProperties.AutomationId="TableInsertColumnLeft" AutomationProperties.Name="Insert column left" />
+                    <rk:RibbonButton x:Name="InsertTableColumnRightButton" Header="Column Right" Size="Large" SizeDefinition="Large, Medium, Small"
+                                     Icon="{StaticResource Icon.WriterAddColumnRight}" LargeIcon="{StaticResource Icon.WriterAddColumnRight}"
+                                     Click="OnInsertTableColumnRightClick" rk:Ribbon.CommandId="Writer.TableTools.Columns.InsertRight" rk:KeyTip.Keys="CR"
+                                     ScreenTipTitle="Insert Column Right" ScreenTipText="Insert one column to the right of the current table cell."
+                                     AutomationProperties.AutomationId="TableInsertColumnRight" AutomationProperties.Name="Insert column right" />
+                    <rk:RibbonButton x:Name="DeleteTableRowButton" Header="Delete Row" Size="Large" SizeDefinition="Large, Medium, Small"
+                                     Icon="{StaticResource Icon.WriterDeleteRow}" LargeIcon="{StaticResource Icon.WriterDeleteRow}"
+                                     Click="OnDeleteTableRowClick" rk:Ribbon.CommandId="Writer.TableTools.Rows.Delete" rk:KeyTip.Keys="DR"
+                                     ScreenTipTitle="Delete Row" ScreenTipText="Delete the row containing the current table cell."
+                                     AutomationProperties.AutomationId="TableDeleteRow" AutomationProperties.Name="Delete row" />
+                    <rk:RibbonButton x:Name="DeleteTableColumnButton" Header="Delete Column" Size="Large" SizeDefinition="Large, Medium, Small"
+                                     Icon="{StaticResource Icon.WriterDeleteColumn}" LargeIcon="{StaticResource Icon.WriterDeleteColumn}"
+                                     Click="OnDeleteTableColumnClick" rk:Ribbon.CommandId="Writer.TableTools.Columns.Delete" rk:KeyTip.Keys="DC"
+                                     ScreenTipTitle="Delete Column" ScreenTipText="Delete the column containing the current table cell."
+                                     AutomationProperties.AutomationId="TableDeleteColumn" AutomationProperties.Name="Delete column" />
+                </rk:RibbonGroup>
+                <rk:RibbonGroup x:Name="TableMergeGroup" Header="Merge" rk:Ribbon.CommandId="Writer.TableTools.Merge"
+                                rk:KeyTip.Keys="ME" Icon="{StaticResource Icon.WriterMergeCells}"
+                                AutomationProperties.AutomationId="TableMergeGroup" AutomationProperties.Name="Merge">
+                    <rk:RibbonButton x:Name="MergeTableCellsButton" Header="Merge Cells" Size="Large" SizeDefinition="Large, Medium, Small"
+                                     Icon="{StaticResource Icon.WriterMergeCells}" LargeIcon="{StaticResource Icon.WriterMergeCells}"
+                                     Click="OnMergeTableCellsClick" rk:Ribbon.CommandId="Writer.TableTools.MergeCells" rk:KeyTip.Keys="MC"
+                                     ScreenTipTitle="Merge Cells" ScreenTipText="Merge the selected rectangular table cells into one cell."
+                                     AutomationProperties.AutomationId="TableMergeCells" AutomationProperties.Name="Merge cells" />
+                    <rk:RibbonButton x:Name="SplitTableCellButton" Header="Split Cell" Size="Large" SizeDefinition="Large, Medium, Small"
+                                     Icon="{StaticResource Icon.WriterSplitCells}" LargeIcon="{StaticResource Icon.WriterSplitCells}"
+                                     Click="OnSplitTableCellClick" rk:Ribbon.CommandId="Writer.TableTools.SplitCell" rk:KeyTip.Keys="SC"
+                                     ScreenTipTitle="Split Cell" ScreenTipText="Split the spanned cell into its logical rows and columns."
+                                     AutomationProperties.AutomationId="TableSplitCell" AutomationProperties.Name="Split cell" />
+                    <rk:RibbonButton x:Name="InsertTableLiteralTabButton" Header="Literal Tab" Size="Large" SizeDefinition="Large, Medium, Small"
+                                     Icon="{StaticResource Icon.WriterTable}" LargeIcon="{StaticResource Icon.WriterTable}"
+                                     Click="OnInsertTableLiteralTabClick" rk:Ribbon.CommandId="Writer.TableTools.InsertLiteralTab" rk:KeyTip.Keys="LT"
+                                     ScreenTipTitle="Literal Tab" ScreenTipText="Insert a tab character in the current cell. Ctrl+Tab is the keyboard shortcut."
+                                     AutomationProperties.AutomationId="TableLiteralTab" AutomationProperties.Name="Insert literal tab" />
+                </rk:RibbonGroup>
+                <rk:RibbonGroup x:Name="TableSizeGroup" Header="Cell Size" rk:Ribbon.CommandId="Writer.TableTools.Size"
+                                rk:KeyTip.Keys="SI" Icon="{StaticResource Icon.WriterDistributeColumns}"
+                                AutomationProperties.AutomationId="TableSizeGroup" AutomationProperties.Name="Cell Size">
+                    <rk:RibbonDropDownButton x:Name="TableRowHeightButton" Header="Row Height" Size="Large"
+                                             SizeDefinition="Large, Medium, Small"
+                                             Icon="{StaticResource Icon.WriterDistributeRows}" LargeIcon="{StaticResource Icon.WriterDistributeRows}"
+                                             rk:Ribbon.CommandId="Writer.TableTools.Size.RowHeight" rk:KeyTip.Keys="RH"
+                                             ScreenTipTitle="Row Height" ScreenTipText="Apply a supported minimum height to the current table row."
+                                             AutomationProperties.AutomationId="TableRowHeight" AutomationProperties.Name="Row height">
+                        <rk:RibbonMenuItem Header="Compact" Tag="24" Click="OnTableRowHeightClick" rk:Ribbon.CommandId="Writer.TableTools.Size.RowHeight.Compact" rk:KeyTip.Keys="C" AutomationProperties.AutomationId="TableRowHeightCompact" AutomationProperties.Name="Compact row height" />
+                        <rk:RibbonMenuItem Header="Standard" Tag="32" Click="OnTableRowHeightClick" rk:Ribbon.CommandId="Writer.TableTools.Size.RowHeight.Standard" rk:KeyTip.Keys="S" AutomationProperties.AutomationId="TableRowHeightStandard" AutomationProperties.Name="Standard row height" />
+                        <rk:RibbonMenuItem Header="Tall" Tag="48" Click="OnTableRowHeightClick" rk:Ribbon.CommandId="Writer.TableTools.Size.RowHeight.Tall" rk:KeyTip.Keys="T" AutomationProperties.AutomationId="TableRowHeightTall" AutomationProperties.Name="Tall row height" />
+                    </rk:RibbonDropDownButton>
+                    <rk:RibbonDropDownButton x:Name="TableColumnWidthButton" Header="Column Width" Size="Large"
+                                             SizeDefinition="Large, Medium, Small"
+                                             Icon="{StaticResource Icon.WriterColumns}" LargeIcon="{StaticResource Icon.WriterColumns}"
+                                             rk:Ribbon.CommandId="Writer.TableTools.Size.ColumnWidth" rk:KeyTip.Keys="CW"
+                                             ScreenTipTitle="Column Width" ScreenTipText="Apply a supported fixed width to the current table column."
+                                             AutomationProperties.AutomationId="TableColumnWidth" AutomationProperties.Name="Column width">
+                        <rk:RibbonMenuItem Header="Narrow" Tag="80" Click="OnTableColumnWidthClick" rk:Ribbon.CommandId="Writer.TableTools.Size.ColumnWidth.Narrow" rk:KeyTip.Keys="N" AutomationProperties.AutomationId="TableColumnWidthNarrow" AutomationProperties.Name="Narrow column width" />
+                        <rk:RibbonMenuItem Header="Standard" Tag="120" Click="OnTableColumnWidthClick" rk:Ribbon.CommandId="Writer.TableTools.Size.ColumnWidth.Standard" rk:KeyTip.Keys="S" AutomationProperties.AutomationId="TableColumnWidthStandard" AutomationProperties.Name="Standard column width" />
+                        <rk:RibbonMenuItem Header="Wide" Tag="160" Click="OnTableColumnWidthClick" rk:Ribbon.CommandId="Writer.TableTools.Size.ColumnWidth.Wide" rk:KeyTip.Keys="W" AutomationProperties.AutomationId="TableColumnWidthWide" AutomationProperties.Name="Wide column width" />
+                    </rk:RibbonDropDownButton>
+                    <rk:RibbonButton x:Name="DistributeTableRowsButton" Header="Distribute Rows" Size="Large" SizeDefinition="Large, Medium, Small"
+                                     Icon="{StaticResource Icon.WriterDistributeRows}" LargeIcon="{StaticResource Icon.WriterDistributeRows}"
+                                     Click="OnDistributeTableRowsClick" rk:Ribbon.CommandId="Writer.TableTools.Size.DistributeRows" rk:KeyTip.Keys="ER"
+                                     ScreenTipTitle="Distribute Rows" ScreenTipText="Give the selected table rows equal minimum height."
+                                     AutomationProperties.AutomationId="TableDistributeRows" AutomationProperties.Name="Distribute rows" />
+                    <rk:RibbonButton x:Name="DistributeTableColumnsButton" Header="Distribute Columns" Size="Large" SizeDefinition="Large, Medium, Small"
+                                     Icon="{StaticResource Icon.WriterDistributeColumns}" LargeIcon="{StaticResource Icon.WriterDistributeColumns}"
+                                     Click="OnDistributeTableColumnsClick" rk:Ribbon.CommandId="Writer.TableTools.Size.DistributeColumns" rk:KeyTip.Keys="EC"
+                                     ScreenTipTitle="Distribute Columns" ScreenTipText="Give the selected table columns equal width."
+                                     AutomationProperties.AutomationId="TableDistributeColumns" AutomationProperties.Name="Distribute columns" />
+                </rk:RibbonGroup>
+                <rk:RibbonGroup x:Name="TableAlignmentGroup" Header="Alignment" rk:Ribbon.CommandId="Writer.TableTools.Alignment"
+                                rk:KeyTip.Keys="AL" Icon="{StaticResource Icon.WriterAlignCenter}"
+                                AutomationProperties.AutomationId="TableAlignmentGroup" AutomationProperties.Name="Alignment">
+                    <rk:RibbonDropDownButton x:Name="TableAlignmentButton" Header="Cell Alignment" Size="Large"
+                                             SizeDefinition="Large, Medium, Small"
+                                             Icon="{StaticResource Icon.WriterAlignCenter}" LargeIcon="{StaticResource Icon.WriterAlignCenter}"
+                                             rk:Ribbon.CommandId="Writer.TableTools.Alignment.Cell" rk:KeyTip.Keys="CA"
+                                             ScreenTipTitle="Cell Alignment" ScreenTipText="Align text in the current table cell."
+                                             AutomationProperties.AutomationId="TableCellAlignment" AutomationProperties.Name="Cell alignment">
+                        <rk:RibbonMenuItem Header="Left" Tag="Left" Click="OnTableAlignmentClick" rk:Ribbon.CommandId="Writer.TableTools.Alignment.Left" rk:KeyTip.Keys="L" AutomationProperties.AutomationId="TableAlignLeft" AutomationProperties.Name="Align cell text left" />
+                        <rk:RibbonMenuItem Header="Center" Tag="Center" Click="OnTableAlignmentClick" rk:Ribbon.CommandId="Writer.TableTools.Alignment.Center" rk:KeyTip.Keys="C" AutomationProperties.AutomationId="TableAlignCenter" AutomationProperties.Name="Center cell text" />
+                        <rk:RibbonMenuItem Header="Right" Tag="Right" Click="OnTableAlignmentClick" rk:Ribbon.CommandId="Writer.TableTools.Alignment.Right" rk:KeyTip.Keys="R" AutomationProperties.AutomationId="TableAlignRight" AutomationProperties.Name="Align cell text right" />
+                        <rk:RibbonMenuItem Header="Justify" Tag="Justify" Click="OnTableAlignmentClick" rk:Ribbon.CommandId="Writer.TableTools.Alignment.Justify" rk:KeyTip.Keys="J" AutomationProperties.AutomationId="TableAlignJustify" AutomationProperties.Name="Justify cell text" />
+                    </rk:RibbonDropDownButton>
+                    <rk:RibbonDropDownButton x:Name="TableVerticalAlignmentButton" Header="Vertical Alignment" Size="Large"
+                                             SizeDefinition="Large, Medium, Small"
+                                             Icon="{StaticResource Icon.WriterCellAlignMiddle}" LargeIcon="{StaticResource Icon.WriterCellAlignMiddle}"
+                                             rk:Ribbon.CommandId="Writer.TableTools.Alignment.Vertical" rk:KeyTip.Keys="VA"
+                                             ScreenTipTitle="Vertical Alignment" ScreenTipText="Place content at the top, center, or bottom of the current cell while preserving its height."
+                                             AutomationProperties.AutomationId="TableCellVerticalAlignment" AutomationProperties.Name="Cell vertical alignment">
+                        <rk:RibbonMenuItem Header="Top" Tag="Top" Click="OnTableVerticalAlignmentClick" rk:Ribbon.CommandId="Writer.TableTools.Alignment.Vertical.Top" rk:KeyTip.Keys="T" AutomationProperties.AutomationId="TableAlignTop" AutomationProperties.Name="Align cell content to top" />
+                        <rk:RibbonMenuItem Header="Center" Tag="Center" Click="OnTableVerticalAlignmentClick" rk:Ribbon.CommandId="Writer.TableTools.Alignment.Vertical.Center" rk:KeyTip.Keys="C" AutomationProperties.AutomationId="TableAlignMiddle" AutomationProperties.Name="Center cell content vertically" />
+                        <rk:RibbonMenuItem Header="Bottom" Tag="Bottom" Click="OnTableVerticalAlignmentClick" rk:Ribbon.CommandId="Writer.TableTools.Alignment.Vertical.Bottom" rk:KeyTip.Keys="B" AutomationProperties.AutomationId="TableAlignBottom" AutomationProperties.Name="Align cell content to bottom" />
+                    </rk:RibbonDropDownButton>
+                    <rk:RibbonDropDownButton x:Name="TableHorizontalAlignmentButton" Header="Table Alignment" Size="Large"
+                                             SizeDefinition="Large, Medium, Small"
+                                             Icon="{StaticResource Icon.WriterAlignCenter}" LargeIcon="{StaticResource Icon.WriterAlignCenter}"
+                                             rk:Ribbon.CommandId="Writer.TableTools.Alignment.Table" rk:KeyTip.Keys="TA"
+                                             ScreenTipTitle="Table Alignment" ScreenTipText="Place the table at the left, center, or right of the page without changing cell text alignment."
+                                             AutomationProperties.AutomationId="TableHorizontalAlignment" AutomationProperties.Name="Table alignment">
+                        <rk:RibbonMenuItem Header="Left" Tag="Left" Click="OnTableHorizontalAlignmentClick" rk:Ribbon.CommandId="Writer.TableTools.Alignment.Table.Left" rk:KeyTip.Keys="L" AutomationProperties.AutomationId="TablePositionLeft" AutomationProperties.Name="Align table left" />
+                        <rk:RibbonMenuItem Header="Center" Tag="Center" Click="OnTableHorizontalAlignmentClick" rk:Ribbon.CommandId="Writer.TableTools.Alignment.Table.Center" rk:KeyTip.Keys="C" AutomationProperties.AutomationId="TablePositionCenter" AutomationProperties.Name="Center table" />
+                        <rk:RibbonMenuItem Header="Right" Tag="Right" Click="OnTableHorizontalAlignmentClick" rk:Ribbon.CommandId="Writer.TableTools.Alignment.Table.Right" rk:KeyTip.Keys="R" AutomationProperties.AutomationId="TablePositionRight" AutomationProperties.Name="Align table right" />
+                    </rk:RibbonDropDownButton>
+                </rk:RibbonGroup>
+                <rk:RibbonGroup x:Name="TableDesignGroup" Header="Design" rk:Ribbon.CommandId="Writer.TableTools.Design"
+                                rk:KeyTip.Keys="DE" Icon="{StaticResource Icon.WriterBorders}"
+                                AutomationProperties.AutomationId="TableDesignGroup" AutomationProperties.Name="Design"
+                                AutomationProperties.HelpText="Restrained border and background presets only; full table styles are deferred.">
+                    <rk:RibbonDropDownButton x:Name="TableBordersButton" Header="Borders" Size="Large"
+                                             SizeDefinition="Large, Medium, Small"
+                                             Icon="{StaticResource Icon.WriterBorders}" LargeIcon="{StaticResource Icon.WriterBorders}"
+                                             rk:Ribbon.CommandId="Writer.TableTools.Design.Borders" rk:KeyTip.Keys="BO"
+                                             ScreenTipTitle="Borders" ScreenTipText="Apply supported neutral borders to the current table."
+                                             AutomationProperties.AutomationId="TableBorders" AutomationProperties.Name="Table borders">
+                        <rk:RibbonMenuItem Header="All Borders" Tag="All" Click="OnTableBordersClick" rk:Ribbon.CommandId="Writer.TableTools.Design.Borders.All" rk:KeyTip.Keys="A" AutomationProperties.AutomationId="TableBordersAll" AutomationProperties.Name="All borders" />
+                        <rk:RibbonMenuItem Header="No Borders" Tag="None" Click="OnTableBordersClick" rk:Ribbon.CommandId="Writer.TableTools.Design.Borders.None" rk:KeyTip.Keys="N" AutomationProperties.AutomationId="TableBordersNone" AutomationProperties.Name="No borders" />
+                    </rk:RibbonDropDownButton>
+                    <rk:RibbonDropDownButton x:Name="TableBackgroundButton" Header="Background" Size="Large"
+                                             SizeDefinition="Large, Medium, Small"
+                                             Icon="{StaticResource Icon.WriterCellShading}" LargeIcon="{StaticResource Icon.WriterCellShading}"
+                                             rk:Ribbon.CommandId="Writer.TableTools.Design.Background" rk:KeyTip.Keys="BG"
+                                             ScreenTipTitle="Background" ScreenTipText="Apply a supported neutral background to the current table."
+                                             AutomationProperties.AutomationId="TableBackground" AutomationProperties.Name="Table background">
+                        <rk:RibbonMenuItem Header="No Color" Tag="None" Click="OnTableBackgroundClick" rk:Ribbon.CommandId="Writer.TableTools.Design.Background.None" rk:KeyTip.Keys="N" AutomationProperties.AutomationId="TableBackgroundNone" AutomationProperties.Name="No table background" />
+                        <rk:RibbonMenuItem Header="Soft Accent" Tag="Accent" Click="OnTableBackgroundClick" rk:Ribbon.CommandId="Writer.TableTools.Design.Background.Accent" rk:KeyTip.Keys="A" AutomationProperties.AutomationId="TableBackgroundAccent" AutomationProperties.Name="Soft accent table background" />
+                    </rk:RibbonDropDownButton>
+                </rk:RibbonGroup>
+            </rk:RibbonTab>
+            <rk:RibbonTab x:Name="PictureToolsTab" Header="Picture Tools" IsContextual="True"
+                          ContextualColor="#C43E1C" Visibility="Collapsed"
+                          rk:Ribbon.CommandId="Writer.PictureTools" rk:KeyTip.Keys="PT"
+                          AutomationProperties.AutomationId="PictureToolsTab" AutomationProperties.Name="Picture Tools"
+                          AutomationProperties.HelpText="Contextual size and removal commands for the explicitly selected picture.">
+                <rk:RibbonGroup x:Name="PictureSizeGroup" Header="Size" rk:Ribbon.CommandId="Writer.PictureTools.Size"
+                                rk:KeyTip.Keys="SZ" Icon="{StaticResource Icon.WriterPageSize}"
+                                AutomationProperties.AutomationId="PictureSizeGroup" AutomationProperties.Name="Picture size">
+                    <Grid x:Name="PictureDimensionsPanel" VerticalAlignment="Center" Margin="0,0,4,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <TextBlock x:Name="PictureWidthLabel" Grid.Row="0" Grid.Column="0" Text="Width"
+                                   Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}"
+                                   VerticalAlignment="Center" Margin="2,0,6,0" />
+                        <rk:RibbonTextBox x:Name="PictureWidthBox" Grid.Row="0" Grid.Column="1"
+                                          InputWidth="72" MaxLength="10"
+                                          PreviewKeyDown="OnPictureSizeBoxPreviewKeyDown"
+                                          rk:Ribbon.CommandId="Writer.PictureTools.Size.Width" rk:KeyTip.Keys="W"
+                                          ScreenTipTitle="Picture Width" ScreenTipText="Enter a width in device-independent pixels, then choose Apply Size."
+                                          AutomationProperties.AutomationId="PictureWidth" AutomationProperties.Name="Picture width" />
+                        <TextBlock x:Name="PictureHeightLabel" Grid.Row="1" Grid.Column="0" Text="Height"
+                                   Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}"
+                                   VerticalAlignment="Center" Margin="2,0,6,0" />
+                        <rk:RibbonTextBox x:Name="PictureHeightBox" Grid.Row="1" Grid.Column="1"
+                                          InputWidth="72" MaxLength="10"
+                                          PreviewKeyDown="OnPictureSizeBoxPreviewKeyDown"
+                                          rk:Ribbon.CommandId="Writer.PictureTools.Size.Height" rk:KeyTip.Keys="H"
+                                          ScreenTipTitle="Picture Height" ScreenTipText="Enter a height in device-independent pixels, then choose Apply Size."
+                                          AutomationProperties.AutomationId="PictureHeight" AutomationProperties.Name="Picture height" />
+                    </Grid>
+                    <rk:RibbonButton x:Name="ApplyPictureSizeButton" Header="Apply Size" Size="Large" SizeDefinition="Large, Medium, Small"
+                                     Icon="{StaticResource Icon.WriterPageSize}" LargeIcon="{StaticResource Icon.WriterPageSize}"
+                                     Click="OnApplyPictureSizeClick" rk:Ribbon.CommandId="Writer.PictureTools.Size.Apply" rk:KeyTip.Keys="A"
+                                     ScreenTipTitle="Apply Picture Size" ScreenTipText="Commit the entered picture dimensions as one Undo unit."
+                                     AutomationProperties.AutomationId="ApplyPictureSize" AutomationProperties.Name="Apply picture size" />
+                </rk:RibbonGroup>
+                <rk:RibbonGroup x:Name="PictureActionsGroup" Header="Picture" rk:Ribbon.CommandId="Writer.PictureTools.Actions"
+                                rk:KeyTip.Keys="AC" Icon="{StaticResource Icon.WriterImage}"
+                                AutomationProperties.AutomationId="PictureActionsGroup" AutomationProperties.Name="Picture actions">
+                    <rk:RibbonButton x:Name="RemoveSelectedPictureButton" Header="Remove Picture" Size="Large" SizeDefinition="Large, Medium, Small"
+                                     Icon="{StaticResource Icon.WriterDelete}" LargeIcon="{StaticResource Icon.WriterDelete}"
+                                     Click="OnRemoveSelectedPictureClick" rk:Ribbon.CommandId="Writer.PictureTools.Remove" rk:KeyTip.Keys="R"
+                                     ScreenTipTitle="Remove Picture" ScreenTipText="Remove the selected picture. Undo restores it."
+                                     AutomationProperties.AutomationId="RemoveSelectedPicture" AutomationProperties.Name="Remove picture" />
+                </rk:RibbonGroup>
+            </rk:RibbonTab>
+            <rk:RibbonTab x:Name="PageTab" Header="Page" rk:Ribbon.CommandId="Writer.Page" rk:KeyTip.Keys="P"
+                          AutomationProperties.AutomationId="PageTab" AutomationProperties.Name="Page">
+                <rk:RibbonGroup x:Name="PageSetupGroup" Header="Page Setup" rk:Ribbon.CommandId="Writer.Page.Setup" rk:KeyTip.Keys="PS"
+                                Icon="{StaticResource Icon.WriterPageSize}"
+                                AutomationProperties.AutomationId="PageSetupGroup" AutomationProperties.Name="Page Setup">
+                    <rk:RibbonDropDownButton x:Name="PaperSizeButton" Header="Paper Size" Size="Large"
+                                                 Icon="{StaticResource Icon.WriterPageSize}"
+                                                 LargeIcon="{StaticResource Icon.WriterPageSize}"
+                                                 rk:Ribbon.CommandId="Writer.Page.Size" rk:KeyTip.Keys="SZ"
+                                                 ScreenTipTitle="Paper Size" ScreenTipText="Choose the logical paper size used by editing, preview, and printing."
+                                                 AutomationProperties.AutomationId="PagePaperSize" AutomationProperties.Name="Paper Size">
+                            <rk:RibbonMenuItem x:Name="PaperSizeA4" Header="A4 (210 × 297 mm)" Tag="A4" Click="OnPaperSizeClick"
+                                               rk:Ribbon.CommandId="Writer.Page.Size.A4" rk:KeyTip.Keys="A"
+                                               AutomationProperties.AutomationId="PaperSizeA4" AutomationProperties.Name="A4 paper" />
+                            <rk:RibbonMenuItem x:Name="PaperSizeLetter" Header="Letter (8.5 × 11 in)" Tag="Letter" Click="OnPaperSizeClick"
+                                               rk:Ribbon.CommandId="Writer.Page.Size.Letter" rk:KeyTip.Keys="L"
+                                               AutomationProperties.AutomationId="PaperSizeLetter" AutomationProperties.Name="Letter paper" />
+                            <rk:RibbonMenuItem x:Name="PaperSizeLegal" Header="Legal (8.5 × 14 in)" Tag="Legal" Click="OnPaperSizeClick"
+                                               rk:Ribbon.CommandId="Writer.Page.Size.Legal" rk:KeyTip.Keys="G"
+                                               AutomationProperties.AutomationId="PaperSizeLegal" AutomationProperties.Name="Legal paper" />
+                    </rk:RibbonDropDownButton>
+                    <rk:RibbonDropDownButton x:Name="OrientationButton" Header="Orientation" Size="Large"
+                                                 Icon="{StaticResource Icon.WriterPortrait}"
+                                                 LargeIcon="{StaticResource Icon.WriterPortrait}"
+                                                 rk:Ribbon.CommandId="Writer.Page.Orientation" rk:KeyTip.Keys="OR"
+                                                 ScreenTipTitle="Orientation" ScreenTipText="Switch the logical page between portrait and landscape without dimension drift."
+                                                 AutomationProperties.AutomationId="PageOrientation" AutomationProperties.Name="Orientation">
+                            <rk:RibbonMenuItem x:Name="OrientationPortrait" Header="Portrait" Tag="Portrait" Click="OnOrientationClick"
+                                               rk:Ribbon.CommandId="Writer.Page.Orientation.Portrait" rk:KeyTip.Keys="P"
+                                               AutomationProperties.AutomationId="OrientationPortrait" AutomationProperties.Name="Portrait orientation" />
+                            <rk:RibbonMenuItem x:Name="OrientationLandscape" Header="Landscape" Tag="Landscape" Click="OnOrientationClick"
+                                               rk:Ribbon.CommandId="Writer.Page.Orientation.Landscape" rk:KeyTip.Keys="L"
+                                               AutomationProperties.AutomationId="OrientationLandscape" AutomationProperties.Name="Landscape orientation" />
+                    </rk:RibbonDropDownButton>
+                </rk:RibbonGroup>
+                <rk:RibbonGroup x:Name="MarginsGroup" Header="Margins" rk:Ribbon.CommandId="Writer.Page.Margins" rk:KeyTip.Keys="M"
+                                Icon="{StaticResource Icon.WriterMargins}"
+                                AutomationProperties.AutomationId="MarginsGroup" AutomationProperties.Name="Margins">
+                    <rk:RibbonDropDownButton x:Name="MarginsButton" Header="Margins" Size="Large"
+                                             Icon="{StaticResource Icon.WriterMargins}" LargeIcon="{StaticResource Icon.WriterMargins}"
+                                             rk:Ribbon.CommandId="Writer.Page.Margins.Choose" rk:KeyTip.Keys="MA"
+                                             ScreenTipTitle="Margins" ScreenTipText="Choose a preset or enter all four physical page margins."
+                                             AutomationProperties.AutomationId="PageMargins" AutomationProperties.Name="Margins">
+                        <rk:RibbonMenuItem x:Name="MarginsNormal" Header="Normal (1 in)" Tag="Normal" Click="OnMarginPresetClick"
+                                           rk:Ribbon.CommandId="Writer.Page.Margins.Normal" rk:KeyTip.Keys="N"
+                                           AutomationProperties.AutomationId="MarginsNormal" AutomationProperties.Name="Normal margins" />
+                        <rk:RibbonMenuItem x:Name="MarginsNarrow" Header="Narrow (0.5 in)" Tag="Narrow" Click="OnMarginPresetClick"
+                                           rk:Ribbon.CommandId="Writer.Page.Margins.Narrow" rk:KeyTip.Keys="A"
+                                           AutomationProperties.AutomationId="MarginsNarrow" AutomationProperties.Name="Narrow margins" />
+                        <rk:RibbonMenuItem x:Name="MarginsModerate" Header="Moderate" Tag="Moderate" Click="OnMarginPresetClick"
+                                           rk:Ribbon.CommandId="Writer.Page.Margins.Moderate" rk:KeyTip.Keys="O"
+                                           AutomationProperties.AutomationId="MarginsModerate" AutomationProperties.Name="Moderate margins" />
+                        <rk:RibbonMenuItem x:Name="MarginsWide" Header="Wide" Tag="Wide" Click="OnMarginPresetClick"
+                                           rk:Ribbon.CommandId="Writer.Page.Margins.Wide" rk:KeyTip.Keys="W"
+                                           AutomationProperties.AutomationId="MarginsWide" AutomationProperties.Name="Wide margins" />
+                        <Separator />
+                        <rk:RibbonMenuItem x:Name="CustomMargins" Header="Custom Margins…" Click="OnCustomMarginsClick"
+                                           rk:Ribbon.CommandId="Writer.Page.Margins.Custom" rk:KeyTip.Keys="C"
+                                           AutomationProperties.AutomationId="CustomMargins" AutomationProperties.Name="Custom Margins" />
+                    </rk:RibbonDropDownButton>
+                </rk:RibbonGroup>
+                <rk:RibbonGroup x:Name="PageBackgroundGroup" Header="Page Background" rk:Ribbon.CommandId="Writer.Page.Background" rk:KeyTip.Keys="B"
+                                Icon="{StaticResource Icon.WriterPageColor}"
+                                AutomationProperties.AutomationId="PageBackgroundGroup" AutomationProperties.Name="Page Background">
+                    <rk:RibbonDropDownButton x:Name="PageColorButton" Header="Page Color" Size="Large"
+                                             Icon="{StaticResource Icon.WriterPageColor}" LargeIcon="{StaticResource Icon.WriterPageColor}"
+                                             rk:Ribbon.CommandId="Writer.Page.Color" rk:KeyTip.Keys="PC"
+                                             ScreenTipTitle="Page Color" ScreenTipText="Choose the page background used by editing, preview, and native Writer content."
+                                             AutomationProperties.AutomationId="PageColor" AutomationProperties.Name="Page Color">
+                        <rk:RibbonMenuItem x:Name="PageColorWhite" Header="White" Tag="#FFFFFF" Click="OnPageColorClick"
+                                           rk:Ribbon.CommandId="Writer.Page.Color.White" rk:KeyTip.Keys="W"
+                                           AutomationProperties.AutomationId="PageColorWhite" AutomationProperties.Name="White page" />
+                        <rk:RibbonMenuItem x:Name="PageColorIvory" Header="Ivory" Tag="#FFFDF0" Click="OnPageColorClick"
+                                           rk:Ribbon.CommandId="Writer.Page.Color.Ivory" rk:KeyTip.Keys="I"
+                                           AutomationProperties.AutomationId="PageColorIvory" AutomationProperties.Name="Ivory page" />
+                        <rk:RibbonMenuItem x:Name="PageColorBlue" Header="Light Blue" Tag="#EBF6FF" Click="OnPageColorClick"
+                                           rk:Ribbon.CommandId="Writer.Page.Color.LightBlue" rk:KeyTip.Keys="B"
+                                           AutomationProperties.AutomationId="PageColorLightBlue" AutomationProperties.Name="Light blue page" />
+                    </rk:RibbonDropDownButton>
+                </rk:RibbonGroup>
+            </rk:RibbonTab>
+            <rk:RibbonTab x:Name="ViewTab" Header="View" rk:Ribbon.CommandId="Writer.View" rk:KeyTip.Keys="V"
+                          AutomationProperties.AutomationId="ViewTab" AutomationProperties.Name="View">
+                <rk:RibbonGroup x:Name="DocumentViewsGroup" Header="Document Views" rk:Ribbon.CommandId="Writer.View.DocumentViews" rk:KeyTip.Keys="DV"
+                                Icon="{StaticResource Icon.WriterEditLayout}"
+                                AutomationProperties.AutomationId="DocumentViewsGroup" AutomationProperties.Name="Document Views">
+                    <rk:RibbonToggleButton x:Name="ContinuousViewButton" Header="Continuous Edit" Size="Large"
+                                           Icon="{StaticResource Icon.WriterEditLayout}" LargeIcon="{StaticResource Icon.WriterEditLayout}"
+                                           Click="OnContinuousViewClick" rk:Ribbon.CommandId="Writer.View.Continuous" rk:KeyTip.Keys="C"
+                                           ScreenTipTitle="Continuous Edit" ScreenTipText="Use the workspace-filling live editor without changing its document."
+                                           AutomationProperties.AutomationId="ViewContinuous" AutomationProperties.Name="Continuous Edit" />
+                    <rk:RibbonToggleButton x:Name="PaperViewButton" Header="Paper" Size="Large"
+                                           Icon="{StaticResource Icon.WriterDocument}" LargeIcon="{StaticResource Icon.WriterDocument}"
+                                           Click="OnPaperViewClick" rk:Ribbon.CommandId="Writer.View.Paper" rk:KeyTip.Keys="P"
+                                           ScreenTipTitle="Paper View" ScreenTipText="Centre the same live editor on the logical paper."
+                                           AutomationProperties.AutomationId="ViewPaper" AutomationProperties.Name="Paper View" />
+                    <rk:RibbonToggleButton x:Name="PrintPreviewViewButton" Header="Print Preview" Size="Large"
+                                           Icon="{StaticResource Icon.WriterPrintPreview}" LargeIcon="{StaticResource Icon.WriterPrintPreview}"
+                                           Click="OnPrintPreviewViewClick" rk:Ribbon.CommandId="Writer.View.PrintPreview" rk:KeyTip.Keys="R"
+                                           ScreenTipTitle="Print Preview" ScreenTipText="Enter the dedicated preview mode using the exact paginator used for printing."
+                                           AutomationProperties.AutomationId="ViewPrintPreview" AutomationProperties.Name="Print Preview" />
+                </rk:RibbonGroup>
+                <rk:RibbonGroup x:Name="ViewZoomGroup" Header="Zoom" rk:Ribbon.CommandId="Writer.View.Zoom" rk:KeyTip.Keys="Z"
+                                Icon="{StaticResource Icon.WriterZoomReset}"
+                                AutomationProperties.AutomationId="ZoomGroup" AutomationProperties.Name="Zoom">
+                    <rk:RibbonButton x:Name="ZoomOutButton" Header="Zoom Out" Size="Large"
+                                     Icon="{StaticResource Icon.WriterZoomOut}" LargeIcon="{StaticResource Icon.WriterZoomOut}"
+                                     rk:Ribbon.CommandId="Writer.Home.Editing.ZoomOut" rk:KeyTip.Keys="ZO"
+                                     ScreenTipTitle="Zoom Out" ScreenTipText="Reduce the current document view zoom by ten percent."
+                                     AutomationProperties.AutomationId="ZoomOut" AutomationProperties.Name="Zoom Out" />
+                    <rk:RibbonButton x:Name="ZoomResetButton" Header="100%" Size="Large"
+                                     Icon="{StaticResource Icon.WriterZoomReset}" LargeIcon="{StaticResource Icon.WriterZoomReset}"
+                                     rk:Ribbon.CommandId="Writer.Home.Editing.ZoomReset" rk:KeyTip.Keys="ZR"
+                                     ScreenTipTitle="Reset Zoom" ScreenTipText="Restore the current document view zoom to 100 percent."
+                                     AutomationProperties.AutomationId="ZoomReset" AutomationProperties.Name="Reset Zoom" />
+                    <rk:RibbonButton x:Name="ZoomInButton" Header="Zoom In" Size="Large"
+                                     Icon="{StaticResource Icon.WriterZoomIn}" LargeIcon="{StaticResource Icon.WriterZoomIn}"
+                                     rk:Ribbon.CommandId="Writer.Home.Editing.ZoomIn" rk:KeyTip.Keys="ZI"
+                                     ScreenTipTitle="Zoom In" ScreenTipText="Increase the current document view zoom by ten percent."
+                                     AutomationProperties.AutomationId="ZoomIn" AutomationProperties.Name="Zoom In" />
+                </rk:RibbonGroup>
+                <rk:RibbonGroup x:Name="ViewDisplayGroup" Header="Show" rk:Ribbon.CommandId="Writer.View.Show" rk:KeyTip.Keys="S"
+                                Icon="{StaticResource Icon.WriterRuler}"
+                                AutomationProperties.AutomationId="ViewDisplayGroup" AutomationProperties.Name="Show">
+                    <rk:RibbonToggleButton x:Name="RulerToggleButton" Header="Ruler" Size="Large"
+                                           Icon="{StaticResource Icon.WriterRuler}" LargeIcon="{StaticResource Icon.WriterRuler}"
+                                           Click="OnRulerToggleClick" rk:Ribbon.CommandId="Writer.View.Show.Ruler" rk:KeyTip.Keys="RU"
+                                           ScreenTipTitle="Ruler" ScreenTipText="Show the calibrated horizontal ruler in Paper view."
+                                           AutomationProperties.AutomationId="ViewRuler" AutomationProperties.Name="Ruler" />
+                    <rk:RibbonToggleButton x:Name="MarginGuidesToggleButton" Header="Margin Guides" Size="Large"
+                                           Icon="{StaticResource Icon.WriterGridlines}" LargeIcon="{StaticResource Icon.WriterGridlines}"
+                                           Click="OnMarginGuidesToggleClick" rk:Ribbon.CommandId="Writer.View.Show.MarginGuides" rk:KeyTip.Keys="MG"
+                                           ScreenTipTitle="Margin Guides" ScreenTipText="Show non-printing dotted guides at the page content boundary."
+                                           AutomationProperties.AutomationId="ViewMarginGuides" AutomationProperties.Name="Margin Guides" />
+                </rk:RibbonGroup>
+            </rk:RibbonTab>
+            <rk:RibbonTab x:Name="PrintPreviewTab" Header="Print Preview"
+                          rk:Ribbon.CommandId="Writer.PrintPreview" IsModal="True" CanClose="True"
+                          CloseButtonText="Close Print Preview" Visibility="Collapsed"
+                          AutomationProperties.AutomationId="PrintPreviewTab" AutomationProperties.Name="Print Preview">
+                <rk:RibbonGroup x:Name="PreviewLayoutGroup" Header="Preview Layout" rk:Ribbon.CommandId="Writer.View.Preview" rk:KeyTip.Keys="L"
+                                Icon="{StaticResource Icon.WriterPrintPreview}"
+                                AutomationProperties.AutomationId="PreviewGroup" AutomationProperties.Name="Preview Layout">
+                    <rk:RibbonToggleButton x:Name="OnePageButton" Header="One Page" Size="Large"
+                                           Icon="{StaticResource Icon.WriterOnePage}" LargeIcon="{StaticResource Icon.WriterOnePage}"
+                                           Click="OnOnePageClick" rk:Ribbon.CommandId="Writer.View.Preview.OnePage" rk:KeyTip.Keys="O"
+                                           ScreenTipTitle="One Page" ScreenTipText="Show one preview page at the current zoom."
+                                           AutomationProperties.AutomationId="PreviewOnePage" AutomationProperties.Name="One Page" />
+                    <rk:RibbonToggleButton x:Name="TwoPagesButton" Header="Two Pages" Size="Large"
+                                           Icon="{StaticResource Icon.WriterTwoPages}" LargeIcon="{StaticResource Icon.WriterTwoPages}"
+                                           Click="OnTwoPagesClick" rk:Ribbon.CommandId="Writer.View.Preview.TwoPages" rk:KeyTip.Keys="T"
+                                           ScreenTipTitle="Two Pages" ScreenTipText="Fit up to two adjacent preview pages."
+                                           AutomationProperties.AutomationId="PreviewTwoPages" AutomationProperties.Name="Two Pages" />
+                    <rk:RibbonToggleButton x:Name="PageWidthButton" Header="Page Width" Size="Large"
+                                           Icon="{StaticResource Icon.WriterPageWidth}" LargeIcon="{StaticResource Icon.WriterPageWidth}"
+                                           Click="OnPageWidthClick" rk:Ribbon.CommandId="Writer.View.Preview.PageWidth" rk:KeyTip.Keys="W"
+                                           ScreenTipTitle="Page Width" ScreenTipText="Fit the preview page width to the available viewport."
+                                           AutomationProperties.AutomationId="PreviewPageWidth" AutomationProperties.Name="Page Width" />
+                </rk:RibbonGroup>
+                <rk:RibbonGroup x:Name="PreviewNavigationGroup" Header="Navigation" rk:Ribbon.CommandId="Writer.View.Preview.Navigation" rk:KeyTip.Keys="N"
+                                Icon="{StaticResource Icon.WriterNextPage}"
+                                AutomationProperties.AutomationId="PreviewNavigationGroup" AutomationProperties.Name="Preview Navigation">
+                    <rk:RibbonButton x:Name="PreviousPageButton" Header="Previous Page" Size="Large"
+                                     Icon="{StaticResource Icon.WriterPreviousPage}" LargeIcon="{StaticResource Icon.WriterPreviousPage}"
+                                     Click="OnPreviousPageClick" rk:Ribbon.CommandId="Writer.View.Preview.Previous" rk:KeyTip.Keys="B"
+                                     ScreenTipTitle="Previous Page" ScreenTipText="Move to the previous preview page."
+                                     AutomationProperties.AutomationId="PreviewPreviousPage" AutomationProperties.Name="Previous Page" />
+                    <rk:RibbonButton x:Name="NextPageButton" Header="Next Page" Size="Large"
+                                     Icon="{StaticResource Icon.WriterNextPage}" LargeIcon="{StaticResource Icon.WriterNextPage}"
+                                     Click="OnNextPageClick" rk:Ribbon.CommandId="Writer.View.Preview.Next" rk:KeyTip.Keys="N"
+                                     ScreenTipTitle="Next Page" ScreenTipText="Move to the next preview page."
+                                     AutomationProperties.AutomationId="PreviewNextPage" AutomationProperties.Name="Next Page" />
+                </rk:RibbonGroup>
+                <rk:RibbonGroup x:Name="PreviewZoomGroup" Header="Zoom" rk:Ribbon.CommandId="Writer.PrintPreview.Zoom" rk:KeyTip.Keys="Z"
+                                Icon="{StaticResource Icon.WriterZoomReset}"
+                                AutomationProperties.AutomationId="PreviewZoomGroup" AutomationProperties.Name="Preview Zoom">
+                    <rk:RibbonButton x:Name="PreviewZoomOutButton" Header="Zoom Out" Size="Large"
+                                     Icon="{StaticResource Icon.WriterZoomOut}" LargeIcon="{StaticResource Icon.WriterZoomOut}"
+                                     rk:Ribbon.CommandId="Writer.Home.Editing.ZoomOut" rk:KeyTip.Keys="ZO"
+                                     ScreenTipTitle="Zoom Out" ScreenTipText="Reduce preview zoom by ten percent."
+                                     AutomationProperties.AutomationId="PreviewZoomOut" AutomationProperties.Name="Zoom Out" />
+                    <rk:RibbonButton x:Name="PreviewZoomResetButton" Header="100%" Size="Large"
+                                     Icon="{StaticResource Icon.WriterZoomReset}" LargeIcon="{StaticResource Icon.WriterZoomReset}"
+                                     rk:Ribbon.CommandId="Writer.Home.Editing.ZoomReset" rk:KeyTip.Keys="ZR"
+                                     ScreenTipTitle="Reset Zoom" ScreenTipText="Restore preview zoom to 100 percent."
+                                     AutomationProperties.AutomationId="PreviewZoomReset" AutomationProperties.Name="Reset Zoom" />
+                    <rk:RibbonButton x:Name="PreviewZoomInButton" Header="Zoom In" Size="Large"
+                                     Icon="{StaticResource Icon.WriterZoomIn}" LargeIcon="{StaticResource Icon.WriterZoomIn}"
+                                     rk:Ribbon.CommandId="Writer.Home.Editing.ZoomIn" rk:KeyTip.Keys="ZI"
+                                     ScreenTipTitle="Zoom In" ScreenTipText="Increase preview zoom by ten percent."
+                                     AutomationProperties.AutomationId="PreviewZoomIn" AutomationProperties.Name="Zoom In" />
+                </rk:RibbonGroup>
+            </rk:RibbonTab>
+        </rk:Ribbon>
+        <StatusBar DockPanel.Dock="Bottom" Padding="12,3"
+                   Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
+                   BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}"
+                   BorderThickness="0,1,0,0"
+                   AutomationProperties.AutomationId="Status" AutomationProperties.Name="Status">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal" TextElement.Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}">
+                    <TextBlock x:Name="StatusMessage" Text="{Binding StatusText}" FontWeight="SemiBold" />
+                    <TextBlock Text="·" Margin="12,0" Opacity="0.65" />
+                    <TextBlock x:Name="StatisticsText" Text="0 words, 0 characters" AutomationProperties.AutomationId="DocumentStatistics" AutomationProperties.Name="Document statistics" />
+                    <TextBlock Text="·" Margin="12,0" Opacity="0.65" />
+                    <TextBlock x:Name="SpellCheckStatusText" Text="Spelling off" AutomationProperties.AutomationId="SpellingStatus" AutomationProperties.Name="Spelling status" />
+                    <TextBlock x:Name="PreviewPageText" Text="" Margin="12,0,0,0"
+                               AutomationProperties.AutomationId="PreviewPageStatus" AutomationProperties.Name="Preview page position" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="StatusZoomOutButton" Content="−" Style="{StaticResource StatusZoomButtonStyle}" Click="OnStatusZoomOutClick"
+                            AutomationProperties.AutomationId="StatusZoomOut" AutomationProperties.Name="Zoom Out" />
+                    <TextBlock x:Name="ZoomText" Text="100%" MinWidth="44" TextAlignment="Center" VerticalAlignment="Center"
+                               AutomationProperties.AutomationId="ZoomStatus" AutomationProperties.Name="Zoom" />
+                    <Button x:Name="StatusZoomInButton" Content="+" Style="{StaticResource StatusZoomButtonStyle}" Click="OnStatusZoomInClick"
+                            AutomationProperties.AutomationId="StatusZoomIn" AutomationProperties.Name="Zoom In" />
+                </StackPanel>
+            </Grid>
+        </StatusBar>
+        <Grid x:Name="DocumentPresentationHost">
+            <Grid.Resources>
+                <ResourceDictionary>
+                    <ResourceDictionary.MergedDictionaries>
+                        <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.ScrollBars.xaml" />
+                    </ResourceDictionary.MergedDictionaries>
+                    <!-- Keep ScrollViewer/RichTextBox ownership intact while applying RibbonKit chrome
+                         to Paper, Continuous and Print Preview's generated native scrollbars. -->
+                    <Style TargetType="{x:Type ScrollBar}"
+                           BasedOn="{StaticResource RibbonKit.ScrollBarStyle}">
+                        <Setter Property="Margin" Value="0,0,1,0" />
+                        <Style.Triggers>
+                            <Trigger Property="Orientation" Value="Horizontal">
+                                <Setter Property="Margin" Value="0" />
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </ResourceDictionary>
+            </Grid.Resources>
+            <editing:WriterEditorSurface x:Name="EditorSurface"
+                                         ViewMode="Paper"
+                                         Focusable="False"
+                                         Background="{DynamicResource RibbonKit.Brushes.Control.CompanionBackground}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <ScrollViewer x:Name="EditorViewport" Grid.Row="1"
+                              HorizontalScrollBarVisibility="Disabled"
+                              VerticalScrollBarVisibility="Disabled"
+                              Background="{DynamicResource RibbonKit.Brushes.Control.CompanionBackground}">
+                    <Border x:Name="PaperCanvas"
+                            BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}">
+                        <RichTextBox x:Name="DocumentEditor"
+                                     Background="White"
+                                     BorderThickness="0"
+                                     Padding="28,22"
+                                     FontFamily="Segoe UI"
+                                     FontSize="13"
+                                     VerticalScrollBarVisibility="Auto"
+                                     AutomationProperties.AutomationId="DocumentEditor"
+                                     AutomationProperties.Name="Document editor">
+                            <FlowDocument PagePadding="0" />
+                        </RichTextBox>
+                    </Border>
+                </ScrollViewer>
+                <editing:WriterMarginGuide x:Name="MarginGuide" Grid.Row="1" Panel.ZIndex="20"
+                                           IsHitTestVisible="False"
+                                           AutomationProperties.AutomationId="MarginGuide"
+                                           AutomationProperties.Name="Non-printing margin guide" />
+                <Border x:Name="EditorTopSeparator" Grid.Row="1" Panel.ZIndex="25"
+                        Height="1" VerticalAlignment="Top" IsHitTestVisible="False"
+                        Background="{DynamicResource RibbonKit.Brushes.Ribbon.Border}"
+                        AutomationProperties.AutomationId="EditorTopSeparator"
+                        AutomationProperties.Name="Ribbon and document separator">
+                    <Border.Style>
+                        <Style TargetType="{x:Type Border}">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Visibility, ElementName=HorizontalRuler}"
+                                             Value="Collapsed">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                </Border>
+                <editing:WriterRuler x:Name="HorizontalRuler" Grid.Row="0" Panel.ZIndex="30"
+                                     FlowDirection="LeftToRight"
+                                     AutomationProperties.AutomationId="WriterRuler"
+                                     AutomationProperties.Name="Horizontal ruler" />
+            </editing:WriterEditorSurface>
+            <preview:WriterDocumentPreviewView x:Name="PreviewView" Visibility="Collapsed"
+                                               AutomationProperties.AutomationId="DocumentPreview"
+                                               AutomationProperties.Name="Print layout preview" />
+            <Border x:Name="PreviewTopSeparator" Panel.ZIndex="25"
+                    Height="1" VerticalAlignment="Top" IsHitTestVisible="False"
+                    Background="{DynamicResource RibbonKit.Brushes.Ribbon.Border}"
+                    Visibility="{Binding Visibility, ElementName=PreviewView}"
+                    AutomationProperties.AutomationId="PreviewTopSeparator"
+                    AutomationProperties.Name="Ribbon and print preview separator" />
+            <Border x:Name="PreviewPendingOverlay" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Padding="20,12" Background="{DynamicResource RibbonKit.Brushes.Control.SurfaceBackground}"
+                    BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}" BorderThickness="1"
+                    CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                    AutomationProperties.AutomationId="PreviewUpdating" AutomationProperties.Name="Updating preview">
+                <TextBlock Text="Updating preview…" Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
+            </Border>
+        </Grid>
+    </DockPanel>
+</rk:RibbonWindow>
