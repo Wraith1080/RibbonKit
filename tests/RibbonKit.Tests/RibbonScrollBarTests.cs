@@ -924,6 +924,7 @@ public sealed class RibbonScrollBarTests
                 candidate => candidate.Orientation == Orientation.Vertical);
 
             Assert.Equal(Visibility.Visible, scrollBar.Visibility);
+            Assert.Equal(new Thickness(0d, 0d, 1d, 0d), scrollBar.Margin);
             Assert.NotNull(scrollBar.Template.FindName("DecreaseButton", scrollBar));
             Assert.NotNull(scrollBar.Template.FindName("IncreaseButton", scrollBar));
             Assert.Equal(new CornerRadius(3d), RibbonScrollBar.GetButtonCornerRadius(scrollBar));

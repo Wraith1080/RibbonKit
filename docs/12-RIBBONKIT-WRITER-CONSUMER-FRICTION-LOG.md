@@ -573,6 +573,9 @@ remain read-only until actual/diff evidence justifies a deliberate change.
   four focused theme cases prevent either flat generation from regaining rounded scrollbar chrome.
 - **Application impact:** overflow chrome now follows RibbonKit rather than the host OS theme; scrolling behavior and
   RKWF-018's two-scroller ownership boundary remain unchanged.
+- **Popup edge follow-up:** the gallery-only generated-scrollbar adapter carries a one-DIP trailing margin so the
+  vertical rail stays clear of both gallery popup card edges without changing the shared scrollbar style or closed
+  in-ribbon strip geometry.
 - **Evidence still required:** inspect standalone vertical/horizontal controls and overflowing galleries in every
   Office generation/light-dark variant, then check pointer arrows, track paging, thumb dragging, wheel/keyboard,
   100-200% DPI, RTL horizontal direction and High Contrast. The user accepted the corrected full-width thumb and

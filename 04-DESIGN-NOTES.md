@@ -5830,6 +5830,9 @@ parts and generation radii, and proves `LineDown` changes `PART_ContentScroll.Ve
 scrollbar class passes **22/22**, including the pre-existing Customize Ribbon and QAT overflow cases.
 The accepted follow-up adds a one-DIP right margin to `PART_ContentScroll`, moving only its generated rail slightly
 left so the themed chrome no longer touches the dialog edge.
+The gallery-local adapter now carries the same one-DIP trailing margin for both `RibbonGallery` and
+`InRibbonGallery` popup viewports, preventing their generated vertical rails from clipping against the popup card
+while leaving the closed in-ribbon strip and shared scrollbar style unchanged.
 
 RKWF-029 extends the same native-scrollbar adoption to the shared `RibbonComboBox` popup without replacing either
 `ComboBox` or `ScrollViewer` ownership. The existing viewport is now the optional `PART_PopupScrollViewer`;

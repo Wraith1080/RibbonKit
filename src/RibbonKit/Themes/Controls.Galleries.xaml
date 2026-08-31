@@ -23,6 +23,9 @@
         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.ScrollBar.Glyph}" />
         <Setter Property="Width" Value="{DynamicResource RibbonKit.Metrics.ScrollBar.Thickness}" />
         <Setter Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.ScrollBar.Thickness}" />
+        <!-- This adapter is used only by gallery popup viewports. Keep the generated vertical
+             rail one DIP clear of the popup card edge without changing the shared style. -->
+        <Setter Property="Margin" Value="0,0,1,0" />
         <Setter Property="controls:RibbonScrollBar.ButtonCornerRadius"
                 Value="{DynamicResource RibbonKit.Metrics.ScrollBar.ButtonCornerRadius}" />
         <Setter Property="controls:RibbonScrollBar.ThumbCornerRadius"
