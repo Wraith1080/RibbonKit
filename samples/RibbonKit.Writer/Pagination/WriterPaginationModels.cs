@@ -21,6 +21,8 @@ internal enum WriterPaginationResizeHandleKind
     PictureBottom,
     PictureBottomLeft,
     PictureLeft,
+    TableColumn,
+    TableRow,
     TableOverall
 }
 
@@ -59,6 +61,21 @@ internal readonly record struct WriterPaginationObjectGeometry(
     int PageNumber,
     WriterPaginationRectangle Rectangle);
 
+internal readonly record struct WriterPaginationTableRowBoundary(
+    int RowGroupIndex,
+    int RowIndex,
+    double PositionDip);
+
+internal sealed record WriterPaginationTableGeometry(
+    long ObjectIdentity,
+    int PageNumber,
+    WriterPaginationRectangle Bounds,
+    ImmutableArray<double> ColumnBoundaries,
+    bool HasTrustedColumnBoundaries,
+    ImmutableArray<WriterPaginationTableRowBoundary> RowBoundaries,
+    bool IsFirstFragment,
+    bool IsLastFragment);
+
 internal readonly record struct WriterPaginationResizeInteraction(
     long Generation,
     long DocumentIdentity,
@@ -68,7 +85,9 @@ internal readonly record struct WriterPaginationResizeInteraction(
     WriterPaginationResizeHandleKind Handle,
     WriterPaginationResizePhase Phase,
     double DeltaX,
-    double DeltaY);
+    double DeltaY,
+    int HandleIndex = -1,
+    int RowGroupIndex = -1);
 
 internal sealed record WriterPaginationFormatting(
     string FontFamily,
@@ -122,6 +141,7 @@ internal sealed record WriterPaginationLayoutResult(
     ImmutableArray<WriterPaginationPage> Pages,
     ImmutableArray<WriterPaginationInsertionGeometry> Insertions,
     ImmutableArray<WriterPaginationObjectGeometry> StructuredObjects,
+    ImmutableArray<WriterPaginationTableGeometry> Tables,
     WriterPaginationPageSettings PageSettings,
     int WorkerThreadId,
     ApartmentState WorkerApartment,
@@ -138,6 +158,12 @@ internal sealed record WriterPaginationCompletion(
     WriterPaginationCompletionKind Kind,
     WriterPaginationLayoutResult? Result,
     int CompletedMappedPages);
+
+internal readonly record struct WriterPaginationWorkStatistics(
+    int StartedCount,
+    int CompletedCount,
+    int CanceledActiveCount,
+    int SupersededPendingCount);
 
 internal readonly record struct WriterPaginationPageInteraction(
     long Generation,

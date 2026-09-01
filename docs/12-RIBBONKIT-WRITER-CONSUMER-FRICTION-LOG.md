@@ -825,6 +825,98 @@ ribbon artwork remains unchanged.
   page with zero insertion rectangles, and refreshes overlays without failure. The actual Release rerun remained
   responsive at document identity 2, generation 3, page 1/1; the combined pagination gate passes **30/30**.
 
+### RKWF-032 — Hidden paged table origins can inherit cell-text alignment
+
+- **First seen / packet:** 2026-09-01, Writer W2-G immutable table-boundary production batch.
+- **Status:** closed for explicit-width LTR diagnostic tables; native WPF page geometry, not a RibbonKit runtime defect.
+- **Consumer goal:** page-local table column and row handles must remain on the rendered grid when cell paragraph
+  alignment changes, while the worker publishes immutable values rather than dispatcher-owned table objects.
+- **Reproduction and evidence:** the W3-E lesson in RKWF-021 did not transfer unchanged to the hidden paged viewer.
+  There, `Table.ElementStart.GetCharacterRect` moved from X **104.5** to **145.44** DIPs after right-aligning cell text,
+  although the table grid and explicit column widths did not move. Publishing that origin would shift every column
+  boundary and put the new handles over cell text.
+- **Current app-owned correction:** for the current LTR explicit-width contract, derive the table origin from the
+  accepted paginator page's content origin plus finite `Table.Margin.Left` and `CellSpacing`; derive widths from the
+  explicit columns and logical row/span occupancy. Publish only page-local value boundaries and row identities.
+- **Application impact:** cell-text alignment cannot move page-local table handles. Auto-width and production RTL
+  origin policy remain explicit future work rather than inferred geometry.
+- **Smallest possible library direction:** none. RibbonKit hosts commands and contextual tabs; Writer owns the native
+  `FlowDocument`, accepted paginator and clone compositor.
+- **Verification:** the focused regression right-aligns the paged table content and proves every immutable column
+  boundary remains unchanged. The focused production gate passes **11/11**, the combined pagination gate passes
+  **36/36**, and the actual 125%-DPI Release window kept row/column handles aligned through resize, 130% zoom and
+  portrait-to-landscape reflow.
+
+### RKWF-033 — Hidden paginator has no stable public Auto-column grid boundaries
+
+- **First seen / packet:** 2026-09-01, Writer W2-G structural table-matrix production batch.
+- **Status:** closed by a bounded unsupported policy for Auto/star horizontal resize; native WPF page geometry, not a
+  RibbonKit runtime defect.
+- **Consumer goal:** preserve trustworthy page-local table interaction for multiple row groups and spanned cells without
+  inventing column positions that can target the wrong grid boundary.
+- **Reproduction and evidence:** character/insertion rectangles describe formatted text, not the measured table grid.
+  Their X positions change with paragraph alignment, and `ColumnSpan` means a visible cell width cannot be divided into
+  the original Auto columns. The hidden page viewer exposes no stable public measured-column boundary source suitable
+  for an immutable cross-STA result.
+- **Current app-owned correction:** publish trusted column boundaries only when every table column has a finite, positive
+  absolute width. Auto, star, nonpositive or incomplete columns publish an empty boundary set and
+  `HasTrustedColumnBoundaries = false`; the compositor suppresses column/overall handles and the controller rejects such
+  events before W3-E. Logical row-group/span capture remains supported, with a spanning cell's bottom assigned to its
+  last occupied row.
+- **Application impact:** Auto-width tables retain selection and trustworthy row resizing but deliberately expose no
+  column or overall resize handle in the diagnostic. Explicit-width LTR tables retain the existing full interaction.
+- **Smallest possible library direction:** none. RibbonKit hosts the commands and contextual tabs; Writer owns native
+  table measurement, accepted pagination and the opt-in compositor.
+- **Verification:** the focused structural matrix passes with two row groups, `RowSpan` and `ColumnSpan`, then proves
+  right-aligned text does not create horizontal geometry. The production gate passes **12/12**, the pagination gate
+  passes **37/37**, and the actual 125%-DPI structural seed exposed exactly five row handles and zero column/overall
+  handles; row resize plus native Undo/Redo republished fresh geometry with editor focus restored.
+
+### RKWF-034 — Virtual page handles cannot be a durable keyboard-focus owner
+
+- **First seen / packet:** 2026-09-01, Writer W2-G keyboard-resize production slice.
+- **Status:** closed by editor-owned keyboard navigation; no RibbonKit runtime change required.
+- **Consumer goal:** resize clone-page table/picture handles from the keyboard without transferring native editing,
+  command, spelling or IME ownership away from the one authoritative `RichTextBox`.
+- **Reproduction and evidence:** a handle could report keyboard-focusable immediately after creation, but could not
+  retain actual focus through the page `Viewbox` and overlay rebuild performed when resize preview changed. The first
+  live `Ctrl+Alt+R` attempt also reached WPF as `Key.System`; matching `e.Key` alone let the following Enter reach and
+  modify the editor instead of starting resize.
+- **Current app-owned correction:** keep `DocumentEditor` focused. `Ctrl+Alt+R` enters an explicit diagnostic handle mode,
+  Tab/Shift+Tab cycles the app-drawn target, Enter starts the existing W3-E transaction, arrows update it, and Enter or
+  Escape commits/cancels. Normalize `SystemKey` for Alt-modified gestures and reject stale generations as before.
+- **Application impact:** one keyboard session produces one native Undo unit; Escape restores the opening value. Virtual
+  handles remain UIA Invoke buttons but do not claim direct keyboard focus.
+- **Smallest possible library direction:** none. This is Writer compositor/input routing above RibbonKit.
+- **Verification:** the focused test commits 1 + 12 DIPs as one Undo unit and covers target cycling, Escape and
+  `Key.System` normalization. In the actual 125%-DPI window the row handle moved from Y **1103** to **1128**; Ctrl+Z and
+  Ctrl+Y restored each position, Escape left **1128** unchanged, all five handles remained, and `DocumentEditor` held
+  focus.
+
+### RKWF-035 — Live pagination cost has an unresolved block-count cliff
+
+- **First seen / packet:** 2026-09-01, Writer W2-G long-document telemetry/stress slice.
+- **Status:** open Writer/WPF performance investigation; not a RibbonKit runtime defect.
+- **Consumer goal:** keep ordinary and longer documents responsive while preserving accepted preview/print page-count
+  and page-start parity and one authoritative realized editor.
+- **Reproduction and evidence:** the 120-block live seed (**602 words / 5,174 characters**) completed its burst-final
+  generation in **384.4 ms** and page-window handoff in **286.1 ms**. A clean 180-block seed with only **903 words /
+  7,761 characters** still had not published after twenty seconds. Longer probes increased CPU and working set; the
+  480-block run was stopped near **95 CPU seconds / 1.05 GB**. A broad UIA traversal amplified one run, but a clean
+  no-automation isolation reproduced the 180-block delay.
+- **Current app-owned containment:** stress seed/burst flags remain private and explicit; default Paper is unchanged.
+  The diagnostic reports thread-safe started/completed/cancelled/coalesced counters and accepts only the latest final
+  generation. Do not describe the positive 120-block check as long-document acceptance.
+- **Next investigation:** separately time XamlPackage load, formatting, `ComputePageCount`, page-start enumeration,
+  visible/adjacent geometry and rasterization. Use those measurements to define a work budget and cancellation/staging
+  design without weakening accepted paginator parity or adding fake pages.
+- **Smallest possible library direction:** none unless a later focused reproduction implicates RibbonKit. Current work is
+  entirely inside Writer's WPF paginator/editor integration.
+- **Verification:** the automated 1,600-paragraph burst proves at least one cooperative active cancellation, pending
+  coalescing, final-generation acceptance and bounded one-to-three-page publication. The actual 120-block burst recorded
+  one cancellation, seventeen coalesced requests and a successful page-three handoff while the window remained
+  responsive; the 180-block live gate remains failed/open.
+
 ## 5. Closed observations
 
 None yet.

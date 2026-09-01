@@ -26,6 +26,10 @@ internal sealed class WriterDedicatedPaginationEngine : IDisposable
     private WorkerRequest? _pending;
     private bool _stopping;
     private bool _disposed;
+    private int _startedCount;
+    private int _completedCount;
+    private int _canceledActiveCount;
+    private int _supersededPendingCount;
 
     internal WriterDedicatedPaginationEngine()
     {
@@ -40,10 +44,13 @@ internal sealed class WriterDedicatedPaginationEngine : IDisposable
             throw new TimeoutException("The Writer pagination STA did not start.");
     }
 
-    internal int StartedCount { get; private set; }
-    internal int CompletedCount { get; private set; }
-    internal int CanceledActiveCount { get; private set; }
-    internal int SupersededPendingCount { get; private set; }
+    internal int StartedCount => Volatile.Read(ref _startedCount);
+    internal int CompletedCount => Volatile.Read(ref _completedCount);
+    internal int CanceledActiveCount => Volatile.Read(ref _canceledActiveCount);
+    internal int SupersededPendingCount => Volatile.Read(ref _supersededPendingCount);
+
+    internal WriterPaginationWorkStatistics Statistics => new(
+        StartedCount, CompletedCount, CanceledActiveCount, SupersededPendingCount);
 
     internal Task<WriterPaginationCompletion> Queue(WriterPaginationCapture capture)
     {
@@ -58,7 +65,7 @@ internal sealed class WriterDedicatedPaginationEngine : IDisposable
             superseded = _pending;
             _pending = request;
             if (superseded is not null)
-                SupersededPendingCount++;
+                Interlocked.Increment(ref _supersededPendingCount);
             _active?.Cancellation.Cancel();
         }
 
@@ -120,20 +127,20 @@ internal sealed class WriterDedicatedPaginationEngine : IDisposable
             if (request is null)
                 continue;
 
-            StartedCount++;
+            Interlocked.Increment(ref _startedCount);
             try
             {
                 request.Cancellation.Token.ThrowIfCancellationRequested();
                 var result = Build(request, request.Cancellation.Token);
                 request.Cancellation.Token.ThrowIfCancellationRequested();
-                CompletedCount++;
+                Interlocked.Increment(ref _completedCount);
                 request.Completion.TrySetResult(new WriterPaginationCompletion(
                     WriterPaginationCompletionKind.Completed, result,
                     request.CompletedMappedPages));
             }
             catch (OperationCanceledException) when (request.Cancellation.IsCancellationRequested)
             {
-                CanceledActiveCount++;
+                Interlocked.Increment(ref _canceledActiveCount);
                 request.Completion.TrySetResult(new WriterPaginationCompletion(
                     WriterPaginationCompletionKind.CanceledAfterStart, null,
                     request.CompletedMappedPages));
@@ -215,6 +222,7 @@ internal sealed class WriterDedicatedPaginationEngine : IDisposable
         var pages = ImmutableArray.CreateBuilder<WriterPaginationPage>();
         var insertions = ImmutableArray.CreateBuilder<WriterPaginationInsertionGeometry>();
         var structured = ImmutableArray.CreateBuilder<WriterPaginationObjectGeometry>();
+        var tables = ImmutableArray.CreateBuilder<WriterPaginationTableGeometry>();
         try
         {
             host.Show();
@@ -232,7 +240,7 @@ internal sealed class WriterDedicatedPaginationEngine : IDisposable
                 pages.Add(new WriterPaginationPage(pageNumber,
                     RenderPage(documentPage, capture.PageSettings,
                         capture.PixelScaleX, capture.PixelScaleY, cancellationToken)));
-                AddStructuredGeometry(structured, capture.StructuredObjects, cloneObjects,
+                AddStructuredGeometry(structured, tables, capture.StructuredObjects, cloneObjects,
                     pageInsertions, pageView, capture.PageSettings, paginator, pageNumber,
                     cancellationToken);
                 request.CompletedMappedPages++;
@@ -249,7 +257,8 @@ internal sealed class WriterDedicatedPaginationEngine : IDisposable
         watch.Stop();
         return new WriterPaginationLayoutResult(capture.Generation, capture.DocumentIdentity,
             visiblePage, paginator.PageCount, pageStarts, mappedPages, pages.ToImmutable(),
-            insertions.ToImmutable(), structured.ToImmutable(), capture.PageSettings,
+            insertions.ToImmutable(), structured.ToImmutable(), tables.ToImmutable(),
+            capture.PageSettings,
             Environment.CurrentManagedThreadId, Thread.CurrentThread.GetApartmentState(),
             watch.Elapsed.TotalMilliseconds);
     }
@@ -378,6 +387,7 @@ internal sealed class WriterDedicatedPaginationEngine : IDisposable
 
     private static void AddStructuredGeometry(
         ImmutableArray<WriterPaginationObjectGeometry>.Builder output,
+        ImmutableArray<WriterPaginationTableGeometry>.Builder tableOutput,
         ImmutableArray<WriterPaginationObjectCapture> captures,
         IReadOnlyDictionary<long, TextElement> cloneObjects,
         ImmutableArray<WriterPaginationInsertionGeometry> pageInsertions,
@@ -418,8 +428,147 @@ internal sealed class WriterDedicatedPaginationEngine : IDisposable
             output.Add(new WriterPaginationObjectGeometry(capture.ObjectIdentity,
                 capture.Kind, capture.StartOffset, pageNumber,
                 new WriterPaginationRectangle(bounds.X, bounds.Y, bounds.Width, bounds.Height)));
+            if (element is Table table && TryBuildTableGeometry(table,
+                    capture.ObjectIdentity, bounds, pageView, pageSettings, paginator,
+                    pageNumber, out var tableGeometry))
+                tableOutput.Add(tableGeometry);
         }
     }
+
+    private static bool TryBuildTableGeometry(Table table, long objectIdentity,
+        Rect fragmentBounds, DocumentPageView pageView,
+        WriterPaginationPageSettings pageSettings, DynamicDocumentPaginator paginator,
+        int pageNumber, out WriterPaginationTableGeometry geometry)
+    {
+        geometry = null!;
+        var cells = EnumerateLogicalTableCells(table).ToArray();
+        if (cells.Length == 0)
+            return false;
+        var realizedEndings = new List<(CloneTableCell Cell, double Bottom)>();
+        foreach (var cell in cells)
+        {
+            if (TryGetCellBottom(cell.Cell, pageView, pageSettings, paginator,
+                    pageNumber, out var bottom))
+                realizedEndings.Add((cell, bottom));
+        }
+        if (realizedEndings.Count == 0)
+            return false;
+
+        var columnCount = Math.Max(table.Columns.Count,
+            cells.Max(cell => cell.LastColumn) + 1);
+        if (columnCount <= 0)
+            return false;
+        var spacing = double.IsFinite(table.CellSpacing)
+            ? Math.Max(0, table.CellSpacing)
+            : 0;
+        var marginLeft = double.IsFinite(table.Margin.Left)
+            ? Math.Max(0, table.Margin.Left)
+            : 0;
+        var left = pageSettings.LeftMarginDip + marginLeft + spacing;
+        var hasTrustedColumns = table.Columns.Count >= columnCount &&
+            table.Columns.Take(columnCount).All(column => column.Width.IsAbsolute &&
+                double.IsFinite(column.Width.Value) && column.Width.Value > 0);
+        var columns = ImmutableArray.CreateBuilder<double>(
+            hasTrustedColumns ? columnCount + 1 : 0);
+        if (hasTrustedColumns)
+        {
+            columns.Add(left);
+            foreach (var column in table.Columns.Take(columnCount))
+                columns.Add(columns[^1] + column.Width.Value + spacing);
+        }
+
+        var rows = ImmutableArray.CreateBuilder<WriterPaginationTableRowBoundary>();
+        foreach (var group in realizedEndings.GroupBy(item =>
+                     (item.Cell.RowGroupIndex, item.Cell.LastRow)))
+        {
+            var bottom = group.Max(item => item.Bottom);
+            if (double.IsFinite(bottom))
+                rows.Add(new WriterPaginationTableRowBoundary(group.Key.RowGroupIndex,
+                    group.Key.LastRow, bottom));
+        }
+        if (rows.Count == 0)
+            return false;
+        var top = fragmentBounds.Top;
+        var bottomEdge = Math.Max(fragmentBounds.Bottom,
+            rows.Max(row => row.PositionDip));
+        var contentRight = Math.Max(left + 1,
+            pageSettings.WidthDip - pageSettings.RightMarginDip);
+        var right = hasTrustedColumns
+            ? columns[^1]
+            : Math.Clamp(fragmentBounds.Right, left + 1, contentRight);
+        var boundsValue = new WriterPaginationRectangle(left, top,
+            Math.Max(1, right - left), Math.Max(1, bottomEdge - top));
+        geometry = new WriterPaginationTableGeometry(objectIdentity, pageNumber,
+            boundsValue, columns.ToImmutable(), hasTrustedColumns,
+            rows.OrderBy(row => row.PositionDip)
+                .ThenBy(row => row.RowGroupIndex)
+                .ThenBy(row => row.RowIndex)
+                .ToImmutableArray(),
+            GetPageNumber(paginator, table.ContentStart, LogicalDirection.Forward) == pageNumber,
+            GetPageNumber(paginator, table.ContentEnd, LogicalDirection.Backward) == pageNumber);
+        return true;
+    }
+
+    private static bool TryGetCellBottom(TableCell cell, DocumentPageView pageView,
+        WriterPaginationPageSettings pageSettings, DynamicDocumentPaginator paginator,
+        int pageNumber, out double bottom)
+    {
+        bottom = double.NaN;
+        var end = cell.ContentEnd.GetInsertionPosition(LogicalDirection.Backward);
+        if (end is null || paginator.GetPageNumber(end) != pageNumber)
+            return false;
+        var endRect = end.GetCharacterRect(LogicalDirection.Backward);
+        if (!IsFinite(endRect) || endRect.Height <= 0 ||
+            endRect.Left < -1 || endRect.Top < -1 ||
+            endRect.Right > pageView.ActualWidth + 1 || endRect.Bottom > pageView.ActualHeight + 1)
+            return false;
+        var padding = cell.Padding;
+        var border = cell.BorderThickness;
+        var fitted = new Rect(endRect.Left, endRect.Top,
+            Math.Max(1, endRect.Width),
+            Math.Max(1, endRect.Height + padding.Bottom + border.Bottom));
+        var normalized = NormalizePageRect(fitted, pageView, pageSettings);
+        bottom = normalized.Bottom;
+        return IsFinite(normalized) && double.IsFinite(bottom);
+    }
+
+    private static int GetPageNumber(DynamicDocumentPaginator paginator,
+        TextPointer position, LogicalDirection direction)
+    {
+        var insertion = position.GetInsertionPosition(direction) ?? position;
+        return paginator.GetPageNumber(insertion);
+    }
+
+    private static IEnumerable<CloneTableCell> EnumerateLogicalTableCells(Table table)
+    {
+        for (var groupIndex = 0; groupIndex < table.RowGroups.Count; groupIndex++)
+        {
+            var group = table.RowGroups[groupIndex];
+            var occupiedUntil = new List<int>();
+            for (var rowIndex = 0; rowIndex < group.Rows.Count; rowIndex++)
+            {
+                var column = 0;
+                foreach (var cell in group.Rows[rowIndex].Cells)
+                {
+                    while (column < occupiedUntil.Count && occupiedUntil[column] > rowIndex)
+                        column++;
+                    var columnSpan = Math.Max(1, cell.ColumnSpan);
+                    var rowSpan = Math.Max(1, cell.RowSpan);
+                    while (occupiedUntil.Count < column + columnSpan)
+                        occupiedUntil.Add(0);
+                    var lastColumn = column + columnSpan - 1;
+                    yield return new CloneTableCell(cell, groupIndex, rowIndex,
+                        rowIndex + rowSpan - 1, column, lastColumn);
+                    for (var index = column; index <= lastColumn; index++)
+                        occupiedUntil[index] = Math.Max(occupiedUntil[index], rowIndex + rowSpan);
+                    column = lastColumn + 1;
+                }
+            }
+        }
+    }
+
+    private readonly record struct CloneTableCell(TableCell Cell, int RowGroupIndex,
+        int RowIndex, int LastRow, int Column, int LastColumn);
 
     private static bool TryFindImageBounds(DocumentPageView pageView,
         InlineUIContainer container, Image image,

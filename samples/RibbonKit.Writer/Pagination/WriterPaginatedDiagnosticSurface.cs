@@ -2,6 +2,8 @@ using System.Collections.Immutable;
 using System.IO;
 using System.Windows;
 using System.Windows.Automation;
+using System.Windows.Automation.Peers;
+using System.Windows.Automation.Provider;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Input;
@@ -34,6 +36,7 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
     private int _requestedPage;
     private WriterPaginationPageInteraction? _dragAnchor;
     private ResizeDrag? _resizeDrag;
+    private ResizeHandleDescriptor? _keyboardResizeTarget;
     private long? _selectedObjectIdentity;
     private WriterPaginationObjectKind? _selectedObjectKind;
     private DocumentPageSettings? _chromeSettings;
@@ -48,6 +51,9 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
         Background = new SolidColorBrush(Color.FromRgb(229, 232, 235));
         AutomationProperties.SetAutomationId(this, "PaginatedEditingDiagnostic");
         AutomationProperties.SetName(this, "Opt-in paginated editing diagnostic");
+        AutomationProperties.SetHelpText(this,
+            "After selecting a table or picture, press Control+Alt+R to enter keyboard resize, " +
+            "Tab to choose a handle, Enter to start, arrows to resize, and Enter or Escape to finish.");
 
         _pageCanvas = new Canvas { Background = Brushes.Transparent };
         _scrollViewer = new ScrollViewer
@@ -79,6 +85,7 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
             FontSize = 11,
             Text = "Paginated diagnostic: waiting for layout"
         };
+        AutomationProperties.SetAutomationId(_statusText, "PaginationDiagnosticStatus");
         _statusBorder = new Border
         {
             Background = new SolidColorBrush(Color.FromArgb(220, 36, 43, 50)),
@@ -111,6 +118,9 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
         canvas.Children.OfType<FrameworkElement>().Count(element =>
             element.Tag is string tag && tag.StartsWith("pagination-resize-",
                 StringComparison.Ordinal)));
+    internal string StatusTextForTesting => _statusText.Text;
+    internal string? KeyboardResizeTargetNameForTesting =>
+        _keyboardResizeTarget is { } target ? GetResizeHandleName(target) : null;
 
     internal WriterPaginationPageInteraction CaptureInteractionForTesting(
         int pageNumber, int sourceOffset)
@@ -147,17 +157,67 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
         InteractionRequested?.Invoke(anchor, moving);
 
     internal bool BeginResizeForTesting(WriterPaginationObjectKind kind,
-        WriterPaginationResizeHandleKind handle)
+        WriterPaginationResizeHandleKind handle, int handleIndex = -1,
+        int rowGroupIndex = -1)
     {
         var interaction = CaptureObjectInteractionForTesting(kind);
         ShowInteractionStatus(interaction.ObjectIdentity!.Value, kind, activated: true);
-        return TryBeginResize(interaction.PageNumber, interaction.PagePoint, handle);
+        if (!TryFindResizeHandle(interaction.ObjectIdentity.Value, kind, handle,
+                handleIndex, rowGroupIndex, out var descriptor))
+            return false;
+        return TryBeginResize(descriptor.PageNumber, descriptor.Center, handle,
+            handleIndex, rowGroupIndex);
     }
 
     internal bool UpdateResizeForTesting(double deltaX, double deltaY) =>
         UpdateResize(new Vector(deltaX, deltaY));
 
     internal bool CompleteResizeForTesting() => CompleteResize();
+
+    internal bool BeginKeyboardResizeForTesting(WriterPaginationObjectKind kind,
+        WriterPaginationResizeHandleKind handle, int handleIndex = -1,
+        int rowGroupIndex = -1)
+    {
+        var interaction = CaptureObjectInteractionForTesting(kind);
+        ShowInteractionStatus(interaction.ObjectIdentity!.Value, kind, activated: true);
+        if (!TryFindResizeHandle(interaction.ObjectIdentity.Value, kind, handle,
+                handleIndex, rowGroupIndex, out var descriptor))
+            return false;
+        return TryBeginResize(descriptor.PageNumber, descriptor.Center, handle,
+            handleIndex, rowGroupIndex, isKeyboard: true);
+    }
+
+    internal bool ApplyKeyboardResizeKeyForTesting(Key key, ModifierKeys modifiers =
+        ModifierKeys.None) => ApplyKeyboardResizeKey(key, modifiers);
+
+    internal bool ApplyHostKeyForTesting(Key key, ModifierKeys modifiers =
+        ModifierKeys.None) => TryHandleHostKey(key, modifiers);
+
+    internal static Key GetEffectiveKeyForTesting(Key key, Key systemKey) =>
+        key == Key.System ? systemKey : key;
+
+    internal bool ApplyResizeRequestForTesting(WriterPaginationResizeInteraction request) =>
+        ResizeRequested?.Invoke(request) == true;
+
+    internal IReadOnlyList<AutomationPeer> ResizeHandlePeersForTesting() =>
+        _overlayCanvases.Values.SelectMany(canvas => canvas.Children
+                .OfType<ResizeHandleElement>())
+            .Select(element => UIElementAutomationPeer.CreatePeerForElement(element))
+            .Where(peer => peer is not null)
+            .Cast<AutomationPeer>()
+            .ToArray();
+
+    internal IReadOnlyList<AutomationPeer> StructuredObjectPeersForTesting() =>
+        _overlayCanvases.Values.SelectMany(canvas => canvas.Children
+                .OfType<StructuredObjectElement>())
+            .Select(element => UIElementAutomationPeer.CreatePeerForElement(element))
+            .Where(peer => peer is not null)
+            .Cast<AutomationPeer>()
+            .ToArray();
+
+    internal static Size GetLogicalHandleSizeForTesting(double screenSizeDip,
+        double zoomPercent, DpiScale dpi) => GetLogicalHandleSize(
+            screenSizeDip, zoomPercent, dpi);
 
     internal void RequestPageForTesting(int pageNumber)
     {
@@ -188,6 +248,7 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
     internal void Invalidate(long generation, long documentIdentity)
     {
         CancelActiveResize();
+        _keyboardResizeTarget = null;
         if (documentIdentity != _documentIdentity)
         {
             _selectedObjectIdentity = null;
@@ -200,7 +261,8 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
     }
 
     internal void Publish(WriterPaginationLayoutResult result,
-        double captureMilliseconds, RichTextBox editor)
+        double captureMilliseconds, WriterPaginationWorkStatistics statistics,
+        RichTextBox editor)
     {
         ArgumentNullException.ThrowIfNull(result);
         ArgumentNullException.ThrowIfNull(editor);
@@ -215,7 +277,10 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
         _statusText.Text = $"Diagnostic · document {result.DocumentIdentity:N0} · " +
             $"generation {result.Generation:N0} · " +
             $"page {result.VisiblePage + 1:N0}/{result.PageCount:N0} · " +
-            $"capture {captureMilliseconds:0.#} ms · layout {result.WorkerMilliseconds:0.#} ms";
+            $"capture {captureMilliseconds:0.#} ms · layout {result.WorkerMilliseconds:0.#} ms · " +
+            $"work {statistics.CompletedCount:N0}/{statistics.StartedCount:N0} · " +
+            $"cancelled {statistics.CanceledActiveCount:N0} · " +
+            $"coalesced {statistics.SupersededPendingCount:N0}";
         _interactionStatus = null;
         RefreshOverlays(editor);
     }
@@ -227,6 +292,7 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
         {
             _selectedObjectIdentity = objectIdentity;
             _selectedObjectKind = kind;
+            _keyboardResizeTarget = null;
             RefreshOverlays(_editor);
         }
         _interactionStatus = activated
@@ -300,6 +366,9 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
             DpiScaleChanged?.Invoke();
     }
 
+    protected override AutomationPeer OnCreateAutomationPeer() =>
+        new PaginationSurfaceAutomationPeer(this);
+
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         var window = Window.GetWindow(this);
@@ -322,10 +391,38 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
 
     private void OnHostPreviewKeyDown(object sender, KeyEventArgs e)
     {
-        if (e.Key != Key.Escape || _resizeDrag is null)
-            return;
-        CancelActiveResize();
-        e.Handled = true;
+        e.Handled = TryHandleHostKey(GetEffectiveKeyForTesting(e.Key, e.SystemKey),
+            Keyboard.Modifiers);
+    }
+
+    private bool TryHandleHostKey(Key key, ModifierKeys modifiers)
+    {
+        if (_resizeDrag is { IsKeyboard: true })
+            return ApplyKeyboardResizeKey(key, modifiers);
+        if (_resizeDrag is not null)
+        {
+            if (key != Key.Escape)
+                return false;
+            CancelActiveResize();
+            return true;
+        }
+        if (_keyboardResizeTarget is { } target)
+        {
+            if (key == Key.Escape)
+            {
+                _keyboardResizeTarget = null;
+                RefreshOverlays(_editor);
+                RestoreEditorKeyboardFocus();
+                return true;
+            }
+            if (key == Key.Tab)
+                return CycleKeyboardResizeTarget(modifiers.HasFlag(ModifierKeys.Shift));
+            if (key is Key.Enter or Key.Space)
+                return BeginKeyboardResize(target);
+            return false;
+        }
+        return key == Key.R && modifiers.HasFlag(ModifierKeys.Control) &&
+            modifiers.HasFlag(ModifierKeys.Alt) && ActivateKeyboardResizeNavigation();
     }
 
     internal void RefreshOverlays(RichTextBox? editor)
@@ -551,9 +648,43 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
             Canvas.SetLeft(shape, rect.Left);
             Canvas.SetTop(shape, rect.Top);
             canvas.Children.Add(shape);
+            AddStructuredObjectAutomationElement(canvas, result, item, rect);
         }
         AddResizeHandles(result);
         AddResizePreview();
+    }
+
+    private void AddStructuredObjectAutomationElement(Canvas canvas,
+        WriterPaginationLayoutResult result, WriterPaginationObjectGeometry item, Rect rect)
+    {
+        var name = $"Select {item.Kind.ToString().ToLowerInvariant()} on page " +
+            $"{item.PageNumber + 1}";
+        var element = new StructuredObjectElement(
+            () => InvokeStructuredObject(result.Generation, result.DocumentIdentity,
+                item), name)
+        {
+            Width = Math.Max(1, rect.Width),
+            Height = Math.Max(1, rect.Height),
+            Tag = $"pagination-object-{item.Kind.ToString().ToLowerInvariant()}"
+        };
+        AutomationProperties.SetAutomationId(element,
+            $"PaginationObject-{item.Kind}-{item.ObjectIdentity}-{item.PageNumber}");
+        AutomationProperties.SetName(element, name);
+        AutomationProperties.SetHelpText(element,
+            "Invoking selects the authoritative object and returns commands to the live editor.");
+        Canvas.SetLeft(element, rect.Left);
+        Canvas.SetTop(element, rect.Top);
+        canvas.Children.Add(element);
+    }
+
+    private void InvokeStructuredObject(long generation, long documentIdentity,
+        WriterPaginationObjectGeometry item)
+    {
+        var rect = item.Rectangle.ToRect();
+        InteractionRequested?.Invoke(new WriterPaginationPageInteraction(
+            generation, documentIdentity, item.PageNumber,
+            new Point(rect.Left + rect.Width / 2, rect.Top + rect.Height / 2),
+            item.ObjectIdentity, item.Kind), null);
     }
 
     private void AddResizePreview()
@@ -590,6 +721,19 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
                     _result.PageSettings.BottomMarginDip));
             return new Rect(drag.OpeningRect.Location, size);
         }
+        if (drag.Request.Handle == WriterPaginationResizeHandleKind.TableColumn)
+        {
+            return new Rect(drag.OpeningRect.Location,
+                new Size(Math.Max(WriterTableResizeGeometry.MinimumColumnWidth,
+                    drag.OpeningRect.Width + drag.Delta.X), drag.OpeningRect.Height));
+        }
+        if (drag.Request.Handle == WriterPaginationResizeHandleKind.TableRow)
+        {
+            return new Rect(drag.OpeningRect.Location,
+                new Size(drag.OpeningRect.Width,
+                    Math.Max(WriterTableResizeGeometry.MinimumRowHeight,
+                        drag.OpeningRect.Height + drag.Delta.Y)));
+        }
         return new Rect(drag.OpeningRect.Location,
             new Size(Math.Max(WriterTableResizeGeometry.MinimumColumnWidth,
                     drag.OpeningRect.Width + drag.Delta.X),
@@ -602,54 +746,38 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
         if (_selectedObjectIdentity is not { } identity ||
             _selectedObjectKind is not { } kind)
             return;
-        var geometries = result.StructuredObjects
-            .Where(item => item.ObjectIdentity == identity && item.Kind == kind &&
-                _overlayCanvases.ContainsKey(item.PageNumber))
-            .ToArray();
-        if (geometries.Length == 0)
-            return;
-        if (kind == WriterPaginationObjectKind.Picture)
-        {
-            foreach (var geometry in geometries)
-            foreach (var handle in Enum.GetValues<WriterPaginationResizeHandleKind>()
-                         .Where(value => value != WriterPaginationResizeHandleKind.TableOverall))
-                AddResizeHandle(geometry, handle, GetHandleRect(geometry.Rectangle.ToRect(), handle));
-        }
-        else if (kind == WriterPaginationObjectKind.Table)
-        {
-            var geometry = geometries.MaxBy(item => item.PageNumber);
-            if (geometry != default)
-            {
-                var rect = geometry.Rectangle.ToRect();
-                var size = 8 / (_zoomPercent / 100d);
-                AddResizeHandle(geometry, WriterPaginationResizeHandleKind.TableOverall,
-                    new Rect(rect.Right - size / 2, rect.Bottom - size / 2, size, size));
-            }
-        }
+        foreach (var descriptor in BuildResizeHandleDescriptors(result, identity, kind))
+            AddResizeHandle(descriptor);
     }
 
-    private void AddResizeHandle(WriterPaginationObjectGeometry geometry,
-        WriterPaginationResizeHandleKind handle, Rect rect)
+    private void AddResizeHandle(ResizeHandleDescriptor descriptor)
     {
-        if (!_overlayCanvases.TryGetValue(geometry.PageNumber, out var canvas))
+        if (!_overlayCanvases.TryGetValue(descriptor.PageNumber, out var canvas))
             return;
-        var shape = new Rectangle
+        var name = GetResizeHandleName(descriptor);
+        var shape = new ResizeHandleElement(
+            () => InvokeResizeHandle(descriptor), name,
+            _keyboardResizeTarget is { } target && SameHandle(target, descriptor))
         {
-            Width = rect.Width,
-            Height = rect.Height,
-            Fill = Brushes.White,
-            Stroke = Brushes.DodgerBlue,
-            StrokeThickness = Math.Max(0.5, 1 / (_zoomPercent / 100d)),
-            Tag = $"pagination-resize-{handle.ToString().ToLowerInvariant()}"
+            Width = descriptor.Rectangle.Width,
+            Height = descriptor.Rectangle.Height,
+            Tag = $"pagination-resize-{descriptor.Handle.ToString().ToLowerInvariant()}"
         };
-        Canvas.SetLeft(shape, rect.Left);
-        Canvas.SetTop(shape, rect.Top);
+        AutomationProperties.SetAutomationId(shape,
+            $"PaginationResize-{descriptor.ObjectIdentity}-{descriptor.PageNumber}-" +
+            $"{descriptor.Handle}-{descriptor.RowGroupIndex}-{descriptor.HandleIndex}");
+        AutomationProperties.SetName(shape, name);
+        AutomationProperties.SetHelpText(shape,
+            "Invoke grows by twelve DIPs. Use Control+Alt+R from the live editor for transactional " +
+            "keyboard resize without moving native command focus.");
+        Canvas.SetLeft(shape, descriptor.Rectangle.Left);
+        Canvas.SetTop(shape, descriptor.Rectangle.Top);
         canvas.Children.Add(shape);
     }
 
-    private Rect GetHandleRect(Rect rect, WriterPaginationResizeHandleKind handle)
+    private Rect GetPictureHandleRect(Rect rect,
+        WriterPaginationResizeHandleKind handle, double screenSizeDip)
     {
-        var size = 8 / (_zoomPercent / 100d);
         var x = handle switch
         {
             WriterPaginationResizeHandleKind.PictureTopLeft or
@@ -668,8 +796,252 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
                 WriterPaginationResizeHandleKind.PictureRight => rect.Top + rect.Height / 2,
             _ => rect.Bottom
         };
-        return new Rect(x - size / 2, y - size / 2, size, size);
+        return GetPointHandleRect(new Point(x, y), screenSizeDip);
     }
+
+    private Rect GetPointHandleRect(Point point, double screenSizeDip)
+    {
+        var size = GetLogicalHandleSize(screenSizeDip, _zoomPercent,
+            VisualTreeHelper.GetDpi(this));
+        return new Rect(point.X - size.Width / 2, point.Y - size.Height / 2,
+            size.Width, size.Height);
+    }
+
+    private static Size GetLogicalHandleSize(double screenSizeDip,
+        double zoomPercent, DpiScale dpi)
+    {
+        if (!double.IsFinite(screenSizeDip) || screenSizeDip <= 0 ||
+            !double.IsFinite(zoomPercent) || zoomPercent <= 0 ||
+            !double.IsFinite(dpi.DpiScaleX) || dpi.DpiScaleX <= 0 ||
+            !double.IsFinite(dpi.DpiScaleY) || dpi.DpiScaleY <= 0)
+            throw new ArgumentOutOfRangeException(nameof(screenSizeDip));
+        var scale = zoomPercent / 100d;
+        var alignedWidth = Math.Max(1 / dpi.DpiScaleX,
+            Math.Round(screenSizeDip * dpi.DpiScaleX) / dpi.DpiScaleX);
+        var alignedHeight = Math.Max(1 / dpi.DpiScaleY,
+            Math.Round(screenSizeDip * dpi.DpiScaleY) / dpi.DpiScaleY);
+        return new Size(alignedWidth / scale, alignedHeight / scale);
+    }
+
+    private IEnumerable<ResizeHandleDescriptor> BuildResizeHandleDescriptors(
+        WriterPaginationLayoutResult result, long identity, WriterPaginationObjectKind kind)
+    {
+        if (kind == WriterPaginationObjectKind.Picture)
+        {
+            foreach (var geometry in result.StructuredObjects.Where(item =>
+                         item.ObjectIdentity == identity && item.Kind == kind &&
+                         _overlayCanvases.ContainsKey(item.PageNumber)))
+            foreach (var handle in Enum.GetValues<WriterPaginationResizeHandleKind>()
+                         .Where(IsPictureHandle))
+            {
+                yield return new ResizeHandleDescriptor(geometry.PageNumber, identity, kind,
+                    handle, -1, -1, GetPictureHandleRect(
+                        geometry.Rectangle.ToRect(), handle,
+                        WriterTableResizeGeometry.VisualHandleSize));
+            }
+            yield break;
+        }
+        if (kind != WriterPaginationObjectKind.Table)
+            yield break;
+        foreach (var table in result.Tables.Where(item => item.ObjectIdentity == identity &&
+                     _overlayCanvases.ContainsKey(item.PageNumber)))
+        {
+            for (var column = 0; column + 1 < table.ColumnBoundaries.Length; column++)
+            {
+                yield return new ResizeHandleDescriptor(table.PageNumber, identity, kind,
+                    WriterPaginationResizeHandleKind.TableColumn, column, -1,
+                    GetPointHandleRect(new Point(table.ColumnBoundaries[column + 1],
+                        table.Bounds.Y), WriterTableResizeGeometry.VisualHandleSize));
+            }
+            foreach (var row in table.RowBoundaries)
+            {
+                yield return new ResizeHandleDescriptor(table.PageNumber, identity, kind,
+                    WriterPaginationResizeHandleKind.TableRow, row.RowIndex,
+                    row.RowGroupIndex, GetPointHandleRect(new Point(table.Bounds.X,
+                        row.PositionDip), WriterTableResizeGeometry.VisualHandleSize));
+            }
+            if (!table.IsLastFragment || !table.HasTrustedColumnBoundaries)
+                continue;
+            var bounds = table.Bounds.ToRect();
+            yield return new ResizeHandleDescriptor(table.PageNumber, identity, kind,
+                WriterPaginationResizeHandleKind.TableOverall, -1, -1,
+                GetPointHandleRect(new Point(bounds.Right, bounds.Bottom),
+                    WriterTableResizeGeometry.VisualHandleSize));
+        }
+    }
+
+    private bool TryFindResizeHandle(long identity, WriterPaginationObjectKind kind,
+        WriterPaginationResizeHandleKind handle, int handleIndex, int rowGroupIndex,
+        out ResizeHandleDescriptor descriptor)
+    {
+        descriptor = default;
+        if (_result is not { } result)
+            return false;
+        var match = BuildResizeHandleDescriptors(result, identity, kind)
+            .FirstOrDefault(item => item.Handle == handle &&
+                item.HandleIndex == handleIndex && item.RowGroupIndex == rowGroupIndex);
+        if (match == default)
+            return false;
+        descriptor = match;
+        return true;
+    }
+
+    private void InvokeResizeHandle(ResizeHandleDescriptor descriptor)
+    {
+        if (!TryBeginResize(descriptor.PageNumber, descriptor.Center,
+                descriptor.Handle, descriptor.HandleIndex, descriptor.RowGroupIndex))
+            return;
+        var delta = descriptor.Handle switch
+        {
+            WriterPaginationResizeHandleKind.PictureTopLeft => new Vector(-12, -12),
+            WriterPaginationResizeHandleKind.PictureTop => new Vector(0, -12),
+            WriterPaginationResizeHandleKind.PictureTopRight => new Vector(12, -12),
+            WriterPaginationResizeHandleKind.PictureLeft => new Vector(-12, 0),
+            WriterPaginationResizeHandleKind.PictureRight or
+                WriterPaginationResizeHandleKind.TableColumn => new Vector(12, 0),
+            WriterPaginationResizeHandleKind.PictureBottomLeft => new Vector(-12, 12),
+            WriterPaginationResizeHandleKind.PictureBottom => new Vector(0, 12),
+            WriterPaginationResizeHandleKind.TableRow => new Vector(0, 12),
+            _ => new Vector(12, 12)
+        };
+        if (!UpdateResize(delta))
+        {
+            CancelActiveResize();
+            return;
+        }
+        CompleteResize();
+    }
+
+    private bool BeginKeyboardResize(ResizeHandleDescriptor descriptor) =>
+        TryBeginResize(descriptor.PageNumber, descriptor.Center, descriptor.Handle,
+            descriptor.HandleIndex, descriptor.RowGroupIndex, isKeyboard: true);
+
+    private bool ActivateKeyboardResizeNavigation()
+    {
+        if (_result is not { } result || _selectedObjectIdentity is not { } identity ||
+            _selectedObjectKind is not { } kind)
+            return false;
+        var handles = BuildResizeHandleDescriptors(result, identity, kind).ToArray();
+        if (handles.Length == 0)
+            return false;
+        _keyboardResizeTarget = handles[0];
+        ShowKeyboardResizeTargetStatus(handles[0]);
+        RefreshOverlays(_editor);
+        return true;
+    }
+
+    private bool CycleKeyboardResizeTarget(bool reverse)
+    {
+        if (_result is not { } result || _selectedObjectIdentity is not { } identity ||
+            _selectedObjectKind is not { } kind || _keyboardResizeTarget is not { } current)
+            return false;
+        var handles = BuildResizeHandleDescriptors(result, identity, kind).ToArray();
+        if (handles.Length == 0)
+            return false;
+        var index = Array.FindIndex(handles, candidate => SameHandle(candidate, current));
+        index = index < 0 ? 0 : (index + (reverse ? -1 : 1) + handles.Length) % handles.Length;
+        _keyboardResizeTarget = handles[index];
+        ShowKeyboardResizeTargetStatus(handles[index]);
+        RefreshOverlays(_editor);
+        return true;
+    }
+
+    private void ShowKeyboardResizeTargetStatus(ResizeHandleDescriptor descriptor)
+    {
+        if (_result is not { } result)
+            return;
+        _statusText.Text = $"Diagnostic · generation {result.Generation:N0} · keyboard target · " +
+            GetResizeHandleName(descriptor);
+    }
+
+    private static bool SameHandle(ResizeHandleDescriptor first,
+        ResizeHandleDescriptor second) => first.PageNumber == second.PageNumber &&
+        first.ObjectIdentity == second.ObjectIdentity && first.ObjectKind == second.ObjectKind &&
+        first.Handle == second.Handle && first.HandleIndex == second.HandleIndex &&
+        first.RowGroupIndex == second.RowGroupIndex;
+
+    private bool ApplyKeyboardResizeKey(Key key, ModifierKeys modifiers)
+    {
+        if (_resizeDrag is not { IsKeyboard: true } drag)
+            return false;
+        if (key == Key.Escape)
+        {
+            CancelActiveResize();
+            _keyboardResizeTarget = null;
+            RestoreEditorKeyboardFocus();
+            return true;
+        }
+        if (key is Key.Enter or Key.Space)
+        {
+            CompleteResize();
+            _keyboardResizeTarget = null;
+            RestoreEditorKeyboardFocus();
+            return true;
+        }
+
+        var step = modifiers.HasFlag(ModifierKeys.Shift) ? 12d : 1d;
+        var increment = GetKeyboardResizeIncrement(drag.Request.Handle, key, step);
+        if (increment is not { } value)
+            return false;
+        return UpdateResize(drag.Delta + value);
+    }
+
+    private static Vector? GetKeyboardResizeIncrement(
+        WriterPaginationResizeHandleKind handle, Key key, double step)
+    {
+        var allowsHorizontal = handle is WriterPaginationResizeHandleKind.TableColumn or
+            WriterPaginationResizeHandleKind.TableOverall or
+            WriterPaginationResizeHandleKind.PictureTopLeft or
+            WriterPaginationResizeHandleKind.PictureTopRight or
+            WriterPaginationResizeHandleKind.PictureRight or
+            WriterPaginationResizeHandleKind.PictureBottomRight or
+            WriterPaginationResizeHandleKind.PictureBottomLeft or
+            WriterPaginationResizeHandleKind.PictureLeft;
+        var allowsVertical = handle is WriterPaginationResizeHandleKind.TableRow or
+            WriterPaginationResizeHandleKind.TableOverall or
+            WriterPaginationResizeHandleKind.PictureTopLeft or
+            WriterPaginationResizeHandleKind.PictureTop or
+            WriterPaginationResizeHandleKind.PictureTopRight or
+            WriterPaginationResizeHandleKind.PictureBottomRight or
+            WriterPaginationResizeHandleKind.PictureBottom or
+            WriterPaginationResizeHandleKind.PictureBottomLeft;
+        return key switch
+        {
+            Key.Left when allowsHorizontal => new Vector(-step, 0),
+            Key.Right when allowsHorizontal => new Vector(step, 0),
+            Key.Up when allowsVertical => new Vector(0, -step),
+            Key.Down when allowsVertical => new Vector(0, step),
+            _ => null
+        };
+    }
+
+    private void RestoreEditorKeyboardFocus()
+    {
+        if (_editor is null)
+            return;
+        if (Window.GetWindow(_editor) is { } window)
+            FocusManager.SetFocusedElement(window, _editor);
+        _editor.Focus();
+        Keyboard.Focus(_editor);
+    }
+
+    private static string GetResizeHandleName(ResizeHandleDescriptor descriptor) =>
+        descriptor.Handle switch
+        {
+            WriterPaginationResizeHandleKind.TableColumn =>
+                $"Resize table column {descriptor.HandleIndex + 1} on page {descriptor.PageNumber + 1}",
+            WriterPaginationResizeHandleKind.TableRow =>
+                $"Resize table row group {descriptor.RowGroupIndex + 1}, " +
+                $"row {descriptor.HandleIndex + 1} on page {descriptor.PageNumber + 1}",
+            WriterPaginationResizeHandleKind.TableOverall =>
+                $"Resize entire table on page {descriptor.PageNumber + 1}",
+            _ => $"Resize picture {descriptor.Handle.ToString()[7..].ToLowerInvariant()} " +
+                $"on page {descriptor.PageNumber + 1}"
+        };
+
+    private static bool IsPictureHandle(WriterPaginationResizeHandleKind handle) =>
+        handle is >= WriterPaginationResizeHandleKind.PictureTopLeft and
+            <= WriterPaginationResizeHandleKind.PictureLeft;
 
     private void AddCaretOverlay(WriterPaginationLayoutResult result, int offset)
     {
@@ -750,8 +1122,9 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
         if (sender is not Grid { Tag: int pageNumber } page)
             return;
         var scaledPoint = e.GetPosition(page);
-        if (TryHitResizeHandle(pageNumber, scaledPoint, out var handle) &&
-            TryBeginResize(pageNumber, ToPagePoint(scaledPoint), handle))
+        if (TryHitResizeHandle(pageNumber, scaledPoint, out var resizeHandle) &&
+            TryBeginResize(pageNumber, ToPagePoint(scaledPoint), resizeHandle.Handle,
+                resizeHandle.HandleIndex, resizeHandle.RowGroupIndex))
         {
             page.CaptureMouse();
             e.Handled = true;
@@ -799,54 +1172,59 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
     }
 
     private bool TryHitResizeHandle(int pageNumber, Point scaledPoint,
-        out WriterPaginationResizeHandleKind handle)
+        out ResizeHandleDescriptor handle)
     {
         handle = default;
         if (_result is not { } result || _selectedObjectIdentity is not { } identity ||
             _selectedObjectKind is not { } kind)
             return false;
         var point = ToPagePoint(scaledPoint);
-        var geometry = result.StructuredObjects.FirstOrDefault(item =>
-            item.PageNumber == pageNumber && item.ObjectIdentity == identity && item.Kind == kind);
-        if (geometry == default)
-            return false;
-        var candidates = kind == WriterPaginationObjectKind.Picture
-            ? Enum.GetValues<WriterPaginationResizeHandleKind>()
-                .Where(value => value != WriterPaginationResizeHandleKind.TableOverall)
-            : new[] { WriterPaginationResizeHandleKind.TableOverall };
-        var hitPadding = 5 / (_zoomPercent / 100d);
-        foreach (var candidate in candidates)
+        var found = false;
+        var nearest = double.PositiveInfinity;
+        foreach (var candidate in BuildResizeHandleDescriptors(result, identity, kind)
+                     .Where(item => item.PageNumber == pageNumber))
         {
-            var rect = candidate == WriterPaginationResizeHandleKind.TableOverall
-                ? new Rect(geometry.Rectangle.X + geometry.Rectangle.Width,
-                    geometry.Rectangle.Y + geometry.Rectangle.Height, 0, 0)
-                : GetHandleRect(geometry.Rectangle.ToRect(), candidate);
-            rect.Inflate(hitPadding, hitPadding);
+            var center = candidate.Center;
+            var hitSize = GetLogicalHandleSize(
+                WriterTableResizeGeometry.HandleHitTargetSize, _zoomPercent,
+                VisualTreeHelper.GetDpi(this));
+            var rect = new Rect(center.X - hitSize.Width / 2,
+                center.Y - hitSize.Height / 2, hitSize.Width, hitSize.Height);
             if (!rect.Contains(point))
                 continue;
+            var distance = (point - center).LengthSquared;
+            if (distance >= nearest)
+                continue;
+            nearest = distance;
             handle = candidate;
-            return true;
+            found = true;
         }
-        return false;
+        return found;
     }
 
     private bool TryBeginResize(int pageNumber, Point point,
-        WriterPaginationResizeHandleKind handle)
+        WriterPaginationResizeHandleKind handle, int handleIndex = -1,
+        int rowGroupIndex = -1, bool isKeyboard = false)
     {
         if (_resizeDrag is not null || _result is not { } result ||
             _selectedObjectIdentity is not { } identity ||
             _selectedObjectKind is not { } kind)
             return false;
+        if (!TryFindResizeHandle(identity, kind, handle, handleIndex,
+                rowGroupIndex, out var descriptor) || descriptor.PageNumber != pageNumber)
+            return false;
         var geometry = result.StructuredObjects.FirstOrDefault(item =>
             item.PageNumber == pageNumber && item.ObjectIdentity == identity && item.Kind == kind);
-        if (geometry == default)
-            return false;
+        var openingRect = kind == WriterPaginationObjectKind.Table
+            ? result.Tables.First(item => item.PageNumber == pageNumber &&
+                item.ObjectIdentity == identity).Bounds.ToRect()
+            : geometry.Rectangle.ToRect();
         var request = new WriterPaginationResizeInteraction(result.Generation,
             result.DocumentIdentity, pageNumber, identity, kind, handle,
-            WriterPaginationResizePhase.Start, 0, 0);
+            WriterPaginationResizePhase.Start, 0, 0, handleIndex, rowGroupIndex);
         if (ResizeRequested?.Invoke(request) != true)
             return false;
-        _resizeDrag = new ResizeDrag(request, point, geometry.Rectangle.ToRect(), default);
+        _resizeDrag = new ResizeDrag(request, point, openingRect, default, isKeyboard);
         RefreshOverlays(_editor);
         return true;
     }
@@ -997,11 +1375,141 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
             "The resize handle is not a picture handle.")
     };
 
+    private readonly record struct ResizeHandleDescriptor(
+        int PageNumber,
+        long ObjectIdentity,
+        WriterPaginationObjectKind ObjectKind,
+        WriterPaginationResizeHandleKind Handle,
+        int HandleIndex,
+        int RowGroupIndex,
+        Rect Rectangle)
+    {
+        internal Point Center => new(Rectangle.Left + Rectangle.Width / 2,
+            Rectangle.Top + Rectangle.Height / 2);
+    }
+
+    private sealed class ResizeHandleElement : FrameworkElement
+    {
+        private readonly Action _invoke;
+        private readonly bool _isKeyboardTarget;
+
+        internal ResizeHandleElement(Action invoke, string name, bool isKeyboardTarget)
+        {
+            _invoke = invoke;
+            _isKeyboardTarget = isKeyboardTarget;
+            Focusable = false;
+            IsHitTestVisible = false;
+            AutomationProperties.SetName(this, name);
+        }
+
+        internal void Invoke() => _invoke();
+
+        protected override void OnRender(DrawingContext drawingContext)
+        {
+            base.OnRender(drawingContext);
+            var dpi = VisualTreeHelper.GetDpi(this);
+            var thickness = Math.Max(1 / dpi.DpiScaleX, 1);
+            drawingContext.DrawRectangle(Brushes.White,
+                new Pen(Brushes.DodgerBlue, thickness),
+                new Rect(0, 0, ActualWidth, ActualHeight));
+            if (_isKeyboardTarget)
+                drawingContext.DrawRectangle(null,
+                    new Pen(Brushes.Black, thickness),
+                    new Rect(thickness, thickness,
+                        Math.Max(0, ActualWidth - thickness * 2),
+                        Math.Max(0, ActualHeight - thickness * 2)));
+        }
+
+        protected override AutomationPeer OnCreateAutomationPeer() =>
+            new ResizeHandleAutomationPeer(this);
+    }
+
+    private sealed class StructuredObjectElement : FrameworkElement
+    {
+        private readonly Action _invoke;
+
+        internal StructuredObjectElement(Action invoke, string name)
+        {
+            _invoke = invoke;
+            Focusable = false;
+            IsHitTestVisible = false;
+            AutomationProperties.SetName(this, name);
+        }
+
+        internal void Invoke() => _invoke();
+
+        protected override AutomationPeer OnCreateAutomationPeer() =>
+            new StructuredObjectAutomationPeer(this);
+    }
+
+    private sealed class StructuredObjectAutomationPeer(StructuredObjectElement owner) :
+        FrameworkElementAutomationPeer(owner), IInvokeProvider
+    {
+        private StructuredObjectElement ObjectOwner => (StructuredObjectElement)Owner;
+
+        protected override AutomationControlType GetAutomationControlTypeCore() =>
+            AutomationControlType.Button;
+
+        protected override string GetClassNameCore() => "WriterPaginationStructuredObject";
+
+        protected override bool IsControlElementCore() => true;
+
+        protected override bool IsContentElementCore() => true;
+
+        public override object? GetPattern(PatternInterface patternInterface) =>
+            patternInterface == PatternInterface.Invoke ? this : base.GetPattern(patternInterface);
+
+        void IInvokeProvider.Invoke() => ObjectOwner.Dispatcher.BeginInvoke(ObjectOwner.Invoke);
+    }
+
+    private sealed class ResizeHandleAutomationPeer(ResizeHandleElement owner) :
+        FrameworkElementAutomationPeer(owner), IInvokeProvider
+    {
+        private ResizeHandleElement HandleOwner => (ResizeHandleElement)Owner;
+
+        protected override AutomationControlType GetAutomationControlTypeCore() =>
+            AutomationControlType.Button;
+
+        protected override string GetClassNameCore() => "WriterPaginationResizeHandle";
+
+        protected override bool IsControlElementCore() => true;
+
+        protected override bool IsContentElementCore() => true;
+
+        public override object? GetPattern(PatternInterface patternInterface) =>
+            patternInterface == PatternInterface.Invoke ? this : base.GetPattern(patternInterface);
+
+        void IInvokeProvider.Invoke()
+        {
+            if (!IsEnabled())
+                throw new ElementNotEnabledException();
+            if (HandleOwner.Dispatcher.CheckAccess())
+                HandleOwner.Invoke();
+            else
+                HandleOwner.Dispatcher.Invoke(HandleOwner.Invoke);
+        }
+    }
+
+    private sealed class PaginationSurfaceAutomationPeer(
+        WriterPaginatedDiagnosticSurface owner) : FrameworkElementAutomationPeer(owner)
+    {
+        protected override AutomationControlType GetAutomationControlTypeCore() =>
+            AutomationControlType.Pane;
+
+        protected override string GetClassNameCore() =>
+            nameof(WriterPaginatedDiagnosticSurface);
+
+        protected override bool IsControlElementCore() => true;
+
+        protected override bool IsContentElementCore() => true;
+    }
+
     private sealed record ResizeDrag(
         WriterPaginationResizeInteraction Request,
         Point OpeningPoint,
         Rect OpeningRect,
-        Vector Delta)
+        Vector Delta,
+        bool IsKeyboard)
     {
         internal WriterPaginationResizeInteraction ToInteraction(
             WriterPaginationResizePhase phase, Vector delta) => Request with

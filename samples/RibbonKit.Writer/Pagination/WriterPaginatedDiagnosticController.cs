@@ -73,8 +73,9 @@ internal sealed class WriterPaginatedDiagnosticController : IDisposable
     internal long PublishedGeneration { get; private set; }
     internal WriterPaginationLayoutResult? Current { get; private set; }
     internal double LastCaptureMilliseconds { get; private set; }
+    internal WriterPaginationWorkStatistics WorkStatistics => _engine.Statistics;
     internal Func<TextElement, bool>? StructuredObjectActivator { get; set; }
-    internal Func<TextElement, WriterPaginationResizeHandleKind, bool>?
+    internal Func<TextElement, WriterPaginationResizeHandleKind, int, int, bool>?
         StructuredResizeStarter { get; set; }
     internal Action<WriterPaginationResizeHandleKind, double, double>?
         StructuredResizeUpdater { get; set; }
@@ -234,7 +235,7 @@ internal sealed class WriterPaginatedDiagnosticController : IDisposable
                 Current = result;
                 PublishedGeneration = result.Generation;
                 _visiblePage = result.VisiblePage;
-                _surface.Publish(result, LastCaptureMilliseconds, _editor);
+                _surface.Publish(result, LastCaptureMilliseconds, _engine.Statistics, _editor);
             }, DispatcherPriority.DataBind);
         }
         catch (Exception exception)
@@ -317,11 +318,13 @@ internal sealed class WriterPaginatedDiagnosticController : IDisposable
             _handlingResizeRequest = true;
             try
             {
-                if (!StructuredResizeStarter(source.Element, request.Handle))
+                if (!StructuredResizeStarter(source.Element, request.Handle,
+                        request.HandleIndex, request.RowGroupIndex))
                     return false;
                 _activeResize = new ActiveResize(request.Generation,
                     request.DocumentIdentity, request.ObjectIdentity,
-                    request.ObjectKind, request.Handle);
+                    request.ObjectKind, request.Handle, request.HandleIndex,
+                    request.RowGroupIndex);
                 return true;
             }
             finally
@@ -368,14 +371,38 @@ internal sealed class WriterPaginatedDiagnosticController : IDisposable
         }
     }
 
-    private bool IsCurrent(WriterPaginationResizeInteraction interaction) =>
-        Current is { } result && interaction.Generation == RequestedGeneration &&
-        interaction.Generation == PublishedGeneration &&
-        interaction.DocumentIdentity == _documentIdentity &&
-        result.MappedPages.Contains(interaction.PageNumber) &&
-        result.StructuredObjects.Any(item => item.PageNumber == interaction.PageNumber &&
-            item.ObjectIdentity == interaction.ObjectIdentity &&
-            item.Kind == interaction.ObjectKind);
+    private bool IsCurrent(WriterPaginationResizeInteraction interaction)
+    {
+        if (Current is not { } result || interaction.Generation != RequestedGeneration ||
+            interaction.Generation != PublishedGeneration ||
+            interaction.DocumentIdentity != _documentIdentity ||
+            !result.MappedPages.Contains(interaction.PageNumber) ||
+            !result.StructuredObjects.Any(item => item.PageNumber == interaction.PageNumber &&
+                item.ObjectIdentity == interaction.ObjectIdentity &&
+                item.Kind == interaction.ObjectKind))
+            return false;
+        if (interaction.ObjectKind != WriterPaginationObjectKind.Table)
+            return interaction.HandleIndex == -1 && interaction.RowGroupIndex == -1;
+        var table = result.Tables.FirstOrDefault(item =>
+            item.PageNumber == interaction.PageNumber &&
+            item.ObjectIdentity == interaction.ObjectIdentity);
+        if (table is null)
+            return false;
+        return interaction.Handle switch
+        {
+            WriterPaginationResizeHandleKind.TableColumn =>
+                interaction.RowGroupIndex == -1 && interaction.HandleIndex >= 0 &&
+                interaction.HandleIndex + 1 < table.ColumnBoundaries.Length,
+            WriterPaginationResizeHandleKind.TableRow =>
+                interaction.HandleIndex >= 0 && interaction.RowGroupIndex >= 0 &&
+                table.RowBoundaries.Any(row => row.RowGroupIndex == interaction.RowGroupIndex &&
+                    row.RowIndex == interaction.HandleIndex),
+            WriterPaginationResizeHandleKind.TableOverall => table.IsLastFragment &&
+                table.HasTrustedColumnBoundaries &&
+                interaction.HandleIndex == -1 && interaction.RowGroupIndex == -1,
+            _ => false
+        };
+    }
 
     private void CancelActiveResize()
     {
@@ -505,13 +532,16 @@ internal sealed class WriterPaginatedDiagnosticController : IDisposable
         long DocumentIdentity,
         long ObjectIdentity,
         WriterPaginationObjectKind ObjectKind,
-        WriterPaginationResizeHandleKind Handle)
+        WriterPaginationResizeHandleKind Handle,
+        int HandleIndex,
+        int RowGroupIndex)
     {
         internal bool Matches(WriterPaginationResizeInteraction interaction) =>
             interaction.Generation == Generation &&
             interaction.DocumentIdentity == DocumentIdentity &&
             interaction.ObjectIdentity == ObjectIdentity &&
             interaction.ObjectKind == ObjectKind &&
-            interaction.Handle == Handle;
+            interaction.Handle == Handle && interaction.HandleIndex == HandleIndex &&
+            interaction.RowGroupIndex == RowGroupIndex;
     }
 }

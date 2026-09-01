@@ -68,13 +68,16 @@ internal sealed class WriterTableResizeController : IDisposable
     internal void CancelActiveResize() => _adorner?.CancelDrag();
 
     internal bool BeginExternalOverallResize()
+        => BeginExternalResize(new WriterTableResizeHandle(
+            WriterTableResizeHandleKind.Overall));
+
+    internal bool BeginExternalResize(WriterTableResizeHandle handle)
     {
-        if (_disposed || !_enabled)
+        if (_disposed || !_enabled || handle.Kind == WriterTableResizeHandleKind.Select)
             return false;
         AttachAdorner();
         if (_adorner is null)
             return false;
-        var handle = new WriterTableResizeHandle(WriterTableResizeHandleKind.Overall);
         return _adorner.BeginDragForTesting(handle, new Point());
     }
 

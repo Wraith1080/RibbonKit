@@ -1,5 +1,7 @@
 using System.Collections.Immutable;
 using System.Windows;
+using System.Windows.Automation.Peers;
+using System.Windows.Automation.Provider;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Input;
@@ -227,7 +229,7 @@ public sealed class WriterPaginatedDiagnosticProductionTests
                 workspace.Editor, new WriterImageService());
             workspace.Controller.StructuredObjectActivator = element =>
                 element is InlineUIContainer picture && pictureController.SelectPicture(picture);
-            workspace.Controller.StructuredResizeStarter = (element, handle) =>
+            workspace.Controller.StructuredResizeStarter = (element, handle, _, _) =>
                 element is InlineUIContainer picture &&
                 handle == WriterPaginationResizeHandleKind.PictureBottomRight &&
                 pictureController.SelectPicture(picture) &&
@@ -276,6 +278,206 @@ public sealed class WriterPaginatedDiagnosticProductionTests
     }
 
     [Fact]
+    public async Task TableBoundariesAreImmutablePageLocalAndIgnoreCellTextAlignment()
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            using var workspace = ProductionWorkspace.Create(CreateStructuredDocument(
+                DocumentPageSettings.Letter()));
+            await WaitForCurrentAsync(workspace.Controller);
+            using var accepted = new WriterPreviewCloneService().CreateSnapshot(
+                workspace.Editor.Document, workspace.Settings);
+            var paginator = Assert.IsAssignableFrom<DynamicDocumentPaginator>(
+                accepted.PrintPaginator);
+            var cloneTable = accepted.SourceClone.Blocks.OfType<Table>().Single();
+            workspace.Surface.RequestPageForTesting(
+                paginator.GetPageNumber(cloneTable.ContentStart));
+            await WaitForCurrentAsync(workspace.Controller);
+
+            var opening = workspace.Controller.Current!.Tables;
+            Assert.NotEmpty(opening);
+            Assert.All(opening, table =>
+            {
+                Assert.True(table.HasTrustedColumnBoundaries);
+                Assert.Equal(3, table.ColumnBoundaries.Length);
+                Assert.True(table.ColumnBoundaries[0] < table.ColumnBoundaries[1]);
+                Assert.True(table.ColumnBoundaries[1] < table.ColumnBoundaries[2]);
+                Assert.InRange(table.ColumnBoundaries[1] - table.ColumnBoundaries[0],
+                    240, 255);
+                Assert.InRange(table.ColumnBoundaries[2] - table.ColumnBoundaries[1],
+                    240, 255);
+                Assert.NotEmpty(table.RowBoundaries);
+                Assert.All(table.RowBoundaries, row =>
+                    Assert.InRange(row.PositionDip, table.Bounds.Y,
+                        table.Bounds.Y + table.Bounds.Height + 0.01));
+            });
+            var openingColumns = opening.Select(table =>
+                table.ColumnBoundaries.ToArray()).ToArray();
+            var starts = 0;
+            workspace.Controller.StructuredResizeStarter = (_, _, _, _) =>
+            {
+                starts++;
+                return true;
+            };
+            var first = opening[0];
+            var current = Assert.IsType<WriterPaginationLayoutResult>(
+                workspace.Controller.Current);
+            var invalidColumn = new WriterPaginationResizeInteraction(
+                current.Generation, current.DocumentIdentity, first.PageNumber,
+                first.ObjectIdentity, WriterPaginationObjectKind.Table,
+                WriterPaginationResizeHandleKind.TableColumn,
+                WriterPaginationResizePhase.Start, 0, 0, 99, -1);
+            Assert.False(workspace.Surface.ApplyResizeRequestForTesting(invalidColumn));
+            Assert.False(workspace.Surface.ApplyResizeRequestForTesting(
+                invalidColumn with { Generation = invalidColumn.Generation - 1,
+                    HandleIndex = 0 }));
+            Assert.Equal(0, starts);
+
+            var sourceTable = workspace.Editor.Document.Blocks.OfType<Table>().Single();
+            foreach (var paragraph in sourceTable.RowGroups[0].Rows
+                         .SelectMany(row => row.Cells)
+                         .SelectMany(cell => cell.Blocks.OfType<Paragraph>()))
+                paragraph.TextAlignment = TextAlignment.Right;
+            workspace.Controller.RefreshFormatting();
+            await WaitForCurrentAsync(workspace.Controller);
+
+            var aligned = workspace.Controller.Current!.Tables;
+            Assert.Equal(openingColumns.Length, aligned.Length);
+            for (var tableIndex = 0; tableIndex < aligned.Length; tableIndex++)
+            for (var column = 0; column < aligned[tableIndex].ColumnBoundaries.Length; column++)
+                Assert.Equal(openingColumns[tableIndex][column],
+                    aligned[tableIndex].ColumnBoundaries[column], 3);
+        }, TimeSpan.FromSeconds(45));
+    }
+
+    [Fact]
+    public async Task RowGroupsAndSpansPublishRowBoundariesButAutoColumnsStayUnsupported()
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            using var workspace = ProductionWorkspace.Create(
+                CreateStructuralMatrixDocument(DocumentPageSettings.Letter()));
+            await WaitForCurrentAsync(workspace.Controller);
+            using var accepted = new WriterPreviewCloneService().CreateSnapshot(
+                workspace.Editor.Document, workspace.Settings);
+            var paginator = Assert.IsAssignableFrom<DynamicDocumentPaginator>(
+                accepted.PrintPaginator);
+            var cloneTable = accepted.SourceClone.Blocks.OfType<Table>().Single();
+            workspace.Surface.RequestPageForTesting(
+                paginator.GetPageNumber(cloneTable.ContentStart));
+            await WaitForCurrentAsync(workspace.Controller);
+
+            var current = Assert.IsType<WriterPaginationLayoutResult>(
+                workspace.Controller.Current);
+            var fragment = Assert.Single(current.Tables);
+            Assert.False(fragment.HasTrustedColumnBoundaries);
+            Assert.Empty(fragment.ColumnBoundaries);
+            var expectedRows = new[]
+            {
+                (Group: 0, Row: 0), (Group: 0, Row: 1), (Group: 0, Row: 2),
+                (Group: 1, Row: 0), (Group: 1, Row: 1)
+            };
+            Assert.Equal(expectedRows, fragment.RowBoundaries
+                .Select(row => (row.RowGroupIndex, row.RowIndex)));
+            Assert.Equal(fragment.RowBoundaries.Length, fragment.RowBoundaries
+                .Select(row => (row.RowGroupIndex, row.RowIndex)).Distinct().Count());
+
+            var interaction = workspace.Surface.CaptureObjectInteractionForTesting(
+                WriterPaginationObjectKind.Table);
+            workspace.Controller.StructuredObjectActivator = element => element is Table;
+            workspace.Surface.ApplyInteractionForTesting(interaction);
+            var peers = workspace.Surface.ResizeHandlePeersForTesting();
+            Assert.Equal(expectedRows.Length, peers.Count);
+            Assert.All(peers, peer => Assert.StartsWith(
+                "Resize table row group ", peer.GetName(), StringComparison.Ordinal));
+
+            var starts = 0;
+            WriterPaginationResizeHandleKind? startedHandle = null;
+            var startedIndex = -1;
+            var startedGroup = -1;
+            workspace.Controller.StructuredResizeStarter = (_, handle, index, group) =>
+            {
+                starts++;
+                startedHandle = handle;
+                startedIndex = index;
+                startedGroup = group;
+                return true;
+            };
+            workspace.Controller.StructuredResizeCanceler = () => { };
+            var unsupportedColumn = new WriterPaginationResizeInteraction(
+                current.Generation, current.DocumentIdentity, fragment.PageNumber,
+                fragment.ObjectIdentity, WriterPaginationObjectKind.Table,
+                WriterPaginationResizeHandleKind.TableColumn,
+                WriterPaginationResizePhase.Start, 0, 0, 0, -1);
+            Assert.False(workspace.Surface.ApplyResizeRequestForTesting(unsupportedColumn));
+            Assert.False(workspace.Surface.ApplyResizeRequestForTesting(unsupportedColumn with
+            {
+                Handle = WriterPaginationResizeHandleKind.TableOverall,
+                HandleIndex = -1
+            }));
+            Assert.Equal(0, starts);
+
+            var rowBoundary = fragment.RowBoundaries.Single(row =>
+                row.RowGroupIndex == 1 && row.RowIndex == 1);
+            var supportedRow = unsupportedColumn with
+            {
+                Handle = WriterPaginationResizeHandleKind.TableRow,
+                HandleIndex = rowBoundary.RowIndex,
+                RowGroupIndex = rowBoundary.RowGroupIndex
+            };
+            Assert.True(workspace.Surface.ApplyResizeRequestForTesting(supportedRow));
+            Assert.Equal(1, starts);
+            Assert.Equal(WriterPaginationResizeHandleKind.TableRow, startedHandle);
+            Assert.Equal(1, startedIndex);
+            Assert.Equal(1, startedGroup);
+            Assert.True(workspace.Surface.ApplyResizeRequestForTesting(supportedRow with
+            {
+                Phase = WriterPaginationResizePhase.Cancel
+            }));
+
+            var openingRows = fragment.RowBoundaries.ToDictionary(
+                row => (row.RowGroupIndex, row.RowIndex), row => row.PositionDip);
+            var sourceTable = workspace.Editor.Document.Blocks.OfType<Table>().Single();
+            foreach (var paragraph in sourceTable.RowGroups.Cast<TableRowGroup>()
+                         .SelectMany(group => group.Rows.Cast<TableRow>())
+                         .SelectMany(row => row.Cells.Cast<TableCell>())
+                         .SelectMany(cell => cell.Blocks.OfType<Paragraph>()))
+                paragraph.TextAlignment = TextAlignment.Right;
+            workspace.Controller.RefreshFormatting();
+            await WaitForCurrentAsync(workspace.Controller);
+
+            var aligned = Assert.Single(workspace.Controller.Current!.Tables);
+            Assert.False(aligned.HasTrustedColumnBoundaries);
+            Assert.Empty(aligned.ColumnBoundaries);
+            Assert.All(aligned.RowBoundaries, row => Assert.Equal(
+                openingRows[(row.RowGroupIndex, row.RowIndex)], row.PositionDip, 3));
+        }, TimeSpan.FromSeconds(45));
+    }
+
+    [Theory]
+    [InlineData(50, 1)]
+    [InlineData(100, 1.25)]
+    [InlineData(175, 1.5)]
+    [InlineData(200, 2)]
+    public void ResizeHandleSizesRemainScreenStableAndPixelAligned(
+        double zoomPercent, double dpiScale)
+    {
+        var dpi = new DpiScale(dpiScale, dpiScale);
+        var visual = WriterPaginatedDiagnosticSurface.GetLogicalHandleSizeForTesting(
+            WriterTableResizeGeometry.VisualHandleSize, zoomPercent, dpi);
+        var hit = WriterPaginatedDiagnosticSurface.GetLogicalHandleSizeForTesting(
+            WriterTableResizeGeometry.HandleHitTargetSize, zoomPercent, dpi);
+        var zoom = zoomPercent / 100d;
+
+        Assert.InRange(visual.Width * zoom, 7.5, 8.5);
+        Assert.InRange(hit.Width * zoom, 17.5, 18.5);
+        Assert.Equal(Math.Round(visual.Width * zoom * dpiScale),
+            visual.Width * zoom * dpiScale, 6);
+        Assert.Equal(Math.Round(hit.Width * zoom * dpiScale),
+            hit.Width * zoom * dpiScale, 6);
+    }
+
+    [Fact]
     public async Task TableOverallHandleDelegatesToAuthoritativeW3EControllerAndCancelsOnReplacement()
     {
         await StaTestHelper.RunAsync(async () =>
@@ -296,10 +498,23 @@ public sealed class WriterPaginatedDiagnosticProductionTests
                 tableInteraction.MoveCaret(cells[0]);
                 return ReferenceEquals(tableInteraction.CurrentTable, table);
             }
-            workspace.Controller.StructuredObjectActivator = SelectTable;
-            workspace.Controller.StructuredResizeStarter = (element, handle) =>
-                handle == WriterPaginationResizeHandleKind.TableOverall &&
-                SelectTable(element) && tableResize.BeginExternalOverallResize();
+            var activationCount = 0;
+            workspace.Controller.StructuredObjectActivator = element =>
+            {
+                activationCount++;
+                return SelectTable(element);
+            };
+            workspace.Controller.StructuredResizeStarter = (element, handle, index, _) =>
+                SelectTable(element) && tableResize.BeginExternalResize(handle switch
+                {
+                    WriterPaginationResizeHandleKind.TableColumn =>
+                        new WriterTableResizeHandle(WriterTableResizeHandleKind.Column, index),
+                    WriterPaginationResizeHandleKind.TableRow =>
+                        new WriterTableResizeHandle(WriterTableResizeHandleKind.Row, index),
+                    WriterPaginationResizeHandleKind.TableOverall =>
+                        new WriterTableResizeHandle(WriterTableResizeHandleKind.Overall),
+                    _ => new WriterTableResizeHandle(WriterTableResizeHandleKind.Select)
+                });
             workspace.Controller.StructuredResizeUpdater = (_, x, y) =>
                 tableResize.UpdateExternalResize(new Vector(x, y));
             workspace.Controller.StructuredResizeCommitter = tableResize.CompleteExternalResize;
@@ -314,13 +529,76 @@ public sealed class WriterPaginatedDiagnosticProductionTests
             workspace.Surface.RequestPageForTesting(
                 paginator.GetPageNumber(cloneTable.ContentStart));
             await WaitForCurrentAsync(workspace.Controller);
-            var interaction = workspace.Surface.CaptureObjectInteractionForTesting(
+            var tableObjectPeers = workspace.Surface.StructuredObjectPeersForTesting();
+            Assert.Equal(tableObjectPeers.Count, tableObjectPeers
+                .Select(peer => peer.GetAutomationId()).Distinct(StringComparer.Ordinal).Count());
+            var tableObjectPeer = tableObjectPeers
+                .First(peer => peer.GetName().StartsWith("Select table on page ",
+                    StringComparison.Ordinal));
+            Assert.Equal(AutomationControlType.Button,
+                tableObjectPeer.GetAutomationControlType());
+            var tableObjectInvoke = Assert.IsAssignableFrom<IInvokeProvider>(
+                tableObjectPeer.GetPattern(PatternInterface.Invoke));
+            tableObjectInvoke.Invoke();
+            await workspace.Editor.Dispatcher.InvokeAsync(() => { });
+            Assert.Equal(1, activationCount);
+            Assert.True(workspace.Surface.ResizeHandleCount > 3);
+
+            workspace.Controller.RefreshFormatting();
+            await WaitForCurrentAsync(workspace.Controller);
+            tableObjectInvoke.Invoke();
+            await workspace.Editor.Dispatcher.InvokeAsync(() => { });
+            Assert.Equal(1, activationCount);
+
+            var currentInteraction = workspace.Surface.CaptureObjectInteractionForTesting(
                 WriterPaginationObjectKind.Table);
-            workspace.Surface.ApplyInteractionForTesting(interaction);
-            Assert.Equal(1, workspace.Surface.ResizeHandleCount);
+            workspace.Surface.ApplyInteractionForTesting(currentInteraction);
+
+            var surfacePeer = UIElementAutomationPeer.CreatePeerForElement(workspace.Surface);
+            Assert.Equal(AutomationControlType.Pane, surfacePeer.GetAutomationControlType());
+            Assert.Equal("Opt-in paginated editing diagnostic", surfacePeer.GetName());
+            var handlePeers = workspace.Surface.ResizeHandlePeersForTesting();
+            Assert.Equal(handlePeers.Count, handlePeers
+                .Select(peer => peer.GetAutomationId()).Distinct(StringComparer.Ordinal).Count());
+            var columnPeer = handlePeers.First(peer =>
+                peer.GetName().StartsWith("Resize table column 1 on page ",
+                    StringComparison.Ordinal));
+            Assert.Equal(AutomationControlType.Button, columnPeer.GetAutomationControlType());
+            var columnInvoke = Assert.IsAssignableFrom<IInvokeProvider>(
+                columnPeer.GetPattern(PatternInterface.Invoke));
 
             var table = workspace.Editor.Document.Blocks.OfType<Table>().Single();
             var openingWidth = table.Columns.Sum(column => column.Width.Value);
+            var openingFirstColumn = table.Columns[0].Width.Value;
+            columnInvoke.Invoke();
+            await WaitForCurrentAsync(workspace.Controller);
+            table = workspace.Editor.Document.Blocks.OfType<Table>().Single();
+            Assert.True(table.Columns[0].Width.Value > openingFirstColumn);
+            Assert.True(workspace.Editor.CanUndo);
+
+            var interaction = workspace.Surface.CaptureObjectInteractionForTesting(
+                WriterPaginationObjectKind.Table);
+            workspace.Surface.ApplyInteractionForTesting(interaction);
+            var rowBoundary = workspace.Controller.Current!.Tables
+                .SelectMany(item => item.RowBoundaries)
+                .First();
+            var openingPadding = table.RowGroups[rowBoundary.RowGroupIndex]
+                .Rows[rowBoundary.RowIndex].Cells[0].Padding;
+            Assert.True(workspace.Surface.BeginResizeForTesting(
+                WriterPaginationObjectKind.Table,
+                WriterPaginationResizeHandleKind.TableRow,
+                rowBoundary.RowIndex, rowBoundary.RowGroupIndex));
+            Assert.True(workspace.Surface.UpdateResizeForTesting(0, 12));
+            Assert.True(workspace.Surface.CompleteResizeForTesting());
+            await WaitForCurrentAsync(workspace.Controller);
+            table = workspace.Editor.Document.Blocks.OfType<Table>().Single();
+            Assert.True(table.RowGroups[rowBoundary.RowGroupIndex]
+                .Rows[rowBoundary.RowIndex].Cells[0].Padding.Top > openingPadding.Top);
+
+            interaction = workspace.Surface.CaptureObjectInteractionForTesting(
+                WriterPaginationObjectKind.Table);
+            workspace.Surface.ApplyInteractionForTesting(interaction);
+            openingWidth = table.Columns.Sum(column => column.Width.Value);
             Assert.True(workspace.Surface.BeginResizeForTesting(
                 WriterPaginationObjectKind.Table,
                 WriterPaginationResizeHandleKind.TableOverall));
@@ -345,6 +623,171 @@ public sealed class WriterPaginatedDiagnosticProductionTests
         }, TimeSpan.FromSeconds(45));
     }
 
+    [Fact]
+    public async Task KeyboardResizeIsOneNativeUndoUnitAndEscapeCancels()
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            using var workspace = ProductionWorkspace.Create(CreateStructuredDocument(
+                DocumentPageSettings.Letter()));
+            using var tableInteraction = new WriterTableInteractionController(
+                workspace.Editor, () => true);
+            using var tableResize = new WriterTableResizeController(workspace.Editor,
+                tableInteraction, () => { });
+            bool SelectTable(TextElement element)
+            {
+                if (element is not Table table)
+                    return false;
+                var cells = tableInteraction.GetOrderedCells(table);
+                if (cells.Count == 0)
+                    return false;
+                tableInteraction.MoveCaret(cells[0]);
+                return ReferenceEquals(tableInteraction.CurrentTable, table);
+            }
+
+            workspace.Controller.StructuredObjectActivator = SelectTable;
+            workspace.Controller.StructuredResizeStarter = (element, handle, index, _) =>
+                SelectTable(element) && tableResize.BeginExternalResize(handle switch
+                {
+                    WriterPaginationResizeHandleKind.TableColumn =>
+                        new WriterTableResizeHandle(WriterTableResizeHandleKind.Column, index),
+                    WriterPaginationResizeHandleKind.TableRow =>
+                        new WriterTableResizeHandle(WriterTableResizeHandleKind.Row, index),
+                    WriterPaginationResizeHandleKind.TableOverall =>
+                        new WriterTableResizeHandle(WriterTableResizeHandleKind.Overall),
+                    _ => new WriterTableResizeHandle(WriterTableResizeHandleKind.Select)
+                });
+            workspace.Controller.StructuredResizeUpdater = (_, x, y) =>
+                tableResize.UpdateExternalResize(new Vector(x, y));
+            workspace.Controller.StructuredResizeCommitter = tableResize.CompleteExternalResize;
+            workspace.Controller.StructuredResizeCanceler = tableResize.CancelExternalResize;
+
+            await WaitForCurrentAsync(workspace.Controller);
+            using var accepted = new WriterPreviewCloneService().CreateSnapshot(
+                workspace.Editor.Document, workspace.Settings);
+            var paginator = Assert.IsAssignableFrom<DynamicDocumentPaginator>(
+                accepted.PrintPaginator);
+            var cloneTable = accepted.SourceClone.Blocks.OfType<Table>().Single();
+            workspace.Surface.RequestPageForTesting(
+                paginator.GetPageNumber(cloneTable.ContentStart));
+            await WaitForCurrentAsync(workspace.Controller);
+            workspace.Surface.ApplyInteractionForTesting(
+                workspace.Surface.CaptureObjectInteractionForTesting(
+                    WriterPaginationObjectKind.Table));
+
+            var peer = workspace.Surface.ResizeHandlePeersForTesting().First(item =>
+                item.GetName().StartsWith("Resize table column 1 on page ",
+                    StringComparison.Ordinal));
+            Assert.False(peer.IsKeyboardFocusable());
+            Assert.Contains("Control+Alt+R", peer.GetHelpText(),
+                StringComparison.OrdinalIgnoreCase);
+            var surfacePeer = UIElementAutomationPeer.CreatePeerForElement(workspace.Surface);
+            Assert.Contains("Control+Alt+R", surfacePeer.GetHelpText(),
+                StringComparison.OrdinalIgnoreCase);
+            Assert.Equal(Key.R, WriterPaginatedDiagnosticSurface.GetEffectiveKeyForTesting(
+                Key.System, Key.R));
+
+            var table = workspace.Editor.Document.Blocks.OfType<Table>().Single();
+            var openingWidth = table.Columns[0].Width.Value;
+            Assert.True(workspace.Surface.ApplyHostKeyForTesting(Key.R,
+                ModifierKeys.Control | ModifierKeys.Alt));
+            Assert.Contains("column 1", workspace.Surface.KeyboardResizeTargetNameForTesting,
+                StringComparison.OrdinalIgnoreCase);
+            Assert.True(workspace.Surface.ApplyHostKeyForTesting(Key.Tab));
+            Assert.Contains("column 2", workspace.Surface.KeyboardResizeTargetNameForTesting,
+                StringComparison.OrdinalIgnoreCase);
+            Assert.True(workspace.Surface.ApplyHostKeyForTesting(Key.Tab,
+                ModifierKeys.Shift));
+            Assert.Contains("column 1", workspace.Surface.KeyboardResizeTargetNameForTesting,
+                StringComparison.OrdinalIgnoreCase);
+            Assert.True(workspace.Surface.ApplyHostKeyForTesting(Key.Enter));
+            Assert.False(workspace.Surface.ApplyKeyboardResizeKeyForTesting(Key.Up));
+            Assert.True(workspace.Surface.ApplyKeyboardResizeKeyForTesting(Key.Right));
+            Assert.True(workspace.Surface.ApplyKeyboardResizeKeyForTesting(
+                Key.Right, ModifierKeys.Shift));
+            Assert.True(workspace.Surface.ApplyKeyboardResizeKeyForTesting(Key.Enter));
+            await WaitForCurrentAsync(workspace.Controller);
+
+            table = workspace.Editor.Document.Blocks.OfType<Table>().Single();
+            Assert.Equal(openingWidth + 13, table.Columns[0].Width.Value, 6);
+            Assert.True(workspace.Editor.CanUndo);
+            Assert.True(workspace.Editor.IsKeyboardFocusWithin);
+            workspace.Editor.Undo();
+            await WaitForCurrentAsync(workspace.Controller);
+            Assert.Equal(openingWidth, workspace.Editor.Document.Blocks.OfType<Table>()
+                .Single().Columns[0].Width.Value, 6);
+
+            workspace.Surface.ApplyInteractionForTesting(
+                workspace.Surface.CaptureObjectInteractionForTesting(
+                    WriterPaginationObjectKind.Table));
+            var generationBeforeCancel = workspace.Controller.RequestedGeneration;
+            Assert.True(workspace.Surface.ApplyHostKeyForTesting(Key.R,
+                ModifierKeys.Control | ModifierKeys.Alt));
+            Assert.True(workspace.Surface.ApplyHostKeyForTesting(Key.Enter));
+            Assert.True(workspace.Surface.ApplyKeyboardResizeKeyForTesting(
+                Key.Right, ModifierKeys.Shift));
+            Assert.True(workspace.Surface.ApplyKeyboardResizeKeyForTesting(Key.Escape));
+            Assert.False(tableResize.IsDragging);
+            Assert.Equal(generationBeforeCancel, workspace.Controller.RequestedGeneration);
+            Assert.Equal(openingWidth, workspace.Editor.Document.Blocks.OfType<Table>()
+                .Single().Columns[0].Width.Value, 6);
+            Assert.True(workspace.Editor.IsKeyboardFocusWithin);
+        }, TimeSpan.FromSeconds(60));
+    }
+
+    [Fact]
+    public async Task LongDocumentBurstCoalescesPendingWorkAndCancelsActiveLayout()
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            using var workspace = ProductionWorkspace.Create(CreateParagraphDocument(
+                DocumentPageSettings.Letter(), 1600));
+            await WaitForCurrentAsync(workspace.Controller);
+            var opening = workspace.Controller.WorkStatistics;
+            var firstStress = DocumentPageSettings.Legal(
+                DocumentPageOrientation.Landscape,
+                new DocumentPageMargins(54, 60, 66, 72));
+            workspace.Controller.SetPageSettings(firstStress);
+            await WaitForStartedAsync(workspace.Controller, opening.StartedCount);
+
+            for (var index = 0; index < 20; index++)
+            {
+                var margins = new DocumentPageMargins(
+                    54 + index % 4 * 6,
+                    60 + index % 3 * 6,
+                    66 + index % 4 * 6,
+                    72 + index % 3 * 6);
+                workspace.Controller.SetPageSettings((index & 1) == 0
+                    ? DocumentPageSettings.A4(DocumentPageOrientation.Landscape, margins)
+                    : DocumentPageSettings.Legal(DocumentPageOrientation.Portrait, margins));
+            }
+            workspace.Controller.SetPageSettings(workspace.Settings);
+            await WaitForCurrentAsync(workspace.Controller);
+
+            var statistics = workspace.Controller.WorkStatistics;
+            Assert.True(statistics.CanceledActiveCount > opening.CanceledActiveCount,
+                $"No active layout was cancelled: {statistics}.");
+            Assert.True(statistics.SupersededPendingCount > opening.SupersededPendingCount,
+                $"No pending layout was coalesced: {statistics}.");
+            Assert.Equal(workspace.Controller.RequestedGeneration,
+                workspace.Controller.PublishedGeneration);
+            var current = Assert.IsType<WriterPaginationLayoutResult>(
+                workspace.Controller.Current);
+            Assert.True(current.PageCount > 25);
+            Assert.InRange(current.MappedPages.Length, 1, 3);
+            Assert.Equal(workspace.Settings.WidthDip, current.PageSettings.WidthDip, 6);
+            Assert.Equal(workspace.Settings.HeightDip, current.PageSettings.HeightDip, 6);
+            Assert.Equal(workspace.Settings.Margins.LeftDip,
+                current.PageSettings.LeftMarginDip, 6);
+            Assert.Contains($"cancelled {statistics.CanceledActiveCount:N0}",
+                workspace.Surface.StatusTextForTesting, StringComparison.Ordinal);
+            Assert.Contains($"coalesced {statistics.SupersededPendingCount:N0}",
+                workspace.Surface.StatusTextForTesting, StringComparison.Ordinal);
+            await workspace.Editor.Dispatcher.InvokeAsync(() => { },
+                DispatcherPriority.ApplicationIdle);
+        }, TimeSpan.FromSeconds(90));
+    }
+
     private static async Task WaitForCurrentAsync(
         WriterPaginatedDiagnosticController controller)
     {
@@ -359,6 +802,20 @@ public sealed class WriterPaginatedDiagnosticProductionTests
         }
         throw new TimeoutException(
             $"Generation {controller.RequestedGeneration} did not publish.");
+    }
+
+    private static async Task WaitForStartedAsync(
+        WriterPaginatedDiagnosticController controller, int previousStartedCount)
+    {
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(20);
+        while (DateTime.UtcNow < deadline)
+        {
+            if (controller.WorkStatistics.StartedCount > previousStartedCount)
+                return;
+            await Dispatcher.Yield(DispatcherPriority.Background);
+            await Task.Delay(5);
+        }
+        throw new TimeoutException("The stress pagination generation did not start.");
     }
 
     private static ImmutableArray<int> GetPageStartOffsets(FlowDocument document,
@@ -447,6 +904,50 @@ public sealed class WriterPaginatedDiagnosticProductionTests
             BorderBrush = Brushes.Gray,
             BorderThickness = new Thickness(0.5)
         };
+    }
+
+    private static FlowDocument CreateStructuralMatrixDocument(
+        DocumentPageSettings settings)
+    {
+        var document = CreateParagraphDocument(settings, 8);
+        var table = new Table { CellSpacing = 2 };
+        for (var index = 0; index < 3; index++)
+            table.Columns.Add(new TableColumn { Width = GridLength.Auto });
+
+        var first = new TableRowGroup();
+        table.RowGroups.Add(first);
+        first.Rows.Add(Row(Cell("Group 1 header", columnSpan: 2), Cell("Group 1 column 3")));
+        first.Rows.Add(Row(Cell("Group 1 row span", rowSpan: 2),
+            Cell("Group 1 row 2 column 2"), Cell("Group 1 row 2 column 3")));
+        first.Rows.Add(Row(Cell("Group 1 row 3 columns 2-3", columnSpan: 2)));
+
+        var second = new TableRowGroup();
+        table.RowGroups.Add(second);
+        second.Rows.Add(Row(Cell("Group 2 row 1 column 1"),
+            Cell("Group 2 row 1 column 2"), Cell("Group 2 row 1 column 3")));
+        second.Rows.Add(Row(Cell("Group 2 footer", columnSpan: 3)));
+        document.Blocks.Add(table);
+        for (var index = 0; index < 8; index++)
+            document.Blocks.Add(new Paragraph(new Run($"Structural tail {index:D2}.")));
+        return document;
+
+        static TableRow Row(params TableCell[] cells)
+        {
+            var row = new TableRow();
+            foreach (var cell in cells)
+                row.Cells.Add(cell);
+            return row;
+        }
+
+        static TableCell Cell(string text, int rowSpan = 1, int columnSpan = 1) =>
+            new(new Paragraph(new Run(text)) { Margin = new Thickness(2) })
+            {
+                RowSpan = rowSpan,
+                ColumnSpan = columnSpan,
+                Padding = new Thickness(3),
+                BorderBrush = Brushes.Gray,
+                BorderThickness = new Thickness(0.5)
+            };
     }
 
     private static FlowDocument CreateDocument(DocumentPageSettings settings) => new()

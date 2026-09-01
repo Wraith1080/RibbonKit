@@ -15,4 +15,19 @@ internal static class WriterPaginationDiagnosticOptions
         Environment.GetCommandLineArgs().Any(argument =>
             string.Equals(argument, "--writer-pagination-seed",
                 StringComparison.OrdinalIgnoreCase));
+
+    internal static bool ShouldSeedStructuralTableDocument =>
+        Environment.GetCommandLineArgs().Any(argument =>
+            string.Equals(argument, "--writer-pagination-structural-seed",
+                StringComparison.OrdinalIgnoreCase));
+
+    internal static bool ShouldSeedStressDocument =>
+        Environment.GetCommandLineArgs().Any(argument =>
+            string.Equals(argument, "--writer-pagination-stress-seed",
+                StringComparison.OrdinalIgnoreCase));
+
+    internal static bool ShouldRunStressBurst =>
+        Environment.GetCommandLineArgs().Any(argument =>
+            string.Equals(argument, "--writer-pagination-stress-burst",
+                StringComparison.OrdinalIgnoreCase));
 }

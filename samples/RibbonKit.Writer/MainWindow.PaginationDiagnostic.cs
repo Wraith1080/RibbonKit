@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 using RibbonKit.Writer.Editing;
 using RibbonKit.Writer.Pagination;
 using RibbonKit.Writer.Models;
@@ -23,7 +24,19 @@ public partial class MainWindow
     {
         if (!WriterPaginationDiagnosticOptions.IsEnabled)
             return;
-        if (WriterPaginationDiagnosticOptions.ShouldSeedDocument)
+        if (WriterPaginationDiagnosticOptions.ShouldSeedStressDocument)
+        {
+            Shell.CurrentDocument.CommitIdentity(path: null,
+                WriterDocumentFormat.RibbonKitWriter);
+            SeedPaginationStressDocument();
+        }
+        else if (WriterPaginationDiagnosticOptions.ShouldSeedStructuralTableDocument)
+        {
+            Shell.CurrentDocument.CommitIdentity(path: null,
+                WriterDocumentFormat.RibbonKitWriter);
+            SeedPaginationStructuralTableDocument();
+        }
+        else if (WriterPaginationDiagnosticOptions.ShouldSeedDocument)
         {
             Shell.CurrentDocument.CommitIdentity(path: null,
                 WriterDocumentFormat.RibbonKitWriter);
@@ -46,6 +59,9 @@ public partial class MainWindow
             _editingController?.Zoom.Value ?? 100d);
         RefreshPaginationDiagnosticChrome();
         SpellCheck.SetIsEnabled(DocumentEditor, true);
+        if (WriterPaginationDiagnosticOptions.ShouldRunStressBurst)
+            Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle,
+                QueuePaginationDiagnosticStressBurst);
     }
 
     private void DisposePaginationDiagnostic()
@@ -89,27 +105,43 @@ public partial class MainWindow
     }
 
     private bool BeginPaginationResize(TextElement element,
-        WriterPaginationResizeHandleKind handle)
+        WriterPaginationResizeHandleKind handle, int handleIndex, int rowGroupIndex)
     {
         CancelPaginationResize();
         if (element is InlineUIContainer picture &&
-            handle != WriterPaginationResizeHandleKind.TableOverall &&
+            handle is >= WriterPaginationResizeHandleKind.PictureTopLeft and
+                <= WriterPaginationResizeHandleKind.PictureLeft &&
             _pictureInteractionController?.SelectPicture(picture) == true &&
             _pictureInteractionController.BeginExternalResize(ToPictureHandle(handle)))
         {
             _paginationResizeKind = WriterPaginationObjectKind.Picture;
             return true;
         }
-        if (element is Table table &&
-            handle == WriterPaginationResizeHandleKind.TableOverall &&
+        if (element is Table table && handle is WriterPaginationResizeHandleKind.TableColumn
+                or WriterPaginationResizeHandleKind.TableRow
+                or WriterPaginationResizeHandleKind.TableOverall &&
             _tableInteractionController is not null && _tableResizeController is not null)
         {
             var cells = _tableInteractionController.GetOrderedCells(table);
             if (cells.Count == 0)
                 return false;
-            _tableInteractionController.MoveCaret(cells[0]);
+            var target = handle == WriterPaginationResizeHandleKind.TableRow
+                ? cells.FirstOrDefault(cell => cell.GroupIndex == rowGroupIndex &&
+                    cell.Row <= handleIndex && cell.LastRow >= handleIndex)
+                : cells[0];
+            if (target.Cell is null)
+                return false;
+            _tableInteractionController.MoveCaret(target);
+            var tableHandle = handle switch
+            {
+                WriterPaginationResizeHandleKind.TableColumn =>
+                    new WriterTableResizeHandle(WriterTableResizeHandleKind.Column, handleIndex),
+                WriterPaginationResizeHandleKind.TableRow =>
+                    new WriterTableResizeHandle(WriterTableResizeHandleKind.Row, handleIndex),
+                _ => new WriterTableResizeHandle(WriterTableResizeHandleKind.Overall)
+            };
             if (ReferenceEquals(_tableInteractionController.CurrentTable, table) &&
-                _tableResizeController.BeginExternalOverallResize())
+                _tableResizeController.BeginExternalResize(tableHandle))
             {
                 _paginationResizeKind = WriterPaginationObjectKind.Table;
                 return true;
@@ -238,5 +270,99 @@ public partial class MainWindow
             BorderBrush = Brushes.Gray,
             BorderThickness = new Thickness(0.5)
         };
+    }
+
+    private void SeedPaginationStructuralTableDocument()
+    {
+        var document = Shell.CurrentDocument.Content;
+        if (!string.IsNullOrWhiteSpace(
+                new TextRange(document.ContentStart, document.ContentEnd).Text))
+            return;
+        document.Blocks.Clear();
+        for (var index = 0; index < 18; index++)
+        {
+            document.Blocks.Add(new Paragraph(new Run(
+                $"Structural diagnostic paragraph {index:D2}."))
+            {
+                Margin = new Thickness(0, 0, 0, 6)
+            });
+        }
+
+        var table = new Table { CellSpacing = 2 };
+        for (var index = 0; index < 3; index++)
+            table.Columns.Add(new TableColumn { Width = GridLength.Auto });
+        var first = new TableRowGroup();
+        table.RowGroups.Add(first);
+        first.Rows.Add(Row(Cell("Group 1 header", columnSpan: 2),
+            Cell("Group 1 column 3")));
+        first.Rows.Add(Row(Cell("Group 1 row span", rowSpan: 2),
+            Cell("Group 1 row 2 column 2"), Cell("Group 1 row 2 column 3")));
+        first.Rows.Add(Row(Cell("Group 1 row 3 columns 2-3", columnSpan: 2)));
+
+        var second = new TableRowGroup();
+        table.RowGroups.Add(second);
+        second.Rows.Add(Row(Cell("Group 2 row 1 column 1"),
+            Cell("Group 2 row 1 column 2"), Cell("Group 2 row 1 column 3")));
+        second.Rows.Add(Row(Cell("Group 2 footer", columnSpan: 3)));
+        document.Blocks.Add(table);
+        for (var index = 0; index < 18; index++)
+            document.Blocks.Add(new Paragraph(new Run($"Structural tail {index:D2}.")));
+
+        static TableRow Row(params TableCell[] cells)
+        {
+            var row = new TableRow();
+            foreach (var cell in cells)
+                row.Cells.Add(cell);
+            return row;
+        }
+
+        static TableCell Cell(string text, int rowSpan = 1, int columnSpan = 1) =>
+            new(new Paragraph(new Run(text)) { Margin = new Thickness(2) })
+            {
+                RowSpan = rowSpan,
+                ColumnSpan = columnSpan,
+                Padding = new Thickness(3),
+                BorderBrush = Brushes.Gray,
+                BorderThickness = new Thickness(0.5)
+            };
+    }
+
+    private void SeedPaginationStressDocument()
+    {
+        var document = Shell.CurrentDocument.Content;
+        if (!string.IsNullOrWhiteSpace(
+                new TextRange(document.ContentStart, document.ContentEnd).Text))
+            return;
+        document.Blocks.Clear();
+        for (var index = 0; index < 120; index++)
+        {
+            var spellingProbe = index % 79 == 0 ? " qzxwvv" : string.Empty;
+            document.Blocks.Add(new Paragraph(new Run(
+                $"Stress {index:D4}: pagination remains responsive" +
+                $"{spellingProbe}."))
+            {
+                Margin = new Thickness(0, 0, 0, 4)
+            });
+        }
+    }
+
+    private void QueuePaginationDiagnosticStressBurst()
+    {
+        if (_paginationDiagnosticController is null)
+            return;
+        var original = Shell.CurrentDocument.PageSettings;
+        for (var index = 0; index < 18; index++)
+        {
+            var margins = new DocumentPageMargins(
+                54 + index % 4 * 6,
+                60 + index % 3 * 6,
+                66 + index % 4 * 6,
+                72 + index % 3 * 6);
+            var settings = (index & 1) == 0
+                ? DocumentPageSettings.A4(DocumentPageOrientation.Landscape, margins)
+                : DocumentPageSettings.Legal(DocumentPageOrientation.Portrait, margins);
+            _paginationDiagnosticController.SetPageSettings(settings);
+        }
+        _paginationDiagnosticController.SetPageSettings(original);
     }
 }

@@ -6506,6 +6506,127 @@ batch. The next bounded opt-in slice should publish immutable table row/column b
 remaining W3-E row/column handles, then add diagnostic-surface UIA semantics and zoom/DPI hit-target checks before any
 default-Paper decision.
 
+### 3.149 RibbonKit Writer W2-G immutable table boundaries and accessible resize projection — 2026-09-01
+
+The third private production batch completes the planned table-interaction projection without changing the opt-in
+boundary. The dedicated STA now publishes immutable page-local table fragments containing the authoritative object
+identity, page number, fragment bounds, ordered column boundaries, row-group/row-index bottom boundaries and
+first/last-fragment flags. Only values cross the dispatcher boundary. Column, row and overall interactions include the
+same generation, document, mapped-page, object and handle identities used by the existing strict stale-event gate;
+accepted events delegate to the live W3-E column/row/overall resize controller and its native one-unit Undo contract.
+
+The page compositor renders column handles at each published grid boundary, row handles at each published row bottom,
+and an overall handle only on the last fragment. Visual and pointer hit geometry share one descriptor source. Eight-DIP
+visual handles and eighteen-DIP hit targets are converted through zoom and the current `DpiScale`, then pixel-aligned so
+they remain approximately screen-sized instead of growing with the clone page. The surface is a UIA Pane; every
+structured table/picture/hyperlink fragment is now a Button/Invoke target that runs the same current-generation
+page-to-source activation path, and each resize handle is a named Button/Invoke target with a stable handle identity.
+Invoking a handle applies one twelve-DIP diagnostic step through the authoritative W3-E controller and restores native
+editor command ownership.
+
+A focused regression exposed that `Table.ElementStart.GetCharacterRect` inside the hidden paged viewer is not a stable
+table origin: right-aligning cell text moved the reported X coordinate from **104.5** to **145.44** DIPs even though the
+grid did not move. The LTR diagnostic therefore derives explicit-column boundaries from the paginator-page content
+origin plus finite table margin and `CellSpacing`, while logical row/span occupancy supplies row identities. The focused
+test proves right-aligned cell content cannot move those published boundaries. This is recorded as RKWF-032; it is a
+WPF page-geometry constraint, not a RibbonKit runtime defect. Auto-width and production RTL table origins remain outside
+this batch.
+
+In the actual Release Writer window at 125% DPI, UIA activation of the page-four table exposed **39** virtualized
+column/row/overall handles with **39** page/object-qualified AutomationIds and left `Document editor` focused. Invoking
+the first column moved its page-four boundary
+from physical X **849** to **863**; reactivation after the resulting object-identity replacement exposed the new map.
+Invoking row 15 moved its boundary from Y **427** to **444**. Those commits published generations three and four;
+native QAT Undo and Redo published generations five and six. At 130% zoom the visible handles remained aligned at
+about **10-11 physical pixels** on the 125% monitor. The real Orientation -> Landscape command published generation
+seven, reflowed the seed from six to eight pages, and exposed **22** correctly mapped handles on the visible page-five
+fragment. A later virtualized handoff published generation eight; UIA activation of the page-six picture exposed all
+eight picture handles, and invoking its right handle published generation nine with the live editor focused. Warm
+layouts during that final handoff/resize were about **198-208 ms** and the window remained responsive.
+
+The focused production gate passes **11/11**; the combined production plus W3-E table-resize gate passes **19/19**; and
+the namespace-scoped pagination gate passes **36/36**, including the native clipboard/history case after the transient
+external clipboard lock cleared. The final Release Writer build passes with **0 warnings / 0 errors**. No full suite or
+solution build was run. Default Paper, accepted preview/print/Continuous behavior and `src/RibbonKit/**` remain
+unchanged. Genuine OS IME and production RTL remain jointly deferred with no claim. The next bounded opt-in slice should
+cover multi-row-group and spanned-cell boundary matrices, explicit/Auto-width fallback policy, keyboard resize semantics
+and longer-document cancellation/responsiveness before any default-Paper decision.
+
+### 3.150 RibbonKit Writer W2-G structural table matrix and safe Auto-column fallback — 2026-09-01
+
+The fourth private production batch closes the multi-row-group, `RowSpan` and `ColumnSpan` portion of the next slice
+without changing the opt-in boundary. Immutable logical-cell capture now carries each cell's last occupied row, so a
+row-spanning cell contributes its bottom to the row where the span ends rather than its starting row. Published row
+identities retain both row-group and row indexes, and the surface exposes unambiguous group-qualified UIA names. This
+preserves one authoritative live editor and sends only values across the dedicated-STA boundary.
+
+The batch also makes the horizontal table-geometry contract explicit. When every `TableColumn.Width` is a finite,
+positive absolute value, the paginator can publish trusted structural column boundaries and the existing column/overall
+handles remain available. Auto, star, nonpositive or incomplete column definitions now publish
+`HasTrustedColumnBoundaries = false` with no column boundaries. The compositor suppresses column and overall handles,
+and the controller rejects those events before they can reach W3-E; trustworthy row handles remain available. This is
+safer than reconstructing Auto widths from cell insertion rectangles, whose X positions depend on paragraph alignment
+and cannot resolve spanned grid boundaries. RKWF-033 records the bounded unsupported policy as a WPF paginator geometry
+constraint rather than a RibbonKit defect.
+
+A private `--writer-pagination-structural-seed` switch, still gated by `--writer-paginated-diagnostic`, supplies an Auto-
+width three-column table with two row groups plus row and column spans for actual-window verification. In the Release app
+at 125% DPI, page one exposed exactly **5** unique group-qualified row handles and **0** column/overall handles. Invoking
+group two, row one moved its handle from Y **642** to **659**, published generation two with a replacement table-object
+identity, restored editor focus and left the window responsive. Native QAT Undo and Redo published generations three and
+four. The five row handles remained structurally distinct; the table and its spanned cells stayed inside the page margin
+guides. Initial capture/layout measured about **46/346 ms** and later warm capture/layout about **2-11/170-231 ms**.
+
+The focused production gate passes **12/12**; the combined production plus W3-E table-resize gate passes **20/20**; and
+the namespace-scoped pagination gate passes **37/37**. The final Release Writer build passes with **0 warnings / 0
+errors**. No full suite or solution build was run. Default Paper, accepted preview/print/Continuous behavior and
+`src/RibbonKit/**` remain unchanged. Genuine OS IME and production RTL remain jointly deferred with no claim. The next
+bounded opt-in slice should cover keyboard resize semantics plus longer-document coalescing, active cancellation and
+actual-window responsiveness before any default-Paper decision.
+
+### 3.151 RibbonKit Writer W2-G keyboard resize, worker telemetry and live scalability boundary — 2026-09-01
+
+The fifth private production batch deliberately combines three related slices without changing the opt-in boundary.
+First, selected table and picture handles now support a transactional editor-owned keyboard mode. `Ctrl+Alt+R` enters
+handle navigation, Tab/Shift+Tab chooses a handle, Enter begins the native W3-E transaction, arrows apply one-DIP steps,
+Shift+arrow applies twelve-DIP steps, and Enter/Escape commits or cancels. The compositor draws the current keyboard
+target, while the authoritative `RichTextBox` remains the keyboard and command target throughout. A direct-focus attempt
+was rejected after the actual `Viewbox` overlay could not retain focus across overlay rebuilds. The live shortcut also
+exposed WPF's Alt routing: `PreviewKeyDown` reports `Key.System`, so the production path must normalize `SystemKey` before
+matching `R`. RKWF-034 records both findings.
+
+Second, the persistent STA publishes thread-safe value telemetry for started, completed, cooperatively cancelled-active
+and coalesced-pending jobs. The surface reports those counters beside capture/layout time. A focused 1,600-paragraph
+production test waits until one reflow is active, queues a rapid page-setting burst, restores the original settings, and
+proves at least one active cancellation plus pending replacement before accepting only the final generation. The test
+also proves the final page settings, visible/adjacent window and current-generation invariants.
+
+Third, private `--writer-pagination-stress-seed` and `--writer-pagination-stress-burst` switches exercise the same path
+in the actual Release app. The accepted live corpus is intentionally **120** short paragraphs (**602 words / 5,174
+characters**, three pages): generation 20 published after an eighteen-setting burst with **1** active cancellation,
+**17** coalesced pending requests, **2/3** completed/started jobs, **0.1 ms** capture and **384.4 ms** final layout. A real
+wheel handoff to page three published generation 21 in **286.1 ms**, mapped the last page and left the window responsive.
+The first spelling probe remained underlined under the exact `qzxwvv` token.
+
+The live keyboard matrix used the structural Auto-width table at 125% DPI. After UIA selected the table, the native
+editor held focus while Down plus Shift+Down committed one row-resize transaction; the first row handle moved from
+physical Y **1103** to **1128**. Ctrl+Z returned it to **1103**, Ctrl+Y restored **1128**, and a later Shift+Down session
+followed by Escape left the handle at **1128** with all five handles present and `DocumentEditor` focused.
+
+Long-document live acceptance is not closed. Clean isolated runs with **180** separate short paragraphs (**903 words /
+7,761 characters**) still had not published after more than twenty seconds despite continuing to answer window messages.
+Longer 240- and 480-block probes were worse; the 480-block run reached about **95 CPU seconds** and **1.05 GB** working
+set before being stopped. Broad UI Automation traversal amplified one run, but the no-automation 180-block isolation
+confirmed a real block-count/paginator cost. RKWF-035 records this as an open WPF/Writer performance investigation and
+prevents the 120-block result from being presented as long-document acceptance.
+
+The focused production gate passes **14/14**; the combined production plus W3-E table-resize gate passes **22/22**; and
+the namespace-scoped pagination gate passes **39/39**. The final Release Writer build passes with **0 warnings / 0
+errors**. No full suite or solution build was run. Default Paper, accepted preview/print/Continuous behavior and
+`src/RibbonKit/**` remain unchanged. Genuine OS IME and production RTL remain jointly deferred. The next bounded slice
+should instrument load, page-count, page-start, mapped-geometry and raster phases separately, then define a measured
+long-document work budget/cancellation design before any default-Paper decision.
+
 ## 4. Workflow / Session Conventions
 
 - Work from the current Windows checkout at
@@ -6595,11 +6716,14 @@ default-Paper decision.
   table round-trip/schema-v2 and TXT/RTF compatibility matrix. W3-E is accepted through §3.135. W4-A is accepted
   through §3.136 with its focused 6/6 gate, proportional follow-up regressions, zero-warning Writer builds and the
   completed 2026-08-31 actual-window correction sequence.
-  W2-G's first two opt-in production batches are complete through §3.148. The immutable capture/latest-only dedicated-STA
+  W2-G's first five opt-in production batches are complete through §3.151. The immutable capture/latest-only dedicated-STA
   engine, clone-backed visible/adjacent compositor, stale-event gates and page-to-source interaction bridge pass the
-  focused **30/30** pagination gate and the Release Writer build. Actual-window LTR cross-page authoring, native
+  focused **39/39** pagination gate and the Release Writer build. Actual-window LTR cross-page authoring, native
   Undo/Redo, clipboard, spelling, focus recovery, page-setting reflow, table-overall and eight-handle picture resizing,
-  ruler/margin-guide projection, and empty document replacement are positive. Default Paper is unchanged. Genuine OS
+  immutable explicit-column and multi-row-group/span table geometry, safe Auto-column rejection, accessible object/handle
+  invocation, editor-focused keyboard resize, latest-only cancellation/coalescing telemetry, zoom/DPI-stable hit geometry,
+  ruler/margin-guide projection, and empty document replacement are positive. The 180-block live scalability gate is
+  negative and remains open. Default Paper is unchanged. Genuine OS
   IME and production RTL are explicitly deferred as one later paired input/geometry slice; the current decision is a
   qualified go for further opt-in hardening only.
   W4-B still waits for W2-G completion and any default-Paper decision.
@@ -6750,6 +6874,23 @@ default-Paper decision.
   Contrast geometry is user-accepted. The scoped Customize Ribbon scrollbar comparison is also live-accepted; the
   QAT scrollbar, final Office 2013/2019 square-token visual recheck, and modern visible action-button chrome comparison
   remain pending live confirmation.
+- 2026-09-01 after §3.149: the focused W2-G production gate passes **11/11**, production plus W3-E table resize passes
+  **19/19**, the namespace-scoped pagination gate passes **36/36**, and the Release Writer project builds with zero
+  warnings/errors. The actual opt-in Release window at 125% DPI passed UIA table/picture activation, page-local
+  row/column/overall and eight-handle picture projection, native W3-E commits and Undo/Redo, 130% zoom handle stability,
+  landscape reflow, page-window virtualization, focus recovery and ordinary seeded responsiveness. No full suite,
+  solution build, genuine OS IME or production RTL gate was run.
+- 2026-09-01 after §3.150: the focused W2-G production gate passes **12/12**, production plus W3-E table resize passes
+  **20/20**, the namespace-scoped pagination gate passes **37/37**, and the Release Writer project builds with zero
+  warnings/errors. The actual opt-in structural seed at 125% DPI exposed five distinct row-group/span handles and no
+  unsupported Auto-column/overall handles; a native row resize plus QAT Undo/Redo published fresh generations, restored
+  editor focus and remained responsive. No full suite, solution build, genuine OS IME or production RTL gate was run.
+- 2026-09-01 after §3.151: the focused W2-G production gate passes **14/14**, production plus W3-E table resize passes
+  **22/22**, the namespace-scoped pagination gate passes **39/39**, and the Release Writer project builds with zero
+  warnings/errors. The actual opt-in window passed editor-focused keyboard row resize, Escape, native Undo/Redo, one
+  active cancellation, seventeen coalesced requests and a three-page virtualized handoff. A clean 180-block live probe
+  exceeded twenty seconds without publishing, so long-document responsiveness and default-Paper authorization remain
+  open. No full suite, solution build, genuine OS IME or production RTL gate was run.
 - Before quoting a current count or declaring a new change complete, rerun the proportional build
   and test commands. Inspect actual/diff PNG artifacts before changing visual baselines or
   tolerances.
