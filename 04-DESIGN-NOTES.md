@@ -6627,6 +6627,40 @@ errors**. No full suite or solution build was run. Default Paper, accepted previ
 should instrument load, page-count, page-start, mapped-geometry and raster phases separately, then define a measured
 long-document work budget/cancellation design before any default-Paper decision.
 
+### 3.152 RibbonKit Writer W2-G staged publication and spelling-cliff correction — 2026-09-01
+
+The sixth private production batch combines phase diagnosis, staged UI publication and one measured correction while
+keeping default Paper unchanged. Immutable results now carry separate XamlPackage-load, formatting, page-count,
+page-start, object-map, page-realization, insertion-geometry, raster and structured-geometry timings. The persistent STA
+also exposes its current generation/phase as a thread-safe value snapshot, while the controller records generation-local
+capture and end-to-end time. The existing status banner acts as the one non-modal loading surface; it reports the active
+phase while the realized authoritative editor remains available. An optional private telemetry environment variable
+mirrors those value messages to a caller-supplied file for actual-window diagnosis without traversing the editor UIA
+tree. `--writer-pagination-stress-blocks=N` makes the private stress corpus reproducible.
+
+The measurements rejected the earlier paginator-cliff diagnosis. In the live 120-block run, the dedicated STA completed
+all layout phases and went idle in under one second, but final UI publication remained blocked. The compositor was
+calling `RichTextBox.GetNextSpellingErrorPosition` synchronously from `RefreshOverlays`, including once inside page
+rebuild and again on every 750-ms overlay tick. Searching the long correct-text gaps between the sparse `qzxwvv` probes
+occupied the editor dispatcher even though page layout had finished. RKWF-036 records this Writer/WPF consumer seam.
+
+The bounded correction keeps native spelling owned by the single live editor. For only the current visible/adjacent page
+window, the compositor builds value word-start offsets, checks at most 64 candidates and eight milliseconds of completed
+work per dispatcher turn with `GetSpellingErrorRange`, caches generation/document-stamped source ranges, and draws only
+those cached ranges. Invalidation, document replacement and page-window changes clear the scan immediately. No second
+spell-checking control, cross-thread `TextPointer`, fake page or modal dialog was added. A focused 180-block test proves
+publication plus the exact source range and left/right underline bounds of `qzxwvv`.
+
+In the actual Release app, 120 blocks published three pages in **852.8 ms** end-to-end (**801.2 ms** worker); the formerly
+failing 180 blocks published five pages in **1005.1 ms** end-to-end (**911.6 ms** worker). An 18-setting burst over the
+180-block corpus accepted only generation 20 after **1** active cancellation and **18** coalesced requests, publishing in
+**797.3 ms** end-to-end with a **744.0 ms** final worker layout. The user confirmed the window was very fast, and the
+process remained responsive. The focused production gate passes **15/15**, the namespace pagination gate passes
+**39/39**, the W3-E table-resize regression passes **8/8**, and the Release Writer project builds with zero warnings and
+errors. No full suite, solution build, genuine OS IME or production RTL gate was run. Larger real-world document mixes
+still need a separate work-budget gate before any default-Paper decision; the next bounded slice should stage page-window
+handoff prefetch/publication and define measured retention/eviction limits without changing native editor ownership.
+
 ## 4. Workflow / Session Conventions
 
 - Work from the current Windows checkout at
@@ -6716,14 +6750,15 @@ long-document work budget/cancellation design before any default-Paper decision.
   table round-trip/schema-v2 and TXT/RTF compatibility matrix. W3-E is accepted through §3.135. W4-A is accepted
   through §3.136 with its focused 6/6 gate, proportional follow-up regressions, zero-warning Writer builds and the
   completed 2026-08-31 actual-window correction sequence.
-  W2-G's first five opt-in production batches are complete through §3.151. The immutable capture/latest-only dedicated-STA
+  W2-G's first six opt-in production batches are complete through §3.152. The immutable capture/latest-only dedicated-STA
   engine, clone-backed visible/adjacent compositor, stale-event gates and page-to-source interaction bridge pass the
   focused **39/39** pagination gate and the Release Writer build. Actual-window LTR cross-page authoring, native
   Undo/Redo, clipboard, spelling, focus recovery, page-setting reflow, table-overall and eight-handle picture resizing,
   immutable explicit-column and multi-row-group/span table geometry, safe Auto-column rejection, accessible object/handle
-  invocation, editor-focused keyboard resize, latest-only cancellation/coalescing telemetry, zoom/DPI-stable hit geometry,
-  ruler/margin-guide projection, and empty document replacement are positive. The 180-block live scalability gate is
-  negative and remains open. Default Paper is unchanged. Genuine OS
+  invocation, editor-focused keyboard resize, phase-specific/latest-only cancellation/coalescing telemetry,
+  zoom/DPI-stable hit geometry, ruler/margin-guide projection, empty document replacement, staged native-spelling
+  overlays and the 180-block live scalability gate are positive. Larger real-world document budgeting remains open.
+  Default Paper is unchanged. Genuine OS
   IME and production RTL are explicitly deferred as one later paired input/geometry slice; the current decision is a
   qualified go for further opt-in hardening only.
   W4-B still waits for W2-G completion and any default-Paper decision.
@@ -6891,6 +6926,13 @@ long-document work budget/cancellation design before any default-Paper decision.
   active cancellation, seventeen coalesced requests and a three-page virtualized handoff. A clean 180-block live probe
   exceeded twenty seconds without publishing, so long-document responsiveness and default-Paper authorization remain
   open. No full suite, solution build, genuine OS IME or production RTL gate was run.
+- 2026-09-01 after §3.152: the focused W2-G production gate passes **15/15**, the namespace-scoped pagination gate
+  passes **39/39**, the W3-E table-resize regression passes **8/8**, and the Release Writer project builds with zero
+  warnings/errors. Phase telemetry proved the prior live stall was dispatcher-bound spelling enumeration after the STA
+  had completed, not paginator layout. Generation-scoped visible-page spelling slices restored 120-block publication to
+  **852.8 ms** and the formerly failing 180-block publication to **1005.1 ms**; the 180-block burst accepted generation
+  20 in **797.3 ms** after one active cancellation and eighteen coalesced requests. No full suite, solution build,
+  genuine OS IME or production RTL gate was run.
 - Before quoting a current count or declaring a new change complete, rerun the proportional build
   and test commands. Inspect actual/diff PNG artifacts before changing visual baselines or
   tolerances.

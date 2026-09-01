@@ -12,7 +12,7 @@
 > the completed live matrix. Its final closure intentionally used focused tests rather than new full-suite gates.
 > W4-A is accepted through §3.136: its focused 6/6 gate, proportional follow-up regressions and zero-warning Writer
 > builds pass, and the 2026-08-31 actual-window Settings/persistence/appearance-polish sequence is accepted.
-> W2-G's first five private production batches are complete through design-notes §3.151. The focused 14/14 production
+> W2-G's first six private production batches are complete through design-notes §3.152. The focused 15/15 production
 > tests, combined 39/39 pagination gate and zero-warning Release Writer build pass. Actual-window LTR cross-page editing,
 > native history/clipboard/spelling/focus, page-setting reflow, ruler/guides, page-local table-overall and picture resize,
 > immutable explicit-column plus multi-row-group/span row handles, safe Auto-column rejection, accessible object/handle
@@ -477,7 +477,7 @@ mouse/keyboard/UIA operation in the actual Writer window before W3-C begins.
 
 ### W2-G — True editable pagination architecture and delivery
 
-**Status (2026-09-01): fifth opt-in production hardening batch complete; qualified LTR hardening go; default replacement not
+**Status (2026-09-01): sixth opt-in production hardening batch complete; qualified LTR hardening go; default replacement not
 started.** The
 authoritative live `FlowDocument` retains native cross-page selection/edit/Undo and matches W2-D paginator page-start
 offsets, while an isolated clone provides supported bidirectional page-local text geometry, structured image hits and
@@ -485,16 +485,18 @@ paragraph caret/selection overlays. Visible/adjacent mapping runs on a separate 
 latest-only pending coalescing, cooperative active cancellation and UI generation rejection. Generation-stamped page
 events restore the live editor's focus/command ownership; reflow preserves live anchors; native spelling and clipboard
 remain editor-owned. Synthetic text composition routes correctly, while real OS IME is still a manual gate. See design-
-notes §§3.137–3.151. Page-spanning table/image/hyperlink anchors follow paginator reflow, W3-E table/picture chrome stays
+notes §§3.137–3.152. Page-spanning table/image/hyperlink anchors follow paginator reflow, W3-E table/picture chrome stays
 outside serialized content, RTL/zoom/DPI/scroll transforms invert to exact source offsets, and document replacement plus
 page-window handoff reject stale geometry immediately. The private production engine and clone-backed diagnostic now
 exercise those contracts in the Release app; default Paper remains unchanged. Genuine OS IME and production RTL are
 deferred as one paired packet. Page-local table row/column/overall and eight-handle picture resize delegation,
 ruler/margin guides, accessible object/handle invocation, zoom/DPI-stable hit geometry, actual-window empty document
 replacement, multi-row-group/span row geometry, safe Auto-column rejection, editor-focused keyboard resize and worker
-cancellation/coalescing telemetry now pass. A 180-block actual-window probe still exceeded twenty seconds without
-publishing, so long-document responsiveness remains open. The next bounded work is phase-specific layout instrumentation
-and a measured long-document work-budget/cancellation design.
+cancellation/coalescing telemetry now pass. Phase-specific timing proved the earlier 180-block stall was unbounded
+dispatcher-bound spelling enumeration after the dedicated STA had completed. Generation-scoped visible-page spelling
+slices now publish that five-page corpus in about one second with exact-token underlines; larger real-world document
+budgeting remains open. The next bounded work is staged page-window prefetch/publication plus measured retention and
+eviction limits.
 
 **Owns:** a genuinely page-by-page editable Paper presentation and the reflow/virtualization architecture required
 to support it. It begins only after W3-E stabilizes table/picture selection, contextual state and resizing; it does

@@ -893,29 +893,55 @@ ribbon artwork remains unchanged.
   Ctrl+Y restored each position, Escape left **1128** unchanged, all five handles remained, and `DocumentEditor` held
   focus.
 
-### RKWF-035 — Live pagination cost has an unresolved block-count cliff
+### RKWF-035 — Live pagination appeared to have a block-count cliff
 
 - **First seen / packet:** 2026-09-01, Writer W2-G long-document telemetry/stress slice.
-- **Status:** open Writer/WPF performance investigation; not a RibbonKit runtime defect.
+- **Status:** the 120/180-block cliff is explained and contained through RKWF-036; broader real-document budgeting is
+  still open and is not a RibbonKit runtime defect.
 - **Consumer goal:** keep ordinary and longer documents responsive while preserving accepted preview/print page-count
   and page-start parity and one authoritative realized editor.
 - **Reproduction and evidence:** the 120-block live seed (**602 words / 5,174 characters**) completed its burst-final
   generation in **384.4 ms** and page-window handoff in **286.1 ms**. A clean 180-block seed with only **903 words /
   7,761 characters** still had not published after twenty seconds. Longer probes increased CPU and working set; the
   480-block run was stopped near **95 CPU seconds / 1.05 GB**. A broad UIA traversal amplified one run, but a clean
-  no-automation isolation reproduced the 180-block delay.
-- **Current app-owned containment:** stress seed/burst flags remain private and explicit; default Paper is unchanged.
-  The diagnostic reports thread-safe started/completed/cancelled/coalesced counters and accepts only the latest final
-  generation. Do not describe the positive 120-block check as long-document acceptance.
-- **Next investigation:** separately time XamlPackage load, formatting, `ComputePageCount`, page-start enumeration,
-  visible/adjacent geometry and rasterization. Use those measurements to define a work budget and cancellation/staging
-  design without weakening accepted paginator parity or adding fake pages.
+  no-automation isolation reproduced the 180-block delay. Later phase telemetry proved both dedicated-STA jobs completed
+  in under one second; the editor dispatcher was blocked by forward spelling enumeration before final publication.
+- **Current app-owned containment:** stress seed/block-count/burst flags remain private and explicit; default Paper is
+  unchanged. Phase-specific/latest-only worker telemetry remains visible, while RKWF-036 bounds spelling discovery to
+  visible-page candidate slices. Do not generalize the 180-block corpus to arbitrary large real-world documents.
+- **Next investigation:** define measured page-window prefetch, retention/eviction and larger mixed-structure budgets
+  without weakening accepted paginator parity or adding fake pages.
 - **Smallest possible library direction:** none unless a later focused reproduction implicates RibbonKit. Current work is
   entirely inside Writer's WPF paginator/editor integration.
 - **Verification:** the automated 1,600-paragraph burst proves at least one cooperative active cancellation, pending
   coalescing, final-generation acceptance and bounded one-to-three-page publication. The actual 120-block burst recorded
   one cancellation, seventeen coalesced requests and a successful page-three handoff while the window remained
-  responsive; the 180-block live gate remains failed/open.
+  responsive. After RKWF-036, the actual 180-block corpus publishes five pages in **1005.1 ms** and its burst-final
+  generation publishes in **797.3 ms** while the process remains responsive.
+
+### RKWF-036 — Forward spelling-error enumeration can block staged page publication
+
+- **First seen / packet:** 2026-09-01, Writer W2-G phase-instrumentation/staged-publication batch.
+- **Status:** closed for the opt-in compositor by bounded visible-page candidate slices; no RibbonKit runtime change.
+- **Consumer goal:** retain exact native spelling underlines without delaying clone-backed page publication or moving
+  spelling ownership away from the authoritative live `RichTextBox`.
+- **Reproduction and evidence:** phase telemetry showed 120- and 180-block dedicated-STA layout completing in under one
+  second and reporting idle while final UI publication remained blocked. `RefreshOverlays` synchronously called
+  `GetNextSpellingErrorPosition` from the document start, including during page rebuild and every 750-ms overlay tick.
+  Sparse misspellings made each forward search traverse long correct-text gaps on the editor dispatcher.
+- **Current app-owned correction:** build word-start value offsets only for visible/adjacent published pages; inspect at
+  most 64 candidates and eight milliseconds of completed work per dispatcher turn with `GetSpellingErrorRange`; cache
+  generation/document-stamped source ranges; clear them on every invalidation/replacement/page-window change. Pages
+  publish first under the existing non-modal status banner. No second spelling control or dispatcher-owned pointer
+  crosses threads.
+- **Application impact:** the exact `qzxwvv` source range and underline bounds remain correct while ordinary page
+  publication no longer waits for whole-document spelling enumeration.
+- **Smallest possible library direction:** none. RibbonKit is not involved in WPF `RichTextBox` spelling discovery or
+  Writer's clone-page compositor.
+- **Verification:** a focused 180-block native-spelling production test proves exact source/bounds projection. The actual
+  120-block run published in **852.8 ms**, the formerly failing 180-block run in **1005.1 ms**, and its stress-burst final
+  generation in **797.3 ms** after one active cancellation and eighteen coalesced requests; the user confirmed the live
+  window was very fast.
 
 ## 5. Closed observations
 

@@ -10,13 +10,13 @@
 > §3.136: Writer now has a **Settings** dialog containing its transactional **Appearance** page plus RibbonKit's
 > built-in ribbon and QAT pages, with separate versioned appearance and structural-layout files. Its focused 6/6 gate
 > and proportional follow-up regressions/zero-warning Writer builds pass, and the 2026-08-31 actual-window correction
-> sequence is accepted. W2-G's first five private production batches are complete through design-notes §3.151. The
-> focused 14/14 production tests and combined 39/39 pagination gate pass, and the Release app has live LTR evidence for
+> sequence is accepted. W2-G's first six private production batches are complete through design-notes §3.152. The
+> focused 15/15 production tests and namespace 39/39 pagination gate pass, and the Release app has live LTR evidence for
 > cross-page editing, native history/clipboard/spelling/focus, page reflow, ruler/guides, page-local table-overall and
 > row/column resizing, accessible table/picture activation and handles, zoom/DPI-stable hit geometry, picture resizing,
 > multi-row-group/span row geometry, safe Auto-column rejection, editor-focused keyboard resize, latest-only worker
-> telemetry, and empty document replacement. A 180-block live probe exceeded twenty seconds without publishing, so
-> long-document responsiveness remains open. It remains an opt-in
+> phase telemetry, staged exact-word spelling overlays, empty document replacement and responsive five-page publication
+> for the formerly failing 180-block corpus. Larger real-world document budgeting remains open. It remains an opt-in
 > diagnostic; default Paper is unchanged. Genuine OS IME and production RTL are explicitly deferred as one later paired
 > slice. Decorative breaks remain prohibited.
 > Live mixed-monitor DPI movement remains deferred to W4-C. No later

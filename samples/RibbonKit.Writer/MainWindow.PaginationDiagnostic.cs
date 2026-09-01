@@ -334,7 +334,7 @@ public partial class MainWindow
                 new TextRange(document.ContentStart, document.ContentEnd).Text))
             return;
         document.Blocks.Clear();
-        for (var index = 0; index < 120; index++)
+        for (var index = 0; index < WriterPaginationDiagnosticOptions.StressBlockCount; index++)
         {
             var spellingProbe = index % 79 == 0 ? " qzxwvv" : string.Empty;
             document.Blocks.Add(new Paragraph(new Run(

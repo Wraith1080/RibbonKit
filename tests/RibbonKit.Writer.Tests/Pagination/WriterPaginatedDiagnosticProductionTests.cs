@@ -54,6 +54,27 @@ public sealed class WriterPaginatedDiagnosticProductionTests
                 result.PageStartOffsets.ToArray());
             Assert.True(workspace.Controller.LastCaptureMilliseconds < 250,
                 $"Immutable capture took {workspace.Controller.LastCaptureMilliseconds:0.###} ms.");
+            var phases = result.PhaseTimings;
+            Assert.All(new[]
+            {
+                phases.PackageLoadMilliseconds,
+                phases.FormattingMilliseconds,
+                phases.PageCountMilliseconds,
+                phases.PageStartsMilliseconds,
+                phases.ObjectMappingMilliseconds,
+                phases.ViewerRealizationMilliseconds,
+                phases.InsertionGeometryMilliseconds,
+                phases.RasterizationMilliseconds,
+                phases.StructuredGeometryMilliseconds
+            }, value => Assert.True(value >= 0));
+            Assert.InRange(phases.AccountedMilliseconds, 0,
+                result.WorkerMilliseconds + 5);
+            Assert.True(workspace.Controller.LastEndToEndMilliseconds >=
+                result.WorkerMilliseconds);
+            Assert.Contains("phases L/C/S/G/R",
+                workspace.Surface.StatusTextForTesting, StringComparison.Ordinal);
+            Assert.Contains("end ", workspace.Surface.StatusTextForTesting,
+                StringComparison.Ordinal);
 
             var clonePicture = accepted.SourceClone.Blocks.OfType<Paragraph>()
                 .SelectMany(paragraph => paragraph.Inlines.OfType<InlineUIContainer>())
@@ -141,6 +162,59 @@ public sealed class WriterPaginatedDiagnosticProductionTests
             Assert.Equal(GetPageStartOffsets(accepted.SourceClone, paginator).ToArray(),
                 current.PageStartOffsets.ToArray());
         }, TimeSpan.FromSeconds(45));
+    }
+
+    [Fact]
+    public async Task LongNativeSpellingDocumentPublishesAndUnderlinesTheExactToken()
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            var settings = DocumentPageSettings.Letter();
+            var document = CreateParagraphDocument(settings, 179);
+            var misspelling = new Run("qzxwvv");
+            var probe = new Paragraph(new Run("Spelling probe "));
+            probe.Inlines.Add(misspelling);
+            probe.Inlines.Add(new Run(" ends here."));
+            document.Blocks.InsertBefore(document.Blocks.FirstBlock, probe);
+            using var workspace = ProductionWorkspace.Create(document,
+                enableSpellCheck: true);
+
+            await WaitForCurrentAsync(workspace.Controller);
+            var expectedStart = document.ContentStart.GetOffsetToPosition(
+                misspelling.ContentStart);
+            var expectedEnd = document.ContentStart.GetOffsetToPosition(
+                misspelling.ContentEnd);
+            var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(5);
+            while (!workspace.Surface.SpellingRangesForTesting.Contains(
+                       (expectedStart, expectedEnd)) && DateTime.UtcNow < deadline)
+            {
+                workspace.Surface.RefreshOverlays(workspace.Editor);
+                await Dispatcher.Yield(DispatcherPriority.Background);
+                await Task.Delay(20);
+            }
+
+            Assert.Contains((expectedStart, expectedEnd),
+                workspace.Surface.SpellingRangesForTesting);
+            var result = Assert.IsType<WriterPaginationLayoutResult>(
+                workspace.Controller.Current);
+            var tokenGeometry = result.Insertions.Where(item =>
+                    item.SourceOffset >= expectedStart &&
+                    item.SourceOffset <= expectedEnd)
+                .ToArray();
+            Assert.NotEmpty(tokenGeometry);
+            var page = Assert.Single(tokenGeometry.Select(item => item.PageNumber).Distinct());
+            var expectedLeft = tokenGeometry.Min(item => item.Rectangle.X);
+            var expectedRight = tokenGeometry.Max(item => item.Rectangle.X +
+                Math.Max(1, item.Rectangle.Width));
+            var underline = Assert.Single(
+                workspace.Surface.SpellingOverlayBoundsForTesting,
+                item => item.PageNumber == page);
+            Assert.Equal(expectedLeft, underline.Bounds.Left, 1);
+            Assert.Equal(expectedRight, underline.Bounds.Right, 1);
+            Assert.True(workspace.Controller.LastEndToEndMilliseconds < 5000,
+                $"Staged publication took " +
+                $"{workspace.Controller.LastEndToEndMilliseconds:0.###} ms.");
+        }, TimeSpan.FromSeconds(30));
     }
 
     [Fact]
@@ -742,6 +816,15 @@ public sealed class WriterPaginatedDiagnosticProductionTests
         {
             using var workspace = ProductionWorkspace.Create(CreateParagraphDocument(
                 DocumentPageSettings.Letter(), 1600));
+            var activeProgress = await WaitForActiveProgressAsync(workspace.Controller);
+            Assert.Equal(workspace.Controller.RequestedGeneration,
+                activeProgress.Generation);
+            Assert.NotEqual(WriterPaginationWorkPhase.Idle, activeProgress.Phase);
+            Assert.True(activeProgress.PhaseElapsedMilliseconds >= 0);
+            workspace.Surface.ShowWorkProgress(activeProgress,
+                workspace.Controller.WorkStatistics);
+            Assert.Contains(activeProgress.Generation.ToString(),
+                workspace.Surface.StatusTextForTesting, StringComparison.Ordinal);
             await WaitForCurrentAsync(workspace.Controller);
             var opening = workspace.Controller.WorkStatistics;
             var firstStress = DocumentPageSettings.Legal(
@@ -816,6 +899,21 @@ public sealed class WriterPaginatedDiagnosticProductionTests
             await Task.Delay(5);
         }
         throw new TimeoutException("The stress pagination generation did not start.");
+    }
+
+    private static async Task<WriterPaginationWorkProgress> WaitForActiveProgressAsync(
+        WriterPaginatedDiagnosticController controller)
+    {
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(10);
+        while (DateTime.UtcNow < deadline)
+        {
+            var progress = controller.WorkProgress;
+            if (progress.Phase != WriterPaginationWorkPhase.Idle)
+                return progress;
+            await Dispatcher.Yield(DispatcherPriority.Background);
+            await Task.Delay(5);
+        }
+        throw new TimeoutException("The pagination worker did not expose an active phase.");
     }
 
     private static ImmutableArray<int> GetPageStartOffsets(FlowDocument document,
@@ -982,7 +1080,8 @@ public sealed class WriterPaginatedDiagnosticProductionTests
         internal WriterPaginatedDiagnosticController Controller { get; }
         internal Window Window { get; }
 
-        internal static ProductionWorkspace Create(FlowDocument document)
+        internal static ProductionWorkspace Create(FlowDocument document,
+            bool enableSpellCheck = false)
         {
             var settings = DocumentPageSettings.Letter();
             var editor = new RichTextBox
@@ -1008,6 +1107,7 @@ public sealed class WriterPaginatedDiagnosticProductionTests
             };
             window.Show();
             window.UpdateLayout();
+            SpellCheck.SetIsEnabled(editor, enableSpellCheck);
             var controller = new WriterPaginatedDiagnosticController(editor, surface, settings);
             return new ProductionWorkspace(settings, editor, surface, controller, window);
         }

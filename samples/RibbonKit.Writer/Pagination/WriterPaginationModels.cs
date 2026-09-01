@@ -131,6 +131,38 @@ internal sealed record WriterPaginationPage(
     int PageNumber,
     ImmutableArray<byte> PngBytes);
 
+internal enum WriterPaginationWorkPhase
+{
+    Idle,
+    PackageLoad,
+    Formatting,
+    PageCount,
+    PageStarts,
+    ObjectMapping,
+    ViewerRealization,
+    InsertionGeometry,
+    Rasterization,
+    StructuredGeometry
+}
+
+internal readonly record struct WriterPaginationPhaseTimings(
+    double PackageLoadMilliseconds,
+    double FormattingMilliseconds,
+    double PageCountMilliseconds,
+    double PageStartsMilliseconds,
+    double ObjectMappingMilliseconds,
+    double ViewerRealizationMilliseconds,
+    double InsertionGeometryMilliseconds,
+    double RasterizationMilliseconds,
+    double StructuredGeometryMilliseconds)
+{
+    internal double AccountedMilliseconds => PackageLoadMilliseconds +
+        FormattingMilliseconds + PageCountMilliseconds + PageStartsMilliseconds +
+        ObjectMappingMilliseconds + ViewerRealizationMilliseconds +
+        InsertionGeometryMilliseconds + RasterizationMilliseconds +
+        StructuredGeometryMilliseconds;
+}
+
 internal sealed record WriterPaginationLayoutResult(
     long Generation,
     long DocumentIdentity,
@@ -145,6 +177,7 @@ internal sealed record WriterPaginationLayoutResult(
     WriterPaginationPageSettings PageSettings,
     int WorkerThreadId,
     ApartmentState WorkerApartment,
+    WriterPaginationPhaseTimings PhaseTimings,
     double WorkerMilliseconds);
 
 internal enum WriterPaginationCompletionKind
@@ -164,6 +197,11 @@ internal readonly record struct WriterPaginationWorkStatistics(
     int CompletedCount,
     int CanceledActiveCount,
     int SupersededPendingCount);
+
+internal readonly record struct WriterPaginationWorkProgress(
+    long Generation,
+    WriterPaginationWorkPhase Phase,
+    double PhaseElapsedMilliseconds);
 
 internal readonly record struct WriterPaginationPageInteraction(
     long Generation,

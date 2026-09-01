@@ -1,4 +1,6 @@
 using System.Collections.Immutable;
+using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Windows;
 using System.Windows.Automation;
@@ -45,6 +47,11 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
     private bool _showMarginGuides;
     private Window? _hostWindow;
     private string? _interactionStatus;
+    private ImmutableArray<int> _spellingCandidateOffsets;
+    private readonly List<(int Start, int End)> _spellingRanges = new();
+    private long _spellingGeneration;
+    private long _spellingDocumentIdentity;
+    private int _spellingCandidateIndex;
 
     internal WriterPaginatedDiagnosticSurface()
     {
@@ -119,6 +126,15 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
             element.Tag is string tag && tag.StartsWith("pagination-resize-",
                 StringComparison.Ordinal)));
     internal string StatusTextForTesting => _statusText.Text;
+    internal IReadOnlyList<(int Start, int End)> SpellingRangesForTesting =>
+        _spellingRanges;
+    internal IReadOnlyList<(int PageNumber, Rect Bounds)> SpellingOverlayBoundsForTesting =>
+        _overlayCanvases.SelectMany(entry => entry.Value.Children
+            .OfType<FrameworkElement>()
+            .Where(element => Equals(element.Tag, "pagination-spelling"))
+            .Select(element => (entry.Key, new Rect(Canvas.GetLeft(element),
+                Canvas.GetTop(element), element.Width, element.Height))))
+            .ToArray();
     internal string? KeyboardResizeTargetNameForTesting =>
         _keyboardResizeTarget is { } target ? GetResizeHandleName(target) : null;
 
@@ -256,12 +272,14 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
         }
         _requestedGeneration = generation;
         _documentIdentity = documentIdentity;
-        _statusText.Text = $"Paginated diagnostic: updating generation {generation:N0}…";
+        ResetSpellingScan();
+        SetStatus($"Paginated diagnostic: updating generation {generation:N0}…");
         RefreshOverlays(null);
     }
 
     internal void Publish(WriterPaginationLayoutResult result,
-        double captureMilliseconds, WriterPaginationWorkStatistics statistics,
+        double captureMilliseconds, double endToEndMilliseconds,
+        WriterPaginationWorkStatistics statistics,
         RichTextBox editor)
     {
         ArgumentNullException.ThrowIfNull(result);
@@ -271,19 +289,57 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
             return;
         _result = result;
         _editor = editor;
+        ResetSpellingScan();
         _statusBorder.Background = new SolidColorBrush(Color.FromArgb(220, 36, 43, 50));
         _requestedPage = result.VisiblePage;
         RebuildPages();
-        _statusText.Text = $"Diagnostic · document {result.DocumentIdentity:N0} · " +
+        SetStatus($"Diagnostic · document {result.DocumentIdentity:N0} · " +
             $"generation {result.Generation:N0} · " +
             $"page {result.VisiblePage + 1:N0}/{result.PageCount:N0} · " +
             $"capture {captureMilliseconds:0.#} ms · layout {result.WorkerMilliseconds:0.#} ms · " +
+            $"phases L/C/S/G/R {result.PhaseTimings.PackageLoadMilliseconds:0.#}/" +
+            $"{result.PhaseTimings.PageCountMilliseconds:0.#}/" +
+            $"{result.PhaseTimings.PageStartsMilliseconds:0.#}/" +
+            $"{result.PhaseTimings.InsertionGeometryMilliseconds:0.#}/" +
+            $"{result.PhaseTimings.RasterizationMilliseconds:0.#} ms · " +
+            $"end {endToEndMilliseconds:0.#} ms · " +
             $"work {statistics.CompletedCount:N0}/{statistics.StartedCount:N0} · " +
             $"cancelled {statistics.CanceledActiveCount:N0} · " +
-            $"coalesced {statistics.SupersededPendingCount:N0}";
+            $"coalesced {statistics.SupersededPendingCount:N0}");
         _interactionStatus = null;
         RefreshOverlays(editor);
     }
+
+    internal void ShowWorkProgress(WriterPaginationWorkProgress progress,
+        WriterPaginationWorkStatistics statistics)
+    {
+        if (progress.Phase == WriterPaginationWorkPhase.Idle ||
+            progress.Generation <= 0 || _requestedGeneration <= 0)
+            return;
+
+        var generationText = progress.Generation == _requestedGeneration
+            ? $"generation {progress.Generation:N0}"
+            : $"active {progress.Generation:N0} → requested {_requestedGeneration:N0}";
+        SetStatus($"Paginated diagnostic · {generationText} · " +
+            $"{FormatPhase(progress.Phase)} {progress.PhaseElapsedMilliseconds:0.#} ms · " +
+            $"work {statistics.CompletedCount:N0}/{statistics.StartedCount:N0} · " +
+            $"cancelled {statistics.CanceledActiveCount:N0} · " +
+            $"coalesced {statistics.SupersededPendingCount:N0}");
+    }
+
+    private static string FormatPhase(WriterPaginationWorkPhase phase) => phase switch
+    {
+        WriterPaginationWorkPhase.PackageLoad => "package load",
+        WriterPaginationWorkPhase.Formatting => "formatting",
+        WriterPaginationWorkPhase.PageCount => "page count",
+        WriterPaginationWorkPhase.PageStarts => "page starts",
+        WriterPaginationWorkPhase.ObjectMapping => "object mapping",
+        WriterPaginationWorkPhase.ViewerRealization => "page realization",
+        WriterPaginationWorkPhase.InsertionGeometry => "insertion geometry",
+        WriterPaginationWorkPhase.Rasterization => "rasterization",
+        WriterPaginationWorkPhase.StructuredGeometry => "structured geometry",
+        _ => "idle"
+    };
 
     internal void ShowInteractionStatus(long objectIdentity,
         WriterPaginationObjectKind kind, bool activated)
@@ -299,9 +355,9 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
             ? $"{kind.ToString().ToLowerInvariant()} selected"
             : $"{kind.ToString().ToLowerInvariant()} rejected";
         if (_result is { } result)
-            _statusText.Text = $"Diagnostic · generation {result.Generation:N0} · " +
+            SetStatus($"Diagnostic · generation {result.Generation:N0} · " +
                 $"page {result.VisiblePage + 1:N0}/{result.PageCount:N0} · " +
-                _interactionStatus;
+                _interactionStatus);
     }
 
     internal void ShowResizeStatus(WriterPaginationObjectKind kind, bool committed,
@@ -313,8 +369,8 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
                 ? $"{kind.ToString().ToLowerInvariant()} resized"
                 : $"{kind.ToString().ToLowerInvariant()} resize rejected";
         if (_result is { } result)
-            _statusText.Text = $"Diagnostic · document {result.DocumentIdentity:N0} · " +
-                $"generation {result.Generation:N0} · {_interactionStatus}";
+            SetStatus($"Diagnostic · document {result.DocumentIdentity:N0} · " +
+                $"generation {result.Generation:N0} · {_interactionStatus}");
     }
 
     internal void SetChrome(DocumentPageSettings settings, bool showRuler,
@@ -342,8 +398,15 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
 
     internal void ShowFailure(string message)
     {
-        _statusText.Text = $"Paginated diagnostic failed: {message}";
+        SetStatus($"Paginated diagnostic failed: {message}");
         _statusBorder.Background = new SolidColorBrush(Color.FromArgb(230, 145, 36, 36));
+    }
+
+    private void SetStatus(string status)
+    {
+        _statusText.Text = status;
+        AutomationProperties.SetName(_statusText, status);
+        WriterPaginationDiagnosticOptions.WriteTelemetry(status);
     }
 
     internal void Clear()
@@ -357,6 +420,7 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
         _pageCanvas.Children.Clear();
         _pageCanvas.Width = 0;
         _pageCanvas.Height = 0;
+        ResetSpellingScan();
     }
 
     protected override void OnDpiChanged(DpiScale oldDpi, DpiScale newDpi)
@@ -950,8 +1014,8 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
     {
         if (_result is not { } result)
             return;
-        _statusText.Text = $"Diagnostic · generation {result.Generation:N0} · keyboard target · " +
-            GetResizeHandleName(descriptor);
+        SetStatus($"Diagnostic · generation {result.Generation:N0} · keyboard target · " +
+            GetResizeHandleName(descriptor));
     }
 
     private static bool SameHandle(ResizeHandleDescriptor first,
@@ -1067,22 +1131,101 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
 
     private void AddSpellingOverlays(WriterPaginationLayoutResult result, RichTextBox editor)
     {
-        var cursor = editor.Document.ContentStart;
-        var visited = 0;
-        while (visited++ < 256 &&
-               editor.GetNextSpellingErrorPosition(cursor, LogicalDirection.Forward) is { } error)
+        if (!SpellCheck.GetIsEnabled(editor))
+            return;
+        if (_spellingGeneration != result.Generation ||
+            _spellingDocumentIdentity != result.DocumentIdentity ||
+            _spellingCandidateOffsets.IsDefault)
         {
-            var range = editor.GetSpellingErrorRange(error);
+            _spellingGeneration = result.Generation;
+            _spellingDocumentIdentity = result.DocumentIdentity;
+            _spellingCandidateOffsets = BuildSpellingCandidateOffsets(result,
+                editor.Document);
+            _spellingCandidateIndex = 0;
+            _spellingRanges.Clear();
+        }
+
+        var watch = Stopwatch.StartNew();
+        var processed = 0;
+        while (_spellingCandidateIndex < _spellingCandidateOffsets.Length &&
+               processed++ < 64 && watch.ElapsedMilliseconds < 8)
+        {
+            var offset = _spellingCandidateOffsets[_spellingCandidateIndex++];
+            var position = editor.Document.ContentStart.GetPositionAtOffset(offset,
+                LogicalDirection.Forward);
+            var range = position is null ? null : editor.GetSpellingErrorRange(position);
             if (range is null)
-                break;
+                continue;
             var start = editor.Document.ContentStart.GetOffsetToPosition(range.Start);
             var end = editor.Document.ContentStart.GetOffsetToPosition(range.End);
-            AddRangeOverlay(result, start, end, "spelling", Brushes.Red, 1);
-            cursor = range.End.GetNextInsertionPosition(LogicalDirection.Forward)
-                ?? editor.Document.ContentEnd;
-            if (cursor.CompareTo(editor.Document.ContentEnd) >= 0)
-                break;
+            if (!_spellingRanges.Contains((start, end)))
+                _spellingRanges.Add((start, end));
         }
+
+        foreach (var range in _spellingRanges)
+            AddRangeOverlay(result, range.Start, range.End, "spelling", Brushes.Red, 1);
+    }
+
+    private static ImmutableArray<int> BuildSpellingCandidateOffsets(
+        WriterPaginationLayoutResult result, FlowDocument document)
+    {
+        var candidates = ImmutableArray.CreateBuilder<int>();
+        var position = document.ContentStart;
+        while (position is not null && position.CompareTo(document.ContentEnd) < 0)
+        {
+            if (position.GetPointerContext(LogicalDirection.Forward) !=
+                TextPointerContext.Text)
+            {
+                position = position.GetNextContextPosition(LogicalDirection.Forward);
+                continue;
+            }
+
+            var text = position.GetTextInRun(LogicalDirection.Forward);
+            var runOffset = document.ContentStart.GetOffsetToPosition(position);
+            for (var index = 0; index < text.Length; index++)
+            {
+                if (!IsWordCharacter(text[index]) ||
+                    index > 0 && IsWordCharacter(text[index - 1]))
+                    continue;
+                var sourceOffset = runOffset + index;
+                if (IsMappedOffset(result, sourceOffset))
+                    candidates.Add(sourceOffset);
+            }
+            position = position.GetPositionAtOffset(text.Length,
+                LogicalDirection.Forward);
+        }
+        return candidates.ToImmutable();
+    }
+
+    private static bool IsMappedOffset(WriterPaginationLayoutResult result, int offset)
+    {
+        foreach (var page in result.MappedPages)
+        {
+            var start = result.PageStartOffsets[page];
+            var end = page + 1 < result.PageStartOffsets.Length
+                ? result.PageStartOffsets[page + 1]
+                : int.MaxValue;
+            if (offset >= start && offset < end)
+                return true;
+        }
+        return false;
+    }
+
+    private static bool IsWordCharacter(char character)
+    {
+        if (char.IsLetterOrDigit(character) || character is '\'' or '\u2019')
+            return true;
+        return char.GetUnicodeCategory(character) is UnicodeCategory.NonSpacingMark or
+            UnicodeCategory.SpacingCombiningMark or UnicodeCategory.ConnectorPunctuation;
+    }
+
+    private void ResetSpellingScan()
+    {
+        _spellingGeneration = 0;
+        _spellingDocumentIdentity = 0;
+        _spellingCandidateOffsets = default;
+        _spellingCandidateIndex = 0;
+        _spellingRanges.Clear();
     }
 
     private void AddRangeOverlay(WriterPaginationLayoutResult result,

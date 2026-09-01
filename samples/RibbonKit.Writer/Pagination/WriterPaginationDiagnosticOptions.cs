@@ -1,8 +1,13 @@
+using System.IO;
+
 namespace RibbonKit.Writer.Pagination;
 
 internal static class WriterPaginationDiagnosticOptions
 {
     private const string EnvironmentVariable = "RIBBONKIT_WRITER_PAGINATED_DIAGNOSTIC";
+    private const string TelemetryEnvironmentVariable =
+        "RIBBONKIT_WRITER_PAGINATION_TELEMETRY";
+    private static readonly object TelemetrySync = new();
 
     internal static bool IsEnabled =>
         Environment.GetCommandLineArgs().Any(argument =>
@@ -30,4 +35,41 @@ internal static class WriterPaginationDiagnosticOptions
         Environment.GetCommandLineArgs().Any(argument =>
             string.Equals(argument, "--writer-pagination-stress-burst",
                 StringComparison.OrdinalIgnoreCase));
+
+    internal static int StressBlockCount
+    {
+        get
+        {
+            const string prefix = "--writer-pagination-stress-blocks=";
+            foreach (var argument in Environment.GetCommandLineArgs())
+            {
+                if (!argument.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) ||
+                    !int.TryParse(argument[prefix.Length..], out var count))
+                    continue;
+                return Math.Clamp(count, 1, 2000);
+            }
+            return 120;
+        }
+    }
+
+    internal static void WriteTelemetry(string status)
+    {
+        var path = Environment.GetEnvironmentVariable(TelemetryEnvironmentVariable);
+        if (string.IsNullOrWhiteSpace(path))
+            return;
+        try
+        {
+            lock (TelemetrySync)
+            {
+                File.AppendAllText(path,
+                    $"{DateTimeOffset.UtcNow:O}\t{Environment.ProcessId}\t{status}" +
+                    Environment.NewLine);
+            }
+        }
+        catch (Exception exception) when (exception is IOException or
+            UnauthorizedAccessException or ArgumentException or NotSupportedException)
+        {
+            // This optional observer must never alter the diagnostic path it measures.
+        }
+    }
 }

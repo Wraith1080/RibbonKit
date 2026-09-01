@@ -73,7 +73,9 @@ internal sealed class WriterPaginatedDiagnosticController : IDisposable
     internal long PublishedGeneration { get; private set; }
     internal WriterPaginationLayoutResult? Current { get; private set; }
     internal double LastCaptureMilliseconds { get; private set; }
+    internal double LastEndToEndMilliseconds { get; private set; }
     internal WriterPaginationWorkStatistics WorkStatistics => _engine.Statistics;
+    internal WriterPaginationWorkProgress WorkProgress => _engine.Progress;
     internal Func<TextElement, bool>? StructuredObjectActivator { get; set; }
     internal Func<TextElement, WriterPaginationResizeHandleKind, int, int, bool>?
         StructuredResizeStarter { get; set; }
@@ -160,8 +162,11 @@ internal sealed class WriterPaginatedDiagnosticController : IDisposable
 
     private void OnDpiScaleChanged() => InvalidateAndSchedule(immediate: true);
 
-    private void OnOverlayTimerTick(object? sender, EventArgs e) =>
+    private void OnOverlayTimerTick(object? sender, EventArgs e)
+    {
+        _surface.ShowWorkProgress(_engine.Progress, _engine.Statistics);
         _surface.RefreshOverlays(_editor);
+    }
 
     private void OnPageWindowRequested(int pageNumber)
     {
@@ -199,6 +204,7 @@ internal sealed class WriterPaginatedDiagnosticController : IDisposable
         var generation = RequestedGeneration;
         var documentIdentity = _documentIdentity;
         var document = _document;
+        var requestStartedTimestamp = Stopwatch.GetTimestamp();
         var watch = Stopwatch.StartNew();
         if (_cachedContentVersion != _contentVersion || _cachedPackage.IsDefault)
             CaptureTrustedContent(document);
@@ -207,16 +213,20 @@ internal sealed class WriterPaginatedDiagnosticController : IDisposable
             _visiblePage, _cachedPackage, CaptureFormatting(document),
             CapturePageSettings(_settings), dpi.DpiScaleX, dpi.DpiScaleY, _cachedObjects);
         watch.Stop();
-        LastCaptureMilliseconds = watch.Elapsed.TotalMilliseconds;
+        var captureMilliseconds = watch.Elapsed.TotalMilliseconds;
+        LastCaptureMilliseconds = captureMilliseconds;
         var completion = _engine.Queue(capture);
-        _ = PublishWhenReadyAsync(completion, generation, documentIdentity, document);
+        _ = PublishWhenReadyAsync(completion, generation, documentIdentity, document,
+            captureMilliseconds, requestStartedTimestamp);
     }
 
     private async Task PublishWhenReadyAsync(
         Task<WriterPaginationCompletion> completionTask,
         long generation,
         long documentIdentity,
-        FlowDocument sourceDocument)
+        FlowDocument sourceDocument,
+        double captureMilliseconds,
+        long requestStartedTimestamp)
     {
         try
         {
@@ -235,7 +245,10 @@ internal sealed class WriterPaginatedDiagnosticController : IDisposable
                 Current = result;
                 PublishedGeneration = result.Generation;
                 _visiblePage = result.VisiblePage;
-                _surface.Publish(result, LastCaptureMilliseconds, _engine.Statistics, _editor);
+                LastCaptureMilliseconds = captureMilliseconds;
+                LastEndToEndMilliseconds = ElapsedMilliseconds(requestStartedTimestamp);
+                _surface.Publish(result, captureMilliseconds, LastEndToEndMilliseconds,
+                    _engine.Statistics, _editor);
             }, DispatcherPriority.DataBind);
         }
         catch (Exception exception)
@@ -246,6 +259,9 @@ internal sealed class WriterPaginatedDiagnosticController : IDisposable
                 _surface.ShowFailure(exception.Message), DispatcherPriority.DataBind);
         }
     }
+
+    private static double ElapsedMilliseconds(long startedTimestamp) =>
+        (Stopwatch.GetTimestamp() - startedTimestamp) * 1000d / Stopwatch.Frequency;
 
     private void CaptureTrustedContent(FlowDocument document)
     {
