@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
@@ -16,6 +17,8 @@ public partial class MainWindow
     private WriterPaginatedDiagnosticSurface? _paginationDiagnosticSurface;
     private WriterPaginatedDiagnosticController? _paginationDiagnosticController;
     private WriterPaginationObjectKind? _paginationResizeKind;
+    private long _paginationProbePeakWorkingSet;
+    private long _paginationProbePeakPrivateBytes;
 
     internal bool IsPaginationDiagnosticEnabled =>
         _paginationDiagnosticController is not null;
@@ -24,7 +27,13 @@ public partial class MainWindow
     {
         if (!WriterPaginationDiagnosticOptions.IsEnabled)
             return;
-        if (WriterPaginationDiagnosticOptions.ShouldSeedStressDocument)
+        if (WriterPaginationDiagnosticOptions.ShouldSeedMixedStressDocument)
+        {
+            Shell.CurrentDocument.CommitIdentity(path: null,
+                WriterDocumentFormat.RibbonKitWriter);
+            SeedPaginationMixedStressDocument();
+        }
+        else if (WriterPaginationDiagnosticOptions.ShouldSeedStressDocument)
         {
             Shell.CurrentDocument.CommitIdentity(path: null,
                 WriterDocumentFormat.RibbonKitWriter);
@@ -62,6 +71,9 @@ public partial class MainWindow
         if (WriterPaginationDiagnosticOptions.ShouldRunStressBurst)
             Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle,
                 QueuePaginationDiagnosticStressBurst);
+        if (WriterPaginationDiagnosticOptions.ShouldRunScrollProbe)
+            Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle,
+                new Action(() => _ = RunPaginationScrollProbeAsync()));
     }
 
     private void DisposePaginationDiagnostic()
@@ -346,6 +358,73 @@ public partial class MainWindow
         }
     }
 
+    private void SeedPaginationMixedStressDocument()
+    {
+        var document = Shell.CurrentDocument.Content;
+        if (!string.IsNullOrWhiteSpace(
+                new TextRange(document.ContentStart, document.ContentEnd).Text))
+            return;
+        document.Blocks.Clear();
+        var bitmap = BitmapSource.Create(2, 2, 96, 96, PixelFormats.Bgra32, null,
+            new byte[]
+            {
+                0x35, 0x88, 0xD0, 0xFF, 0x70, 0xB0, 0x55, 0xFF,
+                0xD0, 0x88, 0x35, 0xFF, 0x88, 0x55, 0xB0, 0xFF
+            }, 8);
+        bitmap.Freeze();
+        for (var index = 0; index < WriterPaginationDiagnosticOptions.StressBlockCount; index++)
+        {
+            var spellingProbe = index % 79 == 0 ? " qzxwvv" : string.Empty;
+            document.Blocks.Add(new Paragraph(new Run(
+                $"Mixed stress {index:D4}: pagination retains native text" +
+                $"{spellingProbe}."))
+            {
+                Margin = new Thickness(0, 0, 0, 4)
+            });
+            if (index > 0 && index % 75 == 0)
+            {
+                var table = new Table { CellSpacing = 2 };
+                table.Columns.Add(new TableColumn { Width = new GridLength(230) });
+                table.Columns.Add(new TableColumn { Width = new GridLength(230) });
+                var group = new TableRowGroup();
+                table.RowGroups.Add(group);
+                for (var rowIndex = 0; rowIndex < 6; rowIndex++)
+                {
+                    var row = new TableRow();
+                    row.Cells.Add(MixedCell(
+                        $"Table {index / 75:D2}, row {rowIndex:D2}, first."));
+                    row.Cells.Add(MixedCell(
+                        $"Table {index / 75:D2}, row {rowIndex:D2}, second."));
+                    group.Rows.Add(row);
+                }
+                document.Blocks.Add(table);
+            }
+            if (index > 0 && index % 90 == 0)
+            {
+                var paragraph = new Paragraph(new Run(
+                    $"Mixed picture {index / 90:D2} "));
+                paragraph.Inlines.Add(new InlineUIContainer(new Image
+                {
+                    Source = bitmap,
+                    Width = 240,
+                    Height = 140
+                }));
+                paragraph.Inlines.Add(new Run(" remains in the authoritative document."));
+                document.Blocks.Add(paragraph);
+            }
+        }
+
+        static TableCell MixedCell(string text) => new(new Paragraph(new Run(text))
+        {
+            Margin = new Thickness(2)
+        })
+        {
+            Padding = new Thickness(3),
+            BorderBrush = Brushes.Gray,
+            BorderThickness = new Thickness(0.5)
+        };
+    }
+
     private void QueuePaginationDiagnosticStressBurst()
     {
         if (_paginationDiagnosticController is null)
@@ -364,5 +443,216 @@ public partial class MainWindow
             _paginationDiagnosticController.SetPageSettings(settings);
         }
         _paginationDiagnosticController.SetPageSettings(original);
+    }
+
+    private async Task RunPaginationScrollProbeAsync()
+    {
+        try
+        {
+            _paginationProbePeakWorkingSet = 0;
+            _paginationProbePeakPrivateBytes = 0;
+            var initial = await WaitForPaginationVisibleAsync();
+            await WaitForPaginationPrefetchAsync(initial.Generation);
+            WritePaginationProbe("initial", initial, 0);
+
+            var cycles = WriterPaginationDiagnosticOptions.ScrollProbeCycles;
+            var lastSequential = cycles > 1
+                ? initial.PageCount - 1
+                : Math.Min(initial.PageCount - 1, 6);
+            for (var cycle = 1; cycle <= cycles; cycle++)
+            {
+                WritePaginationProcessSnapshot($"cycle-{cycle}-start");
+                for (var page = 1; page <= lastSequential; page++)
+                    await MeasurePaginationPageRequestAsync(page,
+                        $"cycle-{cycle}-forward");
+                for (var page = lastSequential - 1; page >= 1; page--)
+                    await MeasurePaginationPageRequestAsync(page,
+                        $"cycle-{cycle}-reverse");
+                WritePaginationProcessSnapshot($"cycle-{cycle}-end");
+            }
+            await MeasurePaginationPageRequestAsync(Math.Min(2, lastSequential),
+                "cached-revisit");
+
+            if (initial.PageCount > 4 && _paginationDiagnosticSurface is not null &&
+                _paginationDiagnosticController is not null)
+            {
+                var abandonedPage = initial.PageCount - 1;
+                var latestPage = Math.Max(1, initial.PageCount - 3);
+                var watch = Stopwatch.StartNew();
+                _paginationDiagnosticSurface.RequestPageForTesting(abandonedPage);
+                var abandonedPlaceholder = _paginationDiagnosticSurface.PlaceholderPages
+                    .Contains(abandonedPage);
+                _paginationDiagnosticSurface.RequestPageForTesting(latestPage);
+                var latestPlaceholder = _paginationDiagnosticSurface.PlaceholderPages
+                    .Contains(latestPage);
+                var latest = await WaitForPaginationVisibleAsync();
+                watch.Stop();
+                WriterPaginationDiagnosticOptions.WriteTelemetry(
+                    $"probe fast-jump abandoned={abandonedPage + 1:N0} " +
+                    $"latest={latestPage + 1:N0} placeholders=" +
+                    $"{abandonedPlaceholder}/{latestPlaceholder} accepted=" +
+                    $"{latest.VisiblePage + 1:N0} elapsed={watch.Elapsed.TotalMilliseconds:0.0}ms");
+                WritePaginationProbe("fast-jump", latest, watch.Elapsed.TotalMilliseconds);
+            }
+
+            if (_paginationDiagnosticController is not null)
+            {
+                var original = Shell.CurrentDocument.PageSettings;
+                var reflow = DocumentPageSettings.A4(DocumentPageOrientation.Landscape,
+                    new DocumentPageMargins(48, 60, 72, 84));
+                var watch = Stopwatch.StartNew();
+                _paginationDiagnosticController.SetPageSettings(reflow);
+                var reflowIdentity = _paginationDiagnosticController.LayoutIdentity;
+                var reflowed = await WaitForPaginationNewLayoutAsync(reflowIdentity);
+                watch.Stop();
+                WritePaginationProbe("reflow", reflowed, watch.Elapsed.TotalMilliseconds);
+
+                watch.Restart();
+                _paginationDiagnosticController.SetPageSettings(original);
+                var restoreIdentity = _paginationDiagnosticController.LayoutIdentity;
+                var restored = await WaitForPaginationNewLayoutAsync(restoreIdentity);
+                watch.Stop();
+                WritePaginationProbe("reflow-restore", restored,
+                    watch.Elapsed.TotalMilliseconds);
+            }
+
+            var dispatcherWatch = Stopwatch.StartNew();
+            await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            dispatcherWatch.Stop();
+            WritePaginationProcessSnapshot("before-idle-settle");
+            await Task.Delay(2500);
+            await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            WritePaginationProcessSnapshot("after-idle-settle");
+            var process = Process.GetCurrentProcess();
+            process.Refresh();
+            var statistics = _paginationDiagnosticController?.WorkStatistics ?? default;
+            WriterPaginationDiagnosticOptions.WriteTelemetry(
+                $"probe complete ui-idle={dispatcherWatch.Elapsed.TotalMilliseconds:0.0}ms " +
+                $"working={process.WorkingSet64 / 1024d / 1024d:0.0}MB " +
+                $"private={process.PrivateMemorySize64 / 1024d / 1024d:0.0}MB " +
+                $"managed={GC.GetTotalMemory(false) / 1024d / 1024d:0.0}MB " +
+                $"peak-working={_paginationProbePeakWorkingSet / 1024d / 1024d:0.0}MB " +
+                $"peak-private={_paginationProbePeakPrivateBytes / 1024d / 1024d:0.0}MB " +
+                $"sessions={statistics.SessionsCreatedCount:N0}/{statistics.SessionsDisposedCount:N0} " +
+                $"cache={statistics.CachedPageCount:N0}pages/" +
+                $"{statistics.CachedBytes / 1024d / 1024d:0.0}MB-total/" +
+                $"{statistics.CachedDecodedBytes / 1024d / 1024d:0.0}MB-decoded " +
+                $"hits={statistics.CacheHitCount:N0} misses={statistics.CacheMissCount:N0} " +
+                $"evicted={statistics.EvictedPageCount:N0}");
+        }
+        catch (Exception exception)
+        {
+            WriterPaginationDiagnosticOptions.WriteTelemetry(
+                $"probe failed {exception.GetType().Name}: {exception.Message}");
+        }
+        finally
+        {
+            if (WriterPaginationDiagnosticOptions.ShouldExitAfterProbe)
+                Close();
+        }
+    }
+
+    private async Task MeasurePaginationPageRequestAsync(int pageNumber, string direction)
+    {
+        if (_paginationDiagnosticSurface is null)
+            return;
+        var watch = Stopwatch.StartNew();
+        _paginationDiagnosticSurface.RequestPageForTesting(pageNumber);
+        var result = await WaitForPaginationVisibleAsync();
+        watch.Stop();
+        WritePaginationProbe(direction, result, watch.Elapsed.TotalMilliseconds);
+        await WaitForPaginationPrefetchAsync(result.Generation);
+    }
+
+    private async Task<WriterPaginationLayoutResult> WaitForPaginationVisibleAsync()
+    {
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(30);
+        while (DateTime.UtcNow < deadline)
+        {
+            if (_paginationDiagnosticController is { } controller &&
+                controller.LastVisible is { } visible &&
+                visible.Generation == controller.RequestedGeneration)
+                return visible;
+            await Task.Delay(15);
+        }
+        throw new TimeoutException("The live pagination visible request did not publish.");
+    }
+
+    private async Task WaitForPaginationPrefetchAsync(long generation)
+    {
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(10);
+        while (DateTime.UtcNow < deadline)
+        {
+            if (_paginationDiagnosticController is not { } controller ||
+                controller.RequestedGeneration != generation)
+                return;
+            if (controller.PrefetchSettledGeneration == generation)
+                return;
+            if (controller.Current is { } current && current.Generation == generation &&
+                current.RequestKind == WriterPaginationRequestKind.Prefetch)
+                return;
+            await Task.Delay(15);
+        }
+    }
+
+    private async Task<WriterPaginationLayoutResult> WaitForPaginationNewLayoutAsync(
+        long layoutIdentity)
+    {
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(30);
+        while (DateTime.UtcNow < deadline)
+        {
+            if (_paginationDiagnosticController?.LastNewSession is { } result &&
+                result.LayoutIdentity == layoutIdentity)
+                return result;
+            await Task.Delay(15);
+        }
+        throw new TimeoutException(
+            $"Pagination layout identity {layoutIdentity} did not publish.");
+    }
+
+    private void WritePaginationProbe(string label, WriterPaginationLayoutResult result,
+        double elapsedMilliseconds)
+    {
+        var process = Process.GetCurrentProcess();
+        process.Refresh();
+        _paginationProbePeakWorkingSet = Math.Max(_paginationProbePeakWorkingSet,
+            process.WorkingSet64);
+        _paginationProbePeakPrivateBytes = Math.Max(_paginationProbePeakPrivateBytes,
+            process.PrivateMemorySize64);
+        var statistics = _paginationDiagnosticController?.WorkStatistics ?? default;
+        WriterPaginationDiagnosticOptions.WriteTelemetry(
+            $"probe {label} page={result.VisiblePage + 1:N0}/{result.PageCount:N0} " +
+            $"elapsed={elapsedMilliseconds:0.0}ms worker={result.WorkerMilliseconds:0.0}ms " +
+            $"session={(result.ReusedLayoutSession ? "reused" : "new")} " +
+            $"hit/miss={result.CacheHitCount:N0}/{result.CacheMissCount:N0} " +
+            $"retained={result.RetainedPages.Length:N0} " +
+            $"cache={result.CachedBytes / 1024d / 1024d:0.0}MB-total/" +
+            $"{result.CachedDecodedBytes / 1024d / 1024d:0.0}MB-decoded/" +
+            $"{result.CachedEncodedBytes / 1024d / 1024d:0.0}MB-encoded " +
+            $"evicted={result.EvictedPageCount:N0} " +
+            $"working={process.WorkingSet64 / 1024d / 1024d:0.0}MB " +
+            $"private={process.PrivateMemorySize64 / 1024d / 1024d:0.0}MB " +
+            $"managed={GC.GetTotalMemory(false) / 1024d / 1024d:0.0}MB " +
+            $"work={statistics.CompletedCount:N0}/{statistics.StartedCount:N0}");
+    }
+
+    private void WritePaginationProcessSnapshot(string label)
+    {
+        var process = Process.GetCurrentProcess();
+        process.Refresh();
+        _paginationProbePeakWorkingSet = Math.Max(_paginationProbePeakWorkingSet,
+            process.WorkingSet64);
+        _paginationProbePeakPrivateBytes = Math.Max(_paginationProbePeakPrivateBytes,
+            process.PrivateMemorySize64);
+        var statistics = _paginationDiagnosticController?.WorkStatistics ?? default;
+        WriterPaginationDiagnosticOptions.WriteTelemetry(
+            $"probe {label} working={process.WorkingSet64 / 1024d / 1024d:0.0}MB " +
+            $"private={process.PrivateMemorySize64 / 1024d / 1024d:0.0}MB " +
+            $"managed={GC.GetTotalMemory(false) / 1024d / 1024d:0.0}MB " +
+            $"cache={statistics.CachedPageCount:N0}pages/" +
+            $"{statistics.CachedBytes / 1024d / 1024d:0.0}MB-total/" +
+            $"{statistics.CachedDecodedBytes / 1024d / 1024d:0.0}MB-decoded " +
+            $"sessions={statistics.SessionsCreatedCount:N0}/" +
+            $"{statistics.SessionsDisposedCount:N0}");
     }
 }

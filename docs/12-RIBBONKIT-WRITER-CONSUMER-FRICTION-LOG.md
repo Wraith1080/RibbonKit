@@ -943,6 +943,39 @@ ribbon artwork remains unchanged.
   generation in **797.3 ms** after one active cancellation and eighteen coalesced requests; the user confirmed the live
   window was very fast.
 
+### RKWF-037 — Reusable WPF page realization has a larger process high-water than the app cache
+
+- **First seen / packet:** 2026-09-04, Writer W2-G reusable-session/directional-cache batch.
+- **Status:** app cache and repeated-scroll working set are bounded in the mixed-content probe; this is an app-owned
+  qualified go, not a RibbonKit runtime defect or default-Paper approval.
+- **Consumer goal:** keep the immutable clone, paginator, page count and page starts alive so ordinary page scrolling
+  does not reload and repaginate the document, while bounding retained page images/geometry and preserving latest-only
+  interaction.
+- **Reproduction and evidence:** the first 600-block/15-page run reported only encoded PNG and geometry values, so its
+  apparent **1.3 MB** cache understated decoded WPF bitmap pressure. Corrected accounting and explicit frame/source
+  release were then exercised by a 600-mixed-block/18-page Release probe over six complete forward/reverse cycles. The
+  cache stayed at **8 pages / 42.4 MB total** (**41.1 MB decoded**, about **0.7 MB encoded**) and recorded 123 safe
+  evictions. Cycle-end working set rose to **659.1 MB** and peaked at **696.5 MB** in cycle 2, then reclaimed to **660.4,
+  630.0, 593.6 and 602.6 MB** in cycles 3–6; managed memory remained **28.5–35.1 MB**. Stable-layout scrolling kept one
+  undisposed session. Reflow/restore replaced two sessions and reduced working set to **537.1 MB** before final prefetch.
+- **Current app-owned containment:** retain at most eight immutable pages or 64 MB of encoded pixels, projected decoded
+  BGRA pixels and geometry by default; dispose `DocumentPage` instances after raster extraction; detach evicted frames,
+  clear their image sources/children/overlays, and merge only the retained inventory. Dispose/replace the hidden viewer
+  and layout session on content, document, formatting, page-setting or DPI identity changes. A visible request always
+  outranks/cancels speculative prefetch. Uncached jumps show non-interactive white page placeholders and the existing
+  status banner.
+- **Application impact:** ordinary bidirectional scrolling and cached revisits no longer visibly reload the entire
+  document. Fast jumps remain responsive and latest-only. Repeated mixed-content traversal now shows native reclamation,
+  but saved real-world document mixes still need the same counters before any broader or default-Paper decision.
+- **Next investigation:** run a few saved `.rkw` documents and long-paragraph cases under the same telemetry, and expose a
+  deterministic low-memory cache-budget option so decoded-page pressure can be tested below the 64-MB default.
+- **Smallest possible library direction:** none. RibbonKit only hosts Writer commands and chrome; the reproduced cost is
+  inside WPF document pagination/page realization and Writer's private compositor.
+- **Verification:** the focused production gate passes **21/21**, the pagination namespace passes **45/45**, the Release
+  Writer build has zero warnings/errors, and the opt-in probe exited normally after six forward/reverse cycles, a
+  **41.8-ms** cached revisit, a **388.6-ms** two-placeholder latest-only jump, reflow/restore and a **0.2-ms** UI-idle
+  measurement. No full suite, solution build, manual visual acceptance, genuine OS IME or production RTL gate was run.
+
 ## 5. Closed observations
 
 None yet.

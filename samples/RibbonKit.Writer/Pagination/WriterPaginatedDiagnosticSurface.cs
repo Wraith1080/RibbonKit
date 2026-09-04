@@ -30,9 +30,12 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
     private readonly Border _statusBorder;
     private readonly TextBlock _statusText;
     private readonly Dictionary<int, Canvas> _overlayCanvases = new();
+    private readonly Dictionary<int, Border> _pageFrames = new();
+    private readonly HashSet<int> _placeholderPages = new();
     private WriterPaginationLayoutResult? _result;
     private RichTextBox? _editor;
     private long _requestedGeneration;
+    private long _layoutIdentity;
     private long _documentIdentity;
     private double _zoomPercent = 100;
     private int _requestedPage;
@@ -52,6 +55,7 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
     private long _spellingGeneration;
     private long _spellingDocumentIdentity;
     private int _spellingCandidateIndex;
+    private int _releasedPageFrameCount;
 
     internal WriterPaginatedDiagnosticSurface()
     {
@@ -117,6 +121,8 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
     internal event Action? DpiScaleChanged;
 
     internal IReadOnlyCollection<int> RenderedPages => _overlayCanvases.Keys;
+    internal IReadOnlyCollection<int> PlaceholderPages => _placeholderPages;
+    internal int ReleasedPageFrameCount => _releasedPageFrameCount;
     internal int RulerElementCount => _rulerCanvas.Children.Count;
     internal int MarginGuideCount => _overlayCanvases.Values.Sum(canvas =>
         canvas.Children.OfType<FrameworkElement>().Count(element =>
@@ -137,6 +143,26 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
             .ToArray();
     internal string? KeyboardResizeTargetNameForTesting =>
         _keyboardResizeTarget is { } target ? GetResizeHandleName(target) : null;
+
+    internal bool IsPageInteractiveForTesting(int pageNumber) =>
+        _result is { } result && result.Generation == _requestedGeneration &&
+        result.LayoutIdentity == _layoutIdentity &&
+        result.DocumentIdentity == _documentIdentity &&
+        result.MappedPages.Contains(pageNumber) &&
+        _overlayCanvases.ContainsKey(pageNumber) &&
+        !_placeholderPages.Contains(pageNumber);
+
+    internal bool CanCreateInteractionForTesting(int pageNumber)
+    {
+        if (_result is not { } result)
+            return false;
+        var scale = _zoomPercent / 100d;
+        return TryCreateInteraction(pageNumber,
+            new Point(result.PageSettings.WidthDip * scale / 2,
+                result.PageSettings.HeightDip * scale / 2), out _);
+    }
+
+    internal void RaiseDpiScaleChangedForTesting() => DpiScaleChanged?.Invoke();
 
     internal WriterPaginationPageInteraction CaptureInteractionForTesting(
         int pageNumber, int sourceOffset)
@@ -255,13 +281,15 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
             _zoomPercent = value;
             if (_result is not null)
             {
-                RebuildPages();
+                RelayoutPages();
+                RefreshOverlays(_editor);
                 ScrollToPage(centerPage);
             }
         }
     }
 
-    internal void Invalidate(long generation, long documentIdentity)
+    internal void Invalidate(long generation, long layoutIdentity,
+        long documentIdentity, bool preservePages, int requestedPage)
     {
         CancelActiveResize();
         _keyboardResizeTarget = null;
@@ -270,9 +298,17 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
             _selectedObjectIdentity = null;
             _selectedObjectKind = null;
         }
+        if (!preservePages || layoutIdentity != _layoutIdentity)
+        {
+            _result = null;
+            ClearPageVisuals();
+        }
         _requestedGeneration = generation;
+        _layoutIdentity = layoutIdentity;
         _documentIdentity = documentIdentity;
         ResetSpellingScan();
+        if (preservePages)
+            EnsureLoadingPlaceholder(requestedPage);
         SetStatus($"Paginated diagnostic: updating generation {generation:N0}…");
         RefreshOverlays(null);
     }
@@ -285,6 +321,7 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
         ArgumentNullException.ThrowIfNull(result);
         ArgumentNullException.ThrowIfNull(editor);
         if (result.Generation != _requestedGeneration ||
+            result.LayoutIdentity != _layoutIdentity ||
             result.DocumentIdentity != _documentIdentity)
             return;
         _result = result;
@@ -292,10 +329,17 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
         ResetSpellingScan();
         _statusBorder.Background = new SolidColorBrush(Color.FromArgb(220, 36, 43, 50));
         _requestedPage = result.VisiblePage;
-        RebuildPages();
+        MergePages(result);
         SetStatus($"Diagnostic · document {result.DocumentIdentity:N0} · " +
             $"generation {result.Generation:N0} · " +
             $"page {result.VisiblePage + 1:N0}/{result.PageCount:N0} · " +
+            $"{(result.RequestKind == WriterPaginationRequestKind.Prefetch ? "prefetch" : "visible")} · " +
+            $"session {(result.ReusedLayoutSession ? "reused" : "new")} · " +
+            $"cache {result.RetainedPages.Length:N0}/{WriterDedicatedPaginationEngine.DefaultPageCacheLimit:N0} " +
+            $"({result.CachedBytes / 1024d / 1024d:0.0} MB total, " +
+            $"{result.CachedDecodedBytes / 1024d / 1024d:0.0} MB decoded, " +
+            $"hit/miss {result.CacheHitCount:N0}/{result.CacheMissCount:N0}, " +
+            $"evicted {result.EvictedPageCount:N0}) · " +
             $"capture {captureMilliseconds:0.#} ms · layout {result.WorkerMilliseconds:0.#} ms · " +
             $"phases L/C/S/G/R {result.PhaseTimings.PackageLoadMilliseconds:0.#}/" +
             $"{result.PhaseTimings.PageCountMilliseconds:0.#}/" +
@@ -416,10 +460,7 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
         _editor = null;
         _selectedObjectIdentity = null;
         _selectedObjectKind = null;
-        _overlayCanvases.Clear();
-        _pageCanvas.Children.Clear();
-        _pageCanvas.Width = 0;
-        _pageCanvas.Height = 0;
+        ClearPageVisuals();
         ResetSpellingScan();
     }
 
@@ -512,21 +553,60 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
         AddSpellingOverlays(result, editor);
     }
 
-    private void RebuildPages()
+    private void MergePages(WriterPaginationLayoutResult result)
+    {
+        var retained = result.RetainedPages.ToHashSet();
+        foreach (var pageNumber in _pageFrames.Keys
+                     .Where(page => !retained.Contains(page)).ToArray())
+            RemovePageFrame(pageNumber);
+
+        foreach (var page in result.Pages)
+        {
+            if (_pageFrames.ContainsKey(page.PageNumber) &&
+                !_placeholderPages.Contains(page.PageNumber))
+                continue;
+            RemovePageFrame(page.PageNumber);
+            AddPageFrame(page.PageNumber, DecodePage(page.PngBytes));
+        }
+        RelayoutPages();
+        RebuildRuler();
+        RefreshOverlays(_editor);
+    }
+
+    private void EnsureLoadingPlaceholder(int pageNumber)
+    {
+        if (_result is not { } result || pageNumber < 0 || pageNumber >= result.PageCount ||
+            _pageFrames.ContainsKey(pageNumber))
+            return;
+        AddPageFrame(pageNumber, null);
+        RelayoutPages();
+    }
+
+    private void AddPageFrame(int pageNumber, BitmapSource? bitmap)
     {
         if (_result is not { } result)
             return;
-        _overlayCanvases.Clear();
-        _pageCanvas.Children.Clear();
-        var scale = _zoomPercent / 100d;
-        var pageWidth = result.PageSettings.WidthDip * scale;
-        var pageHeight = result.PageSettings.HeightDip * scale;
-        var pitch = pageHeight + PageGap;
-        _pageCanvas.Width = Math.Max(_scrollViewer.ViewportWidth,
-            pageWidth + PageGap * 2);
-        _pageCanvas.Height = PageGap + result.PageCount * pitch;
-
-        foreach (var page in result.Pages)
+        var pageGrid = new Grid
+        {
+            Tag = pageNumber,
+            Background = Brushes.White,
+            Cursor = bitmap is null ? Cursors.Arrow : Cursors.IBeam,
+            IsHitTestVisible = bitmap is not null
+        };
+        if (bitmap is null)
+        {
+            _placeholderPages.Add(pageNumber);
+            pageGrid.Children.Add(new TextBlock
+            {
+                Text = $"Loading page {pageNumber + 1:N0}…",
+                Foreground = new SolidColorBrush(Color.FromRgb(105, 111, 118)),
+                FontSize = 13,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                IsHitTestVisible = false
+            });
+        }
+        else
         {
             var overlay = new Canvas
             {
@@ -534,18 +614,10 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
                 Height = result.PageSettings.HeightDip,
                 IsHitTestVisible = false
             };
-            _overlayCanvases[page.PageNumber] = overlay;
-            var pageGrid = new Grid
-            {
-                Width = pageWidth,
-                Height = pageHeight,
-                Tag = page.PageNumber,
-                Background = Brushes.White,
-                Cursor = Cursors.IBeam
-            };
+            _overlayCanvases[pageNumber] = overlay;
             pageGrid.Children.Add(new Image
             {
-                Source = DecodePage(page.PngBytes),
+                Source = bitmap,
                 Stretch = Stretch.Fill,
                 SnapsToDevicePixels = true,
                 IsHitTestVisible = false
@@ -560,29 +632,85 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
             pageGrid.MouseMove += OnPageMouseMove;
             pageGrid.MouseLeftButtonUp += OnPageMouseLeftButtonUp;
             pageGrid.LostMouseCapture += OnPageLostMouseCapture;
+        }
 
-            var frame = new Border
+        var frame = new Border
+        {
+            Background = Brushes.White,
+            BorderBrush = new SolidColorBrush(Color.FromRgb(176, 180, 184)),
+            BorderThickness = new Thickness(1),
+            Effect = new System.Windows.Media.Effects.DropShadowEffect
             {
-                Width = pageWidth,
-                Height = pageHeight,
-                Background = Brushes.White,
-                BorderBrush = new SolidColorBrush(Color.FromRgb(176, 180, 184)),
-                BorderThickness = new Thickness(1),
-                Effect = new System.Windows.Media.Effects.DropShadowEffect
-                {
-                    BlurRadius = 8,
-                    ShadowDepth = 2,
-                    Opacity = 0.18
-                },
-                Child = pageGrid
-            };
+                BlurRadius = 8,
+                ShadowDepth = 2,
+                Opacity = 0.18
+            },
+            Child = pageGrid,
+            Tag = bitmap is null ? "pagination-loading-placeholder" :
+                "pagination-page"
+        };
+        _pageFrames[pageNumber] = frame;
+        _pageCanvas.Children.Add(frame);
+    }
+
+    private void RemovePageFrame(int pageNumber)
+    {
+        var releasedRenderedPage = !_placeholderPages.Contains(pageNumber) &&
+            _pageFrames.ContainsKey(pageNumber);
+        if (_pageFrames.Remove(pageNumber, out var frame))
+        {
+            _pageCanvas.Children.Remove(frame);
+            if (frame.Child is Panel panel)
+            {
+                foreach (var image in panel.Children.OfType<Image>())
+                    image.Source = null;
+                panel.Children.Clear();
+            }
+            frame.Child = null;
+            frame.Effect = null;
+        }
+        if (_overlayCanvases.Remove(pageNumber, out var overlay))
+            overlay.Children.Clear();
+        _placeholderPages.Remove(pageNumber);
+        if (releasedRenderedPage)
+            _releasedPageFrameCount++;
+    }
+
+    private void ClearPageVisuals()
+    {
+        foreach (var pageNumber in _pageFrames.Keys.ToArray())
+            RemovePageFrame(pageNumber);
+        _placeholderPages.Clear();
+        _overlayCanvases.Clear();
+        _pageCanvas.Children.Clear();
+        _pageCanvas.Width = 0;
+        _pageCanvas.Height = 0;
+    }
+
+    private void RelayoutPages()
+    {
+        if (_result is not { } result)
+            return;
+        var scale = _zoomPercent / 100d;
+        var pageWidth = result.PageSettings.WidthDip * scale;
+        var pageHeight = result.PageSettings.HeightDip * scale;
+        var pitch = pageHeight + PageGap;
+        _pageCanvas.Width = Math.Max(_scrollViewer.ViewportWidth,
+            pageWidth + PageGap * 2);
+        _pageCanvas.Height = PageGap + result.PageCount * pitch;
+        foreach (var (pageNumber, frame) in _pageFrames)
+        {
+            frame.Width = pageWidth;
+            frame.Height = pageHeight;
+            if (frame.Child is FrameworkElement child)
+            {
+                child.Width = pageWidth;
+                child.Height = pageHeight;
+            }
             Canvas.SetLeft(frame, Math.Max(PageGap,
                 (_pageCanvas.Width - pageWidth) / 2));
-            Canvas.SetTop(frame, PageGap + page.PageNumber * pitch);
-            _pageCanvas.Children.Add(frame);
+            Canvas.SetTop(frame, PageGap + pageNumber * pitch);
         }
-        RebuildRuler();
-        RefreshOverlays(_editor);
     }
 
     private void RebuildRuler()
@@ -1469,7 +1597,10 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
     private void OnViewportSizeChanged(object sender, SizeChangedEventArgs e)
     {
         if (_result is not null)
-            RebuildPages();
+        {
+            RelayoutPages();
+            RebuildRuler();
+        }
     }
 
     private int GetViewportPage()

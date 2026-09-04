@@ -31,9 +31,24 @@ internal static class WriterPaginationDiagnosticOptions
             string.Equals(argument, "--writer-pagination-stress-seed",
                 StringComparison.OrdinalIgnoreCase));
 
+    internal static bool ShouldSeedMixedStressDocument =>
+        Environment.GetCommandLineArgs().Any(argument =>
+            string.Equals(argument, "--writer-pagination-mixed-stress-seed",
+                StringComparison.OrdinalIgnoreCase));
+
     internal static bool ShouldRunStressBurst =>
         Environment.GetCommandLineArgs().Any(argument =>
             string.Equals(argument, "--writer-pagination-stress-burst",
+                StringComparison.OrdinalIgnoreCase));
+
+    internal static bool ShouldRunScrollProbe =>
+        Environment.GetCommandLineArgs().Any(argument =>
+            string.Equals(argument, "--writer-pagination-scroll-probe",
+                StringComparison.OrdinalIgnoreCase));
+
+    internal static bool ShouldExitAfterProbe =>
+        Environment.GetCommandLineArgs().Any(argument =>
+            string.Equals(argument, "--writer-pagination-exit-after-probe",
                 StringComparison.OrdinalIgnoreCase));
 
     internal static int StressBlockCount
@@ -49,6 +64,22 @@ internal static class WriterPaginationDiagnosticOptions
                 return Math.Clamp(count, 1, 2000);
             }
             return 120;
+        }
+    }
+
+    internal static int ScrollProbeCycles
+    {
+        get
+        {
+            const string prefix = "--writer-pagination-scroll-cycles=";
+            foreach (var argument in Environment.GetCommandLineArgs())
+            {
+                if (!argument.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) ||
+                    !int.TryParse(argument[prefix.Length..], out var count))
+                    continue;
+                return Math.Clamp(count, 1, 10);
+            }
+            return 1;
         }
     }
 

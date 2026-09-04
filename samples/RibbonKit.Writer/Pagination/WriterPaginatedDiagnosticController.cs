@@ -34,7 +34,9 @@ internal sealed class WriterPaginatedDiagnosticController : IDisposable
     private long _contentVersion;
     private long _nextObjectIdentity;
     private long _documentIdentity = 1;
+    private long _layoutIdentity;
     private int _visiblePage;
+    private int _scrollDirection = 1;
     private ActiveResize? _activeResize;
     private bool _handlingResizeRequest;
     private bool _disposed;
@@ -42,13 +44,15 @@ internal sealed class WriterPaginatedDiagnosticController : IDisposable
     internal WriterPaginatedDiagnosticController(
         RichTextBox editor,
         WriterPaginatedDiagnosticSurface surface,
-        DocumentPageSettings settings)
+        DocumentPageSettings settings,
+        int pageCacheLimit = WriterDedicatedPaginationEngine.DefaultPageCacheLimit,
+        long cacheByteLimit = WriterDedicatedPaginationEngine.DefaultCacheByteLimit)
     {
         _editor = editor ?? throw new ArgumentNullException(nameof(editor));
         _surface = surface ?? throw new ArgumentNullException(nameof(surface));
         _settings = settings ?? throw new ArgumentNullException(nameof(settings));
         _document = editor.Document;
-        _engine = new WriterDedicatedPaginationEngine();
+        _engine = new WriterDedicatedPaginationEngine(pageCacheLimit, cacheByteLimit);
         _captureTimer = new DispatcherTimer(DispatcherPriority.Background, editor.Dispatcher)
         {
             Interval = TimeSpan.FromMilliseconds(90)
@@ -66,12 +70,16 @@ internal sealed class WriterPaginatedDiagnosticController : IDisposable
         _surface.InteractionRequested += OnInteractionRequested;
         _surface.ResizeRequested += OnResizeRequested;
         _surface.DpiScaleChanged += OnDpiScaleChanged;
-        InvalidateAndSchedule(immediate: true);
+        InvalidateLayoutAndSchedule(immediate: true);
     }
 
     internal long RequestedGeneration { get; private set; }
     internal long PublishedGeneration { get; private set; }
+    internal long LayoutIdentity => _layoutIdentity;
     internal WriterPaginationLayoutResult? Current { get; private set; }
+    internal WriterPaginationLayoutResult? LastVisible { get; private set; }
+    internal WriterPaginationLayoutResult? LastNewSession { get; private set; }
+    internal long PrefetchSettledGeneration { get; private set; }
     internal double LastCaptureMilliseconds { get; private set; }
     internal double LastEndToEndMilliseconds { get; private set; }
     internal WriterPaginationWorkStatistics WorkStatistics => _engine.Statistics;
@@ -90,7 +98,7 @@ internal sealed class WriterPaginatedDiagnosticController : IDisposable
         if (_settings == settings)
             return;
         _settings = settings;
-        InvalidateAndSchedule(immediate: true);
+        InvalidateLayoutAndSchedule(immediate: true);
     }
 
     internal void SetZoom(double zoomPercent) => _surface.ZoomPercent = zoomPercent;
@@ -102,7 +110,7 @@ internal sealed class WriterPaginatedDiagnosticController : IDisposable
     internal void RefreshFormatting()
     {
         _contentVersion++;
-        InvalidateAndSchedule(immediate: false);
+        InvalidateLayoutAndSchedule(immediate: false);
     }
 
     internal void ReplaceDocument(FlowDocument document)
@@ -125,8 +133,10 @@ internal sealed class WriterPaginatedDiagnosticController : IDisposable
         _objectIdentities.Clear();
         _visiblePage = 0;
         Current = null;
+        LastVisible = null;
+        LastNewSession = null;
         PublishedGeneration = 0;
-        InvalidateAndSchedule(immediate: true);
+        InvalidateLayoutAndSchedule(immediate: true);
     }
 
     public void Dispose()
@@ -154,13 +164,13 @@ internal sealed class WriterPaginatedDiagnosticController : IDisposable
         _contentVersion++;
         if (_activeResize is not null || _handlingResizeRequest)
             return;
-        InvalidateAndSchedule(immediate: false);
+        InvalidateLayoutAndSchedule(immediate: false);
     }
 
     private void OnEditorSelectionChanged(object sender, RoutedEventArgs e) =>
         _surface.RefreshOverlays(_editor);
 
-    private void OnDpiScaleChanged() => InvalidateAndSchedule(immediate: true);
+    private void OnDpiScaleChanged() => InvalidateLayoutAndSchedule(immediate: true);
 
     private void OnOverlayTimerTick(object? sender, EventArgs e)
     {
@@ -170,22 +180,36 @@ internal sealed class WriterPaginatedDiagnosticController : IDisposable
 
     private void OnPageWindowRequested(int pageNumber)
     {
-        if (_disposed || pageNumber < 0 || pageNumber == _visiblePage ||
-            Current?.MappedPages.Contains(pageNumber) == true)
+        if (_disposed || pageNumber < 0 || pageNumber == _visiblePage)
             return;
+        _scrollDirection = Math.Sign(pageNumber - _visiblePage);
+        if (_scrollDirection == 0)
+            _scrollDirection = 1;
         _visiblePage = pageNumber;
-        InvalidateAndSchedule(immediate: true);
+        ScheduleViewportRequest(immediate: true);
     }
 
-    private void InvalidateAndSchedule(bool immediate)
+    private void InvalidateLayoutAndSchedule(bool immediate)
+    {
+        _layoutIdentity++;
+        LastVisible = null;
+        LastNewSession = null;
+        ScheduleRequest(immediate, preservePages: false);
+    }
+
+    private void ScheduleViewportRequest(bool immediate) =>
+        ScheduleRequest(immediate, preservePages: true);
+
+    private void ScheduleRequest(bool immediate, bool preservePages)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         RequestedGeneration++;
-        _surface.Invalidate(RequestedGeneration, _documentIdentity);
+        _surface.Invalidate(RequestedGeneration, _layoutIdentity, _documentIdentity,
+            preservePages, _visiblePage);
         _captureTimer.Stop();
         if (immediate)
         {
-            CaptureAndQueue();
+            CaptureAndQueue(WriterPaginationRequestKind.Visible);
             return;
         }
         _captureTimer.Start();
@@ -194,10 +218,10 @@ internal sealed class WriterPaginatedDiagnosticController : IDisposable
     private void OnCaptureTimerTick(object? sender, EventArgs e)
     {
         _captureTimer.Stop();
-        CaptureAndQueue();
+        CaptureAndQueue(WriterPaginationRequestKind.Visible);
     }
 
-    private void CaptureAndQueue()
+    private void CaptureAndQueue(WriterPaginationRequestKind requestKind)
     {
         if (_disposed || !ReferenceEquals(_document, _editor.Document))
             return;
@@ -209,20 +233,34 @@ internal sealed class WriterPaginatedDiagnosticController : IDisposable
         if (_cachedContentVersion != _contentVersion || _cachedPackage.IsDefault)
             CaptureTrustedContent(document);
         var dpi = VisualTreeHelper.GetDpi(_surface);
-        var capture = new WriterPaginationCapture(generation, documentIdentity,
-            _visiblePage, _cachedPackage, CaptureFormatting(document),
+        var interactivePages = BuildInteractivePages(_visiblePage, _scrollDirection,
+            Current?.LayoutIdentity == _layoutIdentity ? Current.PageCount : null);
+        var requestedPages = requestKind == WriterPaginationRequestKind.Prefetch
+            ? BuildPrefetchPages(interactivePages, _visiblePage, _scrollDirection,
+                Current?.PageCount)
+            : interactivePages;
+        if (requestKind == WriterPaginationRequestKind.Prefetch &&
+            requestedPages.Length == interactivePages.Length)
+        {
+            PrefetchSettledGeneration = generation;
+            return;
+        }
+        var capture = new WriterPaginationCapture(generation, _layoutIdentity,
+            documentIdentity, _visiblePage, requestKind, interactivePages, requestedPages,
+            _cachedPackage, CaptureFormatting(document),
             CapturePageSettings(_settings), dpi.DpiScaleX, dpi.DpiScaleY, _cachedObjects);
         watch.Stop();
         var captureMilliseconds = watch.Elapsed.TotalMilliseconds;
         LastCaptureMilliseconds = captureMilliseconds;
         var completion = _engine.Queue(capture);
-        _ = PublishWhenReadyAsync(completion, generation, documentIdentity, document,
-            captureMilliseconds, requestStartedTimestamp);
+        _ = PublishWhenReadyAsync(completion, generation, _layoutIdentity,
+            documentIdentity, document, captureMilliseconds, requestStartedTimestamp);
     }
 
     private async Task PublishWhenReadyAsync(
         Task<WriterPaginationCompletion> completionTask,
         long generation,
+        long layoutIdentity,
         long documentIdentity,
         FlowDocument sourceDocument,
         double captureMilliseconds,
@@ -237,18 +275,28 @@ internal sealed class WriterPaginatedDiagnosticController : IDisposable
                     completion.Result is not { } result ||
                     generation != RequestedGeneration ||
                     result.Generation != RequestedGeneration ||
+                    layoutIdentity != _layoutIdentity ||
+                    result.LayoutIdentity != _layoutIdentity ||
                     documentIdentity != _documentIdentity ||
                     result.DocumentIdentity != _documentIdentity ||
                     !ReferenceEquals(sourceDocument, _editor.Document))
                     return;
 
                 Current = result;
+                if (result.RequestKind == WriterPaginationRequestKind.Visible)
+                    LastVisible = result;
+                if (!result.ReusedLayoutSession)
+                    LastNewSession = result;
+                if (result.RequestKind == WriterPaginationRequestKind.Prefetch)
+                    PrefetchSettledGeneration = result.Generation;
                 PublishedGeneration = result.Generation;
                 _visiblePage = result.VisiblePage;
                 LastCaptureMilliseconds = captureMilliseconds;
                 LastEndToEndMilliseconds = ElapsedMilliseconds(requestStartedTimestamp);
                 _surface.Publish(result, captureMilliseconds, LastEndToEndMilliseconds,
                     _engine.Statistics, _editor);
+                if (result.RequestKind == WriterPaginationRequestKind.Visible)
+                    CaptureAndQueue(WriterPaginationRequestKind.Prefetch);
             }, DispatcherPriority.DataBind);
         }
         catch (Exception exception)
@@ -262,6 +310,39 @@ internal sealed class WriterPaginatedDiagnosticController : IDisposable
 
     private static double ElapsedMilliseconds(long startedTimestamp) =>
         (Stopwatch.GetTimestamp() - startedTimestamp) * 1000d / Stopwatch.Frequency;
+
+    private static ImmutableArray<int> BuildInteractivePages(int visiblePage,
+        int direction, int? pageCount)
+    {
+        var normalizedDirection = direction < 0 ? -1 : 1;
+        var candidates = new[]
+        {
+            visiblePage,
+            visiblePage + normalizedDirection,
+            visiblePage - normalizedDirection
+        };
+        return candidates.Where(page => page >= 0 &&
+                (pageCount is null || page < pageCount.Value))
+            .Distinct().ToImmutableArray();
+    }
+
+    private static ImmutableArray<int> BuildPrefetchPages(
+        ImmutableArray<int> interactivePages, int visiblePage, int direction,
+        int? pageCount)
+    {
+        var normalizedDirection = direction < 0 ? -1 : 1;
+        var furthest = normalizedDirection > 0
+            ? interactivePages.DefaultIfEmpty(visiblePage).Max()
+            : interactivePages.DefaultIfEmpty(visiblePage).Min();
+        return interactivePages.Concat(new[]
+            {
+                furthest + normalizedDirection,
+                furthest + normalizedDirection * 2
+            })
+            .Where(page => page >= 0 &&
+                (pageCount is null || page < pageCount.Value))
+            .Distinct().ToImmutableArray();
+    }
 
     private void CaptureTrustedContent(FlowDocument document)
     {
@@ -367,7 +448,7 @@ internal sealed class WriterPaginatedDiagnosticController : IDisposable
                     _surface.ShowResizeStatus(request.ObjectKind, committed);
                     RestoreEditorFocus();
                     if (committed)
-                        InvalidateAndSchedule(immediate: true);
+                        InvalidateLayoutAndSchedule(immediate: true);
                     return committed;
                 }
                 case WriterPaginationResizePhase.Cancel:

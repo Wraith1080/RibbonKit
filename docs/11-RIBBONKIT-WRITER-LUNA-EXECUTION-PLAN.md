@@ -12,12 +12,14 @@
 > the completed live matrix. Its final closure intentionally used focused tests rather than new full-suite gates.
 > W4-A is accepted through §3.136: its focused 6/6 gate, proportional follow-up regressions and zero-warning Writer
 > builds pass, and the 2026-08-31 actual-window Settings/persistence/appearance-polish sequence is accepted.
-> W2-G's first six private production batches are complete through design-notes §3.152. The focused 15/15 production
-> tests, combined 39/39 pagination gate and zero-warning Release Writer build pass. Actual-window LTR cross-page editing,
+> W2-G's first eight private production batches are complete through design-notes §3.154. The focused 21/21 production
+> tests, combined 45/45 pagination gate and zero-warning Release Writer build pass. Actual-window LTR cross-page editing,
 > native history/clipboard/spelling/focus, page-setting reflow, ruler/guides, page-local table-overall and picture resize,
 > immutable explicit-column plus multi-row-group/span row handles, safe Auto-column rejection, accessible object/handle
-> invocation, editor-focused keyboard resize, cancellation/coalescing telemetry, zoom/DPI-stable hit geometry and empty
-> document replacement are positive. Genuine OS
+> invocation, editor-focused keyboard resize, cancellation/coalescing telemetry, zoom/DPI-stable hit geometry, empty
+> document replacement, reusable STA layout, bounded page retention, directional prefetch and latest-only loading
+> placeholders, decoded-page accounting/release and mixed-content working-set reclamation are positive. Saved real-world
+> documents and a deterministic low-memory cache budget remain open. Genuine OS
 > IME and production RTL are explicitly deferred together. The compositor remains opt-in and production Paper remains
 > unchanged.
 > This document does not schedule future agents or imply that any later Writer packet exists.
@@ -477,7 +479,7 @@ mouse/keyboard/UIA operation in the actual Writer window before W3-C begins.
 
 ### W2-G — True editable pagination architecture and delivery
 
-**Status (2026-09-01): sixth opt-in production hardening batch complete; qualified LTR hardening go; default replacement not
+**Status (2026-09-04): eighth opt-in production hardening batch complete; qualified LTR hardening go; default replacement not
 started.** The
 authoritative live `FlowDocument` retains native cross-page selection/edit/Undo and matches W2-D paginator page-start
 offsets, while an isolated clone provides supported bidirectional page-local text geometry, structured image hits and
@@ -485,7 +487,7 @@ paragraph caret/selection overlays. Visible/adjacent mapping runs on a separate 
 latest-only pending coalescing, cooperative active cancellation and UI generation rejection. Generation-stamped page
 events restore the live editor's focus/command ownership; reflow preserves live anchors; native spelling and clipboard
 remain editor-owned. Synthetic text composition routes correctly, while real OS IME is still a manual gate. See design-
-notes §§3.137–3.152. Page-spanning table/image/hyperlink anchors follow paginator reflow, W3-E table/picture chrome stays
+notes §§3.137–3.154. Page-spanning table/image/hyperlink anchors follow paginator reflow, W3-E table/picture chrome stays
 outside serialized content, RTL/zoom/DPI/scroll transforms invert to exact source offsets, and document replacement plus
 page-window handoff reject stale geometry immediately. The private production engine and clone-backed diagnostic now
 exercise those contracts in the Release app; default Paper remains unchanged. Genuine OS IME and production RTL are
@@ -495,8 +497,11 @@ replacement, multi-row-group/span row geometry, safe Auto-column rejection, edit
 cancellation/coalescing telemetry now pass. Phase-specific timing proved the earlier 180-block stall was unbounded
 dispatcher-bound spelling enumeration after the dedicated STA had completed. Generation-scoped visible-page spelling
 slices now publish that five-page corpus in about one second with exact-token underlines; larger real-world document
-budgeting remains open. The next bounded work is staged page-window prefetch/publication plus measured retention and
-eviction limits.
+budgeting remains open. Reusable layout identity, an eight-page/64-MB immutable cache, visible-first directional
+prefetch, incremental publication and page-shaped non-interactive placeholders now make warm bidirectional scrolling a
+qualified go. Decoded-pixel accounting, explicit evicted-frame release and six mixed-content cycles keep the cache at
+eight pages/42.4 MB and demonstrate native working-set reclamation after the two-cycle high-water. The next bounded work
+is saved real-world `.rkw`/long-paragraph coverage plus a deterministic low-memory cache-budget option.
 
 **Owns:** a genuinely page-by-page editable Paper presentation and the reflow/virtualization architecture required
 to support it. It begins only after W3-E stabilizes table/picture selection, contextual state and resizing; it does

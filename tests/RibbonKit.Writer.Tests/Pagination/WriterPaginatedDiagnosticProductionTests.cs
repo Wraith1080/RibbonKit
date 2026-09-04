@@ -37,10 +37,12 @@ public sealed class WriterPaginatedDiagnosticProductionTests
             Assert.Equal(result.Generation, workspace.Controller.PublishedGeneration);
             Assert.Equal(result.Generation, workspace.Controller.RequestedGeneration);
             Assert.InRange(result.MappedPages.Length, 1, 3);
-            Assert.Equal(result.MappedPages.ToArray(),
-                result.Pages.Select(page => page.PageNumber).ToArray());
-            Assert.Equal(result.MappedPages.ToArray(),
-                workspace.Surface.RenderedPages.Order().ToArray());
+            Assert.All(result.MappedPages, page => Assert.Contains(
+                page, result.Pages.Select(item => item.PageNumber)));
+            Assert.All(result.Pages, page => Assert.Contains(
+                page.PageNumber, result.RetainedPages));
+            Assert.All(result.MappedPages, page => Assert.Contains(
+                page, workspace.Surface.RenderedPages));
             Assert.All(result.Pages, page => Assert.True(
                 page.PngBytes.Length > 8 &&
                 page.PngBytes[0] == 0x89 && page.PngBytes[1] == 0x50));
@@ -238,7 +240,7 @@ public sealed class WriterPaginatedDiagnosticProductionTests
             Assert.Equal(caretBeforeStalePage, SelectionOffsets(workspace.Editor));
             await WaitForCurrentAsync(workspace.Controller);
             Assert.Equal(lastPage, workspace.Controller.Current!.VisiblePage);
-            Assert.DoesNotContain(0, workspace.Surface.RenderedPages);
+            Assert.False(workspace.Surface.IsPageInteractiveForTesting(0));
 
             var replacement = CreateDocument(workspace.Settings);
             workspace.Editor.Document = replacement;
@@ -810,6 +812,278 @@ public sealed class WriterPaginatedDiagnosticProductionTests
     }
 
     [Fact]
+    public async Task SequentialForwardReverseScrollingReusesSessionAndPrefetchesDirectionally()
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            using var workspace = ProductionWorkspace.Create(CreateParagraphDocument(
+                DocumentPageSettings.Letter(), 420));
+            var opening = await WaitForVisibleAsync(workspace.Controller);
+            Assert.True(opening.PageCount > 7);
+            await WaitForPrefetchAsync(workspace.Controller, opening.Generation);
+            var sessionCount = workspace.Controller.WorkStatistics.SessionsCreatedCount;
+            Assert.Equal(1, sessionCount);
+
+            for (var page = 1; page <= 4; page++)
+            {
+                workspace.Surface.RequestPageForTesting(page);
+                var visible = await WaitForVisibleAsync(workspace.Controller);
+                Assert.Equal(page, visible.VisiblePage);
+                Assert.True(visible.ReusedLayoutSession);
+                Assert.Equal(0, visible.PhaseTimings.PackageLoadMilliseconds);
+                Assert.Equal(0, visible.PhaseTimings.PageCountMilliseconds);
+                Assert.Equal(0, visible.PhaseTimings.PageStartsMilliseconds);
+                await WaitForPrefetchAsync(workspace.Controller, visible.Generation);
+            }
+
+            var forward = Assert.IsType<WriterPaginationLayoutResult>(
+                workspace.Controller.Current);
+            Assert.Equal(WriterPaginationRequestKind.Prefetch, forward.RequestKind);
+            Assert.Contains(forward.Pages, page =>
+                page.PageNumber > forward.MappedPages.Max());
+
+            workspace.Surface.RequestPageForTesting(3);
+            var reverseVisible = await WaitForVisibleAsync(workspace.Controller);
+            Assert.True(reverseVisible.ReusedLayoutSession);
+            await WaitForPrefetchAsync(workspace.Controller, reverseVisible.Generation);
+            var reverse = Assert.IsType<WriterPaginationLayoutResult>(
+                workspace.Controller.Current);
+            Assert.Contains(reverse.Pages, page =>
+                page.PageNumber < reverse.MappedPages.Min());
+
+            var missesBeforeRevisit = workspace.Controller.WorkStatistics.CacheMissCount;
+            workspace.Surface.RequestPageForTesting(4);
+            var revisit = await WaitForVisibleAsync(workspace.Controller);
+            Assert.Equal(0, revisit.CacheMissCount);
+            Assert.True(revisit.ReusedLayoutSession);
+            Assert.Equal(missesBeforeRevisit,
+                workspace.Controller.WorkStatistics.CacheMissCount);
+            Assert.Equal(sessionCount,
+                workspace.Controller.WorkStatistics.SessionsCreatedCount);
+        }, TimeSpan.FromSeconds(60));
+    }
+
+    [Fact]
+    public async Task FastJumpShowsPlaceholderAndAcceptsOnlyLatestViewport()
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            using var workspace = ProductionWorkspace.Create(CreateParagraphDocument(
+                DocumentPageSettings.Letter(), 700));
+            var opening = await WaitForVisibleAsync(workspace.Controller);
+            Assert.True(opening.PageCount > 10);
+            await WaitForPrefetchAsync(workspace.Controller, opening.Generation);
+            var oldInteraction = workspace.Surface.CaptureInteractionForTesting(0,
+                opening.Insertions.First(item => item.PageNumber == 0).SourceOffset);
+            var selection = SelectionOffsets(workspace.Editor);
+
+            var lastPage = opening.PageCount - 1;
+            workspace.Surface.RequestPageForTesting(lastPage);
+            var abandonedGeneration = workspace.Controller.RequestedGeneration;
+            Assert.Contains(lastPage, workspace.Surface.PlaceholderPages);
+            Assert.False(workspace.Surface.CanCreateInteractionForTesting(lastPage));
+
+            var latestPage = opening.PageCount / 2;
+            workspace.Surface.RequestPageForTesting(latestPage);
+            var latestGeneration = workspace.Controller.RequestedGeneration;
+            Assert.True(latestGeneration > abandonedGeneration);
+            Assert.Contains(latestPage, workspace.Surface.PlaceholderPages);
+            Assert.False(workspace.Surface.IsPageInteractiveForTesting(latestPage));
+            workspace.Surface.ApplyInteractionForTesting(oldInteraction);
+            Assert.Equal(selection, SelectionOffsets(workspace.Editor));
+
+            var latest = await WaitForVisibleAsync(workspace.Controller);
+            Assert.Equal(latestGeneration, latest.Generation);
+            Assert.Equal(latestPage, latest.VisiblePage);
+            Assert.DoesNotContain(lastPage, latest.MappedPages);
+            Assert.True(workspace.Surface.IsPageInteractiveForTesting(latestPage));
+            Assert.False(workspace.Surface.IsPageInteractiveForTesting(lastPage));
+        }, TimeSpan.FromSeconds(60));
+    }
+
+    [Fact]
+    public async Task BoundedCacheEvictsDistantPagesAndRerendersAnEvictedRevisit()
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            const int pageLimit = 3;
+            const long byteLimit = 32L * 1024 * 1024;
+            using var workspace = ProductionWorkspace.Create(CreateParagraphDocument(
+                DocumentPageSettings.Letter(), 600), pageCacheLimit: pageLimit,
+                cacheByteLimit: byteLimit);
+            var opening = await WaitForVisibleAsync(workspace.Controller);
+            Assert.True(opening.PageCount > 9);
+            var sessionCount = workspace.Controller.WorkStatistics.SessionsCreatedCount;
+
+            foreach (var page in new[] { 2, 4, 6, 8 })
+            {
+                workspace.Surface.RequestPageForTesting(page);
+                await WaitForVisibleAsync(workspace.Controller);
+            }
+
+            var statistics = workspace.Controller.WorkStatistics;
+            Assert.InRange(statistics.CachedPageCount, 1, pageLimit);
+            Assert.InRange(statistics.CachedBytes, 1, byteLimit);
+            Assert.True(statistics.EvictedPageCount > 0);
+            Assert.DoesNotContain(0, workspace.Surface.RenderedPages);
+
+            var misses = statistics.CacheMissCount;
+            workspace.Surface.RequestPageForTesting(0);
+            var revisit = await WaitForVisibleAsync(workspace.Controller);
+            Assert.True(revisit.CacheMissCount > 0);
+            Assert.True(workspace.Controller.WorkStatistics.CacheMissCount > misses);
+            Assert.Equal(sessionCount,
+                workspace.Controller.WorkStatistics.SessionsCreatedCount);
+            Assert.True(workspace.Surface.IsPageInteractiveForTesting(0));
+        }, TimeSpan.FromSeconds(60));
+    }
+
+    [Fact]
+    public async Task DecodedPixelFootprintDrivesByteEvictionAndReleasesSurfaceFrames()
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            const int pageLimit = 20;
+            const long byteLimit = 20L * 1024 * 1024;
+            using var workspace = ProductionWorkspace.Create(CreateParagraphDocument(
+                DocumentPageSettings.Letter(), 500), pageCacheLimit: pageLimit,
+                cacheByteLimit: byteLimit);
+            var opening = await WaitForVisibleAsync(workspace.Controller);
+            await WaitForPrefetchAsync(workspace.Controller, opening.Generation);
+            var initial = Assert.IsType<WriterPaginationLayoutResult>(
+                workspace.Controller.Current);
+            Assert.True(initial.CachedDecodedBytes > initial.CachedEncodedBytes);
+            Assert.True(initial.CachedBytes >= initial.CachedDecodedBytes +
+                initial.CachedEncodedBytes);
+            var releasedBefore = workspace.Surface.ReleasedPageFrameCount;
+
+            for (var page = 1; page <= Math.Min(7, initial.PageCount - 1); page++)
+            {
+                workspace.Surface.RequestPageForTesting(page);
+                var visible = await WaitForVisibleAsync(workspace.Controller);
+                await WaitForPrefetchAsync(workspace.Controller, visible.Generation);
+            }
+
+            var statistics = workspace.Controller.WorkStatistics;
+            Assert.InRange(statistics.CachedBytes, 1, byteLimit);
+            Assert.True(statistics.CachedDecodedBytes > statistics.CachedEncodedBytes);
+            Assert.True(statistics.CachedPageCount < pageLimit);
+            Assert.True(statistics.EvictedPageCount > 0);
+            Assert.True(workspace.Surface.ReleasedPageFrameCount > releasedBefore);
+            Assert.Equal(statistics.CachedPageCount,
+                workspace.Surface.RenderedPages.Count);
+        }, TimeSpan.FromSeconds(60));
+    }
+
+    [Fact]
+    public async Task MixedContentMultiCycleScrollingStaysInOneBoundedLayoutSession()
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            const int pageLimit = 5;
+            const long byteLimit = 32L * 1024 * 1024;
+            using var workspace = ProductionWorkspace.Create(CreateMixedContentDocument(
+                DocumentPageSettings.Letter(), 260), pageCacheLimit: pageLimit,
+                cacheByteLimit: byteLimit);
+            var opening = await WaitForVisibleAsync(workspace.Controller);
+            Assert.True(opening.PageCount > pageLimit);
+            await WaitForPrefetchAsync(workspace.Controller, opening.Generation);
+            var sessionCount = workspace.Controller.WorkStatistics.SessionsCreatedCount;
+            var kinds = new HashSet<WriterPaginationObjectKind>();
+
+            for (var cycle = 0; cycle < 2; cycle++)
+            {
+                for (var page = 1; page < opening.PageCount; page++)
+                {
+                    workspace.Surface.RequestPageForTesting(page);
+                    var visible = await WaitForVisibleAsync(workspace.Controller);
+                    foreach (var item in visible.StructuredObjects)
+                        kinds.Add(item.Kind);
+                    await WaitForPrefetchAsync(workspace.Controller, visible.Generation);
+                }
+                for (var page = opening.PageCount - 2; page >= 0; page--)
+                {
+                    workspace.Surface.RequestPageForTesting(page);
+                    var visible = await WaitForVisibleAsync(workspace.Controller);
+                    foreach (var item in visible.StructuredObjects)
+                        kinds.Add(item.Kind);
+                    await WaitForPrefetchAsync(workspace.Controller, visible.Generation);
+                }
+            }
+
+            var statistics = workspace.Controller.WorkStatistics;
+            Assert.Equal(sessionCount, statistics.SessionsCreatedCount);
+            Assert.Equal(0, statistics.SessionsDisposedCount);
+            Assert.InRange(statistics.CachedPageCount, 1, pageLimit);
+            Assert.InRange(statistics.CachedBytes, 1, byteLimit);
+            Assert.True(statistics.EvictedPageCount > 0);
+            Assert.True(workspace.Surface.ReleasedPageFrameCount > 0);
+            Assert.Contains(WriterPaginationObjectKind.Table, kinds);
+            Assert.Contains(WriterPaginationObjectKind.Picture, kinds);
+        }, TimeSpan.FromSeconds(90));
+    }
+
+    [Fact]
+    public async Task LayoutIdentityInvalidatesForContentFormattingSettingsDpiAndDocumentOnly()
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            using var workspace = ProductionWorkspace.Create(CreateParagraphDocument(
+                DocumentPageSettings.Letter(), 220));
+            var opening = await WaitForVisibleAsync(workspace.Controller);
+            var layoutIdentity = opening.LayoutIdentity;
+            var sessionCount = workspace.Controller.WorkStatistics.SessionsCreatedCount;
+
+            workspace.Surface.RequestPageForTesting(1);
+            var scrolled = await WaitForVisibleAsync(workspace.Controller);
+            Assert.Equal(layoutIdentity, scrolled.LayoutIdentity);
+            Assert.Equal(sessionCount,
+                workspace.Controller.WorkStatistics.SessionsCreatedCount);
+
+            workspace.Editor.CaretPosition = workspace.Editor.Document.ContentEnd;
+            workspace.Editor.CaretPosition.InsertTextInRun("content invalidation");
+            var content = await WaitForVisibleAsync(workspace.Controller);
+            Assert.True(content.LayoutIdentity > layoutIdentity);
+            Assert.True(workspace.Controller.WorkStatistics.SessionsCreatedCount > sessionCount);
+            layoutIdentity = content.LayoutIdentity;
+            sessionCount = workspace.Controller.WorkStatistics.SessionsCreatedCount;
+
+            workspace.Editor.Document.FontSize += 1;
+            workspace.Controller.RefreshFormatting();
+            var formatting = await WaitForVisibleAsync(workspace.Controller);
+            Assert.True(formatting.LayoutIdentity > layoutIdentity);
+            Assert.True(workspace.Controller.WorkStatistics.SessionsCreatedCount > sessionCount);
+            layoutIdentity = formatting.LayoutIdentity;
+            sessionCount = workspace.Controller.WorkStatistics.SessionsCreatedCount;
+
+            workspace.Controller.SetPageSettings(DocumentPageSettings.A4(
+                DocumentPageOrientation.Landscape,
+                new DocumentPageMargins(48, 60, 72, 84)));
+            var settings = await WaitForVisibleAsync(workspace.Controller);
+            Assert.True(settings.LayoutIdentity > layoutIdentity);
+            Assert.True(workspace.Controller.WorkStatistics.SessionsCreatedCount > sessionCount);
+            layoutIdentity = settings.LayoutIdentity;
+            sessionCount = workspace.Controller.WorkStatistics.SessionsCreatedCount;
+
+            workspace.Surface.RaiseDpiScaleChangedForTesting();
+            var dpi = await WaitForVisibleAsync(workspace.Controller);
+            Assert.True(dpi.LayoutIdentity > layoutIdentity);
+            Assert.True(workspace.Controller.WorkStatistics.SessionsCreatedCount > sessionCount);
+            layoutIdentity = dpi.LayoutIdentity;
+            sessionCount = workspace.Controller.WorkStatistics.SessionsCreatedCount;
+
+            var replacement = CreateParagraphDocument(workspace.Settings, 40);
+            workspace.Editor.Document = replacement;
+            workspace.Controller.ReplaceDocument(replacement);
+            var document = await WaitForVisibleAsync(workspace.Controller);
+            Assert.True(document.LayoutIdentity > layoutIdentity);
+            Assert.NotEqual(opening.DocumentIdentity, document.DocumentIdentity);
+            Assert.True(workspace.Controller.WorkStatistics.SessionsCreatedCount > sessionCount);
+            Assert.True(workspace.Controller.WorkStatistics.SessionsDisposedCount >= 5);
+        }, TimeSpan.FromSeconds(60));
+    }
+
+    [Fact]
     public async Task LongDocumentBurstCoalescesPendingWorkAndCancelsActiveLayout()
     {
         await StaTestHelper.RunAsync(async () =>
@@ -869,6 +1143,42 @@ public sealed class WriterPaginatedDiagnosticProductionTests
             await workspace.Editor.Dispatcher.InvokeAsync(() => { },
                 DispatcherPriority.ApplicationIdle);
         }, TimeSpan.FromSeconds(90));
+    }
+
+    private static async Task<WriterPaginationLayoutResult> WaitForVisibleAsync(
+        WriterPaginatedDiagnosticController controller)
+    {
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(20);
+        while (DateTime.UtcNow < deadline)
+        {
+            if (controller.LastVisible is { } visible &&
+                visible.Generation == controller.RequestedGeneration &&
+                visible.RequestKind == WriterPaginationRequestKind.Visible)
+                return visible;
+            await Dispatcher.Yield(DispatcherPriority.Background);
+            await Task.Delay(10);
+        }
+        throw new TimeoutException(
+            $"Visible generation {controller.RequestedGeneration} did not publish.");
+    }
+
+    private static async Task<WriterPaginationLayoutResult> WaitForPrefetchAsync(
+        WriterPaginatedDiagnosticController controller, long generation)
+    {
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(20);
+        while (DateTime.UtcNow < deadline)
+        {
+            if (controller.PrefetchSettledGeneration == generation &&
+                controller.Current is { } settled && settled.Generation == generation)
+                return settled;
+            if (controller.Current is { } current &&
+                current.Generation == generation &&
+                current.RequestKind == WriterPaginationRequestKind.Prefetch)
+                return current;
+            await Dispatcher.Yield(DispatcherPriority.Background);
+            await Task.Delay(10);
+        }
+        throw new TimeoutException($"Prefetch generation {generation} did not publish.");
     }
 
     private static async Task WaitForCurrentAsync(
@@ -955,6 +1265,66 @@ public sealed class WriterPaginatedDiagnosticProductionTests
             });
         }
         return document;
+    }
+
+    private static FlowDocument CreateMixedContentDocument(
+        DocumentPageSettings settings, int count)
+    {
+        var document = CreateDocument(settings);
+        var bitmap = BitmapSource.Create(2, 2, 96, 96, PixelFormats.Bgra32, null,
+            new byte[]
+            {
+                0x35, 0x88, 0xD0, 0xFF, 0x70, 0xB0, 0x55, 0xFF,
+                0xD0, 0x88, 0x35, 0xFF, 0x88, 0x55, 0xB0, 0xFF
+            }, 8);
+        bitmap.Freeze();
+        for (var index = 0; index < count; index++)
+        {
+            document.Blocks.Add(new Paragraph(new Run(
+                $"Mixed paragraph {index:D3}: bounded cache corpus."))
+            {
+                Margin = new Thickness(0, 0, 0, 5)
+            });
+            if (index > 0 && index % 65 == 0)
+            {
+                var table = new Table { CellSpacing = 2 };
+                table.Columns.Add(new TableColumn { Width = new GridLength(245) });
+                table.Columns.Add(new TableColumn { Width = new GridLength(245) });
+                var group = new TableRowGroup();
+                table.RowGroups.Add(group);
+                for (var rowIndex = 0; rowIndex < 5; rowIndex++)
+                {
+                    var row = new TableRow();
+                    row.Cells.Add(Cell($"Table {index:D3}, row {rowIndex}, first."));
+                    row.Cells.Add(Cell($"Table {index:D3}, row {rowIndex}, second."));
+                    group.Rows.Add(row);
+                }
+                document.Blocks.Add(table);
+            }
+            if (index > 0 && index % 80 == 0)
+            {
+                var paragraph = new Paragraph(new Run("Before mixed picture "));
+                paragraph.Inlines.Add(new InlineUIContainer(new Image
+                {
+                    Source = bitmap,
+                    Width = 220,
+                    Height = 130
+                }));
+                paragraph.Inlines.Add(new Run(" after mixed picture."));
+                document.Blocks.Add(paragraph);
+            }
+        }
+        return document;
+
+        static TableCell Cell(string text) => new(new Paragraph(new Run(text))
+        {
+            Margin = new Thickness(2)
+        })
+        {
+            Padding = new Thickness(3),
+            BorderBrush = Brushes.Gray,
+            BorderThickness = new Thickness(0.5)
+        };
     }
 
     private static FlowDocument CreateStructuredDocument(DocumentPageSettings settings)
@@ -1081,7 +1451,9 @@ public sealed class WriterPaginatedDiagnosticProductionTests
         internal Window Window { get; }
 
         internal static ProductionWorkspace Create(FlowDocument document,
-            bool enableSpellCheck = false)
+            bool enableSpellCheck = false,
+            int pageCacheLimit = WriterDedicatedPaginationEngine.DefaultPageCacheLimit,
+            long cacheByteLimit = WriterDedicatedPaginationEngine.DefaultCacheByteLimit)
         {
             var settings = DocumentPageSettings.Letter();
             var editor = new RichTextBox
@@ -1108,7 +1480,8 @@ public sealed class WriterPaginatedDiagnosticProductionTests
             window.Show();
             window.UpdateLayout();
             SpellCheck.SetIsEnabled(editor, enableSpellCheck);
-            var controller = new WriterPaginatedDiagnosticController(editor, surface, settings);
+            var controller = new WriterPaginatedDiagnosticController(editor, surface, settings,
+                pageCacheLimit, cacheByteLimit);
             return new ProductionWorkspace(settings, editor, surface, controller, window);
         }
 

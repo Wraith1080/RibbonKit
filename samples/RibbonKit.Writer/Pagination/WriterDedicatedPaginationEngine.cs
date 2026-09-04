@@ -18,24 +18,47 @@ namespace RibbonKit.Writer.Pagination;
 /// </summary>
 internal sealed class WriterDedicatedPaginationEngine : IDisposable
 {
+    internal const int DefaultPageCacheLimit = 8;
+    internal const long DefaultCacheByteLimit = 64L * 1024 * 1024;
+
     private readonly object _sync = new();
     private readonly AutoResetEvent _workAvailable = new(false);
     private readonly ManualResetEventSlim _ready = new();
     private readonly Thread _thread;
+    private readonly int _pageCacheLimit;
+    private readonly long _cacheByteLimit;
     private WorkerRequest? _active;
     private WorkerRequest? _pending;
+    private LayoutSession? _session;
     private bool _stopping;
     private bool _disposed;
     private int _startedCount;
     private int _completedCount;
     private int _canceledActiveCount;
     private int _supersededPendingCount;
+    private int _sessionsCreatedCount;
+    private int _sessionsDisposedCount;
+    private int _cacheHitCount;
+    private int _cacheMissCount;
+    private int _evictedPageCount;
+    private int _cachedPageCount;
+    private long _cachedBytes;
+    private long _cachedEncodedBytes;
+    private long _cachedDecodedBytes;
     private long _activeGeneration;
     private long _phaseStartedTimestamp;
     private int _activePhase;
 
-    internal WriterDedicatedPaginationEngine()
+    internal WriterDedicatedPaginationEngine(
+        int pageCacheLimit = DefaultPageCacheLimit,
+        long cacheByteLimit = DefaultCacheByteLimit)
     {
+        if (pageCacheLimit <= 0)
+            throw new ArgumentOutOfRangeException(nameof(pageCacheLimit));
+        if (cacheByteLimit <= 0)
+            throw new ArgumentOutOfRangeException(nameof(cacheByteLimit));
+        _pageCacheLimit = pageCacheLimit;
+        _cacheByteLimit = cacheByteLimit;
         _thread = new Thread(Run)
         {
             IsBackground = true,
@@ -51,9 +74,21 @@ internal sealed class WriterDedicatedPaginationEngine : IDisposable
     internal int CompletedCount => Volatile.Read(ref _completedCount);
     internal int CanceledActiveCount => Volatile.Read(ref _canceledActiveCount);
     internal int SupersededPendingCount => Volatile.Read(ref _supersededPendingCount);
+    internal int SessionsCreatedCount => Volatile.Read(ref _sessionsCreatedCount);
+    internal int SessionsDisposedCount => Volatile.Read(ref _sessionsDisposedCount);
+    internal int CacheHitCount => Volatile.Read(ref _cacheHitCount);
+    internal int CacheMissCount => Volatile.Read(ref _cacheMissCount);
+    internal int EvictedPageCount => Volatile.Read(ref _evictedPageCount);
+    internal int CachedPageCount => Volatile.Read(ref _cachedPageCount);
+    internal long CachedBytes => Interlocked.Read(ref _cachedBytes);
+    internal long CachedEncodedBytes => Interlocked.Read(ref _cachedEncodedBytes);
+    internal long CachedDecodedBytes => Interlocked.Read(ref _cachedDecodedBytes);
 
     internal WriterPaginationWorkStatistics Statistics => new(
-        StartedCount, CompletedCount, CanceledActiveCount, SupersededPendingCount);
+        StartedCount, CompletedCount, CanceledActiveCount, SupersededPendingCount,
+        SessionsCreatedCount, SessionsDisposedCount, CacheHitCount, CacheMissCount,
+        EvictedPageCount, CachedPageCount, CachedBytes, CachedEncodedBytes,
+        CachedDecodedBytes);
 
     internal WriterPaginationWorkProgress Progress
     {
@@ -84,11 +119,21 @@ internal sealed class WriterDedicatedPaginationEngine : IDisposable
         lock (_sync)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
+            if (capture.RequestKind == WriterPaginationRequestKind.Prefetch &&
+                (_active is { IsCompleting: false } || _pending is not null))
+            {
+                Interlocked.Increment(ref _supersededPendingCount);
+                source.TrySetResult(new WriterPaginationCompletion(
+                    WriterPaginationCompletionKind.SupersededBeforeStart, null, 0));
+                request.Cancellation.Dispose();
+                return source.Task;
+            }
             superseded = _pending;
             _pending = request;
             if (superseded is not null)
                 Interlocked.Increment(ref _supersededPendingCount);
-            _active?.Cancellation.Cancel();
+            if (capture.RequestKind == WriterPaginationRequestKind.Visible)
+                _active?.Cancellation.Cancel();
         }
 
         if (superseded is not null)
@@ -156,6 +201,8 @@ internal sealed class WriterDedicatedPaginationEngine : IDisposable
                 var result = Build(request, request.Cancellation.Token);
                 request.Cancellation.Token.ThrowIfCancellationRequested();
                 Interlocked.Increment(ref _completedCount);
+                lock (_sync)
+                    request.IsCompleting = true;
                 request.Completion.TrySetResult(new WriterPaginationCompletion(
                     WriterPaginationCompletionKind.Completed, result,
                     request.CompletedMappedPages));
@@ -188,6 +235,7 @@ internal sealed class WriterDedicatedPaginationEngine : IDisposable
                     _workAvailable.Set();
             }
         }
+        DisposeSession();
         Dispatcher.CurrentDispatcher.InvokeShutdown();
     }
 
@@ -206,7 +254,144 @@ internal sealed class WriterDedicatedPaginationEngine : IDisposable
         var insertionGeometryMilliseconds = 0d;
         var rasterizationMilliseconds = 0d;
         var structuredGeometryMilliseconds = 0d;
+        var sessionReused = _session is not null &&
+            _session.LayoutIdentity == capture.LayoutIdentity &&
+            _session.DocumentIdentity == capture.DocumentIdentity;
+        if (!sessionReused)
+        {
+            DisposeSession();
+            _session = CreateSession(capture, cancellationToken,
+                ref packageLoadMilliseconds, ref formattingMilliseconds,
+                ref pageCountMilliseconds, ref pageStartsMilliseconds,
+                ref objectMappingMilliseconds, ref viewerRealizationMilliseconds);
+            Interlocked.Increment(ref _sessionsCreatedCount);
+        }
+        var session = _session ?? throw new InvalidOperationException(
+            "The pagination layout session was not created.");
+        cancellationToken.ThrowIfCancellationRequested();
 
+        var visiblePage = Math.Clamp(capture.VisiblePage, 0, session.PageCount - 1);
+        var mappedPages = capture.InteractivePages
+            .Where(page => page >= 0 && page < session.PageCount)
+            .Distinct()
+            .ToImmutableArray();
+        if (mappedPages.IsEmpty)
+            mappedPages = ImmutableArray.Create(visiblePage);
+        var requestedPages = capture.RequestedPages
+            .Concat(mappedPages)
+            .Where(page => page >= 0 && page < session.PageCount)
+            .Distinct()
+            .ToImmutableArray();
+        if (requestedPages.IsEmpty)
+            requestedPages = mappedPages;
+
+        var requestHits = 0;
+        var requestMisses = 0;
+        foreach (var pageNumber in requestedPages)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (session.TryGetPage(pageNumber, out _))
+            {
+                requestHits++;
+                Interlocked.Increment(ref _cacheHitCount);
+                request.CompletedMappedPages++;
+                continue;
+            }
+
+            requestMisses++;
+            Interlocked.Increment(ref _cacheMissCount);
+            SetProgress(capture.Generation, WriterPaginationWorkPhase.ViewerRealization);
+            var phaseStarted = Stopwatch.GetTimestamp();
+            session.Viewer.GoToPage(pageNumber + 1);
+            UpdateLayout(session.Host);
+            var pageView = session.Viewer.PageViews.Single(view =>
+                view.PageNumber == pageNumber);
+            using var documentPage = session.Paginator.GetPage(pageNumber);
+            viewerRealizationMilliseconds += ElapsedMilliseconds(phaseStarted);
+
+            SetProgress(capture.Generation, WriterPaginationWorkPhase.InsertionGeometry);
+            phaseStarted = Stopwatch.GetTimestamp();
+            var pageInsertions = BuildPageInsertions(session.Document, session.Paginator,
+                session.PageStartOffsets, pageNumber, pageView, session.PageSettings,
+                cancellationToken);
+            insertionGeometryMilliseconds += ElapsedMilliseconds(phaseStarted);
+
+            SetProgress(capture.Generation, WriterPaginationWorkPhase.Rasterization);
+            phaseStarted = Stopwatch.GetTimestamp();
+            var page = new WriterPaginationPage(pageNumber,
+                RenderPage(documentPage, session.PageSettings,
+                    session.PixelScaleX, session.PixelScaleY, cancellationToken));
+            rasterizationMilliseconds += ElapsedMilliseconds(phaseStarted);
+
+            SetProgress(capture.Generation, WriterPaginationWorkPhase.StructuredGeometry);
+            phaseStarted = Stopwatch.GetTimestamp();
+            var structured = ImmutableArray.CreateBuilder<WriterPaginationObjectGeometry>();
+            var tables = ImmutableArray.CreateBuilder<WriterPaginationTableGeometry>();
+            AddStructuredGeometry(structured, tables, session.StructuredObjects,
+                session.CloneObjects, pageInsertions, pageView, session.PageSettings,
+                session.Paginator, pageNumber, cancellationToken);
+            structuredGeometryMilliseconds += ElapsedMilliseconds(phaseStarted);
+
+            var structuredValues = structured.ToImmutable();
+            var tableValues = tables.ToImmutable();
+            var footprint = EstimatePageFootprint(page, pageInsertions,
+                structuredValues, tableValues, session.PageSettings,
+                session.PixelScaleX, session.PixelScaleY);
+            session.AddPage(new CachedPage(page, pageInsertions,
+                structuredValues, tableValues, 0, footprint.TotalBytes,
+                footprint.EncodedBytes, footprint.DecodedBytes));
+            UpdateCacheSnapshot(session);
+            request.CompletedMappedPages++;
+            cancellationToken.ThrowIfCancellationRequested();
+        }
+
+        var evicted = session.Evict(_pageCacheLimit, _cacheByteLimit,
+            mappedPages.ToHashSet(), visiblePage);
+        if (evicted > 0)
+            Interlocked.Add(ref _evictedPageCount, evicted);
+        UpdateCacheSnapshot(session);
+
+        var retainedPages = session.CachedPageNumbers;
+        var resultPages = ImmutableArray.CreateBuilder<WriterPaginationPage>();
+        var insertions = ImmutableArray.CreateBuilder<WriterPaginationInsertionGeometry>();
+        var resultStructured = ImmutableArray.CreateBuilder<WriterPaginationObjectGeometry>();
+        var resultTables = ImmutableArray.CreateBuilder<WriterPaginationTableGeometry>();
+        foreach (var pageNumber in requestedPages)
+        {
+            if (!session.TryGetPage(pageNumber, out var cached))
+                continue;
+            resultPages.Add(cached.Page);
+            insertions.AddRange(cached.Insertions);
+            resultStructured.AddRange(cached.StructuredObjects);
+            resultTables.AddRange(cached.Tables);
+        }
+
+        watch.Stop();
+        var timings = new WriterPaginationPhaseTimings(packageLoadMilliseconds,
+            formattingMilliseconds, pageCountMilliseconds, pageStartsMilliseconds,
+            objectMappingMilliseconds, viewerRealizationMilliseconds,
+            insertionGeometryMilliseconds, rasterizationMilliseconds,
+            structuredGeometryMilliseconds);
+        return new WriterPaginationLayoutResult(capture.Generation, capture.LayoutIdentity,
+            capture.DocumentIdentity, visiblePage, session.PageCount, session.PageStartOffsets,
+            mappedPages, retainedPages, resultPages.ToImmutable(), insertions.ToImmutable(),
+            resultStructured.ToImmutable(), resultTables.ToImmutable(), session.PageSettings,
+            capture.RequestKind, sessionReused, requestHits, requestMisses, evicted,
+            session.CachedBytes, session.CachedEncodedBytes, session.CachedDecodedBytes,
+            Environment.CurrentManagedThreadId, Thread.CurrentThread.GetApartmentState(),
+            timings,
+            watch.Elapsed.TotalMilliseconds);
+    }
+
+    private LayoutSession CreateSession(WriterPaginationCapture capture,
+        CancellationToken cancellationToken,
+        ref double packageLoadMilliseconds,
+        ref double formattingMilliseconds,
+        ref double pageCountMilliseconds,
+        ref double pageStartsMilliseconds,
+        ref double objectMappingMilliseconds,
+        ref double viewerRealizationMilliseconds)
+    {
         SetProgress(capture.Generation, WriterPaginationWorkPhase.PackageLoad);
         var phaseStarted = Stopwatch.GetTimestamp();
         var clone = new FlowDocument();
@@ -236,12 +421,6 @@ internal sealed class WriterDedicatedPaginationEngine : IDisposable
         if (paginator.PageCount <= 0)
             throw new InvalidOperationException("The pagination clone did not produce a page.");
 
-        var visiblePage = Math.Clamp(capture.VisiblePage, 0, paginator.PageCount - 1);
-        var firstMappedPage = Math.Max(0, visiblePage - 1);
-        var lastMappedPage = Math.Min(paginator.PageCount - 1, visiblePage + 1);
-        var mappedPages = Enumerable.Range(firstMappedPage,
-                lastMappedPage - firstMappedPage + 1)
-            .ToImmutableArray();
         SetProgress(capture.Generation, WriterPaginationWorkPhase.PageStarts);
         phaseStarted = Stopwatch.GetTimestamp();
         var pageStarts = GetPageStartOffsets(clone, paginator, cancellationToken);
@@ -269,10 +448,6 @@ internal sealed class WriterDedicatedPaginationEngine : IDisposable
             ShowActivated = false,
             Opacity = 0.01
         };
-        var pages = ImmutableArray.CreateBuilder<WriterPaginationPage>();
-        var insertions = ImmutableArray.CreateBuilder<WriterPaginationInsertionGeometry>();
-        var structured = ImmutableArray.CreateBuilder<WriterPaginationObjectGeometry>();
-        var tables = ImmutableArray.CreateBuilder<WriterPaginationTableGeometry>();
         try
         {
             SetProgress(capture.Generation, WriterPaginationWorkPhase.ViewerRealization);
@@ -280,61 +455,17 @@ internal sealed class WriterDedicatedPaginationEngine : IDisposable
             host.Show();
             UpdateLayout(host);
             viewerRealizationMilliseconds += ElapsedMilliseconds(phaseStarted);
-            foreach (var pageNumber in mappedPages)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                SetProgress(capture.Generation, WriterPaginationWorkPhase.ViewerRealization);
-                phaseStarted = Stopwatch.GetTimestamp();
-                viewer.GoToPage(pageNumber + 1);
-                UpdateLayout(host);
-                var pageView = viewer.PageViews.Single(view => view.PageNumber == pageNumber);
-                var documentPage = paginator.GetPage(pageNumber);
-                viewerRealizationMilliseconds += ElapsedMilliseconds(phaseStarted);
-
-                SetProgress(capture.Generation, WriterPaginationWorkPhase.InsertionGeometry);
-                phaseStarted = Stopwatch.GetTimestamp();
-                var pageInsertions = BuildPageInsertions(clone, paginator, pageNumber,
-                    pageView, capture.PageSettings, cancellationToken);
-                insertions.AddRange(pageInsertions);
-                insertionGeometryMilliseconds += ElapsedMilliseconds(phaseStarted);
-
-                SetProgress(capture.Generation, WriterPaginationWorkPhase.Rasterization);
-                phaseStarted = Stopwatch.GetTimestamp();
-                pages.Add(new WriterPaginationPage(pageNumber,
-                    RenderPage(documentPage, capture.PageSettings,
-                        capture.PixelScaleX, capture.PixelScaleY, cancellationToken)));
-                rasterizationMilliseconds += ElapsedMilliseconds(phaseStarted);
-
-                SetProgress(capture.Generation, WriterPaginationWorkPhase.StructuredGeometry);
-                phaseStarted = Stopwatch.GetTimestamp();
-                AddStructuredGeometry(structured, tables, capture.StructuredObjects, cloneObjects,
-                    pageInsertions, pageView, capture.PageSettings, paginator, pageNumber,
-                    cancellationToken);
-                structuredGeometryMilliseconds += ElapsedMilliseconds(phaseStarted);
-                request.CompletedMappedPages++;
-                cancellationToken.ThrowIfCancellationRequested();
-            }
+            return new LayoutSession(capture.LayoutIdentity, capture.DocumentIdentity,
+                clone, paginator, pageStarts, capture.StructuredObjects, cloneObjects,
+                capture.PageSettings, capture.PixelScaleX, capture.PixelScaleY, viewer, host);
         }
-        finally
+        catch
         {
             viewer.Document = null;
             if (host.IsVisible)
                 host.Close();
+            throw;
         }
-
-        watch.Stop();
-        var timings = new WriterPaginationPhaseTimings(packageLoadMilliseconds,
-            formattingMilliseconds, pageCountMilliseconds, pageStartsMilliseconds,
-            objectMappingMilliseconds, viewerRealizationMilliseconds,
-            insertionGeometryMilliseconds, rasterizationMilliseconds,
-            structuredGeometryMilliseconds);
-        return new WriterPaginationLayoutResult(capture.Generation, capture.DocumentIdentity,
-            visiblePage, paginator.PageCount, pageStarts, mappedPages, pages.ToImmutable(),
-            insertions.ToImmutable(), structured.ToImmutable(), tables.ToImmutable(),
-            capture.PageSettings,
-            Environment.CurrentManagedThreadId, Thread.CurrentThread.GetApartmentState(),
-            timings,
-            watch.Elapsed.TotalMilliseconds);
     }
 
     private void SetProgress(long generation, WriterPaginationWorkPhase phase)
@@ -365,7 +496,8 @@ internal sealed class WriterDedicatedPaginationEngine : IDisposable
         for (var page = 0; page < paginator.PageCount; page++)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            if (paginator.GetPagePosition(paginator.GetPage(page)) is not TextPointer position)
+            using var documentPage = paginator.GetPage(page);
+            if (paginator.GetPagePosition(documentPage) is not TextPointer position)
                 throw new InvalidOperationException($"Page {page + 1} has no text position.");
             builder.Add(document.ContentStart.GetOffsetToPosition(position));
         }
@@ -375,16 +507,19 @@ internal sealed class WriterDedicatedPaginationEngine : IDisposable
     private static ImmutableArray<WriterPaginationInsertionGeometry> BuildPageInsertions(
         FlowDocument document,
         DynamicDocumentPaginator paginator,
+        ImmutableArray<int> pageStartOffsets,
         int pageNumber,
         DocumentPageView pageView,
         WriterPaginationPageSettings pageSettings,
         CancellationToken cancellationToken)
     {
-        if (paginator.GetPagePosition(paginator.GetPage(pageNumber)) is not TextPointer pageStart)
+        var pageStart = document.ContentStart.GetPositionAtOffset(
+            pageStartOffsets[pageNumber], LogicalDirection.Forward) ??
             throw new InvalidOperationException($"Page {pageNumber + 1} has no start position.");
-        var pageEnd = pageNumber + 1 < paginator.PageCount
-            ? paginator.GetPagePosition(paginator.GetPage(pageNumber + 1)) as TextPointer
-                ?? throw new InvalidOperationException($"Page {pageNumber + 2} has no start position.")
+        var pageEnd = pageNumber + 1 < pageStartOffsets.Length
+            ? document.ContentStart.GetPositionAtOffset(pageStartOffsets[pageNumber + 1],
+                LogicalDirection.Forward) ?? throw new InvalidOperationException(
+                    $"Page {pageNumber + 2} has no start position.")
             : document.ContentEnd;
         var builder = ImmutableArray.CreateBuilder<WriterPaginationInsertionGeometry>();
         var batch = 0;
@@ -812,6 +947,183 @@ internal sealed class WriterDedicatedPaginationEngine : IDisposable
         window.Dispatcher.Invoke(DispatcherPriority.Render, new Action(() => { }));
     }
 
+    private static PageFootprint EstimatePageFootprint(WriterPaginationPage page,
+        ImmutableArray<WriterPaginationInsertionGeometry> insertions,
+        ImmutableArray<WriterPaginationObjectGeometry> structuredObjects,
+        ImmutableArray<WriterPaginationTableGeometry> tables,
+        WriterPaginationPageSettings settings,
+        double pixelScaleX,
+        double pixelScaleY)
+    {
+        var tableBytes = tables.Sum(table => 128L +
+            table.ColumnBoundaries.Length * sizeof(double) +
+            table.RowBoundaries.Length * 24L);
+        var geometryBytes = insertions.Length * 48L +
+            structuredObjects.Length * 64L + tableBytes;
+        var pixelWidth = Math.Max(1L,
+            (long)Math.Ceiling(settings.WidthDip * pixelScaleX));
+        var pixelHeight = Math.Max(1L,
+            (long)Math.Ceiling(settings.HeightDip * pixelScaleY));
+        var decodedBytes = checked(pixelWidth * pixelHeight * 4L);
+        var encodedBytes = (long)page.PngBytes.Length;
+        return new PageFootprint(checked(encodedBytes + decodedBytes + geometryBytes),
+            encodedBytes, decodedBytes);
+    }
+
+    private void UpdateCacheSnapshot(LayoutSession session)
+    {
+        Volatile.Write(ref _cachedPageCount, session.CachedPageCount);
+        Interlocked.Exchange(ref _cachedBytes, session.CachedBytes);
+        Interlocked.Exchange(ref _cachedEncodedBytes, session.CachedEncodedBytes);
+        Interlocked.Exchange(ref _cachedDecodedBytes, session.CachedDecodedBytes);
+    }
+
+    private void DisposeSession()
+    {
+        if (_session is null)
+            return;
+        _session.Dispose();
+        _session = null;
+        Interlocked.Increment(ref _sessionsDisposedCount);
+        Volatile.Write(ref _cachedPageCount, 0);
+        Interlocked.Exchange(ref _cachedBytes, 0);
+        Interlocked.Exchange(ref _cachedEncodedBytes, 0);
+        Interlocked.Exchange(ref _cachedDecodedBytes, 0);
+    }
+
+    private readonly record struct PageFootprint(
+        long TotalBytes,
+        long EncodedBytes,
+        long DecodedBytes);
+
+    private sealed class LayoutSession : IDisposable
+    {
+        private readonly Dictionary<int, CachedPage> _pages = new();
+        private long _accessSequence;
+
+        internal LayoutSession(long layoutIdentity, long documentIdentity,
+            FlowDocument document, DynamicDocumentPaginator paginator,
+            ImmutableArray<int> pageStartOffsets,
+            ImmutableArray<WriterPaginationObjectCapture> structuredObjects,
+            Dictionary<long, TextElement> cloneObjects,
+            WriterPaginationPageSettings pageSettings,
+            double pixelScaleX, double pixelScaleY,
+            FlowDocumentPageViewer viewer, Window host)
+        {
+            LayoutIdentity = layoutIdentity;
+            DocumentIdentity = documentIdentity;
+            Document = document;
+            Paginator = paginator;
+            PageStartOffsets = pageStartOffsets;
+            StructuredObjects = structuredObjects;
+            CloneObjects = cloneObjects;
+            PageSettings = pageSettings;
+            PixelScaleX = pixelScaleX;
+            PixelScaleY = pixelScaleY;
+            Viewer = viewer;
+            Host = host;
+        }
+
+        internal long LayoutIdentity { get; }
+        internal long DocumentIdentity { get; }
+        internal FlowDocument Document { get; }
+        internal DynamicDocumentPaginator Paginator { get; }
+        internal int PageCount => Paginator.PageCount;
+        internal ImmutableArray<int> PageStartOffsets { get; }
+        internal ImmutableArray<WriterPaginationObjectCapture> StructuredObjects { get; }
+        internal Dictionary<long, TextElement> CloneObjects { get; }
+        internal WriterPaginationPageSettings PageSettings { get; }
+        internal double PixelScaleX { get; }
+        internal double PixelScaleY { get; }
+        internal FlowDocumentPageViewer Viewer { get; }
+        internal Window Host { get; }
+        internal int CachedPageCount => _pages.Count;
+        internal long CachedBytes { get; private set; }
+        internal long CachedEncodedBytes { get; private set; }
+        internal long CachedDecodedBytes { get; private set; }
+        internal ImmutableArray<int> CachedPageNumbers => _pages.Keys
+            .OrderBy(page => page).ToImmutableArray();
+
+        internal bool TryGetPage(int pageNumber, out CachedPage page)
+        {
+            if (!_pages.TryGetValue(pageNumber, out page!))
+                return false;
+            page.LastAccess = ++_accessSequence;
+            return true;
+        }
+
+        internal void AddPage(CachedPage page)
+        {
+            if (_pages.Remove(page.Page.PageNumber, out var replaced))
+            {
+                CachedBytes -= replaced.EstimatedBytes;
+                CachedEncodedBytes -= replaced.EncodedBytes;
+                CachedDecodedBytes -= replaced.DecodedBytes;
+            }
+            page.LastAccess = ++_accessSequence;
+            _pages.Add(page.Page.PageNumber, page);
+            CachedBytes += page.EstimatedBytes;
+            CachedEncodedBytes += page.EncodedBytes;
+            CachedDecodedBytes += page.DecodedBytes;
+        }
+
+        internal int Evict(int pageLimit, long byteLimit,
+            HashSet<int> protectedPages, int visiblePage)
+        {
+            var evicted = 0;
+            var effectivePageLimit = Math.Max(pageLimit, protectedPages.Count);
+            while (_pages.Count > effectivePageLimit || CachedBytes > byteLimit)
+            {
+                var candidates = _pages
+                    .Where(item => !protectedPages.Contains(item.Key))
+                    .OrderByDescending(item => Math.Abs(item.Key - visiblePage))
+                    .ThenBy(item => item.Value.LastAccess)
+                    .ToArray();
+                if (candidates.Length == 0)
+                    break;
+                var candidate = candidates[0];
+                _pages.Remove(candidate.Key);
+                CachedBytes -= candidate.Value.EstimatedBytes;
+                CachedEncodedBytes -= candidate.Value.EncodedBytes;
+                CachedDecodedBytes -= candidate.Value.DecodedBytes;
+                evicted++;
+            }
+            return evicted;
+        }
+
+        public void Dispose()
+        {
+            _pages.Clear();
+            CachedBytes = 0;
+            CachedEncodedBytes = 0;
+            CachedDecodedBytes = 0;
+            Viewer.Document = null;
+            if (Host.IsVisible)
+                Host.Close();
+        }
+    }
+
+    private sealed class CachedPage(
+        WriterPaginationPage page,
+        ImmutableArray<WriterPaginationInsertionGeometry> insertions,
+        ImmutableArray<WriterPaginationObjectGeometry> structuredObjects,
+        ImmutableArray<WriterPaginationTableGeometry> tables,
+        long lastAccess,
+        long estimatedBytes,
+        long encodedBytes,
+        long decodedBytes)
+    {
+        internal WriterPaginationPage Page { get; } = page;
+        internal ImmutableArray<WriterPaginationInsertionGeometry> Insertions { get; } = insertions;
+        internal ImmutableArray<WriterPaginationObjectGeometry> StructuredObjects { get; } =
+            structuredObjects;
+        internal ImmutableArray<WriterPaginationTableGeometry> Tables { get; } = tables;
+        internal long LastAccess { get; set; } = lastAccess;
+        internal long EstimatedBytes { get; } = estimatedBytes;
+        internal long EncodedBytes { get; } = encodedBytes;
+        internal long DecodedBytes { get; } = decodedBytes;
+    }
+
     private sealed class WorkerRequest(
         WriterPaginationCapture capture,
         TaskCompletionSource<WriterPaginationCompletion> completion,
@@ -821,5 +1133,6 @@ internal sealed class WriterDedicatedPaginationEngine : IDisposable
         internal TaskCompletionSource<WriterPaginationCompletion> Completion { get; } = completion;
         internal CancellationTokenSource Cancellation { get; } = cancellation;
         internal int CompletedMappedPages { get; set; }
+        internal bool IsCompleting { get; set; }
     }
 }

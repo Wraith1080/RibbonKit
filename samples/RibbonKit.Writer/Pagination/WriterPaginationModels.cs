@@ -118,8 +118,12 @@ internal readonly record struct WriterPaginationPageSettings(
 
 internal sealed record WriterPaginationCapture(
     long Generation,
+    long LayoutIdentity,
     long DocumentIdentity,
     int VisiblePage,
+    WriterPaginationRequestKind RequestKind,
+    ImmutableArray<int> InteractivePages,
+    ImmutableArray<int> RequestedPages,
     ImmutableArray<byte> XamlPackage,
     WriterPaginationFormatting Formatting,
     WriterPaginationPageSettings PageSettings,
@@ -130,6 +134,12 @@ internal sealed record WriterPaginationCapture(
 internal sealed record WriterPaginationPage(
     int PageNumber,
     ImmutableArray<byte> PngBytes);
+
+internal enum WriterPaginationRequestKind
+{
+    Visible,
+    Prefetch
+}
 
 internal enum WriterPaginationWorkPhase
 {
@@ -165,16 +175,26 @@ internal readonly record struct WriterPaginationPhaseTimings(
 
 internal sealed record WriterPaginationLayoutResult(
     long Generation,
+    long LayoutIdentity,
     long DocumentIdentity,
     int VisiblePage,
     int PageCount,
     ImmutableArray<int> PageStartOffsets,
     ImmutableArray<int> MappedPages,
+    ImmutableArray<int> RetainedPages,
     ImmutableArray<WriterPaginationPage> Pages,
     ImmutableArray<WriterPaginationInsertionGeometry> Insertions,
     ImmutableArray<WriterPaginationObjectGeometry> StructuredObjects,
     ImmutableArray<WriterPaginationTableGeometry> Tables,
     WriterPaginationPageSettings PageSettings,
+    WriterPaginationRequestKind RequestKind,
+    bool ReusedLayoutSession,
+    int CacheHitCount,
+    int CacheMissCount,
+    int EvictedPageCount,
+    long CachedBytes,
+    long CachedEncodedBytes,
+    long CachedDecodedBytes,
     int WorkerThreadId,
     ApartmentState WorkerApartment,
     WriterPaginationPhaseTimings PhaseTimings,
@@ -196,7 +216,16 @@ internal readonly record struct WriterPaginationWorkStatistics(
     int StartedCount,
     int CompletedCount,
     int CanceledActiveCount,
-    int SupersededPendingCount);
+    int SupersededPendingCount,
+    int SessionsCreatedCount,
+    int SessionsDisposedCount,
+    int CacheHitCount,
+    int CacheMissCount,
+    int EvictedPageCount,
+    int CachedPageCount,
+    long CachedBytes,
+    long CachedEncodedBytes,
+    long CachedDecodedBytes);
 
 internal readonly record struct WriterPaginationWorkProgress(
     long Generation,

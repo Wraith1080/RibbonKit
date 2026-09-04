@@ -6661,6 +6661,87 @@ errors. No full suite, solution build, genuine OS IME or production RTL gate was
 still need a separate work-budget gate before any default-Paper decision; the next bounded slice should stage page-window
 handoff prefetch/publication and define measured retention/eviction limits without changing native editor ownership.
 
+### 3.153 RibbonKit Writer W2-G reusable layout session and bounded directional page cache — 2026-09-04
+
+The seventh private production batch removes the full clone/paginator rebuild from scroll-only page-window requests.
+The dedicated STA now owns one disposable layout session containing the immutable clone, paginator, computed page count,
+page starts, structured-object map and realized page viewer. A separate layout identity changes for content, document,
+formatting, page-setting or DPI invalidation; viewport generations change independently. Replacing a layout disposes its
+hidden viewer and cached values on the worker STA before the next session is created. Scroll-only requests reuse the
+session while retaining the existing generation/document/current-page rejection gates.
+
+The session caches immutable PNG bytes plus insertion, structured-object and table geometry under an eight-page and
+64-MB default budget. Each result publishes the retained-page inventory and cache telemetry. The compositor merges new
+page frames, removes only worker-evicted pages and preserves other valid images instead of clearing the surface. Geometry
+remains interactive only for the latest generation's current visible/adjacent window; retained stale frames and loading
+placeholders reject pointer, UIA and resize routing. Visible work publishes first. A second, lower-priority request then
+prefetches two pages in the current direction; a new visible request cancels active speculative work and wins the pending
+slot. An uncached jump immediately inserts a white page-sized non-interactive loading placeholder under the existing
+status banner.
+
+The expanded production gate passes **19/19** and covers sequential forward/reverse scrolling, directional prefetch,
+cache-hit revisits with zero package-load/page-count/page-start work, two-jump latest-only acceptance, eviction and
+rerender, content/formatting/page-setting/DPI/document invalidation, and placeholder/stale-cache interaction rejection.
+The namespace-scoped pagination gate passes **43/43**. The final Release Writer project builds with **0 warnings / 0
+errors**. No full suite or solution build was run.
+
+The actual opt-in Release probe used **600 short blocks / 15 pages**. Initial layout took **643.7 ms** worker time. Once
+directional prefetch was warm, ordinary forward and reverse visible requests were cache hits with **0.1–0.2 ms** worker
+time; measured UI arrival was **49.0–74.2 ms** forward and **24.1–147.3 ms** reverse. A cached revisit arrived in **43.1
+ms** with no new pagination. Two uncached jumps showed both placeholders, abandoned the first request and accepted only
+page 13 in **529.0 ms** (**442.3 ms** worker). Landscape reflow created a new session in **654.5 ms** (**540.3 ms**
+worker), and restoring the original settings took **426.2 ms** (**340.9 ms** worker). The UI reached ApplicationIdle in
+**37.6 ms** after the sequence. The cache stayed at its eight-page cap and reported about **1.3 MB** of encoded
+PNG/geometry values, recording seven evictions. That first counter did not include the decoded WPF bitmap footprint and
+is corrected by §3.154.
+
+Scrolling/cache feasibility is a **qualified go**: ordinary bidirectional scrolling no longer reloads or repaginates
+the document, cached revisits are immediate, and fast jumps retain page-shaped feedback without weakening stale-event
+rejection. Process working set nevertheless rose from **366.5 MB** after initial publication to a **515.2 MB** high-water
+mark and ended at **483.9 MB**, while managed memory remained near **30 MB** and the then-reported encoded/geometry
+cache was only **1.3 MB**. That separation points to WPF/native page-realization high-water rather than an unbounded
+Writer cache, but it is
+not yet a long-run plateau proof. Default Paper remains unchanged; genuine OS IME and production RTL remain deferred.
+The next bounded slice should repeat multi-cycle forward/reverse/jump/reflow runs over mixed tables/images and define a
+process working-set plateau/reclamation budget before broader real-document or default-Paper work.
+
+### 3.154 RibbonKit Writer W2-G decoded page-memory and mixed-content plateau gate — 2026-09-04
+
+The eighth private production batch closes the accounting gap from §3.153 without changing the compositor architecture.
+Each cached page now reports encoded PNG bytes, projected decoded BGRA pixels at the current DPI and geometry overhead;
+the eight-page/64-MB limit is enforced against their combined footprint. Surface eviction detaches the page frame,
+clears each image source and child collection, and removes the overlay before the page can be revisited. The diagnostic
+can seed mixed paragraphs, tables and images and run multiple complete forward/reverse cycles while recording cache,
+working set, private bytes, managed heap and session lifetime at every cycle boundary.
+
+Two focused regressions cover byte-driven eviction/release and two complete mixed-content scroll cycles. They prove that
+decoded bytes dominate encoded bytes, evicted surface frames are released, the retained-frame count matches the worker
+inventory, table and picture geometry survive rerender, and one unchanged layout identity keeps exactly one undisposed
+STA session. The expanded production gate passes **21/21**, the namespace-scoped pagination gate passes **45/45**, and
+the final Release Writer project builds with **0 warnings / 0 errors**. No full suite or solution build was run.
+
+The decisive opt-in Release probe used **600 mixed blocks / 18 pages** and six complete forward/reverse cycles. After
+warm-up, cycles 2–6 delivered forward pages at a **25.6 ms median / 65.4 ms maximum** UI arrival and reverse pages at a
+**26.1 ms median / 88.6 ms maximum**; median worker work in both directions was **0.1 ms** because the stable session
+kept package load, pagination and page starts alive. A cached revisit took **41.8 ms**. Two uncached fast jumps displayed
+both placeholders, abandoned page 18 and accepted only page 16 in **388.6 ms** (**349.8 ms** worker). Landscape reflow
+created a new session in **470.6 ms** (**435.1 ms** worker), and restoring the original settings created another in
+**321.2 ms** (**286.7 ms** worker). The final UI-idle probe took **0.2 ms**.
+
+The corrected cache remained exactly **8 pages / 42.4 MB total**, including **41.1 MB decoded** and about **0.7 MB
+encoded**, throughout the stable-layout cycles; the full run recorded 123 safe evictions. Process memory reached its
+**696.5 MB working-set / 589.9 MB private-byte** high-water at cycle 2, then reclaimed to cycle-end working sets of
+**660.4, 630.0, 593.6 and 602.6 MB** for cycles 3–6 while managed memory stayed **28.5–32.7 MB**. Reflow/restore replaced
+two sessions deterministically and reduced working set to **537.1 MB** before final prefetch settled at **566.6 MB**.
+The measured plateau rule is therefore satisfied: after warm-up, later cycle ends are non-monotonic, remain below the
+two-cycle high-water, keep the app cache at its declared limit and do not grow the managed heap or session count.
+
+Live scrolling/cache feasibility remains a **qualified go**, now with a bounded decoded-page budget and observed native
+reclamation over repeated mixed-content traversal. This is an automated self-running actual Release-window diagnostic,
+not manual visual acceptance or a default-Paper authorization. The next bounded slice should exercise a few saved
+real-world `.rkw` documents and long paragraphs under the same counters, then add a deterministic low-memory/cache-budget
+option; genuine OS IME and production RTL remain deferred together.
+
 ## 4. Workflow / Session Conventions
 
 - Work from the current Windows checkout at
@@ -6677,7 +6758,7 @@ handoff prefetch/publication and define measured retention/eviction limits witho
 
 ## 5. Current State & Next Steps
 
-> **Authoritative status as of 2026-09-01.** Historical checkpoints remain in §3, but status and
+> **Authoritative status as of 2026-09-04.** Historical checkpoints remain in §3, but status and
 > test counts quoted elsewhere should be reconciled against this section and rerun when current
 > evidence matters.
 
@@ -6750,14 +6831,23 @@ handoff prefetch/publication and define measured retention/eviction limits witho
   table round-trip/schema-v2 and TXT/RTF compatibility matrix. W3-E is accepted through §3.135. W4-A is accepted
   through §3.136 with its focused 6/6 gate, proportional follow-up regressions, zero-warning Writer builds and the
   completed 2026-08-31 actual-window correction sequence.
-  W2-G's first six opt-in production batches are complete through §3.152. The immutable capture/latest-only dedicated-STA
+  W2-G's first eight opt-in production batches are complete through §3.154. The immutable capture/latest-only dedicated-STA
   engine, clone-backed visible/adjacent compositor, stale-event gates and page-to-source interaction bridge pass the
-  focused **39/39** pagination gate and the Release Writer build. Actual-window LTR cross-page authoring, native
+  focused **45/45** pagination gate and the Release Writer build. The reusable STA layout session, eight-page/64-MB
+  immutable value cache, visible-first directional prefetch, incremental surface publication and non-interactive
+  page-shaped jump placeholders now keep ordinary bidirectional scrolling off the package-load/page-count/page-start
+  path. Corrected accounting includes decoded pixels as well as encoded PNG/geometry values. The six-cycle, 600-block
+  mixed-content Release probe held the cache at eight pages/42.4 MB, delivered 0.1-ms median worker work, accepted only
+  the latest fast jump and rebuilt deterministic sessions for reflow. Working set peaked at 696.5 MB in cycle 2, then
+  reclaimed to 593.6–602.6 MB by cycles 5–6 with a stable managed heap, satisfying the mixed-content plateau rule.
+  Actual-window LTR
+  cross-page authoring, native
   Undo/Redo, clipboard, spelling, focus recovery, page-setting reflow, table-overall and eight-handle picture resizing,
   immutable explicit-column and multi-row-group/span table geometry, safe Auto-column rejection, accessible object/handle
   invocation, editor-focused keyboard resize, phase-specific/latest-only cancellation/coalescing telemetry,
   zoom/DPI-stable hit geometry, ruler/margin-guide projection, empty document replacement, staged native-spelling
-  overlays and the 180-block live scalability gate are positive. Larger real-world document budgeting remains open.
+  overlays, the 180-block live scalability gate and the bounded scrolling/cache/decoded-memory decision are positive.
+  Saved real-world document and deterministic low-memory-budget coverage remain open.
   Default Paper is unchanged. Genuine OS
   IME and production RTL are explicitly deferred as one later paired input/geometry slice; the current decision is a
   qualified go for further opt-in hardening only.
@@ -6933,6 +7023,20 @@ handoff prefetch/publication and define measured retention/eviction limits witho
   **852.8 ms** and the formerly failing 180-block publication to **1005.1 ms**; the 180-block burst accepted generation
   20 in **797.3 ms** after one active cancellation and eighteen coalesced requests. No full suite, solution build,
   genuine OS IME or production RTL gate was run.
+- 2026-09-04 after §3.153: the focused W2-G production gate passes **19/19**, the namespace-scoped pagination gate
+  passes **43/43**, and the Release Writer project builds with zero warnings/errors. The actual opt-in 600-block probe
+  reused one stable layout session for forward/reverse scrolling, kept the app cache at eight pages/about 1.3 MB of
+  then-reported encoded PNG/geometry values (decoded accounting was added in §3.154),
+  delivered warm visible requests with 0.1–0.2 ms worker time, showed white placeholders for both uncached fast-jump
+  targets, accepted only the latest request, and deterministically replaced the session for reflow. Process working-set
+  plateau/reclamation remains the next bounded gate. No full suite, solution build, genuine OS IME or production RTL
+  gate was run.
+- 2026-09-04 after §3.154: the focused W2-G production gate passes **21/21**, the namespace-scoped pagination gate
+  passes **45/45**, and the Release Writer project builds with zero warnings/errors. Corrected decoded-pixel accounting
+  held the cache at eight pages/42.4 MB during six complete forward/reverse mixed-content cycles. Cycle-end working set
+  peaked at 696.5 MB in cycle 2 and reclaimed to 593.6–602.6 MB in cycles 5–6 while managed memory stayed bounded. The
+  latest-only two-placeholder jump, deterministic reflow/restore session replacement and 0.2-ms UI-idle probe passed.
+  No full suite, solution build, manual visual acceptance, genuine OS IME or production RTL gate was run.
 - Before quoting a current count or declaring a new change complete, rerun the proportional build
   and test commands. Inspect actual/diff PNG artifacts before changing visual baselines or
   tolerances.
