@@ -976,6 +976,37 @@ ribbon artwork remains unchanged.
   **41.8-ms** cached revisit, a **388.6-ms** two-placeholder latest-only jump, reflow/restore and a **0.2-ms** UI-idle
   measurement. No full suite, solution build, manual visual acceptance, genuine OS IME or production RTL gate was run.
 
+### RKWF-038 — A reduced cache protects interaction but can discard every speculative page
+
+- **First seen / packet:** 2026-09-05, Writer W2-G saved-document/low-memory batch (§3.155).
+- **Status:** measured app-owned retention/performance tradeoff; no RibbonKit runtime change.
+- **Consumer goal:** exercise saved documents and long paragraphs under deterministic reduced retention while preserving
+  the live editor, native paginator and stale-event gates.
+- **Reproduction:** opt-in scroll probe with `--writer-pagination-cache-pages=3 --writer-pagination-cache-mb=24` and
+  `--writer-pagination-long-paragraph-seed`. The interior interaction window protects three pages; the worker still
+  realizes two speculative pages and immediately evicts them. Next-page publication needs another realization and
+  insertion-geometry pass. Per-character geometry costs more for dense page-spanning paragraphs than for short blocks.
+  Reducing retained decoded memory does not guarantee a smaller WPF process high-water.
+- **Containment:** preserve the protected interaction window and report target overruns explicitly. The 1-page/1-MB
+  regression documents this floor. Default retention stays eight pages/64 MB. Saved-file probing uses bounded native
+  persistence, bypasses recent-file writes and detaches source identity.
+- **Verification:** 26/26 focused production and 50/50 namespace tests; clean Release Writer build. Four existing
+  saved files loaded unchanged; all were one page at saved settings. Six-cycle 26-page long paragraphs retained
+  16.6 MB but had 539.7/520.3-ms median forward/reverse arrivals and a 730.4-MB process high-water. Later cycle ends
+  exceeded the earlier two-cycle plateau rule despite natural reclamation. The 18-page mixed corpus retained 15.9 MB,
+  arrived at 156.3/155.8-ms medians and held cycle ends at 504.3–516.8 MB. Both disposed-session probes collected 3/3
+  decoded images; focused weak references verify evicted page-zero collectibility while the session stays alive.
+  Forced final GC is labelled separately from natural reclamation. A prefetched boundary page can remain live legally;
+  the collection test targets the page actually evicted. The first final telemetry smoke retained the disposed
+  controller across GC to inspect its counters, which itself kept images reachable (0/3 mixed, 0/1 saved collected).
+  Disposal now returns value counters through a synchronous non-inlined helper; the async probe holds no disposed
+  controller during collection and fails if any image remains reachable. Full measurements and local artifact paths
+  are in §3.155.
+- **Next investigation:** budget-aware prefetch admission, then bounded long-paragraph geometry timing and a 3/24,
+  4/24, 8/64 comparison. Retention is a floor-aware target, not a hard working-set cap. No default-Paper decision,
+  manual visual acceptance, OS IME or RTL result is implied.
+- **Smallest possible library direction:** none; the cost is inside Writer's WPF paginator/page realization integration.
+
 ## 5. Closed observations
 
 None yet.

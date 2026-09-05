@@ -123,6 +123,14 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
     internal IReadOnlyCollection<int> RenderedPages => _overlayCanvases.Keys;
     internal IReadOnlyCollection<int> PlaceholderPages => _placeholderPages;
     internal int ReleasedPageFrameCount => _releasedPageFrameCount;
+    internal int PageCacheLimit { get; set; } = WriterDedicatedPaginationEngine.DefaultPageCacheLimit;
+
+    internal WeakReference[] CaptureDecodedImagesForTesting(int? pageNumber = null) => _pageFrames
+        .Where(item => pageNumber is null || item.Key == pageNumber)
+        .Select(item => item.Value.Child).OfType<Panel>()
+        .SelectMany(panel => panel.Children.OfType<Image>())
+        .Where(image => image.Source is not null)
+        .Select(image => new WeakReference(image.Source)).ToArray();
     internal int RulerElementCount => _rulerCanvas.Children.Count;
     internal int MarginGuideCount => _overlayCanvases.Values.Sum(canvas =>
         canvas.Children.OfType<FrameworkElement>().Count(element =>
@@ -335,7 +343,7 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
             $"page {result.VisiblePage + 1:N0}/{result.PageCount:N0} · " +
             $"{(result.RequestKind == WriterPaginationRequestKind.Prefetch ? "prefetch" : "visible")} · " +
             $"session {(result.ReusedLayoutSession ? "reused" : "new")} · " +
-            $"cache {result.RetainedPages.Length:N0}/{WriterDedicatedPaginationEngine.DefaultPageCacheLimit:N0} " +
+            $"cache {result.RetainedPages.Length:N0}/{PageCacheLimit:N0} " +
             $"({result.CachedBytes / 1024d / 1024d:0.0} MB total, " +
             $"{result.CachedDecodedBytes / 1024d / 1024d:0.0} MB decoded, " +
             $"hit/miss {result.CacheHitCount:N0}/{result.CacheMissCount:N0}, " +

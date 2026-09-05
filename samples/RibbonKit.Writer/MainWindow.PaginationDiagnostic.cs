@@ -27,7 +27,16 @@ public partial class MainWindow
     {
         if (!WriterPaginationDiagnosticOptions.IsEnabled)
             return;
-        if (WriterPaginationDiagnosticOptions.ShouldSeedMixedStressDocument)
+        if (WriterPaginationDiagnosticOptions.ShouldSeedLongParagraphDocument)
+        {
+            Shell.CurrentDocument.CommitIdentity(path: null, WriterDocumentFormat.RibbonKitWriter);
+            var document = Shell.CurrentDocument.Content;
+            document.Blocks.Clear();
+            for (var index = 0; index < 4; index++)
+                document.Blocks.Add(new Paragraph(new Run(string.Concat(Enumerable.Repeat(
+                    "Long paragraph pagination preserves continuous native editing and page geometry. ", 400)))));
+        }
+        else if (WriterPaginationDiagnosticOptions.ShouldSeedMixedStressDocument)
         {
             Shell.CurrentDocument.CommitIdentity(path: null,
                 WriterDocumentFormat.RibbonKitWriter);
@@ -54,9 +63,12 @@ public partial class MainWindow
 
         _paginationDiagnosticSurface = new WriterPaginatedDiagnosticSurface();
         PaginationDiagnosticHost.Children.Add(_paginationDiagnosticSurface);
+        var budget = WriterPaginationDiagnosticOptions.CacheBudget;
+        WriterPaginationDiagnosticOptions.WriteTelemetry(
+            $"budget pages={budget.Pages} bytes={budget.Bytes} protected-interaction-window-floor=true");
         _paginationDiagnosticController = new WriterPaginatedDiagnosticController(
             DocumentEditor, _paginationDiagnosticSurface,
-            Shell.CurrentDocument.PageSettings)
+            Shell.CurrentDocument.PageSettings, budget.Pages, budget.Bytes)
         {
             StructuredObjectActivator = ActivatePaginationObject,
             StructuredResizeStarter = BeginPaginationResize,
@@ -447,8 +459,32 @@ public partial class MainWindow
 
     private async Task RunPaginationScrollProbeAsync()
     {
+        var heartbeatWatch = Stopwatch.StartNew();
+        var heartbeatMaximum = 0d;
+        var heartbeatCount = 0;
+        var heartbeat = new DispatcherTimer(DispatcherPriority.Background, Dispatcher)
+        {
+            Interval = TimeSpan.FromMilliseconds(50)
+        };
+        heartbeat.Tick += (_, _) =>
+        {
+            heartbeatMaximum = Math.Max(heartbeatMaximum, heartbeatWatch.Elapsed.TotalMilliseconds);
+            heartbeatWatch.Restart();
+            heartbeatCount++;
+        };
+        heartbeat.Start();
         try
         {
+            if (WriterPaginationDiagnosticOptions.ProbeDocumentPath is { } path)
+            {
+                if (!await Shell.OpenPaginationProbeDocumentAsync(path))
+                    throw new InvalidOperationException("Could not load the diagnostic document.");
+                _paginationDiagnosticController?.SetPageSettings(Shell.CurrentDocument.PageSettings);
+                WriterPaginationDiagnosticOptions.WriteTelemetry(
+                    $"probe source={System.IO.Path.GetFileName(path)} " +
+                    $"blocks={Shell.CurrentDocument.Content.Blocks.Count} " +
+                    $"symbols={Shell.CurrentDocument.Content.ContentStart.GetOffsetToPosition(Shell.CurrentDocument.Content.ContentEnd)}");
+            }
             _paginationProbePeakWorkingSet = 0;
             _paginationProbePeakPrivateBytes = 0;
             var initial = await WaitForPaginationVisibleAsync();
@@ -470,8 +506,7 @@ public partial class MainWindow
                         $"cycle-{cycle}-reverse");
                 WritePaginationProcessSnapshot($"cycle-{cycle}-end");
             }
-            await MeasurePaginationPageRequestAsync(Math.Min(2, lastSequential),
-                "cached-revisit");
+            await MeasurePaginationPageRequestAsync(Math.Min(2, lastSequential), "revisit");
 
             if (initial.PageCount > 4 && _paginationDiagnosticSurface is not null &&
                 _paginationDiagnosticController is not null)
@@ -487,6 +522,8 @@ public partial class MainWindow
                     .Contains(latestPage);
                 var latest = await WaitForPaginationVisibleAsync();
                 watch.Stop();
+                if (latest.VisiblePage != latestPage)
+                    throw new InvalidOperationException("The fast jump accepted a superseded page.");
                 WriterPaginationDiagnosticOptions.WriteTelemetry(
                     $"probe fast-jump abandoned={abandonedPage + 1:N0} " +
                     $"latest={latestPage + 1:N0} placeholders=" +
@@ -539,17 +576,50 @@ public partial class MainWindow
                 $"{statistics.CachedDecodedBytes / 1024d / 1024d:0.0}MB-decoded " +
                 $"hits={statistics.CacheHitCount:N0} misses={statistics.CacheMissCount:N0} " +
                 $"evicted={statistics.EvictedPageCount:N0}");
+            WriterPaginationDiagnosticOptions.WriteTelemetry(
+                $"probe dispatcher ticks={heartbeatCount} max-gap={heartbeatMaximum:0.0}ms");
+            if (WriterPaginationDiagnosticOptions.ShouldExitAfterProbe &&
+                _paginationDiagnosticSurface is { } surface)
+            {
+                var images = surface.CaptureDecodedImagesForTesting();
+                WritePaginationProcessSnapshot("before-session-release");
+                var releasedStatistics = DisposePaginationProbeSession();
+                await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+                // Explicit end-of-probe collection tests reachability, not normal GC cadence.
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                GC.Collect();
+                await Task.Delay(1000);
+                WritePaginationProcessSnapshot("after-session-release-forced-gc", releasedStatistics);
+                WriterPaginationDiagnosticOptions.WriteTelemetry(
+                    $"probe decoded-release collected={images.Count(image => !image.IsAlive)}/{images.Length} " +
+                    $"sessions={releasedStatistics.SessionsCreatedCount}/{releasedStatistics.SessionsDisposedCount}");
+                if (images.Any(image => image.IsAlive))
+                    throw new InvalidOperationException("Decoded probe images remained reachable after session release.");
+            }
         }
         catch (Exception exception)
         {
             WriterPaginationDiagnosticOptions.WriteTelemetry(
                 $"probe failed {exception.GetType().Name}: {exception.Message}");
+            Environment.ExitCode = 1;
         }
         finally
         {
+            heartbeat.Stop();
             if (WriterPaginationDiagnosticOptions.ShouldExitAfterProbe)
                 Close();
         }
+    }
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    private WriterPaginationWorkStatistics DisposePaginationProbeSession()
+    {
+        // Return only value telemetry. Keeping the disposed controller in the async probe
+        // state machine would itself keep worker/dispatcher objects reachable during GC.
+        var controller = _paginationDiagnosticController;
+        DisposePaginationDiagnostic();
+        return controller?.WorkStatistics ?? default;
     }
 
     private async Task MeasurePaginationPageRequestAsync(int pageNumber, string direction)
@@ -593,6 +663,7 @@ public partial class MainWindow
                 return;
             await Task.Delay(15);
         }
+        throw new TimeoutException("The live pagination prefetch request did not settle.");
     }
 
     private async Task<WriterPaginationLayoutResult> WaitForPaginationNewLayoutAsync(
@@ -620,8 +691,11 @@ public partial class MainWindow
         _paginationProbePeakPrivateBytes = Math.Max(_paginationProbePeakPrivateBytes,
             process.PrivateMemorySize64);
         var statistics = _paginationDiagnosticController?.WorkStatistics ?? default;
+        var budget = WriterPaginationDiagnosticOptions.CacheBudget;
         WriterPaginationDiagnosticOptions.WriteTelemetry(
             $"probe {label} page={result.VisiblePage + 1:N0}/{result.PageCount:N0} " +
+            $"budget-exceeded={result.CachedBytes > budget.Bytes || result.RetainedPages.Length > budget.Pages} " +
+            $"released-frames={_paginationDiagnosticSurface?.ReleasedPageFrameCount ?? 0} " +
             $"elapsed={elapsedMilliseconds:0.0}ms worker={result.WorkerMilliseconds:0.0}ms " +
             $"session={(result.ReusedLayoutSession ? "reused" : "new")} " +
             $"hit/miss={result.CacheHitCount:N0}/{result.CacheMissCount:N0} " +
@@ -636,7 +710,8 @@ public partial class MainWindow
             $"work={statistics.CompletedCount:N0}/{statistics.StartedCount:N0}");
     }
 
-    private void WritePaginationProcessSnapshot(string label)
+    private void WritePaginationProcessSnapshot(string label,
+        WriterPaginationWorkStatistics? statisticsOverride = null)
     {
         var process = Process.GetCurrentProcess();
         process.Refresh();
@@ -644,7 +719,7 @@ public partial class MainWindow
             process.WorkingSet64);
         _paginationProbePeakPrivateBytes = Math.Max(_paginationProbePeakPrivateBytes,
             process.PrivateMemorySize64);
-        var statistics = _paginationDiagnosticController?.WorkStatistics ?? default;
+        var statistics = statisticsOverride ?? _paginationDiagnosticController?.WorkStatistics ?? default;
         WriterPaginationDiagnosticOptions.WriteTelemetry(
             $"probe {label} working={process.WorkingSet64 / 1024d / 1024d:0.0}MB " +
             $"private={process.PrivateMemorySize64 / 1024d / 1024d:0.0}MB " +

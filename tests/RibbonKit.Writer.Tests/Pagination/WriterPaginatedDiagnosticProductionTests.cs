@@ -22,6 +22,76 @@ namespace RibbonKit.Writer.Tests.Pagination;
 public sealed class WriterPaginatedDiagnosticProductionTests
 {
     [Fact]
+    public void DiagnosticBudgetKeepsDefaultAndRejectsInvalidOverrides()
+    {
+        Assert.Equal((8, 64L * 1024 * 1024),
+            WriterPaginationDiagnosticOptions.ParseCacheBudget(Array.Empty<string>()));
+        Assert.Equal((3, 24L * 1024 * 1024),
+            WriterPaginationDiagnosticOptions.ParseCacheBudget(new[]
+            { "--writer-pagination-cache-pages=3", "--writer-pagination-cache-mb=24" }));
+        foreach (var argument in new[] { "--writer-pagination-cache-pages=0",
+            "--writer-pagination-cache-pages=9", "--writer-pagination-cache-mb=0",
+            "--writer-pagination-cache-mb=65", "--writer-pagination-cache-mb=invalid" })
+            Assert.Throws<ArgumentException>(() =>
+                WriterPaginationDiagnosticOptions.ParseCacheBudget(new[] { argument }));
+    }
+
+    [Theory]
+    [InlineData(3, 24)]
+    [InlineData(1, 1)]
+    public async Task SavedLongParagraphsRevisitUnderReducedBudgetWithExplicitInteractionFloor(
+        int pageLimit, int megabytes)
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            var source = new FlowDocument();
+            for (var index = 0; index < 3; index++)
+                source.Blocks.Add(new Paragraph(new Run(string.Concat(Enumerable.Repeat(
+                    "Long paragraphs retain native text across multiple genuine pages. ", 240)))));
+            var package = RibbonKit.Writer.Services.Persistence.WriterRkwPackage.Save(
+                new WriterDocument(source, format: WriterDocumentFormat.RibbonKitWriter));
+            var loaded = RibbonKit.Writer.Services.Persistence.WriterRkwPackage.Load(package);
+            using var workspace = ProductionWorkspace.Create(loaded.Content,
+                pageCacheLimit: pageLimit, cacheByteLimit: megabytes * 1024L * 1024);
+            var opening = await WaitForVisibleAsync(workspace.Controller);
+            await WaitForPrefetchAsync(workspace.Controller, opening.Generation);
+            // Page zero is evicted by the far jump. A prefetched page may legitimately
+            // survive at a boundary where only two interactive pages are protected.
+            var originalImages = workspace.Surface.CaptureDecodedImagesForTesting(0);
+            Assert.NotEmpty(originalImages);
+            Assert.True(opening.PageCount > 5);
+            var starts = opening.PageStartOffsets;
+            foreach (var page in new[] { opening.PageCount - 1, 0 })
+            {
+                workspace.Surface.RequestPageForTesting(page);
+                Assert.Contains(page, workspace.Surface.PlaceholderPages);
+                Assert.False(workspace.Surface.IsPageInteractiveForTesting(page));
+                var result = await WaitForVisibleAsync(workspace.Controller);
+                await WaitForPrefetchAsync(workspace.Controller, result.Generation);
+                Assert.True(result.CacheMissCount > 0);
+                Assert.Equal(starts, result.PageStartOffsets);
+                Assert.True(workspace.Surface.IsPageInteractiveForTesting(page));
+                var current = workspace.Controller.Current!;
+                Assert.InRange(current.RetainedPages.Length, 1, 3);
+                if (megabytes == 24)
+                    Assert.InRange(current.CachedBytes, 1, 24L * 1024 * 1024);
+                else
+                {
+                    Assert.True(current.CachedBytes > 1024 * 1024);
+                    Assert.All(current.RetainedPages, retained => Assert.Contains(retained, current.MappedPages));
+                }
+            }
+            Assert.True(workspace.Surface.ReleasedPageFrameCount > 0);
+            Assert.Equal(1, workspace.Controller.WorkStatistics.SessionsCreatedCount);
+            await Dispatcher.CurrentDispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+            Assert.All(originalImages, image => Assert.False(image.IsAlive));
+        }, TimeSpan.FromSeconds(90));
+    }
+
+    [Fact]
     public async Task DedicatedProductionResultMatchesAcceptedPaginatorAndVirtualizesRealPages()
     {
         await StaTestHelper.RunAsync(async () =>
@@ -863,13 +933,16 @@ public sealed class WriterPaginatedDiagnosticProductionTests
         }, TimeSpan.FromSeconds(60));
     }
 
-    [Fact]
-    public async Task FastJumpShowsPlaceholderAndAcceptsOnlyLatestViewport()
+    [Theory]
+    [InlineData(8, 64)]
+    [InlineData(3, 24)]
+    public async Task FastJumpShowsPlaceholderAndAcceptsOnlyLatestViewport(int pages, int megabytes)
     {
         await StaTestHelper.RunAsync(async () =>
         {
             using var workspace = ProductionWorkspace.Create(CreateParagraphDocument(
-                DocumentPageSettings.Letter(), 700));
+                DocumentPageSettings.Letter(), 700), pageCacheLimit: pages,
+                cacheByteLimit: megabytes * 1024L * 1024);
             var opening = await WaitForVisibleAsync(workspace.Controller);
             Assert.True(opening.PageCount > 10);
             await WaitForPrefetchAsync(workspace.Controller, opening.Generation);
@@ -1023,13 +1096,16 @@ public sealed class WriterPaginatedDiagnosticProductionTests
         }, TimeSpan.FromSeconds(90));
     }
 
-    [Fact]
-    public async Task LayoutIdentityInvalidatesForContentFormattingSettingsDpiAndDocumentOnly()
+    [Theory]
+    [InlineData(8, 64)]
+    [InlineData(3, 24)]
+    public async Task LayoutIdentityInvalidatesForContentFormattingSettingsDpiAndDocumentOnly(int pages, int megabytes)
     {
         await StaTestHelper.RunAsync(async () =>
         {
             using var workspace = ProductionWorkspace.Create(CreateParagraphDocument(
-                DocumentPageSettings.Letter(), 220));
+                DocumentPageSettings.Letter(), 220), pageCacheLimit: pages,
+                cacheByteLimit: megabytes * 1024L * 1024);
             var opening = await WaitForVisibleAsync(workspace.Controller);
             var layoutIdentity = opening.LayoutIdentity;
             var sessionCount = workspace.Controller.WorkStatistics.SessionsCreatedCount;

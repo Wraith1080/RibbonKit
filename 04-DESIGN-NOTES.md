@@ -6742,6 +6742,89 @@ not manual visual acceptance or a default-Paper authorization. The next bounded 
 real-world `.rkw` documents and long paragraphs under the same counters, then add a deterministic low-memory/cache-budget
 option; genuine OS IME and production RTL remain deferred together.
 
+### 3.155 RibbonKit Writer W2-G saved-document and reduced-cache feasibility — 2026-09-05
+
+The ninth private opt-in batch exposes deterministic cache limits through `--writer-pagination-cache-pages=1..8`
+and `--writer-pagination-cache-mb=1..64`. Missing options retain the **eight-page/64-MB default**; invalid values fail
+explicitly. These are retention targets with the existing protected visible/adjacent interaction-window floor, not a
+process-memory limit. A 1-page/1-MB regression deliberately exceeds both targets to preserve current-page interaction,
+retains only protected pages and evicts everything else. Temporary worker rasterization and WPF/native allocations are
+outside the retained-value counter. Probe publications report `budget-exceeded` and released-frame counts; the on-window
+denominator follows the configured page limit.
+
+`--writer-pagination-document=<absolute .rkw path>` with `--writer-pagination-scroll-probe` loads through the normal
+bounded native persistence/session replacement path without updating recent files, then detaches the source path.
+Four existing Documents files were read and their SHA-256 hashes checked unchanged: `Test2.rkw` (formatted text),
+`test3.rkw` and `test4.rkw` (pictures and formatting), and `Untitled.rkw` (eight-column table, picture and hyperlink;
+about 5.7 MB on disk). All four are one-page documents under their saved settings; repeated no-op page requests are
+**not** eviction or scrolling evidence. Landscape reflow expands the table/picture document to two pages. This small
+personal corpus is not general large-document coverage. The synthetic long-paragraph seed uses four paragraphs of 400
+sentences and yields 26 pages; the existing 600-block mixed seed supplies the table/image eviction corpus.
+
+A 50-ms Background dispatcher heartbeat measures dispatch gaps throughout each self-running Release-window probe.
+End-of-probe disposal, explicitly labelled forced collection and weak decoded-image references distinguish collectibility
+from ordinary GC cadence and process working-set observations. A zero retained cache or collected BitmapImage does not
+mean the entire process has returned to startup memory. Probe exceptions set a failure exit code; prefetch timeout and
+superseded fast-jump acceptance fail explicitly.
+
+The four saved-file probes all exited normally at **3 pages/24 MB**, retaining **5.3–5.9 MB** at the original page
+settings and collecting **1/1** decoded page images after session disposal. Their maximum dispatcher gaps were
+**429.5–568.2 ms**, including load/reflow. The image/table file's working set fell **608.5 → 511.4 MB** and private bytes
+**512.0 → 413.4 MB** after explicitly forced release/collection; these are not natural-GC plateau measurements.
+
+Both synthetic runs completed **six full forward/reverse cycles** at **3 pages/24 MB**, with no published budget overrun,
+one undisposed session during stable traversal, two-placeholder latest-only jumps, and two reflow/restore session
+replacements. The long-paragraph run retained **16.6 MB total / 15.4 MB decoded**, recorded **816 evictions**, and delivered
+cycles 2–6 at **539.7/520.3 ms median** forward/reverse arrival (**868.7/1016.8 ms maximum**). Median worker work was
+**470.9/453.4 ms**. A revisit needed one missing page (**465.2 ms**); the latest fast jump took **1297.7 ms**. Its
+**343.8-ms** maximum dispatcher gap and **0.2-ms** final UI-idle arrival demonstrate continued dispatch, not smooth
+interactive scrolling. Dense insertion geometry and speculative pages evicted immediately by the protected three-page
+window account for substantial repeated work.
+
+Long-paragraph cycle-end working sets were **555.8, 654.9, 710.8, 692.0, 708.6, 684.6 MB**; managed cycle-end memory was
+**37.6–52.9 MB**. Natural reclamation occurred, but later cycles exceeded the two-cycle high-water: this corpus does
+**not** pass §3.154's earlier plateau rule. The full probe peaked at **730.4 MB working set / 629.1 MB private bytes**.
+End-of-probe disposal plus forced collection reclaimed **721.3 → 680.3 MB** working set and **618.3 → 577.0 MB** private
+bytes, with **3/3** decoded images collected. A smaller retained cache does not impose a smaller process-memory ceiling.
+
+The 600-mixed-block/18-page comparison retained **15.9 MB total / 15.4 MB decoded**, recorded **528 evictions**, and
+arrived at **156.3/155.8 ms median** forward/reverse (**183.5/186.8 ms maximum**) after warm-up. Its revisit took
+**162.3 ms**, latest jump **462.2 ms**, maximum dispatcher gap **135.6 ms**, and final idle **0.2 ms**. Cycle-end working
+sets **516.8, 504.3, 514.5, 506.8, 507.8, 513.4 MB** and managed heaps **24.8–25.3 MB** stayed stable. Final forced release
+collected **3/3** images and reduced working set **526.9 → 500.4 MB**, private bytes **416.2 → 390.9 MB**. Compared with
+§3.154's default-cache historical run, retention is lower but page arrivals are slower; this is not a controlled
+same-run 8/64 versus 3/24 benchmark.
+
+The final focused production gate passes **26/26**. The namespace gate passed **50/50** before the final weak-reference
+assertion and telemetry refinements; the affected production tests were then rerun. Coverage includes default/invalid option
+handling, reduced-budget latest-only placeholders and stale-event rejection, content/format/settings/DPI/document
+invalidation, saved-package long-paragraph revisits, the deliberately undersized protected-window floor, and weak
+references proving evicted page-zero decoded images are collectible while the editor/session remain alive. An initial
+all-prefetched-images collection assertion was corrected: a boundary request protects only two pages, so one prefetched
+image can legitimately remain retained. The final Release Writer build has **0 warnings / 0 errors**. No full suite,
+solution build, manual visual acceptance, genuine OS IME or production RTL gate was run.
+
+Evidence is local under `artifacts/w2g-low-memory/` (per-corpus logs, `summary.json`, source hashes and runner).
+The six-corpus measurements precede the final telemetry-only denominator/session-count correction and stricter probe
+failure guards. The first final smoke retained the disposed controller to read its counters and observed 0/3 and 0/1
+images collected: the observer itself kept worker/dispatcher objects reachable. A non-inlined synchronous disposal helper
+now returns only value counters, removing that async-state-machine root before collection. Reachability failure now
+fails the probe. The verified final mixed/saved smokes exited 0, collected **3/3 and 1/1** images, and reported all
+**3/3 and 5/5** sessions disposed respectively, checking those refinements. Reproduce using `--writer-paginated-diagnostic`, a document
+or seed flag, `--writer-pagination-cache-pages=3 --writer-pagination-cache-mb=24 --writer-pagination-scroll-probe
+--writer-pagination-scroll-cycles=6 --writer-pagination-exit-after-probe`, with `RIBBONKIT_WRITER_PAGINATION_TELEMETRY`
+pointing to a fresh log. The mixed seed also uses `--writer-pagination-stress-blocks=600`.
+
+**Decision: qualified go for further opt-in correctness/retention hardening; no broader long-document performance or
+hard process-memory guarantee.** Saved inputs, eviction/revisit correctness and decoded collectibility are positive;
+low-budget speculative churn and long-paragraph geometry/native high-water remain measured limitations.
+
+The next bounded slice is **budget-aware speculative admission and long-paragraph page-geometry cost**: avoid rendering
+prefetch pages that cannot survive the protected window, then compare 3/24, 4/24 and default 8/64 on the same
+long-paragraph/mixed corpora. Preserve paginator parity, non-interactive placeholders, latest-only acceptance and the one
+authoritative editor. Stop after a measured retention/arrival tradeoff; genuine OS IME and production RTL remain deferred
+together, and default Paper remains unchanged.
+
 ## 4. Workflow / Session Conventions
 
 - Work from the current Windows checkout at
@@ -6758,7 +6841,7 @@ option; genuine OS IME and production RTL remain deferred together.
 
 ## 5. Current State & Next Steps
 
-> **Authoritative status as of 2026-09-04.** Historical checkpoints remain in §3, but status and
+> **Authoritative status as of 2026-09-05.** Historical checkpoints remain in §3, but status and
 > test counts quoted elsewhere should be reconciled against this section and rerun when current
 > evidence matters.
 
@@ -6831,9 +6914,9 @@ option; genuine OS IME and production RTL remain deferred together.
   table round-trip/schema-v2 and TXT/RTF compatibility matrix. W3-E is accepted through §3.135. W4-A is accepted
   through §3.136 with its focused 6/6 gate, proportional follow-up regressions, zero-warning Writer builds and the
   completed 2026-08-31 actual-window correction sequence.
-  W2-G's first eight opt-in production batches are complete through §3.154. The immutable capture/latest-only dedicated-STA
+  W2-G's first nine opt-in production batches are complete through §3.155. The immutable capture/latest-only dedicated-STA
   engine, clone-backed visible/adjacent compositor, stale-event gates and page-to-source interaction bridge pass the
-  focused **45/45** pagination gate and the Release Writer build. The reusable STA layout session, eight-page/64-MB
+  focused **50/50** pagination gate and the Release Writer build. The reusable STA layout session, eight-page/64-MB
   immutable value cache, visible-first directional prefetch, incremental surface publication and non-interactive
   page-shaped jump placeholders now keep ordinary bidirectional scrolling off the package-load/page-count/page-start
   path. Corrected accounting includes decoded pixels as well as encoded PNG/geometry values. The six-cycle, 600-block
@@ -6847,7 +6930,11 @@ option; genuine OS IME and production RTL remain deferred together.
   invocation, editor-focused keyboard resize, phase-specific/latest-only cancellation/coalescing telemetry,
   zoom/DPI-stable hit geometry, ruler/margin-guide projection, empty document replacement, staged native-spelling
   overlays, the 180-block live scalability gate and the bounded scrolling/cache/decoded-memory decision are positive.
-  Saved real-world document and deterministic low-memory-budget coverage remain open.
+  Four small saved `.rkw` documents, long paragraphs and mixed content now exercise a configurable three-page/24-MB
+  retention target. The protected interaction window remains an explicit floor, including a 1-page/1-MB regression.
+  Decoded release and current-generation interaction are positive; long-paragraph prefetch churn, scrolling latency
+  and a process high-water above the earlier two-cycle rule remain open. Next is budget-aware speculative admission
+  and bounded page-geometry timing (§3.155, RKWF-038).
   Default Paper is unchanged. Genuine OS
   IME and production RTL are explicitly deferred as one later paired input/geometry slice; the current decision is a
   qualified go for further opt-in hardening only.
@@ -7037,6 +7124,11 @@ option; genuine OS IME and production RTL remain deferred together.
   peaked at 696.5 MB in cycle 2 and reclaimed to 593.6–602.6 MB in cycles 5–6 while managed memory stayed bounded. The
   latest-only two-placeholder jump, deterministic reflow/restore session replacement and 0.2-ms UI-idle probe passed.
   No full suite, solution build, manual visual acceptance, genuine OS IME or production RTL gate was run.
+- 2026-09-05 after §3.155: final focused production tests pass **26/26**; the pagination namespace passed **50/50**
+  before final reachability/telemetry refinements, followed by the affected production rerun. The final Release Writer
+  build has zero warnings/errors. Four unchanged saved documents and six-cycle 3-page/24-MB long-paragraph/mixed probes
+  completed. Decoded collectibility is positive; long-paragraph latency and native high-water limit the qualified go.
+  Only opt-in diagnostics were launched. No full suite, solution build, manual visual acceptance, IME or RTL gate ran.
 - Before quoting a current count or declaring a new change complete, rerun the proportional build
   and test commands. Inspect actual/diff PNG artifacts before changing visual baselines or
   tolerances.

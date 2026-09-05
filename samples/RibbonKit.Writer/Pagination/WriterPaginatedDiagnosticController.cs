@@ -53,6 +53,7 @@ internal sealed class WriterPaginatedDiagnosticController : IDisposable
         _settings = settings ?? throw new ArgumentNullException(nameof(settings));
         _document = editor.Document;
         _engine = new WriterDedicatedPaginationEngine(pageCacheLimit, cacheByteLimit);
+        _surface.PageCacheLimit = pageCacheLimit;
         _captureTimer = new DispatcherTimer(DispatcherPriority.Background, editor.Dispatcher)
         {
             Interval = TimeSpan.FromMilliseconds(90)
