@@ -241,6 +241,57 @@ public sealed class WriterTableServiceTests
     }
 
     [Fact]
+    public void StructuralSelectionUsesInwardEndpointsForReverseHitTestingAndMerge()
+    {
+        StaTestHelper.Run(() =>
+        {
+            var (editor, table, service) = CreateTable(1, 3);
+            var row = table.RowGroups[0].Rows[0];
+            var first = row.Cells[0];
+            var second = row.Cells[1];
+            var third = row.Cells[2];
+            var start = first.ContentStart;
+            var structuralEnd = second.ElementEnd;
+            var adjacentStart = third.ContentStart;
+
+            Assert.True(service.TryGetSelectionRange(start, structuralEnd, out var forward));
+            Assert.Equal(0, forward.StartColumn);
+            Assert.Equal(1, forward.EndColumn);
+            Assert.True(service.TryGetSelectionRange(structuralEnd, start, out var reverse));
+            Assert.Equal(forward, reverse);
+            Assert.True(service.TryGetSelectionRange(start, adjacentStart, out var mouseDrag));
+            Assert.Equal(forward, mouseDrag);
+            Assert.True(service.IsPointerInsideTableSelection(second.ContentStart, structuralEnd, start));
+            Assert.False(service.IsPointerInsideTableSelection(third.ContentStart, structuralEnd, start));
+
+            editor.Selection.Select(start, adjacentStart);
+            Assert.True(service.TryGetSelectionRange(out var reshapedAtCommandTime));
+            Assert.Equal(mouseDrag, reshapedAtCommandTime);
+            Assert.True(service.TryMergeSelection(out var merged));
+            Assert.Equal(2, merged.ColumnSpan);
+            Assert.Equal(2, row.Cells.Count);
+            Assert.Same(third, row.Cells[1]);
+            AssertValidGrid(table);
+        });
+    }
+
+    [Fact]
+    public void FullTableStructuralEndIncludesTheRightmostCell()
+    {
+        StaTestHelper.Run(() =>
+        {
+            var (_, table, service) = CreateTable(2, 3);
+            var first = table.RowGroups[0].Rows[0].Cells[0];
+            var last = table.RowGroups[0].Rows[1].Cells[2];
+
+            Assert.True(service.TryGetSelectionRange(first.ContentStart, last.ElementEnd,
+                out var range));
+            Assert.Equal(2, range.RowCount);
+            Assert.Equal(3, range.ColumnCount);
+        });
+    }
+
+    [Fact]
     public void SameCellMergeIsRejectedWithoutNativeHistoryOrTreeChange()
     {
         StaTestHelper.Run(() =>
@@ -636,6 +687,164 @@ public sealed class WriterTableServiceTests
             Assert.Equal(new GridLength(120), table.Columns[0].Width);
             Assert.Equal(new GridLength(120), table.Columns[1].Width);
             Assert.Equal(Brushes.WhiteSmoke.Color, Assert.IsType<SolidColorBrush>(table.Background).Color);
+        });
+    }
+
+    [Fact]
+    public void CellVerticalAlignmentRedistributesPaddingWithoutChangingHeightOrHorizontalPadding()
+    {
+        StaTestHelper.Run(() =>
+        {
+            var (_, table, service) = CreateTable(1, 1);
+            var cell = table.RowGroups[0].Rows[0].Cells[0];
+            cell.Padding = new Thickness(2, 3, 4, 9);
+            Assert.True(service.TryGetCell(cell, out var reference));
+
+            Assert.True(service.SetCellVerticalAlignment(reference,
+                WriterTableCellVerticalAlignment.Bottom));
+            Assert.Equal(new Thickness(2, 12, 4, 0), cell.Padding);
+            Assert.True(service.SetCellVerticalAlignment(reference,
+                WriterTableCellVerticalAlignment.Center));
+            Assert.Equal(new Thickness(2, 6, 4, 6), cell.Padding);
+            Assert.True(service.SetCellVerticalAlignment(reference,
+                WriterTableCellVerticalAlignment.Top));
+            Assert.Equal(new Thickness(2, 0, 4, 12), cell.Padding);
+        });
+    }
+
+    [Fact]
+    public void SelectedRangeAlignmentFormatsEveryCoveredCellOnly()
+    {
+        StaTestHelper.Run(() =>
+        {
+            var (_, table, service) = CreateTable(2, 3);
+            var group = table.RowGroups[0];
+            foreach (var cell in group.Rows.SelectMany(row => row.Cells))
+                cell.Padding = new Thickness(2, 0, 4, 12);
+            Assert.True(service.TryGetSelectionRange(group.Rows[0].Cells[0].ContentStart,
+                group.Rows[1].Cells[1].ElementEnd, out var range));
+
+            Assert.True(service.SetCellAlignment(range, TextAlignment.Right));
+            Assert.True(service.SetCellVerticalAlignment(range,
+                WriterTableCellVerticalAlignment.Center));
+
+            for (var row = 0; row < 2; row++)
+            {
+                Assert.All(group.Rows[row].Cells.Take(2), cell =>
+                {
+                    Assert.Equal(TextAlignment.Right, cell.TextAlignment);
+                    Assert.Equal(new Thickness(2, 6, 4, 6), cell.Padding);
+                });
+                var unselected = group.Rows[row].Cells[2];
+                Assert.NotEqual(TextAlignment.Right, unselected.TextAlignment);
+                Assert.Equal(new Thickness(2, 0, 4, 12), unselected.Padding);
+            }
+        });
+    }
+
+    [Fact]
+    public void TableHorizontalAlignmentChangesPlacementWithoutChangingCellTextAlignment()
+    {
+        StaTestHelper.Run(() =>
+        {
+            var (_, table, service) = CreateTable(1, 2);
+            table.TextAlignment = TextAlignment.Right;
+            var cell = table.RowGroups[0].Rows[0].Cells[0];
+            cell.TextAlignment = TextAlignment.Center;
+
+            Assert.True(service.SetTableHorizontalAlignment(table,
+                WriterTableHorizontalAlignment.Center, tableWidth: 240, availableWidth: 600));
+
+            Assert.Equal(180, table.Margin.Left);
+            Assert.Equal(180, table.Margin.Right);
+            Assert.Equal(0, table.Margin.Top);
+            Assert.Equal(0, table.Margin.Bottom);
+            Assert.Equal(TextAlignment.Right, table.TextAlignment);
+            Assert.Equal(TextAlignment.Center, cell.TextAlignment);
+            Assert.False(service.SetTableHorizontalAlignment(table,
+                WriterTableHorizontalAlignment.Center, tableWidth: 240, availableWidth: 600));
+            Assert.True(service.SetTableHorizontalAlignment(table,
+                WriterTableHorizontalAlignment.Right, tableWidth: 240, availableWidth: 600));
+            Assert.Equal(360, table.Margin.Left);
+        });
+    }
+
+    [Fact]
+    public void TablePlacementReflowPreservesExistingNativeEditHistory()
+    {
+        StaTestHelper.Run(() =>
+        {
+            var created = CreateTable(1, 2);
+            using var service = created.Service;
+            var editor = created.Editor;
+            var table = created.Table;
+            var window = HostEditor(editor);
+            try
+            {
+                window.Show();
+                window.UpdateLayout();
+                Assert.True(service.SetTableHorizontalAlignment(table,
+                    WriterTableHorizontalAlignment.Center, 240, 600));
+                editor.IsUndoEnabled = false;
+                editor.IsUndoEnabled = true;
+                var paragraph = table.RowGroups[0].Rows[0].Cells[0].Blocks
+                    .OfType<Paragraph>().Single();
+                editor.Selection.Select(paragraph.ContentStart, paragraph.ContentEnd);
+                editor.Selection.Text = "edited";
+                Assert.True(editor.CanUndo);
+                var changed = 0;
+                editor.TextChanged += (_, _) => changed++;
+
+                WriterTableMarginProjection.ProjectWithoutUndo(editor.Document, table, 240, 800);
+
+                Assert.Equal(new Thickness(280, 0, 280, 0), table.Margin);
+                Assert.True(editor.CanUndo);
+                Assert.True(editor.Undo());
+                Assert.Equal(new Thickness(280, 0, 280, 0), table.Margin);
+                Assert.NotEqual("edited", new TextRange(paragraph.ContentStart,
+                    paragraph.ContentEnd).Text.Trim());
+                Assert.True(editor.CanRedo);
+
+                WriterTableMarginProjection.ProjectWithoutUndo(editor.Document, table, 240, 700);
+
+                Assert.Equal(new Thickness(230, 0, 230, 0), table.Margin);
+                Assert.True(editor.CanRedo);
+                Assert.True(editor.Redo());
+                Assert.Equal(new Thickness(230, 0, 230, 0), table.Margin);
+                Assert.Equal("edited", new TextRange(paragraph.ContentStart,
+                    paragraph.ContentEnd).Text.Trim());
+            }
+            finally
+            {
+                window.Close();
+            }
+        });
+    }
+
+    [Fact]
+    public void FullWidthPlacementIntentSurvivesAWidthReduction()
+    {
+        StaTestHelper.Run(() =>
+        {
+            foreach (var alignment in Enum.GetValues<WriterTableHorizontalAlignment>())
+            {
+                var created = CreateTable(1, 2);
+                using var service = created.Service;
+                var table = created.Table;
+                Assert.True(service.SetTableHorizontalAlignment(table, alignment, 600, 600));
+                WriterTableMarginProjection.Project(table, alignment, 600, 600);
+
+                WriterTableMarginProjection.Project(table, 400, 600);
+
+                var expected = alignment switch
+                {
+                    WriterTableHorizontalAlignment.Left => new Thickness(0, 0, 200, 0),
+                    WriterTableHorizontalAlignment.Center => new Thickness(100, 0, 100, 0),
+                    WriterTableHorizontalAlignment.Right => new Thickness(200, 0, 0, 0),
+                    _ => throw new ArgumentOutOfRangeException()
+                };
+                Assert.Equal(expected, table.Margin);
+            }
         });
     }
 

@@ -44,6 +44,10 @@ public class RibbonOptionsDialog : Window
     private const string OkButtonPartName = "PART_OkButton";
     private const string CancelButtonPartName = "PART_CancelButton";
     private const string CloseButtonPartName = "PART_CloseButton";
+    private const string ScrollBarStyleResourceKey = "RibbonKit.ScrollBarStyle";
+    private static readonly Uri ScrollBarResourcesUri = new(
+        "/RibbonKit;component/Themes/Controls.ScrollBars.xaml",
+        UriKind.RelativeOrAbsolute);
 
     private static readonly DependencyPropertyKey PagesPropertyKey =
         DependencyProperty.RegisterReadOnly(
@@ -163,6 +167,7 @@ public class RibbonOptionsDialog : Window
         _cancelButton = GetTemplateChild(CancelButtonPartName) as ButtonBase;
         _closeButton = GetTemplateChild(CloseButtonPartName) as ButtonBase;
 
+        ApplyContentScrollBarStyle();
         UpdateContentScrollMode();
 
         if (_okButton is not null)
@@ -192,6 +197,36 @@ public class RibbonOptionsDialog : Window
 
     private static void OnSelectedPageChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
         ((RibbonOptionsDialog)d).UpdateContentScrollMode();
+
+    private void ApplyContentScrollBarStyle()
+    {
+        if (_contentScroll is null
+            || _contentScroll.Resources.Contains(typeof(ScrollBar)))
+        {
+            return;
+        }
+
+        Style? scrollBarStyle = _contentScroll.TryFindResource(ScrollBarStyleResourceKey) as Style;
+        if (scrollBarStyle is null)
+        {
+            // Keyed resources in the assembly theme dictionary are not exposed through ordinary
+            // element lookup. Load the existing shared dictionary into this one viewport's local
+            // scope; its DynamicResources still resolve against the host's active token palette.
+            var resources = new ResourceDictionary { Source = ScrollBarResourcesUri };
+            _contentScroll.Resources.MergedDictionaries.Add(resources);
+            scrollBarStyle = resources[ScrollBarStyleResourceKey] as Style;
+        }
+
+        if (scrollBarStyle is null)
+        {
+            return;
+        }
+
+        // ScrollViewer generates native ScrollBar instances inside its template. Supplying the
+        // shared keyed style as the viewport's implicit ScrollBar style changes only their chrome;
+        // native scrolling ownership, commands and range behavior remain untouched.
+        _contentScroll.Resources[typeof(ScrollBar)] = scrollBarStyle;
+    }
 
     /// <summary>
     /// Chooses how the current page is hosted: a page whose content is an

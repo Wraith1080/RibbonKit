@@ -4,9 +4,50 @@
     xmlns:controls="clr-namespace:RibbonKit.Controls"
     xmlns:layout="clr-namespace:RibbonKit.Layout">
 
+    <!-- The aggregator also lists this part directly for the public RibbonScrollBar.
+         Import it here as well because deferred gallery templates resolve StaticResource
+         only within their own dictionary/merged dictionaries, not aggregator siblings. -->
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.ScrollBars.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
     <!-- Part of the shared RibbonKit control-template dictionary; merged by Office2024.xaml.
          RibbonGalleryItem, RibbonGallery, InRibbonGallery.
          Colours/metrics come from Tokens.Office20XX.xaml via {DynamicResource}. -->
+
+    <!-- A deferred ScrollViewer template cannot use StaticResource against an aggregator
+         sibling, and cross-file BasedOn chains are unsupported by the XAML designer. Keep
+         this small gallery adapter local while importing the one shared template source above. -->
+    <Style x:Key="RibbonKit.GalleryScrollBarStyle" TargetType="{x:Type ScrollBar}">
+        <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.ScrollBar.Track}" />
+        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.ScrollBar.Glyph}" />
+        <Setter Property="Width" Value="{DynamicResource RibbonKit.Metrics.ScrollBar.Thickness}" />
+        <Setter Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.ScrollBar.Thickness}" />
+        <!-- This adapter is used only by gallery popup viewports. Keep the generated vertical
+             rail one DIP clear of the popup card edge without changing the shared style. -->
+        <Setter Property="Margin" Value="0,0,1,0" />
+        <Setter Property="controls:RibbonScrollBar.ButtonCornerRadius"
+                Value="{DynamicResource RibbonKit.Metrics.ScrollBar.ButtonCornerRadius}" />
+        <Setter Property="controls:RibbonScrollBar.ThumbCornerRadius"
+                Value="{DynamicResource RibbonKit.Metrics.ScrollBar.ThumbCornerRadius}" />
+        <Setter Property="controls:RibbonScrollBar.RailCornerRadius"
+                Value="{DynamicResource RibbonKit.Metrics.ScrollBar.RailCornerRadius}" />
+        <Setter Property="Template" Value="{StaticResource RibbonKit.VerticalScrollBarTemplate}" />
+        <Setter Property="UseLayoutRounding" Value="True" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Style.Triggers>
+            <Trigger Property="Orientation" Value="Horizontal">
+                <Setter Property="Width" Value="Auto" />
+                <Setter Property="MinWidth" Value="0" />
+                <Setter Property="Height" Value="{DynamicResource RibbonKit.Metrics.ScrollBar.Thickness}" />
+                <Setter Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.ScrollBar.Thickness}" />
+                <Setter Property="Template" Value="{StaticResource RibbonKit.HorizontalScrollBarTemplate}" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" Value="0.5" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
 
     <!-- ============================================================
          RibbonGalleryItem — selectable tile with hover/selected chrome
@@ -71,6 +112,10 @@
                         <ScrollViewer VerticalScrollBarVisibility="Auto"
                                       HorizontalScrollBarVisibility="Disabled"
                                       MaxHeight="340">
+                            <ScrollViewer.Resources>
+                                <Style TargetType="{x:Type ScrollBar}"
+                                       BasedOn="{StaticResource RibbonKit.GalleryScrollBarStyle}" />
+                            </ScrollViewer.Resources>
                             <ItemsPresenter />
                         </ScrollViewer>
                     </Border>
@@ -99,7 +144,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type controls:InRibbonGallery}">
-                    <Grid>
+                    <Grid UseLayoutRounding="True">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="17" />
@@ -111,36 +156,54 @@
                                 CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
                                 SnapsToDevicePixels="True" />
                         <Decorator x:Name="PART_ContentHost" Grid.Column="0" Margin="2">
-                            <Grid>
-                                <ScrollViewer x:Name="PART_ScrollViewer"
-                                              VerticalScrollBarVisibility="Hidden"
-                                              HorizontalScrollBarVisibility="Disabled"
-                                              Focusable="False">
-                                    <!-- MaxWidth caps wrapping at the strip's width even when
-                                         re-homed into the (unconstrained) popup, so the
-                                         expanded gallery wraps into rows instead of one line -->
-                                    <ItemsPresenter MaxWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}" />
-                                </ScrollViewer>
-                            </Grid>
+                            <!-- Keep the strip viewport permanently in the main-window tree.
+                                 Only PART_ItemsPresenter moves to the popup, so a per-monitor
+                                 DPI transition cannot carry an HWND-specific viewport/clip back. -->
+                            <ScrollViewer x:Name="PART_ScrollViewer"
+                                          VerticalScrollBarVisibility="Hidden"
+                                          HorizontalScrollBarVisibility="Disabled"
+                                          Focusable="False">
+                                <!-- MaxWidth caps wrapping at the strip's width even when
+                                     re-homed into the (unconstrained) popup, so the
+                                     expanded gallery wraps into rows instead of one line -->
+                                <ItemsPresenter x:Name="PART_ItemsPresenter"
+                                                MaxWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}" />
+                            </ScrollViewer>
                         </Decorator>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <StackPanel.Resources>
+                        <Grid x:Name="SideButtonHost"
+                              Grid.Column="1"
+                              Margin="0,1"
+                              UseLayoutRounding="True">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            <Grid.Resources>
                                 <!-- Shared chrome for the three side buttons -->
                                 <Style x:Key="SideButtonStyle" TargetType="{x:Type ButtonBase}">
-                                    <Setter Property="Height" Value="17" />
                                     <Setter Property="Focusable" Value="False" />
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                    <Setter Property="VerticalContentAlignment" Value="Stretch" />
                                     <Setter Property="Template">
                                         <Setter.Value>
                                             <ControlTemplate TargetType="{x:Type ButtonBase}">
-                                                <Border x:Name="Chrome"
-                                                        Background="Transparent"
-                                                        BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
-                                                        CornerRadius="{DynamicResource RibbonKit.Metrics.SmallControlCornerRadius}"
-                                                        Margin="1,0,2,0"
-                                                        SnapsToDevicePixels="True">
-                                                    <ContentPresenter HorizontalAlignment="Center"
-                                                                      VerticalAlignment="Center" />
-                                                </Border>
+                                                <!-- The transparent root deliberately owns the complete
+                                                     row. The inset border is visual chrome only; margins
+                                                     must never create dead hit-test gutters at fractional DPI. -->
+                                                <Grid Background="Transparent"
+                                                      SnapsToDevicePixels="True"
+                                                      UseLayoutRounding="True">
+                                                    <Border x:Name="Chrome"
+                                                            Background="Transparent"
+                                                            BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
+                                                            CornerRadius="{DynamicResource RibbonKit.Metrics.SmallControlCornerRadius}"
+                                                            Margin="1,0,2,0"
+                                                            SnapsToDevicePixels="True">
+                                                        <ContentPresenter HorizontalAlignment="Center"
+                                                                          VerticalAlignment="Center" />
+                                                    </Border>
+                                                </Grid>
                                                 <ControlTemplate.Triggers>
                                                     <Trigger Property="IsMouseOver" Value="True">
                                                         <Setter TargetName="Chrome" Property="Background"
@@ -163,8 +226,9 @@
                                         </Setter.Value>
                                     </Setter>
                                 </Style>
-                            </StackPanel.Resources>
+                            </Grid.Resources>
                             <RepeatButton x:Name="PART_LineUp"
+                                          Grid.Row="0"
                                           Style="{StaticResource SideButtonStyle}">
                                 <Path Data="M0,3.5 L3.5,0 L7,3.5"
                                       Stroke="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
@@ -173,6 +237,7 @@
                                       StrokeEndLineCap="Round" />
                             </RepeatButton>
                             <RepeatButton x:Name="PART_LineDown"
+                                          Grid.Row="1"
                                           Style="{StaticResource SideButtonStyle}">
                                 <Path Data="M0,0 L3.5,3.5 L7,0"
                                       Stroke="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
@@ -181,6 +246,7 @@
                                       StrokeEndLineCap="Round" />
                             </RepeatButton>
                             <ToggleButton x:Name="PART_ExpandToggle"
+                                          Grid.Row="2"
                                           Style="{StaticResource SideButtonStyle}"
                                           IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
                                 <StackPanel>
@@ -195,26 +261,44 @@
                                           HorizontalAlignment="Center" />
                                 </StackPanel>
                             </ToggleButton>
-                        </StackPanel>
+                        </Grid>
                         <!-- Expanded gallery: overlays the strip, like Office -->
                         <Popup x:Name="PART_Popup"
                                AllowsTransparency="True"
                                StaysOpen="True"
-                               Placement="Relative"
-                               HorizontalOffset="-4"
-                               VerticalOffset="-4"
+                               Placement="Custom"
+                               PlacementTarget="{Binding ElementName=PART_ContentHost}"
+                               HorizontalOffset="-1"
+                               VerticalOffset="-8"
                                IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+                            <!--
+                                A transparent Popup is a separate HWND. Its custom placement keeps
+                                the natural-width card's edge at PART_ContentHost's edge, so it
+                                expands away from PART_LineUp/LineDown/ExpandToggle rather than
+                                overlapping those main-window controls.
+                            -->
                             <Border x:Name="PART_PopupHost"
                                     Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
                                     BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
                                     BorderThickness="1"
                                     CornerRadius="{DynamicResource RibbonKit.Metrics.PopupCornerRadius}"
                                     Padding="5"
-                                    Margin="4,4,8,8"
+                                    Margin="4,4,4,8"
                                     MaxHeight="340">
                                 <Border.Effect>
                                     <DropShadowEffect BlurRadius="8" ShadowDepth="2" Opacity="0.25" />
                                 </Border.Effect>
+                                <!-- This viewport remains owned by the popup HWND. The single
+                                     ItemsPresenter is attached here only while the popup is open. -->
+                                <ScrollViewer x:Name="PART_PopupScrollViewer"
+                                              VerticalScrollBarVisibility="Auto"
+                                              HorizontalScrollBarVisibility="Disabled"
+                                              Focusable="False">
+                                    <ScrollViewer.Resources>
+                                        <Style TargetType="{x:Type ScrollBar}"
+                                               BasedOn="{StaticResource RibbonKit.GalleryScrollBarStyle}" />
+                                    </ScrollViewer.Resources>
+                                </ScrollViewer>
                             </Border>
                         </Popup>
                     </Grid>

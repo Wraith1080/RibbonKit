@@ -182,6 +182,260 @@ public sealed class MainWindowIntegrationTests
     }
 
     [Fact]
+    public async Task CenteredTableReflowsAcrossPaperAndContinuousWithoutDirtyingOrReplacingUndo()
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            using var fixture = new WindowFixture();
+            fixture.Show();
+            Assert.True(await fixture.Shell.NewAsync(WriterDocumentProfiles.RibbonKitWriter));
+            await PumpAsync();
+            var window = fixture.Window;
+            var editor = fixture.Editor;
+            var document = fixture.Shell.CurrentDocument;
+            document.Content.Blocks.Clear();
+            var anchor = new Paragraph();
+            document.Content.Blocks.Add(anchor);
+            editor.Selection.Select(anchor.ContentStart, anchor.ContentStart);
+            var tables = window.TableInteractionController.Tables;
+            var table = Assert.IsType<Table>(tables.InsertTable(1, 2));
+            table.Columns[0].Width = new GridLength(100);
+            table.Columns[1].Width = new GridLength(130);
+            window.TableInteractionController.MoveCaret(
+                window.TableInteractionController.GetOrderedCells(table)[0]);
+            window.TableInteractionController.Refresh();
+            await PumpAsync();
+
+            Assert.True(WriterTableLayoutResolver.TryCreate(editor,
+                window.TableInteractionController.GetOrderedCells(table), 0, out var paperLayout));
+            var padding = document.Content.PagePadding;
+            var availableWidth = document.Content.PageWidth - padding.Left - padding.Right;
+            var tableWidth = paperLayout.Bounds.Width / paperLayout.ProjectionScaleX;
+            Assert.True(tables.SetTableHorizontalAlignment(table,
+                WriterTableHorizontalAlignment.Center, tableWidth, availableWidth));
+            WriterTableMarginProjection.Project(table, WriterTableHorizontalAlignment.Center,
+                tableWidth, availableWidth);
+            await PumpAsync();
+            var paperMargin = table.Margin;
+            Assert.Equal(paperMargin.Left, paperMargin.Right, 6);
+
+            editor.IsUndoEnabled = false;
+            editor.IsUndoEnabled = true;
+            var cellParagraph = table.RowGroups[0].Rows[0].Cells[0].Blocks
+                .OfType<Paragraph>().Single();
+            editor.Selection.Select(cellParagraph.ContentStart, cellParagraph.ContentEnd);
+            editor.Selection.Text = "history";
+            Assert.True(editor.CanUndo);
+            document.MarkClean();
+
+            Toggle(Assert.IsType<RibbonToggleButton>(window.FindName("ContinuousViewButton")));
+            await PumpAsync();
+
+            var continuousMargin = table.Margin;
+            Assert.Equal(WriterViewMode.ContinuousEdit, window.CurrentViewMode);
+            Assert.Equal(continuousMargin.Left, continuousMargin.Right, 6);
+            Assert.NotEqual(paperMargin.Left, continuousMargin.Left);
+            Assert.True(editor.CanUndo);
+            Assert.False(document.IsDirty);
+            Assert.True(editor.Undo());
+            await PumpAsync();
+            Assert.Equal(continuousMargin.Left, table.Margin.Left, 6);
+            Assert.Equal(continuousMargin.Right, table.Margin.Right, 6);
+            Assert.NotEqual("history", new TextRange(cellParagraph.ContentStart,
+                cellParagraph.ContentEnd).Text.Trim());
+
+            Toggle(Assert.IsType<RibbonToggleButton>(window.FindName("PaperViewButton")));
+            await PumpAsync();
+
+            Assert.Equal(WriterViewMode.Paper, window.CurrentViewMode);
+            Assert.Equal(paperMargin.Left, table.Margin.Left, 6);
+            Assert.Equal(paperMargin.Right, table.Margin.Right, 6);
+        });
+    }
+
+    [Fact]
+    public async Task WriterIdentityAndBackstageNavigationIconsAreAppOwned()
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            using var fixture = new WindowFixture();
+            fixture.Show();
+            await PumpAsync();
+
+            Assert.NotNull(fixture.Window.Icon);
+            Assert.True(fixture.Window.HasWriterOrbTemplate());
+            var identityBrush = Assert.IsType<LinearGradientBrush>(
+                fixture.Window.TryFindResource("Writer.Brushes.IdentityMark"));
+            Assert.Equal(new[]
+            {
+                Color.FromRgb(0x3F, 0x94, 0xDF),
+                Color.FromRgb(0x14, 0x5A, 0xA6)
+            }, identityBrush.GradientStops.Select(stop => stop.Color).ToArray());
+
+            var backstage = Assert.IsType<Backstage>(fixture.Ribbon.Backstage);
+            var expectedIcons = new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                ["Home"] = "Icon.WriterHome",
+                ["New"] = "Icon.WriterBackstageNew",
+                ["Open"] = "Icon.WriterBackstageOpen",
+                ["Save"] = "Icon.WriterBackstageSave",
+                ["Save As"] = "Icon.WriterBackstageSaveAs",
+                ["Print"] = "Icon.WriterBackstagePrint",
+                ["Settings"] = "Icon.WriterOptions",
+                ["Exit"] = "Icon.WriterExit"
+            };
+
+            var items = backstage.Items.OfType<BackstageTabItem>().ToArray();
+            Assert.Equal(expectedIcons.Count, items.Length);
+            foreach (var item in items)
+            {
+                string header = Assert.IsType<string>(item.Header);
+                string resourceKey = expectedIcons[header];
+                Assert.Same(fixture.Window.TryFindResource(resourceKey), item.Icon);
+            }
+
+            var gear = Assert.IsType<DrawingImage>(fixture.Window.TryFindResource("Icon.WriterOptions"));
+            var gearDrawing = Assert.IsType<GeometryDrawing>(gear.Drawing);
+            Assert.True(gearDrawing.Geometry.FillContains(new Point(12, 3)));
+            Assert.False(gearDrawing.Geometry.FillContains(new Point(12, 12)));
+
+            var open = Assert.IsType<DrawingImage>(fixture.Window.TryFindResource("Icon.WriterBackstageOpen"));
+            var openDrawing = Assert.IsType<DrawingGroup>(open.Drawing);
+            var openBack = Assert.IsType<GeometryDrawing>(openDrawing.Children[0]);
+            Assert.True(openBack.Geometry.FillContains(new Point(3, 10)));
+
+            var saveAs = Assert.IsType<DrawingImage>(fixture.Window.TryFindResource("Icon.WriterBackstageSaveAs"));
+            var saveAsDrawing = Assert.IsType<DrawingGroup>(saveAs.Drawing);
+            var pencil = Assert.IsType<GeometryDrawing>(saveAsDrawing.Children[1]);
+            Assert.True(pencil.Geometry.FillContains(new Point(20.5, 9.5)));
+            Assert.False(pencil.Geometry.FillContains(new Point(18, 13)));
+        });
+    }
+
+    [Fact]
+    public async Task MainContentScrollBarsUseSharedRibbonKitChrome()
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            using var fixture = new WindowFixture();
+            fixture.Show();
+            await PumpAsync();
+
+            var host = Assert.IsType<Grid>(fixture.Window.FindName("DocumentPresentationHost"));
+            var sharedStyle = Assert.IsType<Style>(
+                host.FindResource("RibbonKit.ScrollBarStyle"));
+            var scopedStyle = Assert.IsType<Style>(host.FindResource(typeof(ScrollBar)));
+            Assert.Same(sharedStyle, scopedStyle.BasedOn);
+
+            var viewport = Assert.IsType<ScrollViewer>(fixture.Window.FindName("EditorViewport"));
+            var scrollBars = FindVisualDescendants<ScrollBar>(viewport).ToArray();
+            Assert.NotEmpty(scrollBars);
+            Assert.All(scrollBars, scrollBar => Assert.Same(scopedStyle, scrollBar.Style));
+            Assert.All(scrollBars.Where(scrollBar => scrollBar.Orientation == Orientation.Vertical),
+                scrollBar => Assert.Equal(new Thickness(0, 0, 1, 0), scrollBar.Margin));
+            Assert.All(scrollBars.Where(scrollBar => scrollBar.Orientation == Orientation.Horizontal),
+                scrollBar => Assert.Equal(new Thickness(0), scrollBar.Margin));
+
+            var preview = Assert.IsType<WriterDocumentPreviewView>(
+                fixture.Window.FindName("PreviewView"));
+            var inheritedPreviewStyle = Assert.IsType<Style>(
+                preview.Viewer.FindResource(typeof(ScrollBar)));
+            Assert.Same(scopedStyle, inheritedPreviewStyle);
+        });
+    }
+
+    [Fact]
+    public async Task BackstageRecentAndNewScrollBarsUseSharedRibbonKitChrome()
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            using var fixture = new WindowFixture(withRecentFile: true);
+            fixture.Show();
+            await PumpAsync();
+
+            var backstage = Assert.IsType<Backstage>(fixture.Ribbon.Backstage);
+            fixture.Ribbon.IsBackstageOpen = true;
+            backstage.Items.OfType<BackstageTabItem>().Single(item =>
+                Equals(item.Header, "Home")).IsSelected = true;
+            await PumpAsync();
+
+            var recentScroll = Assert.IsType<ScrollViewer>(
+                fixture.Window.FindName("RecentDocumentsScrollViewer"));
+            AssertBackstageScrollBarChrome(recentScroll);
+
+            backstage.Items.OfType<BackstageTabItem>().Single(item =>
+                Equals(item.Header, "New")).IsSelected = true;
+            await PumpAsync();
+
+            var newScroll = Assert.IsType<ScrollViewer>(
+                fixture.Window.FindName("NewProfileCardsScrollViewer"));
+            AssertBackstageScrollBarChrome(newScroll);
+        });
+    }
+
+    [Fact]
+    public async Task BackstagePageContentStaysLeftAnchoredAsWindowWidens()
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            using var fixture = new WindowFixture(withRecentFile: true);
+            fixture.Show();
+            await PumpAsync();
+
+            var backstage = Assert.IsType<Backstage>(fixture.Ribbon.Backstage);
+            fixture.Ribbon.IsBackstageOpen = true;
+            await PumpAsync();
+
+            var home = backstage.Items.OfType<BackstageTabItem>().Single(item =>
+                Equals(item.Header, "Home"));
+            home.IsSelected = true;
+            await PumpAsync();
+            var recentPage = Assert.IsType<Grid>(fixture.Window.FindName("RecentPage"));
+            var recentDescription = Assert.IsType<TextBlock>(
+                fixture.Window.FindName("RecentPageDescription"));
+            var recentList = Assert.IsType<ItemsControl>(fixture.Window.FindName("RecentList"));
+            var recentButton = FindVisualDescendants<Button>(recentList).First(button =>
+                button.CommandParameter is RecentFileEntry);
+            var recentContent = FindVisualDescendants<Grid>(recentButton).Single(grid =>
+                Math.Abs(grid.MaxWidth - 760) < 0.01);
+            double recentDescriptionLeft = LeftWithin(recentDescription, recentPage);
+            double recentContentLeft = LeftWithin(recentContent, recentPage);
+
+            var newPageItem = backstage.Items.OfType<BackstageTabItem>().Single(item =>
+                Equals(item.Header, "New"));
+            newPageItem.IsSelected = true;
+            await PumpAsync();
+            var newPage = Assert.IsType<Grid>(fixture.Window.FindName("NewProfilePage"));
+            var newDescription = Assert.IsType<TextBlock>(
+                fixture.Window.FindName("NewProfileDescription"));
+            double newDescriptionLeft = LeftWithin(newDescription, newPage);
+
+            var printPageItem = backstage.Items.OfType<BackstageTabItem>().Single(item =>
+                Equals(item.Header, "Print"));
+            printPageItem.IsSelected = true;
+            await PumpAsync();
+            var printPage = Assert.IsType<Grid>(fixture.Window.FindName("PrintBackstagePage"));
+            double printPageLeft = LeftWithin(printPage, backstage);
+
+            fixture.Window.Width = 1800;
+            await PumpAsync();
+
+            home.IsSelected = true;
+            await PumpAsync();
+            Assert.Equal(recentDescriptionLeft, LeftWithin(recentDescription, recentPage), 3);
+            Assert.Equal(recentContentLeft, LeftWithin(recentContent, recentPage), 3);
+
+            newPageItem.IsSelected = true;
+            await PumpAsync();
+            Assert.Equal(newDescriptionLeft, LeftWithin(newDescription, newPage), 3);
+
+            printPageItem.IsSelected = true;
+            await PumpAsync();
+            Assert.Equal(printPageLeft, LeftWithin(printPage, backstage), 3);
+        });
+    }
+
+    [Fact]
     public async Task MainWindowContractAndEditorLifecycleAreWiredOnTheRealTree()
     {
         await StaTestHelper.RunAsync(async () =>
@@ -405,10 +659,9 @@ public sealed class MainWindowIntegrationTests
         Assert.False(string.IsNullOrWhiteSpace(Ribbon.GetCommandId(pictureToolsTab)));
         Assert.False(string.IsNullOrWhiteSpace(KeyTip.GetKeys(pictureToolsTab)));
         Assert.False(string.IsNullOrWhiteSpace(AutomationProperties.GetHelpText(pictureToolsTab)));
-        var firstContextualIndex = fixture.Ribbon.Tabs.IndexOf(
-            fixture.Ribbon.Tabs.First(tab => tab.IsContextual));
-        Assert.All(fixture.Ribbon.Tabs.Take(firstContextualIndex), tab => Assert.False(tab.IsContextual));
-        Assert.All(fixture.Ribbon.Tabs.Skip(firstContextualIndex), tab => Assert.True(tab.IsContextual));
+        var pageTab = Assert.IsType<RibbonTab>(window.FindName("PageTab"));
+        Assert.True(fixture.Ribbon.Tabs.IndexOf(tableToolsTab) < fixture.Ribbon.Tabs.IndexOf(pageTab));
+        Assert.True(fixture.Ribbon.Tabs.IndexOf(pictureToolsTab) < fixture.Ribbon.Tabs.IndexOf(pageTab));
 
         var insertButtons = new[]
         {
@@ -480,7 +733,15 @@ public sealed class MainWindowIntegrationTests
         picker.ApplyTemplate();
         var pickerPopupHost = Assert.IsType<Border>(
             picker.Template.FindName("PART_PopupHost", picker));
+        pickerPopupHost.Background = null;
+        var selectedTab = fixture.Ribbon.SelectedTab;
+        fixture.Ribbon.SelectedTab = insertTab;
+        await PumpAsync();
+        picker.IsDropDownOpen = true;
+        await PumpAsync();
         Assert.NotNull(pickerPopupHost.Background);
+        picker.IsDropDownOpen = false;
+        fixture.Ribbon.SelectedTab = selectedTab;
 
         var tableCommands = new[]
         {
@@ -1139,7 +1400,8 @@ public sealed class MainWindowIntegrationTests
         var printResult = window.TryPrintCurrentSnapshot(printDevice);
         Assert.NotNull(printResult);
         Assert.True(printResult.Submitted);
-        Assert.Same(firstSnapshot!.Paginator, printDevice.SubmittedPaginator);
+        Assert.Same(firstSnapshot!.PrintPaginator, printDevice.SubmittedPaginator);
+        Assert.NotSame(firstSnapshot.Paginator, printDevice.SubmittedPaginator);
         editor.AppendText(" pending edit");
         Assert.Null(window.TryPrintCurrentSnapshot(new RecordingPrintDevice()));
         await WaitForAsync(() => preview.Snapshot is not null);
@@ -1189,7 +1451,8 @@ public sealed class MainWindowIntegrationTests
         Assert.Equal(document.PageSettings, colouredSnapshot.PageSettings);
         var colouredPrintDevice = new RecordingPrintDevice();
         Assert.True(window.TryPrintCurrentSnapshot(colouredPrintDevice)!.Submitted);
-        Assert.Same(colouredSnapshot.Paginator, colouredPrintDevice.SubmittedPaginator);
+        Assert.Same(colouredSnapshot.PrintPaginator, colouredPrintDevice.SubmittedPaginator);
+        Assert.NotSame(colouredSnapshot.Paginator, colouredPrintDevice.SubmittedPaginator);
 
         window.FlowDirection = FlowDirection.RightToLeft;
         window.Width = 540;
@@ -1261,6 +1524,23 @@ public sealed class MainWindowIntegrationTests
         AssertEditorFocusRestored(fixture);
     }
 
+    private static void AssertBackstageScrollBarChrome(ScrollViewer scrollViewer)
+    {
+        var sharedStyle = Assert.IsType<Style>(
+            scrollViewer.FindResource("RibbonKit.ScrollBarStyle"));
+        var scopedStyle = Assert.IsType<Style>(
+            scrollViewer.Resources[typeof(ScrollBar)]);
+        Assert.Same(sharedStyle, scopedStyle.BasedOn?.BasedOn);
+
+        var scrollBars = FindVisualDescendants<ScrollBar>(scrollViewer).ToArray();
+        Assert.NotEmpty(scrollBars);
+        Assert.All(scrollBars, scrollBar => Assert.Same(scopedStyle, scrollBar.Style));
+        Assert.All(scrollBars, scrollBar => Assert.Equal(new Thickness(0), scrollBar.Margin));
+    }
+
+    private static double LeftWithin(FrameworkElement element, Visual ancestor) =>
+        element.TransformToAncestor(ancestor).Transform(new Point()).X;
+
     private static void AssertRuntimeContract(WindowFixture fixture)
     {
         var window = fixture.Window;
@@ -1331,10 +1611,10 @@ public sealed class MainWindowIntegrationTests
             AutomationProperties.GetName(item))));
         Assert.All(fileActions, item => Assert.NotNull(item.Command));
 
-        Assert.Equal(new[] { "Home", "Insert", "Page", "View", "Print Preview", "Table Tools", "Picture Tools" },
+        Assert.Equal(new[] { "Home", "Insert", "Table Tools", "Picture Tools", "Page", "View", "Print Preview" },
             ribbon.Tabs.Select(tab => tab.Header?.ToString()).ToArray());
-        Assert.True(ribbon.Tabs[4].IsModal);
-        Assert.Equal(Visibility.Collapsed, ribbon.Tabs[4].Visibility);
+        var previewTab = Assert.Single(ribbon.Tabs, tab => tab.IsModal);
+        Assert.Equal(Visibility.Collapsed, previewTab.Visibility);
         var home = ribbon.Tabs[0];
         Assert.Equal("Home", home.Header);
         Assert.Equal(new[] { "Clipboard", "Font", "Paragraph", "Editing" },
@@ -1439,6 +1719,13 @@ public sealed class MainWindowIntegrationTests
         var paragraphSpacing = Assert.IsType<RibbonDropDownButton>(window.FindName("ParagraphSpacingButton"));
         Assert.Equal(RibbonControlSize.Large, paragraphSpacing.Size);
         Assert.NotNull(paragraphSpacing.LargeIcon);
+        var paragraphSeparator = Assert.IsType<RibbonGroupSeparator>(
+            window.FindName("ParagraphGroupSeparator"));
+        Assert.False(paragraphSeparator.Focusable);
+        Assert.False(paragraphSeparator.IsHitTestVisible);
+        Assert.True(string.IsNullOrWhiteSpace(KeyTip.GetKeys(paragraphSeparator)));
+        Assert.Null(UIElementAutomationPeer.CreatePeerForElement(paragraphSeparator));
+        Assert.False(ribbon.AddToQuickAccess(paragraphSeparator));
         Assert.Equal(new[] { "QatSave", "QatUndo", "QatRedo" },
             qatItems.Select(AutomationProperties.GetAutomationId).ToArray());
         Assert.Same(ApplicationCommands.Undo, Assert.IsType<RibbonButton>(qatItems[1]).Command);
@@ -1466,10 +1753,12 @@ public sealed class MainWindowIntegrationTests
             .Where(key => key.StartsWith("Icon.Writer", StringComparison.Ordinal))
             .ToArray();
 
-        Assert.True(iconKeys.Length >= 100, $"Expected at least 100 Writer icons, found {iconKeys.Length}.");
+        Assert.True(iconKeys.Length >= 110, $"Expected at least 110 Writer icons, found {iconKeys.Length}.");
         foreach (var key in new[]
         {
             "Icon.WriterNew", "Icon.WriterOpen", "Icon.WriterSaveAs", "Icon.WriterExportPdf",
+            "Icon.WriterBackstageNew", "Icon.WriterBackstageOpen", "Icon.WriterBackstageSave",
+            "Icon.WriterBackstageSaveAs", "Icon.WriterBackstagePrint",
             "Icon.WriterPrint", "Icon.WriterPrintPreview", "Icon.WriterPageSize", "Icon.WriterPortrait",
             "Icon.WriterLandscape", "Icon.WriterMargins", "Icon.WriterPageColor", "Icon.WriterColumns",
             "Icon.WriterPageBreak", "Icon.WriterEditLayout", "Icon.WriterTwoPages", "Icon.WriterPageWidth",
@@ -1478,7 +1767,7 @@ public sealed class MainWindowIntegrationTests
             "Icon.WriterMergeCells", "Icon.WriterSplitCells", "Icon.WriterDistributeColumns",
             "Icon.WriterCellAlignMiddle", "Icon.WriterCellShading", "Icon.WriterBorders",
             "Icon.WriterTheme", "Icon.WriterDarkMode", "Icon.WriterBackdrop", "Icon.WriterCustomizeRibbon",
-            "Icon.WriterOptions", "Icon.WriterWarning", "Icon.WriterInformation", "Icon.WriterError",
+            "Icon.WriterHome", "Icon.WriterOptions", "Icon.WriterExit", "Icon.WriterWarning", "Icon.WriterInformation", "Icon.WriterError",
             "Icon.WriterLock", "Icon.WriterImport", "Icon.WriterExport", "Icon.WriterReset"
         })
             Assert.IsType<DrawingImage>(fixture.Window.TryFindResource(key));

@@ -1,6 +1,7 @@
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:system="clr-namespace:System;assembly=System.Runtime">
 
     <!-- Office 2010 Black is a hybrid palette: dark window/tab chrome around a
          silver-gray ribbon with dark command text. The base theme still supplies
@@ -31,6 +32,47 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Border" Color="#565656" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Primary" Color="#202020" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Secondary" Color="#474747" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScrollBar.Track" Color="#E4E4E4" />
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.ScrollBar.ButtonBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#FAFAFA" />
+        <GradientStop Offset="0.48" Color="#E2E2E2" />
+        <GradientStop Offset="0.54" Color="#BEBEBE" />
+        <GradientStop Offset="1" Color="#E8E8E8" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScrollBar.ButtonBorder" Color="#797979" />
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Dialog.ActionBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#FAFAFA" />
+        <GradientStop Offset="0.48" Color="#E2E2E2" />
+        <GradientStop Offset="0.54" Color="#BEBEBE" />
+        <GradientStop Offset="1" Color="#E8E8E8" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Dialog.ActionBorder" Color="#797979" />
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.ScrollBar.Thumb" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#F3F3F3" />
+        <GradientStop Offset="0.48" Color="#D0D0D0" />
+        <GradientStop Offset="0.54" Color="#A0A0A0" />
+        <GradientStop Offset="1" Color="#D5D5D5" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.ScrollBar.ThumbHover" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#FFF8D8" />
+        <GradientStop Offset="0.48" Color="#F1D16C" />
+        <GradientStop Offset="0.54" Color="#D29A27" />
+        <GradientStop Offset="1" Color="#F2D889" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.ScrollBar.ThumbPressed" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#E9C965" />
+        <GradientStop Offset="0.48" Color="#C78A1E" />
+        <GradientStop Offset="0.54" Color="#A56510" />
+        <GradientStop Offset="1" Color="#DDB54B" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScrollBar.ThumbBorder" Color="#686868" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScrollBar.Glyph" Color="#474747" />
+    <system:Double x:Key="RibbonKit.Metrics.ScrollBar.Thickness">18</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.ScrollBar.MinThumbLength">18</system:Double>
+    <CornerRadius x:Key="RibbonKit.Metrics.ScrollBar.ButtonCornerRadius">2</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.ScrollBar.ThumbCornerRadius">3</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.ScrollBar.RailCornerRadius">2</CornerRadius>
+    <Thickness x:Key="RibbonKit.Metrics.ScrollBar.ThumbBorderThickness">1</Thickness>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Input.Glyph" Color="#FFFFFF" />
 
     <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.Foreground" Color="#F2F2F2" />

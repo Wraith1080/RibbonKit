@@ -8,15 +8,39 @@ RibbonKit.Controls.RibbonWindow.FrameAppearance.get -> RibbonKit.Controls.Ribbon
 RibbonKit.Controls.RibbonWindow.FrameAppearance.set -> void
 RibbonKit.Controls.RibbonTabControl.IsBackstageActive.get -> bool
 RibbonKit.Controls.RibbonTab.IsBackstageActive.get -> bool
+RibbonKit.Controls.Ribbon.BackstageClosed -> System.EventHandler?
+RibbonKit.Controls.RibbonGroupSeparator
+RibbonKit.Controls.RibbonGroupSeparator.RibbonGroupSeparator() -> void
+RibbonKit.Controls.RibbonGroupSeparator.SizeState.get -> RibbonKit.RibbonGroupSizeState
+RibbonKit.Controls.RibbonScrollBar
+RibbonKit.Controls.RibbonScrollBar.ButtonCornerRadius.get -> System.Windows.CornerRadius
+RibbonKit.Controls.RibbonScrollBar.ButtonCornerRadius.set -> void
+RibbonKit.Controls.RibbonScrollBar.RailCornerRadius.get -> System.Windows.CornerRadius
+RibbonKit.Controls.RibbonScrollBar.RailCornerRadius.set -> void
+RibbonKit.Controls.RibbonScrollBar.RibbonScrollBar() -> void
+RibbonKit.Controls.RibbonScrollBar.ThumbCornerRadius.get -> System.Windows.CornerRadius
+RibbonKit.Controls.RibbonScrollBar.ThumbCornerRadius.set -> void
 RibbonKit.Controls.RibbonWindowFrameAppearance
 RibbonKit.Controls.RibbonWindowFrameAppearance.Default = 0 -> RibbonKit.Controls.RibbonWindowFrameAppearance
 RibbonKit.Controls.RibbonWindowFrameAppearance.Office2007Aero = 1 -> RibbonKit.Controls.RibbonWindowFrameAppearance
 RibbonKit.Controls.RibbonWindowFrameAppearance.Office2010Aero = 2 -> RibbonKit.Controls.RibbonWindowFrameAppearance
 RibbonKit.RibbonBackstageDesign.Classic2007 = 4 -> RibbonKit.RibbonBackstageDesign
 RibbonKit.RibbonBackstageDesign.Glass2007 = 3 -> RibbonKit.RibbonBackstageDesign
+override RibbonKit.Controls.RibbonTabControl.ClearContainerForItemOverride(System.Windows.DependencyObject! element, object! item) -> void
+override RibbonKit.Controls.RibbonTabControl.PrepareContainerForItemOverride(System.Windows.DependencyObject! element, object! item) -> void
 static readonly RibbonKit.Controls.RibbonWindow.ActiveBackdropProperty -> System.Windows.DependencyProperty!
 static readonly RibbonKit.Controls.RibbonWindow.AeroFrameTintIntensityProperty -> System.Windows.DependencyProperty!
 static readonly RibbonKit.Controls.RibbonWindow.AeroFrameTintProperty -> System.Windows.DependencyProperty!
 static readonly RibbonKit.Controls.RibbonWindow.FrameAppearanceProperty -> System.Windows.DependencyProperty!
 static readonly RibbonKit.Controls.RibbonTabControl.IsBackstageActiveProperty -> System.Windows.DependencyProperty!
 static readonly RibbonKit.Controls.RibbonTab.IsBackstageActiveProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonGroupSeparator.SizeStateProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonScrollBar.ButtonCornerRadiusProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonScrollBar.RailCornerRadiusProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonScrollBar.ThumbCornerRadiusProperty -> System.Windows.DependencyProperty!
+static RibbonKit.Controls.RibbonScrollBar.GetButtonCornerRadius(System.Windows.DependencyObject! element) -> System.Windows.CornerRadius
+static RibbonKit.Controls.RibbonScrollBar.GetRailCornerRadius(System.Windows.DependencyObject! element) -> System.Windows.CornerRadius
+static RibbonKit.Controls.RibbonScrollBar.GetThumbCornerRadius(System.Windows.DependencyObject! element) -> System.Windows.CornerRadius
+static RibbonKit.Controls.RibbonScrollBar.SetButtonCornerRadius(System.Windows.DependencyObject! element, System.Windows.CornerRadius value) -> void
+static RibbonKit.Controls.RibbonScrollBar.SetRailCornerRadius(System.Windows.DependencyObject! element, System.Windows.CornerRadius value) -> void
+static RibbonKit.Controls.RibbonScrollBar.SetThumbCornerRadius(System.Windows.DependencyObject! element, System.Windows.CornerRadius value) -> void

@@ -1,4 +1,10 @@
+using System.IO;
+using System.IO.Packaging;
+using System.Windows.Controls;
 using System.Windows.Documents;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Xps.Packaging;
 using RibbonKit.Writer.Models;
 using RibbonKit.Writer.Preview;
 using RibbonKit.Writer.Printing;
@@ -40,7 +46,7 @@ public sealed class WriterPrintServiceTests
     }
 
     [Fact]
-    public void ReportOnlySubmitsExactPaginatorWithoutChangingLogicalMargins()
+    public void ReportOnlySubmitsIsolatedPrintPaginatorWithoutChangingLogicalMargins()
     {
         StaTestHelper.Run(() =>
         {
@@ -57,13 +63,69 @@ public sealed class WriterPrintServiceTests
             var result = new WriterPrintService().Print(snapshot, device);
 
             Assert.True(result.Submitted);
-            Assert.Same(snapshot.Paginator, device.Paginator);
-            Assert.Same(snapshot.Paginator, result.Paginator);
+            Assert.Same(snapshot.PrintPaginator, device.Paginator);
+            Assert.Same(snapshot.PrintPaginator, result.Paginator);
+            Assert.NotSame(snapshot.Paginator, device.Paginator);
             Assert.Equal(settings, snapshot.PageSettings);
             Assert.Equal(settings.Margins, snapshot.PageSettings.Margins);
             Assert.False(writerDocument.IsDirty);
             Assert.Equal(settings, writerDocument.PageSettings);
             Assert.Same(liveDocument, writerDocument.Content);
+        });
+    }
+
+    [Fact]
+    public void PictureSnapshotSubmitsFlowPaginatorThatCanBeSerializedToDeviceSpool()
+    {
+        StaTestHelper.Run(() =>
+        {
+            var pixels = new byte[4 * 3 * 4];
+            for (var index = 0; index < pixels.Length; index += 4)
+            {
+                pixels[index] = 0x30;
+                pixels[index + 1] = 0x80;
+                pixels[index + 2] = 0xE0;
+                pixels[index + 3] = 0xFF;
+            }
+            var bitmap = BitmapSource.Create(4, 3, 96, 96, PixelFormats.Bgra32, null,
+                pixels, 4 * 4);
+            bitmap.Freeze();
+            var document = new FlowDocument(new Paragraph(new InlineUIContainer(new Image
+            {
+                Source = bitmap,
+                Width = 80,
+                Height = 60
+            })));
+            using var snapshot = new WriterPreviewCloneService().CreateSnapshot(document,
+                DocumentPageSettings.A4());
+            var device = new RecordingPrintDevice(null);
+            var xpsPath = Path.Combine(Path.GetTempPath(),
+                $"RibbonKit.Writer.PicturePrint.{Guid.NewGuid():N}.xps");
+            try
+            {
+                var result = new WriterPrintService().Print(snapshot, device);
+
+                Assert.True(result.Submitted);
+                Assert.Same(snapshot.PrintPaginator, device.Paginator);
+                Assert.NotSame(snapshot.Paginator, device.Paginator);
+                using (var output = new XpsDocument(xpsPath, FileAccess.ReadWrite))
+                    XpsDocument.CreateXpsDocumentWriter(output).Write(device.Paginator!);
+                using (var output = new XpsDocument(xpsPath, FileAccess.Read))
+                {
+                    var paginator = output.GetFixedDocumentSequence().DocumentPaginator;
+                    paginator.ComputePageCount();
+                    Assert.True(paginator.PageCount > 0);
+                    Assert.NotSame(DocumentPage.Missing, paginator.GetPage(0));
+                }
+                using (var package = Package.Open(xpsPath, FileMode.Open, FileAccess.Read))
+                    Assert.Contains(package.GetParts(), part =>
+                        part.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase));
+            }
+            finally
+            {
+                if (File.Exists(xpsPath))
+                    File.Delete(xpsPath);
+            }
         });
     }
 

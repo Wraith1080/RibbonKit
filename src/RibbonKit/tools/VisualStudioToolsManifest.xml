@@ -27,6 +27,7 @@
       <Item Type="RibbonKit.Controls.RibbonDropDownButton" />
       <Item Type="RibbonKit.Controls.RibbonComboBox" />
       <Item Type="RibbonKit.Controls.RibbonTextBox" />
+      <Item Type="RibbonKit.Controls.RibbonScrollBar" />
       <Item Type="RibbonKit.Controls.RibbonMenuItem" />
 
       <!-- Galleries -->

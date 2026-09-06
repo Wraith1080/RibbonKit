@@ -252,6 +252,12 @@ public sealed class WriterEditorContextMenuController : IDisposable
     public Action<WriterEditorContextMenuTarget>? ParagraphDialogRequested { get; set; }
 
     /// <summary>
+    /// Gets or sets an optional structured-selection hit test used to preserve native selection
+    /// when a right click lands inside a selected object region such as table cells.
+    /// </summary>
+    public Func<TextPointer, TextPointer, TextPointer, bool>? StructuredSelectionHitTest { get; set; }
+
+    /// <summary>
     /// Raised while the base text menu is complete so later packets can append context-aware
     /// structured-object actions using the same stable target.
     /// </summary>
@@ -409,7 +415,7 @@ public sealed class WriterEditorContextMenuController : IDisposable
 
         var selectionStart = _editor.Selection.Start;
         var selectionEnd = _editor.Selection.End;
-        if (IsPointerInsideSelection(pointer, selectionStart, selectionEnd))
+        if (ShouldPreserveSelection(pointer, selectionStart, selectionEnd))
             return;
 
         var insertion = pointer.GetInsertionPosition(LogicalDirection.Forward) ?? pointer;
@@ -565,6 +571,11 @@ public sealed class WriterEditorContextMenuController : IDisposable
             return false;
         return pointer.CompareTo(selectionStart) >= 0 && pointer.CompareTo(selectionEnd) < 0;
     }
+
+    internal bool ShouldPreserveSelection(TextPointer pointer, TextPointer selectionStart,
+        TextPointer selectionEnd) =>
+        IsPointerInsideSelection(pointer, selectionStart, selectionEnd)
+        || StructuredSelectionHitTest?.Invoke(pointer, selectionStart, selectionEnd) == true;
 
     private SpellingError? FindSpellingError(TextPointer start, TextPointer end)
     {

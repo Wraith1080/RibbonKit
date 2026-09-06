@@ -33,6 +33,22 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Border" Color="#919191" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Primary" Color="#444444" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Secondary" Color="#777777" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScrollBar.Track" Color="#F3F3F3" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScrollBar.ButtonBackground" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScrollBar.ButtonBorder" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Dialog.ActionBackground" Color="#F7F7F7" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Dialog.ActionBorder" Color="#ABABAB" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScrollBar.Thumb" Color="#B8B8B8" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScrollBar.ThumbHover" Color="#8A8A8A" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScrollBar.ThumbPressed" Color="#5F5F5F" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScrollBar.ThumbBorder" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScrollBar.Glyph" Color="#777777" />
+    <system:Double x:Key="RibbonKit.Metrics.ScrollBar.Thickness">16</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.ScrollBar.MinThumbLength">20</system:Double>
+    <CornerRadius x:Key="RibbonKit.Metrics.ScrollBar.ButtonCornerRadius">0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.ScrollBar.ThumbCornerRadius">0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.ScrollBar.RailCornerRadius">0</CornerRadius>
+    <Thickness x:Key="RibbonKit.Metrics.ScrollBar.ThumbBorderThickness">0</Thickness>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Input.Glyph" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Accent" Color="#2B579A" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.HoverBackground" Color="#E8EEF7" />

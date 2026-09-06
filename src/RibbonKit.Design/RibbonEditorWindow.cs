@@ -996,6 +996,7 @@ internal sealed class RibbonEditorWindow : Window
         "RibbonTextBox" => "Text Box",
         "InRibbonGallery" => "Gallery (in-ribbon)",
         "RibbonGallery" => "Gallery",
+        "RibbonGroupSeparator" => "Group Separator",
         "Separator" => "Separator",
         "StackPanel" => "Stack Panel",
         "RibbonGalleryItem" => "Gallery Item",
@@ -1947,7 +1948,7 @@ internal sealed class RibbonEditorWindow : Window
             control.Items.Add(MakeControlMenuItem("Text Box", "RibbonTextBox", true));
             control.Items.Add(MakeControlMenuItem("Gallery (in-ribbon)", "InRibbonGallery", false));
             control.Items.Add(MakeControlMenuItem("Gallery (drop-down)", "RibbonGallery", false));
-            control.Items.Add(MakeControlMenuItem("Separator", "Separator", false));
+            control.Items.Add(MakeControlMenuItem("Group Separator", "RibbonGroupSeparator", false));
             control.Items.Add(MakeControlMenuItem("Text Block", "TextBlock", false));
             _addMenu.Items.Add(control);
             _addMenu.Items.Add(MakeMenuItem("Stack Panel", OnAddStack));

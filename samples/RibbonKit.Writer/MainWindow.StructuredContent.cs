@@ -20,10 +20,13 @@ public partial class MainWindow
     private readonly WriterHyperlinkService _writerHyperlinkService = new();
     private readonly WriterDateTimeService _writerDateTimeService = new();
     private WriterTableInteractionController? _tableInteractionController;
+    private WriterTableResizeController? _tableResizeController;
     private WriterStructuredContextResolver? _structuredContextResolver;
     private WriterPictureInteractionController? _pictureInteractionController;
     private Button? _customTableSizeButton;
     private bool _updatingTableGridSelection;
+    private bool _tablePlacementProjectionQueued;
+    private bool _projectingTablePlacement;
 
     /// <summary>Gets the app-owned bridge between table services and the live Writer surface.</summary>
     internal WriterTableInteractionController TableInteractionController =>
@@ -41,6 +44,9 @@ public partial class MainWindow
             DocumentEditor,
             () => CanEditTables);
         _tableInteractionController.StateChanged += OnTableInteractionStateChanged;
+        _tableResizeController = new WriterTableResizeController(DocumentEditor,
+            _tableInteractionController, CompleteStructuredContentMutation);
+        DocumentEditor.SizeChanged += OnTablePlacementViewportChanged;
         EditingController.Editing.UndoExtension = _writerImageService;
         EditingController.Editing.UndoCompleted += OnEditingUndoCompleted;
         EditingController.Editing.RedoCompleted += OnEditingRedoCompleted;
@@ -51,23 +57,7 @@ public partial class MainWindow
             DocumentEditor, _writerImageService);
         _pictureInteractionController.StateChanged += OnPictureInteractionStateChanged;
         PopulateTableGridPicker();
-        ApplyTableGridPopupSurface();
         ApplyStructuredContentCapabilityProjection();
-    }
-
-    private void ApplyTableGridPopupSurface()
-    {
-        // The shared InRibbonGallery popup lives in a separate HWND. Its template-level dynamic
-        // background can remain unresolved there, exposing ribbon content behind the grid. Keep
-        // this app-owned workaround until RKWF-013 is resolved in an approved RibbonKit packet.
-        TableGridPicker.ApplyTemplate();
-        if (TableGridPicker.Template.FindName("PART_PopupHost", TableGridPicker) is Border popupHost)
-        {
-            popupHost.Background = SystemParameters.HighContrast
-                ? SystemColors.WindowBrush
-                : TryFindResource("RibbonKit.Brushes.Ribbon.ContentBackground") as Brush
-                    ?? SystemColors.WindowBrush;
-        }
     }
 
     private void DisposeStructuredContent()
@@ -90,12 +80,15 @@ public partial class MainWindow
         EditingController.Editing.RedoCompleted -= OnEditingRedoCompleted;
         EditingController.Editing.UndoExtension = null;
         DocumentEditor.PreviewKeyDown -= OnEditorPictureRemovalPreviewKeyDown;
+        DocumentEditor.SizeChanged -= OnTablePlacementViewportChanged;
         if (_pictureInteractionController is not null)
         {
             _pictureInteractionController.StateChanged -= OnPictureInteractionStateChanged;
             _pictureInteractionController.Dispose();
             _pictureInteractionController = null;
         }
+        _tableResizeController?.Dispose();
+        _tableResizeController = null;
         _tableInteractionController.StateChanged -= OnTableInteractionStateChanged;
         _tableInteractionController.Dispose();
         _tableInteractionController = null;
@@ -172,7 +165,9 @@ public partial class MainWindow
         tableMenu.Items.Add(new Separator());
         tableMenu.Items.Add(CreateContextAction(context, snapshot, "Merge Cells",
             "WriterContextTableMerge", CanMergeTableContext, current =>
-                ExecuteTableContext(current, tables => tables.TryMergeSelection(out _))));
+                ExecuteTableContext(current, tables =>
+                    _structuredContextResolver?.TryGetTableRange(current, out var range) == true
+                    && tables.TryMergeCells(range, out _))));
         tableMenu.Items.Add(CreateContextAction(context, snapshot, "Split Cell",
             "WriterContextTableSplit", CanSplitTableContext, current =>
                 ExecuteTableContext(current, tables => tables.TrySplitCurrentCell())));
@@ -824,8 +819,12 @@ public partial class MainWindow
     private void OnDeleteTableColumnClick(object sender, RoutedEventArgs e) =>
         QueueStructuredContentAction(() => MutateCurrentCell((tables, cell) => tables.DeleteColumns(cell)));
 
-    private void OnMergeTableCellsClick(object sender, RoutedEventArgs e) =>
-        QueueStructuredContentAction(() => MutateTable(tables => tables.TryMergeSelection(out _)));
+    private void OnMergeTableCellsClick(object sender, RoutedEventArgs e)
+    {
+        if (_tableInteractionController?.TryGetSelectionRange(out var range) != true)
+            return;
+        QueueStructuredContentAction(() => MutateTable(tables => tables.TryMergeCells(range, out _)));
+    }
 
     private void OnSplitTableCellClick(object sender, RoutedEventArgs e) =>
         QueueStructuredContentAction(() => MutateTable(tables => tables.TrySplitCurrentCell()));
@@ -872,10 +871,91 @@ public partial class MainWindow
     private void OnTableAlignmentClick(object sender, RoutedEventArgs e)
     {
         if (sender is not FrameworkElement { Tag: string tag }
-            || !Enum.TryParse<TextAlignment>(tag, out var alignment))
+            || !Enum.TryParse<TextAlignment>(tag, out var alignment)
+            || _tableInteractionController?.TryGetSelectionRange(out var range) != true)
             return;
-        QueueStructuredContentAction(() => MutateCurrentCell((tables, cell) =>
-            tables.SetCellAlignment(cell, alignment)));
+        QueueStructuredContentAction(() => MutateTable(tables =>
+            tables.SetCellAlignment(range, alignment)));
+    }
+
+    private void OnTableVerticalAlignmentClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement { Tag: string tag }
+            || !Enum.TryParse<WriterTableCellVerticalAlignment>(tag, out var alignment)
+            || _tableInteractionController?.TryGetSelectionRange(out var range) != true)
+            return;
+        QueueStructuredContentAction(() => MutateTable(tables =>
+            tables.SetCellVerticalAlignment(range, alignment)));
+    }
+
+    private void OnTableHorizontalAlignmentClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement { Tag: string tag }
+            || !Enum.TryParse<WriterTableHorizontalAlignment>(tag, out var alignment))
+            return;
+        QueueStructuredContentAction(() => MutateCurrentTable((tables, table) =>
+        {
+            if (!WriterTableLayoutResolver.TryCreate(DocumentEditor,
+                    TableInteractionController.GetOrderedCells(table),
+                    TableInteractionController.CurrentCell?.GroupIndex ?? 0, out var layout))
+                return false;
+            var pageWidth = DocumentEditor.Document.PageWidth;
+            var padding = DocumentEditor.Document.PagePadding;
+            var availableWidth = double.IsFinite(pageWidth)
+                ? pageWidth - padding.Left - padding.Right
+                : DocumentEditor.ActualWidth - DocumentEditor.Padding.Left - DocumentEditor.Padding.Right;
+            var tableWidth = layout.Bounds.Width / layout.ProjectionScaleX;
+            var changed = tables.SetTableHorizontalAlignment(table, alignment,
+                tableWidth, availableWidth);
+            if (changed)
+                WriterTableMarginProjection.Project(table, alignment, tableWidth, availableWidth);
+            return changed;
+        }));
+    }
+
+    private void OnTablePlacementViewportChanged(object sender, SizeChangedEventArgs e) =>
+        QueueTablePlacementProjection();
+
+    private void QueueTablePlacementProjection()
+    {
+        if (_tablePlacementProjectionQueued || _tableInteractionController is null
+            || CurrentViewMode == WriterViewMode.PrintPreview)
+            return;
+        _tablePlacementProjectionQueued = true;
+        _ = Dispatcher.BeginInvoke(DispatcherPriority.Render, new Action(() =>
+        {
+            _tablePlacementProjectionQueued = false;
+            if (_closing || !IsVisible || _tableInteractionController is null
+                || CurrentViewMode == WriterViewMode.PrintPreview)
+                return;
+
+            var pageWidth = DocumentEditor.Document.PageWidth;
+            var padding = DocumentEditor.Document.PagePadding;
+            var availableWidth = double.IsFinite(pageWidth)
+                ? pageWidth - padding.Left - padding.Right
+                : DocumentEditor.ActualWidth - DocumentEditor.Padding.Left
+                    - DocumentEditor.Padding.Right;
+            if (!double.IsFinite(availableWidth) || availableWidth <= 0)
+                return;
+
+            _projectingTablePlacement = true;
+            try
+            {
+                foreach (var table in DocumentEditor.Document.Blocks.OfType<Table>())
+                {
+                    if (WriterTableLayoutResolver.TryCreate(DocumentEditor,
+                            TableInteractionController.GetOrderedCells(table), 0, out var layout))
+                    {
+                        WriterTableMarginProjection.ProjectWithoutUndo(DocumentEditor.Document,
+                            table, layout.Bounds.Width / layout.ProjectionScaleX, availableWidth);
+                    }
+                }
+            }
+            finally
+            {
+                _projectingTablePlacement = false;
+            }
+        }));
     }
 
     private void OnTableBordersClick(object sender, RoutedEventArgs e)
@@ -992,6 +1072,7 @@ public partial class MainWindow
         var inTable = CurrentViewMode != WriterViewMode.PrintPreview
             && _tableInteractionController.IsInTable;
         var canEdit = inTable && CanEditTables;
+        _tableResizeController?.SetEnabled(canEdit);
         TableToolsTab.Visibility = inTable ? Visibility.Visible : Visibility.Collapsed;
         TableToolsTab.IsEnabled = canEdit;
         TableRowsColumnsGroup.IsEnabled = canEdit;
@@ -1030,6 +1111,8 @@ public partial class MainWindow
         TableRowHeightButton.IsEnabled = canEdit;
         TableColumnWidthButton.IsEnabled = canEdit;
         TableAlignmentButton.IsEnabled = canEdit;
+        TableVerticalAlignmentButton.IsEnabled = canEdit;
+        TableHorizontalAlignmentButton.IsEnabled = canEdit;
         TableBordersButton.IsEnabled = canEdit;
         TableBackgroundButton.IsEnabled = canEdit;
 
@@ -1058,11 +1141,8 @@ public partial class MainWindow
 
     private bool IsSelectionInsideOneTableCell()
     {
-        if (_tableInteractionController is null
-            || !_tableInteractionController.Tables.TryGetCell(DocumentEditor.Selection.Start, out var first)
-            || !_tableInteractionController.Tables.TryGetCell(DocumentEditor.Selection.End, out var last))
-            return false;
-        return ReferenceEquals(first.Cell, last.Cell);
+        return _tableInteractionController?.Tables.TryGetSelectionRange(out var range) == true
+            && range.RowCount == 1 && range.ColumnCount == 1;
     }
 
     private void ApplyStructuredContentCapabilityProjection()

@@ -125,7 +125,10 @@ surface `#5A4229`.
   if it overlaps too closely with Office 2024 or Aurora.
 
 High contrast is not part of this aesthetic shortlist. It should follow system accessibility colors
-and behavior rather than appear as another user-selected RibbonKit palette.
+and behavior rather than appear as another user-selected RibbonKit palette. This is future whole-surface
+accessibility work: the current RibbonKit release does not claim complete Windows contrast-theme support,
+even though the RKWF-013 gallery popup correction and RKWF-019 scrollbar introduced targeted system-color
+fallbacks for those two surfaces.
 
 Recommended order: **Office 2021 -> RibbonKit Aurora -> Warm Sand -> Graphite Copper**. Evergreen,
 Aubergine and Polar Slate remain exploratory until the earlier themes establish how much maintenance

@@ -65,7 +65,7 @@ public sealed class WriterPreviewCloneService
             var fixedDocument = xpsDocument.GetFixedDocumentSequence();
             var paginator = fixedDocument.DocumentPaginator;
             paginator.ComputePageCount();
-            return new WriterPreviewSnapshot(clone, paginator, pageSettings,
+            return new WriterPreviewSnapshot(clone, paginator, flowPaginator, pageSettings,
                 xpsDocument, package, backingStream, packageUri, fixedDocument);
         }
         catch

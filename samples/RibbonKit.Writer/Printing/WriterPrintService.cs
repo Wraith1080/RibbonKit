@@ -3,7 +3,7 @@ using RibbonKit.Writer.Preview;
 
 namespace RibbonKit.Writer.Printing;
 
-/// <summary>Analyzes printer imageable bounds and submits the preview paginator.</summary>
+/// <summary>Analyzes printer imageable bounds and submits the snapshot's isolated print paginator.</summary>
 public sealed class WriterPrintService
 {
     /// <summary>Differences at or below this value are treated as printer rounding.</summary>
@@ -48,7 +48,7 @@ public sealed class WriterPrintService
     }
 
     /// <summary>
-    /// Analyzes a snapshot and submits its exact paginator.  The default report-only policy keeps
+    /// Analyzes a snapshot and submits its isolated flow paginator. The default report-only policy keeps
     /// logical margins unchanged even when the device cannot image the requested rectangle.
     /// </summary>
     public WriterPrintResult Print(WriterPreviewSnapshot snapshot, IWriterPrintDevice device,
@@ -67,8 +67,8 @@ public sealed class WriterPrintService
         var shouldSubmit = !analysis.HasConflicts ||
             options.ConflictBehavior == WriterPrintConflictBehavior.ReportOnly;
         if (shouldSubmit)
-            device.Submit(snapshot.Paginator, options.DocumentName);
-        return new WriterPrintResult(analysis, snapshot.Paginator, shouldSubmit);
+            device.Submit(snapshot.PrintPaginator, options.DocumentName);
+        return new WriterPrintResult(analysis, snapshot.PrintPaginator, shouldSubmit);
     }
 
     private static void AddConflict(List<WriterPrintConflict> conflicts,

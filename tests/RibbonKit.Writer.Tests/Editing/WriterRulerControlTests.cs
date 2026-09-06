@@ -12,6 +12,48 @@ namespace RibbonKit.Writer.Tests.Editing;
 public sealed class WriterRulerControlTests
 {
     [Fact]
+    public void AppearanceRefreshInvalidatesRealizedRulerWithoutChangingGeometry()
+    {
+        StaTestHelper.Run(() =>
+        {
+            using var ruler = new WriterRuler
+            {
+                Width = 520,
+                IsPaperView = true,
+                PageSettings = DocumentPageSettings.Letter()
+            };
+            var window = new Window
+            {
+                Content = ruler,
+                Width = 520,
+                Height = 100,
+                WindowStartupLocation = WindowStartupLocation.Manual,
+                Left = -10000,
+                Top = -10000,
+                ShowInTaskbar = false,
+                Opacity = 0.01
+            };
+            try
+            {
+                window.Show();
+                window.UpdateLayout();
+                var layout = ruler.Layout;
+                Assert.True(ruler.IsArrangeValid);
+
+                ruler.RefreshAppearance();
+
+                Assert.False(ruler.IsArrangeValid);
+                Assert.Same(layout, ruler.Layout);
+            }
+            finally
+            {
+                if (window.IsVisible)
+                    window.Close();
+            }
+        });
+    }
+
+    [Fact]
     public void MarginDragPreviewsWithoutDirtyingOrCommittingUntilRelease()
     {
         StaTestHelper.Run(() =>

@@ -203,6 +203,33 @@
                     </StackPanel>
                 </rk:RibbonGroup>
 
+                <rk:RibbonGroup Header="RTL Scrolling"
+                                rk:Ribbon.CommandId="loc.group.scrolling"
+                                Icon="{StaticResource Icon.Gear}"
+                                CanResize="False">
+                    <StackPanel Orientation="Horizontal"
+                                Margin="6,0"
+                                VerticalAlignment="Center">
+                        <rk:RibbonScrollBar x:Name="RtlVerticalScrollBar"
+                                            Height="68"
+                                            Minimum="0"
+                                            Maximum="100"
+                                            Value="30"
+                                            ViewportSize="25"
+                                            AutomationProperties.Name="RTL lab vertical scrollbar" />
+                        <rk:RibbonScrollBar x:Name="RtlHorizontalScrollBar"
+                                            Orientation="Horizontal"
+                                            Width="132"
+                                            Minimum="0"
+                                            Maximum="100"
+                                            Value="40"
+                                            ViewportSize="25"
+                                            Margin="12,0,0,0"
+                                            VerticalAlignment="Center"
+                                            AutomationProperties.Name="RTL lab horizontal scrollbar" />
+                    </StackPanel>
+                </rk:RibbonGroup>
+
                 <rk:RibbonGroup Header="Popup Checks"
                                 rk:Ribbon.CommandId="loc.group.popups"
                                 Icon="{StaticResource Icon.Paste}">
@@ -217,6 +244,7 @@
                         <rk:RibbonMenuItem Header="Merge Formatting" Icon="{StaticResource Icon.Copy}" />
                         <rk:RibbonMenuItem Header="Keep Text Only" />
                     </rk:RibbonSplitButton>
+                    <rk:RibbonGroupSeparator x:Name="RtlPopupGroupSeparator" />
                     <rk:RibbonDropDownButton Header="Select"
                                              rk:Ribbon.CommandId="loc.command.select"
                                              Size="Large"
@@ -279,7 +307,10 @@
                         mirror while the main Showcase stays LTR. In RTL Inputs, option indicators
                         should lead from the right; labels should move right of their text fields;
                         the mixed field should start at the right while the document name stays
-                        left-aligned inside a still-mirrored control.&#x0a;
+                        left-aligned inside a still-mirrored control. In Popup Checks, the separator
+                        must remain between Paste and Select as their physical order mirrors. In RTL
+                        Scrolling, the horizontal arrows/value direction should mirror while the
+                        vertical scrollbar keeps its top-to-bottom direction.&#x0a;
                         3. Open both customization pages. Add points toward the target list; Remove
                         points back toward available commands.&#x0a;
                         4. Right-click Paste, Select, and both QAT buttons. Check submenu placement

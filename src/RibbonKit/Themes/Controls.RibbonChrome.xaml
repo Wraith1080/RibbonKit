@@ -278,12 +278,14 @@
                                     Background="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroFallback}"
                                     IsHitTestVisible="False"
                                     Visibility="Collapsed" />
-                            <Border x:Name="Office2010TabTintLayer"
-                                    Grid.ColumnSpan="4"
-                                    Background="{Binding AeroFrameTint, RelativeSource={RelativeSource AncestorType={x:Type controls:RibbonWindow}}}"
-                                    Opacity="{Binding AeroFrameTintIntensity, RelativeSource={RelativeSource AncestorType={x:Type controls:RibbonWindow}}}"
-                                    IsHitTestVisible="False"
-                                    Visibility="Collapsed" />
+                            <Grid x:Name="Office2010TabTintVisual"
+                                  Grid.ColumnSpan="4"
+                                  IsHitTestVisible="False">
+                                <Border x:Name="Office2010TabTintLayer"
+                                        Background="{Binding AeroFrameTint, RelativeSource={RelativeSource AncestorType={x:Type controls:RibbonWindow}}}"
+                                        Opacity="{Binding AeroFrameTintIntensity, RelativeSource={RelativeSource AncestorType={x:Type controls:RibbonWindow}}}"
+                                        Visibility="Collapsed" />
+                            </Grid>
 
                             <!-- Compatibility fallback for custom Ribbon templates that omit the
                                  outer application-menu layer. The shipping template leaves this
@@ -864,6 +866,22 @@
                                     Property="Padding"
                                     Value="{DynamicResource RibbonKit.Metrics.ApplicationButtonAeroPadding}" />
                         </DataTrigger>
+                        <!-- Match the inactive title composition: retain the fallback at full
+                             strength and attenuate only the user-controlled tint. -->
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding FrameAppearance, RelativeSource={RelativeSource AncestorType={x:Type controls:RibbonWindow}}}"
+                                           Value="Office2010Aero" />
+                                <Condition Binding="{Binding IsActive, RelativeSource={RelativeSource AncestorType={x:Type controls:RibbonWindow}}}"
+                                           Value="False" />
+                            </MultiDataTrigger.Conditions>
+                            <Setter TargetName="Office2010TabMaterialLayer"
+                                    Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroInactiveFallback}" />
+                            <Setter TargetName="Office2010TabTintVisual"
+                                    Property="Opacity"
+                                    Value="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroInactiveOverlayOpacity}" />
+                        </MultiDataTrigger>
                         <MultiDataTrigger>
                             <MultiDataTrigger.Conditions>
                                 <Condition Binding="{Binding FrameAppearance, RelativeSource={RelativeSource AncestorType={x:Type controls:RibbonWindow}}}"

@@ -171,14 +171,56 @@ public sealed class WriterTableService : IDisposable
     {
         ThrowIfDisposed();
         range = default;
-        if (!TryGetCell(start, out var first) ||
-            !TryGetCell(end, out var last) ||
+        if (start is null || end is null)
+            return false;
+        try
+        {
+            if (start.CompareTo(end) > 0)
+                (start, end) = (end, start);
+        }
+        catch (ArgumentException)
+        {
+            return false;
+        }
+        catch (InvalidOperationException)
+        {
+            return false;
+        }
+
+        var collapsed = start.CompareTo(end) == 0;
+        WriterTableCellReference first;
+        WriterTableCellReference last;
+        var hasFirst = collapsed
+            ? TryGetCell(start, out first)
+            : TryGetSelectionEdgeCell(start, LogicalDirection.Forward, out first);
+        var hasLast = collapsed
+            ? TryGetCell(end, out last)
+            : TryGetSelectionEdgeCell(end, LogicalDirection.Backward, out last);
+        if (!hasFirst || !hasLast ||
             !ReferenceEquals(first.Table, last.Table) ||
             !ReferenceEquals(first.RowGroup, last.RowGroup))
             return false;
 
         range = WriterTableRange.Between(first, last);
         return range.IsValid;
+    }
+
+    /// <summary>
+    /// Returns whether a pointer lies in one of the cells covered by a captured table selection.
+    /// </summary>
+    public bool IsPointerInsideTableSelection(TextPointer pointer, TextPointer start, TextPointer end)
+    {
+        ThrowIfDisposed();
+        ArgumentNullException.ThrowIfNull(pointer);
+        ArgumentNullException.ThrowIfNull(start);
+        ArgumentNullException.ThrowIfNull(end);
+        if (!TryGetSelectionRange(start, end, out var range)
+            || !TryGetCell(pointer, out var cell)
+            || !ReferenceEquals(cell.Table, range.Table)
+            || !ReferenceEquals(cell.RowGroup, range.RowGroup))
+            return false;
+        return cell.Row >= range.StartRow && cell.LastRow <= range.EndRow
+            && cell.Column >= range.StartColumn && cell.LastColumn <= range.EndColumn;
     }
 
     /// <summary>Resolves the current caret to a table cell.</summary>
@@ -598,6 +640,93 @@ public sealed class WriterTableService : IDisposable
         });
     }
 
+    /// <summary>Sets the text alignment of every cell intersecting a table range.</summary>
+    public bool SetCellAlignment(WriterTableRange range, TextAlignment alignment)
+    {
+        ThrowIfDisposed();
+        if (!Enum.IsDefined(alignment))
+            throw new ArgumentOutOfRangeException(nameof(alignment), alignment,
+                "Unknown text alignment.");
+        return Mutate(() =>
+        {
+            if (!TryGetRangeCells(range, out var cells))
+                return false;
+            var changed = false;
+            foreach (var cell in cells.Where(cell => cell.TextAlignment != alignment))
+            {
+                cell.TextAlignment = alignment;
+                changed = true;
+            }
+            return changed;
+        });
+    }
+
+    /// <summary>
+    /// Redistributes a cell's existing vertical padding to place its content at the top, center,
+    /// or bottom without changing horizontal padding or row height.
+    /// </summary>
+    public bool SetCellVerticalAlignment(WriterTableCellReference reference,
+        WriterTableCellVerticalAlignment alignment)
+    {
+        ThrowIfDisposed();
+        if (!Enum.IsDefined(alignment))
+            throw new ArgumentOutOfRangeException(nameof(alignment), alignment,
+                "Unknown cell vertical alignment.");
+        return Mutate(() =>
+        {
+            if (!TryGetCell(reference.Cell, out var current))
+                return false;
+            var padding = current.Cell.Padding;
+            var vertical = Math.Max(0, padding.Top + padding.Bottom);
+            var top = alignment switch
+            {
+                WriterTableCellVerticalAlignment.Top => 0,
+                WriterTableCellVerticalAlignment.Center => vertical / 2d,
+                WriterTableCellVerticalAlignment.Bottom => vertical,
+                _ => throw new ArgumentOutOfRangeException(nameof(alignment))
+            };
+            var adjusted = new Thickness(padding.Left, top, padding.Right, vertical - top);
+            if (adjusted == padding)
+                return false;
+            current.Cell.Padding = adjusted;
+            return true;
+        });
+    }
+
+    /// <summary>Sets the vertical content alignment of every cell intersecting a table range.</summary>
+    public bool SetCellVerticalAlignment(WriterTableRange range,
+        WriterTableCellVerticalAlignment alignment)
+    {
+        ThrowIfDisposed();
+        if (!Enum.IsDefined(alignment))
+            throw new ArgumentOutOfRangeException(nameof(alignment), alignment,
+                "Unknown cell vertical alignment.");
+        return Mutate(() =>
+        {
+            if (!TryGetRangeCells(range, out var cells))
+                return false;
+            var changed = false;
+            foreach (var cell in cells)
+            {
+                var padding = cell.Padding;
+                var vertical = Math.Max(0, padding.Top + padding.Bottom);
+                var top = alignment switch
+                {
+                    WriterTableCellVerticalAlignment.Top => 0,
+                    WriterTableCellVerticalAlignment.Center => vertical / 2d,
+                    WriterTableCellVerticalAlignment.Bottom => vertical,
+                    _ => throw new ArgumentOutOfRangeException(nameof(alignment))
+                };
+                var adjusted = new Thickness(padding.Left, top, padding.Right, vertical - top);
+                if (adjusted == padding)
+                    continue;
+                cell.Padding = adjusted;
+                changed = true;
+            }
+            return changed;
+        });
+    }
+
     /// <summary>Sets the padding of a cell.</summary>
     public bool SetCellPadding(WriterTableCellReference reference, Thickness padding)
     {
@@ -669,6 +798,42 @@ public sealed class WriterTableService : IDisposable
             if (!IsTableInDocument(table) || table.TextAlignment == alignment)
                 return false;
             table.TextAlignment = alignment;
+            return true;
+        });
+    }
+
+    /// <summary>Places a table horizontally without changing text alignment inside its cells.</summary>
+    public bool SetTableHorizontalAlignment(Table table, WriterTableHorizontalAlignment alignment,
+        double tableWidth, double availableWidth)
+    {
+        ThrowIfDisposed();
+        ArgumentNullException.ThrowIfNull(table);
+        if (!Enum.IsDefined(alignment))
+            throw new ArgumentOutOfRangeException(nameof(alignment), alignment,
+                "Unknown table alignment.");
+        if (!double.IsFinite(tableWidth) || tableWidth <= 0)
+            throw new ArgumentOutOfRangeException(nameof(tableWidth));
+        if (!double.IsFinite(availableWidth) || availableWidth <= 0)
+            throw new ArgumentOutOfRangeException(nameof(availableWidth));
+
+        var remaining = Math.Max(0, availableWidth - tableWidth);
+        var (left, right) = alignment switch
+        {
+            WriterTableHorizontalAlignment.Left => (0d, remaining),
+            WriterTableHorizontalAlignment.Center => (remaining / 2d, remaining / 2d),
+            WriterTableHorizontalAlignment.Right => (remaining, 0d),
+            _ => throw new ArgumentOutOfRangeException(nameof(alignment))
+        };
+        return Mutate(() =>
+        {
+            if (!IsTableInDocument(table))
+                return false;
+            var top = double.IsFinite(table.Margin.Top) ? table.Margin.Top : 0;
+            var bottom = double.IsFinite(table.Margin.Bottom) ? table.Margin.Bottom : 0;
+            var margin = new Thickness(left, top, right, bottom);
+            if (table.Margin == margin)
+                return false;
+            table.Margin = margin;
             return true;
         });
     }
@@ -780,6 +945,73 @@ public sealed class WriterTableService : IDisposable
             for (var i = current.Column; i < cellColumnEnd; i++)
                 replacement.Columns[i].Width = width;
             if (!ReplaceTable(reference.Table, replacement))
+                return false;
+            if (active.IsValid)
+                caret = FindLogicalCaret(replacement, active.GroupIndex, active.Row, active.Column);
+            return true;
+        }, () => SetCaret(caret));
+    }
+
+    internal bool ApplyResize(Table table, IReadOnlyDictionary<int, double> columnWidths,
+        IReadOnlyList<WriterTableCellPaddingAdjustment> cellPaddings)
+    {
+        ThrowIfDisposed();
+        ArgumentNullException.ThrowIfNull(table);
+        ArgumentNullException.ThrowIfNull(columnWidths);
+        ArgumentNullException.ThrowIfNull(cellPaddings);
+        foreach (var pair in columnWidths)
+        {
+            if (pair.Key < 0 || !double.IsFinite(pair.Value) || pair.Value <= 0)
+                throw new ArgumentOutOfRangeException(nameof(columnWidths));
+        }
+        foreach (var adjustment in cellPaddings)
+        {
+            if (adjustment.GroupIndex < 0 || adjustment.Row < 0 || adjustment.Column < 0)
+                throw new ArgumentOutOfRangeException(nameof(cellPaddings));
+            ValidateThickness(adjustment.Padding, nameof(cellPaddings));
+        }
+
+        WriterTableCellReference? caret = null;
+        return Mutate(() =>
+        {
+            if (!IsTableInDocument(table) || !TryGetLogicalTableWidth(table, out var logicalWidth)
+                || columnWidths.Keys.Any(column => column >= logicalWidth))
+                return false;
+            var active = TryGetCell(Editor.Selection.Start, out var activeReference)
+                && ReferenceEquals(activeReference.Table, table) ? activeReference : default;
+            var replacement = CloneTable(table);
+            var changed = false;
+            if (columnWidths.Count > 0)
+            {
+                EnsureColumns(replacement, logicalWidth);
+                foreach (var pair in columnWidths)
+                {
+                    var width = new GridLength(pair.Value, GridUnitType.Pixel);
+                    if (replacement.Columns[pair.Key].Width == width)
+                        continue;
+                    replacement.Columns[pair.Key].Width = width;
+                    changed = true;
+                }
+            }
+
+            foreach (var adjustment in cellPaddings)
+            {
+                if (adjustment.GroupIndex >= replacement.RowGroups.Count)
+                    return false;
+                var group = replacement.RowGroups[adjustment.GroupIndex];
+                if (!WriterTableGrid.TryBuild(replacement, group, out var grid))
+                    return false;
+                var placement = grid.Placements.FirstOrDefault(item =>
+                    item.Row == adjustment.Row && item.Column == adjustment.Column);
+                if (placement is null)
+                    return false;
+                if (placement.Cell.Padding == adjustment.Padding)
+                    continue;
+                placement.Cell.Padding = adjustment.Padding;
+                changed = true;
+            }
+
+            if (!changed || !ReplaceTable(table, replacement))
                 return false;
             if (active.IsValid)
                 caret = FindLogicalCaret(replacement, active.GroupIndex, active.Row, active.Column);
@@ -1054,6 +1286,27 @@ public sealed class WriterTableService : IDisposable
         return range.IsValid && IsTableInDocument(range.Table) &&
             range.Table.RowGroups.Contains(range.RowGroup) &&
             WriterTableGrid.TryBuild(range.Table, range.RowGroup, out grid);
+    }
+
+    private bool TryGetRangeCells(WriterTableRange range, out IReadOnlyList<TableCell> cells)
+    {
+        cells = Array.Empty<TableCell>();
+        if (!TryGetGrid(range, out var grid) || grid.Matrix is null
+            || range.EndRow >= grid.Rows.Count || range.EndColumn >= grid.ColumnCount)
+            return false;
+        var selected = new HashSet<TableCell>();
+        for (var row = range.StartRow; row <= range.EndRow; row++)
+        {
+            for (var column = range.StartColumn; column <= range.EndColumn; column++)
+            {
+                var cell = grid.Matrix[row, column];
+                if (cell is null)
+                    return false;
+                selected.Add(cell);
+            }
+        }
+        cells = selected.ToArray();
+        return cells.Count > 0;
     }
 
     private WriterTableCellReference? MakeCaretReference(Table table, TableRowGroup group,
@@ -1571,6 +1824,66 @@ public sealed class WriterTableService : IDisposable
             current = GetParent(current);
         }
         return null;
+    }
+
+    private bool TryGetSelectionEdgeCell(TextPointer pointer, LogicalDirection inward,
+        out WriterTableCellReference reference)
+    {
+        reference = default;
+        try
+        {
+            if (TryGetCell(pointer, out var boundary))
+            {
+                var includesBoundary = inward == LogicalDirection.Forward
+                    ? pointer.CompareTo(boundary.Cell.ContentEnd) < 0
+                    : pointer.CompareTo(boundary.Cell.ContentStart
+                        .GetInsertionPosition(LogicalDirection.Forward)
+                        ?? boundary.Cell.ContentStart) > 0;
+                if (includesBoundary)
+                {
+                    reference = boundary;
+                    return true;
+                }
+
+                // A mouse cell selection can stop exactly at the next cell's ContentStart.
+                // One symbol backward is still part of that cell's structural boundary, so
+                // select the preceding physical cell instead of relying on pointer affinity.
+                return TryGetAdjacentCell(boundary, inward, out reference);
+            }
+
+            var offset = inward == LogicalDirection.Forward ? 1 : -1;
+            var inner = pointer.GetPositionAtOffset(offset, inward);
+            return inner is not null && TryGetCell(inner, out reference);
+        }
+        catch (ArgumentException)
+        {
+            return false;
+        }
+        catch (InvalidOperationException)
+        {
+            return false;
+        }
+    }
+
+    private bool TryGetAdjacentCell(WriterTableCellReference boundary, LogicalDirection direction,
+        out WriterTableCellReference reference)
+    {
+        reference = default;
+        if (!WriterTableGrid.TryBuild(boundary.Table, boundary.RowGroup, out var grid))
+            return false;
+        var ordered = grid.Placements
+            .OrderBy(item => item.Row)
+            .ThenBy(item => item.Column)
+            .ToList();
+        var index = ordered.FindIndex(item => ReferenceEquals(item.Cell, boundary.Cell));
+        if (index < 0)
+            return false;
+        index += direction == LogicalDirection.Forward ? 1 : -1;
+        if (index < 0 || index >= ordered.Count)
+            return false;
+        var adjacent = ordered[index];
+        reference = MakeReference(boundary.Table, boundary.RowGroup, adjacent.Cell, adjacent, grid);
+        return true;
     }
 
     private static DependencyObject? GetParent(DependencyObject current) => current switch

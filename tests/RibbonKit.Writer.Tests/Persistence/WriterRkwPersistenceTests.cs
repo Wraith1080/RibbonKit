@@ -215,6 +215,37 @@ public sealed class WriterRkwPersistenceTests
         });
     }
 
+    [Theory]
+    [InlineData(WriterTableHorizontalAlignment.Left, 0, 360)]
+    [InlineData(WriterTableHorizontalAlignment.Center, 180, 180)]
+    [InlineData(WriterTableHorizontalAlignment.Right, 360, 0)]
+    public async Task TablePlacementWithDefaultMarginsSavesAndReopens(
+        WriterTableHorizontalAlignment alignment, double expectedLeft, double expectedRight)
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            using var directory = new TemporaryDirectory();
+            var path = Path.Combine(directory.Path, $"table-{alignment}.rkw");
+            var document = new FlowDocument(new Paragraph(new Run("before")));
+            var editor = new RichTextBox { Document = document };
+            var paragraph = Assert.IsType<Paragraph>(document.Blocks.FirstBlock);
+            editor.Selection.Select(paragraph.ContentStart, paragraph.ContentStart);
+            using var tables = new WriterTableService(editor);
+            var table = Assert.IsType<Table>(tables.InsertTable(1, 2));
+
+            Assert.True(tables.SetTableHorizontalAlignment(table, alignment,
+                tableWidth: 240, availableWidth: 600));
+
+            var persistence = new WriterDocumentPersistence();
+            Assert.True(await persistence.SaveAsync(new WriterDocument(document), path,
+                WriterDocumentFormat.RibbonKitWriter, default));
+            var reopened = Assert.IsType<WriterDocument>(await persistence.LoadAsync(path,
+                WriterDocumentFormat.RibbonKitWriter, default));
+            var reopenedTable = Assert.Single(reopened.Content.Blocks.OfType<Table>());
+            Assert.Equal(new Thickness(expectedLeft, 0, expectedRight, 0), reopenedTable.Margin);
+        });
+    }
+
     [Fact]
     public async Task ContentSchemaTwoOwnsTablesAndVersionOneFixtureRemainsReadable()
     {

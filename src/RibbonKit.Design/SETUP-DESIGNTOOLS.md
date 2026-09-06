@@ -107,8 +107,9 @@ inserts a `StackPanel` (vertical in a group, horizontal inside another stack); "
 whatever's selected (a group's `Items`, a container's `Children`, or as a sibling of a control) and
 defaults stacked buttons to `Size="Small"`. Container nodes expose an `Orientation` editor. The
 contextual **Add ▾ → Control** menu covers Button / Toggle / Check Box / Radio Button / Split / Drop-Down / Text Box (each gets a Header caption) plus Combo
-Box, Gallery (in-ribbon / drop-down), and Separator (no caption); creation tries the RibbonKit xmlns
-first, then WPF framework namespaces (so `Separator` works too). The tree also descends into **item
+Box, Gallery (in-ribbon / drop-down), and the adaptive RibbonKit Group Separator (no caption);
+creation tries the RibbonKit xmlns first, then WPF framework namespaces for ordinary layout/text
+types. The tree also descends into **item
 containers** — combo boxes, galleries, and the **split / drop-down buttons** (their `Items`, which are
 `RibbonMenuItem`s) — and surfaces the **Backstage** (the File menu) as its own root node with editable
 nav items. **Add Item** creates the right child for the selected container (a `ComboBoxItem`,

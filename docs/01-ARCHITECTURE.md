@@ -46,7 +46,7 @@ Ribbon (Control)
 │   │       ├── RibbonComboBox
 │   │       ├── RibbonTextBox / RibbonCheckBox / RibbonRadioButton
 │   │       ├── InRibbonGallery  ──►  expands to GalleryPopup
-│   │       ├── RibbonSeparator / RibbonControlGroup (button stacks)
+│   │       ├── RibbonGroupSeparator / RibbonControlGroup (button stacks)
 │   │       └── GroupDialogLauncher (small ↘ button in group corner)
 │   └── ContextualTabGroup (colored header spanning related tabs)
 └── RibbonStatusBar (optional, later)

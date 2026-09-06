@@ -172,7 +172,7 @@ public sealed class WriterPrintAnalysis
 /// <summary>Controls how the print service handles imageable-area conflicts.</summary>
 public enum WriterPrintConflictBehavior
 {
-    /// <summary>Report conflicts and submit the exact preview paginator unchanged.</summary>
+    /// <summary>Report conflicts and submit the isolated snapshot print paginator unchanged.</summary>
     ReportOnly = 0,
 
     /// <summary>Report conflicts and refuse submission.</summary>

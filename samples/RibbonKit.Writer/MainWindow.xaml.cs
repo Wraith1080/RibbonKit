@@ -19,6 +19,7 @@ using RibbonKit.Writer.Services.Persistence;
 using RibbonKit.Writer.Services.RecentFiles;
 using RibbonKit.Writer.Shell;
 using RibbonKit.Writer.View;
+using RibbonKit.Writer.Appearance;
 
 namespace RibbonKit.Writer;
 
@@ -83,10 +84,12 @@ public partial class MainWindow : RibbonWindow
     private void InitializeShell(WriterDialogService? shellDialogs)
     {
         InitializeComponent();
-        MoveContextualTabsToEnd();
+        InitializeWriterIdentity();
+        InitializeWriterSettings();
         _backstageOpenDescriptor = DependencyPropertyDescriptor.FromProperty(
             Ribbon.IsBackstageOpenProperty, typeof(Ribbon));
         _backstageOpenDescriptor.AddValueChanged(MainRibbon, OnBackstageOpenChanged);
+        MainRibbon.BackstageClosed += OnBackstageClosed;
         if (shellDialogs is not null) shellDialogs.Owner = this;
         DataContext = Shell;
         RecentList.ItemsSource = Shell.RecentEntries;
@@ -118,12 +121,6 @@ public partial class MainWindow : RibbonWindow
         ContentRendered += OnInitialContentRendered;
         Closing += OnClosing;
         Closed += OnClosed;
-    }
-
-    private void MoveContextualTabsToEnd()
-    {
-        foreach (var tab in MainRibbon.Tabs.Where(tab => tab.IsContextual).ToArray())
-            MainRibbon.Tabs.Move(MainRibbon.Tabs.IndexOf(tab), MainRibbon.Tabs.Count - 1);
     }
 
     private void WireRibbonCommands()
@@ -306,6 +303,7 @@ public partial class MainWindow : RibbonWindow
     private void ReplaceEditorDocument()
     {
         _pictureInteractionController?.ReplaceDocument(Shell.CurrentDocument.Content);
+        _tableResizeController?.ReplaceDocument();
         _writerImageService.ResetUndoHistory(Shell.CurrentDocument.Content);
         HorizontalRuler.CancelActiveDrags();
         MarginGuide.ClearPreview();
@@ -328,6 +326,7 @@ public partial class MainWindow : RibbonWindow
         _tableInteractionController?.Refresh();
         EditorSurface.SetDocument(Shell.CurrentDocument.Content);
         EditorSurface.PageSettings = Shell.CurrentDocument.PageSettings;
+        QueueTablePlacementProjection();
         EditorSurface.ZoomPercent = _editingController?.Zoom.Value ?? 100d;
         HorizontalRuler.PageSettings = Shell.CurrentDocument.PageSettings;
         HorizontalRuler.ZoomPercent = _editingController?.Zoom.Value ?? 100d;
@@ -369,6 +368,7 @@ public partial class MainWindow : RibbonWindow
         ContentRendered -= OnInitialContentRendered;
         Shell.PropertyChanged -= OnShellPropertyChanged;
         Shell.ExitRequested -= OnExitRequested;
+        MainRibbon.BackstageClosed -= OnBackstageClosed;
         if (_backstageOpenDescriptor is not null)
         {
             _backstageOpenDescriptor.RemoveValueChanged(MainRibbon, OnBackstageOpenChanged);
@@ -401,6 +401,8 @@ public partial class MainWindow : RibbonWindow
         _paragraphKeyboardController?.Dispose();
         _paragraphKeyboardController = null;
         DisposeStructuredContent();
+        DisposeWriterIdentity();
+        DisposeWriterSettings();
         if (_editingController is not null)
         {
             _editingController.StateChanged -= OnEditingStateChanged;
@@ -500,6 +502,9 @@ public partial class MainWindow : RibbonWindow
     private void OnEditorTextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
     {
         _writerImageService.NotifyTextChanged(DocumentEditor);
+        if (_projectingTablePlacement)
+            return;
+        QueueTablePlacementProjection();
         if (_replacingDocument || !ReferenceEquals(DocumentEditor.Document, Shell.CurrentDocument.Content)) return;
         Shell.MarkEditorDirty();
         MarkPreviewPending();
@@ -665,12 +670,15 @@ public partial class MainWindow : RibbonWindow
     private void OnBackstageOpenChanged(object? sender, EventArgs e)
     {
         UpdatePreviewDemand();
-        if (MainRibbon.IsBackstageOpen || _closing || !IsVisible || MainRibbon.IsModal)
+    }
+
+    private void OnBackstageClosed(object? sender, EventArgs e)
+    {
+        if (_closing || !IsVisible || MainRibbon.IsModal)
             return;
 
-        // IsBackstageOpen changes before the adorner has finished closing. Defer once so a
-        // command launched from the page can enter IsBusy, then complete on the common shell
-        // idle edge instead of asking every File action to restore focus independently.
+        // The library reports the exact adorner-removal boundary. Defer one app input cycle only
+        // so a File command can enter IsBusy, then complete on the common shell idle edge.
         _restoreEditorFocusAfterBackstageClose = true;
         _ = Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle,
             new Action(CompleteBackstageCloseFocus));
@@ -704,7 +712,10 @@ public partial class MainWindow : RibbonWindow
             throw new ArgumentOutOfRangeException(nameof(mode), mode, "Unknown Writer view mode.");
 
         if (mode != CurrentViewMode)
+        {
             _pictureInteractionController?.CancelActiveResize();
+            _tableResizeController?.CancelActiveResize();
+        }
         CurrentViewMode = mode;
         if (mode == WriterViewMode.PrintPreview)
         {
@@ -733,6 +744,7 @@ public partial class MainWindow : RibbonWindow
                 ? WriterEditorViewMode.Continuous
                 : WriterEditorViewMode.Paper;
             EditorSurface.Visibility = Visibility.Visible;
+            QueueTablePlacementProjection();
             var paper = mode == WriterViewMode.Paper;
             ApplyRulerVisibility();
             if (!paper)
@@ -811,7 +823,8 @@ public partial class MainWindow : RibbonWindow
         _editorContextMenuController = new WriterEditorContextMenuController(DocumentEditor)
         {
             FontDialogRequested = _ => ShowFontDialog(),
-            ParagraphDialogRequested = _ => ShowParagraphDialog()
+            ParagraphDialogRequested = _ => ShowParagraphDialog(),
+            StructuredSelectionHitTest = TableInteractionController.Tables.IsPointerInsideTableSelection
         };
         AttachStructuredContextMenu(_editorContextMenuController);
     }
