@@ -333,6 +333,12 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
             result.DocumentIdentity != _documentIdentity)
             return;
         _result = result;
+        WriterPaginationDiagnosticOptions.WriteTelemetry(
+            $"admission generation={result.Generation} kind={result.RequestKind} " +
+            $"skipped={result.SkippedSpeculativePages} realized={result.PageTimings.Length}");
+        foreach (var timing in result.PageTimings)
+            WriterPaginationDiagnosticOptions.WriteTelemetry(FormattableString.Invariant(
+                $"page-cost generation={result.Generation} page={timing.PageNumber} speculative={timing.Speculative} insertions={timing.InsertionCount} realization={timing.RealizationMilliseconds:0.###}ms insertion={timing.InsertionMilliseconds:0.###}ms raster={timing.RasterMilliseconds:0.###}ms structured={timing.StructuredMilliseconds:0.###}ms"));
         _editor = editor;
         ResetSpellingScan();
         _statusBorder.Background = new SolidColorBrush(Color.FromArgb(220, 36, 43, 50));

@@ -261,6 +261,12 @@ Mixed-content retention/reclamation has measured positive evidence; long-paragra
 
 ### RKWF-038 — A reduced cache protects interaction but can discard every speculative page
 
-Open app-owned reduced-cache tradeoff. Protected pages can consume the target while speculative realization churns. Next: budget-aware admission and geometry timing with 3/24, 4/24 and 8/64 comparisons; no hard working-set cap or default-Paper approval.
+Speculative churn is now guarded by app-owned admission before realization, using the
+existing eviction policy and largest observed cached footprint. Protected pages remain
+mandatory; unusual content can exceed the estimate. Per-page timing isolates dense
+insertion geometry as the next latency target. The broader latency/native-memory tradeoff
+remains open; no hard working-set cap or default-Paper approval.
+
+[Admission implementation and comparison](history/03-writer-pagination.md#3156-ribbonkit-writer-w2-g-speculative-admission-and-page-cost-timing--2026-09-09).
 
 [Recorded evidence](history/writer-friction-evidence.md#rkwf-038--a-reduced-cache-protects-interaction-but-can-discard-every-speculative-page).

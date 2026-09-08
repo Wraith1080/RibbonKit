@@ -735,3 +735,83 @@ prefetch pages that cannot survive the protected window, then compare 3/24, 4/24
 long-paragraph/mixed corpora. Preserve paginator parity, non-interactive placeholders, latest-only acceptance and the one
 authoritative editor. Stop after a measured retention/arrival tradeoff; genuine OS IME and production RTL remain deferred
 together, and default Paper remains unchanged.
+
+### 3.156 RibbonKit Writer W2-G speculative admission and page-cost timing — 2026-09-09
+
+The worker now maps the protected interaction window first and checks each missing speculative
+page against the existing distance/LRU eviction policy before realizing it. Admission uses the
+largest currently cached total page footprint (decoded BGRA, encoded PNG and geometry). It skips
+pages predicted to be evicted, including every interior speculative page when the three protected
+pages consume the page target. The protected interaction floor and default eight-page/64-MB
+target remain unchanged. This is an estimate: an unusually large new page can exceed the observed
+footprint and still require eviction after rendering. It is not a hard process-memory bound.
+
+Value-only per-page timings report realization, insertion geometry, rasterization and structured
+geometry separately, with insertion counts and speculative status. Cache hits produce no new
+page-cost samples. Published results also report skipped speculative requests; canceled or stale
+work is not included in the published page-cost sample set.
+
+The focused production gate passes **30/30**, including four new admission cases (3/24, 4/24,
+8/64 and the deliberately undersized 8/1 byte target). These verify zero/one/two speculative
+realizations where appropriate, retained interaction pages and timing reconciliation. Existing
+production coverage also checks saved long paragraphs, current-generation interaction, latest-only
+jumps, reflow/session replacement and decoded-image collectibility. The user's minimal-testing
+request limits verification to this affected class and the Writer build; no namespace/full-suite
+rerun, manual visual acceptance, genuine OS IME or production RTL gate is implied.
+
+The Release Writer build completed with **0 warnings / 0 errors**. Nine serial self-running
+Release-window probes exited 0: the same 26-page long-paragraph seed, 600-block/18-page mixed
+seed and saved table/image `.rkw`, each at 3/24, 4/24 and 8/64. Synthetic runs used three full
+forward/reverse cycles; the table reports cycles 2–3 median visible arrival. Each request waits
+for prefetch to settle before the next request, so these are warm-prefetch arrivals, not sustained
+rapid-scroll throughput. This comparison uses the same new implementation across budgets;
+the older six-cycle runs are historical evidence, not a controlled before/after benchmark.
+
+| Corpus / target pages/MB | Forward / reverse arrival ms | Cycle-end retained total / decoded MB | Skipped speculative pages | Cycle-end working set MB (1 / 2 / 3) |
+| --- | --- | --- | --- | --- |
+| Long / 3/24 | 557.9 / 543.6 | 16.6 / 15.4 | 272 | 589.5 / 586.7 / 627.2 |
+| Long / 4/24 | 91.0 / 90.6 | 22.1 / 20.5 | 131 | 550.1 / 591.8 / 632.8 |
+| Long / 8/64 | 88.1 / 85.9 | 44.3 / 41.1 | 0 | 574.9 / 623.2 / 698.6 |
+| Mixed / 3/24 | 159.5 / 159.5 | 15.9 / 15.4 | 177 | 562.2 / 561.3 / 563.1 |
+| Mixed / 4/24 | 27.4 / 26.8 | 21.2 / 20.5 | 84 | 564.7 / 567.2 / 569.7 |
+| Mixed / 8/64 | 27.4 / 28.0 | 42.4 / 41.1 | 0 | 622.9 / 660.0 / 628.4 |
+
+Long-paragraph cycle-end encoded PNG values are about **0.5/0.7/1.3 MB** for these budgets;
+geometry is about **0.7/0.9/1.9 MB**, derived from the separately reported total, decoded and
+encoded values (rounded counters). Mixed encoded values are about **0.3/0.3/0.7 MB**,
+with derived geometry about **0.2/0.4/0.6 MB**. Managed cycle-end heaps are
+**37.1–37.6 / 39.7–45.7 / 50.4–51.4 MB** for long paragraphs and
+**25.6–25.7 / 27.2–33.1 / 31.6–38.2 MB** for mixed content. Native/process memory is therefore
+not represented by the page-retention numbers. Long-paragraph peak working sets were
+**657.7/644.3/709.4 MB**, with peak private bytes **561.7/544.8/612.0 MB**.
+
+Across published newly realized long pages, median insertion geometry cost was
+**344.5/326.3/326.5 ms**, compared with **5.0/5.4/5.4 ms** realization and
+**41.8/40.3/40.0 ms** rasterization. Mixed insertion medians were **75.8/76.1/81.5 ms**.
+The three-page runs realized only one speculative page each (the initial boundary has two
+protected pages). Four pages can retain one speculative page and achieve warm arrival close to
+eight pages while retaining about half the cache. This does not justify changing the default:
+the probe cadence favors completed prefetch, and four pages have fewer cached revisit options.
+
+All probes reported no retention-budget overrun. Synthetic fast jumps showed both placeholders
+and accepted the latest target; settings reflow/restore replaced sessions, leaving one session
+during traversal and **3/3** disposed at release. The saved corpus remains one page (two on
+landscape reflow), so it supplies load/reflow evidence rather than eviction coverage. It retained
+about **5.9 MB**, disposed **5/5** sessions and collected **1/1** decoded image at every budget;
+its before/after SHA-256 matched. No recent-file writes were added.
+
+Forced end-of-probe collection reclaimed all retained decoded images: **3/3, 4/4, 6/6** for
+both synthetic corpora. Long working sets after forced release were **609.7/604.3/632.4 MB**;
+mixed were **536.6/545.7/572.5 MB**. These are collectibility observations, not natural-GC
+plateau proof. Long cycle ends exceed the earlier two-cycle high-water at every budget.
+Mixed 8/64 shows natural reclamation in cycle three; the reduced-budget mixed runs remain in
+a narrow band, but three cycles do not establish a new sustained plateau gate. Maximum
+dispatcher gaps across the entire probes were **1205.8/1183.3/476.8 ms** for long paragraphs
+and **180.5/143.6/169.8 ms** for mixed content; no smooth-authoring acceptance is claimed.
+
+Evidence is local under `artifacts/w2g-admission/`: runner, nine logs, `summary.json`, summarizer
+and source hash. **Decision: qualified go for the admission/timing slice only.** The next bounded
+slice is profiling and reducing the dense `BuildPageInsertions` loop while preserving exact
+page-start/caret/selection parity, cancellation and one authoritative live editor. Do not replace
+exact insertion mapping with sampled geometry. Long-document native-memory/authoring acceptance,
+paired genuine OS IME/production RTL and the default-Paper decision remain deferred.

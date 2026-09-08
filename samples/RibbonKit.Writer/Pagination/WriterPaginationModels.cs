@@ -198,7 +198,21 @@ internal sealed record WriterPaginationLayoutResult(
     int WorkerThreadId,
     ApartmentState WorkerApartment,
     WriterPaginationPhaseTimings PhaseTimings,
-    double WorkerMilliseconds);
+    double WorkerMilliseconds)
+{
+    internal int SkippedSpeculativePages { get; init; }
+    internal ImmutableArray<WriterPaginationPageTiming> PageTimings { get; init; } =
+        ImmutableArray<WriterPaginationPageTiming>.Empty;
+}
+
+internal readonly record struct WriterPaginationPageTiming(
+    int PageNumber,
+    bool Speculative,
+    int InsertionCount,
+    double RealizationMilliseconds,
+    double InsertionMilliseconds,
+    double RasterMilliseconds,
+    double StructuredMilliseconds);
 
 internal enum WriterPaginationCompletionKind
 {

@@ -934,6 +934,41 @@ public sealed class WriterPaginatedDiagnosticProductionTests
     }
 
     [Theory]
+    [InlineData(3, 24, 0)]
+    [InlineData(4, 24, 1)]
+    [InlineData(8, 64, 2)]
+    [InlineData(8, 1, 0)]
+    public async Task SpeculativeAdmissionAvoidsPagesThatCannotSurviveInteractionWindow(
+        int pageLimit, int megabytes, int expectedSpeculativePages)
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            using var workspace = ProductionWorkspace.Create(CreateParagraphDocument(
+                DocumentPageSettings.Letter(), 420), pageCacheLimit: pageLimit,
+                cacheByteLimit: megabytes * 1024L * 1024);
+            var opening = await WaitForVisibleAsync(workspace.Controller);
+            await WaitForPrefetchAsync(workspace.Controller, opening.Generation);
+            workspace.Surface.RequestPageForTesting(6);
+            var visible = await WaitForVisibleAsync(workspace.Controller);
+            Assert.Equal(3, visible.MappedPages.Length);
+            var prefetch = await WaitForPrefetchAsync(workspace.Controller, visible.Generation);
+            Assert.Equal(expectedSpeculativePages, prefetch.CacheMissCount);
+            Assert.Equal(2 - expectedSpeculativePages, prefetch.SkippedSpeculativePages);
+            Assert.Equal(prefetch.CacheMissCount, prefetch.PageTimings.Length);
+            Assert.All(prefetch.PageTimings, timing =>
+            {
+                Assert.True(timing.Speculative);
+                Assert.Contains(timing.PageNumber, prefetch.RetainedPages);
+                Assert.True(timing.InsertionCount > 0);
+                Assert.True(timing.InsertionMilliseconds >= 0);
+            });
+            Assert.All(visible.MappedPages, page => Assert.Contains(page, prefetch.RetainedPages));
+            Assert.Equal(visible.PhaseTimings.InsertionGeometryMilliseconds,
+                visible.PageTimings.Sum(timing => timing.InsertionMilliseconds), 6);
+        }, TimeSpan.FromSeconds(60));
+    }
+
+    [Theory]
     [InlineData(8, 64)]
     [InlineData(3, 24)]
     public async Task FastJumpShowsPlaceholderAndAcceptsOnlyLatestViewport(int pages, int megabytes)

@@ -671,6 +671,10 @@ Historical pending items are superseded only by later evidence, never by a plan.
 
 [Decision, pitfalls and evidence](docs/history/03-writer-pagination.md#3155-ribbonkit-writer-w2-g-saved-document-and-reduced-cache-feasibility--2026-09-05).
 
+### 3.156 RibbonKit Writer W2-G speculative admission and page-cost timing — 2026-09-09
+
+[Decision, pitfalls and evidence](docs/history/03-writer-pagination.md#3156-ribbonkit-writer-w2-g-speculative-admission-and-page-cost-timing--2026-09-09).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),
@@ -681,8 +685,8 @@ file and this index; update §5 only as supported by verification.
 
 ## 5. Current State & Next Steps
 
-> Authoritative summary of recorded evidence through 2026-09-05; reconciled 2026-09-08.
-> The audit did not rerun application checks. Counts below are dated results.
+> Authoritative summary of recorded evidence through 2026-09-09.
+> Counts below are dated results with their stated verification scope.
 
 ### Complete
 
@@ -709,13 +713,13 @@ file and this index; update §5 only as supported by verification.
   immutable clone-backed pages use a dedicated STA layout session, latest-only
   cancellation/coalescing, bounded retention and current-generation interaction.
   LTR editing, page-local table/picture resizing, staged spelling, empty replacement,
-  and the bounded scrolling/cache work have recorded evidence through §3.155.
+  and the bounded scrolling/cache work have recorded evidence through §3.156.
   Default Paper is unchanged; W2-G is not closed.
-- **Next W2-G slice:** budget-aware speculative admission and page-geometry timing.
-  Compare three-page/24-MB, four-page/24-MB and default eight-page/64-MB retention
-  targets. The protected interaction window is a floor, not a hard whole-process
-  memory cap. Saved documents and reduced-cache probes ran; long-paragraph prefetch
-  churn, latency and native working-set high-water remain open (RKWF-037/038).
+- **Next W2-G slice:** profile and reduce dense insertion-geometry cost while preserving
+  exact page/caret/selection mapping. Budget-aware speculative admission and per-page
+  timing are implemented. The protected interaction window is a floor, not a hard
+  whole-process memory cap; long-paragraph latency and native working-set high-water
+  remain open (RKWF-037/038).
 - **Genuine OS IME and production RTL** remain a later paired input/geometry slice.
   W4-B awaits W2-G completion and any default-Paper decision. W4-C includes live
   mixed-monitor/DPI and physical-printer checks; earlier single-display acceptance
@@ -735,11 +739,10 @@ file and this index; update §5 only as supported by verification.
 - Latest recorded full solution gate in this checkpoint list: §3.128 (2026-08-30),
   Release build with zero warnings/errors; RibbonKit 392/392, Writer 439/439, visual
   1/1 covering 63 approved images. These are historical counts, not today's inventory.
-- Latest W2-G evidence: §3.155 (2026-09-05), final production tests 26/26 and clean
-  Release Writer build. The pagination namespace passed 50/50 before final
-  reachability/telemetry refinements, then affected production tests were rerun.
-  Saved-document/reduced-cache probes ran only as opt-in diagnostics. No new full
-  suite, solution build, manual visual acceptance, IME or RTL gate ran in that packet.
+- Latest W2-G evidence: §3.156 (2026-09-09), production tests 30/30, Release Writer
+  build with zero warnings/errors, nine successful opt-in cache-budget probes.
+  Validation remains scoped to Writer and opt-in diagnostics. No new
+  namespace/full-suite, solution build, manual visual acceptance, IME or RTL gate ran.
 - Earlier full/focused results and acceptance limits remain in the
   [checkpoint ledger](docs/history/verification-checkpoints.md) and numbered history.
   Rerun proportionate checks before claiming current results.

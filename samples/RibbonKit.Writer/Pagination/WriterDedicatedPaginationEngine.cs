@@ -277,8 +277,8 @@ internal sealed class WriterDedicatedPaginationEngine : IDisposable
             .ToImmutableArray();
         if (mappedPages.IsEmpty)
             mappedPages = ImmutableArray.Create(visiblePage);
-        var requestedPages = capture.RequestedPages
-            .Concat(mappedPages)
+        var requestedPages = mappedPages
+            .Concat(capture.RequestedPages)
             .Where(page => page >= 0 && page < session.PageCount)
             .Distinct()
             .ToImmutableArray();
@@ -287,6 +287,9 @@ internal sealed class WriterDedicatedPaginationEngine : IDisposable
 
         var requestHits = 0;
         var requestMisses = 0;
+        var skippedSpeculativePages = 0;
+        var protectedPages = mappedPages.ToHashSet();
+        var pageTimings = ImmutableArray.CreateBuilder<WriterPaginationPageTiming>();
         foreach (var pageNumber in requestedPages)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -295,6 +298,14 @@ internal sealed class WriterDedicatedPaginationEngine : IDisposable
                 requestHits++;
                 Interlocked.Increment(ref _cacheHitCount);
                 request.CompletedMappedPages++;
+                continue;
+            }
+
+            if (!protectedPages.Contains(pageNumber) &&
+                !session.CanRetainSpeculativePage(pageNumber, _pageCacheLimit,
+                    _cacheByteLimit, protectedPages, visiblePage))
+            {
+                skippedSpeculativePages++;
                 continue;
             }
 
@@ -307,21 +318,24 @@ internal sealed class WriterDedicatedPaginationEngine : IDisposable
             var pageView = session.Viewer.PageViews.Single(view =>
                 view.PageNumber == pageNumber);
             using var documentPage = session.Paginator.GetPage(pageNumber);
-            viewerRealizationMilliseconds += ElapsedMilliseconds(phaseStarted);
+            var realization = ElapsedMilliseconds(phaseStarted);
+            viewerRealizationMilliseconds += realization;
 
             SetProgress(capture.Generation, WriterPaginationWorkPhase.InsertionGeometry);
             phaseStarted = Stopwatch.GetTimestamp();
             var pageInsertions = BuildPageInsertions(session.Document, session.Paginator,
                 session.PageStartOffsets, pageNumber, pageView, session.PageSettings,
                 cancellationToken);
-            insertionGeometryMilliseconds += ElapsedMilliseconds(phaseStarted);
+            var insertion = ElapsedMilliseconds(phaseStarted);
+            insertionGeometryMilliseconds += insertion;
 
             SetProgress(capture.Generation, WriterPaginationWorkPhase.Rasterization);
             phaseStarted = Stopwatch.GetTimestamp();
             var page = new WriterPaginationPage(pageNumber,
                 RenderPage(documentPage, session.PageSettings,
                     session.PixelScaleX, session.PixelScaleY, cancellationToken));
-            rasterizationMilliseconds += ElapsedMilliseconds(phaseStarted);
+            var raster = ElapsedMilliseconds(phaseStarted);
+            rasterizationMilliseconds += raster;
 
             SetProgress(capture.Generation, WriterPaginationWorkPhase.StructuredGeometry);
             phaseStarted = Stopwatch.GetTimestamp();
@@ -330,7 +344,11 @@ internal sealed class WriterDedicatedPaginationEngine : IDisposable
             AddStructuredGeometry(structured, tables, session.StructuredObjects,
                 session.CloneObjects, pageInsertions, pageView, session.PageSettings,
                 session.Paginator, pageNumber, cancellationToken);
-            structuredGeometryMilliseconds += ElapsedMilliseconds(phaseStarted);
+            var structuredTime = ElapsedMilliseconds(phaseStarted);
+            structuredGeometryMilliseconds += structuredTime;
+            pageTimings.Add(new WriterPaginationPageTiming(pageNumber,
+                !protectedPages.Contains(pageNumber), pageInsertions.Length,
+                realization, insertion, raster, structuredTime));
 
             var structuredValues = structured.ToImmutable();
             var tableValues = tables.ToImmutable();
@@ -346,7 +364,7 @@ internal sealed class WriterDedicatedPaginationEngine : IDisposable
         }
 
         var evicted = session.Evict(_pageCacheLimit, _cacheByteLimit,
-            mappedPages.ToHashSet(), visiblePage);
+            protectedPages, visiblePage);
         if (evicted > 0)
             Interlocked.Add(ref _evictedPageCount, evicted);
         UpdateCacheSnapshot(session);
@@ -380,7 +398,11 @@ internal sealed class WriterDedicatedPaginationEngine : IDisposable
             session.CachedBytes, session.CachedEncodedBytes, session.CachedDecodedBytes,
             Environment.CurrentManagedThreadId, Thread.CurrentThread.GetApartmentState(),
             timings,
-            watch.Elapsed.TotalMilliseconds);
+            watch.Elapsed.TotalMilliseconds)
+        {
+            SkippedSpeculativePages = skippedSpeculativePages,
+            PageTimings = pageTimings.ToImmutable()
+        };
     }
 
     private LayoutSession CreateSession(WriterPaginationCapture capture,
@@ -1065,6 +1087,36 @@ internal sealed class WriterDedicatedPaginationEngine : IDisposable
             CachedBytes += page.EstimatedBytes;
             CachedEncodedBytes += page.EncodedBytes;
             CachedDecodedBytes += page.DecodedBytes;
+        }
+
+        internal bool CanRetainSpeculativePage(int pageNumber, int pageLimit,
+            long byteLimit, HashSet<int> protectedPages, int visiblePage)
+        {
+            // Predict the same distance/LRU eviction used below without realizing a page.
+            // The largest observed footprint includes decoded pixels, PNG and geometry;
+            // content-dependent growth can still exceed this estimate after rendering.
+            if (protectedPages.Count >= pageLimit || _pages.Count == 0)
+                return false;
+            var estimatedBytes = _pages.Values.Max(page => page.EstimatedBytes);
+            var count = _pages.Count + 1;
+            var bytes = CachedBytes + estimatedBytes;
+            var candidates = _pages
+                .Where(item => !protectedPages.Contains(item.Key))
+                .Select(item => (Page: item.Key, Bytes: item.Value.EstimatedBytes,
+                    Access: item.Value.LastAccess))
+                .Append((Page: pageNumber, Bytes: estimatedBytes, Access: long.MaxValue))
+                .OrderByDescending(item => Math.Abs(item.Page - visiblePage))
+                .ThenBy(item => item.Access);
+            foreach (var candidate in candidates)
+            {
+                if (count <= pageLimit && bytes <= byteLimit)
+                    return true;
+                if (candidate.Page == pageNumber)
+                    return false;
+                count--;
+                bytes -= candidate.Bytes;
+            }
+            return count <= pageLimit && bytes <= byteLimit;
         }
 
         internal int Evict(int pageLimit, long byteLimit,

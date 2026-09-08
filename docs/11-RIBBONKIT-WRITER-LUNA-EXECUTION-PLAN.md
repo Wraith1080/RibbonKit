@@ -84,21 +84,23 @@ remain excluded until their semantics and persistence are complete.
 
 ### W2-G — True editable pagination architecture and delivery
 
-Continue from §3.155, not the original prototype. Default Paper remains unchanged.
+Continue from §3.156, not the original prototype. Default Paper remains unchanged.
 One authoritative live `FlowDocument`/editor owns selection, input, native history,
 spelling and clipboard. Immutable clone-backed pages and value-only geometry run on
 a dedicated STA; generation checks reject stale work/events. Preserve accepted
 preview/print page-start parity and current/adjacent interaction during reflow.
 Never split into independent editors, inject blank blocks or draw fake page breaks.
 
-The next slice is budget-aware speculative admission and bounded geometry timing:
+Budget-aware speculative admission and per-page timing are implemented. The next slice
+is profiling and reducing dense insertion-geometry cost without weakening exact mapping:
 
 - Compare 3-page/24-MB, 4-page/24-MB and default 8-page/64-MB targets using saved,
   long-paragraph and mixed-content probes. Preserve the protected interaction floor.
 - Separate retained encoded/decoded cache bytes from total process working set,
   natural reclamation from forced collection, and page realization from geometry cost.
-- Avoid realizing speculative pages only to evict them immediately. Preserve latest-only
-  jumps, deterministic reflow/session replacement and collectible evicted images.
+- Preserve speculative admission, latest-only jumps, deterministic reflow/session
+  replacement and collectible evicted images. Separate warm-prefetch arrival from
+  sustained rapid scrolling; the probe waits for prefetch between page requests.
 - Keep probe source files unchanged, avoid recent-file writes and detach source identity.
   Report current-generation correctness alongside latency/memory tradeoffs.
 
