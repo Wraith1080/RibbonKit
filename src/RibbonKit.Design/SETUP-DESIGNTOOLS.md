@@ -1,188 +1,73 @@
-# RibbonKit.DesignTools — design-time support for the WPF XAML designer
+# RibbonKit.DesignTools — WPF XAML designer support
 
-Design-time tooling for the **new** WPF XAML designer (Visual Studio 2019 16.x+ / VS 2022):
-toolbox default content, right-click verbs for building a ribbon on the surface, and a polished
-Properties window. Runtime is untouched — this is tooling only. **All features below are verified
-working in VS.**
+This guide describes repository tooling, not a claim of fresh validation on every
+Visual Studio version. Dated installation/interaction evidence remains in the
+[design-history index](../../04-DESIGN-NOTES.md). The delivered surface is context
+commands and Ribbon Editor; a floating smart-tag adorner is not supported.
 
-## Files
+## Files and loading boundary
 
 | File | Role |
 | --- | --- |
-| `RibbonKit.Design.csproj` | The design project. Targets **net472** (VS runs on .NET Framework), outputs **`RibbonKit.DesignTools.dll`**. Does **not** reference RibbonKit. |
-| `Metadata.cs` | `[assembly: ProvideMetadata]` + the attribute table wiring providers and property metadata to the control types (by string name). |
-| `DesignModel.cs` | Helpers over the Model API: create an item, add to a named collection, reorder, delete. |
-| `RibbonDefaultInitializer.cs` | Seeds a dropped `Ribbon` with a starter tab + group. |
-| `ContextMenuProviders.cs` | All the right-click verbs (see below). |
-| `PropertyMetadata.cs` | Properties-window categories + descriptions. |
+| `RibbonKit.Design.csproj` | `net472`, output `RibbonKit.DesignTools.dll`, no runtime-project reference |
+| `Metadata.cs`, `PropertyMetadata.cs` | String-type metadata registration and property descriptions |
+| `DesignModel.cs` | ModelItem edits, collection/attached-property handling and undo transactions |
+| `RibbonDefaultInitializer.cs`, `ContextMenuProviders.cs` | Toolbox starter content and context commands |
+| `RibbonEditorWindow.cs`, `TabPreview.cs` | Structure editor and design-only preview coordination |
 
-## Why net472 + no project reference
+The extension works through the Visual Studio Model API, not live .NET 8/9 control
+instances. Preserve string type names and isolation. SDK reference assemblies are
+provided by Visual Studio and are not runtime dependencies of the library.
 
-The new designer loads extensions **inside the VS process** (.NET Framework) and runs them
-**isolated from your live .NET 8/9 controls**. So the design assembly targets .NET Framework and
-refers to every control by **string type name** (never `typeof`); all edits go through the Model API
-(`ModelItem`), not real control instances.
+## Setup and packaging
 
-## Discovery
+The project is already in `RibbonKit.sln`; do not add it again. Build the solution
+with the desktop workload and required SDKs, then reopen the XAML designer after a
+design-tools change. Fully exit Visual Studio for a clean installed-package check
+if its assembly cache or DLL lock could hide the changed build.
 
-The new designer finds extensions by the **`*.designtools.dll`** name in a **`Design`** subfolder
-next to the control assembly. The csproj `DeployToDesignFolder` target copies the built dll into
-`src/RibbonKit/bin/<Config>/net{8,9}.0-windows/Design/`. For the NuGet package it belongs at
-`lib/<tfm>/Design/` — **now wired** (see "NuGet packaging" below).
+Discovery uses `Design/RibbonKit.DesignTools.dll` beside `RibbonKit.dll`.
+`DeployToDesignFolder` copies it into the runtime target output folders. The runtime
+project's build-only reference uses `ReferenceOutputAssembly=false`,
+`UndefineProperties=TargetFramework` and `SkipGetTargetFrameworkProperties=true`;
+preserve them so runtime target properties do not force the design project off net472.
 
-## Setup
+Package layout includes:
 
-```
-dotnet sln add src/RibbonKit.Design/RibbonKit.Design.csproj
-```
+- `lib/net8.0-windows7.0/RibbonKit.dll` and the net9 equivalent;
+- each runtime folder's `Design/RibbonKit.DesignTools.dll`;
+- `tools/VisualStudioToolsManifest.xml`, the package-only toolbox allowlist.
 
-## NuGet packaging (wired)
+Update both deployment and package paths if runtime targets change. The `windows7.0`
+NuGet folder spelling is the target-platform suffix, not a target-machine acceptance
+claim. Use [CONTRIBUTING.md](../../CONTRIBUTING.md#proportional-validation) for pack and
+validation commands. `eng/Validate-Package.ps1 -RunConsumer -KeepConsumer` provides the
+isolated package consumer used for live validation. The 2026-08-11 recorded VS 2026
+18.7.1 check proved packaged context commands and Ribbon Editor; it is historical evidence.
 
-`RibbonKit.csproj` bundles the design tools into the package automatically:
+## Editor behavior
 
-```
-dotnet pack src/RibbonKit/RibbonKit.csproj -c Release
-```
+Dropping a Ribbon seeds Home/Group. Context commands add/reorder/delete tabs, groups,
+controls and File surfaces, and select QAT placement. **Edit Ribbon…** opens a structure
+tree with contextual Add/Move/Delete actions and separate Properties/Design Preview tabs.
+Edits apply immediately to the model as individual undo transactions, not through an
+OK/Cancel staging wrapper. Drag/drop type-checks destinations and rejects descendants.
 
-produces `RibbonKit.<version>.nupkg` containing:
+The tree follows group items, panel children and supported combo/gallery/menu/File
+collections, not arbitrary visual Content graphs. Caption edits Header/Content/Tag
+as appropriate; stacks expose orientation. Type-aware editors cover sizing, ScreenTips,
+input state/width, contextual color, group reduction/launcher and File navigation fields.
+`Ribbon.CommandId` and `KeyTip.Keys` use type-qualified attached-property lookup; clearing
+the field removes the attribute. Enum/brush conversion errors are logged.
 
-- `lib/net8.0-windows7.0/RibbonKit.dll`, `lib/net9.0-windows7.0/RibbonKit.dll` — the runtime control
-  library. (A WPF `net8.0-windows` TFM carries the default Windows platform version `7.0`, so NuGet's
-  folder name is `net8.0-windows7.0` — expected.)
-- `lib/net8.0-windows7.0/Design/RibbonKit.DesignTools.dll` and the net9 equivalent — the design
-  assembly, in the `Design` subfolder NEXT TO `RibbonKit.dll` where the new XAML designer discovers it.
-- `tools/VisualStudioToolsManifest.xml` — the Toolbox allowlist.
-
-How it's wired in `RibbonKit.csproj`: a build-only `ProjectReference` to `RibbonKit.Design`
-(`ReferenceOutputAssembly=false` + `UndefineProperties=TargetFramework` +
-`SkipGetTargetFrameworkProperties=true`, so RibbonKit builds the net472 design dll with its OWN target
-and never references it at runtime — the `UndefineProperties` is what stops `dotnet pack` from failing
-with NETSDK1005 by pushing net8/net9 onto the design project), plus a `<None Pack="true">` item that
-copies `RibbonKit.DesignTools.dll` into `lib/net8.0-windows7.0/Design/` and `lib/net9.0-windows7.0/
-Design/`. A consumer who installs the RibbonKit package therefore gets the toolbox items and the
-right-click design-time editor with no extra steps. (The lib folder names carry the WPF default Windows
-platform version `7.0`; update the `<None>` PackagePath if the `TargetFrameworks` change.)
-
-Build `RibbonKit.Design`, then **close and reopen the XAML designer** (it caches design assemblies;
-an in-place rebuild won't reload).
-
-### Installed-package validation
-
-`eng/Validate-Package.ps1 -RunConsumer -KeepConsumer` creates the isolated package-reference app used
-for release verification. Its `App.xaml` explicitly loads the Office 2024 token dictionary, shared
-control-template aggregator, and MDI dictionary. On 2026-08-11, Visual Studio Community 2026 18.7.1
-loaded that app in `WpfSurface`; the Ribbon context commands appeared from the packaged design-tools
-assembly, and **Edit Ribbon…** opened the one-tab model without an error. Fully exit Visual Studio
-before repeating the check so its designer assembly cache cannot mask a changed package.
-
-## What you get
-
-**Toolbox default:** dropping a `Ribbon` seeds a "Home" tab with a "Group".
-
-**Right-click verbs:**
-
-- Ribbon — **Edit Ribbon…** (opens the structure editor dialog) · Add Tab · Add Backstage (once; also surfaces the File button) · Quick Access Toolbar ▸ Title Bar / Tab Row / Below Ribbon (checked on current).
-- Tab — Add Group · Move Tab Left/Right · Delete Tab.
-- Group — Add Button / Toggle / Check Box / Radio Button / Split / Drop-Down / Text Box · Move Group Left/Right · Delete Group.
-- Button/Toggle/Check Box/Radio Button/Split/Drop-Down/Text Box — Move Control Left/Right · Delete Control.
-- Backstage — Add Nav Item (page) · Add Nav Button (footer action). Select the backstage via the Document Outline or `d:IsBackstageOpen="True"`.
-
-Every verb is a single undo.
-
-**Ribbon Editor dialog (`RibbonEditorWindow`):** "Edit Ribbon…" opens a responsive modal with a
-structure tree, a resizable inspector, and a compact contextual toolbar (**Add ▾ · Move Up/Down ·
-Delete**) plus a Caption box. The inspector keeps the caption visible and separates the scrolling
-**Properties** and **Design Preview** tabs, so preview controls no longer force the dialog wider.
-The grid uses device-independent sizing, scrollable content and a deferred layout refresh on live
-`DpiChanged`, so moving the open editor between differently-scaled monitors remeasures it. Nodes can
-also be **dragged** to reorder or reparent: a blue line
-between rows drops before/after that sibling, a blue box over a container row drops *into* it (append).
-Drops are type-checked the same way the verbs are — tabs among tabs, groups among groups (including
-across tabs), controls among a group's/panel's children (including across groups/panels), and
-combo/gallery/menu/backstage items among containers of the same item type; a node can't be dropped into
-itself or its own descendant. Each drag is a single undo (`DesignModel.MoveInto`). A group's items can be leaf controls OR **layout containers**
-(`StackPanel`) that hold their own children, so the tree recurses into any node with a `Children`
-collection — matching the Office pattern of a vertical stack of horizontal icon rows. "Add Stack"
-inserts a `StackPanel` (vertical in a group, horizontal inside another stack); "Add Control" targets
-whatever's selected (a group's `Items`, a container's `Children`, or as a sibling of a control) and
-defaults stacked buttons to `Size="Small"`. Container nodes expose an `Orientation` editor. The
-contextual **Add ▾ → Control** menu covers Button / Toggle / Check Box / Radio Button / Split / Drop-Down / Text Box (each gets a Header caption) plus Combo
-Box, Gallery (in-ribbon / drop-down), and the adaptive RibbonKit Group Separator (no caption);
-creation tries the RibbonKit xmlns first, then WPF framework namespaces for ordinary layout/text
-types. The tree also descends into **item
-containers** — combo boxes, galleries, and the **split / drop-down buttons** (their `Items`, which are
-`RibbonMenuItem`s) — and surfaces the **Backstage** (the File menu) as its own root node with editable
-nav items. **Add Item** creates the right child for the selected container (a `ComboBoxItem`,
-`RibbonGalleryItem`, a split/drop-down `RibbonMenuItem`, or backstage `BackstageTabItem`). The
-**Caption** box edits `Header`, `Content`, or (for gallery items, whose Content is a visual) `Tag` —
-whichever carries simple text — so it names buttons, tabs, backstage pages, combo items, and gallery
-items (shown by their Tag) alike. Property editors are also type-aware: a backstage page shows
-`IsButton` / `Placement`, a combo box shows `InputWidth` / `IsEditable`, on top of the shared
-control/tab/group editors. Tabs, groups, and command controls also get two **attached-property** rows —
-**Command Id (persistence)** editing `Ribbon.CommandId` (the stable identity the customization serializer
-uses to persist/restore layout) and **KeyTip (Alt access key)** editing `KeyTip.Keys` (the access-key
-badge shown on `Alt`; blank lets the ribbon auto-derive one from the label, like Office). Because
-attached members don't surface through the normal `Properties[name]` indexer (it only sees an element's
-own members), `DesignModel.FindAttached(item, ownerType, name)` resolves them by a type-qualified
-`PropertyIdentifier`, binding the collection accessor by reflection and logging which shape worked —
-confirmed on Windows as `Find(PropertyIdentifier)` (same spike style as the StaticResource icon path).
-Both rows are hidden on entries inside a combo/gallery/menu/backstage (those carry neither a persistence
-identity nor a surface KeyTip); clearing either box removes the attribute. Color properties (`ContextualColor`, a TextBlock's `Foreground`) use a
-**color editor** — a live swatch + hex/name box + a "…" button opening a palette picker
-(`ColorPickerDialog`, self-contained WPF, no WinForms). The tree recurses into Panels (`Children`) and item
-containers (`Items`, i.e. combos/galleries/split+drop-down menus/backstage) but NOT into a control's `Content` (expanding
-every page/gallery item's visual tree was too noisy). A combo item's text lives in its `Content` (a
-string) and is edited via the **Caption** box. `TextBlock` editors and an "Add Text Block" menu entry
-exist for text added directly into a group's panels. The **Design Preview** tab lays out four fields
-vertically: **Theme** (`project default` or any of the five Office generations), **Active tab**,
-mutually-exclusive **File surface** (`Closed` / `Backstage` / `Application menu`, listing only
-surfaces present), and the dependent **Page / pane** picker. Theme preview translates the primitive
-integer `DesignPreviewTheme`; in design mode the runtime control scopes the matching token dictionary
-to that Ribbon, leaving `Application.Resources`, serialized XAML, and runtime behavior untouched.
-`project default` removes the scoped override. This changes theme palette and metrics only: authored
-structural choices such as `ApplicationButtonShape` remain independent. The
-File-surface provider translates one integer `DesignPreviewFileSurface` value, which the runtime
-control applies atomically without serializing state. Both authored object properties remain
-untouched: literal null for `ApplicationMenu` crashed the VS 2022 isolated designer immediately and
-`DependencyProperty.UnsetValue` still poisoned later model-property reads. The Page
-picker drives the backstage's `SelectedIndex` through a second provider
-(`BackstagePagePreviewProvider`, attached to `Backstage`) the same design-only way — enabled only while
-the backstage is shown, "(default)" clears the override. Because `SelectedIndex` is inherited from
-`Selector`, the provider registers (and the coordinator invalidates) under both the `Backstage` and
-`Selector` declaring types, since which one the designer reports for an inherited DP is unverified.
-For an application menu it translates only the integer `DesignPreviewActiveIndex`; the runtime menu
-derives its normal read-only pane state synchronously. No object-valued preview property is registered
-or invalidated. The complete Application menu → Closed → Backstage → Application menu → Closed
-cycle and subsequent pane selection are verified in the VS 2022 isolated designer without a flash,
-crash, or model corruption. It runs in-process on the VS UI thread (only the design
-*surface* is process-isolated, not extension code), so it's a plain code-built WPF `Window`
-(the design assembly can't reference RibbonKit's themes). Every change is applied straight to
-the `ModelItem` tree through `DesignModel`, each as its own single undo — same transaction model
-as the verbs, no OK/Cancel wrapper. The surface updates live.
-
-The dialog also has a **per-item property panel** that shows editors for the selected node,
-skipping any property the type doesn't have (via `DesignModel.HasProperty` / `FindProperty`):
-
-- Controls (button/toggle/split/drop-down): `Size` (Large/Medium/Small), `SizeDefinition`,
-  `ScreenTipTitle`, `ScreenTipText`.
-- Compact inputs: Check Box exposes `IsChecked` / `IsThreeState`; Radio Button exposes
-  `IsChecked` / `GroupName`; Text Box exposes `InputWidth`, `Text`, `IsReadOnly`, and `MaxLength`;
-  all also expose ScreenTips, Command Id, and KeyTip.
-- Tab: `IsContextual`, `ContextualColor` (typed as a name or `#hex`, applied through the brush converter).
-- Group: `ShowDialogLauncher`, `ReductionMode` (Collapse/ResizeThenCollapse/Resize), `CanResize`.
-- Application menu: `DefaultHeader`; command items: `PaneHeader`, `IsSplit`, icon and KeyTip;
-  pane items: `Description`, caption and icon; footer buttons: caption and icon.
-
-The tree also surfaces `Ribbon.ApplicationMenu` as a deletable singleton root. **Add Application
-Menu** exists both on the Ribbon surface verb and in the editor. Contextual Add actions create command
-items, separators, standard default/command pane items, and footer buttons; toolbar/drag operations
-reorder them as one undo. Standard panes use managed `StackPanel` slots. Existing arbitrary content is
-shown as **custom content — edit in XAML** and is never expanded, flattened, or overwritten.
-
-Enum and brush values are set as strings and resolved by the property's type converter (same trick
-as the QAT verb's enum set); an invalid value is logged, not thrown. Each edit is its own undo.
+Application menu is a singleton root with command, pane, separator and footer items.
+Managed standard pane slots are editable; arbitrary content is shown as custom content
+for XAML editing and is never flattened or overwritten. Group separators are adaptive
+chrome without captions. Preview theme changes palette/metrics, not authored structural
+choices such as File shape.
 
 ### Using the Icons.xaml browser
+
 
 Controls and supported application-menu items have **Icon** and, where applicable, **Large icon**
 rows in the Ribbon Editor. The browser expects WPF `ImageSource` resources; keyed `DrawingImage`
@@ -244,61 +129,37 @@ dictionary is parsed in-process with `XamlReader.Load`, cached in `IconCatalog`,
 [`samples/RibbonKit.Showcase/Icons.xaml`](../../samples/RibbonKit.Showcase/Icons.xaml) and its merge in
 [`samples/RibbonKit.Showcase/App.xaml`](../../samples/RibbonKit.Showcase/App.xaml).
 
-## Diagnostics (`DesignLog`)
+## Design-only previews
 
-The design tooling has no console and usually no attached debugger, so `DesignLog` appends to a
-log file: **`%LOCALAPPDATA%\RibbonKit\DesignTools.log`** (falls back to `%TEMP%`). The "Edit
-Ribbon…" verb is wrapped in try/catch — if the dialog can't open it logs the full exception and
-shows a MessageBox with the log path. The dialog's tree reads are defensive: each tab / group /
-control node is read in isolation, so a control type or property the reader can't handle is logged
-(with the offending type) and skipped rather than aborting the whole editor. To investigate an
-editor problem, reproduce it, then open the log — the last lines show how far construction got and
-any `ERROR …` entry names the item that failed. `DesignLog.Enabled = false` silences it; it's a
-development aid — gate or remove before shipping.
+Theme, active tab, File surface and page/pane choices use primitive design-preview
+values and `DesignModeValueProvider`, without serializing overrides or changing
+application resources. File surface is one atomic closed/Backstage/application-menu
+choice; keep authored objects intact. Object-valued null/UnsetValue substitutions
+previously crashed or poisoned isolated-designer model reads.
 
-## Tab preview via DesignModeValueProvider (design-only, no runtime leak)
+Providers are lazy: explicitly invalidate the appropriate model property when the
+selection changes. Backstage inherited SelectedIndex registration must cover the
+actual declaring-type paths. Reset clears the preview; session previews disappear
+when the designer reloads. Hand-authored `d:SelectedIndex`/`d:IsBackstageOpen` remain
+alternatives, but the Model API does not expose a general design-namespace write path.
 
-The editor's **Preview tab** picker shows any tab on the design surface without changing your
-XAML or the running app. Mechanism (`TabPreview.cs`):
+The editor is a plain WPF window on the VS UI thread; the surface is isolated.
+Live File-surface cycling and subsequent model editing must remain healthy. Its DPI
+refresh and scrollable inspector need actual-window checks after layout changes.
 
-- `SelectedTabPreviewProvider : DesignModeValueProvider` is registered on `Ribbon.SelectedIndex`.
-  When a preview is active it returns the chosen index from `TranslatePropertyValue`, so the
-  surface renders that tab. Nothing is serialized, and the migration docs note the provider is
-  never invoked for run-time code — so the running app is unaffected.
-- The new designer calls the provider **lazily** — only on `ValueTranslationService.InvalidateProperty`
-  or when the property is edited in the designer, **NOT on initial load** (confirmed on Windows:
-  a load-time-only probe did nothing). So the picker drives it explicitly: `TabPreviewCoordinator.Set`
-  stores the chosen index and calls
-  `ribbon.Context.Services.GetRequiredService<ValueTranslationService>().InvalidateProperty(ribbon, selectedIndexId)`,
-  which makes the surface re-evaluate and repaint. "(no preview)" clears it.
+## Diagnostics and limits
 
-This is the supported equivalent of a hand-authored `d:SelectedIndex`: a literal `d:` attribute
-can NOT be written programmatically (the model API has no design-namespace write path), so the
-value provider is the route to the same design-only, no-runtime-leak result. Because the preview
-lives in design-session state (not the XAML), it resets when the designer is reloaded.
+`DesignLog` writes `%LOCALAPPDATA%\RibbonKit\DesignTools.log` (TEMP fallback).
+Failures include context/type details; individual unreadable nodes are skipped rather
+than aborting the editor. Check the latest error after reproducing a failure. Logging
+is currently enabled by default in code; this guide does not claim a release-time gate
+has disabled it.
 
-**Properties window:** the main controls' key properties are grouped under a "RibbonKit" category
-with descriptions. `IsBackstageOpen` is hidden from the grid (it would persist to runtime); preview
-it design-time-only with `d:IsBackstageOpen="True"` in XAML. `SelectedIndex` stays visible with a
-runtime-vs-preview note; preview a tab with `d:SelectedIndex="N"`.
+The package toolbox manifest filters authorable controls. Project-reference consumers
+can still see reflected public controls; package-only filtering is not evidence about
+the in-solution Toolbox. Consult the manifest instead of maintaining a duplicate count.
 
-## Toolbox cleanup (package-only)
-
-The new designer populates the Toolbox from a NuGet-package **`tools\VisualStudioToolsManifest.xml`**
-allowlist (NOT `ToolboxBrowsableAttribute`). It's in the RibbonKit project and packed into the
-package, listing only the 14 authorable controls under a "RibbonKit" tab. **It only takes effect when
-RibbonKit is consumed as a NuGet package** — in a project-reference setup the designer still reflects
-all public controls, so it has no effect on the in-solution showcase.
-
-## Known limit: no smart-tag adorner glyph
-
-A floating smart-tag glyph on the surface (via `AdornerProvider`) was attempted and **does not render
-in the new designer**: the provider activates and `Adorners.Add` succeeds, but the new
-surface-isolation designer renders the surface in a separate process and does not host custom adorner
-visuals. The context-menu verbs are the delivery surface for these actions. (See design notes §3.22.)
-
-## Deferred
-
-- `ParentAdapter` (valid-drop rules); design-time "Add to QAT" (QAT items are runtime proxies, not
-  plain XAML). (NuGet packaging of the `lib/<tfm>/Design/` dll + toolbox manifest is now DONE — see
-  "NuGet packaging (wired)" above.)
+Known/deferred boundaries: no floating smart-tag glyph in the isolated designer;
+no general scalar reset/icon-clear action (remove the XAML attribute); no ParentAdapter
+valid-drop extension or design-time Add to QAT for runtime proxies. The manual icon
+browser remains the fallback for automatic discovery ambiguity/failure.

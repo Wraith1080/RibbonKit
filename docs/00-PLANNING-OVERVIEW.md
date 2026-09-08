@@ -1,52 +1,29 @@
-# Professional Ribbon Custom Control for WPF — Planning Overview
+# RibbonKit planning overview
 
-> **Status: historical foundation.** The product described here shipped as RibbonKit v1.0.0; this
-> document preserves the original vision, principles, and risks rather than current implementation
-> status. See the [README](../README.md) and [design notes §5](../04-DESIGN-NOTES.md#5-current-state--next-steps) for current state.
->
-> Written 2026-07-02. Locked decisions: **RibbonKit** · **.NET 8/9** · **MIT/open source**.
+The original 2026-07-02 foundation plan is complete: RibbonKit is an MIT-licensed,
+Office Fluent UI-style WPF control library with a separate Showcase and Writer.
+This page retains the product intent; it is not a second progress board.
 
-## 1. Vision
+## Product intent
 
-A modern, open-source WPF custom control library that recreates the Office Fluent UI Ribbon with high visual fidelity and a complete feature set: tabs, groups, adaptive button sizing, split/dropdown buttons, galleries, contextual tabs, backstage view, application button, quick access toolbar (QAT), combo boxes, minimize mode, tab merging, modal tabs, a runtime customize dialog, five Office theme generations (2007, 2010, 2013, 2019, 2024), per-monitor High-DPI support, and a first-class XAML design-time experience.
+Provide lookless, reusable controls with WPF commanding, binding, templates,
+keyboard access and UI Automation. Preserve Office-generation visual fidelity,
+vector chrome and host-owned per-monitor DPI awareness. Keep theme differences in
+shared-template tokens so fixes apply across generations.
 
-## 2. Guiding principles
+The enduring engineering risks are adaptive layout stability, popup/resource
+lifetimes, native window chrome and DPI, KeyTip/focus routing, and a growing visual
+matrix. Their measured failures and fixes belong in the design history.
 
-The library is built as **lookless custom controls** (templated in `Generic.xaml` and theme dictionaries), never as UserControls, so consumers can restyle everything. The public API follows WPF conventions — dependency properties, routed events, `ICommand` support, `ItemsSource`/data-template friendliness — so the ribbon feels native to WPF developers and works cleanly with MVVM. Visual fidelity to real Office is a feature, not an afterthought: each theme is verified side-by-side against the corresponding Office release. Everything renders from vectors (geometries/`DrawingImage`), never bitmaps, so DPI scaling is free. Accessibility (UI Automation peers, keyboard navigation, KeyTips) is designed in from the start because it cannot be bolted on later.
+## Sources of truth
 
-## 3. Existing landscape (know before building)
+| Need | Reference |
+| --- | --- |
+| Use the library and check supported features | [README](../README.md) |
+| Locate implementation and architectural contracts | [Architecture](01-ARCHITECTURE.md) |
+| Current progress and remaining gates | [Design notes §5](../04-DESIGN-NOTES.md#5-current-state--next-steps) |
+| Completed phases and candidate tracks | [Roadmap](03-ROADMAP.md) |
+| Work and validate a change | [AGENTS.md](../AGENTS.md), [CONTRIBUTING.md](../CONTRIBUTING.md) |
 
-Microsoft's built-in `System.Windows.Controls.Ribbon` is dated, visually stuck around Office 2010, and effectively unmaintained. **Fluent.Ribbon** is the leading open-source alternative and a valuable architectural reference (its size-reduction and KeyTip systems are worth studying). Commercial suites (DevExpress, Syncfusion, Telerik, Actipro) set the bar for polish and the customize dialog. Our differentiation: the full five-theme range including Office 2024, modern .NET only (no legacy baggage), tab merging and modal tabs (rare in open source), and a cleaner MVVM-first API. Pick a distinct name and namespace early to avoid collision with Fluent.Ribbon (see Phase 0 in the roadmap).
-
-## 4. What we need to plan (the complete checklist)
-
-**Product decisions** — name, license (MIT recommended), target framework (locked: net8.0-windows, add net9.0-windows), versioning policy (SemVer), what "v1.0" means.
-
-**Repository & infrastructure** — GitHub repo layout, CI (build + test + package on every PR), local
-package validation and optional GitHub Release assets, demo/showcase app, contribution docs, issue
-templates, API docs generation.
-
-**Architecture** — control class hierarchy, the adaptive sizing/layout engine (the hardest problem in the project), theming system, window-chrome integration, KeyTip/keyboard system, state persistence, design-time support. Detailed in `01-ARCHITECTURE.md`.
-
-**Feature inventory & prioritization** — every control and behavior, sequenced so each phase produces something usable. Detailed in `02-FEATURES.md`.
-
-**Roadmap** — phased milestones from empty repo to v1.0. Detailed in `03-ROADMAP.md`.
-
-**Quality strategy** — unit tests for layout logic, visual regression snapshots per theme, UIA/accessibility audits, DPI test matrix (100/125/150/200%, mixed monitors), sample-app dogfooding.
-
-## 5. Top technical risks (plan mitigation early)
-
-1. **Adaptive size-reduction layout** — groups must shrink large→medium→small→collapsed in a defined order as width changes, without flicker, measured efficiently. This is the make-or-break subsystem; prototype it in Phase 1, not later.
-2. **Window chrome integration** — QAT and contextual-tab headers live in the title bar in real Office. Custom `WindowChrome` interacts with DPI, maximize behavior, and snap layouts in fiddly ways.
-3. **KeyTips** — a global keyboard-mode overlay with chained activation (Alt → H → F → S). Requires careful input routing and dismissal logic.
-4. **Gallery virtualization** — large galleries (styles, colors) must virtualize inside popups without breaking keyboard nav or resizing.
-5. **Theme-count maintenance** — 5+ themes multiply every visual bug. Mitigate with a shared token/resource layer so themes override colors and metrics, not templates.
-
-## 6. Document map
-
-| File | Contents |
-|---|---|
-| `00-PLANNING-OVERVIEW.md` | This document — vision, principles, risks |
-| `01-ARCHITECTURE.md` | Solution structure, control hierarchy, subsystems |
-| `02-FEATURES.md` | Full feature breakdown with priorities |
-| `03-ROADMAP.md` | Phased milestones to v1.0 |
+Original name-selection, package-name reservation, competitor comparisons and
+pre-v1 setup checklists have been retired. They no longer guide implementation.

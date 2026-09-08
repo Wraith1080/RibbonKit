@@ -1,1012 +1,266 @@
 # RibbonKit Writer — Consumer Friction Log
 
-> **Status:** living consumer-evidence record created 2026-08-21. Entries describe friction found while
-> building RibbonKit Writer; they are not confirmed RibbonKit defects, approved runtime work or current
-> implementation status. [`04-DESIGN-NOTES.md` §5](../04-DESIGN-NOTES.md#5-current-state--next-steps)
-> remains authoritative.
+This index separates open investigations from corrected behavior. Titles retain the
+original symptom and stable RKWF identifier; they do not claim that symptom remains.
+Summaries reflect recorded evidence through 2026-09-05, not new acceptance. Full
+reproductions, measurements and historical gates are linked per entry.
 
-## 1. Purpose
+## 1. Purpose and promotion
 
-Writer is RibbonKit's sustained real-application consumer. This log captures places where an ordinary
-WPF application needs surprising glue, timing workarounds, duplicated integration code or testing
-exceptions to use the ribbon successfully. It keeps that evidence separate from Writer's feature plan
-and from RibbonKit's accepted implementation history.
+Record surprising control glue, timing, automation gaps and testing exceptions.
+Distinguish app responsibility, a runtime candidate, authorized correction and closure.
+An entry does not authorize changes under `src/RibbonKit/**`: first reproduce the
+issue, identify the library responsibility and smallest compatible correction, and
+obtain explicit authorization unless already supplied. Follow `AGENTS.md` and
+`CONTRIBUTING.md` for implementation/verification; do not create another approval ritual.
 
-Record friction when it is encountered; do not wait until a packet closes. An entry may later become:
+## 2. Active follow-ups
 
-- **App-owned:** normal document/editor responsibility or ordinary WPF behaviour; keep the workaround
-  in Writer and improve samples or documentation if useful.
-- **Runtime candidate:** repeated or high-impact friction that RibbonKit can solve additively without
-  taking over application state.
-- **Approved runtime work:** separately authorized RibbonKit scope with a focused failing test, public
-  API review when applicable, Showcase coverage and proportional live/visual verification.
-- **Closed:** resolved, superseded, not reproducible or intentionally outside RibbonKit's boundary.
+- Runtime/documentation candidates: RKWF-001/002/026.
+- External UIA investigations: RKWF-003/004/006.
+- Narrow live follow-ups after implemented fixes: RKWF-016/019; W4-C physical driver
+  and cold-start checks remain in RKWF-007/009/010.
+- Opt-in pagination performance: RKWF-037/038, with RKWF-035 explained by RKWF-036.
+- RKWF-008 is a bounded harness allowance, not a product defect.
 
-## 2. Promotion gate
+All other entries below retain corrections, constraints or accepted workarounds.
+No complete Windows contrast-theme, genuine OS IME or production pagination RTL
+acceptance follows from these isolated fixes. Overall progress stays in
+[design notes §5](../04-DESIGN-NOTES.md#5-current-state--next-steps).
 
-Do not edit `src/RibbonKit/**` merely because an entry exists. Before promotion, the lead must:
+## 3. New-entry format
 
-1. Reproduce the behaviour in a minimal RibbonKit consumer or focused Writer test.
-2. Identify the exact RibbonKit control, template, service or automation peer involved.
-3. Show why the app-owned workaround is unsafe, misleading, excessively repetitive or impossible.
-4. State the smallest additive library direction and its compatibility/accessibility consequences.
-5. Obtain separate user approval for the runtime packet.
+Use the next RKWF ID with first-seen date/packet, classification, minimal reproduction,
+current containment/correction, evidence and remaining gate. Keep the summary here;
+put long diagnostic history in the evidence file. Preserve prior results with dates
+instead of repeatedly appending them to the current-status summary.
 
-Every accepted runtime correction must add RibbonKit tests, XML documentation for public API, a
-relevant Showcase scenario and live verification on the affected surface. Existing snapshot approvals
-remain read-only until actual/diff evidence justifies a deliberate change.
-
-## 3. Entry template
-
-```text
-### RKWF-NNN — Short title
-
-- First seen / packet:
-- Status:
-- Consumer goal:
-- Reproduction and evidence:
-- Friction:
-- Current app-owned workaround:
-- Application impact:
-- Smallest possible library direction:
-- Evidence still required:
-```
-
-## 4. Open observations
+## 4. Observations by ID
 
 ### RKWF-001 — KeyTip leaf activation has no consumer focus-handoff contract
 
-- **First seen / packet:** 2026-08-21, Writer W1-C Home formatting commands.
-- **Status:** Open runtime/documentation candidate; app workaround accepted for W1-C.
-- **Consumer goal:** after a KeyTip invokes a formatting command, return keyboard input to the native
-  document editor without inserting any characters from the KeyTip sequence.
-- **Reproduction and evidence:** the actual Writer window leaked terminating KeyTip input into the
-  document when the app restored editor focus at `DispatcherPriority.Input`. The accepted controller
-  attaches focus restoration to each relevant command and defers it to `ContextIdle`.
-- **Friction:** `KeyTipService` invokes a leaf and tears down its session internally, but consumers have
-  no public activation-completed notification or declarative focus-return target. An editor app must
-  know the service's input timing and repeat focus glue across ribbon/QAT actions.
-- **Current app-owned workaround:** `WriterEditingRibbonController.RestoreEditorFocusDeferred()`.
-- **Application impact:** timing-sensitive integration code in any long-lived editor surface; an
-  incorrect dispatcher priority can corrupt typed content.
-- **Smallest possible library direction:** first evaluate documentation or a general completion hook;
-  only then consider an additive focus-return contract that does not make RibbonKit own editor focus.
-- **Evidence still required:** a minimal consumer test proving the leakage and expected focus behavior
-  across ordinary buttons, toggles, menus, QAT proxies and editable ribbon inputs.
+Open focus-handoff candidate. Writer defers post-KeyTip focus to ContextIdle to avoid leaking terminating key input. A minimal cross-control/QAT/editable-input reproduction is still needed.
+
+[Recorded evidence](history/writer-friction-evidence.md#rkwf-001--keytip-leaf-activation-has-no-consumer-focus-handoff-contract).
 
 ### RKWF-002 — Editable RibbonComboBox has no single semantic commit boundary
 
-- **First seen / packet:** 2026-08-21, Writer W1-C font-family and font-size controls.
-- **Status:** Open ergonomics/documentation candidate; may remain ordinary WPF app responsibility.
-- **Consumer goal:** let users type or choose a value, commit once, run a command and return to editing.
-- **Reproduction and evidence:** committing on `SelectionChanged` accepted the first type-to-search
-  match, restored editor focus too early and sent the remaining characters into the document.
-- **Friction:** a command-backed editable ribbon combo must compose `DropDownClosed`, Enter handling and
-  keyboard-focus loss while preventing selection-state refresh from overwriting in-progress text.
-- **Current app-owned workaround:** Writer commits from those three boundaries and deliberately ignores
-  intermediate `SelectionChanged` events.
-- **Application impact:** repeated, easy-to-get-wrong glue for Office-style font and size controls.
-- **Smallest possible library direction:** document a canonical binding pattern or provide an optional
-  additive commit event/command behavior; do not change inherited WPF ComboBox semantics by default.
-- **Evidence still required:** a reusable minimal example covering typing, auto-selection, drop-down
-  choice, Enter, Escape, focus loss, invalid input, selection refresh and IME composition.
+Open commit-semantics candidate. Writer commits editable combos on dropdown close, Enter or focus loss, not intermediate selection. Typing, refresh, cancellation and IME need a reusable minimal proof.
+
+[Recorded evidence](history/writer-friction-evidence.md#rkwf-002--editable-ribboncombobox-has-no-single-semantic-commit-boundary).
 
 ### RKWF-003 — QAT external UIA action semantics need an isolated reproduction
 
-- **First seen / packet:** 2026-08-21, Writer W1-C live minimized-ribbon/QAT verification.
-- **Status:** Open investigation; not yet a confirmed RibbonKit defect.
-- **Consumer goal:** external UI Automation clients should discover named QAT commands as actionable
-  buttons with the same Invoke/Toggle semantics as their source controls.
-- **Reproduction and evidence:** live UIA traversal presented the visible Writer QAT entries through
-  `DataItem`-like wrappers without an available Invoke pattern, while direct in-process
-  `RibbonButtonAutomationPeer` activation and the actual mouse path succeeded.
-- **Friction:** the difference forced live verification to use clickable bounds and leaves uncertainty
-  about what external automation and assistive-technology clients receive from the QAT item hierarchy.
-- **Current app-owned workaround:** preserve automation IDs/names and verify commands through direct
-  peers plus real mouse/keyboard paths.
-- **Application impact:** possible fragility for external automated testing; accessibility impact is
-  unproven until the hierarchy is reproduced with more than one client.
-- **Smallest possible library direction:** inspect the QAT `ItemsControl` container/peer hierarchy and
-  add a specialized peer only if a minimal external UIA reproduction confirms lost action semantics.
-- **Evidence still required:** Inspect.exe or equivalent external-client capture for hand-declared QAT
-  buttons, projected QAT proxies and overflow proxies, including Invoke/Toggle, name, enabled state and
-  source/proxy consistency.
+Open external-UIA investigation, not a confirmed library defect. Compare hand-authored, source-linked and overflow QAT Invoke/Toggle/name/enabled behavior with a second client.
+
+[Recorded evidence](history/writer-friction-evidence.md#rkwf-003--qat-external-uia-action-semantics-need-an-isolated-reproduction).
 
 ### RKWF-004 — Backstage custom page actions are absent from external UIA traversal
 
-- **First seen / packet:** 2026-08-21, Writer W1-D recent-document live verification.
-- **Status:** Open investigation; not yet a confirmed RibbonKit defect.
-- **Consumer goal:** arbitrary application content hosted by Backstage should retain its ordinary WPF
-  UI Automation peers after the surface is presented through the Backstage adorner.
-- **Reproduction and evidence:** the realized recent rows are ordinary focusable `Button` controls with
-  names, unique IDs, full-path help text and a working in-process Invoke pattern. Actual mouse activation
-  opens the document and closes Backstage. Repeated external `UIAutomationClient` traversal of the live
-  Backstage window exposed the navigation labels but no recent-row buttons or their text content.
-- **Friction:** Writer can prove its own button semantics and real interaction, but cannot make an external
-  accessibility client discover those actions without understanding or replacing the Backstage host peer.
-- **Current app-owned workaround:** keep native `Button` semantics, keyboard focus, automation metadata,
-  tooltips and in-process automation coverage; also verify the real mouse/keyboard path.
-- **Application impact:** external automation and assistive-technology clients may be unable to discover
-  actionable custom Backstage page content even though sighted pointer interaction works.
-- **Smallest possible library direction:** isolate whether the adorner/content-presenter peer boundary is
-  excluding the arbitrary page subtree, then add or bridge peers only if multiple external clients reproduce
-  the omission. Do not special-case Writer or recent documents.
-- **Evidence still required:** Inspect.exe or equivalent captures for Modern, Classic2010 and Classic2007
-  Backstage content, including ordinary buttons, lists and custom automation peers; confirm keyboard-client
-  discovery separately from actual focus movement.
+Open external-UIA investigation. Custom Backstage page content needs external-client comparison across Modern/Classic2010/Classic2007; keyboard focus is not traversal proof.
+
+[Recorded evidence](history/writer-friction-evidence.md#rkwf-004--backstage-custom-page-actions-are-absent-from-external-uia-traversal).
 
 ### RKWF-005 — Ribbon groups have no first-class in-group separator
 
-- **First seen / packet:** 2026-08-24, Writer W1-D visual review and W2 planning.
-- **Status:** Corrected in RibbonKit on 2026-08-29; user-verified through every supported theme/light-dark variant,
-  actual collapsed flyouts, RTL and the 100-200% DPI matrix by 2026-08-30. High Contrast is not an RKWF-005
-  acceptance requirement because RibbonKit does not currently claim a whole-ribbon Windows contrast-theme mode.
-- **Consumer goal:** visually partition related command clusters inside one `RibbonGroup` without creating
-  fake groups, hard-coded borders or layout-only command items.
-- **Reproduction and evidence:** the accepted Writer Home surface needs lighter divisions within command-dense
-  groups, but RibbonKit exposes only whole-group boundary chrome, menu separators and the application-menu
-  separator. None participates as an adaptive item inside a ribbon group.
-- **Friction:** an app-owned `Border` or `Separator` would need to reproduce theme tokens, large/medium/small
-  measurement, collapsed-group behavior, RTL placement, visibility and automation semantics that belong to
-  the ribbon item system.
-- **Current resolution:** the lookless `RibbonGroupSeparator` uses shared theme chrome, adapts its desired
-  width and height across large/medium/small group states and returns to its large presentation with content
-  re-homed into a collapsed flyout. Writer uses it between Paragraph command clusters. The Showcase now
-  demonstrates a height-constrained separator inside Font's compact button row, a full-height direct-child
-  separator in Insert/Illustrations, a separator between a large View/Zoom command and a stacked medium
-  command cluster, and a direct-child separator between Paste and Select in the Localization/RTL lab.
-- **Application impact:** dense groups are harder to scan, while consumer-created dividers risk inconsistent
-  adaptive layout and theme behavior across Office generations.
-- **Implemented library direction:** `RibbonGroupSeparator` is a non-focusable, non-hit-test control whose
-  symmetric template follows RTL layout naturally. It implements `IRibbonSizeAware`, exposes a read-only
-  effective `SizeState`, and is deliberately excluded from KeyTips, QAT projection, customization command
-  discovery and UI Automation control content. The Ribbon Editor now inserts this type instead of a stock WPF
-  separator.
-- **Evidence still required:** focused realized coverage now proves horizontal LTR/RTL placement, all effective
-  size states, collapsed-to-large behavior, theme-brush resolution and exclusion from command/accessibility
-  surfaces; structural Showcase contracts pin the authored examples and their neighboring commands. The user has
-  accepted every supported theme/light-dark variant, actual collapsed flyouts, RTL placement and 100-200% DPI.
-  Whole-ribbon Windows contrast-theme support is separate future accessibility work rather than a separator defect.
+Corrected and accepted. RibbonGroupSeparator now supplies adaptive in-group chrome; theme/variant, collapsed, RTL and 100–200% DPI evidence is recorded. Whole-ribbon contrast themes remain separate.
+
+[Recorded evidence](history/writer-friction-evidence.md#rkwf-005--ribbon-groups-have-no-first-class-in-group-separator).
 
 ### RKWF-006 — Main-ribbon leaf commands are absent from external UIA traversal
 
-- **First seen / packet:** 2026-08-24, Writer W2-E Page/View live verification.
-- **Status:** Open investigation; not yet a confirmed RibbonKit defect and no runtime change is approved.
-- **Consumer goal:** external UI Automation clients should discover the visible Page/View ribbon commands with
-  their assigned names, IDs, enabled state and Invoke/Toggle/ExpandCollapse patterns.
-- **Reproduction and evidence:** an exact-process `UIAutomationClient` traversal of the live 125%-scale Writer
-  window discovered the Page and View `TabItem` peers and ordinary status content, but none of the realized named
-  leaf controls in their groups. W2-F repeated the result: the View tab was reachable, but its realized `ViewRuler`
-  and `ViewMarginGuides` toggle leaves were not. The same controls retain app-assigned automation metadata, expose
-  working in-process RibbonKit peers, and pass actual mouse and KeyTip activation.
-- **Friction:** Writer can preserve metadata and prove direct peer/action behavior, but it cannot make an external
-  accessibility client traverse children that the ribbon/group peer hierarchy does not publish.
-- **Current app-owned workaround:** keep explicit automation names/IDs, stable command IDs and KeyTips; cover
-  in-process peer semantics and separately exercise the real mouse/keyboard paths.
-- **Application impact:** external test clients and assistive technologies may not discover Page/View commands even
-  though sighted pointer and keyboard operation work.
-- **Smallest possible library direction:** isolate the `RibbonAutomationPeer`/`RibbonGroupAutomationPeer` child
-  hierarchy with a minimal consumer before considering an additive peer bridge. Do not special-case Writer.
-- **Evidence still required:** Inspect.exe or equivalent captures across expanded, narrow/collapsed and minimized
-  ribbon states, plus comparison with the Showcase and a second UIA client.
+Open main-ribbon leaf traversal investigation; runtime scope is not approved. Compare expanded/collapsed/minimized Writer and Showcase with an independent UIA client.
+
+[Recorded evidence](history/writer-friction-evidence.md#rkwf-006--main-ribbon-leaf-commands-are-absent-from-external-uia-traversal).
 
 ### RKWF-007 — Windows WPF print picker cannot host Writer's existing fixed preview
 
-- **First seen / packet:** 2026-08-24, Writer W2-E user-review correction.
-- **Status:** Resolved in the app; not a RibbonKit runtime defect.
-- **Consumer goal:** select a printer while seeing the exact fixed paginator that Writer will submit.
-- **Reproduction and evidence:** `System.Windows.Controls.PrintDialog.ShowDialog()` opened the current Windows print
-  picker with a large empty pane stating that the app did not support print preview, even though Writer already owned
-  a stable `FixedDocumentSequence`. WPF's public flow returns the selected queue/ticket from `ShowDialog` and accepts
-  the paginator later through `PrintDocument`; it offers no paginator input for that Windows preview pane.
-- **Friction:** the OS message contradicted Writer's working preview and made the accepted same-paginator contract look
-  broken. It could not be corrected from ribbon templates or by changing the existing preview view.
-- **Current app-owned resolution:** Backstage Print opens `WriterPrintSetupDialog`, which selects from installed queues,
-  fits the exact current snapshot in a Writer preview, detaches it on close and submits through the existing validated
-  `WriterPrintDialogDevice`/`WriterPrintService` path without showing the unsupported Windows pane.
-- **Application impact:** Writer currently exposes its streamlined printer/page summary rather than every advanced
-  driver-specific option from the Windows picker. Page size, orientation and margins remain on Writer's Page tab.
-- **Smallest possible library direction:** none. Keep this app-owned unless a future reusable print-setup control is
-  explicitly scoped outside RibbonKit's ribbon-control responsibilities.
-- **Evidence still required:** later W4-C physical-printer coverage should include a non-PDF driver with unusual
-  capabilities and confirm that its queue/ticket validation and conflict report remain correct.
+App-resolved with WriterPrintSetupDialog and isolated preview/print submission. W4-C still needs a non-PDF physical driver with unusual queue/ticket/imageable-area constraints.
+
+[Recorded evidence](history/writer-friction-evidence.md#rkwf-007--windows-wpf-print-picker-cannot-host-writers-existing-fixed-preview).
 
 ### RKWF-008 — The single real-window STA integration case needs a parallel-load timeout allowance
 
-- **First seen / packet:** 2026-08-24, Writer W2-E user-review correction full gate.
-- **Status:** Bounded test-harness exception; no product or RibbonKit defect.
-- **Reproduction and evidence:** the complete Writer suite passed alone in nine seconds, but the one intentionally
-  combined `MainWindow`/`WindowChrome` STA case exceeded the helper's ten-second ceiling when the 63-image visual
-  project ran concurrently. The same assertions passed after the harness allowed that case twenty seconds.
-- **Friction:** splitting the case across fresh STA threads previously triggered WPF `WindowChrome` cross-thread
-  ownership failures, while increasing the global timeout would weaken feedback for every small STA test.
-- **Current app-owned resolution:** `StaTestHelper.RunAsync` accepts an optional timeout; only the combined real-window
-  case requests twenty seconds. The default remains ten seconds and production code is unchanged.
-- **Evidence still required:** keep watching the case duration in full parallel solution runs; investigate subdivision
-  only if WPF chrome ownership can remain on one dispatcher or the duration approaches the bounded allowance.
+Retained harness exception: only the combined real-window case uses a 20-second allowance; the default is 10 seconds. Monitor real duration rather than broadening timeouts.
+
+[Recorded evidence](history/writer-friction-evidence.md#rkwf-008--the-single-real-window-sta-integration-case-needs-a-parallel-load-timeout-allowance).
 
 ### RKWF-009 — Initial paper margins need a post-Loaded invariant
 
-- **First seen / packet:** 2026-08-24, Writer W2-C startup correction after W2-E.
-- **Status:** Resolved in the app; not a RibbonKit runtime defect.
-- **Consumer goal:** the initial untitled document must enter Paper mode with its logical page margins already
-  applied, so the first caret never appears against the paper's top-left edge.
-- **Reproduction and evidence:** the real Writer window intermittently showed correct centred paper geometry but
-  zero `FlowDocument.PagePadding`; using New replaced the document and reapplied the margins. Initialization assigned
-  the document and page model before the native `RichTextBox` completed its first Loaded/template pass, with no
-  later surface invariant to repair a late reset.
-- **Current app-owned resolution:** `WriterEditorSurface` reapplies its selected presentation idempotently on Loaded.
-  A focused hosted-window regression resets `PagePadding` after setup but before first load and requires all four
-  logical margins to be restored by that first Loaded pass.
-- **Application impact:** one extra layout application occurs when the editor surface loads; it neither replaces the
-  editor/document nor changes selection, undo, clipboard, IME or preview ownership.
-- **Smallest possible library direction:** none. This is ordering between Writer's app-owned document model and its
-  app-owned editor surface.
-- **Evidence still required:** repeat cold launches outside the debugger and include the startup caret/margin check in
-  W4-C across the available DPI matrix.
+App-resolved by idempotent Loaded-time presentation/margin restoration. Cold-start checks across W4-C DPI scales remain relevant.
+
+[Recorded evidence](history/writer-friction-evidence.md#rkwf-009--initial-paper-margins-need-a-post-loaded-invariant).
 
 ### RKWF-010 — Initial editor focus needs a post-render handoff
 
-- **First seen / packet:** 2026-08-24, Writer cold-start correction after W2-E.
-- **Status:** Resolved in the app; not a RibbonKit runtime defect.
-- **Consumer goal:** a normal cold launch should place the insertion caret in the document so typing works immediately
-  without clicking the paper.
-- **Reproduction and evidence:** startup called the initial Paper-mode transition with focus restoration disabled while
-  the window was not yet rendered, but no later owner completed the focus transfer. The paper was visible and enabled
-  while the ribbon/window retained focus.
-- **Current app-owned resolution:** after the first `ContentRendered`, Writer queues one Input-priority handoff that
-  assigns both logical and keyboard focus to the existing `RichTextBox` and refreshes insertion-state ribbon values.
-  New/Open/Save/Save As and recent-file activation reuse it after the shell leaves its busy state, including cancelled
-  dialogs. It does not run when Backstage or Print Preview has become the intended surface.
-- **Application impact:** ordinary cold launches accept typing immediately without replacing the editor/document or
-  altering undo, selection, IME, clipboard or preview state.
-- **Smallest possible library direction:** none. RibbonKit does not own the host application's initial document-focus
-  policy.
-- **Evidence still required:** repeat cold launches outside the debugger and confirm caret visibility plus immediate
-  Latin/IME/RTL input at W4-C DPI scales.
+App-resolved by guarded first-render/input-focus handoff and insertion-state refresh. Respect intended Backstage/Preview focus; cold-start Latin/IME/RTL remains a live gate.
+
+[Recorded evidence](history/writer-friction-evidence.md#rkwf-010--initial-editor-focus-needs-a-post-render-handoff).
 
 ### RKWF-011 — Backstage has no host-level close-completed callback
 
-- **First seen / packet:** 2026-08-24, Writer W0-F Backstage focus integration.
-- **Status:** Corrected in RibbonKit on 2026-08-29 and live-accepted on 2026-08-30. The user confirmed
-  that the host behavior occurs after the Backstage close animation finishes, matching the intended
-  close-completed boundary.
-- **Consumer goal:** restore editor focus after any Backstage dismissal without wiring every File action or guessing the
-  exit-animation duration.
-- **Reproduction and evidence:** `Ribbon.IsBackstageOpen` is the only general observable state, but it changes to
-  `false` when closing starts. The Backstage adorner and any Classic orb proxy remain until an internal
-  `RibbonMotion.PlayClose` completion callback removes them. `Backstage.BackRequested` covers only a request from the
-  Back button/Escape and also precedes teardown; no public Ribbon lifecycle event reports that animated teardown has
-  completed. `IsBackstageOpen` additionally represents `RibbonApplicationMenu`, whose popup lifecycle is separate.
-- **Friction:** a host can observe logical close initiation centrally, but cannot reliably distinguish it from visual
-  close completion across File-toggle, Back/Escape, KeyTip, programmatic, Classic2010 and Classic2007 paths.
-- **Current resolution:** `Ribbon.BackstageClosed` is a non-cancellable CLR event raised only after the real Backstage
-  adorner, Classic orb proxy and placement state have been torn down. Writer now starts its guarded focus return from
-  that completion event; its preview-demand observer and dialog/busy/intended-focus policy remain app-owned.
-- **Application impact:** hosts can now use the exact adorner-removal boundary without per-command focus wiring;
-  asynchronous command, dialog and intended-focus policy remains correctly owned by the application.
-- **Implemented library direction:** a non-cancellable CLR `Ribbon.BackstageClosed` event is raised once after
-  the exit animation completes, the Backstage adorner/proxy is removed, placement state is restored and the close was
-  not cancelled by a reopen. Do not raise it for `RibbonApplicationMenu` and do not make Ribbon own a focus target.
-  A non-cancellable `BackstageClosing` event may be considered separately for symmetry, but is too early for focus
-  restoration.
-- **Evidence still required:** none for the consumer friction. Realized-STA coverage proves
-  programmatic/reduced-motion closure for Modern, Classic2010 and Classic2007, reopen cancellation and exclusion of
-  `RibbonApplicationMenu`; Showcase usage and public API/XML documentation are present. The user's live acceptance
-  confirms that host behavior begins only after the close animation completes.
+Corrected and live-accepted. Ribbon.BackstageClosed fires after teardown; Writer owns busy/dialog/focus policy. Reopen cancellation, reduced motion and File-surface distinctions have focused coverage.
+
+[Recorded evidence](history/writer-friction-evidence.md#rkwf-011--backstage-has-no-host-level-close-completed-callback).
 
 ### RKWF-012 — Realized native-undo tests must serialize visible WPF window ownership
 
-- **First seen / packet:** 2026-08-26, Writer W3-B FlowDocument table core.
-- **Status:** Resolved in the Writer test harness; not a RibbonKit runtime defect.
-- **Consumer goal:** prove that structural table commands enter the actual `RichTextBox` undo stack without making
-  unrelated focus-sensitive editor tests intermittent.
-- **Reproduction and evidence:** direct FlowDocument table mutations reported native undo only when the editor was
-  hosted in a shown Window. Running the new realized tests in parallel with the existing editor-surface focus case
-  intermittently moved process keyboard focus and failed that unrelated assertion; isolated runs passed.
-- **Current app-owned resolution:** the W3-A structured-content and W3-B table suites join the existing non-parallel
-  `Writer UI` xUnit collection. After rebuilding, the complete 333-test Writer suite passed repeated runs and the
-  full solution gate while retaining real-window native undo evidence.
-- **Application impact:** production code is unchanged. Only focus-owning WPF integration tests are serialized; pure
-  geometry, model and persistence tests remain parallelizable.
-- **Smallest possible library direction:** none. Process-global Windows focus and WPF native undo realization belong
-  to the consumer test environment, not RibbonKit.
-- **Evidence still required:** keep the collection bounded to tests that truly show/focus Windows, and watch full-run
-  duration before moving additional tests into it.
+Resolved in the Writer UI test collection. Serialize tests that show/focus real windows to preserve native Undo evidence; do not serialize unrelated pure tests.
+
+[Recorded evidence](history/writer-friction-evidence.md#rkwf-012--realized-native-undo-tests-must-serialize-visible-wpf-window-ownership).
 
 ### RKWF-013 — InRibbonGallery popup background can remain unresolved in its popup HWND
 
-- **First seen / packet:** 2026-08-26, Writer W3-C live table-picker acceptance.
-- **Status:** Corrected in RibbonKit on 2026-08-29; user-verified through every theme/light-dark variant and the
-  100-200% DPI matrix by 2026-08-30. The tokenless system-background fallback is focused-tested; collapsed/RTL do
-  not change that brush-resolution contract, and whole-ribbon High Contrast is not currently supported.
-- **Consumer goal:** an expanded `InRibbonGallery` should paint an opaque theme/high-contrast popup surface before its
-  shared presenter is re-homed, so underlying ribbon commands never show through the tile grid.
-- **Reproduction and evidence:** in the real 125%-scale Writer window, `PART_PopupHost.Background` remained null even
-  though the shared template declares `RibbonKit.Brushes.Ribbon.ContentBackground`. The 8-column table grid rendered,
-  but the File/Home ribbon content was visible between tiles. Direct inspection confirmed the null background; the
-  final standard and RTL captures became opaque after the app supplied the resolved brush.
-- **Friction:** the consumer cannot set the popup host through public `InRibbonGallery` API. It must apply the template,
-  find the declared part by name and assign a brush after initialization.
-- **Current resolution:** `InRibbonGallery` resolves the theme-owned content background from the connected gallery
-  when its popup HWND opens, uses the system Window brush in High Contrast, and refreshes an open surface after theme
-  or High Contrast changes. Writer's template-part lookup and direct background assignment have been removed.
-- **Application impact:** the popup is now opaque without private template-part access; gallery selection, re-homing
-  and input behavior remain unchanged.
-- **Implemented library direction:** the focused realized consumer reproduces the unresolved surface; the gallery now
-  resolves/reapplies the theme-owned popup background from its connected resource scope when the separate HWND opens.
-  High Contrast uses the system Window brush, and open popups follow runtime theme/High Contrast notifications.
-- **Evidence still required:** the user has accepted every Office generation/light-dark variant and 100-200% DPI
-  without the Writer override. A focused tokenless-consumer case now proves that opening a popup with no
-  `RibbonKit.Brushes.Ribbon.ContentBackground` resource uses `SystemColors.WindowBrush`; the existing scoped-theme
-  case separately proves recovery of the connected gallery's resolved brush after the detached popup host loses it.
-  No tokenless whole-Showcase visual check is required because RibbonKit otherwise requires a theme token dictionary,
-  and complete Windows contrast-theme support is not currently claimed.
+Corrected and accepted. Resolve popup background from the connected gallery with system Window fallback; tokenless/scoped-theme tests and theme/DPI live evidence replace the Writer override.
+
+[Recorded evidence](history/writer-friction-evidence.md#rkwf-013--inribbongallery-popup-background-can-remain-unresolved-in-its-popup-hwnd).
 
 ### RKWF-014 — Transient Writer selection can collapse the active contextual tab during a table command
 
-- **First seen / packet:** 2026-08-27 user follow-up after Writer W3-C acceptance; assigned to planned W3-E.
-- **Status:** Corrected and live-accepted in the Writer-owned W3-E1 foundation. This
-  is not a confirmed RibbonKit defect and no runtime change is approved.
-- **Consumer goal:** invoking a command from Table Tools should keep that contextual page visually stable when the
-  committed result and caret remain in the table, even if the native mutation temporarily replaces table structure or
-  transfers focus into ribbon/popup chrome.
-- **Reproduction and evidence:** the user observed Table Tools quickly switch to Home and return while clicking one of
-  its commands. Current code publishes `WriterTableInteractionController.StateChanged` for every native selection
-  change and immediately maps an unresolved intermediate selection to `TableToolsTab.Visibility=Collapsed`. Structural
-  table services can replace document elements and restore the caret within one logical command, creating a credible
-  outside-table then inside-table publication sequence. No trace yet proves that RibbonKit changes tabs while Table
-  Tools remains continuously visible.
-- **Friction:** a contextual ribbon consumer must distinguish durable editor context from transient WPF selection and
-  focus states. Publishing every intermediate state makes the ribbon react correctly to state that should never have
-  become user-visible.
-- **Current app-owned correction:** W3-E1 captures a document-bound table/picture/hyperlink snapshot before popup
-  focus moves, revalidates the exact live object before execution and defers table-state refresh while an app-owned
-  structural mutation emits intermediate selection/text events. The final state publishes once after caret recovery;
-  realized coverage keeps Table Tools selected after row insertion and collapses it after true table deletion. Stale
-  document/object targets are rejected.
-- **Application impact:** the flash makes Table Tools appear unreliable and can disorient keyboard users even when the
-  requested command succeeds. An unconditional always-visible tab would instead expose stale or unsafe commands.
-- **Smallest possible library direction:** none at present. Treat RibbonKit's fallback selection as correct when the
-  host actually collapses the selected contextual tab. Consider runtime work only if a minimal consumer shows an
-  unwanted fallback while contextual visibility remains continuously true, or if multiple consumers require a
-  narrowly defined contextual-selection transaction API.
-- **Acceptance:** the W3-E live matrix passed ordinary/dropdown table actions, structural mutations, true deletion,
-  Undo/Redo and contextual-tab stability without the Home-tab flash. No `src/RibbonKit/**` change was required.
+App-corrected and accepted. Capture/revalidate structured targets and defer intermediate selection publication until mutation/caret recovery; reject stale context after real deletion/replacement.
+
+[Recorded evidence](history/writer-friction-evidence.md#rkwf-014--transient-writer-selection-can-collapse-the-active-contextual-tab-during-a-table-command).
 
 ### RKWF-015 — Native Undo can restore a loaded image container without its image child
 
-- **First seen / packet:** 2026-08-28 user follow-up during Writer W3-E1.
-- **Status:** Corrected in Writer; ordinary WPF embedded-content behaviour, not a RibbonKit runtime defect.
-- **Consumer goal:** removing a packaged picture through the structured context menu must be one reversible operation,
-  even when the document was opened from Backstage Recent rather than created during the current editor session.
-- **Reproduction and evidence:** with the first Recent `.rkw` document, removing the first-line picture paused briefly
-  and native Undo appeared to do nothing. A focused reproduction showed that WPF did restore the
-  `InlineUIContainer`, but its child was an empty `Grid` instead of the deserialized `Image`. Assigning a new direct
-  child then cleared WPF's redo chain; leaving the repaired `Grid` in the live document caused XamlPackage save to
-  replace the picture with a space.
-- **Current app-owned correction:** Writer captures a bounded inert image snapshot before removal, repairs WPF's empty
-  placeholder after Undo, and supplies the matching redo only after native redo units have been traversed. W3-E2a reuses
-  that bounded snapshot/placeholder strategy for its one-unit image-container replacement on resize, preserving exact
-  opening and committed dimensions without serializing interaction state. Unmodified
-  Delete/Backspace route through the same transaction only for an exact picture selection or the matching directional
-  caret boundary; ordinary text deletion remains native. Persistence and preview normalize an isolated clone back to
-  the approved direct-image graph, leaving the live undo history untouched. Realized coverage opens through Recent,
-  removes through the actual menu and both keyboard keys, traverses older text history, redoes/removes again, previews,
-  and saves/reopens the restored picture.
-- **Application impact:** without the bridge, Undo consumes a unit without a visual restoration and a naïve repair can
-  either destroy Redo or silently omit the picture on save. The correction stays inside Writer editing and snapshot
-  services and does not broaden the data-only `.rkw` allowlist.
-- **Smallest possible library direction:** none. The affected object graph is owned by the native WPF `RichTextBox` and
-  Writer persistence, not a RibbonKit control or service.
-- **Acceptance:** visible loaded-picture removal, keyboard/context-menu paths, direct resize, repeated Undo/Redo and
-  save/reopen passed during W3-E. Retain the focused multi-picture/nested-container regressions.
+App-corrected. Bounded inert image snapshots repair empty Undo placeholders and preserve older native history; redo runs only after native units. Normalize isolated persistence/preview clones, never the live history.
+
+[Recorded evidence](history/writer-friction-evidence.md#rkwf-015--native-undo-can-restore-a-loaded-image-container-without-its-image-child).
 
 ### RKWF-016 — Revealing a contextual tab can leave the active-tab marker at its previous coordinate
 
-- **First seen / packet:** 2026-08-29, Writer W3-E2a live Picture Tools follow-up.
-- **Status:** Corrected in RibbonKit on 2026-08-29; user-verified through every theme/light-dark variant and the
-  100-200% DPI matrix by 2026-08-30. RTL, reduced motion, merging and customization reorder remain pending.
-- **Consumer goal:** revealing or hiding a contextual tab must keep the selected-tab marker aligned with the selected
-  normal tab, including when the contextual tab occupies an earlier collection position.
-- **Reproduction and evidence:** with Page selected, Picture Tools was located between Insert and Page in Writer's tab
-  collection. Selecting a picture revealed Picture Tools and shifted Page to the right. Page content and selected text
-  remained active, but the selection underline stayed at Page's former coordinate beneath Picture Tools. The user
-  supplied a live screenshot of this contradictory state.
-- **Friction:** the ribbon's selected content and header state can be correct while its animated active marker points
-  at a different tab after contextual visibility changes the positions of later headers. This makes an ordinary
-  contextual-tab insertion look like a selection change even though no selection change occurred.
-- **Current resolution:** `RibbonTabControl` observes tab collection and visibility changes and coalesces a
-  post-layout refresh of both selection visuals. Writer keeps Table Tools and Picture Tools in their authored middle
-  positions; its startup reordering workaround has been removed.
-- **Application impact:** without the ordering constraint, users can see Page content while the active marker appears
-  under Picture Tools, obscuring which commands are currently displayed and undermining contextual-tab trust.
-- **Implemented library direction:** the realized regression keeps normal tabs on both sides of a hidden contextual
-  tab, reveals it while the right-side normal tab stays selected, and requires the shared marker to move to the new
-  header coordinate. The existing Showcase contextual-tab surface exercises the same authored ordering; the control
-  refreshes the sliding underline and connected-tab notch after collection or visibility layout settles.
-- **Evidence still required:** the focused normal/contextual/normal realized case passes, and the user has accepted
-  visibility toggles through every Office generation/light-dark variant and 100-200% DPI. Repeat RTL and reduced
-  motion, then cover tab merging and customization reorder.
+Library-corrected with coalesced post-layout underline/notch refresh. Theme/variant and DPI visibility toggles are accepted; RTL, reduced motion, merging and customization reorder remain recorded follow-ups.
+
+[Recorded evidence](history/writer-friction-evidence.md#rkwf-016--revealing-a-contextual-tab-can-leave-the-active-tab-marker-at-its-previous-coordinate).
 
 ### RKWF-017 — Empty trailing table cells can briefly lack usable text geometry after replacement
 
-- **First seen / packet:** 2026-08-29, Writer W3-E2b live direct-table-resize follow-up.
-- **Status:** Corrected in Writer; native WPF document-layout timing, not a confirmed RibbonKit runtime defect.
-- **Consumer goal:** direct-selection chrome must continue to cover every logical table row and column immediately
-  after a resize commits through cloned native-table replacement.
-- **Reproduction and evidence:** before resize, all empty cells produced enough character geometry for the Writer
-  adorner. After the one-Undo replacement, an empty trailing cell could temporarily produce no usable character
-  rectangle while the rendered table itself still contained the column. The adorner derived its logical column count
-  from only the realized subset and visibly ended one cell before the table edge.
-- **Current app-owned correction:** Writer derives logical row/column counts from the native table grid and uses live
-  character rectangles only for coordinates. Explicit `TableColumn.Width` metadata and bounded interpolation cover a
-  temporarily unrealized edge; subsequent layout passes naturally replace the fallback with realized geometry. When
-  explicit widths are projected, Writer also adds one native `Table.CellSpacing` contribution per column: WPF renders
-  that spacing outside `TableColumn.Width`, so omitting it creates cumulative handle drift after resize.
-- **Application impact:** without the structural count, selection and resize chrome becomes misleading precisely after
-  the user completes a resize, and the bottom-right handle can target the wrong table extent.
-- **Smallest possible library direction:** none. The chrome and geometry resolver are Writer-owned consumers of native
-  `FlowDocument` tables; no RibbonKit control participates in the document layout.
-- **Acceptance:** multi-row/column, spans, resizing, zoom/view geometry, Undo/Redo and save/reopen passed the completed
-  W3-E live matrix. The later zoom-specific correction is recorded in RKWF-023.
+App-corrected. Derive table grid counts from structure, then use realized geometry or bounded explicit-width fallback, including CellSpacing per column.
+
+[Recorded evidence](history/writer-friction-evidence.md#rkwf-017--empty-trailing-table-cells-can-briefly-lack-usable-text-geometry-after-replacement).
 
 ### RKWF-018 — Live DPI transition can stale InRibbonGallery scrolling and side-button hit geometry
 
-- **First seen / packet:** 2026-08-30, Showcase Styles gallery after the RKWF-005/013/016 live matrix.
-- **Status:** Corrected and user-verified on 2026-08-30. Natural width, three-column layout, popup/button separation,
-  button behavior, the `-8` vertical placement and the first post-DPI open/close redraw all passed live. The default
-  template keeps separate permanent strip/popup scrollers and moves only the items presenter across hosts.
-- **Consumer goal:** after moving an active per-monitor-v2 window to a different DPI, the closed gallery strip must
-  remain populated and the first click on each side button must invoke that exact button; opening afterward must show
-  a freshly measured popup at its first item.
-- **Reproduction and evidence:** after a live transition, especially above 150%, the lower expand button sometimes
-  behaved like scroll-down and the strip could page to a completely empty viewport. Opening Snipping Tool caused a
-  later activation/layout/render pass that immediately repaired the gallery. The supplied screenshot captured the
-  empty Styles strip with all three side glyphs still visible. The popup was closed during the DPI transition and was
-  opened only afterward. Two follow-up recordings then showed the initial correction was insufficient: at 200% the
-  transparent popup-window/shadow rectangle visibly covered the left portion of the side-button column, while a
-  normal 125% run still produced partial button response and an empty strip. The blank state also reproduced on a
-  downward 150%-to-125% transition. Constraining the popup window to the narrow content-column width then stopped the
-  HWND overlap, but the next live check exposed a deterministic post-DPI clip and forced a gallery authored for three
-  columns to wrap after two items. Natural-width edge placement then passed live for geometry and interaction, leaving
-  one purely visual symptom: the closed strip could retain a blank/stale frame until another window action repainted it.
-  A generation-guarded final layout plus explicit realized-item invalidation still did not eliminate that live state.
-  The first open/close cycle after a DPI transition can fail while the immediate second cycle works, meaning the first
-  cross-HWND layout is itself priming or repairing state used by the second.
-- **Friction:** `InRibbonGallery` shares one `ScrollViewer` and items presenter between its one-row strip and popup.
-  Popup opening already refreshed the re-homed viewport once, but the closed strip did not observe its owner window's
-  DPI transition. Its fixed-height side-button stack also left the inset visual border as the only transparent hit
-  surface, creating dead edge gutters at fractional device scales. More importantly, the expanded surface is a
-  separate transparent Popup HWND: its margin/shadow accommodation extended that rectangular input window over the
-  main-window side buttons, and transparent pixels in one HWND cannot pass clicks through to controls in another.
-  Closing after browsing a later popup page also re-homed the presenter before the old vertical offset was committed
-  back to a valid strip offset, allowing a blank frame. WPF does hide its separate popup window synchronously and may
-  keep it alive until asynchronous destruction (or cancel that destruction on a quick reopen), but the captured tiny
-  selected-border corner shows this failure is not merely a hidden popup or cached bitmap: the live item visual has
-  returned and is being clipped by stale geometry carried with the re-homed scroller.
-- **Current partial resolution:** the gallery tracks its owning Window while loaded, stops stale scroll animations and resets
-  to a safe offset synchronously on DPI change, then performs generation-guarded Loaded and Render layout passes.
-  A closed strip restores its selected row after the new metrics settle; a subsequently opened popup starts at offset
-  zero with a fresh viewport. The three buttons now occupy equal layout-rounded Grid rows whose full roots are
-  transparent hit surfaces; inset chrome no longer defines input geometry. Scroll commands refresh metrics before
-  calculating their next page. The Popup remains anchored to the content host but no longer inherits its narrow fixed
-  width. A custom placement uses the popup's natural measured size, aligns its outer edge with the content/button
-  boundary, and expands away from the buttons: leftward in LTR and rightward in RTL. Thus three authored columns remain
-  on one row without putting any part of the popup HWND over the buttons. On close it clears the popup-page offset
-  before re-homing, then synchronously lays out the returned strip at offset zero before any deferred selected-row
-  reveal. The attempted final Render/ContextIdle invalidation proved an additional render was requested, but live
-  evidence showed that repaint still consumed the wrong clip, so that workaround was removed. The default template
-  now leaves `PART_ScrollViewer` permanently under `PART_ContentHost` in the main HWND and
-  `PART_PopupScrollViewer` permanently under `PART_PopupHost` in the Popup HWND. Only `PART_ItemsPresenter` moves.
-  Each viewport therefore retains its own DPI, extent and clip state. The visible card keeps its reduced horizontal
-  gap, and the accepted `VerticalOffset=-8` compensates for the popup child's existing top margin/target inset.
-  Horizontal placement mirrors in RTL.
-- **Application impact:** popup geometry/button input and the post-DPI first-open redraw are corrected.
-- **Implemented and next library direction:** the owner subscription survives transient collapsed-group unload/reload
-  re-homing and detaches after a genuine removal. Host-specific scrollers are now the default-template boundary; a
-  compatibility fallback retains the original whole-content re-home for custom templates that do not yet expose the
-  two new optional parts. Focused gallery regressions pass **8/8**, including the invariant that neither scroller
-  changes host during a downward post-DPI open/close cycle. The zero-warning/error solution build, RibbonKit
-  **371/371**, visual **1/1**, and Writer **439/439** pass. The future themed-scrollbar slice remains separate.
-- **Evidence still required:** none for Packet 1. The user accepted the previously failing first-open/close sequence
-  after mixed-DPI changes, including the 150%-to-125% and 200% cases; preserve the regression matrix for future work.
+Library-corrected and live-accepted. Permanent strip/popup scrollers move only the items presenter. Natural-width placement, side-button separation and first post-DPI open/close redraw passed.
+
+[Recorded evidence](history/writer-friction-evidence.md#rkwf-018--live-dpi-transition-can-stale-inribbongallery-scrolling-and-side-button-hit-geometry).
 
 ### RKWF-019 — Gallery overflow falls back to OS-native scrollbar chrome
 
-- **First seen / packet:** 2026-08-30, Showcase Styles gallery after RKWF-018; Packet 2.
-- **Status:** Core gallery geometry and the scoped Customize Ribbon scrollbar pilot are live-accepted. QAT list-box
-  scrollbars are implemented and await live confirmation; the final Office 2013/2019 square-token adjustment and
-  modern dialog-action normal-state follow-up also await visual comparison.
-- **Consumer goal:** gallery overflow should remain visually continuous with the active RibbonKit Office-generation
-  palette while retaining ordinary WPF range, keyboard, mouse, wheel and accessibility semantics.
-- **Reproduction and evidence:** opening an `InRibbonGallery` with enough rows to exceed its 340-DIP popup cap realized
-  the operating system's default vertical scrollbar inside an otherwise RibbonKit-themed popup.
-- **Friction:** the native chrome changed independently of RibbonKit theme and dark-mode switches. Replacing scrolling
-  logic inside each gallery would risk the just-accepted DPI/viewport correction and duplicate mature WPF behavior.
-- **Current resolution:** the public lookless `RibbonScrollBar : ScrollBar` preserves native range commands, both
-  orientations, RTL mirroring and the inherited RangeValue automation peer. One shared template set supplies vector
-  arrows, page tracks, thumbs, pressed/hover states and a High Contrast fallback. Eight palette brushes and six
-  metrics are present in every light/dark Office 2007-2024 token dictionary. `RibbonGallery` and the popup-only
-  `InRibbonGallery` viewport apply a same-file adapter that reuses those shared templates on the native `ScrollBar`
-  instances generated by their `ScrollViewer`s, without replacing either viewport or moving it across HWNDs. Ribbon
-  Lab includes standalone vertical/horizontal examples, and its Accent gallery has enough swatches to force the real
-  popup overflow path. The dedicated Localization/RTL lab includes both orientations under its live mirroring toggle.
-  A later adoption pilot first applied the same shared template to the generated scrollbars in `RibbonCustomizePage`'s
-  available-command list and ribbon-structure tree. The user accepted that page-local scrollbar treatment as visually
-  successful. Follow-up then put the same implicit adapter inside `RibbonQuickAccessPage`, covering its available and
-  current lists while app-owned options pages and optional Backstage content remain unchanged. The Button-targeted counterpart was then
-  promoted into `OptionsDialogActionButtonStyle`, so QAT customization, Customize Ribbon, main/edit Cancel and every
-  compact action share the scrollbar-derived interaction template and radius token. Primary OK keeps its colored gel
-  override and caption Close keeps its Windows-red hover; app-owned page content remains opt-in. Because transparent
-  modern scrollbar-button normal tokens made full action buttons blend into the form, the shared action style now uses
-  dedicated dialog normal-background/border tokens: legacy themes keep the same gel, while 2013/2019/2024 use visible
-  flat fills and one-DIP outlines without changing their scrollbar arrows.
-  The dialog's outer `PART_ContentScroll` now also supplies the exact keyed `RibbonKit.ScrollBarStyle` as its native
-  generated-`ScrollBar` style. It preserves a custom template's pre-existing implicit scrollbar style and does not
-  change ScrollViewer ownership, fill-page disabling or the built-in pages' independently scrolling list boxes.
-- **Preliminary visual correction:** the first live pass found the 12-15 DIP rails squeezed, arrow rows sized only to
-  their 7-by-4 vector content, and the vertical thumb pill compressed. The rail is now 16 DIP for Office 2013-2024
-  and 18 DIP for Office 2007/2010, both line buttons reserve a full square, and orientation-specific padding moved
-  from `Thumb.Margin` into the thumb template's inner border. That preserves `Track`'s calculated thumb geometry.
-  Public `ButtonCornerRadius`, `ThumbCornerRadius`, and `RailCornerRadius` properties (also usable as attached
-  properties on generated native scrollbars) independently allow square or rounded chrome. Office 2007/2010 thumbs use outlined
-  multi-stop glass/gel gradients; later generations retain their flatter palettes.
-- **Second preliminary visual correction:** the first inner-inset correction still removed one DIP from each end of
-  a short vertical thumb, which left its rounded outline looking like two disconnected caps. Removing the longitudinal
-  inset preserved the Thumb's desired size, but the next live capture proved that only a small cap was still rendered.
-  The
-  Showcase's labeled vertical sample returned to a 56-DIP height so its bottom button stays above the group footer;
-  rail width remains 16/18 DIP. `RailCornerRadius` is now an independent public/attached property with theme defaults
-  matching the button radius, preventing the track background's sharp corners from showing behind rounded hover
-  chrome. Office 2007/2010 line buttons also receive a visible outlined gradient in their normal state, while modern
-  themes retain the quieter transparent default.
-- **Track-level correction:** the compact 125% geometry probe found a 22.4-DIP Thumb arranged into an 8-DIP native
-  `Track` slot with an 8-DIP layout clip. WPF's proportional-scrollbar path derives its minimum from half of the local
-  system scrollbar-button resource, not `Thumb.MinHeight`, so the earlier minimum enlarged only the child behind the
-  clip. The internal `RibbonScrollBarTrack` now maps the active theme's minimum-thumb token into those two Track-local
-  system resource keys. Native Track therefore calculates the correct slot, value density, drag area and page-button
-  lengths itself. No process-wide system resource is changed. The Thumb no longer has a conflicting minimum or any
-  inset: its Pill fills the complete vertical rail width or horizontal rail height. Compact Office 2010 and Office
-  2024 realized cases pin equal layout-slot/Pill geometry and the absence of a layout clip. After live acceptance of
-  that geometry, the Office 2013 and Office 2019 light/dark button, thumb and rail radius tokens were all set to zero;
-  four focused theme cases prevent either flat generation from regaining rounded scrollbar chrome.
-- **Application impact:** overflow chrome now follows RibbonKit rather than the host OS theme; scrolling behavior and
-  RKWF-018's two-scroller ownership boundary remain unchanged.
-- **Popup edge follow-up:** the gallery-only generated-scrollbar adapter carries a one-DIP trailing margin so the
-  vertical rail stays clear of both gallery popup card edges without changing the shared scrollbar style or closed
-  in-ribbon strip geometry.
-- **Evidence still required:** inspect standalone vertical/horizontal controls and overflowing galleries in every
-  Office generation/light-dark variant, then check pointer arrows, track paging, thumb dragging, wheel/keyboard,
-  100-200% DPI, RTL horizontal direction and High Contrast. The user accepted the corrected full-width thumb and
-  compact vertical behavior and the Customize Ribbon scrollbar pilot; the final Office 2013/2019 square-token visual
-  recheck remains. Compare the dialog-wide ordinary-button treatment in all modern light/dark themes. Automated
-  focused coverage is **22/22**, including realized overflow/scrolling in both lists on both built-in pages, the outer
-  Options content viewport, Office 2010 gel/radius chrome, modern visible normal chrome, both built-in
-  pages and the OK/Cancel/Close exceptions. The reviewed Office 2024 RTL QAT approval changed only the four expected
-  buttons and then only its available-list scrollbar; the zero-warning Release build, RibbonKit **392/392**, visual
-  **1/1**, and Writer **439/439** pass.
+Core gallery scrollbar geometry and Customize Ribbon pilot are accepted. QAT list styling, final 2013/2019 square-token and modern ordinary-button comparisons retain the narrower pending live checks; do not infer their closure from RKWF-027/029.
+
+[Recorded evidence](history/writer-friction-evidence.md#rkwf-019--gallery-overflow-falls-back-to-os-native-scrollbar-chrome).
 
 ### RKWF-020 — FlowDocument table selection endpoints can resolve to an adjacent cell
 
-- **First seen / packet:** 2026-08-30, Writer W3-E2b live table-selection follow-up.
-- **Status:** Corrected in Writer; native WPF text-pointer affinity, not a RibbonKit runtime defect.
-- **Consumer goal:** whole-table selection, rectangular merge and context-menu invocation must address the same cells
-  regardless of drag direction, without absorbing the cell beyond an exclusive selection end.
-- **Reproduction and evidence:** the table selection grip left the rightmost cell unhighlighted; merging a horizontal
-  selection also merged its next cell; and right-click after right-to-left or bottom-to-top selection collapsed the
-  range. `TextSelection.End` is exclusive, and at a table boundary its parent/ordinary lookup can identify the next
-  cell even though that cell is not part of the visible selection.
-- **Current app-owned correction:** Writer orders endpoints and compares a non-empty end with the containing cell's
-  first real insertion position. When WPF places the exclusive end inside the next cell's structural wrappers but no
-  later than that insertion position, Writer uses the preceding physical cell. That normalized rectangle is carried
-  through ribbon/context-menu execution. Whole-table selection still ends at the final cell's `ElementEnd`, and
-  normalized cell containment protects right-click selection. Partial-span merge rejection remains unchanged.
-- **Application impact:** selection chrome, merge scope and context actions now share one deterministic structural
-  range for forward and reverse drags.
-- **Smallest possible library direction:** none. RibbonKit only hosts the commands; native `RichTextBox`, Writer's
-  table service and its context-menu target resolver own these document pointers.
-- **Acceptance:** forward/reverse row, column and rectangle selection, merge scope, spans, right-click execution and
-  Undo/Redo passed the completed W3-E live matrix.
+App-corrected TextPointer affinity. Normalize selection endpoints so a boundary at the next cell does not expand the selected table range incorrectly.
+
+[Recorded evidence](history/writer-friction-evidence.md#rkwf-020--flowdocument-table-selection-endpoints-can-resolve-to-an-adjacent-cell).
 
 ### RKWF-021 — Table insertion rectangles move with cell text alignment
 
-- **First seen / packet:** 2026-08-30, Writer W3-E2b live alignment follow-up.
-- **Status:** Corrected in Writer; native WPF document geometry, not a RibbonKit runtime defect.
-- **Consumer goal:** table resize chrome must remain on native grid edges when cell text alignment changes, and cell
-  alignment commands must format every cell in the selected rectangle.
-- **Reproduction and evidence:** centering/right-aligning the first cell moved its empty insertion rectangle and the
-  Writer adorner's right edge; selecting multiple cells and invoking horizontal or vertical alignment changed only the
-  caret cell because both handlers used `MutateCurrentCell`.
-- **Current app-owned correction:** anchor the adorner at `Table.ElementStart` plus `CellSpacing`, derive its perimeter
-  from resolved grid boundaries, and route both alignment menus through one normalized `WriterTableRange` mutation.
-- **Smallest possible library direction:** none. RibbonKit raises the menu click; Writer owns native `TableCell`
-  formatting and FlowDocument geometry projection.
-- **Acceptance:** horizontal and vertical alignment over single cells and selected ranges, with spans and Undo/Redo,
-  passed the completed W3-E live matrix; table placement remains the separate RKWF-022/RKWF-024 contract.
+App-corrected table origin: text alignment is not the table border. Use structural/element origin, spacing and widths for the adorner perimeter.
+
+[Recorded evidence](history/writer-friction-evidence.md#rkwf-021--table-insertion-rectangles-move-with-cell-text-alignment).
 
 ### RKWF-022 — Locally setting table placement can materialize inherited Auto margins
 
-- **First seen / packet:** 2026-08-30, Writer W3-E2 live save/reopen follow-up.
-- **Status:** Corrected in Writer; native WPF dependency-property defaults, not a confirmed RibbonKit runtime defect.
-- **Consumer goal:** Left/Center/Right table placement must remain native, undoable and saveable without weakening the
-  strict `.rkw` block-margin validator.
-- **Reproduction and evidence:** resized table geometry saved and reopened correctly. After any table-placement command,
-  save failed with `The native document has an invalid block margin value.` WPF exposes untouched `Table.Margin`
-  components as `Auto`/`NaN`; copying the vertical defaults into a newly local `Thickness` serialized `Auto` values.
-- **Current app-owned correction:** preserve finite top/bottom margins, materialize inherited non-finite defaults as
-  zero, and encode semantic placement with finite left/right remainder margins. The strict package parser continues
-  to reject non-finite persisted margins.
-- **Application impact:** changing table placement no longer makes an otherwise valid native document unsaveable;
-  resize persistence and table/cell text alignment remain unchanged.
-- **Smallest possible library direction:** none. RibbonKit raises the placement command; Writer owns FlowDocument table
-  margins and `.rkw` persistence.
-- **Acceptance:** focused service and three-placement persistence coverage passes **4/4** independently of the full
-  gates. The user confirmed the corrected alignment save-close-reopen path in the fresh visible Writer build; ordinary
-  resized geometry had already passed the same live persistence check.
+App-corrected inherited Auto margins. Preserve finite vertical margins and materialize inherited non-finite defaults safely when committing placement.
+
+[Recorded evidence](history/writer-friction-evidence.md#rkwf-022--locally-setting-table-placement-can-materialize-inherited-auto-margins).
 
 ### RKWF-023 — Adorner-local table geometry must not reapply the editor zoom transform
 
-- **First seen / packet:** 2026-08-30, Writer W3-E2 remaining live-acceptance batch.
-- **Status:** Corrected in Writer; WPF adorner coordinate ownership, not a confirmed RibbonKit runtime defect.
-- **Consumer goal:** table frames and grips must remain on native grid edges at every Writer zoom in Paper and
-  Continuous views.
-- **Reproduction and evidence:** at non-100% zoom, the frame and handles drifted from the table in both editing views.
-  Native text rectangles and adorner rendering already share the adorned `RichTextBox`'s local coordinates, while
-  WPF applies its `LayoutTransform` to the complete editor/adorner pair. Writer multiplied the resolved table geometry
-  by that scale again.
-- **Current app-owned correction:** keep resolved boundaries and drag deltas in the shared local coordinate space;
-  leave the single visual zoom transform to WPF. Existing DPI alignment remains independent.
-- **Application impact:** zoom no longer double-projects table chrome or drag math; accepted unzoomed resize,
-  cancellation, Undo/Redo and persistence behavior remains unchanged.
-- **Smallest possible library direction:** none. RibbonKit does not own Writer's editor transform or document adorner.
-- **Acceptance:** focused realized 50/150/200% plus prior resize transaction coverage passes **4/4**. The user confirmed
-  that table frames and grips align perfectly in both Paper and Continuous views.
+App-corrected coordinate ownership. Table adorner geometry/deltas are already local; applying the editor zoom again double-projects them.
+
+[Recorded evidence](history/writer-friction-evidence.md#rkwf-023--adorner-local-table-geometry-must-not-reapply-the-editor-zoom-transform).
 
 ### RKWF-024 — WPF tables have no semantic horizontal placement across changing widths
 
-- **First seen / packet:** 2026-08-30, Writer W3-E remaining live-acceptance batch.
-- **Status:** Corrected and live-accepted in Writer.
-- **Consumer goal:** Left/Center/Right must remain the same semantic table placement when switching between fixed Paper
-  content width and the fluid Continuous viewport, without dirtying the document or replacing accepted Undo/Redo.
-- **Reproduction and evidence:** Center in Paper remained at its Paper-calculated numeric left margin in Continuous;
-  centering there calculated a different left margin that displaced the table after returning to Paper. WPF `Table`
-  exposes block margins but no horizontal-placement property, and `Auto` left/right margins all realized at the same
-  origin. Changing `Table.Margin` in a realized `RichTextBox` raises `TextChanged` and adds an undo unit; the internal
-  no-undo change scope clears earlier history.
-- **Current app-owned correction:** persist the unused width on both margin sides so the ratio encodes Left, Center or
-  Right. Reproject that ratio at view/viewport changes, suppressing dirty publication for the projection only. A
-  bounded net8 WPF bridge removes only the newly appended projection unit and restores the captured Redo stack;
-  explicit placement remains normally undoable and saveable.
-- **Application impact:** placement is width-semantic rather than view-coordinate-specific, and view changes preserve
-  the existing edit-history head.
-- **Smallest possible library direction:** none. RibbonKit raises the placement command; Writer owns the native table,
-  editor view widths and undo boundary.
-- **Acceptance:** focused service/persistence/history coverage passes **6/6** and the realized cross-view case passes
-  **1/1**. The user confirmed the fresh Writer build preserves semantic placement across Paper and Continuous; prior
-  alignment save/reopen and Undo/Redo checks remain accepted.
+App-corrected and accepted semantic horizontal table placement. Preserve the margin-ratio placement across Paper/Continuous widths, persistence and native history without dirtying view-only projection.
+
+[Recorded evidence](history/writer-friction-evidence.md#rkwf-024--wpf-tables-have-no-semantic-horizontal-placement-across-changing-widths).
 
 ### RKWF-025 — Re-serializing fixed XPS bitmap resources can terminate virtual printing
 
-- **First seen / packet:** 2026-08-30, Writer W3-E remaining live-acceptance batch.
-- **Status:** Corrected and live-accepted in Writer.
-- **Consumer goal:** preview and virtual printing must use the same isolated content/page inputs, including portable
-  pictures, without touching the live editor or terminating Writer.
-- **Reproduction and evidence:** Microsoft Print to PDF worked for text-only documents but terminated Writer when the
-  document contained a picture. Writer was submitting the preview's in-memory `FixedDocumentSequence` paginator, so
-  WPF serialized already-packaged bitmap resources a second time into the device XPS spool.
-- **Current app-owned correction:** keep the fixed paginator for stable preview/navigation, but submit the same
-  snapshot clone's flow paginator to the printer. Bitmap resources are then serialized once into the spool; page
-  settings, isolation and imageable-area reporting stay shared.
-- **Application impact:** pictured print/PDF no longer depends on copying bitmap resources out of an in-memory fixed
-  package; text-only printing and preview remain unchanged.
-- **Smallest possible library direction:** none. RibbonKit only hosts Backstage; Writer owns preview and print devices.
-- **Acceptance:** the pictured spool and print-service cases pass **2/2**, and the existing real-window print lifecycle
-  passes **1/1**. The user confirmed the fresh Writer build exports a document containing a picture through Microsoft
-  Print to PDF without terminating Writer.
+App-corrected and accepted pictured printing. Keep stable fixed preview but print through the isolated flow path to avoid re-serializing fixed XPS bitmap resources.
+
+[Recorded evidence](history/writer-friction-evidence.md#rkwf-025--re-serializing-fixed-xps-bitmap-resources-can-terminate-virtual-printing).
 
 ### RKWF-026 — Ribbon has no host-level Office Orb glyph override
 
-- **First seen / packet:** 2026-08-31, Writer W4-A application-identity follow-up.
-- **Status:** App-owned workaround; runtime direction is not approved.
-- **Consumer goal:** use one Writer identity in the executable/title bar and in the Office 2007 application Orb,
-  including Classic2007's shared-chrome Backstage proxy.
-- **Reproduction and evidence:** setting `RibbonWindow.Icon` supplies the executable/window image but does not affect
-  the application button. RibbonKit's shared Orb template owns a fixed four-square glyph and exposes no host template
-  or image property for replacing only that mark.
-- **Current app-owned workaround:** Writer supplies a themed Orb `DataTemplate` and injects it into the realized
-  application button's `Orb` presenter after render and after appearance changes. Classic2007 already reuses that
-  presenter's template, so the proxy inherits Writer's mark without duplicating its transition logic. The mark uses
-  Writer's fixed blue identity gradient rather than white, which blended into the pale Office 2007 Orb sphere.
-- **Application impact:** the application and Office 2007 Orb share a recognizable W identity while RibbonKit still
-  owns Orb size, surface, ring, shadow, hover, pressed and Backstage-open states. No `src/RibbonKit/**` file changes.
-- **Smallest possible library direction:** an optional host-level Orb content template or image source that defaults
-  to the existing chrome and is also consumed by the Classic2007 proxy.
-- **Verification:** the focused realized identity and eight-item Backstage icon regression passes independently; the
-  corrected blue-gradient Orb mark and final navigation silhouettes were accepted in the actual Writer window during
-  W4-A closure.
+App-owned Orb-glyph workaround; runtime direction is not approved. The realized custom template may justify a future general host hook, not a Writer-specific public API.
 
-The first live navigation-icon review showed that reusing layered ribbon images was not sufficient: Backstage's
-foreground opacity mask flattened New, Save and Save As into nearly identical document blocks and erased most Print
-detail. Writer now uses five dedicated mask-native silhouettes for New, Open, Save, Save As and Print; the general
-ribbon artwork remains unchanged.
+[Recorded evidence](history/writer-friction-evidence.md#rkwf-026--ribbon-has-no-host-level-office-orb-glyph-override).
 
 ### RKWF-027 — Options dialog content scroller did not consume RibbonKit's native ScrollBar style
 
-- **First seen / packet:** 2026-08-31, Writer W4-A final Appearance-page review.
-- **Status:** closed; corrected in the shared RibbonKit container and accepted with W4-A.
-- **Consumer goal:** arbitrary custom pages hosted by `RibbonOptionsDialog` should receive the same generation-aware
-  scrollbar chrome already used by RibbonKit controls.
-- **Reproduction and evidence:** Writer's `WriterAppearancePage` contains no `ScrollViewer`. The visible right-side
-  scrollbar is generated by `RibbonOptionsDialog`'s `PART_ContentScroll` in `Controls.OptionsDialog.xaml`. RibbonKit
-  already exposes the keyed `RibbonKit.ScrollBarStyle` specifically for native `ScrollBar` instances generated by a
-  `ScrollViewer`, but the container does not apply it to that internal scrollbar.
-- **RibbonKit correction:** `RibbonOptionsDialog.OnApplyTemplate` preserves a custom template's existing implicit
-  scrollbar style, otherwise resolves the exact keyed `RibbonKit.ScrollBarStyle` or imports its existing dictionary
-  into only `PART_ContentScroll` and registers that same style object under the native `ScrollBar` type key.
-- **Verification:** focused realized coverage includes the overflowing outer Options viewport without changing
-  fill-page ownership or the built-in pages' inner scrollers; the corrected Settings surface was accepted during the
-  W4-A actual-window sequence.
+Closed shared-container correction, accepted with W4-A. Register the exact native ScrollBar style on the realized Options content viewport; preserve inner page scrollers.
+
+[Recorded evidence](history/writer-friction-evidence.md#rkwf-027--options-dialog-content-scroller-did-not-consume-ribbonkits-native-scrollbar-style).
 
 ### RKWF-028 — Manually drawn consumer chrome needs explicit invalidation after appearance changes
 
-- **First seen / packet:** 2026-08-31, Writer W4-A ruler-material follow-up.
-- **Status:** closed app-owned integration detail; no RibbonKit runtime change required.
-- **Consumer goal:** Writer's ruler markers, ticks, border and margin zones must immediately follow live theme/accent
-  preview, Apply and Cancel rollback.
-- **Reproduction and evidence:** `WriterRuler.OnRender` resolves RibbonKit brush resources manually. Replacing the
-  application theme or accent dictionaries does not create a dependency-property resource change on that custom
-  `FrameworkElement`, so its previous rendering can remain until an unrelated layout invalidation occurs.
-- **App-owned correction:** `WriterRuler.RefreshAppearance()` invalidates only the visual. Writer calls it once at the
-  end of the shared appearance pipeline, after theme, accent, backdrop and dark-chrome updates. Geometry and document
-  state are untouched.
-- **Verification:** a focused realized-control regression proves the refresh invalidates the ruler while retaining the
-  same geometry; actual-window accent preview and Cancel rollback were accepted during W4-A closure.
+Closed app integration. Manually drawn ruler/chrome must invalidate after appearance preview or rollback; geometry remains unchanged.
+
+[Recorded evidence](history/writer-friction-evidence.md#rkwf-028--manually-drawn-consumer-chrome-needs-explicit-invalidation-after-appearance-changes).
 
 ### RKWF-029 — RibbonComboBox popup viewport retains the native OS scrollbar
 
-- **First seen / packet:** 2026-08-31, Writer W4-A scrollbar-consistency follow-up.
-- **Status:** closed; corrected in the shared RibbonKit template and live-accepted in Writer.
-- **Consumer goal:** font-family, font-size and every other `RibbonComboBox` popup should use RibbonKit's
-  generation-aware scrollbar chrome while retaining native ComboBox scrolling behavior.
-- **Reproduction and evidence:** the shared `RibbonComboBox` template in `Controls.DropDowns.xaml` already themes the
-  popup border, background and item states, but its popup contains a bare native `ScrollViewer`. The generated vertical
-  `ScrollBar` consequently keeps OS chrome instead of consuming the existing keyed `RibbonKit.ScrollBarStyle`.
-- **Current app-owned workaround:** none. Styling only Writer's two font controls would duplicate a shared-template
-  responsibility and leave the same inconsistency in every other RibbonKit consumer.
-- **RibbonKit correction:** the existing popup `ScrollViewer` is now the optional `PART_PopupScrollViewer`.
-  `RibbonComboBox.OnApplyTemplate` preserves any implicit native scrollbar style supplied by a custom template, then
-  resolves the exact keyed `RibbonKit.ScrollBarStyle` or imports its existing dictionary into only that deferred
-  viewport and registers the same style object under the native `ScrollBar` type key. No second adapter/template or
-  theme-specific value was added. Native ComboBox, ScrollViewer and `ItemsPresenter` ownership, popup geometry,
-  editable trigger, item chrome and selection states are unchanged.
-- **Verification:** the focused realized Office 2010 theory forces vertical overflow for both editable and
-  non-editable `RibbonComboBox` instances, proves the generated native scrollbar receives the exact shared keyed style,
-  pins its shared template parts and generation radii, and proves `LineDown` moves the popup viewport: **2/2 passed**.
-  `dotnet build src/RibbonKit/RibbonKit.csproj -c Release --no-restore` built `net8.0-windows` and `net9.0-windows`
-  with **0 warnings / 0 errors**. A fresh Release Writer launch exited normally after opening the relevant font
-  controls; the user confirmed the overflowing font-combo scrollbar “looks great.”
+Closed shared-template correction, live-accepted in Writer. Register the native style on the realized RibbonComboBox popup viewport rather than patching only Writer font controls.
+
+[Recorded evidence](history/writer-friction-evidence.md#rkwf-029--ribboncombobox-popup-viewport-retains-the-native-os-scrollbar).
 
 ### RKWF-030 — FlowDocumentPageViewer geometry is fitted-view local, not paginator-page local
 
-- **First seen / packet:** 2026-09-01, Writer W2-G opt-in paginated diagnostic.
-- **Status:** closed app-owned integration detail; no RibbonKit runtime change required.
-- **Consumer goal:** project clone-backed caret, selection and structured-object geometry over page images rendered from
-  the accepted preview/print paginator, while all interaction maps back to one live editor.
-- **Reproduction and evidence:** `TextPointer.GetCharacterRect`, `Image.TranslatePoint` and public hit testing were
-  measured inside a realized `FlowDocumentPageViewer`. Its `DocumentPageView` is fitted to the hidden host, while the
-  compositor PNG uses the paginator's full logical page dimensions. Publishing those rectangles unchanged displaced a
-  live picture hit: page point `347,741` was tested against fitted bounds `192,569,143×120`.
-- **App-owned correction:** normalize every insertion and structured-object rectangle from the realized page-view size
-  to the accepted paginator page size before publishing immutable values. The corrected picture frame aligns with the
-  rendered image; clicking it selects the exact live `InlineUIContainer`, exposes Picture Tools and restores native
-  editor focus. Table and text overlays use the same conversion.
-- **Smallest possible library direction:** none. This is WPF document-viewer geometry owned by Writer's compositor;
-  RibbonKit only hosts the commands and contextual tab.
-- **Verification:** the production geometry test uses the same page-spanning seed shape as the live gate, the combined
-  pagination filter passes **27/27**, and the corrected Release surface was verified at 125% DPI.
+Closed app pagination geometry correction. FlowDocumentPageViewer values are fitted-view-local; normalize to paginator-page coordinates before publishing immutable interaction values.
+
+[Recorded evidence](history/writer-friction-evidence.md#rkwf-030--flowdocumentpageviewer-geometry-is-fitted-view-local-not-paginator-page-local).
 
 ### RKWF-031 — An empty FlowDocument can publish a page without insertion geometry
 
-- **First seen / packet:** 2026-09-01, Writer W2-G page-local resize/page-chrome hardening.
-- **Status:** closed app-owned lifecycle edge; no RibbonKit runtime change required.
-- **Consumer goal:** replace the authoritative document with a normal empty New document while the opt-in compositor's
-  periodic caret overlay remains safe.
-- **Reproduction and evidence:** a clean Ctrl+N changed the diagnostic to the new document, then the process terminated
-  in `WriterPaginatedDiagnosticSurface.AddCaretOverlay`. The accepted paginator correctly reported one page, but the
-  empty clone supplied no public insertion rectangles; `Enumerable.MinBy` therefore threw `Sequence contains no
-  elements` on the next overlay timer tick.
-- **App-owned correction:** treat insertion geometry as an optional immutable set. The caret projection uses an
-  empty-safe ordered lookup and simply renders no caret until a source insertion rectangle exists; document identity,
-  page count and the genuine empty page remain publishable.
-- **Smallest possible library direction:** none. This is an empty WPF document-geometry condition inside Writer's
-  private compositor, not RibbonKit command or control behavior.
-- **Verification:** the production replacement regression now uses an actually empty document, explicitly proves one
-  page with zero insertion rectangles, and refreshes overlays without failure. The actual Release rerun remained
-  responsive at document identity 2, generation 3, page 1/1; the combined pagination gate passes **30/30**.
+Closed app lifecycle edge. Empty documents may have a page without insertion geometry; publish a safe empty state without nullable caret failure.
+
+[Recorded evidence](history/writer-friction-evidence.md#rkwf-031--an-empty-flowdocument-can-publish-a-page-without-insertion-geometry).
 
 ### RKWF-032 — Hidden paged table origins can inherit cell-text alignment
 
-- **First seen / packet:** 2026-09-01, Writer W2-G immutable table-boundary production batch.
-- **Status:** closed for explicit-width LTR diagnostic tables; native WPF page geometry, not a RibbonKit runtime defect.
-- **Consumer goal:** page-local table column and row handles must remain on the rendered grid when cell paragraph
-  alignment changes, while the worker publishes immutable values rather than dispatcher-owned table objects.
-- **Reproduction and evidence:** the W3-E lesson in RKWF-021 did not transfer unchanged to the hidden paged viewer.
-  There, `Table.ElementStart.GetCharacterRect` moved from X **104.5** to **145.44** DIPs after right-aligning cell text,
-  although the table grid and explicit column widths did not move. Publishing that origin would shift every column
-  boundary and put the new handles over cell text.
-- **Current app-owned correction:** for the current LTR explicit-width contract, derive the table origin from the
-  accepted paginator page's content origin plus finite `Table.Margin.Left` and `CellSpacing`; derive widths from the
-  explicit columns and logical row/span occupancy. Publish only page-local value boundaries and row identities.
-- **Application impact:** cell-text alignment cannot move page-local table handles. Auto-width and production RTL
-  origin policy remain explicit future work rather than inferred geometry.
-- **Smallest possible library direction:** none. RibbonKit hosts commands and contextual tabs; Writer owns the native
-  `FlowDocument`, accepted paginator and clone compositor.
-- **Verification:** the focused regression right-aligns the paged table content and proves every immutable column
-  boundary remains unchanged. The focused production gate passes **11/11**, the combined pagination gate passes
-  **36/36**, and the actual 125%-DPI Release window kept row/column handles aligned through resize, 130% zoom and
-  portrait-to-landscape reflow.
+Closed within explicit-width LTR diagnostics. Use page content origin plus finite table margin/spacing rather than text-aligned hidden character rectangles. Production RTL is not implied.
+
+[Recorded evidence](history/writer-friction-evidence.md#rkwf-032--hidden-paged-table-origins-can-inherit-cell-text-alignment).
 
 ### RKWF-033 — Hidden paginator has no stable public Auto-column grid boundaries
 
-- **First seen / packet:** 2026-09-01, Writer W2-G structural table-matrix production batch.
-- **Status:** closed by a bounded unsupported policy for Auto/star horizontal resize; native WPF page geometry, not a
-  RibbonKit runtime defect.
-- **Consumer goal:** preserve trustworthy page-local table interaction for multiple row groups and spanned cells without
-  inventing column positions that can target the wrong grid boundary.
-- **Reproduction and evidence:** character/insertion rectangles describe formatted text, not the measured table grid.
-  Their X positions change with paragraph alignment, and `ColumnSpan` means a visible cell width cannot be divided into
-  the original Auto columns. The hidden page viewer exposes no stable public measured-column boundary source suitable
-  for an immutable cross-STA result.
-- **Current app-owned correction:** publish trusted column boundaries only when every table column has a finite, positive
-  absolute width. Auto, star, nonpositive or incomplete columns publish an empty boundary set and
-  `HasTrustedColumnBoundaries = false`; the compositor suppresses column/overall handles and the controller rejects such
-  events before W3-E. Logical row-group/span capture remains supported, with a spanning cell's bottom assigned to its
-  last occupied row.
-- **Application impact:** Auto-width tables retain selection and trustworthy row resizing but deliberately expose no
-  column or overall resize handle in the diagnostic. Explicit-width LTR tables retain the existing full interaction.
-- **Smallest possible library direction:** none. RibbonKit hosts the commands and contextual tabs; Writer owns native
-  table measurement, accepted pagination and the opt-in compositor.
-- **Verification:** the focused structural matrix passes with two row groups, `RowSpan` and `ColumnSpan`, then proves
-  right-aligned text does not create horizontal geometry. The production gate passes **12/12**, the pagination gate
-  passes **37/37**, and the actual 125%-DPI structural seed exposed exactly five row handles and zero column/overall
-  handles; row resize plus native Undo/Redo republished fresh geometry with editor focus restored.
+Closed by bounded unsupported policy. Publish horizontal boundaries only for finite positive explicit columns; hide Auto/star column/overall resize instead of inventing geometry.
+
+[Recorded evidence](history/writer-friction-evidence.md#rkwf-033--hidden-paginator-has-no-stable-public-auto-column-grid-boundaries).
 
 ### RKWF-034 — Virtual page handles cannot be a durable keyboard-focus owner
 
-- **First seen / packet:** 2026-09-01, Writer W2-G keyboard-resize production slice.
-- **Status:** closed by editor-owned keyboard navigation; no RibbonKit runtime change required.
-- **Consumer goal:** resize clone-page table/picture handles from the keyboard without transferring native editing,
-  command, spelling or IME ownership away from the one authoritative `RichTextBox`.
-- **Reproduction and evidence:** a handle could report keyboard-focusable immediately after creation, but could not
-  retain actual focus through the page `Viewbox` and overlay rebuild performed when resize preview changed. The first
-  live `Ctrl+Alt+R` attempt also reached WPF as `Key.System`; matching `e.Key` alone let the following Enter reach and
-  modify the editor instead of starting resize.
-- **Current app-owned correction:** keep `DocumentEditor` focused. `Ctrl+Alt+R` enters an explicit diagnostic handle mode,
-  Tab/Shift+Tab cycles the app-drawn target, Enter starts the existing W3-E transaction, arrows update it, and Enter or
-  Escape commits/cancels. Normalize `SystemKey` for Alt-modified gestures and reject stale generations as before.
-- **Application impact:** one keyboard session produces one native Undo unit; Escape restores the opening value. Virtual
-  handles remain UIA Invoke buttons but do not claim direct keyboard focus.
-- **Smallest possible library direction:** none. This is Writer compositor/input routing above RibbonKit.
-- **Verification:** the focused test commits 1 + 12 DIPs as one Undo unit and covers target cycling, Escape and
-  `Key.System` normalization. In the actual 125%-DPI window the row handle moved from Y **1103** to **1128**; Ctrl+Z and
-  Ctrl+Y restored each position, Escape left **1128** unchanged, all five handles remained, and `DocumentEditor` held
-  focus.
+Closed by editor-owned keyboard handle mode. Keep the editor focused, use Ctrl+Alt+R navigation and generation-valid targets; virtual page handles cannot own durable focus.
+
+[Recorded evidence](history/writer-friction-evidence.md#rkwf-034--virtual-page-handles-cannot-be-a-durable-keyboard-focus-owner).
 
 ### RKWF-035 — Live pagination appeared to have a block-count cliff
 
-- **First seen / packet:** 2026-09-01, Writer W2-G long-document telemetry/stress slice.
-- **Status:** the 120/180-block cliff is explained and contained through RKWF-036; broader real-document budgeting is
-  still open and is not a RibbonKit runtime defect.
-- **Consumer goal:** keep ordinary and longer documents responsive while preserving accepted preview/print page-count
-  and page-start parity and one authoritative realized editor.
-- **Reproduction and evidence:** the 120-block live seed (**602 words / 5,174 characters**) completed its burst-final
-  generation in **384.4 ms** and page-window handoff in **286.1 ms**. A clean 180-block seed with only **903 words /
-  7,761 characters** still had not published after twenty seconds. Longer probes increased CPU and working set; the
-  480-block run was stopped near **95 CPU seconds / 1.05 GB**. A broad UIA traversal amplified one run, but a clean
-  no-automation isolation reproduced the 180-block delay. Later phase telemetry proved both dedicated-STA jobs completed
-  in under one second; the editor dispatcher was blocked by forward spelling enumeration before final publication.
-- **Current app-owned containment:** stress seed/block-count/burst flags remain private and explicit; default Paper is
-  unchanged. Phase-specific/latest-only worker telemetry remains visible, while RKWF-036 bounds spelling discovery to
-  visible-page candidate slices. Do not generalize the 180-block corpus to arbitrary large real-world documents.
-- **Next investigation:** define measured page-window prefetch, retention/eviction and larger mixed-structure budgets
-  without weakening accepted paginator parity or adding fake pages.
-- **Smallest possible library direction:** none unless a later focused reproduction implicates RibbonKit. Current work is
-  entirely inside Writer's WPF paginator/editor integration.
-- **Verification:** the automated 1,600-paragraph burst proves at least one cooperative active cancellation, pending
-  coalescing, final-generation acceptance and bounded one-to-three-page publication. The actual 120-block burst recorded
-  one cancellation, seventeen coalesced requests and a successful page-three handoff while the window remained
-  responsive. After RKWF-036, the actual 180-block corpus publishes five pages in **1005.1 ms** and its burst-final
-  generation publishes in **797.3 ms** while the process remains responsive.
+The 120/180-block cliff was traced and contained by RKWF-036. Broader real-document latency/memory remains open under RKWF-037/038; default Paper is unchanged.
+
+[Recorded evidence](history/writer-friction-evidence.md#rkwf-035--live-pagination-appeared-to-have-a-block-count-cliff).
 
 ### RKWF-036 — Forward spelling-error enumeration can block staged page publication
 
-- **First seen / packet:** 2026-09-01, Writer W2-G phase-instrumentation/staged-publication batch.
-- **Status:** closed for the opt-in compositor by bounded visible-page candidate slices; no RibbonKit runtime change.
-- **Consumer goal:** retain exact native spelling underlines without delaying clone-backed page publication or moving
-  spelling ownership away from the authoritative live `RichTextBox`.
-- **Reproduction and evidence:** phase telemetry showed 120- and 180-block dedicated-STA layout completing in under one
-  second and reporting idle while final UI publication remained blocked. `RefreshOverlays` synchronously called
-  `GetNextSpellingErrorPosition` from the document start, including during page rebuild and every 750-ms overlay tick.
-  Sparse misspellings made each forward search traverse long correct-text gaps on the editor dispatcher.
-- **Current app-owned correction:** build word-start value offsets only for visible/adjacent published pages; inspect at
-  most 64 candidates and eight milliseconds of completed work per dispatcher turn with `GetSpellingErrorRange`; cache
-  generation/document-stamped source ranges; clear them on every invalidation/replacement/page-window change. Pages
-  publish first under the existing non-modal status banner. No second spelling control or dispatcher-owned pointer
-  crosses threads.
-- **Application impact:** the exact `qzxwvv` source range and underline bounds remain correct while ordinary page
-  publication no longer waits for whole-document spelling enumeration.
-- **Smallest possible library direction:** none. RibbonKit is not involved in WPF `RichTextBox` spelling discovery or
-  Writer's clone-page compositor.
-- **Verification:** a focused 180-block native-spelling production test proves exact source/bounds projection. The actual
-  120-block run published in **852.8 ms**, the formerly failing 180-block run in **1005.1 ms**, and its stress-burst final
-  generation in **797.3 ms** after one active cancellation and eighteen coalesced requests; the user confirmed the live
-  window was very fast.
+Closed for the opt-in compositor. Bounded visible-page spelling candidates replace unbounded forward enumeration; generation-stamped slices preserve exact-word overlays.
+
+[Recorded evidence](history/writer-friction-evidence.md#rkwf-036--forward-spelling-error-enumeration-can-block-staged-page-publication).
 
 ### RKWF-037 — Reusable WPF page realization has a larger process high-water than the app cache
 
-- **First seen / packet:** 2026-09-04, Writer W2-G reusable-session/directional-cache batch.
-- **Status:** app cache and repeated-scroll working set are bounded in the mixed-content probe; this is an app-owned
-  qualified go, not a RibbonKit runtime defect or default-Paper approval.
-- **Consumer goal:** keep the immutable clone, paginator, page count and page starts alive so ordinary page scrolling
-  does not reload and repaginate the document, while bounding retained page images/geometry and preserving latest-only
-  interaction.
-- **Reproduction and evidence:** the first 600-block/15-page run reported only encoded PNG and geometry values, so its
-  apparent **1.3 MB** cache understated decoded WPF bitmap pressure. Corrected accounting and explicit frame/source
-  release were then exercised by a 600-mixed-block/18-page Release probe over six complete forward/reverse cycles. The
-  cache stayed at **8 pages / 42.4 MB total** (**41.1 MB decoded**, about **0.7 MB encoded**) and recorded 123 safe
-  evictions. Cycle-end working set rose to **659.1 MB** and peaked at **696.5 MB** in cycle 2, then reclaimed to **660.4,
-  630.0, 593.6 and 602.6 MB** in cycles 3–6; managed memory remained **28.5–35.1 MB**. Stable-layout scrolling kept one
-  undisposed session. Reflow/restore replaced two sessions and reduced working set to **537.1 MB** before final prefetch.
-- **Current app-owned containment:** retain at most eight immutable pages or 64 MB of encoded pixels, projected decoded
-  BGRA pixels and geometry by default; dispose `DocumentPage` instances after raster extraction; detach evicted frames,
-  clear their image sources/children/overlays, and merge only the retained inventory. Dispose/replace the hidden viewer
-  and layout session on content, document, formatting, page-setting or DPI identity changes. A visible request always
-  outranks/cancels speculative prefetch. Uncached jumps show non-interactive white page placeholders and the existing
-  status banner.
-- **Application impact:** ordinary bidirectional scrolling and cached revisits no longer visibly reload the entire
-  document. Fast jumps remain responsive and latest-only. Repeated mixed-content traversal now shows native reclamation,
-  but saved real-world document mixes still need the same counters before any broader or default-Paper decision.
-- **Next investigation:** run a few saved `.rkw` documents and long-paragraph cases under the same telemetry, and expose a
-  deterministic low-memory cache-budget option so decoded-page pressure can be tested below the 64-MB default.
-- **Smallest possible library direction:** none. RibbonKit only hosts Writer commands and chrome; the reproduced cost is
-  inside WPF document pagination/page realization and Writer's private compositor.
-- **Verification:** the focused production gate passes **21/21**, the pagination namespace passes **45/45**, the Release
-  Writer build has zero warnings/errors, and the opt-in probe exited normally after six forward/reverse cycles, a
-  **41.8-ms** cached revisit, a **388.6-ms** two-placeholder latest-only jump, reflow/restore and a **0.2-ms** UI-idle
-  measurement. No full suite, solution build, manual visual acceptance, genuine OS IME or production RTL gate was run.
+Mixed-content retention/reclamation has measured positive evidence; long-paragraph native high-water remains open. App cache bytes, process working set and natural versus forced collection are distinct metrics.
+
+[Recorded evidence](history/writer-friction-evidence.md#rkwf-037--reusable-wpf-page-realization-has-a-larger-process-high-water-than-the-app-cache).
 
 ### RKWF-038 — A reduced cache protects interaction but can discard every speculative page
 
-- **First seen / packet:** 2026-09-05, Writer W2-G saved-document/low-memory batch (§3.155).
-- **Status:** measured app-owned retention/performance tradeoff; no RibbonKit runtime change.
-- **Consumer goal:** exercise saved documents and long paragraphs under deterministic reduced retention while preserving
-  the live editor, native paginator and stale-event gates.
-- **Reproduction:** opt-in scroll probe with `--writer-pagination-cache-pages=3 --writer-pagination-cache-mb=24` and
-  `--writer-pagination-long-paragraph-seed`. The interior interaction window protects three pages; the worker still
-  realizes two speculative pages and immediately evicts them. Next-page publication needs another realization and
-  insertion-geometry pass. Per-character geometry costs more for dense page-spanning paragraphs than for short blocks.
-  Reducing retained decoded memory does not guarantee a smaller WPF process high-water.
-- **Containment:** preserve the protected interaction window and report target overruns explicitly. The 1-page/1-MB
-  regression documents this floor. Default retention stays eight pages/64 MB. Saved-file probing uses bounded native
-  persistence, bypasses recent-file writes and detaches source identity.
-- **Verification:** 26/26 focused production and 50/50 namespace tests; clean Release Writer build. Four existing
-  saved files loaded unchanged; all were one page at saved settings. Six-cycle 26-page long paragraphs retained
-  16.6 MB but had 539.7/520.3-ms median forward/reverse arrivals and a 730.4-MB process high-water. Later cycle ends
-  exceeded the earlier two-cycle plateau rule despite natural reclamation. The 18-page mixed corpus retained 15.9 MB,
-  arrived at 156.3/155.8-ms medians and held cycle ends at 504.3–516.8 MB. Both disposed-session probes collected 3/3
-  decoded images; focused weak references verify evicted page-zero collectibility while the session stays alive.
-  Forced final GC is labelled separately from natural reclamation. A prefetched boundary page can remain live legally;
-  the collection test targets the page actually evicted. The first final telemetry smoke retained the disposed
-  controller across GC to inspect its counters, which itself kept images reachable (0/3 mixed, 0/1 saved collected).
-  Disposal now returns value counters through a synchronous non-inlined helper; the async probe holds no disposed
-  controller during collection and fails if any image remains reachable. Full measurements and local artifact paths
-  are in §3.155.
-- **Next investigation:** budget-aware prefetch admission, then bounded long-paragraph geometry timing and a 3/24,
-  4/24, 8/64 comparison. Retention is a floor-aware target, not a hard working-set cap. No default-Paper decision,
-  manual visual acceptance, OS IME or RTL result is implied.
-- **Smallest possible library direction:** none; the cost is inside Writer's WPF paginator/page realization integration.
+Open app-owned reduced-cache tradeoff. Protected pages can consume the target while speculative realization churns. Next: budget-aware admission and geometry timing with 3/24, 4/24 and 8/64 comparisons; no hard working-set cap or default-Paper approval.
 
-## 5. Closed observations
-
-None yet.
+[Recorded evidence](history/writer-friction-evidence.md#rkwf-038--a-reduced-cache-protects-interaction-but-can-discard-every-speculative-page).
