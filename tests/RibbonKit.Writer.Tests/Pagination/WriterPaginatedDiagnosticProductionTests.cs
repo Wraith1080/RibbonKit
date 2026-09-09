@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Automation.Peers;
 using System.Windows.Automation.Provider;
@@ -15,12 +16,151 @@ using RibbonKit.Writer.Preview;
 using RibbonKit.Writer.Tests.Document;
 using RibbonKit.Writer.Tests.Preview;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace RibbonKit.Writer.Tests.Pagination;
 
 [Collection(WriterPreviewTestCollection.Name)]
-public sealed class WriterPaginatedDiagnosticProductionTests
+public sealed class WriterPaginatedDiagnosticProductionTests(ITestOutputHelper output)
 {
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public async Task InsertionTraversalMatchesNativeOffsetsAndRectanglesOnEveryPage(
+        bool structured, bool landscape)
+    {
+        await StaTestHelper.RunAsync(() =>
+        {
+            var settings = landscape
+                ? DocumentPageSettings.A4(DocumentPageOrientation.Landscape,
+                    new DocumentPageMargins(48, 60, 72, 84))
+                : DocumentPageSettings.Letter();
+            var source = structured ? CreateStructuredDocument(settings) : CreateDocument(settings);
+            if (!structured)
+            {
+                for (var index = 0; index < 4; index++)
+                {
+                    var paragraph = new Paragraph(new Run(string.Concat(Enumerable.Repeat(
+                        "Dense exact geometry within one long paragraph. ", 120))))
+                    {
+                        TextAlignment = index % 2 == 0 ? TextAlignment.Left : TextAlignment.Right
+                    };
+                    paragraph.Inlines.Add(new Run(
+                        "cafe\u0301 \U0001F642 \U0001F469\u200d\U0001F4BB \u0915\u093f \u4e2d\u6587"));
+                    paragraph.Inlines.Add(new Bold(new Run("bold edge")));
+                    paragraph.Inlines.Add(new Run("adjacent run\r\nnext line"));
+                    paragraph.Inlines.Add(new LineBreak());
+                    paragraph.Inlines.Add(new Hyperlink(new Run("hyperlink edge")));
+                    source.Blocks.Add(paragraph);
+                    source.Blocks.Add(new Paragraph());
+                }
+            }
+            using var snapshot = new WriterPreviewCloneService().CreateSnapshot(source, settings);
+            var document = snapshot.SourceClone;
+            var paginator = Assert.IsAssignableFrom<DynamicDocumentPaginator>(snapshot.PrintPaginator);
+            var starts = GetPageStartOffsets(document, paginator);
+            Assert.True(starts.Length > 1);
+            var capturedSettings = new WriterPaginationPageSettings(settings.WidthDip,
+                settings.HeightDip, settings.ContentWidthDip, settings.Margins.LeftDip,
+                settings.Margins.TopDip, settings.Margins.RightDip, settings.Margins.BottomDip);
+            var viewer = new FlowDocumentPageViewer { Document = document };
+            var host = new Window
+            {
+                Content = viewer, Width = settings.WidthDip + 120, Height = settings.HeightDip + 120,
+                Left = -10000, Top = -10000, ShowInTaskbar = false, Opacity = 0.01,
+                WindowStartupLocation = WindowStartupLocation.Manual
+            };
+            try
+            {
+                host.Show();
+                var total = 0;
+                long nativeTicks = 0, workerTicks = 0;
+                for (var pageNumber = 0; pageNumber < paginator.PageCount; pageNumber++)
+                {
+                    viewer.GoToPage(pageNumber + 1);
+                    host.UpdateLayout();
+                    host.Dispatcher.Invoke(DispatcherPriority.Render, new Action(() => { }));
+                    var view = Assert.Single(viewer.PageViews, page => page.PageNumber == pageNumber);
+                    WriterPaginationInsertionGeometry[] expected;
+                    ImmutableArray<WriterPaginationInsertionGeometry> actual;
+                    if (pageNumber % 2 == 0)
+                    {
+                        expected = ReadNative();
+                        actual = ReadWorker();
+                    }
+                    else
+                    {
+                        actual = ReadWorker();
+                        expected = ReadNative();
+                    }
+                    Assert.Equal(expected, actual.ToArray());
+                    total += actual.Length;
+
+                    WriterPaginationInsertionGeometry[] ReadNative()
+                    {
+                        var started = Stopwatch.GetTimestamp();
+                        var entries = NativePageInsertions(document, paginator, starts,
+                            pageNumber, view, capturedSettings);
+                        nativeTicks += Stopwatch.GetTimestamp() - started;
+                        return entries;
+                    }
+
+                    ImmutableArray<WriterPaginationInsertionGeometry> ReadWorker()
+                    {
+                        var started = Stopwatch.GetTimestamp();
+                        var entries = WriterDedicatedPaginationEngine.BuildPageInsertions(document,
+                            paginator, starts, pageNumber, view, capturedSettings, CancellationToken.None);
+                        workerTicks += Stopwatch.GetTimestamp() - started;
+                        return entries;
+                    }
+                }
+                Assert.True(total > 1000);
+                output.WriteLine(FormattableString.Invariant(
+                    $"geometry-parity structured={structured} landscape={landscape} pages={paginator.PageCount} entries={total} native={nativeTicks * 1000d / Stopwatch.Frequency:0.###}ms worker={workerTicks * 1000d / Stopwatch.Frequency:0.###}ms"));
+            }
+            finally
+            {
+                viewer.Document = null;
+                host.Close();
+            }
+            return Task.CompletedTask;
+        }, TimeSpan.FromSeconds(60));
+    }
+
+    // Independent reference traversal: use WPF's native next-insertion API throughout.
+    private static WriterPaginationInsertionGeometry[] NativePageInsertions(
+        FlowDocument document, DynamicDocumentPaginator paginator, ImmutableArray<int> starts,
+        int pageNumber, System.Windows.Controls.Primitives.DocumentPageView view,
+        WriterPaginationPageSettings settings)
+    {
+        var start = document.ContentStart.GetPositionAtOffset(starts[pageNumber], LogicalDirection.Forward)!;
+        var end = pageNumber + 1 < starts.Length
+            ? document.ContentStart.GetPositionAtOffset(starts[pageNumber + 1], LogicalDirection.Forward)!
+            : document.ContentEnd;
+        var entries = new List<WriterPaginationInsertionGeometry>();
+        for (var position = start.GetInsertionPosition(LogicalDirection.Forward);
+             position is not null && position.CompareTo(end) < 0;
+             position = position.GetNextInsertionPosition(LogicalDirection.Forward))
+        {
+            if (paginator.GetPageNumber(position) != pageNumber)
+                continue;
+            var rect = position.GetCharacterRect(LogicalDirection.Forward);
+            if (rect.IsEmpty || !double.IsFinite(rect.X) || !double.IsFinite(rect.Y) ||
+                !double.IsFinite(rect.Width) || !double.IsFinite(rect.Height) || rect.Height <= 0 ||
+                rect.Left < -1 || rect.Top < -1 || rect.Right > view.ActualWidth + 1 ||
+                rect.Bottom > view.ActualHeight + 1)
+                continue;
+            var x = settings.WidthDip / view.ActualWidth;
+            var y = settings.HeightDip / view.ActualHeight;
+            entries.Add(new WriterPaginationInsertionGeometry(
+                document.ContentStart.GetOffsetToPosition(position), pageNumber,
+                new WriterPaginationRectangle(rect.X * x, rect.Y * y, rect.Width * x, rect.Height * y)));
+        }
+        return entries.ToArray();
+    }
+
     [Fact]
     public void DiagnosticBudgetKeepsDefaultAndRejectsInvalidOverrides()
     {

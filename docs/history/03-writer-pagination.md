@@ -815,3 +815,109 @@ slice is profiling and reducing the dense `BuildPageInsertions` loop while prese
 page-start/caret/selection parity, cancellation and one authoritative live editor. Do not replace
 exact insertion mapping with sampled geometry. Long-document native-memory/authoring acceptance,
 paired genuine OS IME/production RTL and the default-Paper decision remain deferred.
+
+### 3.157 RibbonKit Writer W2-G insertion traversal profiling and exact-map parity — 2026-09-09
+
+Continuing from `4762371`, the worker adds opt-in `--writer-pagination-profile-geometry`
+telemetry for page lookup, character rectangle, source offset and insertion traversal time.
+Without this flag, the per-insertion timestamp reads and detail log are disabled. The existing
+per-page cost samples remain available. The baseline profile found median page lookup at
+**8.3 ms**, character rectangles at **220.3 ms** and offset extraction at **0.6 ms**;
+median total insertion mapping was **440.6 ms** across 23 published page realizations.
+Page membership checks are therefore retained; removing them is not the main opportunity.
+
+For two adjacent positions strictly inside text, the worker can advance one symbol and ask
+WPF's public `IsAtInsertionPosition` about the candidate. This avoids rechecking the known
+current insertion position through native next-position traversal. It does not guess Unicode
+caret boundaries: invalid candidates and text/markup edges fall back to the original
+`GetNextInsertionPosition`. Every accepted position still uses `GetPageNumber`, forward
+`GetCharacterRect`, the same normalization/filter and the same source-offset mapping.
+Cancellation remains checked every 128 candidates, and the immutable clone stays on its STA.
+
+An initial run-length guard was rejected: WPF combines adjacent text nodes in
+`GetTextRunLength`, so repeatedly asking for the remaining run length can rescan split nodes.
+The retained guard uses local pointer-context checks. The relevant public/internal call chain
+was inspected in the [.NET 8 WPF TextPointer source](https://github.com/dotnet/wpf/blob/v8.0.0/src/Microsoft.DotNet.Wpf/src/PresentationFramework/System/Windows/Documents/TextPointer.cs)
+and [TextPointerBase source](https://github.com/dotnet/wpf/blob/v8.0.0/src/Microsoft.DotNet.Wpf/src/PresentationFramework/System/Windows/Documents/TextPointerBase.cs);
+no private WPF API or reflection dependency was introduced.
+
+Four new exhaustive parity cases compare every page's insertion offsets and rectangles with
+native traversal: dense multipage paragraphs with combining marks, surrogate pairs, ZWJ text,
+Indic/CJK samples, empty paragraphs, adjacent formatting, hyperlinks and explicit line breaks;
+and spanning tables/pictures, each at Letter portrait and A4 landscape. They compare **23,284**
+entries in each dense case and **8,231** in each structured case, spanning 6–8 pages. This is
+synthetic map parity, not genuine OS IME or production RTL acceptance. Existing production
+tests continue to cover editor routing, selection/history, current-generation interaction,
+latest-only jumps, invalidation/reflow, retention and decoded-image collectibility.
+
+Test-development limits are explicit: the initial heavily repeated complex-script reference
+exceeded the 10-second helper default and then 60 seconds. The bounded corpus now retains
+the Unicode boundary cases within predominantly dense plain text, and only this new test uses
+the 60-second overload. Its first completed reference also exposed a test setup error:
+page-start pointers must specify forward affinity, matching the worker, or native membership
+can exclude the first boundary position. No expected offsets or rectangle tolerances were
+relaxed. The final focused production gate passes **34/34**.
+
+Alternating native-reference/worker order per realized page yields the following indicative
+whole-map timings; correctness assertions compare all entries, but timing has no flaky pass
+threshold. The reference and worker have different collection/normalization scaffolding, so
+these are not isolated measurements of the traversal helper alone.
+
+| Corpus / settings | Native reference ms | Worker ms |
+| --- | --- | --- |
+| Dense / portrait | 1973.9 | 1761.7 |
+| Dense / landscape | 2583.0 | 2514.6 |
+| Structured / portrait | 357.0 | 406.4 |
+| Structured / landscape | 362.0 | 384.2 |
+
+The final short Release profile exited 0 with exact collectibility checks. Across 23 published
+realizations, insertion median was **348.0 ms**, with **172.9 ms** rectangle queries,
+**161.8 ms** traversal, **6.4 ms** membership lookup and **0.4 ms** offset extraction.
+The rejected guard measured **600.2 ms** median total. These separate app runs include warm-up
+and machine-load variation; the baseline-to-final difference is not a guaranteed percentage
+speedup. The paired results are modest/mixed, and character rectangles plus traversal remain
+the dominant public-API cost. No general long-document performance gate is closed.
+
+Six final unprofiled Release-window probes exited 0: three complete forward/reverse cycles
+on the same 26-page long-paragraph and 600-block/18-page mixed corpora at all three budgets.
+Arrival medians use cycles 2–3; insertion medians cover all published new page realizations.
+Requests still wait for prefetch before proceeding.
+
+| Corpus / target pages/MB | Forward / reverse arrival ms | Insertion cost median ms | Cycle-end working set MB (1 / 2 / 3) |
+| --- | --- | --- | --- |
+| Long / 3/24 | 542.6 / 546.6 | 321.6 | 517.0 / 568.8 / 618.2 |
+| Long / 4/24 | 86.2 / 77.7 | 325.6 | 542.4 / 599.1 / 625.5 |
+| Long / 8/64 | 106.0 / 98.5 | 343.5 | 587.0 / 629.5 / 652.8 |
+| Mixed / 3/24 | 171.9 / 165.6 | 78.8 | 539.3 / 557.9 / 556.0 |
+| Mixed / 4/24 | 27.6 / 27.6 | 79.4 | 539.1 / 553.4 / 561.7 |
+| Mixed / 8/64 | 30.3 / 28.7 | 85.8 | 635.1 / 691.3 / 681.5 |
+
+The retained cycle-end footprints remain **16.6/22.1/44.3 MB** for long paragraphs and
+**15.9/21.2/42.4 MB** for mixed content. Decoded BGRA is **15.4/20.5/41.1 MB**;
+encoded PNG and derived geometry remain separate components as reported in §3.156 and
+the per-request logs. Long cycle-end managed heaps span **37.0–41.6 / 42.4–45.7 /
+49.3–56.9 MB**; mixed spans **24.7–27.0 / 25.5–34.0 / 29.7–34.9 MB**.
+All long cycle-end working sets rise, so no natural-memory plateau is established.
+Mixed 3/24 and 8/64 show third-cycle reclamation; that does not establish a longer-run gate.
+
+All final probes report zero retention-budget overruns, two-placeholder latest-only jumps,
+one unchanged session during traversal, reflow/restore replacement and **3/3** sessions
+disposed at release. Decoded images collected **3/3, 4/4, 6/6** in each corpus. Forced release
+left long working sets at **615.9/617.9/605.3 MB** and mixed at **534.3/524.6/571.9 MB**;
+those are forced collectibility observations, not a process-memory cap. Long latest jumps
+still take **1249–1477 ms** and full-probe dispatcher gaps reach **287–518 ms**. Cold-page
+latency and smooth long-document authoring remain open despite warm-prefetch arrival gains.
+
+The final Release Writer build has **0 warnings / 0 errors**; `git diff --check` passes and
+`src/RibbonKit/**` is unchanged. No namespace/full-suite, solution build, manual visual,
+OS IME or production RTL gate ran. Existing saved-package regression coverage ran in the
+production class; a separate personal saved-document probe was not repeated for this loop change.
+Evidence is local under `artifacts/w2g-geometry/`: final `geometry-final.trx`, profiling trials,
+six final corpus/budget logs, runners and summaries.
+
+**Decision: qualified go for opt-in exact-map traversal/profiling only; modest/mixed timing
+benefit, no broad performance or native-memory acceptance.** The next bounded slice is a
+fixed-cadence rapid-scroll/cancellation probe without waiting for prefetch between requests,
+measuring latest-target arrival and interaction readiness. Preserve exact mapping, one live
+editor, cache admission and current-generation rejection. Default Paper and the paired genuine
+OS IME/production RTL decision remain deferred.

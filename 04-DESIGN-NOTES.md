@@ -675,6 +675,10 @@ Historical pending items are superseded only by later evidence, never by a plan.
 
 [Decision, pitfalls and evidence](docs/history/03-writer-pagination.md#3156-ribbonkit-writer-w2-g-speculative-admission-and-page-cost-timing--2026-09-09).
 
+### 3.157 RibbonKit Writer W2-G insertion traversal profiling and exact-map parity — 2026-09-09
+
+[Decision, pitfalls and evidence](docs/history/03-writer-pagination.md#3157-ribbonkit-writer-w2-g-insertion-traversal-profiling-and-exact-map-parity--2026-09-09).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),
@@ -713,13 +717,14 @@ file and this index; update §5 only as supported by verification.
   immutable clone-backed pages use a dedicated STA layout session, latest-only
   cancellation/coalescing, bounded retention and current-generation interaction.
   LTR editing, page-local table/picture resizing, staged spelling, empty replacement,
-  and the bounded scrolling/cache work have recorded evidence through §3.156.
+  and the bounded scrolling/cache work have recorded evidence through §3.157.
   Default Paper is unchanged; W2-G is not closed.
-- **Next W2-G slice:** profile and reduce dense insertion-geometry cost while preserving
-  exact page/caret/selection mapping. Budget-aware speculative admission and per-page
-  timing are implemented. The protected interaction window is a floor, not a hard
-  whole-process memory cap; long-paragraph latency and native working-set high-water
-  remain open (RKWF-037/038).
+- **Next W2-G slice:** fixed-cadence rapid-scroll/cancellation diagnostics without waiting
+  for prefetch between requests; measure latest-target arrival and interaction readiness.
+  Exact-map traversal parity and detailed insertion profiling are recorded, but the
+  performance gain is modest/mixed. The protected interaction window is a floor, not
+  a hard whole-process memory cap; long-paragraph latency and native working-set
+  high-water remain open (RKWF-037/038/039).
 - **Genuine OS IME and production RTL** remain a later paired input/geometry slice.
   W4-B awaits W2-G completion and any default-Paper decision. W4-C includes live
   mixed-monitor/DPI and physical-printer checks; earlier single-display acceptance
@@ -739,8 +744,9 @@ file and this index; update §5 only as supported by verification.
 - Latest recorded full solution gate in this checkpoint list: §3.128 (2026-08-30),
   Release build with zero warnings/errors; RibbonKit 392/392, Writer 439/439, visual
   1/1 covering 63 approved images. These are historical counts, not today's inventory.
-- Latest W2-G evidence: §3.156 (2026-09-09), production tests 30/30, Release Writer
-  build with zero warnings/errors, nine successful opt-in cache-budget probes.
+- Latest W2-G evidence: §3.157 (2026-09-09), production tests 34/34 including four
+  exhaustive native-reference parity cases, Release Writer build with zero warnings/errors,
+  and six successful final unprofiled cache-budget probes. Timing gains remain modest/mixed.
   Validation remains scoped to Writer and opt-in diagnostics. No new
   namespace/full-suite, solution build, manual visual acceptance, IME or RTL gate ran.
 - Earlier full/focused results and acceptance limits remain in the

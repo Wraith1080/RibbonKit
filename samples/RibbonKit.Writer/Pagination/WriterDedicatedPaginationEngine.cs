@@ -526,7 +526,7 @@ internal sealed class WriterDedicatedPaginationEngine : IDisposable
         return builder.ToImmutable();
     }
 
-    private static ImmutableArray<WriterPaginationInsertionGeometry> BuildPageInsertions(
+    internal static ImmutableArray<WriterPaginationInsertionGeometry> BuildPageInsertions(
         FlowDocument document,
         DynamicDocumentPaginator paginator,
         ImmutableArray<int> pageStartOffsets,
@@ -544,26 +544,68 @@ internal sealed class WriterDedicatedPaginationEngine : IDisposable
                     $"Page {pageNumber + 2} has no start position.")
             : document.ContentEnd;
         var builder = ImmutableArray.CreateBuilder<WriterPaginationInsertionGeometry>();
+        var profile = WriterPaginationDiagnosticOptions.ShouldProfileInsertionGeometry;
+        long lookupTicks = 0, rectangleTicks = 0, offsetTicks = 0, traversalTicks = 0;
         var batch = 0;
         for (var position = pageStart.GetInsertionPosition(LogicalDirection.Forward);
              position is not null && position.CompareTo(pageEnd) < 0;
-             position = position.GetNextInsertionPosition(LogicalDirection.Forward))
+             position = NextPosition(position))
         {
             if (++batch % 128 == 0)
                 cancellationToken.ThrowIfCancellationRequested();
-            if (paginator.GetPageNumber(position) != pageNumber)
+            var started = profile ? Stopwatch.GetTimestamp() : 0;
+            var actualPage = paginator.GetPageNumber(position);
+            if (profile)
+                lookupTicks += Stopwatch.GetTimestamp() - started;
+            if (actualPage != pageNumber)
                 continue;
+            started = profile ? Stopwatch.GetTimestamp() : 0;
             var rect = position.GetCharacterRect(LogicalDirection.Forward);
+            if (profile)
+                rectangleTicks += Stopwatch.GetTimestamp() - started;
             if (!IsFinite(rect) || rect.Height <= 0 || rect.Left < -1 || rect.Top < -1 ||
                 rect.Right > pageView.ActualWidth + 1 || rect.Bottom > pageView.ActualHeight + 1)
                 continue;
             var normalized = NormalizePageRect(rect, pageView, pageSettings);
+            started = profile ? Stopwatch.GetTimestamp() : 0;
+            var offset = document.ContentStart.GetOffsetToPosition(position);
+            if (profile)
+                offsetTicks += Stopwatch.GetTimestamp() - started;
             builder.Add(new WriterPaginationInsertionGeometry(
-                document.ContentStart.GetOffsetToPosition(position), pageNumber,
+                offset, pageNumber,
                 new WriterPaginationRectangle(normalized.X, normalized.Y,
                     normalized.Width, normalized.Height)));
         }
+        if (profile)
+            WriterPaginationDiagnosticOptions.WriteTelemetry(FormattableString.Invariant(
+                $"insertion-detail page={pageNumber} candidates={batch} entries={builder.Count} lookup={lookupTicks * 1000d / Stopwatch.Frequency:0.###}ms rectangle={rectangleTicks * 1000d / Stopwatch.Frequency:0.###}ms offset={offsetTicks * 1000d / Stopwatch.Frequency:0.###}ms traversal={traversalTicks * 1000d / Stopwatch.Frequency:0.###}ms"));
         return builder.ToImmutable();
+
+        TextPointer? NextPosition(TextPointer current)
+        {
+            var started = profile ? Stopwatch.GetTimestamp() : 0;
+            var next = GetNextPageInsertion(current);
+            if (profile)
+                traversalTicks += Stopwatch.GetTimestamp() - started;
+            return next;
+        }
+    }
+
+    private static TextPointer? GetNextPageInsertion(TextPointer current)
+    {
+        // Inside a text run the current position is already a known insertion point.
+        // Ask WPF only about the next position, avoiding the native traversal's repeated
+        // current-position caret-unit query. WPF still decides every caret boundary;
+        // complex clusters and markup edges use the original traversal unchanged.
+        if (current.GetPointerContext(LogicalDirection.Forward) == TextPointerContext.Text)
+        {
+            var next = current.GetPositionAtOffset(1, LogicalDirection.Forward);
+            if (next is not null &&
+                next.GetPointerContext(LogicalDirection.Forward) == TextPointerContext.Text &&
+                next.IsAtInsertionPosition)
+                return next;
+        }
+        return current.GetNextInsertionPosition(LogicalDirection.Forward);
     }
 
     private static ImmutableArray<byte> RenderPage(DocumentPage documentPage,

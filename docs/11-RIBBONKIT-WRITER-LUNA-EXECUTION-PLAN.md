@@ -84,23 +84,27 @@ remain excluded until their semantics and persistence are complete.
 
 ### W2-G — True editable pagination architecture and delivery
 
-Continue from §3.156, not the original prototype. Default Paper remains unchanged.
+Continue from §3.157, not the original prototype. Default Paper remains unchanged.
 One authoritative live `FlowDocument`/editor owns selection, input, native history,
 spelling and clipboard. Immutable clone-backed pages and value-only geometry run on
 a dedicated STA; generation checks reject stale work/events. Preserve accepted
 preview/print page-start parity and current/adjacent interaction during reflow.
 Never split into independent editors, inject blank blocks or draw fake page breaks.
 
-Budget-aware speculative admission and per-page timing are implemented. The next slice
-is profiling and reducing dense insertion-geometry cost without weakening exact mapping:
+Budget-aware speculative admission, insertion profiling and exact-map traversal parity
+are implemented. The next slice is fixed-cadence rapid-scroll/cancellation diagnostics:
 
 - Compare 3-page/24-MB, 4-page/24-MB and default 8-page/64-MB targets using saved,
   long-paragraph and mixed-content probes. Preserve the protected interaction floor.
 - Separate retained encoded/decoded cache bytes from total process working set,
   natural reclamation from forced collection, and page realization from geometry cost.
 - Preserve speculative admission, latest-only jumps, deterministic reflow/session
-  replacement and collectible evicted images. Separate warm-prefetch arrival from
-  sustained rapid scrolling; the probe waits for prefetch between page requests.
+  replacement and collectible evicted images. Issue bounded bursts without waiting for
+  prefetch, then measure latest-target arrival and interaction readiness. The earlier
+  probe waits for prefetch between requests and does not establish this gate.
+- Use `--writer-pagination-profile-geometry` only for detailed attribution; report
+  profiled timings separately from ordinary runs. Keep exact caret-unit mapping,
+  including Unicode/markup boundaries, and avoid private WPF APIs or sampled geometry.
 - Keep probe source files unchanged, avoid recent-file writes and detach source identity.
   Report current-generation correctness alongside latency/memory tradeoffs.
 

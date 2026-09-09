@@ -263,10 +263,22 @@ Mixed-content retention/reclamation has measured positive evidence; long-paragra
 
 Speculative churn is now guarded by app-owned admission before realization, using the
 existing eviction policy and largest observed cached footprint. Protected pages remain
-mandatory; unusual content can exceed the estimate. Per-page timing isolates dense
-insertion geometry as the next latency target. The broader latency/native-memory tradeoff
+mandatory; unusual content can exceed the estimate. Dense insertion profiling and exact-map
+traversal work are recorded under RKWF-039. The broader latency/native-memory tradeoff
 remains open; no hard working-set cap or default-Paper approval.
 
 [Admission implementation and comparison](history/03-writer-pagination.md#3156-ribbonkit-writer-w2-g-speculative-admission-and-page-cost-timing--2026-09-09).
 
 [Recorded evidence](history/writer-friction-evidence.md#rkwf-038--a-reduced-cache-protects-interaction-but-can-discard-every-speculative-page).
+
+### RKWF-039 — Dense insertion mapping repeats native caret-boundary work
+
+App-owned profiling isolates rectangle queries and traversal as the dominant costs.
+The opt-in worker uses a local text-context fast path while retaining WPF caret-boundary
+validation and native fallback at complex/markup edges. Exhaustive synthetic parity passes;
+timing gains are modest/mixed and do not close long-document authoring or native-memory gates.
+Repeated `GetTextRunLength` is unsuitable as a per-position guard because split text nodes
+can make it rescan the run. The bounded parity test uses explicit forward page affinity
+and a 60-second helper limit; its initial repeated-complex-script timeout is not acceptance.
+
+[Implementation, profiling and verification](history/03-writer-pagination.md#3157-ribbonkit-writer-w2-g-insertion-traversal-profiling-and-exact-map-parity--2026-09-09).

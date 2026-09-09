@@ -42,6 +42,9 @@ internal static class WriterPaginationDiagnosticOptions
     internal static bool ShouldSeedLongParagraphDocument => Environment.GetCommandLineArgs()
         .Contains("--writer-pagination-long-paragraph-seed", StringComparer.OrdinalIgnoreCase);
 
+    internal static bool ShouldProfileInsertionGeometry { get; } = Environment.GetCommandLineArgs()
+        .Contains("--writer-pagination-profile-geometry", StringComparer.OrdinalIgnoreCase);
+
     internal static bool IsEnabled =>
         Environment.GetCommandLineArgs().Any(argument =>
             string.Equals(argument, "--writer-paginated-diagnostic",
