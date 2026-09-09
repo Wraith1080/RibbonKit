@@ -61,7 +61,13 @@ public partial class MainWindow
             SeedPaginationDiagnosticDocument();
         }
 
-        _paginationDiagnosticSurface = new WriterPaginatedDiagnosticSurface();
+        _paginationDiagnosticSurface = new WriterPaginatedDiagnosticSurface(
+            WriterPaginationDiagnosticOptions.ShowDiagnostics) { HasExternalRuler = true };
+        _paginationDiagnosticSurface.SetBinding(Panel.BackgroundProperty,
+            new System.Windows.Data.Binding(nameof(Panel.Background)) { Source = DocumentPresentationHost });
+        _paginationDiagnosticSurface.ViewportGeometryChanged += HorizontalRuler.RefreshGeometry;
+        _paginationDiagnosticSurface.ContextMenu = EditorContextMenuController.Menu;
+        _paginationDiagnosticSurface.ContextMenuOpening += (_, _) => EditorContextMenuController.Refresh();
         PaginationDiagnosticHost.Children.Add(_paginationDiagnosticSurface);
         var budget = WriterPaginationDiagnosticOptions.CacheBudget;
         WriterPaginationDiagnosticOptions.WriteTelemetry(
@@ -95,6 +101,7 @@ public partial class MainWindow
         _paginationDiagnosticController = null;
         if (_paginationDiagnosticSurface is not null)
         {
+            _paginationDiagnosticSurface.ViewportGeometryChanged -= HorizontalRuler.RefreshGeometry;
             PaginationDiagnosticHost.Children.Remove(_paginationDiagnosticSurface);
             _paginationDiagnosticSurface = null;
         }
@@ -104,6 +111,21 @@ public partial class MainWindow
     {
         var active = _paginationDiagnosticController is not null &&
             mode == WriterViewMode.Paper;
+        // Keep the accepted interactive ruler above the compositor, with its native edit paths.
+        var parent = (Grid)PaginationDiagnosticHost.Parent;
+        if (active && ReferenceEquals(HorizontalRuler.Parent, EditorSurface))
+        {
+            EditorSurface.Children.Remove(HorizontalRuler);
+            parent.Children.Add(HorizontalRuler);
+            HorizontalRuler.VerticalAlignment = VerticalAlignment.Top;
+        }
+        else if (!active && ReferenceEquals(HorizontalRuler.Parent, parent))
+        {
+            parent.Children.Remove(HorizontalRuler);
+            EditorSurface.Children.Add(HorizontalRuler);
+        }
+        HorizontalRuler.PageOriginProvider = active ? () => _paginationDiagnosticSurface!.PageOrigin : null;
+        HorizontalRuler.RefreshGeometry();
         PaginationDiagnosticHost.Visibility = active
             ? Visibility.Visible
             : Visibility.Collapsed;

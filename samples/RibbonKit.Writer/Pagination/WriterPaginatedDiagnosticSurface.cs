@@ -18,7 +18,7 @@ using RibbonKit.Writer.Models;
 namespace RibbonKit.Writer.Pagination;
 
 /// <summary>
-/// Opt-in clone-page compositor. Its pages and overlays are presentation-only; all mutations are
+/// Clone-page compositor. Its pages and overlays are presentation-only; all mutations are
 /// requested against the separately realized authoritative RichTextBox.
 /// </summary>
 internal sealed class WriterPaginatedDiagnosticSurface : Grid
@@ -56,12 +56,14 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
     private long _spellingDocumentIdentity;
     private int _spellingCandidateIndex;
     private int _releasedPageFrameCount;
+    private readonly bool _showDiagnostics;
 
-    internal WriterPaginatedDiagnosticSurface()
+    internal WriterPaginatedDiagnosticSurface(bool showDiagnostics = false)
     {
+        _showDiagnostics = showDiagnostics;
         Background = new SolidColorBrush(Color.FromRgb(229, 232, 235));
         AutomationProperties.SetAutomationId(this, "PaginatedEditingDiagnostic");
-        AutomationProperties.SetName(this, "Opt-in paginated editing diagnostic");
+        AutomationProperties.SetName(this, "Paginated document");
         AutomationProperties.SetHelpText(this,
             "After selecting a table or picture, press Control+Alt+R to enter keyboard resize, " +
             "Tab to choose a handle, Enter to start, arrows to resize, and Enter or Escape to finish.");
@@ -94,7 +96,7 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
         {
             Foreground = Brushes.White,
             FontSize = 11,
-            Text = "Paginated diagnostic: waiting for layout"
+            Text = showDiagnostics ? "Paginated diagnostic: waiting for layout" : "Preparing pages…"
         };
         AutomationProperties.SetAutomationId(_statusText, "PaginationDiagnosticStatus");
         _statusBorder = new Border
@@ -119,6 +121,12 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
         WriterPaginationPageInteraction?>? InteractionRequested;
     internal event Func<WriterPaginationResizeInteraction, bool>? ResizeRequested;
     internal event Action? DpiScaleChanged;
+    internal event Action<WriterPaginationPageInteraction>? ContextInteractionRequested;
+    internal event Action? ViewportGeometryChanged;
+    internal bool HasExternalRuler { get; set; }
+    internal Point PageOrigin => new(Math.Max(PageGap,
+        (_pageCanvas.Width - (_chromeSettings?.WidthDip ?? 0) * _zoomPercent / 100d) / 2)
+        - _scrollViewer.HorizontalOffset, 0);
 
     internal IReadOnlyCollection<int> RenderedPages => _overlayCanvases.Keys;
     internal IReadOnlyCollection<int> PlaceholderPages => _placeholderPages;
@@ -269,12 +277,50 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
         double zoomPercent, DpiScale dpi) => GetLogicalHandleSize(
             screenSizeDip, zoomPercent, dpi);
 
-    internal void RequestPageForTesting(int pageNumber)
+    internal void RequestPageForTesting(int pageNumber) => RequestPage(pageNumber);
+
+    internal void RequestPage(int pageNumber)
     {
         _requestedPage = pageNumber;
         ScrollToPage(pageNumber);
         PageWindowRequested?.Invoke(pageNumber);
     }
+
+    internal void RevealCaret(int pageNumber, int offset)
+    {
+        if (_result is not { } result || result.Generation != _requestedGeneration)
+            return;
+        var insertion = result.Insertions.Where(item => item.PageNumber == pageNumber)
+            .OrderBy(item => Math.Abs((long)item.SourceOffset - offset)).FirstOrDefault();
+        if (insertion == default || Math.Abs((long)insertion.SourceOffset - offset) > 1)
+            return;
+        var scale = _zoomPercent / 100d;
+        var top = PageGap + pageNumber * (result.PageSettings.HeightDip * scale + PageGap) +
+            insertion.Rectangle.Y * scale;
+        var bottom = top + insertion.Rectangle.Height * scale;
+        if (top < _scrollViewer.VerticalOffset)
+            _scrollViewer.ScrollToVerticalOffset(Math.Max(0, top - PageGap));
+        else if (bottom > _scrollViewer.VerticalOffset + _scrollViewer.ViewportHeight)
+            _scrollViewer.ScrollToVerticalOffset(bottom - _scrollViewer.ViewportHeight + PageGap);
+        var left = Math.Max(PageGap, (_pageCanvas.Width - result.PageSettings.WidthDip * scale) / 2) +
+            insertion.Rectangle.X * scale;
+        if (left < _scrollViewer.HorizontalOffset)
+            _scrollViewer.ScrollToHorizontalOffset(Math.Max(0, left - PageGap));
+        else if (left + scale > _scrollViewer.HorizontalOffset + _scrollViewer.ViewportWidth)
+            _scrollViewer.ScrollToHorizontalOffset(left + scale - _scrollViewer.ViewportWidth + PageGap);
+    }
+
+    internal bool IsCaretVisibleForTesting => _overlayCanvases.Values
+        .SelectMany(canvas => canvas.Children.OfType<FrameworkElement>())
+        .Where(element => Equals(element.Tag, "pagination-caret"))
+        .Any(element =>
+        {
+            var bounds = element.TransformToAncestor(_scrollViewer)
+                .TransformBounds(new Rect(element.RenderSize));
+            return bounds.Height > 0 && bounds.Top >= 0 && bounds.Left >= 0 &&
+                bounds.Bottom <= _scrollViewer.ViewportHeight + 2 &&
+                bounds.Right <= _scrollViewer.ViewportWidth + 2;
+        });
 
     internal double ZoomPercent
     {
@@ -317,7 +363,7 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
         ResetSpellingScan();
         if (preservePages)
             EnsureLoadingPlaceholder(requestedPage);
-        SetStatus($"Paginated diagnostic: updating generation {generation:N0}…");
+        SetStatus($"Paginated diagnostic: updating generation {generation:N0}…", "Updating pages…");
         RefreshOverlays(null);
     }
 
@@ -371,6 +417,8 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
     internal void ShowWorkProgress(WriterPaginationWorkProgress progress,
         WriterPaginationWorkStatistics statistics)
     {
+        if (!_showDiagnostics)
+            return;
         if (progress.Phase == WriterPaginationWorkPhase.Idle ||
             progress.Generation <= 0 || _requestedGeneration <= 0)
             return;
@@ -415,7 +463,7 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
         if (_result is { } result)
             SetStatus($"Diagnostic · generation {result.Generation:N0} · " +
                 $"page {result.VisiblePage + 1:N0}/{result.PageCount:N0} · " +
-                _interactionStatus);
+                _interactionStatus, _interactionStatus);
     }
 
     internal void ShowResizeStatus(WriterPaginationObjectKind kind, bool committed,
@@ -428,7 +476,7 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
                 : $"{kind.ToString().ToLowerInvariant()} resize rejected";
         if (_result is { } result)
             SetStatus($"Diagnostic · document {result.DocumentIdentity:N0} · " +
-                $"generation {result.Generation:N0} · {_interactionStatus}");
+                $"generation {result.Generation:N0} · {_interactionStatus}", _interactionStatus);
     }
 
     internal void SetChrome(DocumentPageSettings settings, bool showRuler,
@@ -438,8 +486,8 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
         _showRuler = showRuler;
         _showMarginGuides = showMarginGuides;
         _rulerIndentation = indentation;
-        _rulerCanvas.Visibility = showRuler ? Visibility.Visible : Visibility.Collapsed;
-        _scrollViewer.Margin = showRuler ? new Thickness(0, 24, 0, 0) : default;
+        _rulerCanvas.Visibility = showRuler && !HasExternalRuler ? Visibility.Visible : Visibility.Collapsed;
+        _scrollViewer.Margin = showRuler ? new Thickness(0, HasExternalRuler ? 31 : 24, 0, 0) : default;
         RebuildRuler();
         RefreshOverlays(_editor);
     }
@@ -456,14 +504,17 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
 
     internal void ShowFailure(string message)
     {
-        SetStatus($"Paginated diagnostic failed: {message}");
+        SetStatus($"Paginated diagnostic failed: {message}",
+            "Pages could not be updated. Choose View > Continuous to continue editing.");
         _statusBorder.Background = new SolidColorBrush(Color.FromArgb(230, 145, 36, 36));
     }
 
-    private void SetStatus(string status)
+    private void SetStatus(string status, string? userStatus = null)
     {
-        _statusText.Text = status;
-        AutomationProperties.SetName(_statusText, status);
+        var visibleStatus = _showDiagnostics ? status : userStatus;
+        _statusText.Text = visibleStatus ?? string.Empty;
+        _statusBorder.Visibility = visibleStatus is null ? Visibility.Collapsed : Visibility.Visible;
+        AutomationProperties.SetName(_statusText, visibleStatus ?? string.Empty);
         WriterPaginationDiagnosticOptions.WriteTelemetry(status);
     }
 
@@ -516,6 +567,8 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
 
     private bool TryHandleHostKey(Key key, ModifierKeys modifiers)
     {
+        if (!IsVisible)
+            return false;
         if (_resizeDrag is { IsKeyboard: true })
             return ApplyKeyboardResizeKey(key, modifiers);
         if (_resizeDrag is not null)
@@ -643,6 +696,7 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
                 Child = overlay
             });
             pageGrid.MouseLeftButtonDown += OnPageMouseLeftButtonDown;
+            pageGrid.MouseRightButtonDown += OnPageMouseRightButtonDown;
             pageGrid.MouseMove += OnPageMouseMove;
             pageGrid.MouseLeftButtonUp += OnPageMouseLeftButtonUp;
             pageGrid.LostMouseCapture += OnPageLostMouseCapture;
@@ -729,7 +783,10 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
 
     private void RebuildRuler()
     {
+        ViewportGeometryChanged?.Invoke();
         _rulerCanvas.Children.Clear();
+        if (HasExternalRuler)
+            return;
         if (!_showRuler || _result is not { } result || _chromeSettings is null)
             return;
         var scale = _zoomPercent / 100d;
@@ -1157,7 +1214,7 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
         if (_result is not { } result)
             return;
         SetStatus($"Diagnostic · generation {result.Generation:N0} · keyboard target · " +
-            GetResizeHandleName(descriptor));
+            GetResizeHandleName(descriptor), GetResizeHandleName(descriptor));
     }
 
     private static bool SameHandle(ResizeHandleDescriptor first,
@@ -1421,6 +1478,18 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
         page.CaptureMouse();
         InteractionRequested?.Invoke(interaction, null);
         e.Handled = true;
+    }
+
+    private void OnPageMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is Grid { Tag: int pageNumber } page &&
+            TryCreateInteraction(pageNumber, e.GetPosition(page), out var interaction))
+            PrepareContextMenu(interaction);
+    }
+
+    internal void PrepareContextMenu(WriterPaginationPageInteraction interaction)
+    {
+        ContextInteractionRequested?.Invoke(interaction);
     }
 
     private void OnPageMouseMove(object sender, MouseEventArgs e)

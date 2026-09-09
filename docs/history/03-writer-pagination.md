@@ -921,3 +921,95 @@ fixed-cadence rapid-scroll/cancellation probe without waiting for prefetch betwe
 measuring latest-target arrival and interaction readiness. Preserve exact mapping, one live
 editor, cache admission and current-generation rejection. Default Paper and the paired genuine
 OS IME/production RTL decision remain deferred.
+
+### 3.158 RibbonKit Writer W2-G native caret page following — 2026-09-09
+
+The user deferred the rapid-scroll benchmark proposed after §3.157 and requested continued
+pagination implementation. That probe is optional validation, not an architectural prerequisite
+or an originally agreed next packet. No new benchmark/probe infrastructure was added here.
+
+The focused reproduction used the native move-to-document-end command on a 12-page document:
+the authoritative caret moved, but the paginated viewport stayed on page zero instead of page
+eleven. `SelectionChanged` had only refreshed overlays, without requesting uncached caret pages.
+
+Selection changes now locate the caret using the current immutable page-start map, preserving
+backward affinity at exact page boundaries. Missing interactive pages use the existing viewport
+request/cache path; once mapped, the surface reveals the actual caret rectangle vertically and
+horizontally at the current zoom. Pure navigation reuses the existing layout session. Content
+changes defer reveal until the current layout generation publishes, so newly added pages do not
+use stale offsets. Publication does not queue speculative work for a generation superseded by
+the reveal. Manual page scrolling cancels pending following, and pointer selection/resize paths
+retain their prior interaction ownership rather than causing a recursive caret page request.
+
+Four new hosted-WPF checks cover native end/start navigation over uncached pages without a new
+layout session, manual scrolling without snapping back to the unchanged caret, actual rendered
+caret bounds at 100%/175% zoom, and insertion from an empty document followed by Undo to empty.
+The last case verifies deferred page-map use after the edit. These are native routed-command
+and realized-window tests, not physical keyboard/OS IME or manual visual acceptance.
+
+The first production-class run passed **37/38** and caught a formatting-only regression:
+changing cell paragraph alignment while viewing the table scheduled a reveal of the unchanged
+caret on page zero. Following is now requested by added/removed content or selection changes,
+not formatting-only `TextChanged` events. The final affected run passes **5/5** (the four new
+checks plus the existing table-alignment regression). The other production tests were not
+repeated after that narrow correction, following the user's minimal-testing request. The final
+Release Writer build passes with **0 warnings / 0 errors**, and `git diff --check` passes.
+No benchmark matrix, full suite, solution build, manual visual, OS IME or production RTL gate ran.
+
+The single native editor still owns content, selection and Undo; default Paper and
+`src/RibbonKit/**` remain unchanged. This closes the reproduced caret-following gap within the
+opt-in surface, not W2-G as a whole. Remaining authoring/input acceptance stays in the delivery
+plan; rapid-scroll benchmarking remains deferred rather than being assigned as the next task.
+
+### 3.159 RibbonKit Writer default paginated Paper — 2026-09-09
+
+The user requested continuing cross-page editing and making pagination the default as quickly
+as possible. This explicitly expands the earlier opt-in-only agreement. Normal Paper startup
+now enables the compositor. `--writer-classic-paper` or environment
+`RIBBONKIT_WRITER_PAGINATED_DIAGNOSTIC=0` restores the previous Paper surface; View > Continuous
+also remains available. The existing diagnostic flag/environment value `1` enables detailed
+telemetry, while ordinary loading/failure messages omit worker/cache implementation details.
+
+Cross-page replacement/history already had coverage. Four additional native-command cases
+cover forward/backward selection over multiple pages, deletion/replacement, and exact content
+restoration through Undo/Redo. The initial backward assertions incorrectly included WPF's
+terminal paragraph marker; correcting that expectation produced 5/5 with the existing
+cross-page test, with no editing-engine correction needed.
+
+Default integration retains the accepted interactive WriterRuler above the compositor instead
+of hiding it with the native editor. Its page origin follows paginated horizontal scrolling
+and zoom while existing margin/paragraph edit paths remain native. Page right-clicks resolve
+against current geometry and use the existing context-menu controller; clicks within a
+selection preserve it. Hidden compositor surfaces no longer consume keyboard resize input.
+One live editor remains authoritative. No runtime-library code changed.
+
+Verification:
+
+- Final pagination production class: **42/42** passed in Release.
+- Release Writer build: **0 warnings / 0 errors**; `git diff --check` passed.
+- Fresh-process default-window, centered-table view-switch, and scrollbar checks: **3/3**.
+  The new default-window check uses a native document, inserts 90 paragraphs, commits a ruler
+  margin change, preserves context selection, and switches Paper/Continuous/Preview without
+  replacing the editor/document. It checks normal status text and the default/fallback policy.
+- Inspected `artifacts/writer-default-paper.png`, captured from the realized application
+  content by the new test. Page text, margin guides and interactive ruler align. The test host
+  does not supply full application theme rendering; this is not complete visual acceptance.
+- An earlier combined run was **42/49**: one assertion still expected the diagnostic UIA name,
+  corrected for the new user-facing name, and six window starts hit WPF cross-thread
+  WindowChrome theme caching. The final scoped checks above run in fresh processes.
+- The isolated broad window-contract test fails because it omits the existing Settings item
+  from its expected Backstage buttons. Repeating with pagination disabled gives the same
+  failure. Its later scenes are not claimed as passed; the test was not broadened or rewritten.
+
+This is a user-directed default switch, not W2-G closure or release acceptance. OS IME,
+production RTL, physical input, sustained long-document authoring and native-memory limits
+remain open. Rapid-scroll benchmarking remains deferred. No full suite or solution gate ran.
+
+**Appearance follow-up:** the user reported that the area around paginated pages stayed grey
+when toggling Mica/Acrylic. The compositor retained a local `#FFE5E8EB` brush while the existing
+appearance path updated `DocumentPresentationHost.Background`. Binding the compositor background
+to that host fixes initial state and subsequent material/fallback/rollback changes. The new
+realized-window regression fails before the fix and passes **1/1** after it, alternating active
+backdrop and light/dark opaque states while asserting unchanged page-image and document-background
+instances. Release Writer builds with **0 warnings / 0 errors**. This verifies WPF brush
+propagation, not a new visual acceptance of the OS-rendered Mica/Acrylic effect.

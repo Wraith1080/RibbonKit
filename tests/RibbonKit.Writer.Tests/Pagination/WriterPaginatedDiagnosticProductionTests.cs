@@ -28,6 +28,148 @@ public sealed class WriterPaginatedDiagnosticProductionTests(ITestOutputHelper o
     [InlineData(false, true)]
     [InlineData(true, false)]
     [InlineData(true, true)]
+    public async Task NativeCrossPageSelectionDeleteAndReplacementRetainUndoRedo(
+        bool backward, bool replace)
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            using var workspace = ProductionWorkspace.Create(CreateParagraphDocument(
+                DocumentPageSettings.Letter(), 180), pageCacheLimit: 3);
+            await WaitForVisibleAsync(workspace.Controller);
+            var editor = workspace.Editor;
+            var document = editor.Document;
+            var before = DocumentText(document);
+            editor.Focus();
+            (backward ? EditingCommands.MoveToDocumentEnd : EditingCommands.MoveToDocumentStart)
+                .Execute(null, editor);
+            await WaitForVisibleAsync(workspace.Controller);
+            (backward ? EditingCommands.SelectToDocumentStart : EditingCommands.SelectToDocumentEnd)
+                .Execute(null, editor);
+            var selected = await WaitForVisibleAsync(workspace.Controller);
+            // Moving backward from the final insertion excludes WPF's terminal paragraph marker.
+            Assert.Equal(before.TrimEnd('\r', '\n'), editor.Selection.Text.TrimEnd('\r', '\n'));
+            Assert.Equal(backward ? 0 : selected.PageCount - 1, selected.VisiblePage);
+
+            if (replace)
+                editor.Selection.Text = "Cross-page replacement";
+            else
+                EditingCommands.Delete.Execute(null, editor);
+            var edited = await WaitForVisibleAsync(workspace.Controller);
+            var after = DocumentText(document);
+            Assert.Equal(replace ? "Cross-page replacement" : "", after.TrimEnd('\r', '\n'));
+            Assert.Equal(1, edited.PageCount);
+            Assert.Same(document, editor.Document);
+            editor.Undo();
+            var restored = await WaitForVisibleAsync(workspace.Controller);
+            Assert.Equal(before, DocumentText(document));
+            Assert.Equal(selected.PageCount, restored.PageCount);
+            Assert.True(editor.CanRedo);
+            editor.Redo();
+            await WaitForVisibleAsync(workspace.Controller);
+            Assert.Equal(after, DocumentText(document));
+            Assert.Same(document, editor.Document);
+            Assert.True(editor.IsKeyboardFocusWithin);
+        }, TimeSpan.FromSeconds(60));
+    }
+
+    [Fact]
+    public async Task NativeDocumentNavigationRevealsCaretPageWithoutRebuildingLayout()
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            using var workspace = ProductionWorkspace.Create(CreateParagraphDocument(
+                DocumentPageSettings.Letter(), 420), pageCacheLimit: 3,
+                cacheByteLimit: 24L * 1024 * 1024);
+            var opening = await WaitForVisibleAsync(workspace.Controller);
+            await WaitForPrefetchAsync(workspace.Controller, opening.Generation);
+            var document = workspace.Editor.Document;
+            workspace.Editor.Focus();
+            EditingCommands.MoveToDocumentEnd.Execute(null, workspace.Editor);
+            var end = await WaitForVisibleAsync(workspace.Controller);
+            Assert.Equal(end.PageCount - 1, end.VisiblePage);
+            Assert.Same(document, workspace.Editor.Document);
+            Assert.Equal(opening.LayoutIdentity, end.LayoutIdentity);
+            Assert.Equal(1, workspace.Controller.WorkStatistics.SessionsCreatedCount);
+            await Dispatcher.Yield(DispatcherPriority.ContextIdle);
+            workspace.Window.UpdateLayout();
+            Assert.True(workspace.Surface.IsCaretVisibleForTesting);
+
+            // Ordinary scrolling must not snap back to the unchanged caret.
+            workspace.Surface.RequestPageForTesting(0);
+            var scrolled = await WaitForVisibleAsync(workspace.Controller);
+            await WaitForPrefetchAsync(workspace.Controller, scrolled.Generation);
+            Assert.Equal(0, workspace.Controller.Current!.VisiblePage);
+            EditingCommands.MoveToDocumentStart.Execute(null, workspace.Editor);
+            var start = await WaitForVisibleAsync(workspace.Controller);
+            Assert.Equal(0, start.VisiblePage);
+            await Dispatcher.Yield(DispatcherPriority.ContextIdle);
+            workspace.Window.UpdateLayout();
+            Assert.True(workspace.Surface.IsCaretVisibleForTesting);
+        }, TimeSpan.FromSeconds(60));
+    }
+
+    [Theory]
+    [InlineData(100)]
+    [InlineData(175)]
+    public async Task NativeCaretNavigationRevealsPositionWithinMappedPageAtZoom(int zoom)
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            var document = CreateParagraphDocument(DocumentPageSettings.Letter(), 12);
+            ((Paragraph)document.Blocks.LastBlock).TextAlignment = TextAlignment.Right;
+            using var workspace = ProductionWorkspace.Create(document);
+            await WaitForVisibleAsync(workspace.Controller);
+            workspace.Controller.SetZoom(zoom);
+            workspace.Window.UpdateLayout();
+            workspace.Editor.Focus();
+            EditingCommands.MoveToDocumentEnd.Execute(null, workspace.Editor);
+            await Dispatcher.Yield(DispatcherPriority.ContextIdle);
+            await WaitForVisibleAsync(workspace.Controller);
+            workspace.Window.UpdateLayout();
+            Assert.True(workspace.Surface.IsCaretVisibleForTesting);
+            EditingCommands.MoveToDocumentStart.Execute(null, workspace.Editor);
+            await Dispatcher.Yield(DispatcherPriority.ContextIdle);
+            workspace.Window.UpdateLayout();
+            Assert.True(workspace.Surface.IsCaretVisibleForTesting);
+            Assert.Equal(1, workspace.Controller.WorkStatistics.SessionsCreatedCount);
+        }, TimeSpan.FromSeconds(60));
+    }
+
+    [Fact]
+    public async Task NativeCaretRevealWaitsForEditedPageMapAndHandlesUndoToEmpty()
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            using var workspace = ProductionWorkspace.Create(new FlowDocument());
+            var opening = await WaitForVisibleAsync(workspace.Controller);
+            workspace.Editor.BeginChange();
+            try
+            {
+                workspace.Editor.Selection.Text = string.Concat(Enumerable.Repeat(
+                    "Newly inserted text must reveal the authoritative caret after pagination. ", 700));
+                EditingCommands.MoveToDocumentEnd.Execute(null, workspace.Editor);
+            }
+            finally { workspace.Editor.EndChange(); }
+            var edited = await WaitForVisibleAsync(workspace.Controller);
+            Assert.True(edited.PageCount > 3);
+            Assert.Equal(edited.PageCount - 1, edited.VisiblePage);
+            Assert.NotEqual(opening.LayoutIdentity, edited.LayoutIdentity);
+            await Dispatcher.Yield(DispatcherPriority.ContextIdle);
+            workspace.Window.UpdateLayout();
+            Assert.True(workspace.Surface.IsCaretVisibleForTesting);
+            Assert.True(workspace.Editor.CanUndo);
+            workspace.Editor.Undo();
+            var empty = await WaitForVisibleAsync(workspace.Controller);
+            Assert.Equal(1, empty.PageCount);
+            Assert.Equal(0, empty.VisiblePage);
+        }, TimeSpan.FromSeconds(60));
+    }
+
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
     public async Task InsertionTraversalMatchesNativeOffsetsAndRectanglesOnEveryPage(
         bool structured, bool landscape)
     {
@@ -842,7 +984,7 @@ public sealed class WriterPaginatedDiagnosticProductionTests(ITestOutputHelper o
 
             var surfacePeer = UIElementAutomationPeer.CreatePeerForElement(workspace.Surface);
             Assert.Equal(AutomationControlType.Pane, surfacePeer.GetAutomationControlType());
-            Assert.Equal("Opt-in paginated editing diagnostic", surfacePeer.GetName());
+            Assert.Equal("Paginated document", surfacePeer.GetName());
             var handlePeers = workspace.Surface.ResizeHandlePeersForTesting();
             Assert.Equal(handlePeers.Count, handlePeers
                 .Select(peer => peer.GetAutomationId()).Distinct(StringComparer.Ordinal).Count());
@@ -1713,7 +1855,7 @@ public sealed class WriterPaginatedDiagnosticProductionTests(ITestOutputHelper o
                 IsUndoEnabled = true,
                 Opacity = 0.01
             };
-            var surface = new WriterPaginatedDiagnosticSurface();
+            var surface = new WriterPaginatedDiagnosticSurface(showDiagnostics: true);
             var grid = new Grid();
             grid.Children.Add(new AdornerDecorator { Child = editor });
             grid.Children.Add(surface);

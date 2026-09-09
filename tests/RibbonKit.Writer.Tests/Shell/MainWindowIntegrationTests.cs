@@ -12,12 +12,14 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using RibbonKit.Controls;
 using RibbonKit.Writer.Editing;
 using RibbonKit.Writer;
 using RibbonKit.Writer.Models;
 using RibbonKit.Writer.Page;
+using RibbonKit.Writer.Pagination;
 using RibbonKit.Writer.Preview;
 using RibbonKit.Writer.Printing;
 using RibbonKit.Writer.Services.Documents;
@@ -38,6 +40,123 @@ public sealed class WriterUiCollectionDefinition
 [Collection("Writer UI")]
 public sealed class MainWindowIntegrationTests
 {
+    [Fact]
+    public async Task PaginatedWorkspaceTracksBackdropAndOpaqueFallbackWithoutChangingPages()
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            using var fixture = new WindowFixture();
+            fixture.Show();
+            var window = fixture.Window;
+            var host = Assert.IsType<Grid>(window.FindName("PaginationDiagnosticHost"));
+            var surface = Assert.IsType<WriterPaginatedDiagnosticSurface>(Assert.Single(host.Children));
+            var workspace = Assert.IsType<Grid>(window.FindName("DocumentPresentationHost"));
+            await WaitForAsync(() => surface.RenderedPages.Count > 0);
+            var page = Assert.Single(FindVisualDescendants<Image>(surface)).Source;
+            var documentBackground = fixture.Editor.Document.Background;
+            var apply = typeof(MainWindow).GetMethod("ApplyWorkspaceBackground",
+                BindingFlags.Instance | BindingFlags.NonPublic)!;
+            // Both materials use this successful-backdrop path; off/failure and rollback
+            // restore the existing palette-aware opaque workspace brush.
+            foreach (var (active, dark) in new[] { (true, false), (false, false),
+                         (true, true), (false, true), (true, false) })
+            {
+                apply.Invoke(window, [active, dark, RibbonKit.Theming.RibbonTheme.Office2024]);
+                await PumpAsync();
+                Assert.Same(workspace.Background, surface.Background);
+                Assert.Equal(active ? (byte)0 : (byte)255,
+                    Assert.IsType<SolidColorBrush>(surface.Background).Color.A);
+                Assert.Same(page, Assert.Single(FindVisualDescendants<Image>(surface)).Source);
+                Assert.Same(documentBackground, fixture.Editor.Document.Background);
+            }
+        }, TimeSpan.FromSeconds(30));
+    }
+
+    [Fact]
+    public async Task DefaultPaperPaginatesAndSwitchesViewsWithOneAuthoritativeEditor()
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            Assert.True(WriterPaginationDiagnosticOptions.UsePaginatedPaper([], null));
+            Assert.False(WriterPaginationDiagnosticOptions.UsePaginatedPaper(
+                ["--writer-classic-paper"], null));
+            Assert.False(WriterPaginationDiagnosticOptions.UsePaginatedPaper([], "0"));
+            using var fixture = new WindowFixture();
+            fixture.Show();
+            Assert.True(await fixture.Shell.NewAsync(WriterDocumentProfiles.RibbonKitWriter));
+            var window = fixture.Window;
+            var document = fixture.Editor.Document;
+            Assert.True(window.IsPaginationDiagnosticEnabled);
+            var host = Assert.IsType<Grid>(window.FindName("PaginationDiagnosticHost"));
+            var surface = Assert.IsType<WriterPaginatedDiagnosticSurface>(Assert.Single(host.Children));
+            var controller = Assert.IsType<WriterPaginatedDiagnosticController>(typeof(MainWindow)
+                .GetField("_paginationDiagnosticController", BindingFlags.Instance | BindingFlags.NonPublic)!
+                .GetValue(window));
+            var deadline = DateTime.UtcNow.AddSeconds(25);
+            while (controller.Current is null || controller.PublishedGeneration != controller.RequestedGeneration)
+            {
+                Assert.True(DateTime.UtcNow < deadline, "Default Paper did not publish.");
+                await Task.Delay(30);
+            }
+            Assert.Equal(WriterViewMode.Paper, window.CurrentViewMode);
+            Assert.True(surface.IsVisible);
+            Assert.NotEmpty(surface.RenderedPages);
+            Assert.Empty(surface.StatusTextForTesting);
+            var ruler = Assert.IsType<WriterRuler>(window.FindName("HorizontalRuler"));
+            Assert.True(ruler.IsVisible);
+            Assert.Same(host.Parent, ruler.Parent);
+            Assert.Equal(surface.PageOrigin.X + fixture.Shell.CurrentDocument.PageSettings.Margins.LeftDip,
+                ruler.Layout.ContentStartDip, 2);
+            var margins = fixture.Shell.CurrentDocument.PageSettings.Margins;
+            Assert.True(ruler.TryBeginMarginDrag(WriterRulerMarginEdge.Left));
+            ruler.UpdateMarginDragPosition(ruler.Layout.ContentStartDip + 12);
+            ruler.CommitMarginDragPosition();
+            Assert.Equal(margins.LeftDip + 12, fixture.Shell.CurrentDocument.PageSettings.Margins.LeftDip, 2);
+            fixture.Editor.Selection.Text = string.Join("\r\n", Enumerable.Range(1, 90)
+                .Select(index => $"Paragraph {index}: editing flows across real document pages."));
+            await WaitForAsync(() => controller.Current is { PageCount: > 1 } &&
+                controller.PublishedGeneration == controller.RequestedGeneration);
+            fixture.Editor.SelectAll();
+            await WaitForAsync(() => controller.PublishedGeneration == controller.RequestedGeneration);
+            var selection = fixture.Editor.Selection.Text;
+            var insertion = controller.Current!.Insertions.First();
+            surface.PrepareContextMenu(surface.CaptureInteractionForTesting(insertion.PageNumber,
+                insertion.SourceOffset));
+            Assert.Equal(selection, fixture.Editor.Selection.Text);
+            Assert.Same(window.EditorContextMenuController.Menu, surface.ContextMenu);
+            window.EditorContextMenuController.Refresh();
+            Assert.NotEmpty(surface.ContextMenu.Items);
+            EditingCommands.MoveToDocumentStart.Execute(null, fixture.Editor);
+            await WaitForAsync(() => controller.PublishedGeneration == controller.RequestedGeneration);
+            await PumpAsync();
+            // Optional capture of the realized application tree for this default-view acceptance check.
+            if (Environment.GetEnvironmentVariable("RIBBONKIT_WRITER_TEST_SNAPSHOT") is { Length: > 0 } imagePath)
+            {
+                var content = Assert.IsAssignableFrom<FrameworkElement>(window.Content);
+                var bitmap = new RenderTargetBitmap((int)content.ActualWidth, (int)content.ActualHeight,
+                    96, 96, PixelFormats.Pbgra32);
+                bitmap.Render(content);
+                var encoder = new PngBitmapEncoder();
+                encoder.Frames.Add(BitmapFrame.Create(bitmap));
+                using var stream = System.IO.File.Create(imagePath);
+                encoder.Save(stream);
+            }
+            window.ApplyWriterViewMode(WriterViewMode.ContinuousEdit);
+            await PumpAsync();
+            Assert.False(surface.IsVisible);
+            Assert.False(surface.ApplyHostKeyForTesting(Key.R, ModifierKeys.Control | ModifierKeys.Alt));
+            Assert.Same(document, fixture.Editor.Document);
+            window.ApplyWriterViewMode(WriterViewMode.PrintPreview);
+            await PumpAsync();
+            Assert.False(surface.IsVisible);
+            window.ApplyWriterViewMode(WriterViewMode.Paper);
+            await PumpAsync();
+            Assert.True(surface.IsVisible);
+            Assert.Same(document, fixture.Editor.Document);
+            Assert.True(fixture.Editor.IsKeyboardFocusWithin);
+        }, TimeSpan.FromSeconds(60));
+    }
+
     private static async Task AssertBackstageNewGalleryAsync(WindowFixture fixture)
     {
         var backstage = Assert.IsType<Backstage>(fixture.Ribbon.Backstage);

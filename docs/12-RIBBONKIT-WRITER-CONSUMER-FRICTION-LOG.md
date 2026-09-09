@@ -282,3 +282,36 @@ can make it rescan the run. The bounded parity test uses explicit forward page a
 and a 60-second helper limit; its initial repeated-complex-script timeout is not acceptance.
 
 [Implementation, profiling and verification](history/03-writer-pagination.md#3157-ribbonkit-writer-w2-g-insertion-traversal-profiling-and-exact-map-parity--2026-09-09).
+
+### RKWF-040 — Native caret navigation did not move the paginated viewport
+
+Corrected in the opt-in compositor. A focused reproduction moved the live editor to document
+end while the paginated view remained on page 1 of 12. Selection changes now request the
+caret's page using the existing layout session and reveal its rectangle at the current zoom.
+Edits defer that request until current geometry publishes. Ordinary scrolling cancels pending
+caret following; surface selection/resize interactions retain their existing ownership.
+
+[Implementation and evidence](history/03-writer-pagination.md#3158-ribbonkit-writer-w2-g-native-caret-page-following--2026-09-09).
+
+### RKWF-041 — Default activation needs the native ruler and context menu
+
+The user authorized default paginated Paper on 2026-09-09. The diagnostic hid the accepted
+interactive ruler with its native editor and did not attach the editor context menu to page
+visuals. Default activation now retains that same ruler above the compositor, supplies its
+visible page origin, and routes mapped right-click targets to native selection/menu actions.
+Right-clicks within a selection preserve it; hidden pagination does not consume resize keys.
+Detailed telemetry is opt-in; normal loading/failure text is user-facing.
+
+Default-view appearance follow-up: the compositor's hard-coded `#FFE5E8EB` workspace
+masked the active Mica/Acrylic material. Its background now binds to the existing
+`DocumentPresentationHost.Background`, following successful backdrop activation,
+light/dark opaque fallback and rollback without changing page images or document color.
+A realized-window regression reproduced the mismatch and passes after the binding fix.
+
+The combined production/window test run hit dispatcher-affine WindowChrome theme caching.
+Fresh-process checks avoid that harness contamination without changing the runtime. The broad
+window contract also expects the pre-Settings menu and fails identically with pagination
+disabled; it was not rewritten as part of this change. The inspected render is hosted WPF
+page/ruler evidence, not full application theme, physical input or OS IME acceptance.
+
+[Default activation and verification](history/03-writer-pagination.md#3159-ribbonkit-writer-default-paginated-paper--2026-09-09).

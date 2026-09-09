@@ -45,7 +45,14 @@ internal static class WriterPaginationDiagnosticOptions
     internal static bool ShouldProfileInsertionGeometry { get; } = Environment.GetCommandLineArgs()
         .Contains("--writer-pagination-profile-geometry", StringComparer.OrdinalIgnoreCase);
 
-    internal static bool IsEnabled =>
+    internal static bool IsEnabled => UsePaginatedPaper(Environment.GetCommandLineArgs(),
+        Environment.GetEnvironmentVariable(EnvironmentVariable));
+
+    internal static bool UsePaginatedPaper(IEnumerable<string> arguments, string? environmentValue) =>
+        !arguments.Contains("--writer-classic-paper", StringComparer.OrdinalIgnoreCase) &&
+        !string.Equals(environmentValue, "0", StringComparison.Ordinal);
+
+    internal static bool ShowDiagnostics =>
         Environment.GetCommandLineArgs().Any(argument =>
             string.Equals(argument, "--writer-paginated-diagnostic",
                 StringComparison.OrdinalIgnoreCase)) ||

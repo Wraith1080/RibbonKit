@@ -48,7 +48,7 @@ Current acceptance is recorded only in design-notes §5 and its linked evidence.
 | W2-D | Preview and printing | W2-C |
 | W2-E | Page/View integration | W2-B/D |
 | W2-F | Ruler and margin guides | W0-F, W2-E |
-| W2-G | Opt-in true editable pagination | W3-E |
+| W2-G | Default true editable pagination and remaining acceptance | W3-E |
 | W3-A | Pictures, hyperlinks and date/time | W0-E, W1-D, W2-B |
 | W3-B | Table structural core | W0-E, W1-D, W2-B |
 | W3-C | Insert/Table Tools and cell navigation | W0-F, W2-F, W3-A/B |
@@ -84,29 +84,26 @@ remain excluded until their semantics and persistence are complete.
 
 ### W2-G — True editable pagination architecture and delivery
 
-Continue from §3.157, not the original prototype. Default Paper remains unchanged.
+Continue from §3.159, not the original prototype. The user authorized default paginated
+Paper on 2026-09-09. Normal startup enables it; `--writer-classic-paper` or environment
+`RIBBONKIT_WRITER_PAGINATED_DIAGNOSTIC=0` restores the prior Paper surface.
 One authoritative live `FlowDocument`/editor owns selection, input, native history,
 spelling and clipboard. Immutable clone-backed pages and value-only geometry run on
 a dedicated STA; generation checks reject stale work/events. Preserve accepted
 preview/print page-start parity and current/adjacent interaction during reflow.
 Never split into independent editors, inject blank blocks or draw fake page breaks.
 
-Budget-aware speculative admission, insertion profiling and exact-map traversal parity
-are implemented. The next slice is fixed-cadence rapid-scroll/cancellation diagnostics:
+Budget-aware speculative admission, insertion profiling, exact-map traversal parity and
+native caret page following are implemented. Continue actual paginated-editing work with
+focused regressions for changed behavior. Preserve the interaction floor, exact mapping,
+latest-only rejection and native editing/history ownership.
 
-- Compare 3-page/24-MB, 4-page/24-MB and default 8-page/64-MB targets using saved,
-  long-paragraph and mixed-content probes. Preserve the protected interaction floor.
-- Separate retained encoded/decoded cache bytes from total process working set,
-  natural reclamation from forced collection, and page realization from geometry cost.
-- Preserve speculative admission, latest-only jumps, deterministic reflow/session
-  replacement and collectible evicted images. Issue bounded bursts without waiting for
-  prefetch, then measure latest-target arrival and interaction readiness. The earlier
-  probe waits for prefetch between requests and does not establish this gate.
-- Use `--writer-pagination-profile-geometry` only for detailed attribution; report
-  profiled timings separately from ordinary runs. Keep exact caret-unit mapping,
-  including Unicode/markup boundaries, and avoid private WPF APIs or sampled geometry.
-- Keep probe source files unchanged, avoid recent-file writes and detach source identity.
-  Report current-generation correctness alongside latency/memory tradeoffs.
+The fixed-cadence rapid-scroll probe proposed after §3.157 is **deferred by user direction**.
+It was a suggested validation method, not a pre-existing delivery prerequisite. Existing
+cancellation/coalescing and latest-only coverage remains in use; do not require another
+cache-budget benchmark matrix for unrelated implementation work. Real scrolling/authoring
+responsiveness still needs acceptance after the user-directed default switch, but that does not
+require this particular automated probe.
 
 The retained scope includes cross-page editing/deletion/selection/history; focus and
 command routing; page-setting reflow; table/picture/hyperlink hits and resize; rulers,
@@ -114,14 +111,14 @@ non-printing chrome, zoom/DPI transforms and empty/replaced documents. Trusted e
 column geometry and the unsupported Auto/star resize policy remain separate. Test
 cancellation/coalescing and page-window handoff, including dense long paragraphs.
 
-Genuine OS IME and production RTL are explicitly deferred together. W2-G is not closed,
-and the diagnostic does not authorize a default-Paper switch. Its complete exit needs
+Genuine OS IME and production RTL remain deferred together. W2-G is not closed by the
+default switch. Its complete exit needs
 the outstanding input/geometry and actual long-document authoring gates, not merely a
 passing worker test. Record limitations rather than substitute decorative pagination.
 
 ### W4-B — Automated integration and hardening
 
-Wait for W2-G completion and any default-Paper decision. Cover integrated native
+The default-Paper decision is made; W2-G acceptance remains outstanding. Cover integrated native
 persistence, keyboard/UIA state, RTL, reduced motion, DPI metrics and performance
 instrumentation. Run the full solution build/tests with dated counts and inspect
 visual differences before changing approvals. Correct warnings or explain external

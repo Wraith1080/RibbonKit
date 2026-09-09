@@ -58,16 +58,17 @@ Reject stale targets after replacement, deletion or history traversal.
 drift-free orientation and validated margins. Page metadata is document state.
 
 - **Continuous:** the native workspace-filling editor.
-- **Default Paper:** the same live editor on a centered, fixed-width paper surface.
+- **Default Paper:** clone-backed paginator pages mapped to the same live editor.
   Margins and zoom affect presentation; switching views preserves content, selection,
-  focus and history. It remains continuous and draws no fake paginator breaks.
+  focus and history. `--writer-classic-paper` restores the previous continuous Paper
+  surface. No presentation inserts artificial content or creates separate editors.
 - **Preview/print:** an isolated document/snapshot with the same logical page inputs.
   Preserve deterministic page count/break parity and stable navigation; no live-editor
   paginator mutation. For pictured output, preserve the corrected isolated flow-print
   path rather than re-serializing fixed XPS bitmap resources (history §3.135/RKWF-025).
-- **W2-G diagnostic:** opt-in clone-backed editable page visuals mapped to one live
-  input owner. It does not authorize replacing default Paper. Current constraints
-  and next measurements are in §5 and the packet map.
+- **W2-G diagnostics:** `--writer-paginated-diagnostic` enables detailed telemetry for
+  the default paginated view. The user authorized default activation on 2026-09-09;
+  outstanding input/performance/manual acceptance remains in §5 and the packet map.
 
 Page provides presets, orientation, page color and transactional Custom Margins.
 View owns zoom and supported presentation/ruler/guide toggles; the status zoom remains

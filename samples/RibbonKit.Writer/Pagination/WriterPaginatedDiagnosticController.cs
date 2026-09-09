@@ -39,6 +39,9 @@ internal sealed class WriterPaginatedDiagnosticController : IDisposable
     private int _scrollDirection = 1;
     private ActiveResize? _activeResize;
     private bool _handlingResizeRequest;
+    private bool _handlingSurfaceInteraction;
+    private bool _pendingCaretReveal;
+    private bool _requestingCaretPage;
     private bool _disposed;
 
     internal WriterPaginatedDiagnosticController(
@@ -69,6 +72,7 @@ internal sealed class WriterPaginatedDiagnosticController : IDisposable
         _editor.SelectionChanged += OnEditorSelectionChanged;
         _surface.PageWindowRequested += OnPageWindowRequested;
         _surface.InteractionRequested += OnInteractionRequested;
+        _surface.ContextInteractionRequested += OnContextInteractionRequested;
         _surface.ResizeRequested += OnResizeRequested;
         _surface.DpiScaleChanged += OnDpiScaleChanged;
         InvalidateLayoutAndSchedule(immediate: true);
@@ -133,6 +137,7 @@ internal sealed class WriterPaginatedDiagnosticController : IDisposable
         _currentObjects.Clear();
         _objectIdentities.Clear();
         _visiblePage = 0;
+        _pendingCaretReveal = false;
         Current = null;
         LastVisible = null;
         LastNewSession = null;
@@ -153,6 +158,7 @@ internal sealed class WriterPaginatedDiagnosticController : IDisposable
         _editor.SelectionChanged -= OnEditorSelectionChanged;
         _surface.PageWindowRequested -= OnPageWindowRequested;
         _surface.InteractionRequested -= OnInteractionRequested;
+        _surface.ContextInteractionRequested -= OnContextInteractionRequested;
         _surface.ResizeRequested -= OnResizeRequested;
         _surface.DpiScaleChanged -= OnDpiScaleChanged;
         CancelActiveResize();
@@ -165,11 +171,42 @@ internal sealed class WriterPaginatedDiagnosticController : IDisposable
         _contentVersion++;
         if (_activeResize is not null || _handlingResizeRequest)
             return;
+        if (e.Changes.Any(change => change.AddedLength != 0 || change.RemovedLength != 0))
+            _pendingCaretReveal = true;
         InvalidateLayoutAndSchedule(immediate: false);
     }
 
-    private void OnEditorSelectionChanged(object sender, RoutedEventArgs e) =>
+    private void OnEditorSelectionChanged(object sender, RoutedEventArgs e)
+    {
         _surface.RefreshOverlays(_editor);
+        if (_handlingSurfaceInteraction || _handlingResizeRequest || _activeResize is not null)
+            return;
+        _pendingCaretReveal = true;
+        TryRevealCaret();
+    }
+
+    private void TryRevealCaret()
+    {
+        if (!_pendingCaretReveal || Current is not { } result ||
+            result.Generation != RequestedGeneration || result.LayoutIdentity != _layoutIdentity ||
+            result.DocumentIdentity != _documentIdentity || !ReferenceEquals(_document, _editor.Document))
+            return;
+        var offset = _document.ContentStart.GetOffsetToPosition(_editor.CaretPosition);
+        var page = result.PageStartOffsets.BinarySearch(offset);
+        if (page < 0)
+            page = Math.Max(0, ~page - 1);
+        else if (page > 0 && _editor.CaretPosition.LogicalDirection == LogicalDirection.Backward)
+            page--;
+        if (!result.MappedPages.Contains(page))
+        {
+            _requestingCaretPage = true;
+            try { _surface.RequestPage(page); }
+            finally { _requestingCaretPage = false; }
+            return;
+        }
+        _pendingCaretReveal = false;
+        _surface.RevealCaret(page, offset);
+    }
 
     private void OnDpiScaleChanged() => InvalidateLayoutAndSchedule(immediate: true);
 
@@ -181,6 +218,8 @@ internal sealed class WriterPaginatedDiagnosticController : IDisposable
 
     private void OnPageWindowRequested(int pageNumber)
     {
+        if (!_requestingCaretPage)
+            _pendingCaretReveal = false;
         if (_disposed || pageNumber < 0 || pageNumber == _visiblePage)
             return;
         _scrollDirection = Math.Sign(pageNumber - _visiblePage);
@@ -296,7 +335,9 @@ internal sealed class WriterPaginatedDiagnosticController : IDisposable
                 LastEndToEndMilliseconds = ElapsedMilliseconds(requestStartedTimestamp);
                 _surface.Publish(result, captureMilliseconds, LastEndToEndMilliseconds,
                     _engine.Statistics, _editor);
-                if (result.RequestKind == WriterPaginationRequestKind.Visible)
+                TryRevealCaret();
+                if (result.Generation == RequestedGeneration &&
+                    result.RequestKind == WriterPaginationRequestKind.Visible)
                     CaptureAndQueue(WriterPaginationRequestKind.Prefetch);
             }, DispatcherPriority.DataBind);
         }
@@ -372,7 +413,27 @@ internal sealed class WriterPaginatedDiagnosticController : IDisposable
         _cachedContentVersion = _contentVersion;
     }
 
+    private void OnContextInteractionRequested(WriterPaginationPageInteraction interaction)
+    {
+        if (!IsCurrent(interaction))
+            return;
+        var pointer = GetLiveInsertionPosition(HitTest(interaction.PageNumber, interaction.PagePoint));
+        if (!_editor.Selection.IsEmpty && pointer.CompareTo(_editor.Selection.Start) >= 0 &&
+            pointer.CompareTo(_editor.Selection.End) <= 0)
+            return;
+        OnInteractionRequested(interaction, null);
+    }
+
     private void OnInteractionRequested(
+        WriterPaginationPageInteraction anchor,
+        WriterPaginationPageInteraction? moving)
+    {
+        _handlingSurfaceInteraction = true;
+        try { HandleSurfaceInteraction(anchor, moving); }
+        finally { _handlingSurfaceInteraction = false; }
+    }
+
+    private void HandleSurfaceInteraction(
         WriterPaginationPageInteraction anchor,
         WriterPaginationPageInteraction? moving)
     {

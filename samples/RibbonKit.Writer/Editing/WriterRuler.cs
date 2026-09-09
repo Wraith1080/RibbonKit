@@ -71,6 +71,9 @@ public sealed class WriterRuler : FrameworkElement, IDisposable
     private bool _hasGeometrySignature;
     private bool _disposed;
 
+    // Retain native ruler editing when a compositor supplies the visible page origin.
+    internal Func<Point>? PageOriginProvider { get; set; }
+
     /// <summary>Initializes the Writer ruler.</summary>
     public WriterRuler()
     {
@@ -706,6 +709,11 @@ public sealed class WriterRuler : FrameworkElement, IDisposable
     private bool TryGetPaperOrigin(out Point point)
     {
         point = default;
+        if (PageOriginProvider is { } provider)
+        {
+            point = provider();
+            return double.IsFinite(point.X) && double.IsFinite(point.Y);
+        }
         if (_paperCanvas is null || !IsLoaded)
             return false;
         try
