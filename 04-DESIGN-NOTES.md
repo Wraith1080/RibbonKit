@@ -603,6 +603,10 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [Correction and verification](docs/history/02-writer-foundation.md#3162-ribbonkit-writer-expanding-paper-default-and-growing-margin-guide--2026-09-15).
 
+### 3.163 Writer Insert dialog theming — 2026-09-16
+
+[Correction and verification](docs/history/02-writer-foundation.md#3163-writer-insert-dialog-theming--2026-09-16).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),

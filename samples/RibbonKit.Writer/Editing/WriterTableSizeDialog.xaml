@@ -1,10 +1,16 @@
 <Window x:Class="RibbonKit.Writer.Editing.WriterTableSizeDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:rk="clr-namespace:RibbonKit.Controls;assembly=RibbonKit"
+        Background="{DynamicResource RibbonKit.Brushes.Control.SurfaceBackground}"
+        Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}"
         Title="Insert Table" Width="420" SizeToContent="Height" ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False" UseLayoutRounding="True"
         AutomationProperties.AutomationId="InsertTableSizeDialog"
         AutomationProperties.Name="Insert Table">
+    <Window.Resources>
+        <ResourceDictionary Source="WriterInsertDialogResources.xaml" />
+    </Window.Resources>
     <Grid Margin="22">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -24,12 +30,14 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <TextBlock Text="Rows:" VerticalAlignment="Center" />
-            <TextBox x:Name="RowsBox" Grid.Column="1" VerticalContentAlignment="Center"
+            <rk:RibbonTextBox x:Name="RowsBox" Grid.Column="1" VerticalContentAlignment="Center"
+                     InputWidth="{Binding ActualWidth, RelativeSource={RelativeSource Self}}"
                      TextChanged="OnInputChanged"
                      AutomationProperties.AutomationId="TableRows"
                      AutomationProperties.Name="Table rows" />
             <TextBlock Grid.Row="1" Text="Columns:" VerticalAlignment="Center" Margin="0,10,0,0" />
-            <TextBox x:Name="ColumnsBox" Grid.Row="1" Grid.Column="1" Margin="0,10,0,0"
+            <rk:RibbonTextBox x:Name="ColumnsBox" Grid.Row="1" Grid.Column="1" Margin="0,10,0,0"
+                     InputWidth="{Binding ActualWidth, RelativeSource={RelativeSource Self}}"
                      VerticalContentAlignment="Center" TextChanged="OnInputChanged"
                      AutomationProperties.AutomationId="TableColumns"
                      AutomationProperties.Name="Table columns" />
@@ -46,10 +54,12 @@
                        AutomationProperties.AutomationId="TableSizeValidation"
                        AutomationProperties.Name="Table size validation" />
             <Button x:Name="InsertButton" Grid.Column="1" Content="Insert" Width="92"
+                    Style="{DynamicResource OptionsDialogPrimaryButtonStyle}"
                     VerticalAlignment="Center" IsDefault="True" Click="OnInsert"
                     AutomationProperties.AutomationId="InsertCustomTable"
                     AutomationProperties.Name="Insert custom table" />
             <Button Grid.Column="2" Content="Cancel" Width="92" Margin="10,0,0,0"
+                    Style="{DynamicResource OptionsDialogActionButtonStyle}"
                     VerticalAlignment="Center" IsCancel="True"
                     AutomationProperties.AutomationId="CancelCustomTable"
                     AutomationProperties.Name="Cancel custom table insertion" />

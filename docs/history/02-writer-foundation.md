@@ -1483,3 +1483,23 @@ Subsequent cleanup: 77 focused tests passed across the editor, ruler, pictures, 
 resize, preview and actual-window view switching. Release Writer build: zero warnings/errors.
 The combined window run encountered WPF WindowChrome cross-thread caching; the affected
 check passed in a fresh process. No new live UI or full-suite acceptance is claimed.
+
+### 3.163 Writer Insert dialog theming — 2026-09-16
+
+Table, Picture, Hyperlink and Date and Time dialogs used stock WPF fields/buttons
+without themed window surfaces. They now use RibbonTextBox/RibbonComboBox, the existing
+Options action/primary button styles, and dynamic surface/text tokens. Input widths
+follow their dialog columns. Validation, automation IDs and insertion handlers remain intact.
+
+Writer owns the DatePicker/calendar templates because RibbonKit has no date-picker control.
+Native parsing, date selection and month/year navigation remain in WPF. CalendarItem reads
+weekday headings directly from ControlTemplate.Resources; a nested grid/style resource
+does not supply them. This follows the [WPF CalendarItem implementation](https://github.com/dotnet/wpf/blob/main/src/Microsoft.DotNet.Wpf/src/PresentationFramework/System/Windows/Controls/Primitives/CalendarItem.cs).
+No runtime library files changed (RKWF-045).
+
+Verification: Release Writer build passed with zero warnings/errors. 6/6 focused
+structured-content dialog tests passed, including realized theme changes
+across five Office generations and light/dark palettes, calendar headings/navigation,
+and existing input validation. Live Office 2007 inspection covered all four dialog layouts,
+mouse date selection and the corrected weekday headings/month chooser. Full-suite,
+live dark-theme, mixed-DPI, High Contrast and OS IME acceptance were not run.

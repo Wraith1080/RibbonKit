@@ -231,6 +231,15 @@ or printed page breaks. The focused regression covers 75/100/150% zoom.
 
 [Verification](history/02-writer-foundation.md#3162-ribbonkit-writer-expanding-paper-default-and-growing-margin-guide--2026-09-15).
 
+### RKWF-045 — Insert forms bypassed themed controls and dialog resources
+
+App-corrected: Table, Picture, Hyperlink and Date and Time now consume themed fields,
+buttons and surfaces. A Writer-local DatePicker/calendar template retains native WPF
+behavior while replacing stock colors; RibbonKit has no date-picker control. Calendar
+weekday resources must live directly in ControlTemplate.Resources. No runtime change.
+
+[Verification](history/02-writer-foundation.md#3163-writer-insert-dialog-theming--2026-09-16).
+
 ### Verification note — 2026-09-15 cleanup
 
 77 focused Writer tests passed. The combined window run hit the known WPF WindowChrome

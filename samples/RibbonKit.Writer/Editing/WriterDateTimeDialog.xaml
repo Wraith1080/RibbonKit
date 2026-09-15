@@ -1,10 +1,16 @@
 <Window x:Class="RibbonKit.Writer.Editing.WriterDateTimeDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:rk="clr-namespace:RibbonKit.Controls;assembly=RibbonKit"
+        Background="{DynamicResource RibbonKit.Brushes.Control.SurfaceBackground}"
+        Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}"
         Title="Insert Date and Time" Width="560" SizeToContent="Height" ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False" UseLayoutRounding="True"
         AutomationProperties.AutomationId="InsertDateTimeDialog"
         AutomationProperties.Name="Insert Date and Time">
+    <Window.Resources>
+        <ResourceDictionary Source="WriterInsertDialogResources.xaml" />
+    </Window.Resources>
     <Grid Margin="22">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -28,12 +34,14 @@
                         AutomationProperties.AutomationId="DateTimeDate"
                         AutomationProperties.Name="Date" />
             <TextBlock Grid.Row="1" Text="Time:" VerticalAlignment="Center" Margin="0,10,0,0" />
-            <TextBox x:Name="TimeBox" Grid.Row="1" Grid.Column="1" Margin="0,10,0,0"
+            <rk:RibbonTextBox x:Name="TimeBox" Grid.Row="1" Grid.Column="1" Margin="0,10,0,0"
+                     InputWidth="{Binding ActualWidth, RelativeSource={RelativeSource Self}}"
                      VerticalContentAlignment="Center" TextChanged="OnTimeChanged"
                      AutomationProperties.AutomationId="DateTimeTime"
                      AutomationProperties.Name="Time" />
             <TextBlock Grid.Row="2" Text="Format:" VerticalAlignment="Center" Margin="0,10,0,0" />
-            <ComboBox x:Name="FormatBox" Grid.Row="2" Grid.Column="1" Margin="0,10,0,0"
+            <rk:RibbonComboBox x:Name="FormatBox" Grid.Row="2" Grid.Column="1" Margin="0,10,0,0"
+                     InputWidth="{Binding ActualWidth, RelativeSource={RelativeSource Self}}"
                       VerticalAlignment="Center" SelectedIndex="0"
                       SelectionChanged="OnFormatChanged"
                       AutomationProperties.AutomationId="DateTimeFormat"
@@ -42,7 +50,7 @@
                 <ComboBoxItem Tag="d" Content="Short date" />
                 <ComboBoxItem Tag="D" Content="Long date" />
                 <ComboBoxItem Tag="yyyy-MM-dd HH:mm" Content="ISO date and time" />
-            </ComboBox>
+            </rk:RibbonComboBox>
         </Grid>
         <Grid Grid.Row="2" Margin="0,16,0,0">
             <Grid.ColumnDefinitions>
@@ -56,9 +64,11 @@
                        AutomationProperties.AutomationId="DateTimeValidation"
                        AutomationProperties.Name="Date and time validation" />
             <Button x:Name="InsertButton" Grid.Column="1" Content="Insert" Width="92" IsDefault="True"
+                    Style="{DynamicResource OptionsDialogPrimaryButtonStyle}"
                     Click="OnInsert" AutomationProperties.AutomationId="InsertDateTime"
                     AutomationProperties.Name="Insert date and time" />
             <Button Grid.Column="2" Content="Cancel" Width="92" Margin="10,0,0,0" IsCancel="True"
+                    Style="{DynamicResource OptionsDialogActionButtonStyle}"
                     AutomationProperties.AutomationId="CancelDateTime"
                     AutomationProperties.Name="Cancel date and time insertion" />
         </Grid>
