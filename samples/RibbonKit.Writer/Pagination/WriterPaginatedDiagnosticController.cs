@@ -7,6 +7,7 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Markup;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using RibbonKit.Writer.Models;
 
@@ -29,6 +30,10 @@ internal sealed class WriterPaginatedDiagnosticController : IDisposable
     private DocumentPageSettings _settings;
     private FlowDocument _document;
     private ImmutableArray<byte> _cachedPackage;
+    private WriterPaginationContentSnapshot? _contentSnapshot;
+    private bool _usePackageSnapshot;
+    private readonly Dictionary<BitmapSource, WriterPaginationImagePixels> _imageCache =
+        new(ReferenceEqualityComparer.Instance);
     private ImmutableArray<WriterPaginationObjectCapture> _cachedObjects;
     private long _cachedContentVersion = -1;
     private long _contentVersion;
@@ -56,6 +61,7 @@ internal sealed class WriterPaginatedDiagnosticController : IDisposable
         _settings = settings ?? throw new ArgumentNullException(nameof(settings));
         _document = editor.Document;
         _engine = new WriterDedicatedPaginationEngine(pageCacheLimit, cacheByteLimit);
+        _engine.PresentationReady += OnPresentationReady;
         _surface.PageCacheLimit = pageCacheLimit;
         _captureTimer = new DispatcherTimer(DispatcherPriority.Background, editor.Dispatcher)
         {
@@ -87,6 +93,8 @@ internal sealed class WriterPaginatedDiagnosticController : IDisposable
     internal long PrefetchSettledGeneration { get; private set; }
     internal double LastCaptureMilliseconds { get; private set; }
     internal double LastEndToEndMilliseconds { get; private set; }
+    internal long PresentedGeneration { get; private set; }
+    internal event Action? PagePresentedForTesting;
     internal WriterPaginationWorkStatistics WorkStatistics => _engine.Statistics;
     internal WriterPaginationWorkProgress WorkProgress => _engine.Progress;
     internal Func<TextElement, bool>? StructuredObjectActivator { get; set; }
@@ -133,6 +141,9 @@ internal sealed class WriterPaginatedDiagnosticController : IDisposable
         _contentVersion++;
         _cachedContentVersion = -1;
         _cachedPackage = default;
+        _contentSnapshot = null;
+        _imageCache.Clear();
+        _usePackageSnapshot = false;
         _cachedObjects = default;
         _currentObjects.Clear();
         _objectIdentities.Clear();
@@ -163,6 +174,9 @@ internal sealed class WriterPaginatedDiagnosticController : IDisposable
         _surface.DpiScaleChanged -= OnDpiScaleChanged;
         CancelActiveResize();
         _surface.Clear();
+        _contentSnapshot = null;
+        _imageCache.Clear();
+        _engine.PresentationReady -= OnPresentationReady;
         _engine.Dispose();
     }
 
@@ -213,7 +227,7 @@ internal sealed class WriterPaginatedDiagnosticController : IDisposable
     private void OnOverlayTimerTick(object? sender, EventArgs e)
     {
         _surface.ShowWorkProgress(_engine.Progress, _engine.Statistics);
-        _surface.RefreshOverlays(_editor);
+        _surface.RefreshOverlays(_editor, updateSpelling: true);
     }
 
     private void OnPageWindowRequested(int pageNumber)
@@ -270,6 +284,7 @@ internal sealed class WriterPaginatedDiagnosticController : IDisposable
         var document = _document;
         var requestStartedTimestamp = Stopwatch.GetTimestamp();
         var watch = Stopwatch.StartNew();
+        var edited = _cachedContentVersion >= 0 && _cachedContentVersion != _contentVersion;
         if (_cachedContentVersion != _contentVersion || _cachedPackage.IsDefault)
             CaptureTrustedContent(document);
         var dpi = VisualTreeHelper.GetDpi(_surface);
@@ -288,10 +303,16 @@ internal sealed class WriterPaginatedDiagnosticController : IDisposable
         var capture = new WriterPaginationCapture(generation, _layoutIdentity,
             documentIdentity, _visiblePage, requestKind, interactivePages, requestedPages,
             _cachedPackage, CaptureFormatting(document),
-            CapturePageSettings(_settings), dpi.DpiScaleX, dpi.DpiScaleY, _cachedObjects);
+            CapturePageSettings(_settings), dpi.DpiScaleX, dpi.DpiScaleY, _cachedObjects)
+        {
+            EditedCaretOffset = edited && _editor.Selection.IsEmpty
+                ? document.ContentStart.GetOffsetToPosition(_editor.CaretPosition) : null,
+            ContentSnapshot = _contentSnapshot
+        };
         watch.Stop();
         var captureMilliseconds = watch.Elapsed.TotalMilliseconds;
-        LastCaptureMilliseconds = captureMilliseconds;
+        if (requestKind == WriterPaginationRequestKind.Visible)
+            LastCaptureMilliseconds = captureMilliseconds;
         var completion = _engine.Queue(capture);
         _ = PublishWhenReadyAsync(completion, generation, _layoutIdentity,
             documentIdentity, document, captureMilliseconds, requestStartedTimestamp);
@@ -331,7 +352,8 @@ internal sealed class WriterPaginatedDiagnosticController : IDisposable
                     PrefetchSettledGeneration = result.Generation;
                 PublishedGeneration = result.Generation;
                 _visiblePage = result.VisiblePage;
-                LastCaptureMilliseconds = captureMilliseconds;
+                if (result.RequestKind == WriterPaginationRequestKind.Visible)
+                    LastCaptureMilliseconds = captureMilliseconds;
                 LastEndToEndMilliseconds = ElapsedMilliseconds(requestStartedTimestamp);
                 _surface.Publish(result, captureMilliseconds, LastEndToEndMilliseconds,
                     _engine.Statistics, _editor);
@@ -340,6 +362,20 @@ internal sealed class WriterPaginatedDiagnosticController : IDisposable
                     result.RequestKind == WriterPaginationRequestKind.Visible)
                     CaptureAndQueue(WriterPaginationRequestKind.Prefetch);
             }, DispatcherPriority.DataBind);
+        }
+        catch (WriterPaginationSnapshotException)
+        {
+            // Unusual trusted content can retain the established package path.
+            // Never publish a clone whose symbol positions differ from the editor.
+            await _editor.Dispatcher.InvokeAsync(() =>
+            {
+                if (_disposed || generation != RequestedGeneration ||
+                    documentIdentity != _documentIdentity || _usePackageSnapshot)
+                    return;
+                _usePackageSnapshot = true;
+                _cachedContentVersion = -1;
+                CaptureAndQueue(WriterPaginationRequestKind.Visible);
+            }, DispatcherPriority.Background);
         }
         catch (Exception exception)
         {
@@ -388,10 +424,17 @@ internal sealed class WriterPaginatedDiagnosticController : IDisposable
 
     private void CaptureTrustedContent(FlowDocument document)
     {
-        using var stream = new MemoryStream();
-        new TextRange(document.ContentStart, document.ContentEnd)
-            .Save(stream, DataFormats.XamlPackage);
-        _cachedPackage = stream.ToArray().ToImmutableArray();
+        _contentSnapshot = _usePackageSnapshot ? null :
+            WriterPaginationContentSnapshot.Capture(document, _imageCache);
+        _cachedPackage = ImmutableArray<byte>.Empty;
+        if (_contentSnapshot is null)
+        {
+            _imageCache.Clear();
+            using var stream = new MemoryStream();
+            new TextRange(document.ContentStart, document.ContentEnd)
+                .Save(stream, DataFormats.XamlPackage);
+            _cachedPackage = stream.ToArray().ToImmutableArray();
+        }
 
         var objects = ImmutableArray.CreateBuilder<WriterPaginationObjectCapture>();
         var currentObjects = new Dictionary<long, SourceObject>();
@@ -417,11 +460,27 @@ internal sealed class WriterPaginatedDiagnosticController : IDisposable
     {
         if (!IsCurrent(interaction))
             return;
-        var pointer = GetLiveInsertionPosition(HitTest(interaction.PageNumber, interaction.PagePoint));
+        if (HitTest(interaction.PageNumber, interaction.PagePoint) is not { } offset)
+            return;
+        var pointer = GetLiveInsertionPosition(offset);
         if (!_editor.Selection.IsEmpty && pointer.CompareTo(_editor.Selection.Start) >= 0 &&
             pointer.CompareTo(_editor.Selection.End) <= 0)
             return;
         OnInteractionRequested(interaction, null);
+    }
+
+    private void OnPresentationReady(WriterPaginationLayoutResult result)
+    {
+        _editor.Dispatcher.BeginInvoke(DispatcherPriority.DataBind, new Action(() =>
+        {
+            if (_disposed || result.Generation != RequestedGeneration ||
+                result.LayoutIdentity != _layoutIdentity || result.DocumentIdentity != _documentIdentity ||
+                PublishedGeneration == result.Generation || !ReferenceEquals(_document, _editor.Document))
+                return;
+            _surface.Publish(result, LastCaptureMilliseconds, 0, _engine.Statistics, _editor);
+            PresentedGeneration = result.Generation;
+            PagePresentedForTesting?.Invoke();
+        }));
     }
 
     private void OnInteractionRequested(
@@ -456,8 +515,10 @@ internal sealed class WriterPaginatedDiagnosticController : IDisposable
         var movingOffset = moving is { } endpoint
             ? HitTest(endpoint.PageNumber, endpoint.PagePoint)
             : anchorOffset;
-        var anchorPosition = GetLiveInsertionPosition(anchorOffset);
-        var movingPosition = GetLiveInsertionPosition(movingOffset);
+        if (anchorOffset is null || movingOffset is null)
+            return;
+        var anchorPosition = GetLiveInsertionPosition(anchorOffset.Value);
+        var movingPosition = GetLiveInsertionPosition(movingOffset.Value);
         _editor.Selection.Select(anchorPosition, movingPosition);
         RestoreEditorFocus();
         _surface.RefreshOverlays(_editor);
@@ -601,17 +662,21 @@ internal sealed class WriterPaginatedDiagnosticController : IDisposable
         interaction.DocumentIdentity == _documentIdentity &&
         result.MappedPages.Contains(interaction.PageNumber);
 
-    private int HitTest(int pageNumber, Point point)
+    private int? HitTest(int pageNumber, Point point)
     {
         var entries = Current!.Insertions.Where(item => item.PageNumber == pageNumber);
-        var nearest = entries.MinBy(item => DistanceSquared(item.Rectangle, point));
-        if (nearest == default && !entries.Any())
-            throw new InvalidOperationException($"Page {pageNumber + 1} has no insertion geometry.");
-        return nearest.SourceOffset;
+        // A blockless document is a valid blank page with no clone insertion geometry.
+        // Nullable projection also makes missing geometry on any other page a safe miss.
+        var nearest = entries.Select(item => (WriterPaginationInsertionGeometry?)item)
+            .MinBy(item => DistanceSquared(item!.Value.Rectangle, point));
+        return nearest?.SourceOffset ??
+            (pageNumber == 0 && _document.Blocks.Count == 0 ? 0 : null);
     }
 
     private TextPointer GetLiveInsertionPosition(int sourceOffset)
     {
+        if (sourceOffset == 0 && _document.Blocks.Count == 0)
+            return _document.ContentStart;
         var position = _document.ContentStart.GetPositionAtOffset(sourceOffset,
             LogicalDirection.Forward) ?? throw new InvalidOperationException(
                 $"Live offset {sourceOffset} is outside the authoritative document.");

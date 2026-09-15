@@ -129,7 +129,11 @@ internal sealed record WriterPaginationCapture(
     WriterPaginationPageSettings PageSettings,
     double PixelScaleX,
     double PixelScaleY,
-    ImmutableArray<WriterPaginationObjectCapture> StructuredObjects);
+    ImmutableArray<WriterPaginationObjectCapture> StructuredObjects)
+{
+    internal int? EditedCaretOffset { get; init; }
+    internal WriterPaginationContentSnapshot? ContentSnapshot { get; init; }
+}
 
 internal sealed record WriterPaginationPage(
     int PageNumber,
@@ -200,6 +204,7 @@ internal sealed record WriterPaginationLayoutResult(
     WriterPaginationPhaseTimings PhaseTimings,
     double WorkerMilliseconds)
 {
+    internal bool IsPresentationOnly { get; init; }
     internal int SkippedSpeculativePages { get; init; }
     internal ImmutableArray<WriterPaginationPageTiming> PageTimings { get; init; } =
         ImmutableArray<WriterPaginationPageTiming>.Empty;

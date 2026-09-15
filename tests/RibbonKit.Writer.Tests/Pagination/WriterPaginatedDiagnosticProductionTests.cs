@@ -23,6 +23,270 @@ namespace RibbonKit.Writer.Tests.Pagination;
 [Collection(WriterPreviewTestCollection.Name)]
 public sealed class WriterPaginatedDiagnosticProductionTests(ITestOutputHelper output)
 {
+    [Fact]
+    public async Task TrustedSnapshotPreservesSymbolsFormattingAndReusesUnchangedImagePixels()
+    {
+        await StaTestHelper.RunAsync(() =>
+        {
+            var document = CreateStructuredDocument(DocumentPageSettings.Letter());
+            var paragraph = new Paragraph();
+            paragraph.Inlines.Add(new Run());
+            paragraph.Inlines.Add(new Run("  first\r\nline  "));
+            paragraph.Inlines.Add(new Span(new Bold(new Run("cafe\u0301 \U0001F642"))));
+            paragraph.Inlines.Add(new Hyperlink(new Run("link")) { NavigateUri = new Uri("https://example.com") });
+            paragraph.Inlines.Add(new Run());
+            document.Blocks.Add(paragraph);
+            var cache = new Dictionary<BitmapSource, WriterPaginationImagePixels>();
+            var first = Assert.IsType<WriterPaginationContentSnapshot>(
+                WriterPaginationContentSnapshot.Capture(document, cache));
+            var clone = first.CreateDocument();
+            Assert.Equal(Tokens(document), Tokens(clone));
+            Assert.Equal(CurrentImage(document).Width, CurrentImage(clone).Width);
+            Assert.Equal(CurrentImage(document).Height, CurrentImage(clone).Height);
+            Assert.Equal(document.Blocks.OfType<Table>().Single().Columns.Select(column => column.Width),
+                clone.Blocks.OfType<Table>().Single().Columns.Select(column => column.Width));
+            paragraph.Inlines.OfType<Run>().First().Text = "edited";
+            var second = Assert.IsType<WriterPaginationContentSnapshot>(
+                WriterPaginationContentSnapshot.Capture(document, cache));
+            Assert.Same(first.Images.Single(), second.Images.Single());
+            Assert.Equal(Tokens(document), Tokens(second.CreateDocument()));
+            return Task.CompletedTask;
+
+            static string[] Tokens(FlowDocument document)
+            {
+                var tokens = new List<string>();
+                for (var position = document.ContentStart; position is not null &&
+                     position.CompareTo(document.ContentEnd) < 0;
+                     position = position.GetNextContextPosition(LogicalDirection.Forward))
+                {
+                    var context = position.GetPointerContext(LogicalDirection.Forward);
+                    var value = context == TextPointerContext.Text
+                        ? position.GetTextInRun(LogicalDirection.Forward)
+                        : position.GetAdjacentElement(LogicalDirection.Forward)?.GetType().Name;
+                    tokens.Add($"{document.ContentStart.GetOffsetToPosition(position)}:{context}:{value}");
+                }
+                return tokens.ToArray();
+            }
+        });
+    }
+
+    [Fact]
+    public async Task PictureBoundsUseImageSizeAndTableOutlineUsesResizeBounds()
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            var document = CreateDocument(DocumentPageSettings.Letter());
+            var bitmap = BitmapSource.Create(1, 1, 96, 96, PixelFormats.Bgra32, null,
+                new byte[] { 40, 100, 200, 255 }, 4);
+            bitmap.Freeze();
+            var paragraph = new Paragraph(new InlineUIContainer(new Image
+            {
+                Source = bitmap, Width = 320, Height = 100, Stretch = Stretch.Fill
+            })) { FontSize = 20, LineHeight = 40 };
+            paragraph.Inlines.Add(new Run(string.Concat(Enumerable.Repeat(" Following text fills more lines.", 15))));
+            document.Blocks.Add(paragraph);
+            var table = new Table { Margin = new Thickness(70, 0, 0, 0), CellSpacing = 2 };
+            for (var column = 0; column < 8; column++)
+                table.Columns.Add(new TableColumn { Width = new GridLength(50) });
+            var group = new TableRowGroup();
+            table.RowGroups.Add(group);
+            for (var rowIndex = 0; rowIndex < 3; rowIndex++)
+            {
+                var row = new TableRow();
+                for (var column = 0; column < 8; column++)
+                    row.Cells.Add(new TableCell(new Paragraph(new Run(column == 0 ? "Test" : "")))
+                    {
+                        BorderBrush = Brushes.Gray, BorderThickness = new Thickness(1), Padding = new Thickness(2)
+                    });
+                group.Rows.Add(row);
+            }
+            document.Blocks.Add(table);
+            var snapshot = WriterPaginationContentSnapshot.Capture(document,
+                new Dictionary<BitmapSource, WriterPaginationImagePixels>());
+            Assert.NotNull(snapshot);
+            snapshot.CreateDocument();
+            using var workspace = ProductionWorkspace.Create(document);
+            var result = await WaitForVisibleAsync(workspace.Controller);
+            var picture = Assert.Single(result.StructuredObjects.Where(item => item.Kind == WriterPaginationObjectKind.Picture));
+            Assert.Equal(320, picture.Rectangle.Width, 1);
+            Assert.Equal(100, picture.Rectangle.Height, 1);
+            var tableGeometry = Assert.Single(result.Tables);
+            var tableObject = Assert.Single(result.StructuredObjects.Where(item => item.Kind == WriterPaginationObjectKind.Table));
+            Assert.Equal(tableGeometry.Bounds, tableObject.Rectangle);
+        }, TimeSpan.FromSeconds(30));
+    }
+
+    [Fact]
+    public async Task TypingAndEnterPublishCurrentDocument()
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            var path = Environment.GetEnvironmentVariable("RIBBONKIT_WRITER_EDIT_DOCUMENT");
+            RibbonKit.Writer.Services.Persistence.WriterRkwPackageData? loaded = string.IsNullOrWhiteSpace(path) ? null :
+                RibbonKit.Writer.Services.Persistence.WriterRkwPackage.Load(System.IO.File.ReadAllBytes(path));
+            var document = loaded?.Content ?? CreateParagraphDocument(DocumentPageSettings.Letter(), 180);
+            using var workspace = ProductionWorkspace.Create(document, enableSpellCheck: true,
+                showDiagnostics: false, pageSettings: loaded?.PageSettings);
+            await WaitForVisibleAsync(workspace.Controller);
+            var paragraphs = new List<Paragraph>();
+            for (var pointer = document.ContentStart; pointer is not null && pointer.CompareTo(document.ContentEnd) < 0;
+                 pointer = pointer.GetNextContextPosition(LogicalDirection.Forward))
+                if (pointer.GetAdjacentElement(LogicalDirection.Forward) is Paragraph paragraph && !paragraphs.Contains(paragraph))
+                    paragraphs.Add(paragraph);
+            var target = paragraphs.MaxBy(paragraph => new TextRange(paragraph.ContentStart, paragraph.ContentEnd).Text.Length)!;
+            var length = target.ContentStart.GetOffsetToPosition(target.ContentEnd);
+            workspace.Editor.CaretPosition = target.ContentStart.GetPositionAtOffset(length / 2)!
+                .GetInsertionPosition(LogicalDirection.Forward);
+            workspace.Editor.Focus();
+            await WaitForVisibleAsync(workspace.Controller);
+            foreach (var enter in new[] { false, true })
+            {
+                if (enter)
+                {
+                    workspace.Window.Activate();
+                    workspace.Editor.CaretPosition = target.ContentStart.GetPositionAtOffset(
+                        target.ContentStart.GetOffsetToPosition(target.ContentEnd) / 2)!
+                        .GetInsertionPosition(LogicalDirection.Forward);
+                    workspace.Editor.Focus();
+                    Keyboard.Focus(workspace.Editor);
+                    for (var ancestor = workspace.Editor.CaretPosition.Parent; ancestor is TextElement element; ancestor = element.Parent)
+                        output.WriteLine($"Enter ancestor={ancestor.GetType().Name}");
+                }
+                var previousGeneration = workspace.Controller.RequestedGeneration;
+                var watch = Stopwatch.StartNew();
+                double presentationTime = -1;
+                void OnPresented() => presentationTime = watch.Elapsed.TotalMilliseconds;
+                workspace.Controller.PagePresentedForTesting += OnPresented;
+                if (enter)
+                    EditingCommands.EnterParagraphBreak.Execute(null, workspace.Editor);
+                else
+                {
+                    workspace.Editor.Selection.Text = "x";
+                    workspace.Editor.CaretPosition = workspace.Editor.Selection.End;
+                }
+                var input = watch.Elapsed.TotalMilliseconds;
+                Assert.True(workspace.Controller.RequestedGeneration > previousGeneration,
+                    $"{(enter ? "Enter" : "Character")} did not change the document.");
+                var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(20);
+                while (workspace.Controller.PresentedGeneration != workspace.Controller.RequestedGeneration &&
+                       workspace.Controller.PublishedGeneration != workspace.Controller.RequestedGeneration &&
+                       DateTime.UtcNow < deadline)
+                    await Task.Delay(5);
+                var presented = presentationTime >= 0 ? presentationTime : watch.Elapsed.TotalMilliseconds;
+                var result = await WaitForVisibleAsync(workspace.Controller);
+                workspace.Controller.PagePresentedForTesting -= OnPresented;
+                output.WriteLine(FormattableString.Invariant(
+                    $"edit={(enter ? "Enter" : "character")} pages={result.PageCount} input={input:0.0}ms presented={presented:0.0}ms interactive={watch.Elapsed.TotalMilliseconds:0.0}ms capture={workspace.Controller.LastCaptureMilliseconds:0.0}ms worker={result.WorkerMilliseconds:0.0}ms load={result.PhaseTimings.PackageLoadMilliseconds:0.0}ms count={result.PhaseTimings.PageCountMilliseconds:0.0}ms starts={result.PhaseTimings.PageStartsMilliseconds:0.0}ms geometry={result.PhaseTimings.InsertionGeometryMilliseconds:0.0}ms raster={result.PhaseTimings.RasterizationMilliseconds:0.0}ms objects={result.PhaseTimings.StructuredGeometryMilliseconds:0.0}ms"));
+                Assert.Same(document, workspace.Editor.Document);
+                var caretOffset = document.ContentStart.GetOffsetToPosition(workspace.Editor.CaretPosition);
+                output.WriteLine($"caret={caretOffset} nearest={result.Insertions.MinBy(item => Math.Abs(item.SourceOffset - caretOffset)).SourceOffset} presentedGeneration={workspace.Controller.PresentedGeneration}");
+            }
+        }, TimeSpan.FromSeconds(90));
+    }
+
+    [Fact]
+    public async Task TypingRetainsPageImageUntilCurrentReplacementPublishes()
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            using var workspace = ProductionWorkspace.Create(CreateParagraphDocument(
+                DocumentPageSettings.Letter(), 12), showDiagnostics: false);
+            var current = await WaitForVisibleAsync(workspace.Controller);
+            workspace.Editor.Focus();
+            workspace.Controller.SetChrome(false, true, WriterRulerIndentation.Empty);
+            var guideCount = workspace.Surface.MarginGuideCount;
+            Assert.True(guideCount > 0);
+            var oldImage = Assert.Single(workspace.Surface.CaptureDecodedImagesForTesting(0)).Target;
+            var oldInteraction = workspace.Surface.CaptureInteractionForTesting(0,
+                current.Insertions.First().SourceOffset);
+            foreach (var character in "abc")
+            {
+                workspace.Editor.Selection.Text = character.ToString();
+                workspace.Editor.CaretPosition = workspace.Editor.Selection.End;
+                Assert.NotEmpty(workspace.Surface.RenderedPages);
+                Assert.Equal(guideCount, workspace.Surface.MarginGuideCount);
+                Assert.Same(oldImage, Assert.Single(workspace.Surface.CaptureDecodedImagesForTesting(0)).Target);
+                Assert.Empty(workspace.Surface.StatusTextForTesting);
+                Assert.False(workspace.Surface.IsPageInteractiveForTesting(0));
+            }
+            var selected = SelectionOffsets(workspace.Editor);
+            workspace.Surface.ApplyInteractionForTesting(oldInteraction);
+            Assert.Equal(selected, SelectionOffsets(workspace.Editor));
+            await WaitForVisibleAsync(workspace.Controller);
+            Assert.NotSame(oldImage, Assert.Single(workspace.Surface.CaptureDecodedImagesForTesting(0)).Target);
+            Assert.Contains("abc", DocumentText(workspace.Editor.Document));
+            Assert.True(workspace.Surface.IsPageInteractiveForTesting(0));
+        }, TimeSpan.FromSeconds(30));
+    }
+
+    [Fact]
+    public async Task CaretBlinksAcrossOverlayRefreshAndStopsWhenEditorLosesFocus()
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            using var workspace = ProductionWorkspace.Create(new FlowDocument(new Paragraph(new Run("Caret"))));
+            await WaitForVisibleAsync(workspace.Controller);
+            workspace.Editor.Focus();
+            workspace.Surface.RefreshOverlays(workspace.Editor);
+            Assert.Equal(1, workspace.Surface.CaretOpacityForTesting);
+            var period = workspace.Surface.CaretBlinkPeriodForTesting;
+            if (period is > 0 and < uint.MaxValue)
+            {
+                var deadline = DateTime.UtcNow.AddMilliseconds(period * 3L + 500);
+                while (workspace.Surface.CaretOpacityForTesting != 0 && DateTime.UtcNow < deadline)
+                    await Task.Delay(15);
+                Assert.Equal(0, workspace.Surface.CaretOpacityForTesting);
+                workspace.Surface.RefreshOverlays(workspace.Editor);
+                Assert.Equal(0, workspace.Surface.CaretOpacityForTesting);
+                while (workspace.Surface.CaretOpacityForTesting != 1 && DateTime.UtcNow < deadline)
+                    await Task.Delay(15);
+                Assert.Equal(1, workspace.Surface.CaretOpacityForTesting);
+            }
+            workspace.Surface.Focusable = true;
+            workspace.Surface.Focus();
+            Assert.Equal(0, workspace.Surface.CaretOpacityForTesting);
+            workspace.Editor.Focus();
+            Assert.Equal(1, workspace.Surface.CaretOpacityForTesting);
+            workspace.Editor.SelectAll();
+            Assert.Equal(0, workspace.Surface.CaretOpacityForTesting);
+        }, TimeSpan.FromSeconds(30));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ClickingBlankPageShowsCaretAndAllowsNativeTyping(bool emptyParagraph)
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            var document = new FlowDocument();
+            if (emptyParagraph)
+                document.Blocks.Add(new Paragraph());
+            using var workspace = ProductionWorkspace.Create(document);
+            var current = await WaitForVisibleAsync(workspace.Controller);
+            var blockCount = document.Blocks.Count;
+            var click = new WriterPaginationPageInteraction(current.Generation,
+                current.DocumentIdentity, 0, new Point(150, 150), null, null);
+            workspace.Surface.PrepareContextMenu(click);
+            workspace.Surface.ApplyInteractionForTesting(click);
+            await Dispatcher.Yield(DispatcherPriority.ContextIdle);
+            workspace.Window.UpdateLayout();
+            Assert.True(workspace.Editor.IsKeyboardFocusWithin);
+            Assert.Equal(blockCount, document.Blocks.Count);
+            Assert.True(workspace.Surface.IsCaretVisibleForTesting);
+            workspace.Editor.Selection.Text = "First words";
+            await WaitForVisibleAsync(workspace.Controller);
+            Assert.Equal("First words", DocumentText(document).TrimEnd('\r', '\n'));
+            workspace.Editor.Undo();
+            var restored = await WaitForVisibleAsync(workspace.Controller);
+            workspace.Surface.ApplyInteractionForTesting(click with { Generation = restored.Generation });
+            await Dispatcher.Yield(DispatcherPriority.ContextIdle);
+            workspace.Window.UpdateLayout();
+            Assert.True(workspace.Surface.IsCaretVisibleForTesting);
+            Assert.Equal("", DocumentText(document).TrimEnd('\r', '\n'));
+        }, TimeSpan.FromSeconds(30));
+    }
+
     [Theory]
     [InlineData(false, false)]
     [InlineData(false, true)]
@@ -1846,16 +2110,17 @@ public sealed class WriterPaginatedDiagnosticProductionTests(ITestOutputHelper o
         internal static ProductionWorkspace Create(FlowDocument document,
             bool enableSpellCheck = false,
             int pageCacheLimit = WriterDedicatedPaginationEngine.DefaultPageCacheLimit,
-            long cacheByteLimit = WriterDedicatedPaginationEngine.DefaultCacheByteLimit)
+            long cacheByteLimit = WriterDedicatedPaginationEngine.DefaultCacheByteLimit,
+            bool showDiagnostics = true, DocumentPageSettings? pageSettings = null)
         {
-            var settings = DocumentPageSettings.Letter();
+            var settings = pageSettings ?? DocumentPageSettings.Letter();
             var editor = new RichTextBox
             {
                 Document = document,
                 IsUndoEnabled = true,
                 Opacity = 0.01
             };
-            var surface = new WriterPaginatedDiagnosticSurface(showDiagnostics: true);
+            var surface = new WriterPaginatedDiagnosticSurface(showDiagnostics);
             var grid = new Grid();
             grid.Children.Add(new AdornerDecorator { Child = editor });
             grid.Children.Add(surface);

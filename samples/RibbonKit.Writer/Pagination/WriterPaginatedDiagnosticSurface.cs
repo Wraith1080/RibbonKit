@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Automation.Peers;
@@ -12,6 +13,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 using RibbonKit.Writer.Editing;
 using RibbonKit.Writer.Models;
 
@@ -57,6 +59,17 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
     private int _spellingCandidateIndex;
     private int _releasedPageFrameCount;
     private readonly bool _showDiagnostics;
+    private readonly DispatcherTimer _statusDelayTimer;
+    private readonly DispatcherTimer _caretBlinkTimer;
+    private Rectangle? _caretVisual;
+    private bool _awaitingPublication;
+    private bool _caretPhaseVisible = true;
+    private bool _caretHasFocus;
+    private int _blinkOffset = -1;
+    private uint _blinkPeriod;
+
+    [DllImport("user32.dll")]
+    private static extern uint GetCaretBlinkTime();
 
     internal WriterPaginatedDiagnosticSurface(bool showDiagnostics = false)
     {
@@ -112,6 +125,24 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
         };
         Panel.SetZIndex(_statusBorder, 20);
         Children.Add(_statusBorder);
+        _statusDelayTimer = new DispatcherTimer(DispatcherPriority.Background, Dispatcher)
+        {
+            Interval = TimeSpan.FromMilliseconds(400)
+        };
+        _statusDelayTimer.Tick += (_, _) =>
+        {
+            _statusDelayTimer.Stop();
+            if (_awaitingPublication)
+                SetStatus($"Paginated diagnostic: updating generation {_requestedGeneration:N0}…", "Updating pages…");
+        };
+        _caretBlinkTimer = new DispatcherTimer(DispatcherPriority.Background, Dispatcher);
+        _caretBlinkTimer.Tick += (_, _) =>
+        {
+            _caretPhaseVisible = !_caretPhaseVisible;
+            if (_caretVisual is not null)
+                _caretVisual.Opacity = _caretPhaseVisible ? 1 : 0;
+        };
+        IsVisibleChanged += (_, _) => UpdateCaretBlink();
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
     }
@@ -352,7 +383,9 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
             _selectedObjectIdentity = null;
             _selectedObjectKind = null;
         }
-        if (!preservePages || layoutIdentity != _layoutIdentity)
+        // Keep the last image while this document reflows. Generation checks below still
+        // reject its old geometry; a different document must never retain those visuals.
+        if (documentIdentity != _documentIdentity)
         {
             _result = null;
             ClearPageVisuals();
@@ -363,7 +396,14 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
         ResetSpellingScan();
         if (preservePages)
             EnsureLoadingPlaceholder(requestedPage);
-        SetStatus($"Paginated diagnostic: updating generation {generation:N0}…", "Updating pages…");
+        if (_showDiagnostics || _pageFrames.Count == 0)
+            SetStatus($"Paginated diagnostic: updating generation {generation:N0}…", "Updating pages…");
+        else if (!_awaitingPublication)
+        {
+            SetStatus($"Paginated diagnostic: updating generation {generation:N0}…");
+            _statusDelayTimer.Start();
+        }
+        _awaitingPublication = true;
         RefreshOverlays(null);
     }
 
@@ -378,18 +418,28 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
             result.LayoutIdentity != _layoutIdentity ||
             result.DocumentIdentity != _documentIdentity)
             return;
+        var replaceImages = _result?.LayoutIdentity != result.LayoutIdentity ||
+            _result.IsPresentationOnly;
         _result = result;
+        _awaitingPublication = false;
+        _statusDelayTimer.Stop();
         WriterPaginationDiagnosticOptions.WriteTelemetry(
             $"admission generation={result.Generation} kind={result.RequestKind} " +
             $"skipped={result.SkippedSpeculativePages} realized={result.PageTimings.Length}");
         foreach (var timing in result.PageTimings)
             WriterPaginationDiagnosticOptions.WriteTelemetry(FormattableString.Invariant(
                 $"page-cost generation={result.Generation} page={timing.PageNumber} speculative={timing.Speculative} insertions={timing.InsertionCount} realization={timing.RealizationMilliseconds:0.###}ms insertion={timing.InsertionMilliseconds:0.###}ms raster={timing.RasterMilliseconds:0.###}ms structured={timing.StructuredMilliseconds:0.###}ms"));
-        _editor = editor;
+        if (!ReferenceEquals(_editor, editor))
+        {
+            if (_editor is not null)
+                _editor.IsKeyboardFocusWithinChanged -= OnEditorFocusChanged;
+            _editor = editor;
+            _editor.IsKeyboardFocusWithinChanged += OnEditorFocusChanged;
+        }
         ResetSpellingScan();
         _statusBorder.Background = new SolidColorBrush(Color.FromArgb(220, 36, 43, 50));
         _requestedPage = result.VisiblePage;
-        MergePages(result);
+        MergePages(result, replaceImages);
         SetStatus($"Diagnostic · document {result.DocumentIdentity:N0} · " +
             $"generation {result.Generation:N0} · " +
             $"page {result.VisiblePage + 1:N0}/{result.PageCount:N0} · " +
@@ -504,6 +554,8 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
 
     internal void ShowFailure(string message)
     {
+        _statusDelayTimer.Stop();
+        _awaitingPublication = false;
         SetStatus($"Paginated diagnostic failed: {message}",
             "Pages could not be updated. Choose View > Continuous to continue editing.");
         _statusBorder.Background = new SolidColorBrush(Color.FromArgb(230, 145, 36, 36));
@@ -521,6 +573,11 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
     internal void Clear()
     {
         CancelActiveResize();
+        _statusDelayTimer.Stop();
+        _caretBlinkTimer.Stop();
+        _awaitingPublication = false;
+        if (_editor is not null)
+            _editor.IsKeyboardFocusWithinChanged -= OnEditorFocusChanged;
         _result = null;
         _editor = null;
         _selectedObjectIdentity = null;
@@ -541,6 +598,7 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
+        UpdateCaretBlink();
         var window = Window.GetWindow(this);
         if (ReferenceEquals(window, _hostWindow))
             return;
@@ -553,6 +611,9 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
+        _caretBlinkTimer.Stop();
+        _caretHasFocus = false;
+        _statusDelayTimer.Stop();
         if (_hostWindow is not null)
             _hostWindow.PreviewKeyDown -= OnHostPreviewKeyDown;
         _hostWindow = null;
@@ -597,14 +658,27 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
             modifiers.HasFlag(ModifierKeys.Alt) && ActivateKeyboardResizeNavigation();
     }
 
-    internal void RefreshOverlays(RichTextBox? editor)
+    internal void RefreshOverlays(RichTextBox? editor, bool updateSpelling = false)
     {
-        foreach (var canvas in _overlayCanvases.Values)
-            canvas.Children.Clear();
         if (_result is not { } result || editor is null ||
             result.Generation != _requestedGeneration ||
             result.DocumentIdentity != _documentIdentity)
+        {
+            // Retain the last caret and noninteractive page guides while waiting; stale selection/object overlays
+            // and automation handles must not remain interactive against edited content.
+            foreach (var canvas in _overlayCanvases.Values)
+                foreach (var child in canvas.Children.OfType<FrameworkElement>()
+                             .Where(child => !ReferenceEquals(child, _caretVisual) &&
+                                 !Equals(child.Tag, "pagination-margin-guide")).ToArray())
+                    canvas.Children.Remove(child);
+            UpdateCaretBlink();
             return;
+        }
+
+        foreach (var canvas in _overlayCanvases.Values)
+            canvas.Children.Clear();
+        _caretVisual = null;
+        UpdateCaretBlink();
 
         AddMarginGuideOverlays(result);
         AddStructuredObjectOverlays(result);
@@ -617,14 +691,17 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
         else
             AddCaretOverlay(result, document.ContentStart.GetOffsetToPosition(
                 editor.CaretPosition));
-        AddSpellingOverlays(result, editor);
+        if (!result.IsPresentationOnly)
+            AddSpellingOverlays(result, editor, updateSpelling);
     }
 
-    private void MergePages(WriterPaginationLayoutResult result)
+    private void MergePages(WriterPaginationLayoutResult result, bool replaceImages)
     {
         var retained = result.RetainedPages.ToHashSet();
         foreach (var pageNumber in _pageFrames.Keys
-                     .Where(page => !retained.Contains(page)).ToArray())
+                     .Where(page => result.IsPresentationOnly
+                         ? result.Pages.Any(item => item.PageNumber == page)
+                         : replaceImages || !retained.Contains(page)).ToArray())
             RemovePageFrame(pageNumber);
 
         foreach (var page in result.Pages)
@@ -746,6 +823,7 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
 
     private void ClearPageVisuals()
     {
+        _caretVisual = null;
         foreach (var pageNumber in _pageFrames.Keys.ToArray())
             RemovePageFrame(pageNumber);
         _placeholderPages.Clear();
@@ -888,7 +966,8 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
             {
                 Width = Math.Max(1, rect.Width),
                 Height = Math.Max(1, rect.Height),
-                Fill = item.Kind == WriterPaginationObjectKind.Picture
+                Fill = item.Kind == WriterPaginationObjectKind.Picture &&
+                    (_showDiagnostics || item.ObjectIdentity == _selectedObjectIdentity)
                     ? new SolidColorBrush(Color.FromArgb(24, 30, 144, 255))
                     : Brushes.Transparent,
                 StrokeThickness = item.Kind switch
@@ -900,7 +979,8 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
                 StrokeDashArray = item.Kind == WriterPaginationObjectKind.Table
                     ? new DoubleCollection { 3, 2 }
                     : null,
-                Stroke = item.Kind switch
+                Stroke = !_showDiagnostics && item.ObjectIdentity != _selectedObjectIdentity
+                    ? Brushes.Transparent : item.Kind switch
                 {
                     WriterPaginationObjectKind.Picture => Brushes.DodgerBlue,
                     WriterPaginationObjectKind.Table => Brushes.SteelBlue,
@@ -1135,14 +1215,15 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
 
     private bool TryFindResizeHandle(long identity, WriterPaginationObjectKind kind,
         WriterPaginationResizeHandleKind handle, int handleIndex, int rowGroupIndex,
-        out ResizeHandleDescriptor descriptor)
+        out ResizeHandleDescriptor descriptor, int? pageNumber = null)
     {
         descriptor = default;
         if (_result is not { } result)
             return false;
         var match = BuildResizeHandleDescriptors(result, identity, kind)
             .FirstOrDefault(item => item.Handle == handle &&
-                item.HandleIndex == handleIndex && item.RowGroupIndex == rowGroupIndex);
+                item.HandleIndex == handleIndex && item.RowGroupIndex == rowGroupIndex &&
+                (pageNumber is null || item.PageNumber == pageNumber));
         if (match == default)
             return false;
         descriptor = match;
@@ -1312,6 +1393,16 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
             .Where(item => _overlayCanvases.ContainsKey(item.PageNumber))
             .OrderBy(item => Math.Abs((long)item.SourceOffset - offset))
             .FirstOrDefault();
+        if (nearest == default && offset == 0 && _editor?.Document.Blocks.Count == 0 &&
+            result.MappedPages.Contains(0))
+        {
+            var nativeRect = _editor.CaretPosition.GetCharacterRect(LogicalDirection.Forward);
+            var height = !nativeRect.IsEmpty && double.IsFinite(nativeRect.Height) && nativeRect.Height > 0
+                ? nativeRect.Height : _editor.FontSize * _editor.FontFamily.LineSpacing;
+            nearest = new WriterPaginationInsertionGeometry(0, 0,
+                new WriterPaginationRectangle(result.PageSettings.LeftMarginDip,
+                    result.PageSettings.TopMarginDip, 0, height));
+        }
         if (nearest == default || Math.Abs((long)nearest.SourceOffset - offset) > 1 ||
             !_overlayCanvases.TryGetValue(nearest.PageNumber, out var canvas))
             return;
@@ -1321,14 +1412,49 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
             Width = 1,
             Height = Math.Max(1, rect.Height),
             Fill = Brushes.Black,
+            Opacity = _caretHasFocus && _caretPhaseVisible ? 1 : 0,
             Tag = "pagination-caret"
         };
         Canvas.SetLeft(caret, rect.Left);
         Canvas.SetTop(caret, rect.Top);
         canvas.Children.Add(caret);
+        _caretVisual = caret;
     }
 
-    private void AddSpellingOverlays(WriterPaginationLayoutResult result, RichTextBox editor)
+    private void OnEditorFocusChanged(object sender, DependencyPropertyChangedEventArgs e) => UpdateCaretBlink();
+
+    private void UpdateCaretBlink()
+    {
+        var focused = IsVisible && _editor is { IsKeyboardFocusWithin: true } && _editor.Selection.IsEmpty;
+        var offset = focused ? _editor!.Document.ContentStart.GetOffsetToPosition(_editor.CaretPosition) : -1;
+        var period = GetCaretBlinkTime();
+        if (!focused)
+        {
+            _caretBlinkTimer.Stop();
+            _caretPhaseVisible = false;
+        }
+        else if (!_caretHasFocus || offset != _blinkOffset || period != _blinkPeriod)
+        {
+            _caretBlinkTimer.Stop();
+            _caretPhaseVisible = true;
+            // Windows uses INFINITE to disable blinking; zero also stays steadily visible.
+            if (period is > 0 and < uint.MaxValue)
+            {
+                _caretBlinkTimer.Interval = TimeSpan.FromMilliseconds(period);
+                _caretBlinkTimer.Start();
+            }
+        }
+        _caretHasFocus = focused;
+        _blinkOffset = offset;
+        _blinkPeriod = period;
+        if (_caretVisual is not null)
+            _caretVisual.Opacity = focused && _caretPhaseVisible ? 1 : 0;
+    }
+
+    internal double CaretOpacityForTesting => _caretVisual?.Opacity ?? 0;
+    internal uint CaretBlinkPeriodForTesting => _blinkPeriod;
+
+    private void AddSpellingOverlays(WriterPaginationLayoutResult result, RichTextBox editor, bool updateSpelling)
     {
         if (!SpellCheck.GetIsEnabled(editor))
             return;
@@ -1336,6 +1462,8 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
             _spellingDocumentIdentity != result.DocumentIdentity ||
             _spellingCandidateOffsets.IsDefault)
         {
+            if (!updateSpelling)
+                return;
             _spellingGeneration = result.Generation;
             _spellingDocumentIdentity = result.DocumentIdentity;
             _spellingCandidateOffsets = BuildSpellingCandidateOffsets(result,
@@ -1346,7 +1474,7 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
 
         var watch = Stopwatch.StartNew();
         var processed = 0;
-        while (_spellingCandidateIndex < _spellingCandidateOffsets.Length &&
+        while (updateSpelling && _spellingCandidateIndex < _spellingCandidateOffsets.Length &&
                processed++ < 64 && watch.ElapsedMilliseconds < 8)
         {
             var offset = _spellingCandidateOffsets[_spellingCandidateIndex++];
@@ -1565,7 +1693,7 @@ internal sealed class WriterPaginatedDiagnosticSurface : Grid
             _selectedObjectKind is not { } kind)
             return false;
         if (!TryFindResizeHandle(identity, kind, handle, handleIndex,
-                rowGroupIndex, out var descriptor) || descriptor.PageNumber != pageNumber)
+                rowGroupIndex, out var descriptor, pageNumber))
             return false;
         var geometry = result.StructuredObjects.FirstOrDefault(item =>
             item.PageNumber == pageNumber && item.ObjectIdentity == identity && item.Kind == kind);

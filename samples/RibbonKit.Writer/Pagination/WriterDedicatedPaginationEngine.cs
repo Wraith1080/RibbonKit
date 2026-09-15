@@ -90,6 +90,8 @@ internal sealed class WriterDedicatedPaginationEngine : IDisposable
         EvictedPageCount, CachedPageCount, CachedBytes, CachedEncodedBytes,
         CachedDecodedBytes);
 
+    internal event Action<WriterPaginationLayoutResult>? PresentationReady;
+
     internal WriterPaginationWorkProgress Progress
     {
         get
@@ -271,6 +273,9 @@ internal sealed class WriterDedicatedPaginationEngine : IDisposable
         cancellationToken.ThrowIfCancellationRequested();
 
         var visiblePage = Math.Clamp(capture.VisiblePage, 0, session.PageCount - 1);
+        var editedCaret = capture.EditedCaretOffset is { } caretOffset
+            ? session.Document.ContentStart.GetPositionAtOffset(caretOffset, LogicalDirection.Forward)
+            : null;
         var mappedPages = capture.InteractivePages
             .Where(page => page >= 0 && page < session.PageCount)
             .Distinct()
@@ -321,14 +326,6 @@ internal sealed class WriterDedicatedPaginationEngine : IDisposable
             var realization = ElapsedMilliseconds(phaseStarted);
             viewerRealizationMilliseconds += realization;
 
-            SetProgress(capture.Generation, WriterPaginationWorkPhase.InsertionGeometry);
-            phaseStarted = Stopwatch.GetTimestamp();
-            var pageInsertions = BuildPageInsertions(session.Document, session.Paginator,
-                session.PageStartOffsets, pageNumber, pageView, session.PageSettings,
-                cancellationToken);
-            var insertion = ElapsedMilliseconds(phaseStarted);
-            insertionGeometryMilliseconds += insertion;
-
             SetProgress(capture.Generation, WriterPaginationWorkPhase.Rasterization);
             phaseStarted = Stopwatch.GetTimestamp();
             var page = new WriterPaginationPage(pageNumber,
@@ -336,6 +333,37 @@ internal sealed class WriterDedicatedPaginationEngine : IDisposable
                     session.PixelScaleX, session.PixelScaleY, cancellationToken));
             var raster = ElapsedMilliseconds(phaseStarted);
             rasterizationMilliseconds += raster;
+
+            if (pageNumber == visiblePage && editedCaret is not null &&
+                session.Paginator.GetPageNumber(editedCaret) == pageNumber)
+            {
+                var rect = editedCaret.GetCharacterRect(LogicalDirection.Forward);
+                var caret = ImmutableArray<WriterPaginationInsertionGeometry>.Empty;
+                if (IsFinite(rect) && rect.Height > 0)
+                {
+                    rect = NormalizePageRect(rect, pageView, session.PageSettings);
+                    caret = ImmutableArray.Create(new WriterPaginationInsertionGeometry(
+                        capture.EditedCaretOffset!.Value, pageNumber,
+                        new WriterPaginationRectangle(rect.X, rect.Y, rect.Width, rect.Height)));
+                }
+                cancellationToken.ThrowIfCancellationRequested();
+                PresentationReady?.Invoke(new WriterPaginationLayoutResult(capture.Generation,
+                    capture.LayoutIdentity, capture.DocumentIdentity, visiblePage, session.PageCount,
+                    session.PageStartOffsets, ImmutableArray<int>.Empty, ImmutableArray.Create(pageNumber),
+                    ImmutableArray.Create(page), caret, ImmutableArray<WriterPaginationObjectGeometry>.Empty,
+                    ImmutableArray<WriterPaginationTableGeometry>.Empty, session.PageSettings,
+                    capture.RequestKind, sessionReused, 0, 0, 0, 0, 0, 0,
+                    Environment.CurrentManagedThreadId, Thread.CurrentThread.GetApartmentState(),
+                    default, watch.Elapsed.TotalMilliseconds) { IsPresentationOnly = true });
+            }
+
+            SetProgress(capture.Generation, WriterPaginationWorkPhase.InsertionGeometry);
+            phaseStarted = Stopwatch.GetTimestamp();
+            var pageInsertions = BuildPageInsertions(session.Document, session.Paginator,
+                session.PageStartOffsets, pageNumber, pageView, session.PageSettings,
+                cancellationToken);
+            var insertion = ElapsedMilliseconds(phaseStarted);
+            insertionGeometryMilliseconds += insertion;
 
             SetProgress(capture.Generation, WriterPaginationWorkPhase.StructuredGeometry);
             phaseStarted = Stopwatch.GetTimestamp();
@@ -416,9 +444,10 @@ internal sealed class WriterDedicatedPaginationEngine : IDisposable
     {
         SetProgress(capture.Generation, WriterPaginationWorkPhase.PackageLoad);
         var phaseStarted = Stopwatch.GetTimestamp();
-        var clone = new FlowDocument();
-        using (var stream = new MemoryStream(capture.XamlPackage.ToArray(), writable: false))
+        var clone = capture.ContentSnapshot?.CreateDocument() ?? new FlowDocument();
+        if (capture.ContentSnapshot is null)
         {
+            using var stream = new MemoryStream(capture.XamlPackage.ToArray(), writable: false);
             new TextRange(clone.ContentStart, clone.ContentEnd)
                 .Load(stream, DataFormats.XamlPackage);
         }
@@ -719,13 +748,16 @@ internal sealed class WriterDedicatedPaginationEngine : IDisposable
                 bounds = new Rect(left, top, Math.Max(1, right - left),
                     Math.Max(1, bottom - top));
             }
-            output.Add(new WriterPaginationObjectGeometry(capture.ObjectIdentity,
-                capture.Kind, capture.StartOffset, pageNumber,
-                new WriterPaginationRectangle(bounds.X, bounds.Y, bounds.Width, bounds.Height)));
+            var rectangle = new WriterPaginationRectangle(bounds.X, bounds.Y, bounds.Width, bounds.Height);
             if (element is Table table && TryBuildTableGeometry(table,
                     capture.ObjectIdentity, bounds, pageView, pageSettings, paginator,
                     pageNumber, out var tableGeometry))
+            {
                 tableOutput.Add(tableGeometry);
+                rectangle = tableGeometry.Bounds;
+            }
+            output.Add(new WriterPaginationObjectGeometry(capture.ObjectIdentity,
+                capture.Kind, capture.StartOffset, pageNumber, rectangle));
         }
     }
 
@@ -868,24 +900,8 @@ internal sealed class WriterDedicatedPaginationEngine : IDisposable
         InlineUIContainer container, Image image,
         CancellationToken cancellationToken, out Rect bounds)
     {
-        var leading = container.ElementStart.GetCharacterRect(LogicalDirection.Forward);
-        var trailing = container.ElementEnd.GetCharacterRect(LogicalDirection.Backward);
-        if (IsFinite(leading) && leading.Height > 0 &&
-            leading.Left >= -1 && leading.Top >= -1 &&
-            leading.Right <= pageView.ActualWidth + 1 &&
-            leading.Bottom <= pageView.ActualHeight + 1)
-        {
-            var width = IsFinite(trailing) && trailing.X > leading.X
-                ? trailing.X - leading.X
-                : image.RenderSize.Width;
-            var height = Math.Max(leading.Height, image.RenderSize.Height);
-            if (width > 0 && height > 0)
-            {
-                bounds = new Rect(leading.X, leading.Y, width, height);
-                return true;
-            }
-        }
-
+        // Use the rendered image, including the page-view transform. Caret line
+        // height can include following text and Image.RenderSize is unscaled.
         foreach (var candidate in EnumerateVisualDescendants(pageView).OfType<Image>())
         {
             cancellationToken.ThrowIfCancellationRequested();

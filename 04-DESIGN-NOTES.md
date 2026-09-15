@@ -687,6 +687,14 @@ Historical pending items are superseded only by later evidence, never by a plan.
 
 [Default activation and verification](docs/history/03-writer-pagination.md#3159-ribbonkit-writer-default-paginated-paper--2026-09-09).
 
+### 3.160 RibbonKit Writer blank-page click correction — 2026-09-09
+
+[Reproduction and correction](docs/history/03-writer-pagination.md#3160-ribbonkit-writer-blank-page-click-correction--2026-09-09).
+
+### 3.161 RibbonKit Writer typing presentation and caret blink — 2026-09-09
+
+[Correction and verification](docs/history/03-writer-pagination.md#3161-ribbonkit-writer-typing-presentation-and-caret-blink--2026-09-09).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),
@@ -726,7 +734,8 @@ file and this index; update §5 only as supported by verification.
   cancellation/coalescing, bounded retention and current-generation interaction.
   LTR editing, page-local table/picture resizing, staged spelling, empty replacement,
   bounded scrolling/cache work and native caret page following have recorded evidence
-  through §3.159. The existing interactive ruler and context menu are connected to the
+  through §3.161. Typing retains the last page image until its replacement is ready;
+  the caret follows Windows blink timing. The existing interactive ruler and context menu are connected to the
   compositor; diagnostic telemetry remains opt-in. `--writer-classic-paper` restores
   the prior Paper surface. The surrounding workspace now follows the appearance backdrop
   brush; its focused realized-window regression passes 1/1 with unchanged page images.
@@ -752,6 +761,8 @@ file and this index; update §5 only as supported by verification.
 
 ### Verification checkpoint
 
+- Latest correction: §3.160 blank-page click regression, focused tests **4/4**, Release
+  Writer build **0 warnings / 0 errors**. The blockless-page crash was reproduced before fixing.
 - Latest recorded full solution gate in this checkpoint list: §3.128 (2026-08-30),
   Release build with zero warnings/errors; RibbonKit 392/392, Writer 439/439, visual
   1/1 covering 63 approved images. These are historical counts, not today's inventory.

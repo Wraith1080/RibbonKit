@@ -315,3 +315,25 @@ disabled; it was not rewritten as part of this change. The inspected render is h
 page/ruler evidence, not full application theme, physical input or OS IME acceptance.
 
 [Default activation and verification](history/03-writer-pagination.md#3159-ribbonkit-writer-default-paginated-paper--2026-09-09).
+
+### RKWF-042 — Clicking a blockless page threw before the empty-geometry guard
+
+`MinBy` over value-type insertion entries threw `Sequence contains no elements` before
+the controller checked for empty geometry. A blockless document legitimately has no entries.
+Hit testing now returns the native document start for that specific case and a safe miss for
+other missing maps. Its caret overlay uses the page content origin and native/font line height,
+without adding a paragraph. The retained `Diagnostic` class names identify the default
+pagination implementation; diagnostics remain separately opt-in.
+
+[Reproduction and correction](history/03-writer-pagination.md#3160-ribbonkit-writer-blank-page-click-correction--2026-09-09).
+
+### RKWF-043 — Each keystroke cleared the page and the caret never blinked
+
+Layout invalidation discarded all page frames and showed a loading message immediately;
+the caret was a static rectangle. Same-document updates now retain the previous image until
+current replacement pages publish, with old geometry still rejected for input. Document
+replacement still clears immediately. Normal loading status waits 400 ms; diagnostic telemetry
+remains immediate. A focus/selection-aware timer uses Windows caret-blink settings and preserves
+its phase across periodic overlay rebuilds. The existing async layout/debounce remains in use.
+
+[Correction and verification](history/03-writer-pagination.md#3161-ribbonkit-writer-typing-presentation-and-caret-blink--2026-09-09).

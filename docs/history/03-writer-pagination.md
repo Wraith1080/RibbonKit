@@ -1013,3 +1013,42 @@ realized-window regression fails before the fix and passes **1/1** after it, alt
 backdrop and light/dark opaque states while asserting unchanged page-image and document-background
 instances. Release Writer builds with **0 warnings / 0 errors**. This verifies WPF brush
 propagation, not a new visual acceptance of the OS-rendered Mica/Acrylic effect.
+
+### 3.160 RibbonKit Writer blank-page click correction — 2026-09-09
+
+The user reported a first-click crash in `WriterPaginatedDiagnosticController.HitTest`.
+A regression reproduced the exact `Sequence contains no elements` at line 607 for a
+blockless FlowDocument; a document with an empty Paragraph already worked. `MinBy` on
+non-nullable value types threw before the empty-map guard could run.
+
+Nullable hit results now safely handle missing geometry. Only the valid blockless first
+page resolves to the native document start. A caret overlay at the content origin uses
+native line height (font metrics if unavailable); no paragraph/content is inserted by clicking.
+The test exercises context and ordinary click paths, visible caret, native typing and Undo
+back to empty. Existing stale-event/document-replacement and cross-page editing checks
+remain part of the focused run. These are hosted-WPF interaction tests, not physical input.
+
+Final focused result: **4/4 passed**. Release Writer build: **0 warnings / 0 errors**;
+`git diff --check` passed. No broader suite or benchmark was needed for this correction.
+
+### 3.161 RibbonKit Writer typing presentation and caret blink — 2026-09-09
+
+The user reported page updates on every typed character and a caret that never blinked.
+The focused reproduction showed that the rendered-page collection became empty synchronously
+on a text change. Every invalidation cleared the canvas and immediately displayed loading
+status; caret rectangles had no blink behavior.
+
+Same-document updates now retain prior page imagery while the existing asynchronous layout
+and debounce prepare current text. Publication replaces changed-layout images in one dispatcher
+pass without zeroing the page-canvas extent. Stale geometry/selection/object interactions are
+still rejected, and replacement documents clear immediately. This is presentation continuity,
+not a claim that full-document layout or text-publication latency has been eliminated. The
+previous displayed images can temporarily overlap the new generation's memory until publication.
+Normal loading status is delayed 400 ms and canceled when current pages publish; diagnostics
+retain immediate status. The last caret may remain at its prior location during layout.
+
+The caret timer uses Windows GetCaretBlinkTime, including steady display when blinking is
+disabled. It resets for caret movement/focus, hides for selection or focus loss, preserves phase
+across the existing periodic overlay rebuild, and stops on clear/unload. New hosted-WPF checks
+verify image continuity through typing and replacement, stale-click rejection, real timer
+transitions across overlay refresh, focus/selection behavior, and the earlier empty-page fixes.
