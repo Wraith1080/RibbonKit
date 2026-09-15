@@ -2,8 +2,8 @@
 
 This index separates open investigations from corrected behavior. Titles retain the
 original symptom and stable RKWF identifier; they do not claim that symptom remains.
-Summaries reflect recorded evidence through 2026-09-05, not new acceptance. Full
-reproductions, measurements and historical gates are linked per entry.
+Index reviewed on 2026-09-15. Statuses reflect the linked recorded evidence, not new
+live acceptance. Full reproductions, measurements and historical gates are linked per entry.
 
 ## 1. Purpose and promotion
 
@@ -16,15 +16,26 @@ obtain explicit authorization unless already supplied. Follow `AGENTS.md` and
 
 ## 2. Active follow-ups
 
-- Runtime/documentation candidates: RKWF-001/002/026.
-- External UIA investigations: RKWF-003/004/006.
+### RibbonKit control improvement candidates
+
+| Priority | Entries | Benefit and next bounded step |
+| --- | --- | --- |
+| 1 | RKWF-002 | Make editable ComboBox commits predictable. Reproduce typing, selection, Enter, Escape and focus loss; document a reusable pattern before deciding whether an optional commit event is needed. Preserve native behavior and IME composition. |
+| 2 | RKWF-001 | Return focus safely after KeyTip activation without leaking the final key into the editor. Reproduce across buttons, toggles, menus and QAT before choosing documentation or a general completion hook. |
+| 3 | RKWF-003/004/006 | Improve external UI Automation discovery and actions for QAT, Backstage and ribbon commands. Start with one missing main-ribbon leaf and a second independent client; these remain investigations, not confirmed library defects. |
+| 4 | RKWF-026 | Let hosts supply an Office 2007 Orb glyph without modifying the realized visual tree. Evaluate an optional content-template/image hook shared by the main Orb and Classic2007 proxy. |
+
+These candidates benefit ribbon consumers generally. This review does not implement
+or approve new runtime APIs; first establish the focused reproduction and scope.
+
+### Existing fixes needing narrower acceptance
+
 - Narrow live follow-ups after implemented fixes: RKWF-016/019; W4-C physical driver
   and cold-start checks remain in RKWF-007/009/010.
-- Opt-in pagination performance: RKWF-037/038, with RKWF-035 explained by RKWF-036.
 - RKWF-008 is a bounded harness allowance, not a product defect.
 
 All other entries below retain corrections, constraints or accepted workarounds.
-No complete Windows contrast-theme, genuine OS IME or production pagination RTL
+No complete Windows contrast-theme, genuine OS IME or production RTL
 acceptance follows from these isolated fixes. Overall progress stays in
 [design notes §5](../04-DESIGN-NOTES.md#5-current-state--next-steps).
 
@@ -211,144 +222,17 @@ Closed shared-template correction, live-accepted in Writer. Register the native 
 
 [Recorded evidence](history/writer-friction-evidence.md#rkwf-029--ribboncombobox-popup-viewport-retains-the-native-os-scrollbar).
 
-### RKWF-030 — FlowDocumentPageViewer geometry is fitted-view local, not paginator-page local
-
-Closed app pagination geometry correction. FlowDocumentPageViewer values are fitted-view-local; normalize to paginator-page coordinates before publishing immutable interaction values.
-
-[Recorded evidence](history/writer-friction-evidence.md#rkwf-030--flowdocumentpageviewer-geometry-is-fitted-view-local-not-paginator-page-local).
-
-### RKWF-031 — An empty FlowDocument can publish a page without insertion geometry
-
-Closed app lifecycle edge. Empty documents may have a page without insertion geometry; publish a safe empty state without nullable caret failure.
-
-[Recorded evidence](history/writer-friction-evidence.md#rkwf-031--an-empty-flowdocument-can-publish-a-page-without-insertion-geometry).
-
-### RKWF-032 — Hidden paged table origins can inherit cell-text alignment
-
-Closed within explicit-width LTR diagnostics. Use page content origin plus finite table margin/spacing rather than text-aligned hidden character rectangles. Production RTL is not implied.
-
-[Recorded evidence](history/writer-friction-evidence.md#rkwf-032--hidden-paged-table-origins-can-inherit-cell-text-alignment).
-
-### RKWF-033 — Hidden paginator has no stable public Auto-column grid boundaries
-
-Closed by bounded unsupported policy. Publish horizontal boundaries only for finite positive explicit columns; hide Auto/star column/overall resize instead of inventing geometry.
-
-[Recorded evidence](history/writer-friction-evidence.md#rkwf-033--hidden-paginator-has-no-stable-public-auto-column-grid-boundaries).
-
-### RKWF-034 — Virtual page handles cannot be a durable keyboard-focus owner
-
-Closed by editor-owned keyboard handle mode. Keep the editor focused, use Ctrl+Alt+R navigation and generation-valid targets; virtual page handles cannot own durable focus.
-
-[Recorded evidence](history/writer-friction-evidence.md#rkwf-034--virtual-page-handles-cannot-be-a-durable-keyboard-focus-owner).
-
-### RKWF-035 — Live pagination appeared to have a block-count cliff
-
-The 120/180-block cliff was traced and contained by RKWF-036. Broader real-document latency/memory remains open under RKWF-037/038; default Paper is unchanged.
-
-[Recorded evidence](history/writer-friction-evidence.md#rkwf-035--live-pagination-appeared-to-have-a-block-count-cliff).
-
-### RKWF-036 — Forward spelling-error enumeration can block staged page publication
-
-Closed for the opt-in compositor. Bounded visible-page spelling candidates replace unbounded forward enumeration; generation-stamped slices preserve exact-word overlays.
-
-[Recorded evidence](history/writer-friction-evidence.md#rkwf-036--forward-spelling-error-enumeration-can-block-staged-page-publication).
-
-### RKWF-037 — Reusable WPF page realization has a larger process high-water than the app cache
-
-Mixed-content retention/reclamation has measured positive evidence; long-paragraph native high-water remains open. App cache bytes, process working set and natural versus forced collection are distinct metrics.
-
-[Recorded evidence](history/writer-friction-evidence.md#rkwf-037--reusable-wpf-page-realization-has-a-larger-process-high-water-than-the-app-cache).
-
-### RKWF-038 — A reduced cache protects interaction but can discard every speculative page
-
-Speculative churn is now guarded by app-owned admission before realization, using the
-existing eviction policy and largest observed cached footprint. Protected pages remain
-mandatory; unusual content can exceed the estimate. Dense insertion profiling and exact-map
-traversal work are recorded under RKWF-039. The broader latency/native-memory tradeoff
-remains open; no hard working-set cap or default-Paper approval.
-
-[Admission implementation and comparison](history/03-writer-pagination.md#3156-ribbonkit-writer-w2-g-speculative-admission-and-page-cost-timing--2026-09-09).
-
-[Recorded evidence](history/writer-friction-evidence.md#rkwf-038--a-reduced-cache-protects-interaction-but-can-discard-every-speculative-page).
-
-### RKWF-039 — Dense insertion mapping repeats native caret-boundary work
-
-App-owned profiling isolates rectangle queries and traversal as the dominant costs.
-The opt-in worker uses a local text-context fast path while retaining WPF caret-boundary
-validation and native fallback at complex/markup edges. Exhaustive synthetic parity passes;
-timing gains are modest/mixed and do not close long-document authoring or native-memory gates.
-Repeated `GetTextRunLength` is unsuitable as a per-position guard because split text nodes
-can make it rescan the run. The bounded parity test uses explicit forward page affinity
-and a 60-second helper limit; its initial repeated-complex-script timeout is not acceptance.
-
-[Implementation, profiling and verification](history/03-writer-pagination.md#3157-ribbonkit-writer-w2-g-insertion-traversal-profiling-and-exact-map-parity--2026-09-09).
-
-### RKWF-040 — Native caret navigation did not move the paginated viewport
-
-Corrected in the opt-in compositor. A focused reproduction moved the live editor to document
-end while the paginated view remained on page 1 of 12. Selection changes now request the
-caret's page using the existing layout session and reveal its rectangle at the current zoom.
-Edits defer that request until current geometry publishes. Ordinary scrolling cancels pending
-caret following; surface selection/resize interactions retain their existing ownership.
-
-[Implementation and evidence](history/03-writer-pagination.md#3158-ribbonkit-writer-w2-g-native-caret-page-following--2026-09-09).
-
-### RKWF-041 — Default activation needs the native ruler and context menu
-
-The user authorized default paginated Paper on 2026-09-09. The diagnostic hid the accepted
-interactive ruler with its native editor and did not attach the editor context menu to page
-visuals. Default activation now retains that same ruler above the compositor, supplies its
-visible page origin, and routes mapped right-click targets to native selection/menu actions.
-Right-clicks within a selection preserve it; hidden pagination does not consume resize keys.
-Detailed telemetry is opt-in; normal loading/failure text is user-facing.
-
-Default-view appearance follow-up: the compositor's hard-coded `#FFE5E8EB` workspace
-masked the active Mica/Acrylic material. Its background now binds to the existing
-`DocumentPresentationHost.Background`, following successful backdrop activation,
-light/dark opaque fallback and rollback without changing page images or document color.
-A realized-window regression reproduced the mismatch and passes after the binding fix.
-
-The combined production/window test run hit dispatcher-affine WindowChrome theme caching.
-Fresh-process checks avoid that harness contamination without changing the runtime. The broad
-window contract also expects the pre-Settings menu and fails identically with pagination
-disabled; it was not rewritten as part of this change. The inspected render is hosted WPF
-page/ruler evidence, not full application theme, physical input or OS IME acceptance.
-
-[Default activation and verification](history/03-writer-pagination.md#3159-ribbonkit-writer-default-paginated-paper--2026-09-09).
-
-### RKWF-042 — Clicking a blockless page threw before the empty-geometry guard
-
-`MinBy` over value-type insertion entries threw `Sequence contains no elements` before
-the controller checked for empty geometry. A blockless document legitimately has no entries.
-Hit testing now returns the native document start for that specific case and a safe miss for
-other missing maps. Its caret overlay uses the page content origin and native/font line height,
-without adding a paragraph. The retained `Diagnostic` class names identify the default
-pagination implementation; diagnostics remain separately opt-in.
-
-[Reproduction and correction](history/03-writer-pagination.md#3160-ribbonkit-writer-blank-page-click-correction--2026-09-09).
-
-### RKWF-043 — Each keystroke cleared the page and the caret never blinked
-
-Layout invalidation discarded all page frames and showed a loading message immediately;
-the caret was a static rectangle. Same-document updates now retain the previous image until
-current replacement pages publish, with old geometry still rejected for input. Document
-replacement still clears immediately. Normal loading status waits 400 ms; diagnostic telemetry
-remains immediate. A focus/selection-aware timer uses Windows caret-blink settings and preserves
-its phase across periodic overlay rebuilds. The existing async layout/debounce remains in use.
-
-[Correction and verification](history/03-writer-pagination.md#3161-ribbonkit-writer-typing-presentation-and-caret-blink--2026-09-09).
-
 ### RKWF-044 — Expanding Paper outgrew its fixed-height dotted margin guide
 
-The user restored expanding Paper as the default and deferred multipage work on 2026-09-15.
-The native sheet already grew with content, but guide drawing and invalidation still used
-one physical page's content height. The reproduced failure at 75/100/150% zoom is corrected
-using the measured paper interior minus scaled margins. Growth, scrolling and Undo/Redo
-retain the dotted bottom and sides without changing document content or print pagination.
+The native sheet grew with content, but the guide used one physical page's content height.
+Guide drawing and invalidation now use the measured paper interior minus scaled margins.
+Growth, scrolling and Undo/Redo retain the dotted bottom and sides without changing content
+or printed page breaks. The focused regression covers 75/100/150% zoom.
 
-Focused automated and live Release-window checks passed. The live editor's offscreen UIA
-center required a visible coordinate click; the close-dialog button cache required keyboard
-navigation. These are automation limitations, not runtime-library changes. Multipage code
-is preserved behind explicit opt-in; its outstanding performance/input gates remain deferred.
+[Verification](history/02-writer-foundation.md#3162-ribbonkit-writer-expanding-paper-default-and-growing-margin-guide--2026-09-15).
 
-[Reproduction and verification](history/03-writer-pagination.md#3162-ribbonkit-writer-expanding-paper-default-and-growing-margin-guide--2026-09-15).
+### Verification note — 2026-09-15 cleanup
+
+77 focused Writer tests passed. The combined window run hit the known WPF WindowChrome
+cross-thread cache issue; the affected table check passed in a fresh process. No new live UI
+or full-suite acceptance is claimed.

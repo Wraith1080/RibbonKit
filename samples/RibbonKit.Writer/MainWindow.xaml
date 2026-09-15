@@ -1268,9 +1268,6 @@
                                      AutomationProperties.AutomationId="WriterRuler"
                                      AutomationProperties.Name="Horizontal ruler" />
             </editing:WriterEditorSurface>
-            <Grid x:Name="PaginationDiagnosticHost" Visibility="Collapsed" Panel.ZIndex="18"
-                  AutomationProperties.AutomationId="PaginationDiagnosticHost"
-                  AutomationProperties.Name="Paginated document" />
             <preview:WriterDocumentPreviewView x:Name="PreviewView" Visibility="Collapsed"
                                                AutomationProperties.AutomationId="DocumentPreview"
                                                AutomationProperties.Name="Print layout preview" />

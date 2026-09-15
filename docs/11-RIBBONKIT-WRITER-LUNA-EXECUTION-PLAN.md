@@ -48,7 +48,6 @@ Current acceptance is recorded only in design-notes §5 and its linked evidence.
 | W2-D | Preview and printing | W2-C |
 | W2-E | Page/View integration | W2-B/D |
 | W2-F | Ruler and margin guides | W0-F, W2-E |
-| W2-G | Experimental editable pagination (deferred) | W3-E |
 | W3-A | Pictures, hyperlinks and date/time | W0-E, W1-D, W2-B |
 | W3-B | Table structural core | W0-E, W1-D, W2-B |
 | W3-C | Insert/Table Tools and cell navigation | W0-F, W2-F, W3-A/B |
@@ -82,46 +81,9 @@ corrected Font/Color/Paragraph dialogs and representative ribbon/context-menu st
 Verify the actual surface against the product contract before closing it. Named styles
 remain excluded until their semantics and persistence are complete.
 
-### W2-G — True editable pagination architecture and delivery
-
-**Deferred by user direction on 2026-09-15 (§3.162).** Normal startup uses expanding
-Paper. Resume W2-G only when explicitly requested; it does not block W4-B.
-`--writer-paginated-diagnostic` or environment
-`RIBBONKIT_WRITER_PAGINATED_DIAGNOSTIC=1` enables the retained experiment.
-`--writer-classic-paper` or environment value `0` forces expanding Paper.
-The following contracts apply if experimental work resumes.
-One authoritative live `FlowDocument`/editor owns selection, input, native history,
-spelling and clipboard. Immutable clone-backed pages and value-only geometry run on
-a dedicated STA; generation checks reject stale work/events. Preserve accepted
-preview/print page-start parity and current/adjacent interaction during reflow.
-Never split into independent editors, inject blank blocks or draw fake page breaks.
-
-Budget-aware speculative admission, insertion profiling, exact-map traversal parity and
-native caret page following are implemented. Any resumed paginated-editing work needs
-focused regressions for changed behavior. Preserve the interaction floor, exact mapping,
-latest-only rejection and native editing/history ownership.
-
-The fixed-cadence rapid-scroll probe proposed after §3.157 is **deferred by user direction**.
-It was a suggested validation method, not a pre-existing delivery prerequisite. Existing
-cancellation/coalescing and latest-only coverage remains in use; do not require another
-cache-budget benchmark matrix for unrelated implementation work. Real scrolling/authoring
-responsiveness still needs acceptance for the experiment, but that does not
-require this particular automated probe.
-
-The retained scope includes cross-page editing/deletion/selection/history; focus and
-command routing; page-setting reflow; table/picture/hyperlink hits and resize; rulers,
-non-printing chrome, zoom/DPI transforms and empty/replaced documents. Trusted explicit
-column geometry and the unsupported Auto/star resize policy remain separate. Test
-cancellation/coalescing and page-window handoff, including dense long paragraphs.
-
-Genuine OS IME and production RTL remain deferred together. W2-G remains incomplete.
-Its complete exit needs
-the outstanding input/geometry and actual long-document authoring gates, not merely a
-passing worker test. Record limitations rather than substitute decorative pagination.
-
 ### W4-B — Automated integration and hardening
 
-Use expanding Paper as the default; deferred W2-G acceptance does not block this packet. Cover integrated native
+Use expanding Paper as the default. Cover integrated native
 persistence, keyboard/UIA state, RTL, reduced motion, DPI metrics and performance
 instrumentation. Run the full solution build/tests with dated counts and inspect
 visual differences before changing approvals. Correct warnings or explain external

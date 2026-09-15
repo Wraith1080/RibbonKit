@@ -47,15 +47,6 @@ public sealed class WriterShellViewModel : INotifyPropertyChanged, IDisposable
     /// <summary>The currently displayed document.</summary>
     public WriterDocument CurrentDocument => _document;
 
-    // Private diagnostic loading uses normal persistence/session replacement without adding
-    // recent-file entries. Detach the source path so the probe cannot overwrite the corpus.
-    internal async Task<bool> OpenPaginationProbeDocumentAsync(string path)
-    {
-        if (!await _session.OpenAsync(path, WriterDocumentFormat.RibbonKitWriter))
-            return false;
-        _document.CommitIdentity(null, WriterDocumentFormat.RibbonKitWriter);
-        return true;
-    }
     /// <summary>Window title including identity and dirty marker.</summary>
     public string Title => (_document.IsUntitled ? "Untitled" : Path.GetFileName(_document.Path)) + (_document.IsDirty ? " *" : "") + " - RibbonKit Writer";
     /// <summary>Human-readable last operation result.</summary>

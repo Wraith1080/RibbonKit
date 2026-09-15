@@ -23,7 +23,7 @@ Read the relevant historical entry below before modifying a subsystem. In partic
 - Merge/modal/QAT lifetimes and selection geometry: §§3.32–3.36.
 - Window maximize/DPI, Snap Layouts and frame composition: §§3.12, 3.18, 3.42, 3.89–3.98.
 - Writer lifecycle, persistence and editing: §§3.99–3.136.
-- Opt-in editable pagination and measured limits: §§3.137–3.155.
+- Expanding Paper and margin-guide growth: §3.162.
 
 ## 3. Implemented Features (chronological, with pitfalls)
 
@@ -595,109 +595,13 @@ Historical pending items are superseded only by later evidence, never by a plan.
 
 [Decision, pitfalls and evidence](docs/history/02-writer-foundation.md#3136-ribbonkit-writer-w4-a-customization-and-appearance-persistence--2026-08-31).
 
-### 3.137 RibbonKit Writer W2-G editable-pagination feasibility — 2026-08-31
+### 3.137 Editable multipage editing — canceled
 
-[Decision, pitfalls and evidence](docs/history/03-writer-pagination.md#3137-ribbonkit-writer-w2-g-editable-pagination-feasibility--2026-08-31).
-
-### 3.138 RibbonKit Writer W2-G public page-geometry map spike — 2026-08-31
-
-[Decision, pitfalls and evidence](docs/history/03-writer-pagination.md#3138-ribbonkit-writer-w2-g-public-page-geometry-map-spike--2026-08-31).
-
-### 3.139 RibbonKit Writer W2-G paragraph caret/selection compositor prototype — 2026-08-31
-
-[Decision, pitfalls and evidence](docs/history/03-writer-pagination.md#3139-ribbonkit-writer-w2-g-paragraph-caretselection-compositor-prototype--2026-08-31).
-
-### 3.140 RibbonKit Writer W2-G dedicated-STA layout-worker spike — 2026-08-31
-
-[Decision, pitfalls and evidence](docs/history/03-writer-pagination.md#3140-ribbonkit-writer-w2-g-dedicated-sta-layout-worker-spike--2026-08-31).
-
-### 3.141 RibbonKit Writer W2-G latest-only worker coalescing and cancellation — 2026-08-31
-
-[Decision, pitfalls and evidence](docs/history/03-writer-pagination.md#3141-ribbonkit-writer-w2-g-latest-only-worker-coalescing-and-cancellation--2026-08-31).
-
-### 3.142 RibbonKit Writer W2-G paragraph focus and native-command bridge — 2026-08-31
-
-[Decision, pitfalls and evidence](docs/history/03-writer-pagination.md#3142-ribbonkit-writer-w2-g-paragraph-focus-and-native-command-bridge--2026-08-31).
-
-### 3.143 RibbonKit Writer W2-G paragraph page-setting reflow and live anchors — 2026-08-31
-
-[Decision, pitfalls and evidence](docs/history/03-writer-pagination.md#3143-ribbonkit-writer-w2-g-paragraph-page-setting-reflow-and-live-anchors--2026-08-31).
-
-### 3.144 RibbonKit Writer W2-G paragraph input-services prototype batch — 2026-08-31
-
-[Decision, pitfalls and evidence](docs/history/03-writer-pagination.md#3144-ribbonkit-writer-w2-g-paragraph-input-services-prototype-batch--2026-08-31).
-
-### 3.145 RibbonKit Writer W2-G structured-content and viewport prototype batch — 2026-08-31
-
-[Decision, pitfalls and evidence](docs/history/03-writer-pagination.md#3145-ribbonkit-writer-w2-g-structured-content-and-viewport-prototype-batch--2026-08-31).
-
-### 3.146 RibbonKit Writer W2-G lifecycle closure and production feasibility decision — 2026-08-31
-
-[Decision, pitfalls and evidence](docs/history/03-writer-pagination.md#3146-ribbonkit-writer-w2-g-lifecycle-closure-and-production-feasibility-decision--2026-08-31).
-
-### 3.147 RibbonKit Writer W2-G opt-in production compositor and LTR live decision — 2026-09-01
-
-[Decision, pitfalls and evidence](docs/history/03-writer-pagination.md#3147-ribbonkit-writer-w2-g-opt-in-production-compositor-and-ltr-live-decision--2026-09-01).
-
-### 3.148 RibbonKit Writer W2-G page-local resize and page-chrome hardening — 2026-09-01
-
-[Decision, pitfalls and evidence](docs/history/03-writer-pagination.md#3148-ribbonkit-writer-w2-g-page-local-resize-and-page-chrome-hardening--2026-09-01).
-
-### 3.149 RibbonKit Writer W2-G immutable table boundaries and accessible resize projection — 2026-09-01
-
-[Decision, pitfalls and evidence](docs/history/03-writer-pagination.md#3149-ribbonkit-writer-w2-g-immutable-table-boundaries-and-accessible-resize-projection--2026-09-01).
-
-### 3.150 RibbonKit Writer W2-G structural table matrix and safe Auto-column fallback — 2026-09-01
-
-[Decision, pitfalls and evidence](docs/history/03-writer-pagination.md#3150-ribbonkit-writer-w2-g-structural-table-matrix-and-safe-auto-column-fallback--2026-09-01).
-
-### 3.151 RibbonKit Writer W2-G keyboard resize, worker telemetry and live scalability boundary — 2026-09-01
-
-[Decision, pitfalls and evidence](docs/history/03-writer-pagination.md#3151-ribbonkit-writer-w2-g-keyboard-resize-worker-telemetry-and-live-scalability-boundary--2026-09-01).
-
-### 3.152 RibbonKit Writer W2-G staged publication and spelling-cliff correction — 2026-09-01
-
-[Decision, pitfalls and evidence](docs/history/03-writer-pagination.md#3152-ribbonkit-writer-w2-g-staged-publication-and-spelling-cliff-correction--2026-09-01).
-
-### 3.153 RibbonKit Writer W2-G reusable layout session and bounded directional page cache — 2026-09-04
-
-[Decision, pitfalls and evidence](docs/history/03-writer-pagination.md#3153-ribbonkit-writer-w2-g-reusable-layout-session-and-bounded-directional-page-cache--2026-09-04).
-
-### 3.154 RibbonKit Writer W2-G decoded page-memory and mixed-content plateau gate — 2026-09-04
-
-[Decision, pitfalls and evidence](docs/history/03-writer-pagination.md#3154-ribbonkit-writer-w2-g-decoded-page-memory-and-mixed-content-plateau-gate--2026-09-04).
-
-### 3.155 RibbonKit Writer W2-G saved-document and reduced-cache feasibility — 2026-09-05
-
-[Decision, pitfalls and evidence](docs/history/03-writer-pagination.md#3155-ribbonkit-writer-w2-g-saved-document-and-reduced-cache-feasibility--2026-09-05).
-
-### 3.156 RibbonKit Writer W2-G speculative admission and page-cost timing — 2026-09-09
-
-[Decision, pitfalls and evidence](docs/history/03-writer-pagination.md#3156-ribbonkit-writer-w2-g-speculative-admission-and-page-cost-timing--2026-09-09).
-
-### 3.157 RibbonKit Writer W2-G insertion traversal profiling and exact-map parity — 2026-09-09
-
-[Decision, pitfalls and evidence](docs/history/03-writer-pagination.md#3157-ribbonkit-writer-w2-g-insertion-traversal-profiling-and-exact-map-parity--2026-09-09).
-
-### 3.158 RibbonKit Writer W2-G native caret page following — 2026-09-09
-
-[Implementation and evidence](docs/history/03-writer-pagination.md#3158-ribbonkit-writer-w2-g-native-caret-page-following--2026-09-09).
-
-### 3.159 RibbonKit Writer default paginated Paper — 2026-09-09
-
-[Default activation and verification](docs/history/03-writer-pagination.md#3159-ribbonkit-writer-default-paginated-paper--2026-09-09).
-
-### 3.160 RibbonKit Writer blank-page click correction — 2026-09-09
-
-[Reproduction and correction](docs/history/03-writer-pagination.md#3160-ribbonkit-writer-blank-page-click-correction--2026-09-09).
-
-### 3.161 RibbonKit Writer typing presentation and caret blink — 2026-09-09
-
-[Correction and verification](docs/history/03-writer-pagination.md#3161-ribbonkit-writer-typing-presentation-and-caret-blink--2026-09-09).
+Canceled due to bloat. Implementation, dedicated tests and obsolete documentation removed.
 
 ### 3.162 RibbonKit Writer expanding Paper default and growing margin guide — 2026-09-15
 
-[Correction and verification](docs/history/03-writer-pagination.md#3162-ribbonkit-writer-expanding-paper-default-and-growing-margin-guide--2026-09-15).
+[Correction and verification](docs/history/02-writer-foundation.md#3162-ribbonkit-writer-expanding-paper-default-and-growing-margin-guide--2026-09-15).
 
 ## 4. Workflow / Session Conventions
 
@@ -736,14 +640,9 @@ file and this index; update §5 only as supported by verification.
 - **Expanding Paper is the default again, by user direction (§3.162).** One native editor
   sits on a centered sheet with fixed page width and minimum page height. The sheet and
   dotted margin guide grow downward with content; preview/print retain physical pagination.
-  Normal startup does not create the experimental pagination surface or worker.
-- **W2-G implementation and acceptance are deferred.** The retained multipage experiment
-  requires `--writer-paginated-diagnostic` or `RIBBONKIT_WRITER_PAGINATED_DIAGNOSTIC=1`.
-  `--writer-classic-paper` or environment value `0` overrides opt-in. Existing work through
-  §3.161 is preserved. Cold-page latency, long-document authoring and native-memory limits
-  remain open; no new pagination benchmark or production acceptance is claimed.
+
 - **Genuine OS IME and production RTL** remain a later paired input/geometry slice.
-  W4-B proceeds with expanding-Paper integration/hardening without waiting for W2-G. W4-C includes live
+  W4-B proceeds with expanding-Paper integration/hardening. W4-C includes live
   mixed-monitor/DPI and physical-printer checks; earlier single-display acceptance
   does not close them. W5 remains a distribution decision after sustained use.
 - **W1-E:** Home formatting and the corrected Font/Color/Paragraph dialogs have
@@ -758,23 +657,13 @@ file and this index; update §5 only as supported by verification.
 
 ### Verification checkpoint
 
-- Latest correction: §3.162 expanding Paper and growing guide, **79 focused tests** across
-  separate runs; Release Writer build **0 warnings / 0 errors**. Live Release window
-  inspection confirmed long-content guide growth, scrolling, new-line growth and Undo.
-  No full-suite, physical-printer, OS IME, mixed-DPI or performance-benchmark claim.
-- Earlier correction: §3.160 blank-page click regression, focused tests **4/4**, Release
-  Writer build **0 warnings / 0 errors**. The blockless-page crash was reproduced before fixing.
+- Latest cleanup: 77 focused Writer tests passed across separate runs; Release Writer build
+  **0 warnings / 0 errors**. The combined window run hit the known WPF WindowChrome
+  cross-thread cache issue; the affected table check passed in a fresh process.
+  No full-suite, new live UI, physical-printer, OS IME or mixed-DPI acceptance is claimed.
 - Latest recorded full solution gate in this checkpoint list: §3.128 (2026-08-30),
   Release build with zero warnings/errors; RibbonKit 392/392, Writer 439/439, visual
   1/1 covering 63 approved images. These are historical counts, not today's inventory.
-- Latest W2-G evidence: §3.159 (2026-09-09), pagination production tests **42/42**;
-  isolated default-window, centered-table view-switch and scrollbar tests **3/3**.
-  The default-window check includes multiple pages, native ruler margin commit, context
-  selection, and Paper/Continuous/Preview switching. Its rendered page/ruler was inspected.
-  A combined run hit WPF cross-thread theme caching; an isolated broad window contract
-  fails on its old Settings-menu expectation with both default and classic Paper.
-  No full-suite, solution-build, physical input, OS IME, RTL or long-document acceptance
-  claim follows from the default switch. §3.157 retains its geometry/cache limits.
 - Earlier full/focused results and acceptance limits remain in the
   [checkpoint ledger](docs/history/verification-checkpoints.md) and numbered history.
   Rerun proportionate checks before claiming current results.

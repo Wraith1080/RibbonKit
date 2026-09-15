@@ -96,9 +96,7 @@
 - 2026-08-28 after the §3.119 corrective dialog/search pass: the inventory is 739 logic tests plus one visual test
   covering 63 approved images. Writer passes **384/384**, RibbonKit passes **355/355**, the visual suite passes **1/1**,
   and the Debug solution build has zero warnings/errors. Writer now uses RibbonKit-themed app-owned Font, Color and
-  Paragraph dialogs with no WinForms dependency; live visual reacceptance of those dialogs remains pending. The newly
-  planned W2-G packet owns true editable pagination after W3-E and explicitly rejects decorative or content-injected
-  fake page breaks.
+  Paragraph dialogs with no WinForms dependency; live visual reacceptance of those dialogs remains pending.
 - 2026-08-28 after the second §3.119 live follow-up: the inventory is 743 logic tests plus one visual test covering
   63 approved images. Writer passes **388/388**, RibbonKit passes **355/355**, the visual suite passes **1/1**, and the
   Debug solution build has zero warnings/errors. The quick colour menu now exposes only base colours; More Colors has
@@ -145,49 +143,3 @@
   Contrast geometry is user-accepted. The scoped Customize Ribbon scrollbar comparison is also live-accepted; the
   QAT scrollbar, final Office 2013/2019 square-token visual recheck, and modern visible action-button chrome comparison
   remain pending live confirmation.
-- 2026-09-01 after §3.149: the focused W2-G production gate passes **11/11**, production plus W3-E table resize passes
-  **19/19**, the namespace-scoped pagination gate passes **36/36**, and the Release Writer project builds with zero
-  warnings/errors. The actual opt-in Release window at 125% DPI passed UIA table/picture activation, page-local
-  row/column/overall and eight-handle picture projection, native W3-E commits and Undo/Redo, 130% zoom handle stability,
-  landscape reflow, page-window virtualization, focus recovery and ordinary seeded responsiveness. No full suite,
-  solution build, genuine OS IME or production RTL gate was run.
-- 2026-09-01 after §3.150: the focused W2-G production gate passes **12/12**, production plus W3-E table resize passes
-  **20/20**, the namespace-scoped pagination gate passes **37/37**, and the Release Writer project builds with zero
-  warnings/errors. The actual opt-in structural seed at 125% DPI exposed five distinct row-group/span handles and no
-  unsupported Auto-column/overall handles; a native row resize plus QAT Undo/Redo published fresh generations, restored
-  editor focus and remained responsive. No full suite, solution build, genuine OS IME or production RTL gate was run.
-- 2026-09-01 after §3.151: the focused W2-G production gate passes **14/14**, production plus W3-E table resize passes
-  **22/22**, the namespace-scoped pagination gate passes **39/39**, and the Release Writer project builds with zero
-  warnings/errors. The actual opt-in window passed editor-focused keyboard row resize, Escape, native Undo/Redo, one
-  active cancellation, seventeen coalesced requests and a three-page virtualized handoff. A clean 180-block live probe
-  exceeded twenty seconds without publishing, so long-document responsiveness and default-Paper authorization remain
-  open. No full suite, solution build, genuine OS IME or production RTL gate was run.
-- 2026-09-01 after §3.152: the focused W2-G production gate passes **15/15**, the namespace-scoped pagination gate
-  passes **39/39**, the W3-E table-resize regression passes **8/8**, and the Release Writer project builds with zero
-  warnings/errors. Phase telemetry proved the prior live stall was dispatcher-bound spelling enumeration after the STA
-  had completed, not paginator layout. Generation-scoped visible-page spelling slices restored 120-block publication to
-  **852.8 ms** and the formerly failing 180-block publication to **1005.1 ms**; the 180-block burst accepted generation
-  20 in **797.3 ms** after one active cancellation and eighteen coalesced requests. No full suite, solution build,
-  genuine OS IME or production RTL gate was run.
-- 2026-09-04 after §3.153: the focused W2-G production gate passes **19/19**, the namespace-scoped pagination gate
-  passes **43/43**, and the Release Writer project builds with zero warnings/errors. The actual opt-in 600-block probe
-  reused one stable layout session for forward/reverse scrolling, kept the app cache at eight pages/about 1.3 MB of
-  then-reported encoded PNG/geometry values (decoded accounting was added in §3.154),
-  delivered warm visible requests with 0.1–0.2 ms worker time, showed white placeholders for both uncached fast-jump
-  targets, accepted only the latest request, and deterministically replaced the session for reflow. Process working-set
-  plateau/reclamation remains the next bounded gate. No full suite, solution build, genuine OS IME or production RTL
-  gate was run.
-- 2026-09-04 after §3.154: the focused W2-G production gate passes **21/21**, the namespace-scoped pagination gate
-  passes **45/45**, and the Release Writer project builds with zero warnings/errors. Corrected decoded-pixel accounting
-  held the cache at eight pages/42.4 MB during six complete forward/reverse mixed-content cycles. Cycle-end working set
-  peaked at 696.5 MB in cycle 2 and reclaimed to 593.6–602.6 MB in cycles 5–6 while managed memory stayed bounded. The
-  latest-only two-placeholder jump, deterministic reflow/restore session replacement and 0.2-ms UI-idle probe passed.
-  No full suite, solution build, manual visual acceptance, genuine OS IME or production RTL gate was run.
-- 2026-09-05 after §3.155: final focused production tests pass **26/26**; the pagination namespace passed **50/50**
-  before final reachability/telemetry refinements, followed by the affected production rerun. The final Release Writer
-  build has zero warnings/errors. Four unchanged saved documents and six-cycle 3-page/24-MB long-paragraph/mixed probes
-  completed. Decoded collectibility is positive; long-paragraph latency and native high-water limit the qualified go.
-  Only opt-in diagnostics were launched. No full suite, solution build, manual visual acceptance, IME or RTL gate ran.
-- Before quoting a current count or declaring a new change complete, rerun the proportional build
-  and test commands. Inspect actual/diff PNG artifacts before changing visual baselines or
-  tolerances.

@@ -813,7 +813,7 @@ The focused W3-D/profile/transition gate passes **63/63** and the complete Debug
 RibbonKit **355/355** and visual **1/1** over 63 approved images. The solution build succeeds with zero errors; its only
 12 warnings are retry/copy warnings for `RibbonKit.DesignTools.dll` held open by Visual Studio process 33288. The
 Writer project build itself is zero-warning. No `src/RibbonKit/**` file changed. W3-E remains the next structured-object
-packet after the pending W1-E live visual reacceptance; W2-G still waits for W3-E.
+packet after the pending W1-E live visual reacceptance.
 
 ### 3.121 RibbonKit Writer W3-E1 structured-context and contextual-state foundation — 2026-08-28
 
@@ -1352,7 +1352,7 @@ XPS bitmap spool path corrected in §§3.132-3.134; their fresh-build rechecks p
 Per the user's explicit minimal-testing direction, closure relies on the focused **8/8** combined regression, the
 realized cross-view **1/1**, the existing real-window print lifecycle **1/1**, the zero-warning Writer build and the
 completed live matrix. Full Writer/RibbonKit/visual/solution gates were intentionally not rerun, so no new full-suite
-inventory is claimed. W3-E is accepted. W4-A and W2-G have not begun. No `src/RibbonKit/**` file changed.
+inventory is claimed. W3-E is accepted. W4-A has not begun. No `src/RibbonKit/**` file changed.
 
 ### 3.136 RibbonKit Writer W4-A customization and appearance persistence — 2026-08-31
 
@@ -1466,3 +1466,20 @@ changing its content or column layout. The user accepted the resulting actual wi
 and repeated zero-warning Writer builds; the final one-property card alignment was live-accepted without another test
 or build at the user's request. Full Writer/RibbonKit/visual/solution suites were intentionally not rerun, so no new
 full-suite inventory is claimed.
+
+### 3.162 RibbonKit Writer expanding Paper default and growing margin guide — 2026-09-15
+
+Paper uses one centered native editor with fixed page width and minimum page height.
+The sheet and dotted guide grow downward with content. The guide previously stayed at
+one physical page's content height; it now follows the measured paper interior minus
+scaled margins. That measured height already includes zoom. Print Preview and printing
+retain physical pages, while editing keeps native selection, history and object interaction.
+
+The initial surface/ruler gate passed 20/20 with growth, scrolling and Undo/Redo at
+75/100/150% zoom. A live Release window showed the dotted bottom following 1,354 words
+and an added newline, then shrinking with Undo. These are bounded checks, not a benchmark.
+
+Subsequent cleanup: 77 focused tests passed across the editor, ruler, pictures, table
+resize, preview and actual-window view switching. Release Writer build: zero warnings/errors.
+The combined window run encountered WPF WindowChrome cross-thread caching; the affected
+check passed in a fresh process. No new live UI or full-suite acceptance is claimed.

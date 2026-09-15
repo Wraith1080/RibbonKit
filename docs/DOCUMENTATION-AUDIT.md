@@ -53,7 +53,7 @@ reduction. These are character counts, not tokenizer output or a model-speed ben
 - Skill metadata validation and `git diff --check` pass. Only Markdown files changed.
 - No WPF build, application tests, live UI/IME/DPI/printer acceptance or external-link
   availability check was run for this documentation edit. Recorded prior gates remain
-  dated. W1-E live reacceptance, W2-G performance/IME/RTL/default-Paper decisions, W4-C
+  dated. W1-E live reacceptance, OS IME/RTL acceptance, W4-C
   hardware checks and narrower library follow-ups remain open where unrecorded.
 
 Maintain current progress in [design notes §5](../04-DESIGN-NOTES.md#5-current-state--next-steps),

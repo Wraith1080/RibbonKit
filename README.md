@@ -192,9 +192,8 @@ Writer includes native persistence, page settings, preview/printing, tables/pict
 contextual editing and Settings. Paper opens as one centered sheet that grows downward
 with the document; its dotted margin guide grows with it. Print Preview and printing
 retain physical pagination. View > Continuous provides a workspace-filling editor.
-Experimental multipage editing is deferred and available only through
-`--writer-paginated-diagnostic` (with telemetry). Outstanding acceptance gates and the
-distribution decision remain detailed in the current-status page.
+Editable multipage editing was canceled due to bloat. Outstanding acceptance gates and
+the distribution decision remain detailed in the current-status page.
 Library work includes the remaining MDI milestones and separately scoped projection,
 accessibility and theme candidates. Plans do not establish implementation or acceptance.
 

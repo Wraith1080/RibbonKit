@@ -66,11 +66,6 @@ drift-free orientation and validated margins. Page metadata is document state.
   Preserve deterministic page count/break parity and stable navigation; no live-editor
   paginator mutation. For pictured output, preserve the corrected isolated flow-print
   path rather than re-serializing fixed XPS bitmap resources (history §3.135/RKWF-025).
-- **W2-G experiment (deferred):** `--writer-paginated-diagnostic` or environment
-  `RIBBONKIT_WRITER_PAGINATED_DIAGNOSTIC=1` explicitly enables multipage editing and
-  telemetry. `--writer-classic-paper` or environment value `0` overrides that opt-in.
-  The user restored expanding Paper on 2026-09-15; outstanding pagination acceptance
-  remains deferred in §5 and the packet map.
 
 Page provides presets, orientation, page color and transactional Custom Margins.
 View owns zoom and supported presentation/ruler/guide toggles; the status zoom remains
@@ -123,8 +118,7 @@ Structural Import/Export/Reset cannot leak appearance or transient merge/modal s
 No DOC/DOCX compatibility, OLE/COM activation, macros, mail merge, tracked changes,
 comments/collaboration, cloud sync, or Word-compatible section/header/footer/footnote
 layout is promised. Do not add decorative commands without working model, undo and
-persistence contracts. Editable pagination is an explicitly bounded W2-G investigation,
-not the old blanket non-goal and not a completed Word-compatible engine.
+persistence contracts. Editable multipage editing was canceled due to bloat.
 
 Remaining integration covers native reopen/corrupt-input safety; TXT/RTF loss;
 A4/Letter and physical printing; keyboard/KeyTips/UIA; context/resize cancellation and
@@ -135,4 +129,4 @@ support remains unclaimed. Follow [proportional validation](../CONTRIBUTING.md#p
 and the specific packet's gates; startup alone is not visual acceptance.
 
 W5 decides sample-only versus a portable GitHub artifact after sustained ordinary
-multi-page use. Writer does not change the library release cadence or authorize publication.
+long-document editing and preview/print use. Writer does not change the library release cadence or authorize publication.
