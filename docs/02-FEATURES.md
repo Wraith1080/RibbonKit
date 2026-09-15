@@ -1,94 +1,11 @@
-# Feature Breakdown & Priorities
+# Feature inventory
 
-Priority key: **P0** = core skeleton (Milestone 1) · **P1** = required for a credible ribbon · **P2** = full Office parity · **P3** = differentiators / post-v1 polish
+The maintained public feature inventory is [README — Feature status](../README.md#feature-status).
+Current implementation progress and acceptance limits are in
+[design notes §5](../04-DESIGN-NOTES.md#5-current-state--next-steps).
 
-> **Status: historical planning inventory, not a status board.** Priorities and notes below preserve
-> the original sequencing. Use the ✅/📋 tables in the [README](../README.md) for current support.
-> Items once called out here as missing—including dark variants, RTL/localization, compact input
-> controls, the application menu, and visual snapshots—have since shipped; the simplified single-row
-> ribbon remains a post-v1 candidate.
-
-## Structure & layout
-
-| Feature | Priority | Notes |
-|---|---|---|
-| Ribbon root control + tab strip | P0 | Selection, headers, content host |
-| RibbonTab / RibbonGroup | P0 | Group header label, separators between groups |
-| Adaptive sizing engine (large→medium→small→collapsed) | P0 | Prototype first; see architecture §3 |
-| Group collapse to popup button | P1 | Final reduction step |
-| Group dialog launcher (↘) | P1 | Command + ScreenTip |
-| Minimize mode (double-click tab / chevron / Ctrl+F1) | P1 | Tabs act as popups when minimized |
-| Simplified ribbon (single-row, 365-style) | P3 | Nice differentiator, big layout work |
-| RibbonWindow (QAT + contextual headers in title bar) | P2 | Graceful fallback on plain Window |
-
-## Controls
-
-| Feature | Priority | Notes |
-|---|---|---|
-| RibbonButton — Large / Medium / Small | P0 | Icon + label layouts per size |
-| ToggleButton | P1 | Group exclusivity option |
-| SplitButton / DropDownButton | P1 | Split hit-testing, submenu support |
-| RibbonComboBox (editable + readonly) | P1 | In-group width control |
-| TextBox / CheckBox / RadioButton (ribbon-styled) | P2 | |
-| Control groups (button stacks, 3-row small layout) | P1 | |
-| RibbonMenu / MenuItem with icons + split items | P1 | Used by all dropdowns |
-| ScreenTips (rich tooltip: title, body, image, F1 hint) | P1 | |
-| In-ribbon gallery + expandable popup | P2 | Virtualized, grouped, filterable |
-| Gallery in dropdown menus | P2 | Color picker, style gallery patterns |
-| Live preview events (hover preview / commit / cancel) | P2 | |
-| Arbitrary application content in RibbonGroup | P1 | Direct controls/panels are supported; implement `IRibbonSizeAware` when custom content must react to group reduction |
-
-## Application-level features
-
-| Feature | Priority | Notes |
-|---|---|---|
-| ApplicationButton (File button / Office orb for 2007) | P1 | Orb shape differs per theme |
-| Application menu (2007/2010 dropdown style) | P2 | |
-| Backstage view (2013+ full-window) | P2 | Left nav + content, animation, Esc to close |
-| Quick Access Toolbar (three placements, overflow, add/remove) | P2 | Source-linked proxies for button, toggle, split and drop-down commands; richer group/gallery/combo projections are post-v1 candidates |
-| Customize dialog (QAT plus tabs/groups) | P3 | Word-Options-style extensible host with Import/Export and Reset |
-| Customization persistence | P2 | JSON round-trip for QAT order/placement and tab/group structure; consumer-controlled storage |
-| Contextual tabs + colored tab groups | P2 | Visibility bound to app state |
-| Tab merging (child ribbon contributes into host) | P3 | RibbonMergeSource API |
-| Modal tabs (Print-Preview-style exclusive tab) | P3 | IsModal + close button |
-| Recent-items list (app menu / backstage) | P3 | |
-
-## Input & accessibility
-
-| Feature | Priority | Notes |
-|---|---|---|
-| KeyTips (Alt chained navigation) | P2 | Own subsystem |
-| Arrow/Tab/F6 keyboard navigation | P1 | Required for accessibility sign-off |
-| AutomationPeers for every control | P1 | Grows with each control |
-| RTL support | P2 | |
-| Localization of built-in strings | P2 | .resx + override point |
-
-## Theming & rendering
-
-| Feature | Priority | Notes |
-|---|---|---|
-| Token-based theme layer (shared templates) | P0 | Foundation — do before theme #2 |
-| Office 2024 theme (default, light) | P0 | Ship-first look |
-| Office 2019 theme (+ dark, accent colors) | P2 | |
-| Office 2013 theme (white/light gray/dark gray) | P2 | |
-| Office 2010 theme (silver/blue/black) | P2 | |
-| Office 2007 theme (blue/silver/black, glass look) | P2 | Most geometry overrides |
-| Runtime theme switching | P1 | ThemeManager |
-| Per-monitor v2 High DPI | P1 | Vector icons only; test 100–200% |
-| Built-in vector icon set for samples | P2 | Geometry-based |
-
-## Developer experience & project infrastructure
-
-| Feature | Priority | Notes |
-|---|---|---|
-| MVVM: ItemsSource + DataTemplates everywhere | P1 | Design API this way from day one |
-| XAML designer preview (VS 2022) | P1 | Design-mode guards, default content |
-| XML doc comments on all public API | P1 | Enforced in CI |
-| Frozen public-API compatibility baseline | P1 | Nullability-aware shipped/unshipped files enforced for both runtime TFMs |
-| Repository-native user documentation | P1 | README is the public entry point; focused Markdown and Showcase provide depth |
-| Showcase/demo app | P0 | Grows with every feature; is the test bed |
-| NuGet package + SourceLink + symbols | P1 | Package layout, metadata, symbols and isolated two-TFM consumer compile are enforced after pack |
-| CI: build + tests + pack on PR | P0 | GitHub Actions |
-| Visual regression snapshots per theme/DPI | P2 | |
-| Docs site (getting started, control gallery) | P2 | |
-| README, LICENSE (MIT), CONTRIBUTING, issue templates | P0 | Open-source hygiene from day one |
+The original P0–P3 sequencing table has been retired: it duplicated the README and
+mixed completed work with provisional APIs. Use the [roadmap](03-ROADMAP.md) for
+remaining tracks, [architecture](01-ARCHITECTURE.md) for implementation boundaries,
+and the Showcase for runnable component examples. This path remains as a stable
+entry point for existing links.

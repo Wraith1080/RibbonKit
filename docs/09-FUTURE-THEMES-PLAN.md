@@ -1,178 +1,58 @@
-# Future theme expansion plan
+# Future theme candidates
 
-> **Status:** post-v1 candidate track. Office 2021 is the leading first addition; implementation has
-> not started.
+These are unimplemented design candidates, not `RibbonTheme` values or release
+commitments. Current support is in [README](../README.md#theming--rendering).
+The intended order is Office 2021 → Aurora → Warm Sand → Graphite Copper;
+Evergreen, Aubergine and Polar Slate remain exploratory.
 
-RibbonKit may add more visual themes after v1.0.0. The first candidate is **Office 2021**, which was
-deliberately skipped before v1 because it is a transitional step between the existing Office 2019
-and Office 2024 themes. It now has value as a deliberate bridge rather than a release blocker. Later
-choices can be additional official variants, later generations, or explicitly named RibbonKit/
-community palettes.
+## Architecture and intake
 
-## 1. Architectural boundary
+Keep one shared template family, complete token-key parity, dynamic resources,
+opaque backdrop fallback and application-owned icons. Add narrowly scoped tokenized
+geometry only when existing metrics cannot express the approved reference. Public
+new-theme enum/API additions require review and XML documentation.
 
-- Preserve one shared control-template set. A new look should normally be a complete token
-  dictionary, plus its dark/black overlay where that variant is promised.
-- Do not hardcode theme colors or metrics into shared templates.
-- Every new token must exist in every shipped theme dictionary; themes that do not use the effect
-  receive a transparent/zero value.
-- A genuinely different geometry may add tokenized metrics or narrowly scoped template triggers,
-  but must not fork the complete template family.
-- Continue using `DynamicResource` so open ribbons, popups, custom controls and projections recolor
-  during a live `ThemeManager` switch.
-- Adding a value to the public `RibbonTheme` enum is an additive API change and requires XML docs,
-  API-baseline review and switch/default-path tests.
+Before implementation, establish name/provenance, representative ribbon/title/File/
+menu/control images, palette variants, accent/material policy and geometry differences.
+The Office 2021 direction still needs user approval of collected references against
+current 2019/2024 before implementation; already-given approval need not be repeated.
 
-## 2. Leading candidate: Office 2021 pre-rounded transition
+## Office 2021 reference direction
 
-RibbonKit's `Office2021` label means the **sharp-edged, pre-Windows-11-refresh Office UI** shown in the
-user-approved reference. It is not the later rounded visual refresh that is already substantially
-represented by RibbonKit's Office 2024 theme.
+The project label means the user's sharp-edged, pre-rounded reference: compact 2019
+geometry and separators, blue integrated title bar/white ribbon, newer centered
+rectangular search/title composition and updated command treatment. Avoid importing
+2024 floating cards, pills, Mica dependence or generous spacing. Compare title/QAT,
+tab selection, popup shadows and Backstage side by side so the result remains distinct
+from both neighbors. Proposed dictionary names and enum value remain provisional.
 
-The intended position is visibly between the current themes:
+## Original palettes
 
-- preserve Office 2019's compact density, square control edges, flat group geometry and thin
-  separators;
-- retain the saturated blue integrated title bar and white ribbon surface;
-- add the newer centered title-bar search box and its rectangular results flyout;
-- use the updated command/icon treatment and later-era title/QAT arrangement without introducing
-  Office 2024-style rounded cards, pill-like controls, Mica surfaces or generous spacing;
-- keep menus, Backstage and popup edges predominantly square, with only subtle system-level rounding
-  where the reference actually shows it.
+Values are starting anchors, not approved final colors. Columns list base, raised
+surface, border, primary text, secondary text and accent respectively.
 
-The key visual signature is therefore **almost Office 2024 in capability and title-bar composition,
-but still Office 2019 in geometry**. Reference capture must settle exact title-bar/search dimensions,
-tab underline/selection, group separators, hover/pressed washes, popup shadow, Backstage treatment
-and light/dark variants. A side-by-side matrix must make the 2019 -> 2021 -> 2024 progression legible
-without letting 2021 collapse into either neighbor.
+| Candidate | Palette anchors | Geometry/material direction |
+| --- | --- | --- |
+| Aurora | `#111525`, `#1A2135`, `#34415D`, `#F2F5FA`, `#AAB6CA`, `#63A8FF` | Matte indigo, restrained blue/violet title gradient, ~6-DIP corners, thin underline, optional material with opaque fallback |
+| Warm Sand | `#E8DDC7`, `#F1E8D7`, `#B8A98F`, `#3D352B`, `#6F6252`, `#2F7D76` | Parchment/sand light surfaces, restrained teal; no texture or ornamental chrome |
+| Graphite Copper | `#181818`, `#242321`, `#3A3733`, `#F2EEE7`, `#B8AEA1`, `#D48A3A` | Compact 2–4 DIP charcoal geometry, warm ivory/copper, thin outlines and little shadow |
 
-Provisional implementation shape:
+Aurora group/hover/pressed/checked anchors: `#171D30`, `#26FFFFFF`, `#3DFFFFFF`,
+`#344E78`. Warm Sand state anchors: `#DED0B7`, `#CCB995`, `#C5DDD6`.
+Graphite Copper state anchors: `#34302B`, `#493B2C`, `#5A4229`.
+Keep live accent overrides. Evergreen explores forest/sage/cream; Aubergine plum/lavender
+with restrained saturation; Polar Slate blue-gray/cyan and subtle translucency, only
+if distinct from Aurora/2024.
 
-- `RibbonTheme.Office2021`;
-- `Tokens.Office2021.xaml` and `Tokens.Office2021.Dark.xaml`;
-- the existing shared `Office2024.xaml` control-template aggregator;
-- a Showcase selector entry and complete theme/variant snapshot rows.
+Windows contrast themes are separate accessibility work based on system colors,
+not an aesthetic preset. Current gallery/scrollbar fallbacks do not establish
+whole-ribbon contrast-theme support.
 
-Icons remain application assets. RibbonKit should match the reference's built-in chrome glyph weight,
-but a theme must not silently replace application-authored command artwork.
+## Acceptance
 
-## 3. Original RibbonKit theme shortlist
-
-After Office 2021 closes the historical gap, RibbonKit should add an original theme that establishes
-an identity beyond reproducing Office generations.
-
-### 3.1 RibbonKit Aurora — flagship original candidate
-
-Aurora is the recommended first original theme: a dark indigo foundation with restrained
-blue-violet depth. It must not be merely another Black variant. Its identity comes from a coherent
-material and geometry policy:
-
-- matte indigo ribbon and group surfaces;
-- a subtle blue-to-violet title-band gradient with an opaque fallback;
-- approximately 6-DIP corners, between Office 2019's flat geometry and Office 2024's stronger
-  rounding;
-- a thin accent underline for the selected tab;
-- translucent hover/pressed washes instead of strong state borders;
-- a neutral dark Backstage rail, with accent reserved for selection and intentional commands;
-- optional Mica/Acrylic title material without making the theme dependent on DWM support;
-- subtle inner highlights rather than Office 2007/2010 gloss.
-
-Provisional core palette:
-
-| Role | Value |
-|---|---|
-| Window/ribbon base | `#111525` |
-| Raised control surface | `#1A2135` |
-| Group surface | `#171D30` |
-| Border/separator | `#34415D` |
-| Primary text | `#F2F5FA` |
-| Secondary text | `#AAB6CA` |
-| Default accent | `#63A8FF` |
-| Hover wash | `#26FFFFFF` |
-| Pressed wash | `#3DFFFFFF` |
-| Checked surface | `#344E78` |
-
-Application accent overrides must remain supported. Application-authored icons are not recolored or
-replaced except through the existing explicit QAT monochrome behavior.
-
-### 3.2 Warm Sand — non-white light candidate
-
-Warm Sand provides a light theme without white or cool gray as its dominant surface. It uses muted
-parchment/sand surfaces, dark brown-gray text and a restrained teal accent. The intended result is
-comfortable and professional, not textured or ornamental; all rendering remains vector/solid or
-tokenized gradient.
-
-Suggested anchors: base `#E8DDC7`, raised surface `#F1E8D7`, border `#B8A98F`, primary text
-`#3D352B`, secondary text `#6F6252`, accent `#2F7D76`, hover `#DED0B7`, pressed `#CCB995`, and checked
-surface `#C5DDD6`.
-
-### 3.3 Graphite Copper — warm professional dark candidate
-
-Graphite Copper combines charcoal surfaces and warm ivory text with a copper/orange default accent.
-It should use compact 2–4 DIP geometry, restrained one-pixel outlines and almost no shadow, giving it
-a denser engineering/creative-tool character than Aurora.
-
-Suggested anchors: base `#181818`, raised surface `#242321`, border `#3A3733`, primary text
-`#F2EEE7`, secondary text `#B8AEA1`, accent `#D48A3A`, hover `#34302B`, pressed `#493B2C`, and checked
-surface `#5A4229`.
-
-### 3.4 Later exploratory palettes
-
-- **Evergreen:** deep forest and sage with pale cream text; a calm low-saturation dark option.
-- **Aubergine:** dark plum with restrained lavender highlights; elegant but requires strict
-  saturation/contrast control.
-- **Polar Slate:** cool blue-gray surfaces with an icy cyan accent and subtle translucency; reject it
-  if it overlaps too closely with Office 2024 or Aurora.
-
-High contrast is not part of this aesthetic shortlist. It should follow system accessibility colors
-and behavior rather than appear as another user-selected RibbonKit palette. This is future whole-surface
-accessibility work: the current RibbonKit release does not claim complete Windows contrast-theme support,
-even though the RKWF-013 gallery popup correction and RKWF-019 scrollbar introduced targeted system-color
-fallbacks for those two surfaces.
-
-Recommended order: **Office 2021 -> RibbonKit Aurora -> Warm Sand -> Graphite Copper**. Evergreen,
-Aubergine and Polar Slate remain exploratory until the earlier themes establish how much maintenance
-the expanded visual matrix requires.
-
-## 4. Theme intake checklist
-
-Before implementation, record:
-
-1. Theme/variant name and whether it represents a real Office generation or RibbonKit styling.
-2. Reference images for ribbon, title bar, Backstage/application menu, menus and common controls.
-3. Light/dark/black scope and accent-color behavior.
-4. Window backdrop policy (opaque, Mica, Acrylic, or generation-specific glass).
-5. Geometry differences that cannot be expressed by existing tokens.
-6. Licensing/provenance of any reference or distributable artwork.
-
-Prefer a token-only variant as the first post-v1 theme slice. It exercises the extension boundary
-without committing to another generation-specific control-template branch.
-
-## 5. Surface checklist
-
-Each selected theme must cover, rather than only recolor the main ribbon:
-
-- `RibbonWindow`, title bar, caption buttons, QAT placements and contextual tabs;
-- normal/toggle/dropdown/split controls at all adaptive sizes and states;
-- groups, collapsed flyouts, galleries, menus, ScreenTips and KeyTips;
-- Backstage and Office 2007-style application-menu surfaces;
-- inputs, customization/options dialogs, message bar and MDI chrome;
-- disabled, hover, pressed, checked, focus and high-contrast-sensitive states;
-- custom-control consumer tokens defined by the integration plan.
-
-## 6. Verification gate
-
-- Token-key parity tests pass against every existing theme and variant.
-- No new literal theme color/metric leaks into shared control templates.
-- Deterministic snapshots cover the representative matrix at 100/125/150/200% DPI, with manual
-  175% inspection where fractional rounding is most revealing.
-- Live switching verifies open ribbon content, QAT, Backstage/application menu, popups and custom
-  projections without stale resources.
-- LTR/RTL, normal/maximized window edges, reduced motion and the supported backdrop modes are checked.
-- The Showcase exposes the new theme and its intended variants before release documentation claims
-  support.
-
-Office 2021 remains first. Its implementation begins only after representative Word/Excel/PowerPoint
-references are collected and the user approves the intended midpoint against RibbonKit's current
-Office 2019 and Office 2024 themes. Original themes then follow the ordered shortlist above, with
-their palettes treated as starting points rather than approved final values.
+Cover window/caption/QAT/contextual tabs; all command sizes and states; collapsed
+flyouts, galleries, menus, ScreenTips/KeyTips; Backstage/application menu; inputs,
+options/customization, message bars, MDI and consumer tokens. Check token parity,
+deterministic 100/125/150/200% snapshots, live 175% where needed, open-surface theme
+switching, LTR/RTL, normal/maximized edges, reduced motion and backdrop fallback.
+Showcase must expose the selected variants before documentation claims they ship.

@@ -1,62 +1,31 @@
 # RibbonKit Writer icon catalog
 
-> **Status:** app-owned W1-D artwork. `Icons.xaml` currently contains 110 vector `DrawingImage`
-> resources: 105 small/general resources and five explicit Large variants. RibbonKit itself does not
-> own or synthesize these icons.
+`Icons.xaml` is the source of truth: the 2026-09-08 source inventory contains
+113 `DrawingImage` resources, including five `.Large` variants. Icons are app-owned;
+resource existence does not mean the associated feature is implemented.
 
-## Conventions
+## Visual contract
 
-- All artwork uses a 24-unit coordinate grid and remains vector at every WPF/DPI scale.
-- Current command keys keep the `Icon.Writer*` identities already consumed by `MainWindow.xaml`.
-- Large command artwork uses the `.Large` suffix.
-- Muted blue and muted amber are the only chromatic `Writer.Icon.Brush.*` resources. Dark ink, slate,
-  paper and paper-shadow are structural neutrals and do not introduce extra command identities.
-- Dark ink owns primary structure, muted blue owns secondary/action detail, and muted amber is reserved
-  for color, warning or deliberate emphasis. Ordinary Home/QAT commands use the same ink/blue pairing
-  across Clipboard, Font, Paragraph and Editing instead of assigning a palette per group.
-- Every palette pen uses a 1.4-unit rounded stroke. Line-based current commands use those pens instead
-  of ad hoc filled bars so alignment, list, indent, paragraph, find and zoom glyphs have one optical weight.
-- The semantic palette is referenced with `DynamicResource`; a later appearance dictionary can replace
-  it without changing command resources or geometry.
-- Contextual sets keep the same color treatment: undo/redo; bold/italic/underline; all text alignments;
-  bullets/numbering; find/replace; and all zoom actions. Do not assign a different color just to
-  distinguish siblings whose geometry already communicates the operation.
+Use a 24-unit vector grid and stable `Icon.Writer*` keys. Large artwork is reserved
+for commands with primary visual weight. Shared palette pens use rounded 1.4-unit
+strokes. Dark ink owns structure, muted blue secondary/action detail and muted amber
+color/warning/emphasis; paper/slate/shadow remain structural neutrals. Related commands
+share the palette rather than receiving group-specific colors. Palette resources are
+dynamic so appearance changes do not require geometry replacement.
 
-## Current Home/QAT resources
+## Sources and uses
 
-`Document`, `Save`, `Undo`, `Redo`, `Paste`, `Cut`, `Copy`, `Font`, `TextColor`, `Highlight`, `Bold`,
-`Italic`, `Underline`, `AlignLeft`, `AlignCenter`, `AlignRight`, `Justify`, `Bullets`, `Numbering`,
-`IndentIncrease`, `IndentDecrease`, `ParagraphSpacing`, `Find`, `Replace`, `SelectAll`, `SpellCheck`,
-`ZoomOut`, `ZoomReset` and `ZoomIn`.
+- [Icons.xaml](Icons.xaml) contains Home, File, Page/View, Insert, Table/Picture and
+  general-purpose resources; inspect consuming XAML/code before treating one as reserve.
+- `Document`, `Save`, `Paste`, `Undo` and `Redo` have explicit `.Large` variants.
+- `Home`, `BackstageNew`, `BackstageOpen`, `BackstageSave`, `BackstageSaveAs`,
+  `BackstagePrint`, `Options` and `Exit` are File-navigation silhouettes. Backstage
+  uses a foreground-tinted mask, so cutouts and outline distinctions must survive tinting.
+- [Assets/Writer.svg](Assets/Writer.svg) is the identity master; `Assets/Writer.ico`
+  supplies the multiframe application icon. Writer's Orb uses the same W mark with
+  its blue gradient, distinct from the pale sphere.
 
-Large variants currently exist for `Document`, `Save`, `Paste`, `Undo` and `Redo`.
-
-## Current Backstage resources
-
-`Home`, `BackstageNew`, `BackstageOpen`, `BackstageSave`, `BackstageSaveAs`, `BackstagePrint`,
-`Options` and `Exit` are the eight navigation silhouettes. The five `Backstage*` resources are
-deliberately separate from the layered ribbon artwork because Backstage renders icons as a single
-foreground-tinted opacity mask. Their page-plus, open-folder, cut-out floppy, floppy-pencil and
-printer silhouettes keep their semantic differences after tinting. The open folder has a closed rear
-outline behind its front flap, while the Save As pencil has its own transparent center stripe. The gear uses an even-odd center
-cutout so its hub cannot become a solid dot. `Assets/Writer.svg` is the application-identity master; the reproducible
-`Assets/Writer.ico` contains nine PNG frames from 16 through 256 pixels. The same W mark is used by
-Writer's Office 2007 Orb template, filled with the identity's `#3F94DF` to `#145AA6` blue gradient
-so it remains distinct from the pale Orb sphere.
-
-## Prepared reserve
-
-| Feature area | Resource suffixes after `Icon.Writer` |
-|---|---|
-| File and Backstage | `CloseDocument`, `ExportPdf`, `PrintPreview`, `Properties`, `Recent` |
-| Page layout | `PageSize`, `Portrait`, `Landscape`, `Margins`, `PageColor`, `Columns`, `PageBreak` |
-| View | `EditLayout`, `PrintLayout`, `OnePage`, `TwoPages`, `PageWidth`, `PreviousPage`, `NextPage`, `FullScreen`, `Ruler`, `Gridlines` |
-| Insert | `Image`, `Hyperlink`, `RemoveLink`, `DateTime`, `Table` |
-| Table structure | `AddRowAbove`, `AddRowBelow`, `AddColumnLeft`, `AddColumnRight`, `DeleteRow`, `DeleteColumn`, `MergeCells`, `SplitCells`, `DistributeRows`, `DistributeColumns` |
-| Table presentation | `CellAlignTop`, `CellAlignMiddle`, `CellAlignBottom`, `CellShading`, `Borders` |
-| Appearance | `Theme`, `DarkMode`, `Backdrop`, `CustomizeRibbon` |
-| General actions | `Refresh`, `Delete`, `Check`, `Warning`, `Information`, `Error`, `Lock`, `Unlock`, `Import`, `Export`, `Reset`, `Plus`, `Minus`, `Close`, `ArrowUp`, `ArrowDown`, `ArrowLeft`, `ArrowRight` |
-
-Reserve artwork is deliberately present before its command surfaces. Future packets should reuse the closest
-semantic resource, add a Large variant only when the ribbon actually gives the action primary visual weight,
-and remove a reserve only when the corresponding planned feature is intentionally dropped.
+Reuse semantically matching resources. The old table labeled Page/View/Insert/Table
+artwork as future reserve even after those commands shipped; it has been retired.
+Do not expose a dead command merely because an icon exists. For resource discovery
+and designer assignment, see the [Icons.xaml browser](../../src/RibbonKit.Design/SETUP-DESIGNTOOLS.md#using-the-iconsxaml-browser).

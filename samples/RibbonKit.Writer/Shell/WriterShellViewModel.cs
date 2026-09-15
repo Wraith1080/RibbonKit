@@ -46,6 +46,7 @@ public sealed class WriterShellViewModel : INotifyPropertyChanged, IDisposable
     public event PropertyChangedEventHandler? PropertyChanged;
     /// <summary>The currently displayed document.</summary>
     public WriterDocument CurrentDocument => _document;
+
     /// <summary>Window title including identity and dirty marker.</summary>
     public string Title => (_document.IsUntitled ? "Untitled" : Path.GetFileName(_document.Path)) + (_document.IsDirty ? " *" : "") + " - RibbonKit Writer";
     /// <summary>Human-readable last operation result.</summary>

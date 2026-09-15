@@ -1,44 +1,38 @@
 # RibbonKit visual snapshots
 
-This project renders fixed RibbonKit scenes off-screen and compares them with approved PNGs.
-It complements the logic-focused `RibbonKit.Tests` project; it does not open a window or depend on
-the showcase's persisted state.
+The harness renders fixed scenes off-screen, independent of Showcase preferences.
+It pins culture, dimensions, text rendering, rounding, software rendering and disabled
+animation. Each scene renders twice and must be pixel-identical before approval comparison.
 
-The suite covers the light and dark/black variants of all five themes at 100%, 125%, 150%, and 200%
-DPI. It fixes culture, dimensions,
-text rendering, layout rounding, and software rendering, and disables RibbonKit animation before
-taking each snapshot. Every scene is rendered twice and must produce identical pixels before it is
-compared with the approved image.
+The source inventory on 2026-09-08 contains 63 approved PNGs: five themes in light and
+dark/black at 100/125/150/200% plus focused RTL, File, Backstage, application-menu,
+merged-tab and window-frame scenes. This is a file count, not a fresh test result.
+See the test source for the exact scene matrix rather than maintaining another list.
 
-Three additional Office 2024 snapshots at 100% apply `FlowDirection.RightToLeft`: one to the ribbon
-scene, one to the real QAT-customization template, and one to a real Backstage containing Arabic,
-Latin, mixed-direction text, Arabic-Indic digits, and an explicitly LTR document identifier. The
-first two keep invariant English resources so mirrored layout/action-direction regressions are not
-confused with translation or font fallback; the third deliberately pins representative bidi shaping.
+The harness assigns and checks root DPI before layout; bitmap DPI metadata alone
+cannot control a disconnected WPF tree. RTL cases separate invariant-English layout
+from representative bidi shaping. Open/checked controls stand in for state brushes
+where disconnected `IsMouseOver` cannot be forced reliably. These snapshots do not
+establish actual mouse, IME, monitor-transition or DWM-material acceptance.
 
-A focused Office 2010 snapshot at 100% renders the open File application button, a checked toggle,
-an open dropdown, and both halves of an open split button. These are deterministic stand-ins for the
-shared state brushes because `IsMouseOver` cannot be forced reliably on the disconnected visual tree.
-A second focused Office 2010 snapshot renders the real `Classic2010` Backstage shell, including its
-square radial selection marker and content drop shadow. Two more focused snapshots render the complete
-Office 2007 Black and Office 2010 Black application menus. Later focused application-menu, Backstage, merged-tab and
-window-frame scenes extend the same corpus; the suite currently contains 63 approved PNGs.
+## Review and update
 
-`RenderTargetBitmap`'s 96-DPI setting does not override the DPI WPF assigns to a disconnected visual
-tree. The harness explicitly assigns each scene's root DPI with `VisualTreeHelper.SetRootDpi` before
-layout, verifies that WPF reports the requested value, and scales both bitmap dimensions and DPI
-metadata consistently. The matrix is therefore independent of the physical monitor's scaling.
+Approved images are under `Snapshots/approved`. Inspect actual and magnified diff
+PNGs in `TestResults/visual` before deliberately replacing a baseline or threshold.
+CI uploads them in the failure-only `visual-snapshot-diagnostics` artifact. An early
+matrix failure says nothing about later scenes.
 
-Approved images live in `Snapshots/approved` and are reviewed like source changes. To intentionally
-replace them after reviewing a visual change, run:
+After the intended visual change has been reviewed, run from the repository root:
 
 ```powershell
-$env:RIBBONKIT_UPDATE_SNAPSHOTS = '1'
-dotnet test .\tests\RibbonKit.VisualTests\RibbonKit.VisualTests.csproj --configuration Release
-Remove-Item Env:RIBBONKIT_UPDATE_SNAPSHOTS
+$previousSnapshotUpdate = $env:RIBBONKIT_UPDATE_SNAPSHOTS
+try {
+    $env:RIBBONKIT_UPDATE_SNAPSHOTS = '1'
+    dotnet test tests/RibbonKit.VisualTests/RibbonKit.VisualTests.csproj --configuration Release
+} finally {
+    $env:RIBBONKIT_UPDATE_SNAPSHOTS = $previousSnapshotUpdate
+}
 ```
 
-On a mismatch, the test writes the actual image and a magnified difference image beneath
-`TestResults/visual`; that directory is already ignored by Git. GitHub Actions uploads those PNGs
-as the failure-only `visual-snapshot-diagnostics` run artifact, so cross-machine differences can be
-reviewed before changing an approval or comparison threshold.
+Review the resulting image diff and test output. Ordinary verification leaves the
+update variable unset; see [validation tiers](../../CONTRIBUTING.md#proportional-validation).

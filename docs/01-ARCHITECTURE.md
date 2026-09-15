@@ -1,97 +1,98 @@
-# Architecture Plan
+# RibbonKit architecture
 
-> **Status: design record.** Most of this architecture is implemented, but examples and proposed
-> APIs below may describe the original design rather than the as-built code. Use the
-> [README](../README.md) for supported features and [design notes](../04-DESIGN-NOTES.md) for current
-> implementation details and pitfalls.
+Checked against the repository on 2026-09-08. This replaces the original speculative
+layout and API sketches. For dated decisions and regressions, follow the numbered
+[design-history index](../04-DESIGN-NOTES.md#3-implemented-features-chronological-with-pitfalls).
 
-## 1. Solution & repository layout
+## Repository layout
 
-```
-/ (repo root)
-├── src/
-│   └── <LibraryName>/                  # single control library, net8.0-windows;net9.0-windows
-│       ├── Controls/                   # one file per control
-│       ├── Layout/                     # sizing engine, panels, size definitions
-│       ├── Theming/                    # theme manager, resource keys
-│       ├── Input/                      # KeyTips, keyboard navigation
-│       ├── Automation/                 # UIA peers
-│       ├── State/                      # QAT/customization persistence
-│       └── Themes/
-│           ├── Generic.xaml            # default (Office 2024) templates
-│           ├── Office2007/ Office2010/ Office2013/ Office2019/ Office2024/
-│           └── Shared/                 # tokens: brushes, metrics, geometry icons
-├── samples/
-│   └── Showcase/                       # demo app exercising every feature + theme switcher
-├── tests/
-│   ├── UnitTests/                      # layout math, size reduction, state serialization
-│   └── VisualTests/                    # rendered snapshot comparisons per theme/DPI
-├── docs/                               # these planning docs + user documentation
-└── .github/workflows/                  # CI: build, test, pack, publish
-```
+| Path | Responsibility |
+| --- | --- |
+| `src/RibbonKit/Controls` | Lookless controls, KeyTips, customization, merge/modal and MDI services |
+| `src/RibbonKit/Layout` | Adaptive group sizing and custom panels |
+| `src/RibbonKit/Theming`, `Themes` | Theme manager, token dictionaries and shared templates |
+| `src/RibbonKit/Animation`, `Interop` | Motion and native window/backdrop integration |
+| `src/RibbonKit/Automation`, `Localization` | UIA peers, built-in strings and provider fallback |
+| `src/RibbonKit.Design` | Separate `net472` Visual Studio design tools; no runtime-project reference |
+| `samples/RibbonKit.Showcase` | Component, theme, RTL/localization and MDI laboratory |
+| `samples/RibbonKit.Writer` | App-owned document, editing, persistence and pagination services |
+| `tests/RibbonKit.Tests`, `tests/RibbonKit.Writer.Tests`, `tests/RibbonKit.VisualTests` | Runtime, consumer and deterministic rendering coverage |
+| `eng`, `.github/workflows/ci.yml` | Package/performance utilities and Windows build/test/pack validation |
 
-## 2. Control class hierarchy
+Runtime frameworks are declared in `RibbonKit.csproj`; CI has no publishing step.
 
-```
-Ribbon (Control)
-├── QuickAccessToolbar
-├── ApplicationButton  ──►  ApplicationMenu (simple)  |  Backstage (full-window)
-├── RibbonTabControl
-│   ├── RibbonTab (regular / contextual / modal)
-│   │   └── RibbonGroup
-│   │       ├── RibbonButton              (Large / Medium / Small size states)
-│   │       ├── RibbonToggleButton
-│   │       ├── RibbonSplitButton
-│   │       ├── RibbonDropDownButton
-│   │       ├── RibbonComboBox
-│   │       ├── RibbonTextBox / RibbonCheckBox / RibbonRadioButton
-│   │       ├── InRibbonGallery  ──►  expands to GalleryPopup
-│   │       ├── RibbonGroupSeparator / RibbonControlGroup (button stacks)
-│   │       └── GroupDialogLauncher (small ↘ button in group corner)
-│   └── ContextualTabGroup (colored header spanning related tabs)
-└── RibbonStatusBar (optional, later)
-```
+## Controls and adaptive layout
 
-Shared base: `RibbonControl` abstract class providing `Size` (Large/Medium/Small), `SizeDefinition` (allowed reduction sequence), `Header`, `Icon`/`LargeIcon`, `ScreenTip`, `KeyTip`, `ICommand` plumbing. All items containers support `ItemsSource` + templates for MVVM.
+`Ribbon` hosts tabs, groups, commands, File surfaces, contextual state and QAT.
+Use actual control APIs and the shipped/unshipped public baselines rather than the
+old proposed universal `RibbonControl` base or unimplemented status-bar types.
+`RibbonGroupsPanel` and `ReductionAlgorithm` reduce groups through permitted sizes
+and collapsed flyouts. Keep modal/merge logic out of that engine.
+Arbitrary WPF group content is supported; `IRibbonSizeAware` is an optional reduction
+hook. Preserve source ownership when a group subtree moves into a popup.
 
-## 3. The adaptive sizing engine (critical subsystem)
+## One template set, dynamic tokens
 
-A custom panel (`RibbonGroupsPanel`) measures groups at their preferred size and, when width is insufficient, applies **reduction steps** in a declared order (e.g. `"LargeGroup, MediumGroup, SmallGroup, Collapsed"` per group, with a tab-level priority order for *which* group shrinks first). Each control declares its own `SizeDefinition` ("Large, Middle, Small") describing how it renders at each group state. Final step collapses a group to a single dropdown button that opens the full group in a popup. Requirements: no layout loops, single measure pass per width change where possible, smooth behavior during window resize, and correct interaction with the minimized ribbon. **Prototype this in Phase 1** with plain buttons before any other feature depends on it.
+`Themes/Generic.xaml` supplies the default theme path. `Themes/Office2024.xaml`
+aggregates `Controls.*.xaml` for every Office generation; it is a stable shared
+composition, not an experimental split. `Tokens.Office*.xaml` and dark dictionaries
+supply matching brush/metric/effect keys through `DynamicResource`.
 
-## 4. Theming system
+Do not fork per-theme templates. New keys belong in every theme, with neutral values
+where unused. Brush tokens may be gradients. Keep dependent `StaticResource` and
+`BasedOn` chains within valid dictionary/deferred-template scope; realized popups
+and native scrollbars need explicit resource-scope verification (§3.37 and later
+consumer corrections). `Controls.Shared.xaml` remains first in the aggregator.
 
-Two-layer design: **templates are theme-agnostic**; they reference a token layer (`ComponentResourceKey`s or markup extension) of brushes, thicknesses, corner radii, fonts, and metrics. Each Office theme (2007, 2010, 2013, 2019, 2024) is a `ResourceDictionary` that supplies token values; only where a generation genuinely changed geometry (e.g. 2007's rounded glass tabs vs 2013's flat tabs) does a theme override a template. `ThemeManager` static class swaps merged dictionaries at runtime (whole app or per-ribbon), supports accent colors and a generation-specific dark overlay for every theme. This keeps 5 themes maintainable: a visual bug fix lands once, in the shared template.
+`ThemeManager` swaps dictionaries and reapplies accent/title overrides. Clear old
+override keys before deriving the next palette. XAML should use dynamic resources;
+code-drawn consumer chrome must invalidate after appearance changes. Animate opacity
+and transforms, honoring reduced motion, rather than layout or a token brush's Color.
 
-## 5. Window integration
+## Native window boundary
 
-`RibbonWindow` (optional but recommended) uses `WindowChrome` to draw the QAT and contextual tab group headers into the title bar, matching Office. Must handle: maximize (content not clipped), per-monitor DPI changes, Windows 11 snap layouts on the caption buttons, and graceful fallback when the consumer uses a normal `Window` (ribbon renders self-contained, QAT below title bar).
+`RibbonWindow` adds title/QAT integration, themed caption controls and optional
+backdrops; ordinary `Window` hosting remains supported. The application owns its
+PerMonitorV2 manifest. Maximize uses measured work-area inset compensation in DIPs.
+A WM_GETMINMAXINFO-only fix was insufficient; preserve the measured inset contract.
+Preserve native maximize hit testing and non-client button handling for Snap Layouts;
+a WPF hover alone is not the native contract. Theme selection, frame appearance and
+DWM backdrop preference are separate choices with an opaque fallback.
 
-## 6. Input: KeyTips & keyboard navigation
+## Input, File surfaces and customization
 
-Global Alt-key handler enters KeyTip mode: overlay adorner shows each control's `KeyTip` string; typing chains into tab → group → control (Alt, H, F, S style). Esc walks back one level; any click/focus loss dismisses. Arrow-key navigation across the ribbon per UIA expectations. F6 cycles regions. This is its own subsystem (`Input/`) with the ribbon exposing an attachment point — do not scatter key handling across controls.
+KeyTips and keyboard navigation are control services; avoid duplicating input state
+in layout code. Localized built-in text uses embedded resources and
+`RibbonLocalization.Provider`, with null results falling back to the current culture.
+Application command text remains app-owned.
 
-## 7. Backstage, galleries, QAT, customization
+Backstage placement depends on its design; Classic2010 starts below the live tab row.
+Office 2007's two-pane application menu is a distinct control. Galleries combine
+strip/popup presentation and live-preview semantics. Test realized popups, not only
+resource declarations.
 
-**Backstage**: full-window overlay replacing the ribbon on ApplicationButton click; left nav of `BackstageTabItem`s + content area; own theming; Esc/back-button to exit; animates in per 2013+ behavior.
+QAT proxies for buttons, toggles, splits and dropdowns stay linked to source commands.
+Overflow, borrowed menus, disabled state and merge parking share the source lifetime.
+Group/gallery/combo projections remain candidates in the [integration plan](08-CUSTOM-CONTROL-INTEGRATION-PLAN.md).
+`RibbonCustomizationSerializer` owns structural layout; applications own storage and
+separate appearance/document settings. Stable command IDs support persistence.
 
-**Galleries**: `InRibbonGallery` shows a scrollable strip of items in the ribbon with expand button opening a resizable popup; `Gallery` inside dropdowns. Both use `VirtualizingPanel`, item grouping with headers, filter support, and live-preview hooks (mouse-over raises preview events, click commits).
+## 8. Merge, modal and MDI
 
-**QAT**: `Ribbon.QuickAccessItems` holds the active strip. `Ribbon.AddToQuickAccess` leaves the source command in its group and creates a small proxy; toggles, enabled state, split/drop-down behavior, merge parking, and persistence remain tied to the source. Constrained title-bar/tab-row placements create a second, medium proxy of the original command in the overflow flyout. The supported built-in candidate set is currently button, toggle, split, and drop-down commands; groups, galleries, and combo boxes are intentionally not projected yet. A future projection contract must distinguish strip and overflow contexts, create a fresh element for each visual parent, preserve source identity for persistence, and own popup cleanup. The earlier proposed one-method `IQuickAccessItemProvider` was never shipped and is not an API commitment.
+[Merge/modal contracts](06-MERGE-AND-MODAL-PLAN.md) isolate transient source insertion,
+authored visibility, QAT parking and layout restoration from persisted customization.
+Refresh the selected-tab underline and connected notch after changes.
+[MDI](05-MDI-EMULATION-PLAN.md) reuses these services for active-document tabs and
+maximized-child caption controls; arrange/tabbed/persistence work remains separate.
 
-**Customize dialog + persistence**: the runtime options surface includes QAT ordering plus tab/group structure customization. `RibbonCustomizationSerializer` persists QAT order and placement, tab/group structure, custom command proxies, names, icons and layout as JSON; Import/Export and Reset use the same representation, while the application chooses where its saved state lives.
+## Design tooling and verification
 
-## 8. Tab merging & modal tabs
+`RibbonKit.DesignTools.dll` uses type-name strings and the Visual Studio Model API.
+It is packaged under each runtime assembly's `Design` folder. Follow the
+[setup guide](../src/RibbonKit.Design/SETUP-DESIGNTOOLS.md) for installation and the
+Icons.xaml browser; designer startup alone is not interaction acceptance.
 
-**Tab merging**: a child context (e.g. an embedded document editor or MDI child) contributes tabs/groups into the host ribbon and removes them when deactivated — API: `RibbonMergeSource` + `Merge()/Unmerge()` with ordering hints. **Modal tabs**: a tab that, when active, temporarily hides all others plus shows a Close button (e.g. Print Preview mode) — API: `IsModal` on tab + `RibbonModalScope` events. Both are rare features; isolate them behind their own services so core layout never special-cases them.
-
-## 9. Design-time experience
-
-`XmlnsDefinition`/`XmlnsPrefix` attributes for clean namespaces; a `*.DesignTools` metadata story is unnecessary for modern VS — instead ensure templates render in the XAML designer without runtime services (guard `DesignerProperties.GetIsInDesignMode`), give every control sensible default content, and ship VS item-template snippets in docs. Verify designer preview in VS 2022+ per theme.
-
-## 10. Accessibility & internationalization
-
-Every control gets an `AutomationPeer` (patterns: Invoke, Toggle, ExpandCollapse, Selection, Value). Localizable strings (customize dialog, tooltips like "Minimize the Ribbon") in `.resx` with a `RibbonLocalization` override point. RTL (`FlowDirection`) supported in layout and verified in the showcase app.
-
-## 11. Testing strategy
-
-Layout/size-reduction logic factored into testable pure classes (unit tests, xUnit). Visual regression: showcase pages rendered off-screen per theme at 100/125/150/200% DPI, compared to approved snapshots in CI. Accessibility: automated UIA tree checks + Accessibility Insights passes per milestone. Manual matrix: Windows 10/11, mixed-DPI multi-monitor.
+[CONTRIBUTING.md](../CONTRIBUTING.md#proportional-validation) owns validation commands.
+Automated layout/STA tests, deterministic snapshots and actual-window input/DPI/IME
+checks establish different evidence. Complete Windows contrast-theme support is
+still unclaimed; isolated system-color fallbacks are narrower contracts.

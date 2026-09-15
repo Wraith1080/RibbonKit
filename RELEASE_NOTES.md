@@ -1,5 +1,8 @@
 # RibbonKit v1.0.0
 
+> Release-specific record. Later repository progress and acceptance are tracked in
+> [design notes §5](04-DESIGN-NOTES.md#5-current-state--next-steps).
+
 RibbonKit v1.0.0 is published through GitHub Releases.
 
 RibbonKit is an MIT-licensed Office Fluent UI-style Ribbon control library for WPF applications on

@@ -38,6 +38,49 @@ public sealed class WriterUiCollectionDefinition
 [Collection("Writer UI")]
 public sealed class MainWindowIntegrationTests
 {
+    [Fact]
+    public async Task DefaultPaperExpandsAndSwitchesViewsWithNativeHistory()
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            using var fixture = new WindowFixture();
+            fixture.Show();
+            Assert.True(await fixture.Shell.NewAsync(WriterDocumentProfiles.RibbonKitWriter));
+            var window = fixture.Window;
+            var editor = fixture.Editor;
+            var document = editor.Document;
+            var paper = Assert.IsType<Border>(window.FindName("PaperCanvas"));
+            var viewport = Assert.IsType<ScrollViewer>(window.FindName("EditorViewport"));
+            Assert.True(editor.IsVisible);
+            Assert.Equal(WriterViewMode.Paper, window.CurrentViewMode);
+            editor.Selection.Text = string.Join("\r\n", Enumerable.Range(1, 90)
+                .Select(index => $"Paragraph {index}: editing continues on one expanding sheet."));
+            await PumpAsync();
+            Assert.True(paper.ActualHeight > fixture.Shell.CurrentDocument.PageSettings.HeightDip * 2);
+            viewport.ScrollToBottom();
+            await PumpAsync();
+            Assert.Equal(viewport.ScrollableHeight, viewport.VerticalOffset, 2);
+            editor.SelectAll();
+            var text = editor.Selection.Text;
+            editor.Selection.Text = "Short replacement";
+            editor.Undo();
+            Assert.Equal(text, new TextRange(document.ContentStart, document.ContentEnd).Text);
+            editor.Redo();
+            Assert.Contains("Short replacement", new TextRange(document.ContentStart, document.ContentEnd).Text);
+            editor.Undo();
+            foreach (var mode in new[] { WriterViewMode.ContinuousEdit,
+                         WriterViewMode.PrintPreview, WriterViewMode.Paper })
+            {
+                window.ApplyWriterViewMode(mode);
+                await PumpAsync();
+                Assert.Same(document, editor.Document);
+                Assert.Equal(text, new TextRange(document.ContentStart, document.ContentEnd).Text);
+            }
+            Assert.True(editor.IsVisible);
+            Assert.True(editor.IsKeyboardFocusWithin);
+        }, TimeSpan.FromSeconds(30));
+    }
+
     private static async Task AssertBackstageNewGalleryAsync(WindowFixture fixture)
     {
         var backstage = Assert.IsType<Backstage>(fixture.Ribbon.Backstage);
