@@ -189,12 +189,12 @@ owns focused/full validation and pack/consumer-check commands. Packages go to ig
 ## Post-v1 roadmap
 
 Writer includes native persistence, page settings, preview/printing, tables/pictures,
-contextual editing and Settings. Paper now opens with true paginated editing, backed
-by one native editor. Use `--writer-classic-paper` to restore the previous continuous
-Paper surface, or choose View > Continuous. `--writer-paginated-diagnostic` enables
-detailed pagination telemetry. Outstanding input/performance/manual gates and the
-distribution decision remain detailed in the current-status page; this default switch
-does not establish full W2-G acceptance.
+contextual editing and Settings. Paper opens as one centered sheet that grows downward
+with the document; its dotted margin guide grows with it. Print Preview and printing
+retain physical pagination. View > Continuous provides a workspace-filling editor.
+Experimental multipage editing is deferred and available only through
+`--writer-paginated-diagnostic` (with telemetry). Outstanding acceptance gates and the
+distribution decision remain detailed in the current-status page.
 Library work includes the remaining MDI milestones and separately scoped projection,
 accessibility and theme candidates. Plans do not establish implementation or acceptance.
 

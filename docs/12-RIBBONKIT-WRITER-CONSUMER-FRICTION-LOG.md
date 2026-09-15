@@ -337,3 +337,18 @@ remains immediate. A focus/selection-aware timer uses Windows caret-blink settin
 its phase across periodic overlay rebuilds. The existing async layout/debounce remains in use.
 
 [Correction and verification](history/03-writer-pagination.md#3161-ribbonkit-writer-typing-presentation-and-caret-blink--2026-09-09).
+
+### RKWF-044 — Expanding Paper outgrew its fixed-height dotted margin guide
+
+The user restored expanding Paper as the default and deferred multipage work on 2026-09-15.
+The native sheet already grew with content, but guide drawing and invalidation still used
+one physical page's content height. The reproduced failure at 75/100/150% zoom is corrected
+using the measured paper interior minus scaled margins. Growth, scrolling and Undo/Redo
+retain the dotted bottom and sides without changing document content or print pagination.
+
+Focused automated and live Release-window checks passed. The live editor's offscreen UIA
+center required a visible coordinate click; the close-dialog button cache required keyboard
+navigation. These are automation limitations, not runtime-library changes. Multipage code
+is preserved behind explicit opt-in; its outstanding performance/input gates remain deferred.
+
+[Reproduction and verification](history/03-writer-pagination.md#3162-ribbonkit-writer-expanding-paper-default-and-growing-margin-guide--2026-09-15).

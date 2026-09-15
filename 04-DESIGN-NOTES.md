@@ -695,6 +695,10 @@ Historical pending items are superseded only by later evidence, never by a plan.
 
 [Correction and verification](docs/history/03-writer-pagination.md#3161-ribbonkit-writer-typing-presentation-and-caret-blink--2026-09-09).
 
+### 3.162 RibbonKit Writer expanding Paper default and growing margin guide — 2026-09-15
+
+[Correction and verification](docs/history/03-writer-pagination.md#3162-ribbonkit-writer-expanding-paper-default-and-growing-margin-guide--2026-09-15).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),
@@ -705,7 +709,7 @@ file and this index; update §5 only as supported by verification.
 
 ## 5. Current State & Next Steps
 
-> Authoritative summary of recorded evidence through 2026-09-09.
+> Authoritative summary of recorded evidence through 2026-09-15.
 > Counts below are dated results with their stated verification scope.
 
 ### Complete
@@ -729,24 +733,17 @@ file and this index; update §5 only as supported by verification.
 
 ### Remaining or intentionally deferred
 
-- **Paginated editing is now the default Paper view, by user direction.** One live editor owns input/history;
-  immutable clone-backed pages use a dedicated STA layout session, latest-only
-  cancellation/coalescing, bounded retention and current-generation interaction.
-  LTR editing, page-local table/picture resizing, staged spelling, empty replacement,
-  bounded scrolling/cache work and native caret page following have recorded evidence
-  through §3.161. Typing retains the last page image until its replacement is ready;
-  the caret follows Windows blink timing. The existing interactive ruler and context menu are connected to the
-  compositor; diagnostic telemetry remains opt-in. `--writer-classic-paper` restores
-  the prior Paper surface. The surrounding workspace now follows the appearance backdrop
-  brush; its focused realized-window regression passes 1/1 with unchanged page images.
-  Default activation does not close W2-G acceptance.
-- **W2-G implementation continues; rapid-scroll benchmarking is deferred.** The proposed
-  fixed-cadence probe is optional validation, not a prerequisite for implementing pagination.
-  Native caret navigation now follows the paginated viewport, including after edits/reflow,
-  while ordinary scrolling leaves the caret unchanged. Long-document authoring acceptance,
-  cold-page latency and native working-set high-water remain open (RKWF-037/038/039/040).
+- **Expanding Paper is the default again, by user direction (§3.162).** One native editor
+  sits on a centered sheet with fixed page width and minimum page height. The sheet and
+  dotted margin guide grow downward with content; preview/print retain physical pagination.
+  Normal startup does not create the experimental pagination surface or worker.
+- **W2-G implementation and acceptance are deferred.** The retained multipage experiment
+  requires `--writer-paginated-diagnostic` or `RIBBONKIT_WRITER_PAGINATED_DIAGNOSTIC=1`.
+  `--writer-classic-paper` or environment value `0` overrides opt-in. Existing work through
+  §3.161 is preserved. Cold-page latency, long-document authoring and native-memory limits
+  remain open; no new pagination benchmark or production acceptance is claimed.
 - **Genuine OS IME and production RTL** remain a later paired input/geometry slice.
-  W4-B retains integrated acceptance work; the default-Paper decision is made. W4-C includes live
+  W4-B proceeds with expanding-Paper integration/hardening without waiting for W2-G. W4-C includes live
   mixed-monitor/DPI and physical-printer checks; earlier single-display acceptance
   does not close them. W5 remains a distribution decision after sustained use.
 - **W1-E:** Home formatting and the corrected Font/Color/Paragraph dialogs have
@@ -761,7 +758,11 @@ file and this index; update §5 only as supported by verification.
 
 ### Verification checkpoint
 
-- Latest correction: §3.160 blank-page click regression, focused tests **4/4**, Release
+- Latest correction: §3.162 expanding Paper and growing guide, **79 focused tests** across
+  separate runs; Release Writer build **0 warnings / 0 errors**. Live Release window
+  inspection confirmed long-content guide growth, scrolling, new-line growth and Undo.
+  No full-suite, physical-printer, OS IME, mixed-DPI or performance-benchmark claim.
+- Earlier correction: §3.160 blank-page click regression, focused tests **4/4**, Release
   Writer build **0 warnings / 0 errors**. The blockless-page crash was reproduced before fixing.
 - Latest recorded full solution gate in this checkpoint list: §3.128 (2026-08-30),
   Release build with zero warnings/errors; RibbonKit 392/392, Writer 439/439, visual

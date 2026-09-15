@@ -167,7 +167,7 @@ public sealed class WriterMarginGuide : FrameworkElement, IDisposable
         var left = origin.X + settings.Margins.LeftDip * scale;
         var top = origin.Y + settings.Margins.TopDip * scale;
         var width = settings.ContentWidthDip * scale;
-        var height = settings.ContentHeightDip * scale;
+        var height = GetContentHeight(settings, scale);
         if (width <= 0 || height <= 0)
             return;
 
@@ -231,6 +231,16 @@ public sealed class WriterMarginGuide : FrameworkElement, IDisposable
 
     private void OnViewportChanged(object sender, ScrollChangedEventArgs e) => InvalidateVisual();
 
+    private double GetContentHeight(DocumentPageSettings settings, double scale)
+    {
+        // Paper is one growing sheet. Its measured height already includes zoom; only the
+        // physical margins need scaling. Keep short documents at least one page tall.
+        var border = _paperCanvas!.BorderThickness;
+        var paperHeight = Math.Max(settings.HeightDip * scale,
+            _paperCanvas.ActualHeight - border.Top - border.Bottom);
+        return paperHeight - (settings.Margins.TopDip + settings.Margins.BottomDip) * scale;
+    }
+
     private void OnPaperLayoutUpdated(object? sender, EventArgs e)
     {
         if (!TryGetPaperOrigin(out var origin))
@@ -240,7 +250,7 @@ public sealed class WriterMarginGuide : FrameworkElement, IDisposable
         var left = origin.X + settings.Margins.LeftDip * scale;
         var top = origin.Y + settings.Margins.TopDip * scale;
         var width = settings.ContentWidthDip * scale;
-        var height = settings.ContentHeightDip * scale;
+        var height = GetContentHeight(settings, scale);
         if (_hasGeometrySignature && Equals(_lastGeometrySettings, settings) &&
             Math.Abs(_lastOriginX - left) < 0.01 && Math.Abs(_lastOriginY - top) < 0.01 &&
             Math.Abs(_lastWidth - width) < 0.01 && Math.Abs(_lastHeight - height) < 0.01 &&

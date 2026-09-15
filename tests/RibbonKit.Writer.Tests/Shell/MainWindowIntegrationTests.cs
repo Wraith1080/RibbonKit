@@ -41,11 +41,72 @@ public sealed class WriterUiCollectionDefinition
 public sealed class MainWindowIntegrationTests
 {
     [Fact]
-    public async Task PaginatedWorkspaceTracksBackdropAndOpaqueFallbackWithoutChangingPages()
+    public void PaginationRequiresExplicitOptInAndHonorsClassicOverride()
+    {
+        Assert.False(WriterPaginationDiagnosticOptions.UsePaginatedPaper([], null));
+        Assert.False(WriterPaginationDiagnosticOptions.UsePaginatedPaper([], "unexpected"));
+        Assert.True(WriterPaginationDiagnosticOptions.UsePaginatedPaper([], "1"));
+        Assert.True(WriterPaginationDiagnosticOptions.UsePaginatedPaper(
+            ["--writer-paginated-diagnostic"], null));
+        Assert.False(WriterPaginationDiagnosticOptions.UsePaginatedPaper(
+            ["--writer-paginated-diagnostic", "--writer-classic-paper"], "1"));
+        Assert.False(WriterPaginationDiagnosticOptions.UsePaginatedPaper(
+            ["--writer-paginated-diagnostic"], "0"));
+    }
+
+    [Fact]
+    public async Task DefaultPaperExpandsAndSwitchesViewsWithNativeHistory()
     {
         await StaTestHelper.RunAsync(async () =>
         {
             using var fixture = new WindowFixture();
+            fixture.Show();
+            Assert.True(await fixture.Shell.NewAsync(WriterDocumentProfiles.RibbonKitWriter));
+            var window = fixture.Window;
+            var editor = fixture.Editor;
+            var document = editor.Document;
+            var paper = Assert.IsType<Border>(window.FindName("PaperCanvas"));
+            var viewport = Assert.IsType<ScrollViewer>(window.FindName("EditorViewport"));
+            var host = Assert.IsType<Grid>(window.FindName("PaginationDiagnosticHost"));
+            Assert.False(window.IsPaginationDiagnosticEnabled);
+            Assert.Empty(host.Children);
+            Assert.True(editor.IsVisible);
+            Assert.Equal(WriterViewMode.Paper, window.CurrentViewMode);
+            editor.Selection.Text = string.Join("\r\n", Enumerable.Range(1, 90)
+                .Select(index => $"Paragraph {index}: editing continues on one expanding sheet."));
+            await PumpAsync();
+            Assert.True(paper.ActualHeight > fixture.Shell.CurrentDocument.PageSettings.HeightDip * 2);
+            viewport.ScrollToBottom();
+            await PumpAsync();
+            Assert.Equal(viewport.ScrollableHeight, viewport.VerticalOffset, 2);
+            editor.SelectAll();
+            var text = editor.Selection.Text;
+            editor.Selection.Text = "Short replacement";
+            editor.Undo();
+            Assert.Equal(text, new TextRange(document.ContentStart, document.ContentEnd).Text);
+            editor.Redo();
+            Assert.Contains("Short replacement", new TextRange(document.ContentStart, document.ContentEnd).Text);
+            editor.Undo();
+            foreach (var mode in new[] { WriterViewMode.ContinuousEdit,
+                         WriterViewMode.PrintPreview, WriterViewMode.Paper })
+            {
+                window.ApplyWriterViewMode(mode);
+                await PumpAsync();
+                Assert.Same(document, editor.Document);
+                Assert.Equal(text, new TextRange(document.ContentStart, document.ContentEnd).Text);
+            }
+            Assert.True(editor.IsVisible);
+            Assert.True(editor.IsKeyboardFocusWithin);
+            Assert.Empty(host.Children);
+        }, TimeSpan.FromSeconds(30));
+    }
+
+    [Fact]
+    public async Task PaginatedWorkspaceTracksBackdropAndOpaqueFallbackWithoutChangingPages()
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            using var fixture = new WindowFixture(paginatedPaper: true);
             fixture.Show();
             var window = fixture.Window;
             var host = Assert.IsType<Grid>(window.FindName("PaginationDiagnosticHost"));
@@ -73,15 +134,11 @@ public sealed class MainWindowIntegrationTests
     }
 
     [Fact]
-    public async Task DefaultPaperPaginatesAndSwitchesViewsWithOneAuthoritativeEditor()
+    public async Task ExperimentalPaperPaginatesAndSwitchesViewsWithOneAuthoritativeEditor()
     {
         await StaTestHelper.RunAsync(async () =>
         {
-            Assert.True(WriterPaginationDiagnosticOptions.UsePaginatedPaper([], null));
-            Assert.False(WriterPaginationDiagnosticOptions.UsePaginatedPaper(
-                ["--writer-classic-paper"], null));
-            Assert.False(WriterPaginationDiagnosticOptions.UsePaginatedPaper([], "0"));
-            using var fixture = new WindowFixture();
+            using var fixture = new WindowFixture(paginatedPaper: true);
             fixture.Show();
             Assert.True(await fixture.Shell.NewAsync(WriterDocumentProfiles.RibbonKitWriter));
             var window = fixture.Window;
@@ -95,13 +152,13 @@ public sealed class MainWindowIntegrationTests
             var deadline = DateTime.UtcNow.AddSeconds(25);
             while (controller.Current is null || controller.PublishedGeneration != controller.RequestedGeneration)
             {
-                Assert.True(DateTime.UtcNow < deadline, "Default Paper did not publish.");
+                Assert.True(DateTime.UtcNow < deadline, "Experimental Paper did not publish.");
                 await Task.Delay(30);
             }
             Assert.Equal(WriterViewMode.Paper, window.CurrentViewMode);
             Assert.True(surface.IsVisible);
             Assert.NotEmpty(surface.RenderedPages);
-            Assert.Empty(surface.StatusTextForTesting);
+            Assert.Contains("Diagnostic", surface.StatusTextForTesting);
             var ruler = Assert.IsType<WriterRuler>(window.FindName("HorizontalRuler"));
             Assert.True(ruler.IsVisible);
             Assert.Same(host.Parent, ruler.Parent);
@@ -2103,7 +2160,7 @@ public sealed class MainWindowIntegrationTests
     {
         private readonly TemporaryDirectory _directory = new();
         private bool _disposed;
-        public WindowFixture(bool withRecentFile = false)
+        public WindowFixture(bool withRecentFile = false, bool paginatedPaper = false)
         {
             Dialogs = new FakeDialogs();
             Persistence = new FakePersistence();
@@ -2122,7 +2179,17 @@ public sealed class MainWindowIntegrationTests
                 new WriterUnsavedChangesDecider(Dialogs), new WriterSaveDestinationProvider(Dialogs),
                 transitionDecider: new WriterFormatTransitionDecider(Dialogs));
             Shell = new WriterShellViewModel(session, new RecentFileService(recentPath), Dialogs);
-            Window = new MainWindow(Shell);
+            const string option = "RIBBONKIT_WRITER_PAGINATED_DIAGNOSTIC";
+            var previous = Environment.GetEnvironmentVariable(option);
+            try
+            {
+                Environment.SetEnvironmentVariable(option, paginatedPaper ? "1" : null);
+                Window = new MainWindow(Shell);
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable(option, previous);
+            }
         }
 
         public FakeDialogs Dialogs { get; }

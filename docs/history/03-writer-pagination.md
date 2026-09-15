@@ -1052,3 +1052,41 @@ disabled. It resets for caret movement/focus, hides for selection or focus loss,
 across the existing periodic overlay rebuild, and stops on clear/unload. New hosted-WPF checks
 verify image continuity through typing and replacement, stale-click rejection, real timer
 transitions across overlay refresh, focus/selection behavior, and the earlier empty-page fixes.
+
+### 3.162 RibbonKit Writer expanding Paper default and growing margin guide — 2026-09-15
+
+The user deferred editable multipage work because responsiveness and correctness were still
+disrupting Writer progress. Default Paper again uses the existing single native editor on a
+centered sheet with fixed width and minimum page height; content grows the sheet downward.
+Normal startup does not construct the compositor/worker. The retained experiment requires
+`--writer-paginated-diagnostic` or `RIBBONKIT_WRITER_PAGINATED_DIAGNOSTIC=1`; classic-paper
+and environment value `0` remain explicit overrides. Preview/print keep physical pagination.
+W4-B proceeds on expanding Paper without requiring deferred W2-G acceptance.
+
+The dotted guide previously used `ContentHeightDip` in both drawing and layout invalidation,
+so it ended at the first page even as the native editor/paper grew. No historical rationale
+for retaining that fixed bottom was found. The focused regression failed at 75/100/150%
+zoom before the fix. Guide height now follows the measured paper interior, subtracting scaled
+top/bottom margins and retaining a one-page minimum. Measured height is already zoomed;
+scaling it again would misalign the bottom. The same calculation drives redraw invalidation.
+No document content, page settings or RibbonKit runtime code changes.
+
+Verification (Release, net8.0-windows):
+
+- Surface/ruler tests: **20/20**, including growth, bottom visibility after scrolling,
+  minimum height, zoom and shrink/regrowth through native Undo/Redo.
+- Default-window lifecycle and option precedence: **2/2**; normal startup has no pagination
+  children, and long content/history survive Paper/Continuous/Preview switching.
+- Centered-table view switching: **1/1** in a separate process.
+- Preview clones, native persistence, selected picture integration and table resize: **54/54**.
+- Experimental view lifecycle and backdrop: **1/1 each**, in separate processes. The former
+  now expects diagnostic status because this path explicitly opts in to telemetry.
+- Writer build: **0 warnings / 0 errors**; `git diff --check` passes.
+- Live Release window: entered 1,354 words, scrolled beyond one page and inspected the dotted
+  sides/bottom; adding a newline extended the bottom and Undo restored the shorter sheet.
+  The synthetic document was closed without saving. UIA's editor rectangle extended outside
+  the viewport, so focus used a screenshot-backed click; the close dialog used its keyboard
+  mnemonic after the cached UIA button index was unavailable.
+
+These are 79 focused passing tests, not a full-suite gate or a throughput/latency benchmark.
+No OS IME, mixed-monitor/DPI, physical-printer or comprehensive long-document acceptance is claimed.

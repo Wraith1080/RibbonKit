@@ -50,7 +50,9 @@ internal static class WriterPaginationDiagnosticOptions
 
     internal static bool UsePaginatedPaper(IEnumerable<string> arguments, string? environmentValue) =>
         !arguments.Contains("--writer-classic-paper", StringComparer.OrdinalIgnoreCase) &&
-        !string.Equals(environmentValue, "0", StringComparison.Ordinal);
+        !string.Equals(environmentValue, "0", StringComparison.Ordinal) &&
+        (arguments.Contains("--writer-paginated-diagnostic", StringComparer.OrdinalIgnoreCase) ||
+         string.Equals(environmentValue, "1", StringComparison.Ordinal));
 
     internal static bool ShowDiagnostics =>
         Environment.GetCommandLineArgs().Any(argument =>

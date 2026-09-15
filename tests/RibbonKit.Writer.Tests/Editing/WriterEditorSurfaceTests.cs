@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
+using System.Windows.Media;
 using System.Windows.Threading;
 using RibbonKit.Writer.Editing;
 using RibbonKit.Writer.Models;
@@ -298,6 +299,68 @@ public sealed class WriterEditorSurfaceTests
         viewport.Content = paper;
         surface.Attach(editor, viewport, paper);
         return surface;
+    }
+
+    [Theory]
+    [InlineData(75)]
+    [InlineData(100)]
+    [InlineData(150)]
+    public void MarginGuideFollowsPaperGrowthScrollAndUndo(double zoom)
+    {
+        StaTestHelper.Run(() =>
+        {
+            var settings = DocumentPageSettings.A4(
+                margins: new DocumentPageMargins(48, 60, 48, 72));
+            using var hosted = CreateHostedSurface(settings, 1000, 620);
+            var editor = hosted.Editor;
+            var paper = GetPaper(hosted.Surface);
+            var viewport = GetViewport(hosted.Surface);
+            editor.LayoutTransform = new ScaleTransform(zoom / 100d, zoom / 100d);
+            hosted.Surface.ZoomPercent = zoom;
+            using var guide = new WriterMarginGuide
+            {
+                IsPaperView = true, PageSettings = settings, ZoomPercent = zoom
+            };
+            hosted.Surface.Children.Add(guide);
+            guide.Attach(editor, viewport, paper);
+
+            Rect RenderedGuide()
+            {
+                hosted.Window.UpdateLayout();
+                hosted.Window.Dispatcher.Invoke(DispatcherPriority.ApplicationIdle, new Action(() => { }));
+                static IEnumerable<GeometryDrawing> Geometries(Drawing drawing) => drawing switch
+                {
+                    GeometryDrawing geometry => [geometry],
+                    DrawingGroup group => group.Children.SelectMany(Geometries),
+                    _ => []
+                };
+                return Assert.Single(Geometries(VisualTreeHelper.GetDrawing(guide)!)).Geometry.Bounds;
+            }
+
+            var initial = RenderedGuide();
+            Assert.Equal(settings.ContentHeightDip * zoom / 100d, initial.Height, 2);
+            editor.CaretPosition = editor.Document.ContentEnd;
+            editor.Selection.Text = string.Join("\r\n", Enumerable.Range(1, 120)
+                .Select(index => $"Paragraph {index}: the sheet and its dotted guide grow together."));
+            var grown = RenderedGuide();
+            Assert.True(grown.Height > initial.Height + settings.HeightDip,
+                $"Guide remained {grown.Height:0.##} high while paper grew to {paper.ActualHeight:0.##}.");
+
+            viewport.ScrollToBottom();
+            var scrolled = RenderedGuide();
+            var paperBottom = paper.TranslatePoint(
+                new Point(paper.BorderThickness.Left, paper.ActualHeight - paper.BorderThickness.Bottom), guide);
+            Assert.Equal(paperBottom.Y - settings.Margins.BottomDip * zoom / 100d, scrolled.Bottom, 2);
+            Assert.InRange(scrolled.Bottom, 0, guide.ActualHeight);
+            Assert.Equal(grown.Height, scrolled.Height, 2);
+            Assert.Equal(settings.HeightDip, editor.Document.PageHeight);
+
+            editor.Undo();
+            viewport.ScrollToTop();
+            Assert.Equal(initial.Height, RenderedGuide().Height, 2);
+            editor.Redo();
+            Assert.Equal(grown.Height, RenderedGuide().Height, 2);
+        });
     }
 
     private static ScrollViewer GetViewport(WriterEditorSurface surface) =>
