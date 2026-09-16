@@ -42,6 +42,7 @@ Historical pending items are superseded only by later evidence, never by a plan.
 ### 3.3 KeyTips (Alt / F10)
 
 [Decision, pitfalls and evidence](docs/history/01-library.md#33-keytips-alt--f10).
+Includes the 2026-09-16 animated Backstage badge-placement correction and focused verification.
 
 ### 3.4 Contextual tabs = custom coloring (no marker line)
 
