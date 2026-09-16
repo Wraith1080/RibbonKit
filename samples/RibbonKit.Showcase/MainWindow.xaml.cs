@@ -294,6 +294,9 @@ public partial class MainWindow : RibbonWindow
 
     private void OnApplyOffice2024(object sender, RoutedEventArgs e) => ApplyTheme(RibbonTheme.Office2024);
 
+    private void OnPreviewCrystal(object sender, RoutedEventArgs e) =>
+        new CrystalPreviewWindow { Owner = this }.Show();
+
     private void OnApplyOffice2019(object sender, RoutedEventArgs e) => ApplyTheme(RibbonTheme.Office2019);
 
     private void OnApplyOffice2013(object sender, RoutedEventArgs e) => ApplyTheme(RibbonTheme.Office2013);

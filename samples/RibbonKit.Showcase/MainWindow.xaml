@@ -807,6 +807,12 @@
                 </rk:RibbonGroup>
                 <!-- Runtime theme switch — same templates, different token dictionary -->
                 <rk:RibbonGroup Header="Theme" rk:Ribbon.CommandId="group.view.theme" Icon="{StaticResource Icon.Palette}">
+                    <rk:RibbonButton Header="Crystal preview"
+                                     Icon="{StaticResource Icon.Mica}"
+                                     SizeDefinition="Large, Medium, Small"
+                                     Click="OnPreviewCrystal"
+                                     ScreenTipTitle="Crystal light prototype"
+                                     ScreenTipText="Open a separate glass-inspired Office 2024 preview." />
                     <rk:RibbonButton Header="Office 2024"
                                      LargeIcon="{StaticResource Icon.Palette}"
                                      Icon="{StaticResource Icon.Palette}"

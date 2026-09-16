@@ -28,6 +28,22 @@ from both neighbors. Proposed dictionary names and enum value remain provisional
 
 ## Original palettes
 
+### Crystal light study — 2026-09-16
+
+An experimental Office 2024 derivative is available in Showcase under View → Theme →
+Crystal preview, or by launching Showcase with `--crystal`. It opens a separate window
+with window-scoped Office 2024 tokens and `Themes/Crystal.Light.xaml` overrides.
+Compare 2024 removes/reinstates the overlay without changing saved preferences.
+The first slice covers title/ribbon surfaces, selected/hover/disabled controls and an
+Arrange dropdown. It uses opaque gradients, bright edges and rounded geometry;
+it does not implement live blur/refraction or add a public theme enum.
+
+Live inspection found that dropdown templates also consume `Ribbon.ContentBackground`.
+Its initial translucency exposed underlying text through menus, so this study keeps
+that brush opaque. Separate popup/material tokens need consideration before real
+translucency. Dark mode, system materials, whole-surface coverage and DPI/RTL acceptance
+remain later slices. The initial Showcase Release build passed with zero warnings/errors.
+
 Values are starting anchors, not approved final colors. Columns list base, raised
 surface, border, primary text, secondary text and accent respectively.
 

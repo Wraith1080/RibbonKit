@@ -16,5 +16,8 @@ public partial class App : Application
         // Register the app so RibbonKit can publish its animation-duration tokens and honor
         // the global level (default Subtle). Optional — controls animate via code-behind too.
         RibbonAnimation.Initialize(this);
+
+        if (System.Array.Exists(e.Args, arg => arg == "--crystal"))
+            StartupUri = new System.Uri("CrystalPreviewWindow.xaml", System.UriKind.Relative);
     }
 }
