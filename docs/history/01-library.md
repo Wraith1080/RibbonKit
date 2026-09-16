@@ -64,6 +64,20 @@ point both at the same values so nothing changes shape.
   bottoms. The outer layer paints QAT KeyTips above both rows without lifting the title background
   over the Office 2007 orb; the content row retains its inner decorator for backstage overlays.
 - Invocation goes through UIA patterns (Invoke/Toggle) so it works for every control.
+- **Animated target placement (2026-09-16):** Backstage KeyTips can be realized at
+  `DispatcherPriority.Loaded` while the surface's render-transform slide is still running.
+  WPF's `AdornerLayer` caches that intermediate target transform during layout; completing
+  the animation alone did not refresh it, leaving badges off-center until a hover/layout
+  update. Loaded `KeyTipAdorner`s now compare the target's coordinate basis and render size
+  on rendering ticks and update their target's layer placement only when those values change.
+  Unloading removes the rendering subscription, and reuse starts fresh. Do not replace this
+  with a fixed animation delay: duration, disabled motion, and entry into an already-open
+  surface all vary. Two realized-window regressions cover LTR/RTL intermediate and final
+  slide positions plus badge removal/reuse; both fail against the original implementation.
+  Verification: net8/net9 Release runtime build, zero warnings/errors; 36 focused KeyTip/RTL
+  tests passed. Live Showcase reproduced the original offset with F10 → F and verified
+  centered navigation/footer/custom-content badges with Alt → F after rebuilding, without
+  moving the mouse. Full-suite and theme/mixed-DPI matrix checks were not run for this fix.
 
 ### 3.4 Contextual tabs = custom coloring (no marker line)
 `RibbonTab.ContextualColor` (Brush) + read-only `ContextualBrush` (falls back to theme

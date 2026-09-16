@@ -14,6 +14,7 @@ namespace RibbonKit.Controls;
 internal sealed class KeyTipAdorner : Adorner
 {
     private readonly Border _badge;
+    private (Point Origin, Point X, Point Y, Size Size)? _lastPlacement;
 
     internal KeyTipAdorner(UIElement adornedElement, string keys)
         : base(adornedElement)
@@ -43,6 +44,51 @@ internal sealed class KeyTipAdorner : Adorner
         _badge.SetResourceReference(Border.BorderBrushProperty, "RibbonKit.Brushes.KeyTip.Border");
 
         AddVisualChild(_badge);
+        Loaded += OnLoaded;
+        Unloaded += OnUnloaded;
+    }
+
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        _lastPlacement = null;
+        CompositionTarget.Rendering -= OnRendering;
+        CompositionTarget.Rendering += OnRendering;
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        CompositionTarget.Rendering -= OnRendering;
+        _lastPlacement = null;
+    }
+
+    private void OnRendering(object? sender, EventArgs e)
+    {
+        if (VisualTreeHelper.GetParent(this) is not AdornerLayer layer
+            || !AdornedElement.IsVisible
+            || VisualTreeHelper.GetParent(layer) is not Visual root
+            || !root.IsAncestorOf(AdornedElement))
+        {
+            return;
+        }
+
+        // AdornerLayer caches the target-to-layer transform during layout. Backstage's
+        // render-only slide can keep moving after that layout, leaving badges at an
+        // intermediate position until unrelated input causes another layout pass.
+        // Track the full coordinate basis (including RTL/scaling), refreshing only
+        // when placement changes, and only while the badge is loaded.
+        GeneralTransform transform = AdornedElement.TransformToVisual(layer);
+        var placement = (
+            transform.Transform(new Point(0, 0)),
+            transform.Transform(new Point(1, 0)),
+            transform.Transform(new Point(0, 1)),
+            AdornedElement.RenderSize);
+        if (_lastPlacement == placement)
+        {
+            return;
+        }
+
+        _lastPlacement = placement;
+        layer.Update(AdornedElement);
     }
 
     /// <summary>Dims the badge when its key no longer matches what the user has typed.</summary>
