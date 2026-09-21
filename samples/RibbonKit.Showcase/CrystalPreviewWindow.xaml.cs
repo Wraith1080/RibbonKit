@@ -36,6 +36,7 @@ public partial class CrystalPreviewWindow : RibbonWindow
 
     private void UpdateCrystalDetails(bool enabled)
     {
+        AccentSelector.IsEnabled = enabled;
         PictureTab.CrystalEnabled = enabled;
         TableTab.CrystalEnabled = enabled;
         foreach (var panel in new[] { CompactClipboard, CompactText })
@@ -43,6 +44,19 @@ public partial class CrystalPreviewWindow : RibbonWindow
             if (enabled) panel.Resources["RibbonKit.Metrics.ControlCornerRadius"] = new CornerRadius(3);
             else panel.Resources.Remove("RibbonKit.Metrics.ControlCornerRadius");
         }
+    }
+
+    private void OnAccentSelected(object sender, RoutedEventArgs e)
+    {
+        if (_crystal == null || sender is not RibbonMenuItem { Tag: string value } item)
+            return;
+        var replacement = CrystalPalette.Create((Color)ColorConverter.ConvertFromString(value));
+        int index = Resources.MergedDictionaries.IndexOf(_crystal);
+        if (index < 0) return;
+        Resources.MergedDictionaries[index] = replacement;
+        _crystal = replacement;
+        UpdateCrystalDetails(true);
+        StatusText.Text = $"Glass tint: {item.Header}";
     }
 
     private void OnChangeContextTint(object sender, RoutedEventArgs e)

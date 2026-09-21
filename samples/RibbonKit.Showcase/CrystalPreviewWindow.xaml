@@ -65,6 +65,13 @@
                     <rk:RibbonToggleButton x:Name="DisableInputsToggle" Header="Disable inputs" Size="Large"
                                            Icon="{StaticResource Icon.Select}"
                                            Checked="OnDisableInputs" Unchecked="OnDisableInputs" />
+                    <rk:RibbonDropDownButton x:Name="AccentSelector" Header="Glass tint" Size="Large"
+                                             Icon="{StaticResource Icon.Palette}">
+                        <rk:RibbonMenuItem Header="Blue (original)" Tag="#397CA9" Click="OnAccentSelected" />
+                        <rk:RibbonMenuItem Header="Green" Tag="#287E78" Click="OnAccentSelected" />
+                        <rk:RibbonMenuItem Header="Purple" Tag="#8659A5" Click="OnAccentSelected" />
+                        <rk:RibbonMenuItem Header="Amber" Tag="#AC731C" Click="OnAccentSelected" />
+                    </rk:RibbonDropDownButton>
                 </rk:RibbonGroup>
                 <rk:RibbonGroup Header="Inputs" Icon="{StaticResource Icon.Bold}">
                     <StackPanel>

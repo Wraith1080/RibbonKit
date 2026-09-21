@@ -116,6 +116,34 @@ styles without clearing values. Showcase Release build passed with zero warnings
 nine focused Crystal/contextual/input tests passed, including palette isolation and
 value preservation during comparison. Visual checking remains with the user.
 
+The next input lighting iteration replaces the broad vertical fill with a pale radial
+lens, a narrow upper inset shade and a localized white lower reflection. The resting
+rim transitions from a darker top to a light bottom; dimensions, corners and native
+editing behavior stay unchanged. This is simulated glass lighting, without background
+blur or refraction. Visual acceptance of this iteration remains with the user.
+
+2026-09-22 refinement: reduced the top shade and resting rim contrast after the
+first lens appeared too heavily inset. Hover uses a localized white upper glint
+and blue-gray lower edge. The input-scoped secondary brush also lights the native
+combo chevron; focus retains its distinct accent edge. Showcase Release build
+passed with zero warnings/errors and the nine focused Crystal/input tests passed.
+The user will check the revised resting and hover appearance.
+
+**Accent study (2026-09-22):** Appearance > Glass tint offers original Blue, Green,
+Purple and Amber. The sample-only CrystalPalette builds each variant from the accepted
+XAML palette, rotating hue while retaining saturation, lightness, alpha and reflection
+geometry. Neutral text, shadows and pure-white highlights remain unchanged. Input
+styles receive their own matching palette; focus/selected text use a darker accent.
+Blue reloads the exact original brushes, with no cumulative color drift. Each preview
+owns its dictionary; application theme preferences and contextual colors are independent.
+Compare 2024 temporarily disables the selector and restores the chosen tint on return.
+This is a preset prototype, not yet an application-wide accent setting or color picker.
+
+Showcase Release build passed with zero warnings/errors. Eleven focused Crystal/input
+tests cover palette replacement, input value preservation, original palette restoration,
+contextual tint independence and preset selected-tab text contrast. Visual review of the
+new presets remains with the user.
+
 Release solution build passed with zero warnings/errors; the library suite passed
 400/400 and existing visual snapshots 1/1. The full Writer run passed 465/472, with
 seven failures including WindowChrome cross-thread initialization. Isolated reruns

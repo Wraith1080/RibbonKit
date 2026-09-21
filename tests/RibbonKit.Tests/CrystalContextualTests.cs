@@ -107,8 +107,8 @@ public class CrystalContextualTests
         var textChrome = (Border)text.Template.FindName("Chrome", text);
         var comboChrome = (Border)combo.Template.FindName("Chrome", combo);
         var buttonChrome = (Border)button.Template.FindName("Chrome", button);
-        Assert.IsType<LinearGradientBrush>(textChrome.Background);
-        Assert.IsType<LinearGradientBrush>(comboChrome.Background);
+        Assert.IsType<DrawingBrush>(textChrome.Background);
+        Assert.IsType<DrawingBrush>(comboChrome.Background);
         Assert.Equal(new CornerRadius(4), textChrome.CornerRadius);
         Assert.Equal(new CornerRadius(4), comboChrome.CornerRadius);
         Assert.Equal(new CornerRadius(8), buttonChrome.CornerRadius);
@@ -122,6 +122,93 @@ public class CrystalContextualTests
         Assert.IsType<SolidColorBrush>(((Border)text.Template.FindName("Chrome", text)).Background);
         Assert.IsType<SolidColorBrush>(((Border)combo.Template.FindName("Chrome", combo)).Background);
     });
+
+    [Fact]
+    public void Crystal_accent_switches_live_inputs_without_losing_values_or_original_palette() => Sta.Run(() =>
+    {
+        const string surface = "RibbonKit.Brushes.Ribbon.ContentBackground";
+        var root = new StackPanel();
+        root.Resources.MergedDictionaries.Add(new ResourceDictionary
+        { Source = new Uri("/RibbonKit;component/Themes/Tokens.Office2024.xaml", UriKind.Relative) });
+        var blue = CrystalPalette.Create(CrystalPalette.Blue);
+        root.Resources.MergedDictionaries.Add(blue);
+        var text = new RibbonTextBox { Text = "Keep this title" };
+        var combo = new RibbonComboBox { ItemsSource = new[] { "Arial", "Georgia" }, SelectedIndex = 1 };
+        root.Children.Add(text);
+        root.Children.Add(combo);
+        void LayoutInputs()
+        {
+            root.Measure(new Size(500, 200));
+            root.Arrange(new Rect(0, 0, 500, 200));
+            root.UpdateLayout();
+            Sta.Drain();
+        }
+        LayoutInputs();
+        var original = ((LinearGradientBrush)blue[surface]).GradientStops[2].Color;
+        static Color InputEdge(Brush brush) => ((RadialGradientBrush)((GeometryDrawing)
+            ((DrawingGroup)((DrawingBrush)brush).Drawing).Children[0]).Brush).GradientStops[2].Color;
+        Color originalInput = InputEdge(((Border)text.Template.FindName("Chrome", text)).Background);
+        foreach (string hex in new[] { "#287E78", "#8659A5", "#AC731C" })
+        {
+            var tinted = CrystalPalette.Create((Color)ColorConverter.ConvertFromString(hex));
+            root.Resources.MergedDictionaries[1] = tinted;
+            LayoutInputs();
+            Assert.NotEqual(original, ((LinearGradientBrush)tinted[surface]).GradientStops[2].Color);
+            Assert.Equal(original, ((LinearGradientBrush)blue[surface]).GradientStops[2].Color);
+            var inputBackground = (DrawingBrush)text.FindResource("RibbonKit.Brushes.Control.SurfaceBackground");
+            Assert.NotEqual(originalInput, InputEdge(inputBackground));
+            Assert.Same(inputBackground, ((Border)text.Template.FindName("Chrome", text)).Background);
+            Assert.IsType<DrawingBrush>(((Border)combo.Template.FindName("Chrome", combo)).Background);
+            Assert.Equal("Keep this title", text.Text);
+            Assert.Equal("Georgia", combo.SelectedItem);
+            Assert.Equal(new CornerRadius(4), ((Border)text.Template.FindName("Chrome", text)).CornerRadius);
+            // Pure-white reflection stays white in every hue variant.
+            var rim = (DrawingGroup)((DrawingBrush)tinted["RibbonKit.Brushes.Control.HoverBorder"]).Drawing;
+            var glint = (RadialGradientBrush)((GeometryDrawing)rim.Children[1]).Brush;
+            Assert.Equal(Colors.White, glint.GradientStops[0].Color);
+            Color foreground = ((SolidColorBrush)tinted["RibbonKit.Brushes.Tab.SelectedForeground"]).Color;
+            foreach (var stop in ((RadialGradientBrush)tinted["RibbonKit.Brushes.Tab.SelectedBackground"]).GradientStops)
+                Assert.True((Luminance(stop.Color) + 0.05) / (Luminance(foreground) + 0.05) >= 4.5);
+        }
+        root.Resources.MergedDictionaries.RemoveAt(1);
+        LayoutInputs();
+        Assert.IsType<SolidColorBrush>(((Border)text.Template.FindName("Chrome", text)).Background);
+        root.Resources.MergedDictionaries.Add(CrystalPalette.Create(CrystalPalette.Blue));
+        LayoutInputs();
+        Assert.Equal(original, ((LinearGradientBrush)root.FindResource(surface)).GradientStops[2].Color);
+        Assert.Equal("Keep this title", text.Text);
+    });
+
+    [Fact]
+    public void Crystal_global_accent_preserves_contextual_tab_tint() => Sta.Run(() =>
+    {
+        var context = new CrystalContextualTab { Header = "Picture", IsContextual = true, ContextualColor = Brushes.Teal };
+        var host = Host(context);
+        host.Resources.Remove("RibbonKit.Brushes.Tab.SelectedUnderline");
+        host.Resources.MergedDictionaries.Add(new ResourceDictionary
+        { Source = new Uri("/RibbonKit;component/Themes/Tokens.Office2024.xaml", UriKind.Relative) });
+        host.Resources.MergedDictionaries.Add(CrystalPalette.Create(CrystalPalette.Blue));
+        using var shown = new ShownHost(host);
+        Layout(host);
+        Color before = ((RadialGradientBrush)context.Resources["RibbonKit.Brushes.Tab.SelectedBackground"]).GradientStops[2].Color;
+        host.Resources.MergedDictionaries[1] = CrystalPalette.Create(Colors.Purple);
+        context.CrystalEnabled = true;
+        Layout(host);
+        Assert.Same(Brushes.Teal, context.ContextualBrush);
+        Assert.Equal(before, ((RadialGradientBrush)context.Resources["RibbonKit.Brushes.Tab.SelectedBackground"]).GradientStops[2].Color);
+        var marker = (Rectangle)host.Template.FindName("PART_TabMarker", host);
+        Assert.Same(context.ContextualSelectionBrush, marker.Fill);
+    });
+
+    private static double Luminance(Color color)
+    {
+        static double Linear(byte b)
+        {
+            double c = b / 255d;
+            return c <= 0.04045 ? c / 12.92 : Math.Pow((c + 0.055) / 1.055, 2.4);
+        }
+        return 0.2126 * Linear(color.R) + 0.7152 * Linear(color.G) + 0.0722 * Linear(color.B);
+    }
 
     private static RibbonTabControl Host(params RibbonTab[] tabs)
     {
