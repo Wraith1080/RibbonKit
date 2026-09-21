@@ -101,6 +101,11 @@ These compact metrics remain scoped to this preview's control stacks.
 The popup follow-up reduces the shell radius from 12 to 8 DIP and scopes a 4-DIP
 radius to menu rows through a resource-only style. Shared templates, padding and
 shadows are unchanged; visual acceptance remains with the user.
+The pressed/checked follow-up adds a soft reflection inside the lower part of the
+fill, fading horizontally before the corners. Pressed/open controls use a deeper
+lens fill; checked controls use a lighter fill with a quieter reflection. Both keep
+a blue-gray outer edge. Hover, geometry and animation are unchanged; this is still
+gradient/drawing-brush shading, with visual acceptance left to the user.
 
 Release solution build passed with zero warnings/errors; the library suite passed
 400/400 and existing visual snapshots 1/1. The full Writer run passed 465/472, with

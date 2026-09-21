@@ -58,28 +58,69 @@
     <DrawingBrush x:Key="RibbonKit.Brushes.Control.HoverBorder"
                   Drawing="{StaticResource Crystal.Drawing.GlassRim}"
                   Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
-    <RadialGradientBrush x:Key="RibbonKit.Brushes.Control.PressedBackground"
-                         Center="0.5,0.72" GradientOrigin="0.5,0.72" RadiusX="0.85" RadiusY="0.9">
-        <GradientStop Color="#DEEDF8" Offset="0" />
-        <GradientStop Color="#C4DCEE" Offset="0.58" />
-        <GradientStop Color="#AECBE1" Offset="1" />
-    </RadialGradientBrush>
+    <!-- Reflection lives inside the fill, so the darker outer border remains intact.
+         Soft horizontal falloff avoids a hard white stripe at the rounded corners. -->
+    <GeometryDrawing x:Key="Crystal.Drawing.InnerReflection" Geometry="M0,0 H1 V1 H0 Z">
+        <GeometryDrawing.Brush>
+            <RadialGradientBrush Center="0.5,0.91" GradientOrigin="0.5,0.91"
+                                 RadiusX="0.46" RadiusY="0.075">
+                <GradientStop Color="#D9FFFFFF" Offset="0" />
+                <GradientStop Color="#70F4FCFF" Offset="0.45" />
+                <GradientStop Color="#00F4FCFF" Offset="1" />
+            </RadialGradientBrush>
+        </GeometryDrawing.Brush>
+    </GeometryDrawing>
+    <DrawingBrush x:Key="RibbonKit.Brushes.Control.PressedBackground"
+                  Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
+        <DrawingBrush.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z">
+                    <GeometryDrawing.Brush>
+                        <RadialGradientBrush Center="0.5,0.42" GradientOrigin="0.5,0.42" RadiusX="0.85" RadiusY="0.85">
+                            <GradientStop Color="#DFEFFA" Offset="0" />
+                            <GradientStop Color="#C8DFEF" Offset="0.6" />
+                            <GradientStop Color="#AFCBDF" Offset="1" />
+                        </RadialGradientBrush>
+                    </GeometryDrawing.Brush>
+                </GeometryDrawing>
+                <StaticResource ResourceKey="Crystal.Drawing.InnerReflection" />
+            </DrawingGroup>
+        </DrawingBrush.Drawing>
+    </DrawingBrush>
     <LinearGradientBrush x:Key="RibbonKit.Brushes.Control.PressedBorder" StartPoint="0,0" EndPoint="0,1">
         <GradientStop Color="#90678BAA" Offset="0" />
         <GradientStop Color="#60678BAA" Offset="0.55" />
         <GradientStop Color="#C07898B2" Offset="1" />
     </LinearGradientBrush>
-    <RadialGradientBrush x:Key="RibbonKit.Brushes.Control.CheckedBackground"
-                         Center="0.5,0.72" GradientOrigin="0.5,0.72" RadiusX="0.85" RadiusY="0.9">
-        <GradientStop Color="#E5F1FA" Offset="0" />
-        <GradientStop Color="#CBDFEF" Offset="1" />
-    </RadialGradientBrush>
+    <DrawingBrush x:Key="RibbonKit.Brushes.Control.CheckedBackground"
+                  Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
+        <DrawingBrush.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z">
+                    <GeometryDrawing.Brush>
+                        <RadialGradientBrush Center="0.5,0.42" GradientOrigin="0.5,0.42" RadiusX="0.85" RadiusY="0.85">
+                            <GradientStop Color="#EAF5FC" Offset="0" />
+                            <GradientStop Color="#D6E8F4" Offset="0.6" />
+                            <GradientStop Color="#BED5E7" Offset="1" />
+                        </RadialGradientBrush>
+                    </GeometryDrawing.Brush>
+                </GeometryDrawing>
+                <DrawingGroup Opacity="0.65">
+                    <StaticResource ResourceKey="Crystal.Drawing.InnerReflection" />
+                </DrawingGroup>
+            </DrawingGroup>
+        </DrawingBrush.Drawing>
+    </DrawingBrush>
     <RadialGradientBrush x:Key="RibbonKit.Brushes.Control.CheckedHoverBackground"
                          Center="0.5,0.72" GradientOrigin="0.5,0.72" RadiusX="0.85" RadiusY="0.9">
         <GradientStop Color="#DAEDF9" Offset="0" />
         <GradientStop Color="#BBD5EA" Offset="1" />
     </RadialGradientBrush>
-    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CheckedBorder" Color="#80678BAA" />
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Control.CheckedBorder" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#A67898B2" Offset="0" />
+        <GradientStop Color="#707898B2" Offset="0.5" />
+        <GradientStop Color="#A67898B2" Offset="1" />
+    </LinearGradientBrush>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.InnerGlow" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionBackground" Color="#105885B1" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionBorder" Color="#185D82A6" />
