@@ -29,24 +29,109 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Secondary" Color="#4F6476" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.TitleBar.Foreground" Color="#20364A" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.Foreground" Color="#20364A" />
-    <LinearGradientBrush x:Key="RibbonKit.Brushes.Control.HoverBackground" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Color="#F2FFFFFF" Offset="0" />
-        <GradientStop Color="#A6DCEFFC" Offset="1" />
+    <!-- User-preferred rim: steady blue-gray sides with localized top/bottom glints.
+         The small inset impression is preferred to the full-height gradient's taper. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.HoverBackground" Color="#205885B1" />
+    <DrawingGroup x:Key="Crystal.Drawing.GlassRim">
+        <GeometryDrawing Brush="#8892ABC0" Geometry="M0,0 H1 V1 H0 Z" />
+        <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z">
+            <GeometryDrawing.Brush>
+                <RadialGradientBrush Center="0.5,0" GradientOrigin="0.5,0"
+                                     RadiusX="0.48" RadiusY="0.10">
+                    <GradientStop Color="#FFFFFFFF" Offset="0" />
+                    <GradientStop Color="#CCFFFFFF" Offset="0.55" />
+                    <GradientStop Color="#00FFFFFF" Offset="1" />
+                </RadialGradientBrush>
+            </GeometryDrawing.Brush>
+        </GeometryDrawing>
+        <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z">
+            <GeometryDrawing.Brush>
+                <RadialGradientBrush Center="0.5,1" GradientOrigin="0.5,1"
+                                     RadiusX="0.48" RadiusY="0.10">
+                    <GradientStop Color="#A66D88A0" Offset="0" />
+                    <GradientStop Color="#006D88A0" Offset="1" />
+                </RadialGradientBrush>
+            </GeometryDrawing.Brush>
+        </GeometryDrawing>
+    </DrawingGroup>
+    <DrawingBrush x:Key="RibbonKit.Brushes.Control.HoverBorder"
+                  Drawing="{StaticResource Crystal.Drawing.GlassRim}"
+                  Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
+    <RadialGradientBrush x:Key="RibbonKit.Brushes.Control.PressedBackground"
+                         Center="0.5,0.72" GradientOrigin="0.5,0.72" RadiusX="0.85" RadiusY="0.9">
+        <GradientStop Color="#E5F4FE" Offset="0" />
+        <GradientStop Color="#CFE4F4" Offset="0.58" />
+        <GradientStop Color="#BCD3E7" Offset="1" />
+    </RadialGradientBrush>
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Control.PressedBorder" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#90678BAA" Offset="0" />
+        <GradientStop Color="#60678BAA" Offset="0.55" />
+        <GradientStop Color="#B3FFFFFF" Offset="1" />
     </LinearGradientBrush>
-    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.PressedBackground" Color="#B0C4DCEF" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CheckedBackground" Color="#BFD2E5F6" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CheckedHoverBackground" Color="#D9C3DEF4" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.HoverBorder" Color="#F2FFFFFF" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.PressedBorder" Color="#A67A9DBD" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CheckedBorder" Color="#A684A9C9" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.InnerGlow" Color="#80FFFFFF" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionBackground" Color="#60FFFFFF" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionBorder" Color="#80FFFFFF" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionGlow" Color="#40FFFFFF" />
+    <RadialGradientBrush x:Key="RibbonKit.Brushes.Control.CheckedBackground"
+                         Center="0.5,0.72" GradientOrigin="0.5,0.72" RadiusX="0.85" RadiusY="0.9">
+        <GradientStop Color="#E5F1FA" Offset="0" />
+        <GradientStop Color="#CBDFEF" Offset="1" />
+    </RadialGradientBrush>
+    <RadialGradientBrush x:Key="RibbonKit.Brushes.Control.CheckedHoverBackground"
+                         Center="0.5,0.72" GradientOrigin="0.5,0.72" RadiusX="0.85" RadiusY="0.9">
+        <GradientStop Color="#DAEDF9" Offset="0" />
+        <GradientStop Color="#BBD5EA" Offset="1" />
+    </RadialGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CheckedBorder" Color="#80678BAA" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.InnerGlow" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionBackground" Color="#105885B1" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionBorder" Color="#185D82A6" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionGlow" Color="Transparent" />
     <Thickness x:Key="RibbonKit.Metrics.ControlHighlightBorderThickness">1</Thickness>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Group.Separator" Color="#40819DB5" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedBackground" Color="#66FFFFFF" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverBackground" Color="#40FFFFFF" />
+    <!-- Selection carries the stronger glass surface and an icy reflective marker.
+         Hover borrows a quieter rim; its gray underline would compete with selection. -->
+    <RadialGradientBrush x:Key="RibbonKit.Brushes.Tab.SelectedBackground"
+                         Center="0.5,0.25" GradientOrigin="0.5,0.25" RadiusX="0.85" RadiusY="0.95">
+        <GradientStop Color="#F5FBFF" Offset="0" />
+        <GradientStop Color="#E1EFF9" Offset="0.55" />
+        <GradientStop Color="#C7DEEF" Offset="1" />
+    </RadialGradientBrush>
+    <DrawingBrush x:Key="RibbonKit.Brushes.Tab.SelectedBorderBrush"
+                  Drawing="{StaticResource Crystal.Drawing.GlassRim}"
+                  Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverBackground" Color="#187BA5C7" />
+    <DrawingBrush x:Key="RibbonKit.Brushes.Tab.HoverBorder"
+                  Drawing="{StaticResource Crystal.Drawing.GlassRim}" Opacity="0.6"
+                  Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverUnderline" Color="Transparent" />
+    <!-- The existing rounded marker clips this brush into a pill. A darker upper/lower
+         edge surrounds a luminous center, with a localized glint for a trapped-air look. -->
+    <DrawingBrush x:Key="RibbonKit.Brushes.Tab.SelectedUnderline"
+                  Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" Opacity="0.9">
+        <DrawingBrush.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z">
+                    <GeometryDrawing.Brush>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                            <GradientStop Color="#809FB5" Offset="0" />
+                            <GradientStop Color="#BCD6E6" Offset="0.2" />
+                            <GradientStop Color="#EBF8FF" Offset="0.48" />
+                            <GradientStop Color="#D1EAF6" Offset="0.76" />
+                            <GradientStop Color="#8CAFC5" Offset="1" />
+                        </LinearGradientBrush>
+                    </GeometryDrawing.Brush>
+                </GeometryDrawing>
+                <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z">
+                    <GeometryDrawing.Brush>
+                        <RadialGradientBrush Center="0.3,0.42" GradientOrigin="0.3,0.42"
+                                             RadiusX="0.28" RadiusY="0.48">
+                            <GradientStop Color="#D9FFFFFF" Offset="0" />
+                            <GradientStop Color="#00FFFFFF" Offset="1" />
+                        </RadialGradientBrush>
+                    </GeometryDrawing.Brush>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingBrush.Drawing>
+    </DrawingBrush>
+    <!-- Reserve the same rim on every tab, so selecting or hovering never moves labels. -->
+    <Thickness x:Key="RibbonKit.Metrics.TabSelectedBorderThickness">1,1,1,0</Thickness>
     <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.ControlHoverBackground" Color="#80FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.ControlPressedBackground" Color="#809EBBD2" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.ScrollButtonBackground" Color="#EBF2F9" />

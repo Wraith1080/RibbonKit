@@ -44,6 +44,53 @@ that brush opaque. Separate popup/material tokens need consideration before real
 translucency. Dark mode, system materials, whole-surface coverage and DPI/RTL acceptance
 remain later slices. The initial Showcase Release build passed with zero warnings/errors.
 
+The 2026-09-21 interaction pass replaces the bright white hover cap/rim with a faint
+blue tint and a low-contrast outline. Pressed/open controls use an opaque radial
+highlight near the lower center, with a shaded top edge and light lower rim; checked
+controls use a quieter version of the same shading. The extra white inner outline is
+removed. These are palette-only changes in the preview, using the existing shared
+templates and animation policy; no new motion or runtime APIs are introduced.
+Showcase Release build: zero warnings/errors. Live checks covered dropdown hover/open,
+Escape dismissal and Office 2024 comparison in both directions on the current display.
+No full-suite or new DPI/RTL acceptance is claimed; visual acceptance remains with the user.
+
+Follow-up feedback requests the content card's mixed white/dark outline on hover.
+The hover rim now grades from white at the top to blue-gray at the bottom, retaining
+the quiet fill and the pressed/open shading. Visual checking of this revision is
+delegated to the user at their request to conserve usage; the prior live checks above
+apply to the earlier revision.
+
+The user's clarified preference is the localized-reflection version: a vector drawing
+brush with steady blue-gray sides, a white top-center glint and darker bottom-center
+shading. Its slight inset impression is preferred to the full-height gradient's apparent
+taper. This version is restored with the original reflection radii (0.48, 0.10).
+Geometry, fill and pressed state are unchanged. Visual checking remains with the user.
+
+The next tab study adds a pale-blue radial selected fill and reuses the chosen button
+rim, with a 60%-opacity rim and faint blue wash on hover. After feedback, the ordinary
+selection underline uses an icy gradient (white upper edge, pale blue center, blue-gray
+lower edge) instead of solid blue; the gray hover underline is hidden. The existing
+marker geometry and motion are retained. Contextual tab markers retain their own tint.
+The 55%-opacity revision proved too subtle in user review. The current marker instead
+explores an air bubble inside glass: a pale luminous center bounded by blue-gray upper
+and lower edges, plus a localized white glint, at 90% brush opacity. It retains the
+existing pill geometry and motion; this is brush shading, not optical refraction.
+All tabs reserve the same top/side border thickness to avoid label movement on state
+changes. The shared rim drawing leaves the accepted button appearance unchanged.
+This remains a Showcase-only token overlay. The initial tab Release build passed with
+zero warnings/errors; the marker follow-up also passed, with two transient copy-retry
+warnings from the running preview. Tab switching, hover and visual acceptance are left
+to the user as requested.
+
+**Next planned slice — contextual tab color (deferred at the user's usage limit):**
+Make Crystal tab headers tintable from each tab's existing contextual color, covering
+the header surface as well as text and the selection marker. Preserve the glass rim,
+bubble highlight and clear idle/hover/selected states across different context colors.
+Use the existing contextual-brush contract where possible, keep ordinary tabs neutral,
+and preserve live color changes and readable text. Add a Showcase comparison with at
+least two differently colored contextual tabs; leave visual acceptance to the user.
+This is a plan only; contextual Crystal header tinting has not been implemented.
+
 Values are starting anchors, not approved final colors. Columns list base, raised
 surface, border, primary text, secondary text and accent respectively.
 
