@@ -200,6 +200,108 @@ public class CrystalContextualTests
         Assert.Same(context.ContextualSelectionBrush, marker.Fill);
     });
 
+    [Fact]
+    public void Crystal_backstage_uses_tinted_materials_and_restores_baseline_without_losing_selection() => Sta.Run(() =>
+    {
+        var stage = new Backstage { Design = RibbonBackstageDesign.Modern };
+        stage.Resources.MergedDictionaries.Add(new ResourceDictionary
+        { Source = new Uri("/RibbonKit;component/Themes/Tokens.Office2024.xaml", UriKind.Relative) });
+        stage.Resources.MergedDictionaries.Add(CrystalPalette.Create(CrystalPalette.Blue));
+        var home = new BackstageTabItem { Header = "Home", Content = new TextBlock { Text = "Document" } };
+        var appearance = new BackstageTabItem { Header = "Appearance", Content = new TextBlock { Text = "Tint" } };
+        stage.Items.Add(home);
+        stage.Items.Add(appearance);
+        stage.SelectedItem = appearance;
+        void LayoutStage()
+        {
+            stage.Measure(new Size(800, 500));
+            stage.Arrange(new Rect(0, 0, 800, 500));
+            stage.UpdateLayout();
+            Sta.Drain();
+        }
+        LayoutStage();
+        var nav = (Border)stage.Template.FindName("NavColumn", stage);
+        var chrome = (Border)appearance.Template.FindName("Chrome", appearance);
+        var original = Assert.IsType<LinearGradientBrush>(nav.Background).GradientStops[2].Color;
+        Assert.Same(appearance, stage.SelectedItem);
+        Assert.True(appearance.IsSelected);
+        Assert.Equal(RibbonBackstageDesign.Modern, Backstage.GetDesign(appearance));
+        Assert.IsType<DrawingBrush>(stage.FindResource("RibbonKit.Brushes.Backstage.Modern.ItemSelected"));
+        var selection = Assert.IsType<DrawingBrush>(chrome.Background);
+        Assert.IsType<DrawingBrush>(Assert.IsType<GeometryDrawing>(selection.Drawing).Brush);
+        Assert.Equal(new CornerRadius(4), chrome.CornerRadius);
+        stage.Resources.MergedDictionaries[1] = CrystalPalette.Create(Colors.Purple);
+        LayoutStage();
+        Assert.NotEqual(original, Assert.IsType<LinearGradientBrush>(nav.Background).GradientStops[2].Color);
+        Assert.Same(appearance, stage.SelectedItem);
+        Assert.Same(stage.FindResource("RibbonKit.Brushes.Backstage.Modern.ItemSelected"), chrome.Background);
+        Assert.Same(stage.FindResource("RibbonKit.Brushes.Backstage.ContentBackground"), stage.Background);
+        stage.Resources.MergedDictionaries.RemoveAt(1);
+        LayoutStage();
+        Assert.IsType<SolidColorBrush>(nav.Background);
+        Assert.IsType<SolidColorBrush>(chrome.Background);
+        Assert.Same(appearance, stage.SelectedItem);
+    });
+
+    [Fact]
+    public void Crystal_floating_backstage_keeps_document_binding_navigation_and_comparison_when_detached() => Sta.Run(() =>
+    {
+        var stage = new Backstage { Design = RibbonBackstageDesign.Modern };
+        var titleInput = new RibbonTextBox { Text = "A calmer workspace" };
+        var title = new TextBlock();
+        var home = new BackstageTabItem { Header = "Overview", Content = title };
+        var appearance = new BackstageTabItem { Header = "Appearance", Content = new TextBlock { Text = "Tint" } };
+        var about = new BackstageTabItem { Header = "About" };
+        stage.Items.Add(home);
+        stage.Items.Add(appearance);
+        stage.Items.Add(about);
+        stage.SelectedItem = home;
+        var presentation = new CrystalBackstagePresentation(stage, new ResourceDictionary
+        { Source = new Uri("/RibbonKit;component/Themes/Tokens.Office2024.xaml", UriKind.Relative) }, title, titleInput);
+        var blue = CrystalPalette.Create(CrystalPalette.Blue);
+        presentation.Apply(blue);
+        void LayoutStage()
+        {
+            stage.Measure(new Size(680, 440));
+            stage.Arrange(new Rect(0, 0, 680, 440));
+            stage.UpdateLayout();
+            Sta.Drain();
+        }
+        LayoutStage();
+        Assert.Equal("A calmer workspace", title.Text);
+        titleInput.Text = "Changed while File is open";
+        Sta.Drain();
+        Assert.Equal(titleInput.Text, title.Text);
+        var first = home.TransformToAncestor(stage).Transform(new Point());
+        var second = appearance.TransformToAncestor(stage).Transform(new Point());
+        var third = about.TransformToAncestor(stage).Transform(new Point());
+        Assert.Equal(first.Y, second.Y);
+        Assert.Equal(first.Y, third.Y);
+        Assert.True(first.X < second.X && second.X < third.X);
+        Assert.True(third.X + about.ActualWidth <= stage.ActualWidth);
+        Assert.Null(stage.Template.FindName("NavColumn", stage));
+        int backRequests = 0;
+        stage.BackRequested += (_, _) => backRequests++;
+        ((Button)stage.Template.FindName("PART_BackButton", stage)).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Assert.Equal(1, backRequests);
+        stage.SelectedItem = appearance;
+        var purple = CrystalPalette.Create(Colors.Purple);
+        presentation.Apply(purple);
+        LayoutStage();
+        Assert.Same(appearance, stage.SelectedItem);
+        Assert.Same(purple["RibbonKit.Brushes.Window.Background"], stage.FindResource("RibbonKit.Brushes.Window.Background"));
+        presentation.Apply(null);
+        LayoutStage();
+        Assert.NotNull(stage.Template.FindName("NavColumn", stage));
+        Assert.Same(appearance, stage.SelectedItem);
+        presentation.Apply(blue);
+        LayoutStage();
+        Assert.Null(stage.Template.FindName("NavColumn", stage));
+        stage.SelectedItem = home;
+        LayoutStage();
+        Assert.Equal(titleInput.Text, title.Text);
+    });
+
     private static double Luminance(Color color)
     {
         static double Linear(byte b)

@@ -22,13 +22,89 @@
             <TextBlock x:Name="StatusText" Text="Ready · Try the controls, open Arrange, or compare with Office 2024."
                        Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
         </Border>
-        <rk:Ribbon DockPanel.Dock="Top" QuickAccessPosition="TabRow">
+        <rk:Ribbon x:Name="PreviewRibbon" DockPanel.Dock="Top" QuickAccessPosition="TabRow">
             <rk:Ribbon.Backstage>
-                <rk:Backstage>
-                    <rk:BackstageTabItem Header="About this study">
-                        <TextBlock Margin="32" FontSize="18" TextWrapping="Wrap"
-                                   Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}"
-                                   Text="Crystal is an experimental Office 2024 derivative. This first study explores light surfaces and control states; the full Backstage design comes later." />
+                <rk:Backstage x:Name="CrystalBackstage" Design="Modern" SelectedIndex="0">
+                    <rk:BackstageTabItem Header="Overview" Icon="{StaticResource Icon.Style}">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel Margin="4,0,4,16">
+                                <TextBlock Text="Space to think." FontSize="36" Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+                                <TextBlock Text="Your document, with a little room to breathe." Margin="0,10,0,28" FontSize="15" TextWrapping="Wrap"
+                                           Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
+                                <Border Padding="28" CornerRadius="24"
+                                        Background="{DynamicResource RibbonKit.Brushes.Control.SurfaceBackground}"
+                                        BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}" BorderThickness="1"
+                                        Effect="{DynamicResource RibbonKit.Effects.ContentShadow}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                    <StackPanel Margin="0,0,24,0">
+                                        <TextBlock Text="CURRENT DOCUMENT" FontSize="11" Foreground="{DynamicResource RibbonKit.Brushes.Accent}" />
+                                        <TextBlock x:Name="BackstageDocumentTitle" Margin="0,10,0,16" FontSize="26" TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+                                        <TextBlock Text="Pick up where you left off."
+                                                   TextWrapping="Wrap" FontSize="14" Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
+                                        <Button Content="Continue editing  →" Margin="0,24,0,0" HorizontalAlignment="Left"
+                                                Style="{DynamicResource Crystal.Backstage.Action}" Click="OnReturnToDocument" />
+                                    </StackPanel>
+                                        <Border Grid.Column="1" Width="88" Height="120" VerticalAlignment="Center" CornerRadius="10"
+                                                Background="{DynamicResource RibbonKit.Brushes.Tab.SelectedBackground}"
+                                                BorderBrush="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" BorderThickness="1"
+                                                IsHitTestVisible="False" RenderTransformOrigin="0.5,0.5">
+                                            <Border.RenderTransform><RotateTransform Angle="-5" /></Border.RenderTransform>
+                                            <StackPanel Margin="16,24">
+                                                <Border Height="5" Width="26" HorizontalAlignment="Left" CornerRadius="2" Background="{DynamicResource RibbonKit.Brushes.Accent}" Opacity="0.5" />
+                                                <Border Height="3" Margin="0,14,0,0" Background="{DynamicResource RibbonKit.Brushes.Text.Secondary}" Opacity="0.18" />
+                                                <Border Height="3" Margin="0,8,0,0" Background="{DynamicResource RibbonKit.Brushes.Text.Secondary}" Opacity="0.18" />
+                                                <Border Height="3" Margin="0,8,16,0" Background="{DynamicResource RibbonKit.Brushes.Text.Secondary}" Opacity="0.18" />
+                                            </StackPanel>
+                                        </Border>
+                                    </Grid>
+                                </Border>
+                                <Border Margin="0,18,0,0" Padding="22,18" CornerRadius="18"
+                                        Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
+                                        BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}" BorderThickness="1">
+                                    <TextBlock Text="A space that feels like yours. Explore Appearance to change the glass tint."
+                                               TextWrapping="Wrap" Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
+                                </Border>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </rk:BackstageTabItem>
+                    <rk:BackstageTabItem Header="Appearance" Icon="{StaticResource Icon.Palette}">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel Margin="4,0,4,16">
+                                <TextBlock Text="Make it yours." FontSize="36" Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+                                <TextBlock Text="A little color, the same clear glass." Margin="0,10,0,28" FontSize="15"
+                                           TextWrapping="Wrap" Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
+                                <Border Padding="28" CornerRadius="24"
+                                        Background="{DynamicResource RibbonKit.Brushes.Control.SurfaceBackground}"
+                                        BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}" BorderThickness="1">
+                                    <StackPanel>
+                                        <TextBlock Text="Glass tint" FontSize="20" Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+                                        <TextBlock Text="Choose a tint for this preview. Picture and table tabs keep their own colors."
+                                                   Margin="0,10,0,18" TextWrapping="Wrap" FontSize="14" Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
+                                        <rk:RibbonDropDownButton x:Name="BackstageAccentSelector" Header="Choose tint" Size="Medium"
+                                                                 HorizontalAlignment="Left" Icon="{StaticResource Icon.Palette}">
+                                            <rk:RibbonMenuItem Header="Blue (original)" Tag="#397CA9" Click="OnAccentSelected" />
+                                            <rk:RibbonMenuItem Header="Green" Tag="#287E78" Click="OnAccentSelected" />
+                                            <rk:RibbonMenuItem Header="Purple" Tag="#8659A5" Click="OnAccentSelected" />
+                                            <rk:RibbonMenuItem Header="Amber" Tag="#AC731C" Click="OnAccentSelected" />
+                                        </rk:RibbonDropDownButton>
+                                        <TextBlock x:Name="BackstageTintLabel" Text="Current tint: Blue (original)" Margin="0,12,0,0"
+                                                   Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </rk:BackstageTabItem>
+                    <rk:BackstageTabItem Header="About" Icon="{StaticResource Icon.Palette}">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel Margin="4,0,4,16" MaxWidth="720" HorizontalAlignment="Left">
+                                <TextBlock Text="Crystal" FontSize="36" Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+                                <TextBlock Margin="0,16,0,0" FontSize="15" TextWrapping="Wrap"
+                                           Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
+                                           Text="A glass-inspired Office 2024 study, built around soft reflections, clear commands and a tint that feels like yours." />
+                            </StackPanel>
+                        </ScrollViewer>
                     </rk:BackstageTabItem>
                 </rk:Backstage>
             </rk:Ribbon.Backstage>

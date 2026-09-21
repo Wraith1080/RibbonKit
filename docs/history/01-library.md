@@ -4563,3 +4563,20 @@ WindowChrome cross-thread issue. Fresh-process follow-ups also failed on the exp
 menu lacking Settings and a table-selection count (expected 2, actual 1). These remain
 unresolved outside this change; no Writer code was edited. The user owns Crystal visual
 checking, so no new live visual/DPI/RTL acceptance is claimed.
+
+2026-09-22 File-panel follow-up: sample-only Modern Backstage palette and preview pages
+reuse the accepted Crystal lighting and local tint variants. A top-level keyed
+StaticResource alias resolved to the baseline fill in the realized-control test;
+explicit DrawingBrush resources with nested geometry/brush references resolved the
+intended Crystal fill. Keep the realized selection-fill assertion when changing these
+resources. Showcase Release build and twelve focused Crystal/input tests passed;
+Backstage live visual acceptance remains with the user.
+
+The subsequent user-requested structural redesign uses a sample-only Backstage
+template with a floating horizontal navigation island and separate content cards.
+Compare 2024 clears this style to recover the shared layout. The overlay lives outside
+the ordinary window namescope/resource route: an explicit scoped palette and binding
+source are required for preview colors and document text to survive reparenting.
+CrystalBackstagePresentation now owns that bridge. Thirteen focused tests passed,
+including detached binding changes, minimum-width navigation, back requests and style
+restoration. Live visual review remains with the user.

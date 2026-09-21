@@ -1,0 +1,100 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:rk="urn:ribbonkit">
+    <!-- Original Showcase-only layout experiment. The library's Backstage control
+         still owns selection, automation, keyboard handling and back requests. -->
+    <Style x:Key="Crystal.Backstage.Action" TargetType="Button">
+        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+        <Setter Property="Padding" Value="18,11" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Chrome" CornerRadius="12" Padding="{TemplateBinding Padding}"
+                            Background="{DynamicResource RibbonKit.Brushes.Control.CheckedBackground}"
+                            BorderBrush="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" BorderThickness="1">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource RibbonKit.Brushes.Tab.SelectedBackground}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Accent}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.4" /></Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style x:Key="Crystal.Backstage.Tab" TargetType="{x:Type rk:BackstageTabItem}">
+        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type rk:BackstageTabItem}">
+                    <Border x:Name="Chrome" CornerRadius="12" Margin="3" Padding="20,11"
+                            Background="Transparent" BorderBrush="Transparent" BorderThickness="1">
+                        <ContentPresenter ContentSource="Header" RecognizesAccessKey="True" HorizontalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource RibbonKit.Brushes.Tab.HoverBackground}" />
+                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Tab.HoverBorder}" />
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource RibbonKit.Brushes.Control.CheckedBackground}" />
+                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
+                            <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Accent}" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Accent}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.4" /></Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style x:Key="Crystal.Backstage.Style" TargetType="{x:Type rk:Backstage}">
+        <Setter Property="ItemContainerStyle" Value="{StaticResource Crystal.Backstage.Tab}" />
+        <Setter Property="ItemsPanel">
+            <Setter.Value><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></Setter.Value>
+        </Setter>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type rk:Backstage}">
+                    <Grid Background="{DynamicResource RibbonKit.Brushes.Window.Background}">
+                        <Grid Margin="28,24" MaxWidth="1040">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            <DockPanel LastChildFill="False">
+                                <Button x:Name="PART_BackButton" Content="←  Back to document" DockPanel.Dock="Left"
+                                        Style="{StaticResource Crystal.Backstage.Action}"
+                                        AutomationProperties.Name="Back to document" />
+                                <TextBlock Text="CRYSTAL  /  WORKSPACE" DockPanel.Dock="Right" Margin="16,0,0,0"
+                                           FontSize="11" VerticalAlignment="Center" Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
+                            </DockPanel>
+                            <Border Grid.Row="1" HorizontalAlignment="Left" Margin="0,24,0,24" Padding="5" CornerRadius="20"
+                                    Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
+                                    BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}" BorderThickness="1"
+                                    Effect="{DynamicResource RibbonKit.Effects.ContentShadow}">
+                                <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained" />
+                            </Border>
+                            <Grid x:Name="ContentArea" Grid.Row="2">
+                                <ContentPresenter ContentSource="SelectedContent" />
+                            </Grid>
+                        </Grid>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</ResourceDictionary>

@@ -8,11 +8,16 @@ namespace RibbonKit.Showcase;
 public partial class CrystalPreviewWindow : RibbonWindow
 {
     private ResourceDictionary? _crystal;
+    private readonly CrystalBackstagePresentation _backstagePresentation;
 
     public CrystalPreviewWindow()
     {
         InitializeComponent();
         _crystal = Resources.MergedDictionaries[1];
+        // Backstage is reparented into an adorner. Give it explicit palette and data
+        // sources instead of depending on the window's visual tree or namescope.
+        _backstagePresentation = new CrystalBackstagePresentation(CrystalBackstage,
+            Resources.MergedDictionaries[0], BackstageDocumentTitle, TitleInput);
         UpdateCrystalDetails(true);
     }
 
@@ -36,7 +41,10 @@ public partial class CrystalPreviewWindow : RibbonWindow
 
     private void UpdateCrystalDetails(bool enabled)
     {
+        _backstagePresentation.Apply(enabled ? _crystal : null);
         AccentSelector.IsEnabled = enabled;
+        BackstageAccentSelector.IsEnabled = enabled;
+        BackstageTintLabel.Visibility = enabled ? Visibility.Visible : Visibility.Collapsed;
         PictureTab.CrystalEnabled = enabled;
         TableTab.CrystalEnabled = enabled;
         foreach (var panel in new[] { CompactClipboard, CompactText })
@@ -45,6 +53,8 @@ public partial class CrystalPreviewWindow : RibbonWindow
             else panel.Resources.Remove("RibbonKit.Metrics.ControlCornerRadius");
         }
     }
+
+    private void OnReturnToDocument(object sender, RoutedEventArgs e) => PreviewRibbon.IsBackstageOpen = false;
 
     private void OnAccentSelected(object sender, RoutedEventArgs e)
     {
@@ -57,6 +67,7 @@ public partial class CrystalPreviewWindow : RibbonWindow
         _crystal = replacement;
         UpdateCrystalDetails(true);
         StatusText.Text = $"Glass tint: {item.Header}";
+        BackstageTintLabel.Text = $"Current tint: {item.Header}";
     }
 
     private void OnChangeContextTint(object sender, RoutedEventArgs e)

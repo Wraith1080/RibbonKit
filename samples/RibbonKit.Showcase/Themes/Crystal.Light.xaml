@@ -172,6 +172,46 @@
             </DrawingGroup>
         </DrawingBrush.Drawing>
     </DrawingBrush>
+    <!-- Modern File panel: opaque readable sheet, softly tinted rail, and the same
+         reflective selection material as the ribbon. Accent variants recolor these too. -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Backstage.Modern.NavBackground" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#F3FAFE" Offset="0" />
+        <GradientStop Color="#E4EFF8" Offset="0.65" />
+        <GradientStop Color="#DCEAF4" Offset="1" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.Foreground" Color="#20364A" />
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Backstage.ContentBackground" StartPoint="0,0" EndPoint="0.2,1">
+        <GradientStop Color="#FCFEFF" Offset="0" />
+        <GradientStop Color="#F4F9FD" Offset="0.7" />
+        <GradientStop Color="#ECF4FA" Offset="1" />
+    </LinearGradientBrush>
+    <DrawingBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemHover" Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
+        <DrawingBrush.Drawing><GeometryDrawing Geometry="M0,0 H1 V1 H0 Z" Brush="{StaticResource RibbonKit.Brushes.Tab.SelectedBackground}" /></DrawingBrush.Drawing>
+    </DrawingBrush>
+    <DrawingBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemSelected" Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
+        <DrawingBrush.Drawing><GeometryDrawing Geometry="M0,0 H1 V1 H0 Z" Brush="{StaticResource RibbonKit.Brushes.Control.CheckedBackground}" /></DrawingBrush.Drawing>
+    </DrawingBrush>
+    <DrawingBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemHoverTranslucent" Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
+        <DrawingBrush.Drawing><GeometryDrawing Geometry="M0,0 H1 V1 H0 Z" Brush="{StaticResource RibbonKit.Brushes.Tab.SelectedBackground}" /></DrawingBrush.Drawing>
+    </DrawingBrush>
+    <DrawingBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemSelectedTranslucent" Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
+        <DrawingBrush.Drawing><GeometryDrawing Geometry="M0,0 H1 V1 H0 Z" Brush="{StaticResource RibbonKit.Brushes.Control.CheckedBackground}" /></DrawingBrush.Drawing>
+    </DrawingBrush>
+    <DrawingBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverBackground" Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
+        <DrawingBrush.Drawing><GeometryDrawing Geometry="M0,0 H1 V1 H0 Z" Brush="{StaticResource RibbonKit.Brushes.Control.HoverBackground}" /></DrawingBrush.Drawing>
+    </DrawingBrush>
+    <DrawingBrush x:Key="RibbonKit.Brushes.ApplicationButton.PressedBackground" Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
+        <DrawingBrush.Drawing><GeometryDrawing Geometry="M0,0 H1 V1 H0 Z" Brush="{StaticResource RibbonKit.Brushes.Control.PressedBackground}" /></DrawingBrush.Drawing>
+    </DrawingBrush>
+    <DrawingBrush x:Key="RibbonKit.Brushes.ApplicationButton.MenuOpenBackground" Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
+        <DrawingBrush.Drawing><GeometryDrawing Geometry="M0,0 H1 V1 H0 Z" Brush="{StaticResource RibbonKit.Brushes.Control.CheckedBackground}" /></DrawingBrush.Drawing>
+    </DrawingBrush>
+    <DrawingBrush x:Key="RibbonKit.Brushes.ApplicationButton.MenuOpenBottom" Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
+        <DrawingBrush.Drawing><GeometryDrawing Geometry="M0,0 H1 V1 H0 Z" Brush="{StaticResource RibbonKit.Brushes.Control.CheckedBackground}" /></DrawingBrush.Drawing>
+    </DrawingBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.Foreground" Color="#20364A" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.MenuOpenForeground" Color="#20364A" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverUnderline" Color="Transparent" />
     <!-- Reserve the same rim on every tab, so selecting or hovering never moves labels. -->
     <Thickness x:Key="RibbonKit.Metrics.TabSelectedBorderThickness">1,1,1,0</Thickness>
     <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.ControlHoverBackground" Color="#80FFFFFF" />

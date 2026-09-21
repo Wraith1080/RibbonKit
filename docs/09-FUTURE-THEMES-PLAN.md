@@ -144,6 +144,36 @@ tests cover palette replacement, input value preservation, original palette rest
 contextual tint independence and preset selected-tab text contrast. Visual review of the
 new presets remains with the user.
 
+**File panel study (2026-09-22):** the preview explicitly uses Modern Backstage,
+with Home, Appearance and a bottom About page. A pale opaque page surface and a softly
+tinted rail reuse the accepted glass selection/hover materials; File-button states
+follow the same palette. Appearance provides a tint selector for checking changes
+while Backstage is open. Compare 2024 disables both tint selectors and restores the
+baseline brushes. Native templates, navigation, keyboard behavior and animations remain
+in use; no shared runtime changes or real file commands were introduced.
+
+Showcase Release build and twelve focused Crystal/input tests passed, including
+realized Backstage palette replacement and baseline restoration without losing the
+selected page. Visual review remains with the user.
+
+**Floating workspace redesign (2026-09-22, supersedes the File-panel layout above):**
+the user found the rail-and-sheet version too similar to Office. Crystal now has an
+original sample-only Backstage template in `Themes/Crystal.Backstage.xaml`: a return
+capsule, a horizontal glass navigation island, and independent rounded content cards
+over the tinted window surface. Overview includes a document preview and a working
+Continue editing action. Appearance and About use the same open canvas. This is an
+intentional layout experiment, not a copied Office template or a new runtime theme.
+The shared Backstage control still handles selection, back requests and its existing
+motion; comparison removes the sample style and restores the stock layout.
+
+The detached adorner does not reliably inherit the preview window's palette/namescope.
+`CrystalBackstagePresentation` supplies its own baseline/layout/current palette scope
+and binds the document title directly to the live input, fixing the blank title and
+fallback colors. Tint replacement updates both window and overlay. Showcase Release
+build passed, and thirteen focused tests passed, including detached title updates,
+horizontal navigation at 680 DIP, the back request, and comparison restoration.
+The user owns visual acceptance; no live keyboard, DPI or RTL acceptance is claimed.
+
 Release solution build passed with zero warnings/errors; the library suite passed
 400/400 and existing visual snapshots 1/1. The full Writer run passed 465/472, with
 seven failures including WindowChrome cross-thread initialization. Isolated reruns
