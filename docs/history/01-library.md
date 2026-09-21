@@ -4539,3 +4539,27 @@ collapsed/disabled group and both Classic2007 frame paths; the pre-test appearan
 restored afterward.
 Current gate: **355 logic tests plus one visual test covering 63 approved images**, with zero build
 warnings or errors.
+
+### 3.164 Crystal contextual tab study and compact button refinement — 2026-09-21
+
+Crystal remains a Showcase-only Office 2024 overlay. Teal Picture Format and purple
+Table Design tabs now derive glass surfaces, rims, readable darkened text and bubble
+markers from their effective solid contextual color. Change tint exercises live updates;
+Compare 2024 removes the adapter overrides. Gradient/custom context brushes fall back
+to standard rendering. The adapter depends on the shared ContextualHeaderText part;
+there is no copied tab template. Compact Clipboard/Text stacks scope a 3-DIP radius,
+while large controls keep 8 DIP. Pressed buttons gain a deeper fill and visible lower rim.
+
+API justification: the optional, null-default RibbonTab.ContextualSelectionBrush lets
+consumers supply a material marker independently of contextual text color. Existing
+callers retain contextual tint as the fallback. The marker now binds to both brushes,
+so replacement and clearing update the selected tab immediately. Shipped API is intact;
+the addition is recorded in PublicAPI.Unshipped.txt and XML documentation.
+
+Release solution build: zero warnings/errors. Library: 400/400; existing visual test:
+1/1. Focused Crystal tests additionally confirm mutable-brush updates and comparison
+restoration (2/2). Writer full run: 465/472, seven failures including the recorded
+WindowChrome cross-thread issue. Fresh-process follow-ups also failed on the expected
+menu lacking Settings and a table-selection count (expected 2, actual 1). These remain
+unresolved outside this change; no Writer code was edited. The user owns Crystal visual
+checking, so no new live visual/DPI/RTL acceptance is claimed.

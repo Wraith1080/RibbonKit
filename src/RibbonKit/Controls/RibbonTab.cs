@@ -57,6 +57,11 @@ public class RibbonTab : TabItem
             typeof(RibbonTab),
             new FrameworkPropertyMetadata(null, OnContextualAppearanceChanged));
 
+    /// <summary>Identifies the <see cref="ContextualSelectionBrush"/> dependency property.</summary>
+    public static readonly DependencyProperty ContextualSelectionBrushProperty =
+        DependencyProperty.Register(nameof(ContextualSelectionBrush), typeof(Brush), typeof(RibbonTab),
+            new FrameworkPropertyMetadata(null));
+
     /// <summary>Identifies the <see cref="IsModal"/> dependency property.</summary>
     public static readonly DependencyProperty IsModalProperty =
         DependencyProperty.Register(
@@ -155,6 +160,16 @@ public class RibbonTab : TabItem
     /// unset (invisible) header color.
     /// </summary>
     public Brush? ContextualBrush => (Brush?)GetValue(ContextualBrushProperty);
+
+    /// <summary>
+    /// Optional brush for this contextual tab's selection marker. When null, the marker uses
+    /// <see cref="ContextualBrush"/>. Does not change the header text or ordinary tab markers.
+    /// </summary>
+    public Brush? ContextualSelectionBrush
+    {
+        get => (Brush?)GetValue(ContextualSelectionBrushProperty);
+        set => SetValue(ContextualSelectionBrushProperty, value);
+    }
 
     /// <summary>
     /// Marks this as a <b>modal</b> tab — a Print-Preview-style mode that, while active, hides

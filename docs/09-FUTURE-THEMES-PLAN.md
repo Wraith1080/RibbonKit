@@ -82,14 +82,32 @@ zero warnings/errors; the marker follow-up also passed, with two transient copy-
 warnings from the running preview. Tab switching, hover and visual acceptance are left
 to the user as requested.
 
-**Next planned slice — contextual tab color (deferred at the user's usage limit):**
-Make Crystal tab headers tintable from each tab's existing contextual color, covering
-the header surface as well as text and the selection marker. Preserve the glass rim,
-bubble highlight and clear idle/hover/selected states across different context colors.
-Use the existing contextual-brush contract where possible, keep ordinary tabs neutral,
-and preserve live color changes and readable text. Add a Showcase comparison with at
-least two differently colored contextual tabs; leave visual acceptance to the user.
-This is a plan only; contextual Crystal header tinting has not been implemented.
+**Contextual tab study and button refinements — implemented for review:**
+Showcase now includes teal Picture Format and purple Table Design tabs. Each has a
+Change tint command. `CrystalContextualTab` derives selected/hover surfaces, rims,
+darkened header text and the bubble marker from its effective solid contextual brush;
+ordinary tabs remain neutral. The adapter updates on color changes and clears its
+overrides for Compare 2024. Non-solid contextual brushes retain standard rendering.
+The existing shared template is reused; the adapter binds its scoped text token to
+the `ContextualHeaderText` part and therefore needs review if that part changes.
+
+`RibbonTab.ContextualSelectionBrush` is an optional marker-only override, with null
+falling back to the existing contextual tint. This additive API is needed to preserve
+glass marker shading without applying that same brush to the header text. The marker
+binding follows override replacement/removal and live context color changes.
+Compact Clipboard/Text preview controls now use 3-DIP corners (large buttons retain
+8-DIP corners); pressed fills are slightly deeper with a blue-gray lower border.
+These compact metrics remain scoped to this preview's control stacks.
+The popup follow-up reduces the shell radius from 12 to 8 DIP and scopes a 4-DIP
+radius to menu rows through a resource-only style. Shared templates, padding and
+shadows are unchanged; visual acceptance remains with the user.
+
+Release solution build passed with zero warnings/errors; the library suite passed
+400/400 and existing visual snapshots 1/1. The full Writer run passed 465/472, with
+seven failures including WindowChrome cross-thread initialization. Isolated reruns
+also failed on an expected menu missing Settings and a table-selection count (2 vs 1).
+No Writer code was changed. New Crystal visual review and DPI/RTL acceptance remain
+with the user; existing snapshot success does not establish Crystal visual acceptance.
 
 Values are starting anchors, not approved final colors. Columns list base, raised
 surface, border, primary text, secondary text and accent respectively.

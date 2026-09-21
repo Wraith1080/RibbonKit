@@ -66,6 +66,9 @@ Office 2007, 2010, 2013, 2019 and 2024 each have light and dark/black palettes, 
 live theme/accent switching. Shared `Controls.*.xaml` templates use dynamic tokens.
 `RibbonWindow` supports compatible Mica/Acrylic backdrops and separate optional
 frame appearance. Theme selection does not silently enable a material.
+Contextual tabs can optionally set `RibbonTab.ContextualSelectionBrush` for a distinct
+selection marker; null uses the contextual tint. Showcase's experimental Crystal
+preview (`--crystal`) demonstrates colored glass headers and markers.
 Motion honors reduced-motion settings. Recorded DPI checks include 100/125/150/175/200%
 and mixed-monitor scenarios; new changes still need their applicable checks.
 

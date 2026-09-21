@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Shapes;
@@ -256,9 +257,12 @@ public class RibbonTabControl : TabControl
 
         // Tint: a selected contextual tab underlines in its own colour; otherwise the theme's
         // accent underline token (which flat themes set Transparent, hiding the marker there).
-        if (tab.IsContextual && tab.ContextualBrush is { } contextual)
+        if (tab.IsContextual && tab.ContextualBrush is not null)
         {
-            _marker.Fill = contextual;
+            var binding = new MultiBinding { Converter = ContextualMarkerConverter.Instance };
+            binding.Bindings.Add(new Binding(nameof(RibbonTab.ContextualSelectionBrush)) { Source = tab });
+            binding.Bindings.Add(new Binding(nameof(RibbonTab.ContextualBrush)) { Source = tab });
+            _marker.SetBinding(Shape.FillProperty, binding);
         }
         else
         {
@@ -285,6 +289,17 @@ public class RibbonTabControl : TabControl
 
         _marker.Opacity = 1d;
         _markerPlaced = true;
+    }
+
+    private sealed class ContextualMarkerConverter : IMultiValueConverter
+    {
+        internal static readonly ContextualMarkerConverter Instance = new();
+
+        public object? Convert(object[] values, Type targetType, object parameter, System.Globalization.CultureInfo culture) =>
+            values[0] as Brush ?? values[1] as Brush;
+
+        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, System.Globalization.CultureInfo culture) =>
+            throw new NotSupportedException();
     }
 
     /// <summary>

@@ -608,6 +608,10 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [Correction and verification](docs/history/02-writer-foundation.md#3163-writer-insert-dialog-theming--2026-09-16).
 
+### 3.164 Crystal contextual tab study and compact button refinement — 2026-09-21
+
+[Implementation and verification](docs/history/01-library.md#3164-crystal-contextual-tab-study-and-compact-button-refinement--2026-09-21).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),

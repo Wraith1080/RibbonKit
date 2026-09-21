@@ -1,4 +1,7 @@
 #nullable enable
+RibbonKit.Controls.RibbonTab.ContextualSelectionBrush.get -> System.Windows.Media.Brush?
+RibbonKit.Controls.RibbonTab.ContextualSelectionBrush.set -> void
+static readonly RibbonKit.Controls.RibbonTab.ContextualSelectionBrushProperty -> System.Windows.DependencyProperty!
 RibbonKit.Controls.RibbonWindow.AeroFrameTint.get -> System.Windows.Media.Brush?
 RibbonKit.Controls.RibbonWindow.AeroFrameTint.set -> void
 RibbonKit.Controls.RibbonWindow.AeroFrameTintIntensity.get -> double

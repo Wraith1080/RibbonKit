@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Media;
 using RibbonKit.Controls;
 
 namespace RibbonKit.Showcase;
@@ -12,6 +13,7 @@ public partial class CrystalPreviewWindow : RibbonWindow
     {
         InitializeComponent();
         _crystal = Resources.MergedDictionaries[1];
+        UpdateCrystalDetails(true);
     }
 
     private void OnCompare(object sender, RoutedEventArgs e)
@@ -29,6 +31,27 @@ public partial class CrystalPreviewWindow : RibbonWindow
             Resources.MergedDictionaries.Add(_crystal);
             PreviewLabel.Text = "CRYSTAL / LIGHT STUDY";
         }
+        UpdateCrystalDetails(CompareToggle.IsChecked != true);
+    }
+
+    private void UpdateCrystalDetails(bool enabled)
+    {
+        PictureTab.CrystalEnabled = enabled;
+        TableTab.CrystalEnabled = enabled;
+        foreach (var panel in new[] { CompactClipboard, CompactText })
+        {
+            if (enabled) panel.Resources["RibbonKit.Metrics.ControlCornerRadius"] = new CornerRadius(3);
+            else panel.Resources.Remove("RibbonKit.Metrics.ControlCornerRadius");
+        }
+    }
+
+    private void OnChangeContextTint(object sender, RoutedEventArgs e)
+    {
+        CrystalContextualTab tab = PictureTab.IsSelected ? PictureTab : TableTab;
+        Color current = (tab.ContextualColor as SolidColorBrush)?.Color ?? Colors.Teal;
+        tab.ContextualColor = new SolidColorBrush(current.R > current.G
+            ? Color.FromRgb(40, 126, 120) : Color.FromRgb(134, 89, 165));
+        StatusText.Text = $"Changed {tab.Header} tint.";
     }
 
     private void OnPreviewCommand(object sender, RoutedEventArgs e)
