@@ -195,6 +195,16 @@
             <CornerRadius x:Key="RibbonKit.Metrics.ControlCornerRadius">4</CornerRadius>
         </Style.Resources>
     </Style>
+    <Style TargetType="{x:Type rk:RibbonComboBox}">
+        <Style.Resources>
+            <ResourceDictionary Source="Crystal.Inputs.xaml" />
+        </Style.Resources>
+    </Style>
+    <Style TargetType="{x:Type rk:RibbonTextBox}">
+        <Style.Resources>
+            <ResourceDictionary Source="Crystal.Inputs.xaml" />
+        </Style.Resources>
+    </Style>
     <CornerRadius x:Key="RibbonKit.Metrics.TabCornerRadius">8,8,0,0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.ApplicationButtonCornerRadius">8</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadius">14</CornerRadius>

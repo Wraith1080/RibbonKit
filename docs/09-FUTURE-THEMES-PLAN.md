@@ -107,6 +107,15 @@ lens fill; checked controls use a lighter fill with a quieter reflection. Both k
 a blue-gray outer edge. Hover, geometry and animation are unchanged; this is still
 gradient/drawing-brush shading, with visual acceptance left to the user.
 
+**Input study:** the Home tab now includes a font combo, size combo and title text
+field, plus a Disable inputs toggle. Font/size update the sample paragraph; title text
+updates its heading. Input-only style resources provide a softly inset pale surface,
+4-DIP corners, a stronger hover border and blue focus edge, keeping the existing
+native input templates and disabled treatment. Compare 2024 restores the baseline
+styles without clearing values. Showcase Release build passed with zero warnings/errors;
+nine focused Crystal/contextual/input tests passed, including palette isolation and
+value preservation during comparison. Visual checking remains with the user.
+
 Release solution build passed with zero warnings/errors; the library suite passed
 400/400 and existing visual snapshots 1/1. The full Writer run passed 465/472, with
 seven failures including WindowChrome cross-thread initialization. Isolated reruns

@@ -62,6 +62,30 @@
                                            Checked="OnCompare" Unchecked="OnCompare"
                                            ScreenTipTitle="Compare the original palette"
                                            ScreenTipText="Switch this window between Crystal and Office 2024." />
+                    <rk:RibbonToggleButton x:Name="DisableInputsToggle" Header="Disable inputs" Size="Large"
+                                           Icon="{StaticResource Icon.Select}"
+                                           Checked="OnDisableInputs" Unchecked="OnDisableInputs" />
+                </rk:RibbonGroup>
+                <rk:RibbonGroup Header="Inputs" Icon="{StaticResource Icon.Bold}">
+                    <StackPanel>
+                        <rk:RibbonComboBox x:Name="FontInput" Header="Font" InputWidth="150" Margin="0,1"
+                                           SelectedIndex="0" SelectedValuePath="Content" AutomationProperties.Name="Preview font">
+                            <ComboBoxItem Content="Segoe UI" />
+                            <ComboBoxItem Content="Arial" />
+                            <ComboBoxItem Content="Georgia" />
+                            <ComboBoxItem Content="Times New Roman" />
+                        </rk:RibbonComboBox>
+                        <rk:RibbonComboBox x:Name="SizeInput" Header="Size" InputWidth="70" Margin="0,1"
+                                           SelectedIndex="2" SelectedValuePath="Content" AutomationProperties.Name="Preview font size">
+                            <ComboBoxItem Content="11" />
+                            <ComboBoxItem Content="12" />
+                            <ComboBoxItem Content="15" />
+                            <ComboBoxItem Content="18" />
+                            <ComboBoxItem Content="24" />
+                        </rk:RibbonComboBox>
+                        <rk:RibbonTextBox x:Name="TitleInput" Header="Title" InputWidth="150" Margin="0,1"
+                                          Text="A calmer workspace" AutomationProperties.Name="Preview title" />
+                    </StackPanel>
                 </rk:RibbonGroup>
             </rk:RibbonTab>
             <rk:RibbonTab Header="Insert">
@@ -101,8 +125,9 @@
                         Background="{DynamicResource RibbonKit.Brushes.Control.SurfaceBackground}"
                         BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}" BorderThickness="1">
                     <StackPanel>
-                        <TextBlock Text="A calmer workspace" FontSize="24" Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
-                        <TextBlock Margin="0,14,0,24" FontSize="15" LineHeight="25" TextWrapping="Wrap"
+                        <TextBlock Text="{Binding Text, ElementName=TitleInput}" FontSize="24" Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+                        <TextBlock Margin="0,14,0,24" FontSize="{Binding SelectedValue, ElementName=SizeInput, FallbackValue=15}"
+                                   FontFamily="{Binding SelectedValue, ElementName=FontInput, FallbackValue=Segoe UI}" TextWrapping="Wrap"
                                    Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
                                    Text="The ribbon carries a cool, luminous surface. Subtle borders catch the light, while the document keeps a steady, readable background. Color appears where it helps you see what is selected." />
                         <Separator Background="{DynamicResource RibbonKit.Brushes.Group.Separator}" />

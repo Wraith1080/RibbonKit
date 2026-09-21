@@ -85,6 +85,44 @@ public class CrystalContextualTests
         Assert.IsType<DrawingBrush>(marker.Fill);
     });
 
+    [Fact]
+    public void Crystal_input_styles_are_scoped_and_comparison_preserves_values() => Sta.Run(() =>
+    {
+        var root = new StackPanel();
+        root.Resources.MergedDictionaries.Add(new ResourceDictionary
+        { Source = new Uri("/RibbonKit;component/Themes/Tokens.Office2024.xaml", UriKind.Relative) });
+        var crystal = new ResourceDictionary
+        { Source = new Uri("/RibbonKit.Showcase;component/Themes/Crystal.Light.xaml", UriKind.Relative) };
+        root.Resources.MergedDictionaries.Add(crystal);
+        var text = new RibbonTextBox { Text = "Keep my title" };
+        var combo = new RibbonComboBox { ItemsSource = new[] { "Segoe UI", "Georgia" }, SelectedIndex = 1 };
+        var button = new RibbonButton { Header = "Ordinary button" };
+        root.Children.Add(text);
+        root.Children.Add(combo);
+        root.Children.Add(button);
+        root.Measure(new Size(500, 200));
+        root.Arrange(new Rect(0, 0, 500, 200));
+        root.UpdateLayout();
+
+        var textChrome = (Border)text.Template.FindName("Chrome", text);
+        var comboChrome = (Border)combo.Template.FindName("Chrome", combo);
+        var buttonChrome = (Border)button.Template.FindName("Chrome", button);
+        Assert.IsType<LinearGradientBrush>(textChrome.Background);
+        Assert.IsType<LinearGradientBrush>(comboChrome.Background);
+        Assert.Equal(new CornerRadius(4), textChrome.CornerRadius);
+        Assert.Equal(new CornerRadius(4), comboChrome.CornerRadius);
+        Assert.Equal(new CornerRadius(8), buttonChrome.CornerRadius);
+        Assert.IsType<SolidColorBrush>(root.FindResource("RibbonKit.Brushes.Control.SurfaceBackground"));
+
+        root.Resources.MergedDictionaries.Remove(crystal);
+        root.UpdateLayout();
+        Sta.Drain();
+        Assert.Equal("Keep my title", text.Text);
+        Assert.Equal("Georgia", combo.SelectedItem);
+        Assert.IsType<SolidColorBrush>(((Border)text.Template.FindName("Chrome", text)).Background);
+        Assert.IsType<SolidColorBrush>(((Border)combo.Template.FindName("Chrome", combo)).Background);
+    });
+
     private static RibbonTabControl Host(params RibbonTab[] tabs)
     {
         var host = new RibbonTabControl

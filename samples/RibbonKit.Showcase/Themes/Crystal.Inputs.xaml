@@ -1,0 +1,15 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Scoped to input styles. The shared templates keep native editing, focus,
+         selection, popup and disabled behavior; other Crystal surfaces stay unchanged. -->
+    <CornerRadius x:Key="RibbonKit.Metrics.ControlCornerRadius">4</CornerRadius>
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Control.SurfaceBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#DAE8F2" Offset="0" />
+        <GradientStop Color="#F2F8FC" Offset="0.26" />
+        <GradientStop Color="#F5FAFD" Offset="0.78" />
+        <GradientStop Color="#E5F1F9" Offset="1" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.Border" Color="#A1B8CB" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Secondary" Color="#688DAA" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Accent" Color="#397CA9" />
+</ResourceDictionary>

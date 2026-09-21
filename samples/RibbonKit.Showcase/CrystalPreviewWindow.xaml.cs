@@ -61,4 +61,12 @@ public partial class CrystalPreviewWindow : RibbonWindow
         else if (sender is RibbonButton button)
             StatusText.Text = $"Selected: {button.Header}";
     }
+
+    private void OnDisableInputs(object sender, RoutedEventArgs e)
+    {
+        if (FontInput == null || SizeInput == null || TitleInput == null)
+            return;
+        bool enabled = DisableInputsToggle.IsChecked != true;
+        FontInput.IsEnabled = SizeInput.IsEnabled = TitleInput.IsEnabled = enabled;
+    }
 }
