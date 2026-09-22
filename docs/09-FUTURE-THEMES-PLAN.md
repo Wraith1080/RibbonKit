@@ -222,6 +222,16 @@ body or other controls. Showcase Release build and nine focused Crystal tests pa
 realized strip/popup checks confirm both surfaces and tint replacement, with no resource
 leakage. Visual acceptance remains with the user.
 
+**Screen-tip study (2026-09-22):** rich tips reuse the gallery's opaque lens and
+restrained border, retaining the shared title/description template and 8-DIP corners.
+Arrange, Glass tint, the font/size/title inputs, Document style and the disabled command
+provide examples alongside Compare 2024. CrystalScreenTipPalette explicitly scopes
+the baseline/current palette to each detached tooltip. Its border override sits above
+the merged general popup border because ToolTip.Resources precedes Style.Resources.
+No shared template or popup timing changes were made. Showcase Release build passed;
+sixteen focused Crystal/input tests passed, including tint changes while a real tip
+is open and restoration of baseline brushes. Visual review remains with the user.
+
 Release solution build passed with zero warnings/errors; the library suite passed
 400/400 and existing visual snapshots 1/1. The full Writer run passed 465/472, with
 seven failures including WindowChrome cross-thread initialization. Isolated reruns

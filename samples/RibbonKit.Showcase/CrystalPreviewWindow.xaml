@@ -125,7 +125,8 @@
                     <StackPanel x:Name="CompactClipboard">
                         <rk:RibbonButton Header="Cut" Size="Medium" Icon="{StaticResource Icon.Cut}" Click="OnPreviewCommand" />
                         <rk:RibbonButton Header="Copy" Size="Medium" Icon="{StaticResource Icon.Copy}" Click="OnPreviewCommand" />
-                        <rk:RibbonButton Header="Unavailable" Size="Medium" Icon="{StaticResource Icon.Undo}" IsEnabled="False" />
+                        <rk:RibbonButton x:Name="UnavailableButton" Header="Unavailable" Size="Medium" Icon="{StaticResource Icon.Undo}" IsEnabled="False"
+                                         ScreenTipTitle="Unavailable command" ScreenTipText="This preview command is disabled. Its description remains available while you hover." />
                     </StackPanel>
                 </rk:RibbonGroup>
                 <rk:RibbonGroup Header="Text" Icon="{StaticResource Icon.Bold}">
@@ -136,7 +137,8 @@
                     </StackPanel>
                 </rk:RibbonGroup>
                 <rk:RibbonGroup Header="Layout" Icon="{StaticResource Icon.Select}">
-                    <rk:RibbonDropDownButton Header="Arrange" Size="Large" Icon="{StaticResource Icon.Select}">
+                    <rk:RibbonDropDownButton x:Name="ArrangeButton" Header="Arrange" Size="Large" Icon="{StaticResource Icon.Select}"
+                                             ScreenTipTitle="Arrange objects" ScreenTipText="Choose how an object sits on the page or in front of other objects.">
                         <rk:RibbonMenuItem Header="Bring to front" Click="OnPreviewCommand" />
                         <rk:RibbonMenuItem Header="Send to back" Click="OnPreviewCommand" />
                         <rk:RibbonMenuItem Header="Align to page" Click="OnPreviewCommand" />
@@ -153,7 +155,8 @@
                                            Icon="{StaticResource Icon.Select}"
                                            Checked="OnDisableInputs" Unchecked="OnDisableInputs" />
                     <rk:RibbonDropDownButton x:Name="AccentSelector" Header="Glass tint" Size="Large"
-                                             Icon="{StaticResource Icon.Palette}">
+                                             Icon="{StaticResource Icon.Palette}" ScreenTipTitle="Glass tint"
+                                             ScreenTipText="Change the glass color throughout this preview. Contextual tabs keep their own colors.">
                         <rk:RibbonMenuItem Header="Blue (original)" Tag="#397CA9" Click="OnAccentSelected" />
                         <rk:RibbonMenuItem Header="Green" Tag="#287E78" Click="OnAccentSelected" />
                         <rk:RibbonMenuItem Header="Purple" Tag="#8659A5" Click="OnAccentSelected" />
@@ -163,14 +166,16 @@
                 <rk:RibbonGroup Header="Inputs" Icon="{StaticResource Icon.Bold}">
                     <StackPanel>
                         <rk:RibbonComboBox x:Name="FontInput" Header="Font" InputWidth="150" Margin="0,1"
-                                           SelectedIndex="0" SelectedValuePath="Content" AutomationProperties.Name="Preview font">
+                                           SelectedIndex="0" SelectedValuePath="Content" AutomationProperties.Name="Preview font"
+                                           ScreenTipTitle="Font" ScreenTipText="Choose the typeface for the sample paragraph.">
                             <ComboBoxItem Content="Segoe UI" />
                             <ComboBoxItem Content="Arial" />
                             <ComboBoxItem Content="Georgia" />
                             <ComboBoxItem Content="Times New Roman" />
                         </rk:RibbonComboBox>
                         <rk:RibbonComboBox x:Name="SizeInput" Header="Size" InputWidth="70" Margin="0,1"
-                                           SelectedIndex="2" SelectedValuePath="Content" AutomationProperties.Name="Preview font size">
+                                           SelectedIndex="2" SelectedValuePath="Content" AutomationProperties.Name="Preview font size"
+                                           ScreenTipTitle="Font size" ScreenTipText="Choose the text size for the sample paragraph.">
                             <ComboBoxItem Content="11" />
                             <ComboBoxItem Content="12" />
                             <ComboBoxItem Content="15" />
@@ -178,7 +183,8 @@
                             <ComboBoxItem Content="24" />
                         </rk:RibbonComboBox>
                         <rk:RibbonTextBox x:Name="TitleInput" Header="Title" InputWidth="150" Margin="0,1"
-                                          Text="A calmer workspace" AutomationProperties.Name="Preview title" />
+                                          Text="A calmer workspace" AutomationProperties.Name="Preview title"
+                                          ScreenTipTitle="Document title" ScreenTipText="Edit the heading shown in your document and in the File panel." />
                     </StackPanel>
                 </rk:RibbonGroup>
             </rk:RibbonTab>
@@ -191,8 +197,10 @@
             <rk:RibbonTab Header="Design">
                 <rk:RibbonGroup Header="Document style" Icon="{StaticResource Icon.Style}">
                     <rk:InRibbonGallery x:Name="CrystalStylesGallery" Width="282" SelectedIndex="0"
-                                        SelectionChanged="OnGalleryStyleSelected" AutomationProperties.Name="Document heading style"
-                                        ToolTip="Expand the gallery to see every style. Choose a tile to update the document heading.">
+                                        SelectionChanged="OnGalleryStyleSelected" AutomationProperties.Name="Document heading style">
+                        <rk:InRibbonGallery.ToolTip>
+                            <rk:RibbonScreenTip Title="Document style" Description="Expand the gallery to see every style. Choose a tile to update the document heading." />
+                        </rk:InRibbonGallery.ToolTip>
                         <rk:RibbonGalleryItem Tag="Calm" AutomationProperties.Name="Calm">
                             <StackPanel Width="72"><TextBlock Text="Aa" FontSize="18" HorizontalAlignment="Center" /><TextBlock Text="Calm" FontSize="10" HorizontalAlignment="Center" /></StackPanel>
                         </rk:RibbonGalleryItem>

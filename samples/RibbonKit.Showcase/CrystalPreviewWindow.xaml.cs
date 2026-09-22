@@ -9,6 +9,7 @@ public partial class CrystalPreviewWindow : RibbonWindow
 {
     private ResourceDictionary? _crystal;
     private readonly CrystalBackstagePresentation _backstagePresentation;
+    private readonly CrystalScreenTipPalette _screenTipPalette;
 
     public CrystalPreviewWindow()
     {
@@ -18,6 +19,10 @@ public partial class CrystalPreviewWindow : RibbonWindow
         // sources instead of depending on the window's visual tree or namescope.
         _backstagePresentation = new CrystalBackstagePresentation(CrystalBackstage,
             Resources.MergedDictionaries[0], BackstageDocumentTitle, TitleInput);
+        _screenTipPalette = new CrystalScreenTipPalette(Resources.MergedDictionaries[0]);
+        foreach (var control in new FrameworkElement[] { CompareToggle, ArrangeButton, AccentSelector,
+            FontInput, SizeInput, TitleInput, CrystalStylesGallery, UnavailableButton })
+            if (control.ToolTip is RibbonScreenTip tip) _screenTipPalette.Attach(tip);
         UpdateCrystalDetails(true);
         PreviewRibbon.Loaded += (_, _) => CrystalFileHover.Apply(PreviewRibbon, CompareToggle.IsChecked != true);
     }
@@ -44,6 +49,7 @@ public partial class CrystalPreviewWindow : RibbonWindow
     {
         if (PreviewRibbon.IsLoaded) CrystalFileHover.Apply(PreviewRibbon, enabled);
         _backstagePresentation.Apply(enabled ? _crystal : null);
+        _screenTipPalette.Apply(enabled ? _crystal : null);
         AccentSelector.IsEnabled = enabled;
         BackstageAccentSelector.IsEnabled = enabled;
         BackstageLayoutSelector.IsEnabled = enabled;

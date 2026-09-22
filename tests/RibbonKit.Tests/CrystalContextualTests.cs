@@ -413,6 +413,53 @@ public class CrystalContextualTests
         }
     });
 
+    [Fact]
+    public void Crystal_screen_tip_tracks_local_palette_while_open_and_restores_baseline() => Sta.Run(() =>
+    {
+        var owner = new Button { Content = "Preview" };
+        var window = new Window { Content = owner, Width = 200, Height = 100, Left = -10000, Top = -10000,
+            ShowActivated = false, ShowInTaskbar = false };
+        var tip = new RibbonScreenTip { Title = "Document title", Description = "Edit the heading in your document and File panel.", PlacementTarget = owner };
+        owner.ToolTip = tip;
+        var scope = new CrystalScreenTipPalette(new ResourceDictionary
+        { Source = new Uri("/RibbonKit;component/Themes/Tokens.Office2024.xaml", UriKind.Relative) });
+        scope.Attach(tip);
+        scope.Attach(tip);
+        Assert.Single(tip.Resources.MergedDictionaries);
+        var blue = CrystalPalette.Create(CrystalPalette.Blue);
+        scope.Apply(blue);
+        try
+        {
+            window.Show();
+            tip.IsOpen = true;
+            Sta.Drain(DispatcherPriority.Render);
+            var border = (Border)VisualTreeHelper.GetChild(tip, 0);
+            Assert.IsType<DrawingBrush>(border.Background);
+            Assert.IsType<DrawingBrush>(border.BorderBrush);
+            Assert.Equal(new CornerRadius(8), border.CornerRadius);
+            var title = (TextBlock)tip.Template.FindName("TitleText", tip);
+            Assert.Equal(tip.Title, title.Text);
+            var purple = CrystalPalette.Create(Colors.Purple);
+            scope.Apply(purple);
+            Sta.Drain(DispatcherPriority.Render);
+            border = (Border)VisualTreeHelper.GetChild(tip, 0);
+            Assert.Same(purple["Crystal.Brushes.GallerySurface"], border.Background);
+            Assert.Same(purple["Crystal.Brushes.GalleryBorder"], border.BorderBrush);
+            Assert.True(tip.IsOpen);
+            scope.Apply(null);
+            Sta.Drain(DispatcherPriority.Render);
+            border = (Border)VisualTreeHelper.GetChild(tip, 0);
+            Assert.IsType<SolidColorBrush>(border.Background);
+            Assert.IsType<SolidColorBrush>(border.BorderBrush);
+            Assert.Equal("Document title", tip.Title);
+        }
+        finally
+        {
+            tip.IsOpen = false;
+            window.Close();
+        }
+    });
+
     private static double Luminance(Color color)
     {
         static double Linear(byte b)

@@ -4588,3 +4588,11 @@ CrystalBackstagePresentation retains the chosen layout during palette replacemen
 baseline comparison. Release Showcase build and eight focused Crystal tests passed,
 including both navigation arrangements at the preview minimum width. Visual acceptance
 remains with the user.
+
+Crystal screen-tip scope note (2026-09-22): detached tooltips require their own palette
+bridge. Once the palette is merged into ToolTip.Resources, its general ScreenTip.Border
+outranks an implicit style's resource with that key. The preview's bridge therefore
+publishes the dedicated glass rim directly in its own scope, removing it on baseline
+comparison. A realized open-tooltip test covers tint replacement and restoration;
+the focused Crystal/input filter passed sixteen tests. Visual acceptance remains with
+the user.

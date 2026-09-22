@@ -33,6 +33,7 @@ internal static class CrystalPalette
         {
             (typeof(RibbonGalleryItem), "RibbonKit.Brushes.Group.Separator", "RibbonKit.Brushes.Tab.HoverBorder"),
             (typeof(InRibbonGallery), "RibbonKit.Brushes.ScreenTip.Border", "Crystal.Brushes.GalleryBorder"),
+            (typeof(RibbonScreenTip), "RibbonKit.Brushes.ScreenTip.Border", "Crystal.Brushes.GalleryBorder"),
         })
         {
             var galleryStyle = new Style(type, (Style)palette[type]);
