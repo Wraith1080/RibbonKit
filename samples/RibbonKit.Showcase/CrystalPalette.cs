@@ -29,6 +29,16 @@ internal static class CrystalPalette
             palette[type] = new Style(type, (Style)palette[type]) { Resources = inputs };
         }
         var foreground = new SolidColorBrush(ReadableAccent(accent));
+        foreach (var (type, localKey, paletteKey) in new[]
+        {
+            (typeof(RibbonGalleryItem), "RibbonKit.Brushes.Group.Separator", "RibbonKit.Brushes.Tab.HoverBorder"),
+            (typeof(InRibbonGallery), "RibbonKit.Brushes.ScreenTip.Border", "Crystal.Brushes.GalleryBorder"),
+        })
+        {
+            var galleryStyle = new Style(type, (Style)palette[type]);
+            galleryStyle.Resources[localKey] = palette[paletteKey];
+            palette[type] = galleryStyle;
+        }
         foreground.Freeze();
         palette["RibbonKit.Brushes.Accent"] = foreground;
         palette["RibbonKit.Brushes.Tab.SelectedForeground"] = foreground;

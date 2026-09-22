@@ -195,6 +195,25 @@ for Compare 2024. The adapter depends on TabControlHost, PART_ApplicationButton 
 InnerRim template parts; the shared template is unchanged. Release build via the test
 run and eight focused Crystal tests passed. Visual acceptance remains with the user.
 
+**Gallery study (2026-09-22):** Design > Document style provides six typography tiles
+and a Disable gallery toggle. Picking a tile updates the sample document heading.
+Gallery items use 5-DIP corners, the existing reflective tab hover rim and the accepted
+checked glass fill; the native selected accent outline stays visible. The expanded
+popup keeps its opaque glass surface and gains the same reflective edge. Scoped
+gallery resources follow all tint presets without changing ribbon group separators
+or unrelated popup borders. Shared gallery templates, viewport ownership, placement
+and scrolling behavior remain unchanged. Showcase Release build passed with zero
+warnings/errors; nine focused Crystal tests passed, including a realized popup,
+scoped resources, live tint replacement and baseline restoration without losing
+selection. The user owns visual review and live pointer/DPI acceptance.
+
+Gallery boundary refinement: the hover-style white rim disappeared into the pale
+surfaces inside and outside the strip. Its persistent border now uses an opaque
+blue-gray base and a restrained tinted top glint, shared by strip and expanded popup.
+Tile hover and selection retain their accepted treatment. The dedicated gallery rim
+follows tint changes. Showcase Release build and nine focused Crystal tests passed;
+the user will check the revised boundary visually.
+
 Release solution build passed with zero warnings/errors; the library suite passed
 400/400 and existing visual snapshots 1/1. The full Writer run passed 465/472, with
 seven failures including WindowChrome cross-thread initialization. Isolated reruns

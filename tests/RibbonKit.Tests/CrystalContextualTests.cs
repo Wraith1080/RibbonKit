@@ -352,6 +352,57 @@ public class CrystalContextualTests
         Assert.Equal(baselineSize, button.DesiredSize);
     });
 
+    [Fact]
+    public void Crystal_gallery_preserves_tile_selection_and_scoped_chrome_across_popup_and_tint_changes() => Sta.Run(() =>
+    {
+        var gallery = new InRibbonGallery { Width = 282, SelectedIndex = 0 };
+        for (int i = 0; i < 6; i++)
+            gallery.Items.Add(new RibbonGalleryItem { Content = new TextBlock { Text = $"Style {i}", Width = 72 } });
+        var window = new Window { Width = 400, Height = 200, Left = -10000, Top = -10000,
+            ShowActivated = false, ShowInTaskbar = false, Content = gallery };
+        window.Resources.MergedDictionaries.Add(new ResourceDictionary
+        { Source = new Uri("/RibbonKit;component/Themes/Tokens.Office2024.xaml", UriKind.Relative) });
+        window.Resources.MergedDictionaries.Add(CrystalPalette.Create(CrystalPalette.Blue));
+        try
+        {
+            window.Show();
+            Sta.Drain(DispatcherPriority.Render);
+            var tile = (RibbonGalleryItem)gallery.Items[0];
+            var chrome = (Border)tile.Template.FindName("Chrome", tile);
+            Assert.Equal(new CornerRadius(5), chrome.CornerRadius);
+            Assert.IsType<DrawingBrush>(tile.FindResource("RibbonKit.Brushes.Group.Separator"));
+            Assert.IsType<SolidColorBrush>(window.FindResource("RibbonKit.Brushes.Group.Separator"));
+            Assert.IsType<DrawingBrush>(chrome.Background);
+            gallery.IsDropDownOpen = true;
+            Sta.Drain(DispatcherPriority.Render);
+            var popup = (System.Windows.Controls.Primitives.Popup)gallery.Template.FindName("PART_Popup", gallery);
+            var popupHost = (Border)gallery.Template.FindName("PART_PopupHost", gallery);
+            Assert.True(popup.IsOpen);
+            Assert.IsType<DrawingBrush>(popupHost.BorderBrush);
+            Assert.Equal(new CornerRadius(8), popupHost.CornerRadius);
+            gallery.IsDropDownOpen = false;
+            window.Resources.MergedDictionaries[1] = CrystalPalette.Create(Colors.Purple);
+            Sta.Drain(DispatcherPriority.Render);
+            Assert.Same(tile, gallery.SelectedItem);
+            Assert.Equal(new CornerRadius(5), ((Border)tile.Template.FindName("Chrome", tile)).CornerRadius);
+            Assert.Same(window.FindResource("RibbonKit.Brushes.Tab.HoverBorder"), tile.FindResource("RibbonKit.Brushes.Group.Separator"));
+            gallery.IsDropDownOpen = true;
+            Sta.Drain(DispatcherPriority.Render);
+            popupHost = (Border)gallery.Template.FindName("PART_PopupHost", gallery);
+            Assert.Same(window.FindResource("Crystal.Brushes.GalleryBorder"), popupHost.BorderBrush);
+            gallery.IsDropDownOpen = false;
+            window.Resources.MergedDictionaries.RemoveAt(1);
+            Sta.Drain(DispatcherPriority.Render);
+            Assert.Same(tile, gallery.SelectedItem);
+            Assert.IsType<SolidColorBrush>(((Border)tile.Template.FindName("Chrome", tile)).Background);
+        }
+        finally
+        {
+            gallery.IsDropDownOpen = false;
+            window.Close();
+        }
+    });
+
     private static double Luminance(Color color)
     {
         static double Linear(byte b)

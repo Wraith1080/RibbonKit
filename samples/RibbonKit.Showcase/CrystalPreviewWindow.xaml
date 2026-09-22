@@ -188,6 +188,36 @@
                     <rk:RibbonButton Header="Select" Size="Large" Icon="{StaticResource Icon.Select}" Click="OnPreviewCommand" />
                 </rk:RibbonGroup>
             </rk:RibbonTab>
+            <rk:RibbonTab Header="Design">
+                <rk:RibbonGroup Header="Document style" Icon="{StaticResource Icon.Style}">
+                    <rk:InRibbonGallery x:Name="CrystalStylesGallery" Width="282" SelectedIndex="0"
+                                        SelectionChanged="OnGalleryStyleSelected" AutomationProperties.Name="Document heading style"
+                                        ToolTip="Expand the gallery to see every style. Choose a tile to update the document heading.">
+                        <rk:RibbonGalleryItem Tag="Calm" AutomationProperties.Name="Calm">
+                            <StackPanel Width="72"><TextBlock Text="Aa" FontSize="18" HorizontalAlignment="Center" /><TextBlock Text="Calm" FontSize="10" HorizontalAlignment="Center" /></StackPanel>
+                        </rk:RibbonGalleryItem>
+                        <rk:RibbonGalleryItem Tag="Heading" AutomationProperties.Name="Heading">
+                            <StackPanel Width="72"><TextBlock Text="Aa" FontSize="18" FontWeight="SemiBold" HorizontalAlignment="Center" /><TextBlock Text="Heading" FontSize="10" HorizontalAlignment="Center" /></StackPanel>
+                        </rk:RibbonGalleryItem>
+                        <rk:RibbonGalleryItem Tag="Title" AutomationProperties.Name="Title">
+                            <StackPanel Width="72"><TextBlock Text="Aa" FontSize="18" FontWeight="Light" HorizontalAlignment="Center" /><TextBlock Text="Title" FontSize="10" HorizontalAlignment="Center" /></StackPanel>
+                        </rk:RibbonGalleryItem>
+                        <rk:RibbonGalleryItem Tag="Quote" AutomationProperties.Name="Quote">
+                            <StackPanel Width="72"><TextBlock Text="Aa" FontSize="18" FontFamily="Georgia" FontStyle="Italic" HorizontalAlignment="Center" /><TextBlock Text="Quote" FontSize="10" HorizontalAlignment="Center" /></StackPanel>
+                        </rk:RibbonGalleryItem>
+                        <rk:RibbonGalleryItem Tag="Emphasis" AutomationProperties.Name="Emphasis">
+                            <StackPanel Width="72"><TextBlock Text="Aa" FontSize="18" FontStyle="Italic" HorizontalAlignment="Center" /><TextBlock Text="Emphasis" FontSize="10" HorizontalAlignment="Center" /></StackPanel>
+                        </rk:RibbonGalleryItem>
+                        <rk:RibbonGalleryItem Tag="Classic" AutomationProperties.Name="Classic">
+                            <StackPanel Width="72"><TextBlock Text="Aa" FontSize="18" FontFamily="Georgia" HorizontalAlignment="Center" /><TextBlock Text="Classic" FontSize="10" HorizontalAlignment="Center" /></StackPanel>
+                        </rk:RibbonGalleryItem>
+                    </rk:InRibbonGallery>
+                </rk:RibbonGroup>
+                <rk:RibbonGroup Header="Preview states" Icon="{StaticResource Icon.Select}">
+                    <rk:RibbonToggleButton x:Name="DisableGalleryToggle" Header="Disable gallery" Size="Large" Icon="{StaticResource Icon.Select}"
+                                           Checked="OnDisableGallery" Unchecked="OnDisableGallery" />
+                </rk:RibbonGroup>
+            </rk:RibbonTab>
             <local:CrystalContextualTab x:Name="PictureTab" Header="Picture Format" IsContextual="True" ContextualColor="#287E78">
                 <rk:RibbonGroup Header="Picture" Icon="{StaticResource Icon.Select}">
                     <rk:RibbonButton Header="Select" Size="Large" Icon="{StaticResource Icon.Select}" Click="OnPreviewCommand" />
@@ -219,7 +249,7 @@
                         Background="{DynamicResource RibbonKit.Brushes.Control.SurfaceBackground}"
                         BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}" BorderThickness="1">
                     <StackPanel>
-                        <TextBlock Text="{Binding Text, ElementName=TitleInput}" FontSize="24" Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+                        <TextBlock x:Name="DocumentHeading" Text="{Binding Text, ElementName=TitleInput}" FontSize="24" TextWrapping="Wrap" Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
                         <TextBlock Margin="0,14,0,24" FontSize="{Binding SelectedValue, ElementName=SizeInput, FallbackValue=15}"
                                    FontFamily="{Binding SelectedValue, ElementName=FontInput, FallbackValue=Segoe UI}" TextWrapping="Wrap"
                                    Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}"

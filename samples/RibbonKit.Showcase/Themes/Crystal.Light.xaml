@@ -239,6 +239,35 @@
             <ResourceDictionary Source="Crystal.Inputs.xaml" />
         </Style.Resources>
     </Style>
+    <Style TargetType="{x:Type rk:RibbonGalleryItem}">
+        <Style.Resources>
+            <CornerRadius x:Key="RibbonKit.Metrics.ControlCornerRadius">5</CornerRadius>
+            <!-- The gallery template uses Group.Separator for its hover outline. -->
+            <DrawingBrush x:Key="RibbonKit.Brushes.Group.Separator" Drawing="{StaticResource Crystal.Drawing.GlassRim}"
+                          Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" Opacity="0.6" />
+        </Style.Resources>
+    </Style>
+    <!-- A persistent boundary needs less white than a transient hover rim: the
+         gallery is surrounded by pale surfaces on both sides of this outline. -->
+    <DrawingGroup x:Key="Crystal.Drawing.GalleryRim">
+        <GeometryDrawing Brush="#8FAABE" Geometry="M0,0 H1 V1 H0 Z" />
+        <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z">
+            <GeometryDrawing.Brush>
+                <RadialGradientBrush Center="0.5,0" GradientOrigin="0.5,0" RadiusX="0.48" RadiusY="0.10">
+                    <GradientStop Color="#B7CBDA" Offset="0" />
+                    <GradientStop Color="#00B7CBDA" Offset="1" />
+                </RadialGradientBrush>
+            </GeometryDrawing.Brush>
+        </GeometryDrawing>
+    </DrawingGroup>
+    <DrawingBrush x:Key="Crystal.Brushes.GalleryBorder" Drawing="{StaticResource Crystal.Drawing.GalleryRim}"
+                  Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
+    <Style TargetType="{x:Type rk:InRibbonGallery}">
+        <Style.Resources>
+            <DrawingBrush x:Key="RibbonKit.Brushes.ScreenTip.Border" Drawing="{StaticResource Crystal.Drawing.GalleryRim}"
+                          Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
+        </Style.Resources>
+    </Style>
     <Style TargetType="{x:Type rk:RibbonTextBox}">
         <Style.Resources>
             <ResourceDictionary Source="Crystal.Inputs.xaml" />

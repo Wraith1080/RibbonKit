@@ -105,4 +105,19 @@ public partial class CrystalPreviewWindow : RibbonWindow
         bool enabled = DisableInputsToggle.IsChecked != true;
         FontInput.IsEnabled = SizeInput.IsEnabled = TitleInput.IsEnabled = enabled;
     }
+
+    private void OnGalleryStyleSelected(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        if (DocumentHeading == null || CrystalStylesGallery.SelectedItem is not RibbonGalleryItem { Tag: string style }) return;
+        DocumentHeading.FontFamily = new FontFamily(style is "Quote" or "Classic" ? "Georgia" : "Segoe UI");
+        DocumentHeading.FontSize = style == "Title" ? 32 : 24;
+        DocumentHeading.FontWeight = style == "Heading" ? FontWeights.SemiBold : style == "Title" ? FontWeights.Light : FontWeights.Normal;
+        DocumentHeading.FontStyle = style is "Quote" or "Emphasis" ? FontStyles.Italic : FontStyles.Normal;
+        StatusText.Text = $"Document style: {style}";
+    }
+
+    private void OnDisableGallery(object sender, RoutedEventArgs e)
+    {
+        if (CrystalStylesGallery != null) CrystalStylesGallery.IsEnabled = DisableGalleryToggle.IsChecked != true;
+    }
 }
