@@ -20,13 +20,6 @@ internal sealed class CrystalScreenTipPalette
     {
         if (_palette != null) _scope.MergedDictionaries.Remove(_palette);
         _palette = palette;
-        if (palette != null)
-        {
-            _scope.MergedDictionaries.Add(palette);
-            // ToolTip.Resources precedes Style.Resources, so explicitly publish
-            // the tooltip rim above the merged palette's general popup border.
-            _scope["RibbonKit.Brushes.ScreenTip.Border"] = palette["Crystal.Brushes.GalleryBorder"];
-        }
-        else _scope.Remove("RibbonKit.Brushes.ScreenTip.Border");
+        if (palette != null) _scope.MergedDictionaries.Add(palette);
     }
 }

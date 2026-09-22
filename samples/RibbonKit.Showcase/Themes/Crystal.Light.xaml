@@ -262,32 +262,44 @@
     </DrawingGroup>
     <DrawingBrush x:Key="Crystal.Brushes.GalleryBorder" Drawing="{StaticResource Crystal.Drawing.GalleryRim}"
                   Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
-    <!-- Opaque lens underneath the reflections keeps the separate popup readable.
-         Broad light across the upper face and a lower caustic sit inside the rim. -->
+    <!-- Shallow recessed glass: opaque reading plane, an inward top/side shadow
+         and a restrained lower reflection. The outer rim remains distinct. -->
     <DrawingGroup x:Key="Crystal.Drawing.GallerySurface">
         <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z">
             <GeometryDrawing.Brush>
-                <RadialGradientBrush Center="0.5,0.38" GradientOrigin="0.5,0.38" RadiusX="0.85" RadiusY="0.8">
+                <RadialGradientBrush Center="0.55,0.6" GradientOrigin="0.55,0.6" RadiusX="0.9" RadiusY="0.95">
                     <GradientStop Color="#F5FBFE" Offset="0" />
                     <GradientStop Color="#E5F1F8" Offset="0.55" />
-                    <GradientStop Color="#C3DCEB" Offset="1" />
+                    <GradientStop Color="#D5E6F1" Offset="1" />
                 </RadialGradientBrush>
             </GeometryDrawing.Brush>
         </GeometryDrawing>
         <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z">
             <GeometryDrawing.Brush>
-                <RadialGradientBrush Center="0.35,0.13" GradientOrigin="0.35,0.13" RadiusX="0.6" RadiusY="0.23">
-                    <GradientStop Color="#C0FFFFFF" Offset="0" />
-                    <GradientStop Color="#60FFFFFF" Offset="0.5" />
-                    <GradientStop Color="#00FFFFFF" Offset="1" />
-                </RadialGradientBrush>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#3852738C" Offset="0" />
+                    <GradientStop Color="#1552738C" Offset="0.045" />
+                    <GradientStop Color="#0052738C" Offset="0.14" />
+                    <GradientStop Color="#00FFFFFF" Offset="0.88" />
+                    <GradientStop Color="#50FFFFFF" Offset="1" />
+                </LinearGradientBrush>
             </GeometryDrawing.Brush>
         </GeometryDrawing>
         <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z">
             <GeometryDrawing.Brush>
-                <RadialGradientBrush Center="0.5,0.9" GradientOrigin="0.5,0.9" RadiusX="0.47" RadiusY="0.07">
-                    <GradientStop Color="#E6FFFFFF" Offset="0" />
-                    <GradientStop Color="#80FFFFFF" Offset="0.45" />
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                    <GradientStop Color="#2052738C" Offset="0" />
+                    <GradientStop Color="#0052738C" Offset="0.025" />
+                    <GradientStop Color="#0052738C" Offset="0.975" />
+                    <GradientStop Color="#1252738C" Offset="1" />
+                </LinearGradientBrush>
+            </GeometryDrawing.Brush>
+        </GeometryDrawing>
+        <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z">
+            <GeometryDrawing.Brush>
+                <RadialGradientBrush Center="0.6,0.98" GradientOrigin="0.6,0.98" RadiusX="0.48" RadiusY="0.035">
+                    <GradientStop Color="#90FFFFFF" Offset="0" />
+                    <GradientStop Color="#40FFFFFF" Offset="0.45" />
                     <GradientStop Color="#00FFFFFF" Offset="1" />
                 </RadialGradientBrush>
             </GeometryDrawing.Brush>
@@ -310,12 +322,77 @@
             <ResourceDictionary Source="Crystal.Inputs.xaml" />
         </Style.Resources>
     </Style>
+    <SolidColorBrush x:Key="Crystal.Brushes.ScreenTipBorder" Color="#8FA9BD" />
+    <!-- Thin glass sheet: a quiet diagonal wash, off-center light and narrow edge
+         reflections. No full-width shaded roll that would make the face bulge. -->
+    <DrawingBrush x:Key="Crystal.Brushes.ScreenTipSurface" Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
+        <DrawingBrush.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z">
+                    <GeometryDrawing.Brush>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#F5FBFE" Offset="0" />
+                            <GradientStop Color="#E6F2FA" Offset="0.55" />
+                            <GradientStop Color="#EAF5FB" Offset="1" />
+                        </LinearGradientBrush>
+                    </GeometryDrawing.Brush>
+                </GeometryDrawing>
+                <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z">
+                    <GeometryDrawing.Brush>
+                        <RadialGradientBrush Center="0.12,0.16" GradientOrigin="0.12,0.16" RadiusX="0.9" RadiusY="0.85">
+                            <GradientStop Color="#A6FFFFFF" Offset="0" />
+                            <GradientStop Color="#40FFFFFF" Offset="0.5" />
+                            <GradientStop Color="#00FFFFFF" Offset="1" />
+                        </RadialGradientBrush>
+                    </GeometryDrawing.Brush>
+                </GeometryDrawing>
+                <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z">
+                    <GeometryDrawing.Brush>
+                        <RadialGradientBrush Center="0.68,1" GradientOrigin="0.68,1" RadiusX="0.55" RadiusY="0.045">
+                            <GradientStop Color="#D9FFFFFF" Offset="0" />
+                            <GradientStop Color="#60FFFFFF" Offset="0.5" />
+                            <GradientStop Color="#00FFFFFF" Offset="1" />
+                        </RadialGradientBrush>
+                    </GeometryDrawing.Brush>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingBrush.Drawing>
+    </DrawingBrush>
     <Style TargetType="{x:Type rk:RibbonScreenTip}">
-        <Setter Property="Background" Value="{DynamicResource Crystal.Brushes.GallerySurface}" />
-        <Style.Resources>
-            <DrawingBrush x:Key="RibbonKit.Brushes.ScreenTip.Border" Drawing="{StaticResource Crystal.Drawing.GalleryRim}"
-                          Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
-        </Style.Resources>
+        <Setter Property="Background" Value="{DynamicResource Crystal.Brushes.ScreenTipSurface}" />
+        <!-- Sample-only layer study: keep definition on the outer contour and
+             reflections on a separate inner border, with concentric corners. -->
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type rk:RibbonScreenTip}">
+                    <Border x:Name="OuterRim" Background="{TemplateBinding Background}" Margin="5,4,5,6"
+                            BorderBrush="{DynamicResource Crystal.Brushes.ScreenTipBorder}"
+                            BorderThickness="1" CornerRadius="8" MaxWidth="300">
+                        <Border.Effect><DropShadowEffect Color="#304C60" BlurRadius="8" ShadowDepth="1" Opacity="0.14" /></Border.Effect>
+                        <Grid>
+                            <Border x:Name="InnerReflection" CornerRadius="7" BorderThickness="1" IsHitTestVisible="False">
+                                <Border.BorderBrush>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                        <GradientStop Color="#C0FFFFFF" Offset="0" />
+                                        <GradientStop Color="#50FFFFFF" Offset="0.4" />
+                                        <GradientStop Color="#00FFFFFF" Offset="0.75" />
+                                    </LinearGradientBrush>
+                                </Border.BorderBrush>
+                            </Border>
+                            <StackPanel Margin="10,8">
+                                <TextBlock x:Name="TitleText" Text="{TemplateBinding Title}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                <TextBlock x:Name="DescriptionText" Text="{TemplateBinding Description}" TextWrapping="Wrap"
+                                           Margin="0,4,0,0" Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Title" Value="{x:Null}"><Setter TargetName="TitleText" Property="Visibility" Value="Collapsed" /></Trigger>
+                        <Trigger Property="Description" Value="{x:Null}"><Setter TargetName="DescriptionText" Property="Visibility" Value="Collapsed" /></Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
     <CornerRadius x:Key="RibbonKit.Metrics.TabCornerRadius">8,8,0,0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.ApplicationButtonCornerRadius">8,8,0,0</CornerRadius>

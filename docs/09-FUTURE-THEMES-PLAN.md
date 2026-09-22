@@ -232,6 +232,41 @@ No shared template or popup timing changes were made. Showcase Release build pas
 sixteen focused Crystal/input tests passed, including tint changes while a real tip
 is open and restoration of baseline brushes. Visual review remains with the user.
 
+Screen-tip rim refinement: a dedicated rim retains the gallery-like upper and side
+definition, then lightens toward a muted blue-gray bottom (#BECFDE in the original
+palette). It echoes the input's lower edge without approaching white. Gallery borders
+are unchanged. Showcase Release build and ten focused Crystal tests passed; visual
+acceptance remains with the user.
+
+Screen-tip curvature study: a dedicated tint-aware background adds a broad upper
+highlight, a pale central reading area and a shaded lower roll ending in a narrow
+reflection. The intended impression is gently convex, with the existing distinct rim
+retained. Input/gallery surfaces are unchanged. Showcase Release build and ten focused
+Crystal tests passed; curvature and strength remain for the user's visual review.
+
+The convex treatment was rejected as too inflated. The next screen-tip iteration uses
+a flatter diagonal wash and a broad off-center reflection, with depth concentrated in
+the crisp blue-gray rim. An upper-left rim glint and a smaller lower-right reflection
+replace the symmetric top/bottom bands. Geometry and readable text remain unchanged.
+Showcase Release build and ten focused Crystal tests passed; visual review is pending.
+
+The following screen-tip iteration keeps that flatter background and separates the
+edge into a continuous muted blue-gray outer line and a faint inner white reflection.
+A soft shadow provides separation from pale surroundings, with margin to avoid
+clipping. A sample-only screen-tip template provides these independent layers and
+retains the title/description visibility behavior. Its dedicated border resource
+replaces the earlier scoped general-border override; accent changes still apply to
+open tips, and comparison restores the baseline template. Showcase Release build
+and ten focused Crystal tests passed. Visual acceptance remains with the user.
+
+The user accepted the separate outer rim, inner reflection and soft shadow for
+screen tips. The next gallery study leaves that treatment intact and gives both
+the ribbon gallery and its popup a shallow recessed surface: a narrow inward top
+shadow, softer side shading, a clear opaque center and a restrained lower reflection.
+The distinct gallery border, tile states and accent recoloring remain in place.
+Showcase Release build and ten focused Crystal tests passed; gallery visual review
+remains with the user.
+
 Release solution build passed with zero warnings/errors; the library suite passed
 400/400 and existing visual snapshots 1/1. The full Writer run passed 465/472, with
 seven failures including WindowChrome cross-thread initialization. Isolated reruns
