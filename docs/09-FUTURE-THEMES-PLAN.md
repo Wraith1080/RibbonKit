@@ -292,6 +292,44 @@ reflection remains inside the existing lens surface, and the local accent palett
 continues to recolor the outline. Showcase Release build and seventeen focused
 Crystal/input tests passed; visual acceptance remains with the user.
 
+The user accepted the input bottom outline. The next study covers RibbonCheckBox
+and RibbonRadioButton through sample-scoped resources, retaining the native shared
+templates and interaction. Idle indicators reuse the clear input lens with a muted
+outline; selected/mixed indicators use a deeper tinted glass fill with a narrow
+reflection and white marks. Checkbox corners and row hover washes use 3-DIP rounding;
+radio indicators remain circular. Design exposes unchecked, checked, mixed and
+grouped examples plus an Enable options toggle for disabled-state review. Tint
+replacement recolors both the merged idle lens and selected fill. Showcase Release
+build and nineteen focused Crystal/option-control tests passed, including state,
+grouping, tint, disabled and baseline-restoration coverage. Visual review remains
+with the user.
+
+The first option-control study was too solid in appearance, and its Enable options
+ElementName bindings failed after group-content reparenting. The preview now binds
+both panels directly to the toggle instance. A test of the actual preview window
+reproduced the failure and passes with the fix; local icon resources let that window
+load independently of Showcase application resources. Selected indicators now use
+pale tinted lenses, shaded rims, dark marks and localized upper/lower reflections.
+Showcase Release build and twenty focused Crystal/option-control tests passed.
+Visual acceptance of the revised indicators remains with the user.
+
+The user found the indicator treatment too flashy and identified the broad shading
+as the main issue. The next pass keeps the center nearly even, concentrates the
+shade transition near the perimeter, and reduces the size/intensity of the white
+reflections. Indicator dimensions and marks are unchanged. Release build and twenty
+focused Crystal/option-control tests passed; visual review remains with the user.
+
+The radial checkbox shading still looked uneven, and sharing the selected fill with
+the outline/focus brush constrained further refinement. Crystal now uses sample-only
+option templates with independent selected-surface, selected-border and focus keys.
+The checkbox face has a quiet vertical wash instead of circular inner shading; the
+radio has a continuous muted tinted outline. Focus uses a compact ring around the
+indicator instead of a full-row box. Native hover/press wash parts, check/mixed marks,
+radio grouping and disabled behavior remain. Comparison restores the shared template.
+Showcase Release build and twenty focused tests passed, including focus transfer,
+transparent row borders, tint replacement and baseline template restoration. The user
+retains visual acceptance.
+
 Release solution build passed with zero warnings/errors; the library suite passed
 400/400 and existing visual snapshots 1/1. The full Writer run passed 465/472, with
 seven failures including WindowChrome cross-thread initialization. Isolated reruns

@@ -345,6 +345,16 @@
                           Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
         </Style.Resources>
     </Style>
+    <Style TargetType="{x:Type rk:RibbonCheckBox}">
+        <Style.Resources><ResourceDictionary Source="Crystal.Options.xaml" /></Style.Resources>
+        <Setter Property="Template" Value="{DynamicResource Crystal.Options.CheckBoxTemplate}" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+    </Style>
+    <Style TargetType="{x:Type rk:RibbonRadioButton}">
+        <Style.Resources><ResourceDictionary Source="Crystal.Options.xaml" /></Style.Resources>
+        <Setter Property="Template" Value="{DynamicResource Crystal.Options.RadioButtonTemplate}" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+    </Style>
     <Style TargetType="{x:Type rk:RibbonTextBox}">
         <Style.Resources>
             <ResourceDictionary Source="Crystal.Inputs.xaml" />

@@ -14,6 +14,7 @@
                 <!-- Window scope keeps this study independent of Showcase theme/accent preferences. -->
                 <ResourceDictionary Source="/RibbonKit;component/Themes/Tokens.Office2024.xaml" />
                 <ResourceDictionary Source="Themes/Crystal.Light.xaml" />
+                <ResourceDictionary Source="Icons.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </rk:RibbonWindow.Resources>
@@ -162,6 +163,8 @@
                         <rk:RibbonMenuItem Header="Purple" Tag="#8659A5" Click="OnAccentSelected" />
                         <rk:RibbonMenuItem Header="Amber" Tag="#AC731C" Click="OnAccentSelected" />
                     </rk:RibbonDropDownButton>
+                    <rk:RibbonButton Header="Customize" Size="Large" Icon="{StaticResource Icon.Style}"
+                                     Click="OnCustomize" />
                 </rk:RibbonGroup>
                 <rk:RibbonGroup Header="Inputs" Icon="{StaticResource Icon.Bold}">
                     <StackPanel>
@@ -221,9 +224,25 @@
                         </rk:RibbonGalleryItem>
                     </rk:InRibbonGallery>
                 </rk:RibbonGroup>
+                <rk:RibbonGroup Header="Options" Icon="{StaticResource Icon.Select}">
+                    <StackPanel x:Name="CrystalOptionsPanel">
+                        <rk:RibbonCheckBox Header="Show guides" IsChecked="True" />
+                        <rk:RibbonCheckBox Header="Snap to grid" />
+                        <rk:RibbonCheckBox Header="Mixed selection" IsThreeState="True" IsChecked="{x:Null}" />
+                    </StackPanel>
+                </rk:RibbonGroup>
+                <rk:RibbonGroup Header="Spacing" Icon="{StaticResource Icon.Select}">
+                    <StackPanel x:Name="CrystalSpacingPanel">
+                        <rk:RibbonRadioButton Header="Comfortable" GroupName="CrystalSpacing" IsChecked="True" />
+                        <rk:RibbonRadioButton Header="Compact" GroupName="CrystalSpacing" />
+                        <rk:RibbonRadioButton Header="Custom" GroupName="CrystalSpacing" />
+                    </StackPanel>
+                </rk:RibbonGroup>
                 <rk:RibbonGroup Header="Preview states" Icon="{StaticResource Icon.Select}">
                     <rk:RibbonToggleButton x:Name="DisableGalleryToggle" Header="Disable gallery" Size="Large" Icon="{StaticResource Icon.Select}"
                                            Checked="OnDisableGallery" Unchecked="OnDisableGallery" />
+                    <rk:RibbonToggleButton x:Name="EnableOptionsToggle" Header="Enable options" Size="Large"
+                                           Icon="{StaticResource Icon.Select}" IsChecked="True" />
                 </rk:RibbonGroup>
             </rk:RibbonTab>
             <local:CrystalContextualTab x:Name="PictureTab" Header="Picture Format" IsContextual="True" ContextualColor="#287E78">

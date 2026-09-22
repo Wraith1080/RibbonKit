@@ -29,6 +29,15 @@ internal static class CrystalPalette
             palette[type] = new Style(type, (Style)palette[type]) { Resources = inputs };
         }
         var foreground = new SolidColorBrush(ReadableAccent(accent));
+        foreach (var type in new[] { typeof(RibbonCheckBox), typeof(RibbonRadioButton) })
+        {
+            var options = Load("Crystal.Options.xaml");
+            // The clear idle lens lives in the merged input dictionary.
+            foreach (var merged in options.MergedDictionaries)
+                TintResources(merged, rotation, keepText: false);
+            TintResources(options, rotation, keepText: false);
+            palette[type] = new Style(type, (Style)palette[type]) { Resources = options };
+        }
         foreach (var (type, localKey, paletteKey) in new[]
         {
             (typeof(RibbonGalleryItem), "RibbonKit.Brushes.Group.Separator", "RibbonKit.Brushes.Tab.HoverBorder"),

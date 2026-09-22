@@ -14,6 +14,122 @@ namespace RibbonKit.Tests;
 public class CrystalContextualTests
 {
     [Fact]
+    public void Crystal_preview_enable_options_updates_both_reparented_groups() => Sta.Run(() =>
+    {
+        var window = new CrystalPreviewWindow { Left = -10000, Top = -10000,
+            ShowActivated = false, ShowInTaskbar = false };
+        try
+        {
+            window.Show();
+            var ribbon = (Ribbon)window.FindName("PreviewRibbon");
+            ribbon.SelectedIndex = 2;
+            Sta.Drain(DispatcherPriority.Render);
+            var toggle = (RibbonToggleButton)window.FindName("EnableOptionsToggle");
+            var options = (StackPanel)window.FindName("CrystalOptionsPanel");
+            var spacing = (StackPanel)window.FindName("CrystalSpacingPanel");
+            toggle.SetCurrentValue(System.Windows.Controls.Primitives.ToggleButton.IsCheckedProperty, false);
+            Sta.Drain();
+            Assert.False(options.IsEnabled);
+            Assert.False(spacing.IsEnabled);
+            foreach (UIElement item in options.Children) Assert.False(item.IsEnabled);
+            foreach (UIElement item in spacing.Children) Assert.False(item.IsEnabled);
+            toggle.SetCurrentValue(System.Windows.Controls.Primitives.ToggleButton.IsCheckedProperty, true);
+            Sta.Drain();
+            Assert.True(options.IsEnabled);
+            Assert.True(spacing.IsEnabled);
+            var dialog = window.CreateCustomizationDialog(false);
+            try
+            {
+                dialog.Show();
+                Sta.Drain(DispatcherPriority.Render);
+                Assert.Same(window, dialog.Owner);
+                Assert.Equal(2, dialog.Pages.Count);
+                Assert.Same(dialog.Pages[0], dialog.SelectedPage);
+                var page = Assert.IsType<RibbonCustomizePage>(dialog.SelectedPage.Content);
+                Assert.Same(ribbon, page.Ribbon);
+                Assert.False(string.IsNullOrEmpty(page.ResetLayout));
+                Assert.NotNull(page.Template);
+                Assert.Same(window.FindResource("RibbonKit.Brushes.Window.Background"),
+                    dialog.FindResource("RibbonKit.Brushes.Window.Background"));
+                dialog.SelectedPage = dialog.Pages[1];
+                Sta.Drain(DispatcherPriority.Render);
+                Assert.Same(ribbon, Assert.IsType<RibbonQuickAccessPage>(dialog.SelectedPage.Content).Ribbon);
+            }
+            finally { dialog.Close(); }
+            var quickAccessDialog = window.CreateCustomizationDialog(true);
+            Assert.Same(quickAccessDialog.Pages[1], quickAccessDialog.SelectedPage);
+            quickAccessDialog.Close();
+        }
+        finally { window.Close(); }
+    });
+
+    [Fact]
+    public void Crystal_options_preserve_marks_grouping_and_values_across_tint_and_comparison() => Sta.Run(() =>
+    {
+        var check = new RibbonCheckBox { Header = "Guides", IsThreeState = true, IsChecked = true };
+        var first = new RibbonRadioButton { Header = "Comfortable", GroupName = "Spacing", IsChecked = true };
+        var second = new RibbonRadioButton { Header = "Compact", GroupName = "Spacing" };
+        var panel = new StackPanel();
+        panel.Children.Add(check);
+        panel.Children.Add(first);
+        panel.Children.Add(second);
+        var window = new Window { Content = panel, Width = 300, Height = 200,
+            Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
+        window.Resources.MergedDictionaries.Add(new ResourceDictionary
+        { Source = new Uri("/RibbonKit;component/Themes/Tokens.Office2024.xaml", UriKind.Relative) });
+        window.Resources.MergedDictionaries.Add(CrystalPalette.Create(CrystalPalette.Blue));
+        try
+        {
+            window.Show();
+            Sta.Drain(DispatcherPriority.Render);
+            var indicator = (Border)check.Template.FindName("Indicator", check);
+            Assert.Equal(new CornerRadius(3), indicator.CornerRadius);
+            var blue = Assert.IsType<DrawingBrush>(indicator.Background);
+            Assert.Equal(Visibility.Visible, ((Path)check.Template.FindName("CheckMark", check)).Visibility);
+            check.IsChecked = null;
+            Sta.Drain();
+            Assert.Equal(Visibility.Visible, ((Rectangle)check.Template.FindName("IndeterminateMark", check)).Visibility);
+            Assert.Equal(Visibility.Collapsed, ((Path)check.Template.FindName("CheckMark", check)).Visibility);
+            second.IsChecked = true;
+            Assert.False(first.IsChecked);
+            window.Resources.MergedDictionaries[1] = CrystalPalette.Create(Colors.Purple);
+            Sta.Drain();
+            indicator = (Border)check.Template.FindName("Indicator", check);
+            var purple = Assert.IsType<DrawingBrush>(indicator.Background);
+            var blueBody = (LinearGradientBrush)((GeometryDrawing)((DrawingGroup)blue.Drawing).Children[0]).Brush;
+            var purpleBody = (LinearGradientBrush)((GeometryDrawing)((DrawingGroup)purple.Drawing).Children[0]).Brush;
+            Assert.NotEqual(blueBody.GradientStops[0].Color, purpleBody.GradientStops[0].Color);
+            Assert.IsType<DrawingBrush>(((Ellipse)second.Template.FindName("Indicator", second)).Fill);
+            Assert.Same(second.FindResource("Crystal.Options.SelectedBorder"),
+                ((Ellipse)second.Template.FindName("Indicator", second)).Stroke);
+            window.Activate();
+            Assert.True(second.Focus());
+            Sta.Drain();
+            var focusRing = (Ellipse)second.Template.FindName("FocusRing", second);
+            Assert.Equal(1d, focusRing.Opacity);
+            Assert.False(focusRing.IsHitTestVisible);
+            Assert.Equal(Colors.Transparent,
+                ((SolidColorBrush)((Border)second.Template.FindName("Chrome", second)).BorderBrush).Color);
+            Assert.True(check.Focus());
+            Sta.Drain();
+            Assert.Equal(1d, ((Border)check.Template.FindName("FocusRing", check)).Opacity);
+            Assert.Equal(0d, focusRing.Opacity);
+            panel.IsEnabled = false;
+            Assert.Equal(0.4, check.Opacity);
+            Assert.Equal(0.4, second.Opacity);
+            panel.IsEnabled = true;
+            window.Resources.MergedDictionaries.RemoveAt(1);
+            Sta.Drain();
+            Assert.Null(check.IsChecked);
+            Assert.True(second.IsChecked);
+            Assert.IsType<SolidColorBrush>(((Border)check.Template.FindName("Indicator", check)).Background);
+            Assert.IsType<SolidColorBrush>(((Ellipse)second.Template.FindName("Indicator", second)).Fill);
+            Assert.Null(check.Template.FindName("FocusRing", check));
+        }
+        finally { window.Close(); }
+    });
+
+    [Fact]
     public void Contextual_marker_tracks_override_replacement_clear_and_color_changes() => Sta.Run(() =>
     {
         var context = new RibbonTab { Header = "Picture", IsContextual = true, ContextualColor = Brushes.Teal };

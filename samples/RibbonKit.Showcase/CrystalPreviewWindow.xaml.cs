@@ -10,10 +10,16 @@ public partial class CrystalPreviewWindow : RibbonWindow
     private ResourceDictionary? _crystal;
     private readonly CrystalBackstagePresentation _backstagePresentation;
     private readonly CrystalScreenTipPalette _screenTipPalette;
+    private readonly string _baselineLayout;
 
     public CrystalPreviewWindow()
     {
         InitializeComponent();
+        // Group content is reparented by ribbon layout, so use the actual source
+        // rather than resolving a window name from the borrowed content tree.
+        foreach (var panel in new[] { CrystalOptionsPanel, CrystalSpacingPanel })
+            panel.SetBinding(IsEnabledProperty, new System.Windows.Data.Binding(nameof(EnableOptionsToggle.IsChecked))
+            { Source = EnableOptionsToggle, Mode = System.Windows.Data.BindingMode.OneWay });
         _crystal = Resources.MergedDictionaries[1];
         // Backstage is reparented into an adorner. Give it explicit palette and data
         // sources instead of depending on the window's visual tree or namescope.
@@ -25,6 +31,35 @@ public partial class CrystalPreviewWindow : RibbonWindow
             if (control.ToolTip is RibbonScreenTip tip) _screenTipPalette.Attach(tip);
         UpdateCrystalDetails(true);
         PreviewRibbon.Loaded += (_, _) => CrystalFileHover.Apply(PreviewRibbon, CompareToggle.IsChecked != true);
+        _baselineLayout = RibbonCustomizationSerializer.Serialize(PreviewRibbon);
+        PreviewRibbon.RibbonCustomizeRequested += (_, _) => CreateCustomizationDialog(false).ShowDialog();
+        PreviewRibbon.QuickAccessCustomizeRequested += (_, _) => CreateCustomizationDialog(true).ShowDialog();
+    }
+
+    private void OnCustomize(object sender, RoutedEventArgs e) => CreateCustomizationDialog(false).ShowDialog();
+
+    internal RibbonOptionsDialog CreateCustomizationDialog(bool quickAccess)
+    {
+        var dialog = new RibbonOptionsDialog { Title = "Customize Crystal", Owner = this };
+        // An owned window has its own resource lookup; explicitly carry the current
+        // preview palette, including baseline comparison, into the dialog.
+        foreach (var dictionary in Resources.MergedDictionaries)
+            dialog.Resources.MergedDictionaries.Add(dictionary);
+        var ribbonPage = new RibbonOptionsPage
+        {
+            Header = "Customize Ribbon",
+            Content = new RibbonCustomizePage { Ribbon = PreviewRibbon, ResetLayout = _baselineLayout },
+        };
+        var quickAccessPage = new RibbonOptionsPage
+        {
+            Header = "Quick Access Toolbar",
+            Content = new RibbonQuickAccessPage { Ribbon = PreviewRibbon },
+        };
+        dialog.Pages.Add(ribbonPage);
+        dialog.Pages.Add(quickAccessPage);
+        dialog.SelectedPage = quickAccess ? quickAccessPage : ribbonPage;
+        dialog.Applied += (_, _) => StatusText.Text = "Customization applied to this preview.";
+        return dialog;
     }
 
     private void OnCompare(object sender, RoutedEventArgs e)

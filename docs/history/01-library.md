@@ -4596,3 +4596,11 @@ publishes the dedicated glass rim directly in its own scope, removing it on base
 comparison. A realized open-tooltip test covers tint replacement and restoration;
 the focused Crystal/input filter passed sixteen tests. Visual acceptance remains with
 the user.
+
+Crystal option preview follow-up (2026-09-22): ElementName bindings from borrowed
+group content to EnableOptionsToggle did not resolve after layout. Explicit binding
+Source references fix both Options and Spacing panels. A realized CrystalPreviewWindow
+test failed before the fix and passes for disable/re-enable afterwards; isolated
+control tests alone had missed this preview wiring. The window now merges its icon
+resources locally for standalone construction. Release Showcase build and twenty
+focused Crystal/option-control tests passed; the user owns visual acceptance.
