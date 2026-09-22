@@ -39,10 +39,12 @@
             </DrawingGroup>
         </DrawingBrush.Drawing>
     </DrawingBrush>
+    <!-- Keep the white reflection inside the surface; a muted lower outline
+         separates the lens from the pale ribbon without a heavy dark bevel. -->
     <LinearGradientBrush x:Key="RibbonKit.Brushes.ScreenTip.Border" StartPoint="0,0" EndPoint="0,1">
         <GradientStop Color="#B5CBDC" Offset="0" />
         <GradientStop Color="#B9CFDF" Offset="0.55" />
-        <GradientStop Color="#EFFAFF" Offset="1" />
+        <GradientStop Color="#A8C1D3" Offset="1" />
     </LinearGradientBrush>
     <!-- The native input templates share this brush between the hover rim and
          combo chevron. Keep a legible blue body with a localized edge glint. -->

@@ -286,6 +286,12 @@ comparison. Showcase Release build and eleven focused Crystal tests passed,
 including minimize/expand, tint replacement and comparison restoration. Visual
 acceptance of these header shapes remains with the user.
 
+Input edge follow-up: the idle combo/text-box rim now ends in muted blue-gray
+instead of near-white, separating the bottom edge from the pale ribbon. The white
+reflection remains inside the existing lens surface, and the local accent palette
+continues to recolor the outline. Showcase Release build and seventeen focused
+Crystal/input tests passed; visual acceptance remains with the user.
+
 Release solution build passed with zero warnings/errors; the library suite passed
 400/400 and existing visual snapshots 1/1. The full Writer run passed 465/472, with
 seven failures including WindowChrome cross-thread initialization. Isolated reruns
