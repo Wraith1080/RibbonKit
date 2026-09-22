@@ -262,9 +262,46 @@
     </DrawingGroup>
     <DrawingBrush x:Key="Crystal.Brushes.GalleryBorder" Drawing="{StaticResource Crystal.Drawing.GalleryRim}"
                   Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
+    <!-- Opaque lens underneath the reflections keeps the separate popup readable.
+         Broad light across the upper face and a lower caustic sit inside the rim. -->
+    <DrawingGroup x:Key="Crystal.Drawing.GallerySurface">
+        <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z">
+            <GeometryDrawing.Brush>
+                <RadialGradientBrush Center="0.5,0.38" GradientOrigin="0.5,0.38" RadiusX="0.85" RadiusY="0.8">
+                    <GradientStop Color="#F5FBFE" Offset="0" />
+                    <GradientStop Color="#E5F1F8" Offset="0.55" />
+                    <GradientStop Color="#C3DCEB" Offset="1" />
+                </RadialGradientBrush>
+            </GeometryDrawing.Brush>
+        </GeometryDrawing>
+        <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z">
+            <GeometryDrawing.Brush>
+                <RadialGradientBrush Center="0.35,0.13" GradientOrigin="0.35,0.13" RadiusX="0.6" RadiusY="0.23">
+                    <GradientStop Color="#C0FFFFFF" Offset="0" />
+                    <GradientStop Color="#60FFFFFF" Offset="0.5" />
+                    <GradientStop Color="#00FFFFFF" Offset="1" />
+                </RadialGradientBrush>
+            </GeometryDrawing.Brush>
+        </GeometryDrawing>
+        <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z">
+            <GeometryDrawing.Brush>
+                <RadialGradientBrush Center="0.5,0.9" GradientOrigin="0.5,0.9" RadiusX="0.47" RadiusY="0.07">
+                    <GradientStop Color="#E6FFFFFF" Offset="0" />
+                    <GradientStop Color="#80FFFFFF" Offset="0.45" />
+                    <GradientStop Color="#00FFFFFF" Offset="1" />
+                </RadialGradientBrush>
+            </GeometryDrawing.Brush>
+        </GeometryDrawing>
+    </DrawingGroup>
+    <DrawingBrush x:Key="Crystal.Brushes.GallerySurface" Drawing="{StaticResource Crystal.Drawing.GallerySurface}"
+                  Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
     <Style TargetType="{x:Type rk:InRibbonGallery}">
         <Style.Resources>
             <DrawingBrush x:Key="RibbonKit.Brushes.ScreenTip.Border" Drawing="{StaticResource Crystal.Drawing.GalleryRim}"
+                          Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
+            <DrawingBrush x:Key="RibbonKit.Brushes.Control.SurfaceBackground" Drawing="{StaticResource Crystal.Drawing.GallerySurface}"
+                          Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
+            <DrawingBrush x:Key="RibbonKit.Brushes.Ribbon.ContentBackground" Drawing="{StaticResource Crystal.Drawing.GallerySurface}"
                           Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
         </Style.Resources>
     </Style>

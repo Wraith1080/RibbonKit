@@ -37,6 +37,11 @@ internal static class CrystalPalette
         {
             var galleryStyle = new Style(type, (Style)palette[type]);
             galleryStyle.Resources[localKey] = palette[paletteKey];
+            if (type == typeof(InRibbonGallery))
+            {
+                galleryStyle.Resources["RibbonKit.Brushes.Control.SurfaceBackground"] = palette["Crystal.Brushes.GallerySurface"];
+                galleryStyle.Resources["RibbonKit.Brushes.Ribbon.ContentBackground"] = palette["Crystal.Brushes.GallerySurface"];
+            }
             palette[type] = galleryStyle;
         }
         foreground.Freeze();

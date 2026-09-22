@@ -379,6 +379,13 @@ public class CrystalContextualTests
             var popupHost = (Border)gallery.Template.FindName("PART_PopupHost", gallery);
             Assert.True(popup.IsOpen);
             Assert.IsType<DrawingBrush>(popupHost.BorderBrush);
+            Assert.IsType<DrawingBrush>(popupHost.Background);
+            Assert.Same(gallery.FindResource("RibbonKit.Brushes.Ribbon.ContentBackground"), popupHost.Background);
+            var strip = (Border)((Grid)VisualTreeHelper.GetChild(gallery, 0)).Children[0];
+            Assert.IsType<DrawingBrush>(strip.Background);
+            Assert.Same(gallery.FindResource("RibbonKit.Brushes.Control.SurfaceBackground"), strip.Background);
+            Assert.IsType<SolidColorBrush>(window.FindResource("RibbonKit.Brushes.Control.SurfaceBackground"));
+            Assert.IsType<LinearGradientBrush>(window.FindResource("RibbonKit.Brushes.Ribbon.ContentBackground"));
             Assert.Equal(new CornerRadius(8), popupHost.CornerRadius);
             gallery.IsDropDownOpen = false;
             window.Resources.MergedDictionaries[1] = CrystalPalette.Create(Colors.Purple);
@@ -390,6 +397,9 @@ public class CrystalContextualTests
             Sta.Drain(DispatcherPriority.Render);
             popupHost = (Border)gallery.Template.FindName("PART_PopupHost", gallery);
             Assert.Same(window.FindResource("Crystal.Brushes.GalleryBorder"), popupHost.BorderBrush);
+            Assert.Same(window.FindResource("Crystal.Brushes.GallerySurface"), popupHost.Background);
+            strip = (Border)((Grid)VisualTreeHelper.GetChild(gallery, 0)).Children[0];
+            Assert.Same(popupHost.Background, strip.Background);
             gallery.IsDropDownOpen = false;
             window.Resources.MergedDictionaries.RemoveAt(1);
             Sta.Drain(DispatcherPriority.Render);

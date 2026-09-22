@@ -214,6 +214,14 @@ Tile hover and selection retain their accepted treatment. The dedicated gallery 
 follows tint changes. Showcase Release build and nine focused Crystal tests passed;
 the user will check the revised boundary visually.
 
+Gallery surface refinement: both the strip and popup now use an opaque radial lens
+with a broad upper reflection and a narrow inner lower reflection. Their persistent
+blue-gray border remains intact, separating the material from the outer ribbon. The
+gallery-only surface resources follow the accent palette without affecting the ribbon
+body or other controls. Showcase Release build and nine focused Crystal tests passed;
+realized strip/popup checks confirm both surfaces and tint replacement, with no resource
+leakage. Visual acceptance remains with the user.
+
 Release solution build passed with zero warnings/errors; the library suite passed
 400/400 and existing visual snapshots 1/1. The full Writer run passed 465/472, with
 seven failures including WindowChrome cross-thread initialization. Isolated reruns
