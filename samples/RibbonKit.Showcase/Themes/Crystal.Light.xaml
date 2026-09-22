@@ -26,7 +26,7 @@
         <GradientStop Color="#8095AFC5" Offset="1" />
     </LinearGradientBrush>
     <DropShadowEffect x:Key="Crystal.Effects.QuickAccessShadow" Color="#34485A"
-                      BlurRadius="5" ShadowDepth="1" Direction="270" Opacity="0.16" />
+                      BlurRadius="5" ShadowDepth="1" Direction="90" Opacity="0.16" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.SurfaceBackground" Color="#F6FBFD" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Primary" Color="#20364A" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Secondary" Color="#4F6476" />

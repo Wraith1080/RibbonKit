@@ -14,7 +14,7 @@ namespace RibbonKit.Tests;
 public class CrystalContextualTests
 {
     [Fact]
-    public void Crystal_below_ribbon_quick_access_is_detached_and_restores_baseline() => Sta.Run(() =>
+    public void Crystal_below_ribbon_quick_access_drawer_restores_baseline() => Sta.Run(() =>
     {
         var templates = new ResourceDictionary
         { Source = new Uri("/RibbonKit;component/Themes/Office2024.xaml", UriKind.Relative) };
@@ -39,13 +39,16 @@ public class CrystalContextualTests
             var tabs = (RibbonTabControl)ribbon.Template.FindName("TabControlHost", ribbon);
             var body = (Border)tabs.Template.FindName("ContentHost", tabs);
             Assert.Equal(new CornerRadius(14), body.CornerRadius);
-            Assert.Equal(new CornerRadius(10), panel.CornerRadius);
+            Assert.Equal(new CornerRadius(0, 0, 10, 10), panel.CornerRadius);
+            Assert.Equal(new Thickness(1, 0, 1, 1), panel.BorderThickness);
             Assert.Same(ribbon.FindResource("RibbonKit.Brushes.Tab.HoverBackground"), panel.Background);
             Assert.Same(ribbon.FindResource("RibbonKit.Brushes.Tab.HoverBorder"), panel.BorderBrush);
+            Assert.True(Panel.GetZIndex(tabs) > Panel.GetZIndex(panel));
+            Assert.Equal(90d, ((System.Windows.Media.Effects.DropShadowEffect)panel.Effect).Direction);
             Assert.Same(ribbon.FindResource("Crystal.Effects.QuickAccessShadow"), panel.Effect);
-            Assert.Equal(body.ActualWidth, panel.ActualWidth, 1);
-            Assert.Equal(body.TranslatePoint(new Point(), ribbon).X, panel.TranslatePoint(new Point(), ribbon).X, 1);
-            Assert.InRange(panel.TranslatePoint(new Point(), ribbon).Y - body.TranslatePoint(new Point(0, body.ActualHeight), ribbon).Y, 2.5, 3.5);
+            Assert.Equal(body.ActualWidth - 32, panel.ActualWidth, 1);
+            Assert.Equal(body.TranslatePoint(new Point(), ribbon).X + 16, panel.TranslatePoint(new Point(), ribbon).X, 1);
+            Assert.InRange(panel.TranslatePoint(new Point(), ribbon).Y - body.TranslatePoint(new Point(0, body.ActualHeight), ribbon).Y, -0.5, 0.5);
             Assert.Equal(new Thickness(8, 2, 8, 2), panel.Padding);
             var blue = panel.Background;
             ribbon.Resources.MergedDictionaries[1] = CrystalPalette.Create(Colors.Purple);
@@ -54,6 +57,7 @@ public class CrystalContextualTests
             ribbon.IsMinimized = true;
             Layout();
             Assert.Equal(new CornerRadius(10), panel.CornerRadius);
+            Assert.Equal(new Thickness(1), panel.BorderThickness);
             ribbon.QuickAccessPosition = RibbonQuickAccessPosition.TabRow;
             Layout();
             Assert.Equal(Visibility.Collapsed, panel.Visibility);
@@ -66,6 +70,7 @@ public class CrystalContextualTests
             Assert.Equal(new CornerRadius(0, 0, 8, 8), panel.CornerRadius);
             Assert.Equal(new Thickness(7, 0, 7, 7), panel.Margin);
             Assert.NotNull(panel.Effect);
+            Assert.Equal(0, Panel.GetZIndex(tabs));
             Assert.Single(ribbon.QuickAccessItems);
         }
         finally { window.Close(); }

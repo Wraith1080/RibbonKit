@@ -403,6 +403,21 @@ soft 1-DIP downward shadow (5-DIP blur, 16% opacity), retaining the tab-hover fi
 outline and compact full-width geometry. Release build and fourteen focused Crystal
 tests passed; launching and visual acceptance remain with the user.
 
+QAT drawer study: remove the gap and inset each end by 16 DIP relative to the body.
+The QAT now shares the ribbon's fill/rim, with no top border and rounding only at
+its lower corners while expanded. Native minimized-state triggers restore a complete
+rounded outline and a small gap when the body is hidden. The shallow shadow remains.
+Release build and fourteen focused Crystal tests passed, including measured drawer
+alignment, minimized geometry and baseline restoration. The user will launch and
+review the new composition.
+
+Drawer correction: use the original tab-hover fill/rim with square upper corners,
+not the ribbon-body fill. Raise the tab/body host above the QAT in drawing order so
+its shadow falls onto the drawer seam; direct the QAT's own shallow shadow upward.
+Comparison restores the original stacking. Build passed after closing the preview
+to resolve executable-lock warnings; fourteen focused Crystal tests passed. The user
+will relaunch and assess the seam visually.
+
 Release solution build passed with zero warnings/errors; the library suite passed
 400/400 and existing visual snapshots 1/1. The full Writer run passed 465/472, with
 seven failures including WindowChrome cross-thread initialization. Isolated reruns
