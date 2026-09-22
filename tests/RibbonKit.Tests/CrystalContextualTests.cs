@@ -14,6 +14,61 @@ namespace RibbonKit.Tests;
 public class CrystalContextualTests
 {
     [Fact]
+    public void Crystal_below_ribbon_quick_access_is_detached_and_restores_baseline() => Sta.Run(() =>
+    {
+        var templates = new ResourceDictionary
+        { Source = new Uri("/RibbonKit;component/Themes/Office2024.xaml", UriKind.Relative) };
+        var ribbon = new Ribbon { Style = (Style)templates[typeof(Ribbon)], QuickAccessPosition = RibbonQuickAccessPosition.BelowRibbon };
+        ribbon.Resources.MergedDictionaries.Add(new ResourceDictionary
+        { Source = new Uri("/RibbonKit;component/Themes/Tokens.Office2024.xaml", UriKind.Relative) });
+        ribbon.Resources.MergedDictionaries.Add(CrystalPalette.Create(CrystalPalette.Blue));
+        var tab = new RibbonTab { Header = "Home" };
+        var group = new RibbonGroup { Header = "Commands" };
+        group.Items.Add(new RibbonButton { Header = "Paste" });
+        tab.Groups.Add(group);
+        ribbon.Tabs.Add(tab);
+        ribbon.QuickAccessItems.Add(new RibbonButton { Header = "Copy", Size = RibbonControlSize.Small });
+        var window = new Window { Content = ribbon, Width = 800, Height = 300,
+            Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
+        try
+        {
+            window.Show();
+            CrystalQuickAccess.Apply(ribbon, true);
+            Layout();
+            var panel = (Border)ribbon.Template.FindName("QatBelowHost", ribbon);
+            var tabs = (RibbonTabControl)ribbon.Template.FindName("TabControlHost", ribbon);
+            var body = (Border)tabs.Template.FindName("ContentHost", tabs);
+            Assert.Equal(new CornerRadius(14), body.CornerRadius);
+            Assert.Equal(new CornerRadius(10), panel.CornerRadius);
+            Assert.Equal(body.ActualWidth, panel.ActualWidth, 1);
+            Assert.Equal(body.TranslatePoint(new Point(), ribbon).X, panel.TranslatePoint(new Point(), ribbon).X, 1);
+            Assert.InRange(panel.TranslatePoint(new Point(), ribbon).Y - body.TranslatePoint(new Point(0, body.ActualHeight), ribbon).Y, 2.5, 3.5);
+            Assert.Equal(new Thickness(8, 2, 8, 2), panel.Padding);
+            var blue = panel.Background;
+            ribbon.Resources.MergedDictionaries[1] = CrystalPalette.Create(Colors.Purple);
+            Layout();
+            Assert.NotSame(blue, panel.Background);
+            ribbon.IsMinimized = true;
+            Layout();
+            Assert.Equal(new CornerRadius(10), panel.CornerRadius);
+            ribbon.QuickAccessPosition = RibbonQuickAccessPosition.TabRow;
+            Layout();
+            Assert.Equal(Visibility.Collapsed, panel.Visibility);
+            ribbon.QuickAccessPosition = RibbonQuickAccessPosition.BelowRibbon;
+            ribbon.IsMinimized = false;
+            CrystalQuickAccess.Apply(ribbon, false);
+            ribbon.Resources.MergedDictionaries.RemoveAt(1);
+            Layout();
+            Assert.Equal(HorizontalAlignment.Stretch, panel.HorizontalAlignment);
+            Assert.Equal(new CornerRadius(0, 0, 8, 8), panel.CornerRadius);
+            Assert.Equal(new Thickness(7, 0, 7, 7), panel.Margin);
+            Assert.Single(ribbon.QuickAccessItems);
+        }
+        finally { window.Close(); }
+        void Layout() { Sta.Drain(); window.UpdateLayout(); }
+    });
+
+    [Fact]
     public void Crystal_preview_enable_options_updates_both_reparented_groups() => Sta.Run(() =>
     {
         var window = new CrystalPreviewWindow { Left = -10000, Top = -10000,

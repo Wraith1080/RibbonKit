@@ -380,6 +380,17 @@ wash, increasing to 8% on hover and 11% during dragging. Accepted base surfaces 
 transparent rails are retained. Release build and thirteen focused Crystal tests
 passed; the user will review the resulting tint strength.
 
+The user accepted customization tint strength for now. The next study detaches the
+below-ribbon QAT into a content-sized glass panel with a 7-DIP gap, 10-DIP corners,
+a stronger version of the tab-hover wash and the existing reflective control rim.
+The ribbon body's lower corners remain rounded. A sample adapter changes the existing
+host without reparenting commands or replacing the runtime template; comparison clears
+the overrides. The preview starts with Paste, Copy and Select below the ribbon for
+inspection. Release Showcase build and fourteen focused Crystal tests passed, covering
+the measured gap, compact width, tint changes, minimization, position switching and
+baseline restoration. The user now owns both launching and visual review; no preview
+was launched by the agent for this pass.
+
 Release solution build passed with zero warnings/errors; the library suite passed
 400/400 and existing visual snapshots 1/1. The full Writer run passed 465/472, with
 seven failures including WindowChrome cross-thread initialization. Isolated reruns

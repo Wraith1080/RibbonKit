@@ -25,6 +25,27 @@
         <GradientStop Color="#A6FFFFFF" Offset="0.45" />
         <GradientStop Color="#8095AFC5" Offset="1" />
     </LinearGradientBrush>
+    <DrawingBrush x:Key="Crystal.Brushes.QuickAccessSurface" Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
+        <DrawingBrush.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Brush="#447BA5C7" Geometry="M0,0 H1 V1 H0 Z" />
+                <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z">
+                    <GeometryDrawing.Brush>
+                        <RadialGradientBrush Center="0.35,0.12" GradientOrigin="0.35,0.12" RadiusX="0.7" RadiusY="0.65">
+                            <GradientStop Color="#B0FFFFFF" Offset="0" /><GradientStop Color="#00FFFFFF" Offset="1" />
+                        </RadialGradientBrush>
+                    </GeometryDrawing.Brush>
+                </GeometryDrawing>
+                <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z">
+                    <GeometryDrawing.Brush>
+                        <RadialGradientBrush Center="0.55,0.94" GradientOrigin="0.55,0.94" RadiusX="0.43" RadiusY="0.06">
+                            <GradientStop Color="#90FFFFFF" Offset="0" /><GradientStop Color="#00FFFFFF" Offset="1" />
+                        </RadialGradientBrush>
+                    </GeometryDrawing.Brush>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingBrush.Drawing>
+    </DrawingBrush>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.SurfaceBackground" Color="#F6FBFD" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Primary" Color="#20364A" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Secondary" Color="#4F6476" />

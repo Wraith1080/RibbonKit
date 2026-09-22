@@ -30,7 +30,11 @@ public partial class CrystalPreviewWindow : RibbonWindow
             FontInput, SizeInput, TitleInput, CrystalStylesGallery, UnavailableButton })
             if (control.ToolTip is RibbonScreenTip tip) _screenTipPalette.Attach(tip);
         UpdateCrystalDetails(true);
-        PreviewRibbon.Loaded += (_, _) => CrystalFileHover.Apply(PreviewRibbon, CompareToggle.IsChecked != true);
+        PreviewRibbon.Loaded += (_, _) =>
+        {
+            CrystalFileHover.Apply(PreviewRibbon, CompareToggle.IsChecked != true);
+            CrystalQuickAccess.Apply(PreviewRibbon, CompareToggle.IsChecked != true);
+        };
         _baselineLayout = RibbonCustomizationSerializer.Serialize(PreviewRibbon);
         PreviewRibbon.RibbonCustomizeRequested += (_, _) => CreateCustomizationDialog(false).ShowDialog();
         PreviewRibbon.QuickAccessCustomizeRequested += (_, _) => CreateCustomizationDialog(true).ShowDialog();
@@ -85,6 +89,7 @@ public partial class CrystalPreviewWindow : RibbonWindow
     private void UpdateCrystalDetails(bool enabled)
     {
         CrystalTabShape.Apply(PreviewRibbon, enabled);
+        if (PreviewRibbon.IsLoaded) CrystalQuickAccess.Apply(PreviewRibbon, enabled);
         if (PreviewRibbon.IsLoaded) CrystalFileHover.Apply(PreviewRibbon, enabled);
         _backstagePresentation.Apply(enabled ? _crystal : null);
         _screenTipPalette.Apply(enabled ? _crystal : null);

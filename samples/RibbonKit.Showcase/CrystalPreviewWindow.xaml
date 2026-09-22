@@ -23,7 +23,12 @@
             <TextBlock x:Name="StatusText" Text="Ready · Try the controls, open Arrange, or compare with Office 2024."
                        Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
         </Border>
-        <rk:Ribbon x:Name="PreviewRibbon" DockPanel.Dock="Top" QuickAccessPosition="TabRow">
+        <rk:Ribbon x:Name="PreviewRibbon" DockPanel.Dock="Top" QuickAccessPosition="BelowRibbon">
+            <rk:Ribbon.QuickAccessItems>
+                <rk:RibbonButton Header="Paste" Size="Small" Icon="{StaticResource Icon.Paste}" Click="OnPreviewCommand" />
+                <rk:RibbonButton Header="Copy" Size="Small" Icon="{StaticResource Icon.Copy}" Click="OnPreviewCommand" />
+                <rk:RibbonButton Header="Select" Size="Small" Icon="{StaticResource Icon.Select}" Click="OnPreviewCommand" />
+            </rk:Ribbon.QuickAccessItems>
             <rk:Ribbon.Backstage>
                 <rk:Backstage x:Name="CrystalBackstage" Design="Modern" SelectedIndex="0">
                     <rk:BackstageTabItem Header="Overview" Icon="{StaticResource Icon.Style}">
