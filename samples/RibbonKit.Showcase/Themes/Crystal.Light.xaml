@@ -253,8 +253,8 @@
         <GeometryDrawing Brush="#8FAABE" Geometry="M0,0 H1 V1 H0 Z" />
         <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z">
             <GeometryDrawing.Brush>
-                <RadialGradientBrush Center="0.5,0" GradientOrigin="0.5,0" RadiusX="0.48" RadiusY="0.10">
-                    <GradientStop Color="#B7CBDA" Offset="0" />
+                <RadialGradientBrush Center="0.68,0" GradientOrigin="0.68,0" RadiusX="0.27" RadiusY="0.10">
+                    <GradientStop Color="#DAE8F1" Offset="0" />
                     <GradientStop Color="#00B7CBDA" Offset="1" />
                 </RadialGradientBrush>
             </GeometryDrawing.Brush>
@@ -277,9 +277,11 @@
         <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z">
             <GeometryDrawing.Brush>
                 <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                    <GradientStop Color="#3852738C" Offset="0" />
-                    <GradientStop Color="#1552738C" Offset="0.045" />
-                    <GradientStop Color="#0052738C" Offset="0.14" />
+                    <GradientStop Color="#B8FFFFFF" Offset="0" />
+                    <GradientStop Color="#40FFFFFF" Offset="0.015" />
+                    <GradientStop Color="#3852738C" Offset="0.045" />
+                    <GradientStop Color="#1552738C" Offset="0.09" />
+                    <GradientStop Color="#0052738C" Offset="0.20" />
                     <GradientStop Color="#00FFFFFF" Offset="0.88" />
                     <GradientStop Color="#50FFFFFF" Offset="1" />
                 </LinearGradientBrush>
@@ -305,15 +307,41 @@
             </GeometryDrawing.Brush>
         </GeometryDrawing>
     </DrawingGroup>
-    <DrawingBrush x:Key="Crystal.Brushes.GallerySurface" Drawing="{StaticResource Crystal.Drawing.GallerySurface}"
+    <DrawingGroup x:Key="Crystal.Drawing.GallerySpecularSurface">
+        <StaticResource ResourceKey="Crystal.Drawing.GallerySurface" />
+        <!-- An asymmetric face reflection gives the raised lip a glass surface
+             to catch light on; its soft edges avoid a full-width bevel band. -->
+        <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z">
+            <GeometryDrawing.Brush>
+                <RadialGradientBrush Center="0.68,0.38" GradientOrigin="0.68,0.38" RadiusX="0.3" RadiusY="0.55">
+                    <GradientStop Color="#80FFFFFF" Offset="0" />
+                    <GradientStop Color="#38FFFFFF" Offset="0.45" />
+                    <GradientStop Color="#00FFFFFF" Offset="1" />
+                </RadialGradientBrush>
+            </GeometryDrawing.Brush>
+        </GeometryDrawing>
+        <!-- A short white glint inside the lower edge, over the softer reflection.
+             Keeping it off the outer rim preserves the gallery silhouette. -->
+        <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z">
+            <GeometryDrawing.Brush>
+                <RadialGradientBrush Center="0.62,0.975" GradientOrigin="0.62,0.975" RadiusX="0.32" RadiusY="0.018">
+                    <GradientStop Color="#FFFFFFFF" Offset="0" />
+                    <GradientStop Color="#E6FFFFFF" Offset="0.25" />
+                    <GradientStop Color="#70FFFFFF" Offset="0.6" />
+                    <GradientStop Color="#00FFFFFF" Offset="1" />
+                </RadialGradientBrush>
+            </GeometryDrawing.Brush>
+        </GeometryDrawing>
+    </DrawingGroup>
+    <DrawingBrush x:Key="Crystal.Brushes.GallerySurface" Drawing="{StaticResource Crystal.Drawing.GallerySpecularSurface}"
                   Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
     <Style TargetType="{x:Type rk:InRibbonGallery}">
         <Style.Resources>
             <DrawingBrush x:Key="RibbonKit.Brushes.ScreenTip.Border" Drawing="{StaticResource Crystal.Drawing.GalleryRim}"
                           Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
-            <DrawingBrush x:Key="RibbonKit.Brushes.Control.SurfaceBackground" Drawing="{StaticResource Crystal.Drawing.GallerySurface}"
+            <DrawingBrush x:Key="RibbonKit.Brushes.Control.SurfaceBackground" Drawing="{StaticResource Crystal.Drawing.GallerySpecularSurface}"
                           Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
-            <DrawingBrush x:Key="RibbonKit.Brushes.Ribbon.ContentBackground" Drawing="{StaticResource Crystal.Drawing.GallerySurface}"
+            <DrawingBrush x:Key="RibbonKit.Brushes.Ribbon.ContentBackground" Drawing="{StaticResource Crystal.Drawing.GallerySpecularSurface}"
                           Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
         </Style.Resources>
     </Style>
@@ -395,7 +423,7 @@
         </Setter>
     </Style>
     <CornerRadius x:Key="RibbonKit.Metrics.TabCornerRadius">8,8,0,0</CornerRadius>
-    <CornerRadius x:Key="RibbonKit.Metrics.ApplicationButtonCornerRadius">8,8,0,0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.ApplicationButtonCornerRadius">8</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadius">14</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadiusTop">14,14,0,0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.SplitLeftCornerRadius">8,0,0,8</CornerRadius>

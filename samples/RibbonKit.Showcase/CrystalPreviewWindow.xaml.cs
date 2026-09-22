@@ -47,6 +47,7 @@ public partial class CrystalPreviewWindow : RibbonWindow
 
     private void UpdateCrystalDetails(bool enabled)
     {
+        CrystalTabShape.Apply(PreviewRibbon, enabled);
         if (PreviewRibbon.IsLoaded) CrystalFileHover.Apply(PreviewRibbon, enabled);
         _backstagePresentation.Apply(enabled ? _crystal : null);
         _screenTipPalette.Apply(enabled ? _crystal : null);

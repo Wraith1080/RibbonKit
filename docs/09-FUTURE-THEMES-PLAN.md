@@ -264,8 +264,27 @@ screen tips. The next gallery study leaves that treatment intact and gives both
 the ribbon gallery and its popup a shallow recessed surface: a narrow inward top
 shadow, softer side shading, a clear opaque center and a restrained lower reflection.
 The distinct gallery border, tile states and accent recoloring remain in place.
-Showcase Release build and ten focused Crystal tests passed; gallery visual review
-remains with the user.
+Showcase Release build and ten focused Crystal tests passed. The user accepted the
+recessed gallery treatment. A follow-up adds a narrow, off-center white specular
+glint along the inner lower edge of both surfaces, fading before the corners and
+leaving the outer border intact. Release build and ten focused Crystal tests passed
+again; visual acceptance of the added glint remains with the user.
+
+The lower glint alone did not give the gallery enough glass character. The next
+iteration pairs a thin bright upper lip with the inward shadow immediately below,
+adds a soft off-center face reflection and concentrates the rim reflection over that
+area. Both the strip and popup use this raised-edge/recessed-center study. Screen
+tips are unchanged. Showcase Release build and ten focused Crystal tests passed;
+visual acceptance remains with the user.
+
+The user accepted the gallery's raised-edge/recessed-center treatment. The File
+button now uses 8-DIP rounding on all four corners, including its complete hover
+rim. Minimized ribbon tab headers (ordinary and contextual) use the same complete
+rounding; expanded headers retain their connected bottom corners. A sample-only
+binding scopes the tab metrics to the preview ribbon and removes them for baseline
+comparison. Showcase Release build and eleven focused Crystal tests passed,
+including minimize/expand, tint replacement and comparison restoration. Visual
+acceptance of these header shapes remains with the user.
 
 Release solution build passed with zero warnings/errors; the library suite passed
 400/400 and existing visual snapshots 1/1. The full Writer run passed 465/472, with

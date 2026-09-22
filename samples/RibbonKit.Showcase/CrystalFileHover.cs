@@ -28,8 +28,8 @@ internal static class CrystalFileHover
         // This overlay doesn't contribute an extra border around the content, so
         // matching the tab rim never moves the File label or changes hit geometry.
         rim.SetResourceReference(Border.BorderBrushProperty, "RibbonKit.Brushes.Tab.HoverBorder");
-        rim.BorderThickness = new Thickness(1, 1, 1, 0);
-        rim.SetResourceReference(Border.CornerRadiusProperty, "RibbonKit.Metrics.TabCornerRadius");
+        rim.BorderThickness = new Thickness(1);
+        rim.SetResourceReference(Border.CornerRadiusProperty, "RibbonKit.Metrics.ApplicationButtonCornerRadius");
         var style = new Style(typeof(Border));
         style.Setters.Add(new Setter(UIElement.OpacityProperty, 0d));
         var hover = new MultiDataTrigger();

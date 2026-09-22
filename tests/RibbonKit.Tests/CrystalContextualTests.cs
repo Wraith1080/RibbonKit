@@ -337,7 +337,10 @@ public class CrystalContextualTests
         var button = (System.Windows.Controls.Primitives.ToggleButton)tabs.Template.FindName("PART_ApplicationButton", tabs);
         var rim = (Border)button.Template.FindName("InnerRim", button);
         Assert.Same(ribbon.FindResource("RibbonKit.Brushes.Tab.HoverBorder"), rim.BorderBrush);
-        Assert.Equal(new Thickness(1, 1, 1, 0), rim.BorderThickness);
+        Assert.Equal(new Thickness(1), rim.BorderThickness);
+        var chrome = (Border)button.Template.FindName("Chrome", button);
+        Assert.Equal(new CornerRadius(8), chrome.CornerRadius);
+        Assert.Equal(chrome.CornerRadius, rim.CornerRadius);
         Assert.Equal(0d, rim.Opacity);
         var baselineSize = button.DesiredSize;
         ribbon.Resources.MergedDictionaries[1] = CrystalPalette.Create(Colors.Purple);
@@ -348,8 +351,58 @@ public class CrystalContextualTests
         ribbon.UpdateLayout();
         Assert.Same(ribbon.FindResource("RibbonKit.Brushes.ApplicationButton.InnerGlow"), rim.BorderBrush);
         Assert.Equal(new Thickness(0), rim.BorderThickness);
+        Assert.Equal((CornerRadius)ribbon.FindResource("RibbonKit.Metrics.ApplicationButtonCornerRadius"), chrome.CornerRadius);
+        Assert.Equal(chrome.CornerRadius, rim.CornerRadius);
         Assert.Null(rim.Style);
         Assert.Equal(baselineSize, button.DesiredSize);
+    });
+
+    [Fact]
+    public void Crystal_minimized_tab_shapes_follow_state_tint_and_comparison() => Sta.Run(() =>
+    {
+        var templates = new ResourceDictionary
+        { Source = new Uri("/RibbonKit;component/Themes/Office2024.xaml", UriKind.Relative) };
+        var ribbon = new Ribbon { Style = (Style)templates[typeof(Ribbon)] };
+        ribbon.Resources.MergedDictionaries.Add(new ResourceDictionary
+        { Source = new Uri("/RibbonKit;component/Themes/Tokens.Office2024.xaml", UriKind.Relative) });
+        ribbon.Resources.MergedDictionaries.Add(CrystalPalette.Create(CrystalPalette.Blue));
+        ribbon.Tabs.Add(new RibbonTab { Header = "Home" });
+        ribbon.Tabs.Add(new CrystalContextualTab { Header = "Picture", IsContextual = true, ContextualColor = Brushes.Teal });
+        var window = new Window { Content = ribbon, Width = 800, Height = 300,
+            Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
+        try
+        {
+            window.Show();
+            CrystalTabShape.Apply(ribbon, true);
+            Check(new CornerRadius(8, 8, 0, 0), new Thickness(1, 1, 1, 0));
+            ribbon.IsMinimized = true;
+            Check(new CornerRadius(8), new Thickness(1));
+            ribbon.Resources.MergedDictionaries[1] = CrystalPalette.Create(Colors.Purple);
+            Check(new CornerRadius(8), new Thickness(1));
+            ribbon.IsMinimized = false;
+            Check(new CornerRadius(8, 8, 0, 0), new Thickness(1, 1, 1, 0));
+            ribbon.IsMinimized = true;
+            CrystalTabShape.Apply(ribbon, false);
+            ribbon.Resources.MergedDictionaries.RemoveAt(1);
+            Check((CornerRadius)ribbon.FindResource("RibbonKit.Metrics.TabCornerRadius"),
+                (Thickness)ribbon.FindResource("RibbonKit.Metrics.TabSelectedBorderThickness"));
+            ribbon.Resources.MergedDictionaries.Add(CrystalPalette.Create(CrystalPalette.Blue));
+            CrystalTabShape.Apply(ribbon, true);
+            Check(new CornerRadius(8), new Thickness(1));
+        }
+        finally { window.Close(); }
+
+        void Check(CornerRadius radius, Thickness border)
+        {
+            Sta.Drain(DispatcherPriority.Render);
+            window.UpdateLayout();
+            foreach (var tab in ribbon.Tabs)
+            {
+                var chrome = (Border)tab.Template.FindName("HeaderChrome", tab);
+                Assert.Equal(radius, chrome.CornerRadius);
+                Assert.Equal(border, chrome.BorderThickness);
+            }
+        }
     });
 
     [Fact]
