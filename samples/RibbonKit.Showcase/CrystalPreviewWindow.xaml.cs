@@ -19,6 +19,7 @@ public partial class CrystalPreviewWindow : RibbonWindow
         _backstagePresentation = new CrystalBackstagePresentation(CrystalBackstage,
             Resources.MergedDictionaries[0], BackstageDocumentTitle, TitleInput);
         UpdateCrystalDetails(true);
+        PreviewRibbon.Loaded += (_, _) => CrystalFileHover.Apply(PreviewRibbon, CompareToggle.IsChecked != true);
     }
 
     private void OnCompare(object sender, RoutedEventArgs e)
@@ -41,9 +42,11 @@ public partial class CrystalPreviewWindow : RibbonWindow
 
     private void UpdateCrystalDetails(bool enabled)
     {
+        if (PreviewRibbon.IsLoaded) CrystalFileHover.Apply(PreviewRibbon, enabled);
         _backstagePresentation.Apply(enabled ? _crystal : null);
         AccentSelector.IsEnabled = enabled;
         BackstageAccentSelector.IsEnabled = enabled;
+        BackstageLayoutSelector.IsEnabled = enabled;
         BackstageTintLabel.Visibility = enabled ? Visibility.Visible : Visibility.Collapsed;
         PictureTab.CrystalEnabled = enabled;
         TableTab.CrystalEnabled = enabled;
@@ -55,6 +58,14 @@ public partial class CrystalPreviewWindow : RibbonWindow
     }
 
     private void OnReturnToDocument(object sender, RoutedEventArgs e) => PreviewRibbon.IsBackstageOpen = false;
+
+    private void OnBackstageLayoutSelected(object sender, RoutedEventArgs e)
+    {
+        if (sender is not RibbonMenuItem { Tag: string layout } item) return;
+        _backstagePresentation.SetLayout(layout == "Floating"
+            ? CrystalBackstageLayout.Floating : CrystalBackstageLayout.Sidebar);
+        BackstageLayoutLabel.Text = $"Current layout: {item.Header}";
+    }
 
     private void OnAccentSelected(object sender, RoutedEventArgs e)
     {

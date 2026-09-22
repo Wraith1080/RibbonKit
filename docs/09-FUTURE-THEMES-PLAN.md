@@ -174,6 +174,27 @@ build passed, and thirteen focused tests passed, including detached title update
 horizontal navigation at 680 DIP, the back request, and comparison restoration.
 The user owns visual acceptance; no live keyboard, DPI or RTL acceptance is claimed.
 
+**Layout options (2026-09-22, current default):** preserve the traditional Backstage
+structure in a Glass sidebar variant: full-height vertical navigation, a bottom About
+entry, and a large page area on the right. Softly rounded boundaries, reflective
+selection and tint-aware surfaces carry Crystal's appearance. The floating workspace
+above remains available as an alternative. File > Appearance > Choose layout switches
+between them without losing the current page, document title or tint. The selection
+survives Compare 2024 and is scoped to this preview session. No enlarged-control
+mode is implied; the user's clarification was to retain the traditional overall layout.
+Showcase Release build passed with no warnings/errors and eight focused Crystal tests
+passed, including vertical/footer and horizontal navigation at 680 DIP and restoration
+through comparison. Visual review remains with the user.
+
+File hover follow-up: the stronger lens/extra reflections were rejected as too different
+from tab headers. File now uses the same subtle tab wash and top-rounded shape.
+The sample-only CrystalFileHover adapter puts the existing Tab.HoverBorder brush on the
+native InnerRim overlay, visible only while hovered and neither pressed nor checked.
+It follows live tint changes, adds no label padding, and restores original resources
+for Compare 2024. The adapter depends on TabControlHost, PART_ApplicationButton and
+InnerRim template parts; the shared template is unchanged. Release build via the test
+run and eight focused Crystal tests passed. Visual acceptance remains with the user.
+
 Release solution build passed with zero warnings/errors; the library suite passed
 400/400 and existing visual snapshots 1/1. The full Writer run passed 465/472, with
 seven failures including WindowChrome cross-thread initialization. Isolated reruns

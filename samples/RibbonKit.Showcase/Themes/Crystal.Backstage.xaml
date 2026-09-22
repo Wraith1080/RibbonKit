@@ -34,14 +34,25 @@
     <Style x:Key="Crystal.Backstage.Tab" TargetType="{x:Type rk:BackstageTabItem}">
         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
         <Setter Property="FontSize" Value="14" />
+        <Setter Property="Padding" Value="20,11" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type rk:BackstageTabItem}">
-                    <Border x:Name="Chrome" CornerRadius="12" Margin="3" Padding="20,11"
+                    <Border x:Name="Chrome" CornerRadius="12" Margin="3" Padding="{TemplateBinding Padding}"
                             Background="Transparent" BorderBrush="Transparent" BorderThickness="1">
-                        <ContentPresenter ContentSource="Header" RecognizesAccessKey="True" HorizontalAlignment="Center" />
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}">
+                            <Image x:Name="NavIcon" Source="{TemplateBinding Icon}" Width="18" Height="18" Margin="0,0,12,0" Visibility="Collapsed" />
+                            <ContentPresenter ContentSource="Header" RecognizesAccessKey="True" VerticalAlignment="Center" />
+                        </StackPanel>
                     </Border>
                     <ControlTemplate.Triggers>
+                        <Trigger Property="HorizontalContentAlignment" Value="Left">
+                            <Setter TargetName="NavIcon" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="Icon" Value="{x:Null}">
+                            <Setter TargetName="NavIcon" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource RibbonKit.Brushes.Tab.HoverBackground}" />
                             <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Tab.HoverBorder}" />
@@ -91,6 +102,53 @@
                             <Grid x:Name="ContentArea" Grid.Row="2">
                                 <ContentPresenter ContentSource="SelectedContent" />
                             </Grid>
+                        </Grid>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style x:Key="Crystal.Backstage.SidebarTab" TargetType="{x:Type rk:BackstageTabItem}" BasedOn="{StaticResource Crystal.Backstage.Tab}">
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="Padding" Value="14,12" />
+    </Style>
+    <!-- Familiar full-height navigation and page area, with Crystal material and
+         shallow separation at their edges. The floating layout remains independent. -->
+    <Style x:Key="Crystal.Backstage.Sidebar" TargetType="{x:Type rk:Backstage}">
+        <Setter Property="ItemContainerStyle" Value="{StaticResource Crystal.Backstage.SidebarTab}" />
+        <Setter Property="ItemsPanel">
+            <Setter.Value><ItemsPanelTemplate><rk:BackstageNavPanel /></ItemsPanelTemplate></Setter.Value>
+        </Setter>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type rk:Backstage}">
+                    <Grid Background="{DynamicResource RibbonKit.Brushes.Window.Background}">
+                        <Grid Margin="16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="196" />
+                                <ColumnDefinition Width="16" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Border x:Name="NavColumn" CornerRadius="18" BorderThickness="1"
+                                    BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}"
+                                    Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}">
+                                <DockPanel Margin="8,12">
+                                    <StackPanel DockPanel.Dock="Top" Margin="6,0,6,22">
+                                        <Button x:Name="PART_BackButton" Content="←  Back" HorizontalAlignment="Left"
+                                                Style="{StaticResource Crystal.Backstage.Action}" Padding="14,9"
+                                                AutomationProperties.Name="Back to document" />
+                                        <TextBlock Text="File" FontSize="26" Margin="8,24,0,4"
+                                                   Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+                                    </StackPanel>
+                                    <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained" />
+                                </DockPanel>
+                            </Border>
+                            <Border x:Name="ContentArea" Grid.Column="2" CornerRadius="20" Padding="24"
+                                    BorderThickness="1" BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}"
+                                    Background="{DynamicResource RibbonKit.Brushes.Backstage.ContentBackground}"
+                                    Effect="{DynamicResource RibbonKit.Effects.ContentShadow}">
+                                <ContentPresenter ContentSource="SelectedContent" />
+                            </Border>
                         </Grid>
                     </Grid>
                 </ControlTemplate>

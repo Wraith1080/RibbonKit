@@ -251,7 +251,7 @@ public class CrystalContextualTests
         var title = new TextBlock();
         var home = new BackstageTabItem { Header = "Overview", Content = title };
         var appearance = new BackstageTabItem { Header = "Appearance", Content = new TextBlock { Text = "Tint" } };
-        var about = new BackstageTabItem { Header = "About" };
+        var about = new BackstageTabItem { Header = "About", Placement = BackstageItemPlacement.Bottom };
         stage.Items.Add(home);
         stage.Items.Add(appearance);
         stage.Items.Add(about);
@@ -267,6 +267,16 @@ public class CrystalContextualTests
             stage.UpdateLayout();
             Sta.Drain();
         }
+        LayoutStage();
+        Assert.Equal(CrystalBackstageLayout.Sidebar, presentation.Layout);
+        Assert.NotNull(stage.Template.FindName("NavColumn", stage));
+        var sidebarHome = home.TransformToAncestor(stage).Transform(new Point());
+        var sidebarAppearance = appearance.TransformToAncestor(stage).Transform(new Point());
+        var sidebarAbout = about.TransformToAncestor(stage).Transform(new Point());
+        Assert.Equal(sidebarHome.X, sidebarAppearance.X);
+        Assert.True(sidebarAppearance.Y > sidebarHome.Y);
+        Assert.True(sidebarAbout.Y > sidebarAppearance.Y + appearance.ActualHeight);
+        presentation.SetLayout(CrystalBackstageLayout.Floating);
         LayoutStage();
         Assert.Equal("A calmer workspace", title.Text);
         titleInput.Text = "Changed while File is open";
@@ -290,16 +300,56 @@ public class CrystalContextualTests
         LayoutStage();
         Assert.Same(appearance, stage.SelectedItem);
         Assert.Same(purple["RibbonKit.Brushes.Window.Background"], stage.FindResource("RibbonKit.Brushes.Window.Background"));
+        presentation.SetLayout(CrystalBackstageLayout.Sidebar);
+        LayoutStage();
+        Assert.Same(appearance, stage.SelectedItem);
+        Assert.NotNull(stage.Template.FindName("NavColumn", stage));
         presentation.Apply(null);
         LayoutStage();
         Assert.NotNull(stage.Template.FindName("NavColumn", stage));
         Assert.Same(appearance, stage.SelectedItem);
         presentation.Apply(blue);
         LayoutStage();
+        Assert.Equal(CrystalBackstageLayout.Sidebar, presentation.Layout);
+        Assert.NotNull(stage.Template.FindName("NavColumn", stage));
+        presentation.SetLayout(CrystalBackstageLayout.Floating);
+        LayoutStage();
         Assert.Null(stage.Template.FindName("NavColumn", stage));
         stage.SelectedItem = home;
         LayoutStage();
         Assert.Equal(titleInput.Text, title.Text);
+    });
+
+    [Fact]
+    public void Crystal_file_rim_uses_tab_resources_and_restores_baseline_overlay() => Sta.Run(() =>
+    {
+        var ribbon = new Ribbon();
+        var templates = new ResourceDictionary
+        { Source = new Uri("/RibbonKit;component/Themes/Office2024.xaml", UriKind.Relative) };
+        ribbon.Style = (Style)templates[typeof(Ribbon)];
+        ribbon.Resources.MergedDictionaries.Add(new ResourceDictionary
+        { Source = new Uri("/RibbonKit;component/Themes/Tokens.Office2024.xaml", UriKind.Relative) });
+        ribbon.Resources.MergedDictionaries.Add(CrystalPalette.Create(CrystalPalette.Blue));
+        ribbon.Measure(new Size(800, 200));
+        ribbon.Arrange(new Rect(0, 0, 800, 200));
+        CrystalFileHover.Apply(ribbon, true);
+        var tabs = (RibbonTabControl)ribbon.Template.FindName("TabControlHost", ribbon);
+        var button = (System.Windows.Controls.Primitives.ToggleButton)tabs.Template.FindName("PART_ApplicationButton", tabs);
+        var rim = (Border)button.Template.FindName("InnerRim", button);
+        Assert.Same(ribbon.FindResource("RibbonKit.Brushes.Tab.HoverBorder"), rim.BorderBrush);
+        Assert.Equal(new Thickness(1, 1, 1, 0), rim.BorderThickness);
+        Assert.Equal(0d, rim.Opacity);
+        var baselineSize = button.DesiredSize;
+        ribbon.Resources.MergedDictionaries[1] = CrystalPalette.Create(Colors.Purple);
+        Sta.Drain();
+        Assert.Same(ribbon.FindResource("RibbonKit.Brushes.Tab.HoverBorder"), rim.BorderBrush);
+        CrystalFileHover.Apply(ribbon, false);
+        ribbon.Resources.MergedDictionaries.RemoveAt(1);
+        ribbon.UpdateLayout();
+        Assert.Same(ribbon.FindResource("RibbonKit.Brushes.ApplicationButton.InnerGlow"), rim.BorderBrush);
+        Assert.Equal(new Thickness(0), rim.BorderThickness);
+        Assert.Null(rim.Style);
+        Assert.Equal(baselineSize, button.DesiredSize);
     });
 
     private static double Luminance(Color color)

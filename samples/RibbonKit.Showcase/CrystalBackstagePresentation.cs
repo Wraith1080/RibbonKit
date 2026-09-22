@@ -6,12 +6,21 @@ using RibbonKit.Controls;
 
 namespace RibbonKit.Showcase;
 
+internal enum CrystalBackstageLayout { Sidebar, Floating }
+
 /// <summary>Owns the preview's detached overlay resource scope and explicit document binding.</summary>
 internal sealed class CrystalBackstagePresentation
 {
     private readonly Backstage _stage;
     private readonly ResourceDictionary _scope = new();
     private ResourceDictionary? _palette;
+    public CrystalBackstageLayout Layout { get; private set; } = CrystalBackstageLayout.Sidebar;
+
+    public void SetLayout(CrystalBackstageLayout layout)
+    {
+        Layout = layout;
+        UpdateStyle();
+    }
 
     public CrystalBackstagePresentation(Backstage stage, ResourceDictionary baseline,
         TextBlock title, RibbonTextBox titleInput)
@@ -28,12 +37,16 @@ internal sealed class CrystalBackstagePresentation
     {
         if (_palette != null) _scope.MergedDictionaries.Remove(_palette);
         _palette = palette;
-        if (palette == null)
+        if (palette != null) _scope.MergedDictionaries.Add(palette);
+        UpdateStyle();
+    }
+
+    private void UpdateStyle()
+    {
+        if (_palette == null)
             _stage.ClearValue(FrameworkElement.StyleProperty);
         else
-        {
-            _scope.MergedDictionaries.Add(palette);
-            _stage.SetResourceReference(FrameworkElement.StyleProperty, "Crystal.Backstage.Style");
-        }
+            _stage.SetResourceReference(FrameworkElement.StyleProperty, Layout == CrystalBackstageLayout.Sidebar
+                ? "Crystal.Backstage.Sidebar" : "Crystal.Backstage.Style");
     }
 }

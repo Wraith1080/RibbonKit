@@ -197,9 +197,8 @@
     <DrawingBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemSelectedTranslucent" Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
         <DrawingBrush.Drawing><GeometryDrawing Geometry="M0,0 H1 V1 H0 Z" Brush="{StaticResource RibbonKit.Brushes.Control.CheckedBackground}" /></DrawingBrush.Drawing>
     </DrawingBrush>
-    <DrawingBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverBackground" Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
-        <DrawingBrush.Drawing><GeometryDrawing Geometry="M0,0 H1 V1 H0 Z" Brush="{StaticResource RibbonKit.Brushes.Control.HoverBackground}" /></DrawingBrush.Drawing>
-    </DrawingBrush>
+    <!-- File shares the ordinary tab wash; its existing overlay supplies the tab rim. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverBackground" Color="#187BA5C7" />
     <DrawingBrush x:Key="RibbonKit.Brushes.ApplicationButton.PressedBackground" Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
         <DrawingBrush.Drawing><GeometryDrawing Geometry="M0,0 H1 V1 H0 Z" Brush="{StaticResource RibbonKit.Brushes.Control.PressedBackground}" /></DrawingBrush.Drawing>
     </DrawingBrush>
@@ -246,7 +245,7 @@
         </Style.Resources>
     </Style>
     <CornerRadius x:Key="RibbonKit.Metrics.TabCornerRadius">8,8,0,0</CornerRadius>
-    <CornerRadius x:Key="RibbonKit.Metrics.ApplicationButtonCornerRadius">8</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.ApplicationButtonCornerRadius">8,8,0,0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadius">14</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadiusTop">14,14,0,0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.SplitLeftCornerRadius">8,0,0,8</CornerRadius>

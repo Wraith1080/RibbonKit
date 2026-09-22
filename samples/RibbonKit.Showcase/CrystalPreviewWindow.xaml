@@ -91,12 +91,23 @@
                                         </rk:RibbonDropDownButton>
                                         <TextBlock x:Name="BackstageTintLabel" Text="Current tint: Blue (original)" Margin="0,12,0,0"
                                                    Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
+                                        <Separator Margin="0,24,0,20" Background="{DynamicResource RibbonKit.Brushes.Group.Separator}" />
+                                        <TextBlock Text="File layout" FontSize="20" Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+                                        <TextBlock Text="Keep familiar navigation at the side, or give your workspace a floating navigation bar."
+                                                   Margin="0,10,0,18" TextWrapping="Wrap" FontSize="14" Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
+                                        <rk:RibbonDropDownButton x:Name="BackstageLayoutSelector" Header="Choose layout" Size="Medium"
+                                                                 HorizontalAlignment="Left" Icon="{StaticResource Icon.Select}">
+                                            <rk:RibbonMenuItem Header="Glass sidebar" Tag="Sidebar" Click="OnBackstageLayoutSelected" />
+                                            <rk:RibbonMenuItem Header="Floating workspace" Tag="Floating" Click="OnBackstageLayoutSelected" />
+                                        </rk:RibbonDropDownButton>
+                                        <TextBlock x:Name="BackstageLayoutLabel" Text="Current layout: Glass sidebar" Margin="0,12,0,0"
+                                                   Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
                                     </StackPanel>
                                 </Border>
                             </StackPanel>
                         </ScrollViewer>
                     </rk:BackstageTabItem>
-                    <rk:BackstageTabItem Header="About" Icon="{StaticResource Icon.Palette}">
+                    <rk:BackstageTabItem Header="About" Placement="Bottom" Icon="{StaticResource Icon.Palette}">
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <StackPanel Margin="4,0,4,16" MaxWidth="720" HorizontalAlignment="Left">
                                 <TextBlock Text="Crystal" FontSize="36" Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}" />

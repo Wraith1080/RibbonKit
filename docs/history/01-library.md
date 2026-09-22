@@ -4580,3 +4580,11 @@ source are required for preview colors and document text to survive reparenting.
 CrystalBackstagePresentation now owns that bridge. Thirteen focused tests passed,
 including detached binding changes, minimum-width navigation, back requests and style
 restoration. Live visual review remains with the user.
+
+The floating layout is now optional. The default Glass sidebar preserves traditional
+vertical navigation, bottom About placement and a large right-hand content area, with
+Crystal surfaces and selection rims. The Appearance page switches layouts in place;
+CrystalBackstagePresentation retains the chosen layout during palette replacement and
+baseline comparison. Release Showcase build and eight focused Crystal tests passed,
+including both navigation arrangements at the preview minimum width. Visual acceptance
+remains with the user.
