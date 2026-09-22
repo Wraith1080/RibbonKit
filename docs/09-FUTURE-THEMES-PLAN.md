@@ -391,6 +391,18 @@ the measured gap, compact width, tint changes, minimization, position switching 
 baseline restoration. The user now owns both launching and visual review; no preview
 was launched by the agent for this pass.
 
+QAT refinement (2026-09-23): the panel now spans the ribbon body's width, uses a
+3-DIP gap and 2-DIP vertical padding. The stronger material was rejected; its fill
+and border now reference the original tab-hover brushes directly, without the
+panel shadow or separate reflection layers. Baseline comparison restores the original
+effect and host geometry. Release build and fourteen focused Crystal tests passed;
+launching and visual review remain with the user.
+
+The quieter QAT surface was accepted but felt flat. A depth-only follow-up adds a
+soft 1-DIP downward shadow (5-DIP blur, 16% opacity), retaining the tab-hover fill,
+outline and compact full-width geometry. Release build and fourteen focused Crystal
+tests passed; launching and visual acceptance remain with the user.
+
 Release solution build passed with zero warnings/errors; the library suite passed
 400/400 and existing visual snapshots 1/1. The full Writer run passed 465/472, with
 seven failures including WindowChrome cross-thread initialization. Isolated reruns

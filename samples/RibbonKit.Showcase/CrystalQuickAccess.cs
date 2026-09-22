@@ -17,7 +17,7 @@ internal static class CrystalQuickAccess
             tabs.Resources.Remove(bodyCorner);
             foreach (var property in new[] { FrameworkElement.HorizontalAlignmentProperty,
                 FrameworkElement.MarginProperty, Border.PaddingProperty, Border.CornerRadiusProperty,
-                Border.BorderThicknessProperty, Border.BackgroundProperty, Border.BorderBrushProperty })
+                Border.BorderThicknessProperty, Border.BackgroundProperty, Border.BorderBrushProperty, UIElement.EffectProperty })
                 panel.ClearValue(property);
             return;
         }
@@ -29,7 +29,8 @@ internal static class CrystalQuickAccess
         panel.Padding = new Thickness(8, 2, 8, 2);
         panel.CornerRadius = new CornerRadius(10);
         panel.BorderThickness = new Thickness(1);
-        panel.SetResourceReference(Border.BackgroundProperty, "Crystal.Brushes.QuickAccessSurface");
-        panel.SetResourceReference(Border.BorderBrushProperty, "RibbonKit.Brushes.Control.HoverBorder");
+        panel.SetResourceReference(UIElement.EffectProperty, "Crystal.Effects.QuickAccessShadow");
+        panel.SetResourceReference(Border.BackgroundProperty, "RibbonKit.Brushes.Tab.HoverBackground");
+        panel.SetResourceReference(Border.BorderBrushProperty, "RibbonKit.Brushes.Tab.HoverBorder");
     }
 }

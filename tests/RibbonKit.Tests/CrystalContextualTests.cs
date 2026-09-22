@@ -40,6 +40,9 @@ public class CrystalContextualTests
             var body = (Border)tabs.Template.FindName("ContentHost", tabs);
             Assert.Equal(new CornerRadius(14), body.CornerRadius);
             Assert.Equal(new CornerRadius(10), panel.CornerRadius);
+            Assert.Same(ribbon.FindResource("RibbonKit.Brushes.Tab.HoverBackground"), panel.Background);
+            Assert.Same(ribbon.FindResource("RibbonKit.Brushes.Tab.HoverBorder"), panel.BorderBrush);
+            Assert.Same(ribbon.FindResource("Crystal.Effects.QuickAccessShadow"), panel.Effect);
             Assert.Equal(body.ActualWidth, panel.ActualWidth, 1);
             Assert.Equal(body.TranslatePoint(new Point(), ribbon).X, panel.TranslatePoint(new Point(), ribbon).X, 1);
             Assert.InRange(panel.TranslatePoint(new Point(), ribbon).Y - body.TranslatePoint(new Point(0, body.ActualHeight), ribbon).Y, 2.5, 3.5);
@@ -62,6 +65,7 @@ public class CrystalContextualTests
             Assert.Equal(HorizontalAlignment.Stretch, panel.HorizontalAlignment);
             Assert.Equal(new CornerRadius(0, 0, 8, 8), panel.CornerRadius);
             Assert.Equal(new Thickness(7, 0, 7, 7), panel.Margin);
+            Assert.NotNull(panel.Effect);
             Assert.Single(ribbon.QuickAccessItems);
         }
         finally { window.Close(); }
