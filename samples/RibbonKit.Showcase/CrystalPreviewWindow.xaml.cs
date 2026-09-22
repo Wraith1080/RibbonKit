@@ -58,6 +58,8 @@ public partial class CrystalPreviewWindow : RibbonWindow
         dialog.Pages.Add(ribbonPage);
         dialog.Pages.Add(quickAccessPage);
         dialog.SelectedPage = quickAccess ? quickAccessPage : ribbonPage;
+        if (CompareToggle.IsChecked != true && _crystal != null)
+            CrystalCustomization.Apply(dialog, _crystal);
         dialog.Applied += (_, _) => StatusText.Text = "Customization applied to this preview.";
         return dialog;
     }

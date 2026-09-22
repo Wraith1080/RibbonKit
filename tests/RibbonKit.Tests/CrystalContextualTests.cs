@@ -41,19 +41,60 @@ public class CrystalContextualTests
             try
             {
                 dialog.Show();
-                Sta.Drain(DispatcherPriority.Render);
+                Sta.Drain();
+                dialog.UpdateLayout();
                 Assert.Same(window, dialog.Owner);
                 Assert.Equal(2, dialog.Pages.Count);
                 Assert.Same(dialog.Pages[0], dialog.SelectedPage);
-                var page = Assert.IsType<RibbonCustomizePage>(dialog.SelectedPage.Content);
+                var selectedNavigation = dialog.Pages[0];
+                Assert.Equal(Visibility.Visible,
+                    ((Rectangle)selectedNavigation.Template.FindName("CrystalMarker", selectedNavigation)).Visibility);
+                Assert.Same(dialog.FindResource("RibbonKit.Brushes.Tab.SelectedBackground"),
+                    ((Border)selectedNavigation.Template.FindName("Chrome", selectedNavigation)).Background);
+                foreach (var name in new[] { "PART_OkButton", "PART_CancelButton" })
+                {
+                    var action = (Button)dialog.Template.FindName(name, dialog);
+                    Assert.Same(action.FindResource("RibbonKit.Brushes.Control.CheckedBackground"),
+                        ((Border)action.Template.FindName("Chrome", action)).Background);
+                    if (name == "PART_OkButton")
+                    {
+                        Assert.Same(dialog.FindResource("RibbonKit.Brushes.Text.Primary"), action.Foreground);
+                        Assert.NotSame(dialog.FindResource("RibbonKit.Brushes.Control.CheckedBackground"),
+                            action.FindResource("RibbonKit.Brushes.Control.CheckedBackground"));
+                    }
+                }
+                var page = Assert.IsType<RibbonCustomizePage>(dialog.SelectedPage!.Content);
                 Assert.Same(ribbon, page.Ribbon);
                 Assert.False(string.IsNullOrEmpty(page.ResetLayout));
                 Assert.NotNull(page.Template);
+                var available = (ListBox)page.Template.FindName("PART_AvailableList", page);
+                available.SelectedIndex = 0;
+                Sta.Drain(DispatcherPriority.Render);
+                var row = (ListBoxItem)available.ItemContainerGenerator.ContainerFromIndex(0);
+                Assert.Same(dialog.FindResource("RibbonKit.Brushes.Control.CheckedBackground"),
+                    ((Border)row.Template.FindName("Row", row)).Background);
+                var tree = (TreeView)page.Template.FindName("PART_Tree", page);
+                var treeRow = (TreeViewItem)tree.ItemContainerGenerator.ContainerFromIndex(0);
+                treeRow.IsSelected = true;
+                treeRow.IsExpanded = true;
+                Sta.Drain(DispatcherPriority.Render);
+                Assert.NotNull(treeRow.Template.FindName("PART_Header", treeRow));
+                Assert.Same(dialog.FindResource("RibbonKit.Brushes.Control.CheckedBackground"),
+                    ((Border)treeRow.Template.FindName("Row", treeRow)).Background);
+                var scrollBar = FindScrollBar(available);
+                Assert.NotNull(scrollBar);
+                Assert.Equal(14d, scrollBar.Width);
+                Assert.Equal(Colors.Transparent, ((SolidColorBrush)scrollBar.Background).Color);
+                Assert.IsType<DrawingBrush>(scrollBar.FindResource("RibbonKit.Brushes.ScrollBar.Thumb"));
                 Assert.Same(window.FindResource("RibbonKit.Brushes.Window.Background"),
                     dialog.FindResource("RibbonKit.Brushes.Window.Background"));
                 dialog.SelectedPage = dialog.Pages[1];
-                Sta.Drain(DispatcherPriority.Render);
+                Sta.Drain();
                 Assert.Same(ribbon, Assert.IsType<RibbonQuickAccessPage>(dialog.SelectedPage.Content).Ribbon);
+                Assert.Equal(Visibility.Collapsed,
+                    ((Rectangle)selectedNavigation.Template.FindName("CrystalMarker", selectedNavigation)).Visibility);
+                Assert.Equal(Visibility.Visible,
+                    ((Rectangle)dialog.Pages[1].Template.FindName("CrystalMarker", dialog.Pages[1])).Visibility);
             }
             finally { dialog.Close(); }
             var quickAccessDialog = window.CreateCustomizationDialog(true);
@@ -61,6 +102,17 @@ public class CrystalContextualTests
             quickAccessDialog.Close();
         }
         finally { window.Close(); }
+
+        static System.Windows.Controls.Primitives.ScrollBar? FindScrollBar(DependencyObject root)
+        {
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++)
+            {
+                var child = VisualTreeHelper.GetChild(root, i);
+                if (child is System.Windows.Controls.Primitives.ScrollBar bar && bar.Orientation == Orientation.Vertical) return bar;
+                if (FindScrollBar(child) is { } found) return found;
+            }
+            return null;
+        }
     });
 
     [Fact]

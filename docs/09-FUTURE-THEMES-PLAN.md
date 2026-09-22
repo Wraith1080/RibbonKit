@@ -330,6 +330,56 @@ Showcase Release build and twenty focused tests passed, including focus transfer
 transparent row borders, tint replacement and baseline template restoration. The user
 retains visual acceptance.
 
+Customization preview: Home / Appearance / Customize and both native right-click
+customization requests now open the standard RibbonOptionsDialog with Ribbon and
+Quick Access pages targeting this preview. Reset uses its captured initial layout;
+changes remain session-local. Owned dialogs explicitly receive the current palette.
+Crystal adds sample-scoped list/tree row templates for hover, selection and focus,
+while preserving the tree's selection/expansion bindings and header part. The native
+scrollbar templates use tinted glass thumbs, a visible outline and 14-DIP rails;
+action buttons and the navigation background follow the same palette. Baseline
+comparison opens the unmodified standard presentation. Release Showcase build and
+thirteen focused Crystal tests passed, including opening both pages, selected rows,
+tree expansion and realized scrollbar resources. Visual review remains with the user.
+
+Customization navigation/actions follow-up: selected navigation entries now reuse
+the active tab surface, rim and crystal underline, with rounded standalone corners.
+An accent outline replaces the platform dotted navigation focus box. All page actions,
+including compact reorder/import/export buttons and OK/Cancel, reuse the Backstage
+action template with dialog-sized padding; OK has a semibold accent label. Shared
+commands, default/cancel behavior and page switching remain in place. Release build
+and thirteen focused Crystal tests passed, including active-marker transfer and
+realized OK/Cancel glass surfaces. Visual acceptance remains with the user.
+
+OK now uses a darker version of the effective accent with white text, a narrow
+internal reflection and separate hover/pressed depths. These overrides are local
+to OK, leaving other action buttons pale. Resolve the accent through dialog resources:
+the default blue overlay inherits that key from Office 2024 rather than defining it
+itself. Scrollbar rails are transparent while thumbs and arrow buttons remain visible.
+Release build and thirteen focused Crystal tests passed, including the realized
+transparent rail and isolated primary-button surface. Visual review remains with
+the user.
+
+Customization material follow-up: OK's dark fill was too subdued, so its face now
+mixes light into the effective accent, with a localized upper glint and stronger
+lower reflection. The vertical scrollbar thumb uses dedicated shading across its
+width and an internal lengthwise reflection instead of a stretched button surface;
+hover and drag deepen its tint. Rails remain transparent. Release Showcase build
+and thirteen focused Crystal tests passed; visual review remains with the user.
+
+The stronger thumb/OK effects were rejected. The thumb now reuses the scrollbar
+arrow-button surface and border with a 3.5% dark wash (5% hover, 8% drag), retaining
+the transparent rail. OK reuses each ordinary Backstage button state with only a
+4% accent wash and the normal dark label. The bespoke lighting helpers were removed.
+Release Showcase build and thirteen focused Crystal tests passed; visual acceptance
+remains with the user.
+
+Tint-strength follow-up: OK's wash is increased to 12% to distinguish it from Cancel
+at a glance. The thumb's neutral dark wash is replaced by a faint 6% effective-accent
+wash, increasing to 8% on hover and 11% during dragging. Accepted base surfaces and
+transparent rails are retained. Release build and thirteen focused Crystal tests
+passed; the user will review the resulting tint strength.
+
 Release solution build passed with zero warnings/errors; the library suite passed
 400/400 and existing visual snapshots 1/1. The full Writer run passed 465/472, with
 seven failures including WindowChrome cross-thread initialization. Isolated reruns
