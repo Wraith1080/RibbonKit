@@ -1,6 +1,7 @@
 using System;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using System.Windows.Markup;
 using System.Windows.Media;
 using System.Windows.Shapes;
@@ -14,11 +15,68 @@ namespace RibbonKit.Tests;
 public class CrystalContextualTests
 {
     [Fact]
+    public void Crystal_keytip_glass_tracks_window_palette_and_restores_baseline() => Sta.Run(() =>
+    {
+        var target = new Button { Content = "Paste", Width = 80, Height = 40 };
+        var decorator = new AdornerDecorator { Child = target };
+        var window = new Window { Content = decorator, Width = 300, Height = 200,
+            Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
+        window.Resources.MergedDictionaries.Add(new ResourceDictionary
+        { Source = new Uri("/RibbonKit;component/Themes/Tokens.Office2024.xaml", UriKind.Relative) });
+        window.Resources.MergedDictionaries.Add(CrystalPalette.Create(CrystalPalette.Blue));
+        KeyTipAdorner? adorner = null;
+        try
+        {
+            window.Show();
+            adorner = new KeyTipAdorner(target, "P");
+            decorator.AdornerLayer.Add(adorner);
+            Layout();
+            var badge = (Border)VisualTreeHelper.GetChild(adorner, 0);
+            var label = (TextBlock)badge.Child;
+            Assert.Equal("P", label.Text);
+            Assert.False(adorner.IsHitTestVisible);
+            Assert.Equal(new CornerRadius(3), badge.CornerRadius);
+            var blue = Assert.IsType<DrawingBrush>(badge.Background);
+            Assert.Same(window.FindResource("RibbonKit.Brushes.KeyTip.Border"), badge.BorderBrush);
+            Assert.Same(window.FindResource("RibbonKit.Brushes.KeyTip.Foreground"), label.Foreground);
+            var originalSize = badge.RenderSize;
+            var originalTextColor = ((SolidColorBrush)label.Foreground).Color;
+
+            window.Resources.MergedDictionaries[1] = CrystalPalette.Create(Colors.Purple);
+            Layout();
+            Assert.NotSame(blue, badge.Background);
+            Assert.Same(window.FindResource("RibbonKit.Brushes.KeyTip.Background"), badge.Background);
+            Assert.Same(window.FindResource("RibbonKit.Brushes.KeyTip.Border"), badge.BorderBrush);
+            Assert.Equal(originalTextColor, ((SolidColorBrush)label.Foreground).Color);
+            Assert.Equal(originalSize, badge.RenderSize);
+            adorner.Dimmed = true;
+            Assert.Equal(0.3, adorner.Opacity);
+            adorner.Dimmed = false;
+            Assert.Equal(1d, adorner.Opacity);
+
+            window.Resources.MergedDictionaries.RemoveAt(1);
+            Layout();
+            Assert.IsType<SolidColorBrush>(badge.Background);
+            Assert.Same(window.FindResource("RibbonKit.Brushes.KeyTip.Background"), badge.Background);
+            Assert.Same(window.FindResource("RibbonKit.Brushes.KeyTip.Border"), badge.BorderBrush);
+            Assert.Equal(originalSize, badge.RenderSize);
+        }
+        finally
+        {
+            if (adorner != null) decorator.AdornerLayer.Remove(adorner);
+            window.Close();
+        }
+        void Layout() { Sta.Drain(); window.UpdateLayout(); }
+    });
+
+    [Fact]
     public void Crystal_below_ribbon_quick_access_drawer_restores_baseline() => Sta.Run(() =>
     {
+        // Initialize WPF resource handling before loading pack resources in an isolated run.
+        var ribbon = new Ribbon { QuickAccessPosition = RibbonQuickAccessPosition.BelowRibbon };
         var templates = new ResourceDictionary
         { Source = new Uri("/RibbonKit;component/Themes/Office2024.xaml", UriKind.Relative) };
-        var ribbon = new Ribbon { Style = (Style)templates[typeof(Ribbon)], QuickAccessPosition = RibbonQuickAccessPosition.BelowRibbon };
+        ribbon.Style = (Style)templates[typeof(Ribbon)];
         ribbon.Resources.MergedDictionaries.Add(new ResourceDictionary
         { Source = new Uri("/RibbonKit;component/Themes/Tokens.Office2024.xaml", UriKind.Relative) });
         ribbon.Resources.MergedDictionaries.Add(CrystalPalette.Create(CrystalPalette.Blue));
@@ -57,8 +115,7 @@ public class CrystalContextualTests
             Assert.False(tabs.Resources.Contains("RibbonKit.Effects.ContentShadow"));
             Assert.True(Panel.GetZIndex(tabs) > Panel.GetZIndex(panel));
             Assert.Same(ribbon.FindResource("Crystal.Effects.QuickAccessShadow"), panel.Effect);
-            Assert.Equal(((System.Windows.Media.Effects.DropShadowEffect)body.Effect).Direction,
-                ((System.Windows.Media.Effects.DropShadowEffect)panel.Effect).Direction);
+            Assert.Equal(0d, ((System.Windows.Media.Effects.DropShadowEffect)panel.Effect).ShadowDepth);
             Assert.Equal(body.ActualWidth - 32, panel.ActualWidth, 1);
             Assert.Equal(body.TranslatePoint(new Point(), ribbon).X + 16, panel.TranslatePoint(new Point(), ribbon).X, 1);
             Assert.InRange(panel.TranslatePoint(new Point(), ribbon).Y - body.TranslatePoint(new Point(0, body.ActualHeight), ribbon).Y, -0.5, 0.5);

@@ -475,6 +475,34 @@ The first separation shadow was too subtle. The next trial increases downward
 depth to 2 DIP, blur to 6 DIP and opacity to 16%. Release Showcase build and fourteen
 focused Crystal tests passed; visual review remains with the user.
 
+Shadow alignment: QAT now uses 315 degrees, matching the ribbon body's rendered
+down-and-right direction, while retaining 2-DIP depth, 6-DIP blur and 16% opacity.
+Release Showcase build and the focused QAT regression passed. The regression now
+initializes the ribbon before loading its resource dictionary so it also runs in
+isolation, and verifies shadow-direction parity. Visual review remains pending.
+
+The directional QAT shadow was changed to surrounding depth: centered (zero offset),
+10-DIP blur and the existing 16% opacity. Its spread extends around the panel instead
+of favoring the lower-right edge. The accepted fill, bottom-lit rim and ribbon-body
+shadow remain unchanged. Release Showcase build and the focused QAT regression
+passed; user visual review remains pending.
+
+Opacity trial: increase the centered QAT shadow to 50%, keeping its 10-DIP blur
+and zero offset. Release Showcase build and the focused QAT regression passed;
+the user will assess the stronger shadow.
+
+The user settled the centered QAT shadow at 30% opacity because 50% darkened the
+translucent panel fill. That value is preserved.
+
+Next slice: Crystal KeyTips reuse the existing badge geometry with an opaque pale
+glass fill, a small lower reflection, a defined tinted rim and stable dark text.
+Three window-scoped brush overrides keep the shared adorner and keyboard behavior
+unchanged. The preview status line points to Alt for discovery. Release Showcase
+build passed without warnings; all 48 selected Crystal/KeyTip tests passed, including
+a new realized-badge test for live palette replacement, dimming, unchanged sizing
+and baseline restoration, plus existing animated LTR/RTL placement checks. The user
+will launch and inspect Alt/F10 labels; no new live UI or DPI acceptance is claimed.
+
 Values are starting anchors, not approved final colors. Columns list base, raised
 surface, border, primary text, secondary text and accent respectively.
 

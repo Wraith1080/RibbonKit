@@ -143,7 +143,7 @@
                   Drawing="{StaticResource Crystal.Drawing.GlassRim}" Opacity="0.6"
                   Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
     <DropShadowEffect x:Key="Crystal.Effects.QuickAccessShadow" Color="#34485A"
-                      BlurRadius="6" ShadowDepth="2" Direction="315" Opacity="0.16" />
+                      BlurRadius="10" ShadowDepth="0" Opacity="0.3" />
     <DrawingBrush x:Key="Crystal.Brushes.QuickAccessBorder"
                   Drawing="{StaticResource Crystal.Drawing.GlassRim}" Opacity="0.6"
                   Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
@@ -231,6 +231,26 @@
         <GradientStop Color="#E8F0F8" Offset="1" />
     </LinearGradientBrush>
     <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.Border" Color="#A5BBCE" />
+    <!-- Small opaque lenses keep keyboard labels readable over ribbon content. -->
+    <DrawingBrush x:Key="RibbonKit.Brushes.KeyTip.Background"
+                  Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
+        <DrawingBrush.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z">
+                    <GeometryDrawing.Brush>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                            <GradientStop Color="#FAFDFF" Offset="0" />
+                            <GradientStop Color="#EAF3FA" Offset="0.6" />
+                            <GradientStop Color="#D5E6F2" Offset="1" />
+                        </LinearGradientBrush>
+                    </GeometryDrawing.Brush>
+                </GeometryDrawing>
+                <StaticResource ResourceKey="Crystal.Drawing.InnerReflection" />
+            </DrawingGroup>
+        </DrawingBrush.Drawing>
+    </DrawingBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.KeyTip.Border" Color="#7C9EB8" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.KeyTip.Foreground" Color="#20364A" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.HoverBackground" Color="#80FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.PressedBackground" Color="#809EBBD2" />
     <CornerRadius x:Key="RibbonKit.Metrics.ControlCornerRadius">8</CornerRadius>
