@@ -425,6 +425,19 @@ also failed on an expected menu missing Settings and a table-selection count (2 
 No Writer code was changed. New Crystal visual review and DPI/RTL acceptance remain
 with the user; existing snapshot success does not establish Crystal visual acceptance.
 
+The separate-panel comparison temporarily returned the QAT to a
+separate full-width panel using the ribbon body's fill and rim, with a 3-DIP gap,
+10-DIP rounded corners, compact padding and a shallow downward shadow. Removed the
+drawer's inset, open top edge and stacking override. Release Showcase build passed
+without warnings; fourteen focused Crystal tests passed, including panel alignment,
+palette replacement, minimized geometry and baseline restoration. Launching and
+visual acceptance remain with the user.
+
+After comparing the separate panel in the preview, the user preferred the drawer.
+Restored the previous tab-hover surface, 16-DIP side insets, square upper corners,
+open top edge and upward seam shadow. The separate panel remains a recorded study;
+the drawer is the current direction.
+
 Values are starting anchors, not approved final colors. Columns list base, raised
 surface, border, primary text, secondary text and accent respectively.
 
