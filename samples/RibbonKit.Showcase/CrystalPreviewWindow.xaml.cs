@@ -12,6 +12,7 @@ public partial class CrystalPreviewWindow : RibbonWindow
     private ResourceDictionary? _crystal;
     private readonly CrystalBackstagePresentation _backstagePresentation;
     private readonly CrystalScreenTipPalette _screenTipPalette;
+    private readonly CrystalMessagePresentation _messagePresentation;
     private readonly string _baselineLayout;
     private readonly List<RibbonTab> _scrollPreviewTabs = new();
     private readonly Dictionary<RibbonGroup, bool> _savedHomeResizing = new();
@@ -33,6 +34,7 @@ public partial class CrystalPreviewWindow : RibbonWindow
         _backstagePresentation = new CrystalBackstagePresentation(CrystalBackstage,
             Resources.MergedDictionaries[0], BackstageDocumentTitle, TitleInput);
         _screenTipPalette = new CrystalScreenTipPalette(Resources.MergedDictionaries[0]);
+        _messagePresentation = new CrystalMessagePresentation(CrystalMessageBar);
         foreach (var control in new FrameworkElement[] { CompareToggle, ArrangeButton, AccentSelector,
             FontInput, SizeInput, TitleInput, CrystalStylesGallery, UnavailableButton })
             if (control.ToolTip is RibbonScreenTip tip) _screenTipPalette.Attach(tip);
@@ -96,6 +98,7 @@ public partial class CrystalPreviewWindow : RibbonWindow
     private void UpdateCrystalDetails(bool enabled)
     {
         CrystalUtilityChrome.Apply(this, enabled);
+        _messagePresentation.Apply(enabled);
         CrystalTabShape.Apply(PreviewRibbon, enabled);
         if (PreviewRibbon.IsLoaded) CrystalQuickAccess.Apply(PreviewRibbon, enabled);
         if (PreviewRibbon.IsLoaded) CrystalFileHover.Apply(PreviewRibbon, enabled);
@@ -115,6 +118,32 @@ public partial class CrystalPreviewWindow : RibbonWindow
     }
 
     private void OnReturnToDocument(object sender, RoutedEventArgs e) => PreviewRibbon.IsBackstageOpen = false;
+
+    private void OnShowMessage(object sender, RoutedEventArgs e)
+    {
+        foreach (var message in new[] { CrystalProtectedMessage, CrystalSecurityMessage })
+        {
+            if (message.IsOpen) continue;
+            message.IsOpen = true;
+            StatusText.Text = $"Showing {message.Title}. Use its action or close button, or show the next message.";
+            return;
+        }
+        StatusText.Text = "Both sample messages are visible. Dismiss either one to try reopening it.";
+    }
+
+    private void OnDismissMessages(object sender, RoutedEventArgs e)
+    {
+        CrystalProtectedMessage.Dismiss();
+        CrystalSecurityMessage.Dismiss();
+        StatusText.Text = "Sample messages dismissed.";
+    }
+
+    private void OnMessageAction(object sender, RoutedEventArgs e)
+    {
+        if (sender is not RibbonMessage message) return;
+        message.Dismiss();
+        StatusText.Text = $"{message.Title} acknowledged. This action affects the preview only.";
+    }
 
     private void OnScrollPreview(object sender, RoutedEventArgs e)
     {

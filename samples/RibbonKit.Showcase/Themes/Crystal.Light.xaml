@@ -485,6 +485,24 @@
     <CornerRadius x:Key="RibbonKit.Metrics.TabCornerRadius">8,8,0,0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.ApplicationButtonCornerRadius">8</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadius">14</CornerRadius>
+    <!-- Notices retain their semantic amber tint when the global glass accent changes. -->
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.MessageBar.Background" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#FFFCF3" Offset="0" />
+        <GradientStop Color="#FCF6E4" Offset="0.25" />
+        <GradientStop Color="#F5ECD4" Offset="0.85" />
+        <GradientStop Color="#FBF5E7" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.MessageBar.Border" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#FFFFFF" Offset="0" />
+        <GradientStop Color="#D9C9A1" Offset="0.45" />
+        <GradientStop Color="#BEA874" Offset="1" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MessageBar.Foreground" Color="#51462F" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MessageBar.IconForeground" Color="#966B25" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MessageBar.CloseHoverBorder" Color="#BEA874" />
+    <Thickness x:Key="RibbonKit.Metrics.MessageBar.Margin">7,3,7,7</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.MessageBar.BorderThickness">1</Thickness>
+    <CornerRadius x:Key="Crystal.Metrics.MessageCornerRadius">10</CornerRadius>
     <!-- Wider than the tab arrows, with room for a straight edge between corners. -->
     <sys:Double x:Key="Crystal.Metrics.BodyScrollWidth">32</sys:Double>
     <CornerRadius x:Key="Crystal.Metrics.BodyScrollCornerRadius">10</CornerRadius>

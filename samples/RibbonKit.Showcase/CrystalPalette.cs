@@ -68,6 +68,8 @@ internal static class CrystalPalette
     {
         foreach (object key in resources.Keys.Cast<object>().ToArray())
         {
+            if (key is string semanticKey && semanticKey.StartsWith("RibbonKit.Brushes.MessageBar.", StringComparison.Ordinal))
+                continue;
             if (keepText && key is string name &&
                 (name.Contains(".Text.") || name.EndsWith("Foreground", StringComparison.Ordinal)))
                 continue;

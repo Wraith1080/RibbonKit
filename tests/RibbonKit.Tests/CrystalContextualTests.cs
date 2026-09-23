@@ -182,6 +182,7 @@ public class CrystalContextualTests
             Sta.Drain();
             Assert.NotNull(FindUtilityRim(minimize));
             Assert.Equal(0d, FindUtilityRim(minimize)!.Opacity);
+            CheckCrystalMessages(window, ribbon, utilityTabs);
             Assert.True(window.MinWidth <= 420);
             var home = (RibbonTab)window.FindName("HomeTab");
             var bodyPreview = (RibbonMenuItem)window.FindName("BodyScrollPreviewToggle");
@@ -988,6 +989,81 @@ public class CrystalContextualTests
             window.Close();
         }
     });
+
+    private static void CheckCrystalMessages(CrystalPreviewWindow window, Ribbon ribbon, RibbonTabControl tabs)
+    {
+        var previousMotion = RibbonKit.Animation.RibbonAnimation.GetActionOverride(RibbonKit.Animation.RibbonAnimationAction.MessageBar);
+        RibbonKit.Animation.RibbonAnimation.SetActionLevel(RibbonKit.Animation.RibbonAnimationAction.MessageBar,
+            RibbonKit.Animation.RibbonAnimationLevel.None);
+        try
+        {
+            var bar = (RibbonMessageBar)window.FindName("CrystalMessageBar");
+            var first = (RibbonMessage)window.FindName("CrystalProtectedMessage");
+            var second = (RibbonMessage)window.FindName("CrystalSecurityMessage");
+            var show = (RibbonMenuItem)window.FindName("MessagePreviewButton");
+            var drawer = (Border)ribbon.Template.FindName("QatBelowHost", ribbon);
+            var drawerRadius = drawer.CornerRadius;
+            var drawerShadow = drawer.Effect;
+            Assert.False(bar.HasOpenMessages);
+            show.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            LayoutMessages();
+            Assert.True(first.IsOpen);
+            Assert.False(second.IsOpen);
+            Assert.True(ribbon.HasOpenMessages);
+            var root = (Border)first.Template.FindName("PART_Root", first);
+            Assert.Equal(new CornerRadius(10), root.CornerRadius);
+            Assert.IsType<LinearGradientBrush>(root.Background);
+            Assert.Equal(drawerRadius, drawer.CornerRadius);
+            Assert.Same(drawerShadow, drawer.Effect);
+            var drawerBounds = drawer.TransformToAncestor(ribbon).TransformBounds(new Rect(drawer.RenderSize));
+            var noticeBounds = root.TransformToAncestor(ribbon).TransformBounds(new Rect(root.RenderSize));
+            Assert.True(noticeBounds.Top > drawerBounds.Bottom);
+            show.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            LayoutMessages();
+            Assert.True(second.IsOpen);
+            var secondRoot = (Border)second.Template.FindName("PART_Root", second);
+            Assert.Equal(new CornerRadius(10), secondRoot.CornerRadius);
+            var action = (Button)first.Template.FindName("PART_ActionButton", first);
+            Assert.Same(action.FindResource("Crystal.Backstage.Action"), action.Style);
+            action.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            LayoutMessages();
+            Assert.False(first.IsOpen);
+            Assert.True(second.IsOpen);
+            show.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            LayoutMessages();
+            Assert.True(first.IsOpen);
+            ribbon.QuickAccessPosition = RibbonQuickAccessPosition.TabRow;
+            LayoutMessages();
+            var body = (Border)tabs.Template.FindName("ContentHost", tabs);
+            Assert.Equal(new CornerRadius(14), body.CornerRadius);
+            Assert.True(root.TranslatePoint(new Point(), ribbon).Y > body.TranslatePoint(new Point(0, body.ActualHeight), ribbon).Y);
+            var compare = (RibbonToggleButton)window.FindName("CompareToggle");
+            compare.IsChecked = true;
+            compare.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            LayoutMessages();
+            Assert.Equal(new CornerRadius(), root.CornerRadius);
+            Assert.NotSame(action.FindResource("Crystal.Backstage.Action"), action.Style);
+            compare.IsChecked = false;
+            compare.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            LayoutMessages();
+            Assert.Equal(new CornerRadius(10), root.CornerRadius);
+            foreach (var message in new[] { first, second })
+                ((Button)message.Template.FindName("PART_CloseButton", message)).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            LayoutMessages();
+            Assert.False(ribbon.HasOpenMessages);
+            Assert.Equal(new Thickness(), bar.Margin);
+            ribbon.QuickAccessPosition = RibbonQuickAccessPosition.BelowRibbon;
+            LayoutMessages();
+            Assert.Equal(drawerRadius, drawer.CornerRadius);
+        }
+        finally
+        {
+            if (previousMotion is { } level)
+                RibbonKit.Animation.RibbonAnimation.SetActionLevel(RibbonKit.Animation.RibbonAnimationAction.MessageBar, level);
+            else RibbonKit.Animation.RibbonAnimation.ClearActionLevel(RibbonKit.Animation.RibbonAnimationAction.MessageBar);
+        }
+        void LayoutMessages() { Sta.Drain(); window.UpdateLayout(); }
+    }
 
     private static Border? FindUtilityRim(System.Windows.Controls.Primitives.ButtonBase button)
     {

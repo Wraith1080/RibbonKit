@@ -24,6 +24,16 @@
                        Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
         </Border>
         <rk:Ribbon x:Name="PreviewRibbon" DockPanel.Dock="Top" QuickAccessPosition="BelowRibbon">
+            <rk:Ribbon.MessageBar>
+                <rk:RibbonMessageBar x:Name="CrystalMessageBar">
+                    <rk:RibbonMessage x:Name="CrystalProtectedMessage" IsOpen="False"
+                                      Title="Protected view" Message="This sample is read-only until you enable editing."
+                                      ActionContent="Enable editing" ActionClick="OnMessageAction" />
+                    <rk:RibbonMessage x:Name="CrystalSecurityMessage" IsOpen="False"
+                                      Title="Security notice" Message="Macros are disabled in this sample document."
+                                      ActionContent="Got it" ActionClick="OnMessageAction" />
+                </rk:RibbonMessageBar>
+            </rk:Ribbon.MessageBar>
             <rk:Ribbon.QuickAccessItems>
                 <rk:RibbonButton Header="Paste" Size="Small" Icon="{StaticResource Icon.Paste}" Click="OnPreviewCommand" />
                 <rk:RibbonButton Header="Copy" Size="Small" Icon="{StaticResource Icon.Copy}" Click="OnPreviewCommand" />
@@ -174,6 +184,8 @@
                         <rk:RibbonMenuItem x:Name="ScrollPreviewToggle" Header="Show scroll arrows" Click="OnScrollPreview" />
                         <rk:RibbonMenuItem x:Name="BodyScrollPreviewToggle" Header="Keep Home groups expanded" Click="OnBodyScrollPreview" />
                         <rk:RibbonMenuItem x:Name="OverflowPreviewToggle" Header="Show QAT overflow" Click="OnOverflowPreview" />
+                        <rk:RibbonMenuItem x:Name="MessagePreviewButton" Header="Show next message" Click="OnShowMessage" />
+                        <rk:RibbonMenuItem Header="Dismiss all messages" Click="OnDismissMessages" />
                     </rk:RibbonDropDownButton>
                 </rk:RibbonGroup>
                 <rk:RibbonGroup Header="Inputs" Icon="{StaticResource Icon.Bold}">

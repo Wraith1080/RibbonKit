@@ -538,6 +538,18 @@ button made its ends look pinched. Tab arrows retain their original dimensions.
 The 15 Crystal checks also cover body-arrow insets, rim geometry and restoring
 the original width/radius for comparison; Release Showcase build passed.
 
+Message-panel trial: Home → Appearance → Preview controls can show two sample
+notices one at a time or dismiss both. Each notice uses a rounded amber glass strip
+and the existing Backstage action-button style. Amber remains semantic rather than
+following the selected glass accent. The original message templates retain action,
+close, wrapping, live-region and animation behavior; a sample-only presentation
+adapter rounds each row and restores the baseline on comparison. Notices sit below
+the below-ribbon QAT with a small gap, preserving the drawer's corners and shadow;
+they also work with QAT in the tab row. Release Showcase build and 21 Crystal/message
+checks passed, covering both placements, separate dismissal/reopen, actions, empty
+bar spacing and comparison. Animation was disabled for the layout assertions;
+live appearance and motion remain for the user's preview review.
+
 Values are starting anchors, not approved final colors. Columns list base, raised
 surface, border, primary text, secondary text and accent respectively.
 
