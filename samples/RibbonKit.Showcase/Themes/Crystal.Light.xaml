@@ -487,10 +487,8 @@
     <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadius">14</CornerRadius>
     <!-- Notices retain their semantic amber tint when the global glass accent changes. -->
     <LinearGradientBrush x:Key="RibbonKit.Brushes.MessageBar.Background" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Color="#FFFCF3" Offset="0" />
-        <GradientStop Color="#FCF6E4" Offset="0.25" />
-        <GradientStop Color="#F5ECD4" Offset="0.85" />
-        <GradientStop Color="#FBF5E7" Offset="1" />
+        <GradientStop Color="#FAF4E3" Offset="0" />
+        <GradientStop Color="#F8F1DF" Offset="1" />
     </LinearGradientBrush>
     <LinearGradientBrush x:Key="RibbonKit.Brushes.MessageBar.Border" StartPoint="0,0" EndPoint="0,1">
         <GradientStop Color="#FFFFFF" Offset="0" />
