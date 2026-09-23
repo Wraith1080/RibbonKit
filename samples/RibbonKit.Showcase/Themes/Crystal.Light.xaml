@@ -488,7 +488,8 @@
     <!-- Notices retain their semantic amber tint when the global glass accent changes. -->
     <LinearGradientBrush x:Key="RibbonKit.Brushes.MessageBar.Background" StartPoint="0,0" EndPoint="0,1">
         <GradientStop Color="#FAF4E3" Offset="0" />
-        <GradientStop Color="#F8F1DF" Offset="1" />
+        <GradientStop Color="#F9F2E1" Offset="0.82" />
+        <GradientStop Color="#FCF7EA" Offset="1" />
     </LinearGradientBrush>
     <LinearGradientBrush x:Key="RibbonKit.Brushes.MessageBar.Border" StartPoint="0,0" EndPoint="0,1">
         <GradientStop Color="#FFFFFF" Offset="0" />
