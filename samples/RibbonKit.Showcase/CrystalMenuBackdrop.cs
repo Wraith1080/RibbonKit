@@ -32,7 +32,7 @@ internal sealed class CrystalMenuBackdrop
         _host = host;
         _frame = frame;
         _wrapper = wrapper;
-        _image.Effect = new BlurEffect { Radius = 12, KernelType = KernelType.Gaussian,
+        _image.Effect = new BlurEffect { Radius = 6, KernelType = KernelType.Gaussian,
             RenderingBias = RenderingBias.Performance };
         Layer.Children.Add(_image);
         wrapper.Children.Insert(1, Layer);
