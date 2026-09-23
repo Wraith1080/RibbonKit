@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Data;
+using System.Windows.Media;
 using RibbonKit.Controls;
 
 namespace RibbonKit.Showcase;
@@ -14,6 +15,8 @@ internal static class CrystalUtilityChrome
         new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.Inherits, OnEnabledChanged));
     private static readonly DependencyProperty OverlayProperty = DependencyProperty.RegisterAttached(
         "Overlay", typeof(OverlayState), typeof(CrystalUtilityChrome));
+    private static readonly DependencyProperty ScrollSurfaceProperty = DependencyProperty.RegisterAttached(
+        "ScrollSurface", typeof(Brush), typeof(CrystalUtilityChrome));
 
     public static void Apply(FrameworkElement root, bool enabled) => root.SetValue(EnabledProperty, enabled);
 
@@ -41,6 +44,7 @@ internal static class CrystalUtilityChrome
         {
             if (chrome.GetValue(OverlayProperty) is OverlayState state)
             {
+                if (state.IsScrollArrow) chrome.ClearValue(Border.BackgroundProperty);
                 chrome.Child = null;
                 if (state.Content != null) state.Wrapper.Children.Remove(state.Content);
                 chrome.Child = state.Content;
@@ -52,6 +56,7 @@ internal static class CrystalUtilityChrome
             chrome.TemplatedParent is not ButtonBase button || !IsUtility(button)) return;
 
         var content = chrome.Child;
+        bool isScrollArrow = button is RepeatButton;
         var wrapper = new Grid();
         var thickness = chrome.BorderThickness;
         var rim = new Border
@@ -65,22 +70,33 @@ internal static class CrystalUtilityChrome
         style.Setters.Add(new Setter(UIElement.OpacityProperty, 0d));
         style.Setters.Add(new Setter(Border.BorderBrushProperty,
             new DynamicResourceExtension("RibbonKit.Brushes.Control.HoverBorder")));
-        AddState(nameof(button.IsMouseOver));
+        if (isScrollArrow)
+        {
+            // Keep the shared utility palette intact; only arrows exchange idle/hover surfaces.
+            style.Setters.Add(new Setter(ScrollSurfaceProperty,
+                new DynamicResourceExtension("RibbonKit.Brushes.TabStrip.ControlHoverBackground")));
+            chrome.SetBinding(Border.BackgroundProperty,
+                new Binding { Source = rim, Path = new PropertyPath(ScrollSurfaceProperty) });
+        }
+        AddState(nameof(button.IsMouseOver), surfaceKey: "RibbonKit.Brushes.TabStrip.ScrollButtonBackground");
         if (button is ToggleButton) AddState(nameof(ToggleButton.IsChecked));
-        AddState(nameof(button.IsPressed), "RibbonKit.Brushes.Control.PressedBorder");
+        AddState(nameof(button.IsPressed), "RibbonKit.Brushes.Control.PressedBorder",
+            "RibbonKit.Brushes.TabStrip.ControlPressedBackground");
         rim.Style = style;
         chrome.Child = null;
         if (content != null) wrapper.Children.Add(content);
         wrapper.Children.Add(rim);
-        chrome.SetValue(OverlayProperty, new OverlayState(wrapper, content));
+        chrome.SetValue(OverlayProperty, new OverlayState(wrapper, content, isScrollArrow));
         chrome.Child = wrapper;
 
-        void AddState(string property, string? borderKey = null)
+        void AddState(string property, string? borderKey = null, string? surfaceKey = null)
         {
             var trigger = new DataTrigger { Binding = new Binding(property) { Source = button }, Value = true };
             trigger.Setters.Add(new Setter(UIElement.OpacityProperty, 1d));
             if (borderKey != null)
                 trigger.Setters.Add(new Setter(Border.BorderBrushProperty, new DynamicResourceExtension(borderKey)));
+            if (isScrollArrow && surfaceKey != null)
+                trigger.Setters.Add(new Setter(ScrollSurfaceProperty, new DynamicResourceExtension(surfaceKey)));
             style.Triggers.Add(trigger);
         }
     }
@@ -93,5 +109,5 @@ internal static class CrystalUtilityChrome
             style == button.TryFindResource("RibbonKit.ScrollRightButton") ||
             style == button.TryFindResource("RibbonKit.MergedCaptionButton"));
 
-    private sealed record OverlayState(Grid Wrapper, UIElement? Content);
+    private sealed record OverlayState(Grid Wrapper, UIElement? Content, bool IsScrollArrow);
 }

@@ -200,18 +200,28 @@ public class CrystalContextualTests
             Assert.InRange(window.ActualWidth, 420, 550);
             Assert.True(ribbon.Tabs.Count > originalTabCount);
             Assert.True(tabScroll.CanScrollRight);
+            Assert.True(tabScroll.ScrollRightCommand.CanExecute(null));
+            tabScroll.SetCurrentValue(RibbonKit.Layout.RibbonScrollContentHost.OffsetProperty, 72d);
+            Sta.Drain();
+            window.UpdateLayout();
+            Sta.Drain();
+            Assert.True(tabScroll.CanScrollLeft);
             int arrowCount = 0;
             foreach (UIElement child in ((Grid)VisualTreeHelper.GetParent(tabScroll)).Children)
                 if (child is System.Windows.Controls.Primitives.RepeatButton arrow)
                 {
                     Assert.NotNull(FindUtilityRim(arrow));
+                    var arrowChrome = (Border)arrow.Template.FindName("Chrome", arrow);
+                    Assert.Same(window.FindResource("RibbonKit.Brushes.TabStrip.ControlHoverBackground"),
+                        arrowChrome.Background);
+                    CrystalUtilityChrome.Apply(window, false);
+                    Assert.Same(arrow.Background, arrowChrome.Background);
+                    CrystalUtilityChrome.Apply(window, true);
+                    Assert.Same(window.FindResource("RibbonKit.Brushes.TabStrip.ControlHoverBackground"),
+                        arrowChrome.Background);
                     arrowCount++;
                 }
             Assert.Equal(2, arrowCount);
-            Assert.True(tabScroll.ScrollRightCommand.CanExecute(null));
-            tabScroll.SetCurrentValue(RibbonKit.Layout.RibbonScrollContentHost.OffsetProperty, 72d);
-            Sta.Drain();
-            Assert.True(tabScroll.CanScrollLeft);
             scrollPreview.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             Assert.Equal(originalTabCount, ribbon.Tabs.Count);
             window.Width = 1080;

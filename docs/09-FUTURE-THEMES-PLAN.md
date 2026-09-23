@@ -512,6 +512,20 @@ interaction behavior are unchanged. Release Showcase build and 54 selected Cryst
 RibbonScrollBar and QAT overflow checks passed. The user will inspect the small
 controls' hover/pressed appearance in the preview; no live visual acceptance claimed.
 
+Utility-rim and preview-access follow-up: `CrystalUtilityChrome` adds a 1-DIP,
+non-hit-testable overlay to the shared utility Chrome parts. Hover/open states use
+the existing glass rim; pressing uses the pressed border. Disabling Crystal removes
+the wrapper and restores the original content. No runtime templates were copied.
+The window minimum width is now 420 DIP. Home → Appearance → Preview controls can
+add temporary navigation tabs to expose scroll arrows, or move QAT to the tab row
+with extra sample commands and a 100-DIP cap to expose overflow. Both actions toggle
+back and remove only their own sample items; QAT restores its prior width and position.
+After adding/removing tabs, the preview realizes headers and calls the public scroll
+host Refresh method to invalidate its cached extent. Release Showcase build passed;
+all 54 selected Crystal, RibbonScrollBar and QAT overflow tests passed. Integration
+coverage checks narrow sizing, both realized arrow rims, overflow opening, cleanup
+and comparison restoration. User launching and hover/pressed visual review remain pending.
+
 Values are starting anchors, not approved final colors. Columns list base, raised
 surface, border, primary text, secondary text and accent respectively.
 
