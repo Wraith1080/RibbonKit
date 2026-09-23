@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Media;
 using RibbonKit.Controls;
@@ -11,6 +13,10 @@ public partial class CrystalPreviewWindow : RibbonWindow
     private readonly CrystalBackstagePresentation _backstagePresentation;
     private readonly CrystalScreenTipPalette _screenTipPalette;
     private readonly string _baselineLayout;
+    private readonly List<RibbonTab> _scrollPreviewTabs = new();
+    private readonly List<RibbonButton> _overflowPreviewItems = new();
+    private RibbonQuickAccessPosition _savedQuickAccessPosition;
+    private double _savedQuickAccessWidth;
 
     public CrystalPreviewWindow()
     {
@@ -88,6 +94,7 @@ public partial class CrystalPreviewWindow : RibbonWindow
 
     private void UpdateCrystalDetails(bool enabled)
     {
+        CrystalUtilityChrome.Apply(this, enabled);
         CrystalTabShape.Apply(PreviewRibbon, enabled);
         if (PreviewRibbon.IsLoaded) CrystalQuickAccess.Apply(PreviewRibbon, enabled);
         if (PreviewRibbon.IsLoaded) CrystalFileHover.Apply(PreviewRibbon, enabled);
@@ -107,6 +114,69 @@ public partial class CrystalPreviewWindow : RibbonWindow
     }
 
     private void OnReturnToDocument(object sender, RoutedEventArgs e) => PreviewRibbon.IsBackstageOpen = false;
+
+    private void OnScrollPreview(object sender, RoutedEventArgs e)
+    {
+        if (_scrollPreviewTabs.Count == 0)
+        {
+            int count = Math.Max(6, (int)Math.Ceiling(PreviewRibbon.ActualWidth / 120) + 2);
+            for (int i = 1; i <= count; i++)
+            {
+                var tab = new RibbonTab { Header = $"Navigation preview {i}" };
+                var group = new RibbonGroup { Header = "Sample commands" };
+                var button = new RibbonButton { Header = "Select", Icon = (ImageSource)FindResource("Icon.Select"), Size = RibbonControlSize.Large };
+                button.Click += OnPreviewCommand;
+                group.Items.Add(button);
+                tab.Groups.Add(group);
+                _scrollPreviewTabs.Add(tab);
+                PreviewRibbon.Tabs.Add(tab);
+            }
+            StatusText.Text = "Use the arrows at either end of the tab row. Choose Hide scroll arrows to remove the extra tabs.";
+            ScrollPreviewToggle.Header = "Hide scroll arrows";
+        }
+        else
+        {
+            foreach (var tab in _scrollPreviewTabs) PreviewRibbon.Tabs.Remove(tab);
+            _scrollPreviewTabs.Clear();
+            StatusText.Text = "Scroll preview tabs removed.";
+            ScrollPreviewToggle.Header = "Show scroll arrows";
+        }
+        // Realize the temporary headers before asking the scroller to discard its
+        // cached constrained measurement of the old tab set.
+        PreviewRibbon.UpdateLayout();
+        if (PreviewRibbon.Template.FindName("TabControlHost", PreviewRibbon) is RibbonTabControl tabs &&
+            tabs.Template.FindName("PART_TabScroll", tabs) is RibbonKit.Layout.RibbonScrollContentHost scroller)
+            scroller.Refresh();
+    }
+
+    private void OnOverflowPreview(object sender, RoutedEventArgs e)
+    {
+        if (_overflowPreviewItems.Count == 0)
+        {
+            _savedQuickAccessPosition = PreviewRibbon.QuickAccessPosition;
+            _savedQuickAccessWidth = PreviewRibbon.QuickAccessMaxWidth;
+            foreach (var name in new[] { "Save", "Undo", "Redo", "Print" })
+            {
+                var button = new RibbonButton { Header = name, Icon = (ImageSource)FindResource("Icon." + name), Size = RibbonControlSize.Small };
+                button.Click += OnPreviewCommand;
+                _overflowPreviewItems.Add(button);
+                PreviewRibbon.QuickAccessItems.Add(button);
+            }
+            PreviewRibbon.QuickAccessMaxWidth = 100;
+            PreviewRibbon.QuickAccessPosition = RibbonQuickAccessPosition.TabRow;
+            StatusText.Text = "QAT moved beside the tabs. Open its overflow arrow; choose Restore QAT position to finish.";
+            OverflowPreviewToggle.Header = "Restore QAT position";
+        }
+        else
+        {
+            foreach (var button in _overflowPreviewItems) PreviewRibbon.QuickAccessItems.Remove(button);
+            _overflowPreviewItems.Clear();
+            PreviewRibbon.QuickAccessMaxWidth = _savedQuickAccessWidth;
+            PreviewRibbon.QuickAccessPosition = _savedQuickAccessPosition;
+            StatusText.Text = "Quick access toolbar restored.";
+            OverflowPreviewToggle.Header = "Show QAT overflow";
+        }
+    }
 
     private void OnBackstageLayoutSelected(object sender, RoutedEventArgs e)
     {

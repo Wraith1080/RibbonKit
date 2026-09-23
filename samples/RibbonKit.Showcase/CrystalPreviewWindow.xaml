@@ -5,7 +5,7 @@
                  xmlns:local="clr-namespace:RibbonKit.Showcase"
                  Title="Crystal — RibbonKit material study"
                  Icon="Assets/RibbonKit.ico"
-                 Width="1080" Height="720" MinWidth="680" MinHeight="480"
+                 Width="1080" Height="720" MinWidth="420" MinHeight="480"
                  WindowStartupLocation="CenterScreen" UseLayoutRounding="True"
                  Background="{DynamicResource RibbonKit.Brushes.Window.Background}">
     <rk:RibbonWindow.Resources>
@@ -170,6 +170,10 @@
                     </rk:RibbonDropDownButton>
                     <rk:RibbonButton Header="Customize" Size="Large" Icon="{StaticResource Icon.Style}"
                                      Click="OnCustomize" />
+                    <rk:RibbonDropDownButton Header="Preview controls" Size="Large" Icon="{StaticResource Icon.Select}">
+                        <rk:RibbonMenuItem x:Name="ScrollPreviewToggle" Header="Show scroll arrows" Click="OnScrollPreview" />
+                        <rk:RibbonMenuItem x:Name="OverflowPreviewToggle" Header="Show QAT overflow" Click="OnOverflowPreview" />
+                    </rk:RibbonDropDownButton>
                 </rk:RibbonGroup>
                 <rk:RibbonGroup Header="Inputs" Icon="{StaticResource Icon.Bold}">
                     <StackPanel>

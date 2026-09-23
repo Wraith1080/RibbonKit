@@ -177,6 +177,70 @@ public class CrystalContextualTests
         {
             window.Show();
             var ribbon = (Ribbon)window.FindName("PreviewRibbon");
+            var utilityTabs = (RibbonTabControl)ribbon.Template.FindName("TabControlHost", ribbon);
+            var minimize = (System.Windows.Controls.Primitives.ToggleButton)utilityTabs.Template.FindName("MinimizeToggle", utilityTabs);
+            Sta.Drain();
+            Assert.NotNull(FindUtilityRim(minimize));
+            Assert.Equal(0d, FindUtilityRim(minimize)!.Opacity);
+            Assert.True(window.MinWidth <= 420);
+            int originalTabCount = ribbon.Tabs.Count;
+            int originalQatCount = ribbon.QuickAccessItems.Count;
+            var originalPosition = ribbon.QuickAccessPosition;
+            double originalQatWidth = ribbon.QuickAccessMaxWidth;
+            var scrollPreview = (RibbonMenuItem)window.FindName("ScrollPreviewToggle");
+            var overflowPreview = (RibbonMenuItem)window.FindName("OverflowPreviewToggle");
+            scrollPreview.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            Sta.Drain();
+            window.UpdateLayout();
+            var tabScroll = (RibbonKit.Layout.RibbonScrollContentHost)utilityTabs.Template.FindName("PART_TabScroll", utilityTabs);
+            Assert.True(tabScroll.CanScrollRight);
+            window.Width = 540;
+            Sta.Drain();
+            window.UpdateLayout();
+            Assert.InRange(window.ActualWidth, 420, 550);
+            Assert.True(ribbon.Tabs.Count > originalTabCount);
+            Assert.True(tabScroll.CanScrollRight);
+            int arrowCount = 0;
+            foreach (UIElement child in ((Grid)VisualTreeHelper.GetParent(tabScroll)).Children)
+                if (child is System.Windows.Controls.Primitives.RepeatButton arrow)
+                {
+                    Assert.NotNull(FindUtilityRim(arrow));
+                    arrowCount++;
+                }
+            Assert.Equal(2, arrowCount);
+            Assert.True(tabScroll.ScrollRightCommand.CanExecute(null));
+            tabScroll.SetCurrentValue(RibbonKit.Layout.RibbonScrollContentHost.OffsetProperty, 72d);
+            Sta.Drain();
+            Assert.True(tabScroll.CanScrollLeft);
+            scrollPreview.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            Assert.Equal(originalTabCount, ribbon.Tabs.Count);
+            window.Width = 1080;
+            overflowPreview.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            Sta.Drain();
+            window.UpdateLayout();
+            var qat = (RibbonQuickAccessToolBar)utilityTabs.Template.FindName("QatTabRowHost", utilityTabs);
+            Assert.True(qat.HasOverflow);
+            Assert.Equal(originalQatCount + 4, ribbon.QuickAccessItems.Count);
+            var overflowButton = qat.OverflowButton!;
+            Assert.NotNull(FindUtilityRim(overflowButton));
+            overflowButton.IsChecked = true;
+            Sta.Drain();
+            var utilityRim = FindUtilityRim(overflowButton)!;
+            Assert.Equal(1d, utilityRim.Opacity);
+            Assert.False(utilityRim.IsHitTestVisible);
+            Assert.Same(window.FindResource("RibbonKit.Brushes.Control.HoverBorder"), utilityRim.BorderBrush);
+            Assert.NotEmpty(qat.OverflowEntries);
+            overflowButton.IsChecked = false;
+            CrystalUtilityChrome.Apply(window, false);
+            Assert.Null(FindUtilityRim(minimize));
+            Assert.Null(FindUtilityRim(overflowButton));
+            CrystalUtilityChrome.Apply(window, true);
+            Assert.NotNull(FindUtilityRim(minimize));
+            Assert.NotNull(FindUtilityRim(overflowButton));
+            overflowPreview.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            Assert.Equal(originalQatCount, ribbon.QuickAccessItems.Count);
+            Assert.Equal(originalPosition, ribbon.QuickAccessPosition);
+            Assert.Equal(originalQatWidth, ribbon.QuickAccessMaxWidth);
             ribbon.SelectedIndex = 2;
             Sta.Drain(DispatcherPriority.Render);
             var toggle = (RibbonToggleButton)window.FindName("EnableOptionsToggle");
@@ -849,6 +913,14 @@ public class CrystalContextualTests
             window.Close();
         }
     });
+
+    private static Border? FindUtilityRim(System.Windows.Controls.Primitives.ButtonBase button)
+    {
+        if (button.Template.FindName("Chrome", button) is Border { Child: Grid grid })
+            foreach (UIElement child in grid.Children)
+                if (child is Border { Name: "CrystalUtilityRim" } rim) return rim;
+        return null;
+    }
 
     private static double Luminance(Color color)
     {

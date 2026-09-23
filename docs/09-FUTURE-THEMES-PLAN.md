@@ -503,6 +503,15 @@ a new realized-badge test for live palette replacement, dimming, unchanged sizin
 and baseline restoration, plus existing animated LTR/RTL placement checks. The user
 will launch and inspect Alt/F10 labels; no new live UI or DPI acceptance is claimed.
 
+Utility-button pass: collapse/expand, pin, scroll arrows and QAT overflow now use
+the accepted command glass shading through their existing shared TabStrip tokens.
+Hover uses the checked-button surface at 80% strength; press uses the deeper pressed
+surface. Idle tab-scroll buttons borrow the opaque ribbon-body surface. The shared
+templates also carry this styling to merged child-caption buttons. Geometry and
+interaction behavior are unchanged. Release Showcase build and 54 selected Crystal,
+RibbonScrollBar and QAT overflow checks passed. The user will inspect the small
+controls' hover/pressed appearance in the preview; no live visual acceptance claimed.
+
 Values are starting anchors, not approved final colors. Columns list base, raised
 surface, border, primary text, secondary text and accent respectively.
 

@@ -222,9 +222,29 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverUnderline" Color="Transparent" />
     <!-- Reserve the same rim on every tab, so selecting or hovering never moves labels. -->
     <Thickness x:Key="RibbonKit.Metrics.TabSelectedBorderThickness">1,1,1,0</Thickness>
-    <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.ControlHoverBackground" Color="#80FFFFFF" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.ControlPressedBackground" Color="#809EBBD2" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.ScrollButtonBackground" Color="#EBF2F9" />
+    <!-- Shared utility chrome: collapse, pin, scroll arrows and QAT overflow.
+         Reuse the accepted command shading at a quieter hover strength. -->
+    <DrawingBrush x:Key="RibbonKit.Brushes.TabStrip.ControlHoverBackground"
+                  Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" Opacity="0.8">
+        <DrawingBrush.Drawing>
+            <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z"
+                             Brush="{StaticResource RibbonKit.Brushes.Control.CheckedBackground}" />
+        </DrawingBrush.Drawing>
+    </DrawingBrush>
+    <DrawingBrush x:Key="RibbonKit.Brushes.TabStrip.ControlPressedBackground"
+                  Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
+        <DrawingBrush.Drawing>
+            <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z"
+                             Brush="{StaticResource RibbonKit.Brushes.Control.PressedBackground}" />
+        </DrawingBrush.Drawing>
+    </DrawingBrush>
+    <DrawingBrush x:Key="RibbonKit.Brushes.TabStrip.ScrollButtonBackground"
+                  Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
+        <DrawingBrush.Drawing>
+            <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z"
+                             Brush="{StaticResource RibbonKit.Brushes.Ribbon.ContentBackground}" />
+        </DrawingBrush.Drawing>
+    </DrawingBrush>
     <!-- Native WPF popups have no shared backdrop: use a readable opaque frosting. -->
     <LinearGradientBrush x:Key="RibbonKit.Brushes.ScreenTip.Background" StartPoint="0,0" EndPoint="0,1">
         <GradientStop Color="#FAFDFF" Offset="0" />
