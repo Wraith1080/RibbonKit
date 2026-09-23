@@ -1,6 +1,7 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:rk="urn:ribbonkit">
+                    xmlns:rk="urn:ribbonkit"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
     <!-- Prototype overrides only. Merge after the complete Office 2024 token dictionary.
          No copied templates, system backdrop request, or public RibbonTheme value. -->
     <LinearGradientBrush x:Key="RibbonKit.Brushes.Window.Background" StartPoint="0,0" EndPoint="1,1">
@@ -484,6 +485,9 @@
     <CornerRadius x:Key="RibbonKit.Metrics.TabCornerRadius">8,8,0,0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.ApplicationButtonCornerRadius">8</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadius">14</CornerRadius>
+    <!-- Wider than the tab arrows, with room for a straight edge between corners. -->
+    <sys:Double x:Key="Crystal.Metrics.BodyScrollWidth">32</sys:Double>
+    <CornerRadius x:Key="Crystal.Metrics.BodyScrollCornerRadius">10</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadiusTop">14,14,0,0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.SplitLeftCornerRadius">8,0,0,8</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.SplitRightCornerRadius">0,8,8,0</CornerRadius>

@@ -125,7 +125,7 @@
                     </rk:BackstageTabItem>
                 </rk:Backstage>
             </rk:Ribbon.Backstage>
-            <rk:RibbonTab Header="Home">
+            <rk:RibbonTab x:Name="HomeTab" Header="Home">
                 <rk:RibbonGroup Header="Clipboard" Icon="{StaticResource Icon.Paste}">
                     <rk:RibbonButton Header="Paste" Size="Large" Icon="{StaticResource Icon.Paste}" Click="OnPreviewCommand" />
                     <StackPanel x:Name="CompactClipboard">
@@ -172,6 +172,7 @@
                                      Click="OnCustomize" />
                     <rk:RibbonDropDownButton Header="Preview controls" Size="Large" Icon="{StaticResource Icon.Select}">
                         <rk:RibbonMenuItem x:Name="ScrollPreviewToggle" Header="Show scroll arrows" Click="OnScrollPreview" />
+                        <rk:RibbonMenuItem x:Name="BodyScrollPreviewToggle" Header="Keep Home groups expanded" Click="OnBodyScrollPreview" />
                         <rk:RibbonMenuItem x:Name="OverflowPreviewToggle" Header="Show QAT overflow" Click="OnOverflowPreview" />
                     </rk:RibbonDropDownButton>
                 </rk:RibbonGroup>

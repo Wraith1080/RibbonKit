@@ -14,6 +14,7 @@ public partial class CrystalPreviewWindow : RibbonWindow
     private readonly CrystalScreenTipPalette _screenTipPalette;
     private readonly string _baselineLayout;
     private readonly List<RibbonTab> _scrollPreviewTabs = new();
+    private readonly Dictionary<RibbonGroup, bool> _savedHomeResizing = new();
     private readonly List<RibbonButton> _overflowPreviewItems = new();
     private RibbonQuickAccessPosition _savedQuickAccessPosition;
     private double _savedQuickAccessWidth;
@@ -146,6 +147,32 @@ public partial class CrystalPreviewWindow : RibbonWindow
         PreviewRibbon.UpdateLayout();
         if (PreviewRibbon.Template.FindName("TabControlHost", PreviewRibbon) is RibbonTabControl tabs &&
             tabs.Template.FindName("PART_TabScroll", tabs) is RibbonKit.Layout.RibbonScrollContentHost scroller)
+            scroller.Refresh();
+    }
+
+    private void OnBodyScrollPreview(object sender, RoutedEventArgs e)
+    {
+        if (_savedHomeResizing.Count == 0)
+        {
+            foreach (var group in HomeTab.Groups)
+            {
+                _savedHomeResizing.Add(group, group.CanResize);
+                group.SetCurrentValue(RibbonGroup.CanResizeProperty, false);
+            }
+            BodyScrollPreviewToggle.Header = "Restore Home group resizing";
+            StatusText.Text = "Home groups stay expanded. Narrow the window to try the ribbon-body scroll arrows.";
+        }
+        else
+        {
+            foreach (var entry in _savedHomeResizing)
+                entry.Key.SetCurrentValue(RibbonGroup.CanResizeProperty, entry.Value);
+            _savedHomeResizing.Clear();
+            BodyScrollPreviewToggle.Header = "Keep Home groups expanded";
+            StatusText.Text = "Home group resizing restored.";
+        }
+        PreviewRibbon.UpdateLayout();
+        if (PreviewRibbon.Template.FindName("TabControlHost", PreviewRibbon) is RibbonTabControl tabs &&
+            tabs.Template.FindName("PART_ContentScroll", tabs) is RibbonKit.Layout.RibbonScrollContentHost scroller)
             scroller.Refresh();
     }
 

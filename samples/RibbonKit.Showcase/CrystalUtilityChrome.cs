@@ -45,6 +45,11 @@ internal static class CrystalUtilityChrome
             if (chrome.GetValue(OverlayProperty) is OverlayState state)
             {
                 if (state.IsScrollArrow) chrome.ClearValue(Border.BackgroundProperty);
+                if (state.IsBodyScrollArrow)
+                {
+                    chrome.ClearValue(Border.CornerRadiusProperty);
+                    ((ButtonBase)chrome.TemplatedParent).ClearValue(FrameworkElement.WidthProperty);
+                }
                 chrome.Child = null;
                 if (state.Content != null) state.Wrapper.Children.Remove(state.Content);
                 chrome.Child = state.Content;
@@ -57,6 +62,14 @@ internal static class CrystalUtilityChrome
 
         var content = chrome.Child;
         bool isScrollArrow = button is RepeatButton;
+        bool isBodyScrollArrow = isScrollArrow && button.TemplatedParent is RibbonTabControl tabs &&
+            tabs.Template.FindName("PART_ContentScroll", tabs) is FrameworkElement bodyScroll &&
+            VisualTreeHelper.GetParent(button) == VisualTreeHelper.GetParent(bodyScroll);
+        if (isBodyScrollArrow)
+        {
+            chrome.SetResourceReference(Border.CornerRadiusProperty, "Crystal.Metrics.BodyScrollCornerRadius");
+            button.SetResourceReference(FrameworkElement.WidthProperty, "Crystal.Metrics.BodyScrollWidth");
+        }
         var wrapper = new Grid();
         var thickness = chrome.BorderThickness;
         var rim = new Border
@@ -86,7 +99,7 @@ internal static class CrystalUtilityChrome
         chrome.Child = null;
         if (content != null) wrapper.Children.Add(content);
         wrapper.Children.Add(rim);
-        chrome.SetValue(OverlayProperty, new OverlayState(wrapper, content, isScrollArrow));
+        chrome.SetValue(OverlayProperty, new OverlayState(wrapper, content, isScrollArrow, isBodyScrollArrow));
         chrome.Child = wrapper;
 
         void AddState(string property, string? borderKey = null, string? surfaceKey = null)
@@ -109,5 +122,5 @@ internal static class CrystalUtilityChrome
             style == button.TryFindResource("RibbonKit.ScrollRightButton") ||
             style == button.TryFindResource("RibbonKit.MergedCaptionButton"));
 
-    private sealed record OverlayState(Grid Wrapper, UIElement? Content, bool IsScrollArrow);
+    private sealed record OverlayState(Grid Wrapper, UIElement? Content, bool IsScrollArrow, bool IsBodyScrollArrow);
 }

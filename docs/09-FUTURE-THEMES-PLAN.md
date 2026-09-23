@@ -526,6 +526,18 @@ all 54 selected Crystal, RibbonScrollBar and QAT overflow tests passed. Integrat
 coverage checks narrow sizing, both realized arrow rims, overflow opening, cleanup
 and comparison restoration. User launching and hover/pressed visual review remain pending.
 
+Body-scroll preview follow-up: Home → Appearance → Preview controls → Keep Home
+groups expanded temporarily sets every Home group's CanResize to false. Toggling
+back restores each saved value. Narrowing the window now exposes the body arrows
+without group reduction; these use the same Crystal translucent-idle/opaque-hover
+surface wiring as tab arrows. Release Showcase build and all 15 Crystal tests passed,
+including both realized body arrows and resizing restoration. Live hover appearance
+remains for the user's preview check. After visual review, body arrows use a 32-DIP
+width and 10-DIP corner radius: copying the body's 14-DIP radius onto a 22-DIP
+button made its ends look pinched. Tab arrows retain their original dimensions.
+The 15 Crystal checks also cover body-arrow insets, rim geometry and restoring
+the original width/radius for comparison; Release Showcase build passed.
+
 Values are starting anchors, not approved final colors. Columns list base, raised
 surface, border, primary text, secondary text and accent respectively.
 
