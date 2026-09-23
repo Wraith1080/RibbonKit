@@ -13,12 +13,13 @@ internal sealed class CrystalApplicationMenuPresentation
     private readonly FrameworkElement _owner;
     private bool _enabled;
     private Grid? _innerContent;
+    private CrystalMenuShadow? _shadow;
     private static readonly (string Target, string Source)[] Brushes =
     {
         ("Foreground", "RibbonKit.Brushes.Text.Primary"),
         ("SecondaryForeground", "RibbonKit.Brushes.Text.Secondary"),
         ("HeadingForeground", "RibbonKit.Brushes.Accent"),
-        ("FrameBorder", "Crystal.Brushes.ApplicationMenuOutline"),
+        ("FrameBorder", "RibbonKit.Brushes.Control.HoverBorder"),
         ("FrameRim", "RibbonKit.Brushes.Control.InnerGlow"),
         ("FrameBand", "Crystal.Brushes.ApplicationMenuFrame"),
         ("TopBandBackground", "Crystal.Brushes.ApplicationMenuClearBand"),
@@ -74,6 +75,8 @@ internal sealed class CrystalApplicationMenuPresentation
         if (enabled) _menu.Resources[shadow] = _owner.FindResource("Crystal.Effects.ApplicationMenuShadow");
         else _menu.Resources.Remove(shadow);
         UpdateWidth();
+        // Install the shadow layer before the first opening animation chooses its content surface.
+        if (enabled) _menu.ApplyTemplate();
         UpdateInnerFrame();
         foreach (var entry in _menu.Items)
         {
@@ -95,6 +98,17 @@ internal sealed class CrystalApplicationMenuPresentation
 
     private void UpdateInnerFrame()
     {
+        if (_enabled && _shadow == null &&
+            _menu.Template?.FindName("PART_Frame", _menu) is Border host &&
+            host.Child is Border frame)
+            _shadow = new CrystalMenuShadow(host, frame, _owner);
+        else if (!_enabled && _shadow != null)
+        {
+            _shadow.Remove();
+            _shadow = null;
+        }
+        _shadow?.UpdateClip();
+        _shadow?.RefreshBackdrop();
         if (_menu.Template?.FindName("PART_Pane", _menu) is not Border pane ||
             VisualTreeHelper.GetParent(pane) is not Grid content ||
             VisualTreeHelper.GetParent(content) is not Border outline ||
@@ -111,6 +125,7 @@ internal sealed class CrystalApplicationMenuPresentation
         {
             rim.CornerRadius = new CornerRadius(11);
             outline.CornerRadius = new CornerRadius(10);
+            outline.SetResourceReference(Border.BorderBrushProperty, "Crystal.Brushes.ApplicationMenuOutline");
             // One outline surrounds both columns; avoid a second square frame in the right pane.
             activePage.BorderThickness = new Thickness(0);
             activePage.Margin = new Thickness(0);
@@ -119,6 +134,7 @@ internal sealed class CrystalApplicationMenuPresentation
         {
             rim.ClearValue(Border.CornerRadiusProperty);
             outline.ClearValue(Border.CornerRadiusProperty);
+            outline.ClearValue(Border.BorderBrushProperty);
             activePage.ClearValue(Border.BorderThicknessProperty);
             activePage.ClearValue(FrameworkElement.MarginProperty);
         }

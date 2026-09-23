@@ -586,6 +586,43 @@ screen-tip surface. The active page stays transparent over that pane. Accent upd
 and comparison restoration remain covered. Release Showcase build and 19 focused
 Crystal/menu checks passed; the new material strength remains for visual review.
 
+Menu frame follow-up: the user requested the standard glass outer rim again and
+the same background as the below-ribbon QAT (`Tab.HoverBackground`). Transparent
+top/footer bands preserve one continuous fill, while the inset content retains its
+steady outline. The dedicated centered shadow remains (16-DIP blur, zero offset,
+0.24 opacity). Removed the superseded frame-reflection brush. Release Showcase
+build and the focused preview integration check passed; visual review remains pending.
+
+Translucent-menu shadow correction: applying DropShadowEffect to the whole menu
+made its almost-clear outer frame cast little shadow while its opaque inner panes
+and buttons cast visibly inside the frame. CrystalMenuShadow now supplies an opaque
+rounded caster in a separate non-hit-testable layer, then clips that layer after
+the effect to keep only the outside halo. The interior remains transparent and the
+original frame effect returns in comparison mode. The layer is installed before
+opening motion chooses its content surface, so frame and shadow move together.
+Release Showcase build and the focused preview test passed; a rendered pixel check
+detects shadow on all four outer edges and zero alpha at the shadow layer's center.
+Live opening motion and final shadow strength remain for user inspection.
+
+Menu transparency trial: the outer frame now uses a dedicated cool gradient at
+0.88 brush opacity to reduce readable content showing through. Its slight bottom
+reflection, glass border and outside-only shadow remain. This is tint/opacity,
+not live backdrop blur; the QAT surface is unchanged. Release Showcase build and
+the focused preview/shadow rendering check passed; visual acceptance is pending.
+
+Menu backdrop blur trial: the translucent frame now overlays a cropped WPF snapshot
+of the content behind it, with a 12-DIP Gaussian blur and 24-DIP sampling allowance.
+The entire menu and its shadow are excluded during synchronous capture, then restored
+before returning to the dispatcher. The blurred layer is clipped after its effect;
+foreground text, buttons, rims and the outside-only shadow stay sharp. Captures refresh
+on opening, geometry/DPI changes, document scrolling and palette changes, and are
+released on hiding or comparison restoration. This is an event-refreshed backdrop,
+not continuous live refraction or an OS compositor material. A rendered black/white
+edge test checks smoothing, foreground exclusion, rounded clipping, scrolling,
+resizing and reopening; the preview integration checks the actual menu wiring.
+Release Showcase build and 20 focused Crystal/application-menu checks passed.
+Live motion, mixed-monitor DPI and final material strength remain for visual review.
+
 Values are starting anchors, not approved final colors. Columns list base, raised
 surface, border, primary text, secondary text and accent respectively.
 

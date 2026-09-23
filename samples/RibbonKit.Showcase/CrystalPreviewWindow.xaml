@@ -345,7 +345,7 @@
                         <Separator Background="{DynamicResource RibbonKit.Brushes.Group.Separator}" />
                         <TextBlock Margin="0,20,0,0" Text="01   Surfaces &amp; light" FontSize="14" FontWeight="SemiBold"
                                    Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
-                        <TextBlock Margin="0,8,0,0" Text="An early visual study using layered gradients. Live blur and refraction are not part of this preview."
+                        <TextBlock Margin="0,8,0,0" Text="An early visual study of layered gradients, soft reflections, and frosted menu glass."
                                    TextWrapping="Wrap" Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
                     </StackPanel>
                 </Border>

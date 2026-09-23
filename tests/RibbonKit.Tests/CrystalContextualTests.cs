@@ -15,6 +15,91 @@ namespace RibbonKit.Tests;
 public class CrystalContextualTests
 {
     [Fact]
+    public void Crystal_menu_backdrop_blurs_background_without_capturing_foreground() => Sta.Run(() =>
+    {
+        var scene = new Canvas { Width = 240, Height = 180, Background = Brushes.White };
+        var dark = new Border { Width = 120, Height = 180, Background = Brushes.Black };
+        scene.Children.Add(dark);
+        var scroller = new ScrollViewer { Width = 10, Height = 50, Content = new Border { Height = 400 } };
+        Canvas.SetLeft(scroller, 225);
+        scene.Children.Add(scroller);
+        var frame = new Border { Background = Brushes.Red, CornerRadius = new CornerRadius(14) };
+        var wrapper = new Grid();
+        wrapper.Children.Add(new Grid()); // Shadow slot.
+        wrapper.Children.Add(frame);
+        var host = new Border { Width = 180, Height = 120, Child = wrapper };
+        Canvas.SetLeft(host, 30);
+        Canvas.SetTop(host, 30);
+        scene.Children.Add(host);
+        var window = new Window { Content = scene, SizeToContent = SizeToContent.WidthAndHeight,
+            Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
+        CrystalMenuBackdrop? backdrop = null;
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+            int visibilityChanges = 0;
+            frame.IsVisibleChanged += (_, _) => visibilityChanges++;
+            backdrop = new CrystalMenuBackdrop(scene, host, frame, wrapper);
+            Layout();
+            var image = Assert.IsType<Image>(backdrop.Layer.Children[0]);
+            Assert.NotNull(image.Source);
+            Assert.False(backdrop.Layer.IsHitTestVisible);
+            Assert.Null(frame.Effect);
+            Assert.Equal(Visibility.Visible, wrapper.Visibility);
+            Assert.Equal(1d, wrapper.Opacity);
+            Assert.Equal(0, visibilityChanges);
+            var rendered = Render(backdrop.Layer);
+            // The black/white boundary behind the opaque red foreground becomes a soft ramp.
+            var left = Pixel(rendered, 86, 60);
+            var right = Pixel(rendered, 94, 60);
+            Assert.InRange(left[0], 1, 126);
+            Assert.InRange(right[0], 128, 254);
+            Assert.Equal(left[0], left[2]); // No red foreground or menu feedback in the capture.
+            Assert.Equal(0, Pixel(rendered, 0, 0)[3]); // Rounded clip after the blur.
+            Assert.Equal(255, Pixel(Render(frame), 90, 60)[2]);
+            Assert.Equal(0, Pixel(Render(frame), 90, 60)[0]);
+            var firstSnapshot = image.Source;
+            dark.Background = Brushes.Blue;
+            scroller.ScrollToVerticalOffset(20);
+            Layout();
+            Assert.True(scroller.VerticalOffset > 0);
+            Assert.NotSame(firstSnapshot, image.Source);
+            Assert.Equal(255, Pixel(Render(backdrop.Layer), 30, 60)[0]);
+            // Moving/resizing the menu updates the crop, rather than stretching the old snapshot.
+            Canvas.SetLeft(host, 60);
+            host.Width = 150;
+            Layout();
+            Assert.Equal(new Rect(frame.RenderSize), Assert.IsType<RectangleGeometry>(backdrop.Layer.Clip).Rect);
+            Assert.True(Pixel(Render(backdrop.Layer), 100, 60)[2] > 245);
+            host.Visibility = Visibility.Hidden;
+            Layout();
+            Assert.Null(image.Source);
+            host.Visibility = Visibility.Visible;
+            Layout();
+            Assert.NotNull(image.Source);
+            backdrop.Remove();
+            Assert.Null(image.Source);
+            Assert.False(wrapper.Children.Contains(backdrop.Layer));
+        }
+        finally { backdrop?.Remove(); window.Close(); }
+        void Layout() { window.UpdateLayout(); Sta.Drain(); window.UpdateLayout(); }
+        static System.Windows.Media.Imaging.RenderTargetBitmap Render(FrameworkElement element)
+        {
+            var bitmap = new System.Windows.Media.Imaging.RenderTargetBitmap((int)element.ActualWidth,
+                (int)element.ActualHeight, 96, 96, PixelFormats.Pbgra32);
+            bitmap.Render(element);
+            return bitmap;
+        }
+        static byte[] Pixel(System.Windows.Media.Imaging.BitmapSource bitmap, int x, int y)
+        {
+            var pixel = new byte[4];
+            bitmap.CopyPixels(new Int32Rect(x, y, 1, 1), pixel, 4, 0);
+            return pixel;
+        }
+    });
+
+    [Fact]
     public void Crystal_keytip_glass_tracks_window_palette_and_restores_baseline() => Sta.Run(() =>
     {
         var target = new Button { Content = "Paste", Width = 80, Height = 40 };
@@ -1004,9 +1089,19 @@ public class CrystalContextualTests
         Assert.True(ribbon.IsApplicationMenuOpen);
         var frame = (Border)menu.Template.FindName("Frame", menu);
         Assert.Equal(new CornerRadius(14), frame.CornerRadius);
-        Assert.Equal(0d, Assert.IsType<System.Windows.Media.Effects.DropShadowEffect>(frame.Effect).ShadowDepth);
-        Assert.NotSame(window.FindResource("RibbonKit.Effects.ContentShadow"), frame.Effect);
+        Assert.Null(frame.Effect);
+        var frameWrapper = Assert.IsType<Grid>(VisualTreeHelper.GetParent(frame));
+        var shadowLayer = Assert.IsType<Grid>(frameWrapper.Children[0]);
+        var caster = Assert.IsType<Border>(shadowLayer.Children[0]);
+        Assert.Equal(0d, Assert.IsType<System.Windows.Media.Effects.DropShadowEffect>(caster.Effect).ShadowDepth);
+        Assert.False(shadowLayer.IsHitTestVisible);
+        CheckMenuShadowPixels(shadowLayer);
+        var backdropLayer = Assert.IsType<Grid>(frameWrapper.Children[1]);
+        Assert.Equal("CrystalMenuBackdrop", backdropLayer.Name);
+        Assert.NotNull(Assert.IsType<Image>(backdropLayer.Children[0]).Source);
         Assert.Same(window.FindResource("Crystal.Brushes.ApplicationMenuFrame"), frame.Background);
+        Assert.NotSame(((Border)ribbon.Template.FindName("QatBelowHost", ribbon)).Background, frame.Background);
+        Assert.Same(window.FindResource("RibbonKit.Brushes.Control.HoverBorder"), frame.BorderBrush);
         foreach (var band in new[] { "TopBand", "FooterBand" })
             Assert.Equal(Colors.Transparent, Assert.IsType<SolidColorBrush>(
                 ((Border)menu.Template.FindName(band, menu)).Background).Color);
@@ -1055,6 +1150,8 @@ public class CrystalContextualTests
         compare.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         LayoutMenu();
         Assert.Equal(new CornerRadius(8), frame.CornerRadius);
+        Assert.IsType<Border>(VisualTreeHelper.GetParent(frame));
+        Assert.NotNull(frame.Effect);
         Assert.Equal(new Thickness(), separator.Margin);
         Assert.Equal(new CornerRadius(), innerOutline.CornerRadius);
         Assert.Null(innerContent.Clip);
@@ -1073,6 +1170,36 @@ public class CrystalContextualTests
         Assert.False(ribbon.IsBackstageOpen);
         LayoutMenu();
         void LayoutMenu() { Sta.Drain(); window.UpdateLayout(); }
+    }
+
+    private static void CheckMenuShadowPixels(Grid shadow)
+    {
+        const int padding = 24;
+        int width = (int)Math.Ceiling(shadow.ActualWidth);
+        int height = (int)Math.Ceiling(shadow.ActualHeight);
+        var image = new System.Windows.Media.Imaging.RenderTargetBitmap(width + padding * 2,
+            height + padding * 2, 96, 96, PixelFormats.Pbgra32);
+        var drawing = new DrawingVisual();
+        using (var context = drawing.RenderOpen())
+            context.DrawRectangle(new VisualBrush(shadow)
+            {
+                ViewboxUnits = BrushMappingMode.Absolute,
+                Viewbox = new Rect(-padding, -padding, width + padding * 2, height + padding * 2),
+                Stretch = Stretch.Fill,
+            }, null, new Rect(0, 0, image.PixelWidth, image.PixelHeight));
+        image.Render(drawing);
+        // Verify actual rendered shadow on every edge, with no opaque caster under the glass.
+        Assert.True(Alpha(padding + width / 2, padding - 2) > 0, "Missing top shadow");
+        Assert.True(Alpha(padding + width / 2, padding + height + 2) > 0, "Missing bottom shadow");
+        Assert.True(Alpha(padding - 2, padding + height / 2) > 0, "Missing left shadow");
+        Assert.True(Alpha(padding + width + 2, padding + height / 2) > 0, "Missing right shadow");
+        Assert.Equal(0, Alpha(padding + width / 2, padding + height / 2));
+        int Alpha(int x, int y)
+        {
+            var pixel = new byte[4];
+            image.CopyPixels(new Int32Rect(x, y, 1, 1), pixel, 4, 0);
+            return pixel[3];
+        }
     }
 
     private static void CheckCrystalScrollBars(CrystalPreviewWindow window, Ribbon ribbon)
