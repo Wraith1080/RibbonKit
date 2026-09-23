@@ -1004,7 +1004,17 @@ public class CrystalContextualTests
         Assert.True(ribbon.IsApplicationMenuOpen);
         var frame = (Border)menu.Template.FindName("Frame", menu);
         Assert.Equal(new CornerRadius(14), frame.CornerRadius);
-        Assert.Same(window.FindResource("RibbonKit.Brushes.Ribbon.ContentBackground"), frame.Background);
+        Assert.Equal(0d, Assert.IsType<System.Windows.Media.Effects.DropShadowEffect>(frame.Effect).ShadowDepth);
+        Assert.NotSame(window.FindResource("RibbonKit.Effects.ContentShadow"), frame.Effect);
+        Assert.Same(window.FindResource("Crystal.Brushes.ApplicationMenuFrame"), frame.Background);
+        foreach (var band in new[] { "TopBand", "FooterBand" })
+            Assert.Equal(Colors.Transparent, Assert.IsType<SolidColorBrush>(
+                ((Border)menu.Template.FindName(band, menu)).Background).Color);
+        RibbonApplicationMenuSeparator? separator = null;
+        foreach (var entry in menu.Items)
+            if (entry is RibbonApplicationMenuSeparator line) separator = line;
+        Assert.NotNull(separator);
+        Assert.Equal(new Thickness(12, 4, 12, 4), separator.Margin);
         var pane = (Border)menu.Template.FindName("PART_Pane", menu);
         var innerContent = (Grid)VisualTreeHelper.GetParent(pane);
         var innerOutline = (Border)VisualTreeHelper.GetParent(innerContent);
@@ -1039,12 +1049,13 @@ public class CrystalContextualTests
         ((RibbonMenuItem)accent.Items[1]).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         LayoutMenu();
         Assert.NotSame(oldFace, frame.Background);
-        Assert.Same(window.FindResource("RibbonKit.Brushes.Ribbon.ContentBackground"), frame.Background);
+        Assert.Same(window.FindResource("Crystal.Brushes.ApplicationMenuFrame"), frame.Background);
         var compare = (RibbonToggleButton)window.FindName("CompareToggle");
         compare.IsChecked = true;
         compare.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         LayoutMenu();
         Assert.Equal(new CornerRadius(8), frame.CornerRadius);
+        Assert.Equal(new Thickness(), separator.Margin);
         Assert.Equal(new CornerRadius(), innerOutline.CornerRadius);
         Assert.Null(innerContent.Clip);
         Assert.Equal(new Thickness(1), activePage.BorderThickness);

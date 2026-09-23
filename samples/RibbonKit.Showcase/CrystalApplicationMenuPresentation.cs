@@ -18,14 +18,14 @@ internal sealed class CrystalApplicationMenuPresentation
         ("Foreground", "RibbonKit.Brushes.Text.Primary"),
         ("SecondaryForeground", "RibbonKit.Brushes.Text.Secondary"),
         ("HeadingForeground", "RibbonKit.Brushes.Accent"),
-        ("FrameBorder", "Crystal.Brushes.ScreenTipBorder"),
+        ("FrameBorder", "Crystal.Brushes.ApplicationMenuOutline"),
         ("FrameRim", "RibbonKit.Brushes.Control.InnerGlow"),
-        ("FrameBand", "RibbonKit.Brushes.Ribbon.ContentBackground"),
-        ("TopBandBackground", "RibbonKit.Brushes.Ribbon.ContentBackground"),
-        ("FooterBackground", "RibbonKit.Brushes.Ribbon.ContentBackground"),
-        ("NavBackground", "RibbonKit.Brushes.Tab.HoverBackground"),
-        ("PaneBackground", "RibbonKit.Brushes.Control.SurfaceBackground"),
-        ("PaneSurface", "RibbonKit.Brushes.Ribbon.ContentBackground"),
+        ("FrameBand", "Crystal.Brushes.ApplicationMenuFrame"),
+        ("TopBandBackground", "Crystal.Brushes.ApplicationMenuClearBand"),
+        ("FooterBackground", "Crystal.Brushes.ApplicationMenuClearBand"),
+        ("NavBackground", "RibbonKit.Brushes.Tab.SelectedBackground"),
+        ("PaneBackground", "Crystal.Brushes.ScreenTipSurface"),
+        ("PaneSurface", "Crystal.Brushes.ApplicationMenuClearBand"),
         ("PaneBorder", "RibbonKit.Brushes.Control.HoverBorder"),
         ("HeaderBackground", "RibbonKit.Brushes.Tab.HoverBackground"),
         ("Separator", "RibbonKit.Brushes.Group.Separator"),
@@ -71,12 +71,19 @@ internal sealed class CrystalApplicationMenuPresentation
             else _menu.Resources.Remove(key);
         }
         const string shadow = "RibbonKit.Effects.ApplicationMenuShadow";
-        if (enabled) _menu.Resources[shadow] = _owner.FindResource("RibbonKit.Effects.ContentShadow");
+        if (enabled) _menu.Resources[shadow] = _owner.FindResource("Crystal.Effects.ApplicationMenuShadow");
         else _menu.Resources.Remove(shadow);
         UpdateWidth();
         UpdateInnerFrame();
         foreach (var entry in _menu.Items)
+        {
             if (entry is RibbonApplicationMenuItem item) UpdateRow(item);
+            else if (entry is RibbonApplicationMenuSeparator separator)
+            {
+                if (enabled) separator.Margin = new Thickness(12, 4, 12, 4);
+                else separator.ClearValue(FrameworkElement.MarginProperty);
+            }
+        }
     }
 
     private void UpdateWidth()

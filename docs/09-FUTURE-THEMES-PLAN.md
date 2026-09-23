@@ -577,6 +577,15 @@ Release Showcase build and 26 focused Crystal/application-menu/KeyTip tests pass
 including pane switching, sample action dismissal, narrow width, live tint refresh
 and comparison restoration. Real hover/keyboard appearance remains for user review.
 
+Application-menu material refinement: the navigation separator now has 12-DIP side
+insets and 4-DIP vertical breathing room. The top/footer bands are transparent over
+one continuous frame material, avoiding the white gradient restart caused by painting
+the ribbon brush separately in each band. The frame adds a soft lower reflection and
+the glass rim; the navigation uses the selected-tab lens and the right pane uses the
+screen-tip surface. The active page stays transparent over that pane. Accent updates
+and comparison restoration remain covered. Release Showcase build and 19 focused
+Crystal/menu checks passed; the new material strength remains for visual review.
+
 Values are starting anchors, not approved final colors. Columns list base, raised
 surface, border, primary text, secondary text and accent respectively.
 

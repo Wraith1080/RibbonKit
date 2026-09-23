@@ -485,6 +485,30 @@
     <CornerRadius x:Key="RibbonKit.Metrics.TabCornerRadius">8,8,0,0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.ApplicationButtonCornerRadius">8</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadius">14</CornerRadius>
+    <!-- The application menu paints this once across the frame. Clear top/footer
+         bands avoid restarting a scaled gradient at their boundaries. -->
+    <SolidColorBrush x:Key="Crystal.Brushes.ApplicationMenuClearBand" Color="Transparent" />
+    <!-- Keep the silhouette colored; the existing inner rim carries the white glint. -->
+    <LinearGradientBrush x:Key="Crystal.Brushes.ApplicationMenuOutline" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#9FB5C7" Offset="0" />
+        <GradientStop Color="#B4C6D4" Offset="0.45" />
+        <GradientStop Color="#8FA9BE" Offset="1" />
+    </LinearGradientBrush>
+    <DrawingBrush x:Key="Crystal.Brushes.ApplicationMenuFrame" Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
+        <DrawingBrush.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z" Brush="{StaticResource Crystal.Brushes.ScreenTipSurface}" />
+                <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z">
+                    <GeometryDrawing.Brush>
+                        <RadialGradientBrush Center="0.55,1" GradientOrigin="0.55,1" RadiusX="0.65" RadiusY="0.08">
+                            <GradientStop Color="#A6FFFFFF" Offset="0" />
+                            <GradientStop Color="#00FFFFFF" Offset="1" />
+                        </RadialGradientBrush>
+                    </GeometryDrawing.Brush>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingBrush.Drawing>
+    </DrawingBrush>
     <!-- Notices retain their semantic amber tint when the global glass accent changes. -->
     <LinearGradientBrush x:Key="RibbonKit.Brushes.MessageBar.Background" StartPoint="0,0" EndPoint="0,1" Opacity="0.75">
         <GradientStop Color="#FAF4E3" Offset="0" />
@@ -510,6 +534,8 @@
     <CornerRadius x:Key="RibbonKit.Metrics.SplitRightCornerRadius">0,8,8,0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.SplitTopCornerRadius">8,8,0,0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.SplitBottomCornerRadius">0,0,8,8</CornerRadius>
+    <DropShadowEffect x:Key="Crystal.Effects.ApplicationMenuShadow" Color="#34485A"
+                      BlurRadius="16" ShadowDepth="0" Opacity="0.24" RenderingBias="Performance" />
     <DropShadowEffect x:Key="RibbonKit.Effects.ContentShadow" Color="#466982"
                       BlurRadius="16" ShadowDepth="3" Opacity="0.18" RenderingBias="Performance" />
 </ResourceDictionary>
