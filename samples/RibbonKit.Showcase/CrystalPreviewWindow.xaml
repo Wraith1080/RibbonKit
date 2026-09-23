@@ -24,6 +24,44 @@
                        Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
         </Border>
         <rk:Ribbon x:Name="PreviewRibbon" DockPanel.Dock="Top" QuickAccessPosition="BelowRibbon">
+            <rk:Ribbon.ApplicationMenu>
+                <rk:RibbonApplicationMenu x:Name="CrystalFileMenu">
+                    <rk:RibbonApplicationMenu.DefaultContent>
+                        <StackPanel Margin="12">
+                            <TextBlock Text="Recent documents" FontWeight="SemiBold" Margin="4,2,0,10"
+                                       Foreground="{DynamicResource RibbonKit.Brushes.ApplicationMenu.HeadingForeground}" />
+                            <rk:RibbonApplicationMenuPaneItem Content="A calmer workspace" Description="Crystal preview document" Click="OnApplicationMenuCommand" />
+                            <rk:RibbonApplicationMenuPaneItem Content="Design notes" Description="Surface and color studies" Click="OnApplicationMenuCommand" />
+                            <rk:RibbonApplicationMenuPaneItem Content="Meeting notes" Click="OnApplicationMenuCommand" />
+                        </StackPanel>
+                    </rk:RibbonApplicationMenu.DefaultContent>
+                    <rk:RibbonApplicationMenuItem Header="New" Icon="{StaticResource Icon.Style}" Click="OnApplicationMenuCommand" />
+                    <rk:RibbonApplicationMenuItem Header="Open" Icon="{StaticResource Icon.Table}" Click="OnApplicationMenuCommand" />
+                    <rk:RibbonApplicationMenuItem Header="Save" Icon="{StaticResource Icon.Save}" Click="OnApplicationMenuCommand" />
+                    <rk:RibbonApplicationMenuItem x:Name="CrystalSaveAsMenuItem" Header="Save as" IsSplit="True"
+                                                  Icon="{StaticResource Icon.Save}" PaneHeader="Save a copy" Click="OnApplicationMenuCommand">
+                        <StackPanel Margin="8">
+                            <rk:RibbonApplicationMenuPaneItem Content="Document" Description="Keep the document formatting." Icon="{StaticResource Icon.Style}" Click="OnApplicationMenuCommand" />
+                            <rk:RibbonApplicationMenuPaneItem Content="Plain text" Description="Save only the text content." Icon="{StaticResource Icon.Font}" Click="OnApplicationMenuCommand" />
+                        </StackPanel>
+                    </rk:RibbonApplicationMenuItem>
+                    <rk:RibbonApplicationMenuSeparator />
+                    <rk:RibbonApplicationMenuItem x:Name="CrystalPrintMenuItem" Header="Print" IsSplit="False"
+                                                  Icon="{StaticResource Icon.Print}" PaneHeader="Print options">
+                        <StackPanel Margin="8">
+                            <rk:RibbonApplicationMenuPaneItem Content="Print preview" Description="Review the page before printing." Icon="{StaticResource Icon.Print}" Click="OnApplicationMenuCommand" />
+                            <rk:RibbonApplicationMenuPaneItem Content="Quick print" IsEnabled="False" Description="Unavailable in this preview." Icon="{StaticResource Icon.Print}" />
+                        </StackPanel>
+                    </rk:RibbonApplicationMenuItem>
+                    <rk:RibbonApplicationMenuItem Header="Share" Icon="{StaticResource Icon.Account}" IsEnabled="False" />
+                    <rk:RibbonApplicationMenu.FooterContent>
+                        <StackPanel Orientation="Horizontal">
+                            <rk:RibbonApplicationMenuButton Content="Backstage" Click="OnUseBackstage" />
+                            <rk:RibbonApplicationMenuButton Content="Close menu" Click="OnCloseApplicationMenu" />
+                        </StackPanel>
+                    </rk:RibbonApplicationMenu.FooterContent>
+                </rk:RibbonApplicationMenu>
+            </rk:Ribbon.ApplicationMenu>
             <rk:Ribbon.MessageBar>
                 <rk:RibbonMessageBar x:Name="CrystalMessageBar">
                     <rk:RibbonMessage x:Name="CrystalProtectedMessage" IsOpen="False"
@@ -42,7 +80,7 @@
             <rk:Ribbon.Backstage>
                 <rk:Backstage x:Name="CrystalBackstage" Design="Modern" SelectedIndex="0">
                     <rk:BackstageTabItem Header="Overview" Icon="{StaticResource Icon.Style}">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <ScrollViewer x:Name="CrystalOverviewScroll" VerticalScrollBarVisibility="Auto">
                             <StackPanel Margin="4,0,4,16">
                                 <TextBlock Text="Space to think." FontSize="36" Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
                                 <TextBlock Text="Your document, with a little room to breathe." Margin="0,10,0,28" FontSize="15" TextWrapping="Wrap"
@@ -86,7 +124,7 @@
                         </ScrollViewer>
                     </rk:BackstageTabItem>
                     <rk:BackstageTabItem Header="Appearance" Icon="{StaticResource Icon.Palette}">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <ScrollViewer x:Name="CrystalAppearanceScroll" VerticalScrollBarVisibility="Auto">
                             <StackPanel Margin="4,0,4,16">
                                 <TextBlock Text="Make it yours." FontSize="36" Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
                                 <TextBlock Text="A little color, the same clear glass." Margin="0,10,0,28" FontSize="15"
@@ -124,7 +162,7 @@
                         </ScrollViewer>
                     </rk:BackstageTabItem>
                     <rk:BackstageTabItem Header="About" Placement="Bottom" Icon="{StaticResource Icon.Palette}">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <ScrollViewer x:Name="CrystalAboutScroll" VerticalScrollBarVisibility="Auto">
                             <StackPanel Margin="4,0,4,16" MaxWidth="720" HorizontalAlignment="Left">
                                 <TextBlock Text="Crystal" FontSize="36" Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
                                 <TextBlock Margin="0,16,0,0" FontSize="15" TextWrapping="Wrap"
@@ -185,6 +223,7 @@
                         <rk:RibbonMenuItem x:Name="BodyScrollPreviewToggle" Header="Keep Home groups expanded" Click="OnBodyScrollPreview" />
                         <rk:RibbonMenuItem x:Name="OverflowPreviewToggle" Header="Show QAT overflow" Click="OnOverflowPreview" />
                         <rk:RibbonMenuItem x:Name="MessagePreviewButton" Header="Show next message" Click="OnShowMessage" />
+                        <rk:RibbonMenuItem x:Name="ApplicationMenuPreviewToggle" Header="Use application menu" Click="OnToggleApplicationMenu" />
                         <rk:RibbonMenuItem Header="Dismiss all messages" Click="OnDismissMessages" />
                     </rk:RibbonDropDownButton>
                 </rk:RibbonGroup>
@@ -280,7 +319,7 @@
                 </rk:RibbonGroup>
             </local:CrystalContextualTab>
         </rk:Ribbon>
-        <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <ScrollViewer x:Name="CrystalDocumentScroll" VerticalScrollBarVisibility="Auto">
             <Grid Margin="40,30,40,36" MaxWidth="920">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />

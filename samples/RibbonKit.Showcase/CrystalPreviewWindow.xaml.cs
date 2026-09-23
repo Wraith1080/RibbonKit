@@ -13,6 +13,8 @@ public partial class CrystalPreviewWindow : RibbonWindow
     private readonly CrystalBackstagePresentation _backstagePresentation;
     private readonly CrystalScreenTipPalette _screenTipPalette;
     private readonly CrystalMessagePresentation _messagePresentation;
+    private readonly CrystalScrollBars[] _scrollBars;
+    private readonly CrystalApplicationMenuPresentation _applicationMenuPresentation;
     private readonly string _baselineLayout;
     private readonly List<RibbonTab> _scrollPreviewTabs = new();
     private readonly Dictionary<RibbonGroup, bool> _savedHomeResizing = new();
@@ -23,6 +25,8 @@ public partial class CrystalPreviewWindow : RibbonWindow
     public CrystalPreviewWindow()
     {
         InitializeComponent();
+        PreviewRibbon.ApplicationMenu = null;
+        _applicationMenuPresentation = new CrystalApplicationMenuPresentation(CrystalFileMenu, this);
         // Group content is reparented by ribbon layout, so use the actual source
         // rather than resolving a window name from the borrowed content tree.
         foreach (var panel in new[] { CrystalOptionsPanel, CrystalSpacingPanel })
@@ -35,6 +39,11 @@ public partial class CrystalPreviewWindow : RibbonWindow
             Resources.MergedDictionaries[0], BackstageDocumentTitle, TitleInput);
         _screenTipPalette = new CrystalScreenTipPalette(Resources.MergedDictionaries[0]);
         _messagePresentation = new CrystalMessagePresentation(CrystalMessageBar);
+        _scrollBars = new[]
+        {
+            new CrystalScrollBars(CrystalDocumentScroll), new CrystalScrollBars(CrystalOverviewScroll),
+            new CrystalScrollBars(CrystalAppearanceScroll), new CrystalScrollBars(CrystalAboutScroll),
+        };
         foreach (var control in new FrameworkElement[] { CompareToggle, ArrangeButton, AccentSelector,
             FontInput, SizeInput, TitleInput, CrystalStylesGallery, UnavailableButton })
             if (control.ToolTip is RibbonScreenTip tip) _screenTipPalette.Attach(tip);
@@ -99,11 +108,14 @@ public partial class CrystalPreviewWindow : RibbonWindow
     {
         CrystalUtilityChrome.Apply(this, enabled);
         _messagePresentation.Apply(enabled);
+        _applicationMenuPresentation.Apply(enabled);
         CrystalTabShape.Apply(PreviewRibbon, enabled);
         if (PreviewRibbon.IsLoaded) CrystalQuickAccess.Apply(PreviewRibbon, enabled);
         if (PreviewRibbon.IsLoaded) CrystalFileHover.Apply(PreviewRibbon, enabled);
         _backstagePresentation.Apply(enabled ? _crystal : null);
         _screenTipPalette.Apply(enabled ? _crystal : null);
+        var accent = ((SolidColorBrush)FindResource("RibbonKit.Brushes.Accent")).Color;
+        foreach (var scrollBars in _scrollBars) scrollBars.Apply(enabled ? _crystal : null, accent);
         AccentSelector.IsEnabled = enabled;
         BackstageAccentSelector.IsEnabled = enabled;
         BackstageLayoutSelector.IsEnabled = enabled;
@@ -118,6 +130,33 @@ public partial class CrystalPreviewWindow : RibbonWindow
     }
 
     private void OnReturnToDocument(object sender, RoutedEventArgs e) => PreviewRibbon.IsBackstageOpen = false;
+
+    private void OnToggleApplicationMenu(object sender, RoutedEventArgs e)
+    {
+        PreviewRibbon.IsBackstageOpen = false;
+        bool useMenu = PreviewRibbon.ApplicationMenu == null;
+        PreviewRibbon.ApplicationMenu = useMenu ? CrystalFileMenu : null;
+        ApplicationMenuPreviewToggle.Header = useMenu ? "Use Backstage" : "Use application menu";
+        StatusText.Text = useMenu ? "File now opens the application menu." : "File now opens Backstage.";
+    }
+
+    private void OnUseBackstage(object sender, RoutedEventArgs e)
+    {
+        PreviewRibbon.IsBackstageOpen = false;
+        PreviewRibbon.ApplicationMenu = null;
+        ApplicationMenuPreviewToggle.Header = "Use application menu";
+        StatusText.Text = "File now opens Backstage.";
+    }
+
+    private void OnCloseApplicationMenu(object sender, RoutedEventArgs e) => CrystalFileMenu.RequestClose();
+
+    private void OnApplicationMenuCommand(object sender, RoutedEventArgs e)
+    {
+        string label = sender is RibbonApplicationMenuItem item ? item.Header?.ToString() ?? "Command"
+            : (sender as System.Windows.Controls.ContentControl)?.Content?.ToString() ?? "Command";
+        StatusText.Text = $"{label} selected (preview only).";
+        CrystalFileMenu.RequestClose();
+    }
 
     private void OnShowMessage(object sender, RoutedEventArgs e)
     {

@@ -550,6 +550,33 @@ checks passed, covering both placements, separate dismissal/reopen, actions, emp
 bar spacing and comparison. Animation was disabled for the layout assertions;
 live appearance and motion remain for the user's preview review.
 
+The user accepted the softer message gradient with background brush opacity 0.75
+and border brush opacity 0.85. These brush-level settings preserve fully opaque
+text, icons and actions; the semantic amber palette remains excluded from accent
+rotation. Keep this treatment as the current message-panel study.
+
+Document/Backstage scrollbar follow-up: the main document and all three Backstage
+pages now connect their native ScrollViewer bars to the existing shared
+RibbonKit.ScrollBarStyle. CrystalScrollBars centralizes the accepted customization
+palette (transparent track, 14-DIP thickness, lightly tinted thumb, 4-DIP corners),
+also used by CrystalCustomization. Local scopes survive Backstage reparenting,
+refresh on accent changes, and are removed for Office 2024 comparison. No shared
+runtime templates were copied or changed. Release Showcase build and 39 focused
+Crystal/scrollbar checks passed, including realized bars, scrolling and comparison
+restoration on all four viewers. Live appearance remains for user review.
+
+Application-menu study: Preview controls can switch File between Backstage and a
+sample RibbonApplicationMenu. The sample includes direct commands, a split Save as
+row, a pane-only Print row, recent documents, disabled commands and footer actions.
+CrystalApplicationMenuPresentation maps existing Crystal materials onto the shared
+application-menu tokens, rounds the combined split-row silhouette, and sizes the
+right pane to fit the narrow preview window. Tint changes refresh the materials;
+comparison removes the local overrides and restores Office 2024. All sample commands
+only report status. The menu footer can restore Backstage or close the menu.
+Release Showcase build and 26 focused Crystal/application-menu/KeyTip tests passed,
+including pane switching, sample action dismissal, narrow width, live tint refresh
+and comparison restoration. Real hover/keyboard appearance remains for user review.
+
 Values are starting anchors, not approved final colors. Columns list base, raised
 surface, border, primary text, secondary text and accent respectively.
 

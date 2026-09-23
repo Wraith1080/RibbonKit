@@ -183,6 +183,8 @@ public class CrystalContextualTests
             Assert.NotNull(FindUtilityRim(minimize));
             Assert.Equal(0d, FindUtilityRim(minimize)!.Opacity);
             CheckCrystalMessages(window, ribbon, utilityTabs);
+            CheckCrystalScrollBars(window, ribbon);
+            CheckCrystalApplicationMenu(window, ribbon);
             Assert.True(window.MinWidth <= 420);
             var home = (RibbonTab)window.FindName("HomeTab");
             var bodyPreview = (RibbonMenuItem)window.FindName("BodyScrollPreviewToggle");
@@ -989,6 +991,134 @@ public class CrystalContextualTests
             window.Close();
         }
     });
+
+    private static void CheckCrystalApplicationMenu(CrystalPreviewWindow window, Ribbon ribbon)
+    {
+        var toggle = (RibbonMenuItem)window.FindName("ApplicationMenuPreviewToggle");
+        var menu = (RibbonApplicationMenu)window.FindName("CrystalFileMenu");
+        Assert.Null(ribbon.ApplicationMenu);
+        toggle.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Assert.Same(menu, ribbon.ApplicationMenu);
+        ribbon.IsBackstageOpen = true;
+        LayoutMenu();
+        Assert.True(ribbon.IsApplicationMenuOpen);
+        var frame = (Border)menu.Template.FindName("Frame", menu);
+        Assert.Equal(new CornerRadius(14), frame.CornerRadius);
+        Assert.Same(window.FindResource("RibbonKit.Brushes.Ribbon.ContentBackground"), frame.Background);
+        var pane = (Border)menu.Template.FindName("PART_Pane", menu);
+        var innerContent = (Grid)VisualTreeHelper.GetParent(pane);
+        var innerOutline = (Border)VisualTreeHelper.GetParent(innerContent);
+        var innerRim = (Border)VisualTreeHelper.GetParent(innerOutline);
+        var activePage = (Border)menu.Template.FindName("ActivePage", menu);
+        Assert.Equal(new CornerRadius(10), innerOutline.CornerRadius);
+        Assert.Equal(new CornerRadius(11), innerRim.CornerRadius);
+        Assert.Equal(9d, Assert.IsType<RectangleGeometry>(innerContent.Clip).RadiusX);
+        Assert.Equal(new Thickness(), activePage.BorderThickness);
+        var split = (RibbonApplicationMenuItem)window.FindName("CrystalSaveAsMenuItem");
+        var print = (RibbonApplicationMenuItem)window.FindName("CrystalPrintMenuItem");
+        Assert.True(split.IsSplitPresentation);
+        Assert.False(print.IsSplitPresentation);
+        menu.NotifyItemHoverChanged(split, true);
+        LayoutMenu();
+        Assert.Same(split, menu.ActiveItem);
+        Assert.NotNull(((Grid)split.Template.FindName("Root", split)).Clip);
+        menu.NotifyItemHoverChanged(print, true);
+        LayoutMenu();
+        Assert.Same(print, menu.ActiveItem);
+        var printPane = (StackPanel)print.Content;
+        Assert.False(((RibbonApplicationMenuPaneItem)printPane.Children[1]).IsEnabled);
+        ((RibbonApplicationMenuPaneItem)printPane.Children[0]).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Assert.False(ribbon.IsBackstageOpen);
+        ribbon.IsBackstageOpen = true;
+        window.Width = 420;
+        LayoutMenu();
+        Assert.True(menu.ActualWidth < window.ActualWidth);
+        Assert.Equal(new Rect(innerContent.RenderSize), Assert.IsType<RectangleGeometry>(innerContent.Clip).Rect);
+        var accent = (RibbonDropDownButton)window.FindName("AccentSelector");
+        var oldFace = frame.Background;
+        ((RibbonMenuItem)accent.Items[1]).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        LayoutMenu();
+        Assert.NotSame(oldFace, frame.Background);
+        Assert.Same(window.FindResource("RibbonKit.Brushes.Ribbon.ContentBackground"), frame.Background);
+        var compare = (RibbonToggleButton)window.FindName("CompareToggle");
+        compare.IsChecked = true;
+        compare.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        LayoutMenu();
+        Assert.Equal(new CornerRadius(8), frame.CornerRadius);
+        Assert.Equal(new CornerRadius(), innerOutline.CornerRadius);
+        Assert.Null(innerContent.Clip);
+        Assert.Equal(new Thickness(1), activePage.BorderThickness);
+        Assert.Equal(new Thickness(0, 0, 2, 2), activePage.Margin);
+        Assert.Null(((Grid)split.Template.FindName("Root", split)).Clip);
+        compare.IsChecked = false;
+        compare.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        ((RibbonMenuItem)accent.Items[0]).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        window.Width = 1080;
+        LayoutMenu();
+        Assert.Equal(new CornerRadius(14), frame.CornerRadius);
+        var footer = Assert.IsType<StackPanel>(menu.FooterContent);
+        ((RibbonApplicationMenuButton)footer.Children[0]).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Assert.Null(ribbon.ApplicationMenu);
+        Assert.False(ribbon.IsBackstageOpen);
+        LayoutMenu();
+        void LayoutMenu() { Sta.Drain(); window.UpdateLayout(); }
+    }
+
+    private static void CheckCrystalScrollBars(CrystalPreviewWindow window, Ribbon ribbon)
+    {
+        var stage = (Backstage)window.FindName("CrystalBackstage");
+        var compare = (RibbonToggleButton)window.FindName("CompareToggle");
+        var viewers = new[] { "CrystalDocumentScroll", "CrystalOverviewScroll", "CrystalAppearanceScroll", "CrystalAboutScroll" };
+        int previousSelection = stage.SelectedIndex;
+        try
+        {
+            for (int i = 0; i < viewers.Length; i++)
+            {
+                var viewer = (ScrollViewer)window.FindName(viewers[i]);
+                double originalHeight = viewer.Height;
+                try
+                {
+                    if (i > 0)
+                    {
+                        stage.SelectedIndex = i - 1;
+                        ribbon.IsBackstageOpen = true;
+                    }
+                    viewer.Height = 80;
+                    LayoutScroll();
+                    var bar = (System.Windows.Controls.Primitives.ScrollBar)viewer.Template.FindName("PART_VerticalScrollBar", viewer);
+                    Assert.Equal(Visibility.Visible, bar.Visibility);
+                    Assert.Same(bar.FindResource("RibbonKit.VerticalScrollBarTemplate"), bar.Template);
+                    Assert.Equal(14d, bar.Width);
+                    Assert.Equal(Colors.Transparent, Assert.IsType<SolidColorBrush>(bar.Background).Color);
+                    Assert.IsType<DrawingBrush>(bar.FindResource("RibbonKit.Brushes.ScrollBar.Thumb"));
+                    viewer.ScrollToVerticalOffset(12);
+                    LayoutScroll();
+                    Assert.True(viewer.VerticalOffset > 0);
+                    var crystalTemplate = bar.Template;
+                    compare.IsChecked = true;
+                    compare.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                    LayoutScroll();
+                    Assert.NotSame(crystalTemplate, bar.Template);
+                    compare.IsChecked = false;
+                    compare.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                    LayoutScroll();
+                    Assert.Same(bar.FindResource("RibbonKit.VerticalScrollBarTemplate"), bar.Template);
+                }
+                finally
+                {
+                    viewer.Height = originalHeight;
+                    viewer.ScrollToTop();
+                }
+            }
+        }
+        finally
+        {
+            ribbon.IsBackstageOpen = false;
+            stage.SelectedIndex = previousSelection;
+            LayoutScroll();
+        }
+        void LayoutScroll() { Sta.Drain(); window.UpdateLayout(); }
+    }
 
     private static void CheckCrystalMessages(CrystalPreviewWindow window, Ribbon ribbon, RibbonTabControl tabs)
     {

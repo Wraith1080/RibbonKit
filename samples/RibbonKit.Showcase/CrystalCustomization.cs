@@ -15,24 +15,12 @@ internal static class CrystalCustomization
         foreach (var (target, source) in new[]
         {
             ("OptionsDialog.RailBackground", "Ribbon.ContentBackground"),
-            ("ScrollBar.Glyph", "Text.Secondary"),
-            ("ScrollBar.ButtonBackground", "Control.SurfaceBackground"),
-            ("ScrollBar.ButtonBorder", "Control.HoverBorder"),
             ("Dialog.ActionBackground", "Tab.SelectedBackground"),
         })
             dialog.Resources["RibbonKit.Brushes." + target] = palette["RibbonKit.Brushes." + source];
-        dialog.Resources["RibbonKit.Brushes.ScrollBar.ThumbBorder"] = palette["RibbonKit.Brushes.Control.HoverBorder"];
-        dialog.Resources["RibbonKit.Brushes.ScrollBar.Track"] = Brushes.Transparent;
-        var arrowSurface = (Brush)dialog.Resources["RibbonKit.Brushes.ScrollBar.ButtonBackground"];
         var selectedAccent = ((SolidColorBrush)dialog.FindResource("RibbonKit.Brushes.Accent")).Color;
-        dialog.Resources["RibbonKit.Brushes.ScrollBar.Thumb"] = WithWash(arrowSurface, selectedAccent, 0.06);
-        dialog.Resources["RibbonKit.Brushes.ScrollBar.ThumbHover"] = WithWash(arrowSurface, selectedAccent, 0.08);
-        dialog.Resources["RibbonKit.Brushes.ScrollBar.ThumbPressed"] = WithWash(arrowSurface, selectedAccent, 0.11);
+        CrystalScrollBars.Configure(dialog.Resources, palette, selectedAccent);
         dialog.Resources["RibbonKit.Brushes.Dialog.ActionBorder"] = palette["Crystal.Brushes.ScreenTipBorder"];
-        dialog.Resources["RibbonKit.Metrics.ScrollBar.Thickness"] = 14d;
-        dialog.Resources["RibbonKit.Metrics.ScrollBar.ThumbBorderThickness"] = new Thickness(1);
-        foreach (var name in new[] { "ButtonCornerRadius", "ThumbCornerRadius", "RailCornerRadius" })
-            dialog.Resources["RibbonKit.Metrics.ScrollBar." + name] = new CornerRadius(4);
 
         dialog.Loaded += (_, _) =>
         {
@@ -40,7 +28,7 @@ internal static class CrystalCustomization
             {
                 var accent = ((SolidColorBrush)dialog.FindResource("RibbonKit.Brushes.Accent")).Color;
                 foreach (var key in new[] { "Control.CheckedBackground", "Tab.SelectedBackground", "Control.PressedBackground" })
-                    ok.Resources["RibbonKit.Brushes." + key] = WithWash((Brush)palette["RibbonKit.Brushes." + key], accent, 0.12);
+                    ok.Resources["RibbonKit.Brushes." + key] = CrystalScrollBars.WithWash((Brush)palette["RibbonKit.Brushes." + key], accent, 0.12);
                 ok.Style = (Style)dialog.FindResource("Crystal.Customize.PrimaryAction");
             }
             if (dialog.Template.FindName("PART_CancelButton", dialog) is Button cancel)
@@ -78,16 +66,4 @@ internal static class CrystalCustomization
         }
     }
 
-    private static DrawingBrush WithWash(Brush source, Color color, double amount)
-    {
-        // Preserve the accepted surface and reflection geometry; only its tint changes.
-        var face = new RectangleGeometry(new Rect(0, 0, 1, 1));
-        var drawing = new DrawingGroup();
-        drawing.Children.Add(new GeometryDrawing(source.CloneCurrentValue(), null, face));
-        var wash = new SolidColorBrush(Color.FromArgb((byte)Math.Round(amount * 255), color.R, color.G, color.B));
-        drawing.Children.Add(new GeometryDrawing(wash, null, face));
-        var brush = new DrawingBrush(drawing) { Viewbox = new Rect(0, 0, 1, 1), ViewboxUnits = BrushMappingMode.Absolute, Stretch = Stretch.Fill };
-        brush.Freeze();
-        return brush;
-    }
 }
