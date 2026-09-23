@@ -25,8 +25,6 @@
         <GradientStop Color="#A6FFFFFF" Offset="0.45" />
         <GradientStop Color="#8095AFC5" Offset="1" />
     </LinearGradientBrush>
-    <DropShadowEffect x:Key="Crystal.Effects.QuickAccessShadow" Color="#34485A"
-                      BlurRadius="5" ShadowDepth="1" Direction="90" Opacity="0.16" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.SurfaceBackground" Color="#F6FBFD" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Primary" Color="#20364A" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Secondary" Color="#4F6476" />
@@ -144,6 +142,15 @@
     <DrawingBrush x:Key="RibbonKit.Brushes.Tab.HoverBorder"
                   Drawing="{StaticResource Crystal.Drawing.GlassRim}" Opacity="0.6"
                   Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
+    <DropShadowEffect x:Key="Crystal.Effects.QuickAccessShadow" Color="#34485A"
+                      BlurRadius="6" ShadowDepth="2" Direction="315" Opacity="0.16" />
+    <DrawingBrush x:Key="Crystal.Brushes.QuickAccessBorder"
+                  Drawing="{StaticResource Crystal.Drawing.GlassRim}" Opacity="0.6"
+                  Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
+        <DrawingBrush.RelativeTransform>
+            <ScaleTransform ScaleY="-1" CenterY="0.5" />
+        </DrawingBrush.RelativeTransform>
+    </DrawingBrush>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverUnderline" Color="Transparent" />
     <!-- The existing rounded marker clips this brush into a pill. A darker upper/lower
          edge surrounds a luminous center, with a localized glint for a trapped-air look. -->

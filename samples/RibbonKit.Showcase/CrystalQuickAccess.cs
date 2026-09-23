@@ -49,7 +49,8 @@ internal static class CrystalQuickAccess
         panel.ClearValue(Border.BorderThicknessProperty);
         panel.Padding = new Thickness(8, 2, 8, 2);
         panel.SetResourceReference(UIElement.EffectProperty, "Crystal.Effects.QuickAccessShadow");
+        // Reuse the inactive tab's hover surface, with the global Crystal tint.
         panel.SetResourceReference(Border.BackgroundProperty, "RibbonKit.Brushes.Tab.HoverBackground");
-        panel.SetResourceReference(Border.BorderBrushProperty, "RibbonKit.Brushes.Tab.HoverBorder");
+        panel.SetResourceReference(Border.BorderBrushProperty, "Crystal.Brushes.QuickAccessBorder");
     }
 }

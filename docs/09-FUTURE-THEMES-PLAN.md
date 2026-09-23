@@ -438,6 +438,43 @@ Restored the previous tab-hover surface, 16-DIP side insets, square upper corner
 open top edge and upward seam shadow. The separate panel remains a recorded study;
 the drawer is the current direction.
 
+The current material trial reuses the ordinary selected-tab fill and rim directly,
+without its pill marker. QAT color follows only the global Crystal accent; selecting
+or recoloring a contextual tab must not recolor it. The original gradient geometry,
+ribbon shadow and drawer shadow are preserved. The contextual-color binding and
+shadow-reduction experiment was reverted by the user. Release Showcase build and
+fourteen focused Crystal tests passed; the QAT regression now compares actual
+brushes with a long selected tab and verifies contextual isolation, global accent
+updates, original body shadow, minimized layout and baseline restoration. User
+visual review remains pending.
+
+QAT depth follow-up: move its own shadow downward (2 DIP, 8-DIP blur, 18% opacity)
+so the lower edge and sides separate from the window background. The ribbon body's
+original shadow, drawer geometry and active-tab material are unchanged. Release
+Showcase build and fourteen focused Crystal tests passed; user visual review pending.
+
+The added QAT shadow was rejected and removed. Following clarification, the latest
+trial uses the inactive tab's hover background and hover rim. Global accent changes
+still apply; contextual colors do not.
+The ribbon body's shadow is preserved. Release Showcase build and fourteen focused
+Crystal tests passed; visual review remains with the user.
+
+QAT rim experiment: vertically mirror a dedicated copy of the hover border brush,
+placing its white reflection along the bottom. The shared tab rim, QAT fill and
+shadow settings are unchanged. Global tint replacement preserves the mirror.
+Release Showcase build and fourteen focused Crystal tests passed; visual review
+remains with the user.
+
+The bottom-lit QAT rim was accepted. A small separation shadow now sits below it:
+1-DIP depth, 4-DIP blur and 10% opacity. This is lighter and tighter than the earlier
+rejected shadow; the fill, bottom reflection and ribbon shadow remain unchanged.
+Release Showcase build and fourteen focused Crystal tests passed; user review of
+the new shadow remains pending.
+
+The first separation shadow was too subtle. The next trial increases downward
+depth to 2 DIP, blur to 6 DIP and opacity to 16%. Release Showcase build and fourteen
+focused Crystal tests passed; visual review remains with the user.
+
 Values are starting anchors, not approved final colors. Columns list base, raised
 surface, border, primary text, secondary text and accent respectively.
 
