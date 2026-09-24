@@ -612,6 +612,14 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [Implementation and verification](docs/history/01-library.md#3164-crystal-contextual-tab-study-and-compact-button-refinement--2026-09-21).
 
+### 3.165 Crystal Light theme selection — 2026-09-24
+
+[Implementation and verification](docs/history/01-library.md#3165-crystal-light-theme-selection--2026-09-24).
+
+### 3.166 Crystal main Showcase presentation — 2026-09-24
+
+[Screenshot finding and focused correction](docs/history/01-library.md#3166-crystal-main-showcase-presentation--2026-09-24).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),

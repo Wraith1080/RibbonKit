@@ -55,9 +55,10 @@ public partial class MainWindow : RibbonWindow
     // The Office 2007 application menu, declared in XAML so the designer renders it, then parked
     // here. Ribbon.ApplicationMenu WINS over Ribbon.Backstage whenever it is set, and this app
     // wants the backstage by default — so it is detached at startup and handed back by the
-    // "2007 Menu" toggle or by switching to the Office 2007 theme. A real app that only ever ships
+    // "2007 Menu" toggle or by switching to Office 2007 or Crystal Light. A real app that ships
     // one File surface just leaves the one it wants assigned in XAML and never touches this.
     private readonly RibbonApplicationMenu _applicationMenu;
+    private CrystalMainWindowPresentation? _crystalPresentation;
     private LocalizationRtlDemo? _localizationRtlDemo;
     private string? _customAccent;
     private ShowcaseBackdropPreference _preferredBackdrop;
@@ -294,6 +295,8 @@ public partial class MainWindow : RibbonWindow
 
     private void OnApplyOffice2024(object sender, RoutedEventArgs e) => ApplyTheme(RibbonTheme.Office2024);
 
+    private void OnApplyCrystalLight(object sender, RoutedEventArgs e) => ApplyTheme(RibbonTheme.CrystalLight);
+
     private void OnPreviewCrystal(object sender, RoutedEventArgs e) =>
         new CrystalPreviewWindow { Owner = this }.Show();
 
@@ -312,7 +315,16 @@ public partial class MainWindow : RibbonWindow
     private void ApplyTheme(RibbonTheme theme)
     {
         ThemeManager.Apply(Application.Current, theme);
-        DarkModeToggle.IsEnabled = ThemeManager.SupportsDarkMode(theme);
+        if (theme == RibbonTheme.CrystalLight)
+        {
+            (_crystalPresentation ??= new CrystalMainWindowPresentation(
+                this, MainRibbon, ShowcaseMessageBar, _applicationMenu)).Apply(true);
+        }
+        else
+            _crystalPresentation?.Apply(false);
+        bool supportsDarkMode = ThemeManager.SupportsDarkMode(theme);
+        DarkModeToggle.IsEnabled = supportsDarkMode;
+        DarkModeToggle.Visibility = supportsDarkMode ? Visibility.Visible : Visibility.Collapsed;
 
         bool is2007 = theme == RibbonTheme.Office2007;
         bool is2010 = theme == RibbonTheme.Office2010;
@@ -327,10 +339,9 @@ public partial class MainWindow : RibbonWindow
             ? RibbonApplicationButtonShape.Orb
             : RibbonApplicationButtonShape.Tab;
 
-        // Same reasoning as the orb: the two-pane application menu is what the ORB opened in 2007,
-        // and every generation after it opened a backstage instead. Setting the toggle rather than
-        // the ribbon property keeps the two in sync — the Checked handler does the actual swap.
-        ApplicationMenuToggle.IsChecked = is2007;
+        // Crystal's preview uses the application menu too. Keep the existing toggle as the
+        // single path for swapping File surfaces; restored explicit preferences still win.
+        ApplicationMenuToggle.IsChecked = is2007 || theme == RibbonTheme.CrystalLight;
         ApplyFrameAppearancePreference();
         ApplyAeroFrameTintPreference();
         UpdateBackdropSurfaceTransparency();

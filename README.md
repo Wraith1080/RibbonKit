@@ -63,7 +63,11 @@ mode is **not supported**; gallery/scrollbar system-color fallbacks are narrower
 ### Theming & rendering
 
 Office 2007, 2010, 2013, 2019 and 2024 each have light and dark/black palettes, with
-live theme/accent switching. Shared `Controls.*.xaml` templates use dynamic tokens.
+live theme/accent switching. Crystal Light adds a light-only palette for the same
+shared `Controls.*.xaml` templates. Showcase applies its Crystal QAT, message,
+menu and popup presentation when that theme is selected; these host-owned effects
+are not installed by `ThemeManager`. The preview's document-under-QAT effect remains
+separate.
 `RibbonWindow` supports compatible Mica/Acrylic backdrops and separate optional
 frame appearance. Theme selection does not silently enable a material.
 Contextual tabs can optionally set `RibbonTab.ContextualSelectionBrush` for a distinct

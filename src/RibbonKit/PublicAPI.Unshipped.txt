@@ -1,4 +1,5 @@
 #nullable enable
+RibbonKit.Theming.RibbonTheme.CrystalLight = 5 -> RibbonKit.Theming.RibbonTheme
 RibbonKit.Controls.RibbonTab.ContextualSelectionBrush.get -> System.Windows.Media.Brush?
 RibbonKit.Controls.RibbonTab.ContextualSelectionBrush.set -> void
 static readonly RibbonKit.Controls.RibbonTab.ContextualSelectionBrushProperty -> System.Windows.DependencyProperty!

@@ -49,7 +49,7 @@ public sealed class VisualSnapshotTests
     };
 
     [Fact]
-    public void Every_theme_variant_and_dpi_matches_its_approved_snapshot() =>
+    public void Every_approved_office_theme_variant_and_dpi_matches_its_snapshot() =>
         SnapshotThread.Run(() =>
         {
             CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
@@ -62,9 +62,9 @@ public sealed class VisualSnapshotTests
 
             try
             {
-                Assert.All(
-                    Enum.GetValues<RibbonTheme>(),
-                    theme => Assert.True(ThemeManager.SupportsDarkMode(theme)));
+                Assert.All(Themes, variant =>
+                    Assert.True(ThemeManager.SupportsDarkMode(variant.Theme)));
+                Assert.False(ThemeManager.SupportsDarkMode(RibbonTheme.CrystalLight));
                 AssertDarkBackdropRoundTrip(application);
 
                 foreach ((RibbonTheme theme, bool dark, string name) in Themes)

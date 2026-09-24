@@ -4604,3 +4604,53 @@ test failed before the fix and passes for disable/re-enable afterwards; isolated
 control tests alone had missed this preview wiring. The window now merges its icon
 resources locally for standalone construction. Release Showcase build and twenty
 focused Crystal/option-control tests passed; the user owns visual acceptance.
+
+Crystal runtime token promotion (2026-09-24): the preview's 90 top-level brush,
+drawing, effect and metric resources moved unchanged into the packaged
+`Tokens.Crystal.Light.xaml` dictionary. It merges Office 2024 tokens for keys Crystal
+does not override, while the Showcase dictionary retains its eight local control
+styles. A tint variant must recolor the merged Crystal dictionary itself; recoloring
+only the sample overlay silently leaves shared templates at the blue palette. The
+sample still removes its entire overlay for Office 2024 comparison. This first slice
+does not add a public theme enum or move host-owned blur and document underlay into
+the control. Release Showcase and both runtime target builds passed without warnings;
+the new standalone token test, focused tint and customization checks, and all four
+fresh-process follow-ups passed. A grouped Crystal run passed 17/21 and hit the known
+WindowChrome cross-thread cache failure in the other four. No new live visual or DPI
+acceptance is claimed.
+The user then inspected the preview and reported no perceptible difference on the
+current display; this accepts the resource move, not the later main-window theme.
+
+### 3.165 Crystal Light theme selection — 2026-09-24
+
+`RibbonTheme.CrystalLight` appends public enum value 5, preserving the existing Office
+values. `ThemeManager.Apply` and the design-only `Ribbon.DesignPreviewTheme` share one
+mapping to `Tokens.Crystal.Light.xaml`; the net472 editor mirrors value 5 without a
+runtime reference. Showcase offers Crystal Light in its main Theme group and saves
+the choice separately from the Crystal preview window. It has no dark palette, so
+Showcase hides the dark toggle while it is selected; a stored dark preference still
+applies when returning to an Office theme.
+
+When a custom accent is set, the shared semantic accent and selected-tab text follow
+it. The Crystal reflective selected marker, checked wash and open File surface retain
+their drawing brushes rather than flattening into solid colors. The preview's Glass
+tint still rotates the full material separately. A focused runtime switch test covers
+Crystal → Office 2024 → Crystal with accent and dark preference; a design preview
+test covers the token URI and local scope, and Showcase preference serialization
+round-trips the new value. Release solution build passed without warnings. Live
+main-window appearance, designer interaction, DPI/RTL and Crystal snapshots remain
+unverified.
+
+### 3.166 Crystal main Showcase presentation — 2026-09-24
+
+The user's side-by-side screenshot showed the normal Showcase retained a flat QAT
+strip and square message bars after selecting Crystal Light. Shared token brushes
+alone did not install the preview's host-owned presentation. The preview's implicit
+control styles were split into a reusable Showcase dictionary; the main window merges
+that dictionary and applies the existing QAT, message, utility, menu and popup
+adapters only for Crystal Light. The preview still merges the same styles with its
+window-scoped palette. Crystal selects the application menu as the default File
+surface, while a separately saved explicit File choice is restored afterward.
+Switching back removes the styles and adapters without changing Office resources.
+Focused host switch and preview style checks passed; main-window visual acceptance
+remains with the user.

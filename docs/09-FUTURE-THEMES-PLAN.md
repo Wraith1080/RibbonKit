@@ -1,7 +1,9 @@
 # Future theme candidates
 
-These are unimplemented design candidates, not `RibbonTheme` values or release
-commitments. Current support is in [README](../README.md#theming--rendering).
+The Office 2021, Aurora, Warm Sand and Graphite Copper directions below are
+unimplemented design candidates, not `RibbonTheme` values or release commitments.
+Crystal Light has begun staged promotion into RibbonKit. Current support is in
+[README](../README.md#theming--rendering).
 The intended order is Office 2021 → Aurora → Warm Sand → Graphite Copper;
 Evergreen, Aubergine and Polar Slate remain exploratory.
 
@@ -33,6 +35,7 @@ from both neighbors. Proposed dictionary names and enum value remain provisional
 An experimental Office 2024 derivative is available in Showcase under View → Theme →
 Crystal preview, or by launching Showcase with `--crystal`. It opens a separate window
 with window-scoped Office 2024 tokens and `Themes/Crystal.Light.xaml` overrides.
+The shared base palette is also selectable in the main Showcase window as Crystal Light.
 Compare 2024 removes/reinstates the overlay without changing saved preferences.
 The first slice covers title/ribbon surfaces, selected/hover/disabled controls and an
 Arrange dropdown. It uses opaque gradients, bright edges and rounded geometry;
@@ -672,6 +675,31 @@ drawer, start the fade below it, and keep the scrollbar accessible below it.
 Position, message-bar, resize and DPI changes must restore or update that geometry;
 the ordinary content-below-ribbon layout remains available. Validate the contract
 in a real consumer before treating this Showcase behavior as theme support.
+
+Promotion slice 1 packages the accepted brushes and metrics as
+`RibbonKit/Themes/Tokens.Crystal.Light.xaml`. It merges the Office 2024 token set for
+unchanged keys and can be merged at application or window scope to style the shared
+RibbonKit templates. The Showcase overlay now holds only its local control styles and
+merges that same packaged palette; tint variants recolor the Crystal overrides without
+mutating the Office fallback. At this stage it was an opt-in resource dictionary,
+before adding a `RibbonTheme` value. Snapshot blur, the QAT document underlay, and
+the remaining preview presentation adapters stay host-owned.
+
+Promotion slice 2 adds `RibbonTheme.CrystalLight` and a main-Showcase theme choice.
+`ThemeManager.Apply` loads the shared Crystal tokens, and the choice persists in
+Showcase appearance preferences. The designer's palette preview can select the same
+tokens. Crystal Light has no dark palette. A custom accent
+updates semantic accent and selected-tab text while leaving its reflective marker,
+checked wash and open File surface intact; the preview's separate Glass tint control
+still recolors the whole material. Crystal snapshots and live main-window acceptance
+remain open before calling this a complete shipped theme.
+
+The first main-window visual check showed that tokens alone left the QAT drawer and
+message panels looking like Office. Showcase now applies the existing Crystal
+presentation adapters and local control styles only while Crystal Light is selected.
+The Crystal menu is the default File surface, with an explicit saved File choice still
+respected. Switching back removes the local styles and restores the Office template
+parts. The document-under-QAT layout remains a separate host option.
 
 The preview's Add scrolling text action reveals a longer sample document so the
 QAT underlay can be inspected by scrolling. The same action removes the added

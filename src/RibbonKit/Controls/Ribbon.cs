@@ -2237,9 +2237,7 @@ public class Ribbon : Control
             var theme = (Theming.RibbonTheme)preview;
             var dictionary = new ResourceDictionary
             {
-                Source = new Uri(
-                    $"pack://application:,,,/RibbonKit;component/Themes/Tokens.{theme}.xaml",
-                    UriKind.Absolute),
+                Source = Theming.ThemeManager.TokenDictionaryUri(theme),
             };
             Resources.MergedDictionaries.Add(dictionary);
             _designPreviewThemeDictionary = dictionary;

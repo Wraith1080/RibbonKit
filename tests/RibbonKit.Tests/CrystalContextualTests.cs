@@ -18,6 +18,30 @@ namespace RibbonKit.Tests;
 public class CrystalContextualTests
 {
     [Fact]
+    public void Crystal_runtime_tokens_style_shared_button_without_showcase_resources() => Sta.Run(() =>
+    {
+        var host = new StackPanel();
+        var office = new ResourceDictionary
+        { Source = new Uri("/RibbonKit;component/Themes/Tokens.Office2024.xaml", UriKind.Relative) };
+        var crystal = new ResourceDictionary
+        { Source = new Uri("/RibbonKit;component/Themes/Tokens.Crystal.Light.xaml", UriKind.Relative) };
+        foreach (object key in office.Keys)
+            Assert.NotNull(crystal[key]);
+
+        host.Resources.MergedDictionaries.Add(crystal);
+        var button = new RibbonButton { Header = "Crystal" };
+        host.Children.Add(button);
+        host.Measure(new Size(200, 100));
+        host.Arrange(new Rect(0, 0, 200, 100));
+        host.UpdateLayout();
+        var hover = Assert.IsType<Border>(button.Template.FindName("HoverWash", button));
+        Assert.Same(crystal["RibbonKit.Brushes.Control.HoverBackground"], hover.Background);
+        Assert.Same(crystal["RibbonKit.Brushes.Control.HoverBorder"], hover.BorderBrush);
+        Assert.Equal(new CornerRadius(8), hover.CornerRadius);
+        Assert.IsType<DrawingBrush>(hover.BorderBrush);
+    });
+
+    [Fact]
     public void Crystal_customize_tree_opens_without_missing_ancestor_bindings() => Sta.Run(() =>
     {
         var window = new CrystalPreviewWindow { Width = 760, Height = 480,

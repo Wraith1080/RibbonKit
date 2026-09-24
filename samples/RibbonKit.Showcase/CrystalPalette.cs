@@ -19,6 +19,9 @@ internal static class CrystalPalette
         if (accent == Blue) return palette;
 
         double rotation = Hue(accent) - Hue(Blue);
+        // The reusable palette is merged from RibbonKit; keep each tint scoped to
+        // this fresh preview dictionary, without changing the Office 2024 fallback.
+        TintResources(palette.MergedDictionaries[0], rotation, keepText: true);
         TintResources(palette, rotation, keepText: true);
         foreach (var type in new[] { typeof(RibbonComboBox), typeof(RibbonTextBox) })
         {

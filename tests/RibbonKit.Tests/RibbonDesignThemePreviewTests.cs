@@ -49,6 +49,15 @@ public class RibbonDesignThemePreviewTests
                 new System.Windows.Thickness(8d, 4d, 2d, 0d),
                 ribbon.TryFindResource("RibbonKit.Metrics.ApplicationButtonMargin"));
 
+            ribbon.DesignPreviewTheme = (int)RibbonTheme.CrystalLight;
+            var crystal = Assert.Single(ribbon.Resources.MergedDictionaries);
+            Assert.EndsWith(
+                "/RibbonKit;component/Themes/Tokens.Crystal.Light.xaml",
+                crystal.Source.OriginalString,
+                StringComparison.Ordinal);
+            Assert.IsType<System.Windows.Media.DrawingBrush>(
+                ribbon.TryFindResource("RibbonKit.Brushes.Tab.SelectedUnderline"));
+
             ribbon.DesignPreviewTheme = -1;
             Assert.Empty(ribbon.Resources.MergedDictionaries);
         });
@@ -69,6 +78,8 @@ public class RibbonDesignThemePreviewTests
             "TabPreview.cs"));
 
         Assert.Contains("BuildPreviewRow(\"Theme\", _themeCombo)", editor, StringComparison.Ordinal);
+        Assert.Contains("AddThemePreview(\"Crystal Light\", ThemePreview.CrystalLight)",
+            editor, StringComparison.Ordinal);
         Assert.Contains("TabPreviewCoordinator.SetTheme(_ribbon, theme)", editor, StringComparison.Ordinal);
         Assert.Contains(
             "Properties.Add(new TypeIdentifier(RibbonType), \"DesignPreviewTheme\")",

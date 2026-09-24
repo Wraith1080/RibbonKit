@@ -8,6 +8,16 @@ namespace RibbonKit.Tests;
 public class ShowcaseAppearancePreferencesTests
 {
     [Fact]
+    public void Crystal_light_selection_round_trips_as_a_theme_preference()
+    {
+        string json = ShowcaseAppearancePreferencesSerializer.Serialize(
+            new ShowcaseAppearancePreferences { Theme = RibbonTheme.CrystalLight });
+
+        Assert.True(ShowcaseAppearancePreferencesSerializer.TryDeserialize(json, out var restored));
+        Assert.Equal(RibbonTheme.CrystalLight, restored.Theme);
+    }
+
+    [Fact]
     public void Round_trip_preserves_every_appearance_preference()
     {
         var source = new ShowcaseAppearancePreferences

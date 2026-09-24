@@ -807,6 +807,12 @@
                 </rk:RibbonGroup>
                 <!-- Runtime theme switch — same templates, different token dictionary -->
                 <rk:RibbonGroup Header="Theme" rk:Ribbon.CommandId="group.view.theme" Icon="{StaticResource Icon.Palette}">
+                    <rk:RibbonButton Header="Crystal Light"
+                                     Icon="{StaticResource Icon.Mica}"
+                                     SizeDefinition="Large, Medium, Small"
+                                     Click="OnApplyCrystalLight"
+                                     ScreenTipTitle="Crystal Light theme"
+                                     ScreenTipText="Apply Crystal Light to the main Showcase window." />
                     <rk:RibbonButton Header="Crystal preview"
                                      Icon="{StaticResource Icon.Mica}"
                                      SizeDefinition="Large, Medium, Small"
