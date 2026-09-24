@@ -117,4 +117,12 @@
             <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.4" /></Trigger>
         </ControlTemplate.Triggers>
     </ControlTemplate>
+    <Style x:Key="Crystal.Customize.TreeContainer" TargetType="TreeViewItem">
+        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+        <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+        <Setter Property="Template" Value="{StaticResource Crystal.Customize.TreeItem}" />
+    </Style>
 </ResourceDictionary>

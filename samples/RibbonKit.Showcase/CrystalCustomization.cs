@@ -45,8 +45,7 @@ internal static class CrystalCustomization
         {
             entry.SetResourceReference(Control.TemplateProperty, "Crystal.Customize.Navigation");
             if (entry.Content is not Control page) continue;
-            TreeView? styledTree = null;
-            page.Loaded += (_, _) =>
+            void StylePage()
             {
                 foreach (var name in new[] { "Add", "Remove", "Reset", "NewTab", "NewGroup", "Edit", "Up", "Down", "Import", "Export" })
                     if (page.Template?.FindName("PART_" + name + "Button", page) is Button button)
@@ -55,14 +54,19 @@ internal static class CrystalCustomization
                 foreach (var name in new[] { "PART_AvailableList", "PART_CurrentList" })
                     if (page.Template?.FindName(name, page) is ListBox list)
                         list.ItemContainerStyle = (Style)dialog.FindResource("Crystal.Customize.ListItem");
-                if (page.Template?.FindName("PART_Tree", page) is TreeView tree && tree != styledTree)
+                if (page.Template?.FindName("PART_Tree", page) is TreeView tree)
                 {
-                    var style = new Style(typeof(TreeViewItem), tree.ItemContainerStyle);
-                    style.Setters.Add(new Setter(Control.TemplateProperty, dialog.FindResource("Crystal.Customize.TreeItem")));
+                    var style = (Style)dialog.FindResource("Crystal.Customize.TreeContainer");
                     tree.ItemContainerStyle = style;
-                    styledTree = tree;
+                    tree.Resources[typeof(TreeViewItem)] = style;
                 }
-            };
+            }
+            // RibbonCustomizePage builds its tree in OnApplyTemplate. Style its
+            // containers before the page is attached so ancestor bindings in the
+            // default style never run during the dialog's opening layout.
+            page.ApplyTemplate();
+            StylePage();
+            page.Loaded += (_, _) => StylePage();
         }
     }
 

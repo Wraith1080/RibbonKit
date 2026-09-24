@@ -3,6 +3,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Markup;
 using System.Windows.Media;
@@ -16,6 +17,50 @@ namespace RibbonKit.Tests;
 
 public class CrystalContextualTests
 {
+    [Fact]
+    public void Crystal_customize_tree_opens_without_missing_ancestor_bindings() => Sta.Run(() =>
+    {
+        var window = new CrystalPreviewWindow { Width = 760, Height = 480,
+            Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
+        try
+        {
+            window.Show();
+            Sta.Drain();
+            var dialog = window.CreateCustomizationDialog(false);
+            try
+            {
+                var page = Assert.IsType<RibbonCustomizePage>(dialog.SelectedPage!.Content);
+                page.ApplyTemplate();
+                var tree = Assert.IsType<TreeView>(page.Template.FindName("PART_Tree", page));
+                var treeStyle = Assert.IsType<Style>(dialog.FindResource("Crystal.Customize.TreeContainer"));
+                Assert.Same(treeStyle, tree.ItemContainerStyle);
+                Assert.Same(treeStyle, tree.Resources[typeof(TreeViewItem)]);
+                foreach (var property in new[] { Control.ForegroundProperty,
+                    Control.HorizontalContentAlignmentProperty, Control.VerticalContentAlignmentProperty })
+                    Assert.DoesNotContain(treeStyle.Setters.OfType<Setter>(), setter =>
+                        setter.Property == property && setter.Value is BindingBase);
+                Sta.Drain();
+                dialog.Show();
+                Sta.Drain();
+                dialog.UpdateLayout();
+                var row = Assert.IsType<TreeViewItem>(tree.ItemContainerGenerator.ContainerFromIndex(0));
+                Assert.Same(treeStyle, row.Style);
+                foreach (var property in new[] { Control.ForegroundProperty,
+                    Control.HorizontalContentAlignmentProperty, Control.VerticalContentAlignmentProperty })
+                    Assert.Null(BindingOperations.GetBindingBase(row, property));
+                row.IsExpanded = true;
+                Sta.Drain();
+                var child = Assert.IsType<TreeViewItem>(row.ItemContainerGenerator.ContainerFromIndex(0));
+                Assert.Same(treeStyle, child.Style);
+                foreach (var property in new[] { Control.ForegroundProperty,
+                    Control.HorizontalContentAlignmentProperty, Control.VerticalContentAlignmentProperty })
+                    Assert.Null(BindingOperations.GetBindingBase(child, property));
+            }
+            finally { dialog.Close(); }
+        }
+        finally { window.Close(); }
+    });
+
     [Fact]
     public void Crystal_document_length_toggle_provides_scrollable_sample_text() => Sta.Run(() =>
     {
