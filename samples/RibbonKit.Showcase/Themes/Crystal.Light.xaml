@@ -485,8 +485,8 @@
     <CornerRadius x:Key="RibbonKit.Metrics.TabCornerRadius">8,8,0,0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.ApplicationButtonCornerRadius">8</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadius">14</CornerRadius>
-    <!-- A denser glass tint quiets content behind the menu; bands reveal one continuous fill. -->
-    <LinearGradientBrush x:Key="Crystal.Brushes.ApplicationMenuFrame" StartPoint="0,0" EndPoint="0,1" Opacity="0.88">
+    <!-- The menu frame and popup backdrops share one cool tint over their blurred samples. -->
+    <LinearGradientBrush x:Key="Crystal.Brushes.FrostedFrame" StartPoint="0,0" EndPoint="0,1" Opacity="0.84">
         <GradientStop Color="#EAF3F9" Offset="0" />
         <GradientStop Color="#DEEAF3" Offset="0.78" />
         <GradientStop Color="#ECF5FA" Offset="1" />

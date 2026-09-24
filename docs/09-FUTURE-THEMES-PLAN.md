@@ -638,6 +638,23 @@ Popup-opacity follow-up: the dropdown menu and collapsed-group flyout now share 
 slightly clearer 0.84 tint over the same 6-DIP blur. The accepted application-menu
 frame stays at 0.88. The user accepted both popup surfaces after live visual review.
 
+Shared frost follow-up: the application menu's translucent outer frame now uses the
+same `Crystal.Brushes.FrostedFrame` resource as both popup backdrops, at 0.84 opacity.
+The popup adapter no longer clones or overrides the tint. Its blur, the menu blur,
+sharp foregrounds and separate shadows are unchanged. The two popup surfaces retain
+their visual acceptance; the application's menu frame at 0.84 awaits user review.
+The Release test build and both focused popup checks passed. The combined run hit
+the recorded WPF WindowChrome cross-thread cache failure in the broader preview
+check; that check passed when rerun alone in a fresh process.
+
+Document-edge follow-up: the preview keeps the ribbon fixed above the document.
+When the document scrolls, Crystal fades only the top 24 DIP of its viewport so
+text disappears gradually beneath the ribbon. Home → Appearance → Preview
+controls toggles this fade for comparison; Compare 2024 removes it. Changing the
+ribbon's opacity alone would not reveal document text because the scroll viewport
+begins below the ribbon. The Showcase Release test build and focused scroll,
+toggle and comparison check passed. Live appearance awaits user review.
+
 Values are starting anchors, not approved final colors. Columns list base, raised
 surface, border, primary text, secondary text and accent respectively.
 

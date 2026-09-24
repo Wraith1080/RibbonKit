@@ -21,7 +21,7 @@ internal sealed class CrystalApplicationMenuPresentation
         ("HeadingForeground", "RibbonKit.Brushes.Accent"),
         ("FrameBorder", "RibbonKit.Brushes.Control.HoverBorder"),
         ("FrameRim", "RibbonKit.Brushes.Control.InnerGlow"),
-        ("FrameBand", "Crystal.Brushes.ApplicationMenuFrame"),
+        ("FrameBand", "Crystal.Brushes.FrostedFrame"),
         ("TopBandBackground", "Crystal.Brushes.ApplicationMenuClearBand"),
         ("FooterBackground", "Crystal.Brushes.ApplicationMenuClearBand"),
         ("NavBackground", "RibbonKit.Brushes.Tab.SelectedBackground"),

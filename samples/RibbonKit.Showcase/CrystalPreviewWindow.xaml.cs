@@ -16,12 +16,14 @@ public partial class CrystalPreviewWindow : RibbonWindow
     private readonly CrystalScrollBars[] _scrollBars;
     private readonly CrystalApplicationMenuPresentation _applicationMenuPresentation;
     private readonly CrystalPopupBackdrop[] _popupBackdrops;
+    private readonly CrystalDocumentEdgeFade _documentEdgeFade;
     private readonly string _baselineLayout;
     private readonly List<RibbonTab> _scrollPreviewTabs = new();
     private readonly Dictionary<RibbonGroup, bool> _savedHomeResizing = new();
     private readonly List<RibbonButton> _overflowPreviewItems = new();
     private RibbonQuickAccessPosition _savedQuickAccessPosition;
     private double _savedQuickAccessWidth;
+    private bool _documentEdgeFadeEnabled = true;
 
     public CrystalPreviewWindow()
     {
@@ -45,6 +47,7 @@ public partial class CrystalPreviewWindow : RibbonWindow
             new CrystalScrollBars(CrystalDocumentScroll), new CrystalScrollBars(CrystalOverviewScroll),
             new CrystalScrollBars(CrystalAppearanceScroll), new CrystalScrollBars(CrystalAboutScroll),
         };
+        _documentEdgeFade = new CrystalDocumentEdgeFade(CrystalDocumentScroll);
         var popups = new List<CrystalPopupBackdrop>();
         foreach (var control in new RibbonDropDownButton[]
         {
@@ -122,6 +125,8 @@ public partial class CrystalPreviewWindow : RibbonWindow
         _messagePresentation.Apply(enabled);
         _applicationMenuPresentation.Apply(enabled);
         foreach (var popup in _popupBackdrops) popup.Apply(enabled);
+        _documentEdgeFade.Apply(enabled, _documentEdgeFadeEnabled);
+        DocumentFadeToggle.IsEnabled = enabled;
         CrystalTabShape.Apply(PreviewRibbon, enabled);
         if (PreviewRibbon.IsLoaded) CrystalQuickAccess.Apply(PreviewRibbon, enabled);
         if (PreviewRibbon.IsLoaded) CrystalFileHover.Apply(PreviewRibbon, enabled);
@@ -143,6 +148,17 @@ public partial class CrystalPreviewWindow : RibbonWindow
     }
 
     private void OnReturnToDocument(object sender, RoutedEventArgs e) => PreviewRibbon.IsBackstageOpen = false;
+
+    private void OnDocumentFadeToggle(object sender, RoutedEventArgs e)
+    {
+        _documentEdgeFadeEnabled = !_documentEdgeFadeEnabled;
+        _documentEdgeFade.Apply(CompareToggle.IsChecked != true, _documentEdgeFadeEnabled);
+        DocumentFadeToggle.Header = _documentEdgeFadeEnabled
+            ? "Hide document edge fade" : "Show document edge fade";
+        StatusText.Text = _documentEdgeFadeEnabled
+            ? "The scrolled document fades gently at its top edge."
+            : "The scrolled document has a hard top edge.";
+    }
 
     private void OnToggleApplicationMenu(object sender, RoutedEventArgs e)
     {

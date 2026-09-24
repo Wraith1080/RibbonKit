@@ -17,6 +17,48 @@ namespace RibbonKit.Tests;
 public class CrystalContextualTests
 {
     [Fact]
+    public void Crystal_document_edge_fade_tracks_scrolling_toggle_and_comparison() => Sta.Run(() =>
+    {
+        var window = new CrystalPreviewWindow { Width = 760, Height = 480,
+            Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
+        try
+        {
+            window.Show();
+            Sta.Drain();
+            var viewer = (ScrollViewer)window.FindName("CrystalDocumentScroll");
+            var presenter = Assert.IsType<ScrollContentPresenter>(
+                viewer.Template.FindName("PART_ScrollContentPresenter", viewer));
+            Assert.Null(presenter.OpacityMask);
+            Assert.True(viewer.ScrollableHeight > 30);
+            viewer.ScrollToVerticalOffset(30);
+            Sta.Drain();
+            Assert.True(viewer.VerticalOffset > 0);
+            var fade = Assert.IsType<LinearGradientBrush>(presenter.OpacityMask);
+            Assert.Equal(BrushMappingMode.Absolute, fade.MappingMode);
+
+            var toggle = (RibbonMenuItem)window.FindName("DocumentFadeToggle");
+            toggle.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            Assert.Null(presenter.OpacityMask);
+            Assert.True(viewer.VerticalOffset > 0);
+            toggle.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            Assert.Same(fade, presenter.OpacityMask);
+
+            var compare = (RibbonToggleButton)window.FindName("CompareToggle");
+            compare.IsChecked = true;
+            Assert.Null(presenter.OpacityMask);
+            Assert.False(toggle.IsEnabled);
+            compare.IsChecked = false;
+            Assert.Same(fade, presenter.OpacityMask);
+            Assert.True(toggle.IsEnabled);
+
+            viewer.ScrollToTop();
+            Sta.Drain();
+            Assert.Null(presenter.OpacityMask);
+        }
+        finally { window.Close(); }
+    });
+
+    [Fact]
     public void Crystal_popup_backdrop_blurs_a_real_menu_without_blurring_its_items() => Sta.Run(() =>
     {
         var canvas = new Canvas { Width = 280, Height = 240, Background = Brushes.White };
@@ -97,9 +139,7 @@ public class CrystalContextualTests
             Assert.Same(window.FindResource("RibbonKit.Brushes.Ribbon.ContentBackground"), fallback.Brush);
             var tint = Assert.IsType<GeometryDrawing>(layers[2]);
             var popupTint = Assert.IsType<LinearGradientBrush>(tint.Brush);
-            var frameTint = Assert.IsType<LinearGradientBrush>(window.FindResource("Crystal.Brushes.ApplicationMenuFrame"));
-            Assert.Equal(frameTint.GradientStops[0].Color, popupTint.GradientStops[0].Color);
-            Assert.True(popupTint.Opacity < frameTint.Opacity);
+            Assert.Same(window.FindResource("Crystal.Brushes.FrostedFrame"), popupTint);
             arrange.IsDropDownOpen = false;
             Sta.Drain();
             Assert.Same(window.FindResource("RibbonKit.Brushes.Ribbon.ContentBackground"), menuHost.Background);
@@ -116,7 +156,7 @@ public class CrystalContextualTests
             var groupMaterial = Assert.IsType<DrawingBrush>(groupHost.Background);
             var groupTint = Assert.IsType<LinearGradientBrush>(Assert.IsType<GeometryDrawing>(
                 Assert.IsType<DrawingGroup>(groupMaterial.Drawing).Children[2]).Brush);
-            Assert.Equal(popupTint.Opacity, groupTint.Opacity);
+            Assert.Same(popupTint, groupTint);
             Assert.NotNull(groupHost.Child);
 
             ((RibbonToggleButton)window.FindName("CompareToggle")).IsChecked = true;
@@ -1211,7 +1251,7 @@ public class CrystalContextualTests
         var backdropLayer = Assert.IsType<Grid>(frameWrapper.Children[1]);
         Assert.Equal("CrystalMenuBackdrop", backdropLayer.Name);
         Assert.NotNull(Assert.IsType<Image>(backdropLayer.Children[0]).Source);
-        Assert.Same(window.FindResource("Crystal.Brushes.ApplicationMenuFrame"), frame.Background);
+        Assert.Same(window.FindResource("Crystal.Brushes.FrostedFrame"), frame.Background);
         Assert.NotSame(((Border)ribbon.Template.FindName("QatBelowHost", ribbon)).Background, frame.Background);
         Assert.Same(window.FindResource("RibbonKit.Brushes.Control.HoverBorder"), frame.BorderBrush);
         foreach (var band in new[] { "TopBand", "FooterBand" })
@@ -1256,7 +1296,7 @@ public class CrystalContextualTests
         ((RibbonMenuItem)accent.Items[1]).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         LayoutMenu();
         Assert.NotSame(oldFace, frame.Background);
-        Assert.Same(window.FindResource("Crystal.Brushes.ApplicationMenuFrame"), frame.Background);
+        Assert.Same(window.FindResource("Crystal.Brushes.FrostedFrame"), frame.Background);
         var compare = (RibbonToggleButton)window.FindName("CompareToggle");
         compare.IsChecked = true;
         compare.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));

@@ -13,7 +13,6 @@ namespace RibbonKit.Showcase;
 internal sealed class CrystalPopupBackdrop
 {
     private const double Padding = 24;
-    private const double PopupTintOpacity = 0.84;
     private readonly Window _owner;
     private readonly Control _control;
     private readonly string _hostPart;
@@ -127,9 +126,7 @@ internal sealed class CrystalPopupBackdrop
             if (crop == null) return;
 
             var surface = new Rect(0, 0, host.ActualWidth, host.ActualHeight);
-            var tint = ((Brush)_owner.FindResource("Crystal.Brushes.ApplicationMenuFrame")).CloneCurrentValue();
-            tint.Opacity = PopupTintOpacity;
-            if (tint.CanFreeze) tint.Freeze();
+            var tint = (Brush)_owner.FindResource("Crystal.Brushes.FrostedFrame");
             var material = new DrawingGroup();
             using (var context = material.Open())
             {
