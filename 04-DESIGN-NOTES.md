@@ -620,6 +620,10 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [Screenshot finding and focused correction](docs/history/01-library.md#3166-crystal-main-showcase-presentation--2026-09-24).
 
+### 3.167 Crystal Light first-phase gaps — 2026-09-24
+
+[Screenshot findings and focused implementation](docs/history/01-library.md#3167-crystal-light-first-phase-gaps--2026-09-24).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),

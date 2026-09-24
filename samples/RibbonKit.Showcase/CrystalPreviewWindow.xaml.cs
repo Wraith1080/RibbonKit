@@ -63,7 +63,7 @@ public partial class CrystalPreviewWindow : RibbonWindow
         var popups = new List<CrystalPopupBackdrop>();
         foreach (var control in new RibbonDropDownButton[]
         {
-            ArrangeButton, AccentSelector, PreviewControlsButton,
+            ArrangeButton, AccentSelector, PreviewControlsButton, StyleSplitButton,
             BackstageAccentSelector, BackstageLayoutSelector,
         })
             popups.Add(new CrystalPopupBackdrop(this, control, "PART_MenuHost"));
@@ -79,6 +79,7 @@ public partial class CrystalPreviewWindow : RibbonWindow
         {
             CrystalFileHover.Apply(PreviewRibbon, CompareToggle.IsChecked != true);
             CrystalQuickAccess.Apply(PreviewRibbon, CompareToggle.IsChecked != true);
+            CrystalSplitButtons.Apply(PreviewRibbon, CompareToggle.IsChecked != true);
         };
         _baselineLayout = RibbonCustomizationSerializer.Serialize(PreviewRibbon);
         PreviewRibbon.RibbonCustomizeRequested += (_, _) => CreateCustomizationDialog(false).ShowDialog();
@@ -141,6 +142,7 @@ public partial class CrystalPreviewWindow : RibbonWindow
         DocumentFadeToggle.IsEnabled = enabled;
         DocumentQatUnderlayToggle.IsEnabled = enabled;
         CrystalTabShape.Apply(PreviewRibbon, enabled);
+        CrystalSplitButtons.Apply(PreviewRibbon, enabled);
         if (PreviewRibbon.IsLoaded) CrystalQuickAccess.Apply(PreviewRibbon, enabled);
         if (PreviewRibbon.IsLoaded) CrystalFileHover.Apply(PreviewRibbon, enabled);
         _backstagePresentation.Apply(enabled ? _crystal : null);

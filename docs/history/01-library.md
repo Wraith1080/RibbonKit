@@ -4654,3 +4654,29 @@ surface, while a separately saved explicit File choice is restored afterward.
 Switching back removes the styles and adapters without changing Office resources.
 Focused host switch and preview style checks passed; main-window visual acceptance
 remains with the user.
+
+### 3.167 Crystal Light first-phase gaps — 2026-09-24
+
+The user's next screenshots exposed the remaining first-phase differences: a plain
+contextual tab, merged chart tabs using their ordinary color treatment, Office 2024
+scrollbars, an unstyled main options dialog, a split button without the Crystal
+paired-hover treatment, ordinary Backstage, and an accent picker that changed only
+semantic color. The main Showcase now uses the preview's contextual tab adapter for
+its own and merged tabs, scopes the shared scrollbar style and Crystal Backstage
+style to the Crystal selection's Modern Backstage, and applies the existing customization adapter to
+the detached options dialog. Its accent picker now builds a fresh hue-rotated local
+palette via `CrystalPalette.Create`; Office themes remove that window overlay.
+The split button's idle companion takes the ordinary hover wash and its active half
+receives a slightly stronger wash. A split example was added to the preview's Design
+tab without changing its accepted Home layout. Focused main presentation, merge,
+tint, Office restoration, and preview customization checks passed. Live visual
+acceptance is still open. MDI, localization/RTL, modal tabs, and dark mode are phase
+two by user direction.
+
+Theme-contract follow-up: the stronger active split wash uses the shared
+`RibbonKit.Brushes.Control.SplitActiveHover` token. Each Office base palette defines
+it as Transparent (also inherited by its dark variant); only the Crystal host adapter
+uses it, and that adapter removes its local override when Crystal is deselected.
+The audit found that Crystal's other `RibbonKit.*` overrides already exist in every
+Office base palette. `Crystal.*` resources remain scoped to the opt-in Showcase
+adapters rather than becoming shared template tokens.

@@ -187,6 +187,7 @@ public partial class MainWindow : RibbonWindow
             ApplyAeroFrameTintPreference();
 
             ShowcaseBackstage.Design = preferences.BackstageDesign;
+            _crystalPresentation?.UpdateBackstageStyle();
             BackstageTranslucentToggle.IsChecked = preferences.BackstageTranslucent;
             ApplicationMenuToggle.IsChecked =
                 preferences.FileSurface == ShowcaseFileSurface.ApplicationMenu;
@@ -318,7 +319,8 @@ public partial class MainWindow : RibbonWindow
         if (theme == RibbonTheme.CrystalLight)
         {
             (_crystalPresentation ??= new CrystalMainWindowPresentation(
-                this, MainRibbon, ShowcaseMessageBar, _applicationMenu)).Apply(true);
+                this, MainRibbon, ShowcaseMessageBar, _applicationMenu, ShowcaseBackstage))
+                .Apply(true, CrystalTint());
         }
         else
             _crystalPresentation?.Apply(false);
@@ -423,6 +425,7 @@ public partial class MainWindow : RibbonWindow
         }
 
         ApplyAeroFrameTintPreference();
+        RefreshCrystalTint();
         SaveAppearancePreferences();
     }
 
@@ -450,6 +453,16 @@ public partial class MainWindow : RibbonWindow
             });
         AccentGallery.SelectedItem = matchingItem;
         ApplyAeroFrameTintPreference();
+        RefreshCrystalTint();
+    }
+
+    private Color? CrystalTint() => _customAccent is not null
+        && ColorConverter.ConvertFromString(_customAccent) is Color color ? color : null;
+
+    private void RefreshCrystalTint()
+    {
+        if (ThemeManager.CurrentTheme == RibbonTheme.CrystalLight)
+            _crystalPresentation?.Apply(true, CrystalTint());
     }
 
     private void OnAnimationOff(object sender, RoutedEventArgs e) =>
@@ -473,6 +486,7 @@ public partial class MainWindow : RibbonWindow
             && Enum.TryParse(tag, out RibbonBackstageDesign design))
         {
             ShowcaseBackstage.Design = design;
+            _crystalPresentation?.UpdateBackstageStyle();
             NotifyApplicationSurfaceChanged();
             SaveAppearancePreferences();
         }
@@ -859,6 +873,13 @@ public partial class MainWindow : RibbonWindow
             OptionsPageKind.QuickAccess => qatPage,
             _ => editorPage,
         };
+
+        if (ThemeManager.CurrentTheme == RibbonTheme.CrystalLight
+            && _crystalPresentation?.Palette is { } palette)
+        {
+            dialog.Resources.MergedDictionaries.Add(palette);
+            CrystalCustomization.Apply(dialog, palette);
+        }
 
         // The dialog raises Applied on OK — the app's cue to persist its settings (the
         // customization pages edit the ribbon live). ShowDialog's bool result carries the

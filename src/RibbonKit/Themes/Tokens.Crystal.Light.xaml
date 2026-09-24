@@ -125,7 +125,9 @@
         <GradientStop Color="#A67898B2" Offset="1" />
     </LinearGradientBrush>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.InnerGlow" Color="Transparent" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionBackground" Color="#105885B1" />
+    <!-- Both halves light when one is hovered; the active half gets a stronger wash. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionBackground" Color="#205885B1" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.SplitActiveHover" Color="#405885B1" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionBorder" Color="#185D82A6" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionGlow" Color="Transparent" />
     <Thickness x:Key="RibbonKit.Metrics.ControlHighlightBorderThickness">1</Thickness>

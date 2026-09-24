@@ -63,6 +63,7 @@
          amber outline plus a pale wash inside it. One pair of tokens, one pair of setters in
          Controls.DropDowns.xaml, every generation. See 04-DESIGN-NOTES §3.43. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionBackground" Color="#EFEEED" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.SplitActiveHover" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionBorder" Color="Transparent" />
     <!-- No border to glow just inside of, so nothing to draw. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionGlow" Color="Transparent" />

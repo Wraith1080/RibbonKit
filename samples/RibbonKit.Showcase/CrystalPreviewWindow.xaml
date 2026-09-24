@@ -307,6 +307,11 @@
                                            Checked="OnDisableGallery" Unchecked="OnDisableGallery" />
                     <rk:RibbonToggleButton x:Name="EnableOptionsToggle" Header="Enable options" Size="Large"
                                            Icon="{StaticResource Icon.Select}" IsChecked="True" />
+                    <rk:RibbonSplitButton x:Name="StyleSplitButton" Header="Apply style" Size="Large"
+                                          Icon="{StaticResource Icon.Style}" Click="OnPreviewCommand">
+                        <rk:RibbonMenuItem Header="Calm" Click="OnPreviewCommand" />
+                        <rk:RibbonMenuItem Header="Heading" Click="OnPreviewCommand" />
+                    </rk:RibbonSplitButton>
                 </rk:RibbonGroup>
             </rk:RibbonTab>
             <local:CrystalContextualTab x:Name="PictureTab" Header="Picture Format" IsContextual="True" ContextualColor="#287E78">

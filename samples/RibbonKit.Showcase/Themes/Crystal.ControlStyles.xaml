@@ -17,17 +17,17 @@
         <Style.Resources>
             <CornerRadius x:Key="RibbonKit.Metrics.ControlCornerRadius">5</CornerRadius>
             <!-- The gallery template uses Group.Separator for its hover outline. -->
-            <DrawingBrush x:Key="RibbonKit.Brushes.Group.Separator" Drawing="{StaticResource Crystal.Drawing.GlassRim}"
+            <DrawingBrush x:Key="RibbonKit.Brushes.Group.Separator" Drawing="{DynamicResource Crystal.Drawing.GlassRim}"
                           Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" Opacity="0.6" />
         </Style.Resources>
     </Style>
     <Style TargetType="{x:Type rk:InRibbonGallery}">
         <Style.Resources>
-            <DrawingBrush x:Key="RibbonKit.Brushes.ScreenTip.Border" Drawing="{StaticResource Crystal.Drawing.GalleryRim}"
+            <DrawingBrush x:Key="RibbonKit.Brushes.ScreenTip.Border" Drawing="{DynamicResource Crystal.Drawing.GalleryRim}"
                           Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
-            <DrawingBrush x:Key="RibbonKit.Brushes.Control.SurfaceBackground" Drawing="{StaticResource Crystal.Drawing.GallerySpecularSurface}"
+            <DrawingBrush x:Key="RibbonKit.Brushes.Control.SurfaceBackground" Drawing="{DynamicResource Crystal.Drawing.GallerySpecularSurface}"
                           Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
-            <DrawingBrush x:Key="RibbonKit.Brushes.Ribbon.ContentBackground" Drawing="{StaticResource Crystal.Drawing.GallerySpecularSurface}"
+            <DrawingBrush x:Key="RibbonKit.Brushes.Ribbon.ContentBackground" Drawing="{DynamicResource Crystal.Drawing.GallerySpecularSurface}"
                           Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
         </Style.Resources>
     </Style>

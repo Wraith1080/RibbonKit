@@ -701,6 +701,20 @@ The Crystal menu is the default File surface, with an explicit saved File choice
 respected. Switching back removes the local styles and restores the Office template
 parts. The document-under-QAT layout remains a separate host option.
 
+The next first-phase screenshot review found seven gaps in the main Showcase:
+contextual and merged contextual tabs, scrollbars, customization, split-button
+hover states, Backstage, and full material tint from the accent picker. The main
+Showcase now reuses the preview's local adapters for these surfaces. The selected
+accent rotates the Crystal palette in the Showcase window while contextual tabs
+retain their own colors. This remains sample-scoped presentation; `ThemeManager`
+still supplies the shared base palette. Live review of these seven surfaces is open.
+Every new shared `RibbonKit.*` token needs a neutral counterpart in each Office base
+palette, inherited by its dark variant; Crystal-only presentation helpers must be
+inactive and remove their local overrides when another theme is selected.
+
+Phase two is reserved for MDI, localization and RTL, modal tabs, and dark mode.
+Crystal Light remains light-only in phase one.
+
 The preview's Add scrolling text action reveals a longer sample document so the
 QAT underlay can be inspected by scrolling. The same action removes the added
 paragraphs and restores the short document; this is a Showcase aid only.

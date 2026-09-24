@@ -152,6 +152,7 @@
     <!-- Transparent on purpose: a companion half is NOT filled. Washing the whole button made a
          merely-adjacent half look almost as hot as the hovered one. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionBackground" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.SplitActiveHover" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionBorder" Color="#E9C25E" />
     <!-- The glow: a 1px rim drawn just inside the outline, the same trick as InnerGlow. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionGlow" Color="#CCFFF0CB" />
