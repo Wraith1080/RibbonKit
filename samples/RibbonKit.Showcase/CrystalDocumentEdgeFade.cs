@@ -88,7 +88,7 @@ internal sealed class CrystalDocumentEdgeFade
                 };
                 // Keep the document faintly visible through the drawer, then finish
                 // the fade in the first 24 DIP beneath its lower edge.
-                var underlayOpacity = fadeStart > 0 ? (byte)112 : (byte)0;
+                var underlayOpacity = fadeStart > 0 ? (byte)64 : (byte)0;
                 var underlayColor = Color.FromArgb(underlayOpacity, 255, 255, 255);
                 mask.GradientStops.Add(new GradientStop(underlayColor, 0));
                 if (fadeStart > 0)

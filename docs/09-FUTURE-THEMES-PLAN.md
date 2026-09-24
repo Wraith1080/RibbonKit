@@ -642,7 +642,8 @@ Shared frost follow-up: the application menu's translucent outer frame now uses 
 same `Crystal.Brushes.FrostedFrame` resource as both popup backdrops, at 0.84 opacity.
 The popup adapter no longer clones or overrides the tint. Its blur, the menu blur,
 sharp foregrounds and separate shadows are unchanged. The two popup surfaces retain
-their visual acceptance; the application's menu frame at 0.84 awaits user review.
+their visual acceptance; the user accepted the application-menu frame at 0.84 after
+live review with document text behind it.
 The Release test build and both focused popup checks passed. The combined run hit
 the recorded WPF WindowChrome cross-thread cache failure in the broader preview
 check; that check passed when rerun alone in a fresh process.
@@ -675,6 +676,12 @@ in a real consumer before treating this Showcase behavior as theme support.
 The preview's Add scrolling text action reveals a longer sample document so the
 QAT underlay can be inspected by scrolling. The same action removes the added
 paragraphs and restores the short document; this is a Showcase aid only.
+
+The first long-document review showed the clear QAT drawer still looks good, but
+large document headings compete with its icons when they pass underneath. Keep
+the accepted QAT surface and reduce only the document's underlay visibility from
+44% to 25%; its fade still reaches full opacity below the drawer. This smaller
+adjustment was accepted after the user's live screenshot review.
 
 Values are starting anchors, not approved final colors. Columns list base, raised
 surface, border, primary text, secondary text and accent respectively.
