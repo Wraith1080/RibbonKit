@@ -24,6 +24,7 @@ public partial class CrystalPreviewWindow : RibbonWindow
     private RibbonQuickAccessPosition _savedQuickAccessPosition;
     private double _savedQuickAccessWidth;
     private bool _documentEdgeFadeEnabled = true;
+    private bool _documentQatUnderlayEnabled = true;
 
     public CrystalPreviewWindow()
     {
@@ -47,7 +48,7 @@ public partial class CrystalPreviewWindow : RibbonWindow
             new CrystalScrollBars(CrystalDocumentScroll), new CrystalScrollBars(CrystalOverviewScroll),
             new CrystalScrollBars(CrystalAppearanceScroll), new CrystalScrollBars(CrystalAboutScroll),
         };
-        _documentEdgeFade = new CrystalDocumentEdgeFade(CrystalDocumentScroll);
+        _documentEdgeFade = new CrystalDocumentEdgeFade(PreviewRibbon, CrystalDocumentScroll);
         var popups = new List<CrystalPopupBackdrop>();
         foreach (var control in new RibbonDropDownButton[]
         {
@@ -125,8 +126,9 @@ public partial class CrystalPreviewWindow : RibbonWindow
         _messagePresentation.Apply(enabled);
         _applicationMenuPresentation.Apply(enabled);
         foreach (var popup in _popupBackdrops) popup.Apply(enabled);
-        _documentEdgeFade.Apply(enabled, _documentEdgeFadeEnabled);
+        _documentEdgeFade.Apply(enabled, _documentEdgeFadeEnabled, _documentQatUnderlayEnabled);
         DocumentFadeToggle.IsEnabled = enabled;
+        DocumentQatUnderlayToggle.IsEnabled = enabled;
         CrystalTabShape.Apply(PreviewRibbon, enabled);
         if (PreviewRibbon.IsLoaded) CrystalQuickAccess.Apply(PreviewRibbon, enabled);
         if (PreviewRibbon.IsLoaded) CrystalFileHover.Apply(PreviewRibbon, enabled);
@@ -152,12 +154,25 @@ public partial class CrystalPreviewWindow : RibbonWindow
     private void OnDocumentFadeToggle(object sender, RoutedEventArgs e)
     {
         _documentEdgeFadeEnabled = !_documentEdgeFadeEnabled;
-        _documentEdgeFade.Apply(CompareToggle.IsChecked != true, _documentEdgeFadeEnabled);
+        _documentEdgeFade.Apply(CompareToggle.IsChecked != true, _documentEdgeFadeEnabled,
+            _documentQatUnderlayEnabled);
         DocumentFadeToggle.Header = _documentEdgeFadeEnabled
             ? "Hide document edge fade" : "Show document edge fade";
         StatusText.Text = _documentEdgeFadeEnabled
             ? "The scrolled document fades gently at its top edge."
             : "The scrolled document has a hard top edge.";
+    }
+
+    private void OnDocumentQatUnderlayToggle(object sender, RoutedEventArgs e)
+    {
+        _documentQatUnderlayEnabled = !_documentQatUnderlayEnabled;
+        _documentEdgeFade.Apply(CompareToggle.IsChecked != true, _documentEdgeFadeEnabled,
+            _documentQatUnderlayEnabled);
+        DocumentQatUnderlayToggle.Header = _documentQatUnderlayEnabled
+            ? "Keep document below QAT" : "Show document through QAT";
+        StatusText.Text = _documentQatUnderlayEnabled
+            ? "The document scrolls behind the below-ribbon QAT."
+            : "The document stays below the QAT.";
     }
 
     private void OnToggleApplicationMenu(object sender, RoutedEventArgs e)

@@ -655,6 +655,23 @@ ribbon's opacity alone would not reveal document text because the scroll viewpor
 begins below the ribbon. The Showcase Release test build and focused scroll,
 toggle and comparison check passed. Live appearance awaits user review.
 
+Below-ribbon QAT underlay trial: Crystal can now extend the scrolling document
+behind the translucent QAT drawer. The document remains subdued there; its fade
+to full opacity starts just below the QAT. A second Preview controls action
+switches between this overlap and the original layout.
+The scrollbar still begins below the QAT. Tab-row QAT placement, open messages
+and Compare 2024 restore the normal document boundary. This remains sample-only;
+the live appearance awaits user review.
+
+Crystal promotion requirement: when this theme moves to the main RibbonKit control,
+provide an opt-in host integration for the same below-ribbon QAT underlay and
+document-edge fade. The control must expose the drawer's current bounds and
+placement so a consumer can extend its scrolling content behind the translucent
+drawer, start the fade below it, and keep the scrollbar accessible below it.
+Position, message-bar, resize and DPI changes must restore or update that geometry;
+the ordinary content-below-ribbon layout remains available. Validate the contract
+in a real consumer before treating this Showcase behavior as theme support.
+
 Values are starting anchors, not approved final colors. Columns list base, raised
 surface, border, primary text, secondary text and accent respectively.
 

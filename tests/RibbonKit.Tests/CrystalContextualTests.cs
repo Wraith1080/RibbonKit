@@ -26,34 +26,94 @@ public class CrystalContextualTests
             window.Show();
             Sta.Drain();
             var viewer = (ScrollViewer)window.FindName("CrystalDocumentScroll");
+            var ribbon = (Ribbon)window.FindName("PreviewRibbon");
+            var qat = Assert.IsType<Border>(ribbon.Template.FindName("QatBelowHost", ribbon));
+            var scrollBar = Assert.IsType<ScrollBar>(
+                viewer.Template.FindName("PART_VerticalScrollBar", viewer));
             var presenter = Assert.IsType<ScrollContentPresenter>(
                 viewer.Template.FindName("PART_ScrollContentPresenter", viewer));
-            Assert.Null(presenter.OpacityMask);
+            Assert.True(viewer.Margin.Top < -qat.ActualHeight);
+            Assert.Equal(-viewer.Margin.Top, scrollBar.Margin.Top, 1);
+            Assert.InRange(Math.Abs(viewer.TranslatePoint(new Point(), window).Y -
+                qat.TranslatePoint(new Point(), window).Y), 0, 1);
+            Assert.IsType<LinearGradientBrush>(presenter.OpacityMask);
             Assert.True(viewer.ScrollableHeight > 30);
             viewer.ScrollToVerticalOffset(30);
             Sta.Drain();
             Assert.True(viewer.VerticalOffset > 0);
             var fade = Assert.IsType<LinearGradientBrush>(presenter.OpacityMask);
             Assert.Equal(BrushMappingMode.Absolute, fade.MappingMode);
+            Assert.Equal(qat.ActualHeight + 24, fade.EndPoint.Y, 1);
+            Assert.Equal(3, fade.GradientStops.Count);
+            Assert.Equal(qat.ActualHeight / fade.EndPoint.Y, fade.GradientStops[1].Offset, 2);
+            Assert.InRange(fade.GradientStops[0].Color.A, (byte)1, (byte)254);
+
+            var qatToggle = (RibbonMenuItem)window.FindName("DocumentQatUnderlayToggle");
+            qatToggle.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            Sta.Drain();
+            Assert.Equal(new Thickness(), viewer.Margin);
+            Assert.Equal(new Thickness(), scrollBar.Margin);
+            Assert.Equal(24, Assert.IsType<LinearGradientBrush>(presenter.OpacityMask).EndPoint.Y);
+            qatToggle.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            Sta.Drain();
+            Assert.True(viewer.Margin.Top < -qat.ActualHeight);
 
             var toggle = (RibbonMenuItem)window.FindName("DocumentFadeToggle");
             toggle.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             Assert.Null(presenter.OpacityMask);
             Assert.True(viewer.VerticalOffset > 0);
             toggle.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-            Assert.Same(fade, presenter.OpacityMask);
+            Assert.Equal(qat.ActualHeight + 24,
+                Assert.IsType<LinearGradientBrush>(presenter.OpacityMask).EndPoint.Y, 1);
 
             var compare = (RibbonToggleButton)window.FindName("CompareToggle");
             compare.IsChecked = true;
             Assert.Null(presenter.OpacityMask);
             Assert.False(toggle.IsEnabled);
+            Assert.False(qatToggle.IsEnabled);
+            Assert.Equal(new Thickness(), viewer.Margin);
+            Assert.Equal(new Thickness(), scrollBar.Margin);
             compare.IsChecked = false;
-            Assert.Same(fade, presenter.OpacityMask);
+            Sta.Drain();
+            Assert.True(viewer.Margin.Top < -qat.ActualHeight);
+            Assert.NotNull(presenter.OpacityMask);
             Assert.True(toggle.IsEnabled);
+            Assert.True(qatToggle.IsEnabled);
+
+            ribbon.QuickAccessPosition = RibbonQuickAccessPosition.TabRow;
+            Sta.Drain();
+            Assert.Equal(new Thickness(), viewer.Margin);
+            ribbon.QuickAccessPosition = RibbonQuickAccessPosition.BelowRibbon;
+            Sta.Drain();
+            Assert.True(viewer.Margin.Top < -qat.ActualHeight);
+
+            var previousMotion = RibbonKit.Animation.RibbonAnimation.GetActionOverride(
+                RibbonKit.Animation.RibbonAnimationAction.MessageBar);
+            RibbonKit.Animation.RibbonAnimation.SetActionLevel(
+                RibbonKit.Animation.RibbonAnimationAction.MessageBar,
+                RibbonKit.Animation.RibbonAnimationLevel.None);
+            try
+            {
+                var message = (RibbonMessage)window.FindName("CrystalProtectedMessage");
+                message.IsOpen = true;
+                Sta.Drain();
+                Assert.Equal(new Thickness(), viewer.Margin);
+                message.IsOpen = false;
+                Sta.Drain();
+                Assert.True(viewer.Margin.Top < -qat.ActualHeight);
+            }
+            finally
+            {
+                if (previousMotion is { } level)
+                    RibbonKit.Animation.RibbonAnimation.SetActionLevel(
+                        RibbonKit.Animation.RibbonAnimationAction.MessageBar, level);
+                else RibbonKit.Animation.RibbonAnimation.ClearActionLevel(
+                    RibbonKit.Animation.RibbonAnimationAction.MessageBar);
+            }
 
             viewer.ScrollToTop();
             Sta.Drain();
-            Assert.Null(presenter.OpacityMask);
+            Assert.IsType<LinearGradientBrush>(presenter.OpacityMask);
         }
         finally { window.Close(); }
     });

@@ -225,6 +225,7 @@
                         <rk:RibbonMenuItem x:Name="MessagePreviewButton" Header="Show next message" Click="OnShowMessage" />
                         <rk:RibbonMenuItem x:Name="ApplicationMenuPreviewToggle" Header="Use application menu" Click="OnToggleApplicationMenu" />
                         <rk:RibbonMenuItem x:Name="DocumentFadeToggle" Header="Hide document edge fade" Click="OnDocumentFadeToggle" />
+                        <rk:RibbonMenuItem x:Name="DocumentQatUnderlayToggle" Header="Keep document below QAT" Click="OnDocumentQatUnderlayToggle" />
                         <rk:RibbonMenuItem Header="Dismiss all messages" Click="OnDismissMessages" />
                     </rk:RibbonDropDownButton>
                 </rk:RibbonGroup>
