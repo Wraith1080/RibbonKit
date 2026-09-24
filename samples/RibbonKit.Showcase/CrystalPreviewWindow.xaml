@@ -218,7 +218,7 @@
                     </rk:RibbonDropDownButton>
                     <rk:RibbonButton Header="Customize" Size="Large" Icon="{StaticResource Icon.Style}"
                                      Click="OnCustomize" />
-                    <rk:RibbonDropDownButton Header="Preview controls" Size="Large" Icon="{StaticResource Icon.Select}">
+                    <rk:RibbonDropDownButton x:Name="PreviewControlsButton" Header="Preview controls" Size="Large" Icon="{StaticResource Icon.Select}">
                         <rk:RibbonMenuItem x:Name="ScrollPreviewToggle" Header="Show scroll arrows" Click="OnScrollPreview" />
                         <rk:RibbonMenuItem x:Name="BodyScrollPreviewToggle" Header="Keep Home groups expanded" Click="OnBodyScrollPreview" />
                         <rk:RibbonMenuItem x:Name="OverflowPreviewToggle" Header="Show QAT overflow" Click="OnOverflowPreview" />

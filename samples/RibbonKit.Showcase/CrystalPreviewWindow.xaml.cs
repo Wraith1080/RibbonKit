@@ -15,6 +15,7 @@ public partial class CrystalPreviewWindow : RibbonWindow
     private readonly CrystalMessagePresentation _messagePresentation;
     private readonly CrystalScrollBars[] _scrollBars;
     private readonly CrystalApplicationMenuPresentation _applicationMenuPresentation;
+    private readonly CrystalPopupBackdrop[] _popupBackdrops;
     private readonly string _baselineLayout;
     private readonly List<RibbonTab> _scrollPreviewTabs = new();
     private readonly Dictionary<RibbonGroup, bool> _savedHomeResizing = new();
@@ -44,6 +45,17 @@ public partial class CrystalPreviewWindow : RibbonWindow
             new CrystalScrollBars(CrystalDocumentScroll), new CrystalScrollBars(CrystalOverviewScroll),
             new CrystalScrollBars(CrystalAppearanceScroll), new CrystalScrollBars(CrystalAboutScroll),
         };
+        var popups = new List<CrystalPopupBackdrop>();
+        foreach (var control in new RibbonDropDownButton[]
+        {
+            ArrangeButton, AccentSelector, PreviewControlsButton,
+            BackstageAccentSelector, BackstageLayoutSelector,
+        })
+            popups.Add(new CrystalPopupBackdrop(this, control, "PART_MenuHost"));
+        foreach (RibbonTab tab in PreviewRibbon.Tabs)
+            foreach (RibbonGroup group in tab.Groups)
+                popups.Add(new CrystalPopupBackdrop(this, group, "PART_PopupHost"));
+        _popupBackdrops = popups.ToArray();
         foreach (var control in new FrameworkElement[] { CompareToggle, ArrangeButton, AccentSelector,
             FontInput, SizeInput, TitleInput, CrystalStylesGallery, UnavailableButton })
             if (control.ToolTip is RibbonScreenTip tip) _screenTipPalette.Attach(tip);
@@ -109,6 +121,7 @@ public partial class CrystalPreviewWindow : RibbonWindow
         CrystalUtilityChrome.Apply(this, enabled);
         _messagePresentation.Apply(enabled);
         _applicationMenuPresentation.Apply(enabled);
+        foreach (var popup in _popupBackdrops) popup.Apply(enabled);
         CrystalTabShape.Apply(PreviewRibbon, enabled);
         if (PreviewRibbon.IsLoaded) CrystalQuickAccess.Apply(PreviewRibbon, enabled);
         if (PreviewRibbon.IsLoaded) CrystalFileHover.Apply(PreviewRibbon, enabled);

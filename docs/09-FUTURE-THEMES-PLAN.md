@@ -610,8 +610,8 @@ reflection, glass border and outside-only shadow remain. This is tint/opacity,
 not live backdrop blur; the QAT surface is unchanged. Release Showcase build and
 the focused preview/shadow rendering check passed; visual acceptance is pending.
 
-Menu backdrop blur trial: the translucent frame now overlays a cropped WPF snapshot
-of the content behind it, with a 12-DIP Gaussian blur and 24-DIP sampling allowance.
+Menu backdrop blur: the translucent frame now overlays a cropped WPF snapshot
+of the content behind it, with a 6-DIP Gaussian blur and 24-DIP sampling allowance.
 The entire menu and its shadow are excluded during synchronous capture, then restored
 before returning to the dispatcher. The blurred layer is clipped after its effect;
 foreground text, buttons, rims and the outside-only shadow stay sharp. Captures refresh
@@ -621,7 +621,22 @@ not continuous live refraction or an OS compositor material. A rendered black/wh
 edge test checks smoothing, foreground exclusion, rounded clipping, scrolling,
 resizing and reopening; the preview integration checks the actual menu wiring.
 Release Showcase build and 20 focused Crystal/application-menu checks passed.
-Live motion, mixed-monitor DPI and final material strength remain for visual review.
+The user accepted the 6-DIP blur after live visual review. Opening motion and
+mixed-monitor DPI remain unverified.
+
+Dropdown and collapsed-group popup frost trial: Crystal now samples the preview
+window beneath each open ribbon dropdown or collapsed-group flyout, applies the
+same 6-DIP Gaussian blur with 24-DIP sampling padding, then overlays the accepted
+cool application-menu frame tint. The shared popup border, corner radius, shadow,
+items and opening behavior stay in place; only the popup background changes.
+An opaque base covers any part of a popup that extends beyond the preview window.
+Snapshots refresh for opening geometry, owner resizing, scrolling and tint changes.
+Compare 2024 restores the original background resource. The Showcase Release build
+and two focused popup/rendering checks passed; mixed-monitor DPI remains unverified.
+
+Popup-opacity follow-up: the dropdown menu and collapsed-group flyout now share a
+slightly clearer 0.84 tint over the same 6-DIP blur. The accepted application-menu
+frame stays at 0.88. The user accepted both popup surfaces after live visual review.
 
 Values are starting anchors, not approved final colors. Columns list base, raised
 surface, border, primary text, secondary text and accent respectively.

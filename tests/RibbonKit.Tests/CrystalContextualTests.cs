@@ -1,6 +1,8 @@
 using System;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Documents;
 using System.Windows.Markup;
 using System.Windows.Media;
@@ -14,6 +16,116 @@ namespace RibbonKit.Tests;
 
 public class CrystalContextualTests
 {
+    [Fact]
+    public void Crystal_popup_backdrop_blurs_a_real_menu_without_blurring_its_items() => Sta.Run(() =>
+    {
+        var canvas = new Canvas { Width = 280, Height = 240, Background = Brushes.White };
+        canvas.Children.Add(new Border { Width = 140, Height = 240, Background = Brushes.Black });
+        var button = new RibbonDropDownButton { Header = "Arrange", Width = 120, Height = 36 };
+        button.Items.Add(new RibbonMenuItem { Header = "Bring to front" });
+        Canvas.SetLeft(button, 80);
+        Canvas.SetTop(button, 20);
+        canvas.Children.Add(button);
+        var window = new Window { Content = canvas, SizeToContent = SizeToContent.WidthAndHeight,
+            Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
+        window.Resources.MergedDictionaries.Add(new ResourceDictionary
+        { Source = new Uri("/RibbonKit;component/Themes/Tokens.Office2024.xaml", UriKind.Relative) });
+        window.Resources.MergedDictionaries.Add(CrystalPalette.Create(CrystalPalette.Blue));
+        var backdrop = new CrystalPopupBackdrop(window, button, "PART_MenuHost");
+        try
+        {
+            window.Show();
+            backdrop.Apply(true);
+            button.IsDropDownOpen = true;
+            Sta.Drain();
+            window.UpdateLayout();
+            Sta.Drain();
+            var popup = Assert.IsType<Popup>(button.Template.FindName("PART_Popup", button));
+            Assert.True(popup.IsOpen);
+            var host = Assert.IsType<Border>(button.Template.FindName("PART_MenuHost", button));
+            var material = Assert.IsType<DrawingBrush>(host.Background);
+            var drawing = Assert.IsType<DrawingGroup>(material.Drawing);
+            var image = Assert.IsType<ImageDrawing>(drawing.Children[1]);
+            var crop = Assert.IsType<System.Windows.Media.Imaging.CroppedBitmap>(image.ImageSource);
+            Assert.True(crop.PixelWidth > 70);
+            Assert.NotNull(host.Child); // The native menu items stay above the blurred background.
+
+            // Use fixed owner coordinates for pixel evidence: WPF can clamp a popup
+            // from an offscreen test window onto a different monitor.
+            var dpi = VisualTreeHelper.GetDpi(canvas);
+            var fixedCrop = Assert.IsType<System.Windows.Media.Imaging.CroppedBitmap>(
+                CrystalPopupBackdrop.CaptureBlurred(canvas, new Rect(80, 80, 120, 80), dpi));
+            int edgePixel = (int)Math.Round(60 * dpi.DpiScaleX);
+            var pixel = new byte[4];
+            fixedCrop.CopyPixels(new Int32Rect(edgePixel, fixedCrop.PixelHeight / 2, 1, 1), pixel, 4, 0);
+            Assert.InRange(pixel[0], 1, 254); // A softened black/white boundary.
+            Assert.Equal(pixel[0], pixel[2]);
+
+            backdrop.Apply(false);
+            Assert.NotSame(material, host.Background);
+            Assert.Same(window.FindResource("RibbonKit.Brushes.Ribbon.ContentBackground"), host.Background);
+        }
+        finally
+        {
+            button.IsDropDownOpen = false;
+            backdrop.Remove();
+            window.Close();
+        }
+    });
+
+    [Fact]
+    public void Crystal_preview_frosts_dropdown_and_collapsed_group_then_restores_comparison() => Sta.Run(() =>
+    {
+        var window = new CrystalPreviewWindow { Left = -10000, Top = -10000,
+            ShowActivated = false, ShowInTaskbar = false };
+        try
+        {
+            window.Show();
+            Sta.Drain();
+            var arrange = (RibbonDropDownButton)window.FindName("ArrangeButton");
+            arrange.IsDropDownOpen = true;
+            Sta.Drain();
+            var menuHost = (Border)arrange.Template.FindName("PART_MenuHost", arrange);
+            var blueMenu = Assert.IsType<DrawingBrush>(menuHost.Background);
+            var accent = (RibbonDropDownButton)window.FindName("AccentSelector");
+            ((RibbonMenuItem)accent.Items[1]).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            Sta.Drain();
+            var greenMenu = Assert.IsType<DrawingBrush>(menuHost.Background);
+            Assert.NotSame(blueMenu, greenMenu);
+            var layers = Assert.IsType<DrawingGroup>(greenMenu.Drawing).Children;
+            var fallback = Assert.IsType<GeometryDrawing>(layers[0]);
+            Assert.Same(window.FindResource("RibbonKit.Brushes.Ribbon.ContentBackground"), fallback.Brush);
+            var tint = Assert.IsType<GeometryDrawing>(layers[2]);
+            var popupTint = Assert.IsType<LinearGradientBrush>(tint.Brush);
+            var frameTint = Assert.IsType<LinearGradientBrush>(window.FindResource("Crystal.Brushes.ApplicationMenuFrame"));
+            Assert.Equal(frameTint.GradientStops[0].Color, popupTint.GradientStops[0].Color);
+            Assert.True(popupTint.Opacity < frameTint.Opacity);
+            arrange.IsDropDownOpen = false;
+            Sta.Drain();
+            Assert.Same(window.FindResource("RibbonKit.Brushes.Ribbon.ContentBackground"), menuHost.Background);
+
+            window.Width = 420;
+            Sta.Drain();
+            window.UpdateLayout();
+            var home = (RibbonTab)window.FindName("HomeTab");
+            var group = home.Groups.First(g => g.SizeState == RibbonGroupSizeState.Collapsed);
+            var toggle = (ToggleButton)group.Template.FindName("PART_CollapsedButton", group);
+            toggle.IsChecked = true;
+            Sta.Drain();
+            var groupHost = (Border)group.Template.FindName("PART_PopupHost", group);
+            var groupMaterial = Assert.IsType<DrawingBrush>(groupHost.Background);
+            var groupTint = Assert.IsType<LinearGradientBrush>(Assert.IsType<GeometryDrawing>(
+                Assert.IsType<DrawingGroup>(groupMaterial.Drawing).Children[2]).Brush);
+            Assert.Equal(popupTint.Opacity, groupTint.Opacity);
+            Assert.NotNull(groupHost.Child);
+
+            ((RibbonToggleButton)window.FindName("CompareToggle")).IsChecked = true;
+            Sta.Drain();
+            Assert.Same(window.FindResource("RibbonKit.Brushes.Ribbon.ContentBackground"), groupHost.Background);
+        }
+        finally { window.Close(); }
+    });
+
     [Fact]
     public void Crystal_menu_backdrop_blurs_background_without_capturing_foreground() => Sta.Run(() =>
     {
