@@ -672,6 +672,10 @@ Position, message-bar, resize and DPI changes must restore or update that geomet
 the ordinary content-below-ribbon layout remains available. Validate the contract
 in a real consumer before treating this Showcase behavior as theme support.
 
+The preview's Add scrolling text action reveals a longer sample document so the
+QAT underlay can be inspected by scrolling. The same action removes the added
+paragraphs and restores the short document; this is a Showcase aid only.
+
 Values are starting anchors, not approved final colors. Columns list base, raised
 surface, border, primary text, secondary text and accent respectively.
 

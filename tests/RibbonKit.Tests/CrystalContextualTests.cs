@@ -17,6 +17,42 @@ namespace RibbonKit.Tests;
 public class CrystalContextualTests
 {
     [Fact]
+    public void Crystal_document_length_toggle_provides_scrollable_sample_text() => Sta.Run(() =>
+    {
+        var window = new CrystalPreviewWindow { Width = 760, Height = 480,
+            Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
+        try
+        {
+            window.Show();
+            Sta.Drain();
+            var viewer = (ScrollViewer)window.FindName("CrystalDocumentScroll");
+            var extra = (ItemsControl)window.FindName("DocumentScrollDemo");
+            var toggle = (RibbonMenuItem)window.FindName("DocumentLengthToggle");
+            double originalExtent = viewer.ExtentHeight;
+            Assert.Equal(Visibility.Collapsed, extra.Visibility);
+            Assert.NotEmpty(extra.Items);
+
+            toggle.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            Sta.Drain();
+            window.UpdateLayout();
+            Assert.Equal(Visibility.Visible, extra.Visibility);
+            Assert.True(viewer.ExtentHeight > originalExtent + 200);
+            Assert.Equal("Remove scrolling text", toggle.Header);
+            viewer.ScrollToBottom();
+            Sta.Drain();
+            Assert.True(viewer.VerticalOffset > 0);
+
+            toggle.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            Sta.Drain();
+            window.UpdateLayout();
+            Assert.Equal(Visibility.Collapsed, extra.Visibility);
+            Assert.Equal(originalExtent, viewer.ExtentHeight, 1);
+            Assert.Equal("Add scrolling text", toggle.Header);
+        }
+        finally { window.Close(); }
+    });
+
+    [Fact]
     public void Crystal_document_edge_fade_tracks_scrolling_toggle_and_comparison() => Sta.Run(() =>
     {
         var window = new CrystalPreviewWindow { Width = 760, Height = 480,

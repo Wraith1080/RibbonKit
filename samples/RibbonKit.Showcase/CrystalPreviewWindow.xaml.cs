@@ -49,6 +49,17 @@ public partial class CrystalPreviewWindow : RibbonWindow
             new CrystalScrollBars(CrystalAppearanceScroll), new CrystalScrollBars(CrystalAboutScroll),
         };
         _documentEdgeFade = new CrystalDocumentEdgeFade(PreviewRibbon, CrystalDocumentScroll);
+        DocumentScrollDemo.ItemsSource = new[]
+        {
+            "A clear document gives the commands a quiet place to work. As the page moves, the ribbon stays steady and the quick access drawer keeps its place above the content.",
+            "Soft reflections belong at the edges of a control. They make its shape visible without drawing attention away from the words and choices inside it.",
+            "The document can pass beneath the translucent quick access drawer. Its text stays subdued there, then returns to full strength just below the drawer's lower edge.",
+            "Scrolling is a useful test of the material. Watch the page surface, headings, and body text move past the drawer while its icons and border remain easy to read.",
+            "A second look can reveal small changes in contrast. Try a different glass tint, then return to this page to see how the same content feels beneath the new color.",
+            "The ribbon remains available while the document moves. Commands should feel close at hand without interrupting the natural flow of reading or editing.",
+            "At narrower window sizes, these paragraphs wrap into more lines. The card grows with the text, giving the scrolling edge and scrollbar room to demonstrate their behavior.",
+            "This longer sample is only a preview aid. Remove it from Preview controls to return to the short document and compare the original layout again.",
+        };
         var popups = new List<CrystalPopupBackdrop>();
         foreach (var control in new RibbonDropDownButton[]
         {
@@ -173,6 +184,16 @@ public partial class CrystalPreviewWindow : RibbonWindow
         StatusText.Text = _documentQatUnderlayEnabled
             ? "The document scrolls behind the below-ribbon QAT."
             : "The document stays below the QAT.";
+    }
+
+    private void OnDocumentLengthToggle(object sender, RoutedEventArgs e)
+    {
+        bool show = DocumentScrollDemo.Visibility != Visibility.Visible;
+        DocumentScrollDemo.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+        DocumentLengthToggle.Header = show ? "Remove scrolling text" : "Add scrolling text";
+        StatusText.Text = show
+            ? "Extra document text added. Scroll to inspect the page edge."
+            : "Extra document text removed.";
     }
 
     private void OnToggleApplicationMenu(object sender, RoutedEventArgs e)
