@@ -220,6 +220,16 @@
                                     Value="{DynamicResource RibbonKit.Brushes.Tab.HoverBorder}" />
                             <Setter TargetName="HoverIndicator" Property="Visibility" Value="Visible" />
                         </MultiTrigger>
+                        <!-- A minimized ribbon detaches its tab headers from the body. Keep
+                             the geometry on every header (selected or not) so selection
+                             still changes only brushes and never moves the label. -->
+                        <DataTrigger Binding="{Binding IsMinimized, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
+                                     Value="True">
+                            <Setter TargetName="HeaderChrome" Property="CornerRadius"
+                                    Value="{DynamicResource RibbonKit.Metrics.TabMinimizedCornerRadius}" />
+                            <Setter TargetName="HeaderChrome" Property="BorderThickness"
+                                    Value="{DynamicResource RibbonKit.Metrics.TabMinimizedSelectedBorderThickness}" />
+                        </DataTrigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.4" />
                         </Trigger>

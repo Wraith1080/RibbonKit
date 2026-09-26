@@ -232,6 +232,7 @@
     <sys:Double x:Key="RibbonKit.Metrics.ApplicationButtonInnerRimIdleOpacity">0</sys:Double>
     <!-- Reserve the same rim on every tab, so selecting or hovering never moves labels. -->
     <Thickness x:Key="RibbonKit.Metrics.TabSelectedBorderThickness">1,1,1,0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.TabMinimizedSelectedBorderThickness">1</Thickness>
     <!-- Shared utility chrome: collapse, pin, scroll arrows and QAT overflow.
          Reuse the accepted command shading at a quieter hover strength. -->
     <DrawingBrush x:Key="RibbonKit.Brushes.TabStrip.ControlHoverBackground"
@@ -411,6 +412,7 @@
         </DrawingBrush.Drawing>
     </DrawingBrush>
     <CornerRadius x:Key="RibbonKit.Metrics.TabCornerRadius">8,8,0,0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.TabMinimizedCornerRadius">8</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.ApplicationButtonCornerRadius">8</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadius">14</CornerRadius>
     <!-- The menu frame and popup backdrops share one cool tint over their blurred samples. -->

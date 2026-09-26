@@ -101,6 +101,7 @@
     <!-- Active tab connects to the body via its fill; no outline needed. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedBorderBrush" Color="Transparent" />
     <Thickness x:Key="RibbonKit.Metrics.TabSelectedBorderThickness">0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.TabMinimizedSelectedBorderThickness">0</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.TabSelectedMargin">0</Thickness>
     <!-- Flat theme: tabs don't cut into the body, so the connect transform is identity and the
          connector foot stays invisible. -->
@@ -273,6 +274,7 @@
     <CornerRadius x:Key="RibbonKit.Metrics.SmallControlCornerRadius">0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.PopupCornerRadius">0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.TabCornerRadius">0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.TabMinimizedCornerRadius">0</CornerRadius>
     <!-- Square, like everything else in this generation. -->
     <CornerRadius x:Key="RibbonKit.Metrics.ApplicationButtonCornerRadius">0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.SplitLeftCornerRadius">0</CornerRadius>

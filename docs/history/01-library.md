@@ -4746,4 +4746,21 @@ Office 2010 radial glow and all dark variants. The Showcase-only
 added. A Release Showcase build and focused Crystal rim, preview, and main-window
 switch checks passed. The Office 2010 File-rim contract checks passed; a separate
 unchanged dropdown hover-consumer count check in that class still fails. Live
-hover appearance awaits the user's screenshot review.
+hover appearance was accepted by the user on 2026-09-27. The separate
+`Office2010ThemeContractTests.Every_ribbon_button_family_consumes_the_shared_hover_glass`
+case for `Controls.DropDowns.xaml` reports 3 consumers against its threshold of
+5. The user deferred that investigation.
+
+### 3.170 Minimized tab shape in the shared template — 2026-09-27
+
+The Showcase-only `CrystalTabShape` helper previously bound
+`Ribbon.IsMinimized` and overrode two tab metrics in the ribbon's resource
+dictionary. The shared `RibbonTab` template now applies minimized corner
+radius and border thickness from dedicated dynamic tokens to every header.
+Crystal keeps its accepted top-only 8-DIP corners while expanded and rounds
+all four corners at 8 DIPs when minimized; its reserved border changes from
+`1,1,1,0` to `1`. The helper and its main-window and preview call sites are
+removed. All five Office base palettes set their minimized metrics to their
+existing tab metrics, and the dark palettes inherit the same geometry. Focused
+checks cover Crystal state and comparison switches and Office light/dark token
+parity. Live minimized-tab appearance remains for user review.

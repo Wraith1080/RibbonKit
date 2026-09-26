@@ -106,6 +106,7 @@
     <!-- Active-tab outline is off in 2024 (the accent underline marks selection). -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedBorderBrush" Color="Transparent" />
     <Thickness x:Key="RibbonKit.Metrics.TabSelectedBorderThickness">0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.TabMinimizedSelectedBorderThickness">0</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.TabSelectedMargin">0</Thickness>
     <!-- Underline theme: the active tab floats above the body, so the connect transform is identity
          and the connector foot stays invisible. -->
@@ -283,6 +284,7 @@
     <CornerRadius x:Key="RibbonKit.Metrics.SmallControlCornerRadius">2</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.PopupCornerRadius">6</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.TabCornerRadius">4,4,0,0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.TabMinimizedCornerRadius">4,4,0,0</CornerRadius>
     <!-- The File button rounds on ALL FOUR corners here: 2024 floats it above the ribbon card
          rather than connecting it, so the tab's top-only radius left the pressed and
          backstage-open fills with square bottom corners. -->

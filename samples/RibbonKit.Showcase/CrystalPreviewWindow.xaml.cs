@@ -139,7 +139,6 @@ public partial class CrystalPreviewWindow : RibbonWindow
         _documentEdgeFade.Apply(enabled, _documentEdgeFadeEnabled, _documentQatUnderlayEnabled);
         DocumentFadeToggle.IsEnabled = enabled;
         DocumentQatUnderlayToggle.IsEnabled = enabled;
-        CrystalTabShape.Apply(PreviewRibbon, enabled);
         if (PreviewRibbon.IsLoaded) CrystalQuickAccess.Apply(PreviewRibbon, enabled);
         _backstagePresentation.Apply(enabled ? _crystal : null);
         _screenTipPalette.Apply(enabled ? _crystal : null);

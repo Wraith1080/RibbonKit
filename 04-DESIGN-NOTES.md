@@ -632,6 +632,10 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [Template and token promotion](docs/history/01-library.md#3169-crystal-file-hover-rim-in-the-shared-template--2026-09-27).
 
+### 3.170 Minimized tab shape in the shared template — 2026-09-27
+
+[State-driven tab geometry and Office token parity](docs/history/01-library.md#3170-minimized-tab-shape-in-the-shared-template--2026-09-27).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),
@@ -666,6 +670,9 @@ file and this index; update §5 only as supported by verification.
 
 ### Remaining or intentionally deferred
 
+- **Office 2010 hover-glass contract:** the unchanged dropdown consumer-count check
+  reports 3 shared consumers where its threshold is 5 (§3.169). Investigate
+  the contract and dropdown coverage separately; it is deferred by user direction.
 - **Expanding Paper is the default again, by user direction (§3.162).** One native editor
   sits on a centered sheet with fixed page width and minimum page height. The sheet and
   dotted margin guide grow downward with content; preview/print retain physical pagination.

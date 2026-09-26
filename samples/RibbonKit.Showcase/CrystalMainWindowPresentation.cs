@@ -68,7 +68,6 @@ internal sealed class CrystalMainWindowPresentation
         }
 
         CrystalUtilityChrome.Apply(_window, enabled);
-        CrystalTabShape.Apply(_ribbon, enabled);
         CrystalQuickAccess.Apply(_ribbon, enabled);
         foreach (RibbonTab tab in _ribbon.Tabs)
             if (tab is CrystalContextualTab contextual) contextual.CrystalEnabled = enabled;

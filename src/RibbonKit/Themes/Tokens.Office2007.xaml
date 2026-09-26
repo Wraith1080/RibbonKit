@@ -270,6 +270,7 @@
     <!-- Matches Ribbon.Border so the tab outline and the body outline read as one piece. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedBorderBrush" Color="#8DB2E3" />
     <Thickness x:Key="RibbonKit.Metrics.TabSelectedBorderThickness">1,1,1,0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.TabMinimizedSelectedBorderThickness">1,1,1,0</Thickness>
     <!-- Retained for token parity; the connect is render-only via TabConnect, as in 2010. -->
     <Thickness x:Key="RibbonKit.Metrics.TabSelectedMargin">0</Thickness>
     <!-- Same render-only connect mechanism 2010 uses and that is already DPI-verified. -->
@@ -540,6 +541,7 @@
     <CornerRadius x:Key="RibbonKit.Metrics.SmallControlCornerRadius">2</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.PopupCornerRadius">3</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.TabCornerRadius">3,3,0,0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.TabMinimizedCornerRadius">3,3,0,0</CornerRadius>
     <!-- Top-only, same as a tab. Only reached when ApplicationButtonShape is Tab; the
          default 2007 Orb is an Ellipse and ignores this. -->
     <CornerRadius x:Key="RibbonKit.Metrics.ApplicationButtonCornerRadius">3,3,0,0</CornerRadius>

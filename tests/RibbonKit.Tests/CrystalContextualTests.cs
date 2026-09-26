@@ -1274,9 +1274,10 @@ public class CrystalContextualTests
     [Fact]
     public void Crystal_minimized_tab_shapes_follow_state_tint_and_comparison() => Sta.Run(() =>
     {
+        var ribbon = new Ribbon();
         var templates = new ResourceDictionary
         { Source = new Uri("/RibbonKit;component/Themes/Office2024.xaml", UriKind.Relative) };
-        var ribbon = new Ribbon { Style = (Style)templates[typeof(Ribbon)] };
+        ribbon.Style = (Style)templates[typeof(Ribbon)];
         ribbon.Resources.MergedDictionaries.Add(new ResourceDictionary
         { Source = new Uri("/RibbonKit;component/Themes/Tokens.Office2024.xaml", UriKind.Relative) });
         ribbon.Resources.MergedDictionaries.Add(CrystalPalette.Create(CrystalPalette.Blue));
@@ -1287,7 +1288,6 @@ public class CrystalContextualTests
         try
         {
             window.Show();
-            CrystalTabShape.Apply(ribbon, true);
             Check(new CornerRadius(8, 8, 0, 0), new Thickness(1, 1, 1, 0));
             ribbon.IsMinimized = true;
             Check(new CornerRadius(8), new Thickness(1));
@@ -1296,12 +1296,10 @@ public class CrystalContextualTests
             ribbon.IsMinimized = false;
             Check(new CornerRadius(8, 8, 0, 0), new Thickness(1, 1, 1, 0));
             ribbon.IsMinimized = true;
-            CrystalTabShape.Apply(ribbon, false);
             ribbon.Resources.MergedDictionaries.RemoveAt(1);
             Check((CornerRadius)ribbon.FindResource("RibbonKit.Metrics.TabCornerRadius"),
                 (Thickness)ribbon.FindResource("RibbonKit.Metrics.TabSelectedBorderThickness"));
             ribbon.Resources.MergedDictionaries.Add(CrystalPalette.Create(CrystalPalette.Blue));
-            CrystalTabShape.Apply(ribbon, true);
             Check(new CornerRadius(8), new Thickness(1));
         }
         finally { window.Close(); }
@@ -1315,6 +1313,29 @@ public class CrystalContextualTests
                 var chrome = (Border)tab.Template.FindName("HeaderChrome", tab);
                 Assert.Equal(radius, chrome.CornerRadius);
                 Assert.Equal(border, chrome.BorderThickness);
+            }
+        }
+    });
+
+    [Fact]
+    public void Office_minimized_tab_geometry_matches_normal_tabs_in_light_and_dark() => Sta.Run(() =>
+    {
+        var ribbon = new Ribbon();
+        foreach (var generation in new[] { "2007", "2010", "2013", "2019", "2024" })
+        {
+            var resources = ribbon.Resources;
+            resources.MergedDictionaries.Clear();
+            resources.MergedDictionaries.Add(new ResourceDictionary
+            { Source = new Uri($"/RibbonKit;component/Themes/Tokens.Office{generation}.xaml", UriKind.Relative) });
+            foreach (var dark in new[] { false, true })
+            {
+                if (dark)
+                    resources.MergedDictionaries.Add(new ResourceDictionary
+                    { Source = new Uri($"/RibbonKit;component/Themes/Tokens.Office{generation}.Dark.xaml", UriKind.Relative) });
+                Assert.Equal(resources["RibbonKit.Metrics.TabCornerRadius"],
+                    resources["RibbonKit.Metrics.TabMinimizedCornerRadius"]);
+                Assert.Equal(resources["RibbonKit.Metrics.TabSelectedBorderThickness"],
+                    resources["RibbonKit.Metrics.TabMinimizedSelectedBorderThickness"]);
             }
         }
     });
