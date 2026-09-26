@@ -472,6 +472,52 @@ public class CrystalContextualTests
     });
 
     [Fact]
+    public void Crystal_below_ribbon_qat_keeps_its_height_when_menu_buttons_are_added() => Sta.Run(() =>
+    {
+        var ribbon = new Ribbon { QuickAccessPosition = RibbonQuickAccessPosition.BelowRibbon };
+        var templates = new ResourceDictionary
+        { Source = new Uri("/RibbonKit;component/Themes/Office2024.xaml", UriKind.Relative) };
+        ribbon.Style = (Style)templates[typeof(Ribbon)];
+        ribbon.Resources.MergedDictionaries.Add(new ResourceDictionary
+        { Source = new Uri("/RibbonKit;component/Themes/Tokens.Office2024.xaml", UriKind.Relative) });
+        ribbon.Resources.MergedDictionaries.Add(CrystalPalette.Create(CrystalPalette.Blue));
+        var tab = new RibbonTab { Header = "Home" };
+        tab.Groups.Add(new RibbonGroup { Header = "Commands" });
+        ribbon.Tabs.Add(tab);
+        ribbon.QuickAccessItems.Add(new RibbonButton { Header = "Save", Size = RibbonControlSize.Small });
+        var window = new Window { Content = ribbon, Width = 800, Height = 300,
+            Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
+        try
+        {
+            window.Show();
+            Sta.Drain();
+            CrystalQuickAccess.Apply(ribbon, true);
+            window.UpdateLayout();
+            var panel = (Border)ribbon.Template.FindName("QatBelowHost", ribbon);
+            Assert.Equal(32, panel.MinHeight);
+            double originalHeight = panel.ActualHeight;
+
+            ribbon.QuickAccessItems.Add(new RibbonDropDownButton { Header = "Select", Size = RibbonControlSize.Small });
+            Sta.Drain();
+            window.UpdateLayout();
+            Assert.Equal(originalHeight, panel.ActualHeight, 1);
+
+            ribbon.QuickAccessItems.Add(new RibbonSplitButton { Header = "Paste", Size = RibbonControlSize.Small });
+            Sta.Drain();
+            window.UpdateLayout();
+            Assert.Equal(originalHeight, panel.ActualHeight, 1);
+
+            CrystalQuickAccess.Apply(ribbon, false);
+            Assert.Equal(DependencyProperty.UnsetValue,
+                panel.ReadLocalValue(FrameworkElement.MinHeightProperty));
+        }
+        finally
+        {
+            window.Close();
+        }
+    });
+
+    [Fact]
     public void Crystal_below_ribbon_quick_access_drawer_restores_baseline() => Sta.Run(() =>
     {
         // Initialize WPF resource handling before loading pack resources in an isolated run.
@@ -1135,7 +1181,7 @@ public class CrystalContextualTests
             Sta.Drain();
         }
         LayoutStage();
-        Assert.Equal(CrystalBackstageLayout.Sidebar, presentation.Layout);
+        Assert.Equal(RibbonBackstageDesign.CrystalSidebar, presentation.Layout);
         Assert.NotNull(stage.Template.FindName("NavColumn", stage));
         var sidebarHome = home.TransformToAncestor(stage).Transform(new Point());
         var sidebarAppearance = appearance.TransformToAncestor(stage).Transform(new Point());
@@ -1143,7 +1189,7 @@ public class CrystalContextualTests
         Assert.Equal(sidebarHome.X, sidebarAppearance.X);
         Assert.True(sidebarAppearance.Y > sidebarHome.Y);
         Assert.True(sidebarAbout.Y > sidebarAppearance.Y + appearance.ActualHeight);
-        presentation.SetLayout(CrystalBackstageLayout.Floating);
+        presentation.SetLayout(RibbonBackstageDesign.CrystalFloating);
         LayoutStage();
         Assert.Equal("A calmer workspace", title.Text);
         titleInput.Text = "Changed while File is open";
@@ -1167,7 +1213,7 @@ public class CrystalContextualTests
         LayoutStage();
         Assert.Same(appearance, stage.SelectedItem);
         Assert.Same(purple["RibbonKit.Brushes.Window.Background"], stage.FindResource("RibbonKit.Brushes.Window.Background"));
-        presentation.SetLayout(CrystalBackstageLayout.Sidebar);
+        presentation.SetLayout(RibbonBackstageDesign.CrystalSidebar);
         LayoutStage();
         Assert.Same(appearance, stage.SelectedItem);
         Assert.NotNull(stage.Template.FindName("NavColumn", stage));
@@ -1177,9 +1223,9 @@ public class CrystalContextualTests
         Assert.Same(appearance, stage.SelectedItem);
         presentation.Apply(blue);
         LayoutStage();
-        Assert.Equal(CrystalBackstageLayout.Sidebar, presentation.Layout);
+        Assert.Equal(RibbonBackstageDesign.CrystalSidebar, presentation.Layout);
         Assert.NotNull(stage.Template.FindName("NavColumn", stage));
-        presentation.SetLayout(CrystalBackstageLayout.Floating);
+        presentation.SetLayout(RibbonBackstageDesign.CrystalFloating);
         LayoutStage();
         Assert.Null(stage.Template.FindName("NavColumn", stage));
         stage.SelectedItem = home;
@@ -1597,6 +1643,7 @@ public class CrystalContextualTests
             Assert.True(ribbon.HasOpenMessages);
             var root = (Border)first.Template.FindName("PART_Root", first);
             Assert.Equal(new CornerRadius(10), root.CornerRadius);
+            Assert.Equal(new Thickness(0, 2, 0, 2), first.Margin);
             Assert.IsType<LinearGradientBrush>(root.Background);
             Assert.Equal(drawerRadius, drawer.CornerRadius);
             Assert.Same(drawerShadow, drawer.Effect);
@@ -1627,6 +1674,7 @@ public class CrystalContextualTests
             compare.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             LayoutMessages();
             Assert.Equal(new CornerRadius(), root.CornerRadius);
+            Assert.Equal(new Thickness(), first.Margin);
             Assert.NotSame(action.FindResource("Crystal.Backstage.Action"), action.Style);
             compare.IsChecked = false;
             compare.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));

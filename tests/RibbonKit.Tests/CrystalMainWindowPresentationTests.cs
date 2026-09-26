@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -50,9 +51,10 @@ public sealed class CrystalMainWindowPresentationTests
             ThemeManager.Apply(application, RibbonTheme.Office2024);
             window.Show();
             Sta.Drain();
-            Assert.Equal(Colors.Transparent, Assert.IsType<SolidColorBrush>(
-                window.FindResource("RibbonKit.Brushes.Control.SplitActiveHover")).Color);
+            AssertSamePaint((Brush)window.FindResource("RibbonKit.Brushes.Control.HoverBackground"),
+                (Brush)window.FindResource("RibbonKit.Brushes.Control.SplitActiveHover"));
             var drawer = Assert.IsType<Border>(ribbon.Template.FindName("QatBelowHost", ribbon));
+            Assert.Equal(0, drawer.MinHeight);
             var originalDrawerRadius = drawer.CornerRadius;
             var originalDrawerEffect = drawer.Effect;
             var messageRoot = Assert.IsType<Border>(message.Template.FindName("PART_Root", message));
@@ -72,15 +74,16 @@ public sealed class CrystalMainWindowPresentationTests
                 presentation.Palette![typeof(ScrollBar)]);
             Assert.True(context.CrystalEnabled);
             Assert.IsType<DrawingBrush>(context.ContextualSelectionBrush);
-            Assert.Same(split.FindResource("RibbonKit.Brushes.Control.SplitActiveHover"),
-                split.Resources["RibbonKit.Brushes.Control.HoverBackground"]);
-            Assert.Same(backstage.FindResource("Crystal.Backstage.Sidebar"), backstage.Style);
-            backstage.Design = RibbonBackstageDesign.Classic;
-            presentation.UpdateBackstageStyle();
+            Assert.NotSame(split.FindResource("RibbonKit.Brushes.Control.HoverBackground"),
+                split.FindResource("RibbonKit.Brushes.Control.SplitActiveHover"));
+            Assert.False(split.Resources.Contains("RibbonKit.Brushes.Control.HoverBackground"));
+            Assert.Same(originalBackstageStyle, backstage.Style);
+            backstage.Design = RibbonBackstageDesign.CrystalSidebar;
+            Assert.Same(originalBackstageStyle, backstage.Style);
+            backstage.Design = RibbonBackstageDesign.CrystalFloating;
             Assert.Same(originalBackstageStyle, backstage.Style);
             backstage.Design = RibbonBackstageDesign.Modern;
-            presentation.UpdateBackstageStyle();
-            Assert.Same(backstage.FindResource("Crystal.Backstage.Sidebar"), backstage.Style);
+            Assert.Same(originalBackstageStyle, backstage.Style);
             var source = new RibbonMergeSource();
             var merged = new CrystalContextualTab { Header = "Chart", IsContextual = true,
                 ContextualColor = Brushes.SeaGreen, CrystalEnabled = false };
@@ -93,8 +96,10 @@ public sealed class CrystalMainWindowPresentationTests
             Assert.True(ribbon.Unmerge(source));
             Assert.False(merged.CrystalEnabled);
             Assert.Equal(new CornerRadius(0, 0, 10, 10), drawer.CornerRadius);
+            Assert.Equal(32, drawer.MinHeight);
             Assert.Same(ribbon.FindResource("Crystal.Effects.QuickAccessShadow"), drawer.Effect);
             Assert.Equal(new CornerRadius(10), messageRoot.CornerRadius);
+            Assert.Equal(new Thickness(0, 2, 0, 2), message.Margin);
 
             var blueHover = Assert.IsType<SolidColorBrush>(window.FindResource(
                 "RibbonKit.Brushes.Control.HoverBackground")).Color;
@@ -103,8 +108,7 @@ public sealed class CrystalMainWindowPresentationTests
                 "RibbonKit.Brushes.Control.HoverBackground")).Color;
             Assert.NotEqual(blueHover, purpleHover);
             Assert.Same(window.FindResource(typeof(RibbonComboBox)), combo.Style);
-            Assert.Same(split.FindResource("RibbonKit.Brushes.Control.SplitActiveHover"),
-                split.Resources["RibbonKit.Brushes.Control.HoverBackground"]);
+            Assert.False(split.Resources.Contains("RibbonKit.Brushes.Control.HoverBackground"));
 
             ThemeManager.Apply(application, RibbonTheme.Office2024);
             presentation.Apply(false);
@@ -119,6 +123,8 @@ public sealed class CrystalMainWindowPresentationTests
             Assert.Equal(originalShadow.ShadowDepth, restoredShadow.ShadowDepth);
             Assert.Equal(originalShadow.Opacity, restoredShadow.Opacity);
             Assert.Equal(originalMessageRadius, messageRoot.CornerRadius);
+            Assert.Equal(new Thickness(), message.Margin);
+            Assert.Equal(0, drawer.MinHeight);
             Assert.Same(originalComboStyle, combo.Style);
             Assert.Same(originalBackstageStyle, backstage.Style);
             Assert.False(context.CrystalEnabled);
@@ -133,8 +139,8 @@ public sealed class CrystalMainWindowPresentationTests
                 presentation.Apply(false);
                 Assert.DoesNotContain(window.Resources.MergedDictionaries, dictionary =>
                     dictionary.Source?.OriginalString.EndsWith("Crystal.Light.xaml", StringComparison.Ordinal) == true);
-                Assert.Equal(Colors.Transparent, Assert.IsType<SolidColorBrush>(
-                    window.FindResource("RibbonKit.Brushes.Control.SplitActiveHover")).Color);
+                AssertSamePaint((Brush)window.FindResource("RibbonKit.Brushes.Control.HoverBackground"),
+                    (Brush)window.FindResource("RibbonKit.Brushes.Control.SplitActiveHover"));
                 Assert.Null(window.TryFindResource("Crystal.Brushes.FrostedFrame"));
             }
         }
@@ -144,4 +150,20 @@ public sealed class CrystalMainWindowPresentationTests
             application.Shutdown();
         }
     });
+
+    private static void AssertSamePaint(Brush expected, Brush actual)
+    {
+        if (expected is SolidColorBrush solid)
+        {
+            Assert.Equal(solid.Color, Assert.IsType<SolidColorBrush>(actual).Color);
+            return;
+        }
+
+        var gradient = Assert.IsType<LinearGradientBrush>(expected);
+        var splitGradient = Assert.IsType<LinearGradientBrush>(actual);
+        Assert.Equal(gradient.StartPoint, splitGradient.StartPoint);
+        Assert.Equal(gradient.EndPoint, splitGradient.EndPoint);
+        Assert.Equal(gradient.GradientStops.Select(stop => (stop.Color, stop.Offset)),
+            splitGradient.GradientStops.Select(stop => (stop.Color, stop.Offset)));
+    }
 }

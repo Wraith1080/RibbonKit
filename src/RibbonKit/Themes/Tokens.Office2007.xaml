@@ -185,7 +185,13 @@
     <!-- Transparent on purpose: a companion half is NOT filled. Washing the whole button made a
          merely-adjacent half look almost as hot as the hovered one. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionBackground" Color="Transparent" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.SplitActiveHover" Color="Transparent" />
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Control.SplitActiveHover" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#FFFFF7" />
+        <GradientStop Offset="0.38" Color="#FFE798" />
+        <GradientStop Offset="0.38" Color="#FFD758" />
+        <GradientStop Offset="0.48" Color="#FFD350" />
+        <GradientStop Offset="1" Color="#FFE89F" />
+    </LinearGradientBrush>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionBorder" Color="#C1A877" />
     <!-- The glow: a 1px rim drawn just inside the outline, same idea as the hover state's measured
          inner rim (#FFF2C7). Semi-transparent so it warms whatever the group is sitting on rather
@@ -565,6 +571,7 @@
          rounds the bottom corners the body gave up to ContentCornerRadiusTop. No top border: the
          body's own bottom edge is directly above it. -->
     <Thickness x:Key="RibbonKit.Metrics.QatExtenderMargin">2,0,2,0</Thickness>
+    <system:Double x:Key="RibbonKit.Metrics.QatExtenderMinHeight">0</system:Double>
     <Thickness x:Key="RibbonKit.Metrics.QatExtenderBorderThickness">1,0,1,1</Thickness>
     <CornerRadius x:Key="RibbonKit.Metrics.QatExtenderCornerRadius">0,0,3,3</CornerRadius>
     <Thickness x:Key="RibbonKit.Metrics.QatExtenderMarginMessageBar">2,0,2,0</Thickness>
@@ -690,6 +697,8 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.MessageBar.IconForeground" Color="#1E5A9C" />
     <Thickness x:Key="RibbonKit.Metrics.MessageBar.Margin">2,0,2,0</Thickness>
     <CornerRadius x:Key="RibbonKit.Metrics.MessageBar.LastCornerRadius">0,0,3,3</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.MessageBar.ItemCornerRadius">0</CornerRadius>
+    <Thickness x:Key="RibbonKit.Metrics.MessageBar.ItemMargin">0</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.MessageBar.BorderThickness">1,0,1,1</Thickness>
     <SolidColorBrush x:Key="RibbonKit.Brushes.MessageBar.CloseHoverBorder" Color="#A97F2A" />
 </ResourceDictionary>

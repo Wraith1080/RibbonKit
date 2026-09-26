@@ -39,18 +39,7 @@ internal sealed class CrystalMessagePresentation
 
     private void Update(RibbonMessage message)
     {
-        if (message.Template?.FindName("PART_Root", message) is not Border root) return;
-        if (_enabled)
-        {
-            root.SetResourceReference(Border.CornerRadiusProperty, "Crystal.Metrics.MessageCornerRadius");
-            message.Margin = new Thickness(0, 2, 0, 2);
-        }
-        else
-        {
-            root.ClearValue(Border.CornerRadiusProperty);
-            message.ClearValue(FrameworkElement.MarginProperty);
-        }
-        if (message.Template.FindName("PART_ActionButton", message) is not Button action) return;
+        if (message.Template?.FindName("PART_ActionButton", message) is not Button action) return;
         if (_enabled)
         {
             _originalActions.TryAdd(action, action.Style);

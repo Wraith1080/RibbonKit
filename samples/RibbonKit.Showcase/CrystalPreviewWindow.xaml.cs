@@ -79,7 +79,6 @@ public partial class CrystalPreviewWindow : RibbonWindow
         {
             CrystalFileHover.Apply(PreviewRibbon, CompareToggle.IsChecked != true);
             CrystalQuickAccess.Apply(PreviewRibbon, CompareToggle.IsChecked != true);
-            CrystalSplitButtons.Apply(PreviewRibbon, CompareToggle.IsChecked != true);
         };
         _baselineLayout = RibbonCustomizationSerializer.Serialize(PreviewRibbon);
         PreviewRibbon.RibbonCustomizeRequested += (_, _) => CreateCustomizationDialog(false).ShowDialog();
@@ -142,7 +141,6 @@ public partial class CrystalPreviewWindow : RibbonWindow
         DocumentFadeToggle.IsEnabled = enabled;
         DocumentQatUnderlayToggle.IsEnabled = enabled;
         CrystalTabShape.Apply(PreviewRibbon, enabled);
-        CrystalSplitButtons.Apply(PreviewRibbon, enabled);
         if (PreviewRibbon.IsLoaded) CrystalQuickAccess.Apply(PreviewRibbon, enabled);
         if (PreviewRibbon.IsLoaded) CrystalFileHover.Apply(PreviewRibbon, enabled);
         _backstagePresentation.Apply(enabled ? _crystal : null);
@@ -344,7 +342,7 @@ public partial class CrystalPreviewWindow : RibbonWindow
     {
         if (sender is not RibbonMenuItem { Tag: string layout } item) return;
         _backstagePresentation.SetLayout(layout == "Floating"
-            ? CrystalBackstageLayout.Floating : CrystalBackstageLayout.Sidebar);
+            ? RibbonBackstageDesign.CrystalFloating : RibbonBackstageDesign.CrystalSidebar);
         BackstageLayoutLabel.Text = $"Current layout: {item.Header}";
     }
 

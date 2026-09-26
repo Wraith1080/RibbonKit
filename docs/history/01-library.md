@@ -4680,3 +4680,56 @@ uses it, and that adapter removes its local override when Crystal is deselected.
 The audit found that Crystal's other `RibbonKit.*` overrides already exist in every
 Office base palette. `Crystal.*` resources remain scoped to the opt-in Showcase
 adapters rather than becoming shared template tokens.
+
+### 3.168 Crystal Backstage designs and shared split hover — 2026-09-27
+
+The two accepted Crystal Backstage layouts are now distinct `Backstage.Design`
+values, `CrystalSidebar` (5) and `CrystalFloating` (6). Their existing templates
+move into a shared RibbonKit resource dictionary. The common Backstage style
+selects either template and its matching navigation panel only for those explicit
+values; the Office designs keep their existing templates. The main Showcase adds
+both choices beside its Office layout choices and persists the selected value.
+The preview uses the same design values and restores Modern during comparison.
+The detached Backstage still receives its own palette scope.
+
+The split-button helper is removed. Both halves' hover triggers now read
+`RibbonKit.Brushes.Control.SplitActiveHover`; Crystal defines the stronger wash,
+and every Office base palette defines the same brush as its ordinary hover.
+The 2013/2019/2024 dark variants override it to match their dark hover brush;
+the 2007/2010 dark variants inherit the unchanged base hover.
+The new shared template behavior therefore preserves the Office appearance.
+An attempted `StaticResource` alias resolved to a neighboring brush during WPF
+resource loading, so the Office tokens duplicate their hover brush definitions.
+Focused resource and layout checks cover switching between the two Crystal
+designs, returning to Modern, preview comparison, and Office split parity.
+Live appearance and mixed-monitor DPI remain for user review.
+
+Screenshot follow-up: the first layout check supplied `Office2024.xaml` as a host
+resource, which hid a detached Backstage lookup failure. In a real open adorner,
+the Crystal template keys were unavailable through `DynamicResource`, so the
+control kept its Classic template. `Controls.Backstage.xaml` now merges the
+Crystal templates directly and its design triggers resolve them with
+`StaticResource`. A focused detached-window test opens the actual Backstage,
+checks both Crystal layouts, and checks the Modern return under Office 2024.
+The Crystal split companion outline also uses a stronger border brush; its
+color remains scoped to Crystal.
+
+QAT height follow-up: a below-ribbon Crystal drawer measured 28.8 DIPs with a
+plain small button and 30.4 DIPs after a dropdown joined it. The Crystal
+palette now reserves 32 DIPs on the shared drawer template; Office palettes
+retain a zero floor. A focused layout check adds both a dropdown
+and split button without moving the drawer's lower edge. Office palettes keep
+their existing row sizing.
+
+Floating Backstage width follow-up: its inner grid had a 1040-DIP cap, leaving
+large side gutters in a maximized window. The Crystal floating template now
+uses the available width inside its 28-DIP side margins. A focused layout check
+covers ordinary and 1600-DIP widths; the sidebar template is unchanged.
+
+Shared-template audit follow-up: message-row margin and corner radius, and the
+below-ribbon QAT minimum height, now come from shared template tokens instead
+of Crystal code setting realized parts. Crystal retains its 2-DIP row spacing,
+10-DIP corners, and 32-DIP QAT floor. Every Office base palette supplies zero
+for these new metrics, including the effective dark palettes that inherit the
+base values. The existing split-active hover brush matches ordinary hover in
+all Office light/dark palettes; Crystal keeps its stronger active wash.

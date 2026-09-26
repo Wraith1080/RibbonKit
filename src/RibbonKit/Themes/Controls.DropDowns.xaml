@@ -312,7 +312,7 @@
                                                     </Trigger>
                                                     <Trigger Property="IsMouseOver" Value="True">
                                                         <Setter TargetName="Chrome" Property="Background"
-                                                                Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
+                                                                Value="{DynamicResource RibbonKit.Brushes.Control.SplitActiveHover}" />
                                                         <Setter TargetName="Chrome" Property="BorderBrush"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
                                                         <Setter TargetName="Chrome" Property="BorderThickness"
@@ -493,7 +493,7 @@
                                                     </Trigger>
                                                     <Trigger Property="IsMouseOver" Value="True">
                                                         <Setter TargetName="Chrome" Property="Background"
-                                                                Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
+                                                                Value="{DynamicResource RibbonKit.Brushes.Control.SplitActiveHover}" />
                                                         <Setter TargetName="Chrome" Property="BorderBrush"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
                                                         <Setter TargetName="Chrome" Property="BorderThickness"

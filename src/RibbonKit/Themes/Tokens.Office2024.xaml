@@ -68,7 +68,7 @@
          amber outline plus a pale wash inside it. One pair of tokens, one pair of setters in
          Controls.DropDowns.xaml, every generation. See 04-DESIGN-NOTES §3.43. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionBackground" Color="#F2F2F2" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.SplitActiveHover" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.SplitActiveHover" Color="#E6E6E6" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionBorder" Color="Transparent" />
     <!-- No border to glow just inside of, so nothing to draw. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionGlow" Color="Transparent" />
@@ -312,6 +312,7 @@
     <!-- Below-ribbon QAT: a full-width bar connecting flush under the card (flat top
          border to merge with the card's square bottom, rounded bottom corners). -->
     <Thickness x:Key="RibbonKit.Metrics.QatExtenderMargin">7,0,7,7</Thickness>
+    <system:Double x:Key="RibbonKit.Metrics.QatExtenderMinHeight">0</system:Double>
     <Thickness x:Key="RibbonKit.Metrics.QatExtenderBorderThickness">1,0,1,1</Thickness>
     <CornerRadius x:Key="RibbonKit.Metrics.QatExtenderCornerRadius">0,0,8,8</CornerRadius>
     <Thickness x:Key="RibbonKit.Metrics.QatExtenderMarginMessageBar">7,0,7,0</Thickness>
@@ -405,6 +406,8 @@
 
     <Thickness x:Key="RibbonKit.Metrics.MessageBar.Margin">7,0,7,7</Thickness>
     <CornerRadius x:Key="RibbonKit.Metrics.MessageBar.LastCornerRadius">0,0,8,8</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.MessageBar.ItemCornerRadius">0</CornerRadius>
+    <Thickness x:Key="RibbonKit.Metrics.MessageBar.ItemMargin">0</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.MessageBar.BorderThickness">1,0,1,1</Thickness>
     <SolidColorBrush x:Key="RibbonKit.Brushes.MessageBar.CloseHoverBorder" Color="#B8B8B8" />
 </ResourceDictionary>

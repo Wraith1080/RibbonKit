@@ -1040,6 +1040,22 @@
                                 ScreenTipTitle="RibbonKit classic Office 2007 backstage"
                                 ScreenTipText="An opaque silver-blue framed shell with gold command states and a denser document dashboard inspired by Office 2007." />
                         </StackPanel>
+                        <StackPanel Margin="6,0,0,0">
+                            <rk:RibbonButton Header="Crystal Sidebar"
+                                Tag="CrystalSidebar"
+                                Size="Medium"
+                                Icon="{StaticResource Icon.Backstage}"
+                                Click="OnSelectBackstageDesign"
+                                ScreenTipTitle="Crystal glass sidebar"
+                                ScreenTipText="A full-height glass navigation panel beside the document workspace." />
+                            <rk:RibbonButton Header="Crystal Floating"
+                                Tag="CrystalFloating"
+                                Size="Medium"
+                                Icon="{StaticResource Icon.Backstage}"
+                                Click="OnSelectBackstageDesign"
+                                ScreenTipTitle="Crystal floating workspace"
+                                ScreenTipText="A floating navigation strip above the document workspace." />
+                        </StackPanel>
                     </StackPanel>
                 </rk:RibbonGroup>
             </rk:RibbonTab>

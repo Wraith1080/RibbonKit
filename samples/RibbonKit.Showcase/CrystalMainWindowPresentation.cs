@@ -34,9 +34,6 @@ internal sealed class CrystalMainWindowPresentation
         _backstage = backstage;
         _messages = new CrystalMessagePresentation(messageBar);
         _menu = new CrystalApplicationMenuPresentation(menu, window);
-        _backstageScope.MergedDictionaries.Add(new ResourceDictionary
-        { Source = new Uri("/RibbonKit.Showcase;component/Themes/Crystal.Backstage.xaml", UriKind.Relative) });
-
         foreach (RibbonTab tab in ribbon.Tabs)
             AttachTab(tab);
         ribbon.Tabs.CollectionChanged += OnTabsChanged;
@@ -64,11 +61,9 @@ internal sealed class CrystalMainWindowPresentation
             _backstageScope.MergedDictionaries.Add(_palette);
             if (!_backstage.Resources.MergedDictionaries.Contains(_backstageScope))
                 _backstage.Resources.MergedDictionaries.Add(_backstageScope);
-            UpdateBackstageStyle();
         }
         else
         {
-            _backstage.ClearValue(FrameworkElement.StyleProperty);
             _backstage.Resources.MergedDictionaries.Remove(_backstageScope);
         }
 
@@ -76,20 +71,11 @@ internal sealed class CrystalMainWindowPresentation
         CrystalTabShape.Apply(_ribbon, enabled);
         CrystalQuickAccess.Apply(_ribbon, enabled);
         CrystalFileHover.Apply(_ribbon, enabled);
-        CrystalSplitButtons.Apply(_ribbon, enabled);
         foreach (RibbonTab tab in _ribbon.Tabs)
             if (tab is CrystalContextualTab contextual) contextual.CrystalEnabled = enabled;
         _messages.Apply(enabled);
         _menu.Apply(enabled);
         foreach (var popup in _popups.Values) popup.Apply(enabled);
-    }
-
-    public void UpdateBackstageStyle()
-    {
-        if (_enabled && _backstage.Design == RibbonBackstageDesign.Modern)
-            _backstage.SetResourceReference(FrameworkElement.StyleProperty, "Crystal.Backstage.Sidebar");
-        else
-            _backstage.ClearValue(FrameworkElement.StyleProperty);
     }
 
     private void OnTabsChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -118,8 +104,6 @@ internal sealed class CrystalMainWindowPresentation
             foreach (var dropDown in group.Items.OfType<RibbonDropDownButton>())
             {
                 AddPopup(dropDown, "PART_MenuHost");
-                if (dropDown is RibbonSplitButton split)
-                    CrystalSplitButtons.Apply(split, _enabled);
             }
         }
     }
@@ -144,7 +128,6 @@ internal sealed class CrystalMainWindowPresentation
         Remove(group);
         foreach (var dropDown in group.Items.OfType<RibbonDropDownButton>())
         {
-            if (dropDown is RibbonSplitButton split) CrystalSplitButtons.Apply(split, false);
             Remove(dropDown);
         }
         void Remove(Control control)

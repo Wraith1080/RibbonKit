@@ -78,7 +78,7 @@
                 <rk:RibbonButton Header="Select" Size="Small" Icon="{StaticResource Icon.Select}" Click="OnPreviewCommand" />
             </rk:Ribbon.QuickAccessItems>
             <rk:Ribbon.Backstage>
-                <rk:Backstage x:Name="CrystalBackstage" Design="Modern" SelectedIndex="0">
+                <rk:Backstage x:Name="CrystalBackstage" Design="CrystalSidebar" SelectedIndex="0">
                     <rk:BackstageTabItem Header="Overview" Icon="{StaticResource Icon.Style}">
                         <ScrollViewer x:Name="CrystalOverviewScroll" VerticalScrollBarVisibility="Auto">
                             <StackPanel Margin="4,0,4,16">

@@ -6,29 +6,29 @@ using RibbonKit.Controls;
 
 namespace RibbonKit.Showcase;
 
-internal enum CrystalBackstageLayout { Sidebar, Floating }
-
 /// <summary>Owns the preview's detached overlay resource scope and explicit document binding.</summary>
 internal sealed class CrystalBackstagePresentation
 {
     private readonly Backstage _stage;
     private readonly ResourceDictionary _scope = new();
     private ResourceDictionary? _palette;
-    public CrystalBackstageLayout Layout { get; private set; } = CrystalBackstageLayout.Sidebar;
+    public RibbonBackstageDesign Layout { get; private set; } = RibbonBackstageDesign.CrystalSidebar;
 
-    public void SetLayout(CrystalBackstageLayout layout)
+    public void SetLayout(RibbonBackstageDesign layout)
     {
+        if (layout is not (RibbonBackstageDesign.CrystalSidebar or RibbonBackstageDesign.CrystalFloating))
+            throw new ArgumentOutOfRangeException(nameof(layout));
         Layout = layout;
-        UpdateStyle();
+        UpdateDesign();
     }
 
     public CrystalBackstagePresentation(Backstage stage, ResourceDictionary baseline,
         TextBlock title, RibbonTextBox titleInput)
     {
         _stage = stage;
-        _scope.MergedDictionaries.Add(baseline);
         _scope.MergedDictionaries.Add(new ResourceDictionary
-        { Source = new Uri("/RibbonKit.Showcase;component/Themes/Crystal.Backstage.xaml", UriKind.Relative) });
+        { Source = new Uri("/RibbonKit;component/Themes/Office2024.xaml", UriKind.Relative) });
+        _scope.MergedDictionaries.Add(baseline);
         stage.Resources.MergedDictionaries.Add(_scope);
         title.SetBinding(TextBlock.TextProperty, new Binding(nameof(titleInput.Text)) { Source = titleInput });
     }
@@ -38,15 +38,11 @@ internal sealed class CrystalBackstagePresentation
         if (_palette != null) _scope.MergedDictionaries.Remove(_palette);
         _palette = palette;
         if (palette != null) _scope.MergedDictionaries.Add(palette);
-        UpdateStyle();
+        UpdateDesign();
     }
 
-    private void UpdateStyle()
+    private void UpdateDesign()
     {
-        if (_palette == null)
-            _stage.ClearValue(FrameworkElement.StyleProperty);
-        else
-            _stage.SetResourceReference(FrameworkElement.StyleProperty, Layout == CrystalBackstageLayout.Sidebar
-                ? "Crystal.Backstage.Sidebar" : "Crystal.Backstage.Style");
+        _stage.Design = _palette == null ? RibbonBackstageDesign.Modern : Layout;
     }
 }

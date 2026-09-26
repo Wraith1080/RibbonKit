@@ -40,6 +40,7 @@
 
     <Style TargetType="{x:Type controls:RibbonMessage}">
         <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.MessageBar.Background}" />
+        <Setter Property="Margin" Value="{DynamicResource RibbonKit.Metrics.MessageBar.ItemMargin}" />
         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.MessageBar.Foreground}" />
         <Setter Property="HorizontalAlignment" Value="Stretch" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
@@ -55,7 +56,7 @@
                             Background="{TemplateBinding Background}"
                             BorderBrush="{DynamicResource RibbonKit.Brushes.MessageBar.Border}"
                             BorderThickness="{DynamicResource RibbonKit.Metrics.MessageBar.BorderThickness}"
-                            CornerRadius="0"
+                            CornerRadius="{DynamicResource RibbonKit.Metrics.MessageBar.ItemCornerRadius}"
                             TextElement.Foreground="{TemplateBinding Foreground}"
                             SnapsToDevicePixels="True">
                         <Grid>

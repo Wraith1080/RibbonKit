@@ -44,7 +44,7 @@ below describes the current checkout, including post-release additions; see
 ### Application-level
 
 - File tab or Office 2007 orb, two-pane application menu, and Backstage with Modern,
-  Classic, Classic2010, Glass2007 and Classic2007 designs.
+  Classic, Classic2010, Glass2007, Classic2007, CrystalSidebar and CrystalFloating designs.
 - Repeatable message bars with actions/dismissal; Backstage page/footer/recent patterns.
 - Three QAT placements, overflow and source-linked button/toggle/split/dropdown proxies.
 - Contextual tabs, tab/group merging and modal-tab lifetimes.

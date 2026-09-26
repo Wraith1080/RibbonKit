@@ -62,7 +62,7 @@
          amber outline plus a pale wash inside it. One pair of tokens, one pair of setters in
          Controls.DropDowns.xaml, every generation. See 04-DESIGN-NOTES §3.43. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionBackground" Color="#F4F7FC" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.SplitActiveHover" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.SplitActiveHover" Color="#E8EEF7" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionBorder" Color="Transparent" />
     <!-- No border to glow just inside of, so nothing to draw. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionGlow" Color="Transparent" />
@@ -300,6 +300,7 @@
 
     <!-- Flat below-ribbon QAT: a plain full-width strip with a bottom border. -->
     <Thickness x:Key="RibbonKit.Metrics.QatExtenderMargin">0</Thickness>
+    <system:Double x:Key="RibbonKit.Metrics.QatExtenderMinHeight">0</system:Double>
     <Thickness x:Key="RibbonKit.Metrics.QatExtenderBorderThickness">0,0,0,1</Thickness>
     <CornerRadius x:Key="RibbonKit.Metrics.QatExtenderCornerRadius">0</CornerRadius>
     <Thickness x:Key="RibbonKit.Metrics.QatExtenderMarginMessageBar">0</Thickness>
@@ -385,6 +386,8 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.MessageBar.IconForeground" Color="#2B579A" />
     <Thickness x:Key="RibbonKit.Metrics.MessageBar.Margin">0</Thickness>
     <CornerRadius x:Key="RibbonKit.Metrics.MessageBar.LastCornerRadius">0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.MessageBar.ItemCornerRadius">0</CornerRadius>
+    <Thickness x:Key="RibbonKit.Metrics.MessageBar.ItemMargin">0</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.MessageBar.BorderThickness">0,0,0,1</Thickness>
     <SolidColorBrush x:Key="RibbonKit.Brushes.MessageBar.CloseHoverBorder" Color="#A6A6A6" />
 </ResourceDictionary>

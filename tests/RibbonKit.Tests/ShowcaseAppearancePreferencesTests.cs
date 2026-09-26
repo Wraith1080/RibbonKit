@@ -169,6 +169,19 @@ public class ShowcaseAppearancePreferencesTests
     }
 
     [Theory]
+    [InlineData(RibbonBackstageDesign.CrystalSidebar)]
+    [InlineData(RibbonBackstageDesign.CrystalFloating)]
+    public void Crystal_backstage_layout_choice_round_trips(RibbonBackstageDesign design)
+    {
+        var source = new ShowcaseAppearancePreferences { BackstageDesign = design };
+
+        string json = ShowcaseAppearancePreferencesSerializer.Serialize(source);
+
+        Assert.True(ShowcaseAppearancePreferencesSerializer.TryDeserialize(json, out var restored));
+        Assert.Equal(design, restored.BackstageDesign);
+    }
+
+    [Theory]
     [InlineData("#107c41", "#FF107C41")]
     [InlineData("#80107c41", "#80107C41")]
     [InlineData(" #D13438 ", "#FFD13438")]

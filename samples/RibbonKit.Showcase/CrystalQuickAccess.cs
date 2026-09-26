@@ -24,7 +24,8 @@ internal static class CrystalQuickAccess
             tabs.ClearValue(Panel.ZIndexProperty);
             foreach (var key in DrawerMetrics) panel.Resources.Remove("RibbonKit.Metrics." + key);
             foreach (var property in new[] { FrameworkElement.HorizontalAlignmentProperty,
-                FrameworkElement.MarginProperty, Border.PaddingProperty, Border.CornerRadiusProperty,
+                FrameworkElement.MarginProperty,
+                Border.PaddingProperty, Border.CornerRadiusProperty,
                 Border.BorderThicknessProperty, Border.BackgroundProperty, Border.BorderBrushProperty, UIElement.EffectProperty })
                 panel.ClearValue(property);
             return;

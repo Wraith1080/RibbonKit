@@ -187,7 +187,6 @@ public partial class MainWindow : RibbonWindow
             ApplyAeroFrameTintPreference();
 
             ShowcaseBackstage.Design = preferences.BackstageDesign;
-            _crystalPresentation?.UpdateBackstageStyle();
             BackstageTranslucentToggle.IsChecked = preferences.BackstageTranslucent;
             ApplicationMenuToggle.IsChecked =
                 preferences.FileSurface == ShowcaseFileSurface.ApplicationMenu;
@@ -486,7 +485,6 @@ public partial class MainWindow : RibbonWindow
             && Enum.TryParse(tag, out RibbonBackstageDesign design))
         {
             ShowcaseBackstage.Design = design;
-            _crystalPresentation?.UpdateBackstageStyle();
             NotifyApplicationSurfaceChanged();
             SaveAppearancePreferences();
         }

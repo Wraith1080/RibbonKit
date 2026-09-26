@@ -624,6 +624,10 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [Screenshot findings and focused implementation](docs/history/01-library.md#3167-crystal-light-first-phase-gaps--2026-09-24).
 
+### 3.168 Crystal Backstage designs and shared split hover — 2026-09-27
+
+[Independent layout entries and theme-token parity](docs/history/01-library.md#3168-crystal-backstage-designs-and-shared-split-hover--2026-09-27).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),

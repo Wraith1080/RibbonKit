@@ -712,6 +712,13 @@ Every new shared `RibbonKit.*` token needs a neutral counterpart in each Office 
 palette, inherited by its dark variant; Crystal-only presentation helpers must be
 inactive and remove their local overrides when another theme is selected.
 
+The Crystal Backstage sidebar and floating workspace are now explicit
+`Backstage.Design` choices in the shared control, alongside the Office designs.
+Selecting 2024 Rail retains its original layout. The split button also uses a
+dedicated shared active-hover token: Crystal gives the hovered half a stronger wash,
+while each Office palette supplies its existing ordinary hover appearance. No
+Showcase split-button override is needed.
+
 Phase two is reserved for MDI, localization and RTL, modal tabs, and dark mode.
 Crystal Light remains light-only in phase one.
 

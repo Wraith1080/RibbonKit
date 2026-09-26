@@ -128,7 +128,7 @@
     <!-- Both halves light when one is hovered; the active half gets a stronger wash. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionBackground" Color="#205885B1" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.SplitActiveHover" Color="#405885B1" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionBorder" Color="#185D82A6" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionBorder" Color="#805D82A6" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionGlow" Color="Transparent" />
     <Thickness x:Key="RibbonKit.Metrics.ControlHighlightBorderThickness">1</Thickness>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Group.Separator" Color="#40819DB5" />
@@ -437,7 +437,10 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.MessageBar.CloseHoverBorder" Color="#BEA874" />
     <Thickness x:Key="RibbonKit.Metrics.MessageBar.Margin">7,3,7,7</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.MessageBar.BorderThickness">1</Thickness>
-    <CornerRadius x:Key="Crystal.Metrics.MessageCornerRadius">10</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.MessageBar.ItemCornerRadius">10</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.MessageBar.LastCornerRadius">10</CornerRadius>
+    <Thickness x:Key="RibbonKit.Metrics.MessageBar.ItemMargin">0,2,0,2</Thickness>
+    <sys:Double x:Key="RibbonKit.Metrics.QatExtenderMinHeight">32</sys:Double>
     <!-- Wider than the tab arrows, with room for a straight edge between corners. -->
     <sys:Double x:Key="Crystal.Metrics.BodyScrollWidth">32</sys:Double>
     <CornerRadius x:Key="Crystal.Metrics.BodyScrollCornerRadius">10</CornerRadius>
