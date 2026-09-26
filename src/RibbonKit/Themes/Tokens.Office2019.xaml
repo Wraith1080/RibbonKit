@@ -263,6 +263,8 @@
     <Thickness x:Key="RibbonKit.Metrics.ApplicationOrbMargin">2,0,6,0</Thickness>
 
     <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonBorderThickness">0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonInnerRimBorderThickness">0</Thickness>
+    <system:Double x:Key="RibbonKit.Metrics.ApplicationButtonInnerRimIdleOpacity">1</system:Double>
 
     <system:Double x:Key="RibbonKit.Metrics.GroupsRowHeight">104</system:Double>
 

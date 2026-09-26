@@ -225,6 +225,11 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.Foreground" Color="#20364A" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.MenuOpenForeground" Color="#20364A" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverUnderline" Color="Transparent" />
+    <DrawingBrush x:Key="RibbonKit.Brushes.ApplicationButton.InnerGlow"
+                  Drawing="{StaticResource Crystal.Drawing.GlassRim}" Opacity="0.6"
+                  Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonInnerRimBorderThickness">1</Thickness>
+    <sys:Double x:Key="RibbonKit.Metrics.ApplicationButtonInnerRimIdleOpacity">0</sys:Double>
     <!-- Reserve the same rim on every tab, so selecting or hovering never moves labels. -->
     <Thickness x:Key="RibbonKit.Metrics.TabSelectedBorderThickness">1,1,1,0</Thickness>
     <!-- Shared utility chrome: collapse, pin, scroll arrows and QAT overflow.

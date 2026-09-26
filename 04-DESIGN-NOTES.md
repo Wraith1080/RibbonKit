@@ -628,6 +628,10 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [Independent layout entries and theme-token parity](docs/history/01-library.md#3168-crystal-backstage-designs-and-shared-split-hover--2026-09-27).
 
+### 3.169 Crystal File hover rim in the shared template — 2026-09-27
+
+[Template and token promotion](docs/history/01-library.md#3169-crystal-file-hover-rim-in-the-shared-template--2026-09-27).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),

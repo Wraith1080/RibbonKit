@@ -374,8 +374,9 @@
                                                                      supply Transparent. It is suppressed while pressed below. -->
                                                                 <Border x:Name="InnerRim"
                                                                         BorderBrush="{DynamicResource RibbonKit.Brushes.ApplicationButton.InnerGlow}"
-                                                                        BorderThickness="{DynamicResource RibbonKit.Metrics.ApplicationButtonBorderThickness}"
+                                                                        BorderThickness="{DynamicResource RibbonKit.Metrics.ApplicationButtonInnerRimBorderThickness}"
                                                                         CornerRadius="{DynamicResource RibbonKit.Metrics.ApplicationButtonCornerRadius}"
+                                                                        Opacity="{DynamicResource RibbonKit.Metrics.ApplicationButtonInnerRimIdleOpacity}"
                                                                         IsHitTestVisible="False" />
                                                                 <ContentPresenter Margin="{TemplateBinding Padding}"
                                                                                   HorizontalAlignment="Center"
@@ -404,6 +405,16 @@
                                                                     Value="{DynamicResource RibbonKit.Brushes.ApplicationButton.HoverBackground}" />
                                                             <Setter TargetName="HoverUnderline" Property="Visibility" Value="Visible" />
                                                         </Trigger>
+                                                        <!-- Crystal reveals its glass rim only on idle hover. Office
+                                                             palettes retain their existing inner-rim opacity. -->
+                                                        <MultiTrigger>
+                                                            <MultiTrigger.Conditions>
+                                                                <Condition Property="IsMouseOver" Value="True" />
+                                                                <Condition Property="IsPressed" Value="False" />
+                                                                <Condition Property="IsChecked" Value="False" />
+                                                            </MultiTrigger.Conditions>
+                                                            <Setter TargetName="InnerRim" Property="Opacity" Value="1" />
+                                                        </MultiTrigger>
                                                         <!-- Mouse-DOWN (held, before release): a distinct pressed glass, so
                                                              the click reads immediately, not only once the backstage opens. -->
                                                         <Trigger Property="IsPressed" Value="True">

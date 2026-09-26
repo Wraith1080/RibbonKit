@@ -527,6 +527,8 @@
     <Thickness x:Key="RibbonKit.Metrics.ApplicationOrbMargin">6,-18,6,0</Thickness>
 
     <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonBorderThickness">1</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonInnerRimBorderThickness">1</Thickness>
+    <system:Double x:Key="RibbonKit.Metrics.ApplicationButtonInnerRimIdleOpacity">1</system:Double>
 
     <!-- Real 2007 measures ~86 DIP of ribbon body. Held at the shared 104 for S1 so the palette
          lands without disturbing layout; reducing it is an S4 decision, taken together with the

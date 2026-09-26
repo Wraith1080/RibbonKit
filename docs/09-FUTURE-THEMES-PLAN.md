@@ -719,6 +719,32 @@ dedicated shared active-hover token: Crystal gives the hovered half a stronger w
 while each Office palette supplies its existing ordinary hover appearance. No
 Showcase split-button override is needed.
 
+**Deferred View-tab overflow after leaving Crystal Light (user screenshots, 2026-09-27):**
+At the shown window width, Crystal Light hides the unsupported Dark Mode button.
+Selecting Office 2024 makes that button visible again, but the View groups extend
+past the ribbon's right edge without enabling the right scroll chevron. Keep Dark
+Mode hidden for Crystal Light until it has a dark palette; the Office control must
+return without losing access to the remaining groups.
+
+Plan for the later fix:
+
+1. Reproduce Crystal Light → Office 2024 on View at the same width, then check a
+   fresh Office 2024 start, the reverse switch, repeated switches, and narrower
+   widths. Record whether adaptive reduction should fit the row or scrolling is
+   required. Check the other Office generations before changing shared layout.
+2. After Dark Mode changes visibility, inspect `RibbonGroupsPanel`'s cached state
+   widths and reported content width alongside `PART_ContentScroll`'s extent,
+   viewport, and `CanScrollRight`. Determine whether the group measurement, scroll
+   report, or refresh timing is stale. The existing tab-switch refresh is a useful
+   comparison, but the cause of this theme-switch case is not established yet.
+3. Fix the responsible layer once identified. Preserve reduce-then-scroll behavior
+   and avoid a Showcase-only width adjustment or repeated layout invalidation.
+4. Add a focused visibility/theme-switch regression: every View group remains
+   within the ribbon or becomes reachable through an enabled right chevron, and
+   switching back to Crystal Light restores the intended button visibility and
+   overflow state. Follow with live screenshot review at the reported width and
+   relevant DPI scales.
+
 Phase two is reserved for MDI, localization and RTL, modal tabs, and dark mode.
 Crystal Light remains light-only in phase one.
 

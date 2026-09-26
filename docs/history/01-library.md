@@ -4733,3 +4733,17 @@ of Crystal code setting realized parts. Crystal retains its 2-DIP row spacing,
 for these new metrics, including the effective dark palettes that inherit the
 base values. The existing split-active hover brush matches ordinary hover in
 all Office light/dark palettes; Crystal keeps its stronger active wash.
+
+### 3.169 Crystal File hover rim in the shared template — 2026-09-27
+
+The File button's existing `InnerRim` now uses separate thickness and idle-opacity
+tokens, with a shared hover trigger that requires mouse-over without press or open
+state. Crystal supplies the accepted 1-DIP glass rim and hides it at rest; its
+`ApplicationButton.InnerGlow` drawing matches the tab hover rim. Office palettes
+retain their previous inner-rim thickness and full idle opacity, including the
+Office 2010 radial glow and all dark variants. The Showcase-only
+`CrystalFileHover` part adapter and its call sites are removed. No public API was
+added. A Release Showcase build and focused Crystal rim, preview, and main-window
+switch checks passed. The Office 2010 File-rim contract checks passed; a separate
+unchanged dropdown hover-consumer count check in that class still fails. Live
+hover appearance awaits the user's screenshot review.

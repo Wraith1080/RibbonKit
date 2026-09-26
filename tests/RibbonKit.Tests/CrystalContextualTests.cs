@@ -1234,7 +1234,7 @@ public class CrystalContextualTests
     });
 
     [Fact]
-    public void Crystal_file_rim_uses_tab_resources_and_restores_baseline_overlay() => Sta.Run(() =>
+    public void Crystal_file_rim_uses_shared_tokens_and_restores_baseline_overlay() => Sta.Run(() =>
     {
         var ribbon = new Ribbon();
         var templates = new ResourceDictionary
@@ -1245,11 +1245,12 @@ public class CrystalContextualTests
         ribbon.Resources.MergedDictionaries.Add(CrystalPalette.Create(CrystalPalette.Blue));
         ribbon.Measure(new Size(800, 200));
         ribbon.Arrange(new Rect(0, 0, 800, 200));
-        CrystalFileHover.Apply(ribbon, true);
         var tabs = (RibbonTabControl)ribbon.Template.FindName("TabControlHost", ribbon);
         var button = (System.Windows.Controls.Primitives.ToggleButton)tabs.Template.FindName("PART_ApplicationButton", tabs);
+        button.ApplyTemplate();
         var rim = (Border)button.Template.FindName("InnerRim", button);
-        Assert.Same(ribbon.FindResource("RibbonKit.Brushes.Tab.HoverBorder"), rim.BorderBrush);
+        Assert.Same(ribbon.FindResource("RibbonKit.Brushes.ApplicationButton.InnerGlow"), rim.BorderBrush);
+        Assert.Equal(0.6, Assert.IsType<DrawingBrush>(rim.BorderBrush).Opacity);
         Assert.Equal(new Thickness(1), rim.BorderThickness);
         var chrome = (Border)button.Template.FindName("Chrome", button);
         Assert.Equal(new CornerRadius(8), chrome.CornerRadius);
@@ -1258,12 +1259,12 @@ public class CrystalContextualTests
         var baselineSize = button.DesiredSize;
         ribbon.Resources.MergedDictionaries[1] = CrystalPalette.Create(Colors.Purple);
         Sta.Drain();
-        Assert.Same(ribbon.FindResource("RibbonKit.Brushes.Tab.HoverBorder"), rim.BorderBrush);
-        CrystalFileHover.Apply(ribbon, false);
+        Assert.Same(ribbon.FindResource("RibbonKit.Brushes.ApplicationButton.InnerGlow"), rim.BorderBrush);
         ribbon.Resources.MergedDictionaries.RemoveAt(1);
         ribbon.UpdateLayout();
         Assert.Same(ribbon.FindResource("RibbonKit.Brushes.ApplicationButton.InnerGlow"), rim.BorderBrush);
         Assert.Equal(new Thickness(0), rim.BorderThickness);
+        Assert.Equal(1d, rim.Opacity);
         Assert.Equal((CornerRadius)ribbon.FindResource("RibbonKit.Metrics.ApplicationButtonCornerRadius"), chrome.CornerRadius);
         Assert.Equal(chrome.CornerRadius, rim.CornerRadius);
         Assert.Null(rim.Style);
