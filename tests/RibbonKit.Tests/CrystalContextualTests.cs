@@ -1364,6 +1364,66 @@ public class CrystalContextualTests
     });
 
     [Fact]
+    public void Crystal_hover_tab_outline_uses_unmeasured_overlay_and_office_values_stay_the_same() => Sta.Run(() =>
+    {
+        var ribbon = new Ribbon();
+        var resources = ribbon.Resources;
+        foreach (var generation in new[] { "2007", "2010", "2013", "2019", "2024" })
+        {
+            resources.MergedDictionaries.Clear();
+            resources.MergedDictionaries.Add(new ResourceDictionary
+            { Source = new Uri($"/RibbonKit;component/Themes/Tokens.Office{generation}.xaml", UriKind.Relative) });
+            foreach (var dark in new[] { false, true })
+            {
+                if (dark)
+                    resources.MergedDictionaries.Add(new ResourceDictionary
+                    { Source = new Uri($"/RibbonKit;component/Themes/Tokens.Office{generation}.Dark.xaml", UriKind.Relative) });
+                Assert.Equal(resources["RibbonKit.Metrics.TabCornerRadius"],
+                    resources["RibbonKit.Metrics.TabHoverCornerRadius"]);
+                Assert.Equal(resources["RibbonKit.Metrics.TabSelectedBorderThickness"],
+                    resources["RibbonKit.Metrics.TabHoverBorderThickness"]);
+                Assert.Equal(1d, resources["RibbonKit.Metrics.TabHoverConnectFootOpacity"]);
+            }
+        }
+
+        resources.MergedDictionaries.Clear();
+        resources.MergedDictionaries.Add(new ResourceDictionary
+        { Source = new Uri("/RibbonKit;component/Themes/Tokens.Office2024.xaml", UriKind.Relative) });
+        resources.MergedDictionaries.Add(new ResourceDictionary
+        { Source = new Uri("/RibbonKit;component/Themes/Tokens.Crystal.Light.xaml", UriKind.Relative) });
+        Assert.Equal(new CornerRadius(8), resources["RibbonKit.Metrics.TabHoverCornerRadius"]);
+        Assert.Equal(new Thickness(1), resources["RibbonKit.Metrics.TabHoverBorderThickness"]);
+        Assert.Equal(0d, resources["RibbonKit.Metrics.TabHoverConnectFootOpacity"]);
+
+        var templates = new ResourceDictionary
+        { Source = new Uri("/RibbonKit;component/Themes/Office2024.xaml", UriKind.Relative) };
+        ribbon.Style = (Style)templates[typeof(Ribbon)];
+        ribbon.Tabs.Add(new RibbonTab { Header = "Home" });
+        var tab = new RibbonTab { Header = "Ribbon Lab" };
+        ribbon.Tabs.Add(tab);
+        var window = new Window { Content = ribbon, Width = 500, Height = 250,
+            Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
+        try
+        {
+            window.Show();
+            Sta.Drain(DispatcherPriority.Render);
+            window.UpdateLayout();
+            var chrome = (Border)tab.Template.FindName("HeaderChrome", tab);
+            var hover = (Border)tab.Template.FindName("HoverChrome", tab);
+            Assert.Equal(new Thickness(1, 1, 1, 0), chrome.BorderThickness);
+            Assert.Equal(new Thickness(1), hover.BorderThickness);
+            Assert.Equal(new CornerRadius(8), hover.CornerRadius);
+            var desiredSize = tab.DesiredSize;
+            var ribbonSize = ribbon.DesiredSize;
+            hover.Visibility = Visibility.Visible;
+            window.UpdateLayout();
+            Assert.Equal(desiredSize, tab.DesiredSize);
+            Assert.Equal(ribbonSize, ribbon.DesiredSize);
+        }
+        finally { window.Close(); }
+    });
+
+    [Fact]
     public void Body_scroll_geometry_tokens_preserve_office_light_and_dark() => Sta.Run(() =>
     {
         var ribbon = new Ribbon();

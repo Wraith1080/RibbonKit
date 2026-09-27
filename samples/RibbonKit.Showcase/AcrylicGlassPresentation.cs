@@ -30,26 +30,33 @@ internal sealed class AcrylicGlassPresentation
         ScaleOpacity(overlay, "RibbonKit.Brushes.TitleBar.Background", 0.48);
         ScaleOpacity(overlay, "RibbonKit.Brushes.Window.Background", 0.48);
 
-        // Neutral specular washes contrast with the material while the theme supplies
-        // text, pressed states and rims. Dark themes use less white to protect labels.
-        Color hover = darkMode
-            ? Color.FromArgb(0x50, 0xF3, 0xFA, 0xFF)
-            : Color.FromArgb(0x98, 0xF3, 0xFA, 0xFF);
+        // Keep the command wash light enough to read as glass, but carry the
+        // current theme/accent hue through tint changes. Dark themes use less wash.
+        Color accent = ((SolidColorBrush)_window.FindResource("RibbonKit.Brushes.Accent")).Color;
+        Color hover = TintGlass(accent, darkMode ? (byte)0x50 : (byte)0x98);
         // The tab hover stays quieter than the selected glass pill.
         Color tabHover = darkMode
             ? Color.FromArgb(0x30, 0xF3, 0xFA, 0xFF)
             : Color.FromArgb(0x50, 0xF3, 0xFA, 0xFF);
-        Color splitActive = darkMode
-            ? Color.FromArgb(0x68, 0xF3, 0xFA, 0xFF)
-            : Color.FromArgb(0xB8, 0xF3, 0xFA, 0xFF);
+        Color splitActive = TintGlass(accent, darkMode ? (byte)0x68 : (byte)0xB8);
         overlay["RibbonKit.Brushes.Control.HoverBackground"] = new SolidColorBrush(hover);
         overlay["RibbonKit.Brushes.Control.CompanionBackground"] = new SolidColorBrush(hover);
         overlay["RibbonKit.Brushes.Control.SplitActiveHover"] = new SolidColorBrush(splitActive);
         overlay["RibbonKit.Brushes.Tab.HoverBackground"] = new SolidColorBrush(tabHover);
+        overlay["RibbonKit.Brushes.ApplicationButton.HoverBackground"] =
+            overlay["RibbonKit.Brushes.Tab.HoverBackground"];
         ScaleOpacity(overlay, "RibbonKit.Brushes.Tab.HoverBorder", 1.0);
 
         _window.Resources.MergedDictionaries.Add(overlay);
         _overlay = overlay;
+    }
+
+    private static Color TintGlass(Color accent, byte alpha)
+    {
+        static byte Mix(byte neutral, byte tint) =>
+            (byte)Math.Round(neutral * 0.7 + tint * 0.3);
+        return Color.FromArgb(alpha, Mix(0xF3, accent.R), Mix(0xFA, accent.G),
+            Mix(0xFF, accent.B));
     }
 
     private void ScaleOpacity(ResourceDictionary overlay, string key, double opacity)

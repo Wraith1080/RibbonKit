@@ -210,6 +210,12 @@ warnings/errors; nine focused Crystal tests passed, including a realized popup,
 scoped resources, live tint replacement and baseline restoration without losing
 selection. The user owns visual review and live pointer/DPI acceptance.
 
+**Deferred 200% gallery selection clipping (2026-09-27):** In the View tab's Theme
+gallery, the selected icon-bearing tile appears clipped behind the gallery's outer
+border at 200% scaling. Reproduce with and without an icon at 100% and 200%, then
+inspect item bounds, viewport clipping and DPI rounding in the shared gallery before
+changing its layout. Preserve the accepted Crystal tile and gallery border visuals.
+
 Gallery boundary refinement: the hover-style white rim disappeared into the pale
 surfaces inside and outside the strip. Its persistent border now uses an opaque
 blue-gray base and a restrained tinted top glint, shared by strip and expanded popup.

@@ -656,6 +656,18 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [Crystal layout templates honor the existing Translucent setting](docs/history/01-library.md#3175-crystal-translucent-backstage-option--2026-09-27).
 
+### 3.176 Acrylic hover accent and File wash — 2026-09-27
+
+[Accent-tinted command hover and brighter File hover](docs/history/01-library.md#3176-acrylic-hover-accent-and-file-wash--2026-09-27).
+
+### 3.177 Crystal selected-tab bridge — 2026-09-27
+
+[Enable the existing foot and body notch for Crystal](docs/history/01-library.md#3177-crystal-selected-tab-bridge--2026-09-27).
+
+### 3.178 Crystal hover tab closes below the header — 2026-09-27
+
+[Shared hover outline tokens without tab or body movement](docs/history/01-library.md#3178-crystal-hover-tab-closes-below-the-header--2026-09-27).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),

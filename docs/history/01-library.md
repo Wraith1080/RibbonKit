@@ -4870,3 +4870,48 @@ for text readability. Turning the option off restores the original Crystal
 brushes without changing the chosen layout or adding a public API. A focused
 realized-template test checks both Crystal layouts and the on/off transition;
 native Acrylic appearance remains for live screenshot review.
+
+### 3.176 Acrylic hover accent and File wash — 2026-09-27
+
+The Glass look overlay's bright command hover had a fixed near-white color, so
+it stayed neutral when the user selected another accent. The overlay now blends
+the active accent into that wash while retaining its previous light/dark alpha.
+The split-button companion and stronger active-half washes use the same tint.
+The File button's hover fill now resolves to the same brighter glass brush as a
+tab header; its selected and pressed surfaces are unchanged. These remain
+Showcase-scoped overrides, removed when Glass look is off. A focused Crystal
+presentation test checks accent changes, File/tab resource parity, Office opt-in,
+dark alpha, and restoration. Live Acrylic color balance awaits screenshot review.
+
+### 3.177 Crystal selected-tab bridge — 2026-09-27
+
+The user's Acrylic screenshot showed the selected Crystal tab ending above the
+tab strip's last pixel and the ribbon body's white top border. The shared tab
+foot and body-side `PART_ConnectNotch` already bridge these two pixels for
+connected Office themes, but Crystal inherited Office 2024's disabled tokens.
+Crystal now supplies the one-pixel foot transform and visible selected-foot and
+notch brushes. A follow-up screenshot showed a white strip when Glass look was
+off: the opaque notch token used a different color from the foot, while the
+Glass look overlay matched them. Both Crystal tokens now use the same
+accent-tinted color, so the bridge stays consistent as Glass look changes
+without a Showcase-only notch override or layout adjustment. Office 2024 still
+has no notch. A focused realized-control test checks Crystal geometry, foot/notch
+color in both glass states, tint changes, and Office 2024 comparison; live
+ordinary and Acrylic appearance, including minimized tabs, still need review.
+
+### 3.178 Crystal hover tab closes below the header — 2026-09-27
+
+The unselected Crystal tab inherited Office 2024's top-only hover geometry. A
+separate, hit-transparent `HoverChrome` now draws the hover outline in the shared
+tab template. Crystal supplies full 8-DIP corners and a complete one-pixel border;
+its unselected hover hides the connecting foot. The selected tab continues to use
+the existing foot and body notch. The normal and Backstage-active hover triggers
+use the same overlay, and Office light/dark palettes retain their original hover
+corner, border and foot values.
+
+Changing the measured `HeaderChrome` border on hover shifted the ribbon body by
+one pixel, so the outline was moved to a visual overlay. A focused WPF check
+confirms the overlay's geometry, unchanged tab/ribbon desired sizes when it is
+shown, and Office token parity across light and dark variants. Live hover shape
+and body position still need screenshot review. The reported 200% icon-bearing
+gallery selection clipping is recorded separately in the future themes plan.

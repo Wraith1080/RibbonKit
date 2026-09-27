@@ -147,6 +147,11 @@
     <DrawingBrush x:Key="RibbonKit.Brushes.Tab.SelectedBorderBrush"
                   Drawing="{StaticResource Crystal.Drawing.GlassRim}"
                   Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
+    <!-- The 2024 base disables its tab-to-body bridge. Crystal's outlined tab needs both
+         the strip-side foot and body-side notch to cover the two seam pixels. -->
+    <TranslateTransform x:Key="RibbonKit.Transforms.TabConnect" Y="1" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ConnectFootSelected" Color="#C7DEEF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ConnectNotch" Color="#C7DEEF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverBackground" Color="#187BA5C7" />
     <DrawingBrush x:Key="RibbonKit.Brushes.Tab.HoverBorder"
                   Drawing="{StaticResource Crystal.Drawing.GlassRim}" Opacity="0.6"
@@ -238,6 +243,9 @@
     <sys:Double x:Key="RibbonKit.Metrics.ApplicationButtonInnerRimIdleOpacity">0</sys:Double>
     <!-- Reserve the same rim on every tab, so selecting or hovering never moves labels. -->
     <Thickness x:Key="RibbonKit.Metrics.TabSelectedBorderThickness">1,1,1,0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.TabHoverBorderThickness">1</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.TabHoverCornerRadius">8</CornerRadius>
+    <sys:Double x:Key="RibbonKit.Metrics.TabHoverConnectFootOpacity">0</sys:Double>
     <Thickness x:Key="RibbonKit.Metrics.TabMinimizedSelectedBorderThickness">1</Thickness>
     <!-- Shared utility chrome: collapse, pin, scroll arrows and QAT overflow.
          Reuse the accepted command shading at a quieter hover strength. -->
