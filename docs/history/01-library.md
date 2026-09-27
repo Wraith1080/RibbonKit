@@ -4915,3 +4915,44 @@ confirms the overlay's geometry, unchanged tab/ribbon desired sizes when it is
 shown, and Office token parity across light and dark variants. Live hover shape
 and body position still need screenshot review. The reported 200% icon-bearing
 gallery selection clipping is recorded separately in the future themes plan.
+
+### 3.179 Crystal hover and selected tabs share an open lower edge — 2026-09-27
+
+The closed hover pill in §3.178 looked inconsistent when a tab became selected:
+Office 2007/2010 avoid that shape change by using top-rounded, open-bottom chrome
+and a strip-side hover foot. Crystal now uses the same geometry with its existing
+8-DIP upper corners. Its hover foot has the same translucent paint as the hover
+fill, including the Showcase's optional Glass look overlay and tint changes.
+The selected body-side notch remains reserved for the selected tab. The
+separate `HoverChrome` layer and its three hover metrics from §3.178 were
+removed: the original measured `HeaderChrome` now changes only brushes on
+hover. Its existing minimized trigger still supplies the accepted full-corner
+shape. A focused geometry check confirms the brush swap leaves tab and ribbon
+measurements unchanged, and presentation checks cover the Glass look foot tint.
+Live pointer appearance remains for user review.
+
+### 3.180 Crystal hover foot clipping — 2026-09-27
+
+The follow-up screenshot showed the open-bottom hover tab's side outline ending
+before the ribbon body. A focused realized-control check placed `ConnectFoot` at
+37 DIP while `PART_TabScroll` clipped at 36.8 DIP: its one-pixel border was fully
+outside the strip. The shared template now reads a separate render-only hover
+transform. Crystal keeps its hover foot at Y=0, inside the strip, while its
+selected foot remains at Y=1 for the existing body notch. Every Office light
+and dark palette keeps the same hover displacement it had before. The focused
+geometry check verifies the hover trigger, foot/strip intersection, token
+parity, and unchanged tab/ribbon measure. Live pointer and DPI appearance
+remain for user review.
+
+### 3.181 Crystal hover uses one translucent surface — 2026-09-27
+
+The visible hover foot from §3.180 still crossed a fractional strip edge at some
+scales and painted the translucent hover wash twice, making a darker band. A
+realized-control check shows the ordinary `HeaderChrome` already extends to the
+strip's clip edge. Crystal now suppresses the hover foot's fill and side borders
+with a shared opacity token; Office light and dark themes retain opacity 1.
+The hover stays top-rounded and open-bottom, while the selected tab keeps its
+existing opaque foot and body notch. The separate hover transform and its
+Glass look foot override were removed. A focused check covers the header/strip
+geometry, token parity, selected foot restoration, and unchanged tab/ribbon
+measure; live pointer appearance remains for user review.

@@ -76,6 +76,7 @@ public sealed class CrystalMainWindowPresentationTests
             Assert.Equal(Color.FromRgb(0xC7, 0xDE, 0xEF),
                 Assert.IsType<SolidColorBrush>(tab.FindResource("RibbonKit.Brushes.Tab.ConnectNotch")).Color);
             Assert.Same(tab.FindResource("RibbonKit.Brushes.Tab.ConnectFootSelected"), foot.Background);
+            Assert.Equal(1d, foot.Opacity);
             Assert.Equal(Assert.IsType<SolidColorBrush>(foot.Background).Color,
                 Assert.IsType<SolidColorBrush>(notch.Background).Color);
 
@@ -139,6 +140,7 @@ public sealed class CrystalMainWindowPresentationTests
             Assert.NotEqual(purpleHover, acrylicHover.Color);
             Assert.Equal(Color.FromArgb(0x50, 0xF3, 0xFA, 0xFF),
                 Assert.IsType<SolidColorBrush>(tab.FindResource("RibbonKit.Brushes.Tab.HoverBackground")).Color);
+            Assert.Equal(0d, tab.FindResource("RibbonKit.Metrics.TabHoverConnectFootOpacity"));
             Assert.Equal(acrylicHover.Color, Assert.IsType<SolidColorBrush>(split.FindResource(
                 "RibbonKit.Brushes.Control.CompanionBackground")).Color);
             Assert.Equal(Color.FromArgb(0xB8, acrylicHover.Color.R,
@@ -166,6 +168,7 @@ public sealed class CrystalMainWindowPresentationTests
                 "RibbonKit.Brushes.Control.HoverBackground")).Color);
             Assert.NotEqual(Color.FromArgb(0x50, 0xF3, 0xFA, 0xFF),
                 Assert.IsType<SolidColorBrush>(tab.FindResource("RibbonKit.Brushes.Tab.HoverBackground")).Color);
+            Assert.Equal(0d, tab.FindResource("RibbonKit.Metrics.TabHoverConnectFootOpacity"));
             Assert.NotSame(tab.FindResource("RibbonKit.Brushes.Tab.HoverBackground"),
                 file.FindResource("RibbonKit.Brushes.ApplicationButton.HoverBackground"));
             Assert.Equal(opaqueNotch, Assert.IsType<SolidColorBrush>(notch.Background).Color);

@@ -19,9 +19,8 @@
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type controls:RibbonTab}">
                     <Grid>
-                        <!-- Reserve the selected tab's geometry on every tab so selection does not
-                             shift its label. Hover outlines paint in a separate overlay and never
-                             change this measured border. -->
+                        <!-- Reserve the selected tab's geometry on every tab so hovering and
+                             selection change its brushes without changing the measured border. -->
                         <Border x:Name="HeaderChrome"
                                 Background="Transparent"
                                 BorderBrush="Transparent"
@@ -48,15 +47,6 @@
                                                   Visibility="Collapsed" />
                             </Grid>
                         </Border>
-                        <!-- Hover can close the lower corners without adding a measured bottom
-                             border. This overlay has no content and cannot take pointer hits. -->
-                        <Border x:Name="HoverChrome"
-                                BorderBrush="{DynamicResource RibbonKit.Brushes.Tab.HoverBorder}"
-                                BorderThickness="{DynamicResource RibbonKit.Metrics.TabHoverBorderThickness}"
-                                CornerRadius="{DynamicResource RibbonKit.Metrics.TabHoverCornerRadius}"
-                                IsHitTestVisible="False"
-                                SnapsToDevicePixels="True"
-                                Visibility="Collapsed" />
                         <!-- The template carries BOTH an underline and a fill for hover and
                              for selection; a theme picks its style by making the unwanted
                              token Transparent (2024 = underlines; 2019 = fills/pills).
@@ -99,10 +89,10 @@
                                    Visibility="Collapsed" />
                         <!-- Tab-to-body connector, STRIP side. Transparent until the tab is
                              hovered/selected (the triggers set its Background); a 1px sliver at
-                             the tab's bottom, render-shifted 1px DOWN by TabConnect (Y=1 in the
-                             connecting themes, 0 elsewhere) so it fills the seam at the strip's
-                             bottom edge while the tab's top edge and label stay on the
-                             File-button line — the connect never moves the whole tab. NOTE its
+                             the tab's bottom, shifted only by TabConnect. Themes can suppress
+                             the hover foot when their translucent header already reaches the
+                             clipped strip edge. The transform is render-only, so the tab's
+                             top edge and label stay on the File-button line. NOTE its
                              limit: PART_TabScroll clips its subtree (ClipToBounds), so the foot
                              can never paint past the strip onto the ribbon BODY's top border —
                              and no ZIndex can fix that, because the strip and the body are
@@ -132,9 +122,8 @@
                         <Trigger SourceName="HeaderChrome" Property="IsMouseOver" Value="True">
                             <Setter TargetName="HeaderChrome" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Tab.HoverBackground}" />
-                            <Setter TargetName="HeaderChrome" Property="CornerRadius"
-                                    Value="{DynamicResource RibbonKit.Metrics.TabHoverCornerRadius}" />
-                            <Setter TargetName="HoverChrome" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="HeaderChrome" Property="BorderBrush"
+                                    Value="{DynamicResource RibbonKit.Brushes.Tab.HoverBorder}" />
                             <!-- Connect the hovered tab toward the body WITHOUT moving the tab. Instead
                                  of dropping the whole HeaderChrome 1px (which lowered the top edge and
                                  the label off the File-button line), we color the 1px ConnectFoot at the
@@ -144,8 +133,8 @@
                                  Transparent in non-connecting themes. -->
                             <Setter TargetName="ConnectFoot" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Tab.ConnectFootHover}" />
-                            <!-- Continue the tab's side borders 1px down through the foot in
-                                 connecting themes. Crystal hides this foot on unselected hover. -->
+                            <!-- Continue the tab's side borders 1px down through the foot so the
+                                 hovered tab's outline meets the body without a break. -->
                             <Setter TargetName="ConnectFoot" Property="BorderBrush"
                                     Value="{DynamicResource RibbonKit.Brushes.Tab.HoverBorder}" />
                             <Setter TargetName="ConnectFoot" Property="Opacity"
@@ -155,11 +144,6 @@
                         <Trigger Property="IsSelected" Value="True">
                             <Setter TargetName="HeaderChrome" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Tab.SelectedBackground}" />
-                            <!-- A hovered selected tab stays connected; only an unselected hover
-                                 takes the theme's standalone lower corners and border. -->
-                            <Setter TargetName="HeaderChrome" Property="CornerRadius"
-                                    Value="{DynamicResource RibbonKit.Metrics.TabCornerRadius}" />
-                            <Setter TargetName="HoverChrome" Property="Visibility" Value="Collapsed" />
                             <!-- Connect the active tab to the body WITHOUT moving the tab: the 1px
                                  ConnectFoot at the bottom is coloured the body/tab-bottom colour,
                                  filling the seam at the strip's bottom edge; PART_ConnectNotch (in
@@ -204,7 +188,6 @@
                         <Trigger Property="IsBackstageActive" Value="True">
                             <Setter TargetName="HeaderChrome" Property="Background" Value="Transparent" />
                             <Setter TargetName="HeaderChrome" Property="BorderBrush" Value="Transparent" />
-                            <Setter TargetName="HoverChrome" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="ConnectFoot" Property="Background" Value="Transparent" />
                             <Setter TargetName="ConnectFoot" Property="BorderBrush" Value="Transparent" />
                             <Setter TargetName="HoverIndicator" Property="Visibility" Value="Collapsed" />
@@ -225,9 +208,8 @@
                             </MultiTrigger.Conditions>
                             <Setter TargetName="HeaderChrome" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Tab.HoverBackground}" />
-                            <Setter TargetName="HeaderChrome" Property="CornerRadius"
-                                    Value="{DynamicResource RibbonKit.Metrics.TabHoverCornerRadius}" />
-                            <Setter TargetName="HoverChrome" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="HeaderChrome" Property="BorderBrush"
+                                    Value="{DynamicResource RibbonKit.Brushes.Tab.HoverBorder}" />
                             <Setter TargetName="ConnectFoot" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Tab.ConnectFootHover}" />
                             <Setter TargetName="ConnectFoot" Property="BorderBrush"

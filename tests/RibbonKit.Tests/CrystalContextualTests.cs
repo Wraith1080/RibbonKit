@@ -1364,7 +1364,7 @@ public class CrystalContextualTests
     });
 
     [Fact]
-    public void Crystal_hover_tab_outline_uses_unmeasured_overlay_and_office_values_stay_the_same() => Sta.Run(() =>
+    public void Crystal_hover_uses_the_measured_tab_chrome_without_moving_the_ribbon() => Sta.Run(() =>
     {
         var ribbon = new Ribbon();
         var resources = ribbon.Resources;
@@ -1378,21 +1378,14 @@ public class CrystalContextualTests
                 if (dark)
                     resources.MergedDictionaries.Add(new ResourceDictionary
                     { Source = new Uri($"/RibbonKit;component/Themes/Tokens.Office{generation}.Dark.xaml", UriKind.Relative) });
-                Assert.Equal(resources["RibbonKit.Metrics.TabCornerRadius"],
-                    resources["RibbonKit.Metrics.TabHoverCornerRadius"]);
-                Assert.Equal(resources["RibbonKit.Metrics.TabSelectedBorderThickness"],
-                    resources["RibbonKit.Metrics.TabHoverBorderThickness"]);
                 Assert.Equal(1d, resources["RibbonKit.Metrics.TabHoverConnectFootOpacity"]);
             }
         }
-
         resources.MergedDictionaries.Clear();
         resources.MergedDictionaries.Add(new ResourceDictionary
         { Source = new Uri("/RibbonKit;component/Themes/Tokens.Office2024.xaml", UriKind.Relative) });
         resources.MergedDictionaries.Add(new ResourceDictionary
         { Source = new Uri("/RibbonKit;component/Themes/Tokens.Crystal.Light.xaml", UriKind.Relative) });
-        Assert.Equal(new CornerRadius(8), resources["RibbonKit.Metrics.TabHoverCornerRadius"]);
-        Assert.Equal(new Thickness(1), resources["RibbonKit.Metrics.TabHoverBorderThickness"]);
         Assert.Equal(0d, resources["RibbonKit.Metrics.TabHoverConnectFootOpacity"]);
 
         var templates = new ResourceDictionary
@@ -1409,16 +1402,36 @@ public class CrystalContextualTests
             Sta.Drain(DispatcherPriority.Render);
             window.UpdateLayout();
             var chrome = (Border)tab.Template.FindName("HeaderChrome", tab);
-            var hover = (Border)tab.Template.FindName("HoverChrome", tab);
+            var foot = (Border)tab.Template.FindName("ConnectFoot", tab);
+            var tabs = (RibbonTabControl)ribbon.Template.FindName("TabControlHost", ribbon);
+            var strip = (FrameworkElement)tabs.Template.FindName("PART_TabScroll", tabs);
+            var hoverTrigger = tab.Template.Triggers.OfType<Trigger>().Single(trigger =>
+                trigger.SourceName == "HeaderChrome" &&
+                trigger.Property == UIElement.IsMouseOverProperty);
+            Assert.Contains(hoverTrigger.Setters.OfType<Setter>(), setter =>
+                setter.TargetName == "ConnectFoot" &&
+                setter.Property == UIElement.OpacityProperty);
+            Assert.Null(tab.Template.FindName("HoverChrome", tab));
             Assert.Equal(new Thickness(1, 1, 1, 0), chrome.BorderThickness);
-            Assert.Equal(new Thickness(1), hover.BorderThickness);
-            Assert.Equal(new CornerRadius(8), hover.CornerRadius);
+            Assert.Equal(new CornerRadius(8, 8, 0, 0), chrome.CornerRadius);
+            Assert.Equal(new Thickness(1, 0, 1, 0), foot.BorderThickness);
+            var chromeBounds = chrome.TransformToVisual(strip).TransformBounds(new Rect(chrome.RenderSize));
+            Assert.True(chromeBounds.Bottom >= strip.ActualHeight,
+                $"Header ends at {chromeBounds.Bottom} before the strip clips at {strip.ActualHeight}.");
+            foot.Opacity = (double)tab.FindResource("RibbonKit.Metrics.TabHoverConnectFootOpacity");
+            Assert.Equal(0d, foot.Opacity);
+            window.UpdateLayout();
             var desiredSize = tab.DesiredSize;
             var ribbonSize = ribbon.DesiredSize;
-            hover.Visibility = Visibility.Visible;
+            chrome.BorderBrush = (Brush)tab.FindResource("RibbonKit.Brushes.Tab.HoverBorder");
             window.UpdateLayout();
             Assert.Equal(desiredSize, tab.DesiredSize);
             Assert.Equal(ribbonSize, ribbon.DesiredSize);
+            ribbon.IsMinimized = true;
+            Sta.Drain(DispatcherPriority.Render);
+            window.UpdateLayout();
+            Assert.Equal(new CornerRadius(8), chrome.CornerRadius);
+            Assert.Equal(new Thickness(1), chrome.BorderThickness);
         }
         finally { window.Close(); }
     });

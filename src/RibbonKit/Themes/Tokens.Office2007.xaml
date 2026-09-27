@@ -275,14 +275,12 @@
     <!-- Matches Ribbon.Border so the tab outline and the body outline read as one piece. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedBorderBrush" Color="#8DB2E3" />
     <Thickness x:Key="RibbonKit.Metrics.TabSelectedBorderThickness">1,1,1,0</Thickness>
-    <Thickness x:Key="RibbonKit.Metrics.TabHoverBorderThickness">1,1,1,0</Thickness>
-    <CornerRadius x:Key="RibbonKit.Metrics.TabHoverCornerRadius">3,3,0,0</CornerRadius>
-    <system:Double x:Key="RibbonKit.Metrics.TabHoverConnectFootOpacity">1</system:Double>
     <Thickness x:Key="RibbonKit.Metrics.TabMinimizedSelectedBorderThickness">1,1,1,0</Thickness>
     <!-- Retained for token parity; the connect is render-only via TabConnect, as in 2010. -->
     <Thickness x:Key="RibbonKit.Metrics.TabSelectedMargin">0</Thickness>
     <!-- Same render-only connect mechanism 2010 uses and that is already DPI-verified. -->
     <TranslateTransform x:Key="RibbonKit.Transforms.TabConnect" Y="1" />
+    <system:Double x:Key="RibbonKit.Metrics.TabHoverConnectFootOpacity">1</system:Double>
     <!-- ConnectFoot colours = each tab state's bottom fill colour, so the 1px sliver continues
          the tab over the body border seamlessly. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ConnectFootHover" Color="#FFF0BE" />

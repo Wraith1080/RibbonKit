@@ -98,9 +98,6 @@
     <!-- Metro trait: the active tab is outlined (top + sides) and cuts into the ribbon body. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedBorderBrush" Color="#919191" />
     <Thickness x:Key="RibbonKit.Metrics.TabSelectedBorderThickness">1,1,1,0</Thickness>
-    <Thickness x:Key="RibbonKit.Metrics.TabHoverBorderThickness">1,1,1,0</Thickness>
-    <CornerRadius x:Key="RibbonKit.Metrics.TabHoverCornerRadius">0</CornerRadius>
-    <system:Double x:Key="RibbonKit.Metrics.TabHoverConnectFootOpacity">1</system:Double>
     <Thickness x:Key="RibbonKit.Metrics.TabMinimizedSelectedBorderThickness">1,1,1,0</Thickness>
     <!-- Retained for token parity; the connect is now driven render-only by TabConnect (below),
          not by a layout margin (a negative margin re-measured the strip and jittered on hover). -->
@@ -109,6 +106,7 @@
          (tab-strip ZIndex covers the body's top border) so the tab merges WITHOUT moving the tab,
          keeping its top edge/label aligned with the File button. RenderTransform = no re-measure. -->
     <TranslateTransform x:Key="RibbonKit.Transforms.TabConnect" Y="1" />
+    <system:Double x:Key="RibbonKit.Metrics.TabHoverConnectFootOpacity">1</system:Double>
     <!-- ConnectFoot colours = the tab's bottom fill colour so the 1px sliver continues over the
          body border. Hover = the flat hover fill; selected = the white body/tab colour. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ConnectFootHover" Color="#E8EEF7" />

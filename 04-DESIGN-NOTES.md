@@ -668,6 +668,18 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [Shared hover outline tokens without tab or body movement](docs/history/01-library.md#3178-crystal-hover-tab-closes-below-the-header--2026-09-27).
 
+### 3.179 Crystal hover and selected tabs share an open lower edge — 2026-09-27
+
+[Connected hover geometry and minimized-tab preservation](docs/history/01-library.md#3179-crystal-hover-and-selected-tabs-share-an-open-lower-edge--2026-09-27).
+
+### 3.180 Crystal hover foot clipping — 2026-09-27
+
+[Hover foot stays inside the clipped tab strip](docs/history/01-library.md#3180-crystal-hover-foot-clipping--2026-09-27).
+
+### 3.181 Crystal hover uses one translucent surface — 2026-09-27
+
+[Remove the overlapping hover foot while retaining the selected connector](docs/history/01-library.md#3181-crystal-hover-uses-one-translucent-surface--2026-09-27).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),

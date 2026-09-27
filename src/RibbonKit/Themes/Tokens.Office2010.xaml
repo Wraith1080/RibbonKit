@@ -221,9 +221,6 @@
     <!-- Connected-tab outline (top + sides) that cuts into the ribbon body. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedBorderBrush" Color="#8DA5C4" />
     <Thickness x:Key="RibbonKit.Metrics.TabSelectedBorderThickness">1,1,1,0</Thickness>
-    <Thickness x:Key="RibbonKit.Metrics.TabHoverBorderThickness">1,1,1,0</Thickness>
-    <CornerRadius x:Key="RibbonKit.Metrics.TabHoverCornerRadius">3,3,0,0</CornerRadius>
-    <system:Double x:Key="RibbonKit.Metrics.TabHoverConnectFootOpacity">1</system:Double>
     <Thickness x:Key="RibbonKit.Metrics.TabMinimizedSelectedBorderThickness">1,1,1,0</Thickness>
     <!-- Retained for token parity; the connect is now driven render-only by TabConnect (below),
          not by a layout margin (a negative margin re-measured the strip and jittered on hover). -->
@@ -233,6 +230,7 @@
          tab itself, so its top edge and label stay on the File-button line. A RenderTransform, so
          it never re-measures the TabPanel — no hover jitter. Flat themes use identity (Y=0). -->
     <TranslateTransform x:Key="RibbonKit.Transforms.TabConnect" Y="1" />
+    <system:Double x:Key="RibbonKit.Metrics.TabHoverConnectFootOpacity">1</system:Double>
     <!-- ConnectFoot colours = the tab's bottom fill colour, so the 1px sliver continues the tab
          over the body border seamlessly. Hover = the amber hover gradient's low stop; selected =
          the body top colour (which is also the selected tab's bottom stop). -->

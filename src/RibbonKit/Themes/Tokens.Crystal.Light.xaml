@@ -243,8 +243,7 @@
     <sys:Double x:Key="RibbonKit.Metrics.ApplicationButtonInnerRimIdleOpacity">0</sys:Double>
     <!-- Reserve the same rim on every tab, so selecting or hovering never moves labels. -->
     <Thickness x:Key="RibbonKit.Metrics.TabSelectedBorderThickness">1,1,1,0</Thickness>
-    <Thickness x:Key="RibbonKit.Metrics.TabHoverBorderThickness">1</Thickness>
-    <CornerRadius x:Key="RibbonKit.Metrics.TabHoverCornerRadius">8</CornerRadius>
+    <!-- The translucent hover is painted once by HeaderChrome; no overlapping foot. -->
     <sys:Double x:Key="RibbonKit.Metrics.TabHoverConnectFootOpacity">0</sys:Double>
     <Thickness x:Key="RibbonKit.Metrics.TabMinimizedSelectedBorderThickness">1</Thickness>
     <!-- Shared utility chrome: collapse, pin, scroll arrows and QAT overflow.
