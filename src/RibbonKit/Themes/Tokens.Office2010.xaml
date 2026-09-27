@@ -506,6 +506,8 @@
     <!-- Flat below-ribbon QAT: a plain full-width strip with a bottom border. -->
     <Thickness x:Key="RibbonKit.Metrics.QatExtenderMargin">0</Thickness>
     <system:Double x:Key="RibbonKit.Metrics.QatExtenderMinHeight">0</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.BodyScrollButtonWidth">22</system:Double>
+    <CornerRadius x:Key="RibbonKit.Metrics.BodyScrollButtonCornerRadius">3</CornerRadius>
     <Thickness x:Key="RibbonKit.Metrics.QatExtenderBorderThickness">0,0,0,1</Thickness>
     <CornerRadius x:Key="RibbonKit.Metrics.QatExtenderCornerRadius">0</CornerRadius>
     <Thickness x:Key="RibbonKit.Metrics.QatExtenderMarginMessageBar">0</Thickness>

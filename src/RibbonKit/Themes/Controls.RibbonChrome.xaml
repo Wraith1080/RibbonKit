@@ -778,10 +778,14 @@
                                     <ContentPresenter ContentSource="SelectedContent" />
                                 </layout:RibbonScrollContentHost>
                                 <RepeatButton Style="{StaticResource RibbonKit.ScrollLeftButton}"
+                                              Tag="BodyScroll"
+                                              Width="{DynamicResource RibbonKit.Metrics.BodyScrollButtonWidth}"
                                               HorizontalAlignment="Left"
                                               Command="{Binding ScrollLeftCommand, ElementName=PART_ContentScroll}"
                                               Visibility="{Binding CanScrollLeft, ElementName=PART_ContentScroll, Converter={StaticResource RibbonKit.BoolToVis}}" />
                                 <RepeatButton Style="{StaticResource RibbonKit.ScrollRightButton}"
+                                              Tag="BodyScroll"
+                                              Width="{DynamicResource RibbonKit.Metrics.BodyScrollButtonWidth}"
                                               HorizontalAlignment="Right"
                                               Command="{Binding ScrollRightCommand, ElementName=PART_ContentScroll}"
                                               Visibility="{Binding CanScrollRight, ElementName=PART_ContentScroll, Converter={StaticResource RibbonKit.BoolToVis}}" />

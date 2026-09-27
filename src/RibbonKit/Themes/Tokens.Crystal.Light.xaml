@@ -449,8 +449,8 @@
     <Thickness x:Key="RibbonKit.Metrics.MessageBar.ItemMargin">0,2,0,2</Thickness>
     <sys:Double x:Key="RibbonKit.Metrics.QatExtenderMinHeight">32</sys:Double>
     <!-- Wider than the tab arrows, with room for a straight edge between corners. -->
-    <sys:Double x:Key="Crystal.Metrics.BodyScrollWidth">32</sys:Double>
-    <CornerRadius x:Key="Crystal.Metrics.BodyScrollCornerRadius">10</CornerRadius>
+    <sys:Double x:Key="RibbonKit.Metrics.BodyScrollButtonWidth">32</sys:Double>
+    <CornerRadius x:Key="RibbonKit.Metrics.BodyScrollButtonCornerRadius">10</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadiusTop">14,14,0,0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.SplitLeftCornerRadius">8,0,0,8</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.SplitRightCornerRadius">0,8,8,0</CornerRadius>

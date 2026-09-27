@@ -4764,3 +4764,19 @@ removed. All five Office base palettes set their minimized metrics to their
 existing tab metrics, and the dark palettes inherit the same geometry. Focused
 checks cover Crystal state and comparison switches and Office light/dark token
 parity. Live minimized-tab appearance remains for user review.
+
+### 3.171 Crystal body-scroll geometry in the shared template — 2026-09-27
+
+Body scroll arrows and tab scroll arrows share the left/right button templates.
+The body instances now carry an internal `BodyScroll` marker, letting those
+shared templates select `RibbonKit.Metrics.BodyScrollButtonCornerRadius` without
+changing the tab arrows. Their width reads
+`RibbonKit.Metrics.BodyScrollButtonWidth` directly from the ribbon template.
+Crystal keeps the accepted 32-DIP width and 10-DIP corners. Every Office base
+palette supplies the previous 22-DIP width and its existing control corner
+radius; dark variants inherit those values. `CrystalUtilityChrome` no longer
+sets or clears these geometric properties. It still owns the utility rim and
+scroll-arrow surface switching; moving those across the several shared utility
+templates is the next bounded pass. The focused preview interaction and Office
+light/dark token checks passed. Live appearance after this migration remains
+for user review.

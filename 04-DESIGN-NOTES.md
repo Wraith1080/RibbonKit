@@ -636,6 +636,10 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [State-driven tab geometry and Office token parity](docs/history/01-library.md#3170-minimized-tab-shape-in-the-shared-template--2026-09-27).
 
+### 3.171 Crystal body-scroll geometry in the shared template — 2026-09-27
+
+[Body-arrow tokens and utility-helper boundary](docs/history/01-library.md#3171-crystal-body-scroll-geometry-in-the-shared-template--2026-09-27).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),

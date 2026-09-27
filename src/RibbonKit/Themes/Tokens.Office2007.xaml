@@ -576,6 +576,8 @@
          body's own bottom edge is directly above it. -->
     <Thickness x:Key="RibbonKit.Metrics.QatExtenderMargin">2,0,2,0</Thickness>
     <system:Double x:Key="RibbonKit.Metrics.QatExtenderMinHeight">0</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.BodyScrollButtonWidth">22</system:Double>
+    <CornerRadius x:Key="RibbonKit.Metrics.BodyScrollButtonCornerRadius">3</CornerRadius>
     <Thickness x:Key="RibbonKit.Metrics.QatExtenderBorderThickness">1,0,1,1</Thickness>
     <CornerRadius x:Key="RibbonKit.Metrics.QatExtenderCornerRadius">0,0,3,3</CornerRadius>
     <Thickness x:Key="RibbonKit.Metrics.QatExtenderMarginMessageBar">2,0,2,0</Thickness>

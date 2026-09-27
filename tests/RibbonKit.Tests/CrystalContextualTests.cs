@@ -663,8 +663,9 @@ public class CrystalContextualTests
                     Assert.NotNull(FindUtilityRim(arrow));
                     var chrome = (Border)arrow.Template.FindName("Chrome", arrow);
                     Assert.Same(window.FindResource("RibbonKit.Brushes.TabStrip.ControlHoverBackground"), chrome.Background);
-                    var bodyRadius = (CornerRadius)window.FindResource("Crystal.Metrics.BodyScrollCornerRadius");
+                    var bodyRadius = (CornerRadius)window.FindResource("RibbonKit.Metrics.BodyScrollButtonCornerRadius");
                     Assert.Equal(32d, arrow.Width);
+                    Assert.Equal("BodyScroll", arrow.Tag);
                     Assert.Equal(bodyRadius, chrome.CornerRadius);
                     Assert.Equal(bodyRadius, FindUtilityRim(arrow)!.CornerRadius);
                     Assert.True(chrome.ActualWidth > bodyRadius.TopLeft + bodyRadius.TopRight);
@@ -679,8 +680,8 @@ public class CrystalContextualTests
                     else
                         Assert.InRange(Math.Abs(bodyHost.ActualWidth - arrowBounds.Right - 3), 0, 1 / dpi.DpiScaleX);
                     CrystalUtilityChrome.Apply(window, false);
-                    Assert.Equal(22d, arrow.Width);
-                    Assert.Equal((CornerRadius)window.FindResource("RibbonKit.Metrics.ControlCornerRadius"), chrome.CornerRadius);
+                    Assert.Equal(32d, arrow.Width);
+                    Assert.Equal(bodyRadius, chrome.CornerRadius);
                     CrystalUtilityChrome.Apply(window, true);
                     Assert.Equal(32d, arrow.Width);
                     Assert.Equal(bodyRadius, chrome.CornerRadius);
@@ -727,6 +728,7 @@ public class CrystalContextualTests
                     Assert.NotNull(FindUtilityRim(arrow));
                     var arrowChrome = (Border)arrow.Template.FindName("Chrome", arrow);
                     Assert.Equal(22d, arrow.Width);
+                    Assert.Null(arrow.Tag);
                     Assert.Equal((CornerRadius)window.FindResource("RibbonKit.Metrics.ControlCornerRadius"), arrowChrome.CornerRadius);
                     Assert.Same(window.FindResource("RibbonKit.Brushes.TabStrip.ControlHoverBackground"),
                         arrowChrome.Background);
@@ -1336,6 +1338,28 @@ public class CrystalContextualTests
                     resources["RibbonKit.Metrics.TabMinimizedCornerRadius"]);
                 Assert.Equal(resources["RibbonKit.Metrics.TabSelectedBorderThickness"],
                     resources["RibbonKit.Metrics.TabMinimizedSelectedBorderThickness"]);
+            }
+        }
+    });
+
+    [Fact]
+    public void Body_scroll_geometry_tokens_preserve_office_light_and_dark() => Sta.Run(() =>
+    {
+        var ribbon = new Ribbon();
+        var resources = ribbon.Resources;
+        foreach (var generation in new[] { "2007", "2010", "2013", "2019", "2024" })
+        {
+            resources.MergedDictionaries.Clear();
+            resources.MergedDictionaries.Add(new ResourceDictionary
+            { Source = new Uri($"/RibbonKit;component/Themes/Tokens.Office{generation}.xaml", UriKind.Relative) });
+            foreach (var dark in new[] { false, true })
+            {
+                if (dark)
+                    resources.MergedDictionaries.Add(new ResourceDictionary
+                    { Source = new Uri($"/RibbonKit;component/Themes/Tokens.Office{generation}.Dark.xaml", UriKind.Relative) });
+                Assert.Equal(22d, resources["RibbonKit.Metrics.BodyScrollButtonWidth"]);
+                Assert.Equal(resources["RibbonKit.Metrics.ControlCornerRadius"],
+                    resources["RibbonKit.Metrics.BodyScrollButtonCornerRadius"]);
             }
         }
     });

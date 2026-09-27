@@ -267,6 +267,10 @@
                               VerticalAlignment="Center" />
                     </Border>
                     <ControlTemplate.Triggers>
+                        <Trigger Property="Tag" Value="BodyScroll">
+                            <Setter TargetName="Chrome" Property="CornerRadius"
+                                    Value="{DynamicResource RibbonKit.Metrics.BodyScrollButtonCornerRadius}" />
+                        </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="Chrome" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.TabStrip.ControlHoverBackground}" />
@@ -302,6 +306,10 @@
                               VerticalAlignment="Center" />
                     </Border>
                     <ControlTemplate.Triggers>
+                        <Trigger Property="Tag" Value="BodyScroll">
+                            <Setter TargetName="Chrome" Property="CornerRadius"
+                                    Value="{DynamicResource RibbonKit.Metrics.BodyScrollButtonCornerRadius}" />
+                        </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="Chrome" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.TabStrip.ControlHoverBackground}" />
