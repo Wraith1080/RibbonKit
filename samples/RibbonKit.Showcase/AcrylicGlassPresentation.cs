@@ -34,15 +34,15 @@ internal sealed class AcrylicGlassPresentation
         // current theme/accent hue through tint changes. Dark themes use less wash.
         Color accent = ((SolidColorBrush)_window.FindResource("RibbonKit.Brushes.Accent")).Color;
         Color hover = TintGlass(accent, darkMode ? (byte)0x50 : (byte)0x98);
-        // The tab hover stays quieter than the selected glass pill.
-        Color tabHover = darkMode
-            ? Color.FromArgb(0x30, 0xF3, 0xFA, 0xFF)
-            : Color.FromArgb(0x50, 0xF3, 0xFA, 0xFF);
+        // Keep the tab hover quieter than the selected glass pill while letting
+        // its wash follow the accent instead of retaining a fixed blue cast.
+        Color tabHover = TintGlass(accent, darkMode ? (byte)0x30 : (byte)0x50);
         Color splitActive = TintGlass(accent, darkMode ? (byte)0x68 : (byte)0xB8);
         overlay["RibbonKit.Brushes.Control.HoverBackground"] = new SolidColorBrush(hover);
         overlay["RibbonKit.Brushes.Control.CompanionBackground"] = new SolidColorBrush(hover);
         overlay["RibbonKit.Brushes.Control.SplitActiveHover"] = new SolidColorBrush(splitActive);
         overlay["RibbonKit.Brushes.Tab.HoverBackground"] = new SolidColorBrush(tabHover);
+        overlay["RibbonKit.Brushes.QatExtender.Background"] = new SolidColorBrush(tabHover);
         overlay["RibbonKit.Brushes.ApplicationButton.HoverBackground"] =
             overlay["RibbonKit.Brushes.Tab.HoverBackground"];
         ScaleOpacity(overlay, "RibbonKit.Brushes.Tab.HoverBorder", 1.0);

@@ -36,6 +36,11 @@
         <GradientStop Offset="0.17" Color="#C8D9ED" />
         <GradientStop Offset="1" Color="#E3F4FF" />
     </LinearGradientBrush>
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.QatExtender.Background" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#DBE6F4" />
+        <GradientStop Offset="0.17" Color="#C8D9ED" />
+        <GradientStop Offset="1" Color="#E3F4FF" />
+    </LinearGradientBrush>
     <LinearGradientBrush x:Key="RibbonKit.Brushes.Ribbon.BodyBackground" StartPoint="0,0" EndPoint="0,1">
         <GradientStop Offset="0" Color="#DBE6F4" />
         <GradientStop Offset="0.17" Color="#C8D9ED" />
@@ -547,6 +552,7 @@
     <CornerRadius x:Key="RibbonKit.Metrics.SmallControlCornerRadius">2</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.PopupCornerRadius">3</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.TabCornerRadius">3,3,0,0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.TabHoverCornerRadius">3,3,0,0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.TabMinimizedCornerRadius">3,3,0,0</CornerRadius>
     <!-- Top-only, same as a tab. Only reached when ApplicationButtonShape is Tab; the
          default 2007 Orb is an Ellipse and ignores this. -->

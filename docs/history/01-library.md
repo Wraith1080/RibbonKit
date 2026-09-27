@@ -4956,3 +4956,34 @@ existing opaque foot and body notch. The separate hover transform and its
 Glass look foot override were removed. A focused check covers the header/strip
 geometry, token parity, selected foot restoration, and unchanged tab/ribbon
 measure; live pointer appearance remains for user review.
+
+### 3.182 Crystal hover rounding and accent-tinted QAT glass — 2026-09-27
+
+The follow-up screenshot still showed an awkward lower edge on the open-bottom
+hover tab. The shared `RibbonTab` template now gives its existing measured
+`HeaderChrome` a hover corner-radius token. Crystal uses an 8-DIP radius on all
+four corners; selected tabs restore their connected upper-only shape. Office
+light and dark palettes keep their previous hover radius, and minimized tabs
+retain their existing radius trigger. This does not add a second visual layer
+or change border thickness. The translucent hover foot remains suppressed for
+Crystal, avoiding overlapping wash at fractional DPI; the live lower-edge
+appearance still needs screenshot review.
+
+The below-ribbon QAT had reused `Tab.HoverBackground`, which Glass look changes
+to a neutral quiet hover wash. Its shared template now reads
+`QatExtender.Background` instead. Crystal's normal token matches its former
+hover brush and rotates with the accent; optional Glass look gives the QAT an
+accent-tinted translucent brush independently of tab hover. Every Office light
+and dark palette supplies the exact previous QAT paint, including the 2007 and
+2010 gradients. Focused tests verified tab measure, Crystal tint and Glass
+switching, and Office token parity; live visual acceptance remains open.
+
+### 3.183 Glass tab hover follows the accent — 2026-09-27
+
+The accepted rounded hover still looked blue against a warm accent because
+optional Glass look replaced `Tab.HoverBackground` with a fixed blue-white
+wash. It now uses the same accent-aware color recipe as the QAT while retaining
+the quieter tab-hover alpha (0x50 light, 0x30 dark). The File button shares the
+tab hover token, so it tracks the accent as well. The independent QAT token
+remains available for later tuning. Focused presentation checks cover purple,
+green, red, and dark glass colors; live color acceptance remains user-owned.

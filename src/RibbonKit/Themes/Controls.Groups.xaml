@@ -124,7 +124,11 @@
                                     Value="{DynamicResource RibbonKit.Brushes.Tab.HoverBackground}" />
                             <Setter TargetName="HeaderChrome" Property="BorderBrush"
                                     Value="{DynamicResource RibbonKit.Brushes.Tab.HoverBorder}" />
-                            <!-- Connect the hovered tab toward the body WITHOUT moving the tab. Instead
+                            <Setter TargetName="HeaderChrome" Property="CornerRadius"
+                                    Value="{DynamicResource RibbonKit.Metrics.TabHoverCornerRadius}" />
+                            <!-- Connected Office themes use this foot to meet the body; Crystal
+                                 suppresses it and rounds the existing HeaderChrome on hover.
+                                 Connect the hovered tab toward the body WITHOUT moving the tab. Instead
                                  of dropping the whole HeaderChrome 1px (which lowered the top edge and
                                  the label off the File-button line), we color the 1px ConnectFoot at the
                                  tab's bottom in the hover fill's low colour, filling the seam at the
@@ -133,8 +137,7 @@
                                  Transparent in non-connecting themes. -->
                             <Setter TargetName="ConnectFoot" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Tab.ConnectFootHover}" />
-                            <!-- Continue the tab's side borders 1px down through the foot so the
-                                 hovered tab's outline meets the body without a break. -->
+                            <!-- Continue the side borders through the foot in connecting themes. -->
                             <Setter TargetName="ConnectFoot" Property="BorderBrush"
                                     Value="{DynamicResource RibbonKit.Brushes.Tab.HoverBorder}" />
                             <Setter TargetName="ConnectFoot" Property="Opacity"
@@ -144,6 +147,8 @@
                         <Trigger Property="IsSelected" Value="True">
                             <Setter TargetName="HeaderChrome" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Tab.SelectedBackground}" />
+                            <Setter TargetName="HeaderChrome" Property="CornerRadius"
+                                    Value="{DynamicResource RibbonKit.Metrics.TabCornerRadius}" />
                             <!-- Connect the active tab to the body WITHOUT moving the tab: the 1px
                                  ConnectFoot at the bottom is coloured the body/tab-bottom colour,
                                  filling the seam at the strip's bottom edge; PART_ConnectNotch (in
@@ -210,6 +215,8 @@
                                     Value="{DynamicResource RibbonKit.Brushes.Tab.HoverBackground}" />
                             <Setter TargetName="HeaderChrome" Property="BorderBrush"
                                     Value="{DynamicResource RibbonKit.Brushes.Tab.HoverBorder}" />
+                            <Setter TargetName="HeaderChrome" Property="CornerRadius"
+                                    Value="{DynamicResource RibbonKit.Metrics.TabHoverCornerRadius}" />
                             <Setter TargetName="ConnectFoot" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Tab.ConnectFootHover}" />
                             <Setter TargetName="ConnectFoot" Property="BorderBrush"

@@ -125,7 +125,7 @@
                                     MinHeight="{DynamicResource RibbonKit.Metrics.QatExtenderMinHeight}"
                                     Margin="{DynamicResource RibbonKit.Metrics.QatExtenderMargin}"
                                     Padding="8,2"
-                                    Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
+                                    Background="{DynamicResource RibbonKit.Brushes.QatExtender.Background}"
                                     BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}"
                                     BorderThickness="{DynamicResource RibbonKit.Metrics.QatExtenderBorderThickness}"
                                     CornerRadius="{DynamicResource RibbonKit.Metrics.QatExtenderCornerRadius}"

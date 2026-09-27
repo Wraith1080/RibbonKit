@@ -111,6 +111,8 @@ public sealed class CrystalMainWindowPresentationTests
             Assert.Equal(new CornerRadius(0, 0, 10, 10), drawer.CornerRadius);
             Assert.Equal(32, drawer.MinHeight);
             Assert.Same(ribbon.FindResource("Crystal.Effects.QuickAccessShadow"), drawer.Effect);
+            AssertSamePaint((Brush)window.FindResource("RibbonKit.Brushes.Tab.HoverBackground"),
+                drawer.Background);
             Assert.Equal(new CornerRadius(10), messageRoot.CornerRadius);
             Assert.Equal(new Thickness(0, 2, 0, 2), message.Margin);
             Assert.True(split.IsVerticalLayout);
@@ -125,6 +127,8 @@ public sealed class CrystalMainWindowPresentationTests
                 "RibbonKit.Brushes.Control.HoverBackground")).Color;
             var opaqueNotch = Assert.IsType<SolidColorBrush>(notch.Background).Color;
             Assert.NotEqual(blueHover, purpleHover);
+            AssertSamePaint((Brush)window.FindResource("RibbonKit.Brushes.Tab.HoverBackground"),
+                drawer.Background);
             Assert.Same(window.FindResource(typeof(RibbonComboBox)), combo.Style);
             Assert.False(split.Resources.Contains("RibbonKit.Brushes.Control.HoverBackground"));
 
@@ -138,8 +142,11 @@ public sealed class CrystalMainWindowPresentationTests
             Assert.True(acrylicHover.Color.R > acrylicHover.Color.G);
             Assert.True(acrylicHover.Color.B > acrylicHover.Color.G);
             Assert.NotEqual(purpleHover, acrylicHover.Color);
-            Assert.Equal(Color.FromArgb(0x50, 0xF3, 0xFA, 0xFF),
-                Assert.IsType<SolidColorBrush>(tab.FindResource("RibbonKit.Brushes.Tab.HoverBackground")).Color);
+            var purpleQatGlass = Assert.IsType<SolidColorBrush>(drawer.Background).Color;
+            Assert.Equal((byte)0x50, purpleQatGlass.A);
+            Assert.NotEqual(Color.FromArgb(0x50, 0xF3, 0xFA, 0xFF), purpleQatGlass);
+            Assert.Equal(purpleQatGlass, Assert.IsType<SolidColorBrush>(tab.FindResource(
+                "RibbonKit.Brushes.Tab.HoverBackground")).Color);
             Assert.Equal(0d, tab.FindResource("RibbonKit.Metrics.TabHoverConnectFootOpacity"));
             Assert.Equal(acrylicHover.Color, Assert.IsType<SolidColorBrush>(split.FindResource(
                 "RibbonKit.Brushes.Control.CompanionBackground")).Color);
@@ -168,6 +175,8 @@ public sealed class CrystalMainWindowPresentationTests
                 "RibbonKit.Brushes.Control.HoverBackground")).Color);
             Assert.NotEqual(Color.FromArgb(0x50, 0xF3, 0xFA, 0xFF),
                 Assert.IsType<SolidColorBrush>(tab.FindResource("RibbonKit.Brushes.Tab.HoverBackground")).Color);
+            AssertSamePaint((Brush)window.FindResource("RibbonKit.Brushes.Tab.HoverBackground"),
+                drawer.Background);
             Assert.Equal(0d, tab.FindResource("RibbonKit.Metrics.TabHoverConnectFootOpacity"));
             Assert.NotSame(tab.FindResource("RibbonKit.Brushes.Tab.HoverBackground"),
                 file.FindResource("RibbonKit.Brushes.ApplicationButton.HoverBackground"));
@@ -181,8 +190,22 @@ public sealed class CrystalMainWindowPresentationTests
                 "RibbonKit.Brushes.Control.HoverBackground")).Color;
             Assert.NotEqual(acrylicHover.Color, greenGlassHover);
             Assert.True(greenGlassHover.G > greenGlassHover.R);
+            var greenQatGlass = Assert.IsType<SolidColorBrush>(drawer.Background).Color;
+            Assert.NotEqual(purpleQatGlass, greenQatGlass);
+            Assert.True(greenQatGlass.G > greenQatGlass.R);
+            Assert.Equal(greenQatGlass, Assert.IsType<SolidColorBrush>(tab.FindResource(
+                "RibbonKit.Brushes.Tab.HoverBackground")).Color);
             Assert.Equal(Assert.IsType<SolidColorBrush>(foot.Background).Color,
                 Assert.IsType<SolidColorBrush>(notch.Background).Color);
+            glass.Apply(false, darkMode: false);
+
+            presentation.Apply(true, Colors.Red);
+            glass.Apply(true, darkMode: false);
+            var redQatGlass = Assert.IsType<SolidColorBrush>(drawer.Background).Color;
+            Assert.True(redQatGlass.R > redQatGlass.G);
+            Assert.True(redQatGlass.R > redQatGlass.B);
+            Assert.Equal(redQatGlass, Assert.IsType<SolidColorBrush>(tab.FindResource(
+                "RibbonKit.Brushes.Tab.HoverBackground")).Color);
             glass.Apply(false, darkMode: false);
 
             ThemeManager.Apply(application, RibbonTheme.Office2024);
@@ -236,9 +259,10 @@ public sealed class CrystalMainWindowPresentationTests
                 "RibbonKit.Brushes.Control.HoverBackground")).Color;
             Assert.Equal((byte)0x50, darkGlassHover.A);
             Assert.True(darkGlassHover.B > darkGlassHover.R);
-            Assert.Equal(Color.FromArgb(0x30, 0xF3, 0xFA, 0xFF),
-                Assert.IsType<SolidColorBrush>(tab.FindResource(
-                    "RibbonKit.Brushes.Tab.HoverBackground")).Color);
+            var darkTabHover = Assert.IsType<SolidColorBrush>(tab.FindResource(
+                "RibbonKit.Brushes.Tab.HoverBackground")).Color;
+            Assert.Equal((byte)0x30, darkTabHover.A);
+            Assert.Equal(darkTabHover, Assert.IsType<SolidColorBrush>(drawer.Background).Color);
             glass.Apply(false, darkMode: true);
             ThemeManager.SetDarkMode(application, false);
         }
@@ -263,6 +287,8 @@ public sealed class CrystalMainWindowPresentationTests
                     { Source = new Uri($"/RibbonKit;component/Themes/Tokens.Office{generation}.Dark.xaml", UriKind.Relative) });
                 AssertSamePaint((Brush)resources["RibbonKit.Brushes.Ribbon.ContentBackground"],
                     (Brush)resources["RibbonKit.Brushes.Ribbon.BodyBackground"]);
+                AssertSamePaint((Brush)resources["RibbonKit.Brushes.Ribbon.ContentBackground"],
+                    (Brush)resources["RibbonKit.Brushes.QatExtender.Background"]);
                 Assert.Equal(new Thickness(1),
                     resources["RibbonKit.Metrics.SplitVerticalPrimaryBorderThickness"]);
             }

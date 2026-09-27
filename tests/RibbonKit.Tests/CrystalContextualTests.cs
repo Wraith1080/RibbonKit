@@ -1379,6 +1379,8 @@ public class CrystalContextualTests
                     resources.MergedDictionaries.Add(new ResourceDictionary
                     { Source = new Uri($"/RibbonKit;component/Themes/Tokens.Office{generation}.Dark.xaml", UriKind.Relative) });
                 Assert.Equal(1d, resources["RibbonKit.Metrics.TabHoverConnectFootOpacity"]);
+                Assert.Equal(resources["RibbonKit.Metrics.TabCornerRadius"],
+                    resources["RibbonKit.Metrics.TabHoverCornerRadius"]);
             }
         }
         resources.MergedDictionaries.Clear();
@@ -1387,6 +1389,7 @@ public class CrystalContextualTests
         resources.MergedDictionaries.Add(new ResourceDictionary
         { Source = new Uri("/RibbonKit;component/Themes/Tokens.Crystal.Light.xaml", UriKind.Relative) });
         Assert.Equal(0d, resources["RibbonKit.Metrics.TabHoverConnectFootOpacity"]);
+        Assert.Equal(new CornerRadius(8), resources["RibbonKit.Metrics.TabHoverCornerRadius"]);
 
         var templates = new ResourceDictionary
         { Source = new Uri("/RibbonKit;component/Themes/Office2024.xaml", UriKind.Relative) };
@@ -1411,6 +1414,9 @@ public class CrystalContextualTests
             Assert.Contains(hoverTrigger.Setters.OfType<Setter>(), setter =>
                 setter.TargetName == "ConnectFoot" &&
                 setter.Property == UIElement.OpacityProperty);
+            Assert.Contains(hoverTrigger.Setters.OfType<Setter>(), setter =>
+                setter.TargetName == "HeaderChrome" &&
+                setter.Property == Border.CornerRadiusProperty);
             Assert.Null(tab.Template.FindName("HoverChrome", tab));
             Assert.Equal(new Thickness(1, 1, 1, 0), chrome.BorderThickness);
             Assert.Equal(new CornerRadius(8, 8, 0, 0), chrome.CornerRadius);
@@ -1424,7 +1430,9 @@ public class CrystalContextualTests
             var desiredSize = tab.DesiredSize;
             var ribbonSize = ribbon.DesiredSize;
             chrome.BorderBrush = (Brush)tab.FindResource("RibbonKit.Brushes.Tab.HoverBorder");
+            chrome.CornerRadius = (CornerRadius)tab.FindResource("RibbonKit.Metrics.TabHoverCornerRadius");
             window.UpdateLayout();
+            Assert.Equal(new CornerRadius(8), chrome.CornerRadius);
             Assert.Equal(desiredSize, tab.DesiredSize);
             Assert.Equal(ribbonSize, ribbon.DesiredSize);
             ribbon.IsMinimized = true;

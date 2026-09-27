@@ -680,6 +680,14 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [Remove the overlapping hover foot while retaining the selected connector](docs/history/01-library.md#3181-crystal-hover-uses-one-translucent-surface--2026-09-27).
 
+### 3.182 Crystal hover rounding and accent-tinted QAT glass — 2026-09-27
+
+[Round the measured hover chrome and give the QAT its own shared background token](docs/history/01-library.md#3182-crystal-hover-rounding-and-accent-tinted-qat-glass--2026-09-27).
+
+### 3.183 Glass tab hover follows the accent — 2026-09-27
+
+[Remove the fixed blue-white tab hover cast while keeping its quiet opacity](docs/history/01-library.md#3183-glass-tab-hover-follows-the-accent--2026-09-27).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),

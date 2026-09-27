@@ -31,6 +31,10 @@
         <GradientStop Offset="0" Color="#F6F9FC" />
         <GradientStop Offset="1" Color="#DAE5F1" />
     </LinearGradientBrush>
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.QatExtender.Background" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#F6F9FC" />
+        <GradientStop Offset="1" Color="#DAE5F1" />
+    </LinearGradientBrush>
     <LinearGradientBrush x:Key="RibbonKit.Brushes.Ribbon.BodyBackground" StartPoint="0,0" EndPoint="0,1">
         <GradientStop Offset="0" Color="#F6F9FC" />
         <GradientStop Offset="1" Color="#DAE5F1" />
@@ -481,6 +485,7 @@
     <CornerRadius x:Key="RibbonKit.Metrics.SmallControlCornerRadius">2</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.PopupCornerRadius">3</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.TabCornerRadius">3,3,0,0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.TabHoverCornerRadius">3,3,0,0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.TabMinimizedCornerRadius">3,3,0,0</CornerRadius>
     <!-- Top-only, same as a tab: the 2010 File button is physically connected to the
          ribbon body, so a rounded foot would open a gap under it. -->

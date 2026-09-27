@@ -153,6 +153,7 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ConnectFootSelected" Color="#C7DEEF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ConnectNotch" Color="#C7DEEF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverBackground" Color="#187BA5C7" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.QatExtender.Background" Color="#187BA5C7" />
     <DrawingBrush x:Key="RibbonKit.Brushes.Tab.HoverBorder"
                   Drawing="{StaticResource Crystal.Drawing.GlassRim}" Opacity="0.6"
                   Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
@@ -425,6 +426,7 @@
         </DrawingBrush.Drawing>
     </DrawingBrush>
     <CornerRadius x:Key="RibbonKit.Metrics.TabCornerRadius">8,8,0,0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.TabHoverCornerRadius">8</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.TabMinimizedCornerRadius">8</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.ApplicationButtonCornerRadius">8</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadius">14</CornerRadius>
