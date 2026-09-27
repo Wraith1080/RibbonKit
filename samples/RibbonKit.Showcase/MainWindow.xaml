@@ -809,53 +809,54 @@
                 </rk:RibbonGroup>
                 <!-- Runtime theme switch — same templates, different token dictionary -->
                 <rk:RibbonGroup Header="Theme" rk:Ribbon.CommandId="group.view.theme" Icon="{StaticResource Icon.Palette}">
-                    <rk:RibbonButton Header="Crystal Light"
-                                     Icon="{StaticResource Icon.Mica}"
-                                     SizeDefinition="Large, Medium, Small"
-                                     Click="OnApplyCrystalLight"
-                                     ScreenTipTitle="Crystal Light theme"
-                                     ScreenTipText="Apply Crystal Light to the main Showcase window." />
+                    <rk:InRibbonGallery x:Name="ThemeGallery"
+                                        Width="158"
+                                        VerticalAlignment="Center"
+                                        AutomationProperties.Name="Theme"
+                                        SelectionChanged="OnThemeGalleryChanged">
+                        <rk:RibbonGalleryItem Tag="CrystalLight" ToolTip="Crystal Light">
+                            <StackPanel Orientation="Horizontal" Width="112" Height="42">
+                                <Image Source="{StaticResource Icon.Mica}" Width="22" Height="22" Margin="4,0,6,0" />
+                                <TextBlock Text="Crystal Light" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </rk:RibbonGalleryItem>
+                        <rk:RibbonGalleryItem Tag="Office2024" ToolTip="Office 2024">
+                            <StackPanel Orientation="Horizontal" Width="112" Height="42">
+                                <Image Source="{StaticResource Icon.Palette}" Width="22" Height="22" Margin="4,0,6,0" />
+                                <TextBlock Text="Office 2024" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </rk:RibbonGalleryItem>
+                        <rk:RibbonGalleryItem Tag="Office2019" ToolTip="Office 2019">
+                            <StackPanel Orientation="Horizontal" Width="112" Height="42">
+                                <Image Source="{StaticResource Icon.Palette}" Width="22" Height="22" Margin="4,0,6,0" />
+                                <TextBlock Text="Office 2019" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </rk:RibbonGalleryItem>
+                        <rk:RibbonGalleryItem Tag="Office2013" ToolTip="Office 2013">
+                            <StackPanel Orientation="Horizontal" Width="112" Height="42">
+                                <Image Source="{StaticResource Icon.Palette}" Width="22" Height="22" Margin="4,0,6,0" />
+                                <TextBlock Text="Office 2013" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </rk:RibbonGalleryItem>
+                        <rk:RibbonGalleryItem Tag="Office2010" ToolTip="Office 2010">
+                            <StackPanel Orientation="Horizontal" Width="112" Height="42">
+                                <Image Source="{StaticResource Icon.Palette}" Width="22" Height="22" Margin="4,0,6,0" />
+                                <TextBlock Text="Office 2010" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </rk:RibbonGalleryItem>
+                        <rk:RibbonGalleryItem Tag="Office2007" ToolTip="Office 2007">
+                            <StackPanel Orientation="Horizontal" Width="112" Height="42">
+                                <Image Source="{StaticResource Icon.Palette}" Width="22" Height="22" Margin="4,0,6,0" />
+                                <TextBlock Text="Office 2007" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </rk:RibbonGalleryItem>
+                    </rk:InRibbonGallery>
                     <rk:RibbonButton Header="Crystal preview"
                                      Icon="{StaticResource Icon.Mica}"
                                      SizeDefinition="Large, Medium, Small"
                                      Click="OnPreviewCrystal"
                                      ScreenTipTitle="Crystal light prototype"
                                      ScreenTipText="Open a separate glass-inspired Office 2024 preview." />
-                    <rk:RibbonButton Header="Office 2024"
-                                     LargeIcon="{StaticResource Icon.Palette}"
-                                     Icon="{StaticResource Icon.Palette}"
-                                     SizeDefinition="Large, Medium, Small"
-                                     Click="OnApplyOffice2024"
-                                     ScreenTipTitle="Office 2024 theme"
-                                     ScreenTipText="Apply the modern light theme." />
-                    <rk:RibbonButton Header="Office 2019"
-                                     LargeIcon="{StaticResource Icon.Palette}"
-                                     Icon="{StaticResource Icon.Palette}"
-                                     SizeDefinition="Large, Medium, Small"
-                                     Click="OnApplyOffice2019"
-                                     ScreenTipTitle="Office 2019 theme"
-                                     ScreenTipText="Apply the Office 2019 colorful theme (blue tab strip, flat)." />
-                    <rk:RibbonButton Header="Office 2013"
-                                     LargeIcon="{StaticResource Icon.Palette}"
-                                     Icon="{StaticResource Icon.Palette}"
-                                     SizeDefinition="Large, Medium, Small"
-                                     Click="OnApplyOffice2013"
-                                     ScreenTipTitle="Office 2013 theme"
-                                     ScreenTipText="Apply the Office 2013 White theme (flat, white strip, solid File button)." />
-                    <rk:RibbonButton Header="Office 2010"
-                                     LargeIcon="{StaticResource Icon.Palette}"
-                                     Icon="{StaticResource Icon.Palette}"
-                                     SizeDefinition="Large, Medium, Small"
-                                     Click="OnApplyOffice2010"
-                                     ScreenTipTitle="Office 2010 theme"
-                                     ScreenTipText="Apply the Office 2010 Blue theme (gradient silver-blue chrome, amber button highlights, solid blue File button)." />
-                    <rk:RibbonButton Header="Office 2007"
-                                     LargeIcon="{StaticResource Icon.Palette}"
-                                     Icon="{StaticResource Icon.Palette}"
-                                     SizeDefinition="Large, Medium, Small"
-                                     Click="OnApplyOffice2007"
-                                     ScreenTipTitle="Office 2007 theme"
-                                     ScreenTipText="Apply the Office 2007 Blue theme (hard-crease glass gels, valley gradients on the title bar and ribbon body, flat light-blue tab strip)." />
                 </rk:RibbonGroup>
                 <!-- Accent customization: title-bar accent toggle + swappable accent color -->
                 <rk:RibbonGroup Header="Accent" rk:Ribbon.CommandId="group.view.accent" Icon="{StaticResource Icon.ColorDrop}">
@@ -982,6 +983,15 @@
                                            Unchecked="OnToggleAcrylic"
                                            ScreenTipTitle="Acrylic backdrop (Windows 11)"
                                            ScreenTipText="Apply the Windows 11 Acrylic material — a translucent blur of whatever is behind the window. Replaces Mica when both are toggled. Requires Windows 11 22H2+." />
+                    <rk:RibbonToggleButton x:Name="GlassTreatmentToggle"
+                                           Header="Glass look"
+                                           Size="Large"
+                                           LargeIcon="{StaticResource Icon.Acrylic}"
+                                           Icon="{StaticResource Icon.Acrylic}"
+                                           Checked="OnToggleGlassTreatment"
+                                           Unchecked="OnToggleGlassTreatment"
+                                           ScreenTipTitle="Glass treatment"
+                                           ScreenTipText="When Acrylic is active, soften the ribbon surfaces and strengthen tab, button, and split-button hovers. Crystal uses this look by default; other themes can opt in." />
                     <rk:RibbonToggleButton x:Name="ApplicationMenuToggle"
                                            Header="2007 Menu"
                                            Size="Large"
@@ -1000,63 +1010,28 @@
                                            Unchecked="OnToggleBackstageTranslucent"
                                            ScreenTipTitle="Translucent backstage"
                                            ScreenTipText="Make the backstage a frosted-acrylic panel: it turns semi-transparent and strongly blurs whatever is behind it. Open the File menu to see it." />
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <StackPanel>
-                            <rk:RibbonButton Header="2013 Rail"
-                                Tag="Classic"
-                                Size="Medium"
-                                Icon="{StaticResource Icon.Backstage}"
-                                Click="OnSelectBackstageDesign"
-                                ScreenTipTitle="Classic backstage (Office 2013)"
-                                ScreenTipText="Solid accent nav column in light palettes, or matching neutral gray in dark/Black palettes." />
-                            <rk:RibbonButton Header="2024 Rail"
-                                Tag="Modern"
-                                Size="Medium"
-                                Icon="{StaticResource Icon.Backstage}"
-                                Click="OnSelectBackstageDesign"
-                                ScreenTipTitle="Modern backstage (Office 2024)"
-                                ScreenTipText="Neutral rail with an accent selection bar; it follows light or dark mode." />
-                            <rk:RibbonButton Header="2010 Glass"
-                                Tag="Classic2010"
-                                Size="Medium"
-                                Icon="{StaticResource Icon.Backstage}"
-                                Click="OnSelectBackstageDesign"
-                                ScreenTipTitle="Office 2010 backstage"
-                                ScreenTipText="Light glass nav with a glossy selected marker; dark/Black palettes use matching grayscale glass." />
-                        </StackPanel>
-                        <StackPanel Margin="6,0,0,0">
-                            <rk:RibbonButton Header="2007 Modern"
-                                Tag="Glass2007"
-                                Size="Medium"
-                                Icon="{StaticResource Icon.Backstage}"
-                                Click="OnSelectBackstageDesign"
-                                ScreenTipTitle="RibbonKit modern Office 2007 backstage"
-                                ScreenTipText="The preserved modern 2007 glass rail. It has an opaque fallback and reveals Acrylic only when Translucent Backstage is also enabled." />
-                            <rk:RibbonButton Header="2007 Classic"
-                                Tag="Classic2007"
-                                Size="Medium"
-                                Icon="{StaticResource Icon.Backstage}"
-                                Click="OnSelectBackstageDesign"
-                                ScreenTipTitle="RibbonKit classic Office 2007 backstage"
-                                ScreenTipText="An opaque silver-blue framed shell with gold command states and a denser document dashboard inspired by Office 2007." />
-                        </StackPanel>
-                        <StackPanel Margin="6,0,0,0">
-                            <rk:RibbonButton Header="Crystal Sidebar"
-                                Tag="CrystalSidebar"
-                                Size="Medium"
-                                Icon="{StaticResource Icon.Backstage}"
-                                Click="OnSelectBackstageDesign"
-                                ScreenTipTitle="Crystal glass sidebar"
-                                ScreenTipText="A full-height glass navigation panel beside the document workspace." />
-                            <rk:RibbonButton Header="Crystal Floating"
-                                Tag="CrystalFloating"
-                                Size="Medium"
-                                Icon="{StaticResource Icon.Backstage}"
-                                Click="OnSelectBackstageDesign"
-                                ScreenTipTitle="Crystal floating workspace"
-                                ScreenTipText="A floating navigation strip above the document workspace." />
-                        </StackPanel>
-                    </StackPanel>
+                    <rk:RibbonDropDownButton x:Name="BackstageLayoutSelector"
+                                             Header="2024 Rail"
+                                             Size="Large"
+                                             Icon="{StaticResource Icon.Backstage}"
+                                             LargeIcon="{StaticResource Icon.Backstage}"
+                                             ScreenTipTitle="Backstage layout"
+                                             ScreenTipText="Choose the layout shown when you open File.">
+                        <rk:RibbonMenuItem Header="2013 Rail" Tag="Classic" Click="OnSelectBackstageDesign"
+                                           ToolTip="Solid accent navigation in light themes and neutral gray in dark themes." />
+                        <rk:RibbonMenuItem Header="2024 Rail" Tag="Modern" Click="OnSelectBackstageDesign"
+                                           ToolTip="Neutral rail with an accent selection bar." />
+                        <rk:RibbonMenuItem Header="2010 Glass" Tag="Classic2010" Click="OnSelectBackstageDesign"
+                                           ToolTip="Glass navigation with a glossy selected marker." />
+                        <rk:RibbonMenuItem Header="2007 Modern" Tag="Glass2007" Click="OnSelectBackstageDesign"
+                                           ToolTip="Modern Office 2007 glass rail." />
+                        <rk:RibbonMenuItem Header="2007 Classic" Tag="Classic2007" Click="OnSelectBackstageDesign"
+                                           ToolTip="Classic Office 2007 framed shell and document dashboard." />
+                        <rk:RibbonMenuItem Header="Crystal Sidebar" Tag="CrystalSidebar" Click="OnSelectBackstageDesign"
+                                           ToolTip="Full-height glass navigation beside the document." />
+                        <rk:RibbonMenuItem Header="Crystal Floating" Tag="CrystalFloating" Click="OnSelectBackstageDesign"
+                                           ToolTip="Floating navigation above the document." />
+                    </rk:RibbonDropDownButton>
                 </rk:RibbonGroup>
             </rk:RibbonTab>
 

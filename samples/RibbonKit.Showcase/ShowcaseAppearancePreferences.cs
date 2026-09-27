@@ -56,6 +56,9 @@ internal sealed record ShowcaseAppearancePreferences
     /// preference survive a launch on a Windows build where the requested DWM backdrop is absent.
     /// </summary>
     public ShowcaseBackdropPreference Backdrop { get; init; }
+
+    /// <summary>Null keeps Crystal's default and leaves Office themes unchanged.</summary>
+    public bool? GlassTreatment { get; init; }
 }
 
 internal static class ShowcaseAppearancePreferencesSerializer

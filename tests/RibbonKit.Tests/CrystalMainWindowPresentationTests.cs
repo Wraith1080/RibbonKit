@@ -35,7 +35,8 @@ public sealed class CrystalMainWindowPresentationTests
         var combo = new RibbonComboBox();
         combo.Items.Add("One");
         group.Items.Add(combo);
-        var split = new RibbonSplitButton { Header = "Paste" };
+        var split = new RibbonSplitButton { Header = "Paste", Size = RibbonControlSize.Large,
+            Layout = RibbonSplitButtonLayout.Vertical };
         group.Items.Add(split);
         tab.Groups.Add(group);
         ribbon.Tabs.Add(tab);
@@ -48,6 +49,7 @@ public sealed class CrystalMainWindowPresentationTests
             Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
         try
         {
+            AssertOfficeBodyTokenParity();
             ThemeManager.Apply(application, RibbonTheme.Office2024);
             window.Show();
             Sta.Drain();
@@ -100,6 +102,10 @@ public sealed class CrystalMainWindowPresentationTests
             Assert.Same(ribbon.FindResource("Crystal.Effects.QuickAccessShadow"), drawer.Effect);
             Assert.Equal(new CornerRadius(10), messageRoot.CornerRadius);
             Assert.Equal(new Thickness(0, 2, 0, 2), message.Margin);
+            Assert.True(split.IsVerticalLayout);
+            var primary = Assert.IsType<Button>(split.Template.FindName("PART_Primary", split));
+            var primaryChrome = Assert.IsType<Border>(primary.Template.FindName("Chrome", primary));
+            Assert.Equal(new Thickness(1, 1, 1, 0), primaryChrome.BorderThickness);
 
             var blueHover = Assert.IsType<SolidColorBrush>(window.FindResource(
                 "RibbonKit.Brushes.Control.HoverBackground")).Color;
@@ -109,6 +115,39 @@ public sealed class CrystalMainWindowPresentationTests
             Assert.NotEqual(blueHover, purpleHover);
             Assert.Same(window.FindResource(typeof(RibbonComboBox)), combo.Style);
             Assert.False(split.Resources.Contains("RibbonKit.Brushes.Control.HoverBackground"));
+
+            var opaqueBody = (Brush)window.FindResource("RibbonKit.Brushes.Ribbon.BodyBackground");
+            var glass = new AcrylicGlassPresentation(window);
+            glass.Apply(true, darkMode: false);
+            Sta.Drain();
+            var acrylicHover = Assert.IsType<SolidColorBrush>(split.FindResource(
+                "RibbonKit.Brushes.Control.HoverBackground"));
+            Assert.Equal(Color.FromArgb(0x98, 0xF3, 0xFA, 0xFF), acrylicHover.Color);
+            Assert.NotEqual(purpleHover, acrylicHover.Color);
+            Assert.Equal(Color.FromArgb(0x50, 0xF3, 0xFA, 0xFF),
+                Assert.IsType<SolidColorBrush>(tab.FindResource("RibbonKit.Brushes.Tab.HoverBackground")).Color);
+            Assert.Equal(acrylicHover.Color, Assert.IsType<SolidColorBrush>(split.FindResource(
+                "RibbonKit.Brushes.Control.CompanionBackground")).Color);
+            Assert.Equal(Color.FromArgb(0xB8, 0xF3, 0xFA, 0xFF),
+                Assert.IsType<SolidColorBrush>(split.FindResource(
+                    "RibbonKit.Brushes.Control.SplitActiveHover")).Color);
+            Assert.Equal(0.44, ((Brush)window.FindResource("RibbonKit.Brushes.Ribbon.BodyBackground")).Opacity, 2);
+            Assert.Equal(0.62, ((Brush)window.FindResource("RibbonKit.Brushes.Tab.SelectedBackground")).Opacity, 2);
+            Assert.True(((Brush)window.FindResource("RibbonKit.Brushes.Tab.SelectedUnderline")).Opacity < 0.9);
+            Assert.Equal(0.48, ((Brush)window.FindResource("RibbonKit.Brushes.TitleBar.Background")).Opacity, 2);
+            Assert.Equal(0.48, ((Brush)window.FindResource("RibbonKit.Brushes.Window.Background")).Opacity, 2);
+            Assert.Equal(1, ((Brush)window.FindResource("RibbonKit.Brushes.Ribbon.ContentBackground")).Opacity);
+            var tabs = Assert.IsType<RibbonTabControl>(ribbon.Template.FindName("TabControlHost", ribbon));
+            var body = Assert.IsType<Border>(tabs.Template.FindName("ContentHost", tabs));
+            Assert.Same(window.FindResource("RibbonKit.Brushes.Ribbon.BodyBackground"), body.Background);
+            glass.Apply(false, darkMode: false);
+            Sta.Drain();
+            AssertSamePaint(opaqueBody, (Brush)window.FindResource("RibbonKit.Brushes.Ribbon.BodyBackground"));
+            Assert.Equal(1, ((Brush)window.FindResource("RibbonKit.Brushes.Ribbon.BodyBackground")).Opacity);
+            Assert.Equal(purpleHover, Assert.IsType<SolidColorBrush>(split.FindResource(
+                "RibbonKit.Brushes.Control.HoverBackground")).Color);
+            Assert.NotEqual(Color.FromArgb(0x50, 0xF3, 0xFA, 0xFF),
+                Assert.IsType<SolidColorBrush>(tab.FindResource("RibbonKit.Brushes.Tab.HoverBackground")).Color);
 
             ThemeManager.Apply(application, RibbonTheme.Office2024);
             presentation.Apply(false);
@@ -131,6 +170,9 @@ public sealed class CrystalMainWindowPresentationTests
             Assert.Null(context.ContextualSelectionBrush);
             Assert.False(split.Resources.Contains("RibbonKit.Brushes.Control.HoverBackground"));
             Assert.Null(window.TryFindResource("Crystal.Brushes.FrostedFrame"));
+            var officePrimary = Assert.IsType<Button>(split.Template.FindName("PART_Primary", split));
+            var officeChrome = Assert.IsType<Border>(officePrimary.Template.FindName("Chrome", officePrimary));
+            Assert.Equal(new Thickness(1), officeChrome.BorderThickness);
 
             foreach (var office in new[] { RibbonTheme.Office2019, RibbonTheme.Office2013,
                 RibbonTheme.Office2010, RibbonTheme.Office2007 })
@@ -141,8 +183,24 @@ public sealed class CrystalMainWindowPresentationTests
                     dictionary.Source?.OriginalString.EndsWith("Crystal.Light.xaml", StringComparison.Ordinal) == true);
                 AssertSamePaint((Brush)window.FindResource("RibbonKit.Brushes.Control.HoverBackground"),
                     (Brush)window.FindResource("RibbonKit.Brushes.Control.SplitActiveHover"));
+                glass.Apply(true, darkMode: false);
+                Assert.Equal(Color.FromArgb(0xB8, 0xF3, 0xFA, 0xFF),
+                    Assert.IsType<SolidColorBrush>(split.FindResource(
+                        "RibbonKit.Brushes.Control.SplitActiveHover")).Color);
+                glass.Apply(false, darkMode: false);
                 Assert.Null(window.TryFindResource("Crystal.Brushes.FrostedFrame"));
             }
+            ThemeManager.Apply(application, RibbonTheme.Office2024);
+            ThemeManager.SetDarkMode(application, true);
+            glass.Apply(true, darkMode: true);
+            Assert.Equal(Color.FromArgb(0x50, 0xF3, 0xFA, 0xFF),
+                Assert.IsType<SolidColorBrush>(split.FindResource(
+                    "RibbonKit.Brushes.Control.HoverBackground")).Color);
+            Assert.Equal(Color.FromArgb(0x30, 0xF3, 0xFA, 0xFF),
+                Assert.IsType<SolidColorBrush>(tab.FindResource(
+                    "RibbonKit.Brushes.Tab.HoverBackground")).Color);
+            glass.Apply(false, darkMode: true);
+            ThemeManager.SetDarkMode(application, false);
         }
         finally
         {
@@ -150,6 +208,26 @@ public sealed class CrystalMainWindowPresentationTests
             application.Shutdown();
         }
     });
+
+    private static void AssertOfficeBodyTokenParity()
+    {
+        foreach (var generation in new[] { "2007", "2010", "2013", "2019", "2024" })
+        {
+            var resources = new ResourceDictionary();
+            resources.MergedDictionaries.Add(new ResourceDictionary
+            { Source = new Uri($"/RibbonKit;component/Themes/Tokens.Office{generation}.xaml", UriKind.Relative) });
+            foreach (var dark in new[] { false, true })
+            {
+                if (dark)
+                    resources.MergedDictionaries.Add(new ResourceDictionary
+                    { Source = new Uri($"/RibbonKit;component/Themes/Tokens.Office{generation}.Dark.xaml", UriKind.Relative) });
+                AssertSamePaint((Brush)resources["RibbonKit.Brushes.Ribbon.ContentBackground"],
+                    (Brush)resources["RibbonKit.Brushes.Ribbon.BodyBackground"]);
+                Assert.Equal(new Thickness(1),
+                    resources["RibbonKit.Metrics.SplitVerticalPrimaryBorderThickness"]);
+            }
+        }
+    }
 
     private static void AssertSamePaint(Brush expected, Brush actual)
     {

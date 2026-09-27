@@ -12,6 +12,7 @@
     <!-- Tab strip is white in the 2013 White theme (title bar is the only colored band). -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Background" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.ContentBackground" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.BodyBackground" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.SurfaceBackground" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Window.Background" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroFallback" Color="Transparent" />
@@ -288,6 +289,7 @@
     <!-- Vertical split button (Large only). Square, like everything else in 2013. -->
     <CornerRadius x:Key="RibbonKit.Metrics.SplitTopCornerRadius">0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.SplitBottomCornerRadius">0</CornerRadius>
+    <Thickness x:Key="RibbonKit.Metrics.SplitVerticalPrimaryBorderThickness">1</Thickness>
 
     <!-- Prominent outline all around the ribbon body (Metro look). -->
     <Thickness x:Key="RibbonKit.Metrics.ContentBorderThickness">1</Thickness>

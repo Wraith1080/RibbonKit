@@ -297,6 +297,8 @@
                                                         <Setter TargetName="Chrome" Property="Margin" Value="1,1,1,0" />
                                                         <Setter TargetName="Chrome" Property="CornerRadius"
                                                                 Value="{DynamicResource RibbonKit.Metrics.SplitTopCornerRadius}" />
+                                                        <Setter TargetName="Chrome" Property="BorderThickness"
+                                                                Value="{DynamicResource RibbonKit.Metrics.SplitVerticalPrimaryBorderThickness}" />
                                                     </DataTrigger>
                                                     <!-- COMPANION state, set by the outer template when the
                                                          OTHER half is hot. Declared FIRST so this half's own
@@ -315,16 +317,12 @@
                                                                 Value="{DynamicResource RibbonKit.Brushes.Control.SplitActiveHover}" />
                                                         <Setter TargetName="Chrome" Property="BorderBrush"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
-                                                        <Setter TargetName="Chrome" Property="BorderThickness"
-                                                                Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
                                                     </Trigger>
                                                     <Trigger Property="IsPressed" Value="True">
                                                         <Setter TargetName="Chrome" Property="Background"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
                                                         <Setter TargetName="Chrome" Property="BorderBrush"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Control.PressedBorder}" />
-                                                        <Setter TargetName="Chrome" Property="BorderThickness"
-                                                                Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
                                                     </Trigger>
                                                     <MultiTrigger>
                                                         <MultiTrigger.Conditions>

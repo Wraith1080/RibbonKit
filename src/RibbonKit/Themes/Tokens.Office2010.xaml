@@ -31,6 +31,10 @@
         <GradientStop Offset="0" Color="#F6F9FC" />
         <GradientStop Offset="1" Color="#DAE5F1" />
     </LinearGradientBrush>
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Ribbon.BodyBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#F6F9FC" />
+        <GradientStop Offset="1" Color="#DAE5F1" />
+    </LinearGradientBrush>
     <!-- Solid well used by inputs and the in-ribbon gallery; do not reuse the body gradient. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.SurfaceBackground" Color="#FFFFFF" />
     <!-- Medium blue-grey outline around the ribbon body and the connected active tab. -->
@@ -485,6 +489,7 @@
     <!-- Vertical split button (Large only): the same rounding rotated a quarter turn. -->
     <CornerRadius x:Key="RibbonKit.Metrics.SplitTopCornerRadius">3,3,0,0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.SplitBottomCornerRadius">0,0,3,3</CornerRadius>
+    <Thickness x:Key="RibbonKit.Metrics.SplitVerticalPrimaryBorderThickness">1</Thickness>
 
     <!-- Ribbon body: a full outline, square corners. The connect is done by moving the SELECTED
          TAB down 1px into the body (TabSelectedMargin, below) — the mechanism that actually works

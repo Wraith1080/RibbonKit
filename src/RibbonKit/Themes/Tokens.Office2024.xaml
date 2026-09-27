@@ -12,6 +12,7 @@
          the ribbon body floats as a white card over it. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Background" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.ContentBackground" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.BodyBackground" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.SurfaceBackground" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Window.Background" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroFallback" Color="Transparent" />
@@ -294,6 +295,7 @@
     <!-- Vertical split button (Large only): the same rounding rotated a quarter turn. -->
     <CornerRadius x:Key="RibbonKit.Metrics.SplitTopCornerRadius">4,4,0,0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.SplitBottomCornerRadius">0,0,4,4</CornerRadius>
+    <Thickness x:Key="RibbonKit.Metrics.SplitVerticalPrimaryBorderThickness">1</Thickness>
 
     <!-- Ribbon body as a floating rounded card (Office 2024/365 Fluent look):
          inset margin, all-around border, rounded corners. -->

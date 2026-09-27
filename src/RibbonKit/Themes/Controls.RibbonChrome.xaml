@@ -231,8 +231,8 @@
                             <Setter TargetName="QatBelowHost" Property="Margin"
                                     Value="{DynamicResource RibbonKit.Metrics.QatExtenderMarginMessageBar}" />
                         </Trigger>
-                        <!-- Office 2010 Aero continues through the tab row. The ribbon body's own
-                             ContentHost remains opaque; clearing only this outer surface lets the
+                        <!-- Office 2010 Aero continues through the tab row. Its body token
+                             remains opaque; clearing only this outer surface lets the
                              tab-control compose the same fallback/material and tint as the title. -->
                         <DataTrigger Binding="{Binding FrameAppearance, RelativeSource={RelativeSource AncestorType={x:Type controls:RibbonWindow}}}"
                                      Value="Office2010Aero">
@@ -761,7 +761,7 @@
                              collapsing it back to a full-width strip — all via tokens. -->
                         <Border x:Name="ContentHost"
                                 Grid.Row="1"
-                                Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
+                                Background="{DynamicResource RibbonKit.Brushes.Ribbon.BodyBackground}"
                                 BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}"
                                 BorderThickness="{DynamicResource RibbonKit.Metrics.ContentBorderThickness}"
                                 CornerRadius="{DynamicResource RibbonKit.Metrics.ContentCornerRadius}"

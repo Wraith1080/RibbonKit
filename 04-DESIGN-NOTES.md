@@ -640,6 +640,18 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [Body-arrow tokens and utility-helper boundary](docs/history/01-library.md#3171-crystal-body-scroll-geometry-in-the-shared-template--2026-09-27).
 
+### 3.172 Compact Showcase theme and Backstage choices — 2026-09-27
+
+[View-tab gallery, layout dropdown, and startup selection](docs/history/01-library.md#3172-compact-showcase-theme-and-backstage-choices--2026-09-27).
+
+### 3.173 Crystal Acrylic surface transparency — 2026-09-27
+
+[Ribbon body token split and Acrylic-only Crystal opacity](docs/history/01-library.md#3173-crystal-acrylic-surface-transparency--2026-09-27).
+
+### 3.174 Optional Acrylic glass treatment across Showcase themes — 2026-09-27
+
+[Shared token overlay, tab and split hover, and opt-in behavior](docs/history/01-library.md#3174-optional-acrylic-glass-treatment-across-showcase-themes--2026-09-27).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),

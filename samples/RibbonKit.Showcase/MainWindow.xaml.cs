@@ -59,6 +59,7 @@ public partial class MainWindow : RibbonWindow
     // one File surface just leaves the one it wants assigned in XAML and never touches this.
     private readonly RibbonApplicationMenu _applicationMenu;
     private CrystalMainWindowPresentation? _crystalPresentation;
+    private AcrylicGlassPresentation? _acrylicGlassPresentation;
     private LocalizationRtlDemo? _localizationRtlDemo;
     private string? _customAccent;
     private ShowcaseBackdropPreference _preferredBackdrop;
@@ -68,6 +69,9 @@ public partial class MainWindow : RibbonWindow
         ShowcaseAppearancePreferences.DefaultAeroFrameTintIntensity;
     private bool _restoringAppearance;
     private bool _frameAppearanceSync;
+    private bool _syncingThemeGallery;
+    private bool? _glassTreatmentOverride;
+    private bool _glassTreatmentSync;
 
     internal event EventHandler? ApplicationSurfaceChanged;
 
@@ -83,6 +87,8 @@ public partial class MainWindow : RibbonWindow
 
         _applicationMenu = ShowcaseApplicationMenu;
         MainRibbon.ApplicationMenu = null;
+        SyncThemeGallery(ThemeManager.CurrentTheme ?? RibbonTheme.Office2024);
+        SyncGlassTreatmentToggle();
 
         Loaded += OnWindowLoaded;
     }
@@ -165,6 +171,7 @@ public partial class MainWindow : RibbonWindow
         _restoringAppearance = true;
         try
         {
+            _glassTreatmentOverride = preferences.GlassTreatment;
             // Theme first: ApplyTheme intentionally selects that generation's conventional File
             // surface. The explicit saved surface is restored later so the user's choice wins.
             ApplyTheme(preferences.Theme);
@@ -187,6 +194,7 @@ public partial class MainWindow : RibbonWindow
             ApplyAeroFrameTintPreference();
 
             ShowcaseBackstage.Design = preferences.BackstageDesign;
+            SyncBackstageLayoutLabel();
             BackstageTranslucentToggle.IsChecked = preferences.BackstageTranslucent;
             ApplicationMenuToggle.IsChecked =
                 preferences.FileSurface == ShowcaseFileSurface.ApplicationMenu;
@@ -236,6 +244,7 @@ public partial class MainWindow : RibbonWindow
                 ? ShowcaseFileSurface.Backstage
                 : ShowcaseFileSurface.ApplicationMenu,
             Backdrop = _preferredBackdrop,
+            GlassTreatment = _glassTreatmentOverride,
         };
 
         try
@@ -293,20 +302,29 @@ public partial class MainWindow : RibbonWindow
         StatusReady.Content = $"Message added: {nextMessage.Title}";
     }
 
-    private void OnApplyOffice2024(object sender, RoutedEventArgs e) => ApplyTheme(RibbonTheme.Office2024);
-
-    private void OnApplyCrystalLight(object sender, RoutedEventArgs e) => ApplyTheme(RibbonTheme.CrystalLight);
-
     private void OnPreviewCrystal(object sender, RoutedEventArgs e) =>
         new CrystalPreviewWindow { Owner = this }.Show();
 
-    private void OnApplyOffice2019(object sender, RoutedEventArgs e) => ApplyTheme(RibbonTheme.Office2019);
+    private void OnThemeGalleryChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_syncingThemeGallery || ThemeGallery is null
+            || GetStyleTag(ThemeGallery.SelectedItem) is not { } tag
+            || !Enum.TryParse(tag, out RibbonTheme theme))
+            return;
 
-    private void OnApplyOffice2013(object sender, RoutedEventArgs e) => ApplyTheme(RibbonTheme.Office2013);
+        ApplyTheme(theme);
+    }
 
-    private void OnApplyOffice2010(object sender, RoutedEventArgs e) => ApplyTheme(RibbonTheme.Office2010);
-
-    private void OnApplyOffice2007(object sender, RoutedEventArgs e) => ApplyTheme(RibbonTheme.Office2007);
+    private void SyncThemeGallery(RibbonTheme theme)
+    {
+        _syncingThemeGallery = true;
+        try
+        {
+            ThemeGallery.SelectedItem = ThemeGallery.Items.Cast<object>()
+                .FirstOrDefault(item => GetStyleTag(item) == theme.ToString());
+        }
+        finally { _syncingThemeGallery = false; }
+    }
 
     // The orb is an APPLICATION choice, not a theme one (RibbonKit themes recolor, they never
     // reshape), so the showcase opts into it whenever it switches to Office 2007 and back out again
@@ -314,6 +332,7 @@ public partial class MainWindow : RibbonWindow
     // in XAML.
     private void ApplyTheme(RibbonTheme theme)
     {
+        _acrylicGlassPresentation?.Apply(false, false);
         ThemeManager.Apply(Application.Current, theme);
         if (theme == RibbonTheme.CrystalLight)
         {
@@ -346,7 +365,10 @@ public partial class MainWindow : RibbonWindow
         ApplyFrameAppearancePreference();
         ApplyAeroFrameTintPreference();
         UpdateBackdropSurfaceTransparency();
+        SyncGlassTreatmentToggle();
+        RefreshGlassTreatment();
         NotifyApplicationSurfaceChanged();
+        SyncThemeGallery(theme);
         SaveAppearancePreferences();
     }
 
@@ -354,6 +376,7 @@ public partial class MainWindow : RibbonWindow
     {
         bool enabled = (sender as RibbonToggleButton)?.IsChecked == true;
         ThemeManager.SetDarkMode(Application.Current, enabled);
+        RefreshGlassTreatment();
         SaveAppearancePreferences();
     }
 
@@ -402,6 +425,7 @@ public partial class MainWindow : RibbonWindow
         ThemeManager.SetAccentedTitleBar(
             Application.Current,
             (sender as RibbonToggleButton)?.IsChecked == true);
+        RefreshGlassTreatment();
         SaveAppearancePreferences();
     }
 
@@ -460,8 +484,39 @@ public partial class MainWindow : RibbonWindow
 
     private void RefreshCrystalTint()
     {
+        _acrylicGlassPresentation?.Apply(false, false);
         if (ThemeManager.CurrentTheme == RibbonTheme.CrystalLight)
             _crystalPresentation?.Apply(true, CrystalTint());
+        RefreshGlassTreatment();
+    }
+
+    private void OnToggleGlassTreatment(object sender, RoutedEventArgs e)
+    {
+        if (_glassTreatmentSync || GlassTreatmentToggle is null) return;
+        _glassTreatmentOverride = GlassTreatmentToggle.IsChecked == true;
+        RefreshGlassTreatment();
+        SaveAppearancePreferences();
+    }
+
+    private void SyncGlassTreatmentToggle()
+    {
+        if (GlassTreatmentToggle is null) return;
+        _glassTreatmentSync = true;
+        try
+        {
+            GlassTreatmentToggle.IsChecked = _glassTreatmentOverride
+                ?? ThemeManager.CurrentTheme == RibbonTheme.CrystalLight;
+        }
+        finally { _glassTreatmentSync = false; }
+    }
+
+    private void RefreshGlassTreatment()
+    {
+        bool enabled = ActiveBackdrop == RibbonBackdrop.Acrylic
+            && (_glassTreatmentOverride
+                ?? ThemeManager.CurrentTheme == RibbonTheme.CrystalLight);
+        (_acrylicGlassPresentation ??= new AcrylicGlassPresentation(this))
+            .Apply(enabled, ThemeManager.IsDarkMode);
     }
 
     private void OnAnimationOff(object sender, RoutedEventArgs e) =>
@@ -476,18 +531,27 @@ public partial class MainWindow : RibbonWindow
     private void OnToggleRespectSystemMotion(object sender, RoutedEventArgs e) =>
         RibbonAnimation.RespectSystemReduceMotion = (sender as RibbonToggleButton)?.IsChecked == true;
 
-    // Pick one of the Backstage designs, including the independent modern and classic 2007 concepts,
-    // from the button's Tag. Open the File menu to see the change.
+    // Pick one of the Backstage designs from the menu row's Tag. Keep the
+    // dropdown label in sync with both a click and restored preferences.
     private void OnSelectBackstageDesign(object sender, RoutedEventArgs e)
     {
         if (ShowcaseBackstage is not null
-            && (sender as RibbonButton)?.Tag is string tag
+            && (sender as RibbonMenuItem)?.Tag is string tag
             && Enum.TryParse(tag, out RibbonBackstageDesign design))
         {
             ShowcaseBackstage.Design = design;
+            SyncBackstageLayoutLabel();
             NotifyApplicationSurfaceChanged();
             SaveAppearancePreferences();
         }
+    }
+
+    private void SyncBackstageLayoutLabel()
+    {
+        BackstageLayoutSelector.Header = BackstageLayoutSelector.Items
+            .OfType<RibbonMenuItem>()
+            .FirstOrDefault(item => item.Tag is string tag
+                && tag == ShowcaseBackstage.Design.ToString())?.Header ?? "Backstage layout";
     }
 
     // Frosted-acrylic backstage: turn it semi-transparent and let the Ribbon strongly blur the
@@ -708,6 +772,7 @@ public partial class MainWindow : RibbonWindow
             UpdateBackdropSurfaceTransparency();
         }
 
+        RefreshCrystalTint();
         SaveAppearancePreferences();
     }
 

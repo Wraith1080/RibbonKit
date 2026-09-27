@@ -33,6 +33,7 @@ public class ShowcaseAppearancePreferencesTests
             BackstageTranslucent = true,
             FileSurface = ShowcaseFileSurface.ApplicationMenu,
             Backdrop = ShowcaseBackdropPreference.Acrylic,
+            GlassTreatment = true,
         };
 
         string json = ShowcaseAppearancePreferencesSerializer.Serialize(source);
@@ -50,6 +51,7 @@ public class ShowcaseAppearancePreferencesTests
         Assert.True(restored.BackstageTranslucent);
         Assert.Equal(ShowcaseFileSurface.ApplicationMenu, restored.FileSurface);
         Assert.Equal(ShowcaseBackdropPreference.Acrylic, restored.Backdrop);
+        Assert.True(restored.GlassTreatment);
 
         Assert.Contains("\"theme\": \"Office2010\"", json, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("\"backdrop\": \"Acrylic\"", json, StringComparison.OrdinalIgnoreCase);
@@ -76,6 +78,7 @@ public class ShowcaseAppearancePreferencesTests
         Assert.False(defaults.BackstageTranslucent);
         Assert.Equal(ShowcaseFileSurface.Backstage, defaults.FileSurface);
         Assert.Equal(ShowcaseBackdropPreference.None, defaults.Backdrop);
+        Assert.Null(defaults.GlassTreatment);
     }
 
     [Theory]

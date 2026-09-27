@@ -14,6 +14,7 @@
          option). A light grey — not white — so the near-white selected tab stands out. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Background" Color="#E6E6E6" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.ContentBackground" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.BodyBackground" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.SurfaceBackground" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Window.Background" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroFallback" Color="Transparent" />
@@ -282,6 +283,7 @@
     <!-- Vertical split button (Large only). Square, like everything else in 2019. -->
     <CornerRadius x:Key="RibbonKit.Metrics.SplitTopCornerRadius">0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.SplitBottomCornerRadius">0</CornerRadius>
+    <Thickness x:Key="RibbonKit.Metrics.SplitVerticalPrimaryBorderThickness">1</Thickness>
 
     <!-- Office 2019: no floating card. Bottom border only, so the light body connects
          seamlessly under the blue tab strip and the active (light) tab merges into it. -->

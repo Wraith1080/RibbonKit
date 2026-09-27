@@ -4780,3 +4780,79 @@ scroll-arrow surface switching; moving those across the several shared utility
 templates is the next bounded pass. The focused preview interaction and Office
 light/dark token checks passed. Live appearance after this migration remains
 for user review.
+
+### 3.172 Compact Showcase theme and Backstage choices — 2026-09-27
+
+The main Showcase View tab now puts its six theme choices in a compact
+`InRibbonGallery`; the separate Crystal preview action still opens its own
+window. The seven Backstage designs are menu rows in one
+`RibbonDropDownButton`, whose label shows the current design. Both selectors
+are synchronized when appearance preferences are restored. Theme selection
+continues through the existing `ApplyTheme` path, and Backstage selection
+continues to persist the design and notify the File surface.
+
+An initial `SelectedIndex` on the gallery fired `SelectionChanged` while
+`MainWindow.InitializeComponent` was still constructing the window, before
+the File-surface controls and application-menu field were ready. Initial
+selection now happens after initialization under the synchronization guard.
+A focused headless window test covers construction, theme selection, and
+Backstage selection without touching saved preferences. The Release Showcase
+build passed. Popup layout and live visual acceptance remain with the user;
+no Showcase process was launched during this pass.
+
+### 3.173 Crystal Acrylic surface transparency — 2026-09-27
+
+The shared `RibbonTabControl` body now uses `RibbonKit.Brushes.Ribbon.BodyBackground`.
+Every Office light and dark palette defines it with the former body paint;
+Crystal also retains its original paint when Acrylic is inactive. Dropdowns and
+gallery popups continue to use the opaque `ContentBackground` token, so the
+new body translucency cannot wash out detached surfaces.
+
+When the Showcase actually activates Acrylic under Crystal Light, its scoped
+palette softens the ribbon body, selected tab fill and marker, title bar, and
+window/status background. Turning Acrylic off, changing the tint, or switching
+themes rebuilds or removes that palette; no public API or Office paint changes.
+The focused Crystal presentation test covers token parity across all Office
+light and dark palettes, the realized body brush, translucent overrides, and
+restoration. Live Acrylic appearance remains a visual review gate.
+
+Acrylic hover follow-up: the accepted blue command hover wash blends into the
+more saturated material in the user's screenshot. The Showcase's Acrylic-only
+Crystal palette now replaces that shared hover token with a brighter, neutral
+glass wash; the existing rim and non-Acrylic Crystal brush remain unchanged.
+The focused presentation test confirms the Acrylic value and restoration after
+turning Acrylic off. The new hover contrast still needs live visual acceptance.
+
+### 3.174 Optional Acrylic glass treatment across Showcase themes — 2026-09-27
+
+The later screenshot clarified that the faint hover was the tab header marker;
+the command-button hover from §3.173 was already accepted. Its exact Acrylic
+wash is retained. A brighter tab hover fill and rim, plus matching companion
+and active-half split-button washes, now share the same window-scoped
+`AcrylicGlassPresentation` as the ribbon-body, selected-tab, title-bar, and
+status-bar opacity changes. The shared control templates still resolve theme
+tokens; no RibbonKit public API or theme baseline changed.
+
+The Showcase View tab has a separate Glass look switch. Existing preferences
+default to the current behavior: Crystal applies it with Acrylic, while Office
+themes retain their prior Acrylic appearance. The switch may override that
+default for any theme and persists separately from the DWM backdrop choice.
+The overlay is rebuilt after theme, tint, dark-mode, and backdrop changes, and
+is removed whenever Acrylic is inactive. Focused presentation, selector, and
+preference checks cover palette restoration, Office opt-in, and persistence;
+live contrast and width/overflow remain visual review gates.
+
+Tab-hover contrast follow-up: the first glass hover wash was too close to the
+selected tab in the user's screenshot. Its light and dark alpha and hover-rim
+opacity were reduced; the selected marker, command-button hover, and split
+hover values remain as accepted in the preceding pass. The focused presentation
+check covers both light and dark hover tokens. Live appearance still needs a
+new screenshot.
+
+Split-button and switch follow-up: vertically stacked split halves used to
+paint both edges at their join. The shared template now reads a border-thickness
+token for the primary half. Crystal omits its bottom edge, so the lower half
+draws the divider once; all Office light and dark palettes retain their existing
+one-pixel border. The Showcase Glass look switch now uses a large icon and
+displays its label. Focused checks and WPF renders in both glass states covered
+the controls; native Acrylic compositing still needs live visual review.

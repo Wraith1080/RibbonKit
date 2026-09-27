@@ -17,8 +17,12 @@
         <GradientStop Color="#E3F1F0" Offset="1" />
     </LinearGradientBrush>
     <LinearGradientBrush x:Key="RibbonKit.Brushes.Ribbon.ContentBackground" StartPoint="0,0" EndPoint="0.25,1">
-        <!-- Shared dropdown templates also consume this token. Keep it opaque until
-             ribbon material and popup surfaces have separate runtime tokens. -->
+        <!-- Dropdown and popup surfaces keep their opaque, readable fill. -->
+        <GradientStop Color="#FAFDFF" Offset="0" />
+        <GradientStop Color="#E9F2FB" Offset="0.48" />
+        <GradientStop Color="#E7F1F9" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Ribbon.BodyBackground" StartPoint="0,0" EndPoint="0.25,1">
         <GradientStop Color="#FAFDFF" Offset="0" />
         <GradientStop Color="#E9F2FB" Offset="0.48" />
         <GradientStop Color="#E7F1F9" Offset="1" />
@@ -456,6 +460,7 @@
     <CornerRadius x:Key="RibbonKit.Metrics.SplitRightCornerRadius">0,8,8,0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.SplitTopCornerRadius">8,8,0,0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.SplitBottomCornerRadius">0,0,8,8</CornerRadius>
+    <Thickness x:Key="RibbonKit.Metrics.SplitVerticalPrimaryBorderThickness">1,1,1,0</Thickness>
     <DropShadowEffect x:Key="Crystal.Effects.ApplicationMenuShadow" Color="#34485A"
                       BlurRadius="16" ShadowDepth="0" Opacity="0.24" RenderingBias="Performance" />
     <DropShadowEffect x:Key="RibbonKit.Effects.ContentShadow" Color="#466982"
