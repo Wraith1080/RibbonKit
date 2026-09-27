@@ -5024,3 +5024,31 @@ Light uses a larger inset to clear its 14-DIP body radius. Focused
 realized-control checks cover File visibility, merged caption icon, tab-row QAT
 spacing, RTL, below-ribbon QAT, Office 2007, Office 2024, and modal Print
 Preview. Live screenshot acceptance remains with the user.
+
+### 3.186 Crystal Light Localization/RTL lab and Backstage templates — 2026-09-28
+
+The detached Localization/RTL lab inherited Crystal's shared control tokens, but
+its host-owned menu, Backstage, message, popup and QAT presentation did not use
+the main Showcase's Crystal adapters. Its built-in Options dialog also missed
+the Crystal customization styling. The lab now reuses
+`CrystalMainWindowPresentation` and `CrystalCustomization` instead of duplicating
+their brushes or templates. `MainWindow` forwards theme and tint changes to the
+open lab, as it does for MDI demos. The lab retains its independent RTL direction,
+pseudo-localization provider and File-surface subscription.
+
+One focused offscreen check covers a realized RTL lab, tinted Crystal resources,
+the application menu, styled Quick Access Options, tint replacement and Office
+restoration. The lab integration is Showcase-only. Live popup, menu and dialog
+appearance remains for user screenshot review.
+
+The Crystal Backstage templates had fixed English Back/File labels. Both designs
+now bind control-owned labels, tooltips and automation names to live
+`RibbonString` values, and the Back arrow follows the inherited direction.
+WPF already mirrors the Backstage layouts, check box/radio indicators and
+customization tree through `FlowDirection`; no column or dock swaps are needed.
+An initial check measured positions relative to an RTL element and led to
+unnecessary swaps. A corrected check uses physical screen coordinates and
+verifies the original layouts, both Backstage designs, live provider changes,
+the option indicators, customization tree and return to LTR. The shared template
+change adds no public API or theme tokens. Application-authored demo labels
+remain the host's responsibility; live visual acceptance is still pending.

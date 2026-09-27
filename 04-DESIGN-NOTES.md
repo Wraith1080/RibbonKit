@@ -696,6 +696,10 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [Shared header-row QAT or tab inset for hidden application buttons](docs/history/01-library.md#3185-connected-first-tab-with-no-file-button--2026-09-27).
 
+### 3.186 Crystal Light Localization/RTL lab and Backstage templates — 2026-09-28
+
+[Reuse Showcase presentation in the detached lab and localize Crystal Backstage](docs/history/01-library.md#3186-crystal-light-localizationrtl-lab-and-backstage-templates--2026-09-28).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),

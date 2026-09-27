@@ -343,7 +343,7 @@ public partial class MainWindow : RibbonWindow
         }
         else
             _crystalPresentation?.Apply(false);
-        UpdateMdiDemoThemes();
+        UpdateDetachedDemoThemes();
         bool supportsDarkMode = ThemeManager.SupportsDarkMode(theme);
         DarkModeToggle.IsEnabled = supportsDarkMode;
         DarkModeToggle.Visibility = supportsDarkMode ? Visibility.Visible : Visibility.Collapsed;
@@ -489,16 +489,17 @@ public partial class MainWindow : RibbonWindow
         _acrylicGlassPresentation?.Apply(false, false);
         if (ThemeManager.CurrentTheme == RibbonTheme.CrystalLight)
             _crystalPresentation?.Apply(true, CrystalTint());
-        UpdateMdiDemoThemes();
+        UpdateDetachedDemoThemes();
         RefreshGlassTreatment();
     }
 
-    private void UpdateMdiDemoThemes()
+    private void UpdateDetachedDemoThemes()
     {
         bool crystal = ThemeManager.CurrentTheme == RibbonTheme.CrystalLight;
         Color? tint = crystal ? CrystalTint() : null;
         foreach (MdiDemo demo in _mdiDemos)
             demo.ApplyCrystal(crystal, tint);
+        _localizationRtlDemo?.ApplyCrystal(crystal, tint);
     }
 
     private void OnToggleGlassTreatment(object sender, RoutedEventArgs e)
@@ -846,6 +847,7 @@ public partial class MainWindow : RibbonWindow
 
         var demo = new LocalizationRtlDemo { Owner = this };
         demo.AttachApplicationSurfaceSource(this);
+        demo.ApplyCrystal(ThemeManager.CurrentTheme == RibbonTheme.CrystalLight, CrystalTint());
         _localizationRtlDemo = demo;
         demo.Closed += (_, _) => _localizationRtlDemo = null;
         demo.Show();

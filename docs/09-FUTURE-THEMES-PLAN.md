@@ -14,6 +14,45 @@ opaque backdrop fallback and application-owned icons. Add narrowly scoped tokeni
 geometry only when existing metrics cannot express the approved reference. Public
 new-theme enum/API additions require review and XML documentation.
 
+### High priority: audit Crystal duplicates before further integration (planned)
+
+Before the next Crystal feature slice, inventory its Showcase styles, copied
+templates, presentation helpers and runtime Crystal templates against the
+existing shared RibbonKit controls, tokens and behavior. For each override,
+record the visual or behavioral difference it actually needs. Remove copies
+that only repeat shared layout, RTL mirroring, localization, state handling or
+cleanup; express genuine control styling through shared templates and theme
+tokens, and keep host-owned presentation in Showcase. In particular, verify
+physical RTL placement before adding direction-specific column or dock logic:
+inherited WPF `FlowDirection` already mirrors many layouts.
+
+Check each retained override against the Office themes and dark variants,
+including localization and theme-switch restoration. Use focused realized-control
+checks for any changed behavior and leave live appearance to screenshot review.
+Report proposed runtime or public API changes before implementing them. This
+audit is a prerequisite for further Crystal integration, not a request to change
+all theme presentation at once.
+
+### High priority: optional presentation adapters per theme (planned)
+
+Before adding more theme-specific presentation branches, design one registration
+path for a theme's resources and any optional behavior adapter. Resource dictionaries
+remain the source for brushes, metrics, styles and templates; most Office themes
+need no adapter. Snapshot blur, host-owned layout and other effects that require
+events or cleanup need compiled behavior. Loading a resource dictionary alone
+cannot activate that behavior, so register it explicitly through a factory or
+equivalent theme-to-adapter mapping instead of scattering Crystal checks through
+the main window, detached demos and dialogs. Do not require an adapter for every
+theme or treat arbitrary XAML resources as executable registrations.
+
+Keep the adapter boundary in Showcase for host-owned presentation. Move styling
+that belongs to RibbonKit controls into shared templates and theme tokens, with
+Office light/dark parity, before considering any runtime or public API extension.
+The coordinator must apply, retint, detach and restore presentation consistently
+across open windows and dialogs, including RTL and theme switches in both
+directions. Verify baseline restoration and inactive-adapter cleanup with focused
+tests; live material and popup appearance remains a separate acceptance gate.
+
 Before implementation, establish name/provenance, representative ribbon/title/File/
 menu/control images, palette variants, accent/material policy and geometry differences.
 The Office 2021 direction still needs user approval of collected references against
@@ -769,14 +808,25 @@ Two focused MDI checks cover realized chrome, Office restoration, tint changes a
 key availability in every Office light/dark palette. Live screenshot acceptance is
 still open.
 
-Remaining phase-two surfaces: the detached Localization/RTL lab has shared Crystal
-tokens but lacks the main window's Crystal presentation adapters and options-dialog
-styling; Print Preview inherits the main ribbon's Crystal styling, while its preview
-page is still host-painted in fixed grays; Chart Tools already uses Crystal contextual
-tabs and the main-window merge adapter, pending visual review; the main Options
-dialog has Crystal customization styling, while its app-owned Editor page remains
-plain. Modal-tab state uses the shared ribbon template. Crystal Light still has no
-dark palette, so its Dark Mode control remains hidden.
+The detached Localization/RTL lab now reuses the main window's Crystal presentation
+adapter for its menu, Backstage, message bar, popups and QAT, and its two Options
+pages use the existing Crystal customization styling. The lab updates while open
+when the main theme or tint changes, and returns to Office styling on exit from
+Crystal. The shared Crystal Backstage templates now use live localized Back/File
+labels and a direction-aware Back arrow. Inherited `FlowDirection` already
+mirrors both Backstage layouts, the Crystal option indicators and the
+customization tree without manual column swaps. Focused physical-coordinate
+coverage checks these layouts, provider changes, tint replacement,
+options styling and Office restoration. Live RTL visual acceptance remains with
+the user.
+
+Remaining phase-two surfaces: Print Preview inherits the main ribbon's Crystal
+styling, while its preview page is still host-painted in fixed grays; Chart Tools
+already uses Crystal contextual tabs and the main-window merge adapter, pending
+visual review; the main Options dialog has Crystal customization styling, while
+its app-owned Editor page remains plain. Modal-tab state uses the shared ribbon
+template. Crystal Light still has no dark palette, so its Dark Mode control remains
+hidden.
 
 The MDI and Print Preview screenshots exposed a shared first-tab seam when File
 is hidden: a connected tab can meet the body's rounded leading corner. The

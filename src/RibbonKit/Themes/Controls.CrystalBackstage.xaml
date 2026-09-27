@@ -1,6 +1,7 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:rk="clr-namespace:RibbonKit.Controls">
+                    xmlns:rk="clr-namespace:RibbonKit.Controls"
+                    xmlns:localization="clr-namespace:RibbonKit.Localization">
     <!-- Crystal layouts share Backstage's selection, keyboard, automation and back handling. -->
     <ItemsPanelTemplate x:Key="Crystal.Backstage.FloatingItemsPanel"><WrapPanel /></ItemsPanelTemplate>
     <ItemsPanelTemplate x:Key="Crystal.Backstage.SidebarItemsPanel"><rk:BackstageNavPanel /></ItemsPanelTemplate>
@@ -72,6 +73,16 @@
             </Setter.Value>
         </Setter>
     </Style>
+    <Style x:Key="Crystal.Backstage.BackGlyph" TargetType="TextBlock">
+        <Setter Property="Text" Value="←" />
+        <Setter Property="FlowDirection" Value="LeftToRight" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding FlowDirection, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
+                         Value="RightToLeft">
+                <Setter Property="Text" Value="→" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
     <ControlTemplate x:Key="Crystal.Backstage.FloatingTemplate" TargetType="{x:Type rk:Backstage}">
                     <Grid x:Name="RootGrid" Background="{DynamicResource RibbonKit.Brushes.Window.Background}">
                         <Grid Margin="28,24">
@@ -81,10 +92,16 @@
                                 <RowDefinition Height="*" />
                             </Grid.RowDefinitions>
                             <DockPanel LastChildFill="False">
-                                <Button x:Name="PART_BackButton" Content="←  Back to document" DockPanel.Dock="Left"
+                                <Button x:Name="PART_BackButton" DockPanel.Dock="Left"
                                         Style="{StaticResource Crystal.Backstage.Action}"
-                                        AutomationProperties.Name="Back to document" />
-                                <TextBlock Text="CRYSTAL  /  WORKSPACE" DockPanel.Dock="Right" Margin="16,0,0,0"
+                                        AutomationProperties.Name="{localization:RibbonString Key=Back}"
+                                        ToolTip="{localization:RibbonString Key=Back}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Style="{StaticResource Crystal.Backstage.BackGlyph}" />
+                                        <TextBlock Text="{localization:RibbonString Key=Back}" Margin="6,0" />
+                                    </StackPanel>
+                                </Button>
+                                <TextBlock x:Name="CrystalBrand" Text="CRYSTAL" DockPanel.Dock="Right" Margin="16,0,0,0"
                                            FontSize="11" VerticalAlignment="Center" Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
                             </DockPanel>
                             <Border x:Name="NavSurface" Grid.Row="1" HorizontalAlignment="Left" Margin="0,24,0,24" Padding="5" CornerRadius="20"
@@ -130,10 +147,17 @@
                                     Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}">
                                 <DockPanel Margin="8,12">
                                     <StackPanel DockPanel.Dock="Top" Margin="6,0,6,22">
-                                        <Button x:Name="PART_BackButton" Content="←  Back" HorizontalAlignment="Left"
+                                        <Button x:Name="PART_BackButton" HorizontalAlignment="Left"
                                                 Style="{StaticResource Crystal.Backstage.Action}" Padding="14,9"
-                                                AutomationProperties.Name="Back to document" />
-                                        <TextBlock Text="File" FontSize="26" Margin="8,24,0,4"
+                                                AutomationProperties.Name="{localization:RibbonString Key=Back}"
+                                                ToolTip="{localization:RibbonString Key=Back}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Style="{StaticResource Crystal.Backstage.BackGlyph}" />
+                                                <TextBlock Text="{localization:RibbonString Key=Back}" Margin="6,0" />
+                                            </StackPanel>
+                                        </Button>
+                                        <TextBlock x:Name="CrystalFileHeading" Text="{localization:RibbonString Key=File}"
+                                                   FontSize="26" Margin="8,24,0,4"
                                                    Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
                                     </StackPanel>
                                     <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained" />
