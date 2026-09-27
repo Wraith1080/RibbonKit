@@ -197,6 +197,8 @@
         <GradientStop Color="#E4EFF8" Offset="0.65" />
         <GradientStop Color="#DCEAF4" Offset="1" />
     </LinearGradientBrush>
+    <!-- Shared translucent-rail token; Crystal also uses it for its two Backstage layouts. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.NavBackgroundTranslucent" Color="#88E4EFF8" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.Foreground" Color="#20364A" />
     <LinearGradientBrush x:Key="RibbonKit.Brushes.Backstage.ContentBackground" StartPoint="0,0" EndPoint="0.2,1">
         <GradientStop Color="#FCFEFF" Offset="0" />

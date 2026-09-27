@@ -73,7 +73,7 @@
         </Setter>
     </Style>
     <ControlTemplate x:Key="Crystal.Backstage.FloatingTemplate" TargetType="{x:Type rk:Backstage}">
-                    <Grid Background="{DynamicResource RibbonKit.Brushes.Window.Background}">
+                    <Grid x:Name="RootGrid" Background="{DynamicResource RibbonKit.Brushes.Window.Background}">
                         <Grid Margin="28,24">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
@@ -87,7 +87,7 @@
                                 <TextBlock Text="CRYSTAL  /  WORKSPACE" DockPanel.Dock="Right" Margin="16,0,0,0"
                                            FontSize="11" VerticalAlignment="Center" Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
                             </DockPanel>
-                            <Border Grid.Row="1" HorizontalAlignment="Left" Margin="0,24,0,24" Padding="5" CornerRadius="20"
+                            <Border x:Name="NavSurface" Grid.Row="1" HorizontalAlignment="Left" Margin="0,24,0,24" Padding="5" CornerRadius="20"
                                     Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
                                     BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}" BorderThickness="1"
                                     Effect="{DynamicResource RibbonKit.Effects.ContentShadow}">
@@ -98,6 +98,13 @@
                             </Grid>
                         </Grid>
                     </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Translucent" Value="True">
+                            <Setter TargetName="RootGrid" Property="Background" Value="Transparent" />
+                            <Setter TargetName="NavSurface" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.Backstage.Modern.NavBackgroundTranslucent}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
                 </ControlTemplate>
     <Style x:Key="Crystal.Backstage.Style" TargetType="{x:Type rk:Backstage}">
         <Setter Property="ItemContainerStyle" Value="{StaticResource Crystal.Backstage.Tab}" />
@@ -111,7 +118,7 @@
     <!-- Familiar full-height navigation and page area, with Crystal material and
          shallow separation at their edges. The floating layout remains independent. -->
     <ControlTemplate x:Key="Crystal.Backstage.SidebarTemplate" TargetType="{x:Type rk:Backstage}">
-                    <Grid Background="{DynamicResource RibbonKit.Brushes.Window.Background}">
+                    <Grid x:Name="RootGrid" Background="{DynamicResource RibbonKit.Brushes.Window.Background}">
                         <Grid Margin="16">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="196" />
@@ -140,6 +147,13 @@
                             </Border>
                         </Grid>
                     </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Translucent" Value="True">
+                            <Setter TargetName="RootGrid" Property="Background" Value="Transparent" />
+                            <Setter TargetName="NavColumn" Property="Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.Backstage.Modern.NavBackgroundTranslucent}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
                 </ControlTemplate>
     <Style x:Key="Crystal.Backstage.Sidebar" TargetType="{x:Type rk:Backstage}">
         <Setter Property="ItemContainerStyle" Value="{StaticResource Crystal.Backstage.SidebarTab}" />

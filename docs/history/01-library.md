@@ -4856,3 +4856,17 @@ draws the divider once; all Office light and dark palettes retain their existing
 one-pixel border. The Showcase Glass look switch now uses a large icon and
 displays its label. Focused checks and WPF renders in both glass states covered
 the controls; native Acrylic compositing still needs live visual review.
+
+### 3.175 Crystal translucent Backstage option — 2026-09-27
+
+The Showcase's Transparent Backstage switch already sets `Backstage.Translucent`,
+and the Ribbon hides content behind the open surface so DWM Acrylic can show.
+Neither Crystal layout template responded to that property: each kept its
+window-colored root and opaque navigation surface. Both shared Crystal templates
+now clear their root fill when translucent and use the existing translucent
+navigation brush token. Crystal supplies a tinted, alpha-bearing value for that
+token; Office palettes keep their previous values. The content card stays opaque
+for text readability. Turning the option off restores the original Crystal
+brushes without changing the chosen layout or adding a public API. A focused
+realized-template test checks both Crystal layouts and the on/off transition;
+native Acrylic appearance remains for live screenshot review.

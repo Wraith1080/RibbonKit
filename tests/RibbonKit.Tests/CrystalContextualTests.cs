@@ -1182,9 +1182,29 @@ public class CrystalContextualTests
             stage.UpdateLayout();
             Sta.Drain();
         }
+        void AssertTranslucentNavigation(string name)
+        {
+            var root = Assert.IsType<Grid>(stage.Template.FindName("RootGrid", stage));
+            var navigation = Assert.IsType<Border>(stage.Template.FindName(name, stage));
+            Assert.Same(stage.FindResource("RibbonKit.Brushes.Window.Background"), root.Background);
+            var opaqueNavigation = navigation.Background;
+            stage.Translucent = true;
+            LayoutStage();
+            Assert.Equal(Colors.Transparent, Assert.IsType<SolidColorBrush>(root.Background).Color);
+            Assert.Same(stage.FindResource("RibbonKit.Brushes.Backstage.Modern.NavBackgroundTranslucent"),
+                navigation.Background);
+            Assert.InRange(Assert.IsType<SolidColorBrush>(navigation.Background).Color.A, (byte)1, (byte)254);
+            stage.Translucent = false;
+            LayoutStage();
+            Assert.Same(stage.FindResource("RibbonKit.Brushes.Window.Background"), root.Background);
+            Assert.Same(opaqueNavigation, navigation.Background);
+        }
         LayoutStage();
         Assert.Equal(RibbonBackstageDesign.CrystalSidebar, presentation.Layout);
         Assert.NotNull(stage.Template.FindName("NavColumn", stage));
+        AssertTranslucentNavigation("NavColumn");
+        Assert.Equal(1d, Assert.IsType<Border>(stage.Template.FindName("ContentArea", stage))
+            .Background.Opacity);
         var sidebarHome = home.TransformToAncestor(stage).Transform(new Point());
         var sidebarAppearance = appearance.TransformToAncestor(stage).Transform(new Point());
         var sidebarAbout = about.TransformToAncestor(stage).Transform(new Point());
@@ -1193,6 +1213,7 @@ public class CrystalContextualTests
         Assert.True(sidebarAbout.Y > sidebarAppearance.Y + appearance.ActualHeight);
         presentation.SetLayout(RibbonBackstageDesign.CrystalFloating);
         LayoutStage();
+        AssertTranslucentNavigation("NavSurface");
         Assert.Equal("A calmer workspace", title.Text);
         titleInput.Text = "Changed while File is open";
         Sta.Drain();

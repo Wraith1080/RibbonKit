@@ -719,6 +719,16 @@ dedicated shared active-hover token: Crystal gives the hovered half a stronger w
 while each Office palette supplies its existing ordinary hover appearance. No
 Showcase split-button override is needed.
 
+**Planned Office glass iteration:** The separate Glass look switch can opt Office
+themes into the Acrylic glass treatment, but their appearance has not had a live
+theme-by-theme review. Iterate through Office 2007, 2010, 2013, 2019 and 2024,
+including dark variants, with Acrylic and Glass look enabled. Compare each with
+its Acrylic appearance when Glass look is off, and review the title/status bars,
+ribbon body, tab markers, command and split-button states, and Backstage at normal
+and narrow widths. Use screenshots to identify any theme-specific contrast or
+readability adjustments. Keep the switch opt-in for Office themes and preserve
+their current Glass look-off appearance and the accepted Crystal treatment.
+
 **Deferred View-tab overflow after leaving Crystal Light (user screenshots, 2026-09-27):**
 At the shown window width, Crystal Light hides the unsupported Dark Mode button.
 Selecting Office 2024 makes that button visible again, but the View groups extend

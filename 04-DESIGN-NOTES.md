@@ -652,6 +652,10 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [Shared token overlay, tab and split hover, and opt-in behavior](docs/history/01-library.md#3174-optional-acrylic-glass-treatment-across-showcase-themes--2026-09-27).
 
+### 3.175 Crystal translucent Backstage option — 2026-09-27
+
+[Crystal layout templates honor the existing Translucent setting](docs/history/01-library.md#3175-crystal-translucent-backstage-option--2026-09-27).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),
