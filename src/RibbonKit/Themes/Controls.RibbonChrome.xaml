@@ -514,7 +514,7 @@
                                      scrolls in lockstep and stays under its tab. -->
                                 <layout:RibbonScrollContentHost x:Name="PART_TabScroll" ConstrainChildWidth="False">
                                     <Grid>
-                                        <TabPanel IsItemsHost="True"
+                                        <TabPanel x:Name="PART_TabItemsPanel" IsItemsHost="True"
                                                   Margin="{DynamicResource RibbonKit.Metrics.TabStripMargin}"
                                                   Background="Transparent" />
                                         <!-- Shared selection underline that GLIDES between tabs
@@ -930,6 +930,48 @@
                             <Setter TargetName="ContentHost" Property="Margin"
                                     Value="{DynamicResource RibbonKit.Metrics.ContentMarginQatBelow}" />
                         </DataTrigger>
+                        <!-- Keep the body's rounded corner. With no File or merged caption icon,
+                             inset the first visible header-row item. The QAT owns that inset when
+                             it shares the row; otherwise the tab panel owns it. This keeps the
+                             normal QAT-to-tab spacing while the marker and notch follow the tab. -->
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding Visibility, ElementName=PART_ApplicationButton}" Value="Collapsed" />
+                                <Condition Binding="{Binding Visibility, ElementName=PART_MergedCaptionIcon}" Value="Collapsed" />
+                                <Condition Binding="{Binding Visibility, ElementName=QatTabRowHost}" Value="Collapsed" />
+                            </MultiDataTrigger.Conditions>
+                            <Setter TargetName="PART_TabItemsPanel" Property="Margin"
+                                    Value="{DynamicResource RibbonKit.Metrics.TabStripMarginNoApplication}" />
+                        </MultiDataTrigger>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding Visibility, ElementName=PART_ApplicationButton}" Value="Collapsed" />
+                                <Condition Binding="{Binding Visibility, ElementName=PART_MergedCaptionIcon}" Value="Collapsed" />
+                                <Condition Binding="{Binding Visibility, ElementName=QatTabRowHost}" Value="Collapsed" />
+                                <Condition Binding="{Binding FlowDirection, RelativeSource={RelativeSource TemplatedParent}}" Value="RightToLeft" />
+                            </MultiDataTrigger.Conditions>
+                            <Setter TargetName="PART_TabItemsPanel" Property="Margin"
+                                    Value="{DynamicResource RibbonKit.Metrics.TabStripMarginNoApplicationRtl}" />
+                        </MultiDataTrigger>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding Visibility, ElementName=PART_ApplicationButton}" Value="Collapsed" />
+                                <Condition Binding="{Binding Visibility, ElementName=PART_MergedCaptionIcon}" Value="Collapsed" />
+                                <Condition Binding="{Binding Visibility, ElementName=QatTabRowHost}" Value="Visible" />
+                            </MultiDataTrigger.Conditions>
+                            <Setter TargetName="QatTabRowHost" Property="Margin"
+                                    Value="{DynamicResource RibbonKit.Metrics.QatTabRowMarginNoApplication}" />
+                        </MultiDataTrigger>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding Visibility, ElementName=PART_ApplicationButton}" Value="Collapsed" />
+                                <Condition Binding="{Binding Visibility, ElementName=PART_MergedCaptionIcon}" Value="Collapsed" />
+                                <Condition Binding="{Binding Visibility, ElementName=QatTabRowHost}" Value="Visible" />
+                                <Condition Binding="{Binding FlowDirection, RelativeSource={RelativeSource TemplatedParent}}" Value="RightToLeft" />
+                            </MultiDataTrigger.Conditions>
+                            <Setter TargetName="QatTabRowHost" Property="Margin"
+                                    Value="{DynamicResource RibbonKit.Metrics.QatTabRowMarginNoApplicationRtl}" />
+                        </MultiDataTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>

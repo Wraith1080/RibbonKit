@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -14,6 +15,8 @@ namespace RibbonKit.Showcase;
 public partial class MdiDemo : RibbonWindow
 {
     private int _documentNumber;
+    private ResourceDictionary? _crystalPalette;
+    private bool _crystalEnabled;
 
     public MdiDemo()
     {
@@ -22,6 +25,50 @@ public partial class MdiDemo : RibbonWindow
         // A couple of starter documents so the window opens alive.
         OnNewDocument(this, new RoutedEventArgs());
         OnNewDocument(this, new RoutedEventArgs());
+    }
+
+    internal void ApplyCrystal(bool enabled, Color? tint = null)
+    {
+        if (_crystalPalette is not null)
+        {
+            Resources.MergedDictionaries.Remove(_crystalPalette);
+            _crystalPalette = null;
+        }
+
+        _crystalEnabled = enabled;
+        if (enabled)
+        {
+            _crystalPalette = CrystalPalette.Create(tint ?? CrystalPalette.Blue);
+            Resources.MergedDictionaries.Add(_crystalPalette);
+            SetResourceReference(BackgroundProperty, "RibbonKit.Brushes.Window.Background");
+        }
+        else
+        {
+            Background = Brushes.White;
+        }
+
+        CrystalUtilityChrome.Apply(this, enabled);
+        foreach (MdiDocument document in Mdi.Items.OfType<MdiDocument>())
+        {
+            if (document.Content is TextBox editor) ApplyEditorTheme(editor);
+            if (document.MergeSource is { } source)
+                foreach (CrystalContextualTab tab in source.Tabs.OfType<CrystalContextualTab>())
+                    tab.CrystalEnabled = enabled;
+        }
+    }
+
+    private void ApplyEditorTheme(TextBox editor)
+    {
+        if (_crystalEnabled)
+        {
+            editor.SetResourceReference(Control.BackgroundProperty, "RibbonKit.Brushes.Ribbon.ContentBackground");
+            editor.SetResourceReference(Control.ForegroundProperty, "RibbonKit.Brushes.Text.Primary");
+        }
+        else
+        {
+            editor.ClearValue(Control.BackgroundProperty);
+            editor.ClearValue(Control.ForegroundProperty);
+        }
     }
 
     private void OnNewDocument(object sender, RoutedEventArgs e)
@@ -38,6 +85,7 @@ public partial class MdiDemo : RibbonWindow
             Text = $"Document {n}\n\nType here — the dirty marker in the caption "
                    + "lights up on the first edit.",
         };
+        ApplyEditorTheme(editor);
 
         MdiDocument document = Mdi.AddDocument(editor, $"Document {n}");
         editor.TextChanged += (_, _) => document.IsModified = true;
@@ -76,10 +124,11 @@ public partial class MdiDemo : RibbonWindow
         var group = new RibbonGroup { Header = "Text", Icon = TryFindResource("Icon.Font") as ImageSource };
         group.Items.Add(upper);
 
-        var tab = new RibbonTab
+        var tab = new CrystalContextualTab
         {
             Header = $"Doc {number} Tools",
             IsContextual = true,
+            CrystalEnabled = _crystalEnabled,
             ContextualColor = new SolidColorBrush(Color.FromRgb(0x1F, 0x7A, 0x4D)),
         };
         tab.Groups.Add(group);

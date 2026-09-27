@@ -688,6 +688,14 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [Remove the fixed blue-white tab hover cast while keeping its quiet opacity](docs/history/01-library.md#3183-glass-tab-hover-follows-the-accent--2026-09-27).
 
+### 3.184 Crystal Light MDI Demo integration — 2026-09-27
+
+[Shared MDI tokens and detached Showcase presentation](docs/history/01-library.md#3184-crystal-light-mdi-demo-integration--2026-09-27).
+
+### 3.185 Connected first tab with no File button — 2026-09-27
+
+[Shared header-row QAT or tab inset for hidden application buttons](docs/history/01-library.md#3185-connected-first-tab-with-no-file-button--2026-09-27).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),

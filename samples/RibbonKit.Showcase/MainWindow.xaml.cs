@@ -60,6 +60,7 @@ public partial class MainWindow : RibbonWindow
     private readonly RibbonApplicationMenu _applicationMenu;
     private CrystalMainWindowPresentation? _crystalPresentation;
     private AcrylicGlassPresentation? _acrylicGlassPresentation;
+    private readonly List<MdiDemo> _mdiDemos = new();
     private LocalizationRtlDemo? _localizationRtlDemo;
     private string? _customAccent;
     private ShowcaseBackdropPreference _preferredBackdrop;
@@ -342,6 +343,7 @@ public partial class MainWindow : RibbonWindow
         }
         else
             _crystalPresentation?.Apply(false);
+        UpdateMdiDemoThemes();
         bool supportsDarkMode = ThemeManager.SupportsDarkMode(theme);
         DarkModeToggle.IsEnabled = supportsDarkMode;
         DarkModeToggle.Visibility = supportsDarkMode ? Visibility.Visible : Visibility.Collapsed;
@@ -487,7 +489,16 @@ public partial class MainWindow : RibbonWindow
         _acrylicGlassPresentation?.Apply(false, false);
         if (ThemeManager.CurrentTheme == RibbonTheme.CrystalLight)
             _crystalPresentation?.Apply(true, CrystalTint());
+        UpdateMdiDemoThemes();
         RefreshGlassTreatment();
+    }
+
+    private void UpdateMdiDemoThemes()
+    {
+        bool crystal = ThemeManager.CurrentTheme == RibbonTheme.CrystalLight;
+        Color? tint = crystal ? CrystalTint() : null;
+        foreach (MdiDemo demo in _mdiDemos)
+            demo.ApplyCrystal(crystal, tint);
     }
 
     private void OnToggleGlassTreatment(object sender, RoutedEventArgs e)
@@ -816,8 +827,14 @@ public partial class MainWindow : RibbonWindow
     private void OnOpenOptions(object sender, RoutedEventArgs e) =>
         OpenOptionsDialog(OptionsPageKind.Editor);
 
-    private void OnOpenMdiDemo(object sender, RoutedEventArgs e) =>
-        new MdiDemo { Owner = this }.Show();
+    private void OnOpenMdiDemo(object sender, RoutedEventArgs e)
+    {
+        var demo = new MdiDemo { Owner = this };
+        _mdiDemos.Add(demo);
+        demo.Closed += (_, _) => _mdiDemos.Remove(demo);
+        demo.ApplyCrystal(ThemeManager.CurrentTheme == RibbonTheme.CrystalLight, CrystalTint());
+        demo.Show();
+    }
 
     private void OnOpenLocalizationRtlDemo(object sender, RoutedEventArgs e)
     {

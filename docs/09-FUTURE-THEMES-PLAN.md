@@ -761,8 +761,32 @@ Plan for the later fix:
    overflow state. Follow with live screenshot review at the reported width and
    relevant DPI scales.
 
-Phase two is reserved for MDI, localization and RTL, modal tabs, and dark mode.
-Crystal Light remains light-only in phase one.
+Phase two has started with MDI Demo. Its shared MDI child/container templates now
+read Crystal overrides for their existing caption, border, client and button tokens;
+the detached Showcase window scopes its tint, editor paint and contextual document
+tabs, including theme/tint changes while open. This adds no MDI API or token key.
+Two focused MDI checks cover realized chrome, Office restoration, tint changes and
+key availability in every Office light/dark palette. Live screenshot acceptance is
+still open.
+
+Remaining phase-two surfaces: the detached Localization/RTL lab has shared Crystal
+tokens but lacks the main window's Crystal presentation adapters and options-dialog
+styling; Print Preview inherits the main ribbon's Crystal styling, while its preview
+page is still host-painted in fixed grays; Chart Tools already uses Crystal contextual
+tabs and the main-window merge adapter, pending visual review; the main Options
+dialog has Crystal customization styling, while its app-owned Editor page remains
+plain. Modal-tab state uses the shared ribbon template. Crystal Light still has no
+dark palette, so its Dark Mode control remains hidden.
+
+The MDI and Print Preview screenshots exposed a shared first-tab seam when File
+is hidden: a connected tab can meet the body's rounded leading corner. The
+common ribbon template now insets the first visible header-row item when neither
+File nor a merged caption icon occupies the leading slot. With a tab-row QAT,
+the QAT receives the inset and tabs keep their normal gap after it; with the QAT
+elsewhere, the tab panel receives the inset. Theme metrics set both insets in
+LTR and RTL; Crystal uses a larger inset for its 14-DIP body radius. The body
+keeps its rounded corners. Office 2024 retains its pill-tab spacing. Live
+screenshot acceptance remains open.
 
 The preview's Add scrolling text action reveals a longer sample document so the
 QAT underlay can be inspected by scrolling. The same action removes the added

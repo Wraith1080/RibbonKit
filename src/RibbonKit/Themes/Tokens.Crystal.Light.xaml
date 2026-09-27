@@ -37,6 +37,31 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Secondary" Color="#4F6476" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.TitleBar.Foreground" Color="#20364A" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.Foreground" Color="#20364A" />
+    <!-- MDI uses the existing shared child/container templates and Office token keys. -->
+    <RadialGradientBrush x:Key="RibbonKit.Brushes.MdiChild.ActiveCaptionBackground"
+                         Center="0.5,0.15" GradientOrigin="0.5,0.15" RadiusX="0.9" RadiusY="1.1">
+        <GradientStop Color="#F7FCFF" Offset="0" />
+        <GradientStop Color="#DFEEF9" Offset="0.58" />
+        <GradientStop Color="#C6DFF0" Offset="1" />
+    </RadialGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.ActiveCaptionForeground" Color="#20364A" />
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.MdiChild.InactiveCaptionBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#F9FCFE" Offset="0" />
+        <GradientStop Color="#E9F2F8" Offset="1" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.InactiveCaptionForeground" Color="#52697B" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.ActiveBorder" Color="#709BBC" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.InactiveBorder" Color="#A9C5D8" />
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.MdiClient.Background" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#E6F1F8" Offset="0" />
+        <GradientStop Color="#DCEAF4" Offset="0.55" />
+        <GradientStop Color="#E8EDF7" Offset="1" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.CaptionButtonHoverBackground" Color="#385885B1" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.CaptionButtonPressedBackground" Color="#605885B1" />
+    <CornerRadius x:Key="RibbonKit.Metrics.MdiChild.CornerRadius">10</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.MdiChild.CaptionCornerRadius">9,9,0,0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.MdiChild.CloseButtonCornerRadius">0,9,0,0</CornerRadius>
     <!-- User-preferred rim: steady blue-gray sides with localized top/bottom glints.
          The small inset impression is preferred to the full-height gradient's taper. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.HoverBackground" Color="#205885B1" />
@@ -430,6 +455,10 @@
     <CornerRadius x:Key="RibbonKit.Metrics.TabMinimizedCornerRadius">8</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.ApplicationButtonCornerRadius">8</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadius">14</CornerRadius>
+    <Thickness x:Key="RibbonKit.Metrics.TabStripMarginNoApplication">24,4,4,0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.TabStripMarginNoApplicationRtl">2,4,26,0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.QatTabRowMarginNoApplication">24,4,4,0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.QatTabRowMarginNoApplicationRtl">2,4,26,0</Thickness>
     <!-- The menu frame and popup backdrops share one cool tint over their blurred samples. -->
     <LinearGradientBrush x:Key="Crystal.Brushes.FrostedFrame" StartPoint="0,0" EndPoint="0,1" Opacity="0.84">
         <GradientStop Color="#EAF3F9" Offset="0" />

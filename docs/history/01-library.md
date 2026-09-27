@@ -4987,3 +4987,40 @@ the quieter tab-hover alpha (0x50 light, 0x30 dark). The File button shares the
 tab hover token, so it tracks the accent as well. The independent QAT token
 remains available for later tuning. Focused presentation checks cover purple,
 green, red, and dark glass colors; live color acceptance remains user-owned.
+
+### 3.184 Crystal Light MDI Demo integration — 2026-09-27
+
+The detached MDI Demo had only the app-wide Crystal base palette. Its child
+captions, borders and client area inherited Office 2024 MDI values, while its
+white host background, text editors and document tabs missed the main Showcase's
+local Crystal tint. Existing `Mdi.xaml` templates already consume MDI tokens, so
+Crystal Light now overrides those keys without a new template or public API.
+Showcase scopes the tint and editor paint to the demo window, enables its contextual
+document tabs, and updates open demos when the main theme or tint changes. Leaving
+Crystal removes that window scope and restores the Office presentation.
+
+Two focused checks passed: one realizes a child and verifies its token-backed
+caption, editor and merged tab through tint and theme changes; the other verifies
+all reused MDI keys resolve in every Office base and dark variant. The Showcase
+Release build passed. Live MDI appearance and DPI/RTL remain for user screenshots.
+
+### 3.185 Connected first tab with no File button — 2026-09-27
+
+The MDI screenshot showed the first selected tab's left outline ending above the
+rounded top-left ribbon body corner. The same layout occurs when modal Print
+Preview hides File. The shared `RibbonTabControl` template now insets the first
+visible header-row item when both the application button and merged caption icon
+are collapsed. A tab-row QAT takes the inset, keeping the normal gap from QAT
+to tab; with the QAT in the title bar or below the ribbon, the tab panel takes
+the inset. The selected-tab marker and connected body notch follow the measured
+tab. RTL uses an inset on the opposite side. The body retains its rounded
+corners, including with a below-ribbon QAT or message row. A visible merged
+caption icon already reserves the leading space, so both use normal margins.
+
+Every Office base palette defines the tab and QAT LTR/RTL margins, inherited by
+its dark variant. Office 2007 adds a small leading inset; the flat
+2010/2013/2019 and pill-tab 2024 palettes retain their normal spacing. Crystal
+Light uses a larger inset to clear its 14-DIP body radius. Focused
+realized-control checks cover File visibility, merged caption icon, tab-row QAT
+spacing, RTL, below-ribbon QAT, Office 2007, Office 2024, and modal Print
+Preview. Live screenshot acceptance remains with the user.

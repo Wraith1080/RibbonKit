@@ -304,6 +304,10 @@
     <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonAeroMargin">2,2,2,0</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonAeroPadding">18,7,18,9</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.TabStripMargin">2,2,4,0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.TabStripMarginNoApplication">6,2,4,0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.TabStripMarginNoApplicationRtl">2,2,8,0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.QatTabRowMarginNoApplication">6,4,4,0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.QatTabRowMarginNoApplicationRtl">2,4,8,0</Thickness>
     <!-- ⚠ TRIPLE DUTY. Despite the name this brush also paints the MENU SEPARATOR
          (Menus.xaml, RibbonKit.MenuSeparator) and the GALLERY ITEM HOVER BORDER
          (Controls.Galleries.xaml). Setting it Transparent to suppress 2007's ribbon group

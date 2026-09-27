@@ -133,6 +133,10 @@
     <!-- Top inset of the tab headers. Matches the File button's top so the two align;
          a theme can drop the top to 0 to let the tabs meet the title bar. -->
     <Thickness x:Key="RibbonKit.Metrics.TabStripMargin">2,4,4,0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.TabStripMarginNoApplication">2,4,4,0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.TabStripMarginNoApplicationRtl">2,4,4,0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.QatTabRowMarginNoApplication">2,4,4,0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.QatTabRowMarginNoApplicationRtl">2,4,4,0</Thickness>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Group.Separator" Color="#E0E0E0" />
     <!-- 1 = the separator is drawn, as it always has been in this theme. -->
     <system:Double x:Key="RibbonKit.Metrics.GroupSeparatorOpacity">1</system:Double>

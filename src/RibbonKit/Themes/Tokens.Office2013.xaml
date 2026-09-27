@@ -131,6 +131,10 @@
          File button and meet the title bar's lower edge — the colored title bar then
          connects straight into the tab row. -->
     <Thickness x:Key="RibbonKit.Metrics.TabStripMargin">2,0,4,0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.TabStripMarginNoApplication">2,0,4,0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.TabStripMarginNoApplicationRtl">2,0,4,0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.QatTabRowMarginNoApplication">2,4,4,0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.QatTabRowMarginNoApplicationRtl">2,4,4,0</Thickness>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Group.Separator" Color="#D4D4D4" />
     <!-- 1 = the separator is drawn, as it always has been in this theme. -->
     <system:Double x:Key="RibbonKit.Metrics.GroupSeparatorOpacity">1</system:Double>
