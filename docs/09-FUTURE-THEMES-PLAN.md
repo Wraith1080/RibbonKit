@@ -33,6 +33,20 @@ Report proposed runtime or public API changes before implementing them. This
 audit is a prerequisite for further Crystal integration, not a request to change
 all theme presentation at once.
 
+First pass before Print Preview (2026-09-28): `Crystal.ControlStyles.xaml` uses
+shared templates for menu rows, combo/text inputs and galleries through scoped
+resources. Its check box, radio button and ScreenTip templates retain distinct
+focus, selected-lens and reflection visuals; they inherit shared RTL behavior.
+`Crystal.Customize.xaml` changes Options paint and tree appearance while using
+the built-in customization pages and actions. The keyed Crystal Backstage
+templates change layout and paint while using shared Backstage state, navigation
+and localization. Showcase presentation helpers provide host backdrop, shadow,
+QAT, scrollbar, message and contextual effects; Print Preview needs none of
+these helpers. Two candidates for later simplification are the structural copy
+in `Crystal.OptionTemplates.xaml` and the thin `Crystal.Backstage.xaml` resource
+wrapper. Preserve their accepted visuals and resource scope until a focused
+replacement proves equivalence.
+
 ### High priority: optional presentation adapters per theme (planned)
 
 Before adding more theme-specific presentation branches, design one registration
@@ -820,13 +834,18 @@ coverage checks these layouts, provider changes, tint replacement,
 options styling and Office restoration. Live RTL visual acceptance remains with
 the user.
 
-Remaining phase-two surfaces: Print Preview inherits the main ribbon's Crystal
-styling, while its preview page is still host-painted in fixed grays; Chart Tools
-already uses Crystal contextual tabs and the main-window merge adapter, pending
-visual review; the main Options dialog has Crystal customization styling, while
-its app-owned Editor page remains plain. Modal-tab state uses the shared ribbon
-template. Crystal Light still has no dark palette, so its Dark Mode control remains
-hidden.
+Print Preview now paints its Showcase-owned canvas, page border and page text
+from host resources. Crystal supplies cool-tinted values through the existing
+window palette; the printed page stays white. The same modal tab and shared
+ribbon behavior remain in use. A focused check covers modal entry/exit, tint
+changes and the original paint in every Office light/dark palette. Live visual
+acceptance remains open.
+
+Remaining phase-two surfaces: Chart Tools already uses Crystal contextual tabs
+and the main-window merge adapter, pending visual review; the main Options dialog
+has Crystal customization styling, while its app-owned Editor page remains plain.
+Modal-tab state uses the shared ribbon template. Crystal Light still has no dark
+palette, so its Dark Mode control remains hidden.
 
 The MDI and Print Preview screenshots exposed a shared first-tab seam when File
 is hidden: a connected tab can meet the body's rounded leading corner. The

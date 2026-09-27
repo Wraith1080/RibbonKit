@@ -5052,3 +5052,18 @@ verifies the original layouts, both Backstage designs, live provider changes,
 the option indicators, customization tree and return to LTR. The shared template
 change adds no public API or theme tokens. Application-authored demo labels
 remain the host's responsibility; live visual acceptance is still pending.
+
+### 3.187 Crystal Light Print Preview host paint — 2026-09-28
+
+Print Preview already uses RibbonKit's shared modal tab, so its ribbon inherits
+Crystal styling without a new template or adapter. Its Showcase-owned preview
+canvas, page border and page text had fixed grayscale brushes. The Showcase app
+now defines their Office baseline as host resources, and its window-scoped
+Crystal palette overrides those resources. The paper remains white. Crystal's
+existing tint rotation updates the canvas and border while preserving readable
+page text; leaving Crystal restores the original Office paint.
+
+One focused noninteractive check covers modal entry/exit, a tint change and
+baseline paint under every Office theme and supported dark variant. There is no
+RibbonKit runtime or public API change, and no new shared theme token. Live
+Print Preview appearance remains for user screenshot review.

@@ -6,4 +6,9 @@
         <ResourceDictionary Source="/RibbonKit;component/Themes/Tokens.Crystal.Light.xaml" />
         <ResourceDictionary Source="Crystal.ControlStyles.xaml" />
     </ResourceDictionary.MergedDictionaries>
+    <!-- The preview page is Showcase content, so its palette stays outside RibbonKit. -->
+    <SolidColorBrush x:Key="Showcase.Brushes.PrintPreview.Canvas" Color="#A7BECE" />
+    <SolidColorBrush x:Key="Showcase.Brushes.PrintPreview.PageBorder" Color="#829FB3" />
+    <SolidColorBrush x:Key="Showcase.Brushes.PrintPreview.TitleForeground" Color="#20364A" />
+    <SolidColorBrush x:Key="Showcase.Brushes.PrintPreview.BodyForeground" Color="#4F6476" />
 </ResourceDictionary>

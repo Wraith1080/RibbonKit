@@ -700,6 +700,10 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [Reuse Showcase presentation in the detached lab and localize Crystal Backstage](docs/history/01-library.md#3186-crystal-light-localizationrtl-lab-and-backstage-templates--2026-09-28).
 
+### 3.187 Crystal Light Print Preview host paint — 2026-09-28
+
+[Reuse the shared modal tab and scope preview paint to Showcase](docs/history/01-library.md#3187-crystal-light-print-preview-host-paint--2026-09-28).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),

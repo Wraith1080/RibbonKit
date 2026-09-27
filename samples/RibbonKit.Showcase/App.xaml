@@ -11,6 +11,12 @@
                 <ResourceDictionary Source="/RibbonKit;component/Themes/Tokens.Office2024.xaml" />
                 <ResourceDictionary Source="Icons.xaml" />
             </ResourceDictionary.MergedDictionaries>
+            <!-- Host-owned Print Preview paint. Crystal overrides these in its
+                 window-scoped palette; Office themes retain this baseline. -->
+            <SolidColorBrush x:Key="Showcase.Brushes.PrintPreview.Canvas" Color="#6E6E6E" />
+            <SolidColorBrush x:Key="Showcase.Brushes.PrintPreview.PageBorder" Color="#3F3F3F" />
+            <SolidColorBrush x:Key="Showcase.Brushes.PrintPreview.TitleForeground" Color="#3F3F3F" />
+            <SolidColorBrush x:Key="Showcase.Brushes.PrintPreview.BodyForeground" Color="#6B6B6B" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

@@ -1472,22 +1472,22 @@
                      a real mode change rather than just another tab. -->
                 <Border x:Name="PrintPreviewSurface"
                         Margin="8,8,8,0"
-                        Background="#6E6E6E"
+                        Background="{DynamicResource Showcase.Brushes.PrintPreview.Canvas}"
                         Visibility="Collapsed">
                     <Border Width="420"
                             Margin="0,24"
                             VerticalAlignment="Stretch"
                             Background="White"
-                            BorderBrush="#3F3F3F"
+                            BorderBrush="{DynamicResource Showcase.Brushes.PrintPreview.PageBorder}"
                             BorderThickness="1">
                         <StackPanel Margin="36,44" VerticalAlignment="Top">
                             <TextBlock Text="RibbonKit"
                                        FontSize="22"
-                                       Foreground="#3F3F3F"
+                                       Foreground="{DynamicResource Showcase.Brushes.PrintPreview.TitleForeground}"
                                        Margin="0,0,0,14" />
                             <TextBlock TextWrapping="Wrap"
                                        FontSize="12"
-                                       Foreground="#6B6B6B"
+                                       Foreground="{DynamicResource Showcase.Brushes.PrintPreview.BodyForeground}"
                                        Text="Page 1 of 1 — this is a modal tab. Every other tab and the File button are hidden, the ribbon cannot be minimized (try double-clicking a tab header, or Ctrl+F1), and the backstage is blocked. The Quick Access Toolbar stays, exactly like Word's Print Preview." />
                         </StackPanel>
                     </Border>
