@@ -327,10 +327,6 @@ public partial class MainWindow : RibbonWindow
         finally { _syncingThemeGallery = false; }
     }
 
-    // The orb is an APPLICATION choice, not a theme one (RibbonKit themes recolor, they never
-    // reshape), so the showcase opts into it whenever it switches to Office 2007 and back out again
-    // for every other theme. A real app that only ever ships 2007 would just set the property once
-    // in XAML.
     private void ApplyTheme(RibbonTheme theme)
     {
         _acrylicGlassPresentation?.Apply(false, false);
@@ -357,10 +353,6 @@ public partial class MainWindow : RibbonWindow
         Office2010AeroFrameToggle.Visibility = is2010
             ? Visibility.Visible
             : Visibility.Collapsed;
-        MainRibbon.ApplicationButtonShape = is2007
-            ? RibbonApplicationButtonShape.Orb
-            : RibbonApplicationButtonShape.Tab;
-
         // Crystal's preview uses the application menu too. Keep the existing toggle as the
         // single path for swapping File surfaces; restored explicit preferences still win.
         ApplicationMenuToggle.IsChecked = is2007 || theme == RibbonTheme.CrystalLight;

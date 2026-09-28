@@ -1,7 +1,11 @@
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:system="clr-namespace:System;assembly=System.Runtime">
+    xmlns:system="clr-namespace:System;assembly=System.Runtime"
+    xmlns:rk="clr-namespace:RibbonKit">
+
+    <x:Static x:Key="RibbonKit.ApplicationButtonShape.Default"
+              Member="rk:RibbonApplicationButtonShape.Tab" />
 
     <!-- ============================================================
          Office 2010 ("Blue") token palette. Same keys as the other

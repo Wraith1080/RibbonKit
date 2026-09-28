@@ -5198,3 +5198,29 @@ The orb's built-in four-square glyph is fixed in the shared template. Writer's
 `RKWF-026` records a separate missing host-level glyph override and its
 app-owned workaround; Showcase does not have an orb-glyph adapter. No new
 runtime API is approved by this inventory.
+
+### 3.192 Theme-native Office 2007 orb default — 2026-09-28
+
+The shared Ribbon style now reads a typed application-button-shape token. Office
+2007 supplies `Orb`; the other base Office palettes supply `Tab`. Dark variants
+inherit that value, and Crystal inherits Office 2024's `Tab`. WPF invalidates the
+style's `DynamicResource` when `ThemeManager.Apply` or a consumer's merged token
+dictionary changes, so an existing ribbon follows the theme without a new
+effective-shape property. A local `ApplicationButtonShape` remains authoritative
+through switches, and `ClearValue` resumes the token default. No public symbol
+was added or changed. Showcase no longer assigns the shape during theme changes;
+its application-menu preference and RTL lab forwarding remain separate. Writer
+still restores its saved local shape using its existing normalization policy.
+
+A new test project referencing RibbonKit alone proves the loaded control's shape
+and realized orb across every theme, Office 2007 black, manual token changes,
+explicit `Tab`/`Orb`, `ClearValue`, and Classic2007 proxy attachment. The designer
+preview's local token lookup and existing Classic orb lifecycle checks passed in
+six focused tests; six focused Writer appearance-preference tests passed. The
+Release solution build passed with zero warnings and errors. The full solution
+test run did not pass: the portability test passed, while the runtime and Writer
+suites reported contract, source-inspection and WPF cross-thread failures outside
+the new consumer test. The Office 2007 snapshot differed at 929 pixels in tab
+and QAT detail; the same mismatch remained with the new style setter temporarily
+removed. Its approved image was not changed. No Showcase live window, DPI,
+popup or target-machine visual acceptance was run.

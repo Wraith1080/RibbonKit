@@ -9,8 +9,10 @@ order. See [current status](../04-DESIGN-NOTES.md#5-current-state--next-steps) a
 
 Office 2007 uses the shared template set and its light/black token dictionaries.
 The real two-pane `RibbonApplicationMenu` ships independently of Backstage.
-`ApplicationButtonShape=Orb` supplies the overlapping round File button. Dark mode,
-localization/RTL, snapshots and v1 release engineering are no longer future blockers.
+The shared theme defaults `ApplicationButtonShape` to the overlapping round orb;
+an explicit `Tab` retains the rectangular File button through theme switches.
+Dark mode, localization/RTL, snapshots and v1 release engineering are no longer
+future blockers.
 
 ## 4. Measured palette — Office 2007 Blue
 

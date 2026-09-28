@@ -1,7 +1,8 @@
 # Crystal portability and Office 2007 orb integration plan
 
-> Status: proposed on 2026-09-28. This document plans runtime behavior and one
-> public API addition; it does not record implementation or visual acceptance.
+> Status: slice 1 implemented on 2026-09-28; slices 2–8 remain proposed.
+> The orb default adds no public API and has no live visual acceptance yet.
+> The glyph-template property described below remains a proposal.
 > The Crystal duplicate and portability audits are in `04-DESIGN-NOTES.md`
 > §3.189–§3.191. Existing Office 2007 behavior is recorded in §3.94 and
 > `07-OFFICE-2007-THEME-PLAN.md`.
@@ -16,7 +17,7 @@ Keep preview documents, Print Preview paint, application icons, saved preference
 MDI editor content and other host-owned content in each application. Promote one
 control family at a time; no Showcase-only theme coordinator is required.
 
-Office 2007 must show the built-in orb when the application selects its theme
+Office 2007 shows the built-in orb when the application selects its theme
 and has not explicitly set `Ribbon.ApplicationButtonShape`. The existing
 property and `RibbonApplicationButtonShape` enum remain public and authoritative
 for an explicit host choice, including a File tab on Office 2007 or an orb on
@@ -42,17 +43,16 @@ document the chosen property with XML comments and add it to
 
 ## Implementation slices
 
-1. **Theme-native orb default.** Add a typed application-button-shape default
-   resource to every base theme dictionary: `Orb` for Office 2007 and `Tab`
-   for the others, with dark variants inheriting the same value. Bind the
-   shared `Ribbon` style to that resource so a local property value has normal
-   WPF precedence. First prove a resource switch updates an existing ribbon;
-   if WPF style resource invalidation does not suffice, use an internal
-   effective-shape mechanism that still honors local values and merged token
-   dictionaries. Remove Showcase's theme-switch assignment. Keep its File
-   surface preference separate, and let the RTL lab mirror the resolved shape.
+1. **Theme-native orb default (implemented).** Every base theme dictionary has a
+   typed application-button-shape default: `Orb` for Office 2007 and `Tab` for
+   the others, with dark variants inheriting the same value. The shared `Ribbon`
+   style binds to that resource so a local property value has normal WPF
+   precedence. Resource switches update an existing ribbon through the style's
+   `DynamicResource` setter. Showcase's theme-switch assignment was removed.
+   Its File surface preference remains separate, and the RTL lab mirrors the
+   resolved shape.
    Writer currently normalizes its saved shape to the selected theme and sets
-   a local value. Preserve that existing consumer policy during this slice;
+   a local value. That consumer policy was preserved in this slice;
    migrate it separately if Writer later exposes an actual shape override.
 2. **Orb glyph hook.** Keep `RibbonKit.Templates.ApplicationOrbChrome` as the
    shared sphere. Replace its fixed glyph child with a default/host-template

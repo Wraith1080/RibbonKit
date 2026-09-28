@@ -1545,10 +1545,10 @@ public class Ribbon : Control
             == BaseValueSource.Default;
 
     /// <summary>
-    /// Whether the application button renders as a rectangular File tab (default) or as the round
-    /// Office 2007 orb. This is an application choice, not a theme one: the theme system colors
-    /// controls through tokens and never changes their shape, so an app pairing the Office 2007
-    /// theme with the orb sets this explicitly.
+    /// Whether the application button renders as a rectangular File tab or as the round
+    /// Office 2007 orb. Without an explicit value, the theme supplies the shape: Office 2007
+    /// uses the orb and other themes use the File tab. An explicit value overrides that default
+    /// across theme changes; clearing it resumes the theme default.
     /// </summary>
     public RibbonApplicationButtonShape ApplicationButtonShape
     {

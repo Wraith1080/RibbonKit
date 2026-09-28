@@ -1,7 +1,11 @@
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:system="clr-namespace:System;assembly=System.Runtime">
+    xmlns:system="clr-namespace:System;assembly=System.Runtime"
+    xmlns:rk="clr-namespace:RibbonKit">
+
+    <x:Static x:Key="RibbonKit.ApplicationButtonShape.Default"
+              Member="rk:RibbonApplicationButtonShape.Orb" />
 
     <!-- ============================================================
          Office 2007 ("Blue") token palette. Same 95 keys as the other
@@ -296,9 +300,8 @@
     <!-- Contextual tabs: header tint only, no selection underline, no mute. -->
     <system:Double x:Key="RibbonKit.Metrics.ContextualUnderlineHeight">0</system:Double>
     <system:Double x:Key="RibbonKit.Metrics.ContextualUnselectedOpacity">1</system:Double>
-    <!-- File button metrics. These describe the RECTANGULAR fallback only: the real 2007 orb is
-         a round button that overhangs upward into the title bar, and it arrives in S3 with the
-         ApplicationButtonShape property. Until then the File tab renders as a compact blue block. -->
+    <!-- File button metrics for an explicit rectangular Tab override. The theme defaults to the
+         round orb, which overhangs upward into the title bar. -->
     <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonMargin">2,2,2,0</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonPadding">18,7,18,9</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.ApplicationButtonAeroMargin">2,2,2,0</Thickness>

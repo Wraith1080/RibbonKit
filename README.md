@@ -68,6 +68,12 @@ dark palettes for the same shared `Controls.*.xaml` templates. Showcase applies
 its Crystal QAT, message, menu and popup presentation when that theme is selected;
 these host-owned effects are not installed by `ThemeManager`. The preview's
 document-under-QAT effect remains separate.
+
+Office 2007 defaults to the round application orb, including its black palette;
+other themes default to a File tab. Set `Ribbon.ApplicationButtonShape` to `Tab`
+or `Orb` to override the theme, and clear that local value to follow the theme again.
+The application menu or Backstage surface remains the host's choice.
+
 `RibbonWindow` supports compatible Mica/Acrylic backdrops and separate optional
 frame appearance. Theme selection does not silently enable a material.
 Contextual tabs can optionally set `RibbonTab.ContextualSelectionBrush` for a distinct

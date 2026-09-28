@@ -79,6 +79,8 @@
          Ribbon
          ============================================================ -->
     <Style TargetType="{x:Type controls:Ribbon}">
+        <Setter Property="ApplicationButtonShape"
+                Value="{DynamicResource RibbonKit.ApplicationButtonShape.Default}" />
         <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Ribbon.Background}" />
         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
         <Setter Property="FontFamily" Value="Segoe UI" />

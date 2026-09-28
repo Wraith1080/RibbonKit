@@ -50,10 +50,9 @@ replacement proves equivalence.
 ### High priority: portable theme presentation (revised 2026-09-28)
 
 The [Crystal portability and Office 2007 orb integration plan](13-CRYSTAL-PORTABILITY-AND-ORB-PLAN.md)
-now defines the proposed bounded promotion slices. It also records the new
-request for an Office 2007 default orb, the retained explicit shape property,
-and a proposed public glyph-template hook. None of those runtime changes is
-implemented by this plan.
+now defines the bounded promotion slices. Slice 1 implements the Office 2007
+default orb while retaining the explicit shape property. The public glyph-template
+hook and Crystal promotion slices remain proposals.
 
 The earlier Showcase-only adapter registration proposal is superseded. It could
 organize Showcase's code but would not make the Crystal appearance available to
@@ -88,16 +87,16 @@ application-owned. The shared MDI and Crystal Backstage templates are already
 in RibbonKit.
 
 Do not confuse a sample theme choice with a sample-only control implementation.
-Showcase's `ApplyTheme` selects `RibbonApplicationButtonShape.Orb` for Office
-2007 and returns to `Tab` for other themes; it also initially selects the
+The shared Ribbon style selects `RibbonApplicationButtonShape.Orb` by default
+for Office 2007 and `Tab` for other themes; Showcase also initially selects the
 application menu for Office 2007 and Crystal. Showcase separately exposes the
 2007/2010 Aero frame, Backstage design/translucency and Mica/Acrylic switches,
 then mirrors File-surface settings into its Localization/RTL lab. These are
 host policies using public RibbonKit options. The orb chrome, two-pane menu,
 Backstage layouts, Aero frame and their behavior are implemented in RibbonKit.
-`ThemeManager.Apply(Office2007)` alone changes the palette and does not select
-the orb or File surface for another app. Keep that opt-in boundary explicit in
-consumer guidance; it is not a missing Office 2007 adapter.
+`ThemeManager.Apply(Office2007)` now selects the orb on a ribbon with no local
+shape override. It does not select a File surface for another app; that remains
+an independent host decision.
 
 The shared orb has a fixed built-in glyph. A separate recorded consumer gap
 (`RKWF-026` in the Writer friction log) concerns replacing only that glyph

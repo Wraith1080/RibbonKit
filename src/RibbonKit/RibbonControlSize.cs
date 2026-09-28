@@ -135,7 +135,7 @@ public enum RibbonGroupReductionMode
 public enum RibbonApplicationButtonShape
 {
     /// <summary>
-    /// A rectangular File tab, as in Office 2010 / 2013 / 2019 / 2024. Default.
+    /// A rectangular File tab, the theme default outside Office 2007.
     /// </summary>
     Tab,
 

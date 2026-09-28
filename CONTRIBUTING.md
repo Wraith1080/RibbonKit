@@ -58,6 +58,8 @@ dotnet test tests/RibbonKit.Writer.Tests/RibbonKit.Writer.Tests.csproj --configu
 
 Use `tests/RibbonKit.Tests/RibbonKit.Tests.csproj` for runtime-control regressions
 and `tests/RibbonKit.VisualTests/RibbonKit.VisualTests.csproj` for snapshot coverage.
+Use `tests/RibbonKit.Portability.Tests/RibbonKit.Portability.Tests.csproj` for
+consumer checks that must load only RibbonKit resources, without Showcase.
 Confirm the filter discovered and executed the intended tests; zero matches is not a pass.
 
 The full validation sequence mirrors `.github/workflows/ci.yml`:

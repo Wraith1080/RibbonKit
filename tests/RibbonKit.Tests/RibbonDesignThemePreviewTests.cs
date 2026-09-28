@@ -37,6 +37,8 @@ public class RibbonDesignThemePreviewTests
             Assert.Equal(
                 new System.Windows.Thickness(2d, 2d, 2d, 0d),
                 ribbon.TryFindResource("RibbonKit.Metrics.ApplicationButtonMargin"));
+            Assert.Equal(RibbonApplicationButtonShape.Orb,
+                ribbon.TryFindResource("RibbonKit.ApplicationButtonShape.Default"));
 
             ribbon.DesignPreviewTheme = (int)RibbonTheme.Office2019;
             var office2019 = Assert.Single(ribbon.Resources.MergedDictionaries);
@@ -48,6 +50,8 @@ public class RibbonDesignThemePreviewTests
             Assert.Equal(
                 new System.Windows.Thickness(8d, 4d, 2d, 0d),
                 ribbon.TryFindResource("RibbonKit.Metrics.ApplicationButtonMargin"));
+            Assert.Equal(RibbonApplicationButtonShape.Tab,
+                ribbon.TryFindResource("RibbonKit.ApplicationButtonShape.Default"));
 
             ribbon.DesignPreviewTheme = (int)RibbonTheme.CrystalLight;
             var crystal = Assert.Single(ribbon.Resources.MergedDictionaries);
@@ -57,6 +61,8 @@ public class RibbonDesignThemePreviewTests
                 StringComparison.Ordinal);
             Assert.IsType<System.Windows.Media.DrawingBrush>(
                 ribbon.TryFindResource("RibbonKit.Brushes.Tab.SelectedUnderline"));
+            Assert.Equal(RibbonApplicationButtonShape.Tab,
+                ribbon.TryFindResource("RibbonKit.ApplicationButtonShape.Default"));
 
             ribbon.DesignPreviewTheme = -1;
             Assert.Empty(ribbon.Resources.MergedDictionaries);
