@@ -17,7 +17,7 @@ public sealed class CrystalLocalizationIntegrationTests
     [Fact]
     public void Detached_rtl_lab_applies_crystal_and_restores_office_options() => Sta.Run(() =>
     {
-        var application = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
+        var application = Sta.UseApplication();
         application.Resources.MergedDictionaries.Add(new ResourceDictionary
         { Source = new Uri("/RibbonKit.Showcase;component/Icons.xaml", UriKind.Relative) });
         ThemeManager.Apply(application, RibbonTheme.Office2024);
@@ -139,7 +139,7 @@ public sealed class CrystalLocalizationIntegrationTests
         finally
         {
             demo.Close();
-            application.Shutdown();
+            Sta.ResetApplication();
         }
     });
 

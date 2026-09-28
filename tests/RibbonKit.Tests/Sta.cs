@@ -1,63 +1,141 @@
+using System.IO;
+using System.Linq;
+using System.Reflection;
 using System.Runtime.ExceptionServices;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Markup;
 using System.Windows.Threading;
+using System.Xml.Linq;
+using RibbonKit.Theming;
 
 namespace RibbonKit.Tests;
 
 /// <summary>
-/// Runs a test body on a dedicated STA thread with a live <see cref="Dispatcher"/>.
+/// Runs WPF test bodies on one STA thread with a live <see cref="Dispatcher"/>.
 /// </summary>
 /// <remarks>
 /// <para>
 /// WPF objects are thread-affine and must be created on an STA thread, but xunit's runner threads
-/// are MTA — hence the thread per test rather than a shared fixture, which also keeps one test's
-/// leftover dispatcher queue out of the next test's <see cref="Drain"/>.
+/// are MTA. WPF also caches theme resources and WindowChrome objects process-wide, so moving each
+/// test to a new STA can make later tests read objects owned by a dead dispatcher. The shared host
+/// serializes WPF bodies while each test still owns and closes the windows it creates.
 /// </para>
 /// <para>
-/// No WPF Application is started and no window is shown: these tests exercise control
-/// LOGIC (property callbacks, layout passes, deferred dispatcher work), not rendering, so they run
-/// unattended on a CI agent. Anything that genuinely needs a rendered popup belongs in the manual
-/// showcase checklist instead.
+/// The host does not create an Application or show a window by itself. Tests that need realized
+/// windows create them offscreen and close them before returning.
 /// </para>
 /// </remarks>
 internal static class Sta
 {
     private static readonly TimeSpan BodyTimeout = TimeSpan.FromSeconds(30);
+    private static readonly object Gate = new();
+    private static readonly Lazy<Dispatcher> Host = new(StartHost);
+    private static Application? _application;
 
-    /// <summary>Runs <paramref name="body"/> on an STA thread, rethrowing any failure here.</summary>
+    /// <summary>Runs <paramref name="body"/> on the shared STA, rethrowing any failure here.</summary>
     public static void Run(Action body)
     {
-        ExceptionDispatchInfo? failure = null;
-
-        var thread = new Thread(() =>
+        lock (Gate)
         {
-            try
+            var dispatcher = Host.Value;
+            if (dispatcher.CheckAccess())
             {
                 body();
+                return;
             }
-            catch (Exception ex)
-            {
-                // Captured rather than rethrown, so the assertion's original stack survives the
-                // hop back to the runner thread.
-                failure = ExceptionDispatchInfo.Capture(ex);
-            }
-            finally
-            {
-                Dispatcher.CurrentDispatcher.InvokeShutdown();
-            }
-        });
 
-        thread.SetApartmentState(ApartmentState.STA);
-        thread.IsBackground = true;
-        thread.Start();
+            var completed = new TaskCompletionSource<ExceptionDispatchInfo?>(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+            dispatcher.BeginInvoke(new Action(() =>
+            {
+                ExceptionDispatchInfo? failure = null;
+                try { body(); }
+                catch (Exception ex) { failure = ExceptionDispatchInfo.Capture(ex); }
+                finally { completed.SetResult(failure); }
+            }));
 
-        if (!thread.Join(BodyTimeout))
+            if (!completed.Task.Wait(BodyTimeout))
+            {
+                throw new TimeoutException(
+                    $"The STA test body did not finish within {BodyTimeout.TotalSeconds:0}s — most likely " +
+                    "it is waiting on dispatcher work that never gets pumped.");
+            }
+
+            completed.Task.Result?.Throw();
+        }
+    }
+
+    /// <summary>Uses the single WPF Application allowed in this test process.</summary>
+    public static Application UseApplication(bool showcaseResources = false)
+    {
+        if (!Host.Value.CheckAccess())
+            throw new InvalidOperationException("Application access must run inside Sta.Run.");
+
+        if (_application is null)
         {
-            throw new TimeoutException(
-                $"The STA test body did not finish within {BodyTimeout.TotalSeconds:0}s — most likely " +
-                "it is waiting on dispatcher work that never gets pumped.");
+            _application = new Application
+            { ShutdownMode = ShutdownMode.OnExplicitShutdown };
         }
 
-        failure?.Throw();
+        _application.Resources = showcaseResources
+            ? LoadShowcaseResources()
+            : new ResourceDictionary();
+        return _application;
+    }
+
+    private static ResourceDictionary LoadShowcaseResources()
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "RibbonKit.sln")))
+            directory = directory.Parent;
+        if (directory is null) throw new FileNotFoundException("RibbonKit.sln was not found.");
+
+        var appXaml = XDocument.Load(Path.Combine(
+            directory.FullName, "samples", "RibbonKit.Showcase", "App.xaml"));
+        XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+        var dictionary = appXaml.Root!.Element(presentation + "Application.Resources")!
+            .Element(presentation + "ResourceDictionary")!;
+        var context = new ParserContext
+        {
+            BaseUri = new Uri("pack://application:,,,/RibbonKit.Showcase;component/App.xaml"),
+        };
+        return (ResourceDictionary)XamlReader.Parse(dictionary.ToString(), context);
+    }
+
+    /// <summary>Releases per-test windows, theme settings, and application resources.</summary>
+    public static void ResetApplication()
+    {
+        if (!Host.Value.CheckAccess())
+            throw new InvalidOperationException("Application reset must run inside Sta.Run.");
+        if (_application is null) return;
+
+        foreach (Window window in _application.Windows.Cast<Window>().ToArray())
+            window.Close();
+        ThemeManager.ClearAccent(_application);
+        ThemeManager.SetDarkMode(_application, false);
+        ThemeManager.SetAccentedTitleBar(_application, false);
+        ThemeManager.SetTitleBarBackdrop(_application, false);
+        ThemeManager.Apply(_application, RibbonTheme.Office2024);
+        _application.Resources = new ResourceDictionary();
+        // ThemeManager tracks its last dictionary statically. The next test gets a new
+        // Application.Resources scope and must exercise its first-Apply path again.
+        typeof(ThemeManager).GetField("_current", BindingFlags.NonPublic | BindingFlags.Static)!
+            .SetValue(null, null);
+    }
+
+    private static Dispatcher StartHost()
+    {
+        var ready = new TaskCompletionSource<Dispatcher>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var thread = new Thread(() =>
+        {
+            var dispatcher = Dispatcher.CurrentDispatcher;
+            ready.SetResult(dispatcher);
+            Dispatcher.Run();
+        }) { IsBackground = true, Name = "RibbonKit test STA" };
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+        return ready.Task.GetAwaiter().GetResult();
     }
 
     /// <summary>

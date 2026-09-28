@@ -143,3 +143,11 @@
   Contrast geometry is user-accepted. The scoped Customize Ribbon scrollbar comparison is also live-accepted; the
   QAT scrollbar, final Office 2013/2019 square-token visual recheck, and modern visible action-button chrome comparison
   remain pending live confirmation.
+- 2026-09-28 WPF runtime test-host repair: per-test STA dispatchers exposed WPF's process-wide
+  `WindowChrome`/theme-resource ownership, and multiple `Application` constructors failed within
+  one test process. The runtime tests now share one STA dispatcher and one resettable application;
+  the application-host tests load Showcase's real `App.xaml` resource dictionary without starting
+  its window. Two scrollbar tests also initialize WPF before loading relative pack resources.
+  The Release solution build passed with zero warnings/errors. The runtime suite passed **437/438**;
+  its sole failure is the deferred Office 2010 hover-glass consumer-count contract (3 versus 5).
+  Writer's separate suite, visual snapshots, and live UI/DPI checks were not run in this repair.

@@ -569,16 +569,14 @@ public sealed class RibbonScrollBarTests
     [Fact]
     public void Customize_ribbon_overflow_realizes_the_office_2010_scrollbars_and_scrolls() => Sta.Run(() =>
     {
+        var page = new RibbonCustomizePage();
         var resources = new ResourceDictionary
         {
             Source = new Uri(
                 "/RibbonKit;component/Themes/Controls.Customize.xaml",
                 UriKind.Relative),
         };
-        var page = new RibbonCustomizePage
-        {
-            Style = Assert.IsType<Style>(resources[typeof(RibbonCustomizePage)]),
-        };
+        page.Style = Assert.IsType<Style>(resources[typeof(RibbonCustomizePage)]);
         var window = new Window
         {
             Width = 760d,
@@ -633,16 +631,14 @@ public sealed class RibbonScrollBarTests
     [Fact]
     public void Quick_access_overflow_realizes_the_office_2010_scrollbars_and_scrolls() => Sta.Run(() =>
     {
+        var page = new RibbonQuickAccessPage();
         var resources = new ResourceDictionary
         {
             Source = new Uri(
                 "/RibbonKit;component/Themes/Controls.Customize.xaml",
                 UriKind.Relative),
         };
-        var page = new RibbonQuickAccessPage
-        {
-            Style = Assert.IsType<Style>(resources[typeof(RibbonQuickAccessPage)]),
-        };
+        page.Style = Assert.IsType<Style>(resources[typeof(RibbonQuickAccessPage)]);
         var window = new Window
         {
             Width = 760d,

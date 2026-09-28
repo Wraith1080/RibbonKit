@@ -15,8 +15,7 @@ public sealed class CrystalPrintPreviewIntegrationTests
     [Fact]
     public void Preview_page_uses_crystal_host_paint_and_restores_every_office_palette() => Sta.Run(() =>
     {
-        var application = new App { ShutdownMode = ShutdownMode.OnExplicitShutdown };
-        application.InitializeComponent();
+        var application = Sta.UseApplication(showcaseResources: true);
         ThemeManager.Apply(application, RibbonTheme.Office2024);
         var window = new MainWindow();
         try
@@ -98,7 +97,7 @@ public sealed class CrystalPrintPreviewIntegrationTests
         finally
         {
             window.Close();
-            application.Shutdown();
+            Sta.ResetApplication();
         }
     });
 

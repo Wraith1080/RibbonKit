@@ -14,10 +14,9 @@ public sealed class ShowcaseViewChoiceTests
     [Fact]
     public void Main_window_constructs_with_theme_gallery_and_backstage_dropdown() => Sta.Run(() =>
     {
-        var application = new App { ShutdownMode = ShutdownMode.OnExplicitShutdown };
+        var application = Sta.UseApplication(showcaseResources: true);
         try
         {
-            application.InitializeComponent();
             ThemeManager.Apply(application, RibbonTheme.Office2024);
             var window = new MainWindow();
             try
@@ -55,6 +54,6 @@ public sealed class ShowcaseViewChoiceTests
             }
             finally { window.Close(); }
         }
-        finally { application.Shutdown(); }
+        finally { Sta.ResetApplication(); }
     });
 }

@@ -17,7 +17,7 @@ public sealed class CrystalMainWindowPresentationTests
     [Fact]
     public void Crystal_host_details_restore_office_presentation_when_theme_changes() => Sta.Run(() =>
     {
-        var application = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
+        var application = Sta.UseApplication();
         var message = new RibbonMessage { Title = "Notice", Message = "Sample", IsOpen = true };
         var bar = new RibbonMessageBar();
         bar.Items.Add(message);
@@ -292,7 +292,7 @@ public sealed class CrystalMainWindowPresentationTests
         finally
         {
             window.Close();
-            application.Shutdown();
+            Sta.ResetApplication();
         }
     });
 

@@ -13,7 +13,7 @@ public sealed class CrystalThemeManagerTests
     [Fact]
     public void Crystal_dark_host_palette_recolors_scoped_inputs_and_options() => Sta.Run(() =>
     {
-        var application = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
+        var application = Sta.UseApplication();
         try
         {
             var blue = CrystalPalette.Create(CrystalPalette.Blue, dark: true);
@@ -29,13 +29,13 @@ public sealed class CrystalThemeManagerTests
             Assert.IsType<DrawingBrush>(blue["RibbonKit.Brushes.Control.CheckedBackground"]);
             Assert.IsType<DrawingBrush>(blue["RibbonKit.Brushes.Tab.SelectedUnderline"]);
         }
-        finally { application.Shutdown(); }
+        finally { Sta.ResetApplication(); }
     });
 
     [Fact]
     public void Crystal_light_switches_with_office_without_flattening_glass_tokens() => Sta.Run(() =>
     {
-        var application = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
+        var application = Sta.UseApplication();
         try
         {
             var manuallyMergedCrystal = new ResourceDictionary
@@ -90,7 +90,7 @@ public sealed class CrystalThemeManagerTests
             ThemeManager.SetDarkMode(application, false);
             ThemeManager.SetAccentedTitleBar(application, false);
             ThemeManager.SetTitleBarBackdrop(application, false);
-            application.Shutdown();
+            Sta.ResetApplication();
         }
     });
 }

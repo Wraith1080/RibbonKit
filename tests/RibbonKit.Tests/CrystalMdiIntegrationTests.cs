@@ -49,7 +49,7 @@ public sealed class CrystalMdiIntegrationTests
     [Fact]
     public void Crystal_mdi_demo_styles_realized_children_and_restores_office() => Sta.Run(() =>
     {
-        var application = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
+        var application = Sta.UseApplication();
         application.Resources.MergedDictionaries.Add(new ResourceDictionary
         { Source = new Uri("/RibbonKit.Showcase;component/Icons.xaml", UriKind.Relative) });
         ThemeManager.Apply(application, RibbonTheme.Office2024);
@@ -120,7 +120,7 @@ public sealed class CrystalMdiIntegrationTests
         finally
         {
             demo.Close();
-            application.Shutdown();
+            Sta.ResetApplication();
         }
     });
 }
