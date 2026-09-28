@@ -22,6 +22,17 @@ and `samples/RibbonKit.Writer`. Releases use GitHub Releases; NuGet.org publicat
 ## Architecture contracts
 
 - Build lookless custom controls with dependency properties, routed events, commands, `ItemsSource`, templates, MVVM, keyboard access, and UI Automation.
+- Treat Showcase as a consumer and demonstration of RibbonKit, not the sole
+  implementation of reusable features. Every ribbon/control feature and visual
+  demonstrated there must be attainable by another application through shared
+  controls, templates, theme tokens and public extension points, with feature
+  and visual parity. A Showcase-only style, subclass, template-part patch or
+  presentation helper is a temporary prototype for reusable control behavior;
+  promote it into RibbonKit before calling that behavior portable or complete.
+  Keep application content, commands, data, persistence, icons, document paint
+  and platform/window integration that necessarily depends on the host in the
+  host. When a reusable effect needs host participation, provide an optional
+  library integration contract and document the host's part.
 - Keep one shared template set: `Themes/Office2024.xaml` aggregates `Controls.*.xaml`. Theme differences use matching `Tokens.Office*.xaml` keys through `DynamicResource`. Add new keys to every theme; avoid theme-specific literal colors/metrics. A `Brush` token may be a gradient.
 - Preserve vector rendering and per-monitor-v2 DPI behavior; the host owns its DPI-awareness manifest. Animate opacity/transforms rather than layout, and honor reduced-motion/global animation settings.
 - Keep modal/merge behavior in services, outside adaptive layout. Exclude transient state from customization persistence. Refresh the sliding underline and 2010/2013 connected-tab notch after tab collection, visibility, or layout changes.
@@ -33,3 +44,5 @@ and `samples/RibbonKit.Writer`. Releases use GitHub Releases; NuGet.org publicat
 Run the applicable checks in `CONTRIBUTING.md`; satisfy explicit task gates. Add meaningful regression coverage for behavior changes where appropriate. Once checks pass, repeat or broaden only for new changes, failures, or unresolved risk.
 
 Separate build, focused tests, full-suite results, live UI/IME/DPI checks, and target-machine acceptance. Report which actually ran. For visual snapshot failures, inspect the `visual-snapshot-diagnostics` actual/diff PNGs before changing approvals or tolerances; an early failure does not establish that later scenes passed.
+
+For Showcase-originated ribbon/control features, verify portability in a consumer that does not reference Showcase resources or helpers. Record any remaining Showcase-only behavior as a gap rather than claiming RibbonKit feature or visual parity.
