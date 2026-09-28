@@ -708,6 +708,10 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [Dark token overlay, Showcase materials and focused switching checks](docs/history/01-library.md#3188-crystal-dark-palette--2026-09-28).
 
+### 3.189 Crystal duplicate audit — 2026-09-28
+
+[Keep distinct option lenses and remove the redundant Backstage resource wrapper](docs/history/01-library.md#3189-crystal-duplicate-audit--2026-09-28).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),

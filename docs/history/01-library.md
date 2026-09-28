@@ -5090,3 +5090,55 @@ styles, contextual markers, MDI, Print Preview and the RTL lab. The Showcase
 was not launched; live material, contrast and DPI acceptance remain for user
 screenshots. Chart Tools and the Options Editor need no further phase-two edit by
 user direction; the deferred Office Glass and View overflow reviews remain open.
+
+### 3.189 Crystal duplicate audit — 2026-09-28
+
+The user accepted Crystal dark mode in the main Showcase, MDI Demo,
+Localization/RTL lab, and Print Preview screenshots. This records those reviewed
+surfaces only; popup states and DPI scales remain unreviewed. Chart Tools and the
+Options Editor need no further phase-two work.
+
+`Crystal.OptionTemplates.xaml` still copies much of the shared check/radio
+structure, including native content, mark, hover and disabled behavior. Its
+separate focus ring and selected glass lens are distinct from the shared
+accent-filled indicators, including in the dark palette. Replacing these
+templates with the shared ones would change the accepted appearance, so they
+remain Showcase-scoped. They inherit `FlowDirection` and display the caller's
+header; they add no localization branch. The shared Crystal Backstage dictionary
+already owns both layouts, localized labels, direction-aware Back glyph and selection
+behavior. The Showcase `Crystal.Backstage.xaml` dictionary only merged it.
+Customization and message actions now merge the shared dictionary directly;
+the wrapper was removed. No RibbonKit runtime template, token or public API
+changed.
+
+The wider pass found shared tokens and templates already driving ordinary
+ribbon controls, split hover, MDI chrome, Backstage and scrollbars. Showcase's
+`Crystal.ControlStyles.xaml` scopes glass input, gallery and ScreenTip paint;
+`Crystal.Customize.xaml` styles Showcase's dialog presentation. The backdrop
+capture, QAT/document underlay, menu shadow, utility rim and detached preview
+bindings depend on host visuals or content, so they remain Showcase helpers.
+These are distinct presentation choices rather than further safe wrappers to
+remove in this slice.
+
+Presentation wiring remains spread across these Showcase owners:
+
+- `MainWindow.ApplyTheme` and `RefreshCrystalTint` apply the standard shell
+  adapter; `UpdateDetachedDemoThemes` forwards changes to open demos.
+- `LocalizationRtlDemo.ApplyCrystal` separately creates the same shell adapter;
+  `MdiDemo.ApplyCrystal` scopes its own palette, editors and contextual tabs.
+- `CrystalPreviewWindow.UpdateCrystalDetails` applies each preview adapter for
+  comparison; its Backstage helper retains the document-title binding.
+- `MainWindow.OpenOptionsDialog` and the RTL lab's Options path opt into
+  `CrystalCustomization` for their own dialogs. Print Preview uses the shared
+  modal-tab template and Showcase page-paint resources.
+
+The next bounded slice is an optional Showcase-only registration for the
+standard shell: add a small `CrystalShellRegistration` helper that constructs
+`CrystalMainWindowPresentation` from the explicit window, ribbon, message bar,
+menu and Backstage references supplied after `InitializeComponent`. MainWindow
+and LocalizationRtlDemo each keep their own registration and call its `Apply`
+on theme/tint changes; closing a detached window releases its registration.
+Keep MDI's editor/contextual-tab treatment, preview comparison, and dialog
+styling in their owning hosts. There is no need for global discovery, a broad
+coordinator or a RibbonKit API. The deferred Office Glass, View overflow, 200%
+gallery clipping and Office 2010 hover checks remain separate.

@@ -846,7 +846,20 @@ the main Options dialog has Crystal customization styling, while its app-owned
 Editor page remains plain. The user considers both sufficiently integrated for this
 phase. Modal-tab state uses the shared ribbon template. Crystal's dark palette now
 loads through `ThemeManager.SetDarkMode`; Showcase refreshes its window-scoped
-materials and open detached demos when dark mode changes. Live visual review remains.
+materials and open detached demos when dark mode changes. The reviewed surfaces
+and remaining visual limits are recorded below.
+
+The user accepted dark-mode screenshots of the main Showcase, MDI Demo,
+Localization/RTL lab and Print Preview. This does not cover popup states or DPI
+scales. The duplicate audit kept the Showcase option templates because their
+selected glass lens and focus ring differ from the shared check/radio visuals.
+The redundant Showcase Backstage dictionary wrapper was removed; customization
+and message actions now merge the existing shared Crystal Backstage resources
+directly. For the next integration slice, register the existing standard-shell
+presentation adapter optionally in MainWindow and LocalizationRtlDemo, then
+drive it from theme/tint changes. Keep MDI, preview comparison and Options
+dialog presentation with their current Showcase hosts; no broad coordinator or
+new RibbonKit API is needed.
 
 The MDI and Print Preview screenshots exposed a shared first-tab seam when File
 is hidden: a connected tab can meet the body's rounded leading corner. The

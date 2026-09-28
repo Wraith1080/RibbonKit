@@ -17,7 +17,7 @@ internal sealed class CrystalMessagePresentation
     {
         _bar = bar;
         bar.Resources.MergedDictionaries.Add(new ResourceDictionary
-        { Source = new Uri("/RibbonKit.Showcase;component/Themes/Crystal.Backstage.xaml", UriKind.Relative) });
+        { Source = new Uri("/RibbonKit;component/Themes/Controls.CrystalBackstage.xaml", UriKind.Relative) });
         foreach (RibbonMessage message in bar.Items)
         {
             message.Loaded += (_, _) => Update(message);
