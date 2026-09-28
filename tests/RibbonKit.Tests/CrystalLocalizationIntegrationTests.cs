@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
@@ -103,7 +104,7 @@ public sealed class CrystalLocalizationIntegrationTests
             var crystalDialog = demo.CreateOptionsDialog(showQuickAccessPage: true);
             Assert.Equal(FlowDirection.RightToLeft, crystalDialog.FlowDirection);
             Assert.IsType<RibbonQuickAccessPage>(crystalDialog.SelectedPage!.Content);
-            Assert.NotNull(crystalDialog.TryFindResource("Crystal.Customize.Navigation"));
+            Assert.Equal(1d, crystalDialog.FindResource("RibbonKit.Metrics.OptionsDialog.BottomMarkerOpacity"));
             AssertCustomizeTreeDirection(crystalDialog);
 
             demo.ApplyCrystal(true, Colors.SeaGreen);
@@ -134,7 +135,7 @@ public sealed class CrystalLocalizationIntegrationTests
             var officeDialog = demo.CreateOptionsDialog(showQuickAccessPage: false);
             Assert.Equal(FlowDirection.RightToLeft, officeDialog.FlowDirection);
             Assert.IsType<RibbonCustomizePage>(officeDialog.SelectedPage!.Content);
-            Assert.Null(officeDialog.TryFindResource("Crystal.Customize.Navigation"));
+            Assert.Equal(0d, officeDialog.FindResource("RibbonKit.Metrics.OptionsDialog.BottomMarkerOpacity"));
         }
         finally
         {
@@ -206,7 +207,12 @@ public sealed class CrystalLocalizationIntegrationTests
 
     private static void AssertCustomizeTreeDirection(RibbonOptionsDialog dialog)
     {
-        var template = Assert.IsType<ControlTemplate>(dialog.FindResource("Crystal.Customize.TreeItem"));
+        var page = Assert.IsType<RibbonCustomizePage>(dialog.Pages.Single(entry => entry.Content is RibbonCustomizePage).Content);
+        page.ApplyTemplate();
+        var tree = Assert.IsType<TreeView>(page.Template.FindName("PART_Tree", page));
+        var style = Assert.IsType<Style>(tree.ItemContainerStyle);
+        var template = Assert.IsType<ControlTemplate>(Assert.Single(style.Setters.OfType<Setter>(),
+            setter => setter.Property == Control.TemplateProperty).Value);
         var treeItem = new TreeViewItem
         {
             FlowDirection = FlowDirection.RightToLeft, Header = "Item", Template = template,

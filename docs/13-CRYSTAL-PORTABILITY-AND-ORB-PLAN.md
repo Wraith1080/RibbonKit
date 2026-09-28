@@ -1,6 +1,6 @@
 # Crystal portability and Office 2007 orb integration plan
 
-> Status: slices 1–4 implemented on 2026-09-28; slices 5–9 remain proposed.
+> Status: slices 1–4 implemented on 2026-09-28; slices 5–10 remain proposed.
 > The orb default adds no public API and has no live visual acceptance yet.
 > The glyph-template property is additive and has no live visual acceptance yet.
 > Writer integration is deferred by user direction. Keep its current saved
@@ -127,6 +127,12 @@ shipped baseline is unchanged.
    work without a capture source, Acrylic or a running Showcase. Retain
    `CrystalMainWindowPresentation` only for any genuinely app-owned effects;
    do not copy it into RibbonKit as a broad coordinator.
+10. **Showcase consolidation after slices 5–9.** Inventory features still
+    exclusive to `CrystalPreviewWindow`, move the important demonstration and
+    comparison controls into the main Showcase window, and remove the separate
+    Crystal preview window and its launch path after the main window covers them.
+    Keep application-owned document content and optional host effects in Showcase;
+    verify the main-window flows before deleting preview-only code and tests.
 
 The Crystal Backstage designs and shared MDI templates are already in
 RibbonKit. `CrystalBackstagePresentation` primarily selects the preview layout,

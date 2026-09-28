@@ -435,4 +435,29 @@
     <Thickness x:Key="RibbonKit.Metrics.ScreenTip.OuterMargin">0</Thickness>
     <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.InnerReflection" Color="Transparent" />
     <DropShadowEffect x:Key="RibbonKit.Effects.ScreenTipShadow" Opacity="0" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.OptionsDialog.NavigationHoverBackground" Color="#DEDCDA" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.OptionsDialog.NavigationHoverBorder" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.OptionsDialog.NavigationSelectedBackground" Color="#CEDCF0" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.OptionsDialog.NavigationSelectedBorder" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.OptionsDialog.NavigationSelectedForeground" Color="#2B579A" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.OptionsDialog.ActionHoverBackground" Color="#DEDCDA" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.OptionsDialog.PrimaryFocusBorder" Color="#2B579A" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Customize.SelectedBorder" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.OptionsDialog.PrimaryForeground" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.OptionsDialog.PrimaryHoverWash" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.OptionsDialog.PrimaryPressedWash" Color="#000000" />
+    <CornerRadius x:Key="RibbonKit.Metrics.OptionsDialog.ActionCornerRadius">0</CornerRadius>
+    <system:Double x:Key="RibbonKit.Metrics.OptionsDialog.ActionMinHeight">0</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.OptionsDialog.ReorderMinWidth">40</system:Double>
+    <Thickness x:Key="RibbonKit.Metrics.OptionsDialog.ReorderPadding">6</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.OptionsDialog.NavigationMargin">8,1</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.OptionsDialog.NavigationPadding">14,8</Thickness>
+    <system:Double x:Key="RibbonKit.Metrics.OptionsDialog.SideMarkerOpacity">1</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.OptionsDialog.BottomMarkerOpacity">0</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.OptionsDialog.PrimaryHoverOpacity">0.22</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.OptionsDialog.PrimaryPressedOpacity">0.16</system:Double>
+    <CornerRadius x:Key="RibbonKit.Metrics.Customize.FrameCornerRadius">0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.Customize.RowCornerRadius">0</CornerRadius>
+    <Thickness x:Key="RibbonKit.Metrics.Customize.ListItemPadding">5,1</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.Customize.ListItemMargin">2,1</Thickness>
 </ResourceDictionary>

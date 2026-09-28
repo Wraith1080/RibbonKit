@@ -355,6 +355,7 @@ public sealed class ApplicationButtonShapeThemeTests
             ThemeManager.Apply(application, RibbonTheme.Office2007);
             Drain();
             VerifyApplicationOrbGlyphTemplate(ribbon, window);
+            VerifyCustomizationPages(application);
         }
         finally
         {
@@ -371,6 +372,146 @@ public sealed class ApplicationButtonShapeThemeTests
     {
         Source = new Uri($"/RibbonKit;component/Themes/Tokens.{name}.xaml", UriKind.Relative),
     };
+
+    private static void VerifyCustomizationPages(Application application)
+    {
+        var source = new Ribbon();
+        var tab = new RibbonTab { Header = "Home" };
+        var group = new RibbonGroup { Header = "Commands" };
+        for (int i = 0; i < 30; i++)
+            group.Items.Add(new RibbonButton { Header = $"Action {i + 1}" });
+        tab.Groups.Add(group);
+        source.Tabs.Add(tab);
+        source.SelectedTab = tab;
+        source.QuickAccessItems.Add(new RibbonButton { Header = "Save" });
+
+        var ribbonPage = new RibbonOptionsPage
+        {
+            Header = "Customize Ribbon",
+            Content = new RibbonCustomizePage { Ribbon = source },
+        };
+        var quickAccessPage = new RibbonOptionsPage
+        {
+            Header = "Quick Access Toolbar",
+            Content = new RibbonQuickAccessPage { Ribbon = source },
+        };
+        var dialog = new RibbonOptionsDialog
+        {
+            Title = "Options",
+            Width = 760,
+            Height = 430,
+            Left = -10000,
+            Top = -10000,
+            ShowActivated = false,
+            ShowInTaskbar = false,
+        };
+        dialog.Pages.Add(ribbonPage);
+        dialog.Pages.Add(quickAccessPage);
+        dialog.SelectedPage = ribbonPage;
+        try
+        {
+            ThemeManager.Apply(application, RibbonTheme.CrystalLight);
+            dialog.Show();
+            Drain();
+            dialog.UpdateLayout();
+            AssertCustomizationTheme(dialog, ribbonPage, quickAccessPage, crystal: true);
+            dialog.SelectedPage = ribbonPage;
+            Drain();
+            var customize = Assert.IsType<RibbonCustomizePage>(ribbonPage.Content);
+            var available = Assert.IsType<ListBox>(customize.Template.FindName("PART_AvailableList", customize));
+            var scroll = Assert.IsType<ScrollViewer>(available.Template.FindName("PART_ScrollViewer", available));
+            Assert.True(scroll.ScrollableHeight > 0);
+            scroll.ScrollToBottom();
+            Drain();
+            Assert.True(scroll.VerticalOffset > 0);
+            var lightNavigation = dialog.FindResource(
+                "RibbonKit.Brushes.OptionsDialog.NavigationSelectedBackground");
+
+            ThemeManager.SetDarkMode(application, true);
+            Drain();
+            AssertCustomizationTheme(dialog, ribbonPage, quickAccessPage, crystal: true);
+            Assert.NotSame(lightNavigation, dialog.FindResource(
+                "RibbonKit.Brushes.OptionsDialog.NavigationSelectedBackground"));
+
+            dialog.FlowDirection = FlowDirection.RightToLeft;
+            ribbonPage.Header = "تخصيص الشريط";
+            Drain();
+            Assert.Equal(FlowDirection.RightToLeft, ribbonPage.FlowDirection);
+            Assert.Equal("تخصيص الشريط", ribbonPage.Header);
+
+            foreach (RibbonTheme theme in new[]
+            {
+                RibbonTheme.Office2007, RibbonTheme.Office2010,
+                RibbonTheme.Office2013, RibbonTheme.Office2019, RibbonTheme.Office2024,
+            })
+            {
+                foreach (bool dark in new[] { false, true })
+                {
+                    ThemeManager.Apply(application, theme);
+                    ThemeManager.SetDarkMode(application, dark);
+                    Drain();
+                    AssertCustomizationTheme(dialog, ribbonPage, quickAccessPage, crystal: false);
+                }
+            }
+
+            ThemeManager.SetDarkMode(application, false);
+            var manualCrystal = Tokens("Crystal.Light");
+            dialog.Resources.MergedDictionaries.Add(manualCrystal);
+            Drain();
+            AssertCustomizationTheme(dialog, ribbonPage, quickAccessPage, crystal: true);
+            dialog.Resources.MergedDictionaries.Remove(manualCrystal);
+            Drain();
+            AssertCustomizationTheme(dialog, ribbonPage, quickAccessPage, crystal: false);
+        }
+        finally
+        {
+            dialog.Close();
+            ThemeManager.SetDarkMode(application, false);
+        }
+    }
+
+    private static void AssertCustomizationTheme(RibbonOptionsDialog dialog,
+        RibbonOptionsPage ribbonPage, RibbonOptionsPage quickAccessPage, bool crystal)
+    {
+        dialog.SelectedPage = ribbonPage;
+        Drain();
+        dialog.UpdateLayout();
+        var nav = Assert.IsType<ListBox>(dialog.Template.FindName("PART_PageList", dialog));
+        Assert.Equal(2, nav.Items.Count);
+        var selectedMarker = Assert.IsType<System.Windows.Shapes.Rectangle>(
+            ribbonPage.Template.FindName("BottomMarker", ribbonPage));
+        Assert.Equal(crystal ? 1d : 0d, selectedMarker.Opacity);
+        Assert.Equal(Visibility.Visible, selectedMarker.Visibility);
+        var action = Assert.IsType<Button>(dialog.Template.FindName("PART_OkButton", dialog));
+        var actionChrome = Assert.IsType<Border>(action.Template.FindName("Chrome", action));
+        Assert.Equal(crystal ? new CornerRadius(12) : Assert.IsType<CornerRadius>(dialog.FindResource(
+            "RibbonKit.Metrics.ScrollBar.ButtonCornerRadius")), actionChrome.CornerRadius);
+
+        var customize = Assert.IsType<RibbonCustomizePage>(ribbonPage.Content);
+        var available = Assert.IsType<ListBox>(customize.Template.FindName("PART_AvailableList", customize));
+        var tree = Assert.IsType<TreeView>(customize.Template.FindName("PART_Tree", customize));
+        AssertFrame(available, crystal);
+        AssertFrame(tree, crystal);
+        var root = Assert.IsType<TreeViewItem>(tree.ItemContainerGenerator.ContainerFromIndex(0));
+        root.IsExpanded = true;
+        Drain();
+        Assert.NotNull(root.Template.FindName("PART_Header", root));
+
+        dialog.SelectedPage = quickAccessPage;
+        Drain();
+        dialog.UpdateLayout();
+        var qat = Assert.IsType<RibbonQuickAccessPage>(quickAccessPage.Content);
+        AssertFrame(Assert.IsType<ListBox>(qat.Template.FindName("PART_AvailableList", qat)), crystal);
+        AssertFrame(Assert.IsType<ListBox>(qat.Template.FindName("PART_CurrentList", qat)), crystal);
+    }
+
+    private static void AssertFrame(Control control, bool crystal)
+    {
+        control.ApplyTemplate();
+        var frame = Assert.IsType<Border>(control.Template.FindName("Frame", control));
+        Assert.Equal(new CornerRadius(crystal ? 8 : 0), frame.CornerRadius);
+        Assert.NotNull(control.Template.FindName("PART_ScrollViewer", control));
+    }
 
     private static void AssertMenuRadius(RibbonMenuItem item, double radius)
     {

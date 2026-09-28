@@ -63,13 +63,14 @@ public sealed class DarkModeTemplateContractTests
             controls,
             element => (string?)element.Attribute(Xaml + "Name") == "PART_Tree");
         XElement itemStyle = Assert.Single(
-            tree.Descendants(Presentation + "Style"),
-            element => (string?)element.Attribute("TargetType") == "{x:Type TreeViewItem}");
+            document.Root!.Elements(Presentation + "Style"),
+            element => (string?)element.Attribute(Xaml + "Key")
+                == "RibbonKit.Customize.TreeContainerStyle");
         XElement foreground = Assert.Single(
             itemStyle.Elements(Presentation + "Setter"),
             element => (string?)element.Attribute("Property") == "Foreground");
         Assert.Equal(
-            "{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type TreeView}}}",
+            "{DynamicResource RibbonKit.Brushes.Text.Primary}",
             (string?)foreground.Attribute("Value"));
     }
 

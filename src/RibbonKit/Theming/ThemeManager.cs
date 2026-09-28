@@ -60,6 +60,9 @@ public static class ThemeManager
     private const string OptionSelectedSurfaceKey = "RibbonKit.Brushes.Option.SelectedSurface";
     private const string OptionSelectedBorderKey = "RibbonKit.Brushes.Option.SelectedBorder";
     private const string OptionChromeFocusBorderKey = "RibbonKit.Brushes.Option.ChromeFocusBorder";
+    private const string OptionsNavigationSelectedBackgroundKey = "RibbonKit.Brushes.OptionsDialog.NavigationSelectedBackground";
+    private const string OptionsNavigationSelectedForegroundKey = "RibbonKit.Brushes.OptionsDialog.NavigationSelectedForeground";
+    private const string OptionsPrimaryFocusBorderKey = "RibbonKit.Brushes.OptionsDialog.PrimaryFocusBorder";
     private const string CheckedKey = "RibbonKit.Brushes.Control.CheckedBackground";
     private const string CheckedHoverKey = "RibbonKit.Brushes.Control.CheckedHoverBackground";
     private const string BackstageHoverKey = "RibbonKit.Brushes.Backstage.ItemHoverBackground";
@@ -112,7 +115,9 @@ public static class ThemeManager
     private static readonly string[] AccentOverrideKeys =
     {
         AccentKey, InputFocusBorderKey, OptionSelectedSurfaceKey, OptionSelectedBorderKey,
-        OptionChromeFocusBorderKey, CheckedKey, CheckedHoverKey, BackstageHoverKey, BackstageSelectedKey,
+        OptionChromeFocusBorderKey, OptionsNavigationSelectedBackgroundKey,
+        OptionsNavigationSelectedForegroundKey, OptionsPrimaryFocusBorderKey,
+        CheckedKey, CheckedHoverKey, BackstageHoverKey, BackstageSelectedKey,
         BackstageClassicNavKey, BackstageSelectedBorderKey,
         SelectedUnderlineKey, SelectedForegroundKey, AppButtonBackgroundKey, AppButtonHoverKey,
         AppButtonPressedKey, AppButtonBorderKey, BackstageSelectedGlassKey, DialogPrimaryBackgroundKey,
@@ -373,8 +378,11 @@ public static class ThemeManager
         // that backstage design is active, harmless otherwise). Office 2010 replaces this baseline
         // gel with its lower-center radial glow below. The dialog primary (OK) button is flat accent by default;
         // the Office 2010 case swaps it for a glass gel.
-        resources[DialogPrimaryBackgroundKey] = Frozen(accent);
-        resources[DialogPrimaryBorderKey] = Frozen(accent);
+        if (theme != RibbonTheme.CrystalLight)
+        {
+            resources[DialogPrimaryBackgroundKey] = Frozen(accent);
+            resources[DialogPrimaryBorderKey] = Frozen(accent);
+        }
 
         // An MDI child's ACTIVE caption and border are the accent, like a real window's title bar —
         // without this they stay at the theme's baked-in blue and an app with a custom accent gets
@@ -456,6 +464,16 @@ public static class ThemeManager
                 // SelectedForeground stays the theme's dark blue, as in 2010: a custom accent
                 // should not tint the label on a light connected tab.
                 break;
+        }
+        resources[OptionsNavigationSelectedForegroundKey] = theme == RibbonTheme.CrystalLight
+            ? resources[SelectedForegroundKey]
+            : resources[AccentKey];
+        resources[OptionsPrimaryFocusBorderKey] = theme == RibbonTheme.CrystalLight
+            ? resources[AccentKey]
+            : resources[DialogPrimaryBorderKey];
+        if (theme != RibbonTheme.CrystalLight && resources.Contains(CheckedKey))
+        {
+            resources[OptionsNavigationSelectedBackgroundKey] = resources[CheckedKey];
         }
     }
 

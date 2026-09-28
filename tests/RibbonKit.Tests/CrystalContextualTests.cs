@@ -56,9 +56,9 @@ public class CrystalContextualTests
                 var page = Assert.IsType<RibbonCustomizePage>(dialog.SelectedPage!.Content);
                 page.ApplyTemplate();
                 var tree = Assert.IsType<TreeView>(page.Template.FindName("PART_Tree", page));
-                var treeStyle = Assert.IsType<Style>(dialog.FindResource("Crystal.Customize.TreeContainer"));
+                var treeStyle = Assert.IsType<Style>(tree.ItemContainerStyle);
                 Assert.Same(treeStyle, tree.ItemContainerStyle);
-                Assert.Same(treeStyle, tree.Resources[typeof(TreeViewItem)]);
+                Assert.Same(treeStyle, Assert.IsType<Style>(tree.Resources[typeof(TreeViewItem)]).BasedOn);
                 foreach (var property in new[] { Control.ForegroundProperty,
                     Control.HorizontalContentAlignmentProperty, Control.VerticalContentAlignmentProperty })
                     Assert.DoesNotContain(treeStyle.Setters.OfType<Setter>(), setter =>
@@ -713,7 +713,13 @@ public class CrystalContextualTests
                 {
                     Assert.NotNull(FindUtilityRim(arrow));
                     var chrome = (Border)arrow.Template.FindName("Chrome", arrow);
-                    Assert.Same(window.FindResource("RibbonKit.Brushes.TabStrip.ControlHoverBackground"), chrome.Background);
+                    // The preview rim swaps the scroll-arrow surface on hover.
+                    Assert.Same(arrow.IsPressed
+                            ? window.FindResource("RibbonKit.Brushes.TabStrip.ControlPressedBackground")
+                            : arrow.IsMouseOver
+                                ? window.FindResource("RibbonKit.Brushes.TabStrip.ScrollButtonBackground")
+                                : window.FindResource("RibbonKit.Brushes.TabStrip.ControlHoverBackground"),
+                        chrome.Background);
                     var bodyRadius = (CornerRadius)window.FindResource("RibbonKit.Metrics.BodyScrollButtonCornerRadius");
                     Assert.Equal(32d, arrow.Width);
                     Assert.Equal("BodyScroll", arrow.Tag);
@@ -846,19 +852,19 @@ public class CrystalContextualTests
                 Assert.Same(dialog.Pages[0], dialog.SelectedPage);
                 var selectedNavigation = dialog.Pages[0];
                 Assert.Equal(Visibility.Visible,
-                    ((Rectangle)selectedNavigation.Template.FindName("CrystalMarker", selectedNavigation)).Visibility);
-                Assert.Same(dialog.FindResource("RibbonKit.Brushes.Tab.SelectedBackground"),
+                    ((Rectangle)selectedNavigation.Template.FindName("BottomMarker", selectedNavigation)).Visibility);
+                Assert.Same(dialog.FindResource("RibbonKit.Brushes.OptionsDialog.NavigationSelectedBackground"),
                     ((Border)selectedNavigation.Template.FindName("Chrome", selectedNavigation)).Background);
                 foreach (var name in new[] { "PART_OkButton", "PART_CancelButton" })
                 {
                     var action = (Button)dialog.Template.FindName(name, dialog);
-                    Assert.Same(action.FindResource("RibbonKit.Brushes.Control.CheckedBackground"),
+                    Assert.Same(action.FindResource(name == "PART_OkButton"
+                            ? "RibbonKit.Brushes.Dialog.PrimaryBackground"
+                            : "RibbonKit.Brushes.Dialog.ActionBackground"),
                         ((Border)action.Template.FindName("Chrome", action)).Background);
                     if (name == "PART_OkButton")
                     {
-                        Assert.Same(dialog.FindResource("RibbonKit.Brushes.Text.Primary"), action.Foreground);
-                        Assert.NotSame(dialog.FindResource("RibbonKit.Brushes.Control.CheckedBackground"),
-                            action.FindResource("RibbonKit.Brushes.Control.CheckedBackground"));
+                        Assert.Same(dialog.FindResource("RibbonKit.Brushes.OptionsDialog.PrimaryForeground"), action.Foreground);
                     }
                 }
                 var page = Assert.IsType<RibbonCustomizePage>(dialog.SelectedPage!.Content);
@@ -890,9 +896,9 @@ public class CrystalContextualTests
                 Sta.Drain();
                 Assert.Same(ribbon, Assert.IsType<RibbonQuickAccessPage>(dialog.SelectedPage.Content).Ribbon);
                 Assert.Equal(Visibility.Collapsed,
-                    ((Rectangle)selectedNavigation.Template.FindName("CrystalMarker", selectedNavigation)).Visibility);
+                    ((Rectangle)selectedNavigation.Template.FindName("BottomMarker", selectedNavigation)).Visibility);
                 Assert.Equal(Visibility.Visible,
-                    ((Rectangle)dialog.Pages[1].Template.FindName("CrystalMarker", dialog.Pages[1])).Visibility);
+                    ((Rectangle)dialog.Pages[1].Template.FindName("BottomMarker", dialog.Pages[1])).Visibility);
             }
             finally { dialog.Close(); }
             var quickAccessDialog = window.CreateCustomizationDialog(true);

@@ -667,4 +667,44 @@
     <Thickness x:Key="RibbonKit.Metrics.ScreenTip.OuterMargin">0</Thickness>
     <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.InnerReflection" Color="Transparent" />
     <DropShadowEffect x:Key="RibbonKit.Effects.ScreenTipShadow" Opacity="0" />
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.OptionsDialog.NavigationHoverBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#FFF7CE" />
+        <GradientStop Offset="0.5" Color="#FFDC8C" />
+        <GradientStop Offset="0.9" Color="#FFEFB6" />
+        <GradientStop Offset="1" Color="#FFFFFB" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.OptionsDialog.NavigationHoverBorder" Color="#E9C25E" />
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.OptionsDialog.NavigationSelectedBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#FFEFB2" />
+        <GradientStop Offset="0.5" Color="#FFD880" />
+        <GradientStop Offset="0.9" Color="#FFE8A4" />
+        <GradientStop Offset="1" Color="#FFF7D8" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.OptionsDialog.NavigationSelectedBorder" Color="#E0B24E" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.OptionsDialog.NavigationSelectedForeground" Color="#1E5A9C" />
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.OptionsDialog.ActionHoverBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#FFF7CE" />
+        <GradientStop Offset="0.5" Color="#FFDC8C" />
+        <GradientStop Offset="0.9" Color="#FFEFB6" />
+        <GradientStop Offset="1" Color="#FFFFFB" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.OptionsDialog.PrimaryFocusBorder" Color="#17578F" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Customize.SelectedBorder" Color="#E0B24E" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.OptionsDialog.PrimaryForeground" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.OptionsDialog.PrimaryHoverWash" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.OptionsDialog.PrimaryPressedWash" Color="#000000" />
+    <CornerRadius x:Key="RibbonKit.Metrics.OptionsDialog.ActionCornerRadius">2</CornerRadius>
+    <system:Double x:Key="RibbonKit.Metrics.OptionsDialog.ActionMinHeight">0</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.OptionsDialog.ReorderMinWidth">40</system:Double>
+    <Thickness x:Key="RibbonKit.Metrics.OptionsDialog.ReorderPadding">6</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.OptionsDialog.NavigationMargin">8,1</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.OptionsDialog.NavigationPadding">14,8</Thickness>
+    <system:Double x:Key="RibbonKit.Metrics.OptionsDialog.SideMarkerOpacity">1</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.OptionsDialog.BottomMarkerOpacity">0</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.OptionsDialog.PrimaryHoverOpacity">0.22</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.OptionsDialog.PrimaryPressedOpacity">0.16</system:Double>
+    <CornerRadius x:Key="RibbonKit.Metrics.Customize.FrameCornerRadius">0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.Customize.RowCornerRadius">0</CornerRadius>
+    <Thickness x:Key="RibbonKit.Metrics.Customize.ListItemPadding">5,1</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.Customize.ListItemMargin">2,1</Thickness>
 </ResourceDictionary>

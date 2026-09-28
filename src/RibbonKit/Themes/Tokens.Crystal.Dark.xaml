@@ -309,4 +309,54 @@
         </DrawingGroup></DrawingBrush.Drawing>
     </DrawingBrush>
     <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.OuterBorder" Color="#7899AF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.OptionsDialog.NavigationHoverBackground" Color="#3879A8C7" />
+    <DrawingBrush x:Key="RibbonKit.Brushes.OptionsDialog.NavigationHoverBorder" Drawing="{StaticResource Crystal.Drawing.GlassRim}"
+                  Opacity="0.6" Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
+    <RadialGradientBrush x:Key="RibbonKit.Brushes.OptionsDialog.NavigationSelectedBackground"
+                         Center="0.5,0.25" GradientOrigin="0.5,0.25" RadiusX="0.85" RadiusY="0.95">
+        <GradientStop Color="#38566C" Offset="0" /><GradientStop Color="#2B4355" Offset="0.55" />
+        <GradientStop Color="#263A4B" Offset="1" />
+    </RadialGradientBrush>
+    <DrawingBrush x:Key="RibbonKit.Brushes.OptionsDialog.NavigationSelectedBorder" Drawing="{StaticResource Crystal.Drawing.GlassRim}"
+                  Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.OptionsDialog.NavigationSelectedForeground" Color="#B9E1F8" />
+    <RadialGradientBrush x:Key="RibbonKit.Brushes.OptionsDialog.ActionHoverBackground"
+                         Center="0.5,0.25" GradientOrigin="0.5,0.25" RadiusX="0.85" RadiusY="0.95">
+        <GradientStop Color="#38566C" Offset="0" /><GradientStop Color="#2B4355" Offset="0.55" />
+        <GradientStop Color="#263A4B" Offset="1" />
+    </RadialGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.OptionsDialog.PrimaryForeground" Color="#EAF4FC" />
+    <RadialGradientBrush x:Key="RibbonKit.Brushes.OptionsDialog.PrimaryHoverWash"
+                         Center="0.5,0.25" GradientOrigin="0.5,0.25" RadiusX="0.85" RadiusY="0.95">
+        <GradientStop Color="#38566C" Offset="0" /><GradientStop Color="#2B4355" Offset="0.55" />
+        <GradientStop Color="#263A4B" Offset="1" />
+    </RadialGradientBrush>
+    <DrawingBrush x:Key="RibbonKit.Brushes.OptionsDialog.PrimaryPressedWash" Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
+        <DrawingBrush.Drawing><DrawingGroup>
+            <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z" Brush="#365268" />
+            <StaticResource ResourceKey="Crystal.Drawing.InnerReflection" />
+        </DrawingGroup></DrawingBrush.Drawing>
+    </DrawingBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.OptionsDialog.PrimaryFocusBorder" Color="#8BC9F0" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Customize.SelectedBorder" Color="#7899AF" />
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.OptionsDialog.RailBackground" StartPoint="0,0" EndPoint="0.25,1">
+        <GradientStop Color="#273A48" Offset="0" /><GradientStop Color="#202E3B" Offset="0.55" />
+        <GradientStop Color="#1E2B37" Offset="1" />
+    </LinearGradientBrush>
+    <DrawingBrush x:Key="RibbonKit.Brushes.Dialog.ActionBackground" Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
+        <DrawingBrush.Drawing><DrawingGroup>
+            <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z" Brush="#314E63" />
+            <StaticResource ResourceKey="Crystal.Drawing.InnerReflection" />
+        </DrawingGroup></DrawingBrush.Drawing>
+    </DrawingBrush>
+    <DrawingBrush x:Key="RibbonKit.Brushes.Dialog.ActionBorder" Drawing="{StaticResource Crystal.Drawing.GlassRim}"
+                  Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
+    <DrawingBrush x:Key="RibbonKit.Brushes.Dialog.PrimaryBackground" Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
+        <DrawingBrush.Drawing><DrawingGroup>
+            <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z" Brush="#314E63" />
+            <StaticResource ResourceKey="Crystal.Drawing.InnerReflection" />
+        </DrawingGroup></DrawingBrush.Drawing>
+    </DrawingBrush>
+    <DrawingBrush x:Key="RibbonKit.Brushes.Dialog.PrimaryBorder" Drawing="{StaticResource Crystal.Drawing.GlassRim}"
+                  Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
 </ResourceDictionary>

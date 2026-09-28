@@ -148,4 +148,7 @@
     <!-- ScreenTip decoration; Office geometry and paint match the prior shared template. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.Surface" Color="#2B2B2B" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.OuterBorder" Color="#585858" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.OptionsDialog.NavigationHoverBackground" Color="#333333" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.OptionsDialog.NavigationSelectedBackground" Color="#233F59" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.OptionsDialog.ActionHoverBackground" Color="#333333" />
 </ResourceDictionary>

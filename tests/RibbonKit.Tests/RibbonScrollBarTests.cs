@@ -472,8 +472,13 @@ public sealed class RibbonScrollBarTests
                 && (string?)setter.Attribute("Value") == "88");
         Assert.Contains(
             actionStyle.Descendants(Presentation + "Setter"),
-            setter => (string?)setter.Attribute("Property")
-                == "controls:RibbonScrollBar.ButtonCornerRadius");
+            setter => (string?)setter.Attribute("Property") == "MinHeight"
+                && (string?)setter.Attribute("Value")
+                    == "{DynamicResource RibbonKit.Metrics.OptionsDialog.ActionMinHeight}");
+        Assert.Contains(
+            actionStyle.Descendants(Presentation + "Border"),
+            border => (string?)border.Attribute("CornerRadius")
+                == "{DynamicResource RibbonKit.Metrics.OptionsDialog.ActionCornerRadius}");
         Assert.Contains(
             actionStyle.Descendants(Presentation + "Setter"),
             setter => (string?)setter.Attribute("Property") == "Background"
@@ -618,8 +623,8 @@ public sealed class RibbonScrollBarTests
             newTab.ApplyTemplate();
             var chrome = Assert.IsType<Border>(newTab.Template.FindName("Chrome", newTab));
             Assert.IsType<LinearGradientBrush>(newTab.Background);
-            Assert.Equal(new CornerRadius(2d), RibbonScrollBar.GetButtonCornerRadius(newTab));
-            Assert.Equal(new CornerRadius(2d), chrome.CornerRadius);
+            Assert.Equal((CornerRadius)window.FindResource("RibbonKit.Metrics.OptionsDialog.ActionCornerRadius"),
+                chrome.CornerRadius);
             Assert.NotEqual(Colors.Transparent, Assert.IsType<SolidColorBrush>(newTab.BorderBrush).Color);
         }
         finally
