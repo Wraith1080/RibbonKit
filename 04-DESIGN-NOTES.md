@@ -716,6 +716,10 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [Round the four list and tree frames in Showcase while retaining native scrolling](docs/history/01-library.md#3190-crystal-customization-list-frames--2026-09-28).
 
+### 3.191 Showcase presentation portability audit — 2026-09-28
+
+[Separate reusable Crystal control styling from optional host effects](docs/history/01-library.md#3191-showcase-presentation-portability-audit--2026-09-28).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),

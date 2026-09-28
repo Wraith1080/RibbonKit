@@ -47,25 +47,62 @@ in `Crystal.OptionTemplates.xaml` and the thin `Crystal.Backstage.xaml` resource
 wrapper. Preserve their accepted visuals and resource scope until a focused
 replacement proves equivalence.
 
-### High priority: optional presentation adapters per theme (planned)
+### High priority: portable theme presentation (revised 2026-09-28)
 
-Before adding more theme-specific presentation branches, design one registration
-path for a theme's resources and any optional behavior adapter. Resource dictionaries
-remain the source for brushes, metrics, styles and templates; most Office themes
-need no adapter. Snapshot blur, host-owned layout and other effects that require
-events or cleanup need compiled behavior. Loading a resource dictionary alone
-cannot activate that behavior, so register it explicitly through a factory or
-equivalent theme-to-adapter mapping instead of scattering Crystal checks through
-the main window, detached demos and dialogs. Do not require an adapter for every
-theme or treat arbitrary XAML resources as executable registrations.
+The earlier Showcase-only adapter registration proposal is superseded. It could
+organize Showcase's code but would not make the Crystal appearance available to
+another RibbonKit consumer through `ThemeManager.Apply`.
 
-Keep the adapter boundary in Showcase for host-owned presentation. Move styling
-that belongs to RibbonKit controls into shared templates and theme tokens, with
-Office light/dark parity, before considering any runtime or public API extension.
-The coordinator must apply, retint, detach and restore presentation consistently
-across open windows and dialogs, including RTL and theme switches in both
-directions. Verify baseline restoration and inactive-adapter cleanup with focused
-tests; live material and popup appearance remains a separate acceptance gate.
+The Showcase presentation audit found these Crystal portability gaps:
+
+- `Crystal.ControlStyles.xaml`, its input/option/ScreenTip resources, and
+  `CrystalCustomization` style RibbonKit controls and built-in Options pages.
+  Their reusable appearance belongs in shared templates, styles and theme
+  tokens, including the rounded customization list frames.
+- `CrystalQuickAccess`, `CrystalMessagePresentation`,
+  `CrystalApplicationMenuPresentation`, `CrystalUtilityChrome` and
+  `CrystalScrollBars` modify built-in control chrome or template parts after
+  theme selection. Promote generic geometry and paint into RibbonKit rather
+  than requiring each consumer to copy these helpers.
+- `CrystalContextualTab` is a Showcase-only subclass. Ordinary `RibbonTab`
+  consumers cannot obtain its contextual material; integrate it with the
+  shared tab/template contract. `CrystalPalette` supplies full material tint
+  beyond the library's current accent behavior and needs an explicit shared
+  policy if that tint is part of the Crystal theme promise.
+- Menu and popup snapshot blur depend on a host visual and update lifecycle.
+  Keep them explicitly optional until a reusable host integration is designed;
+  do not make the core Crystal controls depend on Showcase capture code.
+
+`AcrylicGlassPresentation` is the only other named presentation adapter in
+Showcase. It implements the optional Glass look over Acrylic, not the ordinary
+Office theme palettes. If that look is offered as a RibbonKit feature, give it
+a reusable opt-in path. Showcase's preview comparison, document edge fade,
+MDI editor content, Print Preview paint, icons and saved preferences remain
+application-owned. The shared MDI and Crystal Backstage templates are already
+in RibbonKit.
+
+Do not confuse a sample theme choice with a sample-only control implementation.
+Showcase's `ApplyTheme` selects `RibbonApplicationButtonShape.Orb` for Office
+2007 and returns to `Tab` for other themes; it also initially selects the
+application menu for Office 2007 and Crystal. Showcase separately exposes the
+2007/2010 Aero frame, Backstage design/translucency and Mica/Acrylic switches,
+then mirrors File-surface settings into its Localization/RTL lab. These are
+host policies using public RibbonKit options. The orb chrome, two-pane menu,
+Backstage layouts, Aero frame and their behavior are implemented in RibbonKit.
+`ThemeManager.Apply(Office2007)` alone changes the palette and does not select
+the orb or File surface for another app. Keep that opt-in boundary explicit in
+consumer guidance; it is not a missing Office 2007 adapter.
+
+The shared orb has a fixed built-in glyph. A separate recorded consumer gap
+(`RKWF-026` in the Writer friction log) concerns replacing only that glyph
+without editing a realized template; Writer has an app-owned workaround,
+while Showcase does not customize the glyph. That possible public hook remains
+unapproved and outside this Crystal audit.
+
+Promote one bounded control family at a time with Office light/dark parity,
+theme-switch cleanup, RTL/localization checks and a separate consumer test.
+Report any runtime or public API proposal before implementing it. Live material
+and popup appearance still need user screenshot review.
 
 Before implementation, establish name/provenance, representative ribbon/title/File/
 menu/control images, palette variants, accent/material policy and geometry differences.
@@ -855,11 +892,10 @@ scales. The duplicate audit kept the Showcase option templates because their
 selected glass lens and focus ring differ from the shared check/radio visuals.
 The redundant Showcase Backstage dictionary wrapper was removed; customization
 and message actions now merge the existing shared Crystal Backstage resources
-directly. For the next integration slice, register the existing standard-shell
-presentation adapter optionally in MainWindow and LocalizationRtlDemo, then
-drive it from theme/tint changes. Keep MDI, preview comparison and Options
-dialog presentation with their current Showcase hosts; no broad coordinator or
-new RibbonKit API is needed.
+directly. The later portability audit above supersedes the proposed
+Showcase-only registration slice. Move generic Crystal control appearance into
+RibbonKit before organizing any remaining host-owned effects. Keep MDI editor
+content, preview comparison and application-owned Options pages with their hosts.
 
 Customization follow-up: the two built-in Options pages now receive rounded
 outer frames on their command lists and tree only while Showcase applies

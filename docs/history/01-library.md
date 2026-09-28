@@ -5159,3 +5159,42 @@ Release build and three focused checks passed in separate processes: frame and
 scrolling on both pages, existing tree behavior, and the detached RTL Options
 path. The dialog was not visually reaccepted at the new corners; live review
 and DPI scales remain with the user.
+
+### 3.191 Showcase presentation portability audit — 2026-09-28
+
+A Showcase presentation inventory exposed a gap after Crystal became a public
+`RibbonTheme` choice: `ThemeManager.Apply` installs shared palettes, while the
+sample still supplies several generic control appearances through local styles,
+template-part changes and a `CrystalContextualTab` subclass. Another consumer
+can use RibbonKit and its shared Crystal palette and Backstage designs, but
+theme selection alone will not reproduce all of Showcase's Crystal visuals.
+The proposed Showcase-only adapter registration would organize sample wiring
+without closing that gap and is superseded in the future-themes plan.
+
+The reusable candidates are input, option, ScreenTip and customization styles;
+QAT, message, application-menu, utility and scrollbar chrome; contextual-tab
+material; and full-material tint policy. They require bounded promotion to
+RibbonKit with Office parity, RTL/localization and another-consumer checks.
+Menu/popup snapshot blur depends on host visuals and should remain explicitly
+optional pending a reusable integration contract. `AcrylicGlassPresentation`
+is the only other named Showcase presentation adapter; it provides an optional
+Glass look rather than the baseline Office themes. Preview comparison,
+document-edge fade, MDI editor content, Print Preview paint, icons and
+preferences remain application-owned. This audit changed documentation only;
+no runtime/public API behavior or visual acceptance is claimed.
+
+The same inventory also checked non-Crystal theme wiring. Showcase explicitly
+selects the built-in `RibbonApplicationButtonShape.Orb` for Office 2007, picks
+the application menu as its conventional File surface, and exposes optional
+2007/2010 Aero frames, Backstage designs and DWM backdrops. The orb template,
+menu, frame and Backstage behavior live in RibbonKit; Showcase chooses among
+their public options and mirrors the File-surface state to its RTL lab. An app
+using `ThemeManager.Apply(Office2007)` must opt into the orb and choose its
+File surface separately. Those host choices were omitted from the initial
+portability summary and are distinct from the Showcase-only Crystal styling
+listed above.
+
+The orb's built-in four-square glyph is fixed in the shared template. Writer's
+`RKWF-026` records a separate missing host-level glyph override and its
+app-owned workaround; Showcase does not have an orb-glyph adapter. No new
+runtime API is approved by this inventory.
