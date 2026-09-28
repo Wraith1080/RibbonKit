@@ -292,6 +292,10 @@
     <!-- Corner radii — rounded (modern Fluent look). Themes that want sharp corners
          (Office 2019/2013) set these to 0. -->
     <CornerRadius x:Key="RibbonKit.Metrics.ControlCornerRadius">4</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.MenuItemCornerRadius">4</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.InputCornerRadius">4</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.GalleryItemCornerRadius">4</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.OptionCornerRadius">4</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.SmallControlCornerRadius">2</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.PopupCornerRadius">6</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.TabCornerRadius">4,4,0,0</CornerRadius>
@@ -429,4 +433,29 @@
     <Thickness x:Key="RibbonKit.Metrics.MessageBar.ItemMargin">0</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.MessageBar.BorderThickness">1,0,1,1</Thickness>
     <SolidColorBrush x:Key="RibbonKit.Brushes.MessageBar.CloseHoverBorder" Color="#B8B8B8" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Input.SurfaceBackground" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Input.Border" Color="#D1D1D1" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Input.HoverBorder" Color="#616161" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Input.FocusBorder" Color="#2B579A" />
+    <!-- Gallery values keep the Office visuals while allowing Crystal-specific materials. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.GalleryItem.HoverBorder" Color="#E0E0E0" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.InRibbonGallery.Border" Color="#D1D1D1" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.InRibbonGallery.SurfaceBackground" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.InRibbonGallery.PopupBackground" Color="#FFFFFF" />
+    <!-- Separate option resources preserve the Office indicator and focus appearance. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Option.IdleSurface" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Option.IdleBorder" Color="#616161" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Option.Glyph" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Option.SelectedSurface" Color="#2B579A" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Option.SelectedBorder" Color="#2B579A" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Option.ChromeFocusBorder" Color="#2B579A" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Option.FocusBorder" Color="Transparent" />
+    <!-- ScreenTip decoration; Office geometry and paint match the prior shared template. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.Surface" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.OuterBorder" Color="#D1D1D1" />
+    <CornerRadius x:Key="RibbonKit.Metrics.ScreenTip.OuterCornerRadius">4</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.ScreenTip.InnerCornerRadius">4</CornerRadius>
+    <Thickness x:Key="RibbonKit.Metrics.ScreenTip.OuterMargin">0</Thickness>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.InnerReflection" Color="Transparent" />
+    <DropShadowEffect x:Key="RibbonKit.Effects.ScreenTipShadow" Opacity="0" />
 </ResourceDictionary>

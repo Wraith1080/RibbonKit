@@ -4,7 +4,6 @@
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/RibbonKit;component/Themes/Tokens.Crystal.Light.xaml" />
         <ResourceDictionary Source="/RibbonKit;component/Themes/Tokens.Crystal.Dark.xaml" />
-        <ResourceDictionary Source="Crystal.ControlStyles.xaml" />
     </ResourceDictionary.MergedDictionaries>
     <SolidColorBrush x:Key="Showcase.Brushes.PrintPreview.Canvas" Color="#111B24" />
     <SolidColorBrush x:Key="Showcase.Brushes.PrintPreview.PageBorder" Color="#66879E" />

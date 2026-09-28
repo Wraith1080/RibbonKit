@@ -1,10 +1,9 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:rk="urn:ribbonkit">
-    <!-- Showcase-only control styles; shared Crystal brushes and metrics live in RibbonKit. -->
+    <!-- Showcase-owned page paint; reusable controls come from RibbonKit. -->
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/RibbonKit;component/Themes/Tokens.Crystal.Light.xaml" />
-        <ResourceDictionary Source="Crystal.ControlStyles.xaml" />
     </ResourceDictionary.MergedDictionaries>
     <!-- The preview page is Showcase content, so its palette stays outside RibbonKit. -->
     <SolidColorBrush x:Key="Showcase.Brushes.PrintPreview.Canvas" Color="#A7BECE" />

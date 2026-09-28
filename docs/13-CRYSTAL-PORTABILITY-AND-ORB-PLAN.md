@@ -1,6 +1,6 @@
 # Crystal portability and Office 2007 orb integration plan
 
-> Status: slices 1–3 implemented on 2026-09-28; slices 4–9 remain proposed.
+> Status: slices 1–4 implemented on 2026-09-28; slices 5–9 remain proposed.
 > The orb default adds no public API and has no live visual acceptance yet.
 > The glyph-template property is additive and has no live visual acceptance yet.
 > Writer integration is deferred by user direction. Keep its current saved
@@ -80,14 +80,19 @@ shipped baseline is unchanged.
    template and post-render injection is deferred. RKWF-026 remains open until
    that separate Writer work and its consumer checks pass. Showcase needs no
    orb adapter.
-4. **Crystal control resources.** Promote the reusable portions of
-   `Crystal.ControlStyles.xaml`, `Crystal.Inputs*`, `Crystal.Options*` and
-   `Crystal.OptionTemplates.xaml` into shared styles/tokens. Handle menu rows,
-   combo/text inputs, galleries, check/radio lenses and ScreenTips as separate
-   small edits. Preserve the distinct selected and focus visuals of the
-   check/radio templates; do not discard them as mere copies. Keep theme-key
-   parity and Office light/dark appearance. Make detached ScreenTips resolve
-   the current theme without `CrystalScreenTipPalette` in a consumer.
+4. **Crystal control resources (implemented; live visual review pending).**
+   Shared templates and theme tokens now paint menu rows, combo/text inputs,
+   galleries, check/radio lenses and ScreenTips. The selected option lens and
+   keyboard focus remain separate. Office palettes retain their light/dark
+   appearance and custom accent behavior. Showcase no longer merges
+   `Crystal.ControlStyles.xaml`, `Crystal.Inputs*`, `Crystal.Options*` or
+   `Crystal.OptionTemplates.xaml`; its local tint variant sets shared tokens.
+   A RibbonKit-only consumer realizes these families with light/dark and Office
+   switches, manually merged tokens, RTL labels, popup open/close and a detached
+   ScreenTip without `CrystalScreenTipPalette`. A locally scoped gallery popup
+   background retains precedence over application theme tokens. Showcase's
+   preview-specific ScreenTip tint scope remains a host choice. User screenshots
+   are still required for live visual acceptance; no DPI acceptance is claimed.
 5. **Customization pages.** Move the reusable `Crystal.Customize.xaml` list,
    tree, navigation and action visuals into RibbonKit's Options templates and
    theme resources. Keep the built-in pages, native scrolling, item behavior,

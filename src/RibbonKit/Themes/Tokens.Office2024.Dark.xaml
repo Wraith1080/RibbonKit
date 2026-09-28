@@ -136,4 +136,19 @@
     <CornerRadius x:Key="RibbonKit.Metrics.MessageBar.LastCornerRadius">0,0,8,8</CornerRadius>
     <Thickness x:Key="RibbonKit.Metrics.MessageBar.BorderThickness">1,0,1,1</Thickness>
     <SolidColorBrush x:Key="RibbonKit.Brushes.MessageBar.CloseHoverBorder" Color="#707070" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Input.SurfaceBackground" Color="#202020" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Input.Border" Color="#555555" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Input.HoverBorder" Color="#B8B8B8" />
+    <!-- Gallery values keep the Office visuals while allowing Crystal-specific materials. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.GalleryItem.HoverBorder" Color="#404040" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.InRibbonGallery.Border" Color="#555555" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.InRibbonGallery.SurfaceBackground" Color="#202020" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.InRibbonGallery.PopupBackground" Color="#202020" />
+    <!-- Separate option resources preserve the Office indicator and focus appearance. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Option.IdleSurface" Color="#202020" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Option.IdleBorder" Color="#B8B8B8" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Option.Glyph" Color="#FFFFFF" />
+    <!-- ScreenTip decoration; Office geometry and paint match the prior shared template. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.Surface" Color="#2B2B2B" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.OuterBorder" Color="#555555" />
 </ResourceDictionary>

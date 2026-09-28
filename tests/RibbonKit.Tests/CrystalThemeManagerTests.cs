@@ -20,10 +20,10 @@ public sealed class CrystalThemeManagerTests
             var green = CrystalPalette.Create(Colors.SeaGreen, dark: true);
             Assert.EndsWith("Crystal.Dark.xaml", blue.Source!.OriginalString);
             Assert.EndsWith("Tokens.Crystal.Dark.xaml", blue.MergedDictionaries[1].Source!.OriginalString);
-            Assert.EndsWith("Crystal.Inputs.Dark.xaml",
-                Assert.IsType<Style>(blue[typeof(RibbonTextBox)]).Resources.Source!.OriginalString);
-            Assert.EndsWith("Crystal.Options.Dark.xaml",
-                Assert.IsType<Style>(blue[typeof(RibbonCheckBox)]).Resources.Source!.OriginalString);
+            Assert.IsType<DrawingBrush>(blue["RibbonKit.Brushes.Input.SurfaceBackground"]);
+            Assert.IsType<DrawingBrush>(blue["RibbonKit.Brushes.Option.SelectedSurface"]);
+            Assert.NotEqual(blue["RibbonKit.Brushes.Input.SurfaceBackground"],
+                green["RibbonKit.Brushes.Input.SurfaceBackground"]);
             Assert.NotEqual(((SolidColorBrush)blue["RibbonKit.Brushes.Control.HoverBackground"]).Color,
                 ((SolidColorBrush)green["RibbonKit.Brushes.Control.HoverBackground"]).Color);
             Assert.IsType<DrawingBrush>(blue["RibbonKit.Brushes.Control.CheckedBackground"]);

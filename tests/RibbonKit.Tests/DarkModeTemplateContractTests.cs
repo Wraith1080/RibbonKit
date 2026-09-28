@@ -91,12 +91,12 @@ public sealed class DarkModeTemplateContractTests
     }
 
     [Fact]
-    public void Combo_and_in_ribbon_gallery_use_the_control_surface_background()
+    public void Combo_and_in_ribbon_gallery_use_dedicated_theme_surfaces()
     {
         XDocument dropdowns = XDocument.Load(ThemePart("Controls.DropDowns.xaml"));
         XElement combo = Template(dropdowns, "RibbonComboBox");
         Assert.Equal(
-            ControlSurfaceBackground,
+            "{DynamicResource RibbonKit.Brushes.Input.SurfaceBackground}",
             (string?)Named(combo, "Border", "Chrome").Attribute("Background"));
 
         XDocument galleries = XDocument.Load(ThemePart("Controls.Galleries.xaml"));
@@ -104,7 +104,8 @@ public sealed class DarkModeTemplateContractTests
         XElement surface = Assert.Single(
             gallery.Descendants(Presentation + "Border"),
             element => (string?)element.Attribute("Grid.ColumnSpan") == "2");
-        Assert.Equal(ControlSurfaceBackground, (string?)surface.Attribute("Background"));
+        Assert.Equal("{DynamicResource RibbonKit.Brushes.InRibbonGallery.SurfaceBackground}",
+            (string?)surface.Attribute("Background"));
     }
 
     [Fact]

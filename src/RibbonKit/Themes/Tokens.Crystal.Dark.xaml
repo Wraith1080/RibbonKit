@@ -229,4 +229,84 @@
     <CornerRadius x:Key="RibbonKit.Metrics.MessageBar.LastCornerRadius">10</CornerRadius>
     <DropShadowEffect x:Key="Crystal.Effects.ApplicationMenuShadow" Color="#000000" BlurRadius="16" ShadowDepth="0" Opacity="0.45" RenderingBias="Performance" />
     <DropShadowEffect x:Key="RibbonKit.Effects.ContentShadow" Color="#000000" BlurRadius="16" ShadowDepth="3" Opacity="0.38" RenderingBias="Performance" />
+    <!-- Dark counterparts for the native combo and text input templates. -->
+    <DrawingBrush x:Key="RibbonKit.Brushes.Input.SurfaceBackground" Stretch="Fill"
+                  Viewbox="0,0,1,1" ViewboxUnits="Absolute">
+        <DrawingBrush.Drawing><DrawingGroup>
+            <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z">
+                <GeometryDrawing.Brush><RadialGradientBrush Center="0.5,0.48" GradientOrigin="0.5,0.48" RadiusX="0.85" RadiusY="0.72">
+                    <GradientStop Color="#2D4556" Offset="0" /><GradientStop Color="#283E50" Offset="0.68" />
+                    <GradientStop Color="#213645" Offset="1" />
+                </RadialGradientBrush></GeometryDrawing.Brush>
+            </GeometryDrawing>
+            <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z" Brush="#15BDDFF3" />
+        </DrawingGroup></DrawingBrush.Drawing>
+    </DrawingBrush>
+
+    <DrawingBrush x:Key="RibbonKit.Brushes.Input.HoverBorder" Stretch="Fill"
+                  Viewbox="0,0,1,1" ViewboxUnits="Absolute">
+        <DrawingBrush.Drawing><DrawingGroup>
+            <GeometryDrawing Brush="#B5CAD9" Geometry="M0,0 H1 V1 H0 Z" />
+            <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z">
+                <GeometryDrawing.Brush><RadialGradientBrush Center="0.5,0" GradientOrigin="0.5,0" RadiusX="0.48" RadiusY="0.16">
+                    <GradientStop Color="#80FFFFFF" Offset="0" /><GradientStop Color="#00FFFFFF" Offset="1" />
+                </RadialGradientBrush></GeometryDrawing.Brush>
+            </GeometryDrawing>
+        </DrawingGroup></DrawingBrush.Drawing>
+    </DrawingBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Input.FocusBorder" Color="#8BC9F0" />
+    <DrawingBrush x:Key="RibbonKit.Brushes.GalleryItem.HoverBorder" Drawing="{StaticResource Crystal.Drawing.GlassRim}"
+                  Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" Opacity="0.6" />
+    <DrawingBrush x:Key="RibbonKit.Brushes.InRibbonGallery.Border" Drawing="{StaticResource Crystal.Drawing.GalleryRim}"
+                  Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
+    <DrawingBrush x:Key="RibbonKit.Brushes.InRibbonGallery.SurfaceBackground" Drawing="{StaticResource Crystal.Drawing.GallerySpecularSurface}"
+                  Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
+    <DrawingBrush x:Key="RibbonKit.Brushes.InRibbonGallery.PopupBackground" Drawing="{StaticResource Crystal.Drawing.GallerySpecularSurface}"
+                  Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
+    <!-- Dark option lens materials. -->
+    <DrawingBrush x:Key="RibbonKit.Brushes.Option.IdleSurface" Stretch="Fill"
+                  Viewbox="0,0,1,1" ViewboxUnits="Absolute">
+        <DrawingBrush.Drawing><DrawingGroup>
+            <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z">
+                <GeometryDrawing.Brush><RadialGradientBrush Center="0.5,0.48" GradientOrigin="0.5,0.48" RadiusX="0.85" RadiusY="0.72">
+                    <GradientStop Color="#2D4556" Offset="0" /><GradientStop Color="#283E50" Offset="0.68" />
+                    <GradientStop Color="#213645" Offset="1" />
+                </RadialGradientBrush></GeometryDrawing.Brush>
+            </GeometryDrawing>
+            <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z" Brush="#15BDDFF3" />
+        </DrawingGroup></DrawingBrush.Drawing>
+    </DrawingBrush>
+    <DrawingBrush x:Key="RibbonKit.Brushes.Option.IdleBorder" Stretch="Fill"
+                  Viewbox="0,0,1,1" ViewboxUnits="Absolute">
+        <DrawingBrush.Drawing><DrawingGroup>
+            <GeometryDrawing Brush="#B5CAD9" Geometry="M0,0 H1 V1 H0 Z" />
+            <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z">
+                <GeometryDrawing.Brush><RadialGradientBrush Center="0.5,0" GradientOrigin="0.5,0" RadiusX="0.48" RadiusY="0.16">
+                    <GradientStop Color="#80FFFFFF" Offset="0" /><GradientStop Color="#00FFFFFF" Offset="1" />
+                </RadialGradientBrush></GeometryDrawing.Brush>
+            </GeometryDrawing>
+        </DrawingGroup></DrawingBrush.Drawing>
+    </DrawingBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Option.Glyph" Color="#EAF4FC" />
+    <DrawingBrush x:Key="RibbonKit.Brushes.Option.SelectedSurface" Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
+        <DrawingBrush.Drawing><DrawingGroup>
+            <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z">
+                <GeometryDrawing.Brush><LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#34556B" Offset="0" /><GradientStop Color="#406981" Offset="0.16" />
+                    <GradientStop Color="#345A70" Offset="0.84" /><GradientStop Color="#29485D" Offset="1" />
+                </LinearGradientBrush></GeometryDrawing.Brush>
+            </GeometryDrawing>
+            <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z" Brush="#1ACBEAFF" />
+        </DrawingGroup></DrawingBrush.Drawing>
+    </DrawingBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Option.SelectedBorder" Color="#8CB6CF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Option.FocusBorder" Color="#A4D4EF" />
+    <!-- Dark ScreenTip material keeps the shared glass geometry. -->
+    <DrawingBrush x:Key="RibbonKit.Brushes.ScreenTip.Surface" Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
+        <DrawingBrush.Drawing><DrawingGroup>
+            <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z" Brush="#263C4C" />
+            <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z" Brush="#10C6E9FB" />
+        </DrawingGroup></DrawingBrush.Drawing>
+    </DrawingBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.OuterBorder" Color="#7899AF" />
 </ResourceDictionary>

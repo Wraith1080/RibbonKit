@@ -56,6 +56,10 @@ public enum RibbonTheme
 public static class ThemeManager
 {
     private const string AccentKey = "RibbonKit.Brushes.Accent";
+    private const string InputFocusBorderKey = "RibbonKit.Brushes.Input.FocusBorder";
+    private const string OptionSelectedSurfaceKey = "RibbonKit.Brushes.Option.SelectedSurface";
+    private const string OptionSelectedBorderKey = "RibbonKit.Brushes.Option.SelectedBorder";
+    private const string OptionChromeFocusBorderKey = "RibbonKit.Brushes.Option.ChromeFocusBorder";
     private const string CheckedKey = "RibbonKit.Brushes.Control.CheckedBackground";
     private const string CheckedHoverKey = "RibbonKit.Brushes.Control.CheckedHoverBackground";
     private const string BackstageHoverKey = "RibbonKit.Brushes.Backstage.ItemHoverBackground";
@@ -107,7 +111,8 @@ public static class ThemeManager
     // theme's accent overrides before re-deriving for the new one.
     private static readonly string[] AccentOverrideKeys =
     {
-        AccentKey, CheckedKey, CheckedHoverKey, BackstageHoverKey, BackstageSelectedKey,
+        AccentKey, InputFocusBorderKey, OptionSelectedSurfaceKey, OptionSelectedBorderKey,
+        OptionChromeFocusBorderKey, CheckedKey, CheckedHoverKey, BackstageHoverKey, BackstageSelectedKey,
         BackstageClassicNavKey, BackstageSelectedBorderKey,
         SelectedUnderlineKey, SelectedForegroundKey, AppButtonBackgroundKey, AppButtonHoverKey,
         AppButtonPressedKey, AppButtonBorderKey, BackstageSelectedGlassKey, DialogPrimaryBackgroundKey,
@@ -345,6 +350,13 @@ public static class ThemeManager
         Color displayAccent = theme == RibbonTheme.CrystalLight && dark
             ? Mix(accent, Colors.White, 0.45) : accent;
         resources[AccentKey] = Frozen(displayAccent);
+        resources[InputFocusBorderKey] = resources[AccentKey];
+        if (theme != RibbonTheme.CrystalLight)
+        {
+            resources[OptionSelectedSurfaceKey] = resources[AccentKey];
+            resources[OptionSelectedBorderKey] = resources[AccentKey];
+            resources[OptionChromeFocusBorderKey] = resources[AccentKey];
+        }
         // Classic Backstage rails follow the accent only in light palettes. Dark/Black palettes
         // deliberately keep their generation-specific neutral rail and selection tokens; otherwise
         // a custom (or previously selected) accent reintroduces the colored slab those palettes

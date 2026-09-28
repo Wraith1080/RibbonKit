@@ -643,7 +643,7 @@
                     <Border x:Name="Chrome"
                             Background="Transparent"
                             BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
-                            CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                            CornerRadius="{DynamicResource RibbonKit.Metrics.MenuItemCornerRadius}"
                             Padding="6,5"
                             SnapsToDevicePixels="True">
                         <Grid>
@@ -707,7 +707,7 @@
                                 <Border x:Name="Chrome"
                                         Background="Transparent"
                                         BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
-                                        CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                        CornerRadius="{DynamicResource RibbonKit.Metrics.InputCornerRadius}"
                                         Padding="7,4"
                                         SnapsToDevicePixels="True">
                                     <ContentPresenter VerticalAlignment="Center" />
@@ -751,10 +751,10 @@
                              the box collapses to the text height and reads as cramped. -->
                         <Grid Width="{TemplateBinding InputWidth}" MinHeight="24">
                             <Border x:Name="Chrome"
-                                    Background="{DynamicResource RibbonKit.Brushes.Control.SurfaceBackground}"
-                                    BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
+                                    Background="{DynamicResource RibbonKit.Brushes.Input.SurfaceBackground}"
+                                    BorderBrush="{DynamicResource RibbonKit.Brushes.Input.Border}"
                                     BorderThickness="1"
-                                    CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.InputCornerRadius}"
                                     SnapsToDevicePixels="True" />
                             <ToggleButton x:Name="DropToggle"
                                           ClickMode="Press"
@@ -767,7 +767,7 @@
                                                 <ControlTemplate TargetType="{x:Type ToggleButton}">
                                                     <Border Background="Transparent">
                                                         <Path Data="M0,0 L3.5,3.5 L7,0"
-                                                              Stroke="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
+                                                              Stroke="{DynamicResource RibbonKit.Brushes.Input.HoverBorder}"
                                                               StrokeThickness="1.5"
                                                               StrokeStartLineCap="Round"
                                                               StrokeEndLineCap="Round"
@@ -803,9 +803,9 @@
                                    IsOpen="{TemplateBinding IsDropDownOpen}">
                                 <Border x:Name="PART_PopupRoot"
                                         Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
-                                        BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
+                                        BorderBrush="{DynamicResource RibbonKit.Brushes.Input.Border}"
                                         BorderThickness="1"
-                                        CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                        CornerRadius="{DynamicResource RibbonKit.Metrics.InputCornerRadius}"
                                         Padding="3"
                                         Margin="4,2,8,8"
                                         MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
@@ -832,11 +832,11 @@
                         </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="Chrome" Property="BorderBrush"
-                                    Value="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
+                                    Value="{DynamicResource RibbonKit.Brushes.Input.HoverBorder}" />
                         </Trigger>
                         <Trigger Property="IsKeyboardFocusWithin" Value="True">
                             <Setter TargetName="Chrome" Property="BorderBrush"
-                                    Value="{DynamicResource RibbonKit.Brushes.Accent}" />
+                                    Value="{DynamicResource RibbonKit.Brushes.Input.FocusBorder}" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.4" />
@@ -852,8 +852,8 @@
          ============================================================ -->
     <Style TargetType="{x:Type controls:RibbonTextBox}">
         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
-        <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Control.SurfaceBackground}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}" />
+        <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Input.SurfaceBackground}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Input.Border}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Padding" Value="7,1" />
         <Setter Property="VerticalAlignment" Value="Center" />
@@ -876,7 +876,7 @@
                                     Background="{TemplateBinding Background}"
                                     BorderBrush="{TemplateBinding BorderBrush}"
                                     BorderThickness="{TemplateBinding BorderThickness}"
-                                    CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.InputCornerRadius}"
                                     SnapsToDevicePixels="True" />
                             <!-- PART_ContentHost keeps the real TextBoxView, caret, selection,
                                  validation, commands, scrolling, and IME behavior intact. -->
@@ -898,11 +898,11 @@
                         </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="Chrome" Property="BorderBrush"
-                                    Value="{DynamicResource RibbonKit.Brushes.Text.Secondary}" />
+                                    Value="{DynamicResource RibbonKit.Brushes.Input.HoverBorder}" />
                         </Trigger>
                         <Trigger Property="IsKeyboardFocusWithin" Value="True">
                             <Setter TargetName="Chrome" Property="BorderBrush"
-                                    Value="{DynamicResource RibbonKit.Brushes.Accent}" />
+                                    Value="{DynamicResource RibbonKit.Brushes.Input.FocusBorder}" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.4" />

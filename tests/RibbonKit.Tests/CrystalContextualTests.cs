@@ -950,7 +950,7 @@ public class CrystalContextualTests
             var purpleBody = (LinearGradientBrush)((GeometryDrawing)((DrawingGroup)purple.Drawing).Children[0]).Brush;
             Assert.NotEqual(blueBody.GradientStops[0].Color, purpleBody.GradientStops[0].Color);
             Assert.IsType<DrawingBrush>(((Ellipse)second.Template.FindName("Indicator", second)).Fill);
-            Assert.Same(second.FindResource("Crystal.Options.SelectedBorder"),
+            Assert.Same(second.FindResource("RibbonKit.Brushes.Option.SelectedBorder"),
                 ((Ellipse)second.Template.FindName("Indicator", second)).Stroke);
             window.Activate();
             Assert.True(second.Focus());
@@ -974,7 +974,11 @@ public class CrystalContextualTests
             Assert.True(second.IsChecked);
             Assert.IsType<SolidColorBrush>(((Border)check.Template.FindName("Indicator", check)).Background);
             Assert.IsType<SolidColorBrush>(((Ellipse)second.Template.FindName("Indicator", second)).Fill);
-            Assert.Null(check.Template.FindName("FocusRing", check));
+            var officeFocus = (Border)check.Template.FindName("FocusRing", check);
+            Assert.Equal(Colors.Transparent,
+                ((SolidColorBrush)window.FindResource("RibbonKit.Brushes.Option.FocusBorder")).Color);
+            Assert.True(officeFocus.BorderBrush is null
+                || ((SolidColorBrush)officeFocus.BorderBrush).Color == Colors.Transparent);
         }
         finally { window.Close(); }
     });
@@ -1121,9 +1125,10 @@ public class CrystalContextualTests
             LayoutInputs();
             Assert.NotEqual(original, ((LinearGradientBrush)tinted[surface]).GradientStops[2].Color);
             Assert.Equal(original, ((LinearGradientBrush)blue[surface]).GradientStops[2].Color);
-            var inputBackground = (DrawingBrush)text.FindResource("RibbonKit.Brushes.Control.SurfaceBackground");
+            var inputBackground = (DrawingBrush)text.FindResource("RibbonKit.Brushes.Input.SurfaceBackground");
             Assert.NotEqual(originalInput, InputEdge(inputBackground));
             Assert.Same(inputBackground, ((Border)text.Template.FindName("Chrome", text)).Background);
+            Assert.IsType<SolidColorBrush>(text.FindResource("RibbonKit.Brushes.Control.SurfaceBackground"));
             Assert.IsType<DrawingBrush>(((Border)combo.Template.FindName("Chrome", combo)).Background);
             Assert.Equal("Keep this title", text.Text);
             Assert.Equal("Georgia", combo.SelectedItem);
@@ -1535,9 +1540,10 @@ public class CrystalContextualTests
             var tile = (RibbonGalleryItem)gallery.Items[0];
             var chrome = (Border)tile.Template.FindName("Chrome", tile);
             Assert.Equal(new CornerRadius(5), chrome.CornerRadius);
-            Assert.IsType<DrawingBrush>(tile.FindResource("RibbonKit.Brushes.Group.Separator"));
+            Assert.IsType<DrawingBrush>(tile.FindResource("RibbonKit.Brushes.GalleryItem.HoverBorder"));
             Assert.IsType<SolidColorBrush>(window.FindResource("RibbonKit.Brushes.Group.Separator"));
             Assert.IsType<DrawingBrush>(chrome.Background);
+            Assert.IsType<DrawingBrush>(gallery.FindResource("RibbonKit.Brushes.InRibbonGallery.PopupBackground"));
             gallery.IsDropDownOpen = true;
             Sta.Drain(DispatcherPriority.Render);
             var popup = (System.Windows.Controls.Primitives.Popup)gallery.Template.FindName("PART_Popup", gallery);
@@ -1545,10 +1551,10 @@ public class CrystalContextualTests
             Assert.True(popup.IsOpen);
             Assert.IsType<DrawingBrush>(popupHost.BorderBrush);
             Assert.IsType<DrawingBrush>(popupHost.Background);
-            Assert.Same(gallery.FindResource("RibbonKit.Brushes.Ribbon.ContentBackground"), popupHost.Background);
+            Assert.Same(gallery.FindResource("RibbonKit.Brushes.InRibbonGallery.PopupBackground"), popupHost.Background);
             var strip = (Border)((Grid)VisualTreeHelper.GetChild(gallery, 0)).Children[0];
             Assert.IsType<DrawingBrush>(strip.Background);
-            Assert.Same(gallery.FindResource("RibbonKit.Brushes.Control.SurfaceBackground"), strip.Background);
+            Assert.Same(gallery.FindResource("RibbonKit.Brushes.InRibbonGallery.SurfaceBackground"), strip.Background);
             Assert.IsType<SolidColorBrush>(window.FindResource("RibbonKit.Brushes.Control.SurfaceBackground"));
             Assert.IsType<LinearGradientBrush>(window.FindResource("RibbonKit.Brushes.Ribbon.ContentBackground"));
             Assert.Equal(new CornerRadius(8), popupHost.CornerRadius);
@@ -1557,12 +1563,12 @@ public class CrystalContextualTests
             Sta.Drain(DispatcherPriority.Render);
             Assert.Same(tile, gallery.SelectedItem);
             Assert.Equal(new CornerRadius(5), ((Border)tile.Template.FindName("Chrome", tile)).CornerRadius);
-            Assert.Same(window.FindResource("RibbonKit.Brushes.Tab.HoverBorder"), tile.FindResource("RibbonKit.Brushes.Group.Separator"));
+            Assert.Same(window.FindResource("RibbonKit.Brushes.Tab.HoverBorder"), tile.FindResource("RibbonKit.Brushes.GalleryItem.HoverBorder"));
             gallery.IsDropDownOpen = true;
             Sta.Drain(DispatcherPriority.Render);
             popupHost = (Border)gallery.Template.FindName("PART_PopupHost", gallery);
-            Assert.Same(window.FindResource("Crystal.Brushes.GalleryBorder"), popupHost.BorderBrush);
-            Assert.Same(window.FindResource("Crystal.Brushes.GallerySurface"), popupHost.Background);
+            Assert.Same(window.FindResource("RibbonKit.Brushes.InRibbonGallery.Border"), popupHost.BorderBrush);
+            Assert.Same(window.FindResource("RibbonKit.Brushes.InRibbonGallery.PopupBackground"), popupHost.Background);
             strip = (Border)((Grid)VisualTreeHelper.GetChild(gallery, 0)).Children[0];
             Assert.Same(popupHost.Background, strip.Background);
             gallery.IsDropDownOpen = false;
@@ -1622,8 +1628,8 @@ public class CrystalContextualTests
             scope.Apply(purple);
             Sta.Drain(DispatcherPriority.Render);
             border = (Border)VisualTreeHelper.GetChild(tip, 0);
-            Assert.Same(purple["Crystal.Brushes.ScreenTipSurface"], border.Background);
-            Assert.Same(purple["Crystal.Brushes.ScreenTipBorder"], border.BorderBrush);
+            Assert.Same(purple["RibbonKit.Brushes.ScreenTip.Surface"], border.Background);
+            Assert.Same(purple["RibbonKit.Brushes.ScreenTip.OuterBorder"], border.BorderBrush);
             Assert.True(tip.IsOpen);
             scope.Apply(null);
             Sta.Drain(DispatcherPriority.Render);

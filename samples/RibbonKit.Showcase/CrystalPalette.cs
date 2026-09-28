@@ -2,7 +2,6 @@ using System;
 using System.Linq;
 using System.Windows;
 using System.Windows.Media;
-using RibbonKit.Controls;
 
 namespace RibbonKit.Showcase;
 
@@ -23,39 +22,12 @@ internal static class CrystalPalette
         // this fresh preview dictionary, without changing the Office 2024 fallback.
         TintResources(palette.MergedDictionaries[dark ? 1 : 0], rotation, keepText: true);
         TintResources(palette, rotation, keepText: true);
-        foreach (var type in new[] { typeof(RibbonComboBox), typeof(RibbonTextBox) })
-        {
-            var inputs = Load(dark ? "Crystal.Inputs.Dark.xaml" : "Crystal.Inputs.xaml");
-            TintResources(inputs, rotation, keepText: false);
-            inputs["RibbonKit.Brushes.Accent"] = new SolidColorBrush(ReadableAccent(accent, dark));
-            // Rebuild the resource scope instead of mutating a potentially sealed style.
-            palette[type] = new Style(type, (Style)palette[type]) { Resources = inputs };
-        }
         var foreground = new SolidColorBrush(ReadableAccent(accent, dark));
-        foreach (var type in new[] { typeof(RibbonCheckBox), typeof(RibbonRadioButton) })
-        {
-            var options = Load(dark ? "Crystal.Options.Dark.xaml" : "Crystal.Options.xaml");
-            // The clear idle lens lives in the merged input dictionary.
-            foreach (var merged in options.MergedDictionaries)
-                TintResources(merged, rotation, keepText: false);
-            TintResources(options, rotation, keepText: false);
-            palette[type] = new Style(type, (Style)palette[type]) { Resources = options };
-        }
-        foreach (var (type, localKey, paletteKey) in new[]
-        {
-            (typeof(RibbonGalleryItem), "RibbonKit.Brushes.Group.Separator", "RibbonKit.Brushes.Tab.HoverBorder"),
-            (typeof(InRibbonGallery), "RibbonKit.Brushes.ScreenTip.Border", "Crystal.Brushes.GalleryBorder"),
-        })
-        {
-            var galleryStyle = new Style(type, (Style)palette[type]);
-            galleryStyle.Resources[localKey] = palette[paletteKey];
-            if (type == typeof(InRibbonGallery))
-            {
-                galleryStyle.Resources["RibbonKit.Brushes.Control.SurfaceBackground"] = palette["Crystal.Brushes.GallerySurface"];
-                galleryStyle.Resources["RibbonKit.Brushes.Ribbon.ContentBackground"] = palette["Crystal.Brushes.GallerySurface"];
-            }
-            palette[type] = galleryStyle;
-        }
+        palette["RibbonKit.Brushes.Input.FocusBorder"] = foreground;
+        palette["RibbonKit.Brushes.GalleryItem.HoverBorder"] = palette["RibbonKit.Brushes.Tab.HoverBorder"];
+        palette["RibbonKit.Brushes.InRibbonGallery.Border"] = palette["Crystal.Brushes.GalleryBorder"];
+        palette["RibbonKit.Brushes.InRibbonGallery.SurfaceBackground"] = palette["Crystal.Brushes.GallerySurface"];
+        palette["RibbonKit.Brushes.InRibbonGallery.PopupBackground"] = palette["Crystal.Brushes.GallerySurface"];
         foreground.Freeze();
         palette["RibbonKit.Brushes.Accent"] = foreground;
         palette["RibbonKit.Brushes.Tab.SelectedForeground"] = foreground;

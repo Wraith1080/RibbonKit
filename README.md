@@ -64,10 +64,11 @@ mode is **not supported**; gallery/scrollbar system-color fallbacks are narrower
 
 Office 2007, 2010, 2013, 2019 and 2024 each have light and dark/black palettes, with
 live theme/accent switching. The Crystal Light theme choice now has both light and
-dark palettes for the same shared `Controls.*.xaml` templates. Showcase applies
-its Crystal QAT, message, menu and popup presentation when that theme is selected;
-these host-owned effects are not installed by `ThemeManager`. The preview's
-document-under-QAT effect remains separate.
+dark palettes for the same shared `Controls.*.xaml` templates. Shared Crystal
+resources cover menu rows, inputs, galleries, check/radio controls and ScreenTips
+in applications using `ThemeManager.Apply`. Showcase still applies its QAT,
+message, menu and popup presentation when that theme is selected; those host
+effects and the preview's document-under-QAT effect remain separate.
 
 Office 2007 defaults to the round application orb, including its black palette;
 other themes default to a File tab. Set `Ribbon.ApplicationButtonShape` to `Tab`

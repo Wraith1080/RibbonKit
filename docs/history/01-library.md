@@ -5278,3 +5278,36 @@ Writer tests were run by user direction. The 1.0.0 package packed and validated
 for clean net8/net9 WPF consumption after the validator allowed NuGet's current
 `nuget.psmdcp` metadata filename. No Showcase window, live screenshot, real DPI
 or popup acceptance was run.
+
+### 3.195 Shared Crystal control resources — 2026-09-28
+
+Crystal menu rows, combo/text inputs, galleries, check/radio controls and
+ScreenTips now use the shared `Controls.*.xaml` templates with dedicated
+`Tokens.Office*.xaml` and `Tokens.Crystal.*.xaml` keys. Office tokens preserve
+their prior light/dark paint and accent behavior. The option templates retain
+separate selected lenses and focus rings; Crystal's detached ScreenTip surface,
+reflection and shadow resolve through theme resources. Showcase no longer merges
+its copied control styles or input/option templates. Its tint palette now sets
+the shared material keys, while its preview-specific ScreenTip tint scope remains
+host-owned. This slice adds no public API.
+
+The gallery popup needs a concrete brush because its content leaves the ribbon's
+resource tree. Its resolver now uses the dedicated popup token and still honors
+a nearer host-scoped ribbon-content background, including a local override from
+an existing consumer. A WPF `StaticResource` element used as a dictionary alias
+did not register a usable brush key; the final tokens use actual brush entries.
+The next slice is customization pages, including their list/tree frames; shell
+chrome, contextual material/tint and optional captured backdrops remain later.
+
+The Release solution build passed with zero warnings/errors. The non-Writer
+runtime suite passed 417 tests with the separately deferred Office 2010
+hover-glass contract excluded. The RibbonKit-only consumer test passed with
+Crystal light/dark, Office restoration, manual token merges, RTL labels,
+detached ScreenTip, gallery popup theme switching and a local popup override.
+The visual snapshot test passed its approved scene matrix. An earlier broad
+runtime run unintentionally included Writer-named consumer-friction tests and
+found the local gallery-popup regression; that test was not rerun after the
+fix. The final runtime run excluded Writer-named tests, and the Writer test
+project was not run by user direction. No Showcase live window, user screenshot,
+DPI or target-machine popup acceptance was run. The accepted earlier Crystal
+dark screenshots do not close those remaining gates.

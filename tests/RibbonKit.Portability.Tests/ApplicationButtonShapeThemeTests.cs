@@ -142,10 +142,28 @@ public sealed class ApplicationButtonShapeThemeTests
     {
         var application = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
         ThemeManager.Apply(application, RibbonTheme.Office2024);
+        Assert.Equal(new CornerRadius(4), application.Resources["RibbonKit.Metrics.MenuItemCornerRadius"]);
+        Assert.Equal(new CornerRadius(4), application.Resources["RibbonKit.Metrics.InputCornerRadius"]);
         var ribbon = new Ribbon
         {
             Backstage = new Backstage { Design = RibbonBackstageDesign.Classic2007 },
         };
+        var menuItem = new RibbonMenuItem { Header = "Open" };
+        var textInput = new RibbonTextBox { Header = "Find", Text = "Keep text" };
+        var comboInput = new RibbonComboBox { Header = "Font", ItemsSource = new[] { "Aptos", "Georgia" }, SelectedIndex = 1 };
+        var check = new RibbonCheckBox { Header = "Guides", IsChecked = true };
+        var radio = new RibbonRadioButton { Header = "Comfortable", IsChecked = true };
+        var gallery = new InRibbonGallery { Width = 282, SelectedIndex = 0 };
+        var tile = new RibbonGalleryItem { Content = "Style" };
+        gallery.Items.Add(tile);
+        var tip = new RibbonScreenTip { Title = "Find", Description = "Search the document", PlacementTarget = textInput };
+        textInput.ToolTip = tip;
+        var group = new RibbonGroup { Header = "File actions" };
+        group.Items.Add(menuItem);
+        var home = new RibbonTab { Header = "Home" };
+        home.Groups.Add(group);
+        ribbon.Tabs.Add(home);
+        ribbon.SelectedTab = home;
         var window = new RibbonWindow
         {
             Content = ribbon,
@@ -156,11 +174,31 @@ public sealed class ApplicationButtonShapeThemeTests
             ShowActivated = false,
             ShowInTaskbar = false,
         };
+        var inputHost = new StackPanel();
+        inputHost.Children.Add(textInput);
+        inputHost.Children.Add(comboInput);
+        inputHost.Children.Add(check);
+        inputHost.Children.Add(radio);
+        inputHost.Children.Add(gallery);
+        var inputWindow = new Window
+        {
+            Content = inputHost,
+            Width = 500,
+            Height = 350,
+            Left = -10000,
+            Top = -10000,
+            ShowActivated = false,
+            ShowInTaskbar = false,
+        };
         try
         {
             window.Show();
+            inputWindow.Show();
             Drain();
             AssertShape(ribbon, RibbonApplicationButtonShape.Tab);
+            AssertMenuRadius(menuItem, 4);
+            AssertInputMaterials(textInput, comboInput, crystal: false, radius: 4);
+            AssertOptionAndGallery(check, radio, gallery, tile, crystal: false, radius: 4);
 
             foreach (RibbonTheme theme in Enum.GetValues<RibbonTheme>())
             {
@@ -169,7 +207,87 @@ public sealed class ApplicationButtonShapeThemeTests
                 AssertShape(ribbon, theme == RibbonTheme.Office2007
                     ? RibbonApplicationButtonShape.Orb
                     : RibbonApplicationButtonShape.Tab);
+                double radius = theme switch
+                {
+                    RibbonTheme.Office2013 or RibbonTheme.Office2019 => 0,
+                    RibbonTheme.CrystalLight or RibbonTheme.Office2024 => 4,
+                    _ => 3,
+                };
+                AssertMenuRadius(menuItem, radius);
+                AssertInputMaterials(textInput, comboInput, theme == RibbonTheme.CrystalLight, radius);
+                AssertOptionAndGallery(check, radio, gallery, tile, theme == RibbonTheme.CrystalLight, radius);
             }
+
+            ThemeManager.Apply(application, RibbonTheme.CrystalLight);
+            Drain();
+            AssertDetachedTip(tip, crystal: true);
+            AssertGalleryPopup(gallery, crystal: true);
+
+            gallery.IsDropDownOpen = true;
+            Drain();
+            var galleryPopupHost = Assert.IsType<Border>(
+                gallery.Template.FindName("PART_PopupHost", gallery));
+            ThemeManager.Apply(application, RibbonTheme.Office2019);
+            Drain();
+            Assert.Same(gallery.FindResource("RibbonKit.Brushes.InRibbonGallery.PopupBackground"),
+                galleryPopupHost.Background);
+            gallery.IsDropDownOpen = false;
+            Drain();
+            var scopedGalleryBackground = new SolidColorBrush(Color.FromRgb(0x23, 0x45, 0x67));
+            inputWindow.Resources["RibbonKit.Brushes.Ribbon.ContentBackground"] = scopedGalleryBackground;
+            gallery.IsDropDownOpen = true;
+            Drain();
+            Assert.Same(scopedGalleryBackground, galleryPopupHost.Background);
+            gallery.IsDropDownOpen = false;
+            inputWindow.Resources.Remove("RibbonKit.Brushes.Ribbon.ContentBackground");
+            Drain();
+
+            ThemeManager.Apply(application, RibbonTheme.CrystalLight);
+            ThemeManager.SetDarkMode(application, true);
+            Drain();
+            AssertMenuRadius(menuItem, 4);
+            AssertInputMaterials(textInput, comboInput, crystal: true, radius: 4);
+            AssertOptionAndGallery(check, radio, gallery, tile, crystal: true, radius: 4);
+            AssertDetachedTip(tip, crystal: true);
+            AssertGalleryPopup(gallery, crystal: true);
+            ThemeManager.Apply(application, RibbonTheme.Office2019);
+            Drain();
+            AssertMenuRadius(menuItem, 0);
+            AssertInputMaterials(textInput, comboInput, crystal: false, radius: 0);
+            AssertOptionAndGallery(check, radio, gallery, tile, crystal: false, radius: 0);
+            AssertDetachedTip(tip, crystal: false);
+            AssertGalleryPopup(gallery, crystal: false);
+
+            ThemeManager.SetDarkMode(application, false);
+            ThemeManager.Apply(application, RibbonTheme.Office2024);
+            var manualCrystal = Tokens("Crystal.Light");
+            application.Resources.MergedDictionaries.Add(manualCrystal);
+            Drain();
+            AssertInputMaterials(textInput, comboInput, crystal: true, radius: 4);
+            AssertOptionAndGallery(check, radio, gallery, tile, crystal: true, radius: 4);
+            AssertDetachedTip(tip, crystal: true);
+            AssertGalleryPopup(gallery, crystal: true);
+            var manualDark = Tokens("Crystal.Dark");
+            application.Resources.MergedDictionaries.Add(manualDark);
+            Drain();
+            AssertInputMaterials(textInput, comboInput, crystal: true, radius: 4);
+            AssertOptionAndGallery(check, radio, gallery, tile, crystal: true, radius: 4);
+            AssertDetachedTip(tip, crystal: true);
+            application.Resources.MergedDictionaries.Remove(manualDark);
+            application.Resources.MergedDictionaries.Remove(manualCrystal);
+            Drain();
+            AssertInputMaterials(textInput, comboInput, crystal: false, radius: 4);
+            AssertOptionAndGallery(check, radio, gallery, tile, crystal: false, radius: 4);
+            AssertDetachedTip(tip, crystal: false);
+
+            inputHost.FlowDirection = FlowDirection.RightToLeft;
+            check.Header = "إرشادات";
+            Drain();
+            Assert.Equal(FlowDirection.RightToLeft, check.FlowDirection);
+            Assert.Equal("إرشادات", check.Header);
+            AssertOptionAndGallery(check, radio, gallery, tile, crystal: false, radius: 4);
+            check.Header = "Guides";
+            inputHost.FlowDirection = FlowDirection.LeftToRight;
 
             ThemeManager.Apply(application, RibbonTheme.Office2007);
             ThemeManager.SetDarkMode(application, true);
@@ -240,6 +358,9 @@ public sealed class ApplicationButtonShapeThemeTests
         }
         finally
         {
+            tip.IsOpen = false;
+            gallery.IsDropDownOpen = false;
+            inputWindow.Close();
             window.Close();
             ThemeManager.SetDarkMode(application, false);
             application.Shutdown();
@@ -250,6 +371,82 @@ public sealed class ApplicationButtonShapeThemeTests
     {
         Source = new Uri($"/RibbonKit;component/Themes/Tokens.{name}.xaml", UriKind.Relative),
     };
+
+    private static void AssertMenuRadius(RibbonMenuItem item, double radius)
+    {
+        item.ApplyTemplate();
+        var chrome = Assert.IsType<Border>(item.Template.FindName("Chrome", item));
+        Assert.Equal(new CornerRadius(radius), chrome.CornerRadius);
+    }
+
+    private static void AssertInputMaterials(RibbonTextBox text, RibbonComboBox combo, bool crystal, double radius)
+    {
+        Assert.Equal(new CornerRadius(radius), Assert.IsType<CornerRadius>(
+            text.FindResource("RibbonKit.Metrics.InputCornerRadius")));
+        text.ApplyTemplate();
+        combo.ApplyTemplate();
+        var textChrome = Assert.IsType<Border>(text.Template.FindName("Chrome", text));
+        var comboChrome = Assert.IsType<Border>(combo.Template.FindName("Chrome", combo));
+        Assert.Same(text.FindResource("RibbonKit.Brushes.Input.SurfaceBackground"), textChrome.Background);
+        Assert.Same(combo.FindResource("RibbonKit.Brushes.Input.SurfaceBackground"), comboChrome.Background);
+        Assert.Same(text.FindResource("RibbonKit.Brushes.Input.Border"), textChrome.BorderBrush);
+        Assert.Same(combo.FindResource("RibbonKit.Brushes.Input.Border"), comboChrome.BorderBrush);
+        Assert.Equal(textChrome.CornerRadius, comboChrome.CornerRadius);
+        Assert.Equal(new CornerRadius(radius), textChrome.CornerRadius);
+        Assert.Equal(crystal, textChrome.Background is DrawingBrush);
+        Assert.Equal(crystal, comboChrome.Background is DrawingBrush);
+        Assert.Equal("Keep text", text.Text);
+        Assert.Equal("Georgia", combo.SelectedItem);
+    }
+
+    private static void AssertOptionAndGallery(RibbonCheckBox check, RibbonRadioButton radio,
+        InRibbonGallery gallery, RibbonGalleryItem tile, bool crystal, double radius)
+    {
+        check.ApplyTemplate();
+        radio.ApplyTemplate();
+        gallery.ApplyTemplate();
+        tile.ApplyTemplate();
+        var checkIndicator = Assert.IsType<Border>(check.Template.FindName("Indicator", check));
+        var radioIndicator = Assert.IsType<Ellipse>(radio.Template.FindName("Indicator", radio));
+        var tileChrome = Assert.IsType<Border>(tile.Template.FindName("Chrome", tile));
+        Assert.Equal(new CornerRadius(crystal ? 3 : radius), checkIndicator.CornerRadius);
+        Assert.Equal(new CornerRadius(crystal ? 5 : radius), tileChrome.CornerRadius);
+        Assert.Equal(crystal, checkIndicator.Background is DrawingBrush);
+        Assert.Equal(crystal, radioIndicator.Fill is DrawingBrush);
+        Assert.Equal(crystal, tile.FindResource("RibbonKit.Brushes.GalleryItem.HoverBorder") is DrawingBrush);
+        Assert.Equal(crystal, gallery.FindResource("RibbonKit.Brushes.InRibbonGallery.SurfaceBackground") is DrawingBrush);
+        var focus = Assert.IsType<Border>(check.Template.FindName("FocusRing", check));
+        Assert.Equal(!crystal, Assert.IsType<SolidColorBrush>(focus.BorderBrush).Color == Colors.Transparent);
+        Assert.True(check.IsChecked);
+        Assert.True(radio.IsChecked);
+        Assert.Same(tile, gallery.SelectedItem);
+    }
+
+    private static void AssertGalleryPopup(InRibbonGallery gallery, bool crystal)
+    {
+        gallery.IsDropDownOpen = true;
+        Drain();
+        var popup = Assert.IsType<Popup>(gallery.Template.FindName("PART_Popup", gallery));
+        var host = Assert.IsType<Border>(gallery.Template.FindName("PART_PopupHost", gallery));
+        Assert.True(popup.IsOpen);
+        Assert.Equal(crystal, host.Background is DrawingBrush);
+        gallery.IsDropDownOpen = false;
+        Drain();
+    }
+
+    private static void AssertDetachedTip(RibbonScreenTip tip, bool crystal)
+    {
+        tip.IsOpen = true;
+        Drain();
+        var border = Assert.IsType<Border>(VisualTreeHelper.GetChild(tip, 0));
+        Assert.Equal(crystal, border.Background is DrawingBrush);
+        Assert.Equal(Assert.IsType<CornerRadius>(tip.FindResource(
+            "RibbonKit.Metrics.ScreenTip.OuterCornerRadius")), border.CornerRadius);
+        if (crystal) Assert.Equal(new CornerRadius(8), border.CornerRadius);
+        Assert.NotNull(tip.Template.FindName("InnerReflection", tip));
+        tip.IsOpen = false;
+        Drain();
+    }
 
     private static void VerifyApplicationOrbGlyphTemplate(Ribbon ribbon, RibbonWindow window)
     {

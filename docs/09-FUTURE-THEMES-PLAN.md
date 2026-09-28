@@ -14,7 +14,7 @@ opaque backdrop fallback and application-owned icons. Add narrowly scoped tokeni
 geometry only when existing metrics cannot express the approved reference. Public
 new-theme enum/API additions require review and XML documentation.
 
-### High priority: audit Crystal duplicates before further integration (planned)
+### High priority: audit Crystal duplicates before further integration (recorded)
 
 Before the next Crystal feature slice, inventory its Showcase styles, copied
 templates, presentation helpers and runtime Crystal templates against the
@@ -45,14 +45,17 @@ QAT, scrollbar, message and contextual effects; Print Preview needs none of
 these helpers. Two candidates for later simplification are the structural copy
 in `Crystal.OptionTemplates.xaml` and the thin `Crystal.Backstage.xaml` resource
 wrapper. Preserve their accepted visuals and resource scope until a focused
-replacement proves equivalence.
+replacement proves equivalence. The option-template copy and the control-style,
+input and option resources were promoted in slice 4; the customization and
+Backstage wrapper work remains separate.
 
 ### High priority: portable theme presentation (revised 2026-09-28)
 
 The [Crystal portability and Office 2007 orb integration plan](13-CRYSTAL-PORTABILITY-AND-ORB-PLAN.md)
-now defines the bounded promotion slices. Slice 1 implements the Office 2007
-default orb while retaining the explicit shape property. The public glyph-template
-hook and Crystal promotion slices remain proposals.
+now defines the bounded promotion slices. Slices 1–4 implement the Office 2007
+default orb, theme-owned header inset, public orb glyph template and portable
+Crystal control resources. Customization and later presentation slices remain
+proposals; live Crystal visual review is still pending.
 
 The earlier Showcase-only adapter registration proposal is superseded. It could
 organize Showcase's code but would not make the Crystal appearance available to
@@ -60,10 +63,10 @@ another RibbonKit consumer through `ThemeManager.Apply`.
 
 The Showcase presentation audit found these Crystal portability gaps:
 
-- `Crystal.ControlStyles.xaml`, its input/option/ScreenTip resources, and
-  `CrystalCustomization` style RibbonKit controls and built-in Options pages.
-  Their reusable appearance belongs in shared templates, styles and theme
-  tokens, including the rounded customization list frames.
+- The formerly sample-only control styles, input/option resources and ScreenTip
+  materials moved into shared templates and tokens in slice 4.
+  `CrystalCustomization` still styles built-in Options pages; its reusable
+  appearance, including rounded list/tree frames, belongs in shared resources.
 - `CrystalQuickAccess`, `CrystalMessagePresentation`,
   `CrystalApplicationMenuPresentation`, `CrystalUtilityChrome` and
   `CrystalScrollBars` modify built-in control chrome or template parts after
@@ -98,11 +101,10 @@ Backstage layouts, Aero frame and their behavior are implemented in RibbonKit.
 shape override. It does not select a File surface for another app; that remains
 an independent host decision.
 
-The shared orb has a fixed built-in glyph. A separate recorded consumer gap
-(`RKWF-026` in the Writer friction log) concerns replacing only that glyph
-without editing a realized template; Writer has an app-owned workaround,
-while Showcase does not customize the glyph. That possible public hook remains
-unimplemented; the staged plan above now proposes it as a separate orb slice.
+The shared orb now accepts a host `ApplicationOrbGlyphTemplate`; `null` retains
+the built-in glyph. Writer still uses its app-owned W workaround. Its migration
+to the public hook remains deferred under `RKWF-026`; Showcase does not customize
+the glyph.
 
 Promote one bounded control family at a time with Office light/dark parity,
 theme-switch cleanup, RTL/localization checks and a separate consumer test.

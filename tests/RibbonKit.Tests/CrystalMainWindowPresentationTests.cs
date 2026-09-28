@@ -82,7 +82,7 @@ public sealed class CrystalMainWindowPresentationTests
 
             Assert.Contains(window.Resources.MergedDictionaries, dictionary =>
                 dictionary.Source?.OriginalString.EndsWith("Crystal.Light.xaml", StringComparison.Ordinal) == true);
-            Assert.Same(window.FindResource(typeof(RibbonComboBox)), combo.Style);
+            Assert.Null(combo.Style);
             Assert.Same(window.FindResource(typeof(ScrollBar)),
                 presentation.Palette![typeof(ScrollBar)]);
             Assert.True(context.CrystalEnabled);
@@ -129,7 +129,9 @@ public sealed class CrystalMainWindowPresentationTests
             Assert.NotEqual(blueHover, purpleHover);
             AssertSamePaint((Brush)window.FindResource("RibbonKit.Brushes.Tab.HoverBackground"),
                 drawer.Background);
-            Assert.Same(window.FindResource(typeof(RibbonComboBox)), combo.Style);
+            Assert.Null(combo.Style);
+            Assert.Same(window.FindResource("RibbonKit.Brushes.Input.SurfaceBackground"),
+                Assert.IsType<Border>(combo.Template.FindName("Chrome", combo)).Background);
             Assert.False(split.Resources.Contains("RibbonKit.Brushes.Control.HoverBackground"));
 
             var opaqueBody = (Brush)window.FindResource("RibbonKit.Brushes.Ribbon.BodyBackground");
@@ -215,7 +217,7 @@ public sealed class CrystalMainWindowPresentationTests
             Assert.Equal(Color.FromRgb(0xEA, 0xF4, 0xFC), Assert.IsType<SolidColorBrush>(
                 window.FindResource("RibbonKit.Brushes.Text.Primary")).Color);
             var darkInput = Assert.IsType<DrawingBrush>(combo.FindResource(
-                "RibbonKit.Brushes.Control.SurfaceBackground"));
+                "RibbonKit.Brushes.Input.SurfaceBackground"));
             var inputDrawing = Assert.IsType<DrawingGroup>(darkInput.Drawing);
             var inputFace = Assert.IsType<RadialGradientBrush>(Assert.IsType<GeometryDrawing>(
                 inputDrawing.Children[0]).Brush);
