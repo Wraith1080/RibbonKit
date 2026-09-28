@@ -724,6 +724,14 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [Shared token default, explicit override and consumer proof](docs/history/01-library.md#3192-theme-native-office-2007-orb-default--2026-09-28).
 
+### 3.193 Theme-owned no-application header inset and snapshot renewal — 2026-09-28
+
+[Audit zero and rounded-corner insets across themes](docs/history/01-library.md#3193-theme-owned-no-application-header-inset-and-snapshot-renewal--2026-09-28).
+
+### 3.194 Portable application-orb glyph template — 2026-09-28
+
+[Shared orb chrome and live host glyph in the real button and Classic2007 proxy](docs/history/01-library.md#3194-portable-application-orb-glyph-template--2026-09-28).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),
@@ -776,11 +784,12 @@ file and this index; update §5 only as supported by verification.
   (M1–M3); Office 2010 Aero live visual approval (§3.97/§3.125); optional designer
   scalar reset actions; touch density, richer QAT/custom-control projections and
   future themes. Complete Windows contrast-theme support is not claimed.
-- **Crystal portability and Office 2007 orb defaults:** slice 1 of the
+- **Crystal portability and Office 2007 orb defaults:** slices 1–3 of the
   [staged integration plan](docs/13-CRYSTAL-PORTABILITY-AND-ORB-PLAN.md) now
-  gives Office 2007 a theme-following orb default while preserving explicit
-  `ApplicationButtonShape`. The glyph-template hook and Crystal control-style
-  promotion remain later slices.
+  give Office 2007 a theme-following orb default while preserving explicit
+  `ApplicationButtonShape`, verify theme-owned header insets, and expose a
+  portable orb glyph template. Crystal control-style promotion and Writer's
+  W-glyph migration remain later slices.
 - Automatic `Icons.xaml` discovery remains best-effort; the manual browser is the
   fallback for no match, ambiguity, inaccessible paths or parse failure.
 

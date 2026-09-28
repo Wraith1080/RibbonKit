@@ -195,6 +195,14 @@ public class Ribbon : Control
                 RibbonApplicationButtonShape.Tab,
                 OnApplicationButtonShapeChanged));
 
+    /// <summary>Identifies the <see cref="ApplicationOrbGlyphTemplate"/> dependency property.</summary>
+    public static readonly DependencyProperty ApplicationOrbGlyphTemplateProperty =
+        DependencyProperty.Register(
+            nameof(ApplicationOrbGlyphTemplate),
+            typeof(DataTemplate),
+            typeof(Ribbon),
+            new FrameworkPropertyMetadata(null));
+
     /// <summary>
     /// Attached flag the ribbon sets on a QAT button while it sits on a colored surface
     /// (an accent title bar, or the colored Office 2019 tab strip). The button template
@@ -1556,6 +1564,18 @@ public class Ribbon : Control
         set => SetValue(ApplicationButtonShapeProperty, value);
     }
 
+    /// <summary>
+    /// Gets or sets the vector glyph template inside the application orb. A <see langword="null"/>
+    /// value uses RibbonKit's four-square glyph. The orb sphere, button state and accessible
+    /// name remain theme-owned; Classic2007 Backstage creates a separate visual from this template.
+    /// The template is rendered within the orb's 16-DIP glyph canvas.
+    /// </summary>
+    public DataTemplate? ApplicationOrbGlyphTemplate
+    {
+        get => (DataTemplate?)GetValue(ApplicationOrbGlyphTemplateProperty);
+        set => SetValue(ApplicationOrbGlyphTemplateProperty, value);
+    }
+
     private BackstageAdorner? _backstageAdorner;
 
     // While a TRANSLUCENT backstage is open, the content behind it (the adorned root) is fully
@@ -2390,6 +2410,12 @@ public class Ribbon : Control
             button,
             AutomationProperties.NameProperty,
             new Binding(nameof(EffectiveApplicationButtonHeader)) { Source = this });
+        // The real button can move into the application-menu overlay, so the shared orb chrome
+        // reads this stable owner binding instead of looking for a Ribbon visual ancestor.
+        BindingOperations.SetBinding(
+            button,
+            FrameworkElement.TagProperty,
+            new Binding(nameof(ApplicationOrbGlyphTemplate)) { Source = this });
     }
 
     private void UpdateApplicationMenuOverlayPlacement()
@@ -2573,6 +2599,10 @@ public class Ribbon : Control
                 Source = RibbonLocalizationBindingSource.Instance,
                 Mode = BindingMode.OneWay,
             });
+        BindingOperations.SetBinding(
+            proxy,
+            FrameworkElement.TagProperty,
+            new Binding(nameof(ApplicationOrbGlyphTemplate)) { Source = this });
         WindowChrome.SetIsHitTestVisibleInChrome(proxy, true);
         proxy.Template = CreateClassicBackstageOrbProxyTemplate();
 

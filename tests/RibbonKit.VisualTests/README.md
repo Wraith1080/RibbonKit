@@ -22,6 +22,11 @@ PNGs in `TestResults/visual` before deliberately replacing a baseline or thresho
 CI uploads them in the failure-only `visual-snapshot-diagnostics` artifact. An early
 matrix failure says nothing about later scenes.
 
+To render every scene for review without changing approvals, set
+`RIBBONKIT_CAPTURE_SNAPSHOTS=1` for one test run. Actual PNGs and diffs for
+mismatches are written to `TestResults/visual-capture`; clear the variable for
+the normal comparison run.
+
 After the intended visual change has been reviewed, run from the repository root:
 
 ```powershell

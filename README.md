@@ -73,6 +73,10 @@ Office 2007 defaults to the round application orb, including its black palette;
 other themes default to a File tab. Set `Ribbon.ApplicationButtonShape` to `Tab`
 or `Orb` to override the theme, and clear that local value to follow the theme again.
 The application menu or Backstage surface remains the host's choice.
+Set `Ribbon.ApplicationOrbGlyphTemplate` to a `DataTemplate` for a custom vector
+mark in the orb's 16-DIP glyph canvas. `null` keeps the built-in four-square mark.
+The sphere and Classic2007 Backstage Back button use the same chrome, while the
+glyph template is instantiated separately in each button.
 
 `RibbonWindow` supports compatible Mica/Acrylic backdrops and separate optional
 frame appearance. Theme selection does not silently enable a material.

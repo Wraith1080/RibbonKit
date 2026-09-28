@@ -1,8 +1,8 @@
 # Crystal portability and Office 2007 orb integration plan
 
-> Status: slice 1 implemented on 2026-09-28; slices 2–9 remain proposed.
+> Status: slices 1–3 implemented on 2026-09-28; slices 4–9 remain proposed.
 > The orb default adds no public API and has no live visual acceptance yet.
-> The glyph-template property described below remains a proposal.
+> The glyph-template property is additive and has no live visual acceptance yet.
 > Writer integration is deferred by user direction. Keep its current saved
 > appearance and W-glyph workaround; RKWF-026 remains open.
 > The Crystal duplicate and portability audits are in `04-DESIGN-NOTES.md`
@@ -31,7 +31,7 @@ rely on the Office 2007 File tab by default; setting the existing property to
 `Tab` preserves that appearance. Choosing an application menu, Backstage
 design, Aero frame or DWM backdrop remains an independent host decision.
 
-Add one proposed public property, `Ribbon.ApplicationOrbGlyphTemplate` of type
+The public `Ribbon.ApplicationOrbGlyphTemplate` property has type
 `DataTemplate?`. `null` retains the current four-square vector glyph. A host
 template replaces only the glyph inside the shared orb sphere; the sphere,
 theme brushes, hit testing, accessibility, pressed states and Classic2007
@@ -39,9 +39,8 @@ transition stay in RibbonKit. The real orb and its private Classic2007 Backstage
 proxy each instantiate the host template independently, so no visual is
 reparented. `ApplicationButtonHeader` remains the localized or host-provided
 accessible name/tooltip, and the proxy retains localized Back semantics. The
-exact API name and implementation require focused review before coding;
-document the chosen property with XML comments and add it to
-`PublicAPI.Unshipped.txt`, never the shipped baseline.
+property has XML documentation and an entry in `PublicAPI.Unshipped.txt`; the
+shipped baseline is unchanged.
 
 ## Implementation slices
 
@@ -56,29 +55,31 @@ document the chosen property with XML comments and add it to
    Writer currently normalizes its saved shape to the selected theme and sets
    a local value. That consumer policy was preserved in this slice. Any Writer
    change is a separately scheduled follow-up.
-2. **Theme-specific header-row inset.** Audit the no-application header layout
-   before renewing visual snapshots. The shared template already uses each
-   theme's `TabStripMarginNoApplication` and `QatTabRowMarginNoApplication`
-   tokens, with RTL counterparts; dark variants inherit their base theme's
-   values. Keep those margins theme-owned and preserve the normal vertical and
-   trailing spacing. For a theme needing no extra inset, set its no-application
-   margin equal to the normal tab/QAT margin (zero *additional* inset), rather
-   than setting the whole `Thickness` to zero. Give a theme an extra leading
-   inset only where its actual header/body geometry calls for it. Check the
-   current Office 2007 four-DIP shift against its intended corner treatment;
-   do not assume the older approved image is correct or approve the new image
-   without review. Cover no File surface, QAT in the tab row or absent, LTR/RTL,
-   theme switches and dark variants. This is a shared-token adjustment, with
-   no new public property and no Writer work.
-3. **Orb glyph hook.** Keep `RibbonKit.Templates.ApplicationOrbChrome` as the
-   shared sphere. Replace its fixed glyph child with a default/host-template
-   choice inside the named `OrbGlyph` container, then pass the selected glyph
-   template into the Classic2007 proxy when it is created or refreshed. Verify
-   a live property change while the orb is present and after Backstage opens.
-   Verify the library hook in a consumer without Showcase resources. Writer's
-   W-mark migration from its full-chrome template and post-render injection is
-   deferred. Leave RKWF-026 open until that separate Writer work and its
-   consumer checks pass. Showcase needs no orb adapter.
+2. **Theme-specific header-row inset (implemented).** The shared template uses
+   each theme's `TabStripMarginNoApplication` and
+   `QatTabRowMarginNoApplication` tokens, with RTL counterparts; dark variants
+   inherit their base theme's values. A zero *additional* inset means the
+   no-application margin equals the normal tab/QAT margin, preserving vertical
+   and trailing spacing rather than setting the whole `Thickness` to zero.
+   The audit found no token change necessary: Office 2010–2024 have zero extra
+   inset, Office 2007 uses four DIPs, and Crystal uses 22 to clear rounded
+   corners. A RibbonKit-only consumer test covers no File surface, QAT in the
+   tab row or absent, LTR/RTL, theme switches, manually merged tokens and dark
+   variants. All 63 captured scenes were compared; the nine differing Office
+   2007 actual/diff pairs were reviewed and their approvals renewed to the
+   current shared geometry. This slice adds no public property and does not
+   change Writer.
+3. **Orb glyph hook (implemented).** `RibbonKit.Templates.ApplicationOrbChrome`
+   keeps the shared sphere and selects the built-in four squares or a host
+   `DataTemplate` inside `OrbGlyph`. The real button and Classic2007 proxy bind
+   to the same property while instantiating separate visuals. The proxy retains
+   its inert content, localized Back name and glyph-only rotation. A consumer
+   without Showcase resources verifies live template changes before and after
+   Backstage opens, `null` fallback, menu and ordinary Backstage paths, and
+   separate glyph visuals. Writer's W-mark migration from its full-chrome
+   template and post-render injection is deferred. RKWF-026 remains open until
+   that separate Writer work and its consumer checks pass. Showcase needs no
+   orb adapter.
 4. **Crystal control resources.** Promote the reusable portions of
    `Crystal.ControlStyles.xaml`, `Crystal.Inputs*`, `Crystal.Options*` and
    `Crystal.OptionTemplates.xaml` into shared styles/tokens. Handle menu rows,

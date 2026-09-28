@@ -5224,3 +5224,57 @@ the new consumer test. The Office 2007 snapshot differed at 929 pixels in tab
 and QAT detail; the same mismatch remained with the new style setter temporarily
 removed. Its approved image was not changed. No Showcase live window, DPI,
 popup or target-machine visual acceptance was run.
+
+### 3.193 Theme-owned no-application header inset and snapshot renewal — 2026-09-28
+
+The shared ribbon template already selected separate LTR/RTL no-application
+tab and tab-row QAT margins from each theme. Comparing each value to its normal
+margin showed zero additional inset in Office 2010, 2013, 2019 and 2024; Office
+2007 adds four DIPs and Crystal adds 22 to clear their rounded body corners.
+Their dark variants inherit the base values. No new token, public API or runtime
+geometry change was needed. The template comment now states that a theme can
+keep its normal margin when it needs no extra inset.
+
+A consumer test referencing RibbonKit without Showcase verifies the realized
+tab/QAT margins and corner clearance where needed, with and without the File
+surface, tab-row QAT or no row QAT, LTR/RTL, all light/dark themes, live
+theme switches and a manually merged token dictionary. It shares one STA WPF
+`Application` with the orb-default test; WPF rejects a second `Application` in
+the same test process.
+
+The visual harness can now capture every scene and its mismatch diff without
+changing approved images. All 63 current scenes were compared against their
+approvals. Only nine Office 2007 images differed, at the header QAT and tabs;
+the ribbon body and message surfaces matched. Those nine approvals were renewed
+after reviewing their actual/diff PNGs. The Release solution build and focused
+visual and portability tests passed. The full solution test run remained red:
+one deferred Office 2010 hover-glass contract and seven Writer failures outside
+this slice. No Showcase live window, real DPI, popup or user screenshot
+acceptance was run; Writer integration remains deferred.
+
+### 3.194 Portable application-orb glyph template — 2026-09-28
+
+`Ribbon.ApplicationOrbGlyphTemplate` is an additive nullable `DataTemplate`
+dependency property in the unshipped API list. `null` keeps the existing
+four-square vector. The shared `ApplicationOrbChrome` still owns the sphere,
+theme state brushes and named `OrbGlyph` rotation target; only the glyph child
+changes. The real application button and the private Classic2007 Back proxy
+each bind to the Ribbon's property through their own internal button state, so
+changing or clearing it updates both without sharing a visual or depending on
+a Ribbon ancestor after the real button moves into the application-menu overlay.
+The proxy's content remains an inert string, with localized Back tooltip and
+automation name. Writer's saved appearance and W-glyph workaround are unchanged;
+RKWF-026 remains open for its separate migration.
+
+A RibbonKit-only consumer test realized custom vector templates in both buttons,
+verified separate glyph instances and unchanged sphere visuals, changed the
+template while Classic2007 Backstage was open, restored the default with `null`,
+checked the glyph-only rotation target and accessible Back name, and exercised
+the application-menu and ordinary Backstage paths. Ten focused Classic/language
+tests and the visual test covering 63 approved scenes passed. The Release
+solution build passed with zero warnings or errors. The runtime suite passed
+434 tests with the deferred Office 2010 hover-contract method excluded; no
+Writer tests were run by user direction. The 1.0.0 package packed and validated
+for clean net8/net9 WPF consumption after the validator allowed NuGet's current
+`nuget.psmdcp` metadata filename. No Showcase window, live screenshot, real DPI
+or popup acceptance was run.

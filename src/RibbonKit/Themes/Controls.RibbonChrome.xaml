@@ -37,18 +37,30 @@
             <!-- Only the logo rotates during the Classic2007 Backstage transition. -->
             <Viewbox x:Name="OrbGlyph" Margin="13" Stretch="Uniform">
                 <Grid Width="16" Height="16">
-                    <Rectangle Width="7" Height="7" RadiusX="1.5" RadiusY="1.5"
-                               HorizontalAlignment="Left" VerticalAlignment="Top" Fill="#E8762C" />
-                    <Rectangle Width="7" Height="7" RadiusX="1.5" RadiusY="1.5"
-                               HorizontalAlignment="Right" VerticalAlignment="Top" Fill="#5FA92C" />
-                    <Rectangle Width="7" Height="7" RadiusX="1.5" RadiusY="1.5"
-                               HorizontalAlignment="Left" VerticalAlignment="Bottom" Fill="#2C7FD1" />
-                    <Rectangle Width="7" Height="7" RadiusX="1.5" RadiusY="1.5"
-                               HorizontalAlignment="Right" VerticalAlignment="Bottom" Fill="#F2B705" />
+                    <Grid x:Name="DefaultOrbGlyph" Visibility="Collapsed">
+                        <Rectangle Width="7" Height="7" RadiusX="1.5" RadiusY="1.5"
+                                   HorizontalAlignment="Left" VerticalAlignment="Top" Fill="#E8762C" />
+                        <Rectangle Width="7" Height="7" RadiusX="1.5" RadiusY="1.5"
+                                   HorizontalAlignment="Right" VerticalAlignment="Top" Fill="#5FA92C" />
+                        <Rectangle Width="7" Height="7" RadiusX="1.5" RadiusY="1.5"
+                                   HorizontalAlignment="Left" VerticalAlignment="Bottom" Fill="#2C7FD1" />
+                        <Rectangle Width="7" Height="7" RadiusX="1.5" RadiusY="1.5"
+                                   HorizontalAlignment="Right" VerticalAlignment="Bottom" Fill="#F2B705" />
+                    </Grid>
+                    <!-- Ribbon binds each private button's Tag to its glyph-template property;
+                         the real button may leave the Ribbon visual tree while its menu is open. -->
+                    <ContentPresenter x:Name="CustomOrbGlyph"
+                                      Content="Glyph"
+                                      ContentTemplate="{Binding Tag, RelativeSource={RelativeSource AncestorType={x:Type primitives:ButtonBase}}}" />
                 </Grid>
             </Viewbox>
         </Grid>
         <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource AncestorType={x:Type primitives:ButtonBase}}}"
+                         Value="{x:Null}">
+                <Setter TargetName="DefaultOrbGlyph" Property="Visibility" Value="Visible" />
+                <Setter TargetName="CustomOrbGlyph" Property="Visibility" Value="Collapsed" />
+            </DataTrigger>
             <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType={x:Type primitives:ButtonBase}}}"
                          Value="True">
                 <Setter TargetName="OrbFill" Property="Fill"
@@ -932,10 +944,11 @@
                             <Setter TargetName="ContentHost" Property="Margin"
                                     Value="{DynamicResource RibbonKit.Metrics.ContentMarginQatBelow}" />
                         </DataTrigger>
-                        <!-- Keep the body's rounded corner. With no File or merged caption icon,
-                             inset the first visible header-row item. The QAT owns that inset when
-                             it shares the row; otherwise the tab panel owns it. This keeps the
-                             normal QAT-to-tab spacing while the marker and notch follow the tab. -->
+                        <!-- With no File or merged caption icon, use the theme's no-application
+                             margin for the first visible header-row item. The QAT owns any extra
+                             inset when it shares the row; otherwise the tab panel owns it. Themes
+                             that need no extra inset keep their normal margin. This preserves the
+                             QAT-to-tab spacing while the marker and notch follow the tab. -->
                         <MultiDataTrigger>
                             <MultiDataTrigger.Conditions>
                                 <Condition Binding="{Binding Visibility, ElementName=PART_ApplicationButton}" Value="Collapsed" />

@@ -284,6 +284,20 @@ public sealed class VisualSnapshotTests
             "approved",
             snapshotName + ".png");
 
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_CAPTURE_SNAPSHOTS") == "1")
+        {
+            string captureDirectory = Path.Combine(repositoryRoot, "TestResults", "visual-capture");
+            SavePng(actual, Path.Combine(captureDirectory, snapshotName + ".actual.png"));
+            if (File.Exists(sourceBaseline))
+            {
+                BitmapSource approved = LoadPng(sourceBaseline);
+                if (!Compare(approved, actual).Passed)
+                    SavePng(CreateDifference(approved, actual),
+                        Path.Combine(captureDirectory, snapshotName + ".diff.png"));
+            }
+            return;
+        }
+
         if (ShouldUpdateSnapshots())
         {
             SavePng(actual, sourceBaseline);
