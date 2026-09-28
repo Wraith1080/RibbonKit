@@ -86,6 +86,57 @@ public class CrystalContextualTests
     });
 
     [Fact]
+    public void Crystal_customize_pages_round_all_list_frames_and_keep_scrolling() => Sta.Run(() =>
+    {
+        var window = new CrystalPreviewWindow { Width = 760, Height = 480,
+            Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
+        try
+        {
+            window.Show();
+            Sta.Drain();
+            var dialog = window.CreateCustomizationDialog(false);
+            try
+            {
+                dialog.Height = 450;
+                dialog.ShowActivated = false;
+                dialog.ShowInTaskbar = false;
+                dialog.Show();
+                Sta.Drain();
+                dialog.UpdateLayout();
+
+                var ribbonPage = Assert.IsType<RibbonCustomizePage>(dialog.SelectedPage!.Content);
+                var available = Assert.IsType<ListBox>(ribbonPage.Template.FindName("PART_AvailableList", ribbonPage));
+                var tree = Assert.IsType<TreeView>(ribbonPage.Template.FindName("PART_Tree", ribbonPage));
+                var availableScroll = AssertRoundedFrame(available);
+                AssertRoundedFrame(tree);
+                Assert.True(availableScroll.ScrollableHeight > 0);
+                availableScroll.ScrollToBottom();
+                Sta.Drain();
+                Assert.True(availableScroll.VerticalOffset > 0);
+
+                dialog.SelectedPage = dialog.Pages.Single(page => page.Content is RibbonQuickAccessPage);
+                Sta.Drain();
+                dialog.UpdateLayout();
+                var qatPage = Assert.IsType<RibbonQuickAccessPage>(dialog.SelectedPage.Content);
+                AssertRoundedFrame(Assert.IsType<ListBox>(qatPage.Template.FindName("PART_AvailableList", qatPage)));
+                AssertRoundedFrame(Assert.IsType<ListBox>(qatPage.Template.FindName("PART_CurrentList", qatPage)));
+            }
+            finally { dialog.Close(); }
+        }
+        finally { window.Close(); }
+
+        static ScrollViewer AssertRoundedFrame(Control control)
+        {
+            control.ApplyTemplate();
+            var frame = Assert.IsType<Border>(control.Template.FindName("Frame", control));
+            Assert.Equal(new CornerRadius(8), frame.CornerRadius);
+            var scroll = Assert.IsType<ScrollViewer>(control.Template.FindName("PART_ScrollViewer", control));
+            Assert.Equal(ScrollBarVisibility.Disabled, scroll.HorizontalScrollBarVisibility);
+            return scroll;
+        }
+    });
+
+    [Fact]
     public void Crystal_document_length_toggle_provides_scrollable_sample_text() => Sta.Run(() =>
     {
         var window = new CrystalPreviewWindow { Width = 760, Height = 480,

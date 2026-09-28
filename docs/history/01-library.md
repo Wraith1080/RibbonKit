@@ -5142,3 +5142,20 @@ Keep MDI's editor/contextual-tab treatment, preview comparison, and dialog
 styling in their owning hosts. There is no need for global discovery, a broad
 coordinator or a RibbonKit API. The deferred Office Glass, View overflow, 200%
 gallery clipping and Office 2010 hover checks remain separate.
+
+### 3.190 Crystal customization list frames — 2026-09-28
+
+The user's main Showcase screenshot confirmed the message panel, and the Options
+dialog screenshot showed square outer frames on the Customize Ribbon command
+list and tree. The requested round treatment also applies to both Quick Access
+Toolbar lists. All four controls are template parts of RibbonKit's shared
+customization pages; their data, navigation and scrolling remain owned there.
+
+Showcase's `CrystalCustomization` adapter now applies one local rounded frame
+template to those parts. It preserves each control's background, border,
+padding, item presenter and scroll viewer, while the Crystal row styles remain
+unchanged. No runtime template, theme token or public API changed. The Showcase
+Release build and three focused checks passed in separate processes: frame and
+scrolling on both pages, existing tree behavior, and the detached RTL Options
+path. The dialog was not visually reaccepted at the new corners; live review
+and DPI scales remain with the user.

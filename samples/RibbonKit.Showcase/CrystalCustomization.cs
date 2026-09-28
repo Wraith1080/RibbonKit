@@ -53,9 +53,13 @@ internal static class CrystalCustomization
                             ? "Crystal.Customize.CompactAction" : "Crystal.Customize.Action");
                 foreach (var name in new[] { "PART_AvailableList", "PART_CurrentList" })
                     if (page.Template?.FindName(name, page) is ListBox list)
+                    {
+                        list.SetResourceReference(Control.TemplateProperty, "Crystal.Customize.ListFrame");
                         list.ItemContainerStyle = (Style)dialog.FindResource("Crystal.Customize.ListItem");
+                    }
                 if (page.Template?.FindName("PART_Tree", page) is TreeView tree)
                 {
+                    tree.SetResourceReference(Control.TemplateProperty, "Crystal.Customize.ListFrame");
                     var style = (Style)dialog.FindResource("Crystal.Customize.TreeContainer");
                     tree.ItemContainerStyle = style;
                     tree.Resources[typeof(TreeViewItem)] = style;

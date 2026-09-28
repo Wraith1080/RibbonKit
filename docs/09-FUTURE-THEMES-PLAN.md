@@ -861,6 +861,11 @@ drive it from theme/tint changes. Keep MDI, preview comparison and Options
 dialog presentation with their current Showcase hosts; no broad coordinator or
 new RibbonKit API is needed.
 
+Customization follow-up: the two built-in Options pages now receive rounded
+outer frames on their command lists and tree only while Showcase applies
+Crystal presentation. This follows the user's dialog screenshot; visual
+acceptance of the new corners and DPI states remains open.
+
 The MDI and Print Preview screenshots exposed a shared first-tab seam when File
 is hidden: a connected tab can meet the body's rounded leading corner. The
 common ribbon template now insets the first visible header-row item when neither

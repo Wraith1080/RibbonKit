@@ -712,6 +712,10 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [Keep distinct option lenses and remove the redundant Backstage resource wrapper](docs/history/01-library.md#3189-crystal-duplicate-audit--2026-09-28).
 
+### 3.190 Crystal customization list frames — 2026-09-28
+
+[Round the four list and tree frames in Showcase while retaining native scrolling](docs/history/01-library.md#3190-crystal-customization-list-frames--2026-09-28).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),

@@ -18,6 +18,22 @@
         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
         <Setter Property="FontWeight" Value="SemiBold" />
     </Style>
+    <!-- ListBox and TreeView share the same frame; their native item panels and
+         scrolling behavior remain inside the ScrollViewer. -->
+    <ControlTemplate x:Key="Crystal.Customize.ListFrame" TargetType="{x:Type Control}">
+        <Border x:Name="Frame" Background="{TemplateBinding Background}"
+                BorderBrush="{TemplateBinding BorderBrush}"
+                BorderThickness="{TemplateBinding BorderThickness}"
+                Padding="{TemplateBinding Padding}" CornerRadius="8"
+                SnapsToDevicePixels="True">
+            <ScrollViewer x:Name="PART_ScrollViewer" Focusable="False"
+                          HorizontalScrollBarVisibility="{TemplateBinding ScrollViewer.HorizontalScrollBarVisibility}"
+                          VerticalScrollBarVisibility="Auto"
+                          CanContentScroll="{TemplateBinding ScrollViewer.CanContentScroll}">
+                <ItemsPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+            </ScrollViewer>
+        </Border>
+    </ControlTemplate>
     <ControlTemplate x:Key="Crystal.Customize.Navigation" TargetType="{x:Type rk:RibbonOptionsPage}">
         <Grid Margin="8,2" Background="Transparent">
             <Border x:Name="Chrome" CornerRadius="8" BorderThickness="1" BorderBrush="Transparent" Background="Transparent" Padding="14,10,14,12">
