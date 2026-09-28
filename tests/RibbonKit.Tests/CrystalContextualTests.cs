@@ -603,7 +603,7 @@ public class CrystalContextualTests
             Assert.Equal(new CornerRadius(14), body.CornerRadius);
             Assert.Equal(new CornerRadius(0, 0, 10, 10), panel.CornerRadius);
             Assert.Equal(new Thickness(1, 0, 1, 1), panel.BorderThickness);
-            Assert.Same(ribbon.FindResource("RibbonKit.Brushes.Tab.HoverBackground"), panel.Background);
+            Assert.Same(ribbon.FindResource("RibbonKit.Brushes.QatExtender.Background"), panel.Background);
             Assert.Same(ribbon.FindResource("Crystal.Brushes.QuickAccessBorder"), panel.BorderBrush);
             var qatRim = Assert.IsType<DrawingBrush>(panel.BorderBrush);
             var hoverRim = Assert.IsType<DrawingBrush>(ribbon.FindResource("RibbonKit.Brushes.Tab.HoverBorder"));
@@ -635,11 +635,11 @@ public class CrystalContextualTests
             ribbon.Resources.MergedDictionaries[1] = CrystalPalette.Create(Colors.Purple);
             Layout();
             Assert.NotSame(blue, panel.Background);
-            Assert.Same(ribbon.FindResource("RibbonKit.Brushes.Tab.HoverBackground"), panel.Background);
+            Assert.Same(ribbon.FindResource("RibbonKit.Brushes.QatExtender.Background"), panel.Background);
             Assert.NotSame(contextHeader.Background, panel.Background);
             ribbon.SelectedTab = tab;
             Layout();
-            Assert.Same(ribbon.FindResource("RibbonKit.Brushes.Tab.HoverBackground"), panel.Background);
+            Assert.Same(ribbon.FindResource("RibbonKit.Brushes.QatExtender.Background"), panel.Background);
             Assert.Same(ribbon.FindResource("Crystal.Brushes.QuickAccessBorder"), panel.BorderBrush);
             Assert.Equal(new Point(0.5, 1), panel.BorderBrush.RelativeTransform.Transform(new Point(0.5, 0)));
             Assert.Same(ribbon.FindResource("Crystal.Effects.QuickAccessShadow"), panel.Effect);

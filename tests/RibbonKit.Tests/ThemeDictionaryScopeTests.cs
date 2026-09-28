@@ -107,28 +107,34 @@ public class ThemeDictionaryScopeTests
     // ---------------------------------------------------------------- rule 3
 
     [Fact]
-    public void Every_part_on_disk_is_merged_by_the_aggregator()
+    public void Every_part_on_disk_is_reachable_from_the_aggregator()
     {
         var themes = ThemesDirectory();
         var aggregator = StripComments(File.ReadAllText(Path.Combine(themes, AggregatorName)));
 
-        var merged = MergedSourcePattern.Matches(aggregator)
-            .Select(m => m.Groups[1].Value)
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var parts = LoadParts();
+        var merged = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var pending = new Queue<string>(MergedSourcePattern.Matches(aggregator)
+            .Select(m => m.Groups[1].Value));
 
-        var onDisk = Directory.GetFiles(themes, PartSearchPattern)
-            .Select(path => Path.GetFileName(path))
-            .ToList();
+        while (pending.Count > 0)
+        {
+            var name = pending.Dequeue();
+            if (!merged.Add(name) || !parts.TryGetValue(name, out var part)) continue;
+            foreach (var dependency in part.Merges) pending.Enqueue(dependency);
+        }
+
+        var onDisk = parts.Keys.ToList();
 
         Assert.True(onDisk.Count > 0, $"No {PartSearchPattern} found in {themes}.");
 
         var orphans = onDisk.Where(f => !merged.Contains(f)).OrderBy(f => f, StringComparer.Ordinal);
 
         Assert.True(!orphans.Any(), Report(
-            $"Part(s) not listed in {AggregatorName}",
+            $"Part(s) not reachable from {AggregatorName}",
             orphans.Select(f =>
                 $"{f}: exists but is never merged, so its styles are silently absent at runtime. " +
-                $"Add a <ResourceDictionary Source=\".../Themes/{f}\" /> line to {AggregatorName}.")));
+                $"Merge it from {AggregatorName} or a part reachable from that aggregator.")));
     }
 
     // ---------------------------------------------------------------- rule 4

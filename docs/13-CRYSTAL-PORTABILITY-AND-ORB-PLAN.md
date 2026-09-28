@@ -3,6 +3,8 @@
 > Status: slice 1 implemented on 2026-09-28; slices 2–8 remain proposed.
 > The orb default adds no public API and has no live visual acceptance yet.
 > The glyph-template property described below remains a proposal.
+> Writer integration is deferred by user direction. Keep its current saved
+> appearance and W-glyph workaround; RKWF-026 remains open.
 > The Crystal duplicate and portability audits are in `04-DESIGN-NOTES.md`
 > §3.189–§3.191. Existing Office 2007 behavior is recorded in §3.94 and
 > `07-OFFICE-2007-THEME-PLAN.md`.
@@ -52,16 +54,17 @@ document the chosen property with XML comments and add it to
    Its File surface preference remains separate, and the RTL lab mirrors the
    resolved shape.
    Writer currently normalizes its saved shape to the selected theme and sets
-   a local value. That consumer policy was preserved in this slice;
-   migrate it separately if Writer later exposes an actual shape override.
+   a local value. That consumer policy was preserved in this slice. Any Writer
+   change is a separately scheduled follow-up.
 2. **Orb glyph hook.** Keep `RibbonKit.Templates.ApplicationOrbChrome` as the
    shared sphere. Replace its fixed glyph child with a default/host-template
    choice inside the named `OrbGlyph` container, then pass the selected glyph
    template into the Classic2007 proxy when it is created or refreshed. Verify
    a live property change while the orb is present and after Backstage opens.
-   Convert Writer's W mark from its full-chrome template and post-render
-   injection to a glyph-only template using the new property; close RKWF-026
-   only after that consumer test passes. Showcase needs no orb adapter.
+   Verify the library hook in a consumer without Showcase resources. Writer's
+   W-mark migration from its full-chrome template and post-render injection is
+   deferred. Leave RKWF-026 open until that separate Writer work and its
+   consumer checks pass. Showcase needs no orb adapter.
 3. **Crystal control resources.** Promote the reusable portions of
    `Crystal.ControlStyles.xaml`, `Crystal.Inputs*`, `Crystal.Options*` and
    `Crystal.OptionTemplates.xaml` into shared styles/tokens. Handle menu rows,
@@ -117,7 +120,9 @@ become library features. Reassess only a demonstrated detached-resource gap.
   `ClearValue`, manually merged token dictionaries, designer recognition, the
   application menu, ordinary Backstage and Classic2007 proxy lifecycle.
   Test a custom vector glyph, `null` fallback, changed template after load,
-  glyph-only rotation, localized Back/accessible names and Writer's migrated W.
+  glyph-only rotation and localized Back/accessible names. Writer's migrated W
+  is a deferred, separate acceptance gate for RKWF-026, not a gate for the
+  library-only glyph hook.
 - For each Crystal control family, realize it in a small consumer that uses
   RibbonKit resources without Showcase resources. Test light/dark switching,
   return to every Office baseline, accent/tint where supported, RTL,
