@@ -772,6 +772,11 @@ file and this index; update §5 only as supported by verification.
   (M1–M3); Office 2010 Aero live visual approval (§3.97/§3.125); optional designer
   scalar reset actions; touch density, richer QAT/custom-control projections and
   future themes. Complete Windows contrast-theme support is not claimed.
+- **Crystal portability and Office 2007 orb defaults:** the
+  [staged integration plan](docs/13-CRYSTAL-PORTABILITY-AND-ORB-PLAN.md) proposes
+  shared Crystal control styling, a theme-following orb default that preserves
+  explicit `ApplicationButtonShape`, and an orb glyph-template hook. These are
+  planned runtime/API changes, not current behavior.
 - Automatic `Icons.xaml` discovery remains best-effort; the manual browser is the
   fallback for no match, ambiguity, inaccessible paths or parse failure.
 

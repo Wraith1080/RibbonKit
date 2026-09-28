@@ -49,6 +49,12 @@ replacement proves equivalence.
 
 ### High priority: portable theme presentation (revised 2026-09-28)
 
+The [Crystal portability and Office 2007 orb integration plan](13-CRYSTAL-PORTABILITY-AND-ORB-PLAN.md)
+now defines the proposed bounded promotion slices. It also records the new
+request for an Office 2007 default orb, the retained explicit shape property,
+and a proposed public glyph-template hook. None of those runtime changes is
+implemented by this plan.
+
 The earlier Showcase-only adapter registration proposal is superseded. It could
 organize Showcase's code but would not make the Crystal appearance available to
 another RibbonKit consumer through `ThemeManager.Apply`.
@@ -97,7 +103,7 @@ The shared orb has a fixed built-in glyph. A separate recorded consumer gap
 (`RKWF-026` in the Writer friction log) concerns replacing only that glyph
 without editing a realized template; Writer has an app-owned workaround,
 while Showcase does not customize the glyph. That possible public hook remains
-unapproved and outside this Crystal audit.
+unimplemented; the staged plan above now proposes it as a separate orb slice.
 
 Promote one bounded control family at a time with Office light/dark parity,
 theme-switch cleanup, RTL/localization checks and a separate consumer test.
