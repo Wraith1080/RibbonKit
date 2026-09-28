@@ -1,6 +1,6 @@
 # Crystal portability and Office 2007 orb integration plan
 
-> Status: slice 1 implemented on 2026-09-28; slices 2–8 remain proposed.
+> Status: slice 1 implemented on 2026-09-28; slices 2–9 remain proposed.
 > The orb default adds no public API and has no live visual acceptance yet.
 > The glyph-template property described below remains a proposal.
 > Writer integration is deferred by user direction. Keep its current saved
@@ -56,7 +56,21 @@ document the chosen property with XML comments and add it to
    Writer currently normalizes its saved shape to the selected theme and sets
    a local value. That consumer policy was preserved in this slice. Any Writer
    change is a separately scheduled follow-up.
-2. **Orb glyph hook.** Keep `RibbonKit.Templates.ApplicationOrbChrome` as the
+2. **Theme-specific header-row inset.** Audit the no-application header layout
+   before renewing visual snapshots. The shared template already uses each
+   theme's `TabStripMarginNoApplication` and `QatTabRowMarginNoApplication`
+   tokens, with RTL counterparts; dark variants inherit their base theme's
+   values. Keep those margins theme-owned and preserve the normal vertical and
+   trailing spacing. For a theme needing no extra inset, set its no-application
+   margin equal to the normal tab/QAT margin (zero *additional* inset), rather
+   than setting the whole `Thickness` to zero. Give a theme an extra leading
+   inset only where its actual header/body geometry calls for it. Check the
+   current Office 2007 four-DIP shift against its intended corner treatment;
+   do not assume the older approved image is correct or approve the new image
+   without review. Cover no File surface, QAT in the tab row or absent, LTR/RTL,
+   theme switches and dark variants. This is a shared-token adjustment, with
+   no new public property and no Writer work.
+3. **Orb glyph hook.** Keep `RibbonKit.Templates.ApplicationOrbChrome` as the
    shared sphere. Replace its fixed glyph child with a default/host-template
    choice inside the named `OrbGlyph` container, then pass the selected glyph
    template into the Classic2007 proxy when it is created or refreshed. Verify
@@ -65,7 +79,7 @@ document the chosen property with XML comments and add it to
    W-mark migration from its full-chrome template and post-render injection is
    deferred. Leave RKWF-026 open until that separate Writer work and its
    consumer checks pass. Showcase needs no orb adapter.
-3. **Crystal control resources.** Promote the reusable portions of
+4. **Crystal control resources.** Promote the reusable portions of
    `Crystal.ControlStyles.xaml`, `Crystal.Inputs*`, `Crystal.Options*` and
    `Crystal.OptionTemplates.xaml` into shared styles/tokens. Handle menu rows,
    combo/text inputs, galleries, check/radio lenses and ScreenTips as separate
@@ -73,26 +87,26 @@ document the chosen property with XML comments and add it to
    check/radio templates; do not discard them as mere copies. Keep theme-key
    parity and Office light/dark appearance. Make detached ScreenTips resolve
    the current theme without `CrystalScreenTipPalette` in a consumer.
-4. **Customization pages.** Move the reusable `Crystal.Customize.xaml` list,
+5. **Customization pages.** Move the reusable `Crystal.Customize.xaml` list,
    tree, navigation and action visuals into RibbonKit's Options templates and
    theme resources. Keep the built-in pages, native scrolling, item behavior,
    RTL and localized labels. Remove `CrystalCustomization` template-part edits
    only after both Customize Ribbon and Quick Access pages match their accepted
    appearance, including rounded list/tree frames. The app-provided Editor page
    and dialog-opening policy stay in Showcase.
-5. **Shared shell chrome.** In bounded passes, replace `CrystalQuickAccess`,
+6. **Shared shell chrome.** In bounded passes, replace `CrystalQuickAccess`,
    `CrystalMessagePresentation` and the control-paint/geometry portion of
    `CrystalApplicationMenuPresentation` with shared QAT, message and menu
    template/token behavior. Preserve QAT placement/minimized states, message
    actions, menu split rows and width/clip behavior. Keep application-menu
    content and the choice between menu and Backstage with the host. Treat the
    outside shadow and captured backdrop separately from ordinary menu paint.
-6. **Utility chrome and scrollbars.** Move the generic utility-button rim and
+7. **Utility chrome and scrollbars.** Move the generic utility-button rim and
    arrow states from `CrystalUtilityChrome` into shared templates. Express
    `CrystalScrollBars` paint and metrics through the existing shared scrollbar
    template and theme tokens, including native scrollbars in Options pages.
    Stop editing realized `Chrome`, arrow and scrollbar parts from Showcase.
-7. **Contextual material and tint.** Make an ordinary `RibbonTab` render the
+8. **Contextual material and tint.** Make an ordinary `RibbonTab` render the
    accepted Crystal contextual surface from its contextual color; retire
    `CrystalContextualTab`. Decide and document whether custom Crystal tint is
    a supported library feature. If yes, move `CrystalPalette`'s whole-material
@@ -100,7 +114,7 @@ document the chosen property with XML comments and add it to
    `ThemeManager.SetAccent` behavior for Office themes. Scope tint updates and
    cleanup per window or control where required; do not let one preview tint
    recolor unrelated windows.
-8. **Optional host effects.** Design a separate opt-in integration, only if
+9. **Optional host effects.** Design a separate opt-in integration, only if
    desired, for `CrystalMenuBackdrop`, `CrystalPopupBackdrop` and the host-owned
    capture/update lifecycle. Likewise evaluate `AcrylicGlassPresentation` as
    an optional cross-theme glass treatment. Core Crystal control styling must
@@ -115,6 +129,13 @@ become library features. Reassess only a demonstrated detached-resource gap.
 
 ## Verification and completion gates
 
+- For the header-row inset slice, verify each theme's normal and
+  no-application margins in a consumer without Showcase resources. Exercise
+  QAT in the tab row and absent, LTR/RTL, light/dark variants and live theme
+  switches. Inspect the actual/diff PNGs across the visual snapshot matrix
+  before changing any approvals; report which scenes ran. Keep live screenshot
+  acceptance with the user and do not infer DPI or popup acceptance from the
+  existing Crystal screenshots.
 - For the orb slices, test Office 2007 light/black default, every other theme's
   tab default, repeated theme switches, explicit `Tab`/`Orb` overrides,
   `ClearValue`, manually merged token dictionaries, designer recognition, the
