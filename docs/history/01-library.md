@@ -5067,3 +5067,26 @@ One focused noninteractive check covers modal entry/exit, a tint change and
 baseline paint under every Office theme and supported dark variant. There is no
 RibbonKit runtime or public API change, and no new shared theme token. Live
 Print Preview appearance remains for user screenshot review.
+
+### 3.188 Crystal dark palette — 2026-09-28
+
+`ThemeManager.SetDarkMode` now loads `Tokens.Crystal.Dark.xaml` for the existing
+`RibbonTheme.CrystalLight` value. The overlay reuses the Office 2024 dark baseline
+for unchanged controls and replaces Crystal's shared glass, MDI, Backstage, KeyTip,
+message and connected-tab brushes. It preserves the light palette's geometry and
+drawing structure, which the Showcase contextual adapter uses for its marker.
+There is no new public theme value, shared template or token key. Every shared key
+in the overlay exists in all five Office palettes and their dark variants.
+
+Showcase adds a dark window palette and dark resource scopes for its existing
+input and option styles. The theme toggle rebuilds the active tint and refreshes
+open MDI and Localization/RTL demos. Print Preview's canvas darkens while its
+white paper and ink remain readable. Contextual tabs derive their dark treatment
+from the actual palette in their resource scope, so the separate light-only
+Crystal preview stays light even when the application has a dark preference.
+
+Focused offscreen checks cover runtime light/dark/Office switching, dark host
+styles, contextual markers, MDI, Print Preview and the RTL lab. The Showcase
+was not launched; live material, contrast and DPI acceptance remain for user
+screenshots. Chart Tools and the Options Editor need no further phase-two edit by
+user direction; the deferred Office Glass and View overflow reviews remain open.

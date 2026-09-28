@@ -92,6 +92,16 @@ public sealed class CrystalMdiIntegrationTests
                 "RibbonKit.Brushes.MdiChild.ActiveBorder")).Color;
             Assert.NotEqual(purpleBorder, greenBorder);
 
+            ThemeManager.SetDarkMode(application, true);
+            demo.ApplyCrystal(true, Colors.SeaGreen);
+            Sta.Drain();
+            Assert.Equal(Color.FromRgb(0xEA, 0xF4, 0xFC), Assert.IsType<SolidColorBrush>(editor.Foreground).Color);
+            Assert.Equal(Color.FromRgb(0xF1, 0xF8, 0xFD), Assert.IsType<SolidColorBrush>(child.FindResource(
+                "RibbonKit.Brushes.MdiChild.ActiveCaptionForeground")).Color);
+            Assert.NotEqual(greenBorder, Assert.IsType<SolidColorBrush>(child.FindResource(
+                "RibbonKit.Brushes.MdiChild.ActiveBorder")).Color);
+
+            ThemeManager.SetDarkMode(application, false);
             ThemeManager.Apply(application, RibbonTheme.Office2024);
             demo.ApplyCrystal(false);
             Sta.Drain();

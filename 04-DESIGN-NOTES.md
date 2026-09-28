@@ -704,6 +704,10 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [Reuse the shared modal tab and scope preview paint to Showcase](docs/history/01-library.md#3187-crystal-light-print-preview-host-paint--2026-09-28).
 
+### 3.188 Crystal dark palette — 2026-09-28
+
+[Dark token overlay, Showcase materials and focused switching checks](docs/history/01-library.md#3188-crystal-dark-palette--2026-09-28).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),

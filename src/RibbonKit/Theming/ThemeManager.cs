@@ -33,7 +33,7 @@ public enum RibbonTheme
     Office2007,
 
     /// <summary>
-    /// Crystal Light: a cool glass-inspired palette for the shared templates. Host-owned
+    /// Crystal: cool glass-inspired light and dark palettes for the shared templates. Host-owned
     /// backdrop blur and document underlay are separate opt-in presentation effects.
     /// </summary>
     CrystalLight,
@@ -205,7 +205,7 @@ public static class ThemeManager
     /// <summary>
     /// Enables or disables the active theme's dark/black palette when available. Office 2007
     /// and 2010 use their historical hybrid Black schemes; Office 2013 uses Dark Gray;
-    /// Office 2019 and 2024 use fully dark palettes. Crystal Light remains light.
+    /// Office 2019 and 2024 use fully dark palettes. Crystal uses a dark glass palette.
     /// The preference survives <see cref="Apply"/> calls.
     /// </summary>
     public static void SetDarkMode(Application application, bool enabled)
@@ -225,7 +225,8 @@ public static class ThemeManager
             or RibbonTheme.Office2010
             or RibbonTheme.Office2013
             or RibbonTheme.Office2019
-            or RibbonTheme.Office2024;
+            or RibbonTheme.Office2024
+            or RibbonTheme.CrystalLight;
 
     private static void ApplyDarkModeDictionary(Application application)
     {
@@ -241,10 +242,11 @@ public static class ThemeManager
             return;
         }
 
+        string file = theme == RibbonTheme.CrystalLight ? "Crystal" : theme.ToString();
         var dictionary = new ResourceDictionary
         {
             Source = new Uri(
-                $"pack://application:,,,/RibbonKit;component/Themes/Tokens.{theme}.Dark.xaml",
+                $"pack://application:,,,/RibbonKit;component/Themes/Tokens.{file}.Dark.xaml",
                 UriKind.Absolute),
         };
         application.Resources.MergedDictionaries.Add(dictionary);
@@ -339,8 +341,10 @@ public static class ThemeManager
         RibbonTheme theme = CurrentTheme ?? RibbonTheme.Office2024;
         bool dark = _darkMode && SupportsDarkMode(theme);
 
-        // Colors shared by every theme.
-        resources[AccentKey] = Frozen(accent);
+        // Crystal uses the accent as text on dark glass; keep that semantic brush readable.
+        Color displayAccent = theme == RibbonTheme.CrystalLight && dark
+            ? Mix(accent, Colors.White, 0.45) : accent;
+        resources[AccentKey] = Frozen(displayAccent);
         // Classic Backstage rails follow the accent only in light palettes. Dark/Black palettes
         // deliberately keep their generation-specific neutral rail and selection tokens; otherwise
         // a custom (or previously selected) accent reintroduces the colored slab those palettes
@@ -386,7 +390,7 @@ public static class ThemeManager
                 // The accepted marker and checked washes are drawn glass brushes. Keep their
                 // geometry when the application's accent changes; only the readable tab label
                 // and shared semantic accent tokens follow that accent in this base theme.
-                resources[SelectedForegroundKey] = Frozen(accent);
+                resources[SelectedForegroundKey] = Frozen(displayAccent);
                 break;
             case RibbonTheme.Office2024:
                 resources[SelectedUnderlineKey] = Frozen(accent);

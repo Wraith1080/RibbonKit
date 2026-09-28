@@ -7,6 +7,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using RibbonKit.Controls;
+using RibbonKit.Theming;
 
 namespace RibbonKit.Showcase;
 
@@ -50,7 +51,7 @@ internal sealed class CrystalMainWindowPresentation
         }
         if (enabled)
         {
-            _palette = CrystalPalette.Create(tint ?? CrystalPalette.Blue);
+            _palette = CrystalPalette.Create(tint ?? CrystalPalette.Blue, ThemeManager.IsDarkMode);
             var scrollTemplates = new ResourceDictionary
             { Source = new Uri("/RibbonKit;component/Themes/Controls.ScrollBars.xaml", UriKind.Relative) };
             _palette.MergedDictionaries.Add(scrollTemplates);

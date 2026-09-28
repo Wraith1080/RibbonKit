@@ -378,7 +378,7 @@ public partial class MainWindow : RibbonWindow
     {
         bool enabled = (sender as RibbonToggleButton)?.IsChecked == true;
         ThemeManager.SetDarkMode(Application.Current, enabled);
-        RefreshGlassTreatment();
+        RefreshCrystalTint();
         SaveAppearancePreferences();
     }
 

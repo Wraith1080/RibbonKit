@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using RibbonKit.Controls;
+using RibbonKit.Theming;
 
 namespace RibbonKit.Showcase;
 
@@ -38,7 +39,7 @@ public partial class MdiDemo : RibbonWindow
         _crystalEnabled = enabled;
         if (enabled)
         {
-            _crystalPalette = CrystalPalette.Create(tint ?? CrystalPalette.Blue);
+            _crystalPalette = CrystalPalette.Create(tint ?? CrystalPalette.Blue, ThemeManager.IsDarkMode);
             Resources.MergedDictionaries.Add(_crystalPalette);
             SetResourceReference(BackgroundProperty, "RibbonKit.Brushes.Window.Background");
         }

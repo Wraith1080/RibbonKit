@@ -13,28 +13,28 @@ internal static class CrystalPalette
     public static Color Blue => Color.FromRgb(57, 124, 169);
 
     /// <summary>Creates a fresh window palette without changing application resources.</summary>
-    public static ResourceDictionary Create(Color accent)
+    public static ResourceDictionary Create(Color accent, bool dark = false)
     {
-        var palette = Load("Crystal.Light.xaml");
-        if (accent == Blue) return palette;
+        var palette = Load(dark ? "Crystal.Dark.xaml" : "Crystal.Light.xaml");
+        if (accent == Blue && !dark) return palette;
 
         double rotation = Hue(accent) - Hue(Blue);
         // The reusable palette is merged from RibbonKit; keep each tint scoped to
         // this fresh preview dictionary, without changing the Office 2024 fallback.
-        TintResources(palette.MergedDictionaries[0], rotation, keepText: true);
+        TintResources(palette.MergedDictionaries[dark ? 1 : 0], rotation, keepText: true);
         TintResources(palette, rotation, keepText: true);
         foreach (var type in new[] { typeof(RibbonComboBox), typeof(RibbonTextBox) })
         {
-            var inputs = Load("Crystal.Inputs.xaml");
+            var inputs = Load(dark ? "Crystal.Inputs.Dark.xaml" : "Crystal.Inputs.xaml");
             TintResources(inputs, rotation, keepText: false);
-            inputs["RibbonKit.Brushes.Accent"] = new SolidColorBrush(ReadableAccent(accent));
+            inputs["RibbonKit.Brushes.Accent"] = new SolidColorBrush(ReadableAccent(accent, dark));
             // Rebuild the resource scope instead of mutating a potentially sealed style.
             palette[type] = new Style(type, (Style)palette[type]) { Resources = inputs };
         }
-        var foreground = new SolidColorBrush(ReadableAccent(accent));
+        var foreground = new SolidColorBrush(ReadableAccent(accent, dark));
         foreach (var type in new[] { typeof(RibbonCheckBox), typeof(RibbonRadioButton) })
         {
-            var options = Load("Crystal.Options.xaml");
+            var options = Load(dark ? "Crystal.Options.Dark.xaml" : "Crystal.Options.xaml");
             // The clear idle lens lives in the merged input dictionary.
             foreach (var merged in options.MergedDictionaries)
                 TintResources(merged, rotation, keepText: false);
@@ -143,17 +143,34 @@ internal static class CrystalPalette
         return (hue * 60 + 360) % 360;
     }
 
-    private static Color ReadableAccent(Color color)
+    private static Color ReadableAccent(Color color, bool dark)
     {
-        // Allow margin beyond 4.5:1 against white for the lightly tinted surfaces.
+        // Keep the selected label legible on either the pale or dark glass face.
         static double Linear(byte value)
         {
             double c = value / 255d;
             return c <= 0.04045 ? c / 12.92 : Math.Pow((c + 0.055) / 1.055, 2.4);
         }
         color.A = 255;
-        while (0.2126 * Linear(color.R) + 0.7152 * Linear(color.G) + 0.0722 * Linear(color.B) > 0.09)
-            color = Color.FromRgb((byte)(color.R * 0.95), (byte)(color.G * 0.95), (byte)(color.B * 0.95));
+        double luminance = 0.2126 * Linear(color.R) + 0.7152 * Linear(color.G) + 0.0722 * Linear(color.B);
+        if (dark)
+        {
+            while (luminance < 0.5)
+            {
+                color = Color.FromRgb((byte)Math.Min(255, Math.Ceiling(color.R * 0.9 + 25.5)),
+                    (byte)Math.Min(255, Math.Ceiling(color.G * 0.9 + 25.5)),
+                    (byte)Math.Min(255, Math.Ceiling(color.B * 0.9 + 25.5)));
+                luminance = 0.2126 * Linear(color.R) + 0.7152 * Linear(color.G) + 0.0722 * Linear(color.B);
+            }
+        }
+        else
+        {
+            while (luminance > 0.09)
+            {
+                color = Color.FromRgb((byte)(color.R * 0.95), (byte)(color.G * 0.95), (byte)(color.B * 0.95));
+                luminance = 0.2126 * Linear(color.R) + 0.7152 * Linear(color.G) + 0.0722 * Linear(color.B);
+            }
+        }
         return color;
     }
 }

@@ -814,10 +814,10 @@
                                         VerticalAlignment="Center"
                                         AutomationProperties.Name="Theme"
                                         SelectionChanged="OnThemeGalleryChanged">
-                        <rk:RibbonGalleryItem Tag="CrystalLight" ToolTip="Crystal Light">
+                        <rk:RibbonGalleryItem Tag="CrystalLight" ToolTip="Crystal">
                             <StackPanel Orientation="Horizontal" Width="112" Height="42">
                                 <Image Source="{StaticResource Icon.Mica}" Width="22" Height="22" Margin="4,0,6,0" />
-                                <TextBlock Text="Crystal Light" VerticalAlignment="Center" />
+                                <TextBlock Text="Crystal" VerticalAlignment="Center" />
                             </StackPanel>
                         </rk:RibbonGalleryItem>
                         <rk:RibbonGalleryItem Tag="Office2024" ToolTip="Office 2024">

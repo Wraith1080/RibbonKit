@@ -1,0 +1,232 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Overlay Tokens.Crystal.Light.xaml. Office 2024 dark covers unchanged shared
+         controls; these overrides keep Crystal's glass geometry on dark surfaces. -->
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/RibbonKit;component/Themes/Tokens.Office2024.Dark.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Window.Background" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#152330" Offset="0" /><GradientStop Color="#242435" Offset="0.5" />
+        <GradientStop Color="#172D32" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.TitleBar.Background" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#233747" Offset="0" /><GradientStop Color="#292B3F" Offset="0.65" />
+        <GradientStop Color="#1D3941" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Ribbon.ContentBackground" StartPoint="0,0" EndPoint="0.25,1">
+        <GradientStop Color="#273A48" Offset="0" /><GradientStop Color="#202E3B" Offset="0.55" />
+        <GradientStop Color="#1E2B37" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Ribbon.BodyBackground" StartPoint="0,0" EndPoint="0.25,1">
+        <GradientStop Color="#273A48" Offset="0" /><GradientStop Color="#202E3B" Offset="0.55" />
+        <GradientStop Color="#1E2B37" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Ribbon.Border" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#A7799CB3" Offset="0" /><GradientStop Color="#7064839A" Offset="0.45" />
+        <GradientStop Color="#80506B80" Offset="1" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Background" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.SurfaceBackground" Color="#243645" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Primary" Color="#EAF4FC" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Secondary" Color="#B5CAD9" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.TitleBar.Foreground" Color="#EAF4FC" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.Foreground" Color="#D7EAF7" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Accent" Color="#8BC9F0" />
+
+    <RadialGradientBrush x:Key="RibbonKit.Brushes.MdiChild.ActiveCaptionBackground"
+                         Center="0.5,0.15" GradientOrigin="0.5,0.15" RadiusX="0.9" RadiusY="1.1">
+        <GradientStop Color="#38566A" Offset="0" /><GradientStop Color="#2B4355" Offset="0.58" />
+        <GradientStop Color="#263A4B" Offset="1" />
+    </RadialGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.ActiveCaptionForeground" Color="#F1F8FD" />
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.MdiChild.InactiveCaptionBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#2B3E4D" Offset="0" /><GradientStop Color="#22313E" Offset="1" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.InactiveCaptionForeground" Color="#B5CAD9" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.ActiveBorder" Color="#6997B5" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.InactiveBorder" Color="#4A687C" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiClient.Background" Color="#192631" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.CaptionButtonHoverBackground" Color="#388ABDE1" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MdiChild.CaptionButtonPressedBackground" Color="#608ABDE1" />
+
+    <DrawingGroup x:Key="Crystal.Drawing.GlassRim">
+        <GeometryDrawing Brush="#8A6F94AC" Geometry="M0,0 H1 V1 H0 Z" />
+        <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z">
+            <GeometryDrawing.Brush>
+                <RadialGradientBrush Center="0.5,0" GradientOrigin="0.5,0" RadiusX="0.48" RadiusY="0.1">
+                    <GradientStop Color="#AABAD8EA" Offset="0" /><GradientStop Color="#60B2D1E6" Offset="0.55" />
+                    <GradientStop Color="#00B2D1E6" Offset="1" />
+                </RadialGradientBrush>
+            </GeometryDrawing.Brush>
+        </GeometryDrawing>
+    </DrawingGroup>
+    <DrawingBrush x:Key="RibbonKit.Brushes.Control.HoverBorder" Drawing="{StaticResource Crystal.Drawing.GlassRim}"
+                  Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
+    <GeometryDrawing x:Key="Crystal.Drawing.InnerReflection" Geometry="M0,0 H1 V1 H0 Z">
+        <GeometryDrawing.Brush>
+            <RadialGradientBrush Center="0.5,0.91" GradientOrigin="0.5,0.91" RadiusX="0.46" RadiusY="0.075">
+                <GradientStop Color="#78C5E7FA" Offset="0" /><GradientStop Color="#30B5D8EF" Offset="0.45" />
+                <GradientStop Color="#00B5D8EF" Offset="1" />
+            </RadialGradientBrush>
+        </GeometryDrawing.Brush>
+    </GeometryDrawing>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.HoverBackground" Color="#406FA6CA" />
+    <DrawingBrush x:Key="RibbonKit.Brushes.Control.PressedBackground" Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
+        <DrawingBrush.Drawing><DrawingGroup>
+            <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z" Brush="#365268" />
+            <StaticResource ResourceKey="Crystal.Drawing.InnerReflection" />
+        </DrawingGroup></DrawingBrush.Drawing>
+    </DrawingBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.PressedBorder" Color="#829DB4" />
+    <DrawingBrush x:Key="RibbonKit.Brushes.Control.CheckedBackground" Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
+        <DrawingBrush.Drawing><DrawingGroup>
+            <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z" Brush="#314E63" />
+            <StaticResource ResourceKey="Crystal.Drawing.InnerReflection" />
+        </DrawingGroup></DrawingBrush.Drawing>
+    </DrawingBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CheckedHoverBackground" Color="#3C637B" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CheckedBorder" Color="#769AB5" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionBackground" Color="#406FA6CA" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.SplitActiveHover" Color="#606FA6CA" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionBorder" Color="#80769CB7" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Group.Separator" Color="#607697AA" />
+
+    <RadialGradientBrush x:Key="RibbonKit.Brushes.Tab.SelectedBackground"
+                         Center="0.5,0.25" GradientOrigin="0.5,0.25" RadiusX="0.85" RadiusY="0.95">
+        <GradientStop Color="#38566C" Offset="0" /><GradientStop Color="#2B4355" Offset="0.55" />
+        <GradientStop Color="#263A4B" Offset="1" />
+    </RadialGradientBrush>
+    <DrawingBrush x:Key="RibbonKit.Brushes.Tab.SelectedBorderBrush" Drawing="{StaticResource Crystal.Drawing.GlassRim}"
+                  Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ConnectFootSelected" Color="#263A4B" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ConnectNotch" Color="#263A4B" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverBackground" Color="#3879A8C7" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.QatExtender.Background" Color="#3879A8C7" />
+    <DrawingBrush x:Key="RibbonKit.Brushes.Tab.HoverBorder" Drawing="{StaticResource Crystal.Drawing.GlassRim}"
+                  Opacity="0.6" Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverUnderline" Color="Transparent" />
+    <DrawingBrush x:Key="RibbonKit.Brushes.Tab.SelectedUnderline" Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
+        <DrawingBrush.Drawing><DrawingGroup>
+            <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z">
+                <GeometryDrawing.Brush><LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#5987A8" Offset="0" /><GradientStop Color="#83BEDD" Offset="0.25" />
+                    <GradientStop Color="#C5EDFC" Offset="0.52" /><GradientStop Color="#83B9D6" Offset="0.78" />
+                    <GradientStop Color="#537B98" Offset="1" />
+                </LinearGradientBrush></GeometryDrawing.Brush>
+            </GeometryDrawing>
+            <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z">
+                <GeometryDrawing.Brush><RadialGradientBrush Center="0.3,0.42" GradientOrigin="0.3,0.42" RadiusX="0.28" RadiusY="0.48">
+                    <GradientStop Color="#80FFFFFF" Offset="0" /><GradientStop Color="#00FFFFFF" Offset="1" />
+                </RadialGradientBrush></GeometryDrawing.Brush>
+            </GeometryDrawing>
+        </DrawingGroup></DrawingBrush.Drawing>
+    </DrawingBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedForeground" Color="#B9E1F8" />
+    <DropShadowEffect x:Key="Crystal.Effects.QuickAccessShadow" Color="#000000" BlurRadius="10" ShadowDepth="0" Opacity="0.45" />
+    <DrawingBrush x:Key="Crystal.Brushes.QuickAccessBorder" Drawing="{StaticResource Crystal.Drawing.GlassRim}"
+                  Opacity="0.6" Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
+        <DrawingBrush.RelativeTransform><ScaleTransform ScaleY="-1" CenterY="0.5" /></DrawingBrush.RelativeTransform>
+    </DrawingBrush>
+
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Backstage.Modern.NavBackground" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#293F50" Offset="0" /><GradientStop Color="#1E3040" Offset="1" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.NavBackgroundTranslucent" Color="#AA1E3040" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.Foreground" Color="#EAF4FC" />
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.Backstage.ContentBackground" StartPoint="0,0" EndPoint="0.2,1">
+        <GradientStop Color="#253947" Offset="0" /><GradientStop Color="#1D2E3B" Offset="1" />
+    </LinearGradientBrush>
+    <DrawingBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemHover" Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
+        <DrawingBrush.Drawing><GeometryDrawing Geometry="M0,0 H1 V1 H0 Z" Brush="{StaticResource RibbonKit.Brushes.Tab.SelectedBackground}" /></DrawingBrush.Drawing>
+    </DrawingBrush>
+    <DrawingBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemSelected" Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
+        <DrawingBrush.Drawing><GeometryDrawing Geometry="M0,0 H1 V1 H0 Z" Brush="{StaticResource RibbonKit.Brushes.Control.CheckedBackground}" /></DrawingBrush.Drawing>
+    </DrawingBrush>
+    <DrawingBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemHoverTranslucent" Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
+        <DrawingBrush.Drawing><GeometryDrawing Geometry="M0,0 H1 V1 H0 Z" Brush="{StaticResource RibbonKit.Brushes.Tab.SelectedBackground}" /></DrawingBrush.Drawing>
+    </DrawingBrush>
+    <DrawingBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemSelectedTranslucent" Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
+        <DrawingBrush.Drawing><GeometryDrawing Geometry="M0,0 H1 V1 H0 Z" Brush="{StaticResource RibbonKit.Brushes.Control.CheckedBackground}" /></DrawingBrush.Drawing>
+    </DrawingBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverBackground" Color="#3879A8C7" />
+    <DrawingBrush x:Key="RibbonKit.Brushes.ApplicationButton.PressedBackground" Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
+        <DrawingBrush.Drawing><GeometryDrawing Geometry="M0,0 H1 V1 H0 Z" Brush="{StaticResource RibbonKit.Brushes.Control.PressedBackground}" /></DrawingBrush.Drawing>
+    </DrawingBrush>
+    <DrawingBrush x:Key="RibbonKit.Brushes.ApplicationButton.MenuOpenBackground" Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
+        <DrawingBrush.Drawing><GeometryDrawing Geometry="M0,0 H1 V1 H0 Z" Brush="{StaticResource RibbonKit.Brushes.Control.CheckedBackground}" /></DrawingBrush.Drawing>
+    </DrawingBrush>
+    <DrawingBrush x:Key="RibbonKit.Brushes.ApplicationButton.MenuOpenBottom" Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
+        <DrawingBrush.Drawing><GeometryDrawing Geometry="M0,0 H1 V1 H0 Z" Brush="{StaticResource RibbonKit.Brushes.Control.CheckedBackground}" /></DrawingBrush.Drawing>
+    </DrawingBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.Foreground" Color="#EAF4FC" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.MenuOpenForeground" Color="#EAF4FC" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationButton.HoverUnderline" Color="Transparent" />
+    <DrawingBrush x:Key="RibbonKit.Brushes.ApplicationButton.InnerGlow" Drawing="{StaticResource Crystal.Drawing.GlassRim}"
+                  Opacity="0.6" Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
+    <DrawingBrush x:Key="RibbonKit.Brushes.TabStrip.ControlHoverBackground" Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" Opacity="0.8">
+        <DrawingBrush.Drawing><GeometryDrawing Geometry="M0,0 H1 V1 H0 Z" Brush="{StaticResource RibbonKit.Brushes.Control.CheckedBackground}" /></DrawingBrush.Drawing>
+    </DrawingBrush>
+    <DrawingBrush x:Key="RibbonKit.Brushes.TabStrip.ControlPressedBackground" Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
+        <DrawingBrush.Drawing><GeometryDrawing Geometry="M0,0 H1 V1 H0 Z" Brush="{StaticResource RibbonKit.Brushes.Control.PressedBackground}" /></DrawingBrush.Drawing>
+    </DrawingBrush>
+    <DrawingBrush x:Key="RibbonKit.Brushes.TabStrip.ScrollButtonBackground" Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
+        <DrawingBrush.Drawing><GeometryDrawing Geometry="M0,0 H1 V1 H0 Z" Brush="{StaticResource RibbonKit.Brushes.Ribbon.ContentBackground}" /></DrawingBrush.Drawing>
+    </DrawingBrush>
+
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.Background" Color="#243645" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.Border" Color="#7796AA" />
+    <DrawingBrush x:Key="RibbonKit.Brushes.KeyTip.Background" Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
+        <DrawingBrush.Drawing><DrawingGroup>
+            <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z" Brush="#304B60" />
+            <StaticResource ResourceKey="Crystal.Drawing.InnerReflection" />
+        </DrawingGroup></DrawingBrush.Drawing>
+    </DrawingBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.KeyTip.Border" Color="#83A8C0" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.KeyTip.Foreground" Color="#F0F8FD" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.HoverBackground" Color="#38C8E3F4" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.PressedBackground" Color="#608ABDDC" />
+
+    <DrawingGroup x:Key="Crystal.Drawing.GalleryRim">
+        <GeometryDrawing Brush="#8A789AAF" Geometry="M0,0 H1 V1 H0 Z" />
+        <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z" Brush="#307FC2E9" />
+    </DrawingGroup>
+    <DrawingBrush x:Key="Crystal.Brushes.GalleryBorder" Drawing="{StaticResource Crystal.Drawing.GalleryRim}"
+                  Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
+    <DrawingGroup x:Key="Crystal.Drawing.GallerySurface">
+        <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z" Brush="#243746" />
+        <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z" Brush="#18B9DBEF" />
+    </DrawingGroup>
+    <DrawingGroup x:Key="Crystal.Drawing.GallerySpecularSurface">
+        <StaticResource ResourceKey="Crystal.Drawing.GallerySurface" />
+        <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z" Brush="#10FFFFFF" />
+    </DrawingGroup>
+    <DrawingBrush x:Key="Crystal.Brushes.GallerySurface" Drawing="{StaticResource Crystal.Drawing.GallerySpecularSurface}"
+                  Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
+    <SolidColorBrush x:Key="Crystal.Brushes.ScreenTipBorder" Color="#7899AF" />
+    <DrawingBrush x:Key="Crystal.Brushes.ScreenTipSurface" Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
+        <DrawingBrush.Drawing><DrawingGroup>
+            <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z" Brush="#263C4C" />
+            <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z" Brush="#10C6E9FB" />
+        </DrawingGroup></DrawingBrush.Drawing>
+    </DrawingBrush>
+    <LinearGradientBrush x:Key="Crystal.Brushes.FrostedFrame" StartPoint="0,0" EndPoint="0,1" Opacity="0.94">
+        <GradientStop Color="#294355" Offset="0" /><GradientStop Color="#213545" Offset="0.78" />
+        <GradientStop Color="#2B4556" Offset="1" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="Crystal.Brushes.ApplicationMenuClearBand" Color="Transparent" />
+    <SolidColorBrush x:Key="Crystal.Brushes.ApplicationMenuOutline" Color="#789AB2" />
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.MessageBar.Background" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#51482D" Offset="0" /><GradientStop Color="#443B25" Offset="0.82" />
+        <GradientStop Color="#4A4129" Offset="1" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MessageBar.Border" Color="#9B8658" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MessageBar.Foreground" Color="#F5EEDC" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MessageBar.IconForeground" Color="#F2C677" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.MessageBar.CloseHoverBorder" Color="#BDA778" />
+    <Thickness x:Key="RibbonKit.Metrics.MessageBar.Margin">7,3,7,7</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.MessageBar.BorderThickness">1</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.MessageBar.LastCornerRadius">10</CornerRadius>
+    <DropShadowEffect x:Key="Crystal.Effects.ApplicationMenuShadow" Color="#000000" BlurRadius="16" ShadowDepth="0" Opacity="0.45" RenderingBias="Performance" />
+    <DropShadowEffect x:Key="RibbonKit.Effects.ContentShadow" Color="#000000" BlurRadius="16" ShadowDepth="3" Opacity="0.38" RenderingBias="Performance" />
+</ResourceDictionary>

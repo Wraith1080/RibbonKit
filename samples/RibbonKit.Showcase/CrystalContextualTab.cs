@@ -53,14 +53,16 @@ public class CrystalContextualTab : RibbonTab
         }
 
         Color color = tint.Color;
+        bool dark = TryFindResource("RibbonKit.Brushes.Text.Primary") is SolidColorBrush primaryText
+            && primaryText.Color.R + primaryText.Color.G + primaryText.Color.B > 450;
         var surface = new RadialGradientBrush
         {
             Center = new Point(0.5, 0.25), GradientOrigin = new Point(0.5, 0.25),
             RadiusX = 0.85, RadiusY = 0.95,
         };
-        surface.GradientStops.Add(new GradientStop(Mix(color, Colors.White, 0.95), 0));
-        surface.GradientStops.Add(new GradientStop(Mix(color, Colors.White, 0.86), 0.55));
-        surface.GradientStops.Add(new GradientStop(Mix(color, Colors.White, 0.72), 1));
+        surface.GradientStops.Add(new GradientStop(Mix(color, dark ? Colors.Black : Colors.White, dark ? 0.48 : 0.95), 0));
+        surface.GradientStops.Add(new GradientStop(Mix(color, dark ? Colors.Black : Colors.White, dark ? 0.62 : 0.86), 0.55));
+        surface.GradientStops.Add(new GradientStop(Mix(color, dark ? Colors.Black : Colors.White, 0.72), 1));
         surface.Freeze();
         Resources[ScopedKeys[0]] = surface;
         Resources[ScopedKeys[1]] = Frozen(Color.FromArgb(28, color.R, color.G, color.B));
@@ -68,7 +70,7 @@ public class CrystalContextualTab : RibbonTab
         if (TryFindResource("Crystal.Drawing.GlassRim") is DrawingGroup rim)
         {
             DrawingGroup drawing = rim.Clone();
-            ((GeometryDrawing)drawing.Children[0]).Brush = Frozen(Mix(color, Colors.White, 0.5));
+            ((GeometryDrawing)drawing.Children[0]).Brush = Frozen(Mix(color, Colors.White, dark ? 0.3 : 0.5));
             var border = new DrawingBrush(drawing) { Viewbox = new Rect(0, 0, 1, 1), ViewboxUnits = BrushMappingMode.Absolute };
             border.Freeze();
             Resources[ScopedKeys[2]] = border;
@@ -83,13 +85,14 @@ public class CrystalContextualTab : RibbonTab
             DrawingBrush marker = bubble.Clone();
             var drawing = (DrawingGroup)marker.Drawing;
             var gradient = (LinearGradientBrush)((GeometryDrawing)drawing.Children[0]).Brush;
-            double[] light = { 0.35, 0.66, 0.94, 0.80, 0.45 };
+            double[] light = dark ? new[] { 0.22, 0.48, 0.78, 0.60, 0.32 }
+                : new[] { 0.35, 0.66, 0.94, 0.80, 0.45 };
             for (int i = 0; i < gradient.GradientStops.Count; i++)
                 gradient.GradientStops[i].Color = Mix(color, Colors.White, light[i]);
             marker.Freeze();
             ContextualSelectionBrush = marker;
         }
-        Resources[TextKey] = Frozen(Mix(color, Colors.Black, 0.45));
+        Resources[TextKey] = Frozen(Mix(color, dark ? Colors.White : Colors.Black, dark ? 0.72 : 0.45));
         Resources[ScopedKeys[4]] = 0.85;
         if (GetTemplateChild("ContextualHeaderText") is FrameworkElement text)
             text.SetResourceReference(TextElement.ForegroundProperty, TextKey);

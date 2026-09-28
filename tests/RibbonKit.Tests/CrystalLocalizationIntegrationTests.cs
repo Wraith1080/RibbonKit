@@ -112,6 +112,18 @@ public sealed class CrystalLocalizationIntegrationTests
                 "RibbonKit.Brushes.Control.HoverBackground")).Color;
             Assert.NotEqual(purpleHover, greenHover);
 
+            ThemeManager.SetDarkMode(application, true);
+            demo.ApplyCrystal(true, Colors.SeaGreen);
+            Sta.Drain();
+            demo.UpdateLayout();
+            AssertOptionIndicatorSide(demo.RtlCheckBox, rtl: true);
+            AssertOptionIndicatorSide(demo.RtlRadioButton, rtl: true);
+            Color darkGlyph = Assert.IsType<SolidColorBrush>(demo.RtlCheckBox.FindResource(
+                "RibbonKit.Brushes.Input.Glyph")).Color;
+            Assert.True(darkGlyph.R > 0xD0 && darkGlyph.G > 0xD0 && darkGlyph.B > 0xD0);
+            Assert.IsType<DrawingBrush>(demo.RtlCheckBox.FindResource("Crystal.Options.SelectedSurface"));
+            ThemeManager.SetDarkMode(application, false);
+
             ThemeManager.Apply(application, RibbonTheme.Office2024);
             demo.ApplyCrystal(false);
             Sta.Drain();

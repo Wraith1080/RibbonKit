@@ -64,7 +64,7 @@ public sealed class VisualSnapshotTests
             {
                 Assert.All(Themes, variant =>
                     Assert.True(ThemeManager.SupportsDarkMode(variant.Theme)));
-                Assert.False(ThemeManager.SupportsDarkMode(RibbonTheme.CrystalLight));
+                Assert.True(ThemeManager.SupportsDarkMode(RibbonTheme.CrystalLight));
                 AssertDarkBackdropRoundTrip(application);
 
                 foreach ((RibbonTheme theme, bool dark, string name) in Themes)

@@ -747,7 +747,7 @@ the remaining preview presentation adapters stay host-owned.
 Promotion slice 2 adds `RibbonTheme.CrystalLight` and a main-Showcase theme choice.
 `ThemeManager.Apply` loads the shared Crystal tokens, and the choice persists in
 Showcase appearance preferences. The designer's palette preview can select the same
-tokens. Crystal Light has no dark palette. A custom accent
+tokens. At this stage Crystal Light had no dark palette. A custom accent
 updates semantic accent and selected-tab text while leaving its reflective marker,
 checked wash and open File surface intact; the preview's separate Glass tint control
 still recolors the whole material. Crystal snapshots and live main-window acceptance
@@ -789,11 +789,11 @@ readability adjustments. Keep the switch opt-in for Office themes and preserve
 their current Glass look-off appearance and the accepted Crystal treatment.
 
 **Deferred View-tab overflow after leaving Crystal Light (user screenshots, 2026-09-27):**
-At the shown window width, Crystal Light hides the unsupported Dark Mode button.
-Selecting Office 2024 makes that button visible again, but the View groups extend
-past the ribbon's right edge without enabling the right scroll chevron. Keep Dark
-Mode hidden for Crystal Light until it has a dark palette; the Office control must
-return without losing access to the remaining groups.
+At the shown window width, Crystal Light hid the then-unsupported Dark Mode button.
+Selecting Office 2024 made that button visible again, but the View groups extended
+past the ribbon's right edge without enabling the right scroll chevron. Crystal now
+supports dark mode, so the visibility change in the original reproduction no longer
+applies. The overflow investigation remains deferred.
 
 Plan for the later fix:
 
@@ -801,7 +801,7 @@ Plan for the later fix:
    fresh Office 2024 start, the reverse switch, repeated switches, and narrower
    widths. Record whether adaptive reduction should fit the row or scrolling is
    required. Check the other Office generations before changing shared layout.
-2. After Dark Mode changes visibility, inspect `RibbonGroupsPanel`'s cached state
+2. During the theme switch, inspect `RibbonGroupsPanel`'s cached state
    widths and reported content width alongside `PART_ContentScroll`'s extent,
    viewport, and `CanScrollRight`. Determine whether the group measurement, scroll
    report, or refresh timing is stale. The existing tab-switch refresh is a useful
@@ -810,8 +810,8 @@ Plan for the later fix:
    and avoid a Showcase-only width adjustment or repeated layout invalidation.
 4. Add a focused visibility/theme-switch regression: every View group remains
    within the ribbon or becomes reachable through an enabled right chevron, and
-   switching back to Crystal Light restores the intended button visibility and
-   overflow state. Follow with live screenshot review at the reported width and
+   switching back to Crystal restores the intended overflow state. Follow with
+   live screenshot review at the reported width and
    relevant DPI scales.
 
 Phase two has started with MDI Demo. Its shared MDI child/container templates now
@@ -841,11 +841,12 @@ ribbon behavior remain in use. A focused check covers modal entry/exit, tint
 changes and the original paint in every Office light/dark palette. Live visual
 acceptance remains open.
 
-Remaining phase-two surfaces: Chart Tools already uses Crystal contextual tabs
-and the main-window merge adapter, pending visual review; the main Options dialog
-has Crystal customization styling, while its app-owned Editor page remains plain.
-Modal-tab state uses the shared ribbon template. Crystal Light still has no dark
-palette, so its Dark Mode control remains hidden.
+Chart Tools already uses Crystal contextual tabs and the main-window merge adapter;
+the main Options dialog has Crystal customization styling, while its app-owned
+Editor page remains plain. The user considers both sufficiently integrated for this
+phase. Modal-tab state uses the shared ribbon template. Crystal's dark palette now
+loads through `ThemeManager.SetDarkMode`; Showcase refreshes its window-scoped
+materials and open detached demos when dark mode changes. Live visual review remains.
 
 The MDI and Print Preview screenshots exposed a shared first-tab seam when File
 is hidden: a connected tab can meet the body's rounded leading corner. The

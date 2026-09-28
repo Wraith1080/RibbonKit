@@ -208,6 +208,29 @@ public sealed class CrystalMainWindowPresentationTests
                 "RibbonKit.Brushes.Tab.HoverBackground")).Color);
             glass.Apply(false, darkMode: false);
 
+            ThemeManager.SetDarkMode(application, true);
+            presentation.Apply(true, Colors.Red);
+            Sta.Drain();
+            Assert.EndsWith("Crystal.Dark.xaml", presentation.Palette!.Source!.OriginalString);
+            Assert.Equal(Color.FromRgb(0xEA, 0xF4, 0xFC), Assert.IsType<SolidColorBrush>(
+                window.FindResource("RibbonKit.Brushes.Text.Primary")).Color);
+            var darkInput = Assert.IsType<DrawingBrush>(combo.FindResource(
+                "RibbonKit.Brushes.Control.SurfaceBackground"));
+            var inputDrawing = Assert.IsType<DrawingGroup>(darkInput.Drawing);
+            var inputFace = Assert.IsType<RadialGradientBrush>(Assert.IsType<GeometryDrawing>(
+                inputDrawing.Children[0]).Brush);
+            Color darkInputFace = inputFace.GradientStops[0].Color;
+            Assert.True(darkInputFace.R < 0x70 && darkInputFace.G < 0x70 && darkInputFace.B < 0x70);
+            Assert.True(darkInputFace.R > darkInputFace.G);
+            Assert.IsType<DrawingBrush>(context.ContextualSelectionBrush);
+            var darkContext = Assert.IsType<RadialGradientBrush>(context.Resources[
+                "RibbonKit.Brushes.Tab.SelectedBackground"]);
+            Assert.True(darkContext.GradientStops[0].Color.R < 0x80);
+            Assert.Equal(Assert.IsType<SolidColorBrush>(foot.Background).Color,
+                Assert.IsType<SolidColorBrush>(notch.Background).Color);
+            ThemeManager.SetDarkMode(application, false);
+            presentation.Apply(true, Colors.Red);
+
             ThemeManager.Apply(application, RibbonTheme.Office2024);
             presentation.Apply(false);
             Sta.Drain();

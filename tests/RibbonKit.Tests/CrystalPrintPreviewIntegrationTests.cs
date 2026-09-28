@@ -58,6 +58,22 @@ public sealed class CrystalPrintPreviewIntegrationTests
             Assert.Equal(Color.FromRgb(0x20, 0x36, 0x4A), ColorOf(title.Foreground));
             Assert.Equal(Color.FromRgb(0x4F, 0x64, 0x76), ColorOf(body.Foreground));
 
+            window.DarkModeToggle.IsChecked = true;
+            Assert.True(ThemeManager.IsDarkMode);
+            Assert.True(ThemeManager.SupportsDarkMode(RibbonTheme.CrystalLight));
+            Assert.Contains(window.Resources.MergedDictionaries, dictionary =>
+                dictionary.Source?.OriginalString.EndsWith("Crystal.Dark.xaml", StringComparison.Ordinal) == true);
+            Color darkCanvas = ColorOf(window.PrintPreviewSurface.Background);
+            Assert.NotEqual(tintedCanvas, darkCanvas);
+            Assert.True(darkCanvas.R < 0x70 && darkCanvas.G < 0x70 && darkCanvas.B < 0x70);
+            Assert.Equal(Color.FromRgb(0x20, 0x36, 0x4A), ColorOf(title.Foreground));
+            Assert.Equal(Colors.White, ColorOf(page.Background));
+
+            window.DarkModeToggle.IsChecked = false;
+            Assert.Equal(tintedCanvas, ColorOf(window.PrintPreviewSurface.Background));
+            Assert.DoesNotContain(window.Resources.MergedDictionaries, dictionary =>
+                dictionary.Source?.OriginalString.EndsWith("Crystal.Dark.xaml", StringComparison.Ordinal) == true);
+
             Assert.True(window.MainRibbon.ExitModal());
             Assert.Equal(Visibility.Collapsed, window.PrintPreviewSurface.Visibility);
             SelectTheme(RibbonTheme.Office2024);
