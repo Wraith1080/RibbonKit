@@ -54,9 +54,10 @@ slice 5, and the Backstage wrapper was simplified in the duplicate audit.
 The [Crystal portability and Office 2007 orb integration plan](13-CRYSTAL-PORTABILITY-AND-ORB-PLAN.md)
 now defines the bounded promotion slices. Slices 1–5 implement the Office 2007
 default orb, theme-owned header inset, public orb glyph template and portable
-Crystal control resources and built-in customization pages. Shell chrome and
-later presentation slices remain proposals; live Crystal visual review is still
-pending. After the promotion slices, migrate important preview-only demonstrations
+Crystal control resources and built-in customization pages. Slice 6's first QAT
+pass now supplies the shared light/dark drawer, body coordination and shadow;
+message-bar/application-menu promotion and later slices remain proposals. Live
+Crystal visual review is still pending. After the promotion slices, migrate important preview-only demonstrations
 to the main Showcase and remove the separate Crystal preview window (slice 10).
 
 The earlier Showcase-only adapter registration proposal is superseded. It could
@@ -70,7 +71,12 @@ The Showcase presentation audit found these Crystal portability gaps:
   Built-in Options page appearance, including rounded list/tree frames, moved
   into shared resources in slice 5. `CrystalCustomization` now only scopes
   preview scrollbar tint; that remaining helper belongs to slice 7.
-- `CrystalQuickAccess`, `CrystalMessagePresentation`,
+- `CrystalQuickAccess` and its callers were removed in slice 6's QAT pass;
+  a RibbonKit-only consumer obtains its paint and geometry through shared
+  templates/tokens. The preview's document underlay remains host-owned and
+  lacks a reusable optional bounds/fade contract (slice 9). Message-only body
+  rounding remains a scoped preview token override for the next message pass.
+- `CrystalMessagePresentation`,
   `CrystalApplicationMenuPresentation`, `CrystalUtilityChrome` and
   `CrystalScrollBars` modify built-in control chrome or template parts after
   theme selection. Promote generic geometry and paint into RibbonKit rather

@@ -75,10 +75,6 @@ public partial class CrystalPreviewWindow : RibbonWindow
             FontInput, SizeInput, TitleInput, CrystalStylesGallery, UnavailableButton })
             if (control.ToolTip is RibbonScreenTip tip) _screenTipPalette.Attach(tip);
         UpdateCrystalDetails(true);
-        PreviewRibbon.Loaded += (_, _) =>
-        {
-            CrystalQuickAccess.Apply(PreviewRibbon, CompareToggle.IsChecked != true);
-        };
         _baselineLayout = RibbonCustomizationSerializer.Serialize(PreviewRibbon);
         PreviewRibbon.RibbonCustomizeRequested += (_, _) => CreateCustomizationDialog(false).ShowDialog();
         PreviewRibbon.QuickAccessCustomizeRequested += (_, _) => CreateCustomizationDialog(true).ShowDialog();
@@ -139,7 +135,6 @@ public partial class CrystalPreviewWindow : RibbonWindow
         _documentEdgeFade.Apply(enabled, _documentEdgeFadeEnabled, _documentQatUnderlayEnabled);
         DocumentFadeToggle.IsEnabled = enabled;
         DocumentQatUnderlayToggle.IsEnabled = enabled;
-        if (PreviewRibbon.IsLoaded) CrystalQuickAccess.Apply(PreviewRibbon, enabled);
         _backstagePresentation.Apply(enabled ? _crystal : null);
         _screenTipPalette.Apply(enabled ? _crystal : null);
         var accent = ((SolidColorBrush)FindResource("RibbonKit.Brushes.Accent")).Color;

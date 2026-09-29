@@ -104,6 +104,7 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionCloseHoverBorder" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionClosePressedBorder" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Border" Color="#8DB2E3" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.QatExtender.Border" Color="#8DB2E3" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Primary" Color="#1E1E1E" />
     <!-- 2007 group labels are BLUE, not grey (unlike every later generation). -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Secondary" Color="#15428B" />
@@ -586,11 +587,16 @@
     <!-- Used INSTEAD of ContentCornerRadius when the QAT sits below the ribbon: the body rounds
          only its top corners and the QAT strip below completes the shape with the bottom pair. -->
     <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadiusTop">3,3,0,0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadiusQatBelow">3,3,0,0</CornerRadius>
+    <system:Int32 x:Key="RibbonKit.Metrics.ContentZIndexQatBelow">0</system:Int32>
     <Thickness x:Key="RibbonKit.Metrics.ContentMarginQatBelow">2,0,2,0</Thickness>
 
     <!-- 2007's ribbon is welded to the window chrome, so the separation from the document is a
          hairline rather than the floating card of 2024. -->
     <DropShadowEffect x:Key="RibbonKit.Effects.ContentShadow"
+                      BlurRadius="5" ShadowDepth="1" Direction="270"
+                      Opacity="0.10" Color="#000000" RenderingBias="Performance" />
+    <DropShadowEffect x:Key="RibbonKit.Effects.QatExtenderShadow"
                       BlurRadius="5" ShadowDepth="1" Direction="270"
                       Opacity="0.10" Color="#000000" RenderingBias="Performance" />
 

@@ -542,7 +542,6 @@ public class CrystalContextualTests
         {
             window.Show();
             Sta.Drain();
-            CrystalQuickAccess.Apply(ribbon, true);
             window.UpdateLayout();
             var panel = (Border)ribbon.Template.FindName("QatBelowHost", ribbon);
             Assert.Equal(32, panel.MinHeight);
@@ -558,7 +557,6 @@ public class CrystalContextualTests
             window.UpdateLayout();
             Assert.Equal(originalHeight, panel.ActualHeight, 1);
 
-            CrystalQuickAccess.Apply(ribbon, false);
             Assert.Equal(DependencyProperty.UnsetValue,
                 panel.ReadLocalValue(FrameworkElement.MinHeightProperty));
         }
@@ -597,14 +595,13 @@ public class CrystalContextualTests
             var tabs = (RibbonTabControl)ribbon.Template.FindName("TabControlHost", ribbon);
             var body = (Border)tabs.Template.FindName("ContentHost", tabs);
             var originalShadow = body.Effect;
-            CrystalQuickAccess.Apply(ribbon, true);
             Layout();
             var panel = (Border)ribbon.Template.FindName("QatBelowHost", ribbon);
             Assert.Equal(new CornerRadius(14), body.CornerRadius);
             Assert.Equal(new CornerRadius(0, 0, 10, 10), panel.CornerRadius);
             Assert.Equal(new Thickness(1, 0, 1, 1), panel.BorderThickness);
             Assert.Same(ribbon.FindResource("RibbonKit.Brushes.QatExtender.Background"), panel.Background);
-            Assert.Same(ribbon.FindResource("Crystal.Brushes.QuickAccessBorder"), panel.BorderBrush);
+            Assert.Same(ribbon.FindResource("RibbonKit.Brushes.QatExtender.Border"), panel.BorderBrush);
             var qatRim = Assert.IsType<DrawingBrush>(panel.BorderBrush);
             var hoverRim = Assert.IsType<DrawingBrush>(ribbon.FindResource("RibbonKit.Brushes.Tab.HoverBorder"));
             Assert.Equal(new Point(0.5, 1), qatRim.RelativeTransform.Transform(new Point(0.5, 0)));
@@ -613,7 +610,7 @@ public class CrystalContextualTests
             Assert.Same(originalShadow, body.Effect);
             Assert.False(tabs.Resources.Contains("RibbonKit.Effects.ContentShadow"));
             Assert.True(Panel.GetZIndex(tabs) > Panel.GetZIndex(panel));
-            Assert.Same(ribbon.FindResource("Crystal.Effects.QuickAccessShadow"), panel.Effect);
+            Assert.Same(ribbon.FindResource("RibbonKit.Effects.QatExtenderShadow"), panel.Effect);
             Assert.Equal(0d, ((System.Windows.Media.Effects.DropShadowEffect)panel.Effect).ShadowDepth);
             Assert.Equal(body.ActualWidth - 32, panel.ActualWidth, 1);
             Assert.Equal(body.TranslatePoint(new Point(), ribbon).X + 16, panel.TranslatePoint(new Point(), ribbon).X, 1);
@@ -640,9 +637,9 @@ public class CrystalContextualTests
             ribbon.SelectedTab = tab;
             Layout();
             Assert.Same(ribbon.FindResource("RibbonKit.Brushes.QatExtender.Background"), panel.Background);
-            Assert.Same(ribbon.FindResource("Crystal.Brushes.QuickAccessBorder"), panel.BorderBrush);
+            Assert.Same(ribbon.FindResource("RibbonKit.Brushes.QatExtender.Border"), panel.BorderBrush);
             Assert.Equal(new Point(0.5, 1), panel.BorderBrush.RelativeTransform.Transform(new Point(0.5, 0)));
-            Assert.Same(ribbon.FindResource("Crystal.Effects.QuickAccessShadow"), panel.Effect);
+            Assert.Same(ribbon.FindResource("RibbonKit.Effects.QatExtenderShadow"), panel.Effect);
             Assert.Same(ribbon.FindResource("RibbonKit.Effects.ContentShadow"), body.Effect);
             ribbon.IsMinimized = true;
             Layout();
@@ -653,7 +650,6 @@ public class CrystalContextualTests
             Assert.Equal(Visibility.Collapsed, panel.Visibility);
             ribbon.QuickAccessPosition = RibbonQuickAccessPosition.BelowRibbon;
             ribbon.IsMinimized = false;
-            CrystalQuickAccess.Apply(ribbon, false);
             ribbon.Resources.MergedDictionaries.RemoveAt(1);
             Layout();
             Assert.Equal(HorizontalAlignment.Stretch, panel.HorizontalAlignment);

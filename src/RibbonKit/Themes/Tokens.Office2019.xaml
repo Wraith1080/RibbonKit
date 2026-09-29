@@ -38,6 +38,7 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionCloseHoverBorder" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionClosePressedBorder" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Border" Color="#C8C6C4" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.QatExtender.Border" Color="#C8C6C4" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Primary" Color="#201F1E" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Secondary" Color="#605E5C" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ScrollBar.Track" Color="#F3F2F1" />
@@ -310,10 +311,14 @@
     <system:Double x:Key="RibbonKit.Metrics.MinimizedDividerHeight">0</system:Double>
     <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadius">0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadiusTop">0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadiusQatBelow">0</CornerRadius>
+    <system:Int32 x:Key="RibbonKit.Metrics.ContentZIndexQatBelow">0</system:Int32>
     <Thickness x:Key="RibbonKit.Metrics.ContentMarginQatBelow">0</Thickness>
 
     <!-- Flat theme: no ribbon shadow. -->
     <DropShadowEffect x:Key="RibbonKit.Effects.ContentShadow"
+                      Opacity="0" BlurRadius="0" ShadowDepth="0" />
+    <DropShadowEffect x:Key="RibbonKit.Effects.QatExtenderShadow"
                       Opacity="0" BlurRadius="0" ShadowDepth="0" />
 
     <!-- Flat below-ribbon QAT: a plain full-width strip with a bottom border. -->

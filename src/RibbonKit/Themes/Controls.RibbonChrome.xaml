@@ -140,10 +140,10 @@
                                     Margin="{DynamicResource RibbonKit.Metrics.QatExtenderMargin}"
                                     Padding="8,2"
                                     Background="{DynamicResource RibbonKit.Brushes.QatExtender.Background}"
-                                    BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}"
+                                    BorderBrush="{DynamicResource RibbonKit.Brushes.QatExtender.Border}"
                                     BorderThickness="{DynamicResource RibbonKit.Metrics.QatExtenderBorderThickness}"
                                     CornerRadius="{DynamicResource RibbonKit.Metrics.QatExtenderCornerRadius}"
-                                    Effect="{DynamicResource RibbonKit.Effects.ContentShadow}"
+                                    Effect="{DynamicResource RibbonKit.Effects.QatExtenderShadow}"
                                     Visibility="Collapsed">
                                 <!-- ItemsSource bound only by the BelowRibbon trigger. -->
                                 <ItemsControl x:Name="QatBelowItems"
@@ -207,6 +207,10 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="QuickAccessPosition" Value="BelowRibbon">
+                            <!-- Crystal raises the body shadow above its inset drawer. Office
+                                 retains declaration order; the application-menu overlay stays above both. -->
+                            <Setter TargetName="TabControlHost" Property="Panel.ZIndex"
+                                    Value="{DynamicResource RibbonKit.Metrics.ContentZIndexQatBelow}" />
                             <Setter TargetName="QatBelowHost" Property="Visibility" Value="Visible" />
                             <Setter TargetName="QatBelowItems" Property="ItemsSource">
                                 <Setter.Value>
@@ -923,13 +927,12 @@
                                     Property="Opacity"
                                     Value="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroMaterialTitleBackgroundOpacity}" />
                         </MultiDataTrigger>
-                        <!-- When the QAT sits below the ribbon, the card squares its bottom
-                             corners and drops its bottom margin so the full-width QAT bar
-                             connects flush underneath. -->
+                        <!-- Office squares its body foot for a full-width extender; Crystal
+                             keeps a rounded body above the inset drawer. Both consume the lower gap. -->
                         <DataTrigger Binding="{Binding QuickAccessPosition, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
                                      Value="BelowRibbon">
                             <Setter TargetName="ContentHost" Property="CornerRadius"
-                                    Value="{DynamicResource RibbonKit.Metrics.ContentCornerRadiusTop}" />
+                                    Value="{DynamicResource RibbonKit.Metrics.ContentCornerRadiusQatBelow}" />
                             <Setter TargetName="ContentHost" Property="Margin"
                                     Value="{DynamicResource RibbonKit.Metrics.ContentMarginQatBelow}" />
                         </DataTrigger>
@@ -944,6 +947,17 @@
                             <Setter TargetName="ContentHost" Property="Margin"
                                     Value="{DynamicResource RibbonKit.Metrics.ContentMarginQatBelow}" />
                         </DataTrigger>
+                        <!-- A message below the QAT does not change the body-to-drawer seam. -->
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding QuickAccessPosition, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
+                                           Value="BelowRibbon" />
+                                <Condition Binding="{Binding HasOpenMessages, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
+                                           Value="True" />
+                            </MultiDataTrigger.Conditions>
+                            <Setter TargetName="ContentHost" Property="CornerRadius"
+                                    Value="{DynamicResource RibbonKit.Metrics.ContentCornerRadiusQatBelow}" />
+                        </MultiDataTrigger>
                         <!-- With no File or merged caption icon, use the theme's no-application
                              margin for the first visible header-row item. The QAT owns any extra
                              inset when it shares the row; otherwise the tab panel owns it. Themes

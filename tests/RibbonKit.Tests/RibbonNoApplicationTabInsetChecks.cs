@@ -83,13 +83,9 @@ internal static class RibbonNoApplicationTabInsetChecks
 
             ribbon.QuickAccessPosition = RibbonQuickAccessPosition.BelowRibbon;
             Sta.Drain();
-            Assert.Equal(new CornerRadius(14, 14, 0, 0), body.CornerRadius);
+            Assert.Equal(new CornerRadius(14), body.CornerRadius);
             Assert.Equal(new Thickness(2, 4, 26, 0), panel.Margin);
             Assert.Equal(Visibility.Collapsed, qat.Visibility);
-            CrystalQuickAccess.Apply(ribbon, true);
-            Sta.Drain();
-            Assert.Equal(new CornerRadius(14), body.CornerRadius);
-            CrystalQuickAccess.Apply(ribbon, false);
 
             ribbon.QuickAccessPosition = RibbonQuickAccessPosition.TabRow;
             ribbon.Backstage = backstage;

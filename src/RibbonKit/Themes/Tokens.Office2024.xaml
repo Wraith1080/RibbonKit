@@ -36,6 +36,7 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionCloseHoverBorder" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.WindowFrame.AeroCaptionClosePressedBorder" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Border" Color="#E0E0E0" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.QatExtender.Border" Color="#E0E0E0" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Primary" Color="#1A1A1A" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Secondary" Color="#616161" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ScrollBar.Track" Color="#F5F5F5" />
@@ -323,10 +324,15 @@
     <!-- Card geometry when the QAT sits below the ribbon: top corners rounded, bottom
          square, and no bottom margin so the QAT bar connects flush. -->
     <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadiusTop">8,8,0,0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadiusQatBelow">8,8,0,0</CornerRadius>
+    <system:Int32 x:Key="RibbonKit.Metrics.ContentZIndexQatBelow">0</system:Int32>
     <Thickness x:Key="RibbonKit.Metrics.ContentMarginQatBelow">7,1,7,0</Thickness>
 
     <!-- Soft drop shadow that lifts the ribbon card. Flat themes zero its opacity. -->
     <DropShadowEffect x:Key="RibbonKit.Effects.ContentShadow"
+                      BlurRadius="12" ShadowDepth="2" Direction="270"
+                      Opacity="0.16" Color="#000000" RenderingBias="Performance" />
+    <DropShadowEffect x:Key="RibbonKit.Effects.QatExtenderShadow"
                       BlurRadius="12" ShadowDepth="2" Direction="270"
                       Opacity="0.16" Color="#000000" RenderingBias="Performance" />
 

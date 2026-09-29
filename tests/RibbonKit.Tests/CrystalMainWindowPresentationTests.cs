@@ -110,7 +110,7 @@ public sealed class CrystalMainWindowPresentationTests
             Assert.False(merged.CrystalEnabled);
             Assert.Equal(new CornerRadius(0, 0, 10, 10), drawer.CornerRadius);
             Assert.Equal(32, drawer.MinHeight);
-            Assert.Same(ribbon.FindResource("Crystal.Effects.QuickAccessShadow"), drawer.Effect);
+            Assert.Same(ribbon.FindResource("RibbonKit.Effects.QatExtenderShadow"), drawer.Effect);
             AssertSamePaint((Brush)window.FindResource("RibbonKit.Brushes.Tab.HoverBackground"),
                 drawer.Background);
             Assert.Equal(new CornerRadius(10), messageRoot.CornerRadius);

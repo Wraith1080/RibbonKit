@@ -182,9 +182,9 @@
     <DrawingBrush x:Key="RibbonKit.Brushes.Tab.HoverBorder"
                   Drawing="{StaticResource Crystal.Drawing.GlassRim}" Opacity="0.6"
                   Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
-    <DropShadowEffect x:Key="Crystal.Effects.QuickAccessShadow" Color="#34485A"
+    <DropShadowEffect x:Key="RibbonKit.Effects.QatExtenderShadow" Color="#34485A"
                       BlurRadius="10" ShadowDepth="0" Opacity="0.3" />
-    <DrawingBrush x:Key="Crystal.Brushes.QuickAccessBorder"
+    <DrawingBrush x:Key="RibbonKit.Brushes.QatExtender.Border"
                   Drawing="{StaticResource Crystal.Drawing.GlassRim}" Opacity="0.6"
                   Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
         <DrawingBrush.RelativeTransform>
@@ -493,6 +493,18 @@
     <CornerRadius x:Key="RibbonKit.Metrics.MessageBar.LastCornerRadius">10</CornerRadius>
     <Thickness x:Key="RibbonKit.Metrics.MessageBar.ItemMargin">0,2,0,2</Thickness>
     <sys:Double x:Key="RibbonKit.Metrics.QatExtenderMinHeight">32</sys:Double>
+    <!-- Inset drawer under the rounded body; minimized draws a complete rim.
+         Message presence keeps the drawer's lower corners and existing spacing. -->
+    <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadiusQatBelow">14</CornerRadius>
+    <sys:Int32 x:Key="RibbonKit.Metrics.ContentZIndexQatBelow">1</sys:Int32>
+    <Thickness x:Key="RibbonKit.Metrics.QatExtenderMargin">23,0,23,4</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.QatExtenderMarginMessageBar">23,0,23,4</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.QatExtenderMarginMinimized">23,3,23,4</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.QatExtenderCornerRadius">0,0,10,10</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.QatExtenderCornerRadiusMessageBar">0,0,10,10</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.QatExtenderCornerRadiusMinimized">10</CornerRadius>
+    <Thickness x:Key="RibbonKit.Metrics.QatExtenderBorderThickness">1,0,1,1</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.QatExtenderBorderThicknessMinimized">1</Thickness>
     <!-- Wider than the tab arrows, with room for a straight edge between corners. -->
     <sys:Double x:Key="RibbonKit.Metrics.BodyScrollButtonWidth">32</sys:Double>
     <CornerRadius x:Key="RibbonKit.Metrics.BodyScrollButtonCornerRadius">10</CornerRadius>

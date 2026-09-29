@@ -6,6 +6,10 @@
         <ResourceDictionary Source="/RibbonKit;component/Themes/Tokens.Office2024.Dark.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
+    <!-- Reassert drawer geometry over the merged Office dark continuation metrics. -->
+    <Thickness x:Key="RibbonKit.Metrics.QatExtenderMarginMessageBar">23,0,23,4</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.QatExtenderCornerRadiusMessageBar">0,0,10,10</CornerRadius>
+
     <LinearGradientBrush x:Key="RibbonKit.Brushes.Window.Background" StartPoint="0,0" EndPoint="1,1">
         <GradientStop Color="#152330" Offset="0" /><GradientStop Color="#242435" Offset="0.5" />
         <GradientStop Color="#172D32" Offset="1" />
@@ -123,8 +127,8 @@
         </DrawingGroup></DrawingBrush.Drawing>
     </DrawingBrush>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedForeground" Color="#B9E1F8" />
-    <DropShadowEffect x:Key="Crystal.Effects.QuickAccessShadow" Color="#000000" BlurRadius="10" ShadowDepth="0" Opacity="0.45" />
-    <DrawingBrush x:Key="Crystal.Brushes.QuickAccessBorder" Drawing="{StaticResource Crystal.Drawing.GlassRim}"
+    <DropShadowEffect x:Key="RibbonKit.Effects.QatExtenderShadow" Color="#000000" BlurRadius="10" ShadowDepth="0" Opacity="0.45" />
+    <DrawingBrush x:Key="RibbonKit.Brushes.QatExtender.Border" Drawing="{StaticResource Crystal.Drawing.GlassRim}"
                   Opacity="0.6" Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
         <DrawingBrush.RelativeTransform><ScaleTransform ScaleY="-1" CenterY="0.5" /></DrawingBrush.RelativeTransform>
     </DrawingBrush>

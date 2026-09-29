@@ -1,7 +1,9 @@
 # Crystal portability and Office 2007 orb integration plan
 
 > Status: slices 1–4 implemented on 2026-09-28; slice 5 implemented on
-> 2026-09-30 with live visual review pending; slices 6–10 remain proposed.
+> 2026-09-30 with live visual review pending. Slice 6's QAT pass is implemented
+> on 2026-09-30 with live review pending; its message-bar/application-menu passes
+> and slices 7–10 remain proposed.
 > The orb default adds no public API and has no live visual acceptance yet.
 > The glyph-template property is additive and has no live visual acceptance yet.
 > Writer integration is deferred by user direction. Keep its current saved
@@ -107,10 +109,27 @@ shipped baseline is unchanged.
    preview's scrollbar tint, which remains a slice 7 gap. The app-provided Editor
    page and dialog-opening policy stay in Showcase. User screenshots remain the
    live visual acceptance gate.
-6. **Shared shell chrome.** In bounded passes, replace `CrystalQuickAccess`,
-   `CrystalMessagePresentation` and the control-paint/geometry portion of
-   `CrystalApplicationMenuPresentation` with shared QAT, message and menu
-   template/token behavior. Preserve QAT placement/minimized states, message
+6. **Shared shell chrome (QAT pass implemented; slice remains open).** Shared
+   ribbon templates and Crystal light/dark tokens now supply the below-ribbon
+   QAT drawer: 16-DIP inset relative to the default body, open top rim, 10-DIP
+   lower corners, 32-DIP minimum height, flipped glass border and zero-depth
+   shadow. The minimized drawer retains its complete rim and 3-DIP top gap;
+   existing message-state priority retains the drawer's open upper corners and
+   spacing. `ContentCornerRadiusQatBelow` coordinates the rounded Crystal body
+   independently of message-only body geometry. `ContentZIndexQatBelow` raises
+   its seam shadow below the application-menu overlay. Office palettes retain
+   their previous geometry, paint and shadow values. All new shared keys have
+   matching Office defaults, and `DynamicResource` updates and explicit local
+   value precedence are verified. This pass adds no public C# API.
+   `CrystalQuickAccess` and its main/preview callers were removed after the
+   RibbonKit-only consumer proved the replacement. Document underlay/fade and
+   preview comparisons stay in Showcase; their optional host contract remains
+   slice 9 work. The preview's message-only body rounding remains a scoped
+   `ContentCornerRadiusTop` override in `Crystal.Light.xaml`, a gap for the next
+   message-bar pass. The separate preview window and its launch path remain.
+   In subsequent bounded passes, replace `CrystalMessagePresentation` and the
+   control-paint/geometry portion of `CrystalApplicationMenuPresentation` with
+   shared message and menu template/token behavior. Preserve QAT placement/minimized states, message
    actions, menu split rows and width/clip behavior. Keep application-menu
    content and the choice between menu and Backstage with the host. Treat the
    outside shadow and captured backdrop separately from ordinary menu paint.
@@ -147,6 +166,24 @@ scopes its palette and binds preview document data; those host tasks do not
 become library features. Reassess only a demonstrated detached-resource gap.
 
 ## Verification and completion gates
+
+- The slice 6 QAT checkpoint on 2026-09-30 passed a Release solution build with
+  zero warnings/errors, 100 focused tests and 417 eligible runtime tests. Both
+  runtime runs exclude Writer-named tests and the deferred
+  `Every_ribbon_button_family_consumes_the_shared_hover_glass` method.
+  The single STA/WPF Application RibbonKit-only consumer test passed with every
+  placement, minimized/message combination, mixed button/dropdown/split proxies,
+  source-menu borrowing in overflow, physical RTL order, repeated light/dark and
+  Office switches, manual token merges and scoped/local precedence.
+  All 77 snapshot scenes passed: the original 63 approvals are unchanged, and
+  14 new Crystal QAT scenes were added after actual-image review. They cover
+  light/dark, expanded/minimized, message presence, RTL, tab-row overflow and
+  synthetic 100/200% rendering. Image inspection first exposed false minimized
+  fixtures; those now realize the control's loaded lifecycle in an offscreen
+  test window and assert that the body is collapsed before bitmap capture.
+  No Writer tests, manual Showcase launch, user screenshot acceptance, real DPI
+  transitions or target-machine popup acceptance ran. These automated results
+  do not close slice 5's pending live review or the remaining slice 6 passes.
 
 - For the header-row inset slice, verify each theme's normal and
   no-application margins in a consumer without Showcase resources. Exercise

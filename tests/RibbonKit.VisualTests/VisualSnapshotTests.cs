@@ -232,6 +232,28 @@ public sealed class VisualSnapshotTests
                     FlowDirection.RightToLeft,
                     CreateMessageBarStackScene,
                     270);
+
+                // Library-only Crystal QAT scenes; no Showcase palette or part patching.
+                foreach (bool dark in new[] { false, true })
+                {
+                    ThemeManager.Apply(application, RibbonTheme.CrystalLight);
+                    ThemeManager.SetDarkMode(application, dark);
+                    string palette = dark ? "crystal-dark" : "crystal-light";
+                    AssertSnapshot($"{palette}-qat-below-100", 1d,
+                        sceneFactory: direction => CreateQatScene(direction), height: 270);
+                    AssertSnapshot($"{palette}-qat-below-200", 2d,
+                        sceneFactory: direction => CreateQatScene(direction), height: 270);
+                    AssertSnapshot($"{palette}-qat-minimized-100", 1d,
+                        sceneFactory: direction => CreateQatScene(direction, minimized: true), height: 270);
+                    AssertSnapshot($"{palette}-qat-message-100", 1d,
+                        sceneFactory: direction => CreateQatScene(direction, message: true), height: 270);
+                    AssertSnapshot($"{palette}-qat-minimized-message-100", 1d,
+                        sceneFactory: direction => CreateQatScene(direction, minimized: true, message: true), height: 270);
+                    AssertSnapshot($"{palette}-qat-rtl-100", 1d, FlowDirection.RightToLeft,
+                        direction => CreateQatScene(direction), 270);
+                    AssertSnapshot($"{palette}-qat-tab-overflow-100", 1d,
+                        sceneFactory: direction => CreateQatScene(direction, tabRow: true), height: 270);
+                }
             }
             finally
             {
@@ -763,6 +785,55 @@ public sealed class VisualSnapshotTests
             Border.BackgroundProperty,
             "RibbonKit.Brushes.TitleBar.Background");
         root.Children.Add(titleBar);
+        return root;
+    }
+
+    private static FrameworkElement CreateQatScene(FlowDirection flowDirection,
+        bool minimized = false, bool message = false, bool tabRow = false)
+    {
+        var root = (Grid)CreateMessageBarStackScene(flowDirection);
+        var ribbon = Assert.IsType<Ribbon>(Assert.Single(root.Children));
+        ribbon.MessageBar!.Items.Clear();
+        if (message)
+            ribbon.MessageBar.Items.Add(new RibbonMessage { Title = "NOTICE", Message = "Review this document before editing." });
+        ribbon.QuickAccessItems.Clear();
+        var group = ribbon.Tabs[0].Groups[0];
+        var save = Button("Save", RibbonControlSize.Small, Icon("M3,3 L13,3 L13,13 L3,13 Z"));
+        var dropdown = new RibbonDropDownButton { Header = "Select", Icon = Icon("M2,8 L6,12 L14,3") };
+        var split = new RibbonSplitButton { Header = "Paste", Icon = Icon("M4,2 L12,2 L12,5 L14,5 L14,15 L2,15 L2,5 L4,5 Z") };
+        group.Items.Add(save);
+        group.Items.Add(dropdown);
+        group.Items.Add(split);
+        Assert.True(ribbon.AddToQuickAccess(save));
+        Assert.True(ribbon.AddToQuickAccess(dropdown));
+        Assert.True(ribbon.AddToQuickAccess(split));
+        if (tabRow)
+        {
+            ribbon.QuickAccessPosition = RibbonQuickAccessPosition.TabRow;
+            ribbon.QuickAccessMaxWidth = 45;
+        }
+        if (minimized)
+        {
+            // Body collapse is synchronized on Loaded. Realize in a test window before
+            // detaching for bitmap capture; setting IsMinimized in a disconnected tree
+            // changes drawer triggers but leaves the body visible and is a false scene.
+            root.Children.Remove(ribbon);
+            var window = new Window { Content = ribbon, Width = Width, Height = 350,
+                Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
+            try
+            {
+                window.Show();
+                ribbon.IsMinimized = true;
+                Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
+                window.UpdateLayout();
+                var tabs = Assert.IsType<RibbonTabControl>(ribbon.Template.FindName("TabControlHost", ribbon));
+                Assert.Equal(Visibility.Collapsed,
+                    Assert.IsType<Border>(tabs.Template.FindName("ContentHost", tabs)).Visibility);
+                window.Content = null;
+                root.Children.Add(ribbon);
+            }
+            finally { window.Close(); }
+        }
         return root;
     }
 

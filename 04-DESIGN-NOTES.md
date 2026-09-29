@@ -740,6 +740,10 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [Promote Options visuals, preserve Office density and verify a RibbonKit-only consumer](docs/history/01-library.md#3196-shared-crystal-customization-pages--2026-09-30).
 
+### 3.197 Shared Crystal QAT drawer — 2026-09-30
+
+[Promote QAT paint, geometry and body coordination without the Showcase helper](docs/history/01-library.md#3197-shared-crystal-qat-drawer--2026-09-30).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),
@@ -798,8 +802,11 @@ file and this index; update §5 only as supported by verification.
   `ApplicationButtonShape`, verify theme-owned header insets, and expose a
   portable orb glyph template. Shared Crystal control materials now cover menu
   rows, inputs, galleries, options, ScreenTips and built-in customization pages
-  in a RibbonKit-only consumer. Shell/utility chrome, contextual tint, optional
-  host effects and final Showcase consolidation remain later slices. Writer's
+  in a RibbonKit-only consumer. Slice 6's QAT pass now promotes drawer paint,
+  geometry, body coordination and shadows (§3.197), with 417 eligible runtime
+  tests, the RibbonKit-only consumer and 77 snapshot scenes passing. Message-bar
+  and application-menu promotion remain open within slice 6; utility chrome,
+  contextual tint, optional host effects and final Showcase consolidation remain later slices. Writer's
   W-glyph migration stays deferred; live Crystal visual review is pending.
 - Automatic `Icons.xaml` discovery remains best-effort; the manual browser is the
   fallback for no match, ambiguity, inaccessible paths or parse failure.

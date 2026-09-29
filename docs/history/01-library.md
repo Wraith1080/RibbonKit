@@ -5348,3 +5348,58 @@ and navigation/list/tree/action focus separate from selection. Theme XML parsed
 without duplicate direct resource keys. Diff review and `git diff --check`
 passed. Writer tests, live Showcase, new screenshots, real DPI transitions and
 target-machine popup acceptance were not run; those gates remain unclaimed.
+
+### 3.197 Shared Crystal QAT drawer — 2026-09-30
+
+Slice 6's first bounded pass moves the reusable QAT behavior from Showcase into
+the shared ribbon template and Crystal light/dark tokens. The drawer keeps its
+16-DIP inset from the default body, open upper rim, 10-DIP lower corners, compact
+padding, 32-DIP height reserve, flipped glass border and zero-depth shadow.
+Minimization uses a complete rim and 3-DIP gap; message-state trigger priority
+keeps the existing drawer spacing and upper-corner geometry. Dedicated
+`ContentCornerRadiusQatBelow` and `ContentZIndexQatBelow` resources coordinate
+the body rounding and seam shadow while keeping the application menu above both.
+`QatExtender.Border` and `QatExtenderShadow` separate drawer paint from body paint.
+Office base/dark tokens retain their previous realized values. New metrics have
+matching defaults in every base palette; dark palettes inherit unchanged metrics.
+No public C# API or shipped API baseline changed.
+
+A RibbonKit-only consumer first reproduced the missing lower body rounding,
+then verified the shared replacement on its existing single STA/Application.
+It exercises all placements, physical RTL ordering, mixed source-linked button,
+dropdown and split proxies, stable drawer height, real minimized body collapse,
+message combinations, overflow menu borrowing/return, light/dark and Office
+switches, manual dictionaries and resource/local-value precedence. The dark
+message case exposed the Office dark dictionary overriding Crystal's drawer
+continuation margin; Crystal dark now explicitly reasserts those two metrics.
+The layering regression now verifies the QAT seam token is conditional on
+BelowRibbon and remains below the application-menu overlay for every theme.
+
+After consumer verification, `CrystalQuickAccess` and its main/preview callers
+were removed. The document-under-QAT and fade effects, comparison controls and
+preview content remain in Showcase. Its message-only body rounding is retained
+as a scoped `ContentCornerRadiusTop` override until the next message-bar pass.
+Application-menu promotion also remains open within slice 6. Slice 10 still
+requires moving important preview-only demonstrations into the main Showcase
+before removing the separate preview window and launch path; neither was removed.
+
+The Release solution build passed with zero warnings/errors. The focused run
+passed 100 tests; the final runtime run passed 417 tests. Both exclude
+Writer-named runtime tests and the separately deferred Office 2010 hover-contract
+method. The RibbonKit-only consumer test passed. The final visual comparison
+passed all 77 scenes. Its original 63 approvals and tolerances are unchanged;
+14 new light/dark QAT baselines cover expanded/minimized, message combinations,
+RTL, tab-row overflow and synthetic 100/200% rendering. Actual-image inspection
+found that disconnected minimized fixtures still painted the body. The fixtures
+now realize Ribbon's loaded lifecycle in an offscreen test window, reparent the
+ribbon into a fresh capture root to avoid native-window offsets, and assert body
+collapse before rendering. The corrected actual images were reviewed before
+adding the new baselines. No existing scene differed in the full capture pass.
+Theme XML parsed without duplicate direct resource keys. Final diff review and
+`git diff --check` passed.
+
+Writer tests and manual Showcase launches were not run. User-supplied QAT visual
+acceptance, real DPI transitions and target-machine popup acceptance remain
+pending; earlier Crystal dark screenshots and slice 5's automated checkpoint
+do not establish these gates. Office Glass, View-tab overflow, 200% gallery
+clipping, the Office 2010 hover investigation and Writer RKWF-026 stay deferred.

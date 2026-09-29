@@ -5,6 +5,9 @@
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/RibbonKit;component/Themes/Tokens.Crystal.Light.xaml" />
     </ResourceDictionary.MergedDictionaries>
+    <!-- Keep the preview's message-only body rounding until slice 6 promotes message
+         coordination. The shared QAT uses its separate ContentCornerRadiusQatBelow token. -->
+    <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadiusTop">14</CornerRadius>
     <!-- The preview page is Showcase content, so its palette stays outside RibbonKit. -->
     <SolidColorBrush x:Key="Showcase.Brushes.PrintPreview.Canvas" Color="#A7BECE" />
     <SolidColorBrush x:Key="Showcase.Brushes.PrintPreview.PageBorder" Color="#829FB3" />
