@@ -809,4 +809,8 @@
     <CornerRadius x:Key="RibbonKit.Metrics.Customize.RowCornerRadius">4</CornerRadius>
     <Thickness x:Key="RibbonKit.Metrics.Customize.ListItemPadding">5,4</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.Customize.ListItemMargin">2,1</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.Customize.FrameInset">0</Thickness>
+    <FontWeight x:Key="RibbonKit.Metrics.OptionsDialog.PrimaryFontWeight">SemiBold</FontWeight>
+    <CornerRadius x:Key="RibbonKit.Metrics.OptionsDialog.PrimaryCornerRadius">12</CornerRadius>
+    <sys:Double x:Key="RibbonKit.Metrics.OptionsDialog.PrimaryTintOpacity">0.12</sys:Double>
 </ResourceDictionary>

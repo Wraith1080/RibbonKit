@@ -458,6 +458,10 @@
     <system:Double x:Key="RibbonKit.Metrics.OptionsDialog.PrimaryPressedOpacity">0.16</system:Double>
     <CornerRadius x:Key="RibbonKit.Metrics.Customize.FrameCornerRadius">0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.Customize.RowCornerRadius">0</CornerRadius>
-    <Thickness x:Key="RibbonKit.Metrics.Customize.ListItemPadding">5,1</Thickness>
-    <Thickness x:Key="RibbonKit.Metrics.Customize.ListItemMargin">2,1</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.Customize.ListItemPadding">4,1</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.Customize.ListItemMargin">0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.Customize.FrameInset">1</Thickness>
+    <FontWeight x:Key="RibbonKit.Metrics.OptionsDialog.PrimaryFontWeight">Normal</FontWeight>
+    <CornerRadius x:Key="RibbonKit.Metrics.OptionsDialog.PrimaryCornerRadius">0</CornerRadius>
+    <system:Double x:Key="RibbonKit.Metrics.OptionsDialog.PrimaryTintOpacity">0</system:Double>
 </ResourceDictionary>

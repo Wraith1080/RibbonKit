@@ -1,6 +1,7 @@
 # Crystal portability and Office 2007 orb integration plan
 
-> Status: slices 1–4 implemented on 2026-09-28; slices 5–10 remain proposed.
+> Status: slices 1–4 implemented on 2026-09-28; slice 5 implemented on
+> 2026-09-30 with live visual review pending; slices 6–10 remain proposed.
 > The orb default adds no public API and has no live visual acceptance yet.
 > The glyph-template property is additive and has no live visual acceptance yet.
 > Writer integration is deferred by user direction. Keep its current saved
@@ -93,13 +94,19 @@ shipped baseline is unchanged.
    background retains precedence over application theme tokens. Showcase's
    preview-specific ScreenTip tint scope remains a host choice. User screenshots
    are still required for live visual acceptance; no DPI acceptance is claimed.
-5. **Customization pages.** Move the reusable `Crystal.Customize.xaml` list,
-   tree, navigation and action visuals into RibbonKit's Options templates and
-   theme resources. Keep the built-in pages, native scrolling, item behavior,
-   RTL and localized labels. Remove `CrystalCustomization` template-part edits
-   only after both Customize Ribbon and Quick Access pages match their accepted
-   appearance, including rounded list/tree frames. The app-provided Editor page
-   and dialog-opening policy stay in Showcase.
+5. **Customization pages (implemented; live visual review pending).** Shared
+   Options and customization templates now provide Crystal's rounded list/tree
+   frames, rows, navigation marker and actions through theme resources. Both
+   built-in pages retain native scrolling, state bindings, RTL and localized
+   labels. Office tokens retain compact list spacing and their existing primary
+   and secondary action corner sizes; the 63-scene snapshot matrix passes without
+   renewing approvals. The RibbonKit-only consumer verifies light/dark, focus
+   separate from selection, scrolling, custom accent, Office restoration and
+   manually merged light/dark dictionaries. `Crystal.Customize.xaml` and the
+   template-part edits were removed. `CrystalCustomization` now only scopes the
+   preview's scrollbar tint, which remains a slice 7 gap. The app-provided Editor
+   page and dialog-opening policy stay in Showcase. User screenshots remain the
+   live visual acceptance gate.
 6. **Shared shell chrome.** In bounded passes, replace `CrystalQuickAccess`,
    `CrystalMessagePresentation` and the control-paint/geometry portion of
    `CrystalApplicationMenuPresentation` with shared QAT, message and menu

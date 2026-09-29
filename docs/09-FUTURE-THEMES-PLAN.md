@@ -46,16 +46,18 @@ these helpers. Two candidates for later simplification are the structural copy
 in `Crystal.OptionTemplates.xaml` and the thin `Crystal.Backstage.xaml` resource
 wrapper. Preserve their accepted visuals and resource scope until a focused
 replacement proves equivalence. The option-template copy and the control-style,
-input and option resources were promoted in slice 4; the customization and
-Backstage wrapper work remains separate.
+input and option resources were promoted in slice 4, customization resources in
+slice 5, and the Backstage wrapper was simplified in the duplicate audit.
 
-### High priority: portable theme presentation (revised 2026-09-28)
+### High priority: portable theme presentation (revised 2026-09-30)
 
 The [Crystal portability and Office 2007 orb integration plan](13-CRYSTAL-PORTABILITY-AND-ORB-PLAN.md)
-now defines the bounded promotion slices. Slices 1–4 implement the Office 2007
+now defines the bounded promotion slices. Slices 1–5 implement the Office 2007
 default orb, theme-owned header inset, public orb glyph template and portable
-Crystal control resources. Customization and later presentation slices remain
-proposals; live Crystal visual review is still pending.
+Crystal control resources and built-in customization pages. Shell chrome and
+later presentation slices remain proposals; live Crystal visual review is still
+pending. After the promotion slices, migrate important preview-only demonstrations
+to the main Showcase and remove the separate Crystal preview window (slice 10).
 
 The earlier Showcase-only adapter registration proposal is superseded. It could
 organize Showcase's code but would not make the Crystal appearance available to
@@ -65,8 +67,9 @@ The Showcase presentation audit found these Crystal portability gaps:
 
 - The formerly sample-only control styles, input/option resources and ScreenTip
   materials moved into shared templates and tokens in slice 4.
-  `CrystalCustomization` still styles built-in Options pages; its reusable
-  appearance, including rounded list/tree frames, belongs in shared resources.
+  Built-in Options page appearance, including rounded list/tree frames, moved
+  into shared resources in slice 5. `CrystalCustomization` now only scopes
+  preview scrollbar tint; that remaining helper belongs to slice 7.
 - `CrystalQuickAccess`, `CrystalMessagePresentation`,
   `CrystalApplicationMenuPresentation`, `CrystalUtilityChrome` and
   `CrystalScrollBars` modify built-in control chrome or template parts after

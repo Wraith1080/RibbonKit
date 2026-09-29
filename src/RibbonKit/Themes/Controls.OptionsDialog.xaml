@@ -76,6 +76,7 @@
         <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Dialog.PrimaryBackground}" />
         <Setter Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Dialog.PrimaryBorder}" />
         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.OptionsDialog.PrimaryForeground}" />
+        <Setter Property="FontWeight" Value="{DynamicResource RibbonKit.Metrics.OptionsDialog.PrimaryFontWeight}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type Button}">
@@ -86,17 +87,21 @@
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="1"
-                            CornerRadius="{DynamicResource RibbonKit.Metrics.OptionsDialog.ActionCornerRadius}"
+                            CornerRadius="{DynamicResource RibbonKit.Metrics.OptionsDialog.PrimaryCornerRadius}"
                             SnapsToDevicePixels="True">
                         <Grid>
                             <!-- Inner light rim just inside the outer border (glass look; 2010 only). -->
                             <Border BorderBrush="{DynamicResource RibbonKit.Brushes.Control.InnerGlow}"
                                     BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
-                                    CornerRadius="{DynamicResource RibbonKit.Metrics.OptionsDialog.ActionCornerRadius}" />
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.OptionsDialog.PrimaryCornerRadius}" />
                             <!-- Wash fills the Chrome, over the accent fill, under the label. -->
                             <Border x:Name="Wash"
-                                    CornerRadius="{DynamicResource RibbonKit.Metrics.OptionsDialog.ActionCornerRadius}"
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.OptionsDialog.PrimaryCornerRadius}"
                                     Opacity="0" />
+                            <Border Background="{DynamicResource RibbonKit.Brushes.Accent}"
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.OptionsDialog.PrimaryCornerRadius}"
+                                    Opacity="{DynamicResource RibbonKit.Metrics.OptionsDialog.PrimaryTintOpacity}"
+                                    IsHitTestVisible="False" />
                             <ContentPresenter Margin="{TemplateBinding Padding}"
                                               HorizontalAlignment="Center"
                                               VerticalAlignment="Center" />

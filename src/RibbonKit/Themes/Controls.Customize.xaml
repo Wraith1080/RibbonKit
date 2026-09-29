@@ -64,12 +64,14 @@
                 Padding="{TemplateBinding Padding}"
                 CornerRadius="{DynamicResource RibbonKit.Metrics.Customize.FrameCornerRadius}"
                 SnapsToDevicePixels="True">
-            <ScrollViewer x:Name="PART_ScrollViewer" Focusable="False"
-                          HorizontalScrollBarVisibility="{TemplateBinding ScrollViewer.HorizontalScrollBarVisibility}"
-                          VerticalScrollBarVisibility="Auto"
-                          CanContentScroll="{TemplateBinding ScrollViewer.CanContentScroll}">
-                <ItemsPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
-            </ScrollViewer>
+            <Border Padding="{DynamicResource RibbonKit.Metrics.Customize.FrameInset}">
+                <ScrollViewer x:Name="PART_ScrollViewer" Focusable="False"
+                              HorizontalScrollBarVisibility="{TemplateBinding ScrollViewer.HorizontalScrollBarVisibility}"
+                              VerticalScrollBarVisibility="Auto"
+                              CanContentScroll="{TemplateBinding ScrollViewer.CanContentScroll}">
+                    <ItemsPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                </ScrollViewer>
+            </Border>
         </Border>
     </ControlTemplate>
 

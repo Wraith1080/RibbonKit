@@ -424,6 +424,11 @@ public sealed class ApplicationButtonShapeThemeTests
             scroll.ScrollToBottom();
             Drain();
             Assert.True(scroll.VerticalOffset > 0);
+            scroll.ScrollToTop();
+            VerifyCustomizationFocus(dialog, ribbonPage);
+            ThemeManager.SetAccent(application, Color.FromRgb(138, 62, 129));
+            Drain();
+            Assert.IsType<DrawingBrush>(((Button)dialog.Template.FindName("PART_OkButton", dialog)).Background);
             var lightNavigation = dialog.FindResource(
                 "RibbonKit.Brushes.OptionsDialog.NavigationSelectedBackground");
 
@@ -432,6 +437,8 @@ public sealed class ApplicationButtonShapeThemeTests
             AssertCustomizationTheme(dialog, ribbonPage, quickAccessPage, crystal: true);
             Assert.NotSame(lightNavigation, dialog.FindResource(
                 "RibbonKit.Brushes.OptionsDialog.NavigationSelectedBackground"));
+            VerifyCustomizationFocus(dialog, ribbonPage);
+            ThemeManager.ClearAccent(application);
 
             dialog.FlowDirection = FlowDirection.RightToLeft;
             ribbonPage.Header = "تخصيص الشريط";
@@ -459,6 +466,13 @@ public sealed class ApplicationButtonShapeThemeTests
             dialog.Resources.MergedDictionaries.Add(manualCrystal);
             Drain();
             AssertCustomizationTheme(dialog, ribbonPage, quickAccessPage, crystal: true);
+            var manualDark = Tokens("Crystal.Dark");
+            dialog.Resources.MergedDictionaries.Add(manualDark);
+            Drain();
+            AssertCustomizationTheme(dialog, ribbonPage, quickAccessPage, crystal: true);
+            Assert.Equal(Color.FromRgb(234, 244, 252),
+                ((SolidColorBrush)dialog.FindResource("RibbonKit.Brushes.OptionsDialog.PrimaryForeground")).Color);
+            dialog.Resources.MergedDictionaries.Remove(manualDark);
             dialog.Resources.MergedDictionaries.Remove(manualCrystal);
             Drain();
             AssertCustomizationTheme(dialog, ribbonPage, quickAccessPage, crystal: false);
@@ -466,6 +480,7 @@ public sealed class ApplicationButtonShapeThemeTests
         finally
         {
             dialog.Close();
+            ThemeManager.ClearAccent(application);
             ThemeManager.SetDarkMode(application, false);
         }
     }
@@ -485,7 +500,12 @@ public sealed class ApplicationButtonShapeThemeTests
         var action = Assert.IsType<Button>(dialog.Template.FindName("PART_OkButton", dialog));
         var actionChrome = Assert.IsType<Border>(action.Template.FindName("Chrome", action));
         Assert.Equal(crystal ? new CornerRadius(12) : Assert.IsType<CornerRadius>(dialog.FindResource(
-            "RibbonKit.Metrics.ScrollBar.ButtonCornerRadius")), actionChrome.CornerRadius);
+            "RibbonKit.Metrics.ControlCornerRadius")), actionChrome.CornerRadius);
+        Assert.Equal(crystal ? FontWeights.SemiBold : FontWeights.Normal, action.FontWeight);
+        var cancel = Assert.IsType<Button>(dialog.Template.FindName("PART_CancelButton", dialog));
+        Assert.Equal(crystal ? new CornerRadius(12) : Assert.IsType<CornerRadius>(dialog.FindResource(
+            "RibbonKit.Metrics.ScrollBar.ButtonCornerRadius")),
+            ((Border)cancel.Template.FindName("Chrome", cancel)).CornerRadius);
 
         var customize = Assert.IsType<RibbonCustomizePage>(ribbonPage.Content);
         var available = Assert.IsType<ListBox>(customize.Template.FindName("PART_AvailableList", customize));
@@ -503,6 +523,47 @@ public sealed class ApplicationButtonShapeThemeTests
         var qat = Assert.IsType<RibbonQuickAccessPage>(quickAccessPage.Content);
         AssertFrame(Assert.IsType<ListBox>(qat.Template.FindName("PART_AvailableList", qat)), crystal);
         AssertFrame(Assert.IsType<ListBox>(qat.Template.FindName("PART_CurrentList", qat)), crystal);
+    }
+
+    private static void VerifyCustomizationFocus(RibbonOptionsDialog dialog, RibbonOptionsPage page)
+    {
+        dialog.SelectedPage = page;
+        Drain();
+        dialog.UpdateLayout();
+        dialog.Activate();
+        var navigation = (ListBox)dialog.Template.FindName("PART_PageList", dialog);
+        var navigationItem = (ListBoxItem)navigation.ItemContainerGenerator.ContainerFromItem(page);
+        Assert.True(navigationItem.Focus());
+        Drain();
+        Assert.Same(dialog.FindResource("RibbonKit.Brushes.Accent"),
+            ((Border)page.Template.FindName("Chrome", page)).BorderBrush);
+
+        var customize = (RibbonCustomizePage)page.Content;
+        var tree = (TreeView)customize.Template.FindName("PART_Tree", customize);
+        var root = (TreeViewItem)tree.ItemContainerGenerator.ContainerFromIndex(0);
+        root.IsSelected = true;
+        Assert.True(root.Focus());
+        Drain();
+        Assert.Same(dialog.FindResource("RibbonKit.Brushes.Accent"),
+            ((Border)root.Template.FindName("Row", root)).BorderBrush);
+
+        var available = (ListBox)customize.Template.FindName("PART_AvailableList", customize);
+        available.SelectedIndex = 0;
+        var item = (ListBoxItem)available.ItemContainerGenerator.ContainerFromIndex(0);
+        Assert.True(item.Focus());
+        Drain();
+        var row = (Border)item.Template.FindName("Row", item);
+        Assert.Same(dialog.FindResource("RibbonKit.Brushes.Accent"), row.BorderBrush);
+        Assert.Same(dialog.FindResource("RibbonKit.Brushes.Control.CheckedBackground"), row.Background);
+        Assert.Same(dialog.FindResource("RibbonKit.Brushes.Customize.SelectedBorder"),
+            ((Border)root.Template.FindName("Row", root)).BorderBrush);
+
+        var primary = (Button)dialog.Template.FindName("PART_OkButton", dialog);
+        Assert.True(primary.Focus());
+        Drain();
+        Assert.Same(dialog.FindResource("RibbonKit.Brushes.OptionsDialog.PrimaryFocusBorder"),
+            ((Border)primary.Template.FindName("Chrome", primary)).BorderBrush);
+        Assert.Same(dialog.FindResource("RibbonKit.Brushes.Customize.SelectedBorder"), row.BorderBrush);
     }
 
     private static void AssertFrame(Control control, bool crystal)

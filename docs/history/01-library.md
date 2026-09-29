@@ -5311,3 +5311,40 @@ fix. The final runtime run excluded Writer-named tests, and the Writer test
 project was not run by user direction. No Showcase live window, user screenshot,
 DPI or target-machine popup acceptance was run. The accepted earlier Crystal
 dark screenshots do not close those remaining gates.
+
+### 3.196 Shared Crystal customization pages — 2026-09-30
+
+Both built-in customization pages now obtain Crystal list/tree frames, rows,
+navigation and action materials from shared Options/customization templates and
+theme tokens. The tree retains its view-model expansion/selection bindings and
+native scroll viewers; selection and keyboard focus use distinct border states.
+Crystal primary actions retain the semibold label and 12-percent accent wash.
+Separate primary/secondary corner tokens preserve the existing Office button
+sizes. No public C# API was added or changed.
+
+Showcase's `Crystal.Customize.xaml` was removed, along with its realized
+template-part edits. `CrystalCustomization` now only scopes the preview's
+scrollbar tint. That remaining visual difference belongs to slice 7; the
+RibbonKit-only consumer does not depend on the helper. Application-provided
+Options content and dialog-opening policy remain in the host. The plan also
+records the user's final consolidation requirement: after the promotion slices,
+move important Crystal preview-only demonstrations to the main Showcase before
+removing the separate preview window and launch path.
+
+The first snapshot run stopped at the Office 2024 RTL QAT customization scene.
+Its approved, actual and diff PNGs showed fewer visible commands because Crystal
+row margins had been applied to Office. Inspecting the native WPF template
+established the original compact padding, margins and frame inset. Those values
+now have Office tokens, while Crystal keeps its prior spacing. The final visual
+test passed all 63 approved scenes without changing approvals or tolerances.
+
+The Release solution build passed with zero warnings/errors. The final runtime
+run passed 417 tests, excluding Writer-named tests and the separately deferred
+Office 2010 hover-glass contract. The earlier focused Crystal/localization/dark
+template run passed 34 tests. The RibbonKit-only consumer test passed with both
+customization pages, light/dark switches, every Office baseline, manually merged
+light/dark dictionaries, native scrolling, custom accent, localized RTL headers,
+and navigation/list/tree/action focus separate from selection. Theme XML parsed
+without duplicate direct resource keys. Diff review and `git diff --check`
+passed. Writer tests, live Showcase, new screenshots, real DPI transitions and
+target-machine popup acceptance were not run; those gates remain unclaimed.
