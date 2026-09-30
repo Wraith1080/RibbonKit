@@ -47,7 +47,7 @@ public partial class LocalizationRtlDemo : RibbonWindow
     {
         if (enabled)
             (_crystalPresentation ??= new CrystalMainWindowPresentation(
-                this, DemoRibbon, DemoMessageBar, _applicationMenu, DemoBackstage))
+                this, DemoRibbon, _applicationMenu, DemoBackstage))
                 .Apply(true, tint);
         else
             _crystalPresentation?.Apply(false);

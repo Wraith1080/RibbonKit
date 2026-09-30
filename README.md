@@ -66,14 +66,20 @@ Office 2007, 2010, 2013, 2019 and 2024 each have light and dark/black palettes, 
 live theme/accent switching. The Crystal Light theme choice now has both light and
 dark palettes for the same shared `Controls.*.xaml` templates. Shared Crystal
 resources cover menu rows, inputs, galleries, check/radio controls, ScreenTips
-and the built-in Ribbon/QAT customization pages and QAT drawer
+and the built-in Ribbon/QAT customization pages, QAT drawer and message bars
 in applications using `ThemeManager.Apply`. The drawer retains its inset, rim,
 shadow and body rounding through light/dark, minimized and message states.
 Its shared `QatExtender.*`, `QatExtenderShadow`, `ContentCornerRadiusQatBelow`
 and `ContentZIndexQatBelow` theme resources support scoped overrides;
-explicit local part values retain WPF precedence. Showcase still applies message,
-menu, scrollbar and popup presentation helpers; their reusable chrome is scheduled
-for later portability passes. Host backdrop effects and the preview's
+explicit local part values retain WPF precedence. Message rows retain semantic
+amber paint, independent dismissal and actions. The shared
+`RibbonKit.Styles.MessageBar.ActionButton` style and
+`RibbonKit.Metrics.MessageBar.ActionCornerRadius`
+metric provide Crystal action paint and 12-DIP corners; Office retains its compact
+action appearance. `RibbonKit.Metrics.ContentCornerRadiusTop` keeps Crystal's body rounded above
+messages. Scoped resources and explicit action styles/values retain WPF precedence.
+Showcase still applies menu, scrollbar and popup presentation helpers; their
+reusable chrome is scheduled for later portability passes. Host backdrop effects and the preview's
 document-under-QAT treatment remain separate.
 
 Office 2007 defaults to the round application orb, including its black palette;

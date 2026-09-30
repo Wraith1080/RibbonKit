@@ -541,6 +541,7 @@
     <CornerRadius x:Key="RibbonKit.Metrics.QatExtenderCornerRadius">0</CornerRadius>
     <Thickness x:Key="RibbonKit.Metrics.QatExtenderMarginMessageBar">0</Thickness>
     <CornerRadius x:Key="RibbonKit.Metrics.QatExtenderCornerRadiusMessageBar">0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.QatExtenderCornerRadiusMinimizedMessageBar">0</CornerRadius>
 
     <!-- The minimized QAT keeps the same full-width, bottom-bordered strip (no floating card). -->
     <Thickness x:Key="RibbonKit.Metrics.QatExtenderMarginMinimized">0</Thickness>
@@ -717,4 +718,23 @@
     <FontWeight x:Key="RibbonKit.Metrics.OptionsDialog.PrimaryFontWeight">Normal</FontWeight>
     <CornerRadius x:Key="RibbonKit.Metrics.OptionsDialog.PrimaryCornerRadius">3</CornerRadius>
     <system:Double x:Key="RibbonKit.Metrics.OptionsDialog.PrimaryTintOpacity">0</system:Double>
+    <!-- Action paint is resolved on the button, preserving live accents and host values. -->
+    <Style x:Key="RibbonKit.Styles.MessageBar.ActionButton" TargetType="{x:Type Button}">
+        <Setter Property="Template" Value="{DynamicResource RibbonKit.Templates.MessageBar.ActionButton}" />
+        <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Control.SurfaceBackground}" />
+        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+                <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.45" /></Trigger>
+        </Style.Triggers>
+    </Style>
+    <system:Boolean x:Key="RibbonKit.Metrics.MessageBar.ActionRecognizesAccessKey">False</system:Boolean>
+    <CornerRadius x:Key="RibbonKit.Metrics.MessageBar.ActionCornerRadius">2</CornerRadius>
 </ResourceDictionary>

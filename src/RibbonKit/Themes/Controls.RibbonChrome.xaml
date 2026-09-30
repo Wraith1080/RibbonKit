@@ -249,6 +249,17 @@
                             <Setter TargetName="QatBelowHost" Property="Margin"
                                     Value="{DynamicResource RibbonKit.Metrics.QatExtenderMarginMessageBar}" />
                         </Trigger>
+                        <!-- The minimized Crystal drawer stays rounded on all four corners
+                             above a message. Office retains its connected message-row geometry. -->
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="QuickAccessPosition" Value="BelowRibbon" />
+                                <Condition Property="IsMinimized" Value="True" />
+                                <Condition Property="HasOpenMessages" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="QatBelowHost" Property="CornerRadius"
+                                    Value="{DynamicResource RibbonKit.Metrics.QatExtenderCornerRadiusMinimizedMessageBar}" />
+                        </MultiTrigger>
                         <!-- Office 2010 Aero continues through the tab row. Its body token
                              remains opaque; clearing only this outer surface lets the
                              tab-control compose the same fallback/material and tint as the title. -->

@@ -1863,7 +1863,8 @@ public class CrystalContextualTests
             var secondRoot = (Border)second.Template.FindName("PART_Root", second);
             Assert.Equal(new CornerRadius(10), secondRoot.CornerRadius);
             var action = (Button)first.Template.FindName("PART_ActionButton", first);
-            Assert.Same(action.FindResource("Crystal.Backstage.Action"), action.Style);
+            var crystalActionStyle = action.Style;
+            Assert.Same(action.FindResource("RibbonKit.Styles.MessageBar.ActionButton"), crystalActionStyle);
             action.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             LayoutMessages();
             Assert.False(first.IsOpen);
@@ -1882,7 +1883,7 @@ public class CrystalContextualTests
             LayoutMessages();
             Assert.Equal(new CornerRadius(), root.CornerRadius);
             Assert.Equal(new Thickness(), first.Margin);
-            Assert.NotSame(action.FindResource("Crystal.Backstage.Action"), action.Style);
+            Assert.NotSame(crystalActionStyle, action.Style);
             compare.IsChecked = false;
             compare.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             LayoutMessages();
