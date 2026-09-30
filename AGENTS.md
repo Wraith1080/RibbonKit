@@ -19,6 +19,14 @@ and `samples/RibbonKit.Writer`. Releases use GitHub Releases; NuGet.org publicat
 - For WPF implementation, debugging, or verification, use `.agents/skills/ribbonkit-wpf-workflow/SKILL.md`. For documentation-only work, inspect the changed instructions, links, and diff; a WPF build is unnecessary unless the edit changes build behavior.
 - Read `docs/06-MERGE-AND-MODAL-PLAN.md`, `docs/05-MDI-EMULATION-PLAN.md`, or `src/RibbonKit.Design/SETUP-DESIGNTOOLS.md` only for the corresponding subsystem.
 
+### Quick documentation and acceptance updates
+
+- For a user confirmation, read only the active plan's current acceptance section and any directly affected text. Reuse instructions and evidence already read in this conversation; do not reload the WPF skill, history, implementation, memory or test logs for a routine confirmation.
+- Record the result once in the active plan's existing status row or review item, with its date and exact review scope. Keep `04-DESIGN-NOTES.md` as a short pointer to that plan. Do not mirror acceptance prose into its §5, README, and history or create a numbered history/index entry for every confirmation, including final acceptance.
+- Add history for new implementation details, changed automated evidence, a new pitfall or an explicitly requested historical record. Preserve existing history; it is not a second current-status checklist.
+- Batch the authorized text edits, review only the changed content and any changed link targets, then run `git diff --check` once. Validate skill metadata only if a skill changed. No build, test, screenshot inspection, app launch, broad repository audit or new handoff for prose-only acceptance.
+- If the user only asks about status, read the active plan's status section and answer; no documentation edit is needed. Finish after the required review, without speculative cleanup or repeated verification.
+
 ## Architecture contracts
 
 - Build lookless custom controls with dependency properties, routed events, commands, `ItemsSource`, templates, MVVM, keyboard access, and UI Automation.

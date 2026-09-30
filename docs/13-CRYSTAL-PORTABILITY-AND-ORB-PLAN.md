@@ -1,45 +1,29 @@
 # Crystal portability and Office 2007 orb integration plan
 
-> Status: slices 1–4 implemented on 2026-09-28; slice 5 implemented on
-> 2026-09-30 with live visual review pending. Slice 6's QAT pass is implemented
-> on 2026-09-30 with the bounded live QAT review complete, including its
-> minimized/message corner correction. Slice 6's message-bar pass is implemented
-> on 2026-09-30 with the bounded light/dark live review complete: expanded and
-> minimized stacked appearance, independent dismissal and reopening were verified.
-> The application-menu pass is implemented on 2026-09-30; fresh light/dark
-> screenshots verify its default page, Save As split pane and Publish dropdown.
-> The user confirmed Esc closing, native command invocation and Recent Documents
-> restoration on reopening in both themes. Narrow default and Save As pages fit
-> in both themes, with clean description wrapping and visible footer actions.
-> The user reported normal menu width returning after widening. Save As also
-> fits above two notices with the ribbon minimized; Esc closing and default-page
-> restoration are confirmed in both themes in that state. RTL default and Save
-> As screenshots verify mirroring, mixed text and the lab's corrected wrapped
-> label in both themes. RTL Esc closing, default-page restoration on reopening
-> and return to LTR are also confirmed in both themes. Alignment and Esc closing
-> after returning to 125% are confirmed. Fresh 200% light/dark screenshots show
-> the corrected footer fully visible, completing its bounded appearance/return
-> check. Scrollbar-arrow dismissal was then reproduced and corrected in the shared
-> close handler. The user confirmed scrollbar buttons now scroll without closing
-> File in both themes. The user also confirmed Tab navigation and Esc closing
-> after tabbing. Repeated File open/Esc/quick-reopen motion also passed in both
-> themes. The user then confirmed thumb/wheel/track scrolling and reverse keyboard
-> traversal, including footer reachability and focus cycling. The bounded slice 6
-> live review is complete. Reduced motion, broader DPI transitions and deferred
-> layout issues remain open; this is not blanket final acceptance.
-> Slice 7 utility chrome and scrollbars are implemented on 2026-09-30, with
-> automated portability/visual checks passing. The bounded live review is complete
-> on 2026-10-01: utility/modal controls, native scrolling/focus/RTL, corrected
-> spacing and 125% → 200% → 125% return are accepted. The final spacing/DPI
-> checks passed for both reviewed themes. Broader acceptance gaps remain open.
-> Slices 8–10 remain open. Contextual/tint policy is still slice 8 work.
-> The orb default adds no public API and has no live visual acceptance yet.
-> The glyph-template property is additive and has no live visual acceptance yet.
-> Writer integration is deferred by user direction. Keep its current saved
-> appearance and W-glyph workaround; RKWF-026 remains open.
-> The Crystal duplicate and portability audits are in `04-DESIGN-NOTES.md`
-> §3.189–§3.191. Existing Office 2007 behavior is recorded in §3.94 and
-> `07-OFFICE-2007-THEME-PLAN.md`.
+> Status and live acceptance are maintained only in the table below. Technical
+> evidence stays in the linked history; routine confirmations update one existing
+> row or active review item, without another history entry or mirrored summaries.
+> Follow [AGENTS.md's quick documentation workflow](../AGENTS.md#quick-documentation-and-acceptance-updates).
+
+## Current status and acceptance
+
+| Slice | Current state and remaining review |
+| --- | --- |
+| 1–4: orb, header inset and control materials | Implemented 2026-09-28. Orb default/glyph and broader control/popup live acceptance remain open. |
+| 5: customization pages | Implemented 2026-09-30. Broader page appearance review remains open; scrollbar review is covered by slice 7. |
+| 6: QAT, message bars and application menu | Bounded light/dark live review complete 2026-09-30. Includes placement/overflow, notice dismissal/restoration, menu commands/reset, narrow/minimized/RTL states, visible footer at 200%, keyboard/focus and native scrolling. [Evidence §3.197–§3.203](history/01-library.md#3197-shared-crystal-qat-drawer--2026-09-30). |
+| 7: utility buttons and scrollbars | Bounded live review complete 2026-10-01 in both reviewed themes: utility/arrows, modal/merged-caption controls, customization spacing, native scrolling/focus/RTL and 125% → 200% → 125% return. [Final acceptance §3.207](history/01-library.md#3207-slice-7-bounded-live-review-complete--2026-10-01). |
+| 8: contextual material and tint | Open; next implementation slice. |
+| 9: optional host effects | Open; opt-in capture/Acrylic scope still to be decided. |
+| 10: Showcase consolidation | Open; retain the separate preview window until this slice. |
+
+Broader reduced-motion, open-menu scaling and mixed-monitor gates remain open.
+The [two 200% observations](#deferred-layout-observations-at-200) remain deferred,
+with unconfirmed causes. Writer's saved appearance and W-glyph workaround remain
+deferred under RKWF-026. This table does not establish blanket final acceptance.
+
+For the earlier audit, see `04-DESIGN-NOTES.md` §3.189–§3.191; Office 2007
+history remains in §3.94 and `07-OFFICE-2007-THEME-PLAN.md`.
 
 ## Outcome and boundary
 
@@ -139,131 +123,36 @@ shipped baseline is unchanged.
    choice remains host policy for slice 8. The app-provided Editor page and
    dialog-opening policy stay in Showcase. Broader slice 5 appearance acceptance
    remains separate from the completed slice 7 scrollbar review.
-6. **Shared shell chrome (QAT, message-bar and application-menu passes implemented; bounded live review complete).** Shared
-   ribbon templates and Crystal light/dark tokens now supply the below-ribbon
-   QAT drawer: 16-DIP inset relative to the default body, open top rim, 10-DIP
-   lower corners, 32-DIP minimum height, flipped glass border and zero-depth
-   shadow. The minimized drawer retains its complete rim and four rounded
-   corners, including above messages. Its 3-DIP top gap applies without messages;
-   message presence retains the existing spacing. The combined-state
-   `QatExtenderCornerRadiusMinimizedMessageBar` token supplies 10-DIP Crystal
-   corners while preserving Office's connected message-row corners.
-   `ContentCornerRadiusQatBelow` coordinates the rounded Crystal body
-   independently of message-only body geometry. `ContentZIndexQatBelow` raises
-   its seam shadow below the application-menu overlay. Office palettes retain
-   their previous geometry, paint and shadow values. All new shared keys have
-   matching Office defaults, and `DynamicResource` updates and explicit local
-   value precedence are verified. This pass adds no public C# API.
-   `CrystalQuickAccess` and its main/preview callers were removed after the
-   RibbonKit-only consumer proved the replacement. Document underlay/fade and
-   preview comparisons stay in Showcase; their optional host contract remains
-   slice 9 work. Shared `ContentCornerRadiusTop` now retains the body's four
-   14-DIP corners above messages; the preview override was removed. Message
-   rows already used shared amber paint, spacing, rounding and shadows. Their
-   action button now uses one shared template with a dynamic theme style token,
-   `RibbonKit.Styles.MessageBar.ActionButton`, and `MessageBar.ActionCornerRadius`
-   and `MessageBar.ActionRecognizesAccessKey` metrics. Crystal retains the accepted
-   glass action paint, 12-DIP corners, hover/pressed/focus states and 0.4 disabled
-   opacity. Office retains its existing paint, 0/2-DIP corners and 0.45 disabled
-   opacity. Dynamic resources preserve scoped overrides and explicit action
-   style/property choices; no public C# API was added. The single STA consumer
-   verifies the replacement without Showcase; `CrystalMessagePresentation` and
-   all callers were then removed. Message content, action policy and preview
-   comparisons remain host-owned. The separate preview window and launch path remain.
-   The application-menu pass now supplies shared translucent frame/pane paint,
-   14-DIP outer corners, 11/10-DIP content rims, a 9-DIP inner clip and 8-DIP
-   split-row clips. Crystal navigation remains 160 DIPs; its pane shrinks from
-   300 to a 180-DIP minimum using the owning Ribbon's width, navigation width
-   and a 32-DIP viewport allowance. Resource-declared, pre-templated menus and
-   reassignment to another Ribbon receive current viewport sizing. Geometry
-   bindings follow layout and dynamic tokens without realized-part patches.
-   Shared outside-only shadow casting preserves the translucent interior;
-   Office retains its whole-frame shadow and original compact geometry.
-   New matching theme keys preserve scoped resources and local paint, size,
-   margin, corner and effect choices. No public C# API was added.
-   `CrystalApplicationMenuPresentation` and `CrystalMenuShadow` were removed
-   after consumer verification. `CrystalApplicationMenuBackdrop` now attaches
-   only the host's captured blur; its capture/lifecycle integration remains
-   slice 9 work. Application-menu content, commands, comparison controls and
-   the choice between menu and Backstage stay with the host. Fresh light/dark
-   screenshots now verify default-page, Save As split and Publish dropdown
-   appearance. Esc closing, split-primary/pane command invocation and default-page
-   restoration on reopening are confirmed in both themes. Narrow default and
-   Save As pages fit in both themes, including all four wrapped descriptions
-   and visible footer actions. The user reported normal width restoration after
-   widening. Save As appearance above two notices with the ribbon minimized,
-   Esc closing and default-page restoration are verified in both themes in
-   that state. RTL default and Save As screenshots verify mirrored placement,
-   mixed text and the lab's full bilingual label on two lines. Its host-owned
-   `HeaderTemplate` correction passes focused tests and fresh appearance review.
-   The user confirmed RTL Esc closing, default-page restoration on reopening and
-   return to LTR in both themes. The bounded RTL appearance/close/reset review is
-   complete. The shared frame now follows available client height,
-   with native scrolling for navigation/default/active content and a stationary
-   footer. The captured backdrop no longer contributes to menu measurement.
-   Fresh 200% light/dark screenshots show both footer actions fully visible;
-   the user confirmed alignment/Esc closing after returning to 125% (§3.202).
-   Live scrolling revealed scrollbar arrows dismissing File while thumb dragging
-   kept it open. The shared click handler now exempts ScrollBar descendants;
-   command clicks still dismiss (§3.203). The user confirmed scrollbar buttons
-   now scroll without closing File in both themes. The user also confirmed Tab
-   navigation and Esc closing after tabbing. Repeated File open/Esc/quick-reopen
-   motion also passed in both themes. The user confirmed thumb/wheel/track
-   scrolling and reverse keyboard traversal, including footer reachability and
-   focus cycling. The bounded QAT/message-bar/application-menu live review is
-   complete. Reduced motion, broader DPI transitions and deferred layout issues
-   remain open; this does not establish blanket final acceptance.
-   The separate preview window and slice 10 remain.
-7. **Utility chrome and scrollbars (implemented; bounded live review complete).** Shared
-   templates now supply non-interactive idle/hover/pressed/checked rims for
-   minimize, modal close, QAT overflow, ribbon/tab scrolling arrows and merged
-   caption buttons. Rims share Chrome's bounds/corners without altering content
-   padding or command routing. Office keeps zero rim opacity and its existing
-   arrow surfaces. Crystal retains the accepted idle/hover surface swap and
-   pressed priority. The small internal `UtilityChrome` selector lets styles
-   consume existing dynamic brushes directly, preserving local/scoped overrides.
-   Crystal light/dark tokens opt native ScrollViewer bars into the existing
-   shared template, including both built-in customization pages and app-owned
-   Options content. Thickness is 14 DIPs; rail/button/thumb corners are 4 DIPs;
-   the thumb has a one-DIP rim and the accepted 6/8/11-percent accent washes
-   (15/20/28 alpha steps). The internal `ScrollBarMaterialConverter` composes
-   only marked Crystal tokens from the realized thumb's resource scope;
-   Office and explicit host thumb brushes pass through unchanged. A regression
-   first exposed nested Freezable resources retaining another window's wash,
-   then proved dialog-local tint isolation and updates. Native tracks, commands,
-   hover/drag states, keyboard/focus and RTL behavior remain with WPF.
-   `ScrollBar.WashAccent` separates paint from the existing main-window raw-tint/
-   dialog readable-accent policy. This host policy stays in Showcase for slice 8;
-   capture integration remains slice 9. No public C# API was added.
-   After RibbonKit-only proof, `CrystalUtilityChrome`, `CrystalScrollBars` and
-   `CrystalCustomization` and their callers were removed. The designer-safe
-   customization scrollbar adapter remains and consumes the same shared tokens.
-   Release solution compilation, all 418 eligible runtime tests, the single
-   RibbonKit-only consumer and all 105 visual scenes pass. The existing 99
-   approvals/tolerances are unchanged; six new light/dark utility/scrollbar
-   scenes were inspected at 100/200% and RTL before adding approvals.
-   The user accepted utility/arrows and modal/merged-caption review checks 1–2.
-   The customization spacing correction makes all four list/tree frames use
-   FrameInset (Crystal 2 DIPs, Office 1 DIP), removing the
-   extra TreeView padding. See [§3.205](history/01-library.md#3205-customization-scrollbar-insets-and-slice-7-live-review--2026-09-30).
-   The spacing build again passed with zero warnings/errors; the RibbonKit-only
-   geometry/override check, 418 eligible runtime tests and 105 visual scenes pass
-   with approvals and tolerances unchanged.
-   A follow-up screenshot still showed unequal top/bottom and Crystal side gaps:
-   the shared pages now round layout and use FrameInset as a transparent border
-   that rounds each edge independently. Tokens are unchanged; local padding and
-   host styles retain precedence. See [§3.206](history/01-library.md#3206-customization-scrollbar-pixel-gaps--2026-10-01).
-   The isolated pixel-gap Release build passed with zero warnings/errors; the
-   consumer's exact 96-variant gap matrix, 418 eligible runtime tests and 105
-   visual scenes pass. Crystal/Office 125/200% renders were inspected, with
-   approvals/tolerances unchanged.
-   Native arrow/track/wheel/thumb scrolling, focus and RTL are accepted by the
-   user. On 2026-10-01, the user confirmed spacing and 125% → 200% → 125%
-   return passed for both reviewed themes, completing the bounded slice 7 live
-   review. See [§3.207](history/01-library.md#3207-slice-7-bounded-live-review-complete--2026-10-01).
-   Showcase was not launched by the agent; this acceptance update is prose only.
-   The prior 200% Office RTL checkbox failure and gallery-layout report remain
-   deferred despite the RTL method passing in this run. See [§3.204](history/01-library.md#3204-shared-crystal-utility-buttons-and-scrollbars--2026-09-30).
+6. **Shared shell chrome (implemented).** Shared templates/tokens supply the
+   QAT drawer, minimized/message geometry and shadows; message action paint and
+   rounding; and the application-menu frame, pane and split-row material.
+   Menu sizing follows available width/client height, scrollable content retains
+   a stationary footer, and captured host blur does not affect measurement.
+   Click dismissal exempts only ScrollBar descendants; ordinary commands still
+   dismiss File. Office appearance and explicit local/scoped overrides remain.
+   `CrystalQuickAccess`, `CrystalMessagePresentation`,
+   `CrystalApplicationMenuPresentation` and `CrystalMenuShadow` were retired
+   after RibbonKit-only proof. Host document/capture integration remains for
+   slice 9. Detailed implementation and checks are in
+   [§3.197–§3.203](history/01-library.md#3197-shared-crystal-qat-drawer--2026-09-30);
+   current live acceptance is in the table above.
+7. **Utility chrome and scrollbars (implemented).** Shared templates supply
+   idle/hover/pressed/checked rims for minimize, modal close, QAT overflow,
+   ribbon/tab arrows and merged captions. Rims follow Chrome bounds without
+   changing padding or command routing; Office retains its original material.
+   Crystal native scrollbars use the existing shared template: 14-DIP thickness,
+   4-DIP corners, one-DIP thumb rim and 6/8/11-percent accent washes.
+   Internal material selectors preserve resource scope and explicit overrides;
+   no public C# API was added. Native input, commands, focus and RTL remain WPF.
+   Shared customization pages round layout and each inset edge independently,
+   retaining 2-DIP Crystal/1-DIP Office tokens and host padding/style precedence.
+   `CrystalUtilityChrome`, `CrystalScrollBars` and `CrystalCustomization` were
+   retired after consumer proof; the designer-safe scrollbar adapter remains.
+   Host tint policy stays in Showcase for slice 8; capture is slice 9.
+   Detailed implementation and checks are in
+   [§3.204–§3.207](history/01-library.md#3204-shared-crystal-utility-buttons-and-scrollbars--2026-09-30);
+   current live acceptance is in the table above.
+
 8. **Contextual material and tint.** Make an ordinary `RibbonTab` render the
    accepted Crystal contextual surface from its contextual color; retire
    `CrystalContextualTab`. Decide and document whether custom Crystal tint is
@@ -317,324 +206,31 @@ build or test run was made for this deferred-issue note.
 
 ## Remaining slice 6 live review
 
-The user's normal-motion check passed in both themes on 2026-09-30: repeated
-File opening, Esc closing and quick reopening, with no reported flicker,
-position jump or leftover shadow. The user then confirmed both remaining short
-File-menu checks passed, completing the bounded slice 6 live review:
-
-- Thumb dragging, wheel scrolling and track clicks above/below the thumb move
-  content without closing File and retain a visible footer. Arrow-button
-  behavior was accepted earlier.
-- Shift+Tab reverses traversal, focus stays visible, Options/Exit are reachable
-  and focus cycles inside File. Tab navigation and Esc closing after tabbing
-  were accepted earlier.
-
-Reduced-motion behavior, a menu remaining open through a scaling change and
-mixed-monitor DPI transitions remain broader acceptance gaps. The two 200%
-layout observations above stay deferred by user direction. Do not infer these
-gates from normal-motion or closed-menu scale-return acceptance. No build/test
-rerun is needed for this documentation-only confirmation.
+Current acceptance is maintained in the table above. The original bounded
+sequence and results remain in history §3.197–§3.203. Reduced motion, scaling
+while File stays open and mixed-monitor transitions are separate broader gates.
 
 ## Slice 7 live review
 
-Use `samples/RibbonKit.Showcase/bin/CrystalSlice7Pixels/Release/net8.0-windows/RibbonKit.Showcase.exe`.
-The agent did not launch it. The bounded review below is complete on 2026-10-01.
-
-1. **Accepted by the user.** Hover and hold minimize, QAT overflow and tab/body arrows. The separate Crystal
-   preview's **Preview controls** offers **Show QAT overflow**, **Show scroll arrows**
-   and **Keep Home groups expanded**; narrow the window for the latter. Confirm
-   idle/hover/pressed/open rims, scrolling commands and cleanup after disabling
-   the demonstration toggles.
-2. **Accepted by the user.** In main Showcase, enter **Print Preview** and check its close button, then use
-   **MDI Demo** with a maximized child to check merged minimize/restore/close paint
-   and commands. Confirm Tab/Shift+Tab focus and a switch back to Office.
-3. **Accepted by the user.** The follow-up review verified matching
-   top/bottom gaps and compact, equal Crystal list/tree side gaps;
-   **native scrollbar input/focus/RTL accepted** for arrow/track/wheel/thumb
-   scrolling and visible focus; **DPI return accepted** for 125% → 200% → 125%.
-   The user confirmed spacing and DPI return passed for both reviewed themes.
-   Original utility/modal checks 1–2 remain accepted. Keep deferred gallery/Office RTL
-   observations separate. Reduced motion, open-menu scaling and mixed-monitor
-   transitions remain broader gates.
+Current acceptance is maintained in the table above; the original review and
+spacing corrections remain in history §3.204–§3.207. The user-reviewed build is
+`samples/RibbonKit.Showcase/bin/CrystalSlice7Pixels/Release/net8.0-windows/RibbonKit.Showcase.exe`.
+The agent did not launch it. Do not rerun automated checks for a prose-only
+confirmation; keep the deferred 200% observations separate.
 
 ## Verification and completion gates
 
-- The slice 6 application-menu pass on 2026-09-30 reproduced the non-Showcase
-  8-DIP frame instead of the accepted 14-DIP Crystal geometry. The Release
-  solution build and affected visual-test rebuild passed with zero
-  warnings/errors. The focused runtime run passed 116 tests; the eligible
-  runtime run passed 417, excluding Writer names and the deferred hover method
-  below. The RibbonKit-only single STA/Application consumer passed with
-  resource-declared/pre-templated menus, all QAT placements, minimized/message
-  combinations, split/dropdown pane and command routing, footer actions, RTL,
-  light/dark/Office switches, manually merged palettes, resource replacement,
-  explicit local values and menu reassignment between Ribbon owners. A rendered
-  pixel check verifies shadow on all four outside edges and none at the center.
-  All 99 snapshot scenes passed. The existing 85 captures are byte-identical;
-  14 new menu images were inspected before adding approvals for light/dark
-  default, split, dropdown, narrow, minimized, RTL and synthetic 100/200% scenes.
-  Existing approvals and tolerances are unchanged. Shared menu XML and all 12
-  palettes parsed without duplicate direct keys; final diff review and
-  `git diff --check` passed. No fresh live menu screenshot, native keyboard,
-  real menu DPI/motion or target-machine popup acceptance is claimed. No Writer
-  tests, manual Showcase launch, commit, push or publication ran. Earlier QAT
-  and message-bar live evidence remains bounded to those passes. Slice 6 is not
-  marked complete; slices 7–10 and Writer RKWF-026 remain open. See
-  [§3.200](history/01-library.md#3200-shared-crystal-application-menu--2026-09-30).
+Detailed dated results are retained in history, rather than copied into this
+plan on each confirmation:
 
-- The first live application-menu checkpoint on 2026-09-30 received light/dark
-  screenshots for the requested 125% setup. Both show expanded Home, title-bar
-  QAT and File open on Recent Documents without message rows. The outer frame,
-  inner outline and footer retain rounded corners; headings, menu commands and
-  footer actions are readable without visible clipping. The host's captured
-  blur remains behind the menu content and the visible shadow stays outside
-  the frame. Active split/dropdown panes, closing/reopening, narrow-window
-  resizing, live RTL and real menu DPI/motion remain pending. This checkpoint
-  changes documentation only: content/diff review and `git diff --check` passed;
-  no build/test rerun or manual Showcase launch was needed. Slice 6 stays open.
+- [Slice 6 QAT through menu checks, §3.197–§3.203](history/01-library.md#3197-shared-crystal-qat-drawer--2026-09-30).
+- [Slice 7 implementation and spacing checks, §3.204–§3.207](history/01-library.md#3204-shared-crystal-utility-buttons-and-scrollbars--2026-09-30).
+  The final pixel-gap build recorded zero warnings/errors, 418 eligible runtime
+  passes, the RibbonKit-only consumer's 96-variant gap matrix and all 105 visual
+  scenes. Existing approvals/tolerances were preserved. These are dated results,
+  not a reason to repeat successful checks for a documentation update.
 
-- The subsequent light/dark Save As screenshots verify the rounded split-row
-  silhouette and divider, active arrow, pane header and all four commands with
-  wrapped descriptions inside the rounded outline. The user confirmed that Esc
-  closes the menu cleanly and reopening File restores Recent Documents in both
-  themes. Dropdown presentation, native command invocation, resizing, live RTL
-  and menu DPI/motion checks remain pending. This documentation-only update
-  passed content/diff review and `git diff --check`; no build/test rerun or
-  manual Showcase launch was needed. Slice 6 remains open.
-
-- Fresh light/dark Publish screenshots verify the dropdown's complete rounded
-  row highlight while its pane is active, with no split divider or dimmed
-  command half. The pane heading and both commands/descriptions fit inside the
-  rounded outline without visible clipping. Native command invocation,
-  narrow-window resizing, live RTL and menu DPI/motion remain pending. The
-  records and diff were reviewed and `git diff --check` passed; no build/test
-  rerun or manual Showcase launch was needed for this documentation update.
-
-- The user confirmed the native command sequence in both light and dark:
-  clicking the Save As command half, Save As arrow → Word Document and Publish
-  → Blog each closes File and reports the selected command in Showcase's status
-  line. Reopening after each restores Recent Documents. This verifies bounded
-  split-primary/pane command handling and reset behavior. Narrow resizing,
-  live RTL and menu motion/DPI checks remain pending; slice 6 is still open.
-  This documentation-only update passed content/diff review and
-  `git diff --check`; no builds/tests were rerun or Showcase launched by the agent.
-
-- Narrow-window light/dark screenshots at the requested 125% setup are each
-  518×850 pixels. Both show Recent Documents with a reduced pane width; the
-  rounded frame fits within the window and footer actions remain visible.
-  The user reported that the menu returns to normal width after enlarging the
-  window. These establish narrow default-page appearance and reported width
-  restoration; active-pane description wrapping, live RTL and menu motion/DPI
-  checks remain pending. The earlier wide pair was retracted by the user and
-  was not counted as narrow evidence. Records/diff review and
-  `git diff --check` passed; no builds/tests were rerun or Showcase launched by
-  the agent. Slice 6 remains open.
-
-- Narrow Save As screenshots in light/dark are each 500×850 pixels. All four
-  command descriptions wrap within the reduced pane without visible clipping;
-  the heading, rounded split row, frame and both footer actions remain intact.
-  This completes the bounded narrow default/Save As appearance check alongside
-  the earlier reported width restoration. Live minimized/message menu review,
-  RTL and broader motion/keyboard/DPI checks remain pending; slice 6 stays open.
-  Documentation content/diff review and `git diff --check` passed; no builds/tests
-  were rerun or Showcase launched by the agent.
-
-- Minimized-ribbon Save As screenshots in light/dark are each 1350×850 pixels,
-  with title-bar QAT and both Protected View and Security Notice visible.
-  The menu overlays the notice rows and document correctly; the rounded frame,
-  inner outline, active split row, four command descriptions and both footer
-  actions remain intact without visible clipping. The user confirmed that Esc
-  closes File cleanly and reopening restores Recent Documents in both themes
-  in this combined state. This completes its bounded appearance/close/reopen
-  check; live RTL and broader motion/keyboard/DPI checks remain pending, and
-  slice 6 stays open. Documentation content/diff review and `git diff --check`
-  passed; no builds/tests were rerun or Showcase launched by the agent.
-
-- RTL default-page light/dark screenshots are each 1300×875 pixels. The menu
-  anchors at File on the right, navigation/icons are on the right, the recent
-  pane is on the left and footer actions mirror leftward. Mixed Arabic/English
-  recent content stays readable, and `Report-2026-Q3.docx` remains explicitly
-  LTR. The long bilingual Save As label is clipped in both captures. A focused
-  reproduction confirmed characters outside its primary hit area; the lab now
-  supplies a wrapping `HeaderTemplate` for that host-owned label. Release
-  Showcase/runtime/test-project compilation and both focused localization tests
-  passed using separate output so the user's running Showcase stayed untouched.
-  Shared templates, tokens and APIs were unchanged by this correction. Fresh
-  RTL label/pane acceptance, closing/reopening and broader live checks remain
-  pending; slice 6 stays open. See [§3.201](history/01-library.md#3201-rtl-lab-bilingual-application-menu-header--2026-09-30).
-
-- Fresh RTL Save As screenshots from the updated build are each 1300×875 pixels
-  in light/dark. The complete bilingual navigation label is visible on two
-  lines, the split arrow points left and its divider stays inside the rounded
-  active row. Both mixed-language pane entries are readable on the left; the
-  frame, inner outline and mirrored Exit/Options footer fit without visible
-  clipping. This verifies the corrected label and RTL active-pane appearance
-  alongside the earlier default-page review. RTL closing/reopening, return to
-  LTR and broader motion/keyboard/DPI checks remain pending; slice 6 stays open.
-  Documentation content/diff review and `git diff --check` passed; no builds/tests
-  were rerun or Showcase launched by the agent for this screenshot checkpoint.
-
-- The user then confirmed RTL Esc closing and Recent Documents restoration on
-  reopening in both themes. After closing File and disabling Right-to-Left,
-  reopening also restores normal LTR menu placement in both themes. This
-  completes the bounded RTL appearance/close/reset review. Broader menu motion,
-  keyboard and real DPI checks remain pending; slice 6 stays open. This
-  documentation-only update passed content/diff review and `git diff --check`;
-  no builds/tests were rerun or Showcase launched by the agent.
-
-- The user confirmed alignment and Esc closing after returning to 125% in both
-  themes. The accompanying 1920×1104 captures at 200% showed Options/Exit clipped
-  below the window. The shared menu now follows available client height and
-  scrolls navigation/default/active content while retaining a visible footer.
-  A RibbonKit-only regression covers short/tall/short resizing, scroll offsets,
-  anchor reflow, local limits and detach/reattach in Crystal/Office 2007/Office 2024,
-  light/dark and LTR/RTL. Captured host blur no longer affects desired size.
-  The Release solution build passed with zero warnings/errors; all 418 eligible
-  runtime tests, the single RibbonKit-only consumer test and all 99 snapshot
-  scenes passed without approval changes. Writer names and the deferred hover
-  method remain excluded. Documentation content/link review and `git diff --check`
-  passed. Separate framework-specific output preserves the user's running build.
-  Fresh 200% footer/scrolling acceptance and the subsequent 125% return check
-  remain pending; slice 6 stays open. See
-  [§3.202](history/01-library.md#3202-application-menu-footer-at-limited-viewport-height--2026-09-30).
-
-- Fresh light/dark screenshots from the updated build each measure 1920×1104
-  pixels at 200%. The Save As heading and all four command descriptions fit;
-  the navigation scrollbar is visible and Options/Exit are fully inside the
-  rounded footer. The user confirmed alignment and Esc closing after returning
-  to 125% in both themes. This completes the bounded footer appearance/return
-  check. Live scroll reachability and broader motion/keyboard/DPI checks remain
-  pending; slice 6 stays open. This documentation-only checkpoint passed
-  content/link review and `git diff --check`; no builds/tests were rerun.
-
-- Live scrollbar-arrow clicks dismissed File, while thumb dragging kept it
-  open. The shared handler now exempts only ScrollBar descendants. The native
-  click regression first reproduced dismissal, then passed line/page scrolling
-  in navigation/default/active panes across Crystal/Office 2007/Office 2024,
-  light/dark and LTR/RTL. The Release solution build passed with zero warnings/
-  errors and the RibbonKit-only consumer test passed. The eligible runtime run
-  passed 417 tests and failed the initial Office RTL option-indicator assertion
-  in `Detached_rtl_lab_applies_crystal_and_restores_office_options`, before File
-  opens. Isolated reruns failed identically in the new and prior build outputs
-  at the current 200% setup; this existing failure remains open. The same Writer/
-  deferred-hover exclusions apply. No snapshots were rerun for the routing-only
-  correction. Documentation content/link review and `git diff --check` passed.
-  Separate `MenuScrollClickCheck` output is ready for fresh light/dark scrolling
-  acceptance; slice 6 remains open. See
-  [§3.203](history/01-library.md#3203-application-menu-scrollbar-clicks-preserve-the-open-menu--2026-09-30).
-
-- The user confirmed scrollbar buttons now scroll without closing File in both
-  themes. This closes the bounded live arrow-click regression check. Page-region,
-  thumb-drag and wheel acceptance were not newly reported; broader keyboard,
-  motion and DPI checks remain open. The earlier Office RTL option-indicator
-  failure remains recorded separately. This documentation-only checkpoint passed
-  content/link review and `git diff --check`; no builds/tests were rerun or
-  Showcase launched by the agent. See
-  [§3.203](history/01-library.md#3203-application-menu-scrollbar-clicks-preserve-the-open-menu--2026-09-30).
-
-- The user supplied `20260930-1141-49.7011675.mp4` and confirmed that keyboard
-  Tab navigation works and Esc closes File after tabbing. This records the
-  reported sequence; the message does not separately confirm Shift+Tab, footer
-  reachability, default-page restoration, or the recording's theme/scale. The
-  next bounded live review is opening motion in light/dark. Remaining scrolling,
-  keyboard and DPI gates stay open; the two deferred 200% layout observations
-  remain parked. Documentation content/link review and `git diff --check`
-  passed; no builds/tests were rerun or Showcase launched by the agent.
-
-- The user confirmed that the requested repeated File open/Esc/quick-reopen
-  motion check passes in both themes. This closes the bounded normal opening-
-  motion review. Remaining checks are listed above; reduced-motion and broader
-  DPI behavior are not inferred. Documentation content/link review and
-  `git diff --check` passed; no builds/tests were rerun or Showcase launched.
-
-- The user confirmed both final short checks: thumb/wheel/track scrolling keeps
-  File open with its footer visible, and reverse keyboard traversal retains
-  visible focus, footer reachability and cycling inside File. The bounded
-  slice 6 QAT/message-bar/application-menu live review is complete. Utility
-  chrome and scrollbar promotion is next in slice 7. Reduced motion, broader
-  DPI transitions and the two deferred 200% layout observations remain open;
-  the recorded 417-pass/1-fail runtime result is unchanged. Documentation
-  content/link review and `git diff --check` passed; no builds/tests were rerun
-  or Showcase launched by the agent.
-
-- The slice 6 message-bar pass on 2026-09-30 reproduced the non-Showcase action's
-  5-DIP corners instead of the accepted 12-DIP corners. Its Release solution
-  build and affected visual-test rebuild passed with zero warnings/errors.
-  The focused runtime run passed 100 tests; the eligible runtime run passed 417,
-  excluding Writer names and the deferred hover method below. The RibbonKit-only
-  single STA/Application consumer passed, covering every QAT placement, minimized
-  state, stacked/empty/reopened messages, wrapping, RTL, action command/parameter,
-  independent dismissal, disabled and synthetic hover/pressed/focus states, live
-  light/dark and Office switches, manual palettes, scoped metric replacement and
-  explicit host style/property precedence. All 85 snapshot scenes passed after
-  full capture/review: the existing 77 were byte-identical, and eight new Crystal
-  message approvals cover light/dark stacks, wrapped body text, rounded actions,
-  minimized body collapse, RTL and synthetic 100/200% rendering. No existing
-  approval or tolerance changed in this pass. Fresh light/dark screenshots now
-  verify expanded Home with TabRow QAT and both notices: body lower corners,
-  separated rounded rows, readable action buttons and no visible clipping.
-  The user confirmed the expanded action/close/reopen sequence in both themes:
-  each action dismisses only its own row, the close target removes the remaining
-  row, and Add Message restores both. Further light/dark screenshots verify the
-  minimized below-ribbon QAT retains all four rounded corners above both notices,
-  with clear row spacing and unclipped actions. The user also confirmed that each
-  action dismisses only its own notice while minimized, then expanding, adding
-  both notices and minimizing restores them without leftover shadows in both
-  themes. This completes the bounded message-bar live review; broader motion,
-  keyboard/DPI checks remain pending. Application-menu promotion
-  remains open; slice 6 is not complete. See [§3.199](history/01-library.md#3199-shared-crystal-message-bars--2026-09-30).
-
-- The minimized/message corner follow-up on 2026-09-30 first reproduced the
-  square upper corners in the RibbonKit-only consumer, then passed the Release
-  solution build with zero warnings/errors, 100 focused tests, 417 eligible
-  runtime tests with the same exclusions below, and the single STA consumer
-  test. Coverage includes live light/dark and Office restoration, manual
-  dictionaries, combined-state resource replacement and local-value precedence.
-  All 77 snapshot scenes passed. A full capture found exactly two changed PNGs;
-  the light/dark minimized-message actual and diff images were inspected before
-  renewing only those two approvals. The other 75 images were identical and
-  tolerances were unchanged. The initial comparison also passed because this
-  small corner change was within its tolerance; the consumer assertion provides
-  the exact corner regression gate.
-
-- The bounded live QAT review is complete on 2026-09-30. User screenshots cover
-  Crystal light/dark below-ribbon expanded/minimized states with and without
-  messages, including the corrected upper corners above Protected View;
-  minimized TabRow and title-bar placement at 125%; ordinary commands, Paste
-  split and Select dropdown in title-bar overflow; and direct/nested Paste and
-  Select popups. The user confirmed Esc closing, the nested two-step Esc sequence
-  and reopening with every source-menu command intact. The corrected light
-  nested Select screenshot has no open message; its dark counterpart has one.
-  Real 200% screenshots cover the maximized minimized/message QAT and Select
-  popup in both themes. Showcase stayed open throughout 125% → 200% → 125%;
-  Select was closed during the change, then reopened aligned and closed cleanly
-  with Esc after the return. The user confirmed removal of the eight temporary
-  commands and restoration of Save, Undo, Redo, Paste and Select below the ribbon,
-  Home expanded and Windows scaling at 125%. Detailed screenshot evidence is in
-  [§3.198](history/01-library.md#3198-minimized-crystal-qat-corners-above-messages--2026-09-30).
-  A popup remaining open during a scale change, mixed-monitor transitions, other
-  popup states and slice 5's customization review remain unverified. No manual
-  Showcase launch or Writer tests were run by the agent. Subsequent screenshot
-  and cleanup record updates changed documentation only; builds/tests were not
-  rerun for those updates. This checkpoint did not cover slice 6's later passes.
-
-- The slice 6 QAT checkpoint on 2026-09-30 passed a Release solution build with
-  zero warnings/errors, 100 focused tests and 417 eligible runtime tests. Both
-  runtime runs exclude Writer-named tests and the deferred
-  `Every_ribbon_button_family_consumes_the_shared_hover_glass` method.
-  The single STA/WPF Application RibbonKit-only consumer test passed with every
-  placement, minimized/message combination, mixed button/dropdown/split proxies,
-  source-menu borrowing in overflow, physical RTL order, repeated light/dark and
-  Office switches, manual token merges and scoped/local precedence.
-  All 77 snapshot scenes passed: the original 63 approvals are unchanged, and
-  14 new Crystal QAT scenes were added after actual-image review. They cover
-  light/dark, expanded/minimized, message presence, RTL, tab-row overflow and
-  synthetic 100/200% rendering. Image inspection first exposed false minimized
-  fixtures; those now realize the control's loaded lifecycle in an offscreen
-  test window and assert that the body is collapsed before bitmap capture.
-  No Writer tests, manual Showcase launch, user screenshot acceptance, real DPI
-  transitions or target-machine popup acceptance ran. These automated results
-  do not close slice 5's pending live review or the remaining slice 6 passes.
+For subsequent implementation, keep the following gates:
 
 - For the header-row inset slice, verify each theme's normal and
   no-application margins in a consumer without Showcase resources. Exercise

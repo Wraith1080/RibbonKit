@@ -44,6 +44,14 @@ verification is unavailable.
 | Focused code fix in one component | Build the affected project and run relevant existing or added regression tests. Check the actual UI when the result depends on rendering or interaction. |
 | Shared templates, public APIs, cross-project behavior, build configuration, or release readiness | Build and test `RibbonKit.sln` in Release; include affected live UI gates. For packaging/designer distribution, also pack and validate the package. |
 
+For documentation-only acceptance, use the [quick documentation workflow](AGENTS.md#quick-documentation-and-acceptance-updates).
+Update one existing acceptance row/item in the active plan; keep its date, review
+scope and remaining limits precise. Review that edit and any changed link target,
+then run `git diff --check` once. Existing links do not need a fresh repository-wide
+link audit. Do not duplicate the confirmation into history, the design index or
+README; those change only when they contain independently affected information.
+Previously read instructions and recorded test evidence need not be reloaded.
+
 Explicit task acceptance gates take precedence. Broaden a focused run when dependency
 impact, a failure, or unresolved risk warrants it. Do not repeat successful checks
 without a relevant new change. `--no-build` requires a successful matching build of

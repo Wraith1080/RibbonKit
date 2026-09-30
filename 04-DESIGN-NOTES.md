@@ -788,13 +788,16 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),
 and the [WPF workflow skill](.agents/skills/ribbonkit-wpf-workflow/SKILL.md).
-Keep current status here, product scope in the relevant plan, and dated evidence in
-`docs/history/`. Add future numbered implementation entries to the relevant history
-file and this index; update §5 only as supported by verification.
+Keep §5 as a brief subsystem summary and pointer. The active plan owns its current
+slice status and live acceptance; `docs/history/` owns detailed implementation,
+automated evidence and pitfalls. Follow the [quick documentation workflow](AGENTS.md#quick-documentation-and-acceptance-updates)
+for routine confirmations. Update the plan once, without duplicating the result
+here or adding another numbered history/index entry. Add those entries when new
+technical evidence warrants them; preserve existing dated records.
 
 ## 5. Current State & Next Steps
 
-> Authoritative summary of recorded evidence through 2026-09-30.
+> Subsystem summary; linked active plans own current slice and acceptance status.
 > Counts below are dated results with their stated verification scope.
 
 ### Complete
@@ -841,95 +844,15 @@ file and this index; update §5 only as supported by verification.
   (M1–M3); Office 2010 Aero live visual approval (§3.97/§3.125); optional designer
   scalar reset actions; touch density, richer QAT/custom-control projections and
   future themes. Complete Windows contrast-theme support is not claimed.
-- **Crystal portability and Office 2007 orb defaults:** slices 1–5 of the
-  [staged integration plan](docs/13-CRYSTAL-PORTABILITY-AND-ORB-PLAN.md) now
-  give Office 2007 a theme-following orb default while preserving explicit
-  `ApplicationButtonShape`, verify theme-owned header insets, and expose a
-  portable orb glyph template. Shared Crystal control materials now cover menu
-  rows, inputs, galleries, options, ScreenTips and built-in customization pages
-  in a RibbonKit-only consumer. Slice 6's QAT pass now promotes drawer paint,
-  geometry, body coordination and shadows (§3.197), with 417 eligible runtime
-  tests, the RibbonKit-only consumer and 77 snapshot scenes passing. A user
-  screenshot exposed square upper QAT corners when minimized above a message;
-  the shared combined-state correction passes the same automated gates (§3.198).
-  The completed bounded live QAT review covers light/dark drawer and placement
-  states, mixed-command overflow, direct/nested Paste and Select menus, Esc
-  closing and reopening with all commands. Real 200% screenshots and a live
-  125% → 200% → 125% change/return passed with Showcase open and Select reopened
-  after the return. The user confirmed temporary-command cleanup and restoration
-  of the original five-command below-ribbon QAT at 125%. The message-bar pass
-  now supplies shared action chrome and message-only body rounding (§3.199),
-  removing its Showcase adapter after consumer verification. The Release solution
-  build, 100 focused/417 eligible runtime tests, RibbonKit-only consumer and all
-  85 snapshots pass. Fresh light/dark screenshots verify expanded Home with
-  TabRow QAT, two separated notices and rounded actions. The user confirmed
-  independent action/close dismissal and reopening in both themes. Minimized
-  below-ribbon QAT/two-notice screenshots also verify four rounded QAT corners,
-  row spacing and unclipped actions in light/dark. The user confirmed independent
-  minimized action dismissal and restoration after expanding, adding both notices
-  and minimizing without leftover shadows. The bounded message-bar live review
-  is complete; broader motion/keyboard/DPI checks remain pending. The application-menu
-  pass now promotes shared paint, rounded content/split rows, responsive sizing
-  and outside-only shadows (§3.200), removing its paint/geometry and shadow
-  helpers. The Release solution build, 116 focused/417 eligible runtime tests,
-  RibbonKit-only consumer and all 99 snapshots pass. The previous 85 images are
-  unchanged; 14 new menu approvals were inspected first. Fresh light/dark
-  screenshots verify the default Recent Documents page, Save As split pane and
-  Publish dropdown, rounded frame/footer and host backdrop. The user confirmed
-  Esc closing, Save As primary/pane and Publish pane command invocation, and
-  default-page restoration on reopening in both themes. Narrow default and Save
-  As pages fit in both themes, with all four descriptions wrapping cleanly and
-  both footer actions visible. The user reported normal width returning after
-  widening. Save As appearance above two notices with the ribbon minimized,
-  Esc closing and default-page restoration are verified in both themes in
-  that state. RTL default and Save As screenshots verify mirrored placement,
-  mixed text and the lab's full bilingual label on two lines. Its host-owned
-  wrapping header template passes both focused localization tests and fresh
-  appearance review (§3.201). The user confirmed RTL Esc closing, default-page
-  restoration on reopening and return to LTR in both themes, completing the
-  bounded RTL review. The shared frame now follows
-  available client height, with scrolling navigation/default/active content and a
-  stationary footer (§3.202). Captured host blur no longer contributes desired size.
-  Fresh 200% light/dark screenshots show Options/Exit fully visible; alignment
-  and Esc closing after returning to 125% are confirmed in both themes. The bounded
-  footer appearance/return check is complete. Live scrolling exposed arrow clicks
-  dismissing File while the thumb stayed open. The shared close handler now exempts
-  only ScrollBar descendants (§3.203); command clicks retain dismissal. The user
-  confirmed scrollbar buttons now scroll without closing File in both themes.
-  Tab navigation and Esc closing after tabbing are also confirmed by the user.
-  Repeated File open/Esc/quick-reopen motion passed in both themes. The user then
-  confirmed thumb/wheel/track scrolling and reverse keyboard traversal, including
-  footer reachability and focus cycling. The bounded slice 6 QAT/message-bar/
-  application-menu live review is complete. Reduced motion, broader DPI
-  transitions and deferred layout issues remain open; blanket final acceptance
-  is not claimed. Slice 7 now promotes utility rims and native scrollbar paint/
-  metrics into shared templates/tokens (§3.204); its Release solution build has
-  zero warnings/errors, all 418 eligible runtime tests pass, the RibbonKit-only
-  consumer passes and all 105 visual scenes pass. Six new state scenes were
-  inspected; the preceding 99 approvals/tolerances are unchanged. The utility,
-  scrollbar and customization paint helpers were retired after consumer proof.
-  User slice 7 live checks 1–2 are accepted. Check 3 reported inconsistent list/tree
-  scrollbar clearance; shared frames now use matching 2-DIP Crystal and 1-DIP
-  Office insets (§3.205), followed by the pixel-gap correction below.
-  The isolated spacing build has zero warnings/errors; its consumer, 418 eligible
-  runtime tests and 105 visual scenes pass with unchanged approvals/tolerances.
-  Follow-up screenshots exposed uneven top/bottom and Crystal list/tree side
-  gaps despite the earlier fractional-DPI tolerance. Shared customization pages
-  now round layout and use a transparent per-edge inset border (§3.206).
-  The isolated pixel-gap Release build has zero warnings/errors; its 96-variant
-  consumer matrix, 418 eligible runtime tests and 105 visual scenes pass. Crystal/
-  Office renders at 125/200% were inspected; approvals/tolerances are unchanged.
-  Native scrollbar input/focus/RTL review is accepted. The user then confirmed
-  spacing and 125% → 200% → 125% return passed for both reviewed themes (§3.207).
-  Together with original utility/modal acceptance, the bounded slice 7 live
-  review is complete on 2026-10-01. This confirmation changes documentation only;
-  no builds/tests were repeated. Slices 8–10 remain open.
-  The prior Office RTL checkbox failure
-  at 200% and gallery-layout report remain deferred, with causes unconfirmed,
-  despite the RTL test passing in this run. Captured blur remains host integration
-  work; contextual tint, optional host effects and final Showcase consolidation remain
-  later slices. Writer's W-glyph migration stays deferred. Slice 5 customization,
-  broader DPI and remaining popup acceptance stay open.
+- **Crystal portability and Office 2007 orb defaults:** use the
+  [active plan's status and acceptance table](docs/13-CRYSTAL-PORTABILITY-AND-ORB-PLAN.md#current-status-and-acceptance)
+  for slice progress, remaining live review and deferred issues. Shared work
+  covers the theme-following orb/glyph hook, control materials, customization,
+  QAT/message/application-menu chrome and utility/native-scrollbar material.
+  Detailed evidence remains in §3.189–§3.207. Update current acceptance in the
+  plan only; do not append each confirmation to this summary. Writer's saved
+  appearance and W-glyph migration remain deferred under RKWF-026.
+
 - Automatic `Icons.xaml` discovery remains best-effort; the manual browser is the
   fallback for no match, ambiguity, inaccessible paths or parse failure.
 
