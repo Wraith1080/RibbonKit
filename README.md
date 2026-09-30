@@ -66,8 +66,9 @@ Office 2007, 2010, 2013, 2019 and 2024 each have light and dark/black palettes, 
 live theme/accent switching. The Crystal Light theme choice now has both light and
 dark palettes for the same shared `Controls.*.xaml` templates. Shared Crystal
 resources cover menu rows, inputs, galleries, check/radio controls, ScreenTips
-and the built-in Ribbon/QAT customization pages, QAT drawer and message bars
-in applications using `ThemeManager.Apply`. The drawer retains its inset, rim,
+and the built-in Ribbon/QAT customization pages, QAT drawer, message bars and
+the two-pane application menu in applications using `ThemeManager.Apply`.
+The drawer retains its inset, rim,
 shadow and body rounding through light/dark, minimized and message states.
 Its shared `QatExtender.*`, `QatExtenderShadow`, `ContentCornerRadiusQatBelow`
 and `ContentZIndexQatBelow` theme resources support scoped overrides;
@@ -78,9 +79,17 @@ amber paint, independent dismissal and actions. The shared
 metric provide Crystal action paint and 12-DIP corners; Office retains its compact
 action appearance. `RibbonKit.Metrics.ContentCornerRadiusTop` keeps Crystal's body rounded above
 messages. Scoped resources and explicit action styles/values retain WPF precedence.
-Showcase still applies menu, scrollbar and popup presentation helpers; their
-reusable chrome is scheduled for later portability passes. Host backdrop effects and the preview's
-document-under-QAT treatment remain separate.
+The application menu receives its translucent paint, 14-DIP outer corners,
+rounded content/split rows, responsive pane width and outside-only shadow from
+shared resources. `RibbonKit.Metrics.ApplicationMenuPaneWidth`,
+`ApplicationMenuPaneMinimumWidth` and `ApplicationMenuPaneViewportInset` set its
+preferred width, lower bound and viewport allowance; scoped resources and local
+part values retain WPF precedence. The shared frame stays within the window's
+available height, with scrolling navigation and pane content and a visible footer.
+Office keeps its existing menu geometry when it fits.
+Showcase still applies utility-button, scrollbar and popup backdrop helpers.
+Captured menu/popup blur, preview tint and document-under-QAT treatment remain
+separate host integration work.
 
 Office 2007 defaults to the round application orb, including its black palette;
 other themes default to a File tab. Set `Ribbon.ApplicationButtonShape` to `Tab`

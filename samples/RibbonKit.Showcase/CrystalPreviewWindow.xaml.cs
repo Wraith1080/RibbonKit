@@ -13,7 +13,7 @@ public partial class CrystalPreviewWindow : RibbonWindow
     private readonly CrystalBackstagePresentation _backstagePresentation;
     private readonly CrystalScreenTipPalette _screenTipPalette;
     private readonly CrystalScrollBars[] _scrollBars;
-    private readonly CrystalApplicationMenuPresentation _applicationMenuPresentation;
+    private readonly CrystalApplicationMenuBackdrop _applicationMenuBackdrop;
     private readonly CrystalPopupBackdrop[] _popupBackdrops;
     private readonly CrystalDocumentEdgeFade _documentEdgeFade;
     private readonly string _baselineLayout;
@@ -29,7 +29,7 @@ public partial class CrystalPreviewWindow : RibbonWindow
     {
         InitializeComponent();
         PreviewRibbon.ApplicationMenu = null;
-        _applicationMenuPresentation = new CrystalApplicationMenuPresentation(CrystalFileMenu, this);
+        _applicationMenuBackdrop = new CrystalApplicationMenuBackdrop(CrystalFileMenu, this);
         // Group content is reparented by ribbon layout, so use the actual source
         // rather than resolving a window name from the borrowed content tree.
         foreach (var panel in new[] { CrystalOptionsPanel, CrystalSpacingPanel })
@@ -127,7 +127,7 @@ public partial class CrystalPreviewWindow : RibbonWindow
     private void UpdateCrystalDetails(bool enabled)
     {
         CrystalUtilityChrome.Apply(this, enabled);
-        _applicationMenuPresentation.Apply(enabled);
+        _applicationMenuBackdrop.Apply(enabled);
         foreach (var popup in _popupBackdrops) popup.Apply(enabled);
         _documentEdgeFade.Apply(enabled, _documentEdgeFadeEnabled, _documentQatUnderlayEnabled);
         DocumentFadeToggle.IsEnabled = enabled;

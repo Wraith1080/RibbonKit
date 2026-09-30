@@ -65,8 +65,35 @@ screenshots also verify four rounded corners, notice spacing and unclipped actio
 in light/dark. The user confirmed independent minimized action dismissal and
 restoration of both notices after expanding, adding and minimizing, without
 leftover shadows. The bounded message-bar live review is complete; broader
-motion/keyboard/DPI checks remain pending. Application-menu promotion and later
-slices remain proposals.
+motion/keyboard/DPI checks remain pending. The application-menu pass now promotes
+frame/pane paint, rounded content and split rows, responsive width and an
+outside-only shadow into shared templates/tokens. The Release solution build,
+116 focused/417 eligible runtime tests, RibbonKit-only consumer and all 99
+snapshots pass; the previous 85 captures are unchanged and 14 new menu images
+were inspected before approval. Fresh light/dark screenshots now verify the
+default Recent Documents page, Save As split pane, Publish dropdown, rounded frame/footer,
+readable content and host backdrop. The user confirmed Esc closing, Save As
+primary/pane and Publish pane command handling, and default-page restoration
+on reopening in both themes. Narrow default and Save As pages fit in both themes,
+including all four wrapped descriptions and visible footer actions. The user
+reported normal width restoration after widening. Save As also fits above two
+notices with the ribbon minimized; Esc closing and default-page restoration are
+confirmed in both themes in that state. RTL default and Save As screenshots
+verify mirroring, mixed text and the lab's full bilingual label on two lines.
+Its host-owned wrapping correction passes focused tests and fresh appearance
+review (§3.201). The user confirmed RTL Esc closing, default restoration on
+reopening and return to LTR in both themes. The bounded RTL review is complete;
+fresh 200% light/dark captures show the corrected footer fully visible (§3.202).
+Alignment and Esc closing after returning to 125% are confirmed in both themes.
+The bounded footer appearance/return check is complete. Scrollbar-arrow clicks
+then exposed command-click dismissal; the shared handler now exempts ScrollBar
+descendants (§3.203). The user confirmed scrollbar buttons scroll without closing
+File in both themes. The user also confirmed Tab navigation and Esc closing
+after tabbing. Repeated File open/Esc/quick-reopen motion passed in both themes.
+Thumb/wheel/track scrolling and reverse keyboard traversal, including footer
+reachability and focus cycling, are now confirmed. The bounded slice 6 live
+review is complete. Reduced motion, broader DPI transitions and deferred layout
+issues remain open. Utility chrome and scrollbar promotion is next in slice 7.
 The bounded QAT live review is complete: light/dark drawer states and corrected
 minimized/message corners, TabRow/title-bar placement, mixed-command overflow,
 direct/nested Paste and Select menus, Esc closing and reopening with all commands.
@@ -100,10 +127,34 @@ The Showcase presentation audit found these Crystal portability gaps:
   behavior are verified in light/dark, as is minimized below-ribbon QAT/two-notice
   appearance and independent minimized dismissal/restoration without leftover
   shadows. The bounded message-bar live review is complete (§3.199).
-- `CrystalApplicationMenuPresentation`, `CrystalUtilityChrome` and
-  `CrystalScrollBars` modify built-in control chrome or template parts after
-  theme selection. Promote generic geometry and paint into RibbonKit rather
-  than requiring each consumer to copy these helpers.
+- `CrystalApplicationMenuPresentation` and `CrystalMenuShadow` were removed
+  after the shared menu passed consumer verification (§3.200). The remaining
+  `CrystalApplicationMenuBackdrop` attaches only captured host blur; its optional
+  integration contract remains slice 9 work. The default page, Save As split and
+  Publish dropdown have fresh light/dark appearance evidence. Esc closing,
+  split-primary/pane command invocation and default restoration are confirmed
+  in both themes. Narrow default/Save As appearance, description wrapping and
+  reported width restoration are recorded. Save As above two notices with the
+  ribbon minimized, Esc closing and default-page restoration are verified in
+  both themes in that state. RTL default/Save As appearance and the corrected
+  bilingual lab label are verified in light/dark (§3.201). RTL Esc closing,
+  default restoration on reopening and return to LTR are confirmed in both
+  themes. The shared menu now bounds its height and scrolls content independently
+  of the footer; host-captured blur no longer affects measurement (§3.202).
+  Fresh 200% light/dark screenshots show the complete footer; alignment/Esc
+  closing after returning to 125% are confirmed in both themes. Scrollbar-arrow
+  dismissal is corrected in the shared click handler (§3.203), and the user
+  confirmed scrollbar buttons now keep File open in both themes. Tab navigation
+  and Esc closing after tabbing are also confirmed by the user. Normal repeated
+  opening/Esc/quick-reopen motion passed in both themes. Thumb/wheel/track
+  scrolling and reverse keyboard traversal, including footer reachability and
+  focus cycling, are now confirmed, completing the bounded live review.
+  Reduced motion, broader DPI transitions and deferred layout issues remain
+  open. The [live review checkpoint](13-CRYSTAL-PORTABILITY-AND-ORB-PLAN.md#remaining-slice-6-live-review)
+  separates that acceptance from broader gaps.
+- `CrystalUtilityChrome` and `CrystalScrollBars` still modify built-in control
+  chrome or template parts after theme selection. Promote their generic geometry
+  and paint into RibbonKit in slice 7.
 - `CrystalContextualTab` is a Showcase-only subclass. Ordinary `RibbonTab`
   consumers cannot obtain its contextual material; integrate it with the
   shared tab/template contract. `CrystalPalette` supplies full material tint
@@ -344,6 +395,14 @@ gallery, the selected icon-bearing tile appears clipped behind the gallery's out
 border at 200% scaling. Reproduce with and without an icon at 100% and 200%, then
 inspect item bounds, viewport clipping and DPI rounding in the shared gallery before
 changing its layout. Preserve the accepted Crystal tile and gallery border visuals.
+
+On 2026-09-30 the user also reported that gallery items have a different layout
+at 200% and requested later investigation alongside the existing RTL
+option-indicator test failure. The exact affected gallery/layout difference is
+not yet established, and it is not assumed to be the same clipping issue.
+Both observations and the bounded later checks are recorded in the
+[deferred layout list](13-CRYSTAL-PORTABILITY-AND-ORB-PLAN.md#deferred-layout-observations-at-200).
+Neither cause is confirmed, and no fix or new acceptance is claimed.
 
 Gallery boundary refinement: the hover-style white rim disappeared into the pale
 surfaces inside and outside the strip. Its persistent border now uses an opaque

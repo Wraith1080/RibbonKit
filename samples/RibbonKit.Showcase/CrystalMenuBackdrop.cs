@@ -34,7 +34,11 @@ internal sealed class CrystalMenuBackdrop
         _wrapper = wrapper;
         _image.Effect = new BlurEffect { Radius = 6, KernelType = KernelType.Gaussian,
             RenderingBias = RenderingBias.Performance };
-        Layer.Children.Add(_image);
+        // Captured pixels are paint, not layout content. An Image measured with infinite
+        // width and bounded height can scale its old bitmap and enlarge the menu on resize.
+        var canvas = new Canvas();
+        canvas.Children.Add(_image);
+        Layer.Children.Add(canvas);
         wrapper.Children.Insert(1, Layer);
         frame.Loaded += OnLoaded;
         frame.IsVisibleChanged += OnVisibleChanged;
@@ -105,6 +109,8 @@ internal sealed class CrystalMenuBackdrop
             _wrapper.SetCurrentValue(UIElement.OpacityProperty, opacity);
             _capturing = false;
         }
+        _image.Width = region.Width;
+        _image.Height = region.Height;
         _image.Source = bitmap;
         // Clip after the blur so the expanded sampling area cannot spill over the glass rim.
         Layer.Clip = new RectangleGeometry(new Rect(_frame.RenderSize),

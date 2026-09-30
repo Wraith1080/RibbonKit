@@ -7,6 +7,7 @@ using System.Windows.Automation.Peers;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Data;
+using System.Windows.Media;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Markup;
@@ -2175,11 +2176,15 @@ public class Ribbon : Control
         if (e.OldValue is RibbonApplicationMenu oldMenu)
         {
             oldMenu.CloseRequested -= ribbon.OnApplicationMenuCloseRequested;
+            BindingOperations.ClearBinding(oldMenu, ApplicationMenuGeometryConverter.AvailableWidthProperty);
+            oldMenu.ClearValue(ApplicationMenuGeometryConverter.AvailableHeightProperty);
         }
 
         if (e.NewValue is RibbonApplicationMenu newMenu)
         {
             newMenu.CloseRequested += ribbon.OnApplicationMenuCloseRequested;
+            BindingOperations.SetBinding(newMenu, ApplicationMenuGeometryConverter.AvailableWidthProperty,
+                new Binding(nameof(ActualWidth)) { Source = ribbon });
         }
 
         // Assigning or clearing a menu changes WHICH surface IsBackstageOpen means, so the
@@ -2443,10 +2448,45 @@ public class Ribbon : Control
             }
 
             bool anchorBelow = TryFindResource(ApplicationMenuAnchorBelowButtonResourceKey) is true;
+            double top = origin.Y + (anchorBelow ? _applicationButton.ActualHeight : 0d);
             Canvas.SetLeft(_applicationMenuOverlayPresenter, origin.X);
-            Canvas.SetTop(
-                _applicationMenuOverlayPresenter,
-                origin.Y + (anchorBelow ? _applicationButton.ActualHeight : 0d));
+            Canvas.SetTop(_applicationMenuOverlayPresenter, top);
+
+            // Canvas measures overlays with infinite height. Bound the shared frame to the
+            // window's client content instead of the ribbon's own (much shorter) height.
+            // Recomputed on layout so resizing and live DPI changes keep the footer reachable.
+            if (ApplicationMenu is RibbonApplicationMenu menu
+                && Window.GetWindow(this) is { Content: FrameworkElement content } window)
+            {
+                FrameworkElement viewport = content;
+                // Content itself may align to the top (including a Window containing only
+                // Ribbon). Its presenter represents the full client area in that case.
+                for (DependencyObject? parent = VisualTreeHelper.GetParent(content);
+                    parent is not null && parent != window;
+                    parent = VisualTreeHelper.GetParent(parent))
+                {
+                    if (parent is ContentPresenter presenter && ReferenceEquals(presenter.Content, content))
+                    {
+                        viewport = presenter;
+                        break;
+                    }
+                }
+
+                if (viewport.ActualHeight <= 0d) return;
+                double bottom = viewport.TransformToVisual(_applicationMenuOverlayLayer)
+                    .Transform(new Point(0d, viewport.ActualHeight)).Y;
+                Thickness presenterMargin = _applicationMenuOverlayPresenter.Margin;
+                double available = Math.Max(0d, bottom - top - presenterMargin.Top
+                    - presenterMargin.Bottom - menu.Margin.Top - menu.Margin.Bottom);
+                if (ApplicationMenuGeometryConverter.GetAvailableHeight(menu) != available)
+                {
+                    ApplicationMenuGeometryConverter.SetAvailableHeight(menu, available);
+                }
+            }
+            else if (ApplicationMenu is RibbonApplicationMenu detachedMenu)
+            {
+                detachedMenu.ClearValue(ApplicationMenuGeometryConverter.AvailableHeightProperty);
+            }
         }
         catch (InvalidOperationException)
         {
@@ -3052,6 +3092,10 @@ public class Ribbon : Control
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
+        if (ApplicationMenu is RibbonApplicationMenu menu)
+        {
+            menu.ClearValue(ApplicationMenuGeometryConverter.AvailableHeightProperty);
+        }
         Theming.ThemeManager.Changed -= OnThemeConfigurationChanged;
         UnregisterRibbonWindowApplicationButtonShape();
         if (_ribbonTabControl is not null)

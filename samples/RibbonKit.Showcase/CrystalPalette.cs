@@ -32,6 +32,7 @@ internal static class CrystalPalette
         palette["RibbonKit.Brushes.OptionsDialog.PrimaryFocusBorder"] = foreground;
         foreground.Freeze();
         palette["RibbonKit.Brushes.Accent"] = foreground;
+        palette["RibbonKit.Brushes.ApplicationMenu.HeadingForeground"] = foreground;
         palette["RibbonKit.Brushes.Tab.SelectedForeground"] = foreground;
         return palette;
     }

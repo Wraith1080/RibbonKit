@@ -849,4 +849,110 @@
     </Style>
     <CornerRadius x:Key="RibbonKit.Metrics.MessageBar.ActionCornerRadius">12</CornerRadius>
     <sys:Boolean x:Key="RibbonKit.Metrics.MessageBar.ActionRecognizesAccessKey">True</sys:Boolean>
+
+    <!-- Shared application-menu geometry; Office retains its original compact surfaces. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.Foreground" Color="#20364A" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.SecondaryForeground" Color="#4F6476" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.HeadingForeground" Color="#2B579A" />
+    <DrawingBrush x:Key="RibbonKit.Brushes.ApplicationMenu.FrameBorder"
+                  Drawing="{StaticResource Crystal.Drawing.GlassRim}"
+                  Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.FrameRim" Color="Transparent" />
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.ApplicationMenu.FrameBand" StartPoint="0,0" EndPoint="0,1" Opacity="0.84">
+        <GradientStop Color="#EAF3F9" Offset="0" />
+        <GradientStop Color="#DEEAF3" Offset="0.78" />
+        <GradientStop Color="#ECF5FA" Offset="1" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.TopBandBackground" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.FooterBackground" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.NavBackground" Color="Transparent" />
+    <DrawingBrush x:Key="RibbonKit.Brushes.ApplicationMenu.PaneBackground" Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
+        <DrawingBrush.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z">
+                    <GeometryDrawing.Brush>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#F5FBFE" Offset="0" />
+                            <GradientStop Color="#E6F2FA" Offset="0.55" />
+                            <GradientStop Color="#EAF5FB" Offset="1" />
+                        </LinearGradientBrush>
+                    </GeometryDrawing.Brush>
+                </GeometryDrawing>
+                <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z">
+                    <GeometryDrawing.Brush>
+                        <RadialGradientBrush Center="0.12,0.16" GradientOrigin="0.12,0.16" RadiusX="0.9" RadiusY="0.85">
+                            <GradientStop Color="#A6FFFFFF" Offset="0" />
+                            <GradientStop Color="#40FFFFFF" Offset="0.5" />
+                            <GradientStop Color="#00FFFFFF" Offset="1" />
+                        </RadialGradientBrush>
+                    </GeometryDrawing.Brush>
+                </GeometryDrawing>
+                <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z">
+                    <GeometryDrawing.Brush>
+                        <RadialGradientBrush Center="0.68,1" GradientOrigin="0.68,1" RadiusX="0.55" RadiusY="0.045">
+                            <GradientStop Color="#D9FFFFFF" Offset="0" />
+                            <GradientStop Color="#60FFFFFF" Offset="0.5" />
+                            <GradientStop Color="#00FFFFFF" Offset="1" />
+                        </RadialGradientBrush>
+                    </GeometryDrawing.Brush>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingBrush.Drawing>
+    </DrawingBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.PaneSurface" Color="Transparent" />
+    <DrawingBrush x:Key="RibbonKit.Brushes.ApplicationMenu.PaneBorder"
+                  Drawing="{StaticResource Crystal.Drawing.GlassRim}"
+                  Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.HeaderBackground" Color="#187BA5C7" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.Separator" Color="#40819DB5" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.SeparatorHighlight" Color="Transparent" />
+    <DrawingBrush x:Key="RibbonKit.Brushes.ApplicationMenu.ButtonBackground"
+                  Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
+        <DrawingBrush.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z">
+                    <GeometryDrawing.Brush>
+                        <RadialGradientBrush Center="0.5,0.42" GradientOrigin="0.5,0.42" RadiusX="0.85" RadiusY="0.85">
+                            <GradientStop Color="#EAF5FC" Offset="0" />
+                            <GradientStop Color="#D6E8F4" Offset="0.6" />
+                            <GradientStop Color="#BED5E7" Offset="1" />
+                        </RadialGradientBrush>
+                    </GeometryDrawing.Brush>
+                </GeometryDrawing>
+                <DrawingGroup Opacity="0.65">
+                    <StaticResource ResourceKey="Crystal.Drawing.InnerReflection" />
+                </DrawingGroup>
+            </DrawingGroup>
+        </DrawingBrush.Drawing>
+    </DrawingBrush>
+    <DrawingBrush x:Key="RibbonKit.Brushes.ApplicationMenu.ButtonBorder"
+                  Drawing="{StaticResource Crystal.Drawing.GlassRim}"
+                  Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
+    <CornerRadius x:Key="RibbonKit.Metrics.ApplicationMenuCornerRadius">14</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.ApplicationMenuInnerCornerRadius">13</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.ApplicationMenuTopBandCornerRadius">12,12,0,0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.ApplicationMenuFooterCornerRadius">0,0,12,12</CornerRadius>
+    <sys:Double x:Key="RibbonKit.Metrics.ApplicationMenuNavWidth">160</sys:Double>
+    <sys:Double x:Key="RibbonKit.Metrics.ApplicationMenuPaneWidth">300</sys:Double>
+    <sys:Double x:Key="RibbonKit.Metrics.ApplicationMenuItemHeight">42</sys:Double>
+    <sys:Double x:Key="RibbonKit.Metrics.ApplicationMenuTopBandHeight">8</sys:Double>
+    <sys:Double x:Key="RibbonKit.Metrics.ApplicationMenuFooterHeight">44</sys:Double>
+    <DropShadowEffect x:Key="RibbonKit.Effects.ApplicationMenuShadow" Color="#34485A"
+                      BlurRadius="16" ShadowDepth="0" Opacity="0.24" RenderingBias="Performance" />
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.ApplicationMenu.InnerOutline" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#9FB5C7" Offset="0" />
+        <GradientStop Color="#B4C6D4" Offset="0.45" />
+        <GradientStop Color="#8FA9BE" Offset="1" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.ShadowCaster" Color="Black" />
+    <Visibility x:Key="RibbonKit.Visibilities.ApplicationMenuOutsideShadow">Visible</Visibility>
+    <CornerRadius x:Key="RibbonKit.Metrics.ApplicationMenuContentRimCornerRadius">11</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.ApplicationMenuContentOutlineCornerRadius">10</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.ApplicationMenuItemClipCornerRadius">8</CornerRadius>
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuItemMargin">4,2,4,2</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuSeparatorMargin">12,4,12,4</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuActivePageBorderThickness">0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuActivePageMargin">0</Thickness>
+    <sys:Double x:Key="RibbonKit.Metrics.ApplicationMenuPaneMinimumWidth">180</sys:Double>
+    <sys:Double x:Key="RibbonKit.Metrics.ApplicationMenuPaneViewportInset">32</sys:Double>
 </ResourceDictionary>

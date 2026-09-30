@@ -155,4 +155,18 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.OptionsDialog.NavigationHoverBackground" Color="#333333" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.OptionsDialog.NavigationSelectedBackground" Color="#233F59" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.OptionsDialog.ActionHoverBackground" Color="#333333" />
+
+    <!-- Shared application-menu geometry; Office retains its original compact surfaces. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.InnerOutline" Color="#555555" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.ShadowCaster" Color="Black" />
+    <Visibility x:Key="RibbonKit.Visibilities.ApplicationMenuOutsideShadow">Collapsed</Visibility>
+    <CornerRadius x:Key="RibbonKit.Metrics.ApplicationMenuContentRimCornerRadius">0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.ApplicationMenuContentOutlineCornerRadius">0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.ApplicationMenuItemClipCornerRadius">0</CornerRadius>
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuItemMargin">0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuSeparatorMargin">0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuActivePageBorderThickness">1</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuActivePageMargin">0,0,2,2</Thickness>
+    <system:Double x:Key="RibbonKit.Metrics.ApplicationMenuPaneMinimumWidth">0</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.ApplicationMenuPaneViewportInset">0</system:Double>
 </ResourceDictionary>

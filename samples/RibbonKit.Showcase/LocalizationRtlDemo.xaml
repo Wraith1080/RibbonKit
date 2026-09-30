@@ -83,6 +83,11 @@
                     <rk:RibbonApplicationMenuItem Header="حفظ باسم — Save As"
                                                   Icon="{StaticResource Icon.Save}"
                                                   IsSplit="True">
+                        <rk:RibbonApplicationMenuItem.HeaderTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}" TextWrapping="Wrap" />
+                            </DataTemplate>
+                        </rk:RibbonApplicationMenuItem.HeaderTemplate>
                         <StackPanel>
                             <rk:RibbonApplicationMenuPaneItem Content="مستند Word — Word Document" />
                             <rk:RibbonApplicationMenuPaneItem Content="قالب — Template" />

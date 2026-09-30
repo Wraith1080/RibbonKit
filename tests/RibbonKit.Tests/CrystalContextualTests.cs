@@ -410,7 +410,9 @@ public class CrystalContextualTests
             frame.IsVisibleChanged += (_, _) => visibilityChanges++;
             backdrop = new CrystalMenuBackdrop(scene, host, frame, wrapper);
             Layout();
-            var image = Assert.IsType<Image>(backdrop.Layer.Children[0]);
+            var backdropCanvas = Assert.IsType<Canvas>(backdrop.Layer.Children[0]);
+            var image = Assert.IsType<Image>(backdropCanvas.Children[0]);
+            Assert.Equal(new Size(), backdropCanvas.DesiredSize);
             Assert.NotNull(image.Source);
             Assert.False(backdrop.Layer.IsHitTestVisible);
             Assert.Null(frame.Effect);
@@ -1668,10 +1670,11 @@ public class CrystalContextualTests
         CheckMenuShadowPixels(shadowLayer);
         var backdropLayer = Assert.IsType<Grid>(frameWrapper.Children[1]);
         Assert.Equal("CrystalMenuBackdrop", backdropLayer.Name);
-        Assert.NotNull(Assert.IsType<Image>(backdropLayer.Children[0]).Source);
-        Assert.Same(window.FindResource("Crystal.Brushes.FrostedFrame"), frame.Background);
+        var backdropCanvas = Assert.IsType<Canvas>(backdropLayer.Children[0]);
+        Assert.NotNull(Assert.IsType<Image>(backdropCanvas.Children[0]).Source);
+        Assert.Same(window.FindResource("RibbonKit.Brushes.ApplicationMenu.FrameBand"), frame.Background);
         Assert.NotSame(((Border)ribbon.Template.FindName("QatBelowHost", ribbon)).Background, frame.Background);
-        Assert.Same(window.FindResource("RibbonKit.Brushes.Control.HoverBorder"), frame.BorderBrush);
+        Assert.Same(window.FindResource("RibbonKit.Brushes.ApplicationMenu.FrameBorder"), frame.BorderBrush);
         foreach (var band in new[] { "TopBand", "FooterBand" })
             Assert.Equal(Colors.Transparent, Assert.IsType<SolidColorBrush>(
                 ((Border)menu.Template.FindName(band, menu)).Background).Color);
@@ -1707,20 +1710,26 @@ public class CrystalContextualTests
         ribbon.IsBackstageOpen = true;
         window.Width = 420;
         LayoutMenu();
-        Assert.True(menu.ActualWidth < window.ActualWidth);
+        // The host's resize path dismisses the menu; realize it again before measuring.
+        ribbon.IsBackstageOpen = true;
+        LayoutMenu();
+        Assert.True(ribbon.IsApplicationMenuOpen);
+        Assert.True(menu.ActualWidth < window.ActualWidth,
+            $"Menu {menu.ActualWidth}, window {window.ActualWidth}, ribbon {ribbon.ActualWidth}, pane {pane.Width}");
         Assert.Equal(new Rect(innerContent.RenderSize), Assert.IsType<RectangleGeometry>(innerContent.Clip).Rect);
         var accent = (RibbonDropDownButton)window.FindName("AccentSelector");
         var oldFace = frame.Background;
         ((RibbonMenuItem)accent.Items[1]).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         LayoutMenu();
         Assert.NotSame(oldFace, frame.Background);
-        Assert.Same(window.FindResource("Crystal.Brushes.FrostedFrame"), frame.Background);
+        Assert.Same(window.FindResource("RibbonKit.Brushes.ApplicationMenu.FrameBand"), frame.Background);
         var compare = (RibbonToggleButton)window.FindName("CompareToggle");
         compare.IsChecked = true;
         compare.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         LayoutMenu();
         Assert.Equal(new CornerRadius(8), frame.CornerRadius);
-        Assert.IsType<Border>(VisualTreeHelper.GetParent(frame));
+        Assert.IsType<Grid>(VisualTreeHelper.GetParent(frame));
+        Assert.Equal(Visibility.Collapsed, shadowLayer.Visibility);
         Assert.NotNull(frame.Effect);
         Assert.Equal(new Thickness(), separator.Margin);
         Assert.Equal(new CornerRadius(), innerOutline.CornerRadius);

@@ -16,6 +16,72 @@ namespace RibbonKit.Tests;
 public sealed class CrystalLocalizationIntegrationTests
 {
     [Fact]
+    public void Bilingual_application_menu_label_stays_within_primary_hit_area() => Sta.Run(() =>
+    {
+        var application = Sta.UseApplication(showcaseResources: true);
+        ThemeManager.Apply(application, RibbonTheme.CrystalLight);
+        var demo = new LocalizationRtlDemo
+        {
+            Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false,
+            WindowStartupLocation = WindowStartupLocation.Manual,
+        };
+        try
+        {
+            demo.DemoRibbon.ApplicationMenu = demo.DemoApplicationMenu;
+            demo.Show();
+            foreach (bool dark in new[] { false, true })
+            {
+                ThemeManager.SetDarkMode(application, dark);
+                demo.ApplyCrystal(true);
+                foreach (bool rtl in new[] { false, true })
+                {
+                    demo.RightToLeftToggle.IsChecked = rtl;
+                    demo.DemoRibbon.IsBackstageOpen = true;
+                    Sta.Drain();
+                    demo.UpdateLayout();
+                    var item = demo.DemoApplicationMenu.Items.OfType<RibbonApplicationMenuItem>()
+                        .Single(entry => entry.HasPane);
+                    var primary = Assert.IsType<Button>(item.Template.FindName("PART_Primary", item));
+                    var text = FindMenuLabel(primary, Assert.IsType<string>(item.Header));
+                    Assert.NotNull(text);
+                    Assert.True(primary.ActualWidth > 0 && primary.ActualHeight > 0);
+                    int positions = 0;
+                    for (var position = text!.ContentStart; position is not null
+                         && position.CompareTo(text.ContentEnd) < 0;
+                         position = position.GetNextInsertionPosition(System.Windows.Documents.LogicalDirection.Forward))
+                    {
+                        var character = position.GetCharacterRect(System.Windows.Documents.LogicalDirection.Forward);
+                        if (character.IsEmpty) continue;
+                        var bounds = text.TransformToAncestor(primary).TransformBounds(character);
+                        Assert.True(bounds.Left >= -1 && bounds.Right <= primary.ActualWidth + 1
+                            && bounds.Top >= -1 && bounds.Bottom <= primary.ActualHeight + 1,
+                            $"dark={dark}, rtl={rtl}: character {bounds} exceeds primary {primary.RenderSize}");
+                        positions++;
+                    }
+                    Assert.True(positions >= 10);
+                    demo.DemoRibbon.IsBackstageOpen = false;
+                }
+            }
+        }
+        finally
+        {
+            demo.Close();
+            Sta.ResetApplication();
+        }
+    });
+
+    private static TextBlock? FindMenuLabel(DependencyObject parent, string label)
+    {
+        if (parent is TextBlock text && text.Text == label) return text;
+        for (int index = 0; index < VisualTreeHelper.GetChildrenCount(parent); index++)
+        {
+            var found = FindMenuLabel(VisualTreeHelper.GetChild(parent, index), label);
+            if (found is not null) return found;
+        }
+        return null;
+    }
+
+    [Fact]
     public void Detached_rtl_lab_applies_crystal_and_restores_office_options() => Sta.Run(() =>
     {
         var application = Sta.UseApplication();
@@ -96,8 +162,9 @@ public sealed class CrystalLocalizationIntegrationTests
             demo.RightToLeftToggle.IsChecked = true;
 
             Assert.NotNull(demo.TryFindResource("Crystal.Brushes.FrostedFrame"));
-            Assert.True(demo.DemoApplicationMenu.Resources.Contains(
+            Assert.False(demo.DemoApplicationMenu.Resources.Contains(
                 "RibbonKit.Brushes.ApplicationMenu.FrameBorder"));
+            Assert.IsAssignableFrom<Brush>(demo.FindResource("RibbonKit.Brushes.ApplicationMenu.FrameBorder"));
             Assert.Equal(new CornerRadius(10), messageRoot.CornerRadius);
             var purpleHover = Assert.IsType<SolidColorBrush>(demo.FindResource(
                 "RibbonKit.Brushes.Control.HoverBackground")).Color;

@@ -142,6 +142,8 @@ public sealed class ApplicationButtonShapeThemeTests
     {
         var application = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
         ThemeManager.Apply(application, RibbonTheme.Office2024);
+        ApplicationMenuViewportChecks.Verify(application);
+        CrystalApplicationMenuPortabilityChecks.Verify(application);
         CrystalQuickAccessPortabilityChecks.Verify(application);
         CrystalMessagePortabilityChecks.Verify(application);
         Assert.Equal(new CornerRadius(4), application.Resources["RibbonKit.Metrics.MenuItemCornerRadius"]);

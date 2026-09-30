@@ -261,6 +261,13 @@ public sealed class VisualSnapshotTests
                         direction => CreateCrystalMessageScene(direction), 350);
                     AssertSnapshot($"{palette}-message-minimized-100", 1d,
                         sceneFactory: direction => CreateCrystalMessageScene(direction, minimized: true), height: 350);
+                    foreach (string state in new[] { "default", "split", "dropdown", "narrow", "minimized" })
+                        AssertSnapshot($"{palette}-application-menu-{state}-100", 1d,
+                            sceneFactory: direction => CreateCrystalApplicationMenuScene(direction, state), height: 400);
+                    AssertSnapshot($"{palette}-application-menu-default-200", 2d,
+                        sceneFactory: direction => CreateCrystalApplicationMenuScene(direction, "default"), height: 400);
+                    AssertSnapshot($"{palette}-application-menu-rtl-100", 1d, FlowDirection.RightToLeft,
+                        direction => CreateCrystalApplicationMenuScene(direction, "split"), 400);
                 }
             }
             finally
@@ -1080,6 +1087,41 @@ public sealed class VisualSnapshotTests
         menu.Items.Add(new RibbonApplicationMenuItem { Header = "Open" });
 
         return menu;
+    }
+
+    private static FrameworkElement CreateCrystalApplicationMenuScene(FlowDirection direction, string state)
+    {
+        var root = (Grid)CreateApplicationMenuMessageBarScene(direction, RibbonApplicationButtonShape.Tab);
+        root.Height = 400;
+        if (state == "narrow") root.Width = 420;
+        var ribbon = Assert.IsType<Ribbon>(Assert.Single(root.Children));
+        var menu = Assert.IsType<RibbonApplicationMenu>(ribbon.ApplicationMenu);
+        var savePane = new StackPanel();
+        savePane.Children.Add(new RibbonApplicationMenuPaneItem { Content = "Document", Description = "Save a copy in this format." });
+        savePane.Children.Add(new RibbonApplicationMenuPaneItem { Content = "Template", IsEnabled = false });
+        var split = new RibbonApplicationMenuItem { Header = "Save As", IsSplit = true,
+            PaneHeader = "Save a copy", Content = savePane };
+        var print = new RibbonApplicationMenuItem { Header = "Print", IsSplit = false,
+            PaneHeader = "Print options", Content = new RibbonApplicationMenuPaneItem { Content = "Quick Print" } };
+        menu.Items.Add(split);
+        menu.Items.Add(new RibbonApplicationMenuSeparator());
+        menu.Items.Add(print);
+        if (state == "minimized") RealizeMinimizedRibbon(root, ribbon);
+        ribbon.IsBackstageOpen = true;
+        root.Measure(new Size(root.Width, root.Height));
+        root.Arrange(new Rect(0, 0, root.Width, root.Height));
+        root.UpdateLayout();
+        Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
+        if (state is "split" or "dropdown")
+        {
+            var item = state == "split" ? split : print;
+            var arrow = Assert.IsType<Button>(item.Template.FindName("PART_Arrow", item));
+            arrow.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            Assert.Same(item, menu.ActiveItem);
+        }
+        Assert.True(ribbon.IsApplicationMenuOpen);
+        Assert.Equal(new CornerRadius(14), Assert.IsType<Border>(menu.Template.FindName("Frame", menu)).CornerRadius);
+        return root;
     }
 
     private static DependencyObject? FindDescendantByName(

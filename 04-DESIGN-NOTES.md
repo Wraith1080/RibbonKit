@@ -752,6 +752,22 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [Promote message actions and body rounding without the Showcase adapter](docs/history/01-library.md#3199-shared-crystal-message-bars--2026-09-30).
 
+### 3.200 Shared Crystal application menu — 2026-09-30
+
+[Promote menu paint, responsive geometry and outside-only shadows while preserving host capture](docs/history/01-library.md#3200-shared-crystal-application-menu--2026-09-30).
+
+### 3.201 RTL lab bilingual application-menu header — 2026-09-30
+
+[Wrap the lab-owned Save As label through the existing header template](docs/history/01-library.md#3201-rtl-lab-bilingual-application-menu-header--2026-09-30).
+
+### 3.202 Application-menu footer at limited viewport height — 2026-09-30
+
+[Bound the shared frame, scroll content and keep captured blur out of measurement](docs/history/01-library.md#3202-application-menu-footer-at-limited-viewport-height--2026-09-30).
+
+### 3.203 Application-menu scrollbar clicks preserve the open menu — 2026-09-30
+
+[Exempt scrollbar buttons from command-click dismissal](docs/history/01-library.md#3203-application-menu-scrollbar-clicks-preserve-the-open-menu--2026-09-30).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),
@@ -786,6 +802,11 @@ file and this index; update §5 only as supported by verification.
 
 ### Remaining or intentionally deferred
 
+- **200% gallery layout and RTL option-indicator failure:** the user requested
+  later investigation on 2026-09-30. Gallery items reportedly change layout;
+  the separate initial Office RTL checkbox-position test fails in both new and
+  prior outputs. Causes remain unconfirmed. See the
+  [deferred layout list](docs/13-CRYSTAL-PORTABILITY-AND-ORB-PLAN.md#deferred-layout-observations-at-200).
 - **Office 2010 hover-glass contract:** the unchanged dropdown consumer-count check
   reports 3 shared consumers where its threshold is 5 (§3.169). Investigate
   the contract and dropdown coverage separately; it is deferred by user direction.
@@ -831,8 +852,42 @@ file and this index; update §5 only as supported by verification.
   row spacing and unclipped actions in light/dark. The user confirmed independent
   minimized action dismissal and restoration after expanding, adding both notices
   and minimizing without leftover shadows. The bounded message-bar live review
-  is complete; broader motion/keyboard/DPI checks remain pending. Application-menu
-  promotion remains open within slice 6; utility chrome,
+  is complete; broader motion/keyboard/DPI checks remain pending. The application-menu
+  pass now promotes shared paint, rounded content/split rows, responsive sizing
+  and outside-only shadows (§3.200), removing its paint/geometry and shadow
+  helpers. The Release solution build, 116 focused/417 eligible runtime tests,
+  RibbonKit-only consumer and all 99 snapshots pass. The previous 85 images are
+  unchanged; 14 new menu approvals were inspected first. Fresh light/dark
+  screenshots verify the default Recent Documents page, Save As split pane and
+  Publish dropdown, rounded frame/footer and host backdrop. The user confirmed
+  Esc closing, Save As primary/pane and Publish pane command invocation, and
+  default-page restoration on reopening in both themes. Narrow default and Save
+  As pages fit in both themes, with all four descriptions wrapping cleanly and
+  both footer actions visible. The user reported normal width returning after
+  widening. Save As appearance above two notices with the ribbon minimized,
+  Esc closing and default-page restoration are verified in both themes in
+  that state. RTL default and Save As screenshots verify mirrored placement,
+  mixed text and the lab's full bilingual label on two lines. Its host-owned
+  wrapping header template passes both focused localization tests and fresh
+  appearance review (§3.201). The user confirmed RTL Esc closing, default-page
+  restoration on reopening and return to LTR in both themes, completing the
+  bounded RTL review. The shared frame now follows
+  available client height, with scrolling navigation/default/active content and a
+  stationary footer (§3.202). Captured host blur no longer contributes desired size.
+  Fresh 200% light/dark screenshots show Options/Exit fully visible; alignment
+  and Esc closing after returning to 125% are confirmed in both themes. The bounded
+  footer appearance/return check is complete. Live scrolling exposed arrow clicks
+  dismissing File while the thumb stayed open. The shared close handler now exempts
+  only ScrollBar descendants (§3.203); command clicks retain dismissal. The user
+  confirmed scrollbar buttons now scroll without closing File in both themes.
+  Tab navigation and Esc closing after tabbing are also confirmed by the user.
+  Repeated File open/Esc/quick-reopen motion passed in both themes. The user then
+  confirmed thumb/wheel/track scrolling and reverse keyboard traversal, including
+  footer reachability and focus cycling. The bounded slice 6 QAT/message-bar/
+  application-menu live review is complete. Reduced motion, broader DPI
+  transitions and deferred layout issues remain open; blanket final acceptance
+  is not claimed. Utility chrome and scrollbar promotion is next in slice 7.
+  Captured blur remains host integration work; utility chrome,
   contextual tint, optional host effects and final Showcase consolidation remain
   later slices. Writer's W-glyph migration stays deferred. Slice 5 customization,
   broader DPI and remaining popup acceptance stay open.

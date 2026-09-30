@@ -5649,3 +5649,408 @@ mixed-monitor message-bar coverage. Documentation diff review and
 `git diff --check` passed; no builds/tests were rerun and Showcase was not launched
 by the agent. Application-menu promotion remains open within slice 6, and the
 separate Crystal window remains until slice 10's verified consolidation.
+
+### 3.200 Shared Crystal application menu — 2026-09-30
+
+Slice 6's third bounded pass moves the reusable application-menu appearance out
+of Showcase. Work resumed from the clean `codex/crystal-theme` checkout at
+`e3b7835` after the user's conflict-resolution commit. The earlier bounded QAT
+and message-bar live evidence remains valid for those surfaces; it does not
+establish acceptance of this new menu implementation.
+
+The RibbonKit-only consumer first reproduced the old 8-DIP frame instead of
+Crystal's accepted 14-DIP geometry. Shared `Controls.ApplicationMenu.xaml` and
+Crystal light/dark tokens now supply the translucent frame, pane, headings and
+footer paint; outer/inner corners; inset rows/separators; and the combined split
+row silhouette. A binding-driven internal converter clips the inner content to
+the outline's inset corners and keeps split hover/selection surfaces inside the
+row's rounded boundary. Layout and token changes invalidate those bindings;
+no Showcase part-paint or geometry patches are needed.
+
+Crystal navigation remains 160 DIPs wide. The preferred pane width is 300 DIPs,
+with a 180-DIP minimum and a 32-DIP viewport allowance. The converter subtracts
+the navigation width and allowance from the owning Ribbon's actual width, then
+clamps to the token bounds. A menu created in `Window.Resources` and templated
+before assignment exposed an ancestor-binding gap: its inheritance context
+could bypass Ribbon during lookup even after visual attachment. Ribbon now
+binds its width to an internal attached value on the menu, clearing the old
+binding when ownership changes. The consumer verifies this preparation order,
+narrow-window resizing, scoped inset replacement and reassignment to another
+Ribbon. The bounds are private template values rather than `MinWidth`/`MaxWidth`,
+so explicit pane widths below or above the theme range retain normal local-value
+precedence.
+
+The shared `MenuSurface` contains a separate noninteractive shadow caster.
+Its clip excludes the frame silhouette, leaving the translucent interior
+unshaded. The halo follows shadow blur/depth and corner changes, including
+nonuniform corners. Crystal uses its accepted 16-DIP, zero-depth light/dark
+shadow; Office collapses this layer and retains its existing whole-frame effect.
+All new keys have matching Office defaults. Existing Office/menu snapshots are
+unchanged. Dynamic resources support scoped paint, corner, spacing, outline,
+pane and shadow replacements; explicit frame paint/corners/effect, pane width
+and row margins survive theme switches, with `ClearValue` resuming the theme.
+The shadow test replaces a resource because WPF can freeze effects after use;
+local width rendering assertions account for physical-pixel layout rounding.
+
+No public C# API or shipped API baseline changed. `CrystalApplicationMenuPresentation`
+and `CrystalMenuShadow` were removed after the shared replacement passed the
+consumer. Main Showcase and Crystal preview callers now use
+`CrystalApplicationMenuBackdrop`, which only attaches the existing host capture
+layer to the shared surface. The accepted 6-DIP blur, 24-DIP capture padding and
+opacity-based capture remain unchanged. Captured blur and its optional reusable
+integration contract remain slice 9 work. Menu content/commands, File-surface
+choice, preview tint/comparison controls and platform integration remain with
+the host. Preview tint continues to replace the shared menu heading token for
+readability; full tint promotion remains slice 8. The separate preview window
+and launch path are retained for slice 10's later verified consolidation.
+
+Validation: the Release solution build and affected VisualTests rebuild passed
+with zero warnings/errors. The focused runtime run passed 116 tests and the
+eligible runtime run passed 417, excluding Writer-named tests and
+`Every_ribbon_button_family_consumes_the_shared_hover_glass`. The single
+STA/WPF Application consumer passed without Showcase resources/helpers. Its
+menu matrix covers all QAT placements, minimized states, message presence,
+LTR/RTL physical order, repeated light/dark and every Office palette switch,
+manual Crystal token merges, resource/local precedence, pre-templated menu
+ownership and command routing. Template button handlers select split/dropdown
+panes; automation invocation verifies pane/footer commands, closing and default
+pane restoration on reopening. A rendered pixel check verifies shadows at all
+four outside edges and a transparent center. These synthetic invocations do
+not establish native keyboard/pointer acceptance.
+
+The full capture and comparison each passed all 99 snapshot scenes. The old
+85 actual images were byte-identical to their approvals. All 14 new light/dark
+menu actual PNGs were inspected before adding approvals: default, split,
+dropdown, narrow, minimized, RTL and synthetic 100/200% scenes. Existing
+approvals and tolerances were unchanged. Shared menu XML and all 12 palette
+dictionaries parsed without duplicate direct keys. Final diff review and
+`git diff --check` passed; later prose updates require no WPF test rerun.
+
+Fresh live menu screenshots, native interaction, animation and real menu DPI
+acceptance remain pending. Slice 6 is not marked complete. Slice 5's fresh
+customization review, broader popup/DPI checks, utility chrome, contextual tint,
+optional effects and slice 10 remain open. Office Glass review, View-tab
+overflow, 200% gallery clipping, the Office 2010 hover-contract investigation
+and Writer RKWF-026 remain deferred. No Writer tests, manual Showcase launch,
+commit, push or publication ran.
+
+First live menu appearance checkpoint: the user supplied dark
+`codex-clipboard-72958fe5-c3ca-4cad-aebf-f4e3b68122ee.png` and light
+`codex-clipboard-25fdb015-40e9-4616-8310-7143366d3a23.png` for the requested
+125% setup. Both 1350×850 captures show expanded Home with title-bar QAT,
+no message rows and File open on Recent Documents. Inspection confirms the
+rounded outer frame, inner outline and footer, readable commands/headings,
+unclipped footer actions and an outside shadow. The host's captured backdrop
+is visible behind the command column while menu text stays sharp. This is
+static default-page evidence; active split/dropdown panes, closing/reopening,
+narrow-window resizing, live RTL, animation and real menu DPI checks remain
+pending. The generic Manage recent locations button remains host content.
+Slice 6 is not marked complete. This update changes documentation only;
+content/diff review and `git diff --check` passed. No builds/tests were rerun,
+no manual Showcase launch occurred, and no commit, push or publication ran.
+
+Save As live checkpoint: the user supplied light
+`codex-clipboard-b3df1b4e-2abd-4312-9f34-e854b1071da9.png` and dark
+`codex-clipboard-da279045-ef9d-45cc-aa70-789f780f700b.png`. Both 1350×850
+captures show the requested Save As split pane with expanded Home, title-bar
+QAT and no messages. The rounded split-row silhouette and internal divider are
+intact; the command half and active arrow remain distinct. The pane header and
+all four commands (Word Document, Word Template, Word 97-2003 Document and Other
+Formats) are readable, with descriptions wrapping inside the rounded outline
+without visible clipping. The user also confirmed that Esc closes File cleanly
+and reopening restores Recent Documents in both light and dark themes. This
+establishes the split-pane appearance and bounded close/reopen sequence;
+dropdown presentation, native command invocation, narrow resizing, live RTL,
+animation and real menu DPI checks remain pending. Slice 6 remains open.
+Documentation content/diff review and `git diff --check` passed; no build/test
+rerun, manual Showcase launch, commit, push or publication occurred.
+
+Publish dropdown appearance checkpoint: the user supplied dark
+`codex-clipboard-e0fd4852-6ee4-425a-b8b4-c0fb5196fb0f.png` and light
+`codex-clipboard-c3745689-ae40-4ca3-b6cc-481e6f8a7a40.png` for the requested
+125% setup. Both 1350×850 captures show the complete Publish row highlighted
+while the right pane is active. The row retains its rounded silhouette without
+a split divider or separately dimmed command half. The heading, Blog and
+Document Management Server entries are readable; their descriptions wrap
+inside the rounded pane without visible clipping. The frame, footer and host
+backdrop remain consistent with the default and Save As captures. This records
+dropdown appearance; native command invocation, narrow-window resizing,
+live RTL, animation and real menu DPI checks remain pending. Slice 6 remains
+open. Documentation content/diff review and `git diff --check` passed; no
+builds/tests were rerun, Showcase was not launched by the agent, and no commit,
+push or publication occurred.
+
+The user then confirmed the native command sequence in both themes: clicking
+the Save As command half, reopening and choosing Save As arrow → Word Document,
+and reopening and choosing Publish → Blog each closes File and displays the
+selected command in Showcase's status line. Reopening after every command
+returns to Recent Documents. These Showcase commands use the existing status
+handler; no runtime behavior was changed for this check. This establishes
+bounded split-primary and pane command invocation and default-page restoration.
+Narrow-window resizing, live RTL, animation and real menu DPI checks remain
+pending; slice 6 remains open. Documentation content/diff review and
+`git diff --check` passed; no builds/tests were rerun, Showcase was not launched
+by the agent, and no commit, push or publication occurred.
+
+Narrow default-page checkpoint: the user replaced an accidentally submitted
+wide pair with light `codex-clipboard-a7b5b5df-d38e-4798-a716-1a6343aa8993.png`
+and dark `codex-clipboard-eaaefaf8-c314-4a8e-9663-8164eb40c6d2.png`. Both PNGs
+measure 518×850 pixels, suitable for the requested narrow-window check at the
+125% setup. They show File on Recent Documents with title-bar QAT and no
+messages. The pane is narrower than in the previous wide captures; the rounded
+frame stays within the window, the default entries fit and both footer actions
+remain visible without clipping. The user reported that the menu widened to
+normal size after enlarging the window again. The earlier wide pair was
+explicitly retracted and is not narrow-layout evidence. This records narrow
+default-page appearance and reported width restoration; the screenshots do not
+show Save As description wrapping. Narrow active-pane review, live RTL,
+animation and real menu DPI acceptance remain pending, and slice 6 stays open.
+Documentation content/diff review and `git diff --check` passed. No builds/tests
+were rerun, Showcase was not launched by the agent, and no commit, push or
+publication occurred.
+
+Narrow Save As checkpoint: the user supplied dark
+`codex-clipboard-89ef3dac-eb99-4bd6-a677-572cbafe6495.png` and light
+`codex-clipboard-bb4f54ad-1f82-480f-ad24-c629026db711.png`. Both PNGs measure
+500×850 pixels and show the Save As pane with title-bar QAT and no messages.
+All four descriptions wrap inside the reduced pane without visible clipping,
+including the longer Word Template and Word 97-2003 Document text. The heading,
+rounded split row and divider, outer frame, inner outline and both footer
+actions remain intact. Together with the previous default-page pair and
+reported width restoration, this completes the bounded narrow default/Save As
+appearance check. Live minimized/message menu review, RTL, animation and real
+menu DPI acceptance remain pending; slice 6 stays open. Documentation
+content/diff review and `git diff --check` passed. No builds/tests were rerun,
+Showcase was not launched by the agent, and no commit, push or publication
+occurred.
+
+Minimized-ribbon/stacked-notice menu checkpoint: the user supplied light
+`codex-clipboard-1cc565b6-e04d-4124-8aa1-79c7bf580b0a.png` and dark
+`codex-clipboard-0aeb1139-b55c-4f30-975f-a764e94030aa.png`. Both PNGs measure
+1350×850 pixels and show the Save As pane with the ribbon minimized, title-bar
+QAT and both Protected View and Security Notice visible. The menu overlays
+the notice rows and document; its rounded frame, inner outline, active split
+row and divider, all four command descriptions and both footer actions remain
+intact without visible clipping. The user confirmed that Esc closes File cleanly
+and reopening restores Recent Documents in both themes in this combined state.
+This completes its bounded appearance/close/reopen check. Live RTL, animation,
+broader keyboard and real menu DPI acceptance remain pending; slice 6 stays
+open. Documentation content/diff review and `git diff --check` passed. No
+builds/tests were rerun, Showcase was not launched by the agent, and no commit,
+push or publication occurred.
+
+### 3.201 RTL lab bilingual application-menu header — 2026-09-30
+
+The user supplied dark `codex-clipboard-4ccad49a-481d-4f3b-99dc-32c6f52f863a.png`
+and light `codex-clipboard-9fb37f6e-a148-4e63-8f64-f74b1903d577.png`. Both PNGs
+measure 1300×875 pixels and show the Localization/RTL lab's default menu with
+Right-to-Left enabled and the embedded/application string provider. The menu
+anchors at File on the right; navigation/icons remain on the right, recent
+content is on the left and footer actions mirror leftward. Arabic/English
+recent content is readable, and the explicitly LTR `Report-2026-Q3.docx` row
+keeps its direction. The rounded frame, inner outline and footer remain intact.
+
+The Save As row reveals a real label gap: `حفظ باسم — Save As` exceeds the
+text space alongside the icon and split arrow. A focused realized-control
+reproduction measured characters outside the primary hit area. This is long
+host-owned bilingual content, so the lab now supplies a wrapping
+`RibbonApplicationMenuItem.HeaderTemplate` for that one row. Shared navigation
+width, menu geometry, colors, behavior and public APIs are unchanged by this
+correction; another consumer can use the same existing extension point.
+
+The regression measures every insertion position's character rectangle inside
+the primary hit area in Crystal light/dark and LTR/RTL, including vertical fit.
+It failed before wrapping and passes afterward. Release compilation of Showcase,
+its runtime dependencies and the affected test project passed; both focused
+`CrystalLocalizationIntegrationTests` passed. Separate `bin/RtlLabHeaderCheck/`
+output preserves the user's running build. No Writer tests, full-suite rerun,
+snapshot approval changes or manual Showcase launch occurred. Fresh screenshots
+from the updated build are required for RTL label/pane acceptance; closing,
+reopening, motion, broader keyboard and real menu DPI checks remain pending.
+Slice 6 stays open. Final content/diff review and `git diff --check` passed;
+no commit, push or publication occurred.
+
+Fresh RTL Save As appearance checkpoint: the user supplied light
+`codex-clipboard-fc5469ce-01ac-4d4b-80a5-e14a085c97d8.png` and dark
+`codex-clipboard-0c465c35-51d2-4f44-84ae-7316f1d210d1.png` from the updated
+build. Both PNGs measure 1300×875 pixels and show the Save As pane in the RTL
+lab with the embedded/application provider. The full bilingual navigation
+label is visible on two lines without clipping. Its left-pointing split arrow
+and internal divider stay within the rounded active row. Both mixed-language
+pane entries are readable on the left, and the frame, inner outline and
+mirrored Exit/Options footer remain intact. This verifies the wrapping correction
+and bounded RTL active-pane appearance alongside the previous default-page
+review. RTL closing/reopening, return to LTR and broader motion/keyboard/real
+menu DPI checks remain pending; slice 6 stays open. Documentation content/diff
+review and `git diff --check` passed. No builds/tests were rerun, Showcase was
+not launched by the agent, and no commit, push or publication occurred.
+
+The user then confirmed that Esc closes File cleanly and reopening restores
+Recent Documents in both themes in RTL. After closing File and turning
+Right-to-Left off, reopening also returns the menu to normal LTR layout in
+both themes. Together with the default/Save As screenshots, this completes
+the bounded RTL appearance/close/reset review. Broader motion/keyboard and real
+menu DPI acceptance remain pending; slice 6 stays open. This documentation-only
+update passed content/diff review and `git diff --check`; no builds/tests were
+rerun, Showcase was not launched by the agent, and no commit, push or publication
+occurred.
+
+### 3.202 Application-menu footer at limited viewport height — 2026-09-30
+
+The user confirmed alignment and Esc closing in both themes after returning to
+125%. The accompanying light `codex-clipboard-98fef5b3-93b6-42c9-bc83-47f05334b2ae.png`
+and dark `codex-clipboard-7b26680c-b1f8-43e6-9cb4-08cd73232f35.png` measure
+1920×1104 pixels and show Save As at 200%. Both Options/Exit footer buttons are
+cut off at the window bottom. The return confirmation remains valid; these
+captures do not establish a passing 200% footer or full menu DPI gate.
+
+The ribbon's Canvas measures its overlay with infinite height. Ribbon now
+publishes an internal available-height value from the menu anchor to the bottom
+of the window's client-content presenter, accounting for menu/presenter margins.
+The presenter matters when the content itself aligns to the top, including a
+window containing only Ribbon. `PART_Frame.MaxHeight` follows that value;
+navigation, default content and active-pane content use native ScrollViewers,
+while the pane header and footer stay outside their scrolling areas. Layout
+reflow refreshes the bound, and detaching/unloading the ribbon or replacing its
+menu releases the previous window's constraint. Explicit local part limits keep
+WPF precedence. There is no public API or new palette key; Office menus retain
+their normal geometry when enough space is available.
+
+A RibbonKit-only reproduction failed before the fix: in a 320-DIP-tall window,
+the footer extended to 637 DIPs inside a 286-DIP client root. The regression
+covers Crystal, Office 2007 and Office 2024, light/dark, LTR/RTL, short/tall/short
+resizing with reopening, scroll offsets in all three content areas, anchor
+reflow while open, local MaxHeight precedence and detach/reattach cleanup.
+Native window resizing already dismisses File; the test preserves that behavior.
+
+The broader runtime check also exposed captured-background measurement feedback:
+when height was constrained, an old Image bitmap could enlarge the preview menu
+to 751.2 DIPs in a 420-DIP-wide window. The host's `CrystalMenuBackdrop` now puts
+its explicitly sized Image in a Canvas, keeping captured paint out of desired
+size. The existing resize regression and blur pixel assertions pass, including
+foreground exclusion, rounded clipping, scroll refresh and capture cleanup.
+Capture remains host-owned slice 9 work; this does not add an integration API.
+
+Final verification: the Release solution build passed with zero warnings/errors
+for both runtime frameworks. All 418 eligible runtime tests passed, excluding
+Writer names and `Every_ribbon_button_family_consumes_the_shared_hover_glass`.
+The RibbonKit-only consumer passed its single STA/Application test, and the
+visual test passed all 99 scenes without approval changes. Snapshot diagnostics
+were inspected before correcting a stale height constraint after detachment;
+the approved minimized appearance is preserved. Separate
+`bin/MenuViewportCheck/Release/<framework>/` output keeps the user's running
+build untouched. Documentation content/link review and `git diff --check` passed.
+
+Fresh 200% light/dark screenshots must verify fully visible footer actions and
+usable scrolling, followed by alignment/Esc checks after returning to 125%.
+Broader motion/keyboard/DPI acceptance remains open; slice 6 is not complete.
+No Writer code/tests, approval changes, manual Showcase launch, commit, push or
+publication occurred.
+
+Fresh footer appearance/return checkpoint: the user supplied light
+`codex-clipboard-67890785-90da-40ee-98e0-4d4ff96ac9e4.png` and dark
+`codex-clipboard-eb4af141-5af6-4a64-9a61-9833a1809dfa.png` from the updated
+build. Both PNGs measure 1920×1104 pixels and show Save As at 200%. The frame
+ends within the window; Options and Exit are fully visible in the rounded
+footer. The navigation scrollbar is present; the pane heading and all four
+commands/descriptions remain readable. The user confirmed alignment and Esc
+closing in both themes after the requested return to 125%. This completes the
+bounded footer appearance/return check. The screenshots do not establish live
+scroll reachability; that check and broader motion/keyboard/DPI acceptance remain
+pending, so slice 6 stays open. This documentation-only checkpoint passed
+content/link review and `git diff --check`; no builds/tests were rerun, Showcase
+was not launched by the agent, and no commit, push or publication occurred.
+
+### 3.203 Application-menu scrollbar clicks preserve the open menu — 2026-09-30
+
+During the live 200% scrolling check, the user reported that clicking a scroll
+button closes File, while using the thumb does not. `RibbonApplicationMenu` listens
+to unhandled `ButtonBase.Click` and requests dismissal. Native scrollbar arrows
+and page regions are RepeatButtons and reach that handler; a Thumb uses drag
+events. The new scrolling areas exposed this pre-existing command-click rule.
+
+The shared handler now walks only the click source's ancestor path and returns
+for a ScrollBar descendant. It neither marks the event handled nor suppresses
+the routed scroll command. Split arrows/dropdown pane openers retain their
+existing handled-click behavior, and ordinary commands inside ScrollViewers,
+pane/footer commands and Esc retain dismissal. No public API, template, token
+or host helper was added or changed for this correction.
+
+The RibbonKit-only viewport regression now invokes the realized RepeatButton's
+protected native `OnClick`, exercising both the bubbling Click and its routed
+scroll command. It failed before the fix with `NavigationScroll: LineDown closed
+File`. Afterward line-down, page-down and line-up change the offset while File
+stays open in navigation, default and active panes, with active-pane ownership
+preserved. Crystal, Office 2007 and Office 2024 run in light/dark and LTR/RTL.
+The earlier direct `ScrollToBottom` check did not exercise button dismissal.
+
+Offscreen UI Automation invocation depends on native activation/command requery
+and was unavailable for these realized buttons in this STA fixture, so the test
+uses reflection to call the native protected click method. This verifies routing
+and command behavior, not physical pointer acceptance. Windows at the user's
+current 200% setup also clamps a requested 950-DIP window to 552 DIPs; the resize
+regression now requires the reopened menu to reclaim actual available space and
+reduce its scroll range instead of assuming all content must fit without scrolling.
+
+The Release solution build passed with zero warnings/errors for both runtime
+frameworks, and the single RibbonKit-only consumer test passed. The eligible
+runtime run passed 417 tests and failed
+`Detached_rtl_lab_applies_crystal_and_restores_office_options` at its initial
+Office RTL option-indicator assertion, before applying Crystal or opening File.
+Separate-process reruns failed identically in both the new output and the prior
+`MenuViewportCheck` output at the current 200% display setup. This existing
+failure remains recorded; the current broader run is not a passing gate. Writer
+names and the deferred hover-glass method remain excluded. Visual snapshots
+were not rerun for this routing-only correction; the preceding 99-scene result
+remains dated evidence. Documentation content/link review and `git diff --check`
+passed. The updated
+Showcase is in separate `bin/MenuScrollClickCheck/Release/net8.0-windows/` output.
+Fresh arrow/page/drag/wheel scrolling at 200% in light/dark remains for the user;
+prior footer appearance/125% return acceptance remains recorded. Broader
+motion/keyboard/DPI checks remain pending, and slice 6 stays open. No Writer
+code/tests, manual Showcase launch, commit, push or publication occurred.
+
+The user subsequently confirmed that scrollbar buttons now scroll without
+closing File in both themes. This closes the bounded live arrow-click regression
+check. It does not add page-region, thumb-drag or wheel acceptance, and broader
+keyboard/motion/DPI checks and the separate Office RTL test failure remain open.
+This follow-up changed documentation only; content/link review and
+`git diff --check` passed, with no builds/tests rerun or Showcase launch.
+
+The user also reported different gallery-item layout at 200% and requested that
+it and the existing RTL option-indicator failure be deferred for later
+investigation. The gallery report's exact surface/geometry and both causes remain
+unconfirmed; it is not assumed to be the earlier View-tab selection-clipping
+issue. The [deferred layout list](../13-CRYSTAL-PORTABILITY-AND-ORB-PLAN.md#deferred-layout-observations-at-200)
+records the observations and later comparison scope. This note changes
+documentation only and does not change runtime behavior, test results or the
+accepted File-menu checks.
+
+The user then supplied `20260930-1141-49.7011675.mp4` and confirmed that keyboard
+Tab navigation works and Esc closes File after tabbing. This is user-reported
+acceptance of that sequence; separate Shift+Tab, footer reachability,
+default-page restoration and recording theme/scale were not stated. Opening
+motion in light/dark is the next bounded live review. Remaining scrolling,
+keyboard/DPI gates and the deferred 200% layout observations retain their
+scope. This documentation-only update passed content/link review and
+`git diff --check`; no builds/tests were rerun or Showcase launched.
+
+The user subsequently confirmed the requested repeated File open/Esc/quick-
+reopen motion check passed in both themes. This closes the bounded normal
+opening-motion review. The [remaining live review](../13-CRYSTAL-PORTABILITY-AND-ORB-PLAN.md#remaining-slice-6-live-review)
+lists the other scrolling modes and remaining keyboard details, separately
+from reduced-motion/open-menu-scaling/mixed-monitor gaps. The two 200% layout
+observations remain deferred. This documentation-only checkpoint passed
+content/link review and `git diff --check`; no builds/tests were rerun or
+Showcase launched.
+
+The user confirmed both remaining short checks passed: thumb/wheel/track
+scrolling keeps File open with its footer visible, and reverse keyboard
+traversal retains visible focus, reaches Options/Exit and cycles inside File.
+This completes the bounded slice 6 QAT/message-bar/application-menu live review.
+Slice 7 utility chrome and scrollbar promotion is next. Reduced motion,
+open-menu scaling/mixed-monitor transitions and the two deferred 200% layout
+observations remain open; no blanket final acceptance or passing broader
+runtime gate is inferred. This documentation-only checkpoint passed content/
+link review and `git diff --check`; no builds/tests were rerun or Showcase
+launched by the agent.
