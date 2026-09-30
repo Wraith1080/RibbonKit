@@ -12,7 +12,6 @@ public partial class CrystalPreviewWindow : RibbonWindow
     private ResourceDictionary? _crystal;
     private readonly CrystalBackstagePresentation _backstagePresentation;
     private readonly CrystalScreenTipPalette _screenTipPalette;
-    private readonly CrystalMessagePresentation _messagePresentation;
     private readonly CrystalScrollBars[] _scrollBars;
     private readonly CrystalApplicationMenuPresentation _applicationMenuPresentation;
     private readonly CrystalPopupBackdrop[] _popupBackdrops;
@@ -42,7 +41,6 @@ public partial class CrystalPreviewWindow : RibbonWindow
         _backstagePresentation = new CrystalBackstagePresentation(CrystalBackstage,
             Resources.MergedDictionaries[0], BackstageDocumentTitle, TitleInput);
         _screenTipPalette = new CrystalScreenTipPalette(Resources.MergedDictionaries[0]);
-        _messagePresentation = new CrystalMessagePresentation(CrystalMessageBar);
         _scrollBars = new[]
         {
             new CrystalScrollBars(CrystalDocumentScroll), new CrystalScrollBars(CrystalOverviewScroll),
@@ -129,7 +127,6 @@ public partial class CrystalPreviewWindow : RibbonWindow
     private void UpdateCrystalDetails(bool enabled)
     {
         CrystalUtilityChrome.Apply(this, enabled);
-        _messagePresentation.Apply(enabled);
         _applicationMenuPresentation.Apply(enabled);
         foreach (var popup in _popupBackdrops) popup.Apply(enabled);
         _documentEdgeFade.Apply(enabled, _documentEdgeFadeEnabled, _documentQatUnderlayEnabled);

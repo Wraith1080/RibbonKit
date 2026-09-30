@@ -2,8 +2,10 @@
 
 > Status: slices 1–4 implemented on 2026-09-28; slice 5 implemented on
 > 2026-09-30 with live visual review pending. Slice 6's QAT pass is implemented
-> on 2026-09-30 with live review pending; its message-bar/application-menu passes
-> and slices 7–10 remain proposed.
+> on 2026-09-30 with the bounded live QAT review complete, including its
+> minimized/message corner correction. Slice 6's message-bar pass is implemented
+> on 2026-09-30 with live review pending. Its application-menu pass and slices
+> 7–10 remain proposed; slice 6 as a whole remains open.
 > The orb default adds no public API and has no live visual acceptance yet.
 > The glyph-template property is additive and has no live visual acceptance yet.
 > Writer integration is deferred by user direction. Keep its current saved
@@ -109,13 +111,16 @@ shipped baseline is unchanged.
    preview's scrollbar tint, which remains a slice 7 gap. The app-provided Editor
    page and dialog-opening policy stay in Showcase. User screenshots remain the
    live visual acceptance gate.
-6. **Shared shell chrome (QAT pass implemented; slice remains open).** Shared
+6. **Shared shell chrome (QAT and message-bar passes implemented; slice remains open).** Shared
    ribbon templates and Crystal light/dark tokens now supply the below-ribbon
    QAT drawer: 16-DIP inset relative to the default body, open top rim, 10-DIP
    lower corners, 32-DIP minimum height, flipped glass border and zero-depth
-   shadow. The minimized drawer retains its complete rim and 3-DIP top gap;
-   existing message-state priority retains the drawer's open upper corners and
-   spacing. `ContentCornerRadiusQatBelow` coordinates the rounded Crystal body
+   shadow. The minimized drawer retains its complete rim and four rounded
+   corners, including above messages. Its 3-DIP top gap applies without messages;
+   message presence retains the existing spacing. The combined-state
+   `QatExtenderCornerRadiusMinimizedMessageBar` token supplies 10-DIP Crystal
+   corners while preserving Office's connected message-row corners.
+   `ContentCornerRadiusQatBelow` coordinates the rounded Crystal body
    independently of message-only body geometry. `ContentZIndexQatBelow` raises
    its seam shadow below the application-menu overlay. Office palettes retain
    their previous geometry, paint and shadow values. All new shared keys have
@@ -124,12 +129,22 @@ shipped baseline is unchanged.
    `CrystalQuickAccess` and its main/preview callers were removed after the
    RibbonKit-only consumer proved the replacement. Document underlay/fade and
    preview comparisons stay in Showcase; their optional host contract remains
-   slice 9 work. The preview's message-only body rounding remains a scoped
-   `ContentCornerRadiusTop` override in `Crystal.Light.xaml`, a gap for the next
-   message-bar pass. The separate preview window and its launch path remain.
-   In subsequent bounded passes, replace `CrystalMessagePresentation` and the
-   control-paint/geometry portion of `CrystalApplicationMenuPresentation` with
-   shared message and menu template/token behavior. Preserve QAT placement/minimized states, message
+   slice 9 work. Shared `ContentCornerRadiusTop` now retains the body's four
+   14-DIP corners above messages; the preview override was removed. Message
+   rows already used shared amber paint, spacing, rounding and shadows. Their
+   action button now uses one shared template with a dynamic theme style token,
+   `RibbonKit.Styles.MessageBar.ActionButton`, and `MessageBar.ActionCornerRadius`
+   and `MessageBar.ActionRecognizesAccessKey` metrics. Crystal retains the accepted
+   glass action paint, 12-DIP corners, hover/pressed/focus states and 0.4 disabled
+   opacity. Office retains its existing paint, 0/2-DIP corners and 0.45 disabled
+   opacity. Dynamic resources preserve scoped overrides and explicit action
+   style/property choices; no public C# API was added. The single STA consumer
+   verifies the replacement without Showcase; `CrystalMessagePresentation` and
+   all callers were then removed. Message content, action policy and preview
+   comparisons remain host-owned. The separate preview window and launch path remain.
+   In the next bounded pass, replace the control-paint/geometry portion of
+   `CrystalApplicationMenuPresentation` with shared menu template/token behavior.
+   Preserve QAT placement/minimized states, message
    actions, menu split rows and width/clip behavior. Keep application-menu
    content and the choice between menu and Backstage with the host. Treat the
    outside shadow and captured backdrop separately from ordinary menu paint.
@@ -166,6 +181,58 @@ scopes its palette and binds preview document data; those host tasks do not
 become library features. Reassess only a demonstrated detached-resource gap.
 
 ## Verification and completion gates
+
+- The slice 6 message-bar pass on 2026-09-30 reproduced the non-Showcase action's
+  5-DIP corners instead of the accepted 12-DIP corners. Its Release solution
+  build and affected visual-test rebuild passed with zero warnings/errors.
+  The focused runtime run passed 100 tests; the eligible runtime run passed 417,
+  excluding Writer names and the deferred hover method below. The RibbonKit-only
+  single STA/Application consumer passed, covering every QAT placement, minimized
+  state, stacked/empty/reopened messages, wrapping, RTL, action command/parameter,
+  independent dismissal, disabled and synthetic hover/pressed/focus states, live
+  light/dark and Office switches, manual palettes, scoped metric replacement and
+  explicit host style/property precedence. All 85 snapshot scenes passed after
+  full capture/review: the existing 77 were byte-identical, and eight new Crystal
+  message approvals cover light/dark stacks, wrapped body text, rounded actions,
+  minimized body collapse, RTL and synthetic 100/200% rendering. No existing
+  approval or tolerance changed in this pass. Live message motion, target-machine
+  keyboard/pointer/DPI acceptance and fresh user screenshots remain pending;
+  the earlier QAT review does not establish them. Application-menu promotion
+  remains open; slice 6 is not complete. See [§3.199](history/01-library.md#3199-shared-crystal-message-bars--2026-09-30).
+
+- The minimized/message corner follow-up on 2026-09-30 first reproduced the
+  square upper corners in the RibbonKit-only consumer, then passed the Release
+  solution build with zero warnings/errors, 100 focused tests, 417 eligible
+  runtime tests with the same exclusions below, and the single STA consumer
+  test. Coverage includes live light/dark and Office restoration, manual
+  dictionaries, combined-state resource replacement and local-value precedence.
+  All 77 snapshot scenes passed. A full capture found exactly two changed PNGs;
+  the light/dark minimized-message actual and diff images were inspected before
+  renewing only those two approvals. The other 75 images were identical and
+  tolerances were unchanged. The initial comparison also passed because this
+  small corner change was within its tolerance; the consumer assertion provides
+  the exact corner regression gate.
+
+- The bounded live QAT review is complete on 2026-09-30. User screenshots cover
+  Crystal light/dark below-ribbon expanded/minimized states with and without
+  messages, including the corrected upper corners above Protected View;
+  minimized TabRow and title-bar placement at 125%; ordinary commands, Paste
+  split and Select dropdown in title-bar overflow; and direct/nested Paste and
+  Select popups. The user confirmed Esc closing, the nested two-step Esc sequence
+  and reopening with every source-menu command intact. The corrected light
+  nested Select screenshot has no open message; its dark counterpart has one.
+  Real 200% screenshots cover the maximized minimized/message QAT and Select
+  popup in both themes. Showcase stayed open throughout 125% → 200% → 125%;
+  Select was closed during the change, then reopened aligned and closed cleanly
+  with Esc after the return. The user confirmed removal of the eight temporary
+  commands and restoration of Save, Undo, Redo, Paste and Select below the ribbon,
+  Home expanded and Windows scaling at 125%. Detailed screenshot evidence is in
+  [§3.198](history/01-library.md#3198-minimized-crystal-qat-corners-above-messages--2026-09-30).
+  A popup remaining open during a scale change, mixed-monitor transitions, other
+  popup states and slice 5's customization review remain unverified. No manual
+  Showcase launch or Writer tests were run by the agent. Subsequent screenshot
+  and cleanup record updates changed documentation only; builds/tests were not
+  rerun for those updates. This checkpoint did not cover slice 6's later passes.
 
 - The slice 6 QAT checkpoint on 2026-09-30 passed a Release solution build with
   zero warnings/errors, 100 focused tests and 417 eligible runtime tests. Both

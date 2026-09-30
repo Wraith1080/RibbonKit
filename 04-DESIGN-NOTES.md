@@ -744,6 +744,14 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [Promote QAT paint, geometry and body coordination without the Showcase helper](docs/history/01-library.md#3197-shared-crystal-qat-drawer--2026-09-30).
 
+### 3.198 Minimized Crystal QAT corners above messages — 2026-09-30
+
+[Preserve all four minimized drawer corners without changing Office geometry](docs/history/01-library.md#3198-minimized-crystal-qat-corners-above-messages--2026-09-30).
+
+### 3.199 Shared Crystal message bars — 2026-09-30
+
+[Promote message actions and body rounding without the Showcase adapter](docs/history/01-library.md#3199-shared-crystal-message-bars--2026-09-30).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),
@@ -804,10 +812,23 @@ file and this index; update §5 only as supported by verification.
   rows, inputs, galleries, options, ScreenTips and built-in customization pages
   in a RibbonKit-only consumer. Slice 6's QAT pass now promotes drawer paint,
   geometry, body coordination and shadows (§3.197), with 417 eligible runtime
-  tests, the RibbonKit-only consumer and 77 snapshot scenes passing. Message-bar
-  and application-menu promotion remain open within slice 6; utility chrome,
-  contextual tint, optional host effects and final Showcase consolidation remain later slices. Writer's
-  W-glyph migration stays deferred; live Crystal visual review is pending.
+  tests, the RibbonKit-only consumer and 77 snapshot scenes passing. A user
+  screenshot exposed square upper QAT corners when minimized above a message;
+  the shared combined-state correction passes the same automated gates (§3.198).
+  The completed bounded live QAT review covers light/dark drawer and placement
+  states, mixed-command overflow, direct/nested Paste and Select menus, Esc
+  closing and reopening with all commands. Real 200% screenshots and a live
+  125% → 200% → 125% change/return passed with Showcase open and Select reopened
+  after the return. The user confirmed temporary-command cleanup and restoration
+  of the original five-command below-ribbon QAT at 125%. The message-bar pass
+  now supplies shared action chrome and message-only body rounding (§3.199),
+  removing its Showcase adapter after consumer verification. The Release solution
+  build, 100 focused/417 eligible runtime tests, RibbonKit-only consumer and all
+  85 snapshots pass; its fresh live review remains pending. Application-menu
+  promotion remains open within slice 6; utility chrome,
+  contextual tint, optional host effects and final Showcase consolidation remain
+  later slices. Writer's W-glyph migration stays deferred. Slice 5 customization,
+  broader DPI and remaining popup acceptance stay open.
 - Automatic `Icons.xaml` discovery remains best-effort; the manual browser is the
   fallback for no match, ambiguity, inaccessible paths or parse failure.
 

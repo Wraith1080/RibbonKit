@@ -64,7 +64,7 @@ public sealed class CrystalMainWindowPresentationTests
             var originalComboStyle = combo.Style;
             var originalBackstageStyle = backstage.Style;
             ThemeManager.Apply(application, RibbonTheme.CrystalLight);
-            var presentation = new CrystalMainWindowPresentation(window, ribbon, bar, menu, backstage);
+            var presentation = new CrystalMainWindowPresentation(window, ribbon, menu, backstage);
             presentation.Apply(true);
             Sta.Drain();
             window.UpdateLayout();

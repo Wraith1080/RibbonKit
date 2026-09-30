@@ -226,11 +226,29 @@ internal static class CrystalQuickAccessPortabilityChecks
             message.IsOpen = false;
             Layout();
             AssertDrawer(false, false);
+            ribbon.IsMinimized = true;
+            message.IsOpen = true;
+            Layout();
+            AssertDrawer(true, true);
             var manualDark = new ResourceDictionary
             { Source = new Uri("/RibbonKit;component/Themes/Tokens.Crystal.Dark.xaml", UriKind.Relative) };
             window.Resources.MergedDictionaries.Add(manualDark);
             Layout();
+            AssertDrawer(true, true);
             Assert.Equal(0.45, Assert.IsType<DropShadowEffect>(drawer.Effect).Opacity);
+            const string minimizedMessageCorners = "RibbonKit.Metrics.QatExtenderCornerRadiusMinimizedMessageBar";
+            ribbon.Resources[minimizedMessageCorners] = new CornerRadius(6);
+            Layout();
+            Assert.Equal(new CornerRadius(6), drawer.CornerRadius);
+            ribbon.Resources[minimizedMessageCorners] = new CornerRadius(12);
+            Layout();
+            Assert.Equal(new CornerRadius(12), drawer.CornerRadius);
+            ribbon.Resources.Remove(minimizedMessageCorners);
+            Layout();
+            Assert.Equal(new CornerRadius(10), drawer.CornerRadius);
+            ribbon.IsMinimized = false;
+            message.IsOpen = false;
+            Layout();
 
             // Nearer resource replacements stay live; explicit part values outrank theme triggers.
             var hostPaint = Brushes.Plum;
@@ -280,7 +298,7 @@ internal static class CrystalQuickAccessPortabilityChecks
             void AssertDrawer(bool minimized, bool notice)
             {
                 Assert.Equal(new Thickness(23, minimized && !notice ? 3 : 0, 23, 4), drawer.Margin);
-                Assert.Equal(new CornerRadius(minimized && !notice ? 10 : 0, minimized && !notice ? 10 : 0, 10, 10), drawer.CornerRadius);
+                Assert.Equal(minimized ? new CornerRadius(10) : new CornerRadius(0, 0, 10, 10), drawer.CornerRadius);
                 Assert.Equal(new Thickness(1, minimized ? 1 : 0, 1, 1), drawer.BorderThickness);
                 Assert.Equal(new Thickness(8, 2, 8, 2), drawer.Padding);
                 Assert.Equal(32, drawer.MinHeight);

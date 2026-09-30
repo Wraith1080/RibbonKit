@@ -5403,3 +5403,206 @@ acceptance, real DPI transitions and target-machine popup acceptance remain
 pending; earlier Crystal dark screenshots and slice 5's automated checkpoint
 do not establish these gates. Office Glass, View-tab overflow, 200% gallery
 clipping, the Office 2010 hover investigation and Writer RKWF-026 stay deferred.
+
+### 3.198 Minimized Crystal QAT corners above messages — 2026-09-30
+
+Live main Showcase review supplied light/dark expanded and minimized QAT
+screenshots without messages, followed by expanded light/dark screenshots with
+Protected View. The minimized dark message screenshot exposed square upper
+drawer corners. The user rejected that geometry: a minimized Crystal QAT must
+retain all four rounded corners even when a message is present. This corrects
+the message-state priority preserved in §3.197. The correction alone does not
+establish live acceptance or complete the remaining slice 6 work.
+
+The shared ribbon template now selects
+`RibbonKit.Metrics.QatExtenderCornerRadiusMinimizedMessageBar` for the combined
+BelowRibbon/minimized/message state. Crystal light/dark use 10-DIP corners;
+every Office base palette retains its previous zero-radius connected message
+geometry, inherited by its dark variant. Margins, border thickness, paint,
+shadow and host choices are unchanged. The token uses `DynamicResource`; no
+public C# API or shipped API baseline changed.
+
+The RibbonKit-only consumer first failed with expected `10,10,10,10` and actual
+`0,0,10,10`, then passed with the correction. Its single STA/Application matrix
+covers placements, RTL, mixed proxies, minimized/message combinations, live
+light/dark and Office switches, overflow, manual light/dark dictionaries,
+combined-state resource replacement and explicit local corner precedence.
+
+The Release solution build passed with zero warnings/errors. The focused run
+passed 100 tests and the eligible runtime run passed 417, excluding Writer-named
+tests and `Every_ribbon_button_family_consumes_the_shared_hover_glass`.
+The RibbonKit-only consumer test passed, including the added dynamic-resource
+check after rebuilding that project. The initial snapshot comparison passed all
+77 scenes because the small corner changes fit its existing tolerance. A full
+capture identified exactly two changed PNGs. Actual and amplified diff images
+for both minimized-message palettes showed only the upper corners and their
+immediate shadow: 317 changed pixels in light and 315 in dark. Only those two
+approvals were renewed after inspection; the other 75 PNGs were identical and
+no tolerances changed. The final comparison passed all 77 scenes after rebuilding
+the visual project. Theme XML parsed without duplicate direct resource keys.
+Final diff review and `git diff --check` passed.
+
+Follow-up user screenshots of the corrected minimized/message state in both
+Crystal dark and light show all four rounded QAT corners, with the message row
+separate below it and the ribbon body hidden. This closes the visual corner
+check at the supplied 1350×850 window capture size. The evidence files are
+`codex-clipboard-d5160476-f97d-420f-b4e2-67128d52155e.png` (dark) and
+`codex-clipboard-4be6f351-cb8f-45db-a678-3348695c7735.png` (light), supplied from
+the user's temporary clipboard folder. The status bar's document zoom of 100%
+does not establish Windows display scaling.
+
+The next user screenshots show the QAT Paste split-button popup open directly
+below its source-linked proxy while the ribbon is minimized above Protected
+View. Both palettes have readable rows, rounded popup corners and no visible
+clipping. Evidence is `codex-clipboard-f8abaea5-35fb-4459-be9c-6f3f339094d4.png`
+(light) and `codex-clipboard-4c88adba-29a5-4676-8557-7b28a668cefd.png` (dark),
+again 1350×850 captures from the temporary clipboard folder. The user explicitly
+confirmed Esc closes the menu cleanly in both themes. This establishes the
+bounded Paste popup appearance/closing check, not every popup state.
+
+Further user screenshots show the QAT Select dropdown aligned beneath its
+proxy in the same minimized/message state. All three rows are readable, and
+the popup has rounded corners with no visible clipping in both palettes.
+Evidence is `codex-clipboard-d2737cdd-ee6c-4838-b22f-d78717a0ebe4.png` (dark)
+and `codex-clipboard-3f0c27b8-cb8b-4d56-8562-508e501024cc.png` (light), again
+1350×850 captures. The user explicitly confirmed Esc closes Select cleanly in
+both themes and reported the current Windows display scale as 125%. These
+Select captures establish the live 125% baseline.
+
+The next 200% Windows-scale check supplies maximized 1920×1104 captures,
+`codex-clipboard-05a412ea-4970-43c5-9721-d372aa78f1a2.png` (light) and
+`codex-clipboard-ed41bcf0-5858-46db-aed9-182dcd1d57ba.png` (dark). The minimized
+QAT and Select popup remain sharply rendered, correctly anchored, rounded and
+visibly unclipped above Protected View in both themes. The screenshot check
+passes for this state. The user then confirmed Showcase stayed open throughout
+125% → 200% → 125%. Select was closed when Alt-Tab switched to Display settings
+to restore the scale. After the return, reopening Select produced normal
+alignment and Esc closed it cleanly in both themes. This completes the bounded
+live Windows scale-change/return check for the minimized/message QAT and Select
+popup. Keeping a popup open during a scale change and moving between monitors
+remain unverified.
+
+The next 125% placement check moves QAT to TabRow using the above-ribbon menu
+choice. The light capture `codex-clipboard-a8997597-90d0-4f94-bdfb-4489c8a65e6f.png`
+and dark capture `codex-clipboard-044e3ce8-d801-4d72-8a0b-c79a61be0a07.png`
+show all five commands aligned between File and Home, with no below-ribbon
+drawer and Protected View directly beneath the minimized tab row. This
+placement passes visual review in both themes at the supplied window size.
+
+Title-bar QAT placement then passes the same 125% minimized/message check in
+both themes. The dark capture `codex-clipboard-4d0df15b-12d3-4ddc-a704-c70a8c36c8e6.png`
+and light capture `codex-clipboard-2be6824b-7832-4e7d-8022-b8aadf970250.png`
+show all five commands fitting beside the window icon without clipping, while
+the tab-row and below-ribbon QAT hosts are cleared.
+
+The title-bar overflow check adds eight temporary Home commands and moves
+Paste/Select after them. The light capture
+`codex-clipboard-b563c866-93da-4b18-8bb3-c4b0d940ca9c.png` and dark capture
+`codex-clipboard-e6718258-ddce-43a0-b6a3-0657ec55d7b2.png` show the overflow
+popup anchored beneath its chevron at 125% with readable, unclipped Underline,
+Find, Replace, Paste and Select rows. This parent-popup appearance check passes
+in both themes.
+
+Nested Paste then passes visual review with both menus open at 125%. The dark
+capture `codex-clipboard-bc5307cb-b02b-41ba-98f9-f2f3b87b9865.png` and light
+capture `codex-clipboard-5e09ffce-ef64-4a3c-a98a-03189fb65daa.png` show all
+three Paste rows readable in a rounded, unclipped child popup below the split
+row. The user confirmed the requested two-step Esc sequence works in both
+themes: the first closes Paste while retaining overflow, and the second closes
+overflow. Reopening overflow and Paste still displays all three commands,
+verifying that menu borrowing did not strand them.
+
+The user then confirmed the requested Select closing/reopening sequence works.
+The dark capture `codex-clipboard-a561d05e-7867-4280-a8c7-c54c1df24b73.png`
+shows Select All, Select Objects and Selection Pane in a readable, rounded,
+unclipped child popup beneath the overflow Select row. Dark Select appearance
+passes. The light attachment
+`codex-clipboard-1d946669-ef56-4539-b27f-af2a5ce5ff5d.png` shows Paste again,
+so it does not establish light nested Select appearance. The corrected light
+capture `codex-clipboard-57597350-6ff6-479d-a539-5d3a9886dd04.png` then shows
+all three Select rows aligned, readable, rounded and unclipped beneath the
+overflow Select row. Protected View is closed in this corrected light capture;
+the dark Select capture above retains it. Light Select appearance passes,
+completing the bounded nested-menu review alongside the user-confirmed closing
+and reopening sequence. The user then confirmed cleanup after instructions to
+remove the eight temporary commands, retain Save/Undo/Redo/Paste/Select, return
+QAT below the ribbon, expand Home and keep Windows scaling at 125%. Restoration
+is user-confirmed; no additional screenshot was requested for cleanup.
+
+This completes the bounded QAT live review at the recorded states and scales.
+The subsequent screenshot and cleanup record updates changed documentation
+only; no builds or tests were rerun for those updates. Final documentation diff
+review and `git diff --check` passed.
+
+Broader DPI coverage, remaining target-machine popup acceptance and slice 5
+customization review remain unverified. The agent did not launch Showcase or
+run Writer tests, and made no commit. Message-bar/application-menu promotion, later
+portability slices and slice 10's main Showcase consolidation remain open;
+the separate Crystal preview window and its launch path remain.
+
+### 3.199 Shared Crystal message bars — 2026-09-30
+
+Slice 6's second bounded pass closes the reusable message-bar gaps: the
+sample's `CrystalMessagePresentation` substituted `Crystal.Backstage.Action`
+for each realized action button, and the preview overrode
+`ContentCornerRadiusTop` to keep all four body corners above messages.
+The rows' semantic amber paint, 10-DIP rounding, spacing and shadow were already
+shared. A RibbonKit-only consumer reproduced the remaining action mismatch:
+the default Crystal action had 5-DIP corners instead of the accepted 12 DIPs.
+
+`Controls.MessageBar.xaml` now supplies one action template in the message's
+template resource scope. A dynamic `RibbonKit.Styles.MessageBar.ActionButton`
+theme style selects the existing brushes and action states without duplicating
+templates. Matching `MessageBar.ActionCornerRadius` and
+`MessageBar.ActionRecognizesAccessKey` metrics preserve Crystal's 12-DIP action,
+hand cursor, access keys, glass hover/pressed/focus states and 0.4 disabled
+opacity. Office base tokens retain their 0/2-DIP action corners, existing brushes
+and 0.45 disabled opacity; dark palettes inherit those styles and resolve their
+own live brushes. Crystal dark explicitly supplies the Crystal style rather
+than falling back to its merged Office dark palette. Shared
+`ContentCornerRadiusTop` now keeps all four Crystal body corners at 14 DIPs.
+The separate QAT seam metrics and the previously reviewed minimized/message
+corner correction are preserved. No public C# API or shipped baseline changed.
+
+After the replacement passed the existing single STA/Application consumer,
+`CrystalMessagePresentation`, its main/preview wiring and the scoped preview
+body-corner override were removed. Message content, commands, action-driven
+closure and comparison policy stay with the host. Action styles/properties and
+message background local values retain WPF precedence; clearing them restores
+the theme. The style resolves its template in the message scope, so it is a
+message-part extension point rather than a general-purpose application button style.
+
+The consumer exercises ItemsSource, every QAT placement, minimized states,
+two independent notices, empty-bar margin/effect cleanup, reopen and wrapping,
+physical RTL positions, UI Automation action invocation and command parameter,
+dismissal events, command-disabled opacity and synthetic hover/pressed/focus
+states. It checks light/dark and every Office palette on realized parts,
+manual light/dark dictionary merges, scoped metric replacement and explicit
+action style/background and message background choices. Semantic notice paint
+does not rotate with a custom accent. Style changes can recreate action chrome;
+the regression reacquires the live template part for Office/manual switches
+rather than asserting on a detached border.
+
+Validation on this pass: Release solution build and affected visual-test rebuild,
+both zero warnings/errors; 100 focused runtime tests; 417 eligible runtime tests;
+the single RibbonKit-only consumer test; full capture and final comparison of
+85 snapshot scenes. Both runtime filters exclude Writer names and the deferred
+`Every_ribbon_button_family_consumes_the_shared_hover_glass` method. The existing
+77 captures were byte-identical to their approvals. Eight new light/dark message
+images were inspected before adding approvals: stacked/paragraph-wrapped notices
+and rounded actions at synthetic 100/200%, RTL stacks and minimized stacks.
+The minimized fixture shares the QAT fixture's loaded lifecycle/body-collapse
+assertion. No existing approval or tolerance changed in this pass.
+All 12 palette dictionaries and the shared message template parsed successfully;
+there were no duplicate direct token keys. Final diff review and
+`git diff --check` passed. The subsequent documentation edits required no
+additional build/test run.
+
+Fresh user message screenshots, live animation, target-machine keyboard/pointer
+and DPI acceptance remain pending. The earlier QAT review is preserved and does
+not establish those gates. No manual Showcase launch, Writer tests, commit, push
+or publication ran. Application-menu promotion still remains within slice 6;
+utility chrome, contextual tint, optional effects and slice 10's final Showcase
+consolidation remain later work. The separate preview window and launch path
+were retained. Office Glass review, View-tab overflow, 200% gallery clipping,
+the Office 2010 hover investigation and Writer RKWF-026 remain deferred.

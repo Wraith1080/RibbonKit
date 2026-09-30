@@ -18,7 +18,6 @@ internal sealed class CrystalMainWindowPresentation
     private readonly Ribbon _ribbon;
     private readonly Backstage _backstage;
     private readonly ResourceDictionary _backstageScope = new();
-    private readonly CrystalMessagePresentation _messages;
     private readonly CrystalApplicationMenuPresentation _menu;
     private readonly Dictionary<Control, CrystalPopupBackdrop> _popups = new();
     private readonly HashSet<RibbonTab> _tabs = new();
@@ -28,12 +27,11 @@ internal sealed class CrystalMainWindowPresentation
     public ResourceDictionary? Palette => _palette;
 
     public CrystalMainWindowPresentation(RibbonWindow window, Ribbon ribbon,
-        RibbonMessageBar messageBar, RibbonApplicationMenu menu, Backstage backstage)
+        RibbonApplicationMenu menu, Backstage backstage)
     {
         _window = window;
         _ribbon = ribbon;
         _backstage = backstage;
-        _messages = new CrystalMessagePresentation(messageBar);
         _menu = new CrystalApplicationMenuPresentation(menu, window);
         foreach (RibbonTab tab in ribbon.Tabs)
             AttachTab(tab);
@@ -71,7 +69,6 @@ internal sealed class CrystalMainWindowPresentation
         CrystalUtilityChrome.Apply(_window, enabled);
         foreach (RibbonTab tab in _ribbon.Tabs)
             if (tab is CrystalContextualTab contextual) contextual.CrystalEnabled = enabled;
-        _messages.Apply(enabled);
         _menu.Apply(enabled);
         foreach (var popup in _popups.Values) popup.Apply(enabled);
     }

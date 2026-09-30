@@ -334,7 +334,7 @@ public partial class MainWindow : RibbonWindow
         if (theme == RibbonTheme.CrystalLight)
         {
             (_crystalPresentation ??= new CrystalMainWindowPresentation(
-                this, MainRibbon, ShowcaseMessageBar, _applicationMenu, ShowcaseBackstage))
+                this, MainRibbon, _applicationMenu, ShowcaseBackstage))
                 .Apply(true, CrystalTint());
         }
         else

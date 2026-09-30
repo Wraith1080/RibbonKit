@@ -56,9 +56,20 @@ now defines the bounded promotion slices. Slices 1–5 implement the Office 2007
 default orb, theme-owned header inset, public orb glyph template and portable
 Crystal control resources and built-in customization pages. Slice 6's first QAT
 pass now supplies the shared light/dark drawer, body coordination and shadow;
-message-bar/application-menu promotion and later slices remain proposals. Live
-Crystal visual review is still pending. After the promotion slices, migrate important preview-only demonstrations
-to the main Showcase and remove the separate Crystal preview window (slice 10).
+the message-bar pass now promotes action chrome and message-only body rounding.
+Its library-only consumer, 100 focused/417 eligible runtime tests and all 85
+snapshots pass; the existing 77 captures are unchanged. Fresh live message review
+remains pending. Application-menu promotion and later slices remain proposals.
+The bounded QAT live review is complete: light/dark drawer states and corrected
+minimized/message corners, TabRow/title-bar placement, mixed-command overflow,
+direct/nested Paste and Select menus, Esc closing and reopening with all commands.
+Real 200% screenshots and a live 125% → 200% → 125% change/return passed with
+Showcase open and Select reopened after the return. The user confirmed cleanup
+and restoration of the original five-command below-ribbon QAT at 125%.
+Other popup states, broader DPI and slice 5's customization acceptance remain
+open; this QAT checkpoint does not complete all of slice 6. After the promotion slices,
+migrate important preview-only demonstrations to the main Showcase and remove
+the separate Crystal preview window (slice 10).
 
 The earlier Showcase-only adapter registration proposal is superseded. It could
 organize Showcase's code but would not make the Crystal appearance available to
@@ -74,10 +85,12 @@ The Showcase presentation audit found these Crystal portability gaps:
 - `CrystalQuickAccess` and its callers were removed in slice 6's QAT pass;
   a RibbonKit-only consumer obtains its paint and geometry through shared
   templates/tokens. The preview's document underlay remains host-owned and
-  lacks a reusable optional bounds/fade contract (slice 9). Message-only body
-  rounding remains a scoped preview token override for the next message pass.
-- `CrystalMessagePresentation`,
-  `CrystalApplicationMenuPresentation`, `CrystalUtilityChrome` and
+  lacks a reusable optional bounds/fade contract (slice 9).
+- `CrystalMessagePresentation` and its callers were removed after the shared
+  message action template/theme style and body-corner token passed the
+  RibbonKit-only consumer. Message content, action policy and comparisons stay
+  with the host. Live review is pending (§3.199).
+- `CrystalApplicationMenuPresentation`, `CrystalUtilityChrome` and
   `CrystalScrollBars` modify built-in control chrome or template parts after
   theme selection. Promote generic geometry and paint into RibbonKit rather
   than requiring each consumer to copy these helpers.

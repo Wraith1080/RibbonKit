@@ -253,6 +253,14 @@ public sealed class VisualSnapshotTests
                         direction => CreateQatScene(direction), 270);
                     AssertSnapshot($"{palette}-qat-tab-overflow-100", 1d,
                         sceneFactory: direction => CreateQatScene(direction, tabRow: true), height: 270);
+                    AssertSnapshot($"{palette}-message-stack-100", 1d,
+                        sceneFactory: direction => CreateCrystalMessageScene(direction), height: 350);
+                    AssertSnapshot($"{palette}-message-stack-200", 2d,
+                        sceneFactory: direction => CreateCrystalMessageScene(direction), height: 350);
+                    AssertSnapshot($"{palette}-message-stack-rtl-100", 1d, FlowDirection.RightToLeft,
+                        direction => CreateCrystalMessageScene(direction), 350);
+                    AssertSnapshot($"{palette}-message-minimized-100", 1d,
+                        sceneFactory: direction => CreateCrystalMessageScene(direction, minimized: true), height: 350);
                 }
             }
             finally
@@ -813,27 +821,43 @@ public sealed class VisualSnapshotTests
             ribbon.QuickAccessMaxWidth = 45;
         }
         if (minimized)
+            RealizeMinimizedRibbon(root, ribbon);
+        return root;
+    }
+
+    private static void RealizeMinimizedRibbon(Grid root, Ribbon ribbon)
+    {
+        // Body collapse is synchronized on Loaded. Realize in a test window before
+        // detaching for bitmap capture; setting IsMinimized in a disconnected tree
+        // changes drawer triggers but leaves the body visible and is a false scene.
+        root.Children.Remove(ribbon);
+        var window = new Window { Content = ribbon, Width = Width, Height = 350,
+            Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
+        try
         {
-            // Body collapse is synchronized on Loaded. Realize in a test window before
-            // detaching for bitmap capture; setting IsMinimized in a disconnected tree
-            // changes drawer triggers but leaves the body visible and is a false scene.
-            root.Children.Remove(ribbon);
-            var window = new Window { Content = ribbon, Width = Width, Height = 350,
-                Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
-            try
-            {
-                window.Show();
-                ribbon.IsMinimized = true;
-                Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
-                window.UpdateLayout();
-                var tabs = Assert.IsType<RibbonTabControl>(ribbon.Template.FindName("TabControlHost", ribbon));
-                Assert.Equal(Visibility.Collapsed,
-                    Assert.IsType<Border>(tabs.Template.FindName("ContentHost", tabs)).Visibility);
-                window.Content = null;
-                root.Children.Add(ribbon);
-            }
-            finally { window.Close(); }
+            window.Show();
+            ribbon.IsMinimized = true;
+            Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
+            window.UpdateLayout();
+            var tabs = Assert.IsType<RibbonTabControl>(ribbon.Template.FindName("TabControlHost", ribbon));
+            Assert.Equal(Visibility.Collapsed,
+                Assert.IsType<Border>(tabs.Template.FindName("ContentHost", tabs)).Visibility);
+            window.Content = null;
+            root.Children.Add(ribbon);
         }
+        finally { window.Close(); }
+    }
+
+    private static FrameworkElement CreateCrystalMessageScene(FlowDirection flowDirection, bool minimized = false)
+    {
+        var root = (Grid)CreateMessageBarStackScene(flowDirection);
+        root.Height = 350;
+        var ribbon = Assert.IsType<Ribbon>(Assert.Single(root.Children));
+        ribbon.QuickAccessPosition = RibbonQuickAccessPosition.TabRow;
+        var second = Assert.IsType<RibbonMessage>(ribbon.MessageBar!.Items[1]);
+        second.Message = "Macros have been disabled. Review the document settings and its source before allowing embedded content to run.";
+        if (minimized)
+            RealizeMinimizedRibbon(root, ribbon);
         return root;
     }
 
