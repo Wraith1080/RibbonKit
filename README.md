@@ -87,7 +87,17 @@ preferred width, lower bound and viewport allowance; scoped resources and local
 part values retain WPF precedence. The shared frame stays within the window's
 available height, with scrolling navigation and pane content and a visible footer.
 Office keeps its existing menu geometry when it fits.
-Showcase still applies utility-button, scrollbar and popup backdrop helpers.
+Shared utility templates provide Crystal rims for minimize, modal close, QAT
+overflow, ribbon/tab scroll arrows and merged-caption buttons. Native scrollbars
+in Crystal scope use the shared 14-DIP template with 4-DIP corners and layered
+6/8/11-percent thumb washes, including Options/customization pages. Scoped
+scrollbar tokens and explicit styles/paint retain WPF precedence;
+`RibbonKit.Brushes.ScrollBar.WashAccent` scopes the wash independently of text.
+Customization list/tree frames share `RibbonKit.Metrics.Customize.FrameInset`:
+2 DIPs in Crystal and 1 DIP in Office, with explicit control padding added to it.
+The pages round inset edges individually to keep painted native-scrollbar gaps
+equal at fractional DPI.
+Showcase still applies captured popup/menu backdrops and its existing tint policy.
 Captured menu/popup blur, preview tint and document-under-QAT treatment remain
 separate host integration work.
 

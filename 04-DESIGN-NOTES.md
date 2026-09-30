@@ -768,6 +768,22 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [Exempt scrollbar buttons from command-click dismissal](docs/history/01-library.md#3203-application-menu-scrollbar-clicks-preserve-the-open-menu--2026-09-30).
 
+### 3.204 Shared Crystal utility buttons and scrollbars — 2026-09-30
+
+[Promote utility rims and native scrollbar material with scoped overrides](docs/history/01-library.md#3204-shared-crystal-utility-buttons-and-scrollbars--2026-09-30).
+
+### 3.205 Customization scrollbar insets and slice 7 live review — 2026-09-30
+
+[Match list/tree clearance by theme and record accepted utility checks](docs/history/01-library.md#3205-customization-scrollbar-insets-and-slice-7-live-review--2026-09-30).
+
+### 3.206 Customization scrollbar pixel gaps — 2026-10-01
+
+[Round inset edges consistently and record accepted native scrolling](docs/history/01-library.md#3206-customization-scrollbar-pixel-gaps--2026-10-01).
+
+### 3.207 Slice 7 bounded live review complete — 2026-10-01
+
+[Record spacing and DPI-return acceptance for both reviewed themes](docs/history/01-library.md#3207-slice-7-bounded-live-review-complete--2026-10-01).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),
@@ -886,9 +902,32 @@ file and this index; update §5 only as supported by verification.
   footer reachability and focus cycling. The bounded slice 6 QAT/message-bar/
   application-menu live review is complete. Reduced motion, broader DPI
   transitions and deferred layout issues remain open; blanket final acceptance
-  is not claimed. Utility chrome and scrollbar promotion is next in slice 7.
-  Captured blur remains host integration work; utility chrome,
-  contextual tint, optional host effects and final Showcase consolidation remain
+  is not claimed. Slice 7 now promotes utility rims and native scrollbar paint/
+  metrics into shared templates/tokens (§3.204); its Release solution build has
+  zero warnings/errors, all 418 eligible runtime tests pass, the RibbonKit-only
+  consumer passes and all 105 visual scenes pass. Six new state scenes were
+  inspected; the preceding 99 approvals/tolerances are unchanged. The utility,
+  scrollbar and customization paint helpers were retired after consumer proof.
+  User slice 7 live checks 1–2 are accepted. Check 3 reported inconsistent list/tree
+  scrollbar clearance; shared frames now use matching 2-DIP Crystal and 1-DIP
+  Office insets (§3.205), followed by the pixel-gap correction below.
+  The isolated spacing build has zero warnings/errors; its consumer, 418 eligible
+  runtime tests and 105 visual scenes pass with unchanged approvals/tolerances.
+  Follow-up screenshots exposed uneven top/bottom and Crystal list/tree side
+  gaps despite the earlier fractional-DPI tolerance. Shared customization pages
+  now round layout and use a transparent per-edge inset border (§3.206).
+  The isolated pixel-gap Release build has zero warnings/errors; its 96-variant
+  consumer matrix, 418 eligible runtime tests and 105 visual scenes pass. Crystal/
+  Office renders at 125/200% were inspected; approvals/tolerances are unchanged.
+  Native scrollbar input/focus/RTL review is accepted. The user then confirmed
+  spacing and 125% → 200% → 125% return passed for both reviewed themes (§3.207).
+  Together with original utility/modal acceptance, the bounded slice 7 live
+  review is complete on 2026-10-01. This confirmation changes documentation only;
+  no builds/tests were repeated. Slices 8–10 remain open.
+  The prior Office RTL checkbox failure
+  at 200% and gallery-layout report remain deferred, with causes unconfirmed,
+  despite the RTL test passing in this run. Captured blur remains host integration
+  work; contextual tint, optional host effects and final Showcase consolidation remain
   later slices. Writer's W-glyph migration stays deferred. Slice 5 customization,
   broader DPI and remaining popup acceptance stay open.
 - Automatic `Icons.xaml` discovery remains best-effort; the manual browser is the

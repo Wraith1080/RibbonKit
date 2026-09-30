@@ -260,4 +260,9 @@
     <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuActivePageMargin">0,0,2,2</Thickness>
     <system:Double x:Key="RibbonKit.Metrics.ApplicationMenuPaneMinimumWidth">0</system:Double>
     <system:Double x:Key="RibbonKit.Metrics.ApplicationMenuPaneViewportInset">0</system:Double>
+
+    <!-- Utility and scrollbar material. -->
+    <system:Double x:Key="RibbonKit.Metrics.UtilityRimActiveOpacity">0</system:Double>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScrollBar.WashAccent" Color="Transparent" />
+    <system:Boolean x:Key="RibbonKit.Metrics.UseUtilityScrollMaterial">False</system:Boolean>
 </ResourceDictionary>

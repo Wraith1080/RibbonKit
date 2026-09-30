@@ -50,12 +50,9 @@ internal sealed class CrystalMainWindowPresentation
         if (enabled)
         {
             _palette = CrystalPalette.Create(tint ?? CrystalPalette.Blue, ThemeManager.IsDarkMode);
-            var scrollTemplates = new ResourceDictionary
-            { Source = new Uri("/RibbonKit;component/Themes/Controls.ScrollBars.xaml", UriKind.Relative) };
-            _palette.MergedDictionaries.Add(scrollTemplates);
-            _palette[typeof(ScrollBar)] = new Style(typeof(ScrollBar),
-                (Style)scrollTemplates["RibbonKit.ScrollBarStyle"]);
-            CrystalScrollBars.Configure(_palette, _palette, tint ?? CrystalPalette.Blue);
+            // The existing main-window tint uses the raw accent for its thumb wash.
+            // Shared templates and metrics come directly from the Crystal palette.
+            _palette["RibbonKit.Brushes.ScrollBar.WashAccent"] = new SolidColorBrush(tint ?? CrystalPalette.Blue);
             _window.Resources.MergedDictionaries.Add(_palette);
             _backstageScope.MergedDictionaries.Add(_palette);
             if (!_backstage.Resources.MergedDictionaries.Contains(_backstageScope))
@@ -66,7 +63,6 @@ internal sealed class CrystalMainWindowPresentation
             _backstage.Resources.MergedDictionaries.Remove(_backstageScope);
         }
 
-        CrystalUtilityChrome.Apply(_window, enabled);
         foreach (RibbonTab tab in _ribbon.Tabs)
             if (tab is CrystalContextualTab contextual) contextual.CrystalEnabled = enabled;
         _menuBackdrop.Apply(enabled);

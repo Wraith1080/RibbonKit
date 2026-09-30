@@ -1,8 +1,10 @@
 using System.Globalization;
 using System.IO;
+using System.Reflection;
 using System.Runtime.ExceptionServices;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Interop;
 using System.Windows.Markup;
 using System.Windows.Media;
@@ -268,6 +270,12 @@ public sealed class VisualSnapshotTests
                         sceneFactory: direction => CreateCrystalApplicationMenuScene(direction, "default"), height: 400);
                     AssertSnapshot($"{palette}-application-menu-rtl-100", 1d, FlowDirection.RightToLeft,
                         direction => CreateCrystalApplicationMenuScene(direction, "split"), 400);
+                    AssertSnapshot($"{palette}-utility-scrollbars-100", 1d,
+                        sceneFactory: CreateCrystalUtilityScene, height: 350);
+                    AssertSnapshot($"{palette}-utility-scrollbars-200", 2d,
+                        sceneFactory: CreateCrystalUtilityScene, height: 350);
+                    AssertSnapshot($"{palette}-utility-scrollbars-rtl-100", 1d, FlowDirection.RightToLeft,
+                        CreateCrystalUtilityScene, 350);
                 }
             }
             finally
@@ -1087,6 +1095,94 @@ public sealed class VisualSnapshotTests
         menu.Items.Add(new RibbonApplicationMenuItem { Header = "Open" });
 
         return menu;
+    }
+
+    private static FrameworkElement CreateCrystalUtilityScene(FlowDirection direction)
+    {
+        var root = (Grid)CreateScene(direction);
+        root.Height = 350;
+        var ribbon = Assert.IsType<Ribbon>(Assert.Single(root.Children));
+        ribbon.QuickAccessMaxWidth = 50;
+        for (int i = 0; i < 6; i++)
+            ribbon.QuickAccessItems.Add(Button(null, RibbonControlSize.Small, Icon("M2,2 L12,12 M12,2 L2,12")));
+        ribbon.ShowMergedCaption(null, "Document");
+        var modalRibbon = new Ribbon { VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(0, 175, 0, 0) };
+        var modal = new RibbonTab { Header = "Print Preview", IsModal = true, CloseButtonText = "Close Preview" };
+        modalRibbon.Tabs.Add(modal);
+        modalRibbon.EnterModal(modal);
+        root.Children.Add(modalRibbon);
+        var samples = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Top,
+            HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 225, 0, 0) };
+        var bars = new List<ScrollBar>();
+        foreach (var state in new[] { "Idle", "Hover", "Pressed / drag" })
+        {
+            var sample = new Grid { Width = 225, Height = 100, Margin = new Thickness(8, 0, 8, 0) };
+            var label = new TextBlock { Text = state, Margin = new Thickness(8), FontSize = 13 };
+            label.SetResourceReference(TextBlock.ForegroundProperty, "RibbonKit.Brushes.Text.Primary");
+            sample.Children.Add(label);
+            foreach (var orientation in new[] { Orientation.Vertical, Orientation.Horizontal })
+            {
+                var bar = new ScrollBar { Orientation = orientation, Minimum = 0, Maximum = 100, Value = 32, ViewportSize = 25,
+                    HorizontalAlignment = orientation == Orientation.Vertical ? HorizontalAlignment.Right : HorizontalAlignment.Stretch,
+                    VerticalAlignment = orientation == Orientation.Vertical ? VerticalAlignment.Stretch : VerticalAlignment.Bottom,
+                    Margin = orientation == Orientation.Vertical ? new Thickness(0, 0, 0, 14) : new Thickness(0, 0, 14, 0) };
+                sample.Children.Add(bar);
+                bars.Add(bar);
+            }
+            samples.Children.Add(sample);
+        }
+        root.Children.Add(samples);
+        Panel.SetZIndex(samples, 100);
+        root.Measure(new Size(Width, 350));
+        root.Arrange(new Rect(0, 0, Width, 350));
+        root.UpdateLayout();
+        var tabs = Assert.IsType<RibbonTabControl>(ribbon.Template.FindName("TabControlHost", ribbon));
+        var minimize = Assert.IsType<ToggleButton>(tabs.Template.FindName("MinimizeToggle", tabs));
+        ForceState(minimize, typeof(UIElement), "IsMouseOverPropertyKey", true);
+        ForceState(minimize, typeof(ButtonBase), "IsPressedPropertyKey", true);
+        var qat = Assert.IsType<RibbonQuickAccessToolBar>(tabs.Template.FindName("QatTabRowHost", tabs));
+        var overflow = Assert.IsType<ToggleButton>(qat.Template.FindName("PART_OverflowButton", qat));
+        overflow.IsChecked = true;
+        foreach (string name in new[] { "PART_TabScroll", "PART_ContentScroll" })
+        {
+            var scroll = Assert.IsType<RibbonKit.Layout.RibbonScrollContentHost>(tabs.Template.FindName(name, tabs));
+            var arrows = ((Grid)VisualTreeHelper.GetParent(scroll)).Children.OfType<RepeatButton>().ToArray();
+            Assert.Equal(2, arrows.Length);
+            for (int i = 0; i < arrows.Length; i++)
+            {
+                arrows[i].Visibility = Visibility.Visible;
+                arrows[i].ApplyTemplate();
+                ForceState(arrows[i], typeof(UIElement), "IsMouseOverPropertyKey", i == 1);
+            }
+        }
+        foreach (var caption in UtilityDescendants<Button>(tabs).Where(b => b.Command == ribbon.MergedCaptionCommand))
+            ForceState(caption, typeof(UIElement), "IsMouseOverPropertyKey", true);
+        var modalTabs = Assert.IsType<RibbonTabControl>(modalRibbon.Template.FindName("TabControlHost", modalRibbon));
+        var close = Assert.IsType<Button>(modalTabs.Template.FindName("PART_ModalClose", modalTabs));
+        ForceState(close, typeof(UIElement), "IsMouseOverPropertyKey", true);
+        for (int i = 0; i < bars.Count; i++)
+        {
+            var thumb = Assert.IsType<Thumb>(bars[i].Template.FindName("Thumb", bars[i]));
+            if (i >= 2) ForceState(thumb, typeof(UIElement), "IsMouseOverPropertyKey", true);
+            if (i >= 4) ForceState(thumb, typeof(Thumb), "IsDraggingPropertyKey", true);
+            var arrow = Assert.IsType<RepeatButton>(bars[i].Template.FindName("IncreaseButton", bars[i]));
+            if (i >= 2) ForceState(arrow, typeof(UIElement), "IsMouseOverPropertyKey", true);
+            if (i >= 4) ForceState(arrow, typeof(ButtonBase), "IsPressedPropertyKey", true);
+        }
+        return root;
+    }
+
+    private static void ForceState(DependencyObject owner, Type type, string name, bool value) =>
+        owner.SetValue(Assert.IsType<DependencyPropertyKey>(type.GetField(name, BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)), value);
+
+    private static IEnumerable<T> UtilityDescendants<T>(DependencyObject root) where T : DependencyObject
+    {
+        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++)
+        {
+            var child = VisualTreeHelper.GetChild(root, i);
+            if (child is T match) yield return match;
+            foreach (var nested in UtilityDescendants<T>(child)) yield return nested;
+        }
     }
 
     private static FrameworkElement CreateCrystalApplicationMenuScene(FlowDirection direction, string state)

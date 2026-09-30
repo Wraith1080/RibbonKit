@@ -711,7 +711,7 @@ public class CrystalContextualTests
                 {
                     Assert.NotNull(FindUtilityRim(arrow));
                     var chrome = (Border)arrow.Template.FindName("Chrome", arrow);
-                    // The preview rim swaps the scroll-arrow surface on hover.
+                    // The shared template swaps the scroll-arrow surface on hover.
                     Assert.Same(arrow.IsPressed
                             ? window.FindResource("RibbonKit.Brushes.TabStrip.ControlPressedBackground")
                             : arrow.IsMouseOver
@@ -734,10 +734,10 @@ public class CrystalContextualTests
                         Assert.InRange(Math.Abs(arrowBounds.Left - 3), 0, 1 / dpi.DpiScaleX);
                     else
                         Assert.InRange(Math.Abs(bodyHost.ActualWidth - arrowBounds.Right - 3), 0, 1 / dpi.DpiScaleX);
-                    CrystalUtilityChrome.Apply(window, false);
+                    arrow.Resources["RibbonKit.Metrics.UtilityRimActiveOpacity"] = 0d;
                     Assert.Equal(32d, arrow.Width);
                     Assert.Equal(bodyRadius, chrome.CornerRadius);
-                    CrystalUtilityChrome.Apply(window, true);
+                    arrow.Resources.Remove("RibbonKit.Metrics.UtilityRimActiveOpacity");
                     Assert.Equal(32d, arrow.Width);
                     Assert.Equal(bodyRadius, chrome.CornerRadius);
                     bodyArrowCount++;
@@ -787,9 +787,9 @@ public class CrystalContextualTests
                     Assert.Equal((CornerRadius)window.FindResource("RibbonKit.Metrics.ControlCornerRadius"), arrowChrome.CornerRadius);
                     Assert.Same(window.FindResource("RibbonKit.Brushes.TabStrip.ControlHoverBackground"),
                         arrowChrome.Background);
-                    CrystalUtilityChrome.Apply(window, false);
+                    arrow.Resources["RibbonKit.Metrics.UtilityRimActiveOpacity"] = 0d;
                     Assert.Same(arrow.Background, arrowChrome.Background);
-                    CrystalUtilityChrome.Apply(window, true);
+                    arrow.Resources.Remove("RibbonKit.Metrics.UtilityRimActiveOpacity");
                     Assert.Same(window.FindResource("RibbonKit.Brushes.TabStrip.ControlHoverBackground"),
                         arrowChrome.Background);
                     arrowCount++;
@@ -814,10 +814,17 @@ public class CrystalContextualTests
             Assert.Same(window.FindResource("RibbonKit.Brushes.Control.HoverBorder"), utilityRim.BorderBrush);
             Assert.NotEmpty(qat.OverflowEntries);
             overflowButton.IsChecked = false;
-            CrystalUtilityChrome.Apply(window, false);
-            Assert.Null(FindUtilityRim(minimize));
-            Assert.Null(FindUtilityRim(overflowButton));
-            CrystalUtilityChrome.Apply(window, true);
+            var compareUtility = (RibbonToggleButton)window.FindName("CompareToggle");
+            overflowButton.IsChecked = true;
+            compareUtility.IsChecked = true;
+            compareUtility.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            Sta.Drain();
+            Assert.Equal(0d, FindUtilityRim(overflowButton)!.Opacity);
+            compareUtility.IsChecked = false;
+            compareUtility.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            Sta.Drain();
+            Assert.Equal(1d, FindUtilityRim(overflowButton)!.Opacity);
+            overflowButton.IsChecked = false;
             Assert.NotNull(FindUtilityRim(minimize));
             Assert.NotNull(FindUtilityRim(overflowButton));
             overflowPreview.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
@@ -1917,10 +1924,7 @@ public class CrystalContextualTests
 
     private static Border? FindUtilityRim(System.Windows.Controls.Primitives.ButtonBase button)
     {
-        if (button.Template.FindName("Chrome", button) is Border { Child: Grid grid })
-            foreach (UIElement child in grid.Children)
-                if (child is Border { Name: "CrystalUtilityRim" } rim) return rim;
-        return null;
+        return button.Template.FindName("CrystalUtilityRim", button) as Border;
     }
 
     private static double Luminance(Color color)

@@ -32,6 +32,7 @@ internal static class CrystalPalette
         palette["RibbonKit.Brushes.OptionsDialog.PrimaryFocusBorder"] = foreground;
         foreground.Freeze();
         palette["RibbonKit.Brushes.Accent"] = foreground;
+        palette["RibbonKit.Brushes.ScrollBar.WashAccent"] = foreground;
         palette["RibbonKit.Brushes.ApplicationMenu.HeadingForeground"] = foreground;
         palette["RibbonKit.Brushes.Tab.SelectedForeground"] = foreground;
         return palette;
@@ -48,8 +49,13 @@ internal static class CrystalPalette
         {
             if (key is string semanticKey && semanticKey.StartsWith("RibbonKit.Brushes.MessageBar.", StringComparison.Ordinal))
                 continue;
+            // These shared composites already resolve the tinted face and wash in
+            // their own scope; rotating the same nested brushes would tint twice.
+            if (key is "RibbonKit.Brushes.ScrollBar.Thumb" or "RibbonKit.Brushes.ScrollBar.ThumbHover" or "RibbonKit.Brushes.ScrollBar.ThumbPressed")
+                continue;
             if (keepText && key is string name &&
-                (name.Contains(".Text.") || name.EndsWith("Foreground", StringComparison.Ordinal)))
+                (name.Contains(".Text.") || name.EndsWith("Foreground", StringComparison.Ordinal)
+                    || name == "RibbonKit.Brushes.ScrollBar.Glyph"))
                 continue;
             if (resources[key] is not Brush original) continue;
             Brush brush = original.Clone();

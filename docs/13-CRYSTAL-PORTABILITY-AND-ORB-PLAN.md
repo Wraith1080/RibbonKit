@@ -27,7 +27,12 @@
 > traversal, including footer reachability and focus cycling. The bounded slice 6
 > live review is complete. Reduced motion, broader DPI transitions and deferred
 > layout issues remain open; this is not blanket final acceptance.
-> Slices 7–10 remain open, with utility chrome and scrollbars next.
+> Slice 7 utility chrome and scrollbars are implemented on 2026-09-30, with
+> automated portability/visual checks passing. The bounded live review is complete
+> on 2026-10-01: utility/modal controls, native scrolling/focus/RTL, corrected
+> spacing and 125% → 200% → 125% return are accepted. The final spacing/DPI
+> checks passed for both reviewed themes. Broader acceptance gaps remain open.
+> Slices 8–10 remain open. Contextual/tint policy is still slice 8 work.
 > The orb default adds no public API and has no live visual acceptance yet.
 > The glyph-template property is additive and has no live visual acceptance yet.
 > Writer integration is deferred by user direction. Keep its current saved
@@ -129,11 +134,12 @@ shipped baseline is unchanged.
    renewing approvals. The RibbonKit-only consumer verifies light/dark, focus
    separate from selection, scrolling, custom accent, Office restoration and
    manually merged light/dark dictionaries. `Crystal.Customize.xaml` and the
-   template-part edits were removed. `CrystalCustomization` now only scopes the
-   preview's scrollbar tint, which remains a slice 7 gap. The app-provided Editor
-   page and dialog-opening policy stay in Showcase. User screenshots remain the
-   live visual acceptance gate.
-6. **Shared shell chrome (QAT, message-bar and application-menu passes implemented; live menu review pending).** Shared
+   template-part edits were removed. Slice 7 subsequently promoted the native
+   scrollbar material and retired `CrystalCustomization`; the existing app tint
+   choice remains host policy for slice 8. The app-provided Editor page and
+   dialog-opening policy stay in Showcase. Broader slice 5 appearance acceptance
+   remains separate from the completed slice 7 scrollbar review.
+6. **Shared shell chrome (QAT, message-bar and application-menu passes implemented; bounded live review complete).** Shared
    ribbon templates and Crystal light/dark tokens now supply the below-ribbon
    QAT drawer: 16-DIP inset relative to the default body, open top rim, 10-DIP
    lower corners, 32-DIP minimum height, flipped glass border and zero-depth
@@ -208,11 +214,56 @@ shipped baseline is unchanged.
    complete. Reduced motion, broader DPI transitions and deferred layout issues
    remain open; this does not establish blanket final acceptance.
    The separate preview window and slice 10 remain.
-7. **Utility chrome and scrollbars.** Move the generic utility-button rim and
-   arrow states from `CrystalUtilityChrome` into shared templates. Express
-   `CrystalScrollBars` paint and metrics through the existing shared scrollbar
-   template and theme tokens, including native scrollbars in Options pages.
-   Stop editing realized `Chrome`, arrow and scrollbar parts from Showcase.
+7. **Utility chrome and scrollbars (implemented; bounded live review complete).** Shared
+   templates now supply non-interactive idle/hover/pressed/checked rims for
+   minimize, modal close, QAT overflow, ribbon/tab scrolling arrows and merged
+   caption buttons. Rims share Chrome's bounds/corners without altering content
+   padding or command routing. Office keeps zero rim opacity and its existing
+   arrow surfaces. Crystal retains the accepted idle/hover surface swap and
+   pressed priority. The small internal `UtilityChrome` selector lets styles
+   consume existing dynamic brushes directly, preserving local/scoped overrides.
+   Crystal light/dark tokens opt native ScrollViewer bars into the existing
+   shared template, including both built-in customization pages and app-owned
+   Options content. Thickness is 14 DIPs; rail/button/thumb corners are 4 DIPs;
+   the thumb has a one-DIP rim and the accepted 6/8/11-percent accent washes
+   (15/20/28 alpha steps). The internal `ScrollBarMaterialConverter` composes
+   only marked Crystal tokens from the realized thumb's resource scope;
+   Office and explicit host thumb brushes pass through unchanged. A regression
+   first exposed nested Freezable resources retaining another window's wash,
+   then proved dialog-local tint isolation and updates. Native tracks, commands,
+   hover/drag states, keyboard/focus and RTL behavior remain with WPF.
+   `ScrollBar.WashAccent` separates paint from the existing main-window raw-tint/
+   dialog readable-accent policy. This host policy stays in Showcase for slice 8;
+   capture integration remains slice 9. No public C# API was added.
+   After RibbonKit-only proof, `CrystalUtilityChrome`, `CrystalScrollBars` and
+   `CrystalCustomization` and their callers were removed. The designer-safe
+   customization scrollbar adapter remains and consumes the same shared tokens.
+   Release solution compilation, all 418 eligible runtime tests, the single
+   RibbonKit-only consumer and all 105 visual scenes pass. The existing 99
+   approvals/tolerances are unchanged; six new light/dark utility/scrollbar
+   scenes were inspected at 100/200% and RTL before adding approvals.
+   The user accepted utility/arrows and modal/merged-caption review checks 1–2.
+   The customization spacing correction makes all four list/tree frames use
+   FrameInset (Crystal 2 DIPs, Office 1 DIP), removing the
+   extra TreeView padding. See [§3.205](history/01-library.md#3205-customization-scrollbar-insets-and-slice-7-live-review--2026-09-30).
+   The spacing build again passed with zero warnings/errors; the RibbonKit-only
+   geometry/override check, 418 eligible runtime tests and 105 visual scenes pass
+   with approvals and tolerances unchanged.
+   A follow-up screenshot still showed unequal top/bottom and Crystal side gaps:
+   the shared pages now round layout and use FrameInset as a transparent border
+   that rounds each edge independently. Tokens are unchanged; local padding and
+   host styles retain precedence. See [§3.206](history/01-library.md#3206-customization-scrollbar-pixel-gaps--2026-10-01).
+   The isolated pixel-gap Release build passed with zero warnings/errors; the
+   consumer's exact 96-variant gap matrix, 418 eligible runtime tests and 105
+   visual scenes pass. Crystal/Office 125/200% renders were inspected, with
+   approvals/tolerances unchanged.
+   Native arrow/track/wheel/thumb scrolling, focus and RTL are accepted by the
+   user. On 2026-10-01, the user confirmed spacing and 125% → 200% → 125%
+   return passed for both reviewed themes, completing the bounded slice 7 live
+   review. See [§3.207](history/01-library.md#3207-slice-7-bounded-live-review-complete--2026-10-01).
+   Showcase was not launched by the agent; this acceptance update is prose only.
+   The prior 200% Office RTL checkbox failure and gallery-layout report remain
+   deferred despite the RTL method passing in this run. See [§3.204](history/01-library.md#3204-shared-crystal-utility-buttons-and-scrollbars--2026-09-30).
 8. **Contextual material and tint.** Make an ordinary `RibbonTab` render the
    accepted Crystal contextual surface from its contextual color; retire
    `CrystalContextualTab`. Decide and document whether custom Crystal tint is
@@ -283,6 +334,28 @@ mixed-monitor DPI transitions remain broader acceptance gaps. The two 200%
 layout observations above stay deferred by user direction. Do not infer these
 gates from normal-motion or closed-menu scale-return acceptance. No build/test
 rerun is needed for this documentation-only confirmation.
+
+## Slice 7 live review
+
+Use `samples/RibbonKit.Showcase/bin/CrystalSlice7Pixels/Release/net8.0-windows/RibbonKit.Showcase.exe`.
+The agent did not launch it. The bounded review below is complete on 2026-10-01.
+
+1. **Accepted by the user.** Hover and hold minimize, QAT overflow and tab/body arrows. The separate Crystal
+   preview's **Preview controls** offers **Show QAT overflow**, **Show scroll arrows**
+   and **Keep Home groups expanded**; narrow the window for the latter. Confirm
+   idle/hover/pressed/open rims, scrolling commands and cleanup after disabling
+   the demonstration toggles.
+2. **Accepted by the user.** In main Showcase, enter **Print Preview** and check its close button, then use
+   **MDI Demo** with a maximized child to check merged minimize/restore/close paint
+   and commands. Confirm Tab/Shift+Tab focus and a switch back to Office.
+3. **Accepted by the user.** The follow-up review verified matching
+   top/bottom gaps and compact, equal Crystal list/tree side gaps;
+   **native scrollbar input/focus/RTL accepted** for arrow/track/wheel/thumb
+   scrolling and visible focus; **DPI return accepted** for 125% → 200% → 125%.
+   The user confirmed spacing and DPI return passed for both reviewed themes.
+   Original utility/modal checks 1–2 remain accepted. Keep deferred gallery/Office RTL
+   observations separate. Reduced motion, open-menu scaling and mixed-monitor
+   transitions remain broader gates.
 
 ## Verification and completion gates
 

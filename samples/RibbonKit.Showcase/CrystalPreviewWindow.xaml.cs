@@ -12,7 +12,6 @@ public partial class CrystalPreviewWindow : RibbonWindow
     private ResourceDictionary? _crystal;
     private readonly CrystalBackstagePresentation _backstagePresentation;
     private readonly CrystalScreenTipPalette _screenTipPalette;
-    private readonly CrystalScrollBars[] _scrollBars;
     private readonly CrystalApplicationMenuBackdrop _applicationMenuBackdrop;
     private readonly CrystalPopupBackdrop[] _popupBackdrops;
     private readonly CrystalDocumentEdgeFade _documentEdgeFade;
@@ -41,11 +40,6 @@ public partial class CrystalPreviewWindow : RibbonWindow
         _backstagePresentation = new CrystalBackstagePresentation(CrystalBackstage,
             Resources.MergedDictionaries[0], BackstageDocumentTitle, TitleInput);
         _screenTipPalette = new CrystalScreenTipPalette(Resources.MergedDictionaries[0]);
-        _scrollBars = new[]
-        {
-            new CrystalScrollBars(CrystalDocumentScroll), new CrystalScrollBars(CrystalOverviewScroll),
-            new CrystalScrollBars(CrystalAppearanceScroll), new CrystalScrollBars(CrystalAboutScroll),
-        };
         _documentEdgeFade = new CrystalDocumentEdgeFade(PreviewRibbon, CrystalDocumentScroll);
         DocumentScrollDemo.ItemsSource = new[]
         {
@@ -100,8 +94,6 @@ public partial class CrystalPreviewWindow : RibbonWindow
         dialog.Pages.Add(ribbonPage);
         dialog.Pages.Add(quickAccessPage);
         dialog.SelectedPage = quickAccess ? quickAccessPage : ribbonPage;
-        if (CompareToggle.IsChecked != true && _crystal != null)
-            CrystalCustomization.Apply(dialog, _crystal);
         dialog.Applied += (_, _) => StatusText.Text = "Customization applied to this preview.";
         return dialog;
     }
@@ -126,7 +118,6 @@ public partial class CrystalPreviewWindow : RibbonWindow
 
     private void UpdateCrystalDetails(bool enabled)
     {
-        CrystalUtilityChrome.Apply(this, enabled);
         _applicationMenuBackdrop.Apply(enabled);
         foreach (var popup in _popupBackdrops) popup.Apply(enabled);
         _documentEdgeFade.Apply(enabled, _documentEdgeFadeEnabled, _documentQatUnderlayEnabled);
@@ -134,8 +125,6 @@ public partial class CrystalPreviewWindow : RibbonWindow
         DocumentQatUnderlayToggle.IsEnabled = enabled;
         _backstagePresentation.Apply(enabled ? _crystal : null);
         _screenTipPalette.Apply(enabled ? _crystal : null);
-        var accent = ((SolidColorBrush)FindResource("RibbonKit.Brushes.Accent")).Color;
-        foreach (var scrollBars in _scrollBars) scrollBars.Apply(enabled ? _crystal : null, accent);
         AccentSelector.IsEnabled = enabled;
         BackstageAccentSelector.IsEnabled = enabled;
         BackstageLayoutSelector.IsEnabled = enabled;

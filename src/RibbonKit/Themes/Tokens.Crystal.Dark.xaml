@@ -1,10 +1,12 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:controls="clr-namespace:RibbonKit.Controls"
                     xmlns:system="clr-namespace:System;assembly=System.Runtime">
     <!-- Overlay Tokens.Crystal.Light.xaml. Office 2024 dark covers unchanged shared
          controls; these overrides keep Crystal's glass geometry on dark surfaces. -->
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/RibbonKit;component/Themes/Tokens.Office2024.Dark.xaml" />
+        <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.ScrollBars.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
     <!-- Reassert drawer geometry over the merged Office dark continuation metrics. -->
@@ -445,4 +447,54 @@
     <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuActivePageMargin">0</Thickness>
     <system:Double x:Key="RibbonKit.Metrics.ApplicationMenuPaneMinimumWidth">180</system:Double>
     <system:Double x:Key="RibbonKit.Metrics.ApplicationMenuPaneViewportInset">32</system:Double>
+
+    <!-- Utility and scrollbar material. -->
+    <system:Double x:Key="RibbonKit.Metrics.UtilityRimActiveOpacity">1</system:Double>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScrollBar.Glyph" Color="#B5CAD9" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScrollBar.ButtonBackground" Color="#243645" />
+    <DrawingBrush x:Key="RibbonKit.Brushes.ScrollBar.ButtonBorder" Drawing="{StaticResource Crystal.Drawing.GlassRim}"
+                  Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
+    <DrawingBrush x:Key="RibbonKit.Brushes.ScrollBar.ThumbBorder" Drawing="{StaticResource Crystal.Drawing.GlassRim}"
+                  Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScrollBar.Track" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScrollBar.WashAccent" Color="#8BC9F0" />
+    <system:Double x:Key="RibbonKit.Metrics.ScrollBar.Thickness">14</system:Double>
+    <Thickness x:Key="RibbonKit.Metrics.ScrollBar.ThumbBorderThickness">1</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.ScrollBar.ButtonCornerRadius">4</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.ScrollBar.ThumbCornerRadius">4</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.ScrollBar.RailCornerRadius">4</CornerRadius>
+    <DrawingBrush controls:UtilityChrome.WashOpacity="0.058823529411764705" x:Key="RibbonKit.Brushes.ScrollBar.Thumb" Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
+        <DrawingBrush.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Brush="{DynamicResource RibbonKit.Brushes.Control.SurfaceBackground}" Geometry="M0,0 L1,0 1,1 0,1 Z" />
+                <DrawingGroup Opacity="0.058823529411764705">
+                    <GeometryDrawing Brush="{DynamicResource RibbonKit.Brushes.ScrollBar.WashAccent}" Geometry="M0,0 L1,0 1,1 0,1 Z" />
+                </DrawingGroup>
+            </DrawingGroup>
+        </DrawingBrush.Drawing>
+    </DrawingBrush>
+    <DrawingBrush controls:UtilityChrome.WashOpacity="0.078431372549019607" x:Key="RibbonKit.Brushes.ScrollBar.ThumbHover" Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
+        <DrawingBrush.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Brush="{DynamicResource RibbonKit.Brushes.Control.SurfaceBackground}" Geometry="M0,0 L1,0 1,1 0,1 Z" />
+                <DrawingGroup Opacity="0.078431372549019607">
+                    <GeometryDrawing Brush="{DynamicResource RibbonKit.Brushes.ScrollBar.WashAccent}" Geometry="M0,0 L1,0 1,1 0,1 Z" />
+                </DrawingGroup>
+            </DrawingGroup>
+        </DrawingBrush.Drawing>
+    </DrawingBrush>
+    <DrawingBrush controls:UtilityChrome.WashOpacity="0.10980392156862745" x:Key="RibbonKit.Brushes.ScrollBar.ThumbPressed" Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
+        <DrawingBrush.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Brush="{DynamicResource RibbonKit.Brushes.Control.SurfaceBackground}" Geometry="M0,0 L1,0 1,1 0,1 Z" />
+                <DrawingGroup Opacity="0.10980392156862745">
+                    <GeometryDrawing Brush="{DynamicResource RibbonKit.Brushes.ScrollBar.WashAccent}" Geometry="M0,0 L1,0 1,1 0,1 Z" />
+                </DrawingGroup>
+            </DrawingGroup>
+        </DrawingBrush.Drawing>
+    </DrawingBrush>
+    <!-- Native ScrollViewer/ListBox/TreeView bars opt into the shared template
+         only while this Crystal palette is in scope. Explicit styles still win. -->
+    <Style TargetType="{x:Type ScrollBar}" BasedOn="{StaticResource RibbonKit.ScrollBarStyle}" />
+    <system:Boolean x:Key="RibbonKit.Metrics.UseUtilityScrollMaterial">True</system:Boolean>
 </ResourceDictionary>

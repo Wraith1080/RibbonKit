@@ -6054,3 +6054,182 @@ observations remain open; no blanket final acceptance or passing broader
 runtime gate is inferred. This documentation-only checkpoint passed content/
 link review and `git diff --check`; no builds/tests were rerun or Showcase
 launched by the agent.
+
+### 3.204 Shared Crystal utility buttons and scrollbars — 2026-09-30
+
+Slice 7 starts from a clean `codex/crystal-theme` checkout at `07bc890`. Shared
+utility templates now own the accepted non-interactive rims for minimize, modal
+close, QAT overflow, ribbon/tab scroll arrows and merged-caption buttons. The
+rim is a sibling of Chrome and binds its bounds/corners without changing content
+padding. Hover/checked rims use the control hover border; pressed paint wins.
+Crystal's idle/hover arrow surfaces remain swapped as in the former helper;
+Office keeps its original surfaces and zero active rim opacity. Default tab
+arrow paint is now a shared style setter so explicit local button backgrounds
+retain WPF precedence. Scoped source brushes update directly through a small
+internal `UtilityChrome` material selector; no public API was added.
+
+Crystal tokens opt native ScrollViewer scrollbars into the existing shared
+vertical/horizontal templates, including Options and both customization pages.
+Thickness is 14 DIPs, corners are 4 DIPs, and the thumb retains its one-DIP rim
+and face plus 6/8/11-percent wash (15/20/28 alpha steps). Native tracks, routed
+line/page commands, thumb dragging, focus and RTL remain in WPF. The designer-safe
+keyed customization scrollbar adapter is retained. An attempted cross-file
+BasedOn simplification failed the existing scope test and was reverted.
+
+The consumer regression exposed a Freezable resource-scope trap: nested brushes
+in a shared resource drawing could retain the first window's surface/wash, even
+with a dialog-local token override; unshared XAML drawings also did not provide
+reliable scope resolution. `ScrollBarMaterialConverter` composes only marked
+Crystal tokens from brushes resolved on the realized Pill. Office and explicit
+host thumb backgrounds pass through unchanged. Live resource updates, manually
+merged light/dark dictionaries, a simultaneous Options window with a different
+wash, local styles/paint/corners, both axes and native line/page routing pass in
+the RibbonKit-only consumer. Its built-in customization list/tree and app-owned
+Options content bars use the same template/material without Showcase references.
+
+After that proof, `CrystalUtilityChrome`, `CrystalScrollBars` and
+`CrystalCustomization` and their callers were removed. Generic paint and geometry
+are now library-owned. The existing main-window raw tint and dialog/preview
+readable-accent wash remain host policy through `ScrollBar.WashAccent`;
+`CrystalPalette` avoids tinting the composite thumb twice and retains neutral
+glyph paint. Contextual/tint policy remains slice 8, capture remains slice 9,
+and the separate preview window/launch path remains until slice 10.
+
+Final verification: the Release solution build passed with zero warnings/errors
+for both runtime targets, all 418 eligible runtime tests passed using
+`FullyQualifiedName!~Writer&FullyQualifiedName!~Every_ribbon_button_family_consumes_the_shared_hover_glass`,
+and the single STA/Application RibbonKit-only consumer passed. All 105 visual
+scenes passed; the existing 99 approvals/tolerances are unchanged. Six new
+light/dark utility/scrollbar scenes at synthetic 100/200% and RTL were inspected
+before adding approvals. Image inspection first caught scrollbar samples hidden
+behind a modal body and intersecting standalone arrow corners; those fixture
+errors were corrected before approval. Synthetic snapshots are not live pointer,
+focus, monitor-transition or target-machine acceptance.
+
+The initial solution build incorrectly used one OutputPath for both runtime
+frameworks and collided net8/net9 assemblies. The corrected isolated output is
+`bin/CrystalSlice7/Release/<framework>/` per project. The user launch build is
+`samples/RibbonKit.Showcase/bin/CrystalSlice7/Release/net8.0-windows/RibbonKit.Showcase.exe`;
+the existing MenuScrollClickCheck output remains untouched. Documentation/link
+review and `git diff --check` passed. No Writer code/tests, public API baseline,
+manual Showcase launch, commit, push or publication changed.
+
+User light/dark review remains pending for utility hover/press/checked paint,
+scrollbar arrows/track/thumb/wheel, Options/customization focus and RTL, merged
+caption commands, and real DPI return. Reduced motion, open-menu scaling and
+mixed-monitor transitions remain broader gaps. The earlier Office RTL checkbox
+failure at the user's 200% setup passed in this automated run, but no fix or cause
+was established; it and the distinct 200% gallery-layout report remain deferred.
+The accepted slice 6 menu sizing, footer, capture-measurement and click-routing
+contracts and bounded live reviews remain in force.
+
+### 3.205 Customization scrollbar insets and slice 7 live review — 2026-09-30
+
+The user accepted slice 7 review checks 1 and 2: utility/arrows and modal/merged
+caption buttons. Check 3 paused at a screenshot-reported spacing mismatch.
+Crystal's tree scrollbar had the desired small inset while list scrollbars were
+flush; Office trees had excessive clearance relative to lists.
+
+The shared customization frame previously combined the FrameInset token with
+an extra literal TreeView Padding of 2. A style default replaces it with zero,
+also neutralizing WPF's native 1-DIP TreeView padding. List padding is unchanged.
+FrameInset supplies 2 DIPs in Crystal light/dark and the existing 1 DIP in every
+Office variant. Crystal tree
+clearance and Office list clearance are retained; the other controls match them.
+The existing template binding still adds local or host-style padding, and scoped
+FrameInset overrides remain dynamic. No runtime or public API was added.
+
+The RibbonKit-only consumer now measures realized viewport and visible native
+scrollbar bounds for both page types, all Office variants, Crystal light/dark,
+manually scoped palettes and both directions. It also checks local padding plus
+a scoped inset, host-style padding and restoration. Native scrollbar size
+rounding at fractional DPI is allowed within half a device pixel; viewport
+clearance stays exact. Final review removed redundant literal list padding and
+neutralized native tree padding at style precedence, retaining host overrides.
+
+The isolated Release solution build passed with zero warnings/errors, the
+RibbonKit-only consumer passed, all 418 eligible runtime tests passed with the
+same Writer/hover-method exclusions, and all 105 visual scenes passed against
+unchanged approvals/tolerances. The solution and consumer checks use
+`bin/CrystalSlice7Spacing/Release/<framework>/`; the new user executable is
+`samples/RibbonKit.Showcase/bin/CrystalSlice7Spacing/Release/net8.0-windows/RibbonKit.Showcase.exe`.
+The prior CrystalSlice7 and MenuScrollClickCheck outputs are preserved. The
+initial geometry assertion needed corrections for native device-pixel rounding
+and RTL ancestor coordinates; neither required another product change.
+One consumer run stopped before customization at `NavigationScroll: LineDown
+closed File`. A fresh-process rerun passed, including the final geometry and
+host-style checks. Menu routing was unchanged; that one-off failure's cause is
+unconfirmed and no menu fix is claimed.
+Documentation links and `git diff --check` passed. No Writer work, Showcase
+launch, commit, push or publication occurred.
+
+Check 3 live scrolling, focus, RTL and real DPI return remains pending. The
+separate Office RTL checkbox failure and 200% gallery-layout observation remain
+deferred with unconfirmed causes. Checks 1–2 need not be repeated for this fix.
+
+### 3.206 Customization scrollbar pixel gaps — 2026-10-01
+
+The user's follow-up screenshot found unequal top/bottom scrollbar gaps in every
+theme and excessive Crystal list-side clearance relative to the tree. The earlier
+half-device-pixel geometry allowance had not established equal painted gaps.
+The user accepted the latest scrollbar arrow/track/wheel/thumb, focus and RTL
+check (follow-up number 2); spacing and 125% → 200% → 125% return will be repeated.
+Original slice 7 utility/modal checks 1–2 remain accepted.
+
+An offscreen RibbonKit-only probe reproduced fractional frame bounds, independently
+rounded scrollbar chrome and column-dependent painted side gaps. Rounding the
+page alone still left an odd inset pixel: WPF Border.Padding can subtract a
+rounded combined width/height differently from an individual edge. The shared
+frame now uses the existing FrameInset token as a transparent BorderThickness,
+which rounds each edge independently. Both customization page styles default
+UseLayoutRounding to true, while local values and host styles keep WPF precedence.
+At 125%, Crystal's outer-edge gap is three pixels including its frame border;
+Office's is two. Top, bottom and scrollbar-side gaps match between both controls.
+The configured Crystal 2-DIP and Office 1-DIP inset tokens are unchanged. Native
+presenters, scrollbars and commands remain; no runtime or public API was added.
+
+The new RibbonKit-only regression checks actual scrollbar chrome bounds in both
+customization pages for 96 theme/light-dark/scale/direction combinations at
+100/125/150/200%, plus native scrolling. It refreshes DPI on the fully realized
+visual tree and asserts native part DPI rather than testing only raster scale.
+Default painted gaps are checked exactly, with no fractional-pixel allowance.
+The existing local-padding/scoped-inset and host-style fixtures use a four-DIP
+padding to distinguish host padding from the independently rounded inset border.
+
+Final validation: Release solution compilation passed with zero warnings/errors
+for both runtime targets, the RibbonKit-only consumer passed, all 418 eligible
+runtime tests passed with the existing Writer/hover-method exclusions, and all
+105 visual scenes passed against unchanged approvals/tolerances. Crystal
+light/dark and Office 2024 renders at 125/200%, including RTL, were inspected;
+before/after probe renders also confirmed the pixel-gap correction. The first
+consumer run passed the new 96-variant gap matrix, then failed an old combined
+inset expectation for host padding. The fixture/calculation was corrected to
+round border, host padding and inset independently; no default-gap tolerance
+was added. The full consumer rerun passed. Documentation/link review and
+`git diff --check` passed. No manual Showcase launch, commit, push or publication
+occurred. User spacing and real DPI-return acceptance remain pending.
+The output is isolated under `bin/CrystalSlice7Pixels/Release/<framework>/`;
+earlier CrystalSlice7, CrystalSlice7Spacing and MenuScrollClickCheck builds are
+preserved. Writer and the deferred Office RTL checkbox/200% gallery issues remain
+untouched. Broader reduced-motion, open-menu scaling and mixed-monitor review
+remain open.
+
+### 3.207 Slice 7 bounded live review complete — 2026-10-01
+
+The user confirmed follow-up checks 1 (corrected customization scrollbar spacing)
+and 3 (125% → 200% → 125% return) passed for both reviewed themes using the
+CrystalSlice7Pixels build. Check 2 (native scrollbar arrow/track/wheel/thumb,
+focus and RTL) was accepted earlier. Original utility/arrows and modal/merged
+caption checks 1–2 also remain accepted. This completes the bounded slice 7 live
+review, alongside its recorded Release, runtime, consumer and visual evidence.
+
+This is a documentation-only acceptance update. Content/link review and
+`git diff --check` passed; no build or test was repeated. Existing edits, test
+coverage, approvals and build outputs are preserved. No Showcase launch,
+commit, push or publication occurred.
+
+The prior Office RTL checkbox failure at 200% and the distinct 200% gallery-layout
+report remain deferred, with unconfirmed causes. Reduced motion, scaling while
+an application menu stays open and mixed-monitor transitions remain broader
+gates. Slices 8–10 and Writer RKWF-026 remain deferred to their own scopes;
+this acceptance does not claim blanket Crystal completion.

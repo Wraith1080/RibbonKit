@@ -952,7 +952,9 @@ public partial class MainWindow : RibbonWindow
             && _crystalPresentation?.Palette is { } palette)
         {
             dialog.Resources.MergedDictionaries.Add(palette);
-            CrystalCustomization.Apply(dialog, palette);
+            // Retain the dialog's existing readable-accent wash; the main preview
+            // uses the raw tint. Shared scrollbar paint/geometry needs no adapter.
+            dialog.Resources["RibbonKit.Brushes.ScrollBar.WashAccent"] = dialog.FindResource("RibbonKit.Brushes.Accent");
         }
 
         // The dialog raises Applied on OK — the app's cue to persist its settings (the

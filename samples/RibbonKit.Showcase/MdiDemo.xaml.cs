@@ -48,7 +48,6 @@ public partial class MdiDemo : RibbonWindow
             Background = Brushes.White;
         }
 
-        CrystalUtilityChrome.Apply(this, enabled);
         foreach (MdiDocument document in Mdi.Items.OfType<MdiDocument>())
         {
             if (document.Content is TextBox editor) ApplyEditorTheme(editor);

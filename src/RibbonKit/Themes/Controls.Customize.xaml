@@ -22,9 +22,8 @@
         <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.ScrollBars.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
-    <!-- Pilot adapter for the Customize Ribbon page only. Keep it local rather than placing an
-         implicit ScrollBar style at dictionary/dialog scope: the QAT page and app-owned options
-         pages must remain unchanged until the visual comparison is accepted. -->
+    <!-- Scoped adapter retained for designer-safe resource lookup. Crystal also
+         themes native bars in QAT and app-owned Options pages through its palette. -->
     <Style x:Key="RibbonKit.CustomizePageScrollBarStyle" TargetType="{x:Type ScrollBar}">
         <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.ScrollBar.Track}" />
         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.ScrollBar.Glyph}" />
@@ -55,7 +54,11 @@
 
     <!-- Shared row and frame templates for both built-in customization pages. Theme
          tokens select the curvature and materials; the native item presenters and
-         ScrollViewer remain in place for virtualization and keyboard scrolling. -->
+         ScrollViewer remain in place for virtualization and keyboard scrolling.
+         FrameInset supplies matching list/tree scrollbar clearance without extra
+         template-part padding. A transparent border rounds each inset edge separately;
+         Border.Padding can leave an odd pixel on one edge at fractional DPI.
+         Host control padding still adds to it. -->
     <ControlTemplate x:Key="RibbonKit.Customize.ListFrameTemplate" TargetType="{x:Type Control}">
         <Border x:Name="Frame"
                 Background="{TemplateBinding Background}"
@@ -64,7 +67,8 @@
                 Padding="{TemplateBinding Padding}"
                 CornerRadius="{DynamicResource RibbonKit.Metrics.Customize.FrameCornerRadius}"
                 SnapsToDevicePixels="True">
-            <Border Padding="{DynamicResource RibbonKit.Metrics.Customize.FrameInset}">
+            <Border BorderBrush="Transparent"
+                    BorderThickness="{DynamicResource RibbonKit.Metrics.Customize.FrameInset}">
                 <ScrollViewer x:Name="PART_ScrollViewer" Focusable="False"
                               HorizontalScrollBarVisibility="{TemplateBinding ScrollViewer.HorizontalScrollBarVisibility}"
                               VerticalScrollBarVisibility="Auto"
@@ -169,6 +173,7 @@
          available ribbon commands | Add/Remove/Up/Down | current QAT
          ============================================================ -->
     <Style TargetType="{x:Type controls:RibbonQuickAccessPage}">
+        <Setter Property="UseLayoutRounding" Value="True" />
         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
         <!-- The page fills the content area because it is an IRibbonFillPage: the dialog hosts
              it in a ScrollViewer with vertical scroll DISABLED, which constrains it to the
@@ -316,6 +321,7 @@
          with New Tab / New Group / Rename below the tree
          ============================================================ -->
     <Style TargetType="{x:Type controls:RibbonCustomizePage}">
+        <Setter Property="UseLayoutRounding" Value="True" />
         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
         <Setter Property="MinHeight" Value="240" />
         <Setter Property="Template">
@@ -449,8 +455,14 @@
                                   Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
                                   BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
                                   BorderThickness="1"
-                                  Padding="2"
                                   ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            <TreeView.Style>
+                                <!-- Neutralize native TreeView padding at style precedence,
+                                     so host styles/local values can still override it. -->
+                                <Style TargetType="{x:Type TreeView}">
+                                    <Setter Property="Padding" Value="0" />
+                                </Style>
+                            </TreeView.Style>
                             <TreeView.Resources>
                                 <!-- Child containers use the same state and geometry as roots. -->
                                 <Style TargetType="{x:Type TreeViewItem}"

@@ -142,6 +142,8 @@ public sealed class ApplicationButtonShapeThemeTests
     {
         var application = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
         ThemeManager.Apply(application, RibbonTheme.Office2024);
+        CustomizationScrollSpacingChecks.Verify(application);
+        CrystalUtilityPortabilityChecks.Verify(application);
         ApplicationMenuViewportChecks.Verify(application);
         CrystalApplicationMenuPortabilityChecks.Verify(application);
         CrystalQuickAccessPortabilityChecks.Verify(application);
@@ -514,19 +516,54 @@ public sealed class ApplicationButtonShapeThemeTests
         var customize = Assert.IsType<RibbonCustomizePage>(ribbonPage.Content);
         var available = Assert.IsType<ListBox>(customize.Template.FindName("PART_AvailableList", customize));
         var tree = Assert.IsType<TreeView>(customize.Template.FindName("PART_Tree", customize));
-        AssertFrame(available, crystal);
-        AssertFrame(tree, crystal);
         var root = Assert.IsType<TreeViewItem>(tree.ItemContainerGenerator.ContainerFromIndex(0));
         root.IsExpanded = true;
         Drain();
         Assert.NotNull(root.Template.FindName("PART_Header", root));
 
-        dialog.SelectedPage = quickAccessPage;
+        var originalDirection = dialog.FlowDirection;
+        foreach (var direction in new[] { FlowDirection.LeftToRight, FlowDirection.RightToLeft })
+        {
+            dialog.FlowDirection = direction;
+            dialog.SelectedPage = ribbonPage;
+            Drain();
+            dialog.UpdateLayout();
+            AssertFrame(available, crystal);
+            AssertFrame(tree, crystal);
+
+            // Local padding and a scoped metric must still contribute independently.
+            available.Padding = new Thickness(4);
+            available.Resources["RibbonKit.Metrics.Customize.FrameInset"] = new Thickness(5);
+            dialog.UpdateLayout();
+            AssertFrameBounds(available, 10);
+            available.Resources.Remove("RibbonKit.Metrics.Customize.FrameInset");
+            available.ClearValue(Control.PaddingProperty);
+            dialog.UpdateLayout();
+            AssertFrame(available, crystal);
+
+            // A host style's padding must also retain its WPF precedence.
+            foreach (var control in new Control[] { available, tree })
+            {
+                control.Style = new Style(control.GetType())
+                {
+                    Setters = { new Setter(Control.PaddingProperty, new Thickness(4)) },
+                };
+                dialog.UpdateLayout();
+                AssertFrameBounds(control, (crystal ? 3 : 2) + 4);
+                control.ClearValue(FrameworkElement.StyleProperty);
+                dialog.UpdateLayout();
+                AssertFrame(control, crystal);
+            }
+
+            dialog.SelectedPage = quickAccessPage;
+            Drain();
+            dialog.UpdateLayout();
+            var qat = Assert.IsType<RibbonQuickAccessPage>(quickAccessPage.Content);
+            AssertFrame(Assert.IsType<ListBox>(qat.Template.FindName("PART_AvailableList", qat)), crystal);
+            AssertFrame(Assert.IsType<ListBox>(qat.Template.FindName("PART_CurrentList", qat)), crystal);
+        }
+        dialog.FlowDirection = originalDirection;
         Drain();
-        dialog.UpdateLayout();
-        var qat = Assert.IsType<RibbonQuickAccessPage>(quickAccessPage.Content);
-        AssertFrame(Assert.IsType<ListBox>(qat.Template.FindName("PART_AvailableList", qat)), crystal);
-        AssertFrame(Assert.IsType<ListBox>(qat.Template.FindName("PART_CurrentList", qat)), crystal);
     }
 
     private static void VerifyCustomizationFocus(RibbonOptionsDialog dialog, RibbonOptionsPage page)
@@ -575,7 +612,51 @@ public sealed class ApplicationButtonShapeThemeTests
         control.ApplyTemplate();
         var frame = Assert.IsType<Border>(control.Template.FindName("Frame", control));
         Assert.Equal(new CornerRadius(crystal ? 8 : 0), frame.CornerRadius);
-        Assert.NotNull(control.Template.FindName("PART_ScrollViewer", control));
+        Assert.Equal(new Thickness(0), control.Padding);
+        // Measure realized native viewport and bar bounds rather than token values:
+        // this catches the former extra TreeView padding and flush Crystal ListBox.
+        AssertFrameBounds(control, crystal ? 3 : 2);
+        if (crystal)
+        {
+            var viewer = Assert.IsType<ScrollViewer>(control.Template.FindName("PART_ScrollViewer", control));
+            viewer.ApplyTemplate();
+            var bar = Assert.IsType<ScrollBar>(viewer.Template.FindName("PART_VerticalScrollBar", viewer));
+            Assert.Equal(14d, bar.Width);
+            Assert.Equal(new CornerRadius(4), RibbonScrollBar.GetThumbCornerRadius(bar));
+            bar.ApplyTemplate();
+            Assert.Equal("RibbonKit.Controls.RibbonScrollBarTrack", Assert.IsAssignableFrom<Track>(bar.Template.FindName("PART_Track", bar)).GetType().FullName);
+        }
+    }
+
+    private static void AssertFrameBounds(Control control, double inset)
+    {
+        var viewer = Assert.IsType<ScrollViewer>(control.Template.FindName("PART_ScrollViewer", control));
+        var dpi = VisualTreeHelper.GetDpi(viewer);
+        // Frame border, host padding and the inset border round independently.
+        // Use a four-DIP host padding fixture to avoid native Padding's own odd
+        // pixel split; default frame/bar gaps are checked without any tolerance.
+        double horizontalInset = (Math.Round(dpi.DpiScaleX) + Math.Round(control.Padding.Left * dpi.DpiScaleX)
+            + Math.Round((inset - 1 - control.Padding.Left) * dpi.DpiScaleX)) / dpi.DpiScaleX;
+        double verticalInset = (Math.Round(dpi.DpiScaleY) + Math.Round(control.Padding.Top * dpi.DpiScaleY)
+            + Math.Round((inset - 1 - control.Padding.Top) * dpi.DpiScaleY)) / dpi.DpiScaleY;
+        var bounds = viewer.TransformToAncestor(control).TransformBounds(new Rect(viewer.RenderSize));
+        Assert.Equal(horizontalInset, bounds.Left, 3);
+        Assert.Equal(verticalInset, bounds.Top, 3);
+        Assert.Equal(horizontalInset, control.ActualWidth - bounds.Right, 3);
+        Assert.Equal(verticalInset, control.ActualHeight - bounds.Bottom, 3);
+
+        viewer.ApplyTemplate();
+        var bar = Assert.IsType<ScrollBar>(viewer.Template.FindName("PART_VerticalScrollBar", viewer));
+        if (bar.Visibility == Visibility.Visible)
+        {
+            var barBounds = bar.TransformToAncestor(control).TransformBounds(new Rect(bar.RenderSize));
+            Assert.Equal(verticalInset, barBounds.Top, 3);
+            Assert.Equal(verticalInset, control.ActualHeight - barBounds.Bottom, 3);
+            // These ancestor coordinates can remain logical in an RTL tree;
+            // native ScrollViewer owns the mirroring boundary and side placement.
+            double edge = Math.Min(barBounds.Left, control.ActualWidth - barBounds.Right);
+            Assert.Equal(horizontalInset, edge, 3);
+        }
     }
 
     private static void AssertMenuRadius(RibbonMenuItem item, double radius)

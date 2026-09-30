@@ -199,7 +199,7 @@ public partial class LocalizationRtlDemo : RibbonWindow
         if (_crystalPresentation?.Palette is { } palette)
         {
             dialog.Resources.MergedDictionaries.Add(palette);
-            CrystalCustomization.Apply(dialog, palette);
+            dialog.Resources["RibbonKit.Brushes.ScrollBar.WashAccent"] = dialog.FindResource("RibbonKit.Brushes.Accent");
         }
         return dialog;
     }
