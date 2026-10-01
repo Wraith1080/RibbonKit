@@ -145,6 +145,7 @@ public sealed class ApplicationButtonShapeThemeTests
         CustomizationScrollSpacingChecks.Verify(application);
         CrystalUtilityPortabilityChecks.Verify(application);
         CrystalTintPortabilityChecks.Verify(application);
+        PopupMarginPortabilityChecks.Verify(application);
         ApplicationMenuViewportChecks.Verify(application);
         CrystalApplicationMenuPortabilityChecks.Verify(application);
         CrystalQuickAccessPortabilityChecks.Verify(application);
@@ -929,8 +930,8 @@ public sealed class ApplicationButtonShapeThemeTests
         thread.SetApartmentState(ApartmentState.STA);
         thread.IsBackground = true;
         thread.Start();
-        if (!thread.Join(TimeSpan.FromSeconds(90)))
-            throw new TimeoutException("The ribbon portability test did not finish within 90 seconds.");
+        if (!thread.Join(TimeSpan.FromSeconds(180)))
+            throw new TimeoutException("The ribbon portability test did not finish within 180 seconds.");
         failure?.Throw();
     }
 }

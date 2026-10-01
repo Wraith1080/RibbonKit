@@ -788,6 +788,18 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [Replace the Showcase tab subclass and expose an independent generic palette factory](docs/history/01-library.md#3208-shared-crystal-contextual-material-and-scoped-palettes--2026-10-01).
 
+### 3.209 Popup border and shadow DPI diagnostics — 2026-10-01
+
+[Observe native popup bounds and distinguish simulated owner DPI from display-scale transitions](docs/history/01-library.md#3209-popup-border-and-shadow-dpi-diagnostics--2026-10-01).
+
+### 3.210 Popup margins follow the DPI pixel grid — 2026-10-01
+
+[Keep shared dropdown/split-button layout and shadow clearance on matching rounded margins](docs/history/01-library.md#3210-popup-margins-follow-the-dpi-pixel-grid--2026-10-01).
+
+### 3.211 Vertical split hover width and diagnostic cleanup — 2026-10-01
+
+[Align flat Office split-button paint and retire the temporary DPI observer](docs/history/01-library.md#3211-vertical-split-hover-width-and-diagnostic-cleanup--2026-10-01).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),
@@ -853,7 +865,7 @@ technical evidence warrants them; preserve existing dated records.
   for slice progress, remaining live review and deferred issues. Shared work
   covers the theme-following orb/glyph hook, control materials, customization,
   QAT/message/application-menu chrome, utility/native-scrollbar material and
-  contextual material/scoped palettes. Detailed evidence remains in §3.189–§3.208.
+  contextual material/scoped palettes. Detailed evidence remains in §3.189–§3.211.
   Update current acceptance in the
   plan only; do not append each confirmation to this summary. Writer's saved
   appearance and W-glyph migration remain deferred under RKWF-026.

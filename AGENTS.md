@@ -8,6 +8,7 @@ and `samples/RibbonKit.Writer`. Releases use GitHub Releases; NuGet.org publicat
 
 - Follow current user instructions over repository and skill guidance, subject to host/system rules. Carry authorized work through implementation and appropriate verification; resolve routine choices without another approval. Ask only when missing information changes scope, correctness, or authorization, and continue independent work meanwhile.
 - Preserve user edits and unrelated worktree changes. Keep changes narrowly scoped. Do not commit, push, or publish unless requested.
+- Use the normal Debug configuration and default output folder for local review. Required Release validation uses the normal Release output. Do not create task-specific configurations or output folders unless the user requests them.
 - During Writer work, keep `src/RibbonKit/**` read-only unless the user explicitly authorizes a focused runtime change. First establish a focused reproduction; record consumer glue, timing workarounds, automation gaps, and testing exceptions in `docs/12-RIBBONKIT-WRITER-CONSUMER-FRICTION-LOG.md`. Existing explicit authorization does not need to be requested again.
 - Use a single agent by default; delegate only when the user requests it. Independent read-only searches may run concurrently; serialize edits and builds that share outputs.
 - Report the outcome, relevant verification, and remaining limits in concise, plain prose. If a skill blocks authorized work, link the exact file and quote the blocking instruction rather than inventing an approval requirement.

@@ -265,7 +265,7 @@ public sealed class CrystalMainWindowPresentationTests
             Assert.Equal(0d, notch.Width);
             var officePrimary = Assert.IsType<Button>(split.Template.FindName("PART_Primary", split));
             var officeChrome = Assert.IsType<Border>(officePrimary.Template.FindName("Chrome", officePrimary));
-            Assert.Equal(new Thickness(1), officeChrome.BorderThickness);
+            Assert.Equal(new Thickness(0), officeChrome.BorderThickness);
 
             foreach (var office in new[] { RibbonTheme.Office2019, RibbonTheme.Office2013,
                 RibbonTheme.Office2010, RibbonTheme.Office2007 })
@@ -322,7 +322,7 @@ public sealed class CrystalMainWindowPresentationTests
                     (Brush)resources["RibbonKit.Brushes.Ribbon.BodyBackground"]);
                 AssertSamePaint((Brush)resources["RibbonKit.Brushes.Ribbon.ContentBackground"],
                     (Brush)resources["RibbonKit.Brushes.QatExtender.Background"]);
-                Assert.Equal(new Thickness(1),
+                Assert.Equal(new Thickness(generation is "2007" or "2010" ? 1 : 0),
                     resources["RibbonKit.Metrics.SplitVerticalPrimaryBorderThickness"]);
             }
         }

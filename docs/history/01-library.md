@@ -6292,3 +6292,97 @@ No Writer code/tests, manual Showcase launch, commit, push or publication occurr
 Live acceptance remains in the active plan. The deferred Office RTL checkbox/200%
 gallery reports, broader motion/open-menu scaling/mixed-monitor gates and Writer
 RKWF-026 retain their separate scopes and unconfirmed causes.
+
+### 3.209 Popup border and shadow DPI diagnostics — 2026-10-01
+
+An opt-in Showcase-only `--popup-dpi-trace` observer samples dropdown and inherited
+split-button popup native DPI/HWND bounds, painted border bounds, pixel shadow
+headroom, rounding/clip flags and shadow parameters at opening, after layout and
+500 ms later. It logs window DPI changes and closing too. Normal startup does not
+enable it; no runtime/public API, template, paint, placement or dismissal changed.
+The isolated `bin/PopupDpiTrace/Release/net8.0-windows/` build has a click-to-run
+`Start Popup DPI Trace.cmd` launcher and writes its log beside the executable.
+This is temporary diagnosis, not a rendering fix.
+
+The Release Showcase build passed with zero warnings/errors. All 19 focused popup
+motion, dismissal and new geometry/logging checks passed. The new two probes use
+ordinary shared controls with Office 2024/Crystal tokens and repeated synthetic
+owner-DPI changes; native popup DPI remains the actual monitor's 125% in this
+process. Measured bottom shadow headroom is 10 pixels as expected for 8 DIPs.
+They did not reproduce real Display Settings timing or establish the cause of the
+intermittent bottom-border/shadow report. Content/commands were reported intact;
+rounding remains unconfirmed. No snapshot approvals changed, full suite was not
+rerun and the agent did not launch Showcase. Current acceptance/report status is
+maintained only in the active plan.
+
+### 3.210 Popup margins follow the DPI pixel grid — 2026-10-01
+
+The user's 200% → 150% → 125% native trace shows correct HWND/paint DPI and
+16/12/10-pixel bottom shadow headroom. At 125%, the popup border acquires a
+full-face layout clip (170.4 × 192 DIPs); the 200%/150% openings have no clip.
+This identifies paint clipping despite sufficient native window space. WPF rounds
+margins for measure/arrange while its layout-clip calculation uses stored margins.
+The 2-DIP top margin lands between pixels at 125%.
+
+An internal PopupBorder now coerces each outer margin edge to the actual visual
+DPI grid when UseLayoutRounding is enabled, and recoerces after DPI/rounding
+changes. Both shared dropdown and split-button PART_MenuHost templates use it.
+Requested local values remain intact; opting out restores them. The explicit
+implicit-Border style lookup preserves consumer styles. Native layout clipping,
+placement, effects, content presenters, commands and dismissal remain WPF-owned;
+there is no public API addition or broad popup coordinator.
+
+Five runtime checks cover repeated DPI changes, requested values/rounding opt-out,
+genuine clipping, shared fractional layout and rendered shadow pixels, plus
+reopened native headroom after synthetic owner-DPI changes. Both rendered 125%
+fixture PNGs were inspected. The RibbonKit-only consumer adds 16 dropdown/split
+openings across Office 2024/Crystal, light/dark and LTR/RTL, including scoped brush
+and implicit style overrides. These checks do not reproduce native Display
+Settings timing; the exact reported sequence remains a live recheck in the plan.
+
+The isolated Release solution build passed with zero warnings/errors. All 423
+eligible runtime tests passed with the existing Writer/deferred-hover filter;
+the complete RibbonKit-only consumer passed in 112 seconds; all 113 visual scenes
+passed without changing approvals or tolerances. The consumer's bounded STA
+deadline increased from 90 to 180 seconds after a fresh run exceeded 90 seconds;
+its new popup checks took about one second and existing coverage was retained.
+The first interrupted run included the user's computer sleep and is not counted
+as product evidence. Temporary progress-file writes were removed before the pass.
+
+Logs are popup-dpi-edge-runtime.trx, popup-dpi-edge-consumer-final.trx and
+popup-dpi-edge-visual.trx under the respective test projects' TestResults folders.
+Outputs use bin/PopupDpiEdgeFix/Release/<framework>/, preserving previous builds.
+The Showcase output includes Start Popup DPI Edge Check.cmd and retains the
+opt-in observer for the pending live recheck. No Writer code/tests, manual
+Showcase launch, commit, push or publication occurred. Existing broader/deferred
+acceptance gaps retain their scope.
+
+### 3.211 Vertical split hover width and diagnostic cleanup — 2026-10-01
+
+Vertical Paste's primary half reserved a transparent 1-DIP border in flat Office
+themes while the arrow half reserved none. Six rendered light/dark checks for
+Office 2013/2019/2024 reproduced a 96-pixel primary wash versus a 98-pixel arrow
+wash at 125%. Their existing SplitVerticalPrimaryBorderThickness defaults now
+match the flat themes' zero-width highlight border. Office 2007/2010 and Crystal
+retain their existing rim metrics; scoped metric overrides remain effective.
+Before/after fixture PNGs were inspected. No new token or public API was added.
+
+The RibbonKit-only consumer now covers 32 popup openings across four themes,
+light/dark and LTR/RTL, equal vertical-half widths/side borders and scoped metric
+replacement/removal. The temporary Showcase DPI observer/startup switch and its
+logging-only test assertions were removed; native headroom, layout clipping,
+requested-margin and rendered-shadow checks remain.
+
+The final isolated Release solution build passed with zero warnings/errors;
+all 429 eligible runtime tests passed with the existing exclusions; the full
+consumer passed on a fresh process; all 113 visual scenes passed. Approvals and
+tolerances are unchanged. An initial consumer run failed an existing customization
+focus assertion; the unchanged fresh-process retry passed and its cause remains
+unconfirmed. No focus behavior or assertion was changed. Two old Office border
+expectations were updated for the corrected default before the full runtime pass.
+
+Outputs are bin/PopupDpiHoverFix/Release/<framework>/; Start Hover Review.cmd starts
+the normal Showcase executable. Evidence logs are popup-hover-runtime-complete.trx,
+popup-hover-consumer-retry.trx and popup-hover-visual.trx under the test projects'
+TestResults folders. No Writer changes, app launch, commit, push or publication
+occurred. Live results and remaining gates stay in the active plan.

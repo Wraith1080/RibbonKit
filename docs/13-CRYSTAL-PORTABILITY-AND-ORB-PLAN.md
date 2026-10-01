@@ -13,7 +13,7 @@
 | 5: customization pages | Implemented 2026-09-30. Broader page appearance review remains open; scrollbar review is covered by slice 7. |
 | 6: QAT, message bars and application menu | Bounded light/dark live review complete 2026-09-30. Includes placement/overflow, notice dismissal/restoration, menu commands/reset, narrow/minimized/RTL states, visible footer at 200%, keyboard/focus and native scrolling. [Evidence §3.197–§3.203](history/01-library.md#3197-shared-crystal-qat-drawer--2026-09-30). |
 | 7: utility buttons and scrollbars | Bounded live review complete 2026-10-01 in both reviewed themes: utility/arrows, modal/merged-caption controls, customization spacing, native scrolling/focus/RTL and 125% → 200% → 125% return. [Final acceptance §3.207](history/01-library.md#3207-slice-7-bounded-live-review-complete--2026-10-01). |
-| 8: contextual material and tint | Implemented 2026-10-01; automated gates pass. Live checks below remain pending. [Evidence §3.208](history/01-library.md#3208-shared-crystal-contextual-material-and-scoped-palettes--2026-10-01). |
+| 8: contextual material and tint | Bounded live review, separate dropdown DPI-return recheck and vertical Paste hover-width review passed 2026-10-01. [Slice evidence §3.208](history/01-library.md#3208-shared-crystal-contextual-material-and-scoped-palettes--2026-10-01), [popup correction §3.210](history/01-library.md#3210-popup-margins-follow-the-dpi-pixel-grid--2026-10-01), [hover correction §3.211](history/01-library.md#3211-vertical-split-hover-width-and-diagnostic-cleanup--2026-10-01). |
 | 9: optional host effects | Open; opt-in capture/Acrylic scope still to be decided. |
 | 10: Showcase consolidation | Open; retain the separate preview window until this slice. |
 
@@ -22,16 +22,28 @@
 Use `samples/RibbonKit.Showcase/bin/CrystalSlice8/Release/net8.0-windows/RibbonKit.Showcase.exe`.
 The agent did not launch Showcase. Record future confirmations in these items only.
 
-1. **Pending.** In Crystal light/dark, show/select Picture Format and Chart Tools;
+1. **Passed 2026-10-01.** In Crystal light/dark, show/select Picture Format and Chart Tools;
    check idle/hover/selected text, rims and reflective marker. Check merged document
    tool tabs in MDI. In the separate preview, select Picture/Table and change the
    contextual tint; only that tab should change.
-2. **Pending.** Change main glass tint, then inspect inputs, options/customization,
+2. **Passed 2026-10-01.** Change main glass tint, then inspect inputs, options/customization,
    File and gallery paint. Values/selection and contextual colors should survive;
    reset tint and switch to Office to check its usual accent appearance.
-3. **Pending.** Keep main and preview open with different tints. Change/reset the
+3. **Passed 2026-10-01.** Keep main and preview open with different tints. Change/reset the
    preview's Glass tint and Office comparison; main/MDI/dialog paint must retain
    their own scope. Check focus/RTL and 125% → 200% → 125% return on these surfaces.
+
+Separate dropdown DPI report — **Passed 2026-10-01.** After using the corrected
+build, the user reports no remaining overlay after 200% → 150% → 125% and reopening
+dropdowns at 125%. The intervening failure screenshot used the older diagnostic
+build. This accepts the reported bottom-edge/corner paint correction, without
+extending the three tint/contextual checks or broader DPI gates.
+
+Vertical Paste hover — **Passed 2026-10-01.** The user confirmed the primary/arrow
+hover-width correction after the requested 125% Office light/dark and Crystal rim
+review. The temporary DPI logger is retired. Future local review uses the normal
+Debug configuration and output folder. See [implementation and automated
+evidence §3.211](history/01-library.md#3211-vertical-split-hover-width-and-diagnostic-cleanup--2026-10-01).
 
 Broader reduced-motion, open-menu scaling and mixed-monitor gates remain open.
 The [two 200% observations](#deferred-layout-observations-at-200) remain deferred,

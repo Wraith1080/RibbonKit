@@ -300,7 +300,7 @@ public class CrystalContextualTests
             Sta.Drain();
             var popup = Assert.IsType<Popup>(button.Template.FindName("PART_Popup", button));
             Assert.True(popup.IsOpen);
-            var host = Assert.IsType<Border>(button.Template.FindName("PART_MenuHost", button));
+            var host = Assert.IsAssignableFrom<Border>(button.Template.FindName("PART_MenuHost", button));
             var material = Assert.IsType<DrawingBrush>(host.Background);
             var drawing = Assert.IsType<DrawingGroup>(material.Drawing);
             var image = Assert.IsType<ImageDrawing>(drawing.Children[1]);

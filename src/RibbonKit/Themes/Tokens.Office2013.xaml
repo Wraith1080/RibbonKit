@@ -305,7 +305,7 @@
     <!-- Vertical split button (Large only). Square, like everything else in 2013. -->
     <CornerRadius x:Key="RibbonKit.Metrics.SplitTopCornerRadius">0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.SplitBottomCornerRadius">0</CornerRadius>
-    <Thickness x:Key="RibbonKit.Metrics.SplitVerticalPrimaryBorderThickness">1</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.SplitVerticalPrimaryBorderThickness">0</Thickness>
 
     <!-- Prominent outline all around the ribbon body (Metro look). -->
     <Thickness x:Key="RibbonKit.Metrics.ContentBorderThickness">1</Thickness>
