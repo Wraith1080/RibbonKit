@@ -97,9 +97,26 @@ Customization list/tree frames share `RibbonKit.Metrics.Customize.FrameInset`:
 2 DIPs in Crystal and 1 DIP in Office, with explicit control padding added to it.
 The pages round inset edges individually to keep painted native-scrollbar gaps
 equal at fractional DPI.
-Showcase still applies captured popup/menu backdrops and its existing tint policy.
-Captured menu/popup blur, preview tint and document-under-QAT treatment remain
-separate host integration work.
+Ordinary `RibbonTab` controls in Crystal scope derive contextual glass headers,
+rims, text and reflective markers from a solid `ContextualColor`; gradient/custom
+brushes retain the ordinary renderer. Local foreground/marker values and scoped
+paint overrides retain precedence. No Showcase contextual subclass is needed.
+
+`ThemeManager.CreatePalette(theme, accent: null, dark: false)` creates an independent
+palette for a window or control. Office uses its normal accent treatment; Crystal
+tints the glass material while retaining highlight geometry, readable text and
+semantic notice colors. Merge the returned dictionary into the owner's resources;
+replace or remove it to change or clear that scope. Creation does not change the
+global theme, accent preferences or other windows. For example:
+
+```csharp
+var palette = ThemeManager.CreatePalette(RibbonTheme.CrystalLight, Colors.Purple, dark: true);
+window.Resources.MergedDictionaries.Add(palette);
+```
+
+`ThemeManager.SetAccent` retains its existing application accent behavior.
+Showcase still owns document paint, captured menu/popup blur and document-under-QAT
+treatment; optional capture integration remains separate work.
 
 Office 2007 defaults to the round application orb, including its black palette;
 other themes default to a File tab. Set `Ribbon.ApplicationButtonShape` to `Tab`
@@ -113,8 +130,8 @@ glyph template is instantiated separately in each button.
 `RibbonWindow` supports compatible Mica/Acrylic backdrops and separate optional
 frame appearance. Theme selection does not silently enable a material.
 Contextual tabs can optionally set `RibbonTab.ContextualSelectionBrush` for a distinct
-selection marker; null uses the contextual tint. Showcase's experimental Crystal
-preview (`--crystal`) demonstrates colored glass headers and markers.
+selection marker; null uses the contextual tint or Crystal's reflective treatment
+of it. The separate Crystal preview (`--crystal`) remains available for comparison.
 Motion honors reduced-motion settings. Recorded DPI checks include 100/125/150/175/200%
 and mixed-monitor scenarios; new changes still need their applicable checks.
 

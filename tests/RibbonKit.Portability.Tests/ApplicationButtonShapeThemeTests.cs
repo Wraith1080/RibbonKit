@@ -144,6 +144,7 @@ public sealed class ApplicationButtonShapeThemeTests
         ThemeManager.Apply(application, RibbonTheme.Office2024);
         CustomizationScrollSpacingChecks.Verify(application);
         CrystalUtilityPortabilityChecks.Verify(application);
+        CrystalTintPortabilityChecks.Verify(application);
         ApplicationMenuViewportChecks.Verify(application);
         CrystalApplicationMenuPortabilityChecks.Verify(application);
         CrystalQuickAccessPortabilityChecks.Verify(application);

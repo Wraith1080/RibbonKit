@@ -13,7 +13,17 @@
          RibbonTab — header in the strip; selected tab gets the
          Office 2024 accent underline
          ============================================================ -->
+    <controls:ContextualMaterialConverter x:Key="RibbonKit.ContextualMaterial" />
     <Style TargetType="{x:Type controls:RibbonTab}">
+        <Setter Property="controls:ContextualMaterial.Enabled" Value="{DynamicResource RibbonKit.Metrics.ContextualUseCrystalMaterial}" />
+        <Setter Property="controls:ContextualMaterial.SelectedBackground" Value="{DynamicResource RibbonKit.Brushes.Tab.SelectedBackground}" />
+        <Setter Property="controls:ContextualMaterial.HoverBackground" Value="{DynamicResource RibbonKit.Brushes.Tab.HoverBackground}" />
+        <Setter Property="controls:ContextualMaterial.SelectedBorder" Value="{DynamicResource RibbonKit.Brushes.Tab.SelectedBorderBrush}" />
+        <Setter Property="controls:ContextualMaterial.HoverBorder" Value="{DynamicResource RibbonKit.Brushes.Tab.HoverBorder}" />
+        <Setter Property="controls:ContextualMaterial.MarkerBrush" Value="{DynamicResource RibbonKit.Brushes.Tab.SelectedUnderline}" />
+        <Setter Property="controls:ContextualMaterial.TextBrush" Value="{DynamicResource RibbonKit.Brushes.Tab.ContextualForeground}" />
+        <Setter Property="controls:ContextualMaterial.PrimaryTextBrush" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+        <Setter Property="controls:ContextualMaterial.AccentBrush" Value="{DynamicResource RibbonKit.Brushes.Accent}" />
         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.TabStrip.Foreground}" />
         <Setter Property="Template">
             <Setter.Value>
@@ -115,15 +125,71 @@
                         <Trigger Property="IsContextual" Value="True">
                             <Setter TargetName="HeaderText" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="ContextualHeaderText" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="ContextualHeaderText" Property="TextElement.Foreground">
+                                <Setter.Value>
+                                    <MultiBinding Converter="{StaticResource RibbonKit.ContextualMaterial}" ConverterParameter="Text">
+                                        <Binding Path="(controls:ContextualMaterial.TextBrush)" RelativeSource="{RelativeSource TemplatedParent}" />
+                                        <Binding Path="ContextualBrush" RelativeSource="{RelativeSource TemplatedParent}" />
+                                        <Binding Path="ContextualBrush.(SolidColorBrush.Color)" RelativeSource="{RelativeSource TemplatedParent}" />
+                                        <Binding Path="(controls:ContextualMaterial.Enabled)" RelativeSource="{RelativeSource TemplatedParent}" />
+                                        <Binding Path="(controls:ContextualMaterial.PrimaryTextBrush)" RelativeSource="{RelativeSource TemplatedParent}" />
+                                        <Binding Path="IsContextual" RelativeSource="{RelativeSource TemplatedParent}" />
+                                        <Binding Path="ContextualSelectionBrush" RelativeSource="{RelativeSource TemplatedParent}" />
+                                        <Binding Path="Foreground" RelativeSource="{RelativeSource TemplatedParent}" />
+                                        <Binding RelativeSource="{RelativeSource TemplatedParent}" />
+                                    </MultiBinding>
+                                </Setter.Value>
+                            </Setter>
+                            <Setter TargetName="ContextualSelectionIndicator" Property="Fill">
+                                <Setter.Value>
+                                    <MultiBinding Converter="{StaticResource RibbonKit.ContextualMaterial}" ConverterParameter="Marker">
+                                        <Binding Path="(controls:ContextualMaterial.MarkerBrush)" RelativeSource="{RelativeSource TemplatedParent}" />
+                                        <Binding Path="ContextualBrush" RelativeSource="{RelativeSource TemplatedParent}" />
+                                        <Binding Path="ContextualBrush.(SolidColorBrush.Color)" RelativeSource="{RelativeSource TemplatedParent}" />
+                                        <Binding Path="(controls:ContextualMaterial.Enabled)" RelativeSource="{RelativeSource TemplatedParent}" />
+                                        <Binding Path="(controls:ContextualMaterial.PrimaryTextBrush)" RelativeSource="{RelativeSource TemplatedParent}" />
+                                        <Binding Path="IsContextual" RelativeSource="{RelativeSource TemplatedParent}" />
+                                        <Binding Path="ContextualSelectionBrush" RelativeSource="{RelativeSource TemplatedParent}" />
+                                        <Binding Path="Foreground" RelativeSource="{RelativeSource TemplatedParent}" />
+                                        <Binding RelativeSource="{RelativeSource TemplatedParent}" />
+                                    </MultiBinding>
+                                </Setter.Value>
+                            </Setter>
                         </Trigger>
                         <!-- Hover shows the fill AND the underline; each theme zeroes the
                              one it doesn't use. SourceName scoping matters — TabItem.IsMouseOver
                              is also true over the tab CONTENT, which would flicker the header. -->
                         <Trigger SourceName="HeaderChrome" Property="IsMouseOver" Value="True">
-                            <Setter TargetName="HeaderChrome" Property="Background"
-                                    Value="{DynamicResource RibbonKit.Brushes.Tab.HoverBackground}" />
-                            <Setter TargetName="HeaderChrome" Property="BorderBrush"
-                                    Value="{DynamicResource RibbonKit.Brushes.Tab.HoverBorder}" />
+                            <Setter TargetName="HeaderChrome" Property="Background">
+                            <Setter.Value>
+                                <MultiBinding Converter="{StaticResource RibbonKit.ContextualMaterial}" ConverterParameter="Hover">
+                                    <Binding Path="(controls:ContextualMaterial.HoverBackground)" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="ContextualBrush" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="ContextualBrush.(SolidColorBrush.Color)" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="(controls:ContextualMaterial.Enabled)" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="(controls:ContextualMaterial.PrimaryTextBrush)" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="IsContextual" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="ContextualSelectionBrush" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="Foreground" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding RelativeSource="{RelativeSource TemplatedParent}" />
+                                </MultiBinding>
+                            </Setter.Value>
+                            </Setter>
+                            <Setter TargetName="HeaderChrome" Property="BorderBrush">
+                            <Setter.Value>
+                                <MultiBinding Converter="{StaticResource RibbonKit.ContextualMaterial}" ConverterParameter="HoverBorder">
+                                    <Binding Path="(controls:ContextualMaterial.HoverBorder)" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="ContextualBrush" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="ContextualBrush.(SolidColorBrush.Color)" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="(controls:ContextualMaterial.Enabled)" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="(controls:ContextualMaterial.PrimaryTextBrush)" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="IsContextual" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="ContextualSelectionBrush" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="Foreground" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding RelativeSource="{RelativeSource TemplatedParent}" />
+                                </MultiBinding>
+                            </Setter.Value>
+                            </Setter>
                             <Setter TargetName="HeaderChrome" Property="CornerRadius"
                                     Value="{DynamicResource RibbonKit.Metrics.TabHoverCornerRadius}" />
                             <!-- Connected Office themes use this foot to meet the body; Crystal
@@ -138,15 +204,41 @@
                             <Setter TargetName="ConnectFoot" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Tab.ConnectFootHover}" />
                             <!-- Continue the side borders through the foot in connecting themes. -->
-                            <Setter TargetName="ConnectFoot" Property="BorderBrush"
-                                    Value="{DynamicResource RibbonKit.Brushes.Tab.HoverBorder}" />
+                            <Setter TargetName="ConnectFoot" Property="BorderBrush">
+                            <Setter.Value>
+                                <MultiBinding Converter="{StaticResource RibbonKit.ContextualMaterial}" ConverterParameter="HoverBorder">
+                                    <Binding Path="(controls:ContextualMaterial.HoverBorder)" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="ContextualBrush" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="ContextualBrush.(SolidColorBrush.Color)" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="(controls:ContextualMaterial.Enabled)" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="(controls:ContextualMaterial.PrimaryTextBrush)" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="IsContextual" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="ContextualSelectionBrush" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="Foreground" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding RelativeSource="{RelativeSource TemplatedParent}" />
+                                </MultiBinding>
+                            </Setter.Value>
+                            </Setter>
                             <Setter TargetName="ConnectFoot" Property="Opacity"
                                     Value="{DynamicResource RibbonKit.Metrics.TabHoverConnectFootOpacity}" />
                             <Setter TargetName="HoverIndicator" Property="Visibility" Value="Visible" />
                         </Trigger>
                         <Trigger Property="IsSelected" Value="True">
-                            <Setter TargetName="HeaderChrome" Property="Background"
-                                    Value="{DynamicResource RibbonKit.Brushes.Tab.SelectedBackground}" />
+                            <Setter TargetName="HeaderChrome" Property="Background">
+                            <Setter.Value>
+                                <MultiBinding Converter="{StaticResource RibbonKit.ContextualMaterial}" ConverterParameter="Surface">
+                                    <Binding Path="(controls:ContextualMaterial.SelectedBackground)" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="ContextualBrush" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="ContextualBrush.(SolidColorBrush.Color)" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="(controls:ContextualMaterial.Enabled)" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="(controls:ContextualMaterial.PrimaryTextBrush)" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="IsContextual" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="ContextualSelectionBrush" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="Foreground" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding RelativeSource="{RelativeSource TemplatedParent}" />
+                                </MultiBinding>
+                            </Setter.Value>
+                            </Setter>
                             <Setter TargetName="HeaderChrome" Property="CornerRadius"
                                     Value="{DynamicResource RibbonKit.Metrics.TabCornerRadius}" />
                             <!-- Connect the active tab to the body WITHOUT moving the tab: the 1px
@@ -160,14 +252,40 @@
                                     Value="{DynamicResource RibbonKit.Brushes.Tab.ConnectFootSelected}" />
                             <!-- Continue the active tab's side borders 1px down through the foot so its
                                  outline joins the body seamlessly at the bottom corners. -->
-                            <Setter TargetName="ConnectFoot" Property="BorderBrush"
-                                    Value="{DynamicResource RibbonKit.Brushes.Tab.SelectedBorderBrush}" />
+                            <Setter TargetName="ConnectFoot" Property="BorderBrush">
+                            <Setter.Value>
+                                <MultiBinding Converter="{StaticResource RibbonKit.ContextualMaterial}" ConverterParameter="Border">
+                                    <Binding Path="(controls:ContextualMaterial.SelectedBorder)" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="ContextualBrush" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="ContextualBrush.(SolidColorBrush.Color)" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="(controls:ContextualMaterial.Enabled)" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="(controls:ContextualMaterial.PrimaryTextBrush)" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="IsContextual" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="ContextualSelectionBrush" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="Foreground" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding RelativeSource="{RelativeSource TemplatedParent}" />
+                                </MultiBinding>
+                            </Setter.Value>
+                            </Setter>
                             <Setter TargetName="ConnectFoot" Property="Opacity" Value="1" />
                             <!-- Office 2013/Metro: the active tab is outlined on top and
                                  sides (no bottom) so it connects into the ribbon body.
                                  Other themes keep this Transparent / zero-thickness. -->
-                            <Setter TargetName="HeaderChrome" Property="BorderBrush"
-                                    Value="{DynamicResource RibbonKit.Brushes.Tab.SelectedBorderBrush}" />
+                            <Setter TargetName="HeaderChrome" Property="BorderBrush">
+                            <Setter.Value>
+                                <MultiBinding Converter="{StaticResource RibbonKit.ContextualMaterial}" ConverterParameter="Border">
+                                    <Binding Path="(controls:ContextualMaterial.SelectedBorder)" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="ContextualBrush" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="ContextualBrush.(SolidColorBrush.Color)" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="(controls:ContextualMaterial.Enabled)" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="(controls:ContextualMaterial.PrimaryTextBrush)" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="IsContextual" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="ContextualSelectionBrush" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="Foreground" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding RelativeSource="{RelativeSource TemplatedParent}" />
+                                </MultiBinding>
+                            </Setter.Value>
+                            </Setter>
                             <Setter TargetName="HeaderChrome" Property="BorderThickness"
                                     Value="{DynamicResource RibbonKit.Metrics.TabSelectedBorderThickness}" />
                             <!-- Selection underline is now the shared gliding PART_TabMarker
@@ -211,16 +329,55 @@
                                 <Condition Property="IsBackstageActive" Value="True" />
                                 <Condition SourceName="HeaderChrome" Property="IsMouseOver" Value="True" />
                             </MultiTrigger.Conditions>
-                            <Setter TargetName="HeaderChrome" Property="Background"
-                                    Value="{DynamicResource RibbonKit.Brushes.Tab.HoverBackground}" />
-                            <Setter TargetName="HeaderChrome" Property="BorderBrush"
-                                    Value="{DynamicResource RibbonKit.Brushes.Tab.HoverBorder}" />
+                            <Setter TargetName="HeaderChrome" Property="Background">
+                            <Setter.Value>
+                                <MultiBinding Converter="{StaticResource RibbonKit.ContextualMaterial}" ConverterParameter="Hover">
+                                    <Binding Path="(controls:ContextualMaterial.HoverBackground)" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="ContextualBrush" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="ContextualBrush.(SolidColorBrush.Color)" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="(controls:ContextualMaterial.Enabled)" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="(controls:ContextualMaterial.PrimaryTextBrush)" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="IsContextual" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="ContextualSelectionBrush" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="Foreground" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding RelativeSource="{RelativeSource TemplatedParent}" />
+                                </MultiBinding>
+                            </Setter.Value>
+                            </Setter>
+                            <Setter TargetName="HeaderChrome" Property="BorderBrush">
+                            <Setter.Value>
+                                <MultiBinding Converter="{StaticResource RibbonKit.ContextualMaterial}" ConverterParameter="HoverBorder">
+                                    <Binding Path="(controls:ContextualMaterial.HoverBorder)" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="ContextualBrush" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="ContextualBrush.(SolidColorBrush.Color)" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="(controls:ContextualMaterial.Enabled)" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="(controls:ContextualMaterial.PrimaryTextBrush)" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="IsContextual" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="ContextualSelectionBrush" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="Foreground" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding RelativeSource="{RelativeSource TemplatedParent}" />
+                                </MultiBinding>
+                            </Setter.Value>
+                            </Setter>
                             <Setter TargetName="HeaderChrome" Property="CornerRadius"
                                     Value="{DynamicResource RibbonKit.Metrics.TabHoverCornerRadius}" />
                             <Setter TargetName="ConnectFoot" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Tab.ConnectFootHover}" />
-                            <Setter TargetName="ConnectFoot" Property="BorderBrush"
-                                    Value="{DynamicResource RibbonKit.Brushes.Tab.HoverBorder}" />
+                            <Setter TargetName="ConnectFoot" Property="BorderBrush">
+                            <Setter.Value>
+                                <MultiBinding Converter="{StaticResource RibbonKit.ContextualMaterial}" ConverterParameter="HoverBorder">
+                                    <Binding Path="(controls:ContextualMaterial.HoverBorder)" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="ContextualBrush" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="ContextualBrush.(SolidColorBrush.Color)" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="(controls:ContextualMaterial.Enabled)" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="(controls:ContextualMaterial.PrimaryTextBrush)" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="IsContextual" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="ContextualSelectionBrush" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="Foreground" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding RelativeSource="{RelativeSource TemplatedParent}" />
+                                </MultiBinding>
+                            </Setter.Value>
+                            </Setter>
                             <Setter TargetName="ConnectFoot" Property="Opacity"
                                     Value="{DynamicResource RibbonKit.Metrics.TabHoverConnectFootOpacity}" />
                             <Setter TargetName="HoverIndicator" Property="Visibility" Value="Visible" />

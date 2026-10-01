@@ -62,9 +62,6 @@ internal sealed class CrystalMainWindowPresentation
         {
             _backstage.Resources.MergedDictionaries.Remove(_backstageScope);
         }
-
-        foreach (RibbonTab tab in _ribbon.Tabs)
-            if (tab is CrystalContextualTab contextual) contextual.CrystalEnabled = enabled;
         _menuBackdrop.Apply(enabled);
         foreach (var popup in _popups.Values) popup.Apply(enabled);
     }
@@ -88,7 +85,6 @@ internal sealed class CrystalMainWindowPresentation
     private void AttachTab(RibbonTab tab)
     {
         if (!_tabs.Add(tab)) return;
-        if (tab is CrystalContextualTab contextual) contextual.CrystalEnabled = _enabled;
         foreach (RibbonGroup group in tab.Groups)
         {
             AddPopup(group, "PART_PopupHost");
@@ -102,7 +98,6 @@ internal sealed class CrystalMainWindowPresentation
     private void RemoveTab(RibbonTab tab)
     {
         if (!_tabs.Remove(tab)) return;
-        if (tab is CrystalContextualTab contextual) contextual.CrystalEnabled = false;
         foreach (RibbonGroup group in tab.Groups) RemovePopup(group);
     }
 

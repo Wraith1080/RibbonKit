@@ -750,10 +750,9 @@
                 </rk:RibbonGroup>
             </rk:RibbonTab>
 
-            <local:CrystalContextualTab x:Name="PictureFormatTab"
+            <rk:RibbonTab x:Name="PictureFormatTab"
                           Header="Picture Format"
                           IsContextual="True"
-                          CrystalEnabled="False"
                           ContextualColor="#C43E96"
                           Visibility="Collapsed">
                 <rk:RibbonGroup Header="Adjust" Icon="{StaticResource Icon.Sliders}">
@@ -778,7 +777,7 @@
                                      ScreenTipTitle="Crop"
                                      ScreenTipText="Crop the picture to remove unwanted areas." />
                 </rk:RibbonGroup>
-            </local:CrystalContextualTab>
+            </rk:RibbonTab>
 
             <rk:RibbonTab Header="View" rk:Ribbon.CommandId="tab.view">
                 <rk:RibbonGroup Header="Zoom" rk:Ribbon.CommandId="group.view.zoom" Icon="{StaticResource Icon.Zoom}">
@@ -1373,9 +1372,8 @@
                         </rk:RibbonGroup>
                     </rk:RibbonGroupContribution>
                 </rk:RibbonMergeSource.Groups>
-                <local:CrystalContextualTab Header="Chart Design"
+                <rk:RibbonTab Header="Chart Design"
                               IsContextual="True"
-                              CrystalEnabled="False"
                               ContextualColor="#1F7A4D">
                     <rk:RibbonGroup Header="Type" Icon="{StaticResource Icon.Style}">
                         <rk:RibbonButton Header="Change Type"
@@ -1393,10 +1391,9 @@
                                          ScreenTipTitle="Select Data"
                                          ScreenTipText="Choose the range the chart plots." />
                     </rk:RibbonGroup>
-                </local:CrystalContextualTab>
-                <local:CrystalContextualTab Header="Chart Format"
+                </rk:RibbonTab>
+                <rk:RibbonTab Header="Chart Format"
                               IsContextual="True"
-                              CrystalEnabled="False"
                               ContextualColor="#1F7A4D">
                     <rk:RibbonGroup Header="Shape Styles" Icon="{StaticResource Icon.Palette}">
                         <rk:RibbonButton Header="Fill"
@@ -1406,7 +1403,7 @@
                                          ScreenTipTitle="Shape Fill"
                                          ScreenTipText="Fill the selected series with a colour or gradient." />
                     </rk:RibbonGroup>
-                </local:CrystalContextualTab>
+                </rk:RibbonTab>
             </rk:RibbonMergeSource>
 
             <DockPanel>

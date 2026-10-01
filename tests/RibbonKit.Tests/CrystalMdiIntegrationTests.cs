@@ -63,21 +63,21 @@ public sealed class CrystalMdiIntegrationTests
             Sta.Drain();
             MdiDocument document = Assert.IsType<MdiDocument>(demo.Mdi.Items[0]);
             var editor = Assert.IsType<TextBox>(document.Content);
-            var tab = Assert.IsType<CrystalContextualTab>(Assert.Single(document.MergeSource!.Tabs));
+            var tab = Assert.IsType<RibbonTab>(Assert.Single(document.MergeSource!.Tabs));
             var child = Assert.IsType<MdiChild>(demo.Mdi.ItemContainerGenerator.ContainerFromItem(document));
             demo.Mdi.ActivateDocument(document);
             Sta.Drain();
             demo.UpdateLayout();
             var caption = Assert.IsType<Border>(child.Template.FindName("Caption", child));
-            Assert.False(tab.CrystalEnabled);
+            Assert.Null(tab.ContextualSelectionBrush);
             Assert.IsType<SolidColorBrush>(caption.Background);
 
             ThemeManager.Apply(application, RibbonTheme.CrystalLight);
             demo.ApplyCrystal(true, Colors.Purple);
             Sta.Drain();
             demo.UpdateLayout();
-            Assert.True(tab.CrystalEnabled);
-            Assert.IsType<DrawingBrush>(tab.ContextualSelectionBrush);
+            Assert.Null(tab.ContextualSelectionBrush);
+            Assert.Null(tab.ContextualSelectionBrush);
             Assert.IsType<RadialGradientBrush>(caption.Background);
             Assert.Same(child.FindResource("RibbonKit.Brushes.MdiChild.ActiveCaptionBackground"), caption.Background);
             Assert.Same(demo.Mdi.FindResource("RibbonKit.Brushes.MdiClient.Background"), demo.Mdi.Background);
@@ -105,7 +105,7 @@ public sealed class CrystalMdiIntegrationTests
             ThemeManager.Apply(application, RibbonTheme.Office2024);
             demo.ApplyCrystal(false);
             Sta.Drain();
-            Assert.False(tab.CrystalEnabled);
+            Assert.Null(tab.ContextualSelectionBrush);
             Assert.Null(tab.ContextualSelectionBrush);
             Assert.IsType<SolidColorBrush>(caption.Background);
             Assert.Equal(Colors.White, Assert.IsType<SolidColorBrush>(demo.Background).Color);

@@ -55,6 +55,34 @@ public enum RibbonTheme
 /// </remarks>
 public static class ThemeManager
 {
+    /// <summary>Creates an independent theme palette for a window or control resource scope.</summary>
+    /// <param name="theme">The theme whose shared token palette is created.</param>
+    /// <param name="accent">An optional accent. Office uses its normal accent treatment;
+    /// Crystal tints the whole glass material while preserving readable text and notice colors.</param>
+    /// <param name="dark">Whether to include the theme's dark or black overlay.</param>
+    /// <returns>A fresh dictionary to merge into the owning resource scope.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">The theme value is not defined.</exception>
+    /// <remarks>
+    /// Creation does not change application resources, active theme, global preferences
+    /// or other palettes. Replace or remove this dictionary to update or clear a scoped
+    /// palette. Local values and nearer resource overrides retain WPF precedence.
+    /// Title-bar accent/backdrop preferences and captured host effects are not included.
+    /// </remarks>
+    public static ResourceDictionary CreatePalette(RibbonTheme theme, Color? accent = null, bool dark = false)
+    {
+        if (!Enum.IsDefined(theme)) throw new ArgumentOutOfRangeException(nameof(theme));
+        if (theme == RibbonTheme.CrystalLight)
+            return CrystalPaletteBuilder.Create(accent ?? CrystalPaletteBuilder.Blue, dark);
+
+        var palette = new ResourceDictionary();
+        palette.MergedDictionaries.Add(new ResourceDictionary { Source = TokenDictionaryUri(theme) });
+        if (dark && SupportsDarkMode(theme))
+            palette.MergedDictionaries.Add(new ResourceDictionary
+            { Source = new Uri($"/RibbonKit;component/Themes/Tokens.{theme}.Dark.xaml", UriKind.Relative) });
+        ApplyAccentOverrides(palette, theme, dark, accent);
+        return palette;
+    }
+
     private const string AccentKey = "RibbonKit.Brushes.Accent";
     private const string InputFocusBorderKey = "RibbonKit.Brushes.Input.FocusBorder";
     private const string OptionSelectedSurfaceKey = "RibbonKit.Brushes.Option.SelectedSurface";
@@ -332,9 +360,13 @@ public static class ThemeManager
         Changed?.Invoke(null, EventArgs.Empty);
     }
 
-    private static void ApplyAccentOverrides(Application application)
+    private static void ApplyAccentOverrides(Application application) =>
+        ApplyAccentOverrides(application.Resources, CurrentTheme ?? RibbonTheme.Office2024,
+            _darkMode && SupportsDarkMode(CurrentTheme ?? RibbonTheme.Office2024), _accent);
+
+    private static void ApplyAccentOverrides(ResourceDictionary resources, RibbonTheme theme, bool dark, Color? requestedAccent)
     {
-        ResourceDictionary resources = application.Resources;
+
 
         // Clear any prior accent overrides first so switching themes never leaks a
         // theme-specific accent token (e.g. a 2024 underline onto flat 2019).
@@ -343,13 +375,11 @@ public static class ThemeManager
             resources.Remove(key);
         }
 
-        if (_accent is not Color accent)
+        if (requestedAccent is not Color accent)
         {
             return;
         }
 
-        RibbonTheme theme = CurrentTheme ?? RibbonTheme.Office2024;
-        bool dark = _darkMode && SupportsDarkMode(theme);
 
         // Crystal uses the accent as text on dark glass; keep that semantic brush readable.
         Color displayAccent = theme == RibbonTheme.CrystalLight && dark

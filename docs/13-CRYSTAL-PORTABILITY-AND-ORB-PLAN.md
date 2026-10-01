@@ -13,9 +13,25 @@
 | 5: customization pages | Implemented 2026-09-30. Broader page appearance review remains open; scrollbar review is covered by slice 7. |
 | 6: QAT, message bars and application menu | Bounded light/dark live review complete 2026-09-30. Includes placement/overflow, notice dismissal/restoration, menu commands/reset, narrow/minimized/RTL states, visible footer at 200%, keyboard/focus and native scrolling. [Evidence §3.197–§3.203](history/01-library.md#3197-shared-crystal-qat-drawer--2026-09-30). |
 | 7: utility buttons and scrollbars | Bounded live review complete 2026-10-01 in both reviewed themes: utility/arrows, modal/merged-caption controls, customization spacing, native scrolling/focus/RTL and 125% → 200% → 125% return. [Final acceptance §3.207](history/01-library.md#3207-slice-7-bounded-live-review-complete--2026-10-01). |
-| 8: contextual material and tint | Open; next implementation slice. |
+| 8: contextual material and tint | Implemented 2026-10-01; automated gates pass. Live checks below remain pending. [Evidence §3.208](history/01-library.md#3208-shared-crystal-contextual-material-and-scoped-palettes--2026-10-01). |
 | 9: optional host effects | Open; opt-in capture/Acrylic scope still to be decided. |
 | 10: Showcase consolidation | Open; retain the separate preview window until this slice. |
+
+### Slice 8 live review
+
+Use `samples/RibbonKit.Showcase/bin/CrystalSlice8/Release/net8.0-windows/RibbonKit.Showcase.exe`.
+The agent did not launch Showcase. Record future confirmations in these items only.
+
+1. **Pending.** In Crystal light/dark, show/select Picture Format and Chart Tools;
+   check idle/hover/selected text, rims and reflective marker. Check merged document
+   tool tabs in MDI. In the separate preview, select Picture/Table and change the
+   contextual tint; only that tab should change.
+2. **Pending.** Change main glass tint, then inspect inputs, options/customization,
+   File and gallery paint. Values/selection and contextual colors should survive;
+   reset tint and switch to Office to check its usual accent appearance.
+3. **Pending.** Keep main and preview open with different tints. Change/reset the
+   preview's Glass tint and Office comparison; main/MDI/dialog paint must retain
+   their own scope. Check focus/RTL and 125% → 200% → 125% return on these surfaces.
 
 Broader reduced-motion, open-menu scaling and mixed-monitor gates remain open.
 The [two 200% observations](#deferred-layout-observations-at-200) remain deferred,
@@ -120,7 +136,8 @@ shipped baseline is unchanged.
    manually merged light/dark dictionaries. `Crystal.Customize.xaml` and the
    template-part edits were removed. Slice 7 subsequently promoted the native
    scrollbar material and retired `CrystalCustomization`; the existing app tint
-   choice remains host policy for slice 8. The app-provided Editor page and
+   choice remains host policy; slice 8 supplies the reusable palette factory.
+   The app-provided Editor page and
    dialog-opening policy stay in Showcase. Broader slice 5 appearance acceptance
    remains separate from the completed slice 7 scrollbar review.
 6. **Shared shell chrome (implemented).** Shared templates/tokens supply the
@@ -153,14 +170,26 @@ shipped baseline is unchanged.
    [§3.204–§3.207](history/01-library.md#3204-shared-crystal-utility-buttons-and-scrollbars--2026-09-30);
    current live acceptance is in the table above.
 
-8. **Contextual material and tint.** Make an ordinary `RibbonTab` render the
-   accepted Crystal contextual surface from its contextual color; retire
-   `CrystalContextualTab`. Decide and document whether custom Crystal tint is
-   a supported library feature. If yes, move `CrystalPalette`'s whole-material
-   tint/readability policy into reusable theming while preserving normal
-   `ThemeManager.SetAccent` behavior for Office themes. Scope tint updates and
-   cleanup per window or control where required; do not let one preview tint
-   recolor unrelated windows.
+8. **Contextual material and tint (implemented).** Ordinary `RibbonTab` now
+   derives the accepted solid-color glass surface, hover/rim/text and marker
+   through the shared template and internal material converter. Resource
+   selectors are dynamic; unmarked host paint and explicit foreground/marker
+   values pass through. Gradient/custom contextual brushes keep the ordinary
+   renderer. All themes have matching opt-in/default keys; Office remains unchanged.
+   `CrystalContextualTab` and its main/preview/MDI callers were retired after
+   RibbonKit-only proof. No public tab property was added or overwritten.
+   Custom material tint is supported through the additive generic
+   `ThemeManager.CreatePalette(RibbonTheme theme, Color? accent = null, bool dark = false)`.
+   Each call starts from fresh theme tokens. Office reuses its existing accent
+   policy; Crystal preserves the accepted hue rotation/readability policy,
+   geometry, alpha, neutral text and semantic notice colors. Creation does not
+   change global theme/preferences or other scopes; owners replace/remove their
+   dictionary for updates/cleanup. `SetAccent` behavior is preserved.
+   Showcase's `CrystalPalette` now delegates control tint to RibbonKit and retains
+   application-owned document paint only. Main's raw scrollbar-wash choice remains
+   an explicit host token override. Captured backdrops remain slice 9; the separate
+   preview remains until slice 10. See the linked §3.208 evidence; live acceptance
+   is maintained above.
 9. **Optional host effects.** Design a separate opt-in integration, only if
    desired, for `CrystalMenuBackdrop`, `CrystalPopupBackdrop` and the host-owned
    capture/update lifecycle. Likewise evaluate `AcrylicGlassPresentation` as

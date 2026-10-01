@@ -51,9 +51,6 @@ public partial class MdiDemo : RibbonWindow
         foreach (MdiDocument document in Mdi.Items.OfType<MdiDocument>())
         {
             if (document.Content is TextBox editor) ApplyEditorTheme(editor);
-            if (document.MergeSource is { } source)
-                foreach (CrystalContextualTab tab in source.Tabs.OfType<CrystalContextualTab>())
-                    tab.CrystalEnabled = enabled;
         }
     }
 
@@ -124,11 +121,10 @@ public partial class MdiDemo : RibbonWindow
         var group = new RibbonGroup { Header = "Text", Icon = TryFindResource("Icon.Font") as ImageSource };
         group.Items.Add(upper);
 
-        var tab = new CrystalContextualTab
+        var tab = new RibbonTab
         {
             Header = $"Doc {number} Tools",
             IsContextual = true,
-            CrystalEnabled = _crystalEnabled,
             ContextualColor = new SolidColorBrush(Color.FromRgb(0x1F, 0x7A, 0x4D)),
         };
         tab.Groups.Add(group);

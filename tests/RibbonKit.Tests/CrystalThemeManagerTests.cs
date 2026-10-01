@@ -19,7 +19,8 @@ public sealed class CrystalThemeManagerTests
             var blue = CrystalPalette.Create(CrystalPalette.Blue, dark: true);
             var green = CrystalPalette.Create(Colors.SeaGreen, dark: true);
             Assert.EndsWith("Crystal.Dark.xaml", blue.Source!.OriginalString);
-            Assert.EndsWith("Tokens.Crystal.Dark.xaml", blue.MergedDictionaries[1].Source!.OriginalString);
+            Assert.Equal(Color.FromRgb(0xEA, 0xF4, 0xFC),
+                Assert.IsType<SolidColorBrush>(blue["RibbonKit.Brushes.Text.Primary"]).Color);
             Assert.IsType<DrawingBrush>(blue["RibbonKit.Brushes.Input.SurfaceBackground"]);
             Assert.IsType<DrawingBrush>(blue["RibbonKit.Brushes.Option.SelectedSurface"]);
             Assert.NotEqual(blue["RibbonKit.Brushes.Input.SurfaceBackground"],

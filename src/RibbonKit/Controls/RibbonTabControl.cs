@@ -259,10 +259,7 @@ public class RibbonTabControl : TabControl
         // accent underline token (which flat themes set Transparent, hiding the marker there).
         if (tab.IsContextual && tab.ContextualBrush is not null)
         {
-            var binding = new MultiBinding { Converter = ContextualMarkerConverter.Instance };
-            binding.Bindings.Add(new Binding(nameof(RibbonTab.ContextualSelectionBrush)) { Source = tab });
-            binding.Bindings.Add(new Binding(nameof(RibbonTab.ContextualBrush)) { Source = tab });
-            _marker.SetBinding(Shape.FillProperty, binding);
+            _marker.SetBinding(Shape.FillProperty, ContextualMaterialConverter.MarkerBinding(tab));
         }
         else
         {
@@ -289,17 +286,6 @@ public class RibbonTabControl : TabControl
 
         _marker.Opacity = 1d;
         _markerPlaced = true;
-    }
-
-    private sealed class ContextualMarkerConverter : IMultiValueConverter
-    {
-        internal static readonly ContextualMarkerConverter Instance = new();
-
-        public object? Convert(object[] values, Type targetType, object parameter, System.Globalization.CultureInfo culture) =>
-            values[0] as Brush ?? values[1] as Brush;
-
-        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, System.Globalization.CultureInfo culture) =>
-            throw new NotSupportedException();
     }
 
     /// <summary>

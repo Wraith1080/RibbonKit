@@ -314,18 +314,18 @@
                     </rk:RibbonSplitButton>
                 </rk:RibbonGroup>
             </rk:RibbonTab>
-            <local:CrystalContextualTab x:Name="PictureTab" Header="Picture Format" IsContextual="True" ContextualColor="#287E78">
+            <rk:RibbonTab x:Name="PictureTab" Header="Picture Format" IsContextual="True" ContextualColor="#287E78">
                 <rk:RibbonGroup Header="Picture" Icon="{StaticResource Icon.Select}">
                     <rk:RibbonButton Header="Select" Size="Large" Icon="{StaticResource Icon.Select}" Click="OnPreviewCommand" />
                     <rk:RibbonButton Header="Change tint" Size="Large" Icon="{StaticResource Icon.Palette}" Click="OnChangeContextTint" />
                 </rk:RibbonGroup>
-            </local:CrystalContextualTab>
-            <local:CrystalContextualTab x:Name="TableTab" Header="Table Design" IsContextual="True" ContextualColor="#8659A5">
+            </rk:RibbonTab>
+            <rk:RibbonTab x:Name="TableTab" Header="Table Design" IsContextual="True" ContextualColor="#8659A5">
                 <rk:RibbonGroup Header="Table" Icon="{StaticResource Icon.Table}">
                     <rk:RibbonButton Header="Table" Size="Large" Icon="{StaticResource Icon.Table}" Click="OnPreviewCommand" />
                     <rk:RibbonButton Header="Change tint" Size="Large" Icon="{StaticResource Icon.Palette}" Click="OnChangeContextTint" />
                 </rk:RibbonGroup>
-            </local:CrystalContextualTab>
+            </rk:RibbonTab>
         </rk:Ribbon>
         <ScrollViewer x:Name="CrystalDocumentScroll" VerticalScrollBarVisibility="Auto">
             <Grid Margin="40,30,40,36" MaxWidth="920">

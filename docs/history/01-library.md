@@ -6233,3 +6233,62 @@ report remain deferred, with unconfirmed causes. Reduced motion, scaling while
 an application menu stays open and mixed-monitor transitions remain broader
 gates. Slices 8–10 and Writer RKWF-026 remain deferred to their own scopes;
 this acceptance does not claim blanket Crystal completion.
+
+### 3.208 Shared Crystal contextual material and scoped palettes — 2026-10-01
+
+Slice 8 promotes the accepted contextual glass into the ordinary shared RibbonTab
+template. An internal ContextualMaterial selector/converter derives selected and
+hover surfaces, rims, readable text and reflective marker from the tab's solid
+contextual color. Dynamic token inputs follow local palette replacement and the
+scoped accent fallback. Derived paint does not write tab resources or public
+ContextualSelectionBrush values. Explicit foreground/marker values and unmarked
+scoped paint retain precedence. Gradient/custom brushes retain the ordinary
+contextual renderer; qualified color dependency-property paths avoid missing-Color
+binding errors. Matching keys exist in all twelve palettes, with Office opt-out
+defaults and Crystal's accepted 0.85 unselected opacity.
+
+The additive public API is ThemeManager.CreatePalette(RibbonTheme theme,
+Color? accent = null, bool dark = false), with XML documentation and an Unshipped
+baseline entry; the Shipped baseline is unchanged. Each call creates a fresh
+scoped dictionary without changing global theme/preferences or raising Changed.
+Office palettes reuse the existing accent derivation; SetAccent remains unchanged.
+Crystal uses the promoted hue rotation/readability policy, preserving alpha,
+glass highlight geometry, neutral text/glyphs, semantic message colors and the
+6/8/11-percent composed scrollbar washes. Replacing/removing the owner's dictionary
+updates/clears that scope without accumulating hue rounding or recoloring another
+window. The generic name and Office support follow the user's naming correction.
+
+CrystalContextualTab and its main, preview and MDI usages were removed after the
+library-only consumer passed. Showcase's CrystalPalette delegates reusable control
+tint to the new factory; only application document paint remains there. The main
+window's raw scrollbar-wash choice remains an explicit token override. Capture,
+popup/menu blur and document effects remain host-owned for slice 9. No broad
+coordinator was added; the separate preview and launch path remain for slice 10.
+
+Final evidence: the isolated Release solution build passed for both runtime targets
+with zero warnings/errors; all 418 eligible runtime tests passed with the existing
+Writer/deferred-hover exclusions; the single STA RibbonKit-only consumer passed.
+Its existing 96-variant customization gap coverage is preserved. New consumer
+checks cover mutable contextual colors, marker/foreground and scoped brush
+overrides, gradient fallback without binding errors, live accent fallback, RTL,
+simultaneous light/dark windows, replacement/removal isolation, no global Changed
+event and accent parity for all ten Office light/dark combinations.
+
+All 113 visual scenes pass. The existing 105 approvals and tolerances are unchanged;
+eight new light/dark contextual 100/200/RTL and purple-tint scenes were captured and
+inspected before adding approvals. Their fixture stays in an offscreen test window
+through rendering, updates DPI on the actual visual root and asserts a visible
+reflective marker. Explicit minimum widths keep the diagnostic labels readable;
+this changes the fixture only. Earlier disconnected captures omitted the marker
+and were not approved. Four initial runtime failures were obsolete helper-storage,
+palette-layer or literal-XAML assertions; they were updated to check the shared
+replacement and the full eligible rerun passed.
+
+Logs are slice8-consumer-final.trx, slice8-runtime-complete.trx and
+slice8-visual-final.trx under their test projects' TestResults directories. Build
+outputs are isolated under bin/CrystalSlice8/Release/<framework>/; previous user
+builds are preserved. Final content/link/diff review and git diff --check passed.
+No Writer code/tests, manual Showcase launch, commit, push or publication occurred.
+Live acceptance remains in the active plan. The deferred Office RTL checkbox/200%
+gallery reports, broader motion/open-menu scaling/mixed-monitor gates and Writer
+RKWF-026 retain their separate scopes and unconfirmed causes.

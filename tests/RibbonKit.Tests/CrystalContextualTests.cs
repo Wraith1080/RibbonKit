@@ -584,7 +584,7 @@ public class CrystalContextualTests
         group.Items.Add(new RibbonButton { Header = "Paste" });
         tab.Groups.Add(group);
         ribbon.Tabs.Add(tab);
-        var context = new CrystalContextualTab { Header = "Picture", IsContextual = true, ContextualColor = Brushes.Teal };
+        var context = new RibbonTab { Header = "Picture", IsContextual = true, ContextualColor = Brushes.Teal };
         context.Groups.Add(new RibbonGroup { Header = "Picture commands" });
         ribbon.Tabs.Add(context);
         ribbon.QuickAccessItems.Add(new RibbonButton { Header = "Copy", Size = RibbonControlSize.Small });
@@ -1026,7 +1026,7 @@ public class CrystalContextualTests
     [Fact]
     public void Crystal_palette_follows_context_color_and_restores_standard_mode() => Sta.Run(() =>
     {
-        var context = new CrystalContextualTab { Header = "Picture", IsContextual = true, ContextualColor = Brushes.Teal };
+        var context = new RibbonTab { Header = "Picture", IsContextual = true, ContextualColor = Brushes.Teal };
         var ordinary = new RibbonTab { Header = "Home" };
         var host = Host(context, ordinary);
         host.Resources.Remove("RibbonKit.Brushes.Tab.SelectedUnderline");
@@ -1037,31 +1037,35 @@ public class CrystalContextualTests
         using var shown = new ShownHost(host);
         Layout(host);
         var marker = (Rectangle)host.Template.FindName("PART_TabMarker", host);
-        var teal = Assert.IsType<RadialGradientBrush>(context.Resources["RibbonKit.Brushes.Tab.SelectedBackground"]);
+        var teal = Assert.IsType<RadialGradientBrush>(((Border)context.Template.FindName("HeaderChrome", context)).Background);
         Assert.IsType<DrawingBrush>(marker.Fill);
-        Assert.Same(context.ContextualSelectionBrush, marker.Fill);
+        Assert.IsType<DrawingBrush>(marker.Fill);
+        Assert.Null(context.ContextualSelectionBrush);
         Assert.False(ordinary.Resources.Contains("RibbonKit.Brushes.Tab.SelectedBackground"));
 
         context.ContextualColor = Brushes.Purple;
         Sta.Drain();
-        var purple = Assert.IsType<RadialGradientBrush>(context.Resources["RibbonKit.Brushes.Tab.SelectedBackground"]);
+        var purple = Assert.IsType<RadialGradientBrush>(((Border)context.Template.FindName("HeaderChrome", context)).Background);
         Assert.NotEqual(teal.GradientStops[2].Color, purple.GradientStops[2].Color);
-        Assert.Same(context.ContextualSelectionBrush, marker.Fill);
+        Assert.IsType<DrawingBrush>(marker.Fill);
+        Assert.Null(context.ContextualSelectionBrush);
         var mutableTint = new SolidColorBrush(Colors.Teal);
         context.ContextualColor = mutableTint;
         Sta.Drain();
-        var beforeMutation = context.ContextualSelectionBrush;
+        var beforeMutation = marker.Fill;
         mutableTint.Color = Colors.Goldenrod;
         Sta.Drain();
-        Assert.NotSame(beforeMutation, context.ContextualSelectionBrush);
-        Assert.Same(context.ContextualSelectionBrush, marker.Fill);
+        Assert.NotSame(beforeMutation, marker.Fill);
+        Assert.IsType<DrawingBrush>(marker.Fill);
+        Assert.Null(context.ContextualSelectionBrush);
         context.ContextualColor = Brushes.Purple;
-        context.CrystalEnabled = false;
+        var crystal = host.Resources.MergedDictionaries[1];
+        host.Resources.MergedDictionaries.Remove(crystal);
         Sta.Drain();
         Assert.False(context.Resources.Contains("RibbonKit.Brushes.Tab.SelectedBackground"));
         Assert.Null(context.ContextualSelectionBrush);
         Assert.Same(Brushes.Purple, marker.Fill);
-        context.CrystalEnabled = true;
+        host.Resources.MergedDictionaries.Add(crystal);
         Sta.Drain();
         Assert.IsType<DrawingBrush>(marker.Fill);
     });
@@ -1164,7 +1168,7 @@ public class CrystalContextualTests
     [Fact]
     public void Crystal_global_accent_preserves_contextual_tab_tint() => Sta.Run(() =>
     {
-        var context = new CrystalContextualTab { Header = "Picture", IsContextual = true, ContextualColor = Brushes.Teal };
+        var context = new RibbonTab { Header = "Picture", IsContextual = true, ContextualColor = Brushes.Teal };
         var host = Host(context);
         host.Resources.Remove("RibbonKit.Brushes.Tab.SelectedUnderline");
         host.Resources.MergedDictionaries.Add(new ResourceDictionary
@@ -1172,14 +1176,14 @@ public class CrystalContextualTests
         host.Resources.MergedDictionaries.Add(CrystalPalette.Create(CrystalPalette.Blue));
         using var shown = new ShownHost(host);
         Layout(host);
-        Color before = ((RadialGradientBrush)context.Resources["RibbonKit.Brushes.Tab.SelectedBackground"]).GradientStops[2].Color;
+        Color before = ((RadialGradientBrush)((Border)context.Template.FindName("HeaderChrome", context)).Background).GradientStops[2].Color;
         host.Resources.MergedDictionaries[1] = CrystalPalette.Create(Colors.Purple);
-        context.CrystalEnabled = true;
         Layout(host);
         Assert.Same(Brushes.Teal, context.ContextualBrush);
-        Assert.Equal(before, ((RadialGradientBrush)context.Resources["RibbonKit.Brushes.Tab.SelectedBackground"]).GradientStops[2].Color);
+        Assert.Equal(before, ((RadialGradientBrush)((Border)context.Template.FindName("HeaderChrome", context)).Background).GradientStops[2].Color);
         var marker = (Rectangle)host.Template.FindName("PART_TabMarker", host);
-        Assert.Same(context.ContextualSelectionBrush, marker.Fill);
+        Assert.IsType<DrawingBrush>(marker.Fill);
+        Assert.Null(context.ContextualSelectionBrush);
     });
 
     [Fact]
@@ -1372,7 +1376,7 @@ public class CrystalContextualTests
         { Source = new Uri("/RibbonKit;component/Themes/Tokens.Office2024.xaml", UriKind.Relative) });
         ribbon.Resources.MergedDictionaries.Add(CrystalPalette.Create(CrystalPalette.Blue));
         ribbon.Tabs.Add(new RibbonTab { Header = "Home" });
-        ribbon.Tabs.Add(new CrystalContextualTab { Header = "Picture", IsContextual = true, ContextualColor = Brushes.Teal });
+        ribbon.Tabs.Add(new RibbonTab { Header = "Picture", IsContextual = true, ContextualColor = Brushes.Teal });
         var window = new Window { Content = ribbon, Width = 800, Height = 300,
             Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
         try

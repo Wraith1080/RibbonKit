@@ -165,13 +165,13 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Group.Separator" Color="#40819DB5" />
     <!-- Selection carries the stronger glass surface and an icy reflective marker.
          Hover borrows a quieter rim; its gray underline would compete with selection. -->
-    <RadialGradientBrush x:Key="RibbonKit.Brushes.Tab.SelectedBackground"
+    <RadialGradientBrush x:Key="RibbonKit.Brushes.Tab.SelectedBackground" controls:ContextualMaterial.Enabled="True"
                          Center="0.5,0.25" GradientOrigin="0.5,0.25" RadiusX="0.85" RadiusY="0.95">
         <GradientStop Color="#F5FBFF" Offset="0" />
         <GradientStop Color="#E1EFF9" Offset="0.55" />
         <GradientStop Color="#C7DEEF" Offset="1" />
     </RadialGradientBrush>
-    <DrawingBrush x:Key="RibbonKit.Brushes.Tab.SelectedBorderBrush"
+    <DrawingBrush x:Key="RibbonKit.Brushes.Tab.SelectedBorderBrush" controls:ContextualMaterial.Enabled="True"
                   Drawing="{StaticResource Crystal.Drawing.GlassRim}"
                   Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
     <!-- The 2024 base disables its tab-to-body bridge. Crystal's outlined tab needs both
@@ -179,9 +179,9 @@
     <TranslateTransform x:Key="RibbonKit.Transforms.TabConnect" Y="1" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ConnectFootSelected" Color="#C7DEEF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ConnectNotch" Color="#C7DEEF" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverBackground" Color="#187BA5C7" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverBackground" controls:ContextualMaterial.Enabled="True" Color="#187BA5C7" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.QatExtender.Background" Color="#187BA5C7" />
-    <DrawingBrush x:Key="RibbonKit.Brushes.Tab.HoverBorder"
+    <DrawingBrush x:Key="RibbonKit.Brushes.Tab.HoverBorder" controls:ContextualMaterial.Enabled="True"
                   Drawing="{StaticResource Crystal.Drawing.GlassRim}" Opacity="0.6"
                   Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
     <DropShadowEffect x:Key="RibbonKit.Effects.QatExtenderShadow" Color="#34485A"
@@ -196,7 +196,7 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverUnderline" Color="Transparent" />
     <!-- The existing rounded marker clips this brush into a pill. A darker upper/lower
          edge surrounds a luminous center, with a localized glint for a trapped-air look. -->
-    <DrawingBrush x:Key="RibbonKit.Brushes.Tab.SelectedUnderline"
+    <DrawingBrush x:Key="RibbonKit.Brushes.Tab.SelectedUnderline" controls:ContextualMaterial.Enabled="True"
                   Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" Opacity="0.9">
         <DrawingBrush.Drawing>
             <DrawingGroup>
@@ -1009,4 +1009,7 @@
          only while this Crystal palette is in scope. Explicit styles still win. -->
     <Style TargetType="{x:Type ScrollBar}" BasedOn="{StaticResource RibbonKit.ScrollBarStyle}" />
     <sys:Boolean x:Key="RibbonKit.Metrics.UseUtilityScrollMaterial">True</sys:Boolean>
+    <sys:Boolean x:Key="RibbonKit.Metrics.ContextualUseCrystalMaterial">True</sys:Boolean>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ContextualForeground" Color="Transparent" controls:ContextualMaterial.Enabled="True" />
+    <sys:Double x:Key="RibbonKit.Metrics.ContextualUnselectedOpacity">0.85</sys:Double>
 </ResourceDictionary>

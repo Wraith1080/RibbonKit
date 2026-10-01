@@ -2,12 +2,11 @@ using System;
 using System.Linq;
 using System.Windows;
 using System.Windows.Media;
-using RibbonKit.Theming;
 
-namespace RibbonKit.Showcase;
+namespace RibbonKit.Theming;
 
-/// <summary>Adds Showcase document paint to an isolated library Crystal palette.</summary>
-internal static class CrystalPalette
+/// <summary>Builds isolated Crystal tint variants from the accepted blue material study.</summary>
+internal static class CrystalPaletteBuilder
 {
     /// <summary>The original study tint; selecting it restores the exact source palette.</summary>
     public static Color Blue => Color.FromRgb(57, 124, 169);
@@ -16,17 +15,39 @@ internal static class CrystalPalette
     public static ResourceDictionary Create(Color accent, bool dark = false)
     {
         var palette = Load(dark ? "Crystal.Dark.xaml" : "Crystal.Light.xaml");
-        palette.MergedDictionaries.Clear();
-        palette.MergedDictionaries.Add(ThemeManager.CreatePalette(RibbonTheme.CrystalLight, accent, dark));
-        // Only Showcase document paint remains here; reusable control tint is in RibbonKit.
-        if (accent != Blue || dark) TintResources(palette, Hue(accent) - Hue(Blue), keepText: true);
+        if (accent == Blue && !dark) return palette;
+
+        double rotation = Hue(accent) - Hue(Blue);
+        // The reusable palette is merged from RibbonKit; keep each tint scoped to
+        // this fresh preview dictionary, without changing the Office 2024 fallback.
+        TintResources(palette.MergedDictionaries[dark ? 1 : 0], rotation, keepText: true);
+        TintResources(palette, rotation, keepText: true);
+        var foreground = new SolidColorBrush(ReadableAccent(accent, dark));
+        palette["RibbonKit.Brushes.Input.FocusBorder"] = foreground;
+        palette["RibbonKit.Brushes.GalleryItem.HoverBorder"] = palette["RibbonKit.Brushes.Tab.HoverBorder"];
+        palette["RibbonKit.Brushes.InRibbonGallery.Border"] = palette["Crystal.Brushes.GalleryBorder"];
+        palette["RibbonKit.Brushes.InRibbonGallery.SurfaceBackground"] = palette["Crystal.Brushes.GallerySurface"];
+        palette["RibbonKit.Brushes.InRibbonGallery.PopupBackground"] = palette["Crystal.Brushes.GallerySurface"];
+        palette["RibbonKit.Brushes.OptionsDialog.NavigationSelectedForeground"] = foreground;
+        palette["RibbonKit.Brushes.OptionsDialog.PrimaryFocusBorder"] = foreground;
+        foreground.Freeze();
+        palette["RibbonKit.Brushes.Accent"] = foreground;
+        palette["RibbonKit.Brushes.ScrollBar.WashAccent"] = foreground;
+        palette["RibbonKit.Brushes.ApplicationMenu.HeadingForeground"] = foreground;
+        palette["RibbonKit.Brushes.Tab.SelectedForeground"] = foreground;
         return palette;
     }
 
-    private static ResourceDictionary Load(string file) => new()
+    private static ResourceDictionary Load(string file)
     {
-        Source = new Uri($"/RibbonKit.Showcase;component/Themes/{file}", UriKind.Relative),
-    };
+        var palette = new ResourceDictionary();
+        palette.MergedDictionaries.Add(new ResourceDictionary
+        { Source = new Uri("/RibbonKit;component/Themes/Tokens.Crystal.Light.xaml", UriKind.Relative) });
+        if (file == "Crystal.Dark.xaml")
+            palette.MergedDictionaries.Add(new ResourceDictionary
+            { Source = new Uri("/RibbonKit;component/Themes/Tokens.Crystal.Dark.xaml", UriKind.Relative) });
+        return palette;
+    }
 
     private static void TintResources(ResourceDictionary resources, double rotation, bool keepText)
     {
@@ -109,4 +130,34 @@ internal static class CrystalPalette
         return (hue * 60 + 360) % 360;
     }
 
+    private static Color ReadableAccent(Color color, bool dark)
+    {
+        // Keep the selected label legible on either the pale or dark glass face.
+        static double Linear(byte value)
+        {
+            double c = value / 255d;
+            return c <= 0.04045 ? c / 12.92 : Math.Pow((c + 0.055) / 1.055, 2.4);
+        }
+        color.A = 255;
+        double luminance = 0.2126 * Linear(color.R) + 0.7152 * Linear(color.G) + 0.0722 * Linear(color.B);
+        if (dark)
+        {
+            while (luminance < 0.5)
+            {
+                color = Color.FromRgb((byte)Math.Min(255, Math.Ceiling(color.R * 0.9 + 25.5)),
+                    (byte)Math.Min(255, Math.Ceiling(color.G * 0.9 + 25.5)),
+                    (byte)Math.Min(255, Math.Ceiling(color.B * 0.9 + 25.5)));
+                luminance = 0.2126 * Linear(color.R) + 0.7152 * Linear(color.G) + 0.0722 * Linear(color.B);
+            }
+        }
+        else
+        {
+            while (luminance > 0.09)
+            {
+                color = Color.FromRgb((byte)(color.R * 0.95), (byte)(color.G * 0.95), (byte)(color.B * 0.95));
+                luminance = 0.2126 * Linear(color.R) + 0.7152 * Linear(color.G) + 0.0722 * Linear(color.B);
+            }
+        }
+        return color;
+    }
 }

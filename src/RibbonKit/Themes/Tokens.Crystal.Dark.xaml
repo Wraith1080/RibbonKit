@@ -100,21 +100,21 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionBorder" Color="#80769CB7" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Group.Separator" Color="#607697AA" />
 
-    <RadialGradientBrush x:Key="RibbonKit.Brushes.Tab.SelectedBackground"
+    <RadialGradientBrush x:Key="RibbonKit.Brushes.Tab.SelectedBackground" controls:ContextualMaterial.Enabled="True"
                          Center="0.5,0.25" GradientOrigin="0.5,0.25" RadiusX="0.85" RadiusY="0.95">
         <GradientStop Color="#38566C" Offset="0" /><GradientStop Color="#2B4355" Offset="0.55" />
         <GradientStop Color="#263A4B" Offset="1" />
     </RadialGradientBrush>
-    <DrawingBrush x:Key="RibbonKit.Brushes.Tab.SelectedBorderBrush" Drawing="{StaticResource Crystal.Drawing.GlassRim}"
+    <DrawingBrush x:Key="RibbonKit.Brushes.Tab.SelectedBorderBrush" controls:ContextualMaterial.Enabled="True" Drawing="{StaticResource Crystal.Drawing.GlassRim}"
                   Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ConnectFootSelected" Color="#263A4B" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ConnectNotch" Color="#263A4B" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverBackground" Color="#3879A8C7" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverBackground" controls:ContextualMaterial.Enabled="True" Color="#3879A8C7" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.QatExtender.Background" Color="#3879A8C7" />
-    <DrawingBrush x:Key="RibbonKit.Brushes.Tab.HoverBorder" Drawing="{StaticResource Crystal.Drawing.GlassRim}"
+    <DrawingBrush x:Key="RibbonKit.Brushes.Tab.HoverBorder" controls:ContextualMaterial.Enabled="True" Drawing="{StaticResource Crystal.Drawing.GlassRim}"
                   Opacity="0.6" Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverUnderline" Color="Transparent" />
-    <DrawingBrush x:Key="RibbonKit.Brushes.Tab.SelectedUnderline" Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
+    <DrawingBrush x:Key="RibbonKit.Brushes.Tab.SelectedUnderline" controls:ContextualMaterial.Enabled="True" Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
         <DrawingBrush.Drawing><DrawingGroup>
             <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z">
                 <GeometryDrawing.Brush><LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
@@ -497,4 +497,7 @@
          only while this Crystal palette is in scope. Explicit styles still win. -->
     <Style TargetType="{x:Type ScrollBar}" BasedOn="{StaticResource RibbonKit.ScrollBarStyle}" />
     <system:Boolean x:Key="RibbonKit.Metrics.UseUtilityScrollMaterial">True</system:Boolean>
+    <system:Boolean x:Key="RibbonKit.Metrics.ContextualUseCrystalMaterial">True</system:Boolean>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ContextualForeground" Color="Transparent" controls:ContextualMaterial.Enabled="True" />
+    <system:Double x:Key="RibbonKit.Metrics.ContextualUnselectedOpacity">0.85</system:Double>
 </ResourceDictionary>

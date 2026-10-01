@@ -144,7 +144,9 @@ public class RibbonTab : TabItem
     /// The color that tints this contextual tab (like Office's per-tool-group color).
     /// In the 2024 theme it colors the header text — muted when unselected, full when
     /// selected — and the selection underline; flatter themes (2019/2013) color the
-    /// header text. When left unset on a contextual tab, the theme accent is used.
+    /// header text. Crystal derives reflective header, rim and marker paint from a solid
+    /// color; other brush types retain the ordinary contextual renderer.
+    /// When left unset on a contextual tab, the scoped theme accent is used.
     /// Has no effect unless <see cref="IsContextual"/> is <see langword="true"/>.
     /// </summary>
     public Brush? ContextualColor
@@ -155,7 +157,7 @@ public class RibbonTab : TabItem
 
     /// <summary>
     /// The effective contextual tint the template renders: <see cref="ContextualColor"/>
-    /// when set, otherwise the theme accent (resolved when the template is applied). This
+    /// when set, otherwise the scoped theme accent, including live palette changes. This
     /// is what the control template binds to, so a contextual tab is never left with an
     /// unset (invisible) header color.
     /// </summary>
@@ -163,7 +165,8 @@ public class RibbonTab : TabItem
 
     /// <summary>
     /// Optional brush for this contextual tab's selection marker. When null, the marker uses
-    /// <see cref="ContextualBrush"/>. Does not change the header text or ordinary tab markers.
+    /// <see cref="ContextualBrush"/>, or Crystal's reflective treatment of that color.
+    /// Does not change the header text or ordinary tab markers.
     /// </summary>
     public Brush? ContextualSelectionBrush
     {
@@ -216,14 +219,14 @@ public class RibbonTab : TabItem
     private static void OnContextualAppearanceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
         ((RibbonTab)d).UpdateContextualBrush();
 
-    private void UpdateContextualBrush()
+    internal void UpdateContextualBrush()
     {
         // Prefer the explicit color; fall back to the theme accent so a contextual tab
         // is never rendered with an unset (invisible) header color.
         Brush? brush = ContextualColor;
         if (brush is null && IsContextual)
         {
-            brush = TryFindResource("RibbonKit.Brushes.Accent") as Brush;
+            brush = ContextualMaterial.GetAccentBrush(this) ?? TryFindResource("RibbonKit.Brushes.Accent") as Brush;
         }
 
         SetValue(ContextualBrushPropertyKey, brush);

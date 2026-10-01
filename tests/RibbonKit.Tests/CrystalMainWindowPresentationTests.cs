@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
+using System.Windows.Documents;
 using System.Windows.Media.Effects;
 using RibbonKit.Controls;
 using RibbonKit.Showcase;
@@ -40,8 +41,8 @@ public sealed class CrystalMainWindowPresentationTests
         group.Items.Add(split);
         tab.Groups.Add(group);
         ribbon.Tabs.Add(tab);
-        var context = new CrystalContextualTab { Header = "Picture", IsContextual = true,
-            ContextualColor = Brushes.Purple, CrystalEnabled = false };
+        var context = new RibbonTab { Header = "Picture", IsContextual = true,
+            ContextualColor = Brushes.Purple };
         context.Groups.Add(new RibbonGroup { Header = "Picture tools" });
         ribbon.Tabs.Add(context);
         ribbon.QuickAccessItems.Add(new RibbonButton { Header = "Save", Size = RibbonControlSize.Small });
@@ -85,8 +86,9 @@ public sealed class CrystalMainWindowPresentationTests
             Assert.Null(combo.Style);
             Assert.Same(window.FindResource(typeof(ScrollBar)),
                 presentation.Palette![typeof(ScrollBar)]);
-            Assert.True(context.CrystalEnabled);
-            Assert.IsType<DrawingBrush>(context.ContextualSelectionBrush);
+            Assert.Null(context.ContextualSelectionBrush);
+            Assert.NotSame(context.ContextualBrush, Assert.IsType<ContentPresenter>(
+                context.Template.FindName("ContextualHeaderText", context)).GetValue(TextElement.ForegroundProperty));
             Assert.NotSame(split.FindResource("RibbonKit.Brushes.Control.HoverBackground"),
                 split.FindResource("RibbonKit.Brushes.Control.SplitActiveHover"));
             Assert.False(split.Resources.Contains("RibbonKit.Brushes.Control.HoverBackground"));
@@ -98,16 +100,16 @@ public sealed class CrystalMainWindowPresentationTests
             backstage.Design = RibbonBackstageDesign.Modern;
             Assert.Same(originalBackstageStyle, backstage.Style);
             var source = new RibbonMergeSource();
-            var merged = new CrystalContextualTab { Header = "Chart", IsContextual = true,
-                ContextualColor = Brushes.SeaGreen, CrystalEnabled = false };
+            var merged = new RibbonTab { Header = "Chart", IsContextual = true,
+                ContextualColor = Brushes.SeaGreen };
             merged.Groups.Add(new RibbonGroup { Header = "Chart tools" });
             source.Tabs.Add(merged);
             Assert.True(ribbon.Merge(source));
             Sta.Drain();
-            Assert.True(merged.CrystalEnabled);
-            Assert.IsType<DrawingBrush>(merged.ContextualSelectionBrush);
+            Assert.Null(merged.ContextualSelectionBrush);
+            Assert.Null(merged.ContextualSelectionBrush);
             Assert.True(ribbon.Unmerge(source));
-            Assert.False(merged.CrystalEnabled);
+            Assert.Null(merged.ContextualSelectionBrush);
             Assert.Equal(new CornerRadius(0, 0, 10, 10), drawer.CornerRadius);
             Assert.Equal(32, drawer.MinHeight);
             Assert.Same(ribbon.FindResource("RibbonKit.Effects.QatExtenderShadow"), drawer.Effect);
@@ -224,10 +226,15 @@ public sealed class CrystalMainWindowPresentationTests
             Color darkInputFace = inputFace.GradientStops[0].Color;
             Assert.True(darkInputFace.R < 0x70 && darkInputFace.G < 0x70 && darkInputFace.B < 0x70);
             Assert.True(darkInputFace.R > darkInputFace.G);
-            Assert.IsType<DrawingBrush>(context.ContextualSelectionBrush);
-            var darkContext = Assert.IsType<RadialGradientBrush>(context.Resources[
-                "RibbonKit.Brushes.Tab.SelectedBackground"]);
+            Assert.Null(context.ContextualSelectionBrush);
+            var previousTab = ribbon.SelectedTab;
+            ribbon.SelectedTab = context;
+            Sta.Drain();
+            var darkContext = Assert.IsType<RadialGradientBrush>(
+                Assert.IsType<Border>(context.Template.FindName("HeaderChrome", context)).Background);
             Assert.True(darkContext.GradientStops[0].Color.R < 0x80);
+            ribbon.SelectedTab = previousTab;
+            Sta.Drain();
             Assert.Equal(Assert.IsType<SolidColorBrush>(foot.Background).Color,
                 Assert.IsType<SolidColorBrush>(notch.Background).Color);
             ThemeManager.SetDarkMode(application, false);
@@ -250,8 +257,9 @@ public sealed class CrystalMainWindowPresentationTests
             Assert.Equal(0, drawer.MinHeight);
             Assert.Same(originalComboStyle, combo.Style);
             Assert.Same(originalBackstageStyle, backstage.Style);
-            Assert.False(context.CrystalEnabled);
             Assert.Null(context.ContextualSelectionBrush);
+            Assert.Same(context.ContextualBrush, Assert.IsType<ContentPresenter>(
+                context.Template.FindName("ContextualHeaderText", context)).GetValue(TextElement.ForegroundProperty));
             Assert.False(split.Resources.Contains("RibbonKit.Brushes.Control.HoverBackground"));
             Assert.Null(window.TryFindResource("Crystal.Brushes.FrostedFrame"));
             Assert.Equal(0d, notch.Width);

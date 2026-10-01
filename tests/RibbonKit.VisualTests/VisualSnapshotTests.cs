@@ -276,6 +276,14 @@ public sealed class VisualSnapshotTests
                         sceneFactory: CreateCrystalUtilityScene, height: 350);
                     AssertSnapshot($"{palette}-utility-scrollbars-rtl-100", 1d, FlowDirection.RightToLeft,
                         CreateCrystalUtilityScene, 350);
+                    AssertSnapshot($"{palette}-contextual-100", 1d,
+                        sceneFactory: direction => CreateCrystalContextualScene(direction, dark), height: 270);
+                    AssertSnapshot($"{palette}-contextual-200", 2d,
+                        sceneFactory: direction => CreateCrystalContextualScene(direction, dark), height: 270);
+                    AssertSnapshot($"{palette}-contextual-rtl-100", 1d, FlowDirection.RightToLeft,
+                        direction => CreateCrystalContextualScene(direction, dark), 270);
+                    AssertSnapshot($"{palette}-tint-purple-100", 1d,
+                        sceneFactory: direction => CreateCrystalContextualScene(direction, dark, Colors.Purple), height: 270);
                 }
             }
             finally
@@ -390,35 +398,47 @@ public sealed class VisualSnapshotTests
         int height)
     {
         FrameworkElement scene = (sceneFactory ?? CreateScene)(flowDirection);
-        var requestedDpi = new DpiScale(dpiScale, dpiScale);
-        VisualTreeHelper.SetRootDpi(scene, requestedDpi);
-        DpiScale effectiveDpi = VisualTreeHelper.GetDpi(scene);
-        if (Math.Abs(effectiveDpi.DpiScaleX - dpiScale) > 0.001
-            || Math.Abs(effectiveDpi.DpiScaleY - dpiScale) > 0.001)
+        Window? captureWindow = Window.GetWindow(scene);
+        try
         {
-            throw new XunitException(
-                $"The snapshot requested {BaseDpi * dpiScale:F0} DPI, but WPF assigned " +
-                $"{effectiveDpi.PixelsPerInchX:F0}×{effectiveDpi.PixelsPerInchY:F0} DPI " +
-                "to its visual root.");
+            var requestedDpi = new DpiScale(dpiScale, dpiScale);
+            VisualTreeHelper.SetRootDpi((Visual?)captureWindow ?? scene, requestedDpi);
+            DpiScale effectiveDpi = VisualTreeHelper.GetDpi(scene);
+            if (Math.Abs(effectiveDpi.DpiScaleX - dpiScale) > 0.001
+                || Math.Abs(effectiveDpi.DpiScaleY - dpiScale) > 0.001)
+            {
+                throw new XunitException(
+                    $"The snapshot requested {BaseDpi * dpiScale:F0} DPI, but WPF assigned " +
+                    $"{effectiveDpi.PixelsPerInchX:F0}×{effectiveDpi.PixelsPerInchY:F0} DPI " +
+                    "to its visual root.");
+            }
+
+            var size = new Size(Width, height);
+
+            scene.Measure(size);
+            scene.Arrange(new Rect(size));
+            scene.UpdateLayout();
+            Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
+            scene.Measure(size);
+            scene.Arrange(new Rect(size));
+            scene.UpdateLayout();
+
+            int pixelWidth = checked((int)Math.Round(Width * dpiScale, MidpointRounding.AwayFromZero));
+            int pixelHeight = checked((int)Math.Round(height * dpiScale, MidpointRounding.AwayFromZero));
+            double dpi = BaseDpi * dpiScale;
+            var bitmap = new RenderTargetBitmap(pixelWidth, pixelHeight, dpi, dpi, PixelFormats.Pbgra32);
+            bitmap.Render(scene);
+            bitmap.Freeze();
+            return bitmap;
         }
-
-        var size = new Size(Width, height);
-
-        scene.Measure(size);
-        scene.Arrange(new Rect(size));
-        scene.UpdateLayout();
-        Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
-        scene.Measure(size);
-        scene.Arrange(new Rect(size));
-        scene.UpdateLayout();
-
-        int pixelWidth = checked((int)Math.Round(Width * dpiScale, MidpointRounding.AwayFromZero));
-        int pixelHeight = checked((int)Math.Round(height * dpiScale, MidpointRounding.AwayFromZero));
-        double dpi = BaseDpi * dpiScale;
-        var bitmap = new RenderTargetBitmap(pixelWidth, pixelHeight, dpi, dpi, PixelFormats.Pbgra32);
-        bitmap.Render(scene);
-        bitmap.Freeze();
-        return bitmap;
+        finally
+        {
+            if (captureWindow is not null)
+            {
+                captureWindow.Content = null;
+                captureWindow.Close();
+            }
+        }
     }
 
     private static FrameworkElement CreateScene(FlowDirection flowDirection)
@@ -1095,6 +1115,50 @@ public sealed class VisualSnapshotTests
         menu.Items.Add(new RibbonApplicationMenuItem { Header = "Open" });
 
         return menu;
+    }
+
+
+    private static FrameworkElement CreateCrystalContextualScene(FlowDirection direction, bool dark, Color? tint = null)
+    {
+        var root = (Grid)CreateScene(direction);
+        root.Resources.MergedDictionaries.Add(ThemeManager.CreatePalette(RibbonTheme.CrystalLight, tint, dark));
+        var ribbon = Assert.IsType<Ribbon>(Assert.Single(root.Children));
+        var picture = new RibbonTab { Header = "Picture Format", MinWidth = 130,
+            IsContextual = true, ContextualColor = Brushes.Teal };
+        var table = new RibbonTab { Header = "Table Design", MinWidth = 120,
+            IsContextual = true, ContextualColor = Brushes.Purple };
+        var group = new RibbonGroup { Header = "Picture tools" };
+        group.Items.Add(Button("Crop", RibbonControlSize.Large, Icon("M3,1 V13 H15 M1,3 H13 V15")));
+        group.Items.Add(new RibbonTextBox { Header = "Name", Text = "Keep this picture", InputWidth = 130 });
+        group.Items.Add(new RibbonCheckBox { Header = "Lock aspect", IsChecked = true });
+        picture.Groups.Add(group);
+        table.Groups.Add(new RibbonGroup { Header = "Table tools" });
+        ribbon.Tabs.Add(picture);
+        ribbon.Tabs.Add(table);
+        ribbon.SelectedTab = picture;
+        // Keep this fixture connected through bitmap rendering so the real marker
+        // placement, label measurement and RTL transform remain live.
+        var captureWindow = new Window { Content = root, Width = Width + 16, Height = 310,
+            Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
+        try
+        {
+            captureWindow.Show();
+            Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
+            captureWindow.UpdateLayout();
+            var chrome = Assert.IsType<Border>(table.Template.FindName("HeaderChrome", table));
+            ForceState(chrome, typeof(UIElement), "IsMouseOverPropertyKey", true);
+            Assert.IsType<RadialGradientBrush>(((Border)picture.Template.FindName("HeaderChrome", picture)).Background);
+            var tabs = Assert.IsType<RibbonTabControl>(ribbon.Template.FindName("TabControlHost", ribbon));
+            var marker = Assert.IsType<System.Windows.Shapes.Rectangle>(tabs.Template.FindName("PART_TabMarker", tabs));
+            Assert.IsType<DrawingBrush>(marker.Fill);
+            Assert.True(marker.Width > 0 && marker.Opacity > 0);
+            return root;
+        }
+        catch
+        {
+            captureWindow.Close();
+            throw;
+        }
     }
 
     private static FrameworkElement CreateCrystalUtilityScene(FlowDirection direction)

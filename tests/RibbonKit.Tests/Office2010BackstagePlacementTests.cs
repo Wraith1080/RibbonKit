@@ -195,9 +195,11 @@ public sealed class Office2010BackstagePlacementTests
             hoverTrigger.Elements(Presentation("Setter")),
             setter => (string?)setter.Attribute("TargetName") == "HeaderChrome"
                 && (string?)setter.Attribute("Property") == "Background"
-                && setter.Attribute("Value")!.Value.Contains(
-                    "RibbonKit.Brushes.Tab.HoverBackground",
-                    StringComparison.Ordinal));
+                && setter.Descendants(Presentation("Binding")).Any(binding =>
+                    (string?)binding.Attribute("Path") == "(controls:ContextualMaterial.HoverBackground)"));
+        Assert.Contains(document.Descendants(Presentation("Setter")), setter =>
+            (string?)setter.Attribute("Property") == "controls:ContextualMaterial.HoverBackground"
+            && (string?)setter.Attribute("Value") == "{DynamicResource RibbonKit.Brushes.Tab.HoverBackground}");
     }
 
     [Fact]

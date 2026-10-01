@@ -267,11 +267,14 @@ public sealed class Office2010AeroFrameTests
             trigger => (string?)trigger.Attribute("SourceName") == "HeaderChrome"
                 && (string?)trigger.Attribute("Property") == "IsMouseOver"
                 && (string?)trigger.Attribute("Value") == "True");
-        AssertSetter(
-            hover,
-            "HeaderChrome",
-            "BorderBrush",
-            "{DynamicResource RibbonKit.Brushes.Tab.HoverBorder}");
+        Assert.Contains(hover.Elements(Presentation + "Setter"), setter =>
+            (string?)setter.Attribute("TargetName") == "HeaderChrome"
+            && (string?)setter.Attribute("Property") == "BorderBrush"
+            && setter.Descendants(Presentation + "Binding").Any(binding =>
+                (string?)binding.Attribute("Path") == "(controls:ContextualMaterial.HoverBorder)"));
+        Assert.Contains(groups.Descendants(Presentation + "Setter"), setter =>
+            (string?)setter.Attribute("Property") == "controls:ContextualMaterial.HoverBorder"
+            && (string?)setter.Attribute("Value") == "{DynamicResource RibbonKit.Brushes.Tab.HoverBorder}");
     }
 
     [Fact]

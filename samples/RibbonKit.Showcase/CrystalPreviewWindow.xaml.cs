@@ -129,8 +129,6 @@ public partial class CrystalPreviewWindow : RibbonWindow
         BackstageAccentSelector.IsEnabled = enabled;
         BackstageLayoutSelector.IsEnabled = enabled;
         BackstageTintLabel.Visibility = enabled ? Visibility.Visible : Visibility.Collapsed;
-        PictureTab.CrystalEnabled = enabled;
-        TableTab.CrystalEnabled = enabled;
         foreach (var panel in new[] { CompactClipboard, CompactText })
         {
             if (enabled) panel.Resources["RibbonKit.Metrics.ControlCornerRadius"] = new CornerRadius(3);
@@ -340,7 +338,7 @@ public partial class CrystalPreviewWindow : RibbonWindow
 
     private void OnChangeContextTint(object sender, RoutedEventArgs e)
     {
-        CrystalContextualTab tab = PictureTab.IsSelected ? PictureTab : TableTab;
+        RibbonTab tab = PictureTab.IsSelected ? PictureTab : TableTab;
         Color current = (tab.ContextualColor as SolidColorBrush)?.Color ?? Colors.Teal;
         tab.ContextualColor = new SolidColorBrush(current.R > current.G
             ? Color.FromRgb(40, 126, 120) : Color.FromRgb(134, 89, 165));

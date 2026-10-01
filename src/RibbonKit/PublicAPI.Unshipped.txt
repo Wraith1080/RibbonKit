@@ -53,3 +53,4 @@ static RibbonKit.Controls.RibbonScrollBar.GetThumbCornerRadius(System.Windows.De
 static RibbonKit.Controls.RibbonScrollBar.SetButtonCornerRadius(System.Windows.DependencyObject! element, System.Windows.CornerRadius value) -> void
 static RibbonKit.Controls.RibbonScrollBar.SetRailCornerRadius(System.Windows.DependencyObject! element, System.Windows.CornerRadius value) -> void
 static RibbonKit.Controls.RibbonScrollBar.SetThumbCornerRadius(System.Windows.DependencyObject! element, System.Windows.CornerRadius value) -> void
+static RibbonKit.Theming.ThemeManager.CreatePalette(RibbonKit.Theming.RibbonTheme theme, System.Windows.Media.Color? accent = null, bool dark = false) -> System.Windows.ResourceDictionary!
