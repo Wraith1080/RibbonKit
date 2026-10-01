@@ -88,6 +88,7 @@ public partial class MainWindow : RibbonWindow
 
         _applicationMenu = ShowcaseApplicationMenu;
         MainRibbon.ApplicationMenu = null;
+        InitializeSamples();
         SyncThemeGallery(ThemeManager.CurrentTheme ?? RibbonTheme.Office2024);
         SyncGlassTreatmentToggle();
 
@@ -134,6 +135,7 @@ public partial class MainWindow : RibbonWindow
     // Persists the ribbon's current customization; called when the options dialog applies.
     private void SaveCustomization()
     {
+        if (_restoringAppearance || _changingSamples || _overflowPreviewItems.Count > 0) return;
         try
         {
             Directory.CreateDirectory(Path.GetDirectoryName(CustomizationFile)!);
@@ -303,9 +305,6 @@ public partial class MainWindow : RibbonWindow
         StatusReady.Content = $"Message added: {nextMessage.Title}";
     }
 
-    private void OnPreviewCrystal(object sender, RoutedEventArgs e) =>
-        new CrystalPreviewWindow { Owner = this }.Show();
-
     private void OnThemeGalleryChanged(object sender, SelectionChangedEventArgs e)
     {
         if (_syncingThemeGallery || ThemeGallery is null
@@ -353,7 +352,7 @@ public partial class MainWindow : RibbonWindow
         Office2010AeroFrameToggle.Visibility = is2010
             ? Visibility.Visible
             : Visibility.Collapsed;
-        // Crystal's preview uses the application menu too. Keep the existing toggle as the
+        // Crystal uses the application menu too. Keep the existing toggle as the
         // single path for swapping File surfaces; restored explicit preferences still win.
         ApplicationMenuToggle.IsChecked = is2007 || theme == RibbonTheme.CrystalLight;
         ApplyFrameAppearancePreference();
@@ -363,6 +362,7 @@ public partial class MainWindow : RibbonWindow
         RefreshGlassTreatment();
         NotifyApplicationSurfaceChanged();
         SyncThemeGallery(theme);
+        UpdateDocumentEffects();
         SaveAppearancePreferences();
     }
 
@@ -925,6 +925,18 @@ public partial class MainWindow : RibbonWindow
     /// </summary>
     private void OpenOptionsDialog(OptionsPageKind select)
     {
+        // Remove temporary overflow controls before editing or persisting the real QAT.
+        if (_overflowPreviewItems.Count > 0) OnOverflowPreview(this, new RoutedEventArgs());
+        if (_scrollPreviewTabs.Count > 0) OnScrollPreview(this, new RoutedEventArgs());
+        if (_savedHomeResizing.Count > 0) OnBodyScrollPreview(this, new RoutedEventArgs());
+        CreateOptionsDialog(select).ShowDialog();
+    }
+
+    internal RibbonOptionsDialog CreateCustomizationDialog(bool quickAccess) =>
+        CreateOptionsDialog(quickAccess ? OptionsPageKind.QuickAccess : OptionsPageKind.CustomizeRibbon);
+
+    private RibbonOptionsDialog CreateOptionsDialog(OptionsPageKind select)
+    {
         var editorPage = new RibbonOptionsPage { Header = "Editor", Content = BuildEditorOptionsContent() };
         var customizePage = new RibbonOptionsPage
         {
@@ -965,7 +977,7 @@ public partial class MainWindow : RibbonWindow
             SaveCustomization();
             StatusReady.Content = "Options applied";
         };
-        dialog.ShowDialog();
+        return dialog;
     }
 
     /// <summary>Stand-in for an application options page — any UserControl works here.</summary>

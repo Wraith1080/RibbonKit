@@ -804,6 +804,18 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [Provide per-control host capture and cross-theme glass paint with explicit lifecycle ownership](docs/history/01-library.md#3212-optional-captured-backdrops-and-scoped-glass-overlays--2026-10-01).
 
+### 3.213 Main Showcase consolidation — 2026-10-01
+
+[Move useful Crystal study demonstrations into the main window and retire the separate preview](docs/history/01-library.md#3213-main-showcase-consolidation--2026-10-01).
+
+### 3.214 Theme gallery clipping and deferred test corrections — 2026-10-01
+
+[Fit Showcase Theme tiles into the strip and correct the RTL fixture and Office 2010 hover contract](docs/history/01-library.md#3214-theme-gallery-clipping-and-deferred-test-corrections--2026-10-01).
+
+### 3.215 Gallery selected-row retention after tab reload — 2026-10-01
+
+[Restore the shared gallery's visible selected row after loading or template replacement](docs/history/01-library.md#3215-gallery-selected-row-retention-after-tab-reload--2026-10-01).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),
@@ -841,14 +853,10 @@ technical evidence warrants them; preserve existing dated records.
 
 ### Remaining or intentionally deferred
 
-- **200% gallery layout and RTL option-indicator failure:** the user requested
-  later investigation on 2026-09-30. Gallery items reportedly change layout;
-  the separate initial Office RTL checkbox-position test fails in both new and
-  prior outputs. Causes remain unconfirmed. See the
+- **Theme gallery review and deferred test follow-up:** implementation and
+  automated evidence are in §3.214–§3.215. Native Theme gallery review and the
+  bounded scope of the RTL/Office 2010 hover corrections are maintained in the
   [deferred layout list](docs/13-CRYSTAL-PORTABILITY-AND-ORB-PLAN.md#deferred-layout-observations-at-200).
-- **Office 2010 hover-glass contract:** the unchanged dropdown consumer-count check
-  reports 3 shared consumers where its threshold is 5 (§3.169). Investigate
-  the contract and dropdown coverage separately; it is deferred by user direction.
 - **Expanding Paper is the default again, by user direction (§3.162).** One native editor
   sits on a centered sheet with fixed page width and minimum page height. The sheet and
   dotted margin guide grow downward with content; preview/print retain physical pagination.
@@ -870,7 +878,7 @@ technical evidence warrants them; preserve existing dated records.
   covers the theme-following orb/glyph hook, control materials, customization,
   QAT/message/application-menu chrome, utility/native-scrollbar material and
   contextual material/scoped palettes and optional host effects. Detailed evidence
-  remains in §3.189–§3.212.
+  remains in §3.189–§3.215.
   Update current acceptance in the
   plan only; do not append each confirmation to this summary. Writer's saved
   appearance and W-glyph migration remain deferred under RKWF-026.

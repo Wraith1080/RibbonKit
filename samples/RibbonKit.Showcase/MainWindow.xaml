@@ -91,6 +91,7 @@
                                     </Style>
                                 </StackPanel.Style>
                                 <TextBlock Text="Good morning" FontSize="30" FontWeight="Light" Margin="0,0,0,20" />
+                                <TextBlock x:Name="BackstageDocumentTitle" FontSize="18" Margin="0,0,0,20" />
                                 <TextBlock Text="New" FontSize="15" FontWeight="SemiBold" Margin="0,0,0,10" />
                                 <WrapPanel Margin="0,0,0,28">
                                     <Border Width="130" Height="168" Background="#FFFFFF" BorderBrush="#D1D1D1"
@@ -474,7 +475,7 @@
                                  ScreenTipTitle="Redo (Ctrl+Y)" ScreenTipText="Redo the last undone action." />
             </rk:Ribbon.QuickAccessItems>
 
-            <rk:RibbonTab Header="Home" rk:Ribbon.CommandId="tab.home">
+            <rk:RibbonTab x:Name="HomeTab" Header="Home" rk:Ribbon.CommandId="tab.home">
                 <!-- ResizeThenCollapse: buttons shrink in place first, then the group
                      collapses to a flyout button as the last step -->
                 <rk:RibbonGroup Header="Clipboard"
@@ -814,48 +815,42 @@
                                         AutomationProperties.Name="Theme"
                                         SelectionChanged="OnThemeGalleryChanged">
                         <rk:RibbonGalleryItem Tag="CrystalLight" ToolTip="Crystal">
-                            <StackPanel Orientation="Horizontal" Width="112" Height="42">
+                            <StackPanel Orientation="Horizontal" Width="112" Height="40">
                                 <Image Source="{StaticResource Icon.Mica}" Width="22" Height="22" Margin="4,0,6,0" />
                                 <TextBlock Text="Crystal" VerticalAlignment="Center" />
                             </StackPanel>
                         </rk:RibbonGalleryItem>
                         <rk:RibbonGalleryItem Tag="Office2024" ToolTip="Office 2024">
-                            <StackPanel Orientation="Horizontal" Width="112" Height="42">
+                            <StackPanel Orientation="Horizontal" Width="112" Height="40">
                                 <Image Source="{StaticResource Icon.Palette}" Width="22" Height="22" Margin="4,0,6,0" />
                                 <TextBlock Text="Office 2024" VerticalAlignment="Center" />
                             </StackPanel>
                         </rk:RibbonGalleryItem>
                         <rk:RibbonGalleryItem Tag="Office2019" ToolTip="Office 2019">
-                            <StackPanel Orientation="Horizontal" Width="112" Height="42">
+                            <StackPanel Orientation="Horizontal" Width="112" Height="40">
                                 <Image Source="{StaticResource Icon.Palette}" Width="22" Height="22" Margin="4,0,6,0" />
                                 <TextBlock Text="Office 2019" VerticalAlignment="Center" />
                             </StackPanel>
                         </rk:RibbonGalleryItem>
                         <rk:RibbonGalleryItem Tag="Office2013" ToolTip="Office 2013">
-                            <StackPanel Orientation="Horizontal" Width="112" Height="42">
+                            <StackPanel Orientation="Horizontal" Width="112" Height="40">
                                 <Image Source="{StaticResource Icon.Palette}" Width="22" Height="22" Margin="4,0,6,0" />
                                 <TextBlock Text="Office 2013" VerticalAlignment="Center" />
                             </StackPanel>
                         </rk:RibbonGalleryItem>
                         <rk:RibbonGalleryItem Tag="Office2010" ToolTip="Office 2010">
-                            <StackPanel Orientation="Horizontal" Width="112" Height="42">
+                            <StackPanel Orientation="Horizontal" Width="112" Height="40">
                                 <Image Source="{StaticResource Icon.Palette}" Width="22" Height="22" Margin="4,0,6,0" />
                                 <TextBlock Text="Office 2010" VerticalAlignment="Center" />
                             </StackPanel>
                         </rk:RibbonGalleryItem>
                         <rk:RibbonGalleryItem Tag="Office2007" ToolTip="Office 2007">
-                            <StackPanel Orientation="Horizontal" Width="112" Height="42">
+                            <StackPanel Orientation="Horizontal" Width="112" Height="40">
                                 <Image Source="{StaticResource Icon.Palette}" Width="22" Height="22" Margin="4,0,6,0" />
                                 <TextBlock Text="Office 2007" VerticalAlignment="Center" />
                             </StackPanel>
                         </rk:RibbonGalleryItem>
                     </rk:InRibbonGallery>
-                    <rk:RibbonButton Header="Crystal preview"
-                                     Icon="{StaticResource Icon.Mica}"
-                                     SizeDefinition="Large, Medium, Small"
-                                     Click="OnPreviewCrystal"
-                                     ScreenTipTitle="Crystal light prototype"
-                                     ScreenTipText="Open a separate glass-inspired Office 2024 preview." />
                 </rk:RibbonGroup>
                 <!-- Accent customization: title-bar accent toggle + swappable accent color -->
                 <rk:RibbonGroup Header="Accent" rk:Ribbon.CommandId="group.view.accent" Icon="{StaticResource Icon.ColorDrop}">
@@ -1293,6 +1288,59 @@
                 </rk:RibbonGroup>
             </rk:RibbonTab>
 
+            <rk:RibbonTab x:Name="SamplesTab" Header="Samples" rk:Ribbon.CommandId="tab.samples">
+                <rk:RibbonGroup Header="Layout demos" rk:Ribbon.CommandId="group.samples.layout" Icon="{StaticResource Icon.Select}">
+                    <rk:RibbonDropDownButton x:Name="LayoutDemosButton" Header="Try layouts" Size="Large"
+                                             Icon="{StaticResource Icon.Select}"
+                                             ScreenTipTitle="Layout demonstrations"
+                                             ScreenTipText="Try scrolling and overflow, then restore the original layout.">
+                        <rk:RibbonMenuItem x:Name="ScrollPreviewToggle" Header="Show scroll arrows" Click="OnScrollPreview" />
+                        <rk:RibbonMenuItem x:Name="BodyScrollPreviewToggle" Header="Keep Home groups expanded" Click="OnBodyScrollPreview" />
+                        <rk:RibbonMenuItem x:Name="OverflowPreviewToggle" Header="Show QAT overflow" Click="OnOverflowPreview" />
+                        <rk:RibbonMenuItem Header="Add message" Click="OnAddMessage" />
+                        <rk:RibbonMenuItem Header="Dismiss messages" Click="OnDismissMessages" />
+                    </rk:RibbonDropDownButton>
+                    <rk:RibbonToggleButton x:Name="CompareToggle" Header="Compare 2024" Size="Large"
+                                           Icon="{StaticResource Icon.Palette}" Checked="OnCompare2024" Unchecked="OnCompare2024"
+                                           ScreenTipTitle="Compare Crystal with Office 2024"
+                                           ScreenTipText="Switch between Crystal and Office 2024 while keeping the current control values." />
+                </rk:RibbonGroup>
+                <rk:RibbonGroup Header="Document" rk:Ribbon.CommandId="group.samples.document" Icon="{StaticResource Icon.Style}">
+                    <StackPanel>
+                        <rk:RibbonTextBox x:Name="TitleInput" Header="Title" InputWidth="170"
+                                          Text="RibbonKit — core ribbon showcase" AutomationProperties.Name="Document title" />
+                        <rk:RibbonDropDownButton x:Name="DocumentEffectsButton" Header="Document effects" Size="Medium" Icon="{StaticResource Icon.Style}">
+                            <rk:RibbonMenuItem x:Name="DocumentLengthToggle" Header="Add scrolling text" Click="OnDocumentLengthToggle" />
+                            <rk:RibbonMenuItem x:Name="DocumentFadeToggle" Header="Show document edge fade" Click="OnDocumentFadeToggle" />
+                            <rk:RibbonMenuItem x:Name="DocumentQatUnderlayToggle" Header="Show document through QAT" Click="OnDocumentQatUnderlayToggle" />
+                        </rk:RibbonDropDownButton>
+                    </StackPanel>
+                </rk:RibbonGroup>
+                <rk:RibbonGroup Header="Options" rk:Ribbon.CommandId="group.samples.options" Icon="{StaticResource Icon.Select}">
+                    <StackPanel x:Name="SampleOptionsPanel">
+                        <rk:RibbonCheckBox Header="Show guides" IsChecked="True" />
+                        <rk:RibbonCheckBox Header="Snap to grid" />
+                        <rk:RibbonCheckBox Header="Mixed selection" IsThreeState="True" IsChecked="{x:Null}" />
+                    </StackPanel>
+                </rk:RibbonGroup>
+                <rk:RibbonGroup Header="Spacing" rk:Ribbon.CommandId="group.samples.spacing" Icon="{StaticResource Icon.Select}">
+                    <StackPanel x:Name="SampleSpacingPanel">
+                        <rk:RibbonRadioButton Header="Comfortable" GroupName="SampleSpacing" IsChecked="True" />
+                        <rk:RibbonRadioButton Header="Compact" GroupName="SampleSpacing" />
+                        <rk:RibbonRadioButton Header="Custom" GroupName="SampleSpacing" />
+                    </StackPanel>
+                </rk:RibbonGroup>
+                <rk:RibbonGroup Header="States" rk:Ribbon.CommandId="group.samples.states" Icon="{StaticResource Icon.Gear}">
+                    <rk:RibbonToggleButton x:Name="EnableOptionsToggle" Header="Enable options" Size="Large"
+                                           Icon="{StaticResource Icon.Select}" IsChecked="True" />
+                    <rk:RibbonToggleButton x:Name="DisableGalleryToggle" Header="Disable gallery" Size="Large"
+                                           Icon="{StaticResource Icon.Style}" Checked="OnDisableGallery" Unchecked="OnDisableGallery" />
+                    <rk:RibbonButton Header="Change context tint" Size="Large" Icon="{StaticResource Icon.Palette}"
+                                     Click="OnChangeContextTint" ScreenTipTitle="Change Picture Format tint"
+                                     ScreenTipText="Show Picture Format and change its color independently of the main ribbon tint." />
+                </rk:RibbonGroup>
+            </rk:RibbonTab>
+
             <!-- MODAL TAB (Print Preview). IsModal only declares eligibility — the app enters the
                  mode with Ribbon.EnterModal(tab). CanClose puts a "Close Print Preview" button at
                  the end of the tab strip, bound to Ribbon.ExitModalCommand. Collapsed by default
@@ -1440,7 +1488,7 @@
                 <!-- Document and the Print Preview surface share one cell, so the preview covers
                      the document but leaves the status bar alone. -->
                 <Grid>
-                <Border Margin="8,8,8,0"
+                <Border x:Name="DocumentSurface" Margin="8,8,8,0"
                         Background="White"
                         BorderBrush="#E0E0E0"
                         BorderThickness="1"
@@ -1454,7 +1502,7 @@
                                  VerticalScrollBarVisibility="Auto"
                                  IsInactiveSelectionHighlightEnabled="True">
                         <FlowDocument PagePadding="0" TextAlignment="Left">
-                            <Paragraph FontSize="18" Foreground="#6B6B6B" Margin="0,0,0,12">RibbonKit — Phase 1: core ribbon skeleton</Paragraph>
+                            <Paragraph FontSize="18" Foreground="#6B6B6B" Margin="0,0,0,12"><Run x:Name="DocumentTitle" /></Paragraph>
                             <Paragraph FontSize="13" Foreground="#9A9A9A" Margin="0,0,0,6">Make the window narrower: groups collapse to flyout buttons by priority — Styles (10) → Editing (5) → Clipboard (default, resizes first) — Font never reduces (CanResize=False).</Paragraph>
                             <Paragraph FontSize="13" Foreground="#9A9A9A" Margin="0,0,0,6">Click a collapsed group button to open its flyout with the full group content.</Paragraph>
                             <Paragraph FontSize="13" Foreground="#9A9A9A" Margin="0,0,0,6">New: click the File button for the backstage view (Esc or the back arrow returns). Paste is a split button, Select is a dropdown, B/I/U are toggles, Font has combos and a ↘ launcher.</Paragraph>

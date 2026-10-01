@@ -11,7 +11,7 @@ using RibbonKit.Theming;
 
 namespace RibbonKit.Showcase;
 
-/// <summary>Applies the preview's host-owned Crystal details to the main Showcase window.</summary>
+/// <summary>Owns the main Showcase palette scope and optional captured-backdrop registrations.</summary>
 internal sealed class CrystalMainWindowPresentation
 {
     private readonly RibbonWindow _window;
@@ -96,7 +96,7 @@ internal sealed class CrystalMainWindowPresentation
         foreach (RibbonGroup group in tab.Groups)
         {
             AddPopup(group);
-            foreach (var dropDown in group.Items.OfType<RibbonDropDownButton>())
+            foreach (var dropDown in DropDowns(group))
             {
                 AddPopup(dropDown);
             }
@@ -120,7 +120,7 @@ internal sealed class CrystalMainWindowPresentation
     private void RemovePopup(RibbonGroup group)
     {
         Remove(group);
-        foreach (var dropDown in group.Items.OfType<RibbonDropDownButton>())
+        foreach (var dropDown in DropDowns(group))
         {
             Remove(dropDown);
         }
@@ -129,5 +129,16 @@ internal sealed class CrystalMainWindowPresentation
             if (!_popups.Remove(control, out var popup)) return;
             popup.Dispose();
         }
+    }
+
+    private static IEnumerable<RibbonDropDownButton> DropDowns(DependencyObject root)
+    {
+        if (root is RibbonDropDownButton button)
+        {
+            yield return button;
+            yield break;
+        }
+        foreach (var child in LogicalTreeHelper.GetChildren(root).OfType<DependencyObject>())
+            foreach (var nested in DropDowns(child)) yield return nested;
     }
 }

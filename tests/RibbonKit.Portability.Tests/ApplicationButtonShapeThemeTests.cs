@@ -365,6 +365,7 @@ public sealed class ApplicationButtonShapeThemeTests
             VerifyApplicationOrbGlyphTemplate(ribbon, window);
             VerifyCustomizationPages(application);
             CapturedBackdropPortabilityChecks.Verify(application);
+            GallerySelectionPortabilityChecks.Verify(application);
         }
         finally
         {

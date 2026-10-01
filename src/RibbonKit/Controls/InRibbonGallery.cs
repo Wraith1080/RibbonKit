@@ -127,6 +127,12 @@ public class InRibbonGallery : RibbonGallery
         SystemParameters.StaticPropertyChanged -= OnSystemParametersChanged;
         SystemParameters.StaticPropertyChanged += OnSystemParametersChanged;
         AttachDpiOwner();
+        if (!IsDropDownOpen && SelectedItem is not null)
+        {
+            // Tab switching or group re-homing can reset the strip's native offset
+            // while the selected item survives. Reveal it after the viewport settles.
+            QueueViewportRefresh();
+        }
     }
 
     private void OnGalleryUnloaded(object sender, RoutedEventArgs e)
@@ -215,6 +221,10 @@ public class InRibbonGallery : RibbonGallery
         if (IsDropDownOpen)
         {
             MoveGalleryContent(open: true);
+        }
+        else if (IsLoaded && SelectedItem is not null)
+        {
+            QueueViewportRefresh();
         }
     }
 
@@ -599,7 +609,7 @@ public class InRibbonGallery : RibbonGallery
         }
 
         scrollViewer.UpdateLayout();
-        double target = container
+        double target = scrollViewer.VerticalOffset + container
             .TransformToAncestor(scrollViewer)
             .Transform(default)
             .Y;

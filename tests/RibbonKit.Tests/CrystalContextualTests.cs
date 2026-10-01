@@ -11,6 +11,7 @@ using System.Windows.Shapes;
 using System.Windows.Threading;
 using RibbonKit.Controls;
 using RibbonKit.Showcase;
+using RibbonKit.Theming;
 using Xunit;
 
 namespace RibbonKit.Tests;
@@ -44,8 +45,7 @@ public class CrystalContextualTests
     [Fact]
     public void Crystal_customize_tree_opens_without_missing_ancestor_bindings() => Sta.Run(() =>
     {
-        var window = new CrystalPreviewWindow { Width = 760, Height = 480,
-            Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
+        var window = CreateCrystalWindow();
         try
         {
             window.Show();
@@ -82,14 +82,13 @@ public class CrystalContextualTests
             }
             finally { dialog.Close(); }
         }
-        finally { window.Close(); }
+        finally { window.Close(); Sta.ResetApplication(); }
     });
 
     [Fact]
     public void Crystal_customize_pages_round_all_list_frames_and_keep_scrolling() => Sta.Run(() =>
     {
-        var window = new CrystalPreviewWindow { Width = 760, Height = 480,
-            Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
+        var window = CreateCrystalWindow();
         try
         {
             window.Show();
@@ -123,7 +122,7 @@ public class CrystalContextualTests
             }
             finally { dialog.Close(); }
         }
-        finally { window.Close(); }
+        finally { window.Close(); Sta.ResetApplication(); }
 
         static ScrollViewer AssertRoundedFrame(Control control)
         {
@@ -139,59 +138,73 @@ public class CrystalContextualTests
     [Fact]
     public void Crystal_document_length_toggle_provides_scrollable_sample_text() => Sta.Run(() =>
     {
-        var window = new CrystalPreviewWindow { Width = 760, Height = 480,
-            Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
+        var window = CreateCrystalWindow();
         try
         {
             window.Show();
             Sta.Drain();
-            var viewer = (ScrollViewer)window.FindName("CrystalDocumentScroll");
-            var extra = (ItemsControl)window.FindName("DocumentScrollDemo");
+            var viewer = DocumentScrollViewer(window);
+            int originalBlocks = window.DocumentEditor.Document.Blocks.Count;
             var toggle = (RibbonMenuItem)window.FindName("DocumentLengthToggle");
             double originalExtent = viewer.ExtentHeight;
-            Assert.Equal(Visibility.Collapsed, extra.Visibility);
-            Assert.NotEmpty(extra.Items);
+            Assert.Equal("Add scrolling text", toggle.Header);
 
             toggle.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             Sta.Drain();
             window.UpdateLayout();
-            Assert.Equal(Visibility.Visible, extra.Visibility);
+            Assert.Equal(originalBlocks + 8, window.DocumentEditor.Document.Blocks.Count);
             Assert.True(viewer.ExtentHeight > originalExtent + 200);
             Assert.Equal("Remove scrolling text", toggle.Header);
             viewer.ScrollToBottom();
             Sta.Drain();
             Assert.True(viewer.VerticalOffset > 0);
 
+            var userParagraph = new System.Windows.Documents.Paragraph(new System.Windows.Documents.Run("User document edit"));
+            window.DocumentEditor.Document.Blocks.Add(userParagraph);
+            window.TitleInput.Text = "Edited title";
+            Sta.Drain();
+            Assert.Equal("Edited title", window.DocumentTitle.Text);
+            Assert.Equal("Edited title", window.BackstageDocumentTitle.Text);
+
             toggle.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             Sta.Drain();
             window.UpdateLayout();
-            Assert.Equal(Visibility.Collapsed, extra.Visibility);
-            Assert.Equal(originalExtent, viewer.ExtentHeight, 1);
+            Assert.Equal(originalBlocks + 1, window.DocumentEditor.Document.Blocks.Count);
+            Assert.Contains(userParagraph, window.DocumentEditor.Document.Blocks.Cast<System.Windows.Documents.Block>());
             Assert.Equal("Add scrolling text", toggle.Header);
+            window.DocumentEditor.Document.Blocks.Remove(userParagraph);
+            Sta.Drain();
+            window.UpdateLayout();
+            Assert.Equal(originalExtent, viewer.ExtentHeight, 1);
         }
-        finally { window.Close(); }
+        finally { window.Close(); Sta.ResetApplication(); }
     });
 
     [Fact]
     public void Crystal_document_edge_fade_tracks_scrolling_toggle_and_comparison() => Sta.Run(() =>
     {
-        var window = new CrystalPreviewWindow { Width = 760, Height = 480,
-            Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
+        var window = CreateCrystalWindow();
         try
         {
             window.Show();
             Sta.Drain();
-            var viewer = (ScrollViewer)window.FindName("CrystalDocumentScroll");
-            var ribbon = (Ribbon)window.FindName("PreviewRibbon");
+            var viewer = DocumentScrollViewer(window);
+            window.DocumentLengthToggle.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            window.DocumentFadeToggle.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            window.DocumentQatUnderlayToggle.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            Sta.Drain();
+            window.UpdateLayout();
+            var surface = window.DocumentSurface;
+            var ribbon = (Ribbon)window.FindName("MainRibbon");
             var qat = Assert.IsType<Border>(ribbon.Template.FindName("QatBelowHost", ribbon));
             var scrollBar = Assert.IsType<ScrollBar>(
                 viewer.Template.FindName("PART_VerticalScrollBar", viewer));
             var presenter = Assert.IsType<ScrollContentPresenter>(
                 viewer.Template.FindName("PART_ScrollContentPresenter", viewer));
-            Assert.True(viewer.Margin.Top < -qat.ActualHeight);
-            Assert.Equal(-viewer.Margin.Top, scrollBar.Margin.Top, 1);
-            Assert.InRange(Math.Abs(viewer.TranslatePoint(new Point(), window).Y -
-                qat.TranslatePoint(new Point(), window).Y), 0, 1);
+            Assert.True(surface.Margin.Top <= 8 - qat.ActualHeight);
+            Assert.Equal(8 - surface.Margin.Top, scrollBar.Margin.Top, 1);
+            Assert.InRange(Math.Abs(surface.TranslatePoint(new Point(), window).Y -
+                qat.TranslatePoint(new Point(), window).Y - 8), 0, 1);
             Assert.IsType<LinearGradientBrush>(presenter.OpacityMask);
             Assert.True(viewer.ScrollableHeight > 30);
             viewer.ScrollToVerticalOffset(30);
@@ -207,12 +220,12 @@ public class CrystalContextualTests
             var qatToggle = (RibbonMenuItem)window.FindName("DocumentQatUnderlayToggle");
             qatToggle.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             Sta.Drain();
-            Assert.Equal(new Thickness(), viewer.Margin);
+            Assert.Equal(new Thickness(8, 8, 8, 0), surface.Margin);
             Assert.Equal(new Thickness(), scrollBar.Margin);
             Assert.Equal(24, Assert.IsType<LinearGradientBrush>(presenter.OpacityMask).EndPoint.Y);
             qatToggle.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             Sta.Drain();
-            Assert.True(viewer.Margin.Top < -qat.ActualHeight);
+            Assert.True(surface.Margin.Top <= 8 - qat.ActualHeight);
 
             var toggle = (RibbonMenuItem)window.FindName("DocumentFadeToggle");
             toggle.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
@@ -227,21 +240,21 @@ public class CrystalContextualTests
             Assert.Null(presenter.OpacityMask);
             Assert.False(toggle.IsEnabled);
             Assert.False(qatToggle.IsEnabled);
-            Assert.Equal(new Thickness(), viewer.Margin);
+            Assert.Equal(new Thickness(8, 8, 8, 0), surface.Margin);
             Assert.Equal(new Thickness(), scrollBar.Margin);
             compare.IsChecked = false;
             Sta.Drain();
-            Assert.True(viewer.Margin.Top < -qat.ActualHeight);
+            Assert.True(surface.Margin.Top <= 8 - qat.ActualHeight);
             Assert.NotNull(presenter.OpacityMask);
             Assert.True(toggle.IsEnabled);
             Assert.True(qatToggle.IsEnabled);
 
             ribbon.QuickAccessPosition = RibbonQuickAccessPosition.TabRow;
             Sta.Drain();
-            Assert.Equal(new Thickness(), viewer.Margin);
+            Assert.Equal(new Thickness(8, 8, 8, 0), surface.Margin);
             ribbon.QuickAccessPosition = RibbonQuickAccessPosition.BelowRibbon;
             Sta.Drain();
-            Assert.True(viewer.Margin.Top < -qat.ActualHeight);
+            Assert.True(surface.Margin.Top <= 8 - qat.ActualHeight);
 
             var previousMotion = RibbonKit.Animation.RibbonAnimation.GetActionOverride(
                 RibbonKit.Animation.RibbonAnimationAction.MessageBar);
@@ -250,13 +263,13 @@ public class CrystalContextualTests
                 RibbonKit.Animation.RibbonAnimationLevel.None);
             try
             {
-                var message = (RibbonMessage)window.FindName("CrystalProtectedMessage");
+                var message = (RibbonMessage)window.FindName("ProtectedViewMessage");
                 message.IsOpen = true;
                 Sta.Drain();
-                Assert.Equal(new Thickness(), viewer.Margin);
+                Assert.Equal(new Thickness(8, 8, 8, 0), surface.Margin);
                 message.IsOpen = false;
                 Sta.Drain();
-                Assert.True(viewer.Margin.Top < -qat.ActualHeight);
+                Assert.True(surface.Margin.Top <= 8 - qat.ActualHeight);
             }
             finally
             {
@@ -271,7 +284,7 @@ public class CrystalContextualTests
             Sta.Drain();
             Assert.IsType<LinearGradientBrush>(presenter.OpacityMask);
         }
-        finally { window.Close(); }
+        finally { window.Close(); Sta.ResetApplication(); }
     });
 
     [Fact]
@@ -332,21 +345,22 @@ public class CrystalContextualTests
     });
 
     [Fact]
-    public void Crystal_preview_frosts_dropdown_and_collapsed_group_then_restores_comparison() => Sta.Run(() =>
+    public void Crystal_main_window_frosts_dropdown_and_collapsed_group_then_restores_comparison() => Sta.Run(() =>
     {
-        var window = new CrystalPreviewWindow { Left = -10000, Top = -10000,
-            ShowActivated = false, ShowInTaskbar = false };
+        var window = CreateCrystalWindow();
         try
         {
             window.Show();
             Sta.Drain();
-            var arrange = (RibbonDropDownButton)window.FindName("ArrangeButton");
+            window.MainRibbon.SelectedIndex = window.MainRibbon.Tabs.IndexOf(window.SamplesTab);
+            Sta.Drain();
+            var arrange = (RibbonDropDownButton)window.FindName("LayoutDemosButton");
             arrange.IsDropDownOpen = true;
             Sta.Drain();
             var menuHost = (Border)arrange.Template.FindName("PART_MenuHost", arrange);
             var blueMenu = Assert.IsType<DrawingBrush>(menuHost.Background);
-            var accent = (RibbonDropDownButton)window.FindName("AccentSelector");
-            ((RibbonMenuItem)accent.Items[1]).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            var accent = window.AccentGallery;
+            accent.SelectedItem = accent.Items[2];
             Sta.Drain();
             var greenMenu = Assert.IsType<DrawingBrush>(menuHost.Background);
             Assert.NotSame(blueMenu, greenMenu);
@@ -360,6 +374,18 @@ public class CrystalContextualTests
             Sta.Drain();
             Assert.Same(window.FindResource("RibbonKit.Brushes.Ribbon.ContentBackground"), menuHost.Background);
 
+            // Nested host controls receive the same optional registration as direct group items.
+            window.DocumentEffectsButton.IsDropDownOpen = true;
+            Sta.Drain();
+            var nestedHost = (Border)window.DocumentEffectsButton.Template.FindName("PART_MenuHost", window.DocumentEffectsButton);
+            Assert.IsType<DrawingBrush>(nestedHost.Background);
+            window.DocumentEffectsButton.IsDropDownOpen = false;
+            window.DisableGalleryToggle.IsChecked = true;
+            Assert.False(window.StylesGallery.IsEnabled);
+            window.DisableGalleryToggle.IsChecked = false;
+            Assert.True(window.StylesGallery.IsEnabled);
+
+            window.MainRibbon.SelectedIndex = 0;
             window.Width = 420;
             Sta.Drain();
             window.UpdateLayout();
@@ -379,7 +405,7 @@ public class CrystalContextualTests
             Sta.Drain();
             Assert.Same(window.FindResource("RibbonKit.Brushes.Ribbon.ContentBackground"), groupHost.Background);
         }
-        finally { window.Close(); }
+        finally { window.Close(); Sta.ResetApplication(); }
     });
 
     [Fact]
@@ -666,14 +692,13 @@ public class CrystalContextualTests
     });
 
     [Fact]
-    public void Crystal_preview_enable_options_updates_both_reparented_groups() => Sta.Run(() =>
+    public void Crystal_main_window_enable_options_updates_both_reparented_groups() => Sta.Run(() =>
     {
-        var window = new CrystalPreviewWindow { Left = -10000, Top = -10000,
-            ShowActivated = false, ShowInTaskbar = false };
+        var window = CreateCrystalWindow();
         try
         {
             window.Show();
-            var ribbon = (Ribbon)window.FindName("PreviewRibbon");
+            var ribbon = (Ribbon)window.FindName("MainRibbon");
             var utilityTabs = (RibbonTabControl)ribbon.Template.FindName("TabControlHost", ribbon);
             var minimize = (System.Windows.Controls.Primitives.ToggleButton)utilityTabs.Template.FindName("MinimizeToggle", utilityTabs);
             Sta.Drain();
@@ -745,7 +770,7 @@ public class CrystalContextualTests
             Assert.Equal(2, bodyArrowCount);
             bodyPreview.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             Assert.False(home.Groups[0].CanResize);
-            for (int i = 1; i < home.Groups.Count; i++) Assert.True(home.Groups[i].CanResize);
+            for (int i = 1; i < home.Groups.Count; i++) Assert.Equal(i != 1 && i != 4, home.Groups[i].CanResize);
             home.Groups[0].CanResize = true;
             Sta.Drain();
             window.UpdateLayout();
@@ -831,11 +856,11 @@ public class CrystalContextualTests
             Assert.Equal(originalQatCount, ribbon.QuickAccessItems.Count);
             Assert.Equal(originalPosition, ribbon.QuickAccessPosition);
             Assert.Equal(originalQatWidth, ribbon.QuickAccessMaxWidth);
-            ribbon.SelectedIndex = 2;
+            ribbon.SelectedIndex = ribbon.Tabs.IndexOf(window.SamplesTab);
             Sta.Drain(DispatcherPriority.Render);
             var toggle = (RibbonToggleButton)window.FindName("EnableOptionsToggle");
-            var options = (StackPanel)window.FindName("CrystalOptionsPanel");
-            var spacing = (StackPanel)window.FindName("CrystalSpacingPanel");
+            var options = (StackPanel)window.FindName("SampleOptionsPanel");
+            var spacing = (StackPanel)window.FindName("SampleSpacingPanel");
             toggle.SetCurrentValue(System.Windows.Controls.Primitives.ToggleButton.IsCheckedProperty, false);
             Sta.Drain();
             Assert.False(options.IsEnabled);
@@ -853,9 +878,9 @@ public class CrystalContextualTests
                 Sta.Drain();
                 dialog.UpdateLayout();
                 Assert.Same(window, dialog.Owner);
-                Assert.Equal(2, dialog.Pages.Count);
-                Assert.Same(dialog.Pages[0], dialog.SelectedPage);
-                var selectedNavigation = dialog.Pages[0];
+                Assert.Equal(3, dialog.Pages.Count);
+                Assert.Same(dialog.Pages[1], dialog.SelectedPage);
+                var selectedNavigation = dialog.Pages[1];
                 Assert.Equal(Visibility.Visible,
                     ((Rectangle)selectedNavigation.Template.FindName("BottomMarker", selectedNavigation)).Visibility);
                 Assert.Same(dialog.FindResource("RibbonKit.Brushes.OptionsDialog.NavigationSelectedBackground"),
@@ -897,20 +922,20 @@ public class CrystalContextualTests
                 Assert.IsType<DrawingBrush>(scrollBar.FindResource("RibbonKit.Brushes.ScrollBar.Thumb"));
                 Assert.Same(window.FindResource("RibbonKit.Brushes.Window.Background"),
                     dialog.FindResource("RibbonKit.Brushes.Window.Background"));
-                dialog.SelectedPage = dialog.Pages[1];
+                dialog.SelectedPage = dialog.Pages[2];
                 Sta.Drain();
                 Assert.Same(ribbon, Assert.IsType<RibbonQuickAccessPage>(dialog.SelectedPage.Content).Ribbon);
                 Assert.Equal(Visibility.Collapsed,
                     ((Rectangle)selectedNavigation.Template.FindName("BottomMarker", selectedNavigation)).Visibility);
                 Assert.Equal(Visibility.Visible,
-                    ((Rectangle)dialog.Pages[1].Template.FindName("BottomMarker", dialog.Pages[1])).Visibility);
+                    ((Rectangle)dialog.Pages[2].Template.FindName("BottomMarker", dialog.Pages[2])).Visibility);
             }
             finally { dialog.Close(); }
             var quickAccessDialog = window.CreateCustomizationDialog(true);
-            Assert.Same(quickAccessDialog.Pages[1], quickAccessDialog.SelectedPage);
+            Assert.Same(quickAccessDialog.Pages[2], quickAccessDialog.SelectedPage);
             quickAccessDialog.Close();
         }
-        finally { window.Close(); }
+        finally { window.Close(); Sta.ResetApplication(); }
 
         static System.Windows.Controls.Primitives.ScrollBar? FindScrollBar(DependencyObject root)
         {
@@ -1242,10 +1267,27 @@ public class CrystalContextualTests
         stage.Items.Add(appearance);
         stage.Items.Add(about);
         stage.SelectedItem = home;
-        var presentation = new CrystalBackstagePresentation(stage, new ResourceDictionary
-        { Source = new Uri("/RibbonKit;component/Themes/Tokens.Office2024.xaml", UriKind.Relative) }, title, titleInput);
+        stage.Resources.MergedDictionaries.Add(new ResourceDictionary
+        { Source = new Uri("/RibbonKit;component/Themes/Office2024.xaml", UriKind.Relative) });
+        stage.Resources.MergedDictionaries.Add(new ResourceDictionary
+        { Source = new Uri("/RibbonKit;component/Themes/Tokens.Office2024.xaml", UriKind.Relative) });
+        title.SetBinding(TextBlock.TextProperty, new Binding(nameof(titleInput.Text)) { Source = titleInput });
+        var layout = RibbonBackstageDesign.CrystalSidebar;
+        ResourceDictionary? currentPalette = null;
+        void ApplyPalette(ResourceDictionary? palette)
+        {
+            if (currentPalette != null) stage.Resources.MergedDictionaries.Remove(currentPalette);
+            currentPalette = palette;
+            if (palette != null) stage.Resources.MergedDictionaries.Add(palette);
+            stage.Design = palette == null ? RibbonBackstageDesign.Modern : layout;
+        }
+        void SetLayout(RibbonBackstageDesign value)
+        {
+            layout = value;
+            stage.Design = currentPalette == null ? RibbonBackstageDesign.Modern : layout;
+        }
         var blue = CrystalPalette.Create(CrystalPalette.Blue);
-        presentation.Apply(blue);
+        ApplyPalette(blue);
         void LayoutStage()
         {
             stage.Measure(new Size(680, 440));
@@ -1271,7 +1313,7 @@ public class CrystalContextualTests
             Assert.Same(opaqueNavigation, navigation.Background);
         }
         LayoutStage();
-        Assert.Equal(RibbonBackstageDesign.CrystalSidebar, presentation.Layout);
+        Assert.Equal(RibbonBackstageDesign.CrystalSidebar, layout);
         Assert.NotNull(stage.Template.FindName("NavColumn", stage));
         AssertTranslucentNavigation("NavColumn");
         Assert.Equal(1d, Assert.IsType<Border>(stage.Template.FindName("ContentArea", stage))
@@ -1282,7 +1324,7 @@ public class CrystalContextualTests
         Assert.Equal(sidebarHome.X, sidebarAppearance.X);
         Assert.True(sidebarAppearance.Y > sidebarHome.Y);
         Assert.True(sidebarAbout.Y > sidebarAppearance.Y + appearance.ActualHeight);
-        presentation.SetLayout(RibbonBackstageDesign.CrystalFloating);
+        SetLayout(RibbonBackstageDesign.CrystalFloating);
         LayoutStage();
         AssertTranslucentNavigation("NavSurface");
         Assert.Equal("A calmer workspace", title.Text);
@@ -1303,23 +1345,23 @@ public class CrystalContextualTests
         Assert.Equal(1, backRequests);
         stage.SelectedItem = appearance;
         var purple = CrystalPalette.Create(Colors.Purple);
-        presentation.Apply(purple);
+        ApplyPalette(purple);
         LayoutStage();
         Assert.Same(appearance, stage.SelectedItem);
         Assert.Same(purple["RibbonKit.Brushes.Window.Background"], stage.FindResource("RibbonKit.Brushes.Window.Background"));
-        presentation.SetLayout(RibbonBackstageDesign.CrystalSidebar);
+        SetLayout(RibbonBackstageDesign.CrystalSidebar);
         LayoutStage();
         Assert.Same(appearance, stage.SelectedItem);
         Assert.NotNull(stage.Template.FindName("NavColumn", stage));
-        presentation.Apply(null);
+        ApplyPalette(null);
         LayoutStage();
         Assert.NotNull(stage.Template.FindName("NavColumn", stage));
         Assert.Same(appearance, stage.SelectedItem);
-        presentation.Apply(blue);
+        ApplyPalette(blue);
         LayoutStage();
-        Assert.Equal(RibbonBackstageDesign.CrystalSidebar, presentation.Layout);
+        Assert.Equal(RibbonBackstageDesign.CrystalSidebar, layout);
         Assert.NotNull(stage.Template.FindName("NavColumn", stage));
-        presentation.SetLayout(RibbonBackstageDesign.CrystalFloating);
+        SetLayout(RibbonBackstageDesign.CrystalFloating);
         LayoutStage();
         Assert.Null(stage.Template.FindName("NavColumn", stage));
         stage.SelectedItem = home;
@@ -1607,13 +1649,20 @@ public class CrystalContextualTests
             ShowActivated = false, ShowInTaskbar = false };
         var tip = new RibbonScreenTip { Title = "Document title", Description = "Edit the heading in your document and File panel.", PlacementTarget = owner };
         owner.ToolTip = tip;
-        var scope = new CrystalScreenTipPalette(new ResourceDictionary
+        var scope = new ResourceDictionary();
+        scope.MergedDictionaries.Add(new ResourceDictionary
         { Source = new Uri("/RibbonKit;component/Themes/Tokens.Office2024.xaml", UriKind.Relative) });
-        scope.Attach(tip);
-        scope.Attach(tip);
+        tip.Resources.MergedDictionaries.Add(scope);
+        ResourceDictionary? currentPalette = null;
+        void ApplyPalette(ResourceDictionary? palette)
+        {
+            if (currentPalette != null) scope.MergedDictionaries.Remove(currentPalette);
+            currentPalette = palette;
+            if (palette != null) scope.MergedDictionaries.Add(palette);
+        }
         Assert.Single(tip.Resources.MergedDictionaries);
         var blue = CrystalPalette.Create(CrystalPalette.Blue);
-        scope.Apply(blue);
+        ApplyPalette(blue);
         try
         {
             window.Show();
@@ -1640,13 +1689,13 @@ public class CrystalContextualTests
             Assert.Equal(Visibility.Collapsed, ((TextBlock)tip.Template.FindName("DescriptionText", tip)).Visibility);
             tip.Description = description;
             var purple = CrystalPalette.Create(Colors.Purple);
-            scope.Apply(purple);
+            ApplyPalette(purple);
             Sta.Drain(DispatcherPriority.Render);
             border = (Border)VisualTreeHelper.GetChild(tip, 0);
             Assert.Same(purple["RibbonKit.Brushes.ScreenTip.Surface"], border.Background);
             Assert.Same(purple["RibbonKit.Brushes.ScreenTip.OuterBorder"], border.BorderBrush);
             Assert.True(tip.IsOpen);
-            scope.Apply(null);
+            ApplyPalette(null);
             Sta.Drain(DispatcherPriority.Render);
             border = (Border)VisualTreeHelper.GetChild(tip, 0);
             Assert.IsType<SolidColorBrush>(border.Background);
@@ -1660,12 +1709,13 @@ public class CrystalContextualTests
         }
     });
 
-    private static void CheckCrystalApplicationMenu(CrystalPreviewWindow window, Ribbon ribbon)
+    private static void CheckCrystalApplicationMenu(MainWindow window, Ribbon ribbon)
     {
-        var toggle = (RibbonMenuItem)window.FindName("ApplicationMenuPreviewToggle");
-        var menu = (RibbonApplicationMenu)window.FindName("CrystalFileMenu");
+        var toggle = window.ApplicationMenuToggle;
+        var menu = (RibbonApplicationMenu)window.FindName("ShowcaseApplicationMenu");
+        toggle.IsChecked = false;
         Assert.Null(ribbon.ApplicationMenu);
-        toggle.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        toggle.IsChecked = true;
         Assert.Same(menu, ribbon.ApplicationMenu);
         ribbon.IsBackstageOpen = true;
         LayoutMenu();
@@ -1703,10 +1753,10 @@ public class CrystalContextualTests
         Assert.Equal(new CornerRadius(11), innerRim.CornerRadius);
         Assert.Equal(9d, Assert.IsType<RectangleGeometry>(innerContent.Clip).RadiusX);
         Assert.Equal(new Thickness(), activePage.BorderThickness);
-        var split = (RibbonApplicationMenuItem)window.FindName("CrystalSaveAsMenuItem");
-        var print = (RibbonApplicationMenuItem)window.FindName("CrystalPrintMenuItem");
+        var split = menu.Items.OfType<RibbonApplicationMenuItem>().Single(item => item.Header?.ToString() == "Save As");
+        var print = menu.Items.OfType<RibbonApplicationMenuItem>().Single(item => item.Header?.ToString() == "Print");
         Assert.True(split.IsSplitPresentation);
-        Assert.False(print.IsSplitPresentation);
+        Assert.True(print.IsSplitPresentation);
         menu.NotifyItemHoverChanged(split, true);
         LayoutMenu();
         Assert.Same(split, menu.ActiveItem);
@@ -1715,7 +1765,7 @@ public class CrystalContextualTests
         LayoutMenu();
         Assert.Same(print, menu.ActiveItem);
         var printPane = (StackPanel)print.Content;
-        Assert.False(((RibbonApplicationMenuPaneItem)printPane.Children[1]).IsEnabled);
+        Assert.True(((RibbonApplicationMenuPaneItem)printPane.Children[1]).IsEnabled);
         ((RibbonApplicationMenuPaneItem)printPane.Children[0]).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Assert.False(ribbon.IsBackstageOpen);
         ribbon.IsBackstageOpen = true;
@@ -1728,9 +1778,9 @@ public class CrystalContextualTests
         Assert.True(menu.ActualWidth < window.ActualWidth,
             $"Menu {menu.ActualWidth}, window {window.ActualWidth}, ribbon {ribbon.ActualWidth}, pane {pane.Width}");
         Assert.Equal(new Rect(innerContent.RenderSize), Assert.IsType<RectangleGeometry>(innerContent.Clip).Rect);
-        var accent = (RibbonDropDownButton)window.FindName("AccentSelector");
+        var accent = window.AccentGallery;
         var oldFace = frame.Background;
-        ((RibbonMenuItem)accent.Items[1]).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        accent.SelectedItem = accent.Items[2];
         LayoutMenu();
         Assert.NotSame(oldFace, frame.Background);
         Assert.Same(window.FindResource("RibbonKit.Brushes.ApplicationMenu.FrameBand"), frame.Background);
@@ -1750,12 +1800,13 @@ public class CrystalContextualTests
         Assert.Null(((Grid)split.Template.FindName("Root", split)).Clip);
         compare.IsChecked = false;
         compare.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        ((RibbonMenuItem)accent.Items[0]).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        accent.SelectedItem = accent.Items[0];
         window.Width = 1080;
+        ribbon.IsBackstageOpen = true;
         LayoutMenu();
+        frame = (Border)menu.Template.FindName("Frame", menu);
         Assert.Equal(new CornerRadius(14), frame.CornerRadius);
-        var footer = Assert.IsType<StackPanel>(menu.FooterContent);
-        ((RibbonApplicationMenuButton)footer.Children[0]).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        toggle.IsChecked = false;
         Assert.Null(ribbon.ApplicationMenu);
         Assert.False(ribbon.IsBackstageOpen);
         LayoutMenu();
@@ -1792,17 +1843,17 @@ public class CrystalContextualTests
         }
     }
 
-    private static void CheckCrystalScrollBars(CrystalPreviewWindow window, Ribbon ribbon)
+    private static void CheckCrystalScrollBars(MainWindow window, Ribbon ribbon)
     {
-        var stage = (Backstage)window.FindName("CrystalBackstage");
+        var stage = (Backstage)window.FindName("ShowcaseBackstage");
         var compare = (RibbonToggleButton)window.FindName("CompareToggle");
-        var viewers = new[] { "CrystalDocumentScroll", "CrystalOverviewScroll", "CrystalAppearanceScroll", "CrystalAboutScroll" };
+        var viewers = new[] { DocumentScrollViewer(window) };
         int previousSelection = stage.SelectedIndex;
         try
         {
             for (int i = 0; i < viewers.Length; i++)
             {
-                var viewer = (ScrollViewer)window.FindName(viewers[i]);
+                var viewer = viewers[i];
                 double originalHeight = viewer.Height;
                 try
                 {
@@ -1848,17 +1899,17 @@ public class CrystalContextualTests
         void LayoutScroll() { Sta.Drain(); window.UpdateLayout(); }
     }
 
-    private static void CheckCrystalMessages(CrystalPreviewWindow window, Ribbon ribbon, RibbonTabControl tabs)
+    private static void CheckCrystalMessages(MainWindow window, Ribbon ribbon, RibbonTabControl tabs)
     {
         var previousMotion = RibbonKit.Animation.RibbonAnimation.GetActionOverride(RibbonKit.Animation.RibbonAnimationAction.MessageBar);
         RibbonKit.Animation.RibbonAnimation.SetActionLevel(RibbonKit.Animation.RibbonAnimationAction.MessageBar,
             RibbonKit.Animation.RibbonAnimationLevel.None);
         try
         {
-            var bar = (RibbonMessageBar)window.FindName("CrystalMessageBar");
-            var first = (RibbonMessage)window.FindName("CrystalProtectedMessage");
-            var second = (RibbonMessage)window.FindName("CrystalSecurityMessage");
-            var show = (RibbonMenuItem)window.FindName("MessagePreviewButton");
+            var bar = (RibbonMessageBar)window.FindName("ShowcaseMessageBar");
+            var first = (RibbonMessage)window.FindName("ProtectedViewMessage");
+            var second = (RibbonMessage)window.FindName("SecurityNoticeMessage");
+            var show = (RibbonMenuItem)window.LayoutDemosButton.Items[3];
             var drawer = (Border)ribbon.Template.FindName("QatBelowHost", ribbon);
             var drawerRadius = drawer.CornerRadius;
             var drawerShadow = drawer.Effect;
@@ -1924,6 +1975,31 @@ public class CrystalContextualTests
             else RibbonKit.Animation.RibbonAnimation.ClearActionLevel(RibbonKit.Animation.RibbonAnimationAction.MessageBar);
         }
         void LayoutMessages() { Sta.Drain(); window.UpdateLayout(); }
+    }
+
+    private static MainWindow CreateCrystalWindow()
+    {
+        var application = Sta.UseApplication(showcaseResources: true);
+        ThemeManager.Apply(application, RibbonTheme.Office2024);
+        var window = new MainWindow { Width = 1080, Height = 680, Left = -10000, Top = -10000,
+            ShowActivated = false, ShowInTaskbar = false };
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        var loaded = (RoutedEventHandler)Delegate.CreateDelegate(typeof(RoutedEventHandler), window,
+            typeof(MainWindow).GetMethod("OnWindowLoaded", flags)!);
+        window.Loaded -= loaded;
+        typeof(MainWindow).GetField("_restoringAppearance", flags)!.SetValue(window, true);
+        typeof(MainWindow).GetField("_baselineLayout", flags)!.SetValue(window, RibbonCustomizationSerializer.Serialize(window.MainRibbon));
+        window.ThemeGallery.SelectedItem = window.ThemeGallery.Items[0];
+        window.MainRibbon.QuickAccessPosition = RibbonQuickAccessPosition.BelowRibbon;
+        window.ProtectedViewMessage.IsOpen = false;
+        window.SecurityNoticeMessage.IsOpen = false;
+        return window;
+    }
+
+    private static ScrollViewer DocumentScrollViewer(MainWindow window)
+    {
+        window.DocumentEditor.ApplyTemplate();
+        return Assert.IsType<ScrollViewer>(window.DocumentEditor.Template.FindName("PART_ContentHost", window.DocumentEditor));
     }
 
     private static Border? FindUtilityRim(System.Windows.Controls.Primitives.ButtonBase button)

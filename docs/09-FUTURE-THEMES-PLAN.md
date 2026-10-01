@@ -398,11 +398,13 @@ changing its layout. Preserve the accepted Crystal tile and gallery border visua
 
 On 2026-09-30 the user also reported that gallery items have a different layout
 at 200% and requested later investigation alongside the existing RTL
-option-indicator test failure. The exact affected gallery/layout difference is
-not yet established, and it is not assumed to be the same clipping issue.
-Both observations and the bounded later checks are recorded in the
+option-indicator test failure. On 2026-10-01 the user clarified that only the
+View-tab Theme gallery was affected: its selected tile was clipped at the
+edges at 200%; other galleries did not show the difference. The subsequent
+Showcase content-height correction and RTL fixture correction are recorded in
+[§3.214](history/01-library.md#3214-theme-gallery-clipping-and-deferred-test-corrections--2026-10-01).
+Current review scope is maintained in the
 [deferred layout list](13-CRYSTAL-PORTABILITY-AND-ORB-PLAN.md#deferred-layout-observations-at-200).
-Neither cause is confirmed, and no fix or new acceptance is claimed.
 
 Gallery boundary refinement: the hover-style white rim disappeared into the pale
 surfaces inside and outside the strip. Its persistent border now uses an opaque

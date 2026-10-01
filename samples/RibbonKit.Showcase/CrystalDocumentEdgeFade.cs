@@ -10,7 +10,10 @@ namespace RibbonKit.Showcase;
 internal sealed class CrystalDocumentEdgeFade
 {
     private readonly Ribbon _ribbon;
-    private readonly ScrollViewer _viewer;
+    private ScrollViewer? _viewer;
+    private readonly RichTextBox? _editor;
+    private readonly FrameworkElement _surface;
+    private readonly Thickness _originalMargin;
     private ScrollContentPresenter? _presenter;
     private ScrollBar? _verticalScrollBar;
     private Brush? _mask;
@@ -20,13 +23,14 @@ internal sealed class CrystalDocumentEdgeFade
     private bool _requested = true;
     private bool _qatUnderlayRequested = true;
 
-    public CrystalDocumentEdgeFade(Ribbon ribbon, ScrollViewer viewer)
+    public CrystalDocumentEdgeFade(Ribbon ribbon, RichTextBox editor, FrameworkElement surface)
     {
         _ribbon = ribbon;
-        _viewer = viewer;
+        _editor = editor;
+        _surface = surface;
+        _originalMargin = surface.Margin;
         _ribbon.LayoutUpdated += (_, _) => Update();
-        _viewer.Loaded += (_, _) => Update();
-        _viewer.ScrollChanged += (_, _) => Update();
+        editor.Loaded += (_, _) => Update();
     }
 
     public void Apply(bool crystal, bool requested, bool qatUnderlayRequested)
@@ -39,15 +43,28 @@ internal sealed class CrystalDocumentEdgeFade
 
     private void Update()
     {
+        if (_editor != null)
+        {
+            _editor.ApplyTemplate();
+            var viewer = _editor.Template?.FindName("PART_ContentHost", _editor) as ScrollViewer;
+            if (!ReferenceEquals(_viewer, viewer))
+            {
+                if (_viewer != null) _viewer.ScrollChanged -= OnScrollChanged;
+                _viewer = viewer;
+                if (viewer != null) viewer.ScrollChanged += OnScrollChanged;
+            }
+        }
+        if (_viewer == null) return;
         _viewer.ApplyTemplate();
         var (overlap, fadeStart) = GetQatOverlap();
         if (overlap > 0)
         {
-            var margin = new Thickness(0, -overlap, 0, 0);
-            if (_viewer.Margin != margin) _viewer.Margin = margin;
+            var margin = new Thickness(_originalMargin.Left, _originalMargin.Top - overlap,
+                _originalMargin.Right, _originalMargin.Bottom);
+            if (_surface.Margin != margin) _surface.SetCurrentValue(FrameworkElement.MarginProperty, margin);
         }
-        else if (_viewer.ReadLocalValue(FrameworkElement.MarginProperty) != DependencyProperty.UnsetValue)
-            _viewer.ClearValue(FrameworkElement.MarginProperty);
+        else if (_surface.Margin != _originalMargin)
+            _surface.SetCurrentValue(FrameworkElement.MarginProperty, _originalMargin);
 
         var scrollBar = _viewer.Template?.FindName("PART_VerticalScrollBar", _viewer) as ScrollBar;
         if (!ReferenceEquals(_verticalScrollBar, scrollBar))
@@ -104,6 +121,8 @@ internal sealed class CrystalDocumentEdgeFade
         else
             _presenter.ClearValue(UIElement.OpacityMaskProperty);
     }
+
+    private void OnScrollChanged(object sender, ScrollChangedEventArgs e) => Update();
 
     private (double Overlap, double FadeStart) GetQatOverlap()
     {

@@ -81,8 +81,12 @@ public sealed class CrystalLocalizationIntegrationTests
         return null;
     }
 
-    [Fact]
-    public void Detached_rtl_lab_applies_crystal_and_restores_office_options() => Sta.Run(() =>
+    [Theory]
+    [InlineData(1800, 1.25)]
+    [InlineData(720, 1.25)]
+    [InlineData(1800, 2)]
+    [InlineData(720, 2)]
+    public void Detached_rtl_lab_applies_crystal_and_restores_office_options(double width, double scale) => Sta.Run(() =>
     {
         var application = Sta.UseApplication();
         application.Resources.MergedDictionaries.Add(new ResourceDictionary
@@ -90,19 +94,20 @@ public sealed class CrystalLocalizationIntegrationTests
         ThemeManager.Apply(application, RibbonTheme.Office2024);
         var demo = new LocalizationRtlDemo
         {
-            Left = -10000, Top = -10000, Width = 1800, ShowActivated = false, ShowInTaskbar = false,
+            Left = -10000, Top = -10000, Width = width, ShowActivated = false, ShowInTaskbar = false,
             WindowStartupLocation = WindowStartupLocation.Manual,
         };
         try
         {
             demo.Show();
+            VisualTreeHelper.SetRootDpi(demo, new DpiScale(scale, scale));
             Sta.Drain();
             Assert.Null(demo.TryFindResource("Crystal.Brushes.FrostedFrame"));
             demo.RightToLeftToggle.IsChecked = true;
             Sta.Drain();
             demo.UpdateLayout();
-            AssertOptionIndicatorSide(demo.RtlCheckBox, rtl: true);
-            AssertOptionIndicatorSide(demo.RtlRadioButton, rtl: true);
+            AssertOptionIndicatorSide(demo.RtlCheckBox, rtl: true, scale);
+            AssertOptionIndicatorSide(demo.RtlRadioButton, rtl: true, scale);
             demo.RightToLeftToggle.IsChecked = false;
             Sta.Drain();
             demo.DemoProtectedViewMessage.IsOpen = true;
@@ -117,8 +122,8 @@ public sealed class CrystalLocalizationIntegrationTests
             demo.PseudoLocalizationToggle.IsChecked = true;
             Sta.Drain();
             demo.UpdateLayout();
-            AssertOptionIndicatorSide(demo.RtlCheckBox, rtl: true);
-            AssertOptionIndicatorSide(demo.RtlRadioButton, rtl: true);
+            AssertOptionIndicatorSide(demo.RtlCheckBox, rtl: true, scale);
+            AssertOptionIndicatorSide(demo.RtlRadioButton, rtl: true, scale);
             demo.DemoBackstage.Design = RibbonBackstageDesign.CrystalSidebar;
             demo.DemoRibbon.IsBackstageOpen = true;
             Sta.Drain();
@@ -157,8 +162,8 @@ public sealed class CrystalLocalizationIntegrationTests
             demo.RightToLeftToggle.IsChecked = false;
             Sta.Drain();
             demo.UpdateLayout();
-            AssertOptionIndicatorSide(demo.RtlCheckBox, rtl: false);
-            AssertOptionIndicatorSide(demo.RtlRadioButton, rtl: false);
+            AssertOptionIndicatorSide(demo.RtlCheckBox, rtl: false, scale);
+            AssertOptionIndicatorSide(demo.RtlRadioButton, rtl: false, scale);
             demo.RightToLeftToggle.IsChecked = true;
 
             Assert.NotNull(demo.TryFindResource("Crystal.Brushes.FrostedFrame"));
@@ -184,8 +189,8 @@ public sealed class CrystalLocalizationIntegrationTests
             demo.ApplyCrystal(true, Colors.SeaGreen);
             Sta.Drain();
             demo.UpdateLayout();
-            AssertOptionIndicatorSide(demo.RtlCheckBox, rtl: true);
-            AssertOptionIndicatorSide(demo.RtlRadioButton, rtl: true);
+            AssertOptionIndicatorSide(demo.RtlCheckBox, rtl: true, scale);
+            AssertOptionIndicatorSide(demo.RtlRadioButton, rtl: true, scale);
             Color darkGlyph = Assert.IsType<SolidColorBrush>(demo.RtlCheckBox.FindResource(
                 "RibbonKit.Brushes.Option.Glyph")).Color;
             Assert.True(darkGlyph.R > 0xD0 && darkGlyph.G > 0xD0 && darkGlyph.B > 0xD0);
@@ -260,16 +265,44 @@ public sealed class CrystalLocalizationIntegrationTests
             Assert.True(backLeft < brandLeft);
     }
 
-    private static void AssertOptionIndicatorSide(Control option, bool rtl)
+    private static void AssertOptionIndicatorSide(Control option, bool rtl, double scale)
     {
-        var indicator = Assert.IsAssignableFrom<FrameworkElement>(option.Template.FindName("Indicator", option));
-        var header = Assert.IsType<ContentPresenter>(option.Template.FindName("HeaderPresenter", option));
-        double indicatorLeft = ScreenX(indicator).left;
-        double headerLeft = ScreenX(header).left;
-        if (rtl)
-            Assert.True(indicatorLeft > headerLeft);
-        else
-            Assert.True(indicatorLeft < headerLeft);
+        DependencyObject? ancestor = option;
+        while (ancestor is not null && ancestor is not RibbonGroup)
+            ancestor = LogicalTreeHelper.GetParent(ancestor) ?? VisualTreeHelper.GetParent(ancestor);
+        var group = Assert.IsType<RibbonGroup>(ancestor);
+        bool open = group.SizeState == RibbonGroupSizeState.Collapsed;
+        if (open)
+        {
+            // A native high-DPI window can be narrower than its requested DIP width.
+            // Measure the visible flyout instead of the hidden, zero-sized group content.
+            group.CollapsedButton!.IsChecked = true;
+            Sta.Drain();
+            group.UpdateLayout();
+        }
+        try
+        {
+            // A group flyout has a separate visual root. Apply the simulated scale there too;
+            // the popup HWND itself still uses the monitor's native DPI.
+            Visual root = option;
+            while (VisualTreeHelper.GetParent(root) is Visual parent) root = parent;
+            VisualTreeHelper.SetRootDpi(root, new DpiScale(scale, scale));
+            Sta.Drain();
+            option.UpdateLayout();
+            Assert.Equal(scale, VisualTreeHelper.GetDpi(option).DpiScaleX, 5);
+            option.ApplyTemplate();
+            var indicator = Assert.IsAssignableFrom<FrameworkElement>(option.Template.FindName("Indicator", option));
+            var header = Assert.IsType<ContentPresenter>(option.Template.FindName("HeaderPresenter", option));
+            Assert.True(option.ActualWidth > 0 && indicator.ActualWidth > 0 && header.ActualWidth > 0);
+            double indicatorLeft = ScreenX(indicator).left;
+            double headerLeft = ScreenX(header).left;
+            Assert.True(rtl ? indicatorLeft > headerLeft : indicatorLeft < headerLeft,
+                $"{option.Name}: indicator={indicatorLeft}, header={headerLeft}, option width={option.ActualWidth}, flow={option.FlowDirection}");
+        }
+        finally
+        {
+            if (open) group.CollapsedButton!.IsChecked = false;
+        }
     }
 
     private static void AssertCustomizeTreeDirection(RibbonOptionsDialog dialog)

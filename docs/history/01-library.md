@@ -6459,3 +6459,170 @@ No manual Showcase launch, Writer code/test edit, commit, push or publication
 occurred. The active plan owns the pending slice 9 live review; broader motion,
 open-menu scaling/mixed-monitor and the two deferred 200% observations retain their
 separate scopes. Content/link/final diff review and git diff --check passed.
+
+### 3.213 Main Showcase consolidation — 2026-10-01
+
+Crystal portability slice 10 moves the useful material-study demonstrations into
+the existing main Showcase. No runtime code, public API, Writer code/tests or
+snapshot approvals/tolerances changed. The separate `CrystalPreviewWindow` XAML,
+code-behind, View launch button and `--crystal` startup branch are retired.
+The preview-only `CrystalBackstagePresentation` and `CrystalScreenTipPalette`
+helpers are also removed; their resource-scope and binding regression checks now
+use direct shared resources and ordinary WPF bindings.
+
+| Former preview demonstration | Main Showcase surface |
+| --- | --- |
+| Crystal / Office 2024 comparison | Samples: Compare 2024; View retains all six themes, dark mode and accent gallery. |
+| Tab arrows, body arrows and QAT overflow | Samples: Try layouts adds/removes temporary navigation tabs, saves/restores each Home group's CanResize value, and saves/restores QAT items, width and placement. |
+| Checkbox, mixed state, radio grouping and disabled gallery | Samples: Options, Spacing and States; explicit source bindings survive group reparenting. Home keeps its existing disabled button/split/input-group demonstration. |
+| Document title, scrolling content, edge fade and QAT underlay | Samples: Document title and Document effects operate on the existing editable RichTextBox. The title is explicitly bound into document and Backstage content. Only the added scrolling paragraphs are removed, preserving unrelated document edits. |
+| Context tint change | Samples: Change context tint selects Picture Format and changes its ordinary ContextualColor; existing Picture and merged Chart Tools retain their shared material. |
+| Styles, inputs, messages and customization | Existing Home and File flows; Samples adds gallery enable/disable and message add/dismiss controls. The same three-page Options dialog is reused by migrated tests. |
+| File menu, Backstage sidebar/floating designs, tint and native effects | Existing View/File controls and scoped palette integration; nested host dropdowns now receive CapturedBackdrop registrations through logical-child discovery. |
+
+`MainWindow.Samples.cs` contains the host demonstrations. Temporary QAT changes
+do not write customization while active; restoring overflow persists the real
+QAT. Opening Options first removes temporary tabs/overflow and restores Home
+resizing. Unidentified navigation demo tabs and commands are omitted by the
+existing customization serializer. No persistence format or library coordinator
+was added. Document fade and underlay start disabled, preserving the ordinary
+document layout until explicitly selected in Crystal. `CrystalDocumentEdgeFade`
+now locates the RichTextBox's native ScrollViewer, tracks template replacement,
+retains the document card's original margins and keeps the scrollbar below the
+overlapping QAT. Theme changes, QAT placement and notices restore or reapply the
+requested host effect. These are application document effects, not library
+control paint.
+
+The six former preview-window regression tests now construct the actual main
+window offscreen, skip its user-preference load, suppress persistence, set a
+known factory ribbon and reset application resources on cleanup. They cover
+customization frames/bindings, editable document scrolling and retained edits,
+fade/underlay restoration, direct/nested dropdown and collapsed-group captures,
+messages, tab/body arrows, QAT overflow and reparented option groups. Main-window
+checks passed before the preview files were removed. Tests reacquire the File
+frame after main-window theme switching because its File-surface selection can
+detach/retemplate that control; a stale part is not current paint evidence.
+
+Final automation used normal output folders: Release Showcase/test compilation
+passed, followed by all **431 eligible runtime tests** with the existing
+`FullyQualifiedName!~Writer&FullyQualifiedName!~Every_ribbon_button_family_consumes_the_shared_hover_glass`
+filter (`slice10-release.trx`). The separate RibbonKit-only consumer passed its
+single aggregate test in 1m49s (`slice10-consumer.trx`) without Showcase resources
+or helpers. The normal Debug Showcase build passed with **0 warnings / 0 errors**
+and updated `samples/RibbonKit.Showcase/bin/Debug/net8.0-windows/RibbonKit.Showcase.exe`.
+Visual snapshots were not rerun for this consumer-only consolidation; approvals
+and tolerances are unchanged. No manual app launch, commit, push or publication
+occurred. The active plan owns the pending main-window live review; broader
+motion, open-menu scaling, mixed-monitor and deferred 200% observations remain
+separate gates. Changed content/links and final diff were reviewed; git diff
+--check passed.
+
+### 3.214 Theme gallery clipping and deferred test corrections — 2026-10-01
+
+The user authorized investigating the two deferred 200% observations and then
+the excluded Office 2010 hover-glass contract. They clarified that the gallery
+report concerned only the View-tab Theme gallery: its selected tile was clipped
+at the edges. Other galleries did not exhibit that difference.
+
+The actual six Showcase Theme tiles used 42-DIP-high content. Shared item padding,
+border and margins made each tile 52 DIP tall, exceeding the strip viewport of
+50.4 DIP at simulated 125% and 50 DIP at simulated 200%. The text-only Home Styles
+tile measured 50 DIP and fit both viewports. The fix reduces only the six host
+content panels to 40 DIP; shared gallery templates, tokens and selection paint
+are unchanged. `ThemeGalleryLayoutTests` loads the actual Showcase markup,
+detaches the Theme and Styles galleries into an offscreen fixture, suppresses
+appearance persistence and disables animation for settled geometry. It checks
+all six theme selections after popup open/close: tile and selected-border bounds,
+icon/text spacing, retained selection and the Styles comparison. Effective tile
+DPI is asserted after returning from the popup. Corrected Theme tiles measure
+49.6 DIP at 125% and 50 DIP at 200%, fitting their respective viewports. Before
+and after PNGs in `TestResults/theme-gallery-diagnostics` were inspected; no
+snapshot approval or tolerance changed.
+
+`Detached_rtl_lab_applies_crystal_and_restores_office_options` previously measured
+hidden, zero-sized checkbox/radio content when a constrained window collapsed
+the Inputs group. At a requested width of 720 DIP, the original assertion failed
+at both simulated 125% and 200%: indicator and header screen coordinates were
+identical and their widths were zero. The test now opens the group's native
+flyout when collapsed, requires nonzero visible parts, and preserves the physical
+LTR/RTL position assertion. Its matrix uses requested widths of 1800/720 DIP and
+scales of 125%/200%, retaining Office, Crystal light/dark, File and customization
+coverage. The simulated scale is also applied to a flyout's separate visual root
+and asserted on the option. No runtime option-placement change was required.
+
+The unchanged Office 2010 consumer-count test reproduced its dropdown failure:
+three references to `Control.HoverBackground` rather than the required five.
+The two split halves correctly use `Control.SplitActiveHover`. That token has
+the same Office 2010 gradient, including the bottom inner glow. The test now
+counts both semantic hover consumers without lowering any family threshold.
+Additional checks guard the split token's bottom glow and compare resolved
+ordinary/split gradients in Office 2010 light/dark using only library resources.
+The former hover exclusion is removed from the current verification command;
+historical filtered results remain unchanged.
+
+Release test compilation and the 33-case focused run passed
+(`deferred-issues-focused.trx`); the final strengthened RTL class passed all five
+cases (`rtl-root-dpi-after.trx`). The final Release runtime run passed **443 tests,
+0 failed / 0 skipped** with only `FullyQualifiedName!~Writer`
+(`deferred-issues-runtime-final.trx`). This includes all four hover-contract
+family cases. The normal Debug Showcase build passed with **0 warnings / 0 errors**
+and updated its default review executable. Visual snapshots, the separate
+portability consumer and the full solution suite were not rerun for this host
+content/test-only change. No runtime/public API or Writer code/tests changed.
+
+Synthetic visual scaling uses `VisualTreeHelper.SetRootDpi` and constrained
+fixture widths; Windows display settings were not changed. Popup HWND DPI,
+native Display Settings timing and mixed-monitor transitions are not simulated
+by those visual-root checks. Native 200% Theme gallery visual acceptance remains
+with the user in the active plan, as do the separate broader motion/open-menu
+gates. No manual Showcase launch, commit, push or publication occurred.
+
+### 3.215 Gallery selected-row retention after tab reload — 2026-10-01
+
+The user's recording shows the View Theme gallery displaying the selected Office
+2024 tile through several tab visits, then showing its first Crystal tile after
+Home → Ribbon Lab → View. A RibbonKit-only reproduction establishes that the
+selection survives while the native strip scroll offset resets to zero when the
+tab content reloads. Four Office 2024/Crystal light/dark cases failed before the
+fix at simulated 125%/200%; the selected fifth tile lay roughly 200 DIP below
+the 50-DIP viewport although `SelectedItem` still referenced that tile.
+
+`InRibbonGallery` now queues its existing generation-guarded viewport refresh
+when a closed gallery with a selection loads, and when its template is rebuilt
+while loaded. The settled strip reveals the selected row without animation.
+The restoration target adds the current vertical offset to the tile's viewport
+position, keeping the absolute row calculation correct. No selection mutation,
+new public API, Showcase patch or theme/template paint change was introduced.
+The separate permanent strip/popup scrollers remain intact, and opening the
+popup still resets its own page to zero.
+
+`InRibbonGallerySelectionTests` exercises the recorded pattern with ordinary
+RibbonKit tabs and two galleries, then replaces the template without unloading
+the gallery. It checks the same selected item, full selected-border visibility
+and no extra selection events. Manual browsing away from the selected row
+survives unrelated resize/layout while the gallery stays loaded. The focused
+run passed 14 cases: four new retention cases, two Theme tile clipping cases,
+and eight existing shared gallery/DPI reproductions from
+`WriterConsumerFrictionTests` (`gallery-row-focused.trx`). No Writer application
+code or tests were edited.
+
+`GallerySelectionPortabilityChecks` runs at the end of the existing separate
+consumer aggregate. It uses only RibbonKit resources, `ItemsSource`, a host data
+template and a two-way bound selected index. All six themes, light/dark, LTR/RTL
+and simulated 125%/200% check restored selected bounds after tab reload and popup
+open/close, retained binding/source value and the popup's independent viewport.
+
+The normal Release solution build passed with **0 warnings / 0 errors** for both
+runtime targets. The serialized solution test run used only the retained
+`FullyQualifiedName!~Writer` exclusion: **447 runtime tests**, the visual snapshot
+aggregate with unchanged approvals/tolerances, and the expanded RibbonKit-only
+consumer aggregate all passed (`gallery-selection-release.trx` in each project's
+TestResults). The consumer completed in 1m25s. Writer tests were excluded, so this
+is a filtered solution pass rather than an unfiltered full-suite claim. The
+normal Debug Showcase build also passed with **0 warnings / 0 errors** and updated
+its default review executable.
+
+The supplied recording was inspected through extracted frames. No manual
+Showcase launch, commit, push or publication occurred. Live confirmation of its
+tab-switch sequence remains in the active plan; synthetic visual DPI coverage
+does not close native popup/monitor-transition or broader motion acceptance.

@@ -15,7 +15,9 @@
 | 7: utility buttons and scrollbars | Bounded live review complete 2026-10-01 in both reviewed themes: utility/arrows, modal/merged-caption controls, customization spacing, native scrolling/focus/RTL and 125% → 200% → 125% return. [Final acceptance §3.207](history/01-library.md#3207-slice-7-bounded-live-review-complete--2026-10-01). |
 | 8: contextual material and tint | Bounded live review, separate dropdown DPI-return recheck and vertical Paste hover-width review passed 2026-10-01. [Slice evidence §3.208](history/01-library.md#3208-shared-crystal-contextual-material-and-scoped-palettes--2026-10-01), [popup correction §3.210](history/01-library.md#3210-popup-margins-follow-the-dpi-pixel-grid--2026-10-01), [hover correction §3.211](history/01-library.md#3211-vertical-split-hover-width-and-diagnostic-cleanup--2026-10-01). |
 | 9: optional host effects | Bounded captured-surface and Glass look live review accepted 2026-10-01 on the normal Debug build, per the user's overall confirmation that everything seems okay. Broader motion, open-menu scaling and mixed-monitor gates remain open. [Evidence §3.212](history/01-library.md#3212-optional-captured-backdrops-and-scoped-glass-overlays--2026-10-01). |
-| 10: Showcase consolidation | Open; retain the separate preview window until this slice. |
+| 10: Showcase consolidation | Bounded functional live review confirmed 2026-10-01: the user reports the consolidated demonstrations work as before. Document fade and QAT underlay also work, with a different visual result because the main Showcase uses a padded editable document card rather than the former preview's scrolling page; the supplied comparison screenshots document that host-layout difference. The separate preview and launch path are retired. Broader motion, open-menu scaling and mixed-monitor gates remain open. [Evidence §3.213](history/01-library.md#3213-main-showcase-consolidation--2026-10-01). |
+| Deferred layout and hover checks | Corrected and verified automatically 2026-10-01: Theme gallery selected-edge clipping, the constrained RTL fixture and the excluded Office 2010 hover contract. Native 200% Theme gallery visual acceptance remains open. [Evidence §3.214](history/01-library.md#3214-theme-gallery-clipping-and-deferred-test-corrections--2026-10-01). |
+| Gallery selected-row retention | Bounded live review confirmed 2026-10-01: the user changed tabs for 25 seconds and the selected tile stayed visible, confirming the reported reset is fixed. Shared RibbonKit also has automated coverage for tab reload and template replacement. Native DPI/monitor transitions and broader motion gates retain their separate scope. [Evidence §3.215](history/01-library.md#3215-gallery-selected-row-retention-after-tab-reload--2026-10-01). |
 
 ### Slice 8 live review
 
@@ -219,41 +221,67 @@ shipped baseline is unchanged.
    scope and app control discovery; no library-wide coordinator was added.
    See [README's integration examples](../README.md#theming--rendering) and §3.212 for API
    rationale, automation evidence and test limitations.
-10. **Showcase consolidation after slices 5–9.** Inventory features still
-    exclusive to `CrystalPreviewWindow`, move the important demonstration and
-    comparison controls into the main Showcase window, and remove the separate
-    Crystal preview window and its launch path after the main window covers them.
-    Keep application-owned document content and optional host effects in Showcase;
-    verify the main-window flows before deleting preview-only code and tests.
+10. **Showcase consolidation — implemented 2026-10-01.** The main **Samples** tab
+    now owns the Office 2024 comparison, temporary navigation/body scrolling and
+    QAT overflow, checkbox/radio/disabled-gallery states, document title and
+    optional scrolling text, edge fade and QAT underlay. Its context-tint command
+    selects Picture Format and changes that tab alone. Existing **View**, Home
+    and File controls cover theme/dark/tint, Backstage layouts, inputs, styles,
+    messages and customization. Main-window tests passed before removal of
+    `CrystalPreviewWindow`, `--crystal`, and the preview-only Backstage/ScreenTip
+    helpers; the regression checks now target main-window flows or direct shared
+    resource scopes. Document paint and capture discovery remain host-owned.
+    See §3.213 for the inventory and automated evidence.
 
 The Crystal Backstage designs and shared MDI templates are already in
-RibbonKit. `CrystalBackstagePresentation` primarily selects the preview layout,
-scopes its palette and binds preview document data; those host tasks do not
-become library features. Reassess only a demonstrated detached-resource gap.
+RibbonKit. Main Showcase retains layout selection, palette scoping and explicit
+document bindings as host tasks. Independent palettes remain available through
+`ThemeManager.CreatePalette`; consolidation introduces no runtime/public API.
+
+### Slice 10 live review
+
+Use the normal Debug build at
+`samples/RibbonKit.Showcase/bin/Debug/net8.0-windows/RibbonKit.Showcase.exe`.
+The agent did not launch Showcase. Record acceptance in the slice 10 status row.
+
+1. Choose Crystal in **View**, then inspect **Samples** in light/dark and after
+   changing tint. Try checkbox/radio states, Enable options, Disable gallery,
+   Change context tint and Compare 2024. Check that values and selections survive.
+2. In **Try layouts**, add/remove scroll arrows, keep Home groups expanded while
+   narrowing the window, and try/restore QAT overflow. Check both message actions,
+   File surfaces/layouts and customization from the existing controls.
+3. Edit the document title/text; add/remove scrolling text. Enable document edge
+   fade and QAT underlay in Crystal, scroll, change QAT placement, and add/dismiss
+   messages. Switch to Office and back; verify restoration and continued editing.
+   These document effects start disabled and remain Showcase-owned.
 
 ## Deferred layout observations at 200%
 
-On 2026-09-30 the user requested that both observations below be recorded for
-later investigation, outside the current slice 6 menu acceptance work.
+The two observations recorded on 2026-09-30 were investigated on 2026-10-01
+under separate user authorization; the earlier slice 6 acceptance keeps its scope.
 
-- **Gallery item layout:** the user reports a different gallery-item layout at
-  200% scaling. The affected gallery, exact geometry difference and cause are
-  not yet established. The earlier View-tab Theme gallery selection-clipping
-  report in [the theme plan](09-FUTURE-THEMES-PLAN.md) may be related, but these
-  reports are not assumed to share a cause. Later compare 125% and 200% with
-  actual window/item/viewport bounds, icon-bearing and text-only items, and
-  selection/wrapping/clipping before changing layout or snapshot approvals.
-- **RTL option-indicator test:**
-  `Detached_rtl_lab_applies_crystal_and_restores_office_options` fails its first
-  Office 2024 RTL checkbox-position assertion at the current 200% setup, before
-  Crystal is applied or File opens. It fails identically in the new and prior
-  outputs (§3.203). Later compare actual option bounds and native test-window
-  sizes at 125%/200% to distinguish a control defect from a constrained fixture.
-  The cause is unconfirmed; the recorded broader run remains 417 passed/1 failed.
+- **Theme gallery selected-edge clipping:** the user clarified that only the
+  View-tab Theme gallery was affected: the selected tile was clipped at its
+  edges at 200%. Other galleries did not show this difference. The Showcase
+  tile content height is corrected, and all six theme selections fit the strip
+  at simulated 125% and 200%, including after popup open/close. Native 200%
+  visual acceptance remains open.
+- **RTL option-indicator test:** the initial Office failure measured hidden,
+  zero-sized content when the fixture's Inputs group collapsed. The test now
+  opens the group flyout when needed and measures visible checkbox/radio parts.
+  Wide/narrow cases pass at simulated 125% and 200%, including Crystal,
+  light/dark and LTR/RTL checks. Runtime placement is unchanged. The earlier
+  417 passed/1 failed result remains historical evidence in §3.203.
 
-Neither item is fixed or accepted. The successful RTL File-menu checks and
-scrollbar-button acceptance retain their original scope. No runtime change,
-build or test run was made for this deferred-issue note.
+The separately deferred **Office 2010 hover-glass contract** is also corrected:
+its dropdown coverage now includes the split-half hover tokens, retains the
+five-consumer threshold, and verifies equivalent glass in light/dark. It ran
+in the current runtime suite without the former hover exclusion.
+
+Bounds, rendered diagnostics, test results and scope are recorded in
+[§3.214](history/01-library.md#3214-theme-gallery-clipping-and-deferred-test-corrections--2026-10-01).
+Synthetic visual DPI checks do not establish native popup DPI transitions,
+reduced-motion behavior or mixed-monitor acceptance.
 
 ## Remaining slice 6 live review
 

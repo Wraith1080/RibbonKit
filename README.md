@@ -168,7 +168,9 @@ glyph template is instantiated separately in each button.
 frame appearance. Theme selection does not silently enable a material.
 Contextual tabs can optionally set `RibbonTab.ContextualSelectionBrush` for a distinct
 selection marker; null uses the contextual tint or Crystal's reflective treatment
-of it. The separate Crystal preview (`--crystal`) remains available for comparison.
+of it. Showcase's **Samples** tab compares Crystal with Office 2024 and demonstrates
+tab/body scrolling, QAT overflow, option states and optional document edge effects.
+Use **View** for theme, tint, File layout and native backdrop selection.
 Motion honors reduced-motion settings. Recorded DPI checks include 100/125/150/175/200%
 and mixed-monitor scenarios; new changes still need their applicable checks.
 
