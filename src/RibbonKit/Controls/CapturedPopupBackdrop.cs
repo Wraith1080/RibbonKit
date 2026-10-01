@@ -7,13 +7,13 @@ using System.Windows.Media.Effects;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 
-namespace RibbonKit.Showcase;
+namespace RibbonKit.Controls;
 
 /// <summary>Places a blurred window snapshot behind a shared ribbon popup's sharp content.</summary>
-internal sealed class CrystalPopupBackdrop
+internal sealed class CapturedPopupBackdrop
 {
     private const double Padding = 24;
-    private readonly Window _owner;
+    private readonly FrameworkElement _owner;
     private readonly Control _control;
     private readonly string _hostPart;
     private readonly ScrollChangedEventHandler _scrollChanged;
@@ -22,18 +22,21 @@ internal sealed class CrystalPopupBackdrop
     private DispatcherOperation? _pending;
     private Rect _lastBounds;
     private DpiScale _lastDpi;
+    private DpiScale _lastHostDpi;
     private bool _enabled;
     private bool _capturing;
     private bool _removed;
+    private DrawingBrush? _material;
+    private Brush? _tint;
+    private Brush? _fallback;
 
-    public CrystalPopupBackdrop(Window owner, Control control, string hostPart)
+    public CapturedPopupBackdrop(FrameworkElement owner, Control control, string hostPart)
     {
         _owner = owner;
         _control = control;
         _hostPart = hostPart;
         _control.Loaded += OnControlLoaded;
         _owner.SizeChanged += OnOwnerSizeChanged;
-        _owner.Closed += OnOwnerClosed;
         _scrollChanged = (_, _) => Refresh();
         _owner.AddHandler(ScrollViewer.ScrollChangedEvent, _scrollChanged, true);
     }
@@ -41,9 +44,8 @@ internal sealed class CrystalPopupBackdrop
     public void Apply(bool enabled)
     {
         _enabled = enabled;
-        Attach();
-        if (enabled) Refresh();
-        else RestoreBackground();
+        if (enabled) { Attach(); Refresh(); }
+        else DetachPopup();
     }
 
     private void OnControlLoaded(object sender, RoutedEventArgs e)
@@ -53,9 +55,7 @@ internal sealed class CrystalPopupBackdrop
     }
 
     private void OnOwnerSizeChanged(object sender, SizeChangedEventArgs e) => Refresh();
-    private void OnOwnerClosed(object? sender, EventArgs e) => Remove();
-
-    private void Attach()
+    internal void Attach()
     {
         if (_removed) return;
         _control.ApplyTemplate();
@@ -74,6 +74,7 @@ internal sealed class CrystalPopupBackdrop
 
     private void OnOpened(object? sender, EventArgs e)
     {
+        if (!_enabled) return;
         CompositionTarget.Rendering -= OnRendering;
         CompositionTarget.Rendering += OnRendering;
         Refresh();
@@ -91,13 +92,25 @@ internal sealed class CrystalPopupBackdrop
     {
         if (!_enabled || _capturing || !CanCapture()) return;
         var bounds = Bounds();
-        if (bounds != _lastBounds || !VisualTreeHelper.GetDpi(_owner).Equals(_lastDpi))
+        if (bounds != _lastBounds || !VisualTreeHelper.GetDpi(_owner).Equals(_lastDpi) ||
+            !VisualTreeHelper.GetDpi(_host!).Equals(_lastHostDpi) ||
+            !ReferenceEquals(_host!.TryFindResource("RibbonKit.Brushes.ApplicationMenu.FrameBand"), _tint) ||
+            !ReferenceEquals(_host.TryFindResource("RibbonKit.Brushes.Ribbon.ContentBackground"), _fallback) ||
+            !ReferenceEquals(_host.Background, _material))
             Refresh();
     }
 
     private bool CanCapture() => _enabled && !_removed && _popup?.IsOpen == true &&
         _host is { ActualWidth: > 0, ActualHeight: > 0 } &&
-        PresentationSource.FromVisual(_host) != null && _owner.IsLoaded;
+        PresentationSource.FromVisual(_host) != null && _owner.IsLoaded && CanPaint();
+
+    private bool CanPaint()
+    {
+        var valueSource = DependencyPropertyHelper.GetValueSource(_host!, Border.BackgroundProperty);
+        bool ownPaint = _material != null && ReferenceEquals(_host!.Background, _material);
+        return !((valueSource.BaseValueSource == BaseValueSource.Local || valueSource.IsCurrent) && !ownPaint) &&
+            valueSource.BaseValueSource is not BaseValueSource.Style and not BaseValueSource.StyleTrigger;
+    }
 
     private Rect Bounds()
     {
@@ -117,6 +130,7 @@ internal sealed class CrystalPopupBackdrop
     {
         if (!CanCapture()) return;
         var host = _host!;
+        // An explicit host Background (including a binding or scoped style) keeps precedence.
         _capturing = true;
         try
         {
@@ -126,25 +140,30 @@ internal sealed class CrystalPopupBackdrop
             if (crop == null) return;
 
             var surface = new Rect(0, 0, host.ActualWidth, host.ActualHeight);
-            var tint = (Brush)_owner.FindResource("Crystal.Brushes.FrostedFrame");
+            var tint = host.TryFindResource("RibbonKit.Brushes.ApplicationMenu.FrameBand") as Brush;
+            var fallback = host.TryFindResource("RibbonKit.Brushes.Ribbon.ContentBackground") as Brush;
             var material = new DrawingGroup();
             using (var context = material.Open())
             {
                 // A popup can extend beyond the owner window. Keep those pixels
                 // opaque where the owner has no content to sample.
-                context.DrawRectangle((Brush)_owner.FindResource("RibbonKit.Brushes.Ribbon.ContentBackground"),
-                    null, surface);
+                context.DrawRectangle(fallback, null, surface);
                 context.DrawImage(crop, surface);
                 context.DrawRectangle(tint, null, surface);
             }
-            host.Background = new DrawingBrush(material)
+            _material = new DrawingBrush(material)
             {
                 ViewboxUnits = BrushMappingMode.Absolute,
                 Viewbox = surface,
                 Stretch = Stretch.Fill,
             };
+            // SetCurrentValue leaves template resources/bindings available for replacement.
+            host.SetCurrentValue(Border.BackgroundProperty, _material);
+            _tint = tint;
+            _fallback = fallback;
             _lastBounds = bounds;
             _lastDpi = dpi;
+            _lastHostDpi = VisualTreeHelper.GetDpi(host);
         }
         finally { _capturing = false; }
     }
@@ -159,19 +178,7 @@ internal sealed class CrystalPopupBackdrop
 
         // Popup content lives in another HWND, so rendering the owner excludes
         // its foreground and shadow without changing visibility or keyboard focus.
-        var snapshot = new RenderTargetBitmap(width, height,
-            dpi.PixelsPerInchX, dpi.PixelsPerInchY, PixelFormats.Pbgra32);
-        var drawing = new DrawingVisual();
-        using (var context = drawing.RenderOpen())
-            context.DrawRectangle(new VisualBrush(owner)
-            {
-                AutoLayoutContent = false,
-                ViewboxUnits = BrushMappingMode.Absolute,
-                Viewbox = region,
-                Stretch = Stretch.Fill,
-            }, null, new Rect(0, 0, region.Width, region.Height));
-        snapshot.Render(drawing);
-        snapshot.Freeze();
+        var snapshot = CaptureSnapshot(owner, region, dpi);
 
         var image = new Image
         {
@@ -201,8 +208,28 @@ internal sealed class CrystalPopupBackdrop
 
     private void RestoreBackground()
     {
-        _host?.SetResourceReference(Border.BackgroundProperty,
-            "RibbonKit.Brushes.Ribbon.ContentBackground");
+        if (_host != null && _material != null && ReferenceEquals(_host.Background, _material))
+            _host.ClearValue(Border.BackgroundProperty);
+        _material = null;
+        _tint = null;
+        _fallback = null;
+    }
+
+    internal static RenderTargetBitmap CaptureSnapshot(FrameworkElement owner, Rect region, DpiScale dpi)
+    {
+        var snapshot = new RenderTargetBitmap((int)Math.Ceiling(region.Width * dpi.DpiScaleX),
+            (int)Math.Ceiling(region.Height * dpi.DpiScaleY),
+            dpi.PixelsPerInchX, dpi.PixelsPerInchY, PixelFormats.Pbgra32);
+        var drawing = new DrawingVisual();
+        using (var context = drawing.RenderOpen())
+            context.DrawRectangle(new VisualBrush(owner)
+            {
+                AutoLayoutContent = false, ViewboxUnits = BrushMappingMode.Absolute,
+                Viewbox = region, Stretch = Stretch.Fill,
+            }, null, new Rect(0, 0, region.Width, region.Height));
+        snapshot.Render(drawing);
+        snapshot.Freeze();
+        return snapshot;
     }
 
     private void DetachPopup()
@@ -227,7 +254,6 @@ internal sealed class CrystalPopupBackdrop
         DetachPopup();
         _control.Loaded -= OnControlLoaded;
         _owner.SizeChanged -= OnOwnerSizeChanged;
-        _owner.Closed -= OnOwnerClosed;
         _owner.RemoveHandler(ScrollViewer.ScrollChangedEvent, _scrollChanged);
     }
 }

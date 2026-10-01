@@ -12,8 +12,8 @@ public partial class CrystalPreviewWindow : RibbonWindow
     private ResourceDictionary? _crystal;
     private readonly CrystalBackstagePresentation _backstagePresentation;
     private readonly CrystalScreenTipPalette _screenTipPalette;
-    private readonly CrystalApplicationMenuBackdrop _applicationMenuBackdrop;
-    private readonly CrystalPopupBackdrop[] _popupBackdrops;
+    private readonly CapturedBackdrop _applicationMenuBackdrop;
+    private readonly CapturedBackdrop[] _popupBackdrops;
     private readonly CrystalDocumentEdgeFade _documentEdgeFade;
     private readonly string _baselineLayout;
     private readonly List<RibbonTab> _scrollPreviewTabs = new();
@@ -28,7 +28,7 @@ public partial class CrystalPreviewWindow : RibbonWindow
     {
         InitializeComponent();
         PreviewRibbon.ApplicationMenu = null;
-        _applicationMenuBackdrop = new CrystalApplicationMenuBackdrop(CrystalFileMenu, this);
+        _applicationMenuBackdrop = new CapturedBackdrop(CrystalFileMenu, this);
         // Group content is reparented by ribbon layout, so use the actual source
         // rather than resolving a window name from the borrowed content tree.
         foreach (var panel in new[] { CrystalOptionsPanel, CrystalSpacingPanel })
@@ -52,17 +52,22 @@ public partial class CrystalPreviewWindow : RibbonWindow
             "At narrower window sizes, these paragraphs wrap into more lines. The card grows with the text, giving the scrolling edge and scrollbar room to demonstrate their behavior.",
             "This longer sample is only a preview aid. Remove it from Preview controls to return to the short document and compare the original layout again.",
         };
-        var popups = new List<CrystalPopupBackdrop>();
+        var popups = new List<CapturedBackdrop>();
         foreach (var control in new RibbonDropDownButton[]
         {
             ArrangeButton, AccentSelector, PreviewControlsButton, StyleSplitButton,
             BackstageAccentSelector, BackstageLayoutSelector,
         })
-            popups.Add(new CrystalPopupBackdrop(this, control, "PART_MenuHost"));
+            popups.Add(new CapturedBackdrop(control, this));
         foreach (RibbonTab tab in PreviewRibbon.Tabs)
             foreach (RibbonGroup group in tab.Groups)
-                popups.Add(new CrystalPopupBackdrop(this, group, "PART_PopupHost"));
+                popups.Add(new CapturedBackdrop(group, this));
         _popupBackdrops = popups.ToArray();
+        Closed += (_, _) =>
+        {
+            _applicationMenuBackdrop.Dispose();
+            foreach (var popup in _popupBackdrops) popup.Dispose();
+        };
         foreach (var control in new FrameworkElement[] { CompareToggle, ArrangeButton, AccentSelector,
             FontInput, SizeInput, TitleInput, CrystalStylesGallery, UnavailableButton })
             if (control.ToolTip is RibbonScreenTip tip) _screenTipPalette.Attach(tip);

@@ -55,6 +55,23 @@ public enum RibbonTheme
 /// </remarks>
 public static class ThemeManager
 {
+    /// <summary>Creates the optional glass paint overlay from a scope's effective theme and accent.</summary>
+    /// <param name="scope">The resource scope whose current brushes should be cloned.</param>
+    /// <param name="dark">Whether to use the quieter dark-theme hover washes.</param>
+    /// <returns>A fresh dictionary for the host to merge, replace and remove in that scope.</returns>
+    /// <remarks>
+    /// This changes no resources or native window backdrop. The host chooses whether to use it,
+    /// typically after Acrylic activation succeeds. Remove an earlier overlay before creating its
+    /// replacement after theme, accent or palette changes, to avoid compounding opacity.
+    /// Direct resources on the scope and resources on child controls keep WPF precedence.
+    /// </remarks>
+    public static ResourceDictionary CreateGlassOverlay(FrameworkElement scope, bool dark = false)
+    {
+        ArgumentNullException.ThrowIfNull(scope);
+        scope.VerifyAccess();
+        return GlassOverlayBuilder.Create(scope, dark);
+    }
+
     /// <summary>Creates an independent theme palette for a window or control resource scope.</summary>
     /// <param name="theme">The theme whose shared token palette is created.</param>
     /// <param name="accent">An optional accent. Office uses its normal accent treatment;

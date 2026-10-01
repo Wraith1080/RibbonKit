@@ -289,7 +289,7 @@ public class CrystalContextualTests
         window.Resources.MergedDictionaries.Add(new ResourceDictionary
         { Source = new Uri("/RibbonKit;component/Themes/Tokens.Office2024.xaml", UriKind.Relative) });
         window.Resources.MergedDictionaries.Add(CrystalPalette.Create(CrystalPalette.Blue));
-        var backdrop = new CrystalPopupBackdrop(window, button, "PART_MenuHost");
+        var backdrop = new CapturedPopupBackdrop(window, button, "PART_MenuHost");
         try
         {
             window.Show();
@@ -312,7 +312,7 @@ public class CrystalContextualTests
             // from an offscreen test window onto a different monitor.
             var dpi = VisualTreeHelper.GetDpi(canvas);
             var fixedCrop = Assert.IsType<System.Windows.Media.Imaging.CroppedBitmap>(
-                CrystalPopupBackdrop.CaptureBlurred(canvas, new Rect(80, 80, 120, 80), dpi));
+                CapturedPopupBackdrop.CaptureBlurred(canvas, new Rect(80, 80, 120, 80), dpi));
             int edgePixel = (int)Math.Round(60 * dpi.DpiScaleX);
             var pixel = new byte[4];
             fixedCrop.CopyPixels(new Int32Rect(edgePixel, fixedCrop.PixelHeight / 2, 1, 1), pixel, 4, 0);
@@ -355,7 +355,7 @@ public class CrystalContextualTests
             Assert.Same(window.FindResource("RibbonKit.Brushes.Ribbon.ContentBackground"), fallback.Brush);
             var tint = Assert.IsType<GeometryDrawing>(layers[2]);
             var popupTint = Assert.IsType<LinearGradientBrush>(tint.Brush);
-            Assert.Same(window.FindResource("Crystal.Brushes.FrostedFrame"), popupTint);
+            Assert.Same(window.FindResource("RibbonKit.Brushes.ApplicationMenu.FrameBand"), popupTint);
             arrange.IsDropDownOpen = false;
             Sta.Drain();
             Assert.Same(window.FindResource("RibbonKit.Brushes.Ribbon.ContentBackground"), menuHost.Background);
@@ -401,14 +401,14 @@ public class CrystalContextualTests
         scene.Children.Add(host);
         var window = new Window { Content = scene, SizeToContent = SizeToContent.WidthAndHeight,
             Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
-        CrystalMenuBackdrop? backdrop = null;
+        CapturedMenuBackdrop? backdrop = null;
         try
         {
             window.Show();
             window.UpdateLayout();
             int visibilityChanges = 0;
             frame.IsVisibleChanged += (_, _) => visibilityChanges++;
-            backdrop = new CrystalMenuBackdrop(scene, host, frame, wrapper);
+            backdrop = new CapturedMenuBackdrop(scene, host, frame, wrapper);
             Layout();
             var backdropCanvas = Assert.IsType<Canvas>(backdrop.Layer.Children[0]);
             var image = Assert.IsType<Image>(backdropCanvas.Children[0]);
@@ -1680,7 +1680,7 @@ public class CrystalContextualTests
         Assert.False(shadowLayer.IsHitTestVisible);
         CheckMenuShadowPixels(shadowLayer);
         var backdropLayer = Assert.IsType<Grid>(frameWrapper.Children[1]);
-        Assert.Equal("CrystalMenuBackdrop", backdropLayer.Name);
+        Assert.Equal("CapturedMenuBackdrop", backdropLayer.Name);
         var backdropCanvas = Assert.IsType<Canvas>(backdropLayer.Children[0]);
         Assert.NotNull(Assert.IsType<Image>(backdropCanvas.Children[0]).Source);
         Assert.Same(window.FindResource("RibbonKit.Brushes.ApplicationMenu.FrameBand"), frame.Background);

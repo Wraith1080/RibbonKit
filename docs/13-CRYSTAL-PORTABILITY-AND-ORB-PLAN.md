@@ -14,7 +14,7 @@
 | 6: QAT, message bars and application menu | Bounded light/dark live review complete 2026-09-30. Includes placement/overflow, notice dismissal/restoration, menu commands/reset, narrow/minimized/RTL states, visible footer at 200%, keyboard/focus and native scrolling. [Evidence §3.197–§3.203](history/01-library.md#3197-shared-crystal-qat-drawer--2026-09-30). |
 | 7: utility buttons and scrollbars | Bounded live review complete 2026-10-01 in both reviewed themes: utility/arrows, modal/merged-caption controls, customization spacing, native scrolling/focus/RTL and 125% → 200% → 125% return. [Final acceptance §3.207](history/01-library.md#3207-slice-7-bounded-live-review-complete--2026-10-01). |
 | 8: contextual material and tint | Bounded live review, separate dropdown DPI-return recheck and vertical Paste hover-width review passed 2026-10-01. [Slice evidence §3.208](history/01-library.md#3208-shared-crystal-contextual-material-and-scoped-palettes--2026-10-01), [popup correction §3.210](history/01-library.md#3210-popup-margins-follow-the-dpi-pixel-grid--2026-10-01), [hover correction §3.211](history/01-library.md#3211-vertical-split-hover-width-and-diagnostic-cleanup--2026-10-01). |
-| 9: optional host effects | Open; opt-in capture/Acrylic scope still to be decided. |
+| 9: optional host effects | Bounded captured-surface and Glass look live review accepted 2026-10-01 on the normal Debug build, per the user's overall confirmation that everything seems okay. Broader motion, open-menu scaling and mixed-monitor gates remain open. [Evidence §3.212](history/01-library.md#3212-optional-captured-backdrops-and-scoped-glass-overlays--2026-10-01). |
 | 10: Showcase consolidation | Open; retain the separate preview window until this slice. |
 
 ### Slice 8 live review
@@ -202,13 +202,23 @@ shipped baseline is unchanged.
    an explicit host token override. Captured backdrops remain slice 9; the separate
    preview remains until slice 10. See the linked §3.208 evidence; live acceptance
    is maintained above.
-9. **Optional host effects.** Design a separate opt-in integration, only if
-   desired, for `CrystalMenuBackdrop`, `CrystalPopupBackdrop` and the host-owned
-   capture/update lifecycle. Likewise evaluate `AcrylicGlassPresentation` as
-   an optional cross-theme glass treatment. Core Crystal control styling must
-   work without a capture source, Acrylic or a running Showcase. Retain
-   `CrystalMainWindowPresentation` only for any genuinely app-owned effects;
-   do not copy it into RibbonKit as a broad coordinator.
+9. **Optional host effects (implemented).** `CapturedBackdrop` registers one
+   application menu, dropdown/split button or group against a host-supplied WPF
+   capture source. `Apply`, `Refresh` and `Dispose` separate opt-in paint from
+   host content/update ownership. Shared capture engines retain the accepted
+   blur, nonmeasuring layer, foreground exclusion and clipped paint, and release
+   captures on close/unload/disable/disposal. Explicit popup backgrounds and
+   bindings keep precedence; scoped popup tint uses the existing shared
+   application-menu frame-band token. The three Showcase capture helpers were
+   retired after replacement coverage. `ThemeManager.CreateGlassOverlay` provides
+   the accepted cross-theme brush treatment; `AcrylicGlassPresentation` retains
+   only host dictionary replacement/removal. The host still activates native
+   Acrylic, decides when to use glass, supplies document paint/refresh timing,
+   registers dynamic controls and disposes registrations. Core Crystal remains
+   usable without either opt-in. `CrystalMainWindowPresentation` retains palette
+   scope and app control discovery; no library-wide coordinator was added.
+   See [README's integration examples](../README.md#theming--rendering) and §3.212 for API
+   rationale, automation evidence and test limitations.
 10. **Showcase consolidation after slices 5–9.** Inventory features still
     exclusive to `CrystalPreviewWindow`, move the important demonstration and
     comparison controls into the main Showcase window, and remove the separate
@@ -258,6 +268,26 @@ spacing corrections remain in history §3.204–§3.207. The user-reviewed build
 `samples/RibbonKit.Showcase/bin/CrystalSlice7Pixels/Release/net8.0-windows/RibbonKit.Showcase.exe`.
 The agent did not launch it. Do not rerun automated checks for a prose-only
 confirmation; keep the deferred 200% observations separate.
+
+## Slice 9 live review
+
+Use the normal Debug executable:
+`samples/RibbonKit.Showcase/bin/Debug/net8.0-windows/RibbonKit.Showcase.exe`.
+The agent did not launch Showcase. The sequence below describes the bounded
+review scope; current acceptance is recorded in the status table.
+
+1. In Crystal light/dark, open File, Paste/Select and a collapsed
+   group. Check sharp content, blur/tint, rounded edges and outside shadow;
+   scroll File and the document, resize, close and reopen. Check footer commands,
+   native scrolling, keyboard/Esc/focus and RTL.
+2. Change tint/dark mode, reopen those surfaces, then switch to Office
+   and back. In the separate preview, use Office comparison and restore Crystal.
+   Check that capture paint clears and returns without stale tint or growing menus.
+3. With native Acrylic active, toggle Glass look in Crystal and Office;
+   change accent/dark mode and turn Acrylic off. Check ordinary paint restoration
+   and independent window palettes. Repeat a 125% → 200% → 125% return and reopening
+   for the captured surfaces. Open-menu scaling, mixed monitors and broader motion
+   acceptance remain separate until explicitly reviewed.
 
 ## Verification and completion gates
 

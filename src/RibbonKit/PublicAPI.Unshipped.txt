@@ -54,3 +54,9 @@ static RibbonKit.Controls.RibbonScrollBar.SetButtonCornerRadius(System.Windows.D
 static RibbonKit.Controls.RibbonScrollBar.SetRailCornerRadius(System.Windows.DependencyObject! element, System.Windows.CornerRadius value) -> void
 static RibbonKit.Controls.RibbonScrollBar.SetThumbCornerRadius(System.Windows.DependencyObject! element, System.Windows.CornerRadius value) -> void
 static RibbonKit.Theming.ThemeManager.CreatePalette(RibbonKit.Theming.RibbonTheme theme, System.Windows.Media.Color? accent = null, bool dark = false) -> System.Windows.ResourceDictionary!
+RibbonKit.Controls.CapturedBackdrop
+RibbonKit.Controls.CapturedBackdrop.CapturedBackdrop(System.Windows.Controls.Control! control, System.Windows.FrameworkElement! source) -> void
+RibbonKit.Controls.CapturedBackdrop.Apply(bool enabled) -> void
+RibbonKit.Controls.CapturedBackdrop.Refresh() -> void
+RibbonKit.Controls.CapturedBackdrop.Dispose() -> void
+static RibbonKit.Theming.ThemeManager.CreateGlassOverlay(System.Windows.FrameworkElement! scope, bool dark = false) -> System.Windows.ResourceDictionary!

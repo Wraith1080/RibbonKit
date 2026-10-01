@@ -18,8 +18,8 @@ internal sealed class CrystalMainWindowPresentation
     private readonly Ribbon _ribbon;
     private readonly Backstage _backstage;
     private readonly ResourceDictionary _backstageScope = new();
-    private readonly CrystalApplicationMenuBackdrop _menuBackdrop;
-    private readonly Dictionary<Control, CrystalPopupBackdrop> _popups = new();
+    private readonly CapturedBackdrop _menuBackdrop;
+    private readonly Dictionary<Control, CapturedBackdrop> _popups = new();
     private readonly HashSet<RibbonTab> _tabs = new();
     private ResourceDictionary? _palette;
     private bool _enabled;
@@ -32,10 +32,18 @@ internal sealed class CrystalMainWindowPresentation
         _window = window;
         _ribbon = ribbon;
         _backstage = backstage;
-        _menuBackdrop = new CrystalApplicationMenuBackdrop(menu, window);
+        _menuBackdrop = new CapturedBackdrop(menu, window);
         foreach (RibbonTab tab in ribbon.Tabs)
             AttachTab(tab);
         ribbon.Tabs.CollectionChanged += OnTabsChanged;
+        window.Closed += (_, _) =>
+        {
+            ribbon.Tabs.CollectionChanged -= OnTabsChanged;
+            _menuBackdrop.Dispose();
+            foreach (var popup in _popups.Values) popup.Dispose();
+            _popups.Clear();
+            _tabs.Clear();
+        };
     }
 
     public void Apply(bool enabled, Color? tint = null)
@@ -87,10 +95,10 @@ internal sealed class CrystalMainWindowPresentation
         if (!_tabs.Add(tab)) return;
         foreach (RibbonGroup group in tab.Groups)
         {
-            AddPopup(group, "PART_PopupHost");
+            AddPopup(group);
             foreach (var dropDown in group.Items.OfType<RibbonDropDownButton>())
             {
-                AddPopup(dropDown, "PART_MenuHost");
+                AddPopup(dropDown);
             }
         }
     }
@@ -101,10 +109,10 @@ internal sealed class CrystalMainWindowPresentation
         foreach (RibbonGroup group in tab.Groups) RemovePopup(group);
     }
 
-    private void AddPopup(Control control, string hostPart)
+    private void AddPopup(Control control)
     {
         if (_popups.ContainsKey(control)) return;
-        var popup = new CrystalPopupBackdrop(_window, control, hostPart);
+        var popup = new CapturedBackdrop(control, _window);
         _popups.Add(control, popup);
         if (_enabled) popup.Apply(true);
     }
@@ -119,7 +127,7 @@ internal sealed class CrystalMainWindowPresentation
         void Remove(Control control)
         {
             if (!_popups.Remove(control, out var popup)) return;
-            popup.Remove();
+            popup.Dispose();
         }
     }
 }

@@ -6,10 +6,10 @@ using System.Windows.Media.Effects;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 
-namespace RibbonKit.Showcase;
+namespace RibbonKit.Controls;
 
 /// <summary>Refreshes a blurred snapshot behind the menu without blurring its foreground.</summary>
-internal sealed class CrystalMenuBackdrop
+internal sealed class CapturedMenuBackdrop
 {
     private const double Padding = 24;
     private readonly FrameworkElement _owner;
@@ -21,12 +21,13 @@ internal sealed class CrystalMenuBackdrop
     private DispatcherOperation? _pending;
     private Rect _lastBounds;
     private DpiScale _lastDpi;
+    private CornerRadius _lastCorners;
     private bool _capturing;
     private bool _removed;
 
-    internal Grid Layer { get; } = new() { Name = "CrystalMenuBackdrop", IsHitTestVisible = false };
+    internal Grid Layer { get; } = new() { Name = "CapturedMenuBackdrop", IsHitTestVisible = false };
 
-    public CrystalMenuBackdrop(FrameworkElement owner, Border host, Border frame, Grid wrapper)
+    public CapturedMenuBackdrop(FrameworkElement owner, Border host, Border frame, Grid wrapper)
     {
         _owner = owner;
         _host = host;
@@ -46,6 +47,7 @@ internal sealed class CrystalMenuBackdrop
         owner.SizeChanged += OnOwnerSizeChanged;
         _scrollChanged = (_, _) => Refresh();
         owner.AddHandler(ScrollViewer.ScrollChangedEvent, _scrollChanged, true);
+        if (_frame.IsVisible) CompositionTarget.Rendering += OnLayoutUpdated;
         Refresh();
     }
 
@@ -54,14 +56,16 @@ internal sealed class CrystalMenuBackdrop
     private void OnVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
     {
         if (_capturing) return;
-        if (_frame.IsVisible) Refresh();
-        else _image.Source = null;
+        CompositionTarget.Rendering -= OnLayoutUpdated;
+        if (_frame.IsVisible) { CompositionTarget.Rendering += OnLayoutUpdated; Refresh(); }
+        else { _pending?.Abort(); _image.Source = null; }
     }
 
     private void OnLayoutUpdated(object? sender, EventArgs e)
     {
         if (!_capturing && _frame.IsVisible && _owner.IsAncestorOf(_host) &&
-            (Bounds() != _lastBounds || !VisualTreeHelper.GetDpi(_owner).Equals(_lastDpi)))
+            (Bounds() != _lastBounds || !VisualTreeHelper.GetDpi(_owner).Equals(_lastDpi) ||
+                _frame.CornerRadius != _lastCorners))
             Refresh();
     }
 
@@ -83,9 +87,7 @@ internal sealed class CrystalMenuBackdrop
         region.Inflate(Padding, Padding);
         var dpi = VisualTreeHelper.GetDpi(_owner);
         _lastDpi = dpi;
-        var bitmap = new RenderTargetBitmap((int)Math.Ceiling(region.Width * dpi.DpiScaleX),
-            (int)Math.Ceiling(region.Height * dpi.DpiScaleY), dpi.PixelsPerInchX, dpi.PixelsPerInchY,
-            PixelFormats.Pbgra32);
+        RenderTargetBitmap bitmap;
         var opacity = _wrapper.Opacity;
         _capturing = true;
         try
@@ -94,15 +96,7 @@ internal sealed class CrystalMenuBackdrop
             // keyboard focus). Opening motion fades the host, not this wrapper. Restore before
             // returning to the dispatcher so no transparent frame is presented onscreen.
             _wrapper.SetCurrentValue(UIElement.OpacityProperty, 0d);
-            var drawing = new DrawingVisual();
-            using (var context = drawing.RenderOpen())
-                context.DrawRectangle(new VisualBrush(_owner)
-                {
-                    AutoLayoutContent = false, ViewboxUnits = BrushMappingMode.Absolute,
-                    Viewbox = region, Stretch = Stretch.Fill,
-                }, null, new Rect(0, 0, region.Width, region.Height));
-            bitmap.Render(drawing);
-            bitmap.Freeze();
+            bitmap = CapturedPopupBackdrop.CaptureSnapshot(_owner, region, dpi);
         }
         finally
         {
@@ -113,13 +107,15 @@ internal sealed class CrystalMenuBackdrop
         _image.Height = region.Height;
         _image.Source = bitmap;
         // Clip after the blur so the expanded sampling area cannot spill over the glass rim.
-        Layer.Clip = new RectangleGeometry(new Rect(_frame.RenderSize),
-            _frame.CornerRadius.TopLeft, _frame.CornerRadius.TopLeft);
+        _lastCorners = _frame.CornerRadius;
+        Layer.Clip = ApplicationMenuGeometryConverter.RoundedRectangle(
+            _frame.ActualWidth, _frame.ActualHeight, _lastCorners);
     }
 
     public void Remove()
     {
         _removed = true;
+        CompositionTarget.Rendering -= OnLayoutUpdated;
         _pending?.Abort();
         _frame.Loaded -= OnLoaded;
         _frame.IsVisibleChanged -= OnVisibleChanged;

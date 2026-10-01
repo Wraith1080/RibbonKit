@@ -6386,3 +6386,76 @@ the normal Showcase executable. Evidence logs are popup-hover-runtime-complete.t
 popup-hover-consumer-retry.trx and popup-hover-visual.trx under the test projects'
 TestResults folders. No Writer changes, app launch, commit, push or publication
 occurred. Live results and remaining gates stay in the active plan.
+
+### 3.212 Optional captured backdrops and scoped glass overlays — 2026-10-01
+
+Slice 9's bounded audit separates reusable capture/paint from host content,
+registration policy and native window integration. The additive public
+`CapturedBackdrop(Control control, FrameworkElement source)` registers one
+application menu, dropdown/split button or ribbon group. `Apply`, `Refresh` and
+`Dispose` provide explicit opt-in and cleanup. Tokens alone cannot supply a host
+capture visual or own event subscriptions; a per-control disposable registration
+provides that seam without importing the main-window coordinator. XML comments
+and Unshipped entries document the addition; the Shipped baseline is unchanged.
+
+The shared engines retain the 6-DIP Gaussian blur, 24-DIP sampling margin,
+stationary application-menu anchor, opacity-based foreground exclusion, Canvas
+measurement exclusion and post-blur clip. The clip reuses shared rounded geometry,
+including changed/nonuniform corner overrides. Popup capture shares the snapshot
+primitive, retains opaque fallback outside the source, and uses the existing scoped
+application-menu frame-band token for the accepted tint. Local backgrounds,
+bindings and host SetCurrentValue overrides keep precedence. Closing/disable clears
+only the integration's own current paint, restoring template resource evaluation.
+Reopening, template replacement, scroll/resize and observed source/popup DPI changes
+refresh capture. Unload releases engines; reload reattaches while enabled. Disposal
+aborts queued work and removes rendering, theme, layout and source handlers.
+
+`ThemeManager.CreateGlassOverlay(FrameworkElement scope, bool dark = false)`
+provides the existing cross-theme brush treatment with the accepted opacity and
+accent-wash values. It clones effective resources without changing global theme or
+activating Acrylic. Owners remove the preceding overlay before regeneration after
+theme/accent/palette changes, merge the new dictionary and remove it on disable.
+Direct scoped/child overrides retain WPF precedence. The host owns capture source,
+content paint and explicit Refresh timing, dynamic-control registration/disposal,
+preferences and Windows backdrop activation. Core Crystal requires neither opt-in.
+
+Showcase's CrystalMenuBackdrop, CrystalApplicationMenuBackdrop and
+CrystalPopupBackdrop were retired after replacement checks. Main and separate
+preview callers use the shared registration and dispose on window close.
+AcrylicGlassPresentation retains only dictionary ownership; paint creation is now
+shared. CrystalMainWindowPresentation retains app palette scope and control
+discovery. Document effects/content and the preview window/launch path remain in
+the host; slice 10 and Writer RKWF-026 remain separate.
+
+Verification: the normal Release solution build passed for both runtime targets
+with zero warnings/errors. All 431 eligible runtime tests passed with the retained
+Writer/deferred-hover filter. The visual suite passed all 113 scenes with unchanged
+approvals/tolerances. The final Release RibbonKit-only consumer passed in 88 seconds
+without Showcase references/resources/helpers. It retains all prior checks and adds
+light/dark/RTL popup/menu paint, enable/disable, scoped palette replacement/removal,
+reopening, scroll/resize, nonmeasuring/input/focus exclusions, collapsed content,
+bindings/current-value overrides, unload/reload/disposal and twelve theme/dark glass
+variants. Runtime coverage additionally retains rendered blur/foreground/shadow
+checks and covers template replacement, opacity binding, corner changes, queued
+cancellation and synthetic root-DPI capture. DPI metadata is checked against the
+observed source DPI; these tests do not reproduce native Display Settings timing.
+
+Earlier consumer attempts intermittently closed File in existing viewport/menu
+assertions. A diagnostic run passed; the final run preserves the original baseline
+case order and appends the optional effects checks after it. Temporary tracing was
+removed and no existing assertion was relaxed. The final uninstrumented pass does
+not establish a cause or a product fix for those earlier closures. The filtered
+solution attempt passed runtime/visual projects but hit this consumer failure;
+the final consumer pass is a separate process, not an unfiltered full-suite pass.
+Evidence is slice9-release.trx in runtime/visual TestResults and
+slice9-consumer-final.trx in the consumer TestResults directory.
+
+The normal Debug Showcase build succeeded with zero errors and twelve designer-copy
+warnings: Visual Studio (PID 27316) holds the Debug RibbonKit.DesignTools.dll open.
+The runtime and Showcase outputs were updated in their default folders; running
+apps were preserved. Local review uses
+samples/RibbonKit.Showcase/bin/Debug/net8.0-windows/RibbonKit.Showcase.exe.
+No manual Showcase launch, Writer code/test edit, commit, push or publication
+occurred. The active plan owns the pending slice 9 live review; broader motion,
+open-menu scaling/mixed-monitor and the two deferred 200% observations retain their
+separate scopes. Content/link/final diff review and git diff --check passed.

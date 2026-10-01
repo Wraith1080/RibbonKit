@@ -115,8 +115,45 @@ window.Resources.MergedDictionaries.Add(palette);
 ```
 
 `ThemeManager.SetAccent` retains its existing application accent behavior.
-Showcase still owns document paint, captured menu/popup blur and document-under-QAT
-treatment; optional capture integration remains separate work.
+Showcase still owns document paint and document-under-QAT treatment. Optional
+menu/popup capture is available through `CapturedBackdrop` in `RibbonKit.Controls`:
+
+```csharp
+var capture = new CapturedBackdrop(fileMenu, window);
+capture.Apply(true);       // Also supports dropdown/split buttons and ribbon groups.
+capture.Refresh();         // After the host changes document paint.
+capture.Apply(false);      // Restores the ordinary shared surface.
+capture.Dispose();         // When the registration/host is retired.
+```
+
+The host supplies a loaded WPF visual on the same dispatcher. For File menus it
+must be an ancestor of the menu surface; popup capture can sample another visual
+in the host window. Capture samples that visual, with a 6-DIP Gaussian blur and
+24-DIP sampling margin. It excludes menu foreground, keeps captured pixels out of
+measurement/input/focus, and follows scrolling, geometry, DPI, reopening and
+template changes. Popup tint uses the scoped
+`RibbonKit.Brushes.ApplicationMenu.FrameBand` token; explicit surface backgrounds
+and bindings retain precedence. `Refresh` coalesces host paint/palette updates.
+Unload releases paint and load reattaches while enabled; dispose removes all
+registration handlers. Templates without the shared surface parts keep their
+ordinary paint. Core Crystal needs neither capture nor a native window material.
+
+The separate optional cross-theme glass treatment is a scoped resource overlay:
+
+```csharp
+var glass = ThemeManager.CreateGlassOverlay(window, dark: true);
+window.Resources.MergedDictionaries.Add(glass);
+// Remove glass before regenerating after theme/accent/palette changes.
+window.Resources.MergedDictionaries.Remove(glass);
+```
+
+The factory clones the scope's effective brushes without changing global state.
+Direct scoped and child resources keep normal WPF precedence. The host owns
+replacement/removal and the decision to use glass after native Acrylic activation
+succeeds; the factory itself does not activate Acrylic. WPF capture samples app
+content rather than the desktop or native DWM material. Document content, update
+timing, preferences, native backdrop activation and window integration stay in
+the host.
 
 Office 2007 defaults to the round application orb, including its black palette;
 other themes default to a File tab. Set `Ribbon.ApplicationButtonShape` to `Tab`

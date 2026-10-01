@@ -64,7 +64,7 @@ internal sealed class ApplicationMenuGeometryConverter : IMultiValueConverter
         return new CombinedGeometry(GeometryCombineMode.Exclude, new RectangleGeometry(halo), silhouette);
     }
 
-    private static Geometry RoundedRectangle(double width, double height, CornerRadius corners)
+    internal static Geometry RoundedRectangle(double width, double height, CornerRadius corners)
     {
         if (corners.TopLeft == corners.TopRight && corners.TopLeft == corners.BottomRight &&
             corners.TopLeft == corners.BottomLeft)
