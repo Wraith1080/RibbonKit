@@ -1503,3 +1503,160 @@ across five Office generations and light/dark palettes, calendar headings/naviga
 and existing input validation. Live Office 2007 inspection covered all four dialog layouts,
 mouse date selection and the corrected weekday headings/month chooser. Full-suite,
 live dark-theme, mixed-DPI, High Contrast and OS IME acceptance were not run.
+
+### 3.216 Writer Crystal integration and deferred validation — 2026-10-02
+
+Writer's existing Appearance page now offers Crystal light/dark and the shared
+Sidebar/Floating Backstage designs. Crystal defaults to Sidebar; Office restores
+its existing generation-compatible default when leaving Crystal. Historical
+2007/2010 frame, Orb, backdrop and Classic2007 translucency rules remain intact.
+The theme label/accessibility name now covers all six themes, with the existing
+`AppearanceTheme` automation ID unchanged. The two new optional effects are
+additive version-one preferences and default off, including when reading older
+settings. Appearance, ribbon/QAT layout and document data remain separate.
+
+The existing Settings session handles live preview, Apply, OK, Cancel, defaults
+and restart restoration. A new test injects a temporary WriterSettingsStore,
+operates the real modal dialog, verifies selected-page/pending-value retention,
+commits Crystal dark with Apply, previews Office 2007, cancels back to Crystal,
+accepts Floating with OK and restores it in a new window. It also verifies that
+document text and ribbon structure remain unchanged. Tests never read or write
+the user's saved appearance/layout preferences.
+
+WriterAppearanceScope replaces only its own dictionaries. It uses the shared
+ThemeManager.CreatePalette for Crystal tint (and isolated Office tests), and
+preserves the host's explicit caption policy. Owned Settings, Font/Color/Paragraph,
+Table, Picture, Hyperlink, Date and Time, Find/Replace, Custom Margins and Print
+Setup windows register independent scopes and release them on close. A Window
+Owner is not resource ancestry; the nested Font/Settings color picker follows its
+owner chain to Writer. Dialogs whose resources use a direct Source dictionary
+need an independent outer dictionary for replacement; the original resources are
+preserved underneath it. Dynamic-resource reevaluation and pending input values
+survive palette changes. Crystal requires neither native Acrylic nor these effects.
+
+Writer's two Print Backstage action styles now inherit the shared Options action
+and primary button materials, keeping their app-owned sizes and command content.
+Custom Margins now consumes RibbonTextBox and shared action styles. The audit
+retains Writer-owned document/profile cards, icons, color-picker content,
+preview/page paint, Office workspace, ruler and native DatePicker/calendar
+styling. Ribbon/contextual tabs, QAT, galleries, menus, inputs, customization and
+scrollbars continue to consume shared controls/tokens; no Showcase resources,
+helpers, demonstration controls or document-under-QAT layout were imported.
+
+The 2026-10-02 visual follow-up lets the shared Crystal window gradient show
+through the editor workspace around the page. It follows light/dark palette and
+tint changes continuously with the ribbon; Office, High Contrast and native
+backdrop handling retain their existing workspace rules.
+The ruler's edge also consumes the shared Crystal glass-rim brush rather than
+the ordinary ribbon border, including tint and dark-palette changes.
+The paper outline instead uses the shared solid inactive-frame border in Crystal,
+following palette/tint changes without reflective glints. Office and High Contrast
+retain their existing border resource. The focused underlay check passed, its
+rendered PNG was inspected, and normal Release/Debug builds had zero warnings/errors.
+
+The next Writer follow-up adds a document underlay when Crystal, Paper view,
+below-ribbon QAT and a hidden ruler coincide. Writer reads the shared drawer's
+geometry without changing its template, overlaps its own document host, and
+fades only the native scroll-content presenter and non-printing margin guide.
+The native scrollbar stays below the drawer. Ruler, QAT, theme and view changes
+restore the original margin, opacity and separator behavior. This is independent
+Writer document presentation; no Showcase helper or runtime API is imported.
+RKWF-046 records its template-part dependency and remaining live review.
+Layout tracking runs only while the underlay's theme/view/QAT/ruler combination
+is requested; loaded/size changes enable it when the drawer becomes available.
+
+View-tab ruler and guide toggles now update the existing appearance preferences
+and save them immediately outside the modal Settings session. Theme preview,
+Cancel and restart retain those choices; Settings preview still waits for Apply
+or OK before saving. Appearance now uses two columns, shared RibbonComboBox and
+RibbonCheckBox controls, even checkbox spacing and a collapsed compatibility
+explanation. Narrow pages stack the columns to preserve access to every field.
+
+Five focused follow-up checks pass for view-toggle persistence, theme rollback,
+restart, native scrolling/undo and underlay cleanup, 125% → 200% → 125% returns,
+and Appearance sizing at normal/narrow widths. Light/dark Appearance PNGs and a
+scrolled-paper underlay capture were inspected; user live review remains open.
+The final follow-up unfiltered Release Writer suite passed 482/482; its TRX is
+under artifacts/writer-integration-verification/paper-and-settings-final. Release
+compilation and the normal Debug Writer build passed with zero warnings/errors.
+An earlier follow-up run lost F10 badges after dispatcher settling. The check
+now records modifiers and window/ribbon lifecycle diagnostics; layout tracking
+is scoped to the requested underlay configuration. The isolated KeyTip check
+and subsequent unfiltered Writer suite passed. This does not establish live
+native keyboard or mixed-monitor acceptance.
+
+The W identity now uses Ribbon.ApplicationOrbGlyphTemplate with a glyph-only
+16-unit vector in the library's glyph canvas. The post-render presenter lookup,
+duplicate sphere/state template and render callback are removed. Tests realize
+the main glyph and Classic2007 Back proxy as separate W instances, with the shared
+sphere and accessible Back name. RKWF-026 records the available library hook,
+completed consumer migration and remaining live W review.
+
+GlassSurfaces explicitly merges ThemeManager.CreateGlassOverlay after removing
+its preceding overlay and installing the current palette. CapturedPopupBackdrop
+registers only dropdown/split buttons, QAT dropdowns and collapsed RibbonGroups,
+with CapturedBackdrop using the Writer window as source. Ribbon.Tabs/Groups are
+explicitly enumerated because they are not all ordinary logical children of the
+Ribbon root. Registration follows loaded customization/QAT changes and Apply;
+disable, obsolete-control removal and window close dispose registrations.
+Writer has Backstage rather than a RibbonApplicationMenu, so no capture is forced
+onto unsupported File surfaces. Native backdrop failure retains ordinary paint
+and the stored portable backdrop request. No src/RibbonKit file or public API changed.
+
+Automated evidence on 2026-10-02:
+
+- Focused appearance/dialog/identity checks passed 29/29; the ribbon/effect/orb/DPI
+  matrix then passed independently. The final unfiltered Release solution run
+  passed RibbonKit 464/464, Writer 478/478, visual aggregate 1/1 (113 existing
+  approved images), and the RibbonKit-only consumer 1/1. The corrected Office
+  2010 hover contract remained included. Both runtime targets built with zero
+  warnings/errors; approvals and tolerances are unchanged. Logs/TRX are under
+  artifacts/writer-integration-verification/final.
+  After adding the separate native-window keyboard check and ruler assertions,
+  the initial integration's unfiltered Writer run passed 479/479; its TRX is under
+  artifacts/writer-integration-verification/writer-final. The normal Debug Writer
+  build also passed with zero warnings/errors and is ready for user review.
+- Nine dialog surfaces render across six themes × two palettes × six scale steps
+  (100/125/150/175/200/125), including RTL at 175%, then return to Office defaults.
+  The root's effective visual DPI is asserted. Thirty-six Crystal light/dark
+  100/200% diagnostic PNGs were produced; representative images across the
+  complete requested family were inspected. The offscreen Print Setup capture
+  verifies surrounding materials/layout but does not establish visible fixed-page
+  glyph paint; existing hosted preview/paginator regressions separately pass.
+- The real ribbon matrix covers all theme/palette pairs, tint/effect replacement,
+  narrow/minimized layouts, all three QAT placements, open File scaling, popup
+  reopening, 125% → 200% → 125% returns, rendering, no-animation policy and W/proxy
+  restoration. A separate check covers F10 KeyTips, Escape, selected-tab retention
+  and File Escape/editor focus across all twelve pairs at the window's native DPI,
+  with optional capture off. Routed events and synthetic root scaling do not
+  establish genuine keyboard/IME or native monitor-transition acceptance.
+- DatePicker popups reported effective visual scale 1.25 and native HWND DPI 120
+  while the owner's synthetic scale had returned to 1.25. The machine exposes
+  one active display. Changing a visual root does not change a popup HWND's native
+  monitor DPI. The shared portability consumer retains gallery selected-row and
+  broader native-popup/customization checks; the previously accepted retention
+  issue is not a pending defect.
+
+The first unfiltered run exposed three stale/harness failures. The Settings
+command list expectation predated W4-A; Settings remains a click action, not a
+shell ICommand. A nested STA persistence fixture deadlocked the new serialization
+gate; nested calls now reuse their current dispatcher. An empty table cell's
+ContentEnd normalized to its insertion start, excluding that endpoint under the
+existing inward-selection contract; the fixture now selects actual final-cell
+content. The three checks passed in isolation and all Writer checks passed in the
+subsequent unfiltered run. No editing/persistence runtime behavior changed.
+RKWF-008 records dispatcher, deferred fixed-page lifetime and finite open-popup
+frame waits without increasing the general timeout. ApplicationIdle waits after
+synthetic scaling timed out with capture enabled or disabled; keyboard/focus checks
+therefore run separately at native window DPI. Native input with capture enabled
+remains a live gate.
+
+Live gates remain precise: the user reviews Writer light/dark/tint, the complete
+dialog family, shared ribbon/contextual/QAT/File/customization material and W orb;
+Windows display-scale changes must check Theme gallery selected edges at native
+200%, File and popup HWNDs while open, and return to 125%; two active monitors
+with different scales are needed for mixed-monitor moves. Toggle Windows reduced
+motion and exercise popup/KeyTip transitions; use a genuine OS IME and production
+RTL text/input workflow; inspect actual Print Setup/preview text and submit to a
+non-PDF physical printer with its real queue/ticket/imageable-area limits. The
+agent did not manually launch Showcase. Final visual acceptance remains with the user.

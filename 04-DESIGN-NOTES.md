@@ -816,6 +816,10 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [Restore the shared gallery's visible selected row after loading or template replacement](docs/history/01-library.md#3215-gallery-selected-row-retention-after-tab-reload--2026-10-01).
 
+### 3.216 Writer Crystal integration and deferred validation — 2026-10-02
+
+[Writer appearance, shared W glyph and optional-effect integration with unfiltered automated evidence](docs/history/02-writer-foundation.md#3216-writer-crystal-integration-and-deferred-validation--2026-10-02).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),
@@ -880,19 +884,18 @@ technical evidence warrants them; preserve existing dated records.
   contextual material/scoped palettes and optional host effects. Detailed evidence
   remains in §3.189–§3.215.
   Update current acceptance in the
-  plan only; do not append each confirmation to this summary. Writer's saved
-  appearance and W-glyph migration remain deferred under RKWF-026.
+  plan only; do not append each confirmation to this summary. Writer's Crystal
+  appearance and W-glyph migration are implemented (§3.216); the active plan's
+  Writer row owns its remaining live acceptance.
 
 - Automatic `Icons.xaml` discovery remains best-effort; the manual browser is the
   fallback for no match, ambiguity, inaccessible paths or parse failure.
 
 ### Verification checkpoint
 
-- Latest cleanup: 77 focused Writer tests passed across separate runs; Release Writer build
-  **0 warnings / 0 errors**. The combined window run hit the known WPF WindowChrome
-  cross-thread cache issue; the affected table check passed in a fresh process.
-  No full-suite, new live UI, physical-printer, OS IME or mixed-DPI acceptance is claimed.
-- Latest recorded full solution gate in this checkpoint list: §3.128 (2026-08-30),
+- Latest Writer/Crystal integration and unfiltered solution evidence: §3.216
+  (2026-10-02). The linked history separates automated checks from remaining live gates.
+- Earlier recorded full solution gate: §3.128 (2026-08-30),
   Release build with zero warnings/errors; RibbonKit 392/392, Writer 439/439, visual
   1/1 covering 63 approved images. These are historical counts, not today's inventory.
 - Earlier full/focused results and acceptance limits remain in the

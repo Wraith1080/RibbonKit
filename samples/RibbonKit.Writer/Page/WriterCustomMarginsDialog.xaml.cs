@@ -18,6 +18,7 @@ public partial class WriterCustomMarginsDialog : Window
         _openingSettings = openingSettings ?? throw new ArgumentNullException(nameof(openingSettings));
         _initializing = true;
         InitializeComponent();
+        RibbonKit.Writer.Appearance.WriterDialogAppearance.Initialize(this);
         TopBox.Text = Format(openingSettings.Margins.TopDip);
         BottomBox.Text = Format(openingSettings.Margins.BottomDip);
         LeftBox.Text = Format(openingSettings.Margins.LeftDip);

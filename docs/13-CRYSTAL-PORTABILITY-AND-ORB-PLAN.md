@@ -18,6 +18,7 @@
 | 10: Showcase consolidation | Bounded functional live review confirmed 2026-10-01: the user reports the consolidated demonstrations work as before. Document fade and QAT underlay also work, with a different visual result because the main Showcase uses a padded editable document card rather than the former preview's scrolling page; the supplied comparison screenshots document that host-layout difference. The separate preview and launch path are retired. Broader motion, open-menu scaling and mixed-monitor gates remain open. [Evidence §3.213](history/01-library.md#3213-main-showcase-consolidation--2026-10-01). |
 | Deferred layout and hover checks | Corrected and verified automatically 2026-10-01: Theme gallery selected-edge clipping, the constrained RTL fixture and the excluded Office 2010 hover contract. Native 200% Theme gallery visual acceptance remains open. [Evidence §3.214](history/01-library.md#3214-theme-gallery-clipping-and-deferred-test-corrections--2026-10-01). |
 | Gallery selected-row retention | Bounded live review confirmed 2026-10-01: the user changed tabs for 25 seconds and the selected tile stayed visible, confirming the reported reset is fixed. Shared RibbonKit also has automated coverage for tab reload and template replacement. Native DPI/monitor transitions and broader motion gates retain their separate scope. [Evidence §3.215](history/01-library.md#3215-gallery-selected-row-retention-after-tab-reload--2026-10-01). |
+| Writer integration and deferred automated gates | Implemented 2026-10-02: Crystal light/dark, Sidebar/Floating, scoped tint, Settings preview/persistence/rollback, W glyph hook and optional shared effects. Writer follow-ups add the conditional paper/QAT fade, persistent ruler/guides and a compact two-column Appearance page. Unfiltered Release solution tests pass, including Writer and Office 2010 hover; visual approvals/tolerances are unchanged. Synthetic 100/125/150/175/200% rendering, DPI returns and open surfaces have automated coverage. Final Writer visual acceptance, native 200% Theme gallery review, Windows reduced-motion switching, native open-popup scaling, mixed monitors, genuine IME/production RTL and physical printing remain separate live gates. [Evidence §3.216](history/02-writer-foundation.md#3216-writer-crystal-integration-and-deferred-validation--2026-10-02). |
 
 ### Slice 8 live review
 
@@ -49,8 +50,9 @@ evidence §3.211](history/01-library.md#3211-vertical-split-hover-width-and-diag
 
 Broader reduced-motion, open-menu scaling and mixed-monitor gates remain open.
 The [two 200% observations](#deferred-layout-observations-at-200) remain deferred,
-with unconfirmed causes. Writer's saved appearance and W-glyph workaround remain
-deferred under RKWF-026. This table does not establish blanket final acceptance.
+with their recorded scope. Writer's appearance and W-glyph migration are implemented;
+its current validation and remaining live review are in the Writer row above.
+This table does not establish blanket final acceptance.
 
 For the earlier audit, see `04-DESIGN-NOTES.md` §3.189–§3.191; Office 2007
 history remains in §3.94 and `07-OFFICE-2007-THEME-PLAN.md`.
@@ -344,7 +346,7 @@ For subsequent implementation, keep the following gates:
   application menu, ordinary Backstage and Classic2007 proxy lifecycle.
   Test a custom vector glyph, `null` fallback, changed template after load,
   glyph-only rotation and localized Back/accessible names. Writer's migrated W
-  is a deferred, separate acceptance gate for RKWF-026, not a gate for the
+  has automated main/proxy coverage; its live appearance remains a separate acceptance gate for RKWF-026, not a gate for the
   library-only glyph hook.
 - For each Crystal control family, realize it in a small consumer that uses
   RibbonKit resources without Showcase resources. Test light/dark switching,

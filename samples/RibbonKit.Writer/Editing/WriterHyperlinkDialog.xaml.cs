@@ -11,6 +11,7 @@ public partial class WriterHyperlinkDialog : Window
     public WriterHyperlinkDialog(string? address = null, string? displayText = null)
     {
         InitializeComponent();
+        RibbonKit.Writer.Appearance.WriterDialogAppearance.Initialize(this);
         AddressBox.Text = address ?? string.Empty;
         DisplayTextBox.Text = displayText ?? string.Empty;
         if (!string.IsNullOrWhiteSpace(address))

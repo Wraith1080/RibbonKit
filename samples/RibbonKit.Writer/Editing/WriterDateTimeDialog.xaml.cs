@@ -13,6 +13,7 @@ public partial class WriterDateTimeDialog : Window
     public WriterDateTimeDialog(DateTimeOffset? openingValue = null)
     {
         InitializeComponent();
+        RibbonKit.Writer.Appearance.WriterDialogAppearance.Initialize(this);
         var value = openingValue ?? DateTimeOffset.Now;
         DateBox.SelectedDate = value.Date;
         TimeBox.Text = value.ToString("t", CultureInfo.CurrentCulture);

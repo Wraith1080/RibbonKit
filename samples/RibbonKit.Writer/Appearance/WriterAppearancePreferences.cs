@@ -27,6 +27,10 @@ internal sealed record WriterAppearancePreferences
 
     public bool BackstageTranslucent { get; init; }
 
+    public bool GlassSurfaces { get; init; }
+
+    public bool CapturedPopupBackdrop { get; init; }
+
     public RibbonBackdrop Backdrop { get; init; } = RibbonBackdrop.None;
 
     public RibbonWindowFrameAppearance FrameAppearance { get; init; }
@@ -143,6 +147,7 @@ internal static class WriterAppearanceCompatibility
 
     public static RibbonBackstageDesign DefaultBackstageDesign(RibbonTheme theme) => theme switch
     {
+        RibbonTheme.CrystalLight => RibbonBackstageDesign.CrystalSidebar,
         RibbonTheme.Office2024 => RibbonBackstageDesign.Modern,
         RibbonTheme.Office2019 or RibbonTheme.Office2013 => RibbonBackstageDesign.Classic,
         RibbonTheme.Office2010 or RibbonTheme.Office2007 => RibbonBackstageDesign.Classic2010,
@@ -152,7 +157,10 @@ internal static class WriterAppearanceCompatibility
     public static bool IsBackstageDesignSupported(RibbonTheme theme, RibbonBackstageDesign design) =>
         design switch
         {
-            RibbonBackstageDesign.Modern or RibbonBackstageDesign.Classic => true,
+            RibbonBackstageDesign.CrystalSidebar or RibbonBackstageDesign.CrystalFloating =>
+                theme == RibbonTheme.CrystalLight,
+            RibbonBackstageDesign.Modern or RibbonBackstageDesign.Classic =>
+                theme != RibbonTheme.CrystalLight,
             RibbonBackstageDesign.Classic2010 =>
                 theme is RibbonTheme.Office2010 or RibbonTheme.Office2007,
             RibbonBackstageDesign.Glass2007 or RibbonBackstageDesign.Classic2007 =>

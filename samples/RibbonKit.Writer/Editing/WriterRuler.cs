@@ -54,6 +54,7 @@ public sealed class WriterRuler : FrameworkElement, IDisposable
     private bool _isPaperView;
     private bool _isRulerVisible = true;
     private bool _isSurfaceTransparent;
+    private bool _useCrystalGlassEdge;
     private bool _canEditMargins = true;
     private bool _canEditParagraphs = true;
     private WriterRulerLayout _layout = WriterRulerGeometry.Create(
@@ -132,6 +133,18 @@ public sealed class WriterRuler : FrameworkElement, IDisposable
             if (_isSurfaceTransparent == value)
                 return;
             _isSurfaceTransparent = value;
+            InvalidateVisual();
+        }
+    }
+
+    internal bool UseCrystalGlassEdge
+    {
+        get => _useCrystalGlassEdge;
+        set
+        {
+            if (_useCrystalGlassEdge == value)
+                return;
+            _useCrystalGlassEdge = value;
             InvalidateVisual();
         }
     }
@@ -375,7 +388,9 @@ public sealed class WriterRuler : FrameworkElement, IDisposable
                 : ResolveBrush("RibbonKit.Brushes.Control.SurfaceBackground", SystemColors.ControlBrush);
         var border = highContrast
             ? SystemColors.WindowTextBrush
-            : ResolveBrush("RibbonKit.Brushes.Ribbon.Border", SystemColors.ControlDarkBrush);
+            : ResolveBrush(_useCrystalGlassEdge
+                ? "RibbonKit.Brushes.Control.HoverBorder"
+                : "RibbonKit.Brushes.Ribbon.Border", SystemColors.ControlDarkBrush);
         var tick = highContrast
             ? SystemColors.WindowTextBrush
             : ResolveBrush("RibbonKit.Brushes.Text.Secondary", SystemColors.ControlTextBrush);

@@ -228,6 +228,9 @@ public sealed class WriterTableServiceTests
             var (editor, table, service) = CreateTable(2, 2);
             var first = table.RowGroups[0].Rows[0].Cells[0];
             var last = table.RowGroups[0].Rows[1].Cells[1];
+            // WPF normalizes an empty final cell's ContentEnd to its insertion start.
+            // Select actual content so the inward endpoint contract includes that cell.
+            ((Paragraph)last.Blocks.FirstBlock).Inlines.Add(new Run("last cell"));
             editor.Selection.Select(first.ContentStart, last.ContentEnd);
 
             Assert.True(service.TryGetSelectionRange(out var range));

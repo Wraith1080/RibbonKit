@@ -13,34 +13,11 @@
         <GradientStop Offset="1" Color="#145AA6" />
     </LinearGradientBrush>
     <Geometry x:Key="Writer.Glyph.IdentityMark">M1,3 H5 L7.5,13 L10,6 L12.5,13 L15,3 H19 L15,20 H12 L10,13 L8,20 H5 Z</Geometry>
-    <DataTemplate x:Key="Writer.Templates.ApplicationOrbChrome">
-        <Grid Width="{DynamicResource RibbonKit.Metrics.ApplicationOrbSize}"
-              Height="{DynamicResource RibbonKit.Metrics.ApplicationOrbSize}"
-              Margin="{DynamicResource RibbonKit.Metrics.ApplicationOrbMargin}">
-            <Ellipse x:Name="OrbFill"
-                     Fill="{DynamicResource RibbonKit.Brushes.ApplicationOrb.Background}"
-                     Stroke="{DynamicResource RibbonKit.Brushes.ApplicationOrb.Ring}"
-                     StrokeThickness="1.5"
-                     Effect="{DynamicResource RibbonKit.Effects.ApplicationOrbShadow}" />
-            <Viewbox x:Name="OrbGlyph" Margin="12" Stretch="Uniform">
-                <Path Width="20" Height="22" Stretch="Uniform" Fill="{StaticResource Writer.Brushes.IdentityMark}"
-                      Data="{StaticResource Writer.Glyph.IdentityMark}" />
-            </Viewbox>
-        </Grid>
-        <DataTemplate.Triggers>
-            <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType={x:Type primitives:ButtonBase}}}" Value="True">
-                <Setter TargetName="OrbFill" Property="Fill" Value="{DynamicResource RibbonKit.Brushes.ApplicationOrb.HoverBackground}" />
-                <Setter TargetName="OrbFill" Property="Stroke" Value="{DynamicResource RibbonKit.Brushes.ApplicationOrb.HoverRing}" />
-            </DataTrigger>
-            <DataTrigger Binding="{Binding IsPressed, RelativeSource={RelativeSource AncestorType={x:Type primitives:ButtonBase}}}" Value="True">
-                <Setter TargetName="OrbFill" Property="Fill" Value="{DynamicResource RibbonKit.Brushes.ApplicationOrb.PressedBackground}" />
-                <Setter TargetName="OrbFill" Property="Stroke" Value="{DynamicResource RibbonKit.Brushes.ApplicationOrb.HoverRing}" />
-            </DataTrigger>
-            <DataTrigger Binding="{Binding IsApplicationMenuOpen, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}" Value="True">
-                <Setter TargetName="OrbFill" Property="Fill" Value="{DynamicResource RibbonKit.Brushes.ApplicationOrb.PressedBackground}" />
-                <Setter TargetName="OrbFill" Property="Stroke" Value="{DynamicResource RibbonKit.Brushes.ApplicationOrb.HoverRing}" />
-            </DataTrigger>
-        </DataTemplate.Triggers>
+    <!-- Glyph only: the shared orb owns the sphere, states and rotation canvas. -->
+    <DataTemplate x:Key="Writer.Templates.ApplicationOrbGlyph">
+        <Path Width="16" Height="16" Stretch="Uniform"
+              Fill="{StaticResource Writer.Brushes.IdentityMark}"
+              Data="{StaticResource Writer.Glyph.IdentityMark}" />
     </DataTemplate>
 
     <Geometry x:Key="Writer.Glyph.Document">M5,2 H15 L20,7 V22 H5 Z M15,2 V7 H20 M8,11 H17 V12 H8 Z M8,15 H17 V16 H8 Z M8,19 H14 V20 H8 Z</Geometry>

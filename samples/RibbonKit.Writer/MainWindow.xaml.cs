@@ -74,8 +74,17 @@ public partial class MainWindow : RibbonWindow
     /// Creates a window around an injected shell. The caller retains ownership of the shell and
     /// remains responsible for disposing it after this window closes.
     /// </summary>
-    public MainWindow(WriterShellViewModel shell)
+    public MainWindow(WriterShellViewModel shell) : this(shell, null)
     {
+    }
+
+    internal MainWindow(WriterShellViewModel shell, WriterSettingsStore? settings)
+    {
+        if (settings is not null)
+        {
+            _writerSettings = settings;
+            _hasInjectedSettings = true;
+        }
         Shell = shell ?? throw new ArgumentNullException(nameof(shell));
         _ownsShell = false;
         InitializeShell(shellDialogs: null);
@@ -117,6 +126,7 @@ public partial class MainWindow : RibbonWindow
         _previewController.SetRebuildEnabled(false);
         PreviewView.StateChanged += OnPreviewViewStateChanged;
         ApplyWriterViewMode(CurrentViewMode, restoreEditorFocus: false);
+        InitializeCrystalPaperPresentation();
         DocumentEditor.TextChanged += OnEditorTextChanged;
         ContentRendered += OnInitialContentRendered;
         Closing += OnClosing;
@@ -385,6 +395,7 @@ public partial class MainWindow : RibbonWindow
         HorizontalRuler.PageSettingsCommitted -= OnRulerPageSettingsCommitted;
         HorizontalRuler.PageSettingsDragCancelled -= OnRulerPageSettingsDragCancelled;
         HorizontalRuler.ParagraphIndentDragCompleted -= OnParagraphIndentDragCompleted;
+        DisposeCrystalPaperPresentation();
         HorizontalRuler.Dispose();
         MarginGuide.Dispose();
         PreviewView.SetSnapshot(null);
@@ -401,7 +412,6 @@ public partial class MainWindow : RibbonWindow
         _paragraphKeyboardController?.Dispose();
         _paragraphKeyboardController = null;
         DisposeStructuredContent();
-        DisposeWriterIdentity();
         DisposeWriterSettings();
         if (_editingController is not null)
         {
@@ -583,6 +593,7 @@ public partial class MainWindow : RibbonWindow
     private void OnRulerToggleClick(object sender, RoutedEventArgs e)
     {
         _rulerVisible = RulerToggleButton.IsChecked == true;
+        SaveDocumentViewPreferences();
         ApplyRulerVisibility();
         RestoreEditorFocusAfterViewCommand();
     }
@@ -590,6 +601,7 @@ public partial class MainWindow : RibbonWindow
     private void OnMarginGuidesToggleClick(object sender, RoutedEventArgs e)
     {
         _marginGuidesVisible = MarginGuidesToggleButton.IsChecked == true;
+        SaveDocumentViewPreferences();
         ApplyRulerVisibility();
         RestoreEditorFocusAfterViewCommand();
     }
@@ -604,6 +616,7 @@ public partial class MainWindow : RibbonWindow
         MarginGuide.Visibility = paper && _marginGuidesVisible
             ? Visibility.Visible
             : Visibility.Collapsed;
+        UpdateCrystalPaperPresentation();
     }
 
     private void OnRulerPageSettingsPreviewChanged(object? sender,

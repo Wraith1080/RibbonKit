@@ -164,6 +164,20 @@
 
 ### RKWF-008 — The single real-window STA integration case needs a parallel-load timeout allowance
 
+- **2026-10-02 update:** Writer's previously excluded tests now run unfiltered on
+  one serialized STA dispatcher. This keeps WPF's cached, unfrozen WindowChrome
+  on its owning thread. Nested persistence fixtures reuse that dispatcher instead
+  of waiting on their own serialization gate. The default timeout is still ten
+  seconds; the Settings and full theme/DPI matrices have explicit 45-second and
+  three-minute ceilings. Print Setup tests drain deferred fixed-page work while
+  the backing package is alive. The open-popup matrix uses a finite frame wait:
+  ApplicationIdle waits after synthetic scaling timed out with capture enabled
+  or disabled. Keyboard/KeyTip/File Escape and editor-focus checks run separately
+  at native window DPI with optional capture off. Native input with capture enabled
+  remains a live gate. These are harness choices, not new runtime APIs or proof
+  of native mixed-monitor/input behavior. See §3.216 for current results.
+  The original timeout observation follows.
+
 - **First seen / packet:** 2026-08-24, Writer W2-E user-review correction full gate.
 - **Status:** Bounded test-harness exception; no product or RibbonKit defect.
 - **Reproduction and evidence:** the complete Writer suite passed alone in nine seconds, but the one intentionally
@@ -657,6 +671,15 @@
   Print to PDF without terminating Writer.
 
 ### RKWF-026 — Ribbon has no host-level Office Orb glyph override
+
+- **2026-10-02 update:** the historical library gap was resolved by
+  `Ribbon.ApplicationOrbGlyphTemplate` in §3.194. Writer now supplies a glyph-only
+  16-unit W in the shared glyph canvas and removes its post-render presenter patch,
+  duplicate sphere/states and render callback. Automated main/proxy checks verify
+  separate glyph instances, the retained themed sphere and accessible Back name.
+  Consumer implementation is complete; final live W appearance acceptance remains open.
+  See [Writer integration evidence §3.216](02-writer-foundation.md#3216-writer-crystal-integration-and-deferred-validation--2026-10-02).
+  The original observation and accepted historical workaround follow.
 
 - **First seen / packet:** 2026-08-31, Writer W4-A application-identity follow-up.
 - **Status:** App-owned workaround; runtime direction is not approved.

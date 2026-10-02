@@ -23,7 +23,6 @@ obtain explicit authorization unless already supplied. Follow `AGENTS.md` and
 | 1 | RKWF-002 | Make editable ComboBox commits predictable. Reproduce typing, selection, Enter, Escape and focus loss; document a reusable pattern before deciding whether an optional commit event is needed. Preserve native behavior and IME composition. |
 | 2 | RKWF-001 | Return focus safely after KeyTip activation without leaking the final key into the editor. Reproduce across buttons, toggles, menus and QAT before choosing documentation or a general completion hook. |
 | 3 | RKWF-003/004/006 | Improve external UI Automation discovery and actions for QAT, Backstage and ribbon commands. Start with one missing main-ribbon leaf and a second independent client; these remain investigations, not confirmed library defects. |
-| 4 | RKWF-026 | Let hosts supply an Office 2007 Orb glyph without modifying the realized visual tree. Evaluate an optional content-template/image hook shared by the main Orb and Classic2007 proxy. |
 
 These candidates benefit ribbon consumers generally. This review does not implement
 or approve new runtime APIs; first establish the focused reproduction and scope.
@@ -33,6 +32,7 @@ or approve new runtime APIs; first establish the focused reproduction and scope.
 - Narrow live follow-ups after implemented fixes: RKWF-016/019; W4-C physical driver
   and cold-start checks remain in RKWF-007/009/010.
 - RKWF-008 is a bounded harness allowance, not a product defect.
+- RKWF-026 now uses the available shared glyph hook; only Writer's migrated W live appearance acceptance remains.
 
 All other entries below retain corrections, constraints or accepted workarounds.
 No complete Windows contrast-theme, genuine OS IME or production RTL
@@ -92,7 +92,7 @@ App-resolved with WriterPrintSetupDialog and isolated preview/print submission. 
 
 ### RKWF-008 — The single real-window STA integration case needs a parallel-load timeout allowance
 
-Retained harness exception: only the combined real-window case uses a 20-second allowance; the default is 10 seconds. Monitor real duration rather than broadening timeouts.
+Retained harness exception: the default remains ten seconds, with explicit allowances for combined window and theme/DPI matrices. Writer tests now share one serialized STA dispatcher to avoid WPF's cached WindowChrome crossing threads, and nested STA fixtures reuse it. See the 2026-10-02 update in the evidence record.
 
 [Recorded evidence](history/writer-friction-evidence.md#rkwf-008--the-single-real-window-sta-integration-case-needs-a-parallel-load-timeout-allowance).
 
@@ -200,7 +200,7 @@ App-corrected and accepted pictured printing. Keep stable fixed preview but prin
 
 ### RKWF-026 — Ribbon has no host-level Office Orb glyph override
 
-App-owned Orb-glyph workaround; runtime direction is not approved. The realized custom template may justify a future general host hook, not a Writer-specific public API.
+The shared `Ribbon.ApplicationOrbGlyphTemplate` hook is available (§3.194). Writer migrated to a glyph-only W template on 2026-10-02 and removed its post-render visual-tree patch. Main Orb and Classic2007 proxy checks pass; final live Writer appearance acceptance remains open. No new runtime API is proposed.
 
 [Recorded evidence](history/writer-friction-evidence.md#rkwf-026--ribbon-has-no-host-level-office-orb-glyph-override).
 
@@ -239,6 +239,18 @@ behavior while replacing stock colors; RibbonKit has no date-picker control. Cal
 weekday resources must live directly in ControlTemplate.Resources. No runtime change.
 
 [Verification](history/02-writer-foundation.md#3163-writer-insert-dialog-theming--2026-09-16).
+
+### RKWF-046 — Crystal paper underlay needs Writer-owned layout and native scroll presentation
+
+App-owned integration: Crystal Paper view with QAT below and the ruler hidden
+reads the shared `QatBelowHost` bounds, overlaps Writer's document host and applies
+a short content fade. Writer owns the native scroll-content opacity mask,
+scrollbar inset and margin-guide paint; changes of ruler, theme, QAT or view
+restore ordinary layout. No shared ribbon template or public API is changed.
+The shared drawer and native ScrollViewer template-part names are integration
+dependencies. Final appearance and live input remain user review gates.
+
+[Verification](history/02-writer-foundation.md#3216-writer-crystal-integration-and-deferred-validation--2026-10-02).
 
 ### Verification note — 2026-09-15 cleanup
 

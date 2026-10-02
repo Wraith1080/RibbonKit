@@ -18,6 +18,7 @@ public partial class WriterPrintSetupDialog : Window
         _snapshot = snapshot ?? throw new ArgumentNullException(nameof(snapshot));
         ArgumentNullException.ThrowIfNull(printers);
         InitializeComponent();
+        RibbonKit.Writer.Appearance.WriterDialogAppearance.Initialize(this);
         PrinterBox.ItemsSource = printers;
         PrinterBox.SelectedItem = printers.FirstOrDefault(printer =>
             string.Equals(printer.Queue?.FullName, defaultPrinterName,

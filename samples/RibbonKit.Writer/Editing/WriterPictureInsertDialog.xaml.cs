@@ -12,6 +12,7 @@ public partial class WriterPictureInsertDialog : Window
     public WriterPictureInsertDialog(string? openingPath = null)
     {
         InitializeComponent();
+        RibbonKit.Writer.Appearance.WriterDialogAppearance.Initialize(this);
         PathBox.Text = openingPath ?? string.Empty;
         ValidatePath();
     }
