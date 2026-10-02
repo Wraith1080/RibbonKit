@@ -349,6 +349,8 @@ public partial class MainWindow
         DocumentPresentationHost.Background = background;
         EditorSurface.Background = background;
         EditorViewport.Background = background;
+        PreviewView.Background = background;
+        PreviewView.Viewer.Background = background;
         // Paper needs a steady outline rather than the ribbon's reflective rim.
         PaperCanvas.SetResourceReference(
             Border.BorderBrushProperty,

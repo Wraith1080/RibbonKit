@@ -1107,7 +1107,8 @@
             </rk:RibbonTab>
         </rk:Ribbon>
         <StatusBar DockPanel.Dock="Bottom" Padding="12,3"
-                   Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
+                   Background="{DynamicResource RibbonKit.Brushes.Ribbon.BodyBackground}"
+                   Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}"
                    BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}"
                    BorderThickness="0,1,0,0"
                    AutomationProperties.AutomationId="Status" AutomationProperties.Name="Status">

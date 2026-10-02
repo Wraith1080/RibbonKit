@@ -1553,6 +1553,13 @@ The paper outline instead uses the shared solid inactive-frame border in Crystal
 following palette/tint changes without reflective glints. Office and High Contrast
 retain their existing border resource. The focused underlay check passed, its
 rendered PNG was inspected, and normal Release/Debug builds had zero warnings/errors.
+Print Preview's host and native viewport now share the editor workspace background,
+revealing the Crystal window material around its pages. The status bar consumes
+the shared ribbon-body fill so the optional glass overlay also applies there;
+its zoom text now follows the shared foreground for dark-palette readability.
+Six focused preview/navigation, native-scrollbar and paper-underlay checks passed.
+Light/dark preview and status-bar renders were inspected; live material acceptance
+remains with the user. Normal Debug and Release compilation passed.
 
 The next Writer follow-up adds a document underlay when Crystal, Paper view,
 below-ribbon QAT and a hidden ruler coincide. Writer reads the shared drawer's
