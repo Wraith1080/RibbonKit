@@ -87,6 +87,8 @@ public class RibbonQuickAccessToolBar : ItemsControl
     /// <inheritdoc />
     public override void OnApplyTemplate()
     {
+        _panel?.RestoreOverflowFocus();
+        _panel = null;
         base.OnApplyTemplate();
 
         if (_overflowPopup is not null)
@@ -118,6 +120,7 @@ public class RibbonQuickAccessToolBar : ItemsControl
     /// <inheritdoc />
     protected override void OnItemsChanged(NotifyCollectionChangedEventArgs e)
     {
+        _panel?.RestoreOverflowFocus();
         base.OnItemsChanged(e);
 
         // The flyout's contents are a SNAPSHOT taken when it opened, so any change to the toolbar

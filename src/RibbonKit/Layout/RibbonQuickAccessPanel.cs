@@ -1,5 +1,7 @@
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using RibbonKit.Controls;
 
 namespace RibbonKit.Layout;
@@ -27,6 +29,25 @@ namespace RibbonKit.Layout;
 public class RibbonQuickAccessPanel : Panel
 {
     private readonly List<UIElement> _overflow = new();
+    private readonly Dictionary<UIElement, OverflowFocusState> _overflowFocus = new();
+
+    /// <summary>Initializes a new <see cref="RibbonQuickAccessPanel"/>.</summary>
+    public RibbonQuickAccessPanel()
+    {
+        Unloaded += (_, _) => RestoreOverflowFocus();
+        IsVisibleChanged += (_, _) =>
+        {
+            if (!IsVisible) RestoreOverflowFocus();
+            else InvalidateArrange();
+        };
+    }
+
+    internal void RestoreOverflowFocus()
+    {
+        foreach (var state in _overflowFocus.Values) state.Restore();
+        _overflowFocus.Clear();
+        InvalidateArrange();
+    }
 
     /// <summary>The children that did not fit, in their original order.</summary>
     internal IReadOnlyList<UIElement> OverflowedChildren => _overflow;
@@ -87,13 +108,23 @@ public class RibbonQuickAccessPanel : Panel
     {
         double x = 0;
 
+        foreach (var child in _overflowFocus.Keys.ToArray())
+        {
+            if (IsVisible && InternalChildren.Contains(child) && _overflow.Contains(child)) continue;
+            _overflowFocus[child].Restore();
+            _overflowFocus.Remove(child);
+        }
+
         foreach (UIElement child in InternalChildren)
         {
             if (_overflow.Contains(child))
             {
                 // Zero-sized rather than Collapsed: Visibility is the app's to own (a QAT item may
                 // legitimately be hidden), and collapsing here would fight that. A zero rect keeps
-                // the element out of sight and out of hit-testing without touching its state.
+                // the element out of sight and out of hit-testing. Its original subtree also
+                // needs to leave keyboard navigation while a separate overflow proxy is used.
+                if (IsVisible && !_overflowFocus.ContainsKey(child))
+                    _overflowFocus.Add(child, new OverflowFocusState(child));
                 child.Arrange(new Rect(0, 0, 0, 0));
                 continue;
             }
@@ -103,6 +134,68 @@ public class RibbonQuickAccessPanel : Panel
         }
 
         return finalSize;
+    }
+
+    private sealed class OverflowFocusState
+    {
+        private readonly UIElement _child;
+        private readonly List<SuppressedValue> _values = new();
+
+        internal OverflowFocusState(UIElement child)
+        {
+            _child = child;
+            Suppress(UIElement.FocusableProperty, false);
+            Suppress(KeyboardNavigation.TabNavigationProperty, KeyboardNavigationMode.None);
+            Suppress(KeyboardNavigation.ControlTabNavigationProperty, KeyboardNavigationMode.None);
+            Suppress(KeyboardNavigation.DirectionalNavigationProperty, KeyboardNavigationMode.None);
+        }
+
+        private void Suppress(DependencyProperty property, object value)
+        {
+            var descriptor = DependencyPropertyDescriptor.FromProperty(property, _child.GetType());
+            var state = new SuppressedValue(property, descriptor);
+            bool updating = false;
+            void Apply()
+            {
+                if (updating) return;
+                updating = true;
+                try
+                {
+                    state.WasCurrent = DependencyPropertyHelper.GetValueSource(_child, property).IsCurrent;
+                    state.RequestedValue = _child.GetValue(property);
+                    _child.SetCurrentValue(property, value);
+                }
+                finally { updating = false; }
+            }
+            state.Changed = (_, _) => Apply();
+            _values.Add(state);
+            Apply();
+            descriptor.AddValueChanged(_child, state.Changed);
+        }
+
+        internal void Restore()
+        {
+            foreach (var state in _values)
+            {
+                state.Descriptor.RemoveValueChanged(_child, state.Changed);
+                // SetValue/binding updates can replace the override without changing the
+                // effective value, in which case no change event was raised. Leave them intact.
+                if (!DependencyPropertyHelper.GetValueSource(_child, state.Property).IsCurrent) continue;
+                // Invalidation removes only our SetCurrentValue override. The current local
+                // value, resource or binding remains owned by the application.
+                _child.InvalidateProperty(state.Property);
+                if (state.WasCurrent) _child.SetCurrentValue(state.Property, state.RequestedValue);
+            }
+        }
+
+        private sealed class SuppressedValue(DependencyProperty property, DependencyPropertyDescriptor descriptor)
+        {
+            internal DependencyProperty Property { get; } = property;
+            internal DependencyPropertyDescriptor Descriptor { get; } = descriptor;
+            internal EventHandler Changed { get; set; } = null!;
+            internal bool WasCurrent { get; set; }
+            internal object RequestedValue { get; set; } = null!;
+        }
     }
 
     private void UpdateOwner()

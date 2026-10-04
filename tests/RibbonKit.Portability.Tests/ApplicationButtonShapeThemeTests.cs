@@ -142,6 +142,7 @@ public sealed class ApplicationButtonShapeThemeTests
     {
         var application = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
         ThemeManager.Apply(application, RibbonTheme.Office2024);
+        KeyboardNavigationPortabilityChecks.Verify(application);
         KeyboardFocusPortabilityChecks.Verify(application);
         CustomizationScrollSpacingChecks.Verify(application);
         CrystalUtilityPortabilityChecks.Verify(application);
@@ -934,8 +935,9 @@ public sealed class ApplicationButtonShapeThemeTests
         thread.SetApartmentState(ApartmentState.STA);
         thread.IsBackground = true;
         thread.Start();
-        if (!thread.Join(TimeSpan.FromSeconds(180)))
-            throw new TimeoutException("The ribbon portability test did not finish within 180 seconds.");
+        // This aggregate realizes consumer windows across themes, directions and Backstage designs.
+        if (!thread.Join(TimeSpan.FromSeconds(300)))
+            throw new TimeoutException("The ribbon portability test did not finish within 300 seconds.");
         failure?.Throw();
     }
 }

@@ -2,6 +2,7 @@ using System.IO;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -10,6 +11,7 @@ using System.Windows.Threading;
 using RibbonKit.Controls;
 using RibbonKit.Theming;
 using Xunit;
+using Ellipse = System.Windows.Shapes.Ellipse;
 
 namespace RibbonKit.Portability.Tests;
 
@@ -156,6 +158,19 @@ internal static class KeyboardFocusPortabilityChecks
                 Assert.True(ribbon.IsApplicationMenuOpen);
                 Press(dropdownPrimary, Key.Escape);
                 Assert.False(ribbon.IsApplicationMenuOpen);
+
+                var tabs = Assert.IsType<RibbonTabControl>(ribbon.Template.FindName("TabControlHost", ribbon));
+                var file = Assert.IsType<ToggleButton>(tabs.Template.FindName("PART_ApplicationButton", tabs));
+                foreach (var shape in new[] { RibbonApplicationButtonShape.Orb, RibbonApplicationButtonShape.Tab })
+                {
+                    ribbon.ApplicationButtonShape = shape;
+                    Drain();
+                    window.UpdateLayout();
+                    Assert.True(document.Focus());
+                    Assert.True(file.Focus());
+                    VerifyFocusVisual(file);
+                }
+                ribbon.ClearValue(Ribbon.ApplicationButtonShapeProperty);
             }
         }
         finally
@@ -168,7 +183,7 @@ internal static class KeyboardFocusPortabilityChecks
     private static Button Part(RibbonApplicationMenuItem item, string name) =>
         Assert.IsType<Button>(item.Template.FindName(name, item));
 
-    private static void VerifyFocusVisual(Control target, string? reviewName = null)
+    internal static void VerifyFocusVisual(Control target, string? reviewName = null, Window? owner = null)
     {
         // Exercise WPF's real focus adorner in the library-only window. Forcing its display
         // substitutes for the physical keyboard input mode that an offscreen fixture lacks.
@@ -182,19 +197,43 @@ internal static class KeyboardFocusPortabilityChecks
                 BindingFlags.Static | BindingFlags.NonPublic, Type.EmptyTypes)!.Invoke(null, null);
         }
         finally { force.SetValue(null, previous); }
-        Window.GetWindow(target)!.UpdateLayout();
-        var layer = AdornerLayer.GetAdornerLayer(target)!;
-        Adorner adorner = Assert.Single(layer.GetAdorners(target)!);
-        var ring = FindBorder(adorner);
-        Assert.NotNull(ring);
-        Assert.Same(target.FindResource("RibbonKit.Brushes.Input.FocusBorder"), ring.BorderBrush);
-        Rect bounds = ring.TransformToAncestor(adorner).TransformBounds(new Rect(ring.RenderSize));
-        Assert.True(bounds.Left >= 0 && bounds.Top >= 0
-            && bounds.Right <= target.ActualWidth && bounds.Bottom <= target.ActualHeight);
+        var window = owner ?? Window.GetWindow(target);
+        Assert.NotNull(window);
+        window.UpdateLayout();
+        var layer = AdornerLayer.GetAdornerLayer(target);
+        Assert.NotNull(layer);
+        var adorners = layer.GetAdorners(target);
+        Assert.NotNull(adorners);
+        Adorner adorner = Assert.Single(adorners);
+        var sphere = FindNamed<Ellipse>(target, "OrbFill");
+        if (target.Template.FindName("Outline", target) is Ellipse || sphere is { IsVisible: true })
+        {
+            var ring = FindNamed<Ellipse>(adorner, "FocusRing");
+            Assert.NotNull(ring);
+            Assert.Same(target.FindResource("RibbonKit.Brushes.Input.FocusBorder"), ring.Stroke);
+            FrameworkElement face = sphere is { IsVisible: true } ? sphere : target;
+            Rect bounds = ring.TransformToVisual(adorner).TransformBounds(new Rect(ring.RenderSize));
+            Rect expected = face.TransformToVisual(adorner).TransformBounds(
+                new Rect(2, 2, face.ActualWidth - 4, face.ActualHeight - 4));
+            var dpi = VisualTreeHelper.GetDpi(target);
+            Assert.InRange(Math.Abs(bounds.Left - expected.Left), 0, 1 / dpi.DpiScaleX);
+            Assert.InRange(Math.Abs(bounds.Top - expected.Top), 0, 1 / dpi.DpiScaleY);
+            Assert.InRange(Math.Abs(bounds.Width - expected.Width), 0, 1 / dpi.DpiScaleX);
+            Assert.InRange(Math.Abs(bounds.Height - expected.Height), 0, 1 / dpi.DpiScaleY);
+            Assert.Equal(ring.ActualWidth, ring.ActualHeight, 5);
+        }
+        else
+        {
+            var ring = FindBorder(adorner);
+            Assert.NotNull(ring);
+            Assert.Same(target.FindResource("RibbonKit.Brushes.Input.FocusBorder"), ring.BorderBrush);
+            Rect bounds = ring.TransformToAncestor(adorner).TransformBounds(new Rect(ring.RenderSize));
+            Assert.True(bounds.Left >= 0 && bounds.Top >= 0
+                && bounds.Right <= target.ActualWidth && bounds.Bottom <= target.ActualHeight);
+        }
         string? reviewDirectory = Environment.GetEnvironmentVariable("RIBBONKIT_FOCUS_DIAGNOSTICS");
         if (reviewName is not null && !string.IsNullOrEmpty(reviewDirectory))
         {
-            var window = Window.GetWindow(target)!;
             var bitmap = new RenderTargetBitmap((int)Math.Ceiling(window.ActualWidth),
                 (int)Math.Ceiling(window.ActualHeight), 96, 96, PixelFormats.Pbgra32);
             bitmap.Render(window);
@@ -214,6 +253,14 @@ internal static class KeyboardFocusPortabilityChecks
             Border? found = FindBorder(VisualTreeHelper.GetChild(node, index));
             if (found is not null) return found;
         }
+        return null;
+    }
+
+    private static T? FindNamed<T>(DependencyObject node, string name) where T : FrameworkElement
+    {
+        if (node is T element && element.Name == name) return element;
+        for (int index = 0; index < VisualTreeHelper.GetChildrenCount(node); index++)
+            if (FindNamed<T>(VisualTreeHelper.GetChild(node, index), name) is { } found) return found;
         return null;
     }
 

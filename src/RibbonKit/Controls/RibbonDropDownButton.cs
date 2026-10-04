@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Automation.Peers;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using RibbonKit.Animation;
@@ -107,6 +108,9 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
     private Popup? _popup;
     private RibbonDropDownButton? _borrowSource;
     private bool _borrowed;
+    private UIElement? _focusBeforeOpen;
+    private bool _returnFocusOnClose;
+    private bool _focusLastItem;
 
     static RibbonDropDownButton()
     {
@@ -124,6 +128,7 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
             () => SetCurrentValue(IsDropDownOpenProperty, false));
 
         Unloaded += OnDropDownUnloaded;
+        AddHandler(Keyboard.PreviewKeyDownEvent, new KeyEventHandler(OnOpenerKeyDown));
     }
 
     /// <summary>The button's label text.</summary>
@@ -191,6 +196,7 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
         if (_menuHost is not null)
         {
             _menuHost.RemoveHandler(ButtonBase.ClickEvent, new RoutedEventHandler(OnMenuItemClicked));
+            _menuHost.PreviewKeyDown -= OnMenuKeyDown;
         }
 
         if (_popup is not null)
@@ -203,6 +209,12 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
 
         _menuHost = GetTemplateChild(MenuHostPartName) as UIElement;
         _menuHost?.AddHandler(ButtonBase.ClickEvent, new RoutedEventHandler(OnMenuItemClicked));
+        if (_menuHost is not null)
+        {
+            KeyboardNavigation.SetTabNavigation(_menuHost, KeyboardNavigationMode.Cycle);
+            KeyboardNavigation.SetDirectionalNavigation(_menuHost, KeyboardNavigationMode.Cycle);
+            _menuHost.PreviewKeyDown += OnMenuKeyDown;
+        }
 
         _popup = GetTemplateChild(PopupPartName) as Popup;
         if (_popup is not null)
@@ -290,6 +302,9 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
             // items here.
             button.ScheduleReturnBorrowedItems();
         }
+
+        if (!(bool)e.NewValue)
+            button._returnFocusOnClose = button._menuHost?.IsKeyboardFocusWithin == true;
     }
 
     private void ReturnBorrowedItems()
@@ -341,6 +356,17 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
     private void OnPopupOpened(object? sender, EventArgs e)
     {
         _dismissHelper.OnOpened();
+        _returnFocusOnClose = false;
+        _focusBeforeOpen = IsKeyboardFocusWithin ? Keyboard.FocusedElement as UIElement
+            : GetTemplateChild("PART_Toggle") as UIElement;
+        var menuHost = _menuHost;
+        bool last = _focusLastItem;
+        _focusLastItem = false;
+        Dispatcher.BeginInvoke(DispatcherPriority.Input, new Action(() =>
+        {
+            if (IsDropDownOpen && ReferenceEquals(menuHost, _menuHost) && menuHost is { IsKeyboardFocusWithin: false })
+                menuHost.MoveFocus(new TraversalRequest(last ? FocusNavigationDirection.Last : FocusNavigationDirection.First));
+        }));
 
         // Unfold the WHOLE menu surface — border, shadow and items together. Animating only the
         // inner content (what this used to do) left the bordered card snapping in around moving
@@ -352,6 +378,8 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
 
     private void OnPopupClosed(object? sender, EventArgs e)
     {
+        bool returnFocus = _returnFocusOnClose || _menuHost?.IsKeyboardFocusWithin == true;
+        _returnFocusOnClose = false;
         _dismissHelper.OnClosed();
 
         // A popup can close BEHIND this property's back. WPF coerces Popup.IsOpen to false while
@@ -371,6 +399,46 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
         {
             ScheduleReturnBorrowedItems();
         }
+
+        if (returnFocus && _focusBeforeOpen is { IsVisible: true, IsEnabled: true })
+            _focusBeforeOpen.Focus();
+        _focusBeforeOpen = null;
+    }
+
+    private void OnOpenerKeyDown(object sender, KeyEventArgs e)
+    {
+        Key key = e.Key == Key.System ? e.SystemKey : e.Key;
+        if (!e.Handled && !IsDropDownOpen && IsKeyboardFocusWithin && (key == Key.Down || key == Key.Up))
+        {
+            _focusLastItem = key == Key.Up;
+            SetCurrentValue(IsDropDownOpenProperty, true);
+            e.Handled = true;
+        }
+    }
+
+    private void OnMenuKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Handled) return;
+        if (e.Key == Key.Escape)
+        {
+            e.Handled = _dismissHelper.TryDismissTopmostForEscape();
+            return;
+        }
+
+        // A ScrollViewer consumes arrows before WPF's navigation post-processing. Navigate
+        // menu buttons here, leaving embedded editors' ordinary key handling intact.
+        if (Keyboard.FocusedElement is not ButtonBase button || Keyboard.Modifiers != ModifierKeys.None) return;
+        FocusNavigationDirection? direction = e.Key switch
+        {
+            Key.Down => FocusNavigationDirection.Down,
+            Key.Up => FocusNavigationDirection.Up,
+            Key.Home => FocusNavigationDirection.First,
+            Key.End => FocusNavigationDirection.Last,
+            _ => null,
+        };
+        if (direction is { } move)
+            e.Handled = (move is FocusNavigationDirection.First or FocusNavigationDirection.Last ? _menuHost! : button)
+                .MoveFocus(new TraversalRequest(move));
     }
 
     // Return borrowed items AFTER the popup has closed and the UI thread is idle, so we never

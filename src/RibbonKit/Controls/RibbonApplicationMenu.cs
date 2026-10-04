@@ -132,6 +132,7 @@ public class RibbonApplicationMenu : ItemsControl
     private Window? _dismissWindow;
 
     private bool _focusingInitialAction;
+    private RibbonApplicationMenuItem? _focusedNavigationItem;
 
     static RibbonApplicationMenu()
     {
@@ -269,11 +270,59 @@ public class RibbonApplicationMenu : ItemsControl
     protected override void OnPreviewKeyDown(KeyEventArgs e)
     {
         base.OnPreviewKeyDown(e);
+        if (e.Handled) return;
 
         if (e.Key == Key.Escape)
         {
             RequestClose();
             e.Handled = true;
+            return;
+        }
+
+        if (Keyboard.FocusedElement is not ButtonBase focused || Keyboard.Modifiers != ModifierKeys.None) return;
+        if (e.Key is Key.Up or Key.Down && focused.TemplatedParent is RibbonDropDownButton) return;
+        var rows = Items.Cast<object>().Select(item => ItemContainerGenerator.ContainerFromItem(item))
+            .OfType<RibbonApplicationMenuItem>()
+            .Where(row => row.PrimaryPart is { IsVisible: true, IsEnabled: true }).ToList();
+        int index = rows.FindIndex(row => ReferenceEquals(focused, row.PrimaryPart) || ReferenceEquals(focused, row.ArrowPart));
+        if (index >= 0)
+        {
+            if (e.Key is Key.Home or Key.End)
+                e.Handled = rows[e.Key == Key.Home ? 0 : rows.Count - 1].PrimaryPart!.Focus();
+            else if (e.Key is Key.Up or Key.Down)
+            {
+                int step = e.Key == Key.Down ? 1 : -1;
+                e.Handled = rows[(index + step + rows.Count) % rows.Count].PrimaryPart!.Focus();
+            }
+            else if (e.Key == (FlowDirection == FlowDirection.RightToLeft ? Key.Left : Key.Right))
+            {
+                var row = rows[index];
+                if (ReferenceEquals(focused, row.PrimaryPart) && row.IsSplitPresentation
+                    && row.ArrowPart is { IsVisible: true, Focusable: true } arrow)
+                    e.Handled = arrow.Focus();
+                else
+                {
+                    NotifyItemClaimed(row);
+                    UpdateLayout();
+                    e.Handled = (GetTemplateChild(PanePartName) as UIElement)?
+                        .MoveFocus(new TraversalRequest(FocusNavigationDirection.First)) == true;
+                }
+            }
+            else if (e.Key == (FlowDirection == FlowDirection.RightToLeft ? Key.Right : Key.Left)
+                     && ReferenceEquals(focused, rows[index].ArrowPart))
+                e.Handled = rows[index].PrimaryPart!.Focus();
+        }
+        else if (GetTemplateChild(PanePartName) is UIElement { IsKeyboardFocusWithin: true } pane)
+        {
+            if (e.Key == (FlowDirection == FlowDirection.RightToLeft ? Key.Right : Key.Left)
+                && _focusedNavigationItem is { } row)
+                e.Handled = (row.IsSplitPresentation ? row.ArrowPart : row.PrimaryPart)?.Focus() == true;
+            else if (e.Key is Key.Up or Key.Down)
+                e.Handled = focused.MoveFocus(new TraversalRequest(e.Key == Key.Down
+                    ? FocusNavigationDirection.Down : FocusNavigationDirection.Up));
+            else if (e.Key is Key.Home or Key.End)
+                e.Handled = pane.MoveFocus(new TraversalRequest(e.Key == Key.Home
+                    ? FocusNavigationDirection.First : FocusNavigationDirection.Last));
         }
     }
 
@@ -304,6 +353,7 @@ public class RibbonApplicationMenu : ItemsControl
 
     internal void NotifyItemFocused(RibbonApplicationMenuItem item)
     {
+        _focusedNavigationItem = item;
         // Opening still shows the default page, even when the first row is a split/dropdown.
         // Subsequent keyboard navigation follows the same pane ownership as pointer hover.
         if (!_focusingInitialAction)
@@ -380,6 +430,7 @@ public class RibbonApplicationMenu : ItemsControl
         }
         else
         {
+            _focusedNavigationItem = null;
             UnhookDismissal();
         }
     }

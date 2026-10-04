@@ -568,6 +568,7 @@
                                                          it: the separator gap and this surface are
                                                          neutral territory once a nav row claims them. -->
                                                     <Border x:Name="PART_Pane"
+                                                            KeyboardNavigation.DirectionalNavigation="Cycle"
                                                             Grid.Column="2"
                                                             controls:ApplicationMenuGeometryConverter.PaneMinimumWidth="{DynamicResource RibbonKit.Metrics.ApplicationMenuPaneMinimumWidth}"
                                                             controls:ApplicationMenuGeometryConverter.PaneMaximumWidth="{DynamicResource RibbonKit.Metrics.ApplicationMenuPaneWidth}"

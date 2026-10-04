@@ -1855,7 +1855,8 @@ public class Ribbon : Control
                 UpdateBackstagePlacement();
                 if (Backstage is FrameworkElement reopening)
                 {
-                    reopening.Focus();
+                    if (reopening is Backstage backstage) backstage.FocusInitialAction();
+                    else reopening.Focus();
                     RibbonMotion.PlayOpen(reopening, RibbonAnimationAction.Backstage, slideEdge);
                 }
 
@@ -1894,8 +1895,12 @@ public class Ribbon : Control
 
             if (content is FrameworkElement element)
             {
-                element.Focusable = true;
-                element.Focus(); // So Esc works immediately.
+                if (element is Backstage backstage) backstage.FocusInitialAction();
+                else
+                {
+                    element.Focusable = true;
+                    element.Focus(); // So Esc works immediately for custom surfaces too.
+                }
 
                 // Slide from the logical leading edge (honors RTL and the global animation level).
                 RibbonMotion.PlayOpen(element, RibbonAnimationAction.Backstage, slideEdge);
@@ -2595,6 +2600,7 @@ public class Ribbon : Control
             }
 
             Button proxy = GetOrCreateClassicBackstageOrbProxy(orbTemplate);
+            proxy.SetCurrentValue(Control.FocusVisualStyleProperty, button.FocusVisualStyle);
             proxy.SetCurrentValue(FlowDirectionProperty, button.FlowDirection);
             var proxySize = new Size(button.ActualWidth, button.ActualHeight);
             _backstageAdorner.AttachClassicOrbProxy(proxy, origin, proxySize);
