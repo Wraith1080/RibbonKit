@@ -37,6 +37,7 @@ public partial class WriterParagraphDialog : Window
         Window? owner = null)
     {
         InitializeComponent();
+        RibbonKit.Writer.Appearance.WriterDialogAppearance.Initialize(this);
         _numericFields.AddRange(new[]
         {
             LeftIndentBox,

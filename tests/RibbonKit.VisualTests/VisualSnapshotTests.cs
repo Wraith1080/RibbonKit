@@ -1,8 +1,10 @@
 using System.Globalization;
 using System.IO;
+using System.Reflection;
 using System.Runtime.ExceptionServices;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Interop;
 using System.Windows.Markup;
 using System.Windows.Media;
@@ -49,7 +51,7 @@ public sealed class VisualSnapshotTests
     };
 
     [Fact]
-    public void Every_theme_variant_and_dpi_matches_its_approved_snapshot() =>
+    public void Every_approved_office_theme_variant_and_dpi_matches_its_snapshot() =>
         SnapshotThread.Run(() =>
         {
             CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
@@ -62,9 +64,9 @@ public sealed class VisualSnapshotTests
 
             try
             {
-                Assert.All(
-                    Enum.GetValues<RibbonTheme>(),
-                    theme => Assert.True(ThemeManager.SupportsDarkMode(theme)));
+                Assert.All(Themes, variant =>
+                    Assert.True(ThemeManager.SupportsDarkMode(variant.Theme)));
+                Assert.True(ThemeManager.SupportsDarkMode(RibbonTheme.CrystalLight));
                 AssertDarkBackdropRoundTrip(application);
 
                 foreach ((RibbonTheme theme, bool dark, string name) in Themes)
@@ -232,6 +234,57 @@ public sealed class VisualSnapshotTests
                     FlowDirection.RightToLeft,
                     CreateMessageBarStackScene,
                     270);
+
+                // Library-only Crystal QAT scenes; no Showcase palette or part patching.
+                foreach (bool dark in new[] { false, true })
+                {
+                    ThemeManager.Apply(application, RibbonTheme.CrystalLight);
+                    ThemeManager.SetDarkMode(application, dark);
+                    string palette = dark ? "crystal-dark" : "crystal-light";
+                    AssertSnapshot($"{palette}-qat-below-100", 1d,
+                        sceneFactory: direction => CreateQatScene(direction), height: 270);
+                    AssertSnapshot($"{palette}-qat-below-200", 2d,
+                        sceneFactory: direction => CreateQatScene(direction), height: 270);
+                    AssertSnapshot($"{palette}-qat-minimized-100", 1d,
+                        sceneFactory: direction => CreateQatScene(direction, minimized: true), height: 270);
+                    AssertSnapshot($"{palette}-qat-message-100", 1d,
+                        sceneFactory: direction => CreateQatScene(direction, message: true), height: 270);
+                    AssertSnapshot($"{palette}-qat-minimized-message-100", 1d,
+                        sceneFactory: direction => CreateQatScene(direction, minimized: true, message: true), height: 270);
+                    AssertSnapshot($"{palette}-qat-rtl-100", 1d, FlowDirection.RightToLeft,
+                        direction => CreateQatScene(direction), 270);
+                    AssertSnapshot($"{palette}-qat-tab-overflow-100", 1d,
+                        sceneFactory: direction => CreateQatScene(direction, tabRow: true), height: 270);
+                    AssertSnapshot($"{palette}-message-stack-100", 1d,
+                        sceneFactory: direction => CreateCrystalMessageScene(direction), height: 350);
+                    AssertSnapshot($"{palette}-message-stack-200", 2d,
+                        sceneFactory: direction => CreateCrystalMessageScene(direction), height: 350);
+                    AssertSnapshot($"{palette}-message-stack-rtl-100", 1d, FlowDirection.RightToLeft,
+                        direction => CreateCrystalMessageScene(direction), 350);
+                    AssertSnapshot($"{palette}-message-minimized-100", 1d,
+                        sceneFactory: direction => CreateCrystalMessageScene(direction, minimized: true), height: 350);
+                    foreach (string state in new[] { "default", "split", "dropdown", "narrow", "minimized" })
+                        AssertSnapshot($"{palette}-application-menu-{state}-100", 1d,
+                            sceneFactory: direction => CreateCrystalApplicationMenuScene(direction, state), height: 400);
+                    AssertSnapshot($"{palette}-application-menu-default-200", 2d,
+                        sceneFactory: direction => CreateCrystalApplicationMenuScene(direction, "default"), height: 400);
+                    AssertSnapshot($"{palette}-application-menu-rtl-100", 1d, FlowDirection.RightToLeft,
+                        direction => CreateCrystalApplicationMenuScene(direction, "split"), 400);
+                    AssertSnapshot($"{palette}-utility-scrollbars-100", 1d,
+                        sceneFactory: CreateCrystalUtilityScene, height: 350);
+                    AssertSnapshot($"{palette}-utility-scrollbars-200", 2d,
+                        sceneFactory: CreateCrystalUtilityScene, height: 350);
+                    AssertSnapshot($"{palette}-utility-scrollbars-rtl-100", 1d, FlowDirection.RightToLeft,
+                        CreateCrystalUtilityScene, 350);
+                    AssertSnapshot($"{palette}-contextual-100", 1d,
+                        sceneFactory: direction => CreateCrystalContextualScene(direction, dark), height: 270);
+                    AssertSnapshot($"{palette}-contextual-200", 2d,
+                        sceneFactory: direction => CreateCrystalContextualScene(direction, dark), height: 270);
+                    AssertSnapshot($"{palette}-contextual-rtl-100", 1d, FlowDirection.RightToLeft,
+                        direction => CreateCrystalContextualScene(direction, dark), 270);
+                    AssertSnapshot($"{palette}-tint-purple-100", 1d,
+                        sceneFactory: direction => CreateCrystalContextualScene(direction, dark, Colors.Purple), height: 270);
+                }
             }
             finally
             {
@@ -284,6 +337,20 @@ public sealed class VisualSnapshotTests
             "approved",
             snapshotName + ".png");
 
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_CAPTURE_SNAPSHOTS") == "1")
+        {
+            string captureDirectory = Path.Combine(repositoryRoot, "TestResults", "visual-capture");
+            SavePng(actual, Path.Combine(captureDirectory, snapshotName + ".actual.png"));
+            if (File.Exists(sourceBaseline))
+            {
+                BitmapSource approved = LoadPng(sourceBaseline);
+                if (!Compare(approved, actual).Passed)
+                    SavePng(CreateDifference(approved, actual),
+                        Path.Combine(captureDirectory, snapshotName + ".diff.png"));
+            }
+            return;
+        }
+
         if (ShouldUpdateSnapshots())
         {
             SavePng(actual, sourceBaseline);
@@ -331,35 +398,47 @@ public sealed class VisualSnapshotTests
         int height)
     {
         FrameworkElement scene = (sceneFactory ?? CreateScene)(flowDirection);
-        var requestedDpi = new DpiScale(dpiScale, dpiScale);
-        VisualTreeHelper.SetRootDpi(scene, requestedDpi);
-        DpiScale effectiveDpi = VisualTreeHelper.GetDpi(scene);
-        if (Math.Abs(effectiveDpi.DpiScaleX - dpiScale) > 0.001
-            || Math.Abs(effectiveDpi.DpiScaleY - dpiScale) > 0.001)
+        Window? captureWindow = Window.GetWindow(scene);
+        try
         {
-            throw new XunitException(
-                $"The snapshot requested {BaseDpi * dpiScale:F0} DPI, but WPF assigned " +
-                $"{effectiveDpi.PixelsPerInchX:F0}×{effectiveDpi.PixelsPerInchY:F0} DPI " +
-                "to its visual root.");
+            var requestedDpi = new DpiScale(dpiScale, dpiScale);
+            VisualTreeHelper.SetRootDpi((Visual?)captureWindow ?? scene, requestedDpi);
+            DpiScale effectiveDpi = VisualTreeHelper.GetDpi(scene);
+            if (Math.Abs(effectiveDpi.DpiScaleX - dpiScale) > 0.001
+                || Math.Abs(effectiveDpi.DpiScaleY - dpiScale) > 0.001)
+            {
+                throw new XunitException(
+                    $"The snapshot requested {BaseDpi * dpiScale:F0} DPI, but WPF assigned " +
+                    $"{effectiveDpi.PixelsPerInchX:F0}×{effectiveDpi.PixelsPerInchY:F0} DPI " +
+                    "to its visual root.");
+            }
+
+            var size = new Size(Width, height);
+
+            scene.Measure(size);
+            scene.Arrange(new Rect(size));
+            scene.UpdateLayout();
+            Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
+            scene.Measure(size);
+            scene.Arrange(new Rect(size));
+            scene.UpdateLayout();
+
+            int pixelWidth = checked((int)Math.Round(Width * dpiScale, MidpointRounding.AwayFromZero));
+            int pixelHeight = checked((int)Math.Round(height * dpiScale, MidpointRounding.AwayFromZero));
+            double dpi = BaseDpi * dpiScale;
+            var bitmap = new RenderTargetBitmap(pixelWidth, pixelHeight, dpi, dpi, PixelFormats.Pbgra32);
+            bitmap.Render(scene);
+            bitmap.Freeze();
+            return bitmap;
         }
-
-        var size = new Size(Width, height);
-
-        scene.Measure(size);
-        scene.Arrange(new Rect(size));
-        scene.UpdateLayout();
-        Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
-        scene.Measure(size);
-        scene.Arrange(new Rect(size));
-        scene.UpdateLayout();
-
-        int pixelWidth = checked((int)Math.Round(Width * dpiScale, MidpointRounding.AwayFromZero));
-        int pixelHeight = checked((int)Math.Round(height * dpiScale, MidpointRounding.AwayFromZero));
-        double dpi = BaseDpi * dpiScale;
-        var bitmap = new RenderTargetBitmap(pixelWidth, pixelHeight, dpi, dpi, PixelFormats.Pbgra32);
-        bitmap.Render(scene);
-        bitmap.Freeze();
-        return bitmap;
+        finally
+        {
+            if (captureWindow is not null)
+            {
+                captureWindow.Content = null;
+                captureWindow.Close();
+            }
+        }
     }
 
     private static FrameworkElement CreateScene(FlowDirection flowDirection)
@@ -752,6 +831,71 @@ public sealed class VisualSnapshotTests
         return root;
     }
 
+    private static FrameworkElement CreateQatScene(FlowDirection flowDirection,
+        bool minimized = false, bool message = false, bool tabRow = false)
+    {
+        var root = (Grid)CreateMessageBarStackScene(flowDirection);
+        var ribbon = Assert.IsType<Ribbon>(Assert.Single(root.Children));
+        ribbon.MessageBar!.Items.Clear();
+        if (message)
+            ribbon.MessageBar.Items.Add(new RibbonMessage { Title = "NOTICE", Message = "Review this document before editing." });
+        ribbon.QuickAccessItems.Clear();
+        var group = ribbon.Tabs[0].Groups[0];
+        var save = Button("Save", RibbonControlSize.Small, Icon("M3,3 L13,3 L13,13 L3,13 Z"));
+        var dropdown = new RibbonDropDownButton { Header = "Select", Icon = Icon("M2,8 L6,12 L14,3") };
+        var split = new RibbonSplitButton { Header = "Paste", Icon = Icon("M4,2 L12,2 L12,5 L14,5 L14,15 L2,15 L2,5 L4,5 Z") };
+        group.Items.Add(save);
+        group.Items.Add(dropdown);
+        group.Items.Add(split);
+        Assert.True(ribbon.AddToQuickAccess(save));
+        Assert.True(ribbon.AddToQuickAccess(dropdown));
+        Assert.True(ribbon.AddToQuickAccess(split));
+        if (tabRow)
+        {
+            ribbon.QuickAccessPosition = RibbonQuickAccessPosition.TabRow;
+            ribbon.QuickAccessMaxWidth = 45;
+        }
+        if (minimized)
+            RealizeMinimizedRibbon(root, ribbon);
+        return root;
+    }
+
+    private static void RealizeMinimizedRibbon(Grid root, Ribbon ribbon)
+    {
+        // Body collapse is synchronized on Loaded. Realize in a test window before
+        // detaching for bitmap capture; setting IsMinimized in a disconnected tree
+        // changes drawer triggers but leaves the body visible and is a false scene.
+        root.Children.Remove(ribbon);
+        var window = new Window { Content = ribbon, Width = Width, Height = 350,
+            Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
+        try
+        {
+            window.Show();
+            ribbon.IsMinimized = true;
+            Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
+            window.UpdateLayout();
+            var tabs = Assert.IsType<RibbonTabControl>(ribbon.Template.FindName("TabControlHost", ribbon));
+            Assert.Equal(Visibility.Collapsed,
+                Assert.IsType<Border>(tabs.Template.FindName("ContentHost", tabs)).Visibility);
+            window.Content = null;
+            root.Children.Add(ribbon);
+        }
+        finally { window.Close(); }
+    }
+
+    private static FrameworkElement CreateCrystalMessageScene(FlowDirection flowDirection, bool minimized = false)
+    {
+        var root = (Grid)CreateMessageBarStackScene(flowDirection);
+        root.Height = 350;
+        var ribbon = Assert.IsType<Ribbon>(Assert.Single(root.Children));
+        ribbon.QuickAccessPosition = RibbonQuickAccessPosition.TabRow;
+        var second = Assert.IsType<RibbonMessage>(ribbon.MessageBar!.Items[1]);
+        second.Message = "Macros have been disabled. Review the document settings and its source before allowing embedded content to run.";
+        if (minimized)
+            RealizeMinimizedRibbon(root, ribbon);
+        return root;
+    }
+
     private static FrameworkElement CreateMessageBarStackScene(FlowDirection flowDirection)
     {
         var root = (Grid)CreateScene(flowDirection);
@@ -971,6 +1115,173 @@ public sealed class VisualSnapshotTests
         menu.Items.Add(new RibbonApplicationMenuItem { Header = "Open" });
 
         return menu;
+    }
+
+
+    private static FrameworkElement CreateCrystalContextualScene(FlowDirection direction, bool dark, Color? tint = null)
+    {
+        var root = (Grid)CreateScene(direction);
+        root.Resources.MergedDictionaries.Add(ThemeManager.CreatePalette(RibbonTheme.CrystalLight, tint, dark));
+        var ribbon = Assert.IsType<Ribbon>(Assert.Single(root.Children));
+        var picture = new RibbonTab { Header = "Picture Format", MinWidth = 130,
+            IsContextual = true, ContextualColor = Brushes.Teal };
+        var table = new RibbonTab { Header = "Table Design", MinWidth = 120,
+            IsContextual = true, ContextualColor = Brushes.Purple };
+        var group = new RibbonGroup { Header = "Picture tools" };
+        group.Items.Add(Button("Crop", RibbonControlSize.Large, Icon("M3,1 V13 H15 M1,3 H13 V15")));
+        group.Items.Add(new RibbonTextBox { Header = "Name", Text = "Keep this picture", InputWidth = 130 });
+        group.Items.Add(new RibbonCheckBox { Header = "Lock aspect", IsChecked = true });
+        picture.Groups.Add(group);
+        table.Groups.Add(new RibbonGroup { Header = "Table tools" });
+        ribbon.Tabs.Add(picture);
+        ribbon.Tabs.Add(table);
+        ribbon.SelectedTab = picture;
+        // Keep this fixture connected through bitmap rendering so the real marker
+        // placement, label measurement and RTL transform remain live.
+        var captureWindow = new Window { Content = root, Width = Width + 16, Height = 310,
+            Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
+        try
+        {
+            captureWindow.Show();
+            Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
+            captureWindow.UpdateLayout();
+            var chrome = Assert.IsType<Border>(table.Template.FindName("HeaderChrome", table));
+            ForceState(chrome, typeof(UIElement), "IsMouseOverPropertyKey", true);
+            Assert.IsType<RadialGradientBrush>(((Border)picture.Template.FindName("HeaderChrome", picture)).Background);
+            var tabs = Assert.IsType<RibbonTabControl>(ribbon.Template.FindName("TabControlHost", ribbon));
+            var marker = Assert.IsType<System.Windows.Shapes.Rectangle>(tabs.Template.FindName("PART_TabMarker", tabs));
+            Assert.IsType<DrawingBrush>(marker.Fill);
+            Assert.True(marker.Width > 0 && marker.Opacity > 0);
+            return root;
+        }
+        catch
+        {
+            captureWindow.Close();
+            throw;
+        }
+    }
+
+    private static FrameworkElement CreateCrystalUtilityScene(FlowDirection direction)
+    {
+        var root = (Grid)CreateScene(direction);
+        root.Height = 350;
+        var ribbon = Assert.IsType<Ribbon>(Assert.Single(root.Children));
+        ribbon.QuickAccessMaxWidth = 50;
+        for (int i = 0; i < 6; i++)
+            ribbon.QuickAccessItems.Add(Button(null, RibbonControlSize.Small, Icon("M2,2 L12,12 M12,2 L2,12")));
+        ribbon.ShowMergedCaption(null, "Document");
+        var modalRibbon = new Ribbon { VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(0, 175, 0, 0) };
+        var modal = new RibbonTab { Header = "Print Preview", IsModal = true, CloseButtonText = "Close Preview" };
+        modalRibbon.Tabs.Add(modal);
+        modalRibbon.EnterModal(modal);
+        root.Children.Add(modalRibbon);
+        var samples = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Top,
+            HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 225, 0, 0) };
+        var bars = new List<ScrollBar>();
+        foreach (var state in new[] { "Idle", "Hover", "Pressed / drag" })
+        {
+            var sample = new Grid { Width = 225, Height = 100, Margin = new Thickness(8, 0, 8, 0) };
+            var label = new TextBlock { Text = state, Margin = new Thickness(8), FontSize = 13 };
+            label.SetResourceReference(TextBlock.ForegroundProperty, "RibbonKit.Brushes.Text.Primary");
+            sample.Children.Add(label);
+            foreach (var orientation in new[] { Orientation.Vertical, Orientation.Horizontal })
+            {
+                var bar = new ScrollBar { Orientation = orientation, Minimum = 0, Maximum = 100, Value = 32, ViewportSize = 25,
+                    HorizontalAlignment = orientation == Orientation.Vertical ? HorizontalAlignment.Right : HorizontalAlignment.Stretch,
+                    VerticalAlignment = orientation == Orientation.Vertical ? VerticalAlignment.Stretch : VerticalAlignment.Bottom,
+                    Margin = orientation == Orientation.Vertical ? new Thickness(0, 0, 0, 14) : new Thickness(0, 0, 14, 0) };
+                sample.Children.Add(bar);
+                bars.Add(bar);
+            }
+            samples.Children.Add(sample);
+        }
+        root.Children.Add(samples);
+        Panel.SetZIndex(samples, 100);
+        root.Measure(new Size(Width, 350));
+        root.Arrange(new Rect(0, 0, Width, 350));
+        root.UpdateLayout();
+        var tabs = Assert.IsType<RibbonTabControl>(ribbon.Template.FindName("TabControlHost", ribbon));
+        var minimize = Assert.IsType<ToggleButton>(tabs.Template.FindName("MinimizeToggle", tabs));
+        ForceState(minimize, typeof(UIElement), "IsMouseOverPropertyKey", true);
+        ForceState(minimize, typeof(ButtonBase), "IsPressedPropertyKey", true);
+        var qat = Assert.IsType<RibbonQuickAccessToolBar>(tabs.Template.FindName("QatTabRowHost", tabs));
+        var overflow = Assert.IsType<ToggleButton>(qat.Template.FindName("PART_OverflowButton", qat));
+        overflow.IsChecked = true;
+        foreach (string name in new[] { "PART_TabScroll", "PART_ContentScroll" })
+        {
+            var scroll = Assert.IsType<RibbonKit.Layout.RibbonScrollContentHost>(tabs.Template.FindName(name, tabs));
+            var arrows = ((Grid)VisualTreeHelper.GetParent(scroll)).Children.OfType<RepeatButton>().ToArray();
+            Assert.Equal(2, arrows.Length);
+            for (int i = 0; i < arrows.Length; i++)
+            {
+                arrows[i].Visibility = Visibility.Visible;
+                arrows[i].ApplyTemplate();
+                ForceState(arrows[i], typeof(UIElement), "IsMouseOverPropertyKey", i == 1);
+            }
+        }
+        foreach (var caption in UtilityDescendants<Button>(tabs).Where(b => b.Command == ribbon.MergedCaptionCommand))
+            ForceState(caption, typeof(UIElement), "IsMouseOverPropertyKey", true);
+        var modalTabs = Assert.IsType<RibbonTabControl>(modalRibbon.Template.FindName("TabControlHost", modalRibbon));
+        var close = Assert.IsType<Button>(modalTabs.Template.FindName("PART_ModalClose", modalTabs));
+        ForceState(close, typeof(UIElement), "IsMouseOverPropertyKey", true);
+        for (int i = 0; i < bars.Count; i++)
+        {
+            var thumb = Assert.IsType<Thumb>(bars[i].Template.FindName("Thumb", bars[i]));
+            if (i >= 2) ForceState(thumb, typeof(UIElement), "IsMouseOverPropertyKey", true);
+            if (i >= 4) ForceState(thumb, typeof(Thumb), "IsDraggingPropertyKey", true);
+            var arrow = Assert.IsType<RepeatButton>(bars[i].Template.FindName("IncreaseButton", bars[i]));
+            if (i >= 2) ForceState(arrow, typeof(UIElement), "IsMouseOverPropertyKey", true);
+            if (i >= 4) ForceState(arrow, typeof(ButtonBase), "IsPressedPropertyKey", true);
+        }
+        return root;
+    }
+
+    private static void ForceState(DependencyObject owner, Type type, string name, bool value) =>
+        owner.SetValue(Assert.IsType<DependencyPropertyKey>(type.GetField(name, BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)), value);
+
+    private static IEnumerable<T> UtilityDescendants<T>(DependencyObject root) where T : DependencyObject
+    {
+        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++)
+        {
+            var child = VisualTreeHelper.GetChild(root, i);
+            if (child is T match) yield return match;
+            foreach (var nested in UtilityDescendants<T>(child)) yield return nested;
+        }
+    }
+
+    private static FrameworkElement CreateCrystalApplicationMenuScene(FlowDirection direction, string state)
+    {
+        var root = (Grid)CreateApplicationMenuMessageBarScene(direction, RibbonApplicationButtonShape.Tab);
+        root.Height = 400;
+        if (state == "narrow") root.Width = 420;
+        var ribbon = Assert.IsType<Ribbon>(Assert.Single(root.Children));
+        var menu = Assert.IsType<RibbonApplicationMenu>(ribbon.ApplicationMenu);
+        var savePane = new StackPanel();
+        savePane.Children.Add(new RibbonApplicationMenuPaneItem { Content = "Document", Description = "Save a copy in this format." });
+        savePane.Children.Add(new RibbonApplicationMenuPaneItem { Content = "Template", IsEnabled = false });
+        var split = new RibbonApplicationMenuItem { Header = "Save As", IsSplit = true,
+            PaneHeader = "Save a copy", Content = savePane };
+        var print = new RibbonApplicationMenuItem { Header = "Print", IsSplit = false,
+            PaneHeader = "Print options", Content = new RibbonApplicationMenuPaneItem { Content = "Quick Print" } };
+        menu.Items.Add(split);
+        menu.Items.Add(new RibbonApplicationMenuSeparator());
+        menu.Items.Add(print);
+        if (state == "minimized") RealizeMinimizedRibbon(root, ribbon);
+        ribbon.IsBackstageOpen = true;
+        root.Measure(new Size(root.Width, root.Height));
+        root.Arrange(new Rect(0, 0, root.Width, root.Height));
+        root.UpdateLayout();
+        Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
+        if (state is "split" or "dropdown")
+        {
+            var item = state == "split" ? split : print;
+            var arrow = Assert.IsType<Button>(item.Template.FindName("PART_Arrow", item));
+            arrow.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            Assert.Same(item, menu.ActiveItem);
+        }
+        Assert.True(ribbon.IsApplicationMenuOpen);
+        Assert.Equal(new CornerRadius(14), Assert.IsType<Border>(menu.Template.FindName("Frame", menu)).CornerRadius);
+        return root;
     }
 
     private static DependencyObject? FindDescendantByName(

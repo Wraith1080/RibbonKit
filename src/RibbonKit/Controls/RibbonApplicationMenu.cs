@@ -141,10 +141,10 @@ public class RibbonApplicationMenu : ItemsControl
     public RibbonApplicationMenu()
     {
         // Any command click inside the menu dismisses it — the pane rows, the footer buttons, and
-        // the plain nav items. The two cases that must NOT dismiss (a nav item's arrow, and a
-        // pane-less "drop-down" nav item) mark the click handled themselves, so this handler never
-        // has to reason about WHERE the click came from. That is deliberate: the collapsed-group
-        // flyout learned the hard way (§3.40) that a visual-tree walk gets menu items backwards.
+        // the plain nav items. Pane openers (a nav item's arrow or a non-split drop-down row)
+        // mark their click handled themselves. Scrollbar buttons
+        // also raise Click, but scrolling is not a command invocation. Exempt only their subtree;
+        // pane/footer commands remain dismissing, including commands inside a ScrollViewer.
         AddHandler(ButtonBase.ClickEvent, new RoutedEventHandler(OnAnyClick));
 
         // Trap Tab inside the menu while it is up, for the same reason the backstage does: the
@@ -438,7 +438,20 @@ public class RibbonApplicationMenu : ItemsControl
 
     private void OnWindowResized(object sender, SizeChangedEventArgs e) => RequestClose();
 
-    private void OnAnyClick(object sender, RoutedEventArgs e) => RequestClose();
+    private void OnAnyClick(object sender, RoutedEventArgs e)
+    {
+        for (DependencyObject? node = e.OriginalSource as DependencyObject;
+            node is not null && !ReferenceEquals(node, this);
+            node = VisualParentOf(node))
+        {
+            if (node is ScrollBar)
+            {
+                return;
+            }
+        }
+
+        RequestClose();
+    }
 
     private static DependencyObject? VisualParentOf(DependencyObject node) =>
         node is Visual or System.Windows.Media.Media3D.Visual3D

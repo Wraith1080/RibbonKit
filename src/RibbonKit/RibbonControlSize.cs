@@ -97,6 +97,12 @@ public enum RibbonBackstageDesign
     /// This is an optional Backstage concept, not a claim that Office 2007 shipped one.
     /// </summary>
     Classic2007,
+
+    /// <summary>A Crystal full-height glass sidebar beside the document workspace.</summary>
+    CrystalSidebar,
+
+    /// <summary>A Crystal floating navigation strip above the document workspace.</summary>
+    CrystalFloating,
 }
 
 /// <summary>
@@ -129,7 +135,7 @@ public enum RibbonGroupReductionMode
 public enum RibbonApplicationButtonShape
 {
     /// <summary>
-    /// A rectangular File tab, as in Office 2010 / 2013 / 2019 / 2024. Default.
+    /// A rectangular File tab, the theme default outside Office 2007.
     /// </summary>
     Tab,
 

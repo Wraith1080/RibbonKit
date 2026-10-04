@@ -76,7 +76,8 @@ function Assert-ArchiveLayout {
     $unexpectedEntries = @($entryNames | Where-Object {
         $RequiredEntries -notcontains $_ -and
         $allowedInfrastructureEntries -notcontains $_ -and
-        $_ -notmatch '^package/services/metadata/core-properties/[0-9a-f]+\.psmdcp$'
+        # NuGet may name its generated core-properties part with a hash or "nuget".
+        $_ -notmatch '^package/services/metadata/core-properties/(?:[0-9a-f]+|nuget)\.psmdcp$'
     })
     Assert-Condition ($unexpectedEntries.Count -eq 0) "Package '$Path' has unexpected entries: $($unexpectedEntries -join ', ')."
 }

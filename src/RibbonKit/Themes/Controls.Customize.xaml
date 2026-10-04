@@ -22,9 +22,8 @@
         <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.ScrollBars.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
-    <!-- Pilot adapter for the Customize Ribbon page only. Keep it local rather than placing an
-         implicit ScrollBar style at dictionary/dialog scope: the QAT page and app-owned options
-         pages must remain unchanged until the visual comparison is accepted. -->
+    <!-- Scoped adapter retained for designer-safe resource lookup. Crystal also
+         themes native bars in QAT and app-owned Options pages through its palette. -->
     <Style x:Key="RibbonKit.CustomizePageScrollBarStyle" TargetType="{x:Type ScrollBar}">
         <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.ScrollBar.Track}" />
         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.ScrollBar.Glyph}" />
@@ -53,11 +52,128 @@
         </Style.Triggers>
     </Style>
 
+    <!-- Shared row and frame templates for both built-in customization pages. Theme
+         tokens select the curvature and materials; the native item presenters and
+         ScrollViewer remain in place for virtualization and keyboard scrolling.
+         FrameInset supplies matching list/tree scrollbar clearance without extra
+         template-part padding. A transparent border rounds each inset edge separately;
+         Border.Padding can leave an odd pixel on one edge at fractional DPI.
+         Host control padding still adds to it. -->
+    <ControlTemplate x:Key="RibbonKit.Customize.ListFrameTemplate" TargetType="{x:Type Control}">
+        <Border x:Name="Frame"
+                Background="{TemplateBinding Background}"
+                BorderBrush="{TemplateBinding BorderBrush}"
+                BorderThickness="{TemplateBinding BorderThickness}"
+                Padding="{TemplateBinding Padding}"
+                CornerRadius="{DynamicResource RibbonKit.Metrics.Customize.FrameCornerRadius}"
+                SnapsToDevicePixels="True">
+            <Border BorderBrush="Transparent"
+                    BorderThickness="{DynamicResource RibbonKit.Metrics.Customize.FrameInset}">
+                <ScrollViewer x:Name="PART_ScrollViewer" Focusable="False"
+                              HorizontalScrollBarVisibility="{TemplateBinding ScrollViewer.HorizontalScrollBarVisibility}"
+                              VerticalScrollBarVisibility="Auto"
+                              CanContentScroll="{TemplateBinding ScrollViewer.CanContentScroll}">
+                    <ItemsPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                </ScrollViewer>
+            </Border>
+        </Border>
+    </ControlTemplate>
+
+    <Style x:Key="RibbonKit.Customize.RowStyle" TargetType="{x:Type Border}">
+        <Setter Property="CornerRadius" Value="{DynamicResource RibbonKit.Metrics.Customize.RowCornerRadius}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+    </Style>
+
+    <Style x:Key="RibbonKit.Customize.ListItemStyle" TargetType="{x:Type ListBoxItem}">
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+        <Setter Property="Padding" Value="{DynamicResource RibbonKit.Metrics.Customize.ListItemPadding}" />
+        <Setter Property="Margin" Value="{DynamicResource RibbonKit.Metrics.Customize.ListItemMargin}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type ListBoxItem}">
+                    <Border x:Name="Row" Style="{StaticResource RibbonKit.Customize.RowStyle}">
+                        <ContentPresenter Margin="{TemplateBinding Padding}" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Row" Property="Background" Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
+                            <Setter TargetName="Row" Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Row" Property="Background" Value="{DynamicResource RibbonKit.Brushes.Control.CheckedBackground}" />
+                            <Setter TargetName="Row" Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Customize.SelectedBorder}" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                            <Setter TargetName="Row" Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Accent}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.4" /></Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <ControlTemplate x:Key="RibbonKit.Customize.TreeItemTemplate" TargetType="{x:Type TreeViewItem}">
+        <Grid>
+            <Grid.ColumnDefinitions><ColumnDefinition Width="18" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+            <ToggleButton x:Name="Expander" Width="16" Height="20" Focusable="False"
+                          IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+                <ToggleButton.Template>
+                    <ControlTemplate TargetType="{x:Type ToggleButton}">
+                        <Border Background="Transparent">
+                            <Path x:Name="Arrow" Data="M0,0 L4,4 L0,8" StrokeThickness="1.3"
+                                  Stroke="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
+                                  HorizontalAlignment="Center" VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Arrow" Property="RenderTransform"><Setter.Value><RotateTransform Angle="90" /></Setter.Value></Setter>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </ToggleButton.Template>
+            </ToggleButton>
+            <Border x:Name="Row" Grid.Column="1" Style="{StaticResource RibbonKit.Customize.RowStyle}"
+                    Padding="4,3" Margin="0,1,2,1">
+                <ContentPresenter x:Name="PART_Header" ContentSource="Header" />
+            </Border>
+            <ItemsPresenter x:Name="ItemsHost" Grid.Row="1" Grid.Column="1" />
+        </Grid>
+        <ControlTemplate.Triggers>
+            <Trigger Property="HasItems" Value="False"><Setter TargetName="Expander" Property="Visibility" Value="Hidden" /></Trigger>
+            <Trigger Property="IsExpanded" Value="False"><Setter TargetName="ItemsHost" Property="Visibility" Value="Collapsed" /></Trigger>
+            <Trigger SourceName="Row" Property="IsMouseOver" Value="True">
+                <Setter TargetName="Row" Property="Background" Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
+                <Setter TargetName="Row" Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
+            </Trigger>
+            <Trigger Property="IsSelected" Value="True">
+                <Setter TargetName="Row" Property="Background" Value="{DynamicResource RibbonKit.Brushes.Control.CheckedBackground}" />
+                <Setter TargetName="Row" Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Customize.SelectedBorder}" />
+            </Trigger>
+            <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Row" Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Accent}" /></Trigger>
+            <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.4" /></Trigger>
+        </ControlTemplate.Triggers>
+    </ControlTemplate>
+
+    <Style x:Key="RibbonKit.Customize.TreeContainerStyle" TargetType="{x:Type TreeViewItem}">
+        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+        <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+        <Setter Property="Template" Value="{StaticResource RibbonKit.Customize.TreeItemTemplate}" />
+    </Style>
+
     <!-- ============================================================
          RibbonQuickAccessPage — the built-in QAT customization page:
          available ribbon commands | Add/Remove/Up/Down | current QAT
          ============================================================ -->
     <Style TargetType="{x:Type controls:RibbonQuickAccessPage}">
+        <Setter Property="UseLayoutRounding" Value="True" />
         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
         <!-- The page fills the content area because it is an IRibbonFillPage: the dialog hosts
              it in a ScrollViewer with vertical scroll DISABLED, which constrains it to the
@@ -108,6 +224,8 @@
 
                         <ListBox x:Name="PART_AvailableList"
                                  Grid.Column="0" Grid.Row="1"
+                                 Template="{StaticResource RibbonKit.Customize.ListFrameTemplate}"
+                                 ItemContainerStyle="{StaticResource RibbonKit.Customize.ListItemStyle}"
                                  Foreground="{TemplateBinding Foreground}"
                                  Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
                                  BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
@@ -154,6 +272,8 @@
 
                         <ListBox x:Name="PART_CurrentList"
                                  Grid.Column="2" Grid.Row="1"
+                                 Template="{StaticResource RibbonKit.Customize.ListFrameTemplate}"
+                                 ItemContainerStyle="{StaticResource RibbonKit.Customize.ListItemStyle}"
                                  Foreground="{TemplateBinding Foreground}"
                                  Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
                                  BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
@@ -201,6 +321,7 @@
          with New Tab / New Group / Rename below the tree
          ============================================================ -->
     <Style TargetType="{x:Type controls:RibbonCustomizePage}">
+        <Setter Property="UseLayoutRounding" Value="True" />
         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
         <Setter Property="MinHeight" Value="240" />
         <Setter Property="Template">
@@ -281,6 +402,8 @@
 
                         <ListBox x:Name="PART_AvailableList"
                                  Grid.Column="0" Grid.Row="1"
+                                 Template="{StaticResource RibbonKit.Customize.ListFrameTemplate}"
+                                 ItemContainerStyle="{StaticResource RibbonKit.Customize.ListItemStyle}"
                                  Foreground="{TemplateBinding Foreground}"
                                  Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
                                  BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
@@ -326,27 +449,25 @@
 
                         <TreeView x:Name="PART_Tree"
                                   Grid.Column="2" Grid.Row="1"
+                                  Template="{StaticResource RibbonKit.Customize.ListFrameTemplate}"
+                                  ItemContainerStyle="{StaticResource RibbonKit.Customize.TreeContainerStyle}"
                                   Foreground="{TemplateBinding Foreground}"
                                   Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
                                   BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
                                   BorderThickness="1"
-                                  Padding="2"
                                   ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                            <TreeView.ItemContainerStyle>
-                                <!-- Mirror tree state into the node view-model so the page can
-                                     re-select/re-expand programmatically after each rebuild. -->
-                                <Style TargetType="{x:Type TreeViewItem}">
-                                    <!-- TreeViewItem's platform style supplies its own black
-                                         Foreground, so forwarding only the TreeView value is not
-                                         enough for dark mode. Bind every generated container back
-                                         to the page-level themed foreground; explicit content
-                                         colors can still override this normally. -->
-                                    <Setter Property="Foreground"
-                                            Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type TreeView}}}" />
-                                    <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
-                                    <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                            <TreeView.Style>
+                                <!-- Neutralize native TreeView padding at style precedence,
+                                     so host styles/local values can still override it. -->
+                                <Style TargetType="{x:Type TreeView}">
+                                    <Setter Property="Padding" Value="0" />
                                 </Style>
-                            </TreeView.ItemContainerStyle>
+                            </TreeView.Style>
+                            <TreeView.Resources>
+                                <!-- Child containers use the same state and geometry as roots. -->
+                                <Style TargetType="{x:Type TreeViewItem}"
+                                       BasedOn="{StaticResource RibbonKit.Customize.TreeContainerStyle}" />
+                            </TreeView.Resources>
                         </TreeView>
 
                         <StackPanel Grid.Column="3" Grid.Row="1"

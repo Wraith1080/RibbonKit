@@ -22,12 +22,16 @@ public partial class MainWindow
     private RibbonOptionsDialog? _settingsDialog;
     private DependencyPropertyDescriptor? _quickAccessPositionDescriptor;
     private bool _suppressRibbonPersistence;
+    private bool _hasInjectedSettings;
+    private WriterAppearanceScope? _appearanceScope;
+    private readonly Dictionary<Window, WriterAppearanceScope> _dialogAppearanceScopes = new();
+    private readonly Dictionary<Control, CapturedBackdrop> _capturedPopups = new();
 
     private void InitializeWriterSettings()
     {
         // Real Writer startup always has App.Current. Isolated window tests intentionally do not;
         // keep them hermetic rather than reading or writing the interactive user's settings.
-        if (Application.Current is null)
+        if (Application.Current is null && !_hasInjectedSettings)
             return;
 
         _appearancePreferences = _writerSettings.LoadAppearance();
@@ -68,13 +72,28 @@ public partial class MainWindow
             Ribbon.QuickAccessPositionProperty,
             typeof(Ribbon));
         _quickAccessPositionDescriptor?.AddValueChanged(MainRibbon, OnQuickAccessPositionChanged);
+        ApplyCapturedPopups(_appearancePreferences.CapturedPopupBackdrop && !SystemParameters.HighContrast);
     }
 
-    private void OnQuickAccessItemsChanged(object? sender, NotifyCollectionChangedEventArgs e) =>
+    private void OnQuickAccessItemsChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        ApplyCapturedPopups(_appearancePreferences.CapturedPopupBackdrop && !SystemParameters.HighContrast);
         SaveRibbonLayoutIfReady();
+    }
 
     private void OnQuickAccessPositionChanged(object? sender, EventArgs e) =>
         SaveRibbonLayoutIfReady();
+
+    private void SaveDocumentViewPreferences()
+    {
+        _appearancePreferences = _appearancePreferences with
+        {
+            ShowRuler = _rulerVisible,
+            ShowMarginGuides = _marginGuidesVisible,
+        };
+        if (_settingsDialog is null && (Application.Current is not null || _hasInjectedSettings))
+            _writerSettings.SaveAppearance(_appearancePreferences);
+    }
 
     private void SaveRibbonLayoutIfReady()
     {
@@ -98,7 +117,7 @@ public partial class MainWindow
     private void OnRibbonCustomizeRequested(object? sender, EventArgs e) =>
         OpenSettingsDialog(WriterSettingsPage.CustomizeRibbon);
 
-    private void OpenSettingsDialog(WriterSettingsPage selected)
+    internal void OpenSettingsDialog(WriterSettingsPage selected)
     {
         if (_settingsDialog is not null)
         {
@@ -167,6 +186,7 @@ public partial class MainWindow
         };
 
         _settingsDialog = dialog;
+        RegisterAppearanceDialog(dialog);
         try
         {
             dialog.ShowDialog();
@@ -194,33 +214,36 @@ public partial class MainWindow
 
     private void PersistSettings()
     {
+        ApplyCapturedPopups(_appearancePreferences.CapturedPopupBackdrop && !SystemParameters.HighContrast);
         _writerSettings.SaveAppearance(_appearancePreferences);
         _writerSettings.SaveRibbonLayout(RibbonCustomizationSerializer.Serialize(MainRibbon));
     }
 
-    private void ApplyAppearance(
+    internal void ApplyAppearance(
         WriterAppearancePreferences preferences,
         RibbonOptionsDialog? openDialog = null)
     {
         preferences = WriterAppearanceCompatibility.Normalize(preferences);
         _appearancePreferences = preferences;
 
-        ThemeManager.Apply(Application.Current, preferences.Theme);
-        ThemeManager.SetDarkMode(Application.Current, preferences.DarkPalette);
-        if (preferences.Accent is { } accent
-            && ColorConverter.ConvertFromString(accent) is Color color)
+        if (Application.Current is { } application)
         {
-            ThemeManager.SetAccent(Application.Current, color);
-        }
-        else
-        {
-            ThemeManager.ClearAccent(Application.Current);
-        }
+            ThemeManager.Apply(application, preferences.Theme);
+            ThemeManager.SetDarkMode(application, preferences.DarkPalette);
+            if (preferences.Accent is { } accent
+                && ColorConverter.ConvertFromString(accent) is Color color)
+            {
+                ThemeManager.SetAccent(application, color);
+            }
+            else
+            {
+                ThemeManager.ClearAccent(application);
+            }
 
-        ThemeManager.SetAccentedTitleBar(Application.Current, preferences.AccentedTitleBar);
+            ThemeManager.SetAccentedTitleBar(application, preferences.AccentedTitleBar);
+        }
         FrameAppearance = preferences.FrameAppearance;
         MainRibbon.ApplicationButtonShape = preferences.ApplicationButtonShape;
-        QueueWriterOrbTemplate();
         WriterBackstage.Design = preferences.BackstageDesign;
 
         RibbonAnimation.GlobalLevel = preferences.AnimationLevel;
@@ -235,6 +258,14 @@ public partial class MainWindow
         }
 
         ApplyBackdrop(preferences);
+        _appearanceScope ??= new WriterAppearanceScope(this);
+        _appearanceScope.Apply(preferences, ActiveBackdrop != RibbonBackdrop.None);
+        foreach (var (dialog, scope) in _dialogAppearanceScopes)
+        {
+            scope.Apply(preferences);
+            MicaHelper.TrySetDarkMode(dialog, preferences.DarkPalette);
+        }
+        ApplyCapturedPopups(preferences.CapturedPopupBackdrop && !SystemParameters.HighContrast);
         WriterBackstage.Translucent = preferences.BackstageTranslucent
             && WriterAppearanceCompatibility.CanUseBackstageTranslucency(
                 preferences,
@@ -262,7 +293,7 @@ public partial class MainWindow
         {
             MicaHelper.TrySetBackdrop(this, RibbonBackdrop.None);
             MicaHelper.ShowNativeCaptionButtons(this, true);
-            ThemeManager.SetTitleBarBackdrop(Application.Current, false);
+            if (Application.Current is { } app) ThemeManager.SetTitleBarBackdrop(app, false);
             SetResourceReference(BackgroundProperty, "RibbonKit.Brushes.Window.Background");
             WriterContentRoot.SetResourceReference(
                 Panel.BackgroundProperty,
@@ -276,7 +307,7 @@ public partial class MainWindow
 
         MicaHelper.ExtendGlassFrame(this, full: true);
         MicaHelper.ShowNativeCaptionButtons(this, false);
-        ThemeManager.SetTitleBarBackdrop(Application.Current, true);
+        if (Application.Current is { } application) ThemeManager.SetTitleBarBackdrop(application, true);
         Background = Brushes.Transparent;
         WriterContentRoot.Background = Brushes.Transparent;
         ApplyWorkspaceBackground(
@@ -299,6 +330,12 @@ public partial class MainWindow
         {
             background = SystemColors.ControlBrush;
         }
+        else if (theme == RibbonTheme.CrystalLight)
+        {
+            // Reveal the same window gradient behind both the ribbon and page,
+            // including live light/dark palette and tint changes.
+            background = Brushes.Transparent;
+        }
         else
         {
             var color = darkPalette
@@ -312,6 +349,15 @@ public partial class MainWindow
         DocumentPresentationHost.Background = background;
         EditorSurface.Background = background;
         EditorViewport.Background = background;
+        PreviewView.Background = background;
+        PreviewView.Viewer.Background = background;
+        // Paper needs a steady outline rather than the ribbon's reflective rim.
+        PaperCanvas.SetResourceReference(
+            Border.BorderBrushProperty,
+            theme == RibbonTheme.CrystalLight && !SystemParameters.HighContrast
+                ? "RibbonKit.Brushes.MdiChild.InactiveBorder"
+                : "RibbonKit.Brushes.Ribbon.Border");
+        HorizontalRuler.UseCrystalGlassEdge = theme == RibbonTheme.CrystalLight;
         HorizontalRuler.IsSurfaceTransparent = ShouldUseTransparentRulerSurface(
             theme,
             isBackdropActive,
@@ -322,10 +368,62 @@ public partial class MainWindow
         RibbonTheme theme,
         bool isBackdropActive,
         bool highContrast) =>
-        theme == RibbonTheme.Office2024 && isBackdropActive && !highContrast;
+        theme is RibbonTheme.Office2024 or RibbonTheme.CrystalLight && isBackdropActive && !highContrast;
+
+    internal void RegisterAppearanceDialog(Window dialog)
+    {
+        if (_dialogAppearanceScopes.ContainsKey(dialog)) return;
+        var scope = new WriterAppearanceScope(dialog);
+        _dialogAppearanceScopes.Add(dialog, scope);
+        scope.Apply(_appearancePreferences);
+        MicaHelper.TrySetDarkMode(dialog, _appearancePreferences.DarkPalette);
+        dialog.Closed += OnAppearanceDialogClosed;
+    }
+
+    private void OnAppearanceDialogClosed(object? sender, EventArgs e)
+    {
+        if (sender is not Window dialog) return;
+        dialog.Closed -= OnAppearanceDialogClosed;
+        if (_dialogAppearanceScopes.Remove(dialog, out var scope)) scope.Dispose();
+    }
+
+    private void ApplyCapturedPopups(bool enabled)
+    {
+        if (!enabled)
+        {
+            foreach (var capture in _capturedPopups.Values) capture.Dispose();
+            _capturedPopups.Clear();
+            return;
+        }
+        // Writer has Backstage rather than a RibbonApplicationMenu. Register only
+        // supported dropdown/split buttons and collapsed groups, never Backstage.
+        var controls = MainRibbon.Tabs.SelectMany(tab => tab.Groups)
+            .SelectMany(group => new Control[] { group }.Concat(FindLogicalDescendants<Control>(group)))
+            .Concat(MainRibbon.QuickAccessItems.OfType<Control>())
+            .Where(control => control is RibbonDropDownButton or RibbonGroup).ToHashSet();
+        foreach (Control obsolete in _capturedPopups.Keys.Except(controls).ToArray())
+        {
+            _capturedPopups[obsolete].Dispose();
+            _capturedPopups.Remove(obsolete);
+        }
+        foreach (Control control in controls)
+        {
+            if (!_capturedPopups.TryGetValue(control, out var capture))
+                _capturedPopups.Add(control, capture = new CapturedBackdrop(control, this));
+            capture.Apply(true);
+        }
+    }
 
     private void DisposeWriterSettings()
     {
+        ApplyCapturedPopups(false);
+        _appearanceScope?.Dispose();
+        foreach (var (dialog, scope) in _dialogAppearanceScopes)
+        {
+            dialog.Closed -= OnAppearanceDialogClosed;
+            scope.Dispose();
+        }
+        _dialogAppearanceScopes.Clear();
         Loaded -= OnWriterWindowLoaded;
         MainRibbon.QuickAccessCustomizeRequested -= OnQuickAccessCustomizeRequested;
         MainRibbon.RibbonCustomizeRequested -= OnRibbonCustomizeRequested;
@@ -340,7 +438,7 @@ public partial class MainWindow
         }
     }
 
-    private enum WriterSettingsPage
+    internal enum WriterSettingsPage
     {
         Appearance,
         CustomizeRibbon,

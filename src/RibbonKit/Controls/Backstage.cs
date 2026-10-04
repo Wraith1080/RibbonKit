@@ -201,7 +201,8 @@ public class Backstage : TabControl
     /// is the light 2024 rail, <see cref="RibbonBackstageDesign.Classic2010"/> is the shared
     /// pre-2013 glass rail, and <see cref="RibbonBackstageDesign.Glass2007"/> is RibbonKit's
     /// optional modern Office 2007 glass interpretation. <see cref="RibbonBackstageDesign.Classic2007"/>
-    /// is the separate opaque, document-oriented Office 2007 concept. Inherited by the nav items.
+    /// is the separate opaque, document-oriented Office 2007 concept. The Crystal sidebar and
+    /// floating workspace are independent values. Inherited by the nav items.
     /// </summary>
     public RibbonBackstageDesign Design
     {

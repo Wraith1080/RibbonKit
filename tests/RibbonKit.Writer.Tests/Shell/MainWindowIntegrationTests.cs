@@ -1,4 +1,7 @@
 using System.Collections.ObjectModel;
+using RibbonKit.Writer.Appearance;
+using RibbonKit.Theming;
+using RibbonKit.Animation;
 using System.ComponentModel;
 using System.Globalization;
 using System.IO;
@@ -38,6 +41,372 @@ public sealed class WriterUiCollectionDefinition
 [Collection("Writer UI")]
 public sealed class MainWindowIntegrationTests
 {
+    [Fact]
+    public async Task ViewTogglesPersistAndSurviveAppearancePreviewCancelAndRestart()
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            using var directory = new TemporaryDirectory();
+            var store = new WriterSettingsStore(new WriterSettingsPaths(directory.File("appearance.json"), directory.File("ribbon.json")));
+            store.SaveAppearance(new WriterAppearancePreferences { Theme = RibbonTheme.CrystalLight });
+            using (var fixture = new WindowFixture(settings: store))
+            {
+                fixture.Show();
+                Assert.True(await fixture.Shell.NewAsync(WriterDocumentProfiles.RibbonKitWriter));
+                await PumpAsync();
+                Toggle((RibbonToggleButton)fixture.Window.FindName("RulerToggleButton"));
+                Toggle((RibbonToggleButton)fixture.Window.FindName("MarginGuidesToggleButton"));
+                Assert.False(store.LoadAppearance().ShowRuler);
+                Assert.False(store.LoadAppearance().ShowMarginGuides);
+                string document = TextOf(fixture.Editor.Document);
+                Exception? failure = null;
+                _ = fixture.Window.Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, new Action(() =>
+                {
+                    var dialog = fixture.Window.OwnedWindows.OfType<RibbonOptionsDialog>().Single();
+                    try
+                    {
+                        var page = (WriterAppearancePage)dialog.Pages[0].Content;
+                        Assert.False(((CheckBox)page.FindName("ShowRulerCheck")).IsChecked);
+                        Assert.False(((CheckBox)page.FindName("ShowMarginGuidesCheck")).IsChecked);
+                        var theme = (ComboBox)page.FindName("ThemeCombo");
+                        theme.SelectedItem = theme.Items.Cast<ComboBoxItem>().Single(item => Equals(item.Tag, RibbonTheme.Office2019));
+                        Assert.False(((RibbonToggleButton)fixture.Window.FindName("RulerToggleButton")).IsChecked);
+                        Assert.False(((RibbonToggleButton)fixture.Window.FindName("MarginGuidesToggleButton")).IsChecked);
+                        ((CheckBox)page.FindName("ShowRulerCheck")).IsChecked = true;
+                        Assert.True(((RibbonToggleButton)fixture.Window.FindName("RulerToggleButton")).IsChecked);
+                        Assert.False(store.LoadAppearance().ShowRuler);
+                    }
+                    catch (Exception ex) { failure = ex; }
+                    finally { dialog.Close(); }
+                }));
+                fixture.Window.OpenSettingsDialog(MainWindow.WriterSettingsPage.Appearance);
+                if (failure is not null) System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(failure).Throw();
+                Assert.False(((RibbonToggleButton)fixture.Window.FindName("RulerToggleButton")).IsChecked);
+                Assert.False(((RibbonToggleButton)fixture.Window.FindName("MarginGuidesToggleButton")).IsChecked);
+                Assert.Equal(RibbonTheme.CrystalLight, store.LoadAppearance().Theme);
+                Assert.Equal(document, TextOf(fixture.Editor.Document));
+            }
+            using var restarted = new WindowFixture(settings: store);
+            restarted.Show();
+            await PumpAsync();
+            Assert.False(((RibbonToggleButton)restarted.Window.FindName("RulerToggleButton")).IsChecked);
+            Assert.False(((RibbonToggleButton)restarted.Window.FindName("MarginGuidesToggleButton")).IsChecked);
+        }, TimeSpan.FromSeconds(45));
+    }
+
+    [Fact]
+    public async Task CrystalPaperUnderlayRetainsNativeScrollAndRestoresForRulerQatThemeAndViewChanges()
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            using var fixture = new WindowFixture();
+            fixture.Show();
+            var window = fixture.Window;
+            var host = (Grid)window.FindName("DocumentPresentationHost");
+            var viewport = (ScrollViewer)window.FindName("EditorViewport");
+            var separator = (Border)window.FindName("EditorTopSeparator");
+            var paper = (Border)window.FindName("PaperCanvas");
+            var guide = (WriterMarginGuide)window.FindName("MarginGuide");
+            var originalMargin = host.Margin;
+            var document = fixture.Editor.Document;
+            fixture.Editor.AppendText(string.Join("\n", Enumerable.Repeat("Native editing and scrolling beneath Crystal", 180)));
+            var preferences = new WriterAppearancePreferences { Theme = RibbonTheme.CrystalLight,
+                ShowRuler = false, AnimationLevel = RibbonAnimationLevel.None };
+            window.ApplyAppearance(preferences);
+            fixture.Ribbon.QuickAccessPosition = RibbonQuickAccessPosition.BelowRibbon;
+            await PumpAsync();
+            var drawer = (Border)fixture.Ribbon.Template.FindName("QatBelowHost", fixture.Ribbon);
+            var presenter = (ScrollContentPresenter)viewport.Template.FindName("PART_ScrollContentPresenter", viewport);
+            var scrollbar = (ScrollBar)viewport.Template.FindName("PART_VerticalScrollBar", viewport);
+            Assert.True(host.Margin.Top < 0);
+            Assert.Equal(Visibility.Collapsed, separator.Visibility);
+            Assert.IsType<LinearGradientBrush>(presenter.OpacityMask);
+            Assert.Same(presenter.OpacityMask, guide.OpacityMask);
+            Assert.True(paper.TranslatePoint(new Point(), window).Y < drawer.TranslatePoint(new Point(0, drawer.ActualHeight), window).Y);
+            Assert.True(scrollbar.TranslatePoint(new Point(), window).Y >= fixture.Ribbon.TranslatePoint(new Point(0, fixture.Ribbon.ActualHeight), window).Y - 1);
+            viewport.ScrollToVerticalOffset(100);
+            await PumpAsync();
+            Assert.True(viewport.VerticalOffset > 0);
+            double offset = viewport.VerticalOffset;
+            var content = (DockPanel)window.FindName("WriterContentRoot");
+            var drawing = new DrawingVisual();
+            using (var context = drawing.RenderOpen())
+            {
+                var bounds = new Rect(0, 0, content.ActualWidth, 360);
+                context.DrawRectangle((Brush)window.FindResource("RibbonKit.Brushes.Window.Background"), null, bounds);
+                context.DrawRectangle(new VisualBrush(content)
+                {
+                    ViewboxUnits = BrushMappingMode.Absolute,
+                    Viewbox = bounds,
+                }, null, bounds);
+            }
+            var bitmap = new System.Windows.Media.Imaging.RenderTargetBitmap((int)content.ActualWidth, 360, 96, 96, PixelFormats.Pbgra32);
+            bitmap.Render(drawing);
+            string diagnostics = Path.Combine(AppContext.BaseDirectory, "writer-theme-diagnostics");
+            Directory.CreateDirectory(diagnostics);
+            var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder();
+            encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bitmap));
+            using (var output = File.Create(Path.Combine(diagnostics, "WriterPaper-underlay.png"))) encoder.Save(output);
+            foreach (double scale in new[] { 1.25, 2, 1.25 })
+            {
+                VisualTreeHelper.SetRootDpi(window, new DpiScale(scale, scale));
+                window.UpdateLayout();
+                await Task.Delay(50);
+                Assert.Equal(scale, VisualTreeHelper.GetDpi(host).DpiScaleX);
+                Assert.True(host.Margin.Top < 0);
+                Assert.Equal(offset, viewport.VerticalOffset, 1);
+            }
+            Assert.Same(document, fixture.Editor.Document);
+            Assert.True(fixture.Editor.CanUndo);
+            window.ApplyAppearance(preferences with { ShowRuler = true });
+            await PumpAsync();
+            Assert.Equal(originalMargin, host.Margin);
+            Assert.Null(presenter.OpacityMask);
+            Assert.Null(guide.OpacityMask);
+            Assert.Equal(0, scrollbar.Margin.Top);
+            window.ApplyAppearance(preferences);
+            fixture.Ribbon.QuickAccessPosition = RibbonQuickAccessPosition.TitleBar;
+            await PumpAsync();
+            Assert.Equal(originalMargin, host.Margin);
+            Assert.Equal(Visibility.Visible, separator.Visibility);
+            fixture.Ribbon.QuickAccessPosition = RibbonQuickAccessPosition.BelowRibbon;
+            await PumpAsync();
+            Assert.True(host.Margin.Top < 0);
+            fixture.Ribbon.IsMinimized = true;
+            await PumpAsync();
+            Assert.True(host.Margin.Top < 0);
+            fixture.Ribbon.IsMinimized = false;
+            window.ApplyAppearance(preferences with { Theme = RibbonTheme.Office2024 });
+            await PumpAsync();
+            Assert.Equal(originalMargin, host.Margin);
+            Assert.Null(presenter.OpacityMask);
+            Assert.Equal(Visibility.Visible, separator.Visibility);
+            window.ApplyAppearance(preferences);
+            await PumpAsync();
+            Assert.True(host.Margin.Top < 0);
+            window.ApplyWriterViewMode(WriterViewMode.ContinuousEdit);
+            await PumpAsync();
+            Assert.Equal(originalMargin, host.Margin);
+            Assert.Null(presenter.OpacityMask);
+            fixture.Shell.CurrentDocument.MarkClean();
+        }, TimeSpan.FromSeconds(45));
+    }
+
+    [Fact]
+    public async Task WriterKeyTipsAndFileEscapeRetainThemeStateAtNativeWindowDpi()
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            using var fixture = new WindowFixture();
+            fixture.Show();
+            await PumpAsync();
+            int deactivations = 0, unloads = 0, mouseClicks = 0, otherKeys = 0;
+            fixture.Window.Deactivated += (_, _) => deactivations++;
+            fixture.Ribbon.Unloaded += (_, _) => unloads++;
+            fixture.Window.PreviewMouseDown += (_, _) => mouseClicks++;
+            fixture.Window.PreviewKeyDown += (_, e) => { if (e.Key != Key.F10) otherKeys++; };
+            foreach (RibbonTheme theme in Enum.GetValues<RibbonTheme>())
+            foreach (bool dark in new[] { false, true })
+            {
+                fixture.Window.ApplyAppearance(new WriterAppearancePreferences { Theme = theme,
+                    DarkPalette = dark, AnimationLevel = RibbonAnimationLevel.None,
+                    RespectSystemReducedMotion = true });
+                await PumpAsync();
+                var selected = fixture.Ribbon.SelectedTab;
+                void PressKey(UIElement target, Key key) => target.RaiseEvent(new KeyEventArgs(
+                    Keyboard.PrimaryDevice, PresentationSource.FromVisual(fixture.Window)!, 0, key)
+                    { RoutedEvent = Keyboard.PreviewKeyDownEvent });
+                var modifiers = Keyboard.Modifiers;
+                bool active = fixture.Window.IsActive;
+                deactivations = unloads = mouseClicks = otherKeys = 0;
+                PressKey(fixture.Window, Key.F10);
+                int immediateBadges = FindVisualDescendants<FrameworkElement>(fixture.Window).Count(element => element.GetType().Name == "KeyTipAdorner");
+                await PumpAsync();
+                Assert.True(FindVisualDescendants<FrameworkElement>(fixture.Window).Any(element => element.GetType().Name == "KeyTipAdorner"),
+                    $"F10 {theme}/{dark}: modifiers {modifiers}, active before {active}, after {fixture.Window.IsActive}, immediate badges {immediateBadges}, deactivated {deactivations}, unloaded {unloads}, clicks {mouseClicks}, other keys {otherKeys}, focused {Keyboard.FocusedElement}");
+                PressKey(fixture.Window, Key.Escape);
+                await PumpAsync();
+                Assert.DoesNotContain(FindVisualDescendants<FrameworkElement>(fixture.Window), element => element.GetType().Name == "KeyTipAdorner");
+                Assert.Same(selected, fixture.Ribbon.SelectedTab);
+                fixture.Ribbon.IsBackstageOpen = true;
+                await PumpAsync();
+                PressKey(Assert.IsType<Backstage>(fixture.Ribbon.Backstage), Key.Escape);
+                await PumpAsync();
+                Assert.False(fixture.Ribbon.IsBackstageOpen);
+                Assert.Same(fixture.Editor, FocusManager.GetFocusedElement(fixture.Window));
+            }
+        }, TimeSpan.FromSeconds(45));
+    }
+
+    [Fact]
+    public async Task WriterSharedMaterialsEffectsOrbAndOpenSurfaceDpiReturnsStayBounded()
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            using var fixture = new WindowFixture();
+            var window = fixture.Window;
+            fixture.Show();
+            await Refresh();
+            async Task Refresh()
+            {
+                window.UpdateLayout();
+                await Task.Delay(50);
+                window.UpdateLayout();
+            }
+            int originalResources = window.Resources.MergedDictionaries.Count;
+            var captures = (System.Collections.IDictionary)typeof(MainWindow).GetField("_capturedPopups",
+                BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(window)!;
+            foreach (RibbonTheme theme in Enum.GetValues<RibbonTheme>())
+            foreach (bool dark in new[] { false, true })
+            {
+                var preferences = new WriterAppearancePreferences { Theme = theme, DarkPalette = dark,
+                    Accent = "#FF7030A0", GlassSurfaces = true, CapturedPopupBackdrop = true,
+                    AnimationLevel = RibbonAnimationLevel.None, RespectSystemReducedMotion = true };
+                window.ApplyAppearance(preferences);
+                Assert.True(captures.Count > 0);
+                Assert.DoesNotContain(captures.Keys.Cast<object>(), control => control is Backstage);
+                Assert.InRange(window.Resources.MergedDictionaries.Count, originalResources + 1, originalResources + 2);
+                Assert.All(Enum.GetValues<RibbonAnimationAction>(), action => Assert.False(RibbonAnimation.IsEnabled(action)));
+                foreach (double scale in new[] { 1, 1.25, 1.5, 1.75, 2, 1.25 })
+                {
+                    VisualTreeHelper.SetRootDpi(window, new DpiScale(scale, scale));
+                    window.Width = scale == 1.75 ? 500 : 1100;
+                    window.FlowDirection = scale == 1.75 ? FlowDirection.RightToLeft : FlowDirection.LeftToRight;
+                    fixture.Ribbon.QuickAccessPosition = scale == 1 ? RibbonQuickAccessPosition.TitleBar
+                        : scale == 1.5 ? RibbonQuickAccessPosition.TabRow : RibbonQuickAccessPosition.BelowRibbon;
+                    fixture.Ribbon.IsMinimized = scale == 1.75;
+                    fixture.Ribbon.IsBackstageOpen = true;
+                    await Refresh();
+                    Assert.True(fixture.Ribbon.IsBackstageOpen);
+                    Assert.Equal(scale, VisualTreeHelper.GetDpi(fixture.Ribbon).DpiScaleX);
+                    var render = new System.Windows.Media.Imaging.RenderTargetBitmap(
+                        (int)Math.Ceiling(window.ActualWidth * scale), (int)Math.Ceiling(window.ActualHeight * scale),
+                        96 * scale, 96 * scale, PixelFormats.Pbgra32);
+                    render.Render(window);
+                    Assert.True(render.PixelWidth > 0);
+                    fixture.Ribbon.IsBackstageOpen = false;
+                    fixture.Ribbon.IsMinimized = false;
+                }
+                fixture.Ribbon.SelectedTab = (RibbonTab)window.FindName("PageTab");
+                await Refresh();
+                var popup = (RibbonDropDownButton)window.FindName("PaperSizeButton");
+                popup.IsDropDownOpen = true;
+                await Refresh();
+                Assert.True(popup.IsDropDownOpen);
+                foreach (double scale in new[] { 1.25, 2, 1.25 })
+                {
+                    VisualTreeHelper.SetRootDpi(window, new DpiScale(scale, scale));
+                    await Refresh();
+                    Assert.True(popup.IsDropDownOpen);
+                }
+                popup.IsDropDownOpen = false;
+                await Refresh();
+                popup.IsDropDownOpen = true;
+                await Refresh();
+                Assert.True(popup.IsDropDownOpen);
+                popup.IsDropDownOpen = false;
+                window.ApplyAppearance(preferences with { GlassSurfaces = false, CapturedPopupBackdrop = false });
+                Assert.Empty(captures);
+                Assert.Equal(originalResources + 1, window.Resources.MergedDictionaries.Count);
+            }
+            window.ApplyAppearance(new WriterAppearancePreferences { Theme = RibbonTheme.Office2007,
+                BackstageDesign = RibbonBackstageDesign.Classic2007, AnimationLevel = RibbonAnimationLevel.None });
+            fixture.Ribbon.SelectedTab = fixture.Ribbon.Tabs[0];
+            await Refresh();
+            var real = FindVisualDescendants<ContentPresenter>(fixture.Ribbon).Single(p => p.Name == "CustomOrbGlyph");
+            Assert.Same(fixture.Ribbon.ApplicationOrbGlyphTemplate, real.ContentTemplate);
+            var realMark = FindVisualDescendants<System.Windows.Shapes.Path>(real).Single();
+            Assert.Same(window.FindResource("Writer.Brushes.IdentityMark"), realMark.Fill);
+            fixture.Ribbon.IsBackstageOpen = true;
+            await Refresh();
+            var proxy = Assert.IsType<Button>(typeof(Ribbon).GetField("_classicBackstageOrbProxy",
+                BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(fixture.Ribbon));
+            var proxyGlyph = FindVisualDescendants<ContentPresenter>(proxy).Single(p => p.Name == "CustomOrbGlyph");
+            Assert.Same(real.ContentTemplate, proxyGlyph.ContentTemplate);
+            var proxyMark = FindVisualDescendants<System.Windows.Shapes.Path>(proxyGlyph).Single();
+            Assert.NotSame(realMark, proxyMark);
+            Assert.Same(realMark.Fill, proxyMark.Fill);
+            Assert.Single(FindVisualDescendants<System.Windows.Shapes.Ellipse>(proxy), p => p.Name == "OrbFill");
+            Assert.False(string.IsNullOrWhiteSpace(AutomationProperties.GetName(proxy)));
+            fixture.Ribbon.IsBackstageOpen = false;
+            window.ApplyAppearance(new WriterAppearancePreferences());
+            Assert.True(window.HasWriterOrbTemplate());
+        }, TimeSpan.FromMinutes(3));
+    }
+
+    [Fact]
+    public async Task CrystalSettingsPreviewApplyCancelOkAndRestartPreservePagesAndSeparateData()
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            using var directory = new TemporaryDirectory();
+            var store = new WriterSettingsStore(new WriterSettingsPaths(directory.File("appearance.json"), directory.File("ribbon.json")));
+            using (var fixture = new WindowFixture(settings: store))
+            {
+                fixture.Show();
+                await PumpAsync();
+                string document = new TextRange(fixture.Editor.Document.ContentStart, fixture.Editor.Document.ContentEnd).Text;
+                string ribbon = RibbonCustomizationSerializer.Serialize(fixture.Ribbon);
+                RunSettings(dialog =>
+                {
+                    var page = Assert.IsType<WriterAppearancePage>(dialog.Pages[0].Content);
+                    var selected = dialog.SelectedPage;
+                    Select((ComboBox)page.FindName("ThemeCombo"), RibbonTheme.CrystalLight);
+                    Select((ComboBox)page.FindName("PaletteCombo"), "True");
+                    ((CheckBox)page.FindName("GlassSurfacesCheck")).IsChecked = true;
+                    ((CheckBox)page.FindName("CapturedPopupBackdropCheck")).IsChecked = true;
+                    Assert.Same(selected, dialog.SelectedPage);
+                    Assert.Equal(RibbonBackstageDesign.CrystalSidebar, page.Preferences.BackstageDesign);
+                    Assert.Equal("Ribbon theme", AutomationProperties.GetName((ComboBox)page.FindName("ThemeCombo")));
+                    Assert.Equal("AppearanceTheme", AutomationProperties.GetAutomationId((ComboBox)page.FindName("ThemeCombo")));
+                    Assert.Same(dialog.FindResource("RibbonKit.Brushes.Control.SurfaceBackground"),
+                        page.FindResource("RibbonKit.Brushes.Control.SurfaceBackground"));
+                    Click((Button)page.FindName("AppearanceApplyButton"));
+                    Assert.Equal(page.Preferences, store.LoadAppearance());
+                    Select((ComboBox)page.FindName("ThemeCombo"), RibbonTheme.Office2007);
+                    dialog.Close();
+                });
+                Assert.Equal(RibbonTheme.CrystalLight, store.LoadAppearance().Theme);
+                Assert.True(store.LoadAppearance().DarkPalette);
+                Assert.Equal(RibbonBackstageDesign.CrystalSidebar, ((Backstage)fixture.Window.FindName("WriterBackstage")).Design);
+                Assert.Equal(ribbon, RibbonCustomizationSerializer.Serialize(fixture.Ribbon));
+                Assert.Equal(document, new TextRange(fixture.Editor.Document.ContentStart, fixture.Editor.Document.ContentEnd).Text);
+                RunSettings(dialog =>
+                {
+                    var page = (WriterAppearancePage)dialog.Pages[0].Content;
+                    Select((ComboBox)page.FindName("BackstageCombo"), RibbonBackstageDesign.CrystalFloating);
+                    ((CheckBox)page.FindName("GlassSurfacesCheck")).IsChecked = false;
+                    dialog.ApplyTemplate();
+                    Click(Assert.IsType<Button>(dialog.Template.FindName("PART_OkButton", dialog)));
+                });
+                Assert.Equal(RibbonBackstageDesign.CrystalFloating, store.LoadAppearance().BackstageDesign);
+
+                void RunSettings(Action<RibbonOptionsDialog> action)
+                {
+                    Exception? failure = null;
+                    fixture.Window.Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, new Action(() =>
+                    {
+                        var dialog = fixture.Window.OwnedWindows.OfType<RibbonOptionsDialog>().Single();
+                        try { action(dialog); }
+                        catch (Exception ex) { failure = ex; dialog.Close(); }
+                    }));
+                    fixture.Window.OpenSettingsDialog(MainWindow.WriterSettingsPage.CustomizeRibbon);
+                    if (failure is not null) System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(failure).Throw();
+                }
+            }
+            using var restarted = new WindowFixture(settings: store);
+            restarted.Show();
+            await PumpAsync();
+            Assert.Equal(RibbonBackstageDesign.CrystalFloating, ((Backstage)restarted.Window.FindName("WriterBackstage")).Design);
+            Assert.Equal(RibbonApplicationButtonShape.Tab, restarted.Ribbon.ApplicationButtonShape);
+            Assert.True(restarted.Window.HasWriterOrbTemplate());
+        }, TimeSpan.FromSeconds(45));
+
+        static void Select(ComboBox combo, object tag) => combo.SelectedItem = combo.Items.Cast<ComboBoxItem>()
+            .Single(item => Equals(item.Tag, tag));
+        static void Click(Button button) => button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+    }
+
     [Fact]
     public async Task DefaultPaperExpandsAndSwitchesViewsWithNativeHistory()
     {
@@ -1646,13 +2015,15 @@ public sealed class MainWindowIntegrationTests
         Assert.False(newPage.IsButton);
         Assert.Null(newPage.Command);
         var fileActions = backstage.Items.OfType<BackstageTabItem>().Where(item => item.IsButton).ToArray();
-        Assert.Equal(new[] { "Open", "Save", "Save As", "Exit" },
+        Assert.Equal(new[] { "Open", "Save", "Save As", "Settings", "Exit" },
             fileActions.Select(item => item.Header?.ToString()).ToArray());
-        Assert.Equal(new[] { "FileOpen", "FileSave", "FileSaveAs", "FileExit" },
+        Assert.Equal(new[] { "FileOpen", "FileSave", "FileSaveAs", "FileSettings", "FileExit" },
             fileActions.Select(AutomationProperties.GetAutomationId).ToArray());
         Assert.All(fileActions, item => Assert.False(string.IsNullOrWhiteSpace(
             AutomationProperties.GetName(item))));
-        Assert.All(fileActions, item => Assert.NotNull(item.Command));
+        Assert.All(fileActions.Where(item => AutomationProperties.GetAutomationId(item) != "FileSettings"),
+            item => Assert.NotNull(item.Command));
+        Assert.Null(fileActions.Single(item => AutomationProperties.GetAutomationId(item) == "FileSettings").Command);
 
         Assert.Equal(new[] { "Home", "Insert", "Table Tools", "Picture Tools", "Page", "View", "Print Preview" },
             ribbon.Tabs.Select(tab => tab.Header?.ToString()).ToArray());
@@ -2027,7 +2398,7 @@ public sealed class MainWindowIntegrationTests
     {
         private readonly TemporaryDirectory _directory = new();
         private bool _disposed;
-        public WindowFixture(bool withRecentFile = false)
+        public WindowFixture(bool withRecentFile = false, WriterSettingsStore? settings = null)
         {
             Dialogs = new FakeDialogs();
             Persistence = new FakePersistence();
@@ -2046,7 +2417,7 @@ public sealed class MainWindowIntegrationTests
                 new WriterUnsavedChangesDecider(Dialogs), new WriterSaveDestinationProvider(Dialogs),
                 transitionDecider: new WriterFormatTransitionDecider(Dialogs));
             Shell = new WriterShellViewModel(session, new RecentFileService(recentPath), Dialogs);
-            Window = new MainWindow(Shell);
+            Window = new MainWindow(Shell, settings);
         }
 
         public FakeDialogs Dialogs { get; }

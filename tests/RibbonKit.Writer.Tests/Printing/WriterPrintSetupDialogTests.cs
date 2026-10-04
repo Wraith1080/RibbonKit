@@ -23,6 +23,9 @@ public sealed class WriterPrintSetupDialogTests
             using var snapshot = new WriterPreviewCloneService().CreateSnapshot(
                 new FlowDocument(new Paragraph(new Run("Writer-owned print preview"))),
                 DocumentPageSettings.A4());
+            // Realize the fixed page while its package is alive; the shared test dispatcher
+            // continues pumping after teardown, unlike the old per-test shutdown.
+            snapshot.Paginator.GetPage(0);
             var dialog = new WriterPrintSetupDialog(snapshot,
                 new[] { new WriterPrinterChoice(null, "Test printer") }, "Test printer")
             {
@@ -34,6 +37,7 @@ public sealed class WriterPrintSetupDialogTests
             };
 
             dialog.Show();
+            dialog.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
             try
             {
                 var preview = Assert.IsType<WriterDocumentPreviewView>(dialog.FindName("Preview"));
@@ -71,6 +75,7 @@ public sealed class WriterPrintSetupDialogTests
             finally
             {
                 dialog.Close();
+                dialog.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
             }
         });
     }

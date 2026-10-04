@@ -63,7 +63,7 @@
                             Background="Transparent"
                             BorderBrush="Transparent"
                             BorderThickness="1"
-                            CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                            CornerRadius="{DynamicResource RibbonKit.Metrics.GalleryItemCornerRadius}"
                             Margin="1"
                             Padding="5,3"
                             MinHeight="48"
@@ -75,7 +75,7 @@
                             <Setter TargetName="Chrome" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
                             <Setter TargetName="Chrome" Property="BorderBrush"
-                                    Value="{DynamicResource RibbonKit.Brushes.Group.Separator}" />
+                                    Value="{DynamicResource RibbonKit.Brushes.GalleryItem.HoverBorder}" />
                         </Trigger>
                         <Trigger Property="IsSelected" Value="True">
                             <Setter TargetName="Chrome" Property="Background"
@@ -150,8 +150,8 @@
                             <ColumnDefinition Width="17" />
                         </Grid.ColumnDefinitions>
                         <Border Grid.ColumnSpan="2"
-                                Background="{DynamicResource RibbonKit.Brushes.Control.SurfaceBackground}"
-                                BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
+                                 Background="{DynamicResource RibbonKit.Brushes.InRibbonGallery.SurfaceBackground}"
+                                 BorderBrush="{DynamicResource RibbonKit.Brushes.InRibbonGallery.Border}"
                                 BorderThickness="1"
                                 CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
                                 SnapsToDevicePixels="True" />
@@ -278,8 +278,8 @@
                                 overlapping those main-window controls.
                             -->
                             <Border x:Name="PART_PopupHost"
-                                    Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
-                                    BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
+                                    Background="{DynamicResource RibbonKit.Brushes.InRibbonGallery.PopupBackground}"
+                                    BorderBrush="{DynamicResource RibbonKit.Brushes.InRibbonGallery.Border}"
                                     BorderThickness="1"
                                     CornerRadius="{DynamicResource RibbonKit.Metrics.PopupCornerRadius}"
                                     Padding="5"

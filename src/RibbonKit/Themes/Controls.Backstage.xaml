@@ -5,6 +5,10 @@
     xmlns:localization="clr-namespace:RibbonKit.Localization"
     xmlns:layout="clr-namespace:RibbonKit.Layout">
 
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.CrystalBackstage.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
     <!-- Part of the shared RibbonKit control-template dictionary; merged by Office2024.xaml.
          Modern backstage brushes, Backstage, BackstageTabItem.
          Colours/metrics come from Tokens.Office20XX.xaml via {DynamicResource}. -->
@@ -27,8 +31,8 @@
 
     <!-- ============================================================
          Backstage — navigation column (back button + tabs) + content.
-         Two looks via the inherited Backstage.Design property: Classic
-         (solid accent column, default) and Modern (the neutral 2024 rail).
+         The inherited Backstage.Design selects Office layouts here, or one
+         of the keyed Crystal templates merged before this dictionary.
          ============================================================ -->
     <Style TargetType="{x:Type controls:Backstage}">
         <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Backstage.ContentBackground}" />
@@ -416,6 +420,20 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+        <Style.Triggers>
+            <Trigger Property="controls:Backstage.Design" Value="CrystalSidebar">
+                <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+                <Setter Property="ItemContainerStyle" Value="{StaticResource Crystal.Backstage.SidebarTab}" />
+                <Setter Property="ItemsPanel" Value="{StaticResource Crystal.Backstage.SidebarItemsPanel}" />
+                <Setter Property="Template" Value="{StaticResource Crystal.Backstage.SidebarTemplate}" />
+            </Trigger>
+            <Trigger Property="controls:Backstage.Design" Value="CrystalFloating">
+                <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+                <Setter Property="ItemContainerStyle" Value="{StaticResource Crystal.Backstage.Tab}" />
+                <Setter Property="ItemsPanel" Value="{StaticResource Crystal.Backstage.FloatingItemsPanel}" />
+                <Setter Property="Template" Value="{StaticResource Crystal.Backstage.FloatingTemplate}" />
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
     <!-- ============================================================

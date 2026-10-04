@@ -100,7 +100,7 @@ public sealed class RibbonTextBoxTests
             element => (string?)element.Attribute(Xaml + "Name") == "PART_ContentHost");
 
         Assert.Equal("{TemplateBinding Padding}", (string?)contentHost.Attribute("Padding"));
-        Assert.Contains("RibbonKit.Brushes.Control.SurfaceBackground", style.ToString());
+        Assert.Contains("RibbonKit.Brushes.Input.SurfaceBackground", style.ToString());
         Assert.Contains("RibbonKit.Brushes.Text.Primary", style.ToString());
 
         string repository = RepositoryRoot();

@@ -229,11 +229,11 @@ public class Office2007ClassicBackstageTests
             "MainWindow.xaml"));
 
         XElement classicChoice = Assert.Single(
-            showcase.Descendants(RibbonKit + "RibbonButton"),
+            showcase.Descendants(RibbonKit + "RibbonMenuItem"),
             element => (string?)element.Attribute("Tag") == "Classic2007");
         Assert.Equal("2007 Classic", (string?)classicChoice.Attribute("Header"));
         XElement modernChoice = Assert.Single(
-            showcase.Descendants(RibbonKit + "RibbonButton"),
+            showcase.Descendants(RibbonKit + "RibbonMenuItem"),
             element => (string?)element.Attribute("Tag") == "Glass2007");
         Assert.Equal("2007 Modern", (string?)modernChoice.Attribute("Header"));
 

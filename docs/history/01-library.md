@@ -4539,3 +4539,2170 @@ collapsed/disabled group and both Classic2007 frame paths; the pre-test appearan
 restored afterward.
 Current gate: **355 logic tests plus one visual test covering 63 approved images**, with zero build
 warnings or errors.
+
+### 3.164 Crystal contextual tab study and compact button refinement — 2026-09-21
+
+Crystal remains a Showcase-only Office 2024 overlay. Teal Picture Format and purple
+Table Design tabs now derive glass surfaces, rims, readable darkened text and bubble
+markers from their effective solid contextual color. Change tint exercises live updates;
+Compare 2024 removes the adapter overrides. Gradient/custom context brushes fall back
+to standard rendering. The adapter depends on the shared ContextualHeaderText part;
+there is no copied tab template. Compact Clipboard/Text stacks scope a 3-DIP radius,
+while large controls keep 8 DIP. Pressed buttons gain a deeper fill and visible lower rim.
+
+API justification: the optional, null-default RibbonTab.ContextualSelectionBrush lets
+consumers supply a material marker independently of contextual text color. Existing
+callers retain contextual tint as the fallback. The marker now binds to both brushes,
+so replacement and clearing update the selected tab immediately. Shipped API is intact;
+the addition is recorded in PublicAPI.Unshipped.txt and XML documentation.
+
+Release solution build: zero warnings/errors. Library: 400/400; existing visual test:
+1/1. Focused Crystal tests additionally confirm mutable-brush updates and comparison
+restoration (2/2). Writer full run: 465/472, seven failures including the recorded
+WindowChrome cross-thread issue. Fresh-process follow-ups also failed on the expected
+menu lacking Settings and a table-selection count (expected 2, actual 1). These remain
+unresolved outside this change; no Writer code was edited. The user owns Crystal visual
+checking, so no new live visual/DPI/RTL acceptance is claimed.
+
+2026-09-22 File-panel follow-up: sample-only Modern Backstage palette and preview pages
+reuse the accepted Crystal lighting and local tint variants. A top-level keyed
+StaticResource alias resolved to the baseline fill in the realized-control test;
+explicit DrawingBrush resources with nested geometry/brush references resolved the
+intended Crystal fill. Keep the realized selection-fill assertion when changing these
+resources. Showcase Release build and twelve focused Crystal/input tests passed;
+Backstage live visual acceptance remains with the user.
+
+The subsequent user-requested structural redesign uses a sample-only Backstage
+template with a floating horizontal navigation island and separate content cards.
+Compare 2024 clears this style to recover the shared layout. The overlay lives outside
+the ordinary window namescope/resource route: an explicit scoped palette and binding
+source are required for preview colors and document text to survive reparenting.
+CrystalBackstagePresentation now owns that bridge. Thirteen focused tests passed,
+including detached binding changes, minimum-width navigation, back requests and style
+restoration. Live visual review remains with the user.
+
+The floating layout is now optional. The default Glass sidebar preserves traditional
+vertical navigation, bottom About placement and a large right-hand content area, with
+Crystal surfaces and selection rims. The Appearance page switches layouts in place;
+CrystalBackstagePresentation retains the chosen layout during palette replacement and
+baseline comparison. Release Showcase build and eight focused Crystal tests passed,
+including both navigation arrangements at the preview minimum width. Visual acceptance
+remains with the user.
+
+Crystal screen-tip scope note (2026-09-22): detached tooltips require their own palette
+bridge. Once the palette is merged into ToolTip.Resources, its general ScreenTip.Border
+outranks an implicit style's resource with that key. The preview's bridge therefore
+publishes the dedicated glass rim directly in its own scope, removing it on baseline
+comparison. A realized open-tooltip test covers tint replacement and restoration;
+the focused Crystal/input filter passed sixteen tests. Visual acceptance remains with
+the user.
+
+Crystal option preview follow-up (2026-09-22): ElementName bindings from borrowed
+group content to EnableOptionsToggle did not resolve after layout. Explicit binding
+Source references fix both Options and Spacing panels. A realized CrystalPreviewWindow
+test failed before the fix and passes for disable/re-enable afterwards; isolated
+control tests alone had missed this preview wiring. The window now merges its icon
+resources locally for standalone construction. Release Showcase build and twenty
+focused Crystal/option-control tests passed; the user owns visual acceptance.
+
+Crystal runtime token promotion (2026-09-24): the preview's 90 top-level brush,
+drawing, effect and metric resources moved unchanged into the packaged
+`Tokens.Crystal.Light.xaml` dictionary. It merges Office 2024 tokens for keys Crystal
+does not override, while the Showcase dictionary retains its eight local control
+styles. A tint variant must recolor the merged Crystal dictionary itself; recoloring
+only the sample overlay silently leaves shared templates at the blue palette. The
+sample still removes its entire overlay for Office 2024 comparison. This first slice
+does not add a public theme enum or move host-owned blur and document underlay into
+the control. Release Showcase and both runtime target builds passed without warnings;
+the new standalone token test, focused tint and customization checks, and all four
+fresh-process follow-ups passed. A grouped Crystal run passed 17/21 and hit the known
+WindowChrome cross-thread cache failure in the other four. No new live visual or DPI
+acceptance is claimed.
+The user then inspected the preview and reported no perceptible difference on the
+current display; this accepts the resource move, not the later main-window theme.
+
+### 3.165 Crystal Light theme selection — 2026-09-24
+
+`RibbonTheme.CrystalLight` appends public enum value 5, preserving the existing Office
+values. `ThemeManager.Apply` and the design-only `Ribbon.DesignPreviewTheme` share one
+mapping to `Tokens.Crystal.Light.xaml`; the net472 editor mirrors value 5 without a
+runtime reference. Showcase offers Crystal Light in its main Theme group and saves
+the choice separately from the Crystal preview window. It has no dark palette, so
+Showcase hides the dark toggle while it is selected; a stored dark preference still
+applies when returning to an Office theme.
+
+When a custom accent is set, the shared semantic accent and selected-tab text follow
+it. The Crystal reflective selected marker, checked wash and open File surface retain
+their drawing brushes rather than flattening into solid colors. The preview's Glass
+tint still rotates the full material separately. A focused runtime switch test covers
+Crystal → Office 2024 → Crystal with accent and dark preference; a design preview
+test covers the token URI and local scope, and Showcase preference serialization
+round-trips the new value. Release solution build passed without warnings. Live
+main-window appearance, designer interaction, DPI/RTL and Crystal snapshots remain
+unverified.
+
+### 3.166 Crystal main Showcase presentation — 2026-09-24
+
+The user's side-by-side screenshot showed the normal Showcase retained a flat QAT
+strip and square message bars after selecting Crystal Light. Shared token brushes
+alone did not install the preview's host-owned presentation. The preview's implicit
+control styles were split into a reusable Showcase dictionary; the main window merges
+that dictionary and applies the existing QAT, message, utility, menu and popup
+adapters only for Crystal Light. The preview still merges the same styles with its
+window-scoped palette. Crystal selects the application menu as the default File
+surface, while a separately saved explicit File choice is restored afterward.
+Switching back removes the styles and adapters without changing Office resources.
+Focused host switch and preview style checks passed; main-window visual acceptance
+remains with the user.
+
+### 3.167 Crystal Light first-phase gaps — 2026-09-24
+
+The user's next screenshots exposed the remaining first-phase differences: a plain
+contextual tab, merged chart tabs using their ordinary color treatment, Office 2024
+scrollbars, an unstyled main options dialog, a split button without the Crystal
+paired-hover treatment, ordinary Backstage, and an accent picker that changed only
+semantic color. The main Showcase now uses the preview's contextual tab adapter for
+its own and merged tabs, scopes the shared scrollbar style and Crystal Backstage
+style to the Crystal selection's Modern Backstage, and applies the existing customization adapter to
+the detached options dialog. Its accent picker now builds a fresh hue-rotated local
+palette via `CrystalPalette.Create`; Office themes remove that window overlay.
+The split button's idle companion takes the ordinary hover wash and its active half
+receives a slightly stronger wash. A split example was added to the preview's Design
+tab without changing its accepted Home layout. Focused main presentation, merge,
+tint, Office restoration, and preview customization checks passed. Live visual
+acceptance is still open. MDI, localization/RTL, modal tabs, and dark mode are phase
+two by user direction.
+
+Theme-contract follow-up: the stronger active split wash uses the shared
+`RibbonKit.Brushes.Control.SplitActiveHover` token. Each Office base palette defines
+it as Transparent (also inherited by its dark variant); only the Crystal host adapter
+uses it, and that adapter removes its local override when Crystal is deselected.
+The audit found that Crystal's other `RibbonKit.*` overrides already exist in every
+Office base palette. `Crystal.*` resources remain scoped to the opt-in Showcase
+adapters rather than becoming shared template tokens.
+
+### 3.168 Crystal Backstage designs and shared split hover — 2026-09-27
+
+The two accepted Crystal Backstage layouts are now distinct `Backstage.Design`
+values, `CrystalSidebar` (5) and `CrystalFloating` (6). Their existing templates
+move into a shared RibbonKit resource dictionary. The common Backstage style
+selects either template and its matching navigation panel only for those explicit
+values; the Office designs keep their existing templates. The main Showcase adds
+both choices beside its Office layout choices and persists the selected value.
+The preview uses the same design values and restores Modern during comparison.
+The detached Backstage still receives its own palette scope.
+
+The split-button helper is removed. Both halves' hover triggers now read
+`RibbonKit.Brushes.Control.SplitActiveHover`; Crystal defines the stronger wash,
+and every Office base palette defines the same brush as its ordinary hover.
+The 2013/2019/2024 dark variants override it to match their dark hover brush;
+the 2007/2010 dark variants inherit the unchanged base hover.
+The new shared template behavior therefore preserves the Office appearance.
+An attempted `StaticResource` alias resolved to a neighboring brush during WPF
+resource loading, so the Office tokens duplicate their hover brush definitions.
+Focused resource and layout checks cover switching between the two Crystal
+designs, returning to Modern, preview comparison, and Office split parity.
+Live appearance and mixed-monitor DPI remain for user review.
+
+Screenshot follow-up: the first layout check supplied `Office2024.xaml` as a host
+resource, which hid a detached Backstage lookup failure. In a real open adorner,
+the Crystal template keys were unavailable through `DynamicResource`, so the
+control kept its Classic template. `Controls.Backstage.xaml` now merges the
+Crystal templates directly and its design triggers resolve them with
+`StaticResource`. A focused detached-window test opens the actual Backstage,
+checks both Crystal layouts, and checks the Modern return under Office 2024.
+The Crystal split companion outline also uses a stronger border brush; its
+color remains scoped to Crystal.
+
+QAT height follow-up: a below-ribbon Crystal drawer measured 28.8 DIPs with a
+plain small button and 30.4 DIPs after a dropdown joined it. The Crystal
+palette now reserves 32 DIPs on the shared drawer template; Office palettes
+retain a zero floor. A focused layout check adds both a dropdown
+and split button without moving the drawer's lower edge. Office palettes keep
+their existing row sizing.
+
+Floating Backstage width follow-up: its inner grid had a 1040-DIP cap, leaving
+large side gutters in a maximized window. The Crystal floating template now
+uses the available width inside its 28-DIP side margins. A focused layout check
+covers ordinary and 1600-DIP widths; the sidebar template is unchanged.
+
+Shared-template audit follow-up: message-row margin and corner radius, and the
+below-ribbon QAT minimum height, now come from shared template tokens instead
+of Crystal code setting realized parts. Crystal retains its 2-DIP row spacing,
+10-DIP corners, and 32-DIP QAT floor. Every Office base palette supplies zero
+for these new metrics, including the effective dark palettes that inherit the
+base values. The existing split-active hover brush matches ordinary hover in
+all Office light/dark palettes; Crystal keeps its stronger active wash.
+
+### 3.169 Crystal File hover rim in the shared template — 2026-09-27
+
+The File button's existing `InnerRim` now uses separate thickness and idle-opacity
+tokens, with a shared hover trigger that requires mouse-over without press or open
+state. Crystal supplies the accepted 1-DIP glass rim and hides it at rest; its
+`ApplicationButton.InnerGlow` drawing matches the tab hover rim. Office palettes
+retain their previous inner-rim thickness and full idle opacity, including the
+Office 2010 radial glow and all dark variants. The Showcase-only
+`CrystalFileHover` part adapter and its call sites are removed. No public API was
+added. A Release Showcase build and focused Crystal rim, preview, and main-window
+switch checks passed. The Office 2010 File-rim contract checks passed; a separate
+unchanged dropdown hover-consumer count check in that class still fails. Live
+hover appearance was accepted by the user on 2026-09-27. The separate
+`Office2010ThemeContractTests.Every_ribbon_button_family_consumes_the_shared_hover_glass`
+case for `Controls.DropDowns.xaml` reports 3 consumers against its threshold of
+5. The user deferred that investigation.
+
+### 3.170 Minimized tab shape in the shared template — 2026-09-27
+
+The Showcase-only `CrystalTabShape` helper previously bound
+`Ribbon.IsMinimized` and overrode two tab metrics in the ribbon's resource
+dictionary. The shared `RibbonTab` template now applies minimized corner
+radius and border thickness from dedicated dynamic tokens to every header.
+Crystal keeps its accepted top-only 8-DIP corners while expanded and rounds
+all four corners at 8 DIPs when minimized; its reserved border changes from
+`1,1,1,0` to `1`. The helper and its main-window and preview call sites are
+removed. All five Office base palettes set their minimized metrics to their
+existing tab metrics, and the dark palettes inherit the same geometry. Focused
+checks cover Crystal state and comparison switches and Office light/dark token
+parity. Live minimized-tab appearance remains for user review.
+
+### 3.171 Crystal body-scroll geometry in the shared template — 2026-09-27
+
+Body scroll arrows and tab scroll arrows share the left/right button templates.
+The body instances now carry an internal `BodyScroll` marker, letting those
+shared templates select `RibbonKit.Metrics.BodyScrollButtonCornerRadius` without
+changing the tab arrows. Their width reads
+`RibbonKit.Metrics.BodyScrollButtonWidth` directly from the ribbon template.
+Crystal keeps the accepted 32-DIP width and 10-DIP corners. Every Office base
+palette supplies the previous 22-DIP width and its existing control corner
+radius; dark variants inherit those values. `CrystalUtilityChrome` no longer
+sets or clears these geometric properties. It still owns the utility rim and
+scroll-arrow surface switching; moving those across the several shared utility
+templates is the next bounded pass. The focused preview interaction and Office
+light/dark token checks passed. Live appearance after this migration remains
+for user review.
+
+### 3.172 Compact Showcase theme and Backstage choices — 2026-09-27
+
+The main Showcase View tab now puts its six theme choices in a compact
+`InRibbonGallery`; the separate Crystal preview action still opens its own
+window. The seven Backstage designs are menu rows in one
+`RibbonDropDownButton`, whose label shows the current design. Both selectors
+are synchronized when appearance preferences are restored. Theme selection
+continues through the existing `ApplyTheme` path, and Backstage selection
+continues to persist the design and notify the File surface.
+
+An initial `SelectedIndex` on the gallery fired `SelectionChanged` while
+`MainWindow.InitializeComponent` was still constructing the window, before
+the File-surface controls and application-menu field were ready. Initial
+selection now happens after initialization under the synchronization guard.
+A focused headless window test covers construction, theme selection, and
+Backstage selection without touching saved preferences. The Release Showcase
+build passed. Popup layout and live visual acceptance remain with the user;
+no Showcase process was launched during this pass.
+
+### 3.173 Crystal Acrylic surface transparency — 2026-09-27
+
+The shared `RibbonTabControl` body now uses `RibbonKit.Brushes.Ribbon.BodyBackground`.
+Every Office light and dark palette defines it with the former body paint;
+Crystal also retains its original paint when Acrylic is inactive. Dropdowns and
+gallery popups continue to use the opaque `ContentBackground` token, so the
+new body translucency cannot wash out detached surfaces.
+
+When the Showcase actually activates Acrylic under Crystal Light, its scoped
+palette softens the ribbon body, selected tab fill and marker, title bar, and
+window/status background. Turning Acrylic off, changing the tint, or switching
+themes rebuilds or removes that palette; no public API or Office paint changes.
+The focused Crystal presentation test covers token parity across all Office
+light and dark palettes, the realized body brush, translucent overrides, and
+restoration. Live Acrylic appearance remains a visual review gate.
+
+Acrylic hover follow-up: the accepted blue command hover wash blends into the
+more saturated material in the user's screenshot. The Showcase's Acrylic-only
+Crystal palette now replaces that shared hover token with a brighter, neutral
+glass wash; the existing rim and non-Acrylic Crystal brush remain unchanged.
+The focused presentation test confirms the Acrylic value and restoration after
+turning Acrylic off. The new hover contrast still needs live visual acceptance.
+
+### 3.174 Optional Acrylic glass treatment across Showcase themes — 2026-09-27
+
+The later screenshot clarified that the faint hover was the tab header marker;
+the command-button hover from §3.173 was already accepted. Its exact Acrylic
+wash is retained. A brighter tab hover fill and rim, plus matching companion
+and active-half split-button washes, now share the same window-scoped
+`AcrylicGlassPresentation` as the ribbon-body, selected-tab, title-bar, and
+status-bar opacity changes. The shared control templates still resolve theme
+tokens; no RibbonKit public API or theme baseline changed.
+
+The Showcase View tab has a separate Glass look switch. Existing preferences
+default to the current behavior: Crystal applies it with Acrylic, while Office
+themes retain their prior Acrylic appearance. The switch may override that
+default for any theme and persists separately from the DWM backdrop choice.
+The overlay is rebuilt after theme, tint, dark-mode, and backdrop changes, and
+is removed whenever Acrylic is inactive. Focused presentation, selector, and
+preference checks cover palette restoration, Office opt-in, and persistence;
+live contrast and width/overflow remain visual review gates.
+
+Tab-hover contrast follow-up: the first glass hover wash was too close to the
+selected tab in the user's screenshot. Its light and dark alpha and hover-rim
+opacity were reduced; the selected marker, command-button hover, and split
+hover values remain as accepted in the preceding pass. The focused presentation
+check covers both light and dark hover tokens. Live appearance still needs a
+new screenshot.
+
+Split-button and switch follow-up: vertically stacked split halves used to
+paint both edges at their join. The shared template now reads a border-thickness
+token for the primary half. Crystal omits its bottom edge, so the lower half
+draws the divider once; all Office light and dark palettes retain their existing
+one-pixel border. The Showcase Glass look switch now uses a large icon and
+displays its label. Focused checks and WPF renders in both glass states covered
+the controls; native Acrylic compositing still needs live visual review.
+
+### 3.175 Crystal translucent Backstage option — 2026-09-27
+
+The Showcase's Transparent Backstage switch already sets `Backstage.Translucent`,
+and the Ribbon hides content behind the open surface so DWM Acrylic can show.
+Neither Crystal layout template responded to that property: each kept its
+window-colored root and opaque navigation surface. Both shared Crystal templates
+now clear their root fill when translucent and use the existing translucent
+navigation brush token. Crystal supplies a tinted, alpha-bearing value for that
+token; Office palettes keep their previous values. The content card stays opaque
+for text readability. Turning the option off restores the original Crystal
+brushes without changing the chosen layout or adding a public API. A focused
+realized-template test checks both Crystal layouts and the on/off transition;
+native Acrylic appearance remains for live screenshot review.
+
+### 3.176 Acrylic hover accent and File wash — 2026-09-27
+
+The Glass look overlay's bright command hover had a fixed near-white color, so
+it stayed neutral when the user selected another accent. The overlay now blends
+the active accent into that wash while retaining its previous light/dark alpha.
+The split-button companion and stronger active-half washes use the same tint.
+The File button's hover fill now resolves to the same brighter glass brush as a
+tab header; its selected and pressed surfaces are unchanged. These remain
+Showcase-scoped overrides, removed when Glass look is off. A focused Crystal
+presentation test checks accent changes, File/tab resource parity, Office opt-in,
+dark alpha, and restoration. Live Acrylic color balance awaits screenshot review.
+
+### 3.177 Crystal selected-tab bridge — 2026-09-27
+
+The user's Acrylic screenshot showed the selected Crystal tab ending above the
+tab strip's last pixel and the ribbon body's white top border. The shared tab
+foot and body-side `PART_ConnectNotch` already bridge these two pixels for
+connected Office themes, but Crystal inherited Office 2024's disabled tokens.
+Crystal now supplies the one-pixel foot transform and visible selected-foot and
+notch brushes. A follow-up screenshot showed a white strip when Glass look was
+off: the opaque notch token used a different color from the foot, while the
+Glass look overlay matched them. Both Crystal tokens now use the same
+accent-tinted color, so the bridge stays consistent as Glass look changes
+without a Showcase-only notch override or layout adjustment. Office 2024 still
+has no notch. A focused realized-control test checks Crystal geometry, foot/notch
+color in both glass states, tint changes, and Office 2024 comparison; live
+ordinary and Acrylic appearance, including minimized tabs, still need review.
+
+### 3.178 Crystal hover tab closes below the header — 2026-09-27
+
+The unselected Crystal tab inherited Office 2024's top-only hover geometry. A
+separate, hit-transparent `HoverChrome` now draws the hover outline in the shared
+tab template. Crystal supplies full 8-DIP corners and a complete one-pixel border;
+its unselected hover hides the connecting foot. The selected tab continues to use
+the existing foot and body notch. The normal and Backstage-active hover triggers
+use the same overlay, and Office light/dark palettes retain their original hover
+corner, border and foot values.
+
+Changing the measured `HeaderChrome` border on hover shifted the ribbon body by
+one pixel, so the outline was moved to a visual overlay. A focused WPF check
+confirms the overlay's geometry, unchanged tab/ribbon desired sizes when it is
+shown, and Office token parity across light and dark variants. Live hover shape
+and body position still need screenshot review. The reported 200% icon-bearing
+gallery selection clipping is recorded separately in the future themes plan.
+
+### 3.179 Crystal hover and selected tabs share an open lower edge — 2026-09-27
+
+The closed hover pill in §3.178 looked inconsistent when a tab became selected:
+Office 2007/2010 avoid that shape change by using top-rounded, open-bottom chrome
+and a strip-side hover foot. Crystal now uses the same geometry with its existing
+8-DIP upper corners. Its hover foot has the same translucent paint as the hover
+fill, including the Showcase's optional Glass look overlay and tint changes.
+The selected body-side notch remains reserved for the selected tab. The
+separate `HoverChrome` layer and its three hover metrics from §3.178 were
+removed: the original measured `HeaderChrome` now changes only brushes on
+hover. Its existing minimized trigger still supplies the accepted full-corner
+shape. A focused geometry check confirms the brush swap leaves tab and ribbon
+measurements unchanged, and presentation checks cover the Glass look foot tint.
+Live pointer appearance remains for user review.
+
+### 3.180 Crystal hover foot clipping — 2026-09-27
+
+The follow-up screenshot showed the open-bottom hover tab's side outline ending
+before the ribbon body. A focused realized-control check placed `ConnectFoot` at
+37 DIP while `PART_TabScroll` clipped at 36.8 DIP: its one-pixel border was fully
+outside the strip. The shared template now reads a separate render-only hover
+transform. Crystal keeps its hover foot at Y=0, inside the strip, while its
+selected foot remains at Y=1 for the existing body notch. Every Office light
+and dark palette keeps the same hover displacement it had before. The focused
+geometry check verifies the hover trigger, foot/strip intersection, token
+parity, and unchanged tab/ribbon measure. Live pointer and DPI appearance
+remain for user review.
+
+### 3.181 Crystal hover uses one translucent surface — 2026-09-27
+
+The visible hover foot from §3.180 still crossed a fractional strip edge at some
+scales and painted the translucent hover wash twice, making a darker band. A
+realized-control check shows the ordinary `HeaderChrome` already extends to the
+strip's clip edge. Crystal now suppresses the hover foot's fill and side borders
+with a shared opacity token; Office light and dark themes retain opacity 1.
+The hover stays top-rounded and open-bottom, while the selected tab keeps its
+existing opaque foot and body notch. The separate hover transform and its
+Glass look foot override were removed. A focused check covers the header/strip
+geometry, token parity, selected foot restoration, and unchanged tab/ribbon
+measure; live pointer appearance remains for user review.
+
+### 3.182 Crystal hover rounding and accent-tinted QAT glass — 2026-09-27
+
+The follow-up screenshot still showed an awkward lower edge on the open-bottom
+hover tab. The shared `RibbonTab` template now gives its existing measured
+`HeaderChrome` a hover corner-radius token. Crystal uses an 8-DIP radius on all
+four corners; selected tabs restore their connected upper-only shape. Office
+light and dark palettes keep their previous hover radius, and minimized tabs
+retain their existing radius trigger. This does not add a second visual layer
+or change border thickness. The translucent hover foot remains suppressed for
+Crystal, avoiding overlapping wash at fractional DPI; the live lower-edge
+appearance still needs screenshot review.
+
+The below-ribbon QAT had reused `Tab.HoverBackground`, which Glass look changes
+to a neutral quiet hover wash. Its shared template now reads
+`QatExtender.Background` instead. Crystal's normal token matches its former
+hover brush and rotates with the accent; optional Glass look gives the QAT an
+accent-tinted translucent brush independently of tab hover. Every Office light
+and dark palette supplies the exact previous QAT paint, including the 2007 and
+2010 gradients. Focused tests verified tab measure, Crystal tint and Glass
+switching, and Office token parity; live visual acceptance remains open.
+
+### 3.183 Glass tab hover follows the accent — 2026-09-27
+
+The accepted rounded hover still looked blue against a warm accent because
+optional Glass look replaced `Tab.HoverBackground` with a fixed blue-white
+wash. It now uses the same accent-aware color recipe as the QAT while retaining
+the quieter tab-hover alpha (0x50 light, 0x30 dark). The File button shares the
+tab hover token, so it tracks the accent as well. The independent QAT token
+remains available for later tuning. Focused presentation checks cover purple,
+green, red, and dark glass colors; live color acceptance remains user-owned.
+
+### 3.184 Crystal Light MDI Demo integration — 2026-09-27
+
+The detached MDI Demo had only the app-wide Crystal base palette. Its child
+captions, borders and client area inherited Office 2024 MDI values, while its
+white host background, text editors and document tabs missed the main Showcase's
+local Crystal tint. Existing `Mdi.xaml` templates already consume MDI tokens, so
+Crystal Light now overrides those keys without a new template or public API.
+Showcase scopes the tint and editor paint to the demo window, enables its contextual
+document tabs, and updates open demos when the main theme or tint changes. Leaving
+Crystal removes that window scope and restores the Office presentation.
+
+Two focused checks passed: one realizes a child and verifies its token-backed
+caption, editor and merged tab through tint and theme changes; the other verifies
+all reused MDI keys resolve in every Office base and dark variant. The Showcase
+Release build passed. Live MDI appearance and DPI/RTL remain for user screenshots.
+
+### 3.185 Connected first tab with no File button — 2026-09-27
+
+The MDI screenshot showed the first selected tab's left outline ending above the
+rounded top-left ribbon body corner. The same layout occurs when modal Print
+Preview hides File. The shared `RibbonTabControl` template now insets the first
+visible header-row item when both the application button and merged caption icon
+are collapsed. A tab-row QAT takes the inset, keeping the normal gap from QAT
+to tab; with the QAT in the title bar or below the ribbon, the tab panel takes
+the inset. The selected-tab marker and connected body notch follow the measured
+tab. RTL uses an inset on the opposite side. The body retains its rounded
+corners, including with a below-ribbon QAT or message row. A visible merged
+caption icon already reserves the leading space, so both use normal margins.
+
+Every Office base palette defines the tab and QAT LTR/RTL margins, inherited by
+its dark variant. Office 2007 adds a small leading inset; the flat
+2010/2013/2019 and pill-tab 2024 palettes retain their normal spacing. Crystal
+Light uses a larger inset to clear its 14-DIP body radius. Focused
+realized-control checks cover File visibility, merged caption icon, tab-row QAT
+spacing, RTL, below-ribbon QAT, Office 2007, Office 2024, and modal Print
+Preview. Live screenshot acceptance remains with the user.
+
+### 3.186 Crystal Light Localization/RTL lab and Backstage templates — 2026-09-28
+
+The detached Localization/RTL lab inherited Crystal's shared control tokens, but
+its host-owned menu, Backstage, message, popup and QAT presentation did not use
+the main Showcase's Crystal adapters. Its built-in Options dialog also missed
+the Crystal customization styling. The lab now reuses
+`CrystalMainWindowPresentation` and `CrystalCustomization` instead of duplicating
+their brushes or templates. `MainWindow` forwards theme and tint changes to the
+open lab, as it does for MDI demos. The lab retains its independent RTL direction,
+pseudo-localization provider and File-surface subscription.
+
+One focused offscreen check covers a realized RTL lab, tinted Crystal resources,
+the application menu, styled Quick Access Options, tint replacement and Office
+restoration. The lab integration is Showcase-only. Live popup, menu and dialog
+appearance remains for user screenshot review.
+
+The Crystal Backstage templates had fixed English Back/File labels. Both designs
+now bind control-owned labels, tooltips and automation names to live
+`RibbonString` values, and the Back arrow follows the inherited direction.
+WPF already mirrors the Backstage layouts, check box/radio indicators and
+customization tree through `FlowDirection`; no column or dock swaps are needed.
+An initial check measured positions relative to an RTL element and led to
+unnecessary swaps. A corrected check uses physical screen coordinates and
+verifies the original layouts, both Backstage designs, live provider changes,
+the option indicators, customization tree and return to LTR. The shared template
+change adds no public API or theme tokens. Application-authored demo labels
+remain the host's responsibility; live visual acceptance is still pending.
+
+### 3.187 Crystal Light Print Preview host paint — 2026-09-28
+
+Print Preview already uses RibbonKit's shared modal tab, so its ribbon inherits
+Crystal styling without a new template or adapter. Its Showcase-owned preview
+canvas, page border and page text had fixed grayscale brushes. The Showcase app
+now defines their Office baseline as host resources, and its window-scoped
+Crystal palette overrides those resources. The paper remains white. Crystal's
+existing tint rotation updates the canvas and border while preserving readable
+page text; leaving Crystal restores the original Office paint.
+
+One focused noninteractive check covers modal entry/exit, a tint change and
+baseline paint under every Office theme and supported dark variant. There is no
+RibbonKit runtime or public API change, and no new shared theme token. Live
+Print Preview appearance remains for user screenshot review.
+
+### 3.188 Crystal dark palette — 2026-09-28
+
+`ThemeManager.SetDarkMode` now loads `Tokens.Crystal.Dark.xaml` for the existing
+`RibbonTheme.CrystalLight` value. The overlay reuses the Office 2024 dark baseline
+for unchanged controls and replaces Crystal's shared glass, MDI, Backstage, KeyTip,
+message and connected-tab brushes. It preserves the light palette's geometry and
+drawing structure, which the Showcase contextual adapter uses for its marker.
+There is no new public theme value, shared template or token key. Every shared key
+in the overlay exists in all five Office palettes and their dark variants.
+
+Showcase adds a dark window palette and dark resource scopes for its existing
+input and option styles. The theme toggle rebuilds the active tint and refreshes
+open MDI and Localization/RTL demos. Print Preview's canvas darkens while its
+white paper and ink remain readable. Contextual tabs derive their dark treatment
+from the actual palette in their resource scope, so the separate light-only
+Crystal preview stays light even when the application has a dark preference.
+
+Focused offscreen checks cover runtime light/dark/Office switching, dark host
+styles, contextual markers, MDI, Print Preview and the RTL lab. The Showcase
+was not launched; live material, contrast and DPI acceptance remain for user
+screenshots. Chart Tools and the Options Editor need no further phase-two edit by
+user direction; the deferred Office Glass and View overflow reviews remain open.
+
+### 3.189 Crystal duplicate audit — 2026-09-28
+
+The user accepted Crystal dark mode in the main Showcase, MDI Demo,
+Localization/RTL lab, and Print Preview screenshots. This records those reviewed
+surfaces only; popup states and DPI scales remain unreviewed. Chart Tools and the
+Options Editor need no further phase-two work.
+
+`Crystal.OptionTemplates.xaml` still copies much of the shared check/radio
+structure, including native content, mark, hover and disabled behavior. Its
+separate focus ring and selected glass lens are distinct from the shared
+accent-filled indicators, including in the dark palette. Replacing these
+templates with the shared ones would change the accepted appearance, so they
+remain Showcase-scoped. They inherit `FlowDirection` and display the caller's
+header; they add no localization branch. The shared Crystal Backstage dictionary
+already owns both layouts, localized labels, direction-aware Back glyph and selection
+behavior. The Showcase `Crystal.Backstage.xaml` dictionary only merged it.
+Customization and message actions now merge the shared dictionary directly;
+the wrapper was removed. No RibbonKit runtime template, token or public API
+changed.
+
+The wider pass found shared tokens and templates already driving ordinary
+ribbon controls, split hover, MDI chrome, Backstage and scrollbars. Showcase's
+`Crystal.ControlStyles.xaml` scopes glass input, gallery and ScreenTip paint;
+`Crystal.Customize.xaml` styles Showcase's dialog presentation. The backdrop
+capture, QAT/document underlay, menu shadow, utility rim and detached preview
+bindings depend on host visuals or content, so they remain Showcase helpers.
+These are distinct presentation choices rather than further safe wrappers to
+remove in this slice.
+
+Presentation wiring remains spread across these Showcase owners:
+
+- `MainWindow.ApplyTheme` and `RefreshCrystalTint` apply the standard shell
+  adapter; `UpdateDetachedDemoThemes` forwards changes to open demos.
+- `LocalizationRtlDemo.ApplyCrystal` separately creates the same shell adapter;
+  `MdiDemo.ApplyCrystal` scopes its own palette, editors and contextual tabs.
+- `CrystalPreviewWindow.UpdateCrystalDetails` applies each preview adapter for
+  comparison; its Backstage helper retains the document-title binding.
+- `MainWindow.OpenOptionsDialog` and the RTL lab's Options path opt into
+  `CrystalCustomization` for their own dialogs. Print Preview uses the shared
+  modal-tab template and Showcase page-paint resources.
+
+The next bounded slice is an optional Showcase-only registration for the
+standard shell: add a small `CrystalShellRegistration` helper that constructs
+`CrystalMainWindowPresentation` from the explicit window, ribbon, message bar,
+menu and Backstage references supplied after `InitializeComponent`. MainWindow
+and LocalizationRtlDemo each keep their own registration and call its `Apply`
+on theme/tint changes; closing a detached window releases its registration.
+Keep MDI's editor/contextual-tab treatment, preview comparison, and dialog
+styling in their owning hosts. There is no need for global discovery, a broad
+coordinator or a RibbonKit API. The deferred Office Glass, View overflow, 200%
+gallery clipping and Office 2010 hover checks remain separate.
+
+### 3.190 Crystal customization list frames — 2026-09-28
+
+The user's main Showcase screenshot confirmed the message panel, and the Options
+dialog screenshot showed square outer frames on the Customize Ribbon command
+list and tree. The requested round treatment also applies to both Quick Access
+Toolbar lists. All four controls are template parts of RibbonKit's shared
+customization pages; their data, navigation and scrolling remain owned there.
+
+Showcase's `CrystalCustomization` adapter now applies one local rounded frame
+template to those parts. It preserves each control's background, border,
+padding, item presenter and scroll viewer, while the Crystal row styles remain
+unchanged. No runtime template, theme token or public API changed. The Showcase
+Release build and three focused checks passed in separate processes: frame and
+scrolling on both pages, existing tree behavior, and the detached RTL Options
+path. The dialog was not visually reaccepted at the new corners; live review
+and DPI scales remain with the user.
+
+### 3.191 Showcase presentation portability audit — 2026-09-28
+
+A Showcase presentation inventory exposed a gap after Crystal became a public
+`RibbonTheme` choice: `ThemeManager.Apply` installs shared palettes, while the
+sample still supplies several generic control appearances through local styles,
+template-part changes and a `CrystalContextualTab` subclass. Another consumer
+can use RibbonKit and its shared Crystal palette and Backstage designs, but
+theme selection alone will not reproduce all of Showcase's Crystal visuals.
+The proposed Showcase-only adapter registration would organize sample wiring
+without closing that gap and is superseded in the future-themes plan.
+
+The reusable candidates are input, option, ScreenTip and customization styles;
+QAT, message, application-menu, utility and scrollbar chrome; contextual-tab
+material; and full-material tint policy. They require bounded promotion to
+RibbonKit with Office parity, RTL/localization and another-consumer checks.
+Menu/popup snapshot blur depends on host visuals and should remain explicitly
+optional pending a reusable integration contract. `AcrylicGlassPresentation`
+is the only other named Showcase presentation adapter; it provides an optional
+Glass look rather than the baseline Office themes. Preview comparison,
+document-edge fade, MDI editor content, Print Preview paint, icons and
+preferences remain application-owned. This audit changed documentation only;
+no runtime/public API behavior or visual acceptance is claimed.
+
+The same inventory also checked non-Crystal theme wiring. Showcase explicitly
+selects the built-in `RibbonApplicationButtonShape.Orb` for Office 2007, picks
+the application menu as its conventional File surface, and exposes optional
+2007/2010 Aero frames, Backstage designs and DWM backdrops. The orb template,
+menu, frame and Backstage behavior live in RibbonKit; Showcase chooses among
+their public options and mirrors the File-surface state to its RTL lab. An app
+using `ThemeManager.Apply(Office2007)` must opt into the orb and choose its
+File surface separately. Those host choices were omitted from the initial
+portability summary and are distinct from the Showcase-only Crystal styling
+listed above.
+
+The orb's built-in four-square glyph is fixed in the shared template. Writer's
+`RKWF-026` records a separate missing host-level glyph override and its
+app-owned workaround; Showcase does not have an orb-glyph adapter. No new
+runtime API is approved by this inventory.
+
+### 3.192 Theme-native Office 2007 orb default — 2026-09-28
+
+The shared Ribbon style now reads a typed application-button-shape token. Office
+2007 supplies `Orb`; the other base Office palettes supply `Tab`. Dark variants
+inherit that value, and Crystal inherits Office 2024's `Tab`. WPF invalidates the
+style's `DynamicResource` when `ThemeManager.Apply` or a consumer's merged token
+dictionary changes, so an existing ribbon follows the theme without a new
+effective-shape property. A local `ApplicationButtonShape` remains authoritative
+through switches, and `ClearValue` resumes the token default. No public symbol
+was added or changed. Showcase no longer assigns the shape during theme changes;
+its application-menu preference and RTL lab forwarding remain separate. Writer
+still restores its saved local shape using its existing normalization policy.
+
+A new test project referencing RibbonKit alone proves the loaded control's shape
+and realized orb across every theme, Office 2007 black, manual token changes,
+explicit `Tab`/`Orb`, `ClearValue`, and Classic2007 proxy attachment. The designer
+preview's local token lookup and existing Classic orb lifecycle checks passed in
+six focused tests; six focused Writer appearance-preference tests passed. The
+Release solution build passed with zero warnings and errors. The full solution
+test run did not pass: the portability test passed, while the runtime and Writer
+suites reported contract, source-inspection and WPF cross-thread failures outside
+the new consumer test. The Office 2007 snapshot differed at 929 pixels in tab
+and QAT detail; the same mismatch remained with the new style setter temporarily
+removed. Its approved image was not changed. No Showcase live window, DPI,
+popup or target-machine visual acceptance was run.
+
+### 3.193 Theme-owned no-application header inset and snapshot renewal — 2026-09-28
+
+The shared ribbon template already selected separate LTR/RTL no-application
+tab and tab-row QAT margins from each theme. Comparing each value to its normal
+margin showed zero additional inset in Office 2010, 2013, 2019 and 2024; Office
+2007 adds four DIPs and Crystal adds 22 to clear their rounded body corners.
+Their dark variants inherit the base values. No new token, public API or runtime
+geometry change was needed. The template comment now states that a theme can
+keep its normal margin when it needs no extra inset.
+
+A consumer test referencing RibbonKit without Showcase verifies the realized
+tab/QAT margins and corner clearance where needed, with and without the File
+surface, tab-row QAT or no row QAT, LTR/RTL, all light/dark themes, live
+theme switches and a manually merged token dictionary. It shares one STA WPF
+`Application` with the orb-default test; WPF rejects a second `Application` in
+the same test process.
+
+The visual harness can now capture every scene and its mismatch diff without
+changing approved images. All 63 current scenes were compared against their
+approvals. Only nine Office 2007 images differed, at the header QAT and tabs;
+the ribbon body and message surfaces matched. Those nine approvals were renewed
+after reviewing their actual/diff PNGs. The Release solution build and focused
+visual and portability tests passed. The full solution test run remained red:
+one deferred Office 2010 hover-glass contract and seven Writer failures outside
+this slice. No Showcase live window, real DPI, popup or user screenshot
+acceptance was run; Writer integration remains deferred.
+
+### 3.194 Portable application-orb glyph template — 2026-09-28
+
+`Ribbon.ApplicationOrbGlyphTemplate` is an additive nullable `DataTemplate`
+dependency property in the unshipped API list. `null` keeps the existing
+four-square vector. The shared `ApplicationOrbChrome` still owns the sphere,
+theme state brushes and named `OrbGlyph` rotation target; only the glyph child
+changes. The real application button and the private Classic2007 Back proxy
+each bind to the Ribbon's property through their own internal button state, so
+changing or clearing it updates both without sharing a visual or depending on
+a Ribbon ancestor after the real button moves into the application-menu overlay.
+The proxy's content remains an inert string, with localized Back tooltip and
+automation name. Writer's saved appearance and W-glyph workaround are unchanged;
+RKWF-026 remains open for its separate migration.
+
+A RibbonKit-only consumer test realized custom vector templates in both buttons,
+verified separate glyph instances and unchanged sphere visuals, changed the
+template while Classic2007 Backstage was open, restored the default with `null`,
+checked the glyph-only rotation target and accessible Back name, and exercised
+the application-menu and ordinary Backstage paths. Ten focused Classic/language
+tests and the visual test covering 63 approved scenes passed. The Release
+solution build passed with zero warnings or errors. The runtime suite passed
+434 tests with the deferred Office 2010 hover-contract method excluded; no
+Writer tests were run by user direction. The 1.0.0 package packed and validated
+for clean net8/net9 WPF consumption after the validator allowed NuGet's current
+`nuget.psmdcp` metadata filename. No Showcase window, live screenshot, real DPI
+or popup acceptance was run.
+
+### 3.195 Shared Crystal control resources — 2026-09-28
+
+Crystal menu rows, combo/text inputs, galleries, check/radio controls and
+ScreenTips now use the shared `Controls.*.xaml` templates with dedicated
+`Tokens.Office*.xaml` and `Tokens.Crystal.*.xaml` keys. Office tokens preserve
+their prior light/dark paint and accent behavior. The option templates retain
+separate selected lenses and focus rings; Crystal's detached ScreenTip surface,
+reflection and shadow resolve through theme resources. Showcase no longer merges
+its copied control styles or input/option templates. Its tint palette now sets
+the shared material keys, while its preview-specific ScreenTip tint scope remains
+host-owned. This slice adds no public API.
+
+The gallery popup needs a concrete brush because its content leaves the ribbon's
+resource tree. Its resolver now uses the dedicated popup token and still honors
+a nearer host-scoped ribbon-content background, including a local override from
+an existing consumer. A WPF `StaticResource` element used as a dictionary alias
+did not register a usable brush key; the final tokens use actual brush entries.
+The next slice is customization pages, including their list/tree frames; shell
+chrome, contextual material/tint and optional captured backdrops remain later.
+
+The Release solution build passed with zero warnings/errors. The non-Writer
+runtime suite passed 417 tests with the separately deferred Office 2010
+hover-glass contract excluded. The RibbonKit-only consumer test passed with
+Crystal light/dark, Office restoration, manual token merges, RTL labels,
+detached ScreenTip, gallery popup theme switching and a local popup override.
+The visual snapshot test passed its approved scene matrix. An earlier broad
+runtime run unintentionally included Writer-named consumer-friction tests and
+found the local gallery-popup regression; that test was not rerun after the
+fix. The final runtime run excluded Writer-named tests, and the Writer test
+project was not run by user direction. No Showcase live window, user screenshot,
+DPI or target-machine popup acceptance was run. The accepted earlier Crystal
+dark screenshots do not close those remaining gates.
+
+### 3.196 Shared Crystal customization pages — 2026-09-30
+
+Both built-in customization pages now obtain Crystal list/tree frames, rows,
+navigation and action materials from shared Options/customization templates and
+theme tokens. The tree retains its view-model expansion/selection bindings and
+native scroll viewers; selection and keyboard focus use distinct border states.
+Crystal primary actions retain the semibold label and 12-percent accent wash.
+Separate primary/secondary corner tokens preserve the existing Office button
+sizes. No public C# API was added or changed.
+
+Showcase's `Crystal.Customize.xaml` was removed, along with its realized
+template-part edits. `CrystalCustomization` now only scopes the preview's
+scrollbar tint. That remaining visual difference belongs to slice 7; the
+RibbonKit-only consumer does not depend on the helper. Application-provided
+Options content and dialog-opening policy remain in the host. The plan also
+records the user's final consolidation requirement: after the promotion slices,
+move important Crystal preview-only demonstrations to the main Showcase before
+removing the separate preview window and launch path.
+
+The first snapshot run stopped at the Office 2024 RTL QAT customization scene.
+Its approved, actual and diff PNGs showed fewer visible commands because Crystal
+row margins had been applied to Office. Inspecting the native WPF template
+established the original compact padding, margins and frame inset. Those values
+now have Office tokens, while Crystal keeps its prior spacing. The final visual
+test passed all 63 approved scenes without changing approvals or tolerances.
+
+The Release solution build passed with zero warnings/errors. The final runtime
+run passed 417 tests, excluding Writer-named tests and the separately deferred
+Office 2010 hover-glass contract. The earlier focused Crystal/localization/dark
+template run passed 34 tests. The RibbonKit-only consumer test passed with both
+customization pages, light/dark switches, every Office baseline, manually merged
+light/dark dictionaries, native scrolling, custom accent, localized RTL headers,
+and navigation/list/tree/action focus separate from selection. Theme XML parsed
+without duplicate direct resource keys. Diff review and `git diff --check`
+passed. Writer tests, live Showcase, new screenshots, real DPI transitions and
+target-machine popup acceptance were not run; those gates remain unclaimed.
+
+### 3.197 Shared Crystal QAT drawer — 2026-09-30
+
+Slice 6's first bounded pass moves the reusable QAT behavior from Showcase into
+the shared ribbon template and Crystal light/dark tokens. The drawer keeps its
+16-DIP inset from the default body, open upper rim, 10-DIP lower corners, compact
+padding, 32-DIP height reserve, flipped glass border and zero-depth shadow.
+Minimization uses a complete rim and 3-DIP gap; message-state trigger priority
+keeps the existing drawer spacing and upper-corner geometry. Dedicated
+`ContentCornerRadiusQatBelow` and `ContentZIndexQatBelow` resources coordinate
+the body rounding and seam shadow while keeping the application menu above both.
+`QatExtender.Border` and `QatExtenderShadow` separate drawer paint from body paint.
+Office base/dark tokens retain their previous realized values. New metrics have
+matching defaults in every base palette; dark palettes inherit unchanged metrics.
+No public C# API or shipped API baseline changed.
+
+A RibbonKit-only consumer first reproduced the missing lower body rounding,
+then verified the shared replacement on its existing single STA/Application.
+It exercises all placements, physical RTL ordering, mixed source-linked button,
+dropdown and split proxies, stable drawer height, real minimized body collapse,
+message combinations, overflow menu borrowing/return, light/dark and Office
+switches, manual dictionaries and resource/local-value precedence. The dark
+message case exposed the Office dark dictionary overriding Crystal's drawer
+continuation margin; Crystal dark now explicitly reasserts those two metrics.
+The layering regression now verifies the QAT seam token is conditional on
+BelowRibbon and remains below the application-menu overlay for every theme.
+
+After consumer verification, `CrystalQuickAccess` and its main/preview callers
+were removed. The document-under-QAT and fade effects, comparison controls and
+preview content remain in Showcase. Its message-only body rounding is retained
+as a scoped `ContentCornerRadiusTop` override until the next message-bar pass.
+Application-menu promotion also remains open within slice 6. Slice 10 still
+requires moving important preview-only demonstrations into the main Showcase
+before removing the separate preview window and launch path; neither was removed.
+
+The Release solution build passed with zero warnings/errors. The focused run
+passed 100 tests; the final runtime run passed 417 tests. Both exclude
+Writer-named runtime tests and the separately deferred Office 2010 hover-contract
+method. The RibbonKit-only consumer test passed. The final visual comparison
+passed all 77 scenes. Its original 63 approvals and tolerances are unchanged;
+14 new light/dark QAT baselines cover expanded/minimized, message combinations,
+RTL, tab-row overflow and synthetic 100/200% rendering. Actual-image inspection
+found that disconnected minimized fixtures still painted the body. The fixtures
+now realize Ribbon's loaded lifecycle in an offscreen test window, reparent the
+ribbon into a fresh capture root to avoid native-window offsets, and assert body
+collapse before rendering. The corrected actual images were reviewed before
+adding the new baselines. No existing scene differed in the full capture pass.
+Theme XML parsed without duplicate direct resource keys. Final diff review and
+`git diff --check` passed.
+
+Writer tests and manual Showcase launches were not run. User-supplied QAT visual
+acceptance, real DPI transitions and target-machine popup acceptance remain
+pending; earlier Crystal dark screenshots and slice 5's automated checkpoint
+do not establish these gates. Office Glass, View-tab overflow, 200% gallery
+clipping, the Office 2010 hover investigation and Writer RKWF-026 stay deferred.
+
+### 3.198 Minimized Crystal QAT corners above messages — 2026-09-30
+
+Live main Showcase review supplied light/dark expanded and minimized QAT
+screenshots without messages, followed by expanded light/dark screenshots with
+Protected View. The minimized dark message screenshot exposed square upper
+drawer corners. The user rejected that geometry: a minimized Crystal QAT must
+retain all four rounded corners even when a message is present. This corrects
+the message-state priority preserved in §3.197. The correction alone does not
+establish live acceptance or complete the remaining slice 6 work.
+
+The shared ribbon template now selects
+`RibbonKit.Metrics.QatExtenderCornerRadiusMinimizedMessageBar` for the combined
+BelowRibbon/minimized/message state. Crystal light/dark use 10-DIP corners;
+every Office base palette retains its previous zero-radius connected message
+geometry, inherited by its dark variant. Margins, border thickness, paint,
+shadow and host choices are unchanged. The token uses `DynamicResource`; no
+public C# API or shipped API baseline changed.
+
+The RibbonKit-only consumer first failed with expected `10,10,10,10` and actual
+`0,0,10,10`, then passed with the correction. Its single STA/Application matrix
+covers placements, RTL, mixed proxies, minimized/message combinations, live
+light/dark and Office switches, overflow, manual light/dark dictionaries,
+combined-state resource replacement and explicit local corner precedence.
+
+The Release solution build passed with zero warnings/errors. The focused run
+passed 100 tests and the eligible runtime run passed 417, excluding Writer-named
+tests and `Every_ribbon_button_family_consumes_the_shared_hover_glass`.
+The RibbonKit-only consumer test passed, including the added dynamic-resource
+check after rebuilding that project. The initial snapshot comparison passed all
+77 scenes because the small corner changes fit its existing tolerance. A full
+capture identified exactly two changed PNGs. Actual and amplified diff images
+for both minimized-message palettes showed only the upper corners and their
+immediate shadow: 317 changed pixels in light and 315 in dark. Only those two
+approvals were renewed after inspection; the other 75 PNGs were identical and
+no tolerances changed. The final comparison passed all 77 scenes after rebuilding
+the visual project. Theme XML parsed without duplicate direct resource keys.
+Final diff review and `git diff --check` passed.
+
+Follow-up user screenshots of the corrected minimized/message state in both
+Crystal dark and light show all four rounded QAT corners, with the message row
+separate below it and the ribbon body hidden. This closes the visual corner
+check at the supplied 1350×850 window capture size. The evidence files are
+`codex-clipboard-d5160476-f97d-420f-b4e2-67128d52155e.png` (dark) and
+`codex-clipboard-4be6f351-cb8f-45db-a678-3348695c7735.png` (light), supplied from
+the user's temporary clipboard folder. The status bar's document zoom of 100%
+does not establish Windows display scaling.
+
+The next user screenshots show the QAT Paste split-button popup open directly
+below its source-linked proxy while the ribbon is minimized above Protected
+View. Both palettes have readable rows, rounded popup corners and no visible
+clipping. Evidence is `codex-clipboard-f8abaea5-35fb-4459-be9c-6f3f339094d4.png`
+(light) and `codex-clipboard-4c88adba-29a5-4676-8557-7b28a668cefd.png` (dark),
+again 1350×850 captures from the temporary clipboard folder. The user explicitly
+confirmed Esc closes the menu cleanly in both themes. This establishes the
+bounded Paste popup appearance/closing check, not every popup state.
+
+Further user screenshots show the QAT Select dropdown aligned beneath its
+proxy in the same minimized/message state. All three rows are readable, and
+the popup has rounded corners with no visible clipping in both palettes.
+Evidence is `codex-clipboard-d2737cdd-ee6c-4838-b22f-d78717a0ebe4.png` (dark)
+and `codex-clipboard-3f0c27b8-cb8b-4d56-8562-508e501024cc.png` (light), again
+1350×850 captures. The user explicitly confirmed Esc closes Select cleanly in
+both themes and reported the current Windows display scale as 125%. These
+Select captures establish the live 125% baseline.
+
+The next 200% Windows-scale check supplies maximized 1920×1104 captures,
+`codex-clipboard-05a412ea-4970-43c5-9721-d372aa78f1a2.png` (light) and
+`codex-clipboard-ed41bcf0-5858-46db-aed9-182dcd1d57ba.png` (dark). The minimized
+QAT and Select popup remain sharply rendered, correctly anchored, rounded and
+visibly unclipped above Protected View in both themes. The screenshot check
+passes for this state. The user then confirmed Showcase stayed open throughout
+125% → 200% → 125%. Select was closed when Alt-Tab switched to Display settings
+to restore the scale. After the return, reopening Select produced normal
+alignment and Esc closed it cleanly in both themes. This completes the bounded
+live Windows scale-change/return check for the minimized/message QAT and Select
+popup. Keeping a popup open during a scale change and moving between monitors
+remain unverified.
+
+The next 125% placement check moves QAT to TabRow using the above-ribbon menu
+choice. The light capture `codex-clipboard-a8997597-90d0-4f94-bdfb-4489c8a65e6f.png`
+and dark capture `codex-clipboard-044e3ce8-d801-4d72-8a0b-c79a61be0a07.png`
+show all five commands aligned between File and Home, with no below-ribbon
+drawer and Protected View directly beneath the minimized tab row. This
+placement passes visual review in both themes at the supplied window size.
+
+Title-bar QAT placement then passes the same 125% minimized/message check in
+both themes. The dark capture `codex-clipboard-4d0df15b-12d3-4ddc-a704-c70a8c36c8e6.png`
+and light capture `codex-clipboard-2be6824b-7832-4e7d-8022-b8aadf970250.png`
+show all five commands fitting beside the window icon without clipping, while
+the tab-row and below-ribbon QAT hosts are cleared.
+
+The title-bar overflow check adds eight temporary Home commands and moves
+Paste/Select after them. The light capture
+`codex-clipboard-b563c866-93da-4b18-8bb3-c4b0d940ca9c.png` and dark capture
+`codex-clipboard-e6718258-ddce-43a0-b6a3-0657ec55d7b2.png` show the overflow
+popup anchored beneath its chevron at 125% with readable, unclipped Underline,
+Find, Replace, Paste and Select rows. This parent-popup appearance check passes
+in both themes.
+
+Nested Paste then passes visual review with both menus open at 125%. The dark
+capture `codex-clipboard-bc5307cb-b02b-41ba-98f9-f2f3b87b9865.png` and light
+capture `codex-clipboard-5e09ffce-ef64-4a3c-a98a-03189fb65daa.png` show all
+three Paste rows readable in a rounded, unclipped child popup below the split
+row. The user confirmed the requested two-step Esc sequence works in both
+themes: the first closes Paste while retaining overflow, and the second closes
+overflow. Reopening overflow and Paste still displays all three commands,
+verifying that menu borrowing did not strand them.
+
+The user then confirmed the requested Select closing/reopening sequence works.
+The dark capture `codex-clipboard-a561d05e-7867-4280-a8c7-c54c1df24b73.png`
+shows Select All, Select Objects and Selection Pane in a readable, rounded,
+unclipped child popup beneath the overflow Select row. Dark Select appearance
+passes. The light attachment
+`codex-clipboard-1d946669-ef56-4539-b27f-af2a5ce5ff5d.png` shows Paste again,
+so it does not establish light nested Select appearance. The corrected light
+capture `codex-clipboard-57597350-6ff6-479d-a539-5d3a9886dd04.png` then shows
+all three Select rows aligned, readable, rounded and unclipped beneath the
+overflow Select row. Protected View is closed in this corrected light capture;
+the dark Select capture above retains it. Light Select appearance passes,
+completing the bounded nested-menu review alongside the user-confirmed closing
+and reopening sequence. The user then confirmed cleanup after instructions to
+remove the eight temporary commands, retain Save/Undo/Redo/Paste/Select, return
+QAT below the ribbon, expand Home and keep Windows scaling at 125%. Restoration
+is user-confirmed; no additional screenshot was requested for cleanup.
+
+This completes the bounded QAT live review at the recorded states and scales.
+The subsequent screenshot and cleanup record updates changed documentation
+only; no builds or tests were rerun for those updates. Final documentation diff
+review and `git diff --check` passed.
+
+Broader DPI coverage, remaining target-machine popup acceptance and slice 5
+customization review remain unverified. The agent did not launch Showcase or
+run Writer tests, and made no commit. Message-bar/application-menu promotion, later
+portability slices and slice 10's main Showcase consolidation remain open;
+the separate Crystal preview window and its launch path remain.
+
+### 3.199 Shared Crystal message bars — 2026-09-30
+
+Slice 6's second bounded pass closes the reusable message-bar gaps: the
+sample's `CrystalMessagePresentation` substituted `Crystal.Backstage.Action`
+for each realized action button, and the preview overrode
+`ContentCornerRadiusTop` to keep all four body corners above messages.
+The rows' semantic amber paint, 10-DIP rounding, spacing and shadow were already
+shared. A RibbonKit-only consumer reproduced the remaining action mismatch:
+the default Crystal action had 5-DIP corners instead of the accepted 12 DIPs.
+
+`Controls.MessageBar.xaml` now supplies one action template in the message's
+template resource scope. A dynamic `RibbonKit.Styles.MessageBar.ActionButton`
+theme style selects the existing brushes and action states without duplicating
+templates. Matching `MessageBar.ActionCornerRadius` and
+`MessageBar.ActionRecognizesAccessKey` metrics preserve Crystal's 12-DIP action,
+hand cursor, access keys, glass hover/pressed/focus states and 0.4 disabled
+opacity. Office base tokens retain their 0/2-DIP action corners, existing brushes
+and 0.45 disabled opacity; dark palettes inherit those styles and resolve their
+own live brushes. Crystal dark explicitly supplies the Crystal style rather
+than falling back to its merged Office dark palette. Shared
+`ContentCornerRadiusTop` now keeps all four Crystal body corners at 14 DIPs.
+The separate QAT seam metrics and the previously reviewed minimized/message
+corner correction are preserved. No public C# API or shipped baseline changed.
+
+After the replacement passed the existing single STA/Application consumer,
+`CrystalMessagePresentation`, its main/preview wiring and the scoped preview
+body-corner override were removed. Message content, commands, action-driven
+closure and comparison policy stay with the host. Action styles/properties and
+message background local values retain WPF precedence; clearing them restores
+the theme. The style resolves its template in the message scope, so it is a
+message-part extension point rather than a general-purpose application button style.
+
+The consumer exercises ItemsSource, every QAT placement, minimized states,
+two independent notices, empty-bar margin/effect cleanup, reopen and wrapping,
+physical RTL positions, UI Automation action invocation and command parameter,
+dismissal events, command-disabled opacity and synthetic hover/pressed/focus
+states. It checks light/dark and every Office palette on realized parts,
+manual light/dark dictionary merges, scoped metric replacement and explicit
+action style/background and message background choices. Semantic notice paint
+does not rotate with a custom accent. Style changes can recreate action chrome;
+the regression reacquires the live template part for Office/manual switches
+rather than asserting on a detached border.
+
+Validation on this pass: Release solution build and affected visual-test rebuild,
+both zero warnings/errors; 100 focused runtime tests; 417 eligible runtime tests;
+the single RibbonKit-only consumer test; full capture and final comparison of
+85 snapshot scenes. Both runtime filters exclude Writer names and the deferred
+`Every_ribbon_button_family_consumes_the_shared_hover_glass` method. The existing
+77 captures were byte-identical to their approvals. Eight new light/dark message
+images were inspected before adding approvals: stacked/paragraph-wrapped notices
+and rounded actions at synthetic 100/200%, RTL stacks and minimized stacks.
+The minimized fixture shares the QAT fixture's loaded lifecycle/body-collapse
+assertion. No existing approval or tolerance changed in this pass.
+All 12 palette dictionaries and the shared message template parsed successfully;
+there were no duplicate direct token keys. Final diff review and
+`git diff --check` passed. The subsequent documentation edits required no
+additional build/test run.
+
+Fresh user message screenshots, live animation, target-machine keyboard/pointer
+and DPI acceptance remain pending. The earlier QAT review is preserved and does
+not establish those gates. No manual Showcase launch, Writer tests, commit, push
+or publication ran. Application-menu promotion still remains within slice 6;
+utility chrome, contextual tint, optional effects and slice 10's final Showcase
+consolidation remain later work. The separate preview window and launch path
+were retained. Office Glass review, View-tab overflow, 200% gallery clipping,
+the Office 2010 hover investigation and Writer RKWF-026 remain deferred.
+
+First live message checkpoint: the user supplied light
+`codex-clipboard-cd14ae68-3b49-43ac-add3-1ccc637e79f6.png` and dark
+`codex-clipboard-2607cb43-182b-45df-8af4-521bb4f63551.png` after the requested
+125% setup. Both 1350×850 captures show expanded Home, TabRow QAT and the
+Protected View/Security Notice rows. Inspection confirms the body retains its
+lower rounded corners, each notice has its own rounded frame and gap, and action
+text/close targets are readable without visible clipping. Live action/dismissal,
+reopen and animation checks remain pending; these static images do not establish
+new DPI or keyboard/pointer acceptance. The worktree was clean at `492fa38`
+when this review began. This checkpoint changed records only; diff review and
+`git diff --check` passed, with no build/test rerun or manual Showcase launch.
+
+The user then confirmed the expanded interaction sequence in both themes:
+Enable Editing closes only Protected View, Add Message restores it, Review
+Settings closes only Security Notice, the remaining close target dismisses the
+last row, and two Add Message clicks restore both notices. The confirmed sequence
+includes independent row dismissal and reopening. Minimized live review and
+broader motion/keyboard/DPI checks remain pending. This confirmation updates
+documentation only; no build/test rerun or manual Showcase launch was needed.
+
+Minimized live appearance checkpoint: the user supplied dark
+`codex-clipboard-d1087026-3b7d-4ec3-b1b9-7dfd3f4cff4f.png` and light
+`codex-clipboard-808c81f2-e5ac-4676-8744-2f9e2dbe9393.png` for the requested
+125% setup with below-ribbon QAT and both notices visible. Both 1350×850 images
+show the collapsed ribbon body, all four rounded QAT corners, separate notice
+frames with clear gaps, and readable action/close targets without visible
+clipping. These images establish this static minimized layout; minimized
+dismiss/reopen/restore interactions and broader motion/keyboard/DPI checks remain
+pending. This checkpoint changes documentation only; no build/test rerun or
+manual Showcase launch was needed. Slice 6's application-menu pass remains open.
+
+The user then confirmed the minimized interaction sequence in both light and
+dark themes: Enable Editing and Review Settings each dismiss only their own
+notice while minimized; expanding the ribbon, adding both messages and minimizing
+again restores both notices without leftover shadows. Expanded Home restoration
+was also included in the requested sequence. This completes the bounded
+message-bar live review at the requested 125% setup. Broader motion/keyboard/DPI
+acceptance remains pending; this confirmation does not establish new 200% or
+mixed-monitor message-bar coverage. Documentation diff review and
+`git diff --check` passed; no builds/tests were rerun and Showcase was not launched
+by the agent. Application-menu promotion remains open within slice 6, and the
+separate Crystal window remains until slice 10's verified consolidation.
+
+### 3.200 Shared Crystal application menu — 2026-09-30
+
+Slice 6's third bounded pass moves the reusable application-menu appearance out
+of Showcase. Work resumed from the clean `codex/crystal-theme` checkout at
+`e3b7835` after the user's conflict-resolution commit. The earlier bounded QAT
+and message-bar live evidence remains valid for those surfaces; it does not
+establish acceptance of this new menu implementation.
+
+The RibbonKit-only consumer first reproduced the old 8-DIP frame instead of
+Crystal's accepted 14-DIP geometry. Shared `Controls.ApplicationMenu.xaml` and
+Crystal light/dark tokens now supply the translucent frame, pane, headings and
+footer paint; outer/inner corners; inset rows/separators; and the combined split
+row silhouette. A binding-driven internal converter clips the inner content to
+the outline's inset corners and keeps split hover/selection surfaces inside the
+row's rounded boundary. Layout and token changes invalidate those bindings;
+no Showcase part-paint or geometry patches are needed.
+
+Crystal navigation remains 160 DIPs wide. The preferred pane width is 300 DIPs,
+with a 180-DIP minimum and a 32-DIP viewport allowance. The converter subtracts
+the navigation width and allowance from the owning Ribbon's actual width, then
+clamps to the token bounds. A menu created in `Window.Resources` and templated
+before assignment exposed an ancestor-binding gap: its inheritance context
+could bypass Ribbon during lookup even after visual attachment. Ribbon now
+binds its width to an internal attached value on the menu, clearing the old
+binding when ownership changes. The consumer verifies this preparation order,
+narrow-window resizing, scoped inset replacement and reassignment to another
+Ribbon. The bounds are private template values rather than `MinWidth`/`MaxWidth`,
+so explicit pane widths below or above the theme range retain normal local-value
+precedence.
+
+The shared `MenuSurface` contains a separate noninteractive shadow caster.
+Its clip excludes the frame silhouette, leaving the translucent interior
+unshaded. The halo follows shadow blur/depth and corner changes, including
+nonuniform corners. Crystal uses its accepted 16-DIP, zero-depth light/dark
+shadow; Office collapses this layer and retains its existing whole-frame effect.
+All new keys have matching Office defaults. Existing Office/menu snapshots are
+unchanged. Dynamic resources support scoped paint, corner, spacing, outline,
+pane and shadow replacements; explicit frame paint/corners/effect, pane width
+and row margins survive theme switches, with `ClearValue` resuming the theme.
+The shadow test replaces a resource because WPF can freeze effects after use;
+local width rendering assertions account for physical-pixel layout rounding.
+
+No public C# API or shipped API baseline changed. `CrystalApplicationMenuPresentation`
+and `CrystalMenuShadow` were removed after the shared replacement passed the
+consumer. Main Showcase and Crystal preview callers now use
+`CrystalApplicationMenuBackdrop`, which only attaches the existing host capture
+layer to the shared surface. The accepted 6-DIP blur, 24-DIP capture padding and
+opacity-based capture remain unchanged. Captured blur and its optional reusable
+integration contract remain slice 9 work. Menu content/commands, File-surface
+choice, preview tint/comparison controls and platform integration remain with
+the host. Preview tint continues to replace the shared menu heading token for
+readability; full tint promotion remains slice 8. The separate preview window
+and launch path are retained for slice 10's later verified consolidation.
+
+Validation: the Release solution build and affected VisualTests rebuild passed
+with zero warnings/errors. The focused runtime run passed 116 tests and the
+eligible runtime run passed 417, excluding Writer-named tests and
+`Every_ribbon_button_family_consumes_the_shared_hover_glass`. The single
+STA/WPF Application consumer passed without Showcase resources/helpers. Its
+menu matrix covers all QAT placements, minimized states, message presence,
+LTR/RTL physical order, repeated light/dark and every Office palette switch,
+manual Crystal token merges, resource/local precedence, pre-templated menu
+ownership and command routing. Template button handlers select split/dropdown
+panes; automation invocation verifies pane/footer commands, closing and default
+pane restoration on reopening. A rendered pixel check verifies shadows at all
+four outside edges and a transparent center. These synthetic invocations do
+not establish native keyboard/pointer acceptance.
+
+The full capture and comparison each passed all 99 snapshot scenes. The old
+85 actual images were byte-identical to their approvals. All 14 new light/dark
+menu actual PNGs were inspected before adding approvals: default, split,
+dropdown, narrow, minimized, RTL and synthetic 100/200% scenes. Existing
+approvals and tolerances were unchanged. Shared menu XML and all 12 palette
+dictionaries parsed without duplicate direct keys. Final diff review and
+`git diff --check` passed; later prose updates require no WPF test rerun.
+
+Fresh live menu screenshots, native interaction, animation and real menu DPI
+acceptance remain pending. Slice 6 is not marked complete. Slice 5's fresh
+customization review, broader popup/DPI checks, utility chrome, contextual tint,
+optional effects and slice 10 remain open. Office Glass review, View-tab
+overflow, 200% gallery clipping, the Office 2010 hover-contract investigation
+and Writer RKWF-026 remain deferred. No Writer tests, manual Showcase launch,
+commit, push or publication ran.
+
+First live menu appearance checkpoint: the user supplied dark
+`codex-clipboard-72958fe5-c3ca-4cad-aebf-f4e3b68122ee.png` and light
+`codex-clipboard-25fdb015-40e9-4616-8310-7143366d3a23.png` for the requested
+125% setup. Both 1350×850 captures show expanded Home with title-bar QAT,
+no message rows and File open on Recent Documents. Inspection confirms the
+rounded outer frame, inner outline and footer, readable commands/headings,
+unclipped footer actions and an outside shadow. The host's captured backdrop
+is visible behind the command column while menu text stays sharp. This is
+static default-page evidence; active split/dropdown panes, closing/reopening,
+narrow-window resizing, live RTL, animation and real menu DPI checks remain
+pending. The generic Manage recent locations button remains host content.
+Slice 6 is not marked complete. This update changes documentation only;
+content/diff review and `git diff --check` passed. No builds/tests were rerun,
+no manual Showcase launch occurred, and no commit, push or publication ran.
+
+Save As live checkpoint: the user supplied light
+`codex-clipboard-b3df1b4e-2abd-4312-9f34-e854b1071da9.png` and dark
+`codex-clipboard-da279045-ef9d-45cc-aa70-789f780f700b.png`. Both 1350×850
+captures show the requested Save As split pane with expanded Home, title-bar
+QAT and no messages. The rounded split-row silhouette and internal divider are
+intact; the command half and active arrow remain distinct. The pane header and
+all four commands (Word Document, Word Template, Word 97-2003 Document and Other
+Formats) are readable, with descriptions wrapping inside the rounded outline
+without visible clipping. The user also confirmed that Esc closes File cleanly
+and reopening restores Recent Documents in both light and dark themes. This
+establishes the split-pane appearance and bounded close/reopen sequence;
+dropdown presentation, native command invocation, narrow resizing, live RTL,
+animation and real menu DPI checks remain pending. Slice 6 remains open.
+Documentation content/diff review and `git diff --check` passed; no build/test
+rerun, manual Showcase launch, commit, push or publication occurred.
+
+Publish dropdown appearance checkpoint: the user supplied dark
+`codex-clipboard-e0fd4852-6ee4-425a-b8b4-c0fb5196fb0f.png` and light
+`codex-clipboard-c3745689-ae40-4ca3-b6cc-481e6f8a7a40.png` for the requested
+125% setup. Both 1350×850 captures show the complete Publish row highlighted
+while the right pane is active. The row retains its rounded silhouette without
+a split divider or separately dimmed command half. The heading, Blog and
+Document Management Server entries are readable; their descriptions wrap
+inside the rounded pane without visible clipping. The frame, footer and host
+backdrop remain consistent with the default and Save As captures. This records
+dropdown appearance; native command invocation, narrow-window resizing,
+live RTL, animation and real menu DPI checks remain pending. Slice 6 remains
+open. Documentation content/diff review and `git diff --check` passed; no
+builds/tests were rerun, Showcase was not launched by the agent, and no commit,
+push or publication occurred.
+
+The user then confirmed the native command sequence in both themes: clicking
+the Save As command half, reopening and choosing Save As arrow → Word Document,
+and reopening and choosing Publish → Blog each closes File and displays the
+selected command in Showcase's status line. Reopening after every command
+returns to Recent Documents. These Showcase commands use the existing status
+handler; no runtime behavior was changed for this check. This establishes
+bounded split-primary and pane command invocation and default-page restoration.
+Narrow-window resizing, live RTL, animation and real menu DPI checks remain
+pending; slice 6 remains open. Documentation content/diff review and
+`git diff --check` passed; no builds/tests were rerun, Showcase was not launched
+by the agent, and no commit, push or publication occurred.
+
+Narrow default-page checkpoint: the user replaced an accidentally submitted
+wide pair with light `codex-clipboard-a7b5b5df-d38e-4798-a716-1a6343aa8993.png`
+and dark `codex-clipboard-eaaefaf8-c314-4a8e-9663-8164eb40c6d2.png`. Both PNGs
+measure 518×850 pixels, suitable for the requested narrow-window check at the
+125% setup. They show File on Recent Documents with title-bar QAT and no
+messages. The pane is narrower than in the previous wide captures; the rounded
+frame stays within the window, the default entries fit and both footer actions
+remain visible without clipping. The user reported that the menu widened to
+normal size after enlarging the window again. The earlier wide pair was
+explicitly retracted and is not narrow-layout evidence. This records narrow
+default-page appearance and reported width restoration; the screenshots do not
+show Save As description wrapping. Narrow active-pane review, live RTL,
+animation and real menu DPI acceptance remain pending, and slice 6 stays open.
+Documentation content/diff review and `git diff --check` passed. No builds/tests
+were rerun, Showcase was not launched by the agent, and no commit, push or
+publication occurred.
+
+Narrow Save As checkpoint: the user supplied dark
+`codex-clipboard-89ef3dac-eb99-4bd6-a677-572cbafe6495.png` and light
+`codex-clipboard-bb4f54ad-1f82-480f-ad24-c629026db711.png`. Both PNGs measure
+500×850 pixels and show the Save As pane with title-bar QAT and no messages.
+All four descriptions wrap inside the reduced pane without visible clipping,
+including the longer Word Template and Word 97-2003 Document text. The heading,
+rounded split row and divider, outer frame, inner outline and both footer
+actions remain intact. Together with the previous default-page pair and
+reported width restoration, this completes the bounded narrow default/Save As
+appearance check. Live minimized/message menu review, RTL, animation and real
+menu DPI acceptance remain pending; slice 6 stays open. Documentation
+content/diff review and `git diff --check` passed. No builds/tests were rerun,
+Showcase was not launched by the agent, and no commit, push or publication
+occurred.
+
+Minimized-ribbon/stacked-notice menu checkpoint: the user supplied light
+`codex-clipboard-1cc565b6-e04d-4124-8aa1-79c7bf580b0a.png` and dark
+`codex-clipboard-0aeb1139-b55c-4f30-975f-a764e94030aa.png`. Both PNGs measure
+1350×850 pixels and show the Save As pane with the ribbon minimized, title-bar
+QAT and both Protected View and Security Notice visible. The menu overlays
+the notice rows and document; its rounded frame, inner outline, active split
+row and divider, all four command descriptions and both footer actions remain
+intact without visible clipping. The user confirmed that Esc closes File cleanly
+and reopening restores Recent Documents in both themes in this combined state.
+This completes its bounded appearance/close/reopen check. Live RTL, animation,
+broader keyboard and real menu DPI acceptance remain pending; slice 6 stays
+open. Documentation content/diff review and `git diff --check` passed. No
+builds/tests were rerun, Showcase was not launched by the agent, and no commit,
+push or publication occurred.
+
+### 3.201 RTL lab bilingual application-menu header — 2026-09-30
+
+The user supplied dark `codex-clipboard-4ccad49a-481d-4f3b-99dc-32c6f52f863a.png`
+and light `codex-clipboard-9fb37f6e-a148-4e63-8f64-f74b1903d577.png`. Both PNGs
+measure 1300×875 pixels and show the Localization/RTL lab's default menu with
+Right-to-Left enabled and the embedded/application string provider. The menu
+anchors at File on the right; navigation/icons remain on the right, recent
+content is on the left and footer actions mirror leftward. Arabic/English
+recent content is readable, and the explicitly LTR `Report-2026-Q3.docx` row
+keeps its direction. The rounded frame, inner outline and footer remain intact.
+
+The Save As row reveals a real label gap: `حفظ باسم — Save As` exceeds the
+text space alongside the icon and split arrow. A focused realized-control
+reproduction measured characters outside the primary hit area. This is long
+host-owned bilingual content, so the lab now supplies a wrapping
+`RibbonApplicationMenuItem.HeaderTemplate` for that one row. Shared navigation
+width, menu geometry, colors, behavior and public APIs are unchanged by this
+correction; another consumer can use the same existing extension point.
+
+The regression measures every insertion position's character rectangle inside
+the primary hit area in Crystal light/dark and LTR/RTL, including vertical fit.
+It failed before wrapping and passes afterward. Release compilation of Showcase,
+its runtime dependencies and the affected test project passed; both focused
+`CrystalLocalizationIntegrationTests` passed. Separate `bin/RtlLabHeaderCheck/`
+output preserves the user's running build. No Writer tests, full-suite rerun,
+snapshot approval changes or manual Showcase launch occurred. Fresh screenshots
+from the updated build are required for RTL label/pane acceptance; closing,
+reopening, motion, broader keyboard and real menu DPI checks remain pending.
+Slice 6 stays open. Final content/diff review and `git diff --check` passed;
+no commit, push or publication occurred.
+
+Fresh RTL Save As appearance checkpoint: the user supplied light
+`codex-clipboard-fc5469ce-01ac-4d4b-80a5-e14a085c97d8.png` and dark
+`codex-clipboard-0c465c35-51d2-4f44-84ae-7316f1d210d1.png` from the updated
+build. Both PNGs measure 1300×875 pixels and show the Save As pane in the RTL
+lab with the embedded/application provider. The full bilingual navigation
+label is visible on two lines without clipping. Its left-pointing split arrow
+and internal divider stay within the rounded active row. Both mixed-language
+pane entries are readable on the left, and the frame, inner outline and
+mirrored Exit/Options footer remain intact. This verifies the wrapping correction
+and bounded RTL active-pane appearance alongside the previous default-page
+review. RTL closing/reopening, return to LTR and broader motion/keyboard/real
+menu DPI checks remain pending; slice 6 stays open. Documentation content/diff
+review and `git diff --check` passed. No builds/tests were rerun, Showcase was
+not launched by the agent, and no commit, push or publication occurred.
+
+The user then confirmed that Esc closes File cleanly and reopening restores
+Recent Documents in both themes in RTL. After closing File and turning
+Right-to-Left off, reopening also returns the menu to normal LTR layout in
+both themes. Together with the default/Save As screenshots, this completes
+the bounded RTL appearance/close/reset review. Broader motion/keyboard and real
+menu DPI acceptance remain pending; slice 6 stays open. This documentation-only
+update passed content/diff review and `git diff --check`; no builds/tests were
+rerun, Showcase was not launched by the agent, and no commit, push or publication
+occurred.
+
+### 3.202 Application-menu footer at limited viewport height — 2026-09-30
+
+The user confirmed alignment and Esc closing in both themes after returning to
+125%. The accompanying light `codex-clipboard-98fef5b3-93b6-42c9-bc83-47f05334b2ae.png`
+and dark `codex-clipboard-7b26680c-b1f8-43e6-9cb4-08cd73232f35.png` measure
+1920×1104 pixels and show Save As at 200%. Both Options/Exit footer buttons are
+cut off at the window bottom. The return confirmation remains valid; these
+captures do not establish a passing 200% footer or full menu DPI gate.
+
+The ribbon's Canvas measures its overlay with infinite height. Ribbon now
+publishes an internal available-height value from the menu anchor to the bottom
+of the window's client-content presenter, accounting for menu/presenter margins.
+The presenter matters when the content itself aligns to the top, including a
+window containing only Ribbon. `PART_Frame.MaxHeight` follows that value;
+navigation, default content and active-pane content use native ScrollViewers,
+while the pane header and footer stay outside their scrolling areas. Layout
+reflow refreshes the bound, and detaching/unloading the ribbon or replacing its
+menu releases the previous window's constraint. Explicit local part limits keep
+WPF precedence. There is no public API or new palette key; Office menus retain
+their normal geometry when enough space is available.
+
+A RibbonKit-only reproduction failed before the fix: in a 320-DIP-tall window,
+the footer extended to 637 DIPs inside a 286-DIP client root. The regression
+covers Crystal, Office 2007 and Office 2024, light/dark, LTR/RTL, short/tall/short
+resizing with reopening, scroll offsets in all three content areas, anchor
+reflow while open, local MaxHeight precedence and detach/reattach cleanup.
+Native window resizing already dismisses File; the test preserves that behavior.
+
+The broader runtime check also exposed captured-background measurement feedback:
+when height was constrained, an old Image bitmap could enlarge the preview menu
+to 751.2 DIPs in a 420-DIP-wide window. The host's `CrystalMenuBackdrop` now puts
+its explicitly sized Image in a Canvas, keeping captured paint out of desired
+size. The existing resize regression and blur pixel assertions pass, including
+foreground exclusion, rounded clipping, scroll refresh and capture cleanup.
+Capture remains host-owned slice 9 work; this does not add an integration API.
+
+Final verification: the Release solution build passed with zero warnings/errors
+for both runtime frameworks. All 418 eligible runtime tests passed, excluding
+Writer names and `Every_ribbon_button_family_consumes_the_shared_hover_glass`.
+The RibbonKit-only consumer passed its single STA/Application test, and the
+visual test passed all 99 scenes without approval changes. Snapshot diagnostics
+were inspected before correcting a stale height constraint after detachment;
+the approved minimized appearance is preserved. Separate
+`bin/MenuViewportCheck/Release/<framework>/` output keeps the user's running
+build untouched. Documentation content/link review and `git diff --check` passed.
+
+Fresh 200% light/dark screenshots must verify fully visible footer actions and
+usable scrolling, followed by alignment/Esc checks after returning to 125%.
+Broader motion/keyboard/DPI acceptance remains open; slice 6 is not complete.
+No Writer code/tests, approval changes, manual Showcase launch, commit, push or
+publication occurred.
+
+Fresh footer appearance/return checkpoint: the user supplied light
+`codex-clipboard-67890785-90da-40ee-98e0-4d4ff96ac9e4.png` and dark
+`codex-clipboard-eb4af141-5af6-4a64-9a61-9833a1809dfa.png` from the updated
+build. Both PNGs measure 1920×1104 pixels and show Save As at 200%. The frame
+ends within the window; Options and Exit are fully visible in the rounded
+footer. The navigation scrollbar is present; the pane heading and all four
+commands/descriptions remain readable. The user confirmed alignment and Esc
+closing in both themes after the requested return to 125%. This completes the
+bounded footer appearance/return check. The screenshots do not establish live
+scroll reachability; that check and broader motion/keyboard/DPI acceptance remain
+pending, so slice 6 stays open. This documentation-only checkpoint passed
+content/link review and `git diff --check`; no builds/tests were rerun, Showcase
+was not launched by the agent, and no commit, push or publication occurred.
+
+### 3.203 Application-menu scrollbar clicks preserve the open menu — 2026-09-30
+
+During the live 200% scrolling check, the user reported that clicking a scroll
+button closes File, while using the thumb does not. `RibbonApplicationMenu` listens
+to unhandled `ButtonBase.Click` and requests dismissal. Native scrollbar arrows
+and page regions are RepeatButtons and reach that handler; a Thumb uses drag
+events. The new scrolling areas exposed this pre-existing command-click rule.
+
+The shared handler now walks only the click source's ancestor path and returns
+for a ScrollBar descendant. It neither marks the event handled nor suppresses
+the routed scroll command. Split arrows/dropdown pane openers retain their
+existing handled-click behavior, and ordinary commands inside ScrollViewers,
+pane/footer commands and Esc retain dismissal. No public API, template, token
+or host helper was added or changed for this correction.
+
+The RibbonKit-only viewport regression now invokes the realized RepeatButton's
+protected native `OnClick`, exercising both the bubbling Click and its routed
+scroll command. It failed before the fix with `NavigationScroll: LineDown closed
+File`. Afterward line-down, page-down and line-up change the offset while File
+stays open in navigation, default and active panes, with active-pane ownership
+preserved. Crystal, Office 2007 and Office 2024 run in light/dark and LTR/RTL.
+The earlier direct `ScrollToBottom` check did not exercise button dismissal.
+
+Offscreen UI Automation invocation depends on native activation/command requery
+and was unavailable for these realized buttons in this STA fixture, so the test
+uses reflection to call the native protected click method. This verifies routing
+and command behavior, not physical pointer acceptance. Windows at the user's
+current 200% setup also clamps a requested 950-DIP window to 552 DIPs; the resize
+regression now requires the reopened menu to reclaim actual available space and
+reduce its scroll range instead of assuming all content must fit without scrolling.
+
+The Release solution build passed with zero warnings/errors for both runtime
+frameworks, and the single RibbonKit-only consumer test passed. The eligible
+runtime run passed 417 tests and failed
+`Detached_rtl_lab_applies_crystal_and_restores_office_options` at its initial
+Office RTL option-indicator assertion, before applying Crystal or opening File.
+Separate-process reruns failed identically in both the new output and the prior
+`MenuViewportCheck` output at the current 200% display setup. This existing
+failure remains recorded; the current broader run is not a passing gate. Writer
+names and the deferred hover-glass method remain excluded. Visual snapshots
+were not rerun for this routing-only correction; the preceding 99-scene result
+remains dated evidence. Documentation content/link review and `git diff --check`
+passed. The updated
+Showcase is in separate `bin/MenuScrollClickCheck/Release/net8.0-windows/` output.
+Fresh arrow/page/drag/wheel scrolling at 200% in light/dark remains for the user;
+prior footer appearance/125% return acceptance remains recorded. Broader
+motion/keyboard/DPI checks remain pending, and slice 6 stays open. No Writer
+code/tests, manual Showcase launch, commit, push or publication occurred.
+
+The user subsequently confirmed that scrollbar buttons now scroll without
+closing File in both themes. This closes the bounded live arrow-click regression
+check. It does not add page-region, thumb-drag or wheel acceptance, and broader
+keyboard/motion/DPI checks and the separate Office RTL test failure remain open.
+This follow-up changed documentation only; content/link review and
+`git diff --check` passed, with no builds/tests rerun or Showcase launch.
+
+The user also reported different gallery-item layout at 200% and requested that
+it and the existing RTL option-indicator failure be deferred for later
+investigation. The gallery report's exact surface/geometry and both causes remain
+unconfirmed; it is not assumed to be the earlier View-tab selection-clipping
+issue. The [deferred layout list](../13-CRYSTAL-PORTABILITY-AND-ORB-PLAN.md#deferred-layout-observations-at-200)
+records the observations and later comparison scope. This note changes
+documentation only and does not change runtime behavior, test results or the
+accepted File-menu checks.
+
+The user then supplied `20260930-1141-49.7011675.mp4` and confirmed that keyboard
+Tab navigation works and Esc closes File after tabbing. This is user-reported
+acceptance of that sequence; separate Shift+Tab, footer reachability,
+default-page restoration and recording theme/scale were not stated. Opening
+motion in light/dark is the next bounded live review. Remaining scrolling,
+keyboard/DPI gates and the deferred 200% layout observations retain their
+scope. This documentation-only update passed content/link review and
+`git diff --check`; no builds/tests were rerun or Showcase launched.
+
+The user subsequently confirmed the requested repeated File open/Esc/quick-
+reopen motion check passed in both themes. This closes the bounded normal
+opening-motion review. The [remaining live review](../13-CRYSTAL-PORTABILITY-AND-ORB-PLAN.md#remaining-slice-6-live-review)
+lists the other scrolling modes and remaining keyboard details, separately
+from reduced-motion/open-menu-scaling/mixed-monitor gaps. The two 200% layout
+observations remain deferred. This documentation-only checkpoint passed
+content/link review and `git diff --check`; no builds/tests were rerun or
+Showcase launched.
+
+The user confirmed both remaining short checks passed: thumb/wheel/track
+scrolling keeps File open with its footer visible, and reverse keyboard
+traversal retains visible focus, reaches Options/Exit and cycles inside File.
+This completes the bounded slice 6 QAT/message-bar/application-menu live review.
+Slice 7 utility chrome and scrollbar promotion is next. Reduced motion,
+open-menu scaling/mixed-monitor transitions and the two deferred 200% layout
+observations remain open; no blanket final acceptance or passing broader
+runtime gate is inferred. This documentation-only checkpoint passed content/
+link review and `git diff --check`; no builds/tests were rerun or Showcase
+launched by the agent.
+
+### 3.204 Shared Crystal utility buttons and scrollbars — 2026-09-30
+
+Slice 7 starts from a clean `codex/crystal-theme` checkout at `07bc890`. Shared
+utility templates now own the accepted non-interactive rims for minimize, modal
+close, QAT overflow, ribbon/tab scroll arrows and merged-caption buttons. The
+rim is a sibling of Chrome and binds its bounds/corners without changing content
+padding. Hover/checked rims use the control hover border; pressed paint wins.
+Crystal's idle/hover arrow surfaces remain swapped as in the former helper;
+Office keeps its original surfaces and zero active rim opacity. Default tab
+arrow paint is now a shared style setter so explicit local button backgrounds
+retain WPF precedence. Scoped source brushes update directly through a small
+internal `UtilityChrome` material selector; no public API was added.
+
+Crystal tokens opt native ScrollViewer scrollbars into the existing shared
+vertical/horizontal templates, including Options and both customization pages.
+Thickness is 14 DIPs, corners are 4 DIPs, and the thumb retains its one-DIP rim
+and face plus 6/8/11-percent wash (15/20/28 alpha steps). Native tracks, routed
+line/page commands, thumb dragging, focus and RTL remain in WPF. The designer-safe
+keyed customization scrollbar adapter is retained. An attempted cross-file
+BasedOn simplification failed the existing scope test and was reverted.
+
+The consumer regression exposed a Freezable resource-scope trap: nested brushes
+in a shared resource drawing could retain the first window's surface/wash, even
+with a dialog-local token override; unshared XAML drawings also did not provide
+reliable scope resolution. `ScrollBarMaterialConverter` composes only marked
+Crystal tokens from brushes resolved on the realized Pill. Office and explicit
+host thumb backgrounds pass through unchanged. Live resource updates, manually
+merged light/dark dictionaries, a simultaneous Options window with a different
+wash, local styles/paint/corners, both axes and native line/page routing pass in
+the RibbonKit-only consumer. Its built-in customization list/tree and app-owned
+Options content bars use the same template/material without Showcase references.
+
+After that proof, `CrystalUtilityChrome`, `CrystalScrollBars` and
+`CrystalCustomization` and their callers were removed. Generic paint and geometry
+are now library-owned. The existing main-window raw tint and dialog/preview
+readable-accent wash remain host policy through `ScrollBar.WashAccent`;
+`CrystalPalette` avoids tinting the composite thumb twice and retains neutral
+glyph paint. Contextual/tint policy remains slice 8, capture remains slice 9,
+and the separate preview window/launch path remains until slice 10.
+
+Final verification: the Release solution build passed with zero warnings/errors
+for both runtime targets, all 418 eligible runtime tests passed using
+`FullyQualifiedName!~Writer&FullyQualifiedName!~Every_ribbon_button_family_consumes_the_shared_hover_glass`,
+and the single STA/Application RibbonKit-only consumer passed. All 105 visual
+scenes passed; the existing 99 approvals/tolerances are unchanged. Six new
+light/dark utility/scrollbar scenes at synthetic 100/200% and RTL were inspected
+before adding approvals. Image inspection first caught scrollbar samples hidden
+behind a modal body and intersecting standalone arrow corners; those fixture
+errors were corrected before approval. Synthetic snapshots are not live pointer,
+focus, monitor-transition or target-machine acceptance.
+
+The initial solution build incorrectly used one OutputPath for both runtime
+frameworks and collided net8/net9 assemblies. The corrected isolated output is
+`bin/CrystalSlice7/Release/<framework>/` per project. The user launch build is
+`samples/RibbonKit.Showcase/bin/CrystalSlice7/Release/net8.0-windows/RibbonKit.Showcase.exe`;
+the existing MenuScrollClickCheck output remains untouched. Documentation/link
+review and `git diff --check` passed. No Writer code/tests, public API baseline,
+manual Showcase launch, commit, push or publication changed.
+
+User light/dark review remains pending for utility hover/press/checked paint,
+scrollbar arrows/track/thumb/wheel, Options/customization focus and RTL, merged
+caption commands, and real DPI return. Reduced motion, open-menu scaling and
+mixed-monitor transitions remain broader gaps. The earlier Office RTL checkbox
+failure at the user's 200% setup passed in this automated run, but no fix or cause
+was established; it and the distinct 200% gallery-layout report remain deferred.
+The accepted slice 6 menu sizing, footer, capture-measurement and click-routing
+contracts and bounded live reviews remain in force.
+
+### 3.205 Customization scrollbar insets and slice 7 live review — 2026-09-30
+
+The user accepted slice 7 review checks 1 and 2: utility/arrows and modal/merged
+caption buttons. Check 3 paused at a screenshot-reported spacing mismatch.
+Crystal's tree scrollbar had the desired small inset while list scrollbars were
+flush; Office trees had excessive clearance relative to lists.
+
+The shared customization frame previously combined the FrameInset token with
+an extra literal TreeView Padding of 2. A style default replaces it with zero,
+also neutralizing WPF's native 1-DIP TreeView padding. List padding is unchanged.
+FrameInset supplies 2 DIPs in Crystal light/dark and the existing 1 DIP in every
+Office variant. Crystal tree
+clearance and Office list clearance are retained; the other controls match them.
+The existing template binding still adds local or host-style padding, and scoped
+FrameInset overrides remain dynamic. No runtime or public API was added.
+
+The RibbonKit-only consumer now measures realized viewport and visible native
+scrollbar bounds for both page types, all Office variants, Crystal light/dark,
+manually scoped palettes and both directions. It also checks local padding plus
+a scoped inset, host-style padding and restoration. Native scrollbar size
+rounding at fractional DPI is allowed within half a device pixel; viewport
+clearance stays exact. Final review removed redundant literal list padding and
+neutralized native tree padding at style precedence, retaining host overrides.
+
+The isolated Release solution build passed with zero warnings/errors, the
+RibbonKit-only consumer passed, all 418 eligible runtime tests passed with the
+same Writer/hover-method exclusions, and all 105 visual scenes passed against
+unchanged approvals/tolerances. The solution and consumer checks use
+`bin/CrystalSlice7Spacing/Release/<framework>/`; the new user executable is
+`samples/RibbonKit.Showcase/bin/CrystalSlice7Spacing/Release/net8.0-windows/RibbonKit.Showcase.exe`.
+The prior CrystalSlice7 and MenuScrollClickCheck outputs are preserved. The
+initial geometry assertion needed corrections for native device-pixel rounding
+and RTL ancestor coordinates; neither required another product change.
+One consumer run stopped before customization at `NavigationScroll: LineDown
+closed File`. A fresh-process rerun passed, including the final geometry and
+host-style checks. Menu routing was unchanged; that one-off failure's cause is
+unconfirmed and no menu fix is claimed.
+Documentation links and `git diff --check` passed. No Writer work, Showcase
+launch, commit, push or publication occurred.
+
+Check 3 live scrolling, focus, RTL and real DPI return remains pending. The
+separate Office RTL checkbox failure and 200% gallery-layout observation remain
+deferred with unconfirmed causes. Checks 1–2 need not be repeated for this fix.
+
+### 3.206 Customization scrollbar pixel gaps — 2026-10-01
+
+The user's follow-up screenshot found unequal top/bottom scrollbar gaps in every
+theme and excessive Crystal list-side clearance relative to the tree. The earlier
+half-device-pixel geometry allowance had not established equal painted gaps.
+The user accepted the latest scrollbar arrow/track/wheel/thumb, focus and RTL
+check (follow-up number 2); spacing and 125% → 200% → 125% return will be repeated.
+Original slice 7 utility/modal checks 1–2 remain accepted.
+
+An offscreen RibbonKit-only probe reproduced fractional frame bounds, independently
+rounded scrollbar chrome and column-dependent painted side gaps. Rounding the
+page alone still left an odd inset pixel: WPF Border.Padding can subtract a
+rounded combined width/height differently from an individual edge. The shared
+frame now uses the existing FrameInset token as a transparent BorderThickness,
+which rounds each edge independently. Both customization page styles default
+UseLayoutRounding to true, while local values and host styles keep WPF precedence.
+At 125%, Crystal's outer-edge gap is three pixels including its frame border;
+Office's is two. Top, bottom and scrollbar-side gaps match between both controls.
+The configured Crystal 2-DIP and Office 1-DIP inset tokens are unchanged. Native
+presenters, scrollbars and commands remain; no runtime or public API was added.
+
+The new RibbonKit-only regression checks actual scrollbar chrome bounds in both
+customization pages for 96 theme/light-dark/scale/direction combinations at
+100/125/150/200%, plus native scrolling. It refreshes DPI on the fully realized
+visual tree and asserts native part DPI rather than testing only raster scale.
+Default painted gaps are checked exactly, with no fractional-pixel allowance.
+The existing local-padding/scoped-inset and host-style fixtures use a four-DIP
+padding to distinguish host padding from the independently rounded inset border.
+
+Final validation: Release solution compilation passed with zero warnings/errors
+for both runtime targets, the RibbonKit-only consumer passed, all 418 eligible
+runtime tests passed with the existing Writer/hover-method exclusions, and all
+105 visual scenes passed against unchanged approvals/tolerances. Crystal
+light/dark and Office 2024 renders at 125/200%, including RTL, were inspected;
+before/after probe renders also confirmed the pixel-gap correction. The first
+consumer run passed the new 96-variant gap matrix, then failed an old combined
+inset expectation for host padding. The fixture/calculation was corrected to
+round border, host padding and inset independently; no default-gap tolerance
+was added. The full consumer rerun passed. Documentation/link review and
+`git diff --check` passed. No manual Showcase launch, commit, push or publication
+occurred. User spacing and real DPI-return acceptance remain pending.
+The output is isolated under `bin/CrystalSlice7Pixels/Release/<framework>/`;
+earlier CrystalSlice7, CrystalSlice7Spacing and MenuScrollClickCheck builds are
+preserved. Writer and the deferred Office RTL checkbox/200% gallery issues remain
+untouched. Broader reduced-motion, open-menu scaling and mixed-monitor review
+remain open.
+
+### 3.207 Slice 7 bounded live review complete — 2026-10-01
+
+The user confirmed follow-up checks 1 (corrected customization scrollbar spacing)
+and 3 (125% → 200% → 125% return) passed for both reviewed themes using the
+CrystalSlice7Pixels build. Check 2 (native scrollbar arrow/track/wheel/thumb,
+focus and RTL) was accepted earlier. Original utility/arrows and modal/merged
+caption checks 1–2 also remain accepted. This completes the bounded slice 7 live
+review, alongside its recorded Release, runtime, consumer and visual evidence.
+
+This is a documentation-only acceptance update. Content/link review and
+`git diff --check` passed; no build or test was repeated. Existing edits, test
+coverage, approvals and build outputs are preserved. No Showcase launch,
+commit, push or publication occurred.
+
+The prior Office RTL checkbox failure at 200% and the distinct 200% gallery-layout
+report remain deferred, with unconfirmed causes. Reduced motion, scaling while
+an application menu stays open and mixed-monitor transitions remain broader
+gates. Slices 8–10 and Writer RKWF-026 remain deferred to their own scopes;
+this acceptance does not claim blanket Crystal completion.
+
+### 3.208 Shared Crystal contextual material and scoped palettes — 2026-10-01
+
+Slice 8 promotes the accepted contextual glass into the ordinary shared RibbonTab
+template. An internal ContextualMaterial selector/converter derives selected and
+hover surfaces, rims, readable text and reflective marker from the tab's solid
+contextual color. Dynamic token inputs follow local palette replacement and the
+scoped accent fallback. Derived paint does not write tab resources or public
+ContextualSelectionBrush values. Explicit foreground/marker values and unmarked
+scoped paint retain precedence. Gradient/custom brushes retain the ordinary
+contextual renderer; qualified color dependency-property paths avoid missing-Color
+binding errors. Matching keys exist in all twelve palettes, with Office opt-out
+defaults and Crystal's accepted 0.85 unselected opacity.
+
+The additive public API is ThemeManager.CreatePalette(RibbonTheme theme,
+Color? accent = null, bool dark = false), with XML documentation and an Unshipped
+baseline entry; the Shipped baseline is unchanged. Each call creates a fresh
+scoped dictionary without changing global theme/preferences or raising Changed.
+Office palettes reuse the existing accent derivation; SetAccent remains unchanged.
+Crystal uses the promoted hue rotation/readability policy, preserving alpha,
+glass highlight geometry, neutral text/glyphs, semantic message colors and the
+6/8/11-percent composed scrollbar washes. Replacing/removing the owner's dictionary
+updates/clears that scope without accumulating hue rounding or recoloring another
+window. The generic name and Office support follow the user's naming correction.
+
+CrystalContextualTab and its main, preview and MDI usages were removed after the
+library-only consumer passed. Showcase's CrystalPalette delegates reusable control
+tint to the new factory; only application document paint remains there. The main
+window's raw scrollbar-wash choice remains an explicit token override. Capture,
+popup/menu blur and document effects remain host-owned for slice 9. No broad
+coordinator was added; the separate preview and launch path remain for slice 10.
+
+Final evidence: the isolated Release solution build passed for both runtime targets
+with zero warnings/errors; all 418 eligible runtime tests passed with the existing
+Writer/deferred-hover exclusions; the single STA RibbonKit-only consumer passed.
+Its existing 96-variant customization gap coverage is preserved. New consumer
+checks cover mutable contextual colors, marker/foreground and scoped brush
+overrides, gradient fallback without binding errors, live accent fallback, RTL,
+simultaneous light/dark windows, replacement/removal isolation, no global Changed
+event and accent parity for all ten Office light/dark combinations.
+
+All 113 visual scenes pass. The existing 105 approvals and tolerances are unchanged;
+eight new light/dark contextual 100/200/RTL and purple-tint scenes were captured and
+inspected before adding approvals. Their fixture stays in an offscreen test window
+through rendering, updates DPI on the actual visual root and asserts a visible
+reflective marker. Explicit minimum widths keep the diagnostic labels readable;
+this changes the fixture only. Earlier disconnected captures omitted the marker
+and were not approved. Four initial runtime failures were obsolete helper-storage,
+palette-layer or literal-XAML assertions; they were updated to check the shared
+replacement and the full eligible rerun passed.
+
+Logs are slice8-consumer-final.trx, slice8-runtime-complete.trx and
+slice8-visual-final.trx under their test projects' TestResults directories. Build
+outputs are isolated under bin/CrystalSlice8/Release/<framework>/; previous user
+builds are preserved. Final content/link/diff review and git diff --check passed.
+No Writer code/tests, manual Showcase launch, commit, push or publication occurred.
+Live acceptance remains in the active plan. The deferred Office RTL checkbox/200%
+gallery reports, broader motion/open-menu scaling/mixed-monitor gates and Writer
+RKWF-026 retain their separate scopes and unconfirmed causes.
+
+### 3.209 Popup border and shadow DPI diagnostics — 2026-10-01
+
+An opt-in Showcase-only `--popup-dpi-trace` observer samples dropdown and inherited
+split-button popup native DPI/HWND bounds, painted border bounds, pixel shadow
+headroom, rounding/clip flags and shadow parameters at opening, after layout and
+500 ms later. It logs window DPI changes and closing too. Normal startup does not
+enable it; no runtime/public API, template, paint, placement or dismissal changed.
+The isolated `bin/PopupDpiTrace/Release/net8.0-windows/` build has a click-to-run
+`Start Popup DPI Trace.cmd` launcher and writes its log beside the executable.
+This is temporary diagnosis, not a rendering fix.
+
+The Release Showcase build passed with zero warnings/errors. All 19 focused popup
+motion, dismissal and new geometry/logging checks passed. The new two probes use
+ordinary shared controls with Office 2024/Crystal tokens and repeated synthetic
+owner-DPI changes; native popup DPI remains the actual monitor's 125% in this
+process. Measured bottom shadow headroom is 10 pixels as expected for 8 DIPs.
+They did not reproduce real Display Settings timing or establish the cause of the
+intermittent bottom-border/shadow report. Content/commands were reported intact;
+rounding remains unconfirmed. No snapshot approvals changed, full suite was not
+rerun and the agent did not launch Showcase. Current acceptance/report status is
+maintained only in the active plan.
+
+### 3.210 Popup margins follow the DPI pixel grid — 2026-10-01
+
+The user's 200% → 150% → 125% native trace shows correct HWND/paint DPI and
+16/12/10-pixel bottom shadow headroom. At 125%, the popup border acquires a
+full-face layout clip (170.4 × 192 DIPs); the 200%/150% openings have no clip.
+This identifies paint clipping despite sufficient native window space. WPF rounds
+margins for measure/arrange while its layout-clip calculation uses stored margins.
+The 2-DIP top margin lands between pixels at 125%.
+
+An internal PopupBorder now coerces each outer margin edge to the actual visual
+DPI grid when UseLayoutRounding is enabled, and recoerces after DPI/rounding
+changes. Both shared dropdown and split-button PART_MenuHost templates use it.
+Requested local values remain intact; opting out restores them. The explicit
+implicit-Border style lookup preserves consumer styles. Native layout clipping,
+placement, effects, content presenters, commands and dismissal remain WPF-owned;
+there is no public API addition or broad popup coordinator.
+
+Five runtime checks cover repeated DPI changes, requested values/rounding opt-out,
+genuine clipping, shared fractional layout and rendered shadow pixels, plus
+reopened native headroom after synthetic owner-DPI changes. Both rendered 125%
+fixture PNGs were inspected. The RibbonKit-only consumer adds 16 dropdown/split
+openings across Office 2024/Crystal, light/dark and LTR/RTL, including scoped brush
+and implicit style overrides. These checks do not reproduce native Display
+Settings timing; the exact reported sequence remains a live recheck in the plan.
+
+The isolated Release solution build passed with zero warnings/errors. All 423
+eligible runtime tests passed with the existing Writer/deferred-hover filter;
+the complete RibbonKit-only consumer passed in 112 seconds; all 113 visual scenes
+passed without changing approvals or tolerances. The consumer's bounded STA
+deadline increased from 90 to 180 seconds after a fresh run exceeded 90 seconds;
+its new popup checks took about one second and existing coverage was retained.
+The first interrupted run included the user's computer sleep and is not counted
+as product evidence. Temporary progress-file writes were removed before the pass.
+
+Logs are popup-dpi-edge-runtime.trx, popup-dpi-edge-consumer-final.trx and
+popup-dpi-edge-visual.trx under the respective test projects' TestResults folders.
+Outputs use bin/PopupDpiEdgeFix/Release/<framework>/, preserving previous builds.
+The Showcase output includes Start Popup DPI Edge Check.cmd and retains the
+opt-in observer for the pending live recheck. No Writer code/tests, manual
+Showcase launch, commit, push or publication occurred. Existing broader/deferred
+acceptance gaps retain their scope.
+
+### 3.211 Vertical split hover width and diagnostic cleanup — 2026-10-01
+
+Vertical Paste's primary half reserved a transparent 1-DIP border in flat Office
+themes while the arrow half reserved none. Six rendered light/dark checks for
+Office 2013/2019/2024 reproduced a 96-pixel primary wash versus a 98-pixel arrow
+wash at 125%. Their existing SplitVerticalPrimaryBorderThickness defaults now
+match the flat themes' zero-width highlight border. Office 2007/2010 and Crystal
+retain their existing rim metrics; scoped metric overrides remain effective.
+Before/after fixture PNGs were inspected. No new token or public API was added.
+
+The RibbonKit-only consumer now covers 32 popup openings across four themes,
+light/dark and LTR/RTL, equal vertical-half widths/side borders and scoped metric
+replacement/removal. The temporary Showcase DPI observer/startup switch and its
+logging-only test assertions were removed; native headroom, layout clipping,
+requested-margin and rendered-shadow checks remain.
+
+The final isolated Release solution build passed with zero warnings/errors;
+all 429 eligible runtime tests passed with the existing exclusions; the full
+consumer passed on a fresh process; all 113 visual scenes passed. Approvals and
+tolerances are unchanged. An initial consumer run failed an existing customization
+focus assertion; the unchanged fresh-process retry passed and its cause remains
+unconfirmed. No focus behavior or assertion was changed. Two old Office border
+expectations were updated for the corrected default before the full runtime pass.
+
+Outputs are bin/PopupDpiHoverFix/Release/<framework>/; Start Hover Review.cmd starts
+the normal Showcase executable. Evidence logs are popup-hover-runtime-complete.trx,
+popup-hover-consumer-retry.trx and popup-hover-visual.trx under the test projects'
+TestResults folders. No Writer changes, app launch, commit, push or publication
+occurred. Live results and remaining gates stay in the active plan.
+
+### 3.212 Optional captured backdrops and scoped glass overlays — 2026-10-01
+
+Slice 9's bounded audit separates reusable capture/paint from host content,
+registration policy and native window integration. The additive public
+`CapturedBackdrop(Control control, FrameworkElement source)` registers one
+application menu, dropdown/split button or ribbon group. `Apply`, `Refresh` and
+`Dispose` provide explicit opt-in and cleanup. Tokens alone cannot supply a host
+capture visual or own event subscriptions; a per-control disposable registration
+provides that seam without importing the main-window coordinator. XML comments
+and Unshipped entries document the addition; the Shipped baseline is unchanged.
+
+The shared engines retain the 6-DIP Gaussian blur, 24-DIP sampling margin,
+stationary application-menu anchor, opacity-based foreground exclusion, Canvas
+measurement exclusion and post-blur clip. The clip reuses shared rounded geometry,
+including changed/nonuniform corner overrides. Popup capture shares the snapshot
+primitive, retains opaque fallback outside the source, and uses the existing scoped
+application-menu frame-band token for the accepted tint. Local backgrounds,
+bindings and host SetCurrentValue overrides keep precedence. Closing/disable clears
+only the integration's own current paint, restoring template resource evaluation.
+Reopening, template replacement, scroll/resize and observed source/popup DPI changes
+refresh capture. Unload releases engines; reload reattaches while enabled. Disposal
+aborts queued work and removes rendering, theme, layout and source handlers.
+
+`ThemeManager.CreateGlassOverlay(FrameworkElement scope, bool dark = false)`
+provides the existing cross-theme brush treatment with the accepted opacity and
+accent-wash values. It clones effective resources without changing global theme or
+activating Acrylic. Owners remove the preceding overlay before regeneration after
+theme/accent/palette changes, merge the new dictionary and remove it on disable.
+Direct scoped/child overrides retain WPF precedence. The host owns capture source,
+content paint and explicit Refresh timing, dynamic-control registration/disposal,
+preferences and Windows backdrop activation. Core Crystal requires neither opt-in.
+
+Showcase's CrystalMenuBackdrop, CrystalApplicationMenuBackdrop and
+CrystalPopupBackdrop were retired after replacement checks. Main and separate
+preview callers use the shared registration and dispose on window close.
+AcrylicGlassPresentation retains only dictionary ownership; paint creation is now
+shared. CrystalMainWindowPresentation retains app palette scope and control
+discovery. Document effects/content and the preview window/launch path remain in
+the host; slice 10 and Writer RKWF-026 remain separate.
+
+Verification: the normal Release solution build passed for both runtime targets
+with zero warnings/errors. All 431 eligible runtime tests passed with the retained
+Writer/deferred-hover filter. The visual suite passed all 113 scenes with unchanged
+approvals/tolerances. The final Release RibbonKit-only consumer passed in 88 seconds
+without Showcase references/resources/helpers. It retains all prior checks and adds
+light/dark/RTL popup/menu paint, enable/disable, scoped palette replacement/removal,
+reopening, scroll/resize, nonmeasuring/input/focus exclusions, collapsed content,
+bindings/current-value overrides, unload/reload/disposal and twelve theme/dark glass
+variants. Runtime coverage additionally retains rendered blur/foreground/shadow
+checks and covers template replacement, opacity binding, corner changes, queued
+cancellation and synthetic root-DPI capture. DPI metadata is checked against the
+observed source DPI; these tests do not reproduce native Display Settings timing.
+
+Earlier consumer attempts intermittently closed File in existing viewport/menu
+assertions. A diagnostic run passed; the final run preserves the original baseline
+case order and appends the optional effects checks after it. Temporary tracing was
+removed and no existing assertion was relaxed. The final uninstrumented pass does
+not establish a cause or a product fix for those earlier closures. The filtered
+solution attempt passed runtime/visual projects but hit this consumer failure;
+the final consumer pass is a separate process, not an unfiltered full-suite pass.
+Evidence is slice9-release.trx in runtime/visual TestResults and
+slice9-consumer-final.trx in the consumer TestResults directory.
+
+The normal Debug Showcase build succeeded with zero errors and twelve designer-copy
+warnings: Visual Studio (PID 27316) holds the Debug RibbonKit.DesignTools.dll open.
+The runtime and Showcase outputs were updated in their default folders; running
+apps were preserved. Local review uses
+samples/RibbonKit.Showcase/bin/Debug/net8.0-windows/RibbonKit.Showcase.exe.
+No manual Showcase launch, Writer code/test edit, commit, push or publication
+occurred. The active plan owns the pending slice 9 live review; broader motion,
+open-menu scaling/mixed-monitor and the two deferred 200% observations retain their
+separate scopes. Content/link/final diff review and git diff --check passed.
+
+### 3.213 Main Showcase consolidation — 2026-10-01
+
+Crystal portability slice 10 moves the useful material-study demonstrations into
+the existing main Showcase. No runtime code, public API, Writer code/tests or
+snapshot approvals/tolerances changed. The separate `CrystalPreviewWindow` XAML,
+code-behind, View launch button and `--crystal` startup branch are retired.
+The preview-only `CrystalBackstagePresentation` and `CrystalScreenTipPalette`
+helpers are also removed; their resource-scope and binding regression checks now
+use direct shared resources and ordinary WPF bindings.
+
+| Former preview demonstration | Main Showcase surface |
+| --- | --- |
+| Crystal / Office 2024 comparison | Samples: Compare 2024; View retains all six themes, dark mode and accent gallery. |
+| Tab arrows, body arrows and QAT overflow | Samples: Try layouts adds/removes temporary navigation tabs, saves/restores each Home group's CanResize value, and saves/restores QAT items, width and placement. |
+| Checkbox, mixed state, radio grouping and disabled gallery | Samples: Options, Spacing and States; explicit source bindings survive group reparenting. Home keeps its existing disabled button/split/input-group demonstration. |
+| Document title, scrolling content, edge fade and QAT underlay | Samples: Document title and Document effects operate on the existing editable RichTextBox. The title is explicitly bound into document and Backstage content. Only the added scrolling paragraphs are removed, preserving unrelated document edits. |
+| Context tint change | Samples: Change context tint selects Picture Format and changes its ordinary ContextualColor; existing Picture and merged Chart Tools retain their shared material. |
+| Styles, inputs, messages and customization | Existing Home and File flows; Samples adds gallery enable/disable and message add/dismiss controls. The same three-page Options dialog is reused by migrated tests. |
+| File menu, Backstage sidebar/floating designs, tint and native effects | Existing View/File controls and scoped palette integration; nested host dropdowns now receive CapturedBackdrop registrations through logical-child discovery. |
+
+`MainWindow.Samples.cs` contains the host demonstrations. Temporary QAT changes
+do not write customization while active; restoring overflow persists the real
+QAT. Opening Options first removes temporary tabs/overflow and restores Home
+resizing. Unidentified navigation demo tabs and commands are omitted by the
+existing customization serializer. No persistence format or library coordinator
+was added. Document fade and underlay start disabled, preserving the ordinary
+document layout until explicitly selected in Crystal. `CrystalDocumentEdgeFade`
+now locates the RichTextBox's native ScrollViewer, tracks template replacement,
+retains the document card's original margins and keeps the scrollbar below the
+overlapping QAT. Theme changes, QAT placement and notices restore or reapply the
+requested host effect. These are application document effects, not library
+control paint.
+
+The six former preview-window regression tests now construct the actual main
+window offscreen, skip its user-preference load, suppress persistence, set a
+known factory ribbon and reset application resources on cleanup. They cover
+customization frames/bindings, editable document scrolling and retained edits,
+fade/underlay restoration, direct/nested dropdown and collapsed-group captures,
+messages, tab/body arrows, QAT overflow and reparented option groups. Main-window
+checks passed before the preview files were removed. Tests reacquire the File
+frame after main-window theme switching because its File-surface selection can
+detach/retemplate that control; a stale part is not current paint evidence.
+
+Final automation used normal output folders: Release Showcase/test compilation
+passed, followed by all **431 eligible runtime tests** with the existing
+`FullyQualifiedName!~Writer&FullyQualifiedName!~Every_ribbon_button_family_consumes_the_shared_hover_glass`
+filter (`slice10-release.trx`). The separate RibbonKit-only consumer passed its
+single aggregate test in 1m49s (`slice10-consumer.trx`) without Showcase resources
+or helpers. The normal Debug Showcase build passed with **0 warnings / 0 errors**
+and updated `samples/RibbonKit.Showcase/bin/Debug/net8.0-windows/RibbonKit.Showcase.exe`.
+Visual snapshots were not rerun for this consumer-only consolidation; approvals
+and tolerances are unchanged. No manual app launch, commit, push or publication
+occurred. The active plan owns the pending main-window live review; broader
+motion, open-menu scaling, mixed-monitor and deferred 200% observations remain
+separate gates. Changed content/links and final diff were reviewed; git diff
+--check passed.
+
+### 3.214 Theme gallery clipping and deferred test corrections — 2026-10-01
+
+The user authorized investigating the two deferred 200% observations and then
+the excluded Office 2010 hover-glass contract. They clarified that the gallery
+report concerned only the View-tab Theme gallery: its selected tile was clipped
+at the edges. Other galleries did not exhibit that difference.
+
+The actual six Showcase Theme tiles used 42-DIP-high content. Shared item padding,
+border and margins made each tile 52 DIP tall, exceeding the strip viewport of
+50.4 DIP at simulated 125% and 50 DIP at simulated 200%. The text-only Home Styles
+tile measured 50 DIP and fit both viewports. The fix reduces only the six host
+content panels to 40 DIP; shared gallery templates, tokens and selection paint
+are unchanged. `ThemeGalleryLayoutTests` loads the actual Showcase markup,
+detaches the Theme and Styles galleries into an offscreen fixture, suppresses
+appearance persistence and disables animation for settled geometry. It checks
+all six theme selections after popup open/close: tile and selected-border bounds,
+icon/text spacing, retained selection and the Styles comparison. Effective tile
+DPI is asserted after returning from the popup. Corrected Theme tiles measure
+49.6 DIP at 125% and 50 DIP at 200%, fitting their respective viewports. Before
+and after PNGs in `TestResults/theme-gallery-diagnostics` were inspected; no
+snapshot approval or tolerance changed.
+
+`Detached_rtl_lab_applies_crystal_and_restores_office_options` previously measured
+hidden, zero-sized checkbox/radio content when a constrained window collapsed
+the Inputs group. At a requested width of 720 DIP, the original assertion failed
+at both simulated 125% and 200%: indicator and header screen coordinates were
+identical and their widths were zero. The test now opens the group's native
+flyout when collapsed, requires nonzero visible parts, and preserves the physical
+LTR/RTL position assertion. Its matrix uses requested widths of 1800/720 DIP and
+scales of 125%/200%, retaining Office, Crystal light/dark, File and customization
+coverage. The simulated scale is also applied to a flyout's separate visual root
+and asserted on the option. No runtime option-placement change was required.
+
+The unchanged Office 2010 consumer-count test reproduced its dropdown failure:
+three references to `Control.HoverBackground` rather than the required five.
+The two split halves correctly use `Control.SplitActiveHover`. That token has
+the same Office 2010 gradient, including the bottom inner glow. The test now
+counts both semantic hover consumers without lowering any family threshold.
+Additional checks guard the split token's bottom glow and compare resolved
+ordinary/split gradients in Office 2010 light/dark using only library resources.
+The former hover exclusion is removed from the current verification command;
+historical filtered results remain unchanged.
+
+Release test compilation and the 33-case focused run passed
+(`deferred-issues-focused.trx`); the final strengthened RTL class passed all five
+cases (`rtl-root-dpi-after.trx`). The final Release runtime run passed **443 tests,
+0 failed / 0 skipped** with only `FullyQualifiedName!~Writer`
+(`deferred-issues-runtime-final.trx`). This includes all four hover-contract
+family cases. The normal Debug Showcase build passed with **0 warnings / 0 errors**
+and updated its default review executable. Visual snapshots, the separate
+portability consumer and the full solution suite were not rerun for this host
+content/test-only change. No runtime/public API or Writer code/tests changed.
+
+Synthetic visual scaling uses `VisualTreeHelper.SetRootDpi` and constrained
+fixture widths; Windows display settings were not changed. Popup HWND DPI,
+native Display Settings timing and mixed-monitor transitions are not simulated
+by those visual-root checks. Native 200% Theme gallery visual acceptance remains
+with the user in the active plan, as do the separate broader motion/open-menu
+gates. No manual Showcase launch, commit, push or publication occurred.
+
+### 3.215 Gallery selected-row retention after tab reload — 2026-10-01
+
+The user's recording shows the View Theme gallery displaying the selected Office
+2024 tile through several tab visits, then showing its first Crystal tile after
+Home → Ribbon Lab → View. A RibbonKit-only reproduction establishes that the
+selection survives while the native strip scroll offset resets to zero when the
+tab content reloads. Four Office 2024/Crystal light/dark cases failed before the
+fix at simulated 125%/200%; the selected fifth tile lay roughly 200 DIP below
+the 50-DIP viewport although `SelectedItem` still referenced that tile.
+
+`InRibbonGallery` now queues its existing generation-guarded viewport refresh
+when a closed gallery with a selection loads, and when its template is rebuilt
+while loaded. The settled strip reveals the selected row without animation.
+The restoration target adds the current vertical offset to the tile's viewport
+position, keeping the absolute row calculation correct. No selection mutation,
+new public API, Showcase patch or theme/template paint change was introduced.
+The separate permanent strip/popup scrollers remain intact, and opening the
+popup still resets its own page to zero.
+
+`InRibbonGallerySelectionTests` exercises the recorded pattern with ordinary
+RibbonKit tabs and two galleries, then replaces the template without unloading
+the gallery. It checks the same selected item, full selected-border visibility
+and no extra selection events. Manual browsing away from the selected row
+survives unrelated resize/layout while the gallery stays loaded. The focused
+run passed 14 cases: four new retention cases, two Theme tile clipping cases,
+and eight existing shared gallery/DPI reproductions from
+`WriterConsumerFrictionTests` (`gallery-row-focused.trx`). No Writer application
+code or tests were edited.
+
+`GallerySelectionPortabilityChecks` runs at the end of the existing separate
+consumer aggregate. It uses only RibbonKit resources, `ItemsSource`, a host data
+template and a two-way bound selected index. All six themes, light/dark, LTR/RTL
+and simulated 125%/200% check restored selected bounds after tab reload and popup
+open/close, retained binding/source value and the popup's independent viewport.
+
+The normal Release solution build passed with **0 warnings / 0 errors** for both
+runtime targets. The serialized solution test run used only the retained
+`FullyQualifiedName!~Writer` exclusion: **447 runtime tests**, the visual snapshot
+aggregate with unchanged approvals/tolerances, and the expanded RibbonKit-only
+consumer aggregate all passed (`gallery-selection-release.trx` in each project's
+TestResults). The consumer completed in 1m25s. Writer tests were excluded, so this
+is a filtered solution pass rather than an unfiltered full-suite claim. The
+normal Debug Showcase build also passed with **0 warnings / 0 errors** and updated
+its default review executable.
+
+The supplied recording was inspected through extracted frames. No manual
+Showcase launch, commit, push or publication occurred. Live confirmation of its
+tab-switch sequence remains in the active plan; synthetic visual DPI coverage
+does not close native popup/monitor-transition or broader motion acceptance.
+
+### 3.217 Crystal pre-merge scope and resource cleanup — 2026-10-04
+
+The project-wide audit reproduced a QAT policy leak: an independent Crystal
+window palette inherited the global accented Office 2019 icon treatment because
+`Ribbon.UpdateQatButtonContext` read global theme flags. The shared Ribbon style
+now resolves `QatTitleBarColored` and `QatTabRowColored` metrics in its own resource
+scope. ThemeManager sets these alongside application accent-band overrides;
+every base palette supplies neutral defaults. Internal attached selectors refresh
+existing QAT items when effective scoped values change. No public C# API was added.
+The RibbonKit-only consumer covers independent Crystal light/dark scopes against
+global Office 2019, Office 2024 and Crystal, every QAT placement, nearer metric
+overrides, palette removal and accent-band toggling.
+
+`CrystalMainWindowPresentation` remains Showcase's host adapter for palette and
+optional `CapturedBackdrop` registration. Its previous tab-only discovery missed
+QAT dropdowns and additions to existing groups, and retained removed dropdowns.
+It now watches the tab, group, QAT and nested ItemsControl collections while enabled,
+reconciles registrations and disposes removed captures. Disabling or closing
+detaches collection handlers and disposes the remaining registrations. A focused
+test checks an actual QAT popup's captured brush, subsequent additions/removals,
+collection resets, disable/re-enable and close. Capture implementation remains in
+the existing optional library contract; document fade/underlay paint is host-owned.
+
+`Controls.ActionTemplates.xaml` holds the shared message/Crystal Backstage action
+template, and `Controls.Actions.xaml` holds its styles and interaction states.
+Office palettes use its standard defaults; Crystal light
+and dark select its glass defaults with thin style references. Geometry, access-key
+recognition and disabled opacity use typed metrics. Idle paint uses ordinary
+setters so a derived host style retains its WPF precedence; it is not supplied by
+a material trigger. The existing message style and scoped template keys are kept,
+including direct Button values and live brush lookup. Palette dictionaries merge
+the shared actions so manually merged palettes also expose the keyed resources.
+The dark palette merges them directly because tint construction can realize its
+styles before attaching the combined palette. The message template also merges
+the shared template dictionary in its own stable scope: replacing a palette's
+style must not replace the button template and discard local part values.
+The separate consumer retains light/dark and all-Office action coverage, adds
+disabled opacity checks and verifies replacement/removal of the existing scoped
+template key.
+
+The Crystal Sidebar/Floating layouts use `RibbonKit.Metrics.Backstage.*` for
+navigation, action and container geometry. Every base palette supplies the former
+values, preserving an independently selected Backstage design under an Office
+palette. The fixed `CRYSTAL` text is removed from the reusable floating template.
+Shared-resource tests check back-action paint and scoped corner, padding, floating
+margin and sidebar-width replacement/removal. Stale Office 2007 orb and Writer
+glyph-migration wording is corrected in the public/theme documentation.
+
+Normal Release and Debug solution builds passed with **0 warnings / 0 errors**
+for both runtime targets and refreshed the default Showcase/Writer review outputs.
+The final serialized, unfiltered Release solution run passed **466 runtime tests**,
+**482 Writer tests**, the visual aggregate covering **113 approved scenes**, and
+the RibbonKit-only consumer aggregate in **2m28s**: **950 tests, 0 failed / 0 skipped**.
+Each test project records `crystal-cleanup-release.trx` in its TestResults folder.
+The final consumer also passed independently in 2m42s
+(`crystal-cleanup-consumer.trx`). Visual approvals and tolerances are unchanged.
+All **338** shared brush/metric/effect references resolve across the twelve
+effective light/dark palettes; the 31 new metric defaults have matching types and
+values across all Office bases. The final diff/content/links were reviewed and
+`git diff --check` passed.
+
+The agent did not manually launch Showcase or Writer, commit, push or publish.
+The active plan owns bounded live review of the revised Backstage appearance and
+dynamic popup/QAT capture. Existing native DPI, motion, open-menu scaling and
+mixed-monitor gates retain their separate scope; automated proof does not close them.
+
+The follow-up Showcase review needed a visible disabled message action. Main
+Showcase now adds a third, initially closed `CONTENT BLOCKED` message through
+the existing Add message control. Its Enable Content action uses an unbound
+host-owned routed command, so native command routing disables only the action;
+the row and dismiss button stay enabled. Dismiss messages includes the new row.
+No shared control, template, token, Writer code or RibbonKit public API changed.
+The existing sample markup check now expects three main-window messages and
+two RTL-lab messages. The existing Crystal integration fixture opens all three,
+checks the disabled action's 0.4 opacity and enabled row/dismissal, then verifies
+Dismiss messages closes the new row. All seven focused existing tests passed.
+Normal Release and Debug Showcase builds passed with zero warnings/errors and
+updated the default review executable. The full suite and visual snapshots were
+not repeated for this host-only example; its live appearance remains in the plan.

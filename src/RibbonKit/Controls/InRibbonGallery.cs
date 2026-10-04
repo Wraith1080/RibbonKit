@@ -60,7 +60,9 @@ public class InRibbonGallery : RibbonGallery
     private const string ItemsPresenterPartName = "PART_ItemsPresenter";
     private const string LineUpPartName = "PART_LineUp";
     private const string LineDownPartName = "PART_LineDown";
-    private const string RibbonContentBackgroundResourceKey =
+    private const string PopupBackgroundResourceKey =
+        "RibbonKit.Brushes.InRibbonGallery.PopupBackground";
+    private const string LegacyPopupBackgroundResourceKey =
         "RibbonKit.Brushes.Ribbon.ContentBackground";
 
     /// <summary>Identifies the <see cref="IsDropDownOpen"/> dependency property.</summary>
@@ -125,6 +127,12 @@ public class InRibbonGallery : RibbonGallery
         SystemParameters.StaticPropertyChanged -= OnSystemParametersChanged;
         SystemParameters.StaticPropertyChanged += OnSystemParametersChanged;
         AttachDpiOwner();
+        if (!IsDropDownOpen && SelectedItem is not null)
+        {
+            // Tab switching or group re-homing can reset the strip's native offset
+            // while the selected item survives. Reveal it after the viewport settles.
+            QueueViewportRefresh();
+        }
     }
 
     private void OnGalleryUnloaded(object sender, RoutedEventArgs e)
@@ -213,6 +221,10 @@ public class InRibbonGallery : RibbonGallery
         if (IsDropDownOpen)
         {
             MoveGalleryContent(open: true);
+        }
+        else if (IsLoaded && SelectedItem is not null)
+        {
+            QueueViewportRefresh();
         }
     }
 
@@ -597,7 +609,7 @@ public class InRibbonGallery : RibbonGallery
         }
 
         scrollViewer.UpdateLayout();
-        double target = container
+        double target = scrollViewer.VerticalOffset + container
             .TransformToAncestor(scrollViewer)
             .Transform(default)
             .Y;
@@ -638,9 +650,40 @@ public class InRibbonGallery : RibbonGallery
 
         Brush background = SystemParameters.HighContrast
             ? SystemColors.WindowBrush
-            : TryFindResource(RibbonContentBackgroundResourceKey) as Brush
+            : FindScopedPopupBackground()
+                ?? TryFindResource(PopupBackgroundResourceKey) as Brush
                 ?? SystemColors.WindowBrush;
         _popupHost.SetCurrentValue(Border.BackgroundProperty, background);
+    }
+
+    private Brush? FindScopedPopupBackground()
+    {
+        // Preserve a host's local ribbon-content override while allowing the dedicated
+        // gallery token in a nearer scope to take precedence. Application theme tokens
+        // are the fallback after the gallery's own resource ancestry has been checked.
+        for (DependencyObject? current = this; current is not null;)
+        {
+            if (current is FrameworkElement element)
+            {
+                if (element.Resources.Contains(PopupBackgroundResourceKey)
+                    && element.Resources[PopupBackgroundResourceKey] is Brush popupBackground)
+                {
+                    return popupBackground;
+                }
+
+                if (element.Resources.Contains(LegacyPopupBackgroundResourceKey)
+                    && element.Resources[LegacyPopupBackgroundResourceKey] is Brush contentBackground)
+                {
+                    return contentBackground;
+                }
+            }
+
+            current = current is Visual or System.Windows.Media.Media3D.Visual3D
+                ? VisualTreeHelper.GetParent(current) ?? LogicalTreeHelper.GetParent(current)
+                : LogicalTreeHelper.GetParent(current);
+        }
+
+        return null;
     }
 
     /// <summary>

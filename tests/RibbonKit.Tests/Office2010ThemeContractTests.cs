@@ -37,6 +37,7 @@ public sealed class Office2010ThemeContractTests
 
     [Theory]
     [InlineData("RibbonKit.Brushes.Control.HoverBackground")]
+    [InlineData("RibbonKit.Brushes.Control.SplitActiveHover")]
     [InlineData("RibbonKit.Brushes.Control.CheckedBackground")]
     [InlineData("RibbonKit.Brushes.Control.CheckedHoverBackground")]
     public void Button_state_glass_finishes_with_a_bright_bottom_inner_glow(string key)
@@ -431,12 +432,40 @@ public sealed class Office2010ThemeContractTests
             .Attributes()
             .Count(attribute => attribute.Value.Contains(
                 "RibbonKit.Brushes.Control.HoverBackground",
-                StringComparison.Ordinal));
+                StringComparison.Ordinal)
+                // Each split half uses its own token so other themes can distinguish it.
+                // Office 2010 still paints the same glass, guarded by the parity test below.
+                || attribute.Value.Contains(
+                    "RibbonKit.Brushes.Control.SplitActiveHover",
+                    StringComparison.Ordinal));
 
         Assert.True(
             consumers >= minimumConsumers,
             $"{templateFile} exposes only {consumers} shared hover-glass consumers; expected at least {minimumConsumers}.");
     }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Split_button_active_hover_matches_ordinary_hover_glass(bool dark) => Sta.Run(() =>
+    {
+        var application = Sta.UseApplication();
+        try
+        {
+            ThemeManager.Apply(application, RibbonTheme.Office2010);
+            ThemeManager.SetDarkMode(application, dark);
+            var ordinary = Assert.IsType<LinearGradientBrush>(application.FindResource(
+                "RibbonKit.Brushes.Control.HoverBackground"));
+            var split = Assert.IsType<LinearGradientBrush>(application.FindResource(
+                "RibbonKit.Brushes.Control.SplitActiveHover"));
+            Assert.Equal(ordinary.StartPoint, split.StartPoint);
+            Assert.Equal(ordinary.EndPoint, split.EndPoint);
+            Assert.Equal(ordinary.Opacity, split.Opacity);
+            Assert.Equal(ordinary.GradientStops.Select(stop => (stop.Color, stop.Offset)),
+                split.GradientStops.Select(stop => (stop.Color, stop.Offset)));
+        }
+        finally { Sta.ResetApplication(); }
+    });
 
     private static XElement Resource(XDocument document, string key) =>
         Assert.Single(

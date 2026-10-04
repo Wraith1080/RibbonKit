@@ -41,6 +41,7 @@ public partial class WriterColorDialog : Window
         Window? owner = null)
     {
         InitializeComponent();
+        RibbonKit.Writer.Appearance.WriterDialogAppearance.Initialize(this);
         if (owner is not null)
             Owner = owner;
         if (SystemParameters.HighContrast)

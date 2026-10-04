@@ -3,7 +3,7 @@ using System.Windows.Media;
 
 namespace RibbonKit.Theming;
 
-/// <summary>The Office theme generations RibbonKit ships.</summary>
+/// <summary>The visual themes RibbonKit can apply to its shared control templates.</summary>
 public enum RibbonTheme
 {
     /// <summary>The modern Office look (light). Default theme.</summary>
@@ -26,19 +26,25 @@ public enum RibbonTheme
     /// Office 2007 ("Blue"): the glossiest generation — hard-crease glass gels on every hot
     /// state (gold on hover, saturated orange when pressed), a "valley" gradient on both the
     /// title bar and the ribbon body, a flat light-blue tab strip, dark-blue tab labels, and a
-    /// connected selected tab. The round Office orb is opt-in via
+    /// connected selected tab. The round Office orb is the theme default; override it via
     /// <see cref="RibbonKit.Controls.Ribbon"/>'s application-button shape; see
     /// docs/07-OFFICE-2007-THEME-PLAN.md.
     /// </summary>
     Office2007,
+
+    /// <summary>
+    /// Crystal: cool glass-inspired light and dark palettes for the shared templates. Host-owned
+    /// backdrop blur and document underlay are separate opt-in presentation effects.
+    /// </summary>
+    CrystalLight,
 }
 
 /// <summary>
 /// Applies a RibbonKit theme at runtime by swapping the active token dictionary in
 /// <see cref="Application.Resources"/>. The shared control templates reference tokens
 /// via <c>DynamicResource</c>, so replacing the token dictionary re-colors every
-/// control instantly — no template is duplicated per theme. Every generation supports
-/// its own dark/black token overlay through <see cref="SetDarkMode"/>.
+/// control instantly — no template is duplicated per theme. Use
+/// <see cref="SupportsDarkMode"/> to check whether a theme has a dark token overlay.
 /// </summary>
 /// <remarks>
 /// A token dictionary must be present for controls to render correctly. Either merge
@@ -49,7 +55,59 @@ public enum RibbonTheme
 /// </remarks>
 public static class ThemeManager
 {
+    /// <summary>Creates the optional glass paint overlay from a scope's effective theme and accent.</summary>
+    /// <param name="scope">The resource scope whose current brushes should be cloned.</param>
+    /// <param name="dark">Whether to use the quieter dark-theme hover washes.</param>
+    /// <returns>A fresh dictionary for the host to merge, replace and remove in that scope.</returns>
+    /// <remarks>
+    /// This changes no resources or native window backdrop. The host chooses whether to use it,
+    /// typically after Acrylic activation succeeds. Remove an earlier overlay before creating its
+    /// replacement after theme, accent or palette changes, to avoid compounding opacity.
+    /// Direct resources on the scope and resources on child controls keep WPF precedence.
+    /// </remarks>
+    public static ResourceDictionary CreateGlassOverlay(FrameworkElement scope, bool dark = false)
+    {
+        ArgumentNullException.ThrowIfNull(scope);
+        scope.VerifyAccess();
+        return GlassOverlayBuilder.Create(scope, dark);
+    }
+
+    /// <summary>Creates an independent theme palette for a window or control resource scope.</summary>
+    /// <param name="theme">The theme whose shared token palette is created.</param>
+    /// <param name="accent">An optional accent. Office uses its normal accent treatment;
+    /// Crystal tints the whole glass material while preserving readable text and notice colors.</param>
+    /// <param name="dark">Whether to include the theme's dark or black overlay.</param>
+    /// <returns>A fresh dictionary to merge into the owning resource scope.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">The theme value is not defined.</exception>
+    /// <remarks>
+    /// Creation does not change application resources, active theme, global preferences
+    /// or other palettes. Replace or remove this dictionary to update or clear a scoped
+    /// palette. Local values and nearer resource overrides retain WPF precedence.
+    /// Title-bar accent/backdrop preferences and captured host effects are not included.
+    /// </remarks>
+    public static ResourceDictionary CreatePalette(RibbonTheme theme, Color? accent = null, bool dark = false)
+    {
+        if (!Enum.IsDefined(theme)) throw new ArgumentOutOfRangeException(nameof(theme));
+        if (theme == RibbonTheme.CrystalLight)
+            return CrystalPaletteBuilder.Create(accent ?? CrystalPaletteBuilder.Blue, dark);
+
+        var palette = new ResourceDictionary();
+        palette.MergedDictionaries.Add(new ResourceDictionary { Source = TokenDictionaryUri(theme) });
+        if (dark && SupportsDarkMode(theme))
+            palette.MergedDictionaries.Add(new ResourceDictionary
+            { Source = new Uri($"/RibbonKit;component/Themes/Tokens.{theme}.Dark.xaml", UriKind.Relative) });
+        ApplyAccentOverrides(palette, theme, dark, accent);
+        return palette;
+    }
+
     private const string AccentKey = "RibbonKit.Brushes.Accent";
+    private const string InputFocusBorderKey = "RibbonKit.Brushes.Input.FocusBorder";
+    private const string OptionSelectedSurfaceKey = "RibbonKit.Brushes.Option.SelectedSurface";
+    private const string OptionSelectedBorderKey = "RibbonKit.Brushes.Option.SelectedBorder";
+    private const string OptionChromeFocusBorderKey = "RibbonKit.Brushes.Option.ChromeFocusBorder";
+    private const string OptionsNavigationSelectedBackgroundKey = "RibbonKit.Brushes.OptionsDialog.NavigationSelectedBackground";
+    private const string OptionsNavigationSelectedForegroundKey = "RibbonKit.Brushes.OptionsDialog.NavigationSelectedForeground";
+    private const string OptionsPrimaryFocusBorderKey = "RibbonKit.Brushes.OptionsDialog.PrimaryFocusBorder";
     private const string CheckedKey = "RibbonKit.Brushes.Control.CheckedBackground";
     private const string CheckedHoverKey = "RibbonKit.Brushes.Control.CheckedHoverBackground";
     private const string BackstageHoverKey = "RibbonKit.Brushes.Backstage.ItemHoverBackground";
@@ -85,6 +143,8 @@ public static class ThemeManager
     private const string TabHoverKey = "RibbonKit.Brushes.Tab.HoverBackground";
     private const string TabStripControlHoverKey = "RibbonKit.Brushes.TabStrip.ControlHoverBackground";
     private const string TabStripControlPressedKey = "RibbonKit.Brushes.TabStrip.ControlPressedBackground";
+    private const string QatTitleBarColoredKey = "RibbonKit.Metrics.QatTitleBarColored";
+    private const string QatTabRowColoredKey = "RibbonKit.Metrics.QatTabRowColored";
 
     // Hover/press washes for the small chrome buttons (minimize chevron, modal-tab close, merged
     // caption buttons, QAT overflow, scroll chevrons, caption buttons, the pressed File button)
@@ -101,7 +161,10 @@ public static class ThemeManager
     // theme's accent overrides before re-deriving for the new one.
     private static readonly string[] AccentOverrideKeys =
     {
-        AccentKey, CheckedKey, CheckedHoverKey, BackstageHoverKey, BackstageSelectedKey,
+        AccentKey, InputFocusBorderKey, OptionSelectedSurfaceKey, OptionSelectedBorderKey,
+        OptionChromeFocusBorderKey, OptionsNavigationSelectedBackgroundKey,
+        OptionsNavigationSelectedForegroundKey, OptionsPrimaryFocusBorderKey,
+        CheckedKey, CheckedHoverKey, BackstageHoverKey, BackstageSelectedKey,
         BackstageClassicNavKey, BackstageSelectedBorderKey,
         SelectedUnderlineKey, SelectedForegroundKey, AppButtonBackgroundKey, AppButtonHoverKey,
         AppButtonPressedKey, AppButtonBorderKey, BackstageSelectedGlassKey, DialogPrimaryBackgroundKey,
@@ -120,6 +183,16 @@ public static class ThemeManager
     private static bool _accentTitleBar;
     private static bool _titleBarBackdrop;
     private static bool _darkMode;
+
+    // Crystal's palette name carries its light variant; the Office themes use
+    // the enum name directly. Design-time preview uses the same URI mapping.
+    internal static Uri TokenDictionaryUri(RibbonTheme theme)
+    {
+        string file = theme == RibbonTheme.CrystalLight ? "Crystal.Light" : theme.ToString();
+        return new Uri(
+            $"pack://application:,,,/RibbonKit;component/Themes/Tokens.{file}.xaml",
+            UriKind.Absolute);
+    }
 
     /// <summary>The theme most recently applied via <see cref="Apply"/>, if any.</summary>
     public static RibbonTheme? CurrentTheme { get; private set; }
@@ -154,9 +227,7 @@ public static class ThemeManager
 
         var dictionary = new ResourceDictionary
         {
-            Source = new Uri(
-                $"pack://application:,,,/RibbonKit;component/Themes/Tokens.{theme}.xaml",
-                UriKind.Absolute),
+            Source = TokenDictionaryUri(theme),
         };
 
         // Remove the dictionaries we added last time...
@@ -189,9 +260,10 @@ public static class ThemeManager
     }
 
     /// <summary>
-    /// Enables or disables the active generation's dark/black palette. Office 2007 and 2010
-    /// use their historical hybrid Black schemes; Office 2013 uses Dark Gray; Office 2019 and
-    /// 2024 use fully dark palettes. The preference survives <see cref="Apply"/> calls.
+    /// Enables or disables the active theme's dark/black palette when available. Office 2007
+    /// and 2010 use their historical hybrid Black schemes; Office 2013 uses Dark Gray;
+    /// Office 2019 and 2024 use fully dark palettes. Crystal uses a dark glass palette.
+    /// The preference survives <see cref="Apply"/> calls.
     /// </summary>
     public static void SetDarkMode(Application application, bool enabled)
     {
@@ -210,7 +282,8 @@ public static class ThemeManager
             or RibbonTheme.Office2010
             or RibbonTheme.Office2013
             or RibbonTheme.Office2019
-            or RibbonTheme.Office2024;
+            or RibbonTheme.Office2024
+            or RibbonTheme.CrystalLight;
 
     private static void ApplyDarkModeDictionary(Application application)
     {
@@ -226,10 +299,11 @@ public static class ThemeManager
             return;
         }
 
+        string file = theme == RibbonTheme.CrystalLight ? "Crystal" : theme.ToString();
         var dictionary = new ResourceDictionary
         {
             Source = new Uri(
-                $"pack://application:,,,/RibbonKit;component/Themes/Tokens.{theme}.Dark.xaml",
+                $"pack://application:,,,/RibbonKit;component/Themes/Tokens.{file}.Dark.xaml",
                 UriKind.Absolute),
         };
         application.Resources.MergedDictionaries.Add(dictionary);
@@ -239,8 +313,10 @@ public static class ThemeManager
     /// <summary>
     /// Sets the accent color used across the current theme — the selection highlight,
     /// toggled-button fills, light-palette backstage highlights, the 2024 selected-tab underline/text,
-    /// and the 2013 File button. Persists across <see cref="Apply"/> calls, re-deriving
-    /// per theme (for example, the flat 2019/2013 themes never gain a selection underline).
+    /// and the 2013 File button. Crystal Light keeps its reflective marker and checked
+    /// material while updating semantic accent and selected-tab text. The preference persists
+    /// across <see cref="Apply"/> calls, re-deriving per theme (for example, the flat
+    /// 2019/2013 themes never gain a selection underline).
     /// </summary>
     public static void SetAccent(Application application, Color accent)
     {
@@ -303,9 +379,13 @@ public static class ThemeManager
         Changed?.Invoke(null, EventArgs.Empty);
     }
 
-    private static void ApplyAccentOverrides(Application application)
+    private static void ApplyAccentOverrides(Application application) =>
+        ApplyAccentOverrides(application.Resources, CurrentTheme ?? RibbonTheme.Office2024,
+            _darkMode && SupportsDarkMode(CurrentTheme ?? RibbonTheme.Office2024), _accent);
+
+    private static void ApplyAccentOverrides(ResourceDictionary resources, RibbonTheme theme, bool dark, Color? requestedAccent)
     {
-        ResourceDictionary resources = application.Resources;
+
 
         // Clear any prior accent overrides first so switching themes never leaks a
         // theme-specific accent token (e.g. a 2024 underline onto flat 2019).
@@ -314,16 +394,23 @@ public static class ThemeManager
             resources.Remove(key);
         }
 
-        if (_accent is not Color accent)
+        if (requestedAccent is not Color accent)
         {
             return;
         }
 
-        RibbonTheme theme = CurrentTheme ?? RibbonTheme.Office2024;
-        bool dark = _darkMode && SupportsDarkMode(theme);
 
-        // Colors shared by every theme.
-        resources[AccentKey] = Frozen(accent);
+        // Crystal uses the accent as text on dark glass; keep that semantic brush readable.
+        Color displayAccent = theme == RibbonTheme.CrystalLight && dark
+            ? Mix(accent, Colors.White, 0.45) : accent;
+        resources[AccentKey] = Frozen(displayAccent);
+        resources[InputFocusBorderKey] = resources[AccentKey];
+        if (theme != RibbonTheme.CrystalLight)
+        {
+            resources[OptionSelectedSurfaceKey] = resources[AccentKey];
+            resources[OptionSelectedBorderKey] = resources[AccentKey];
+            resources[OptionChromeFocusBorderKey] = resources[AccentKey];
+        }
         // Classic Backstage rails follow the accent only in light palettes. Dark/Black palettes
         // deliberately keep their generation-specific neutral rail and selection tokens; otherwise
         // a custom (or previously selected) accent reintroduces the colored slab those palettes
@@ -340,8 +427,11 @@ public static class ThemeManager
         // that backstage design is active, harmless otherwise). Office 2010 replaces this baseline
         // gel with its lower-center radial glow below. The dialog primary (OK) button is flat accent by default;
         // the Office 2010 case swaps it for a glass gel.
-        resources[DialogPrimaryBackgroundKey] = Frozen(accent);
-        resources[DialogPrimaryBorderKey] = Frozen(accent);
+        if (theme != RibbonTheme.CrystalLight)
+        {
+            resources[DialogPrimaryBackgroundKey] = Frozen(accent);
+            resources[DialogPrimaryBorderKey] = Frozen(accent);
+        }
 
         // An MDI child's ACTIVE caption and border are the accent, like a real window's title bar —
         // without this they stay at the theme's baked-in blue and an app with a custom accent gets
@@ -355,7 +445,7 @@ public static class ThemeManager
         // hover/press/toggle highlight is always the gold/amber "hot" color regardless of the color
         // scheme (authentic for both: the accent recolors the chrome, never the button highlight).
         // Leaving these unset keeps each theme's own gradient (they were Removed above).
-        if (theme is not (RibbonTheme.Office2010 or RibbonTheme.Office2007))
+        if (theme is not (RibbonTheme.Office2010 or RibbonTheme.Office2007 or RibbonTheme.CrystalLight))
         {
             resources[CheckedKey] = Frozen(Mix(accent, dark ? Colors.Black : Colors.White, dark ? 0.52 : 0.82));
             resources[CheckedHoverKey] = Frozen(Mix(accent, dark ? Colors.Black : Colors.White, dark ? 0.40 : 0.72));
@@ -365,6 +455,12 @@ public static class ThemeManager
         // so the flat themes keep their fill/outline selection untouched.
         switch (theme)
         {
+            case RibbonTheme.CrystalLight:
+                // The accepted marker and checked washes are drawn glass brushes. Keep their
+                // geometry when the application's accent changes; only the readable tab label
+                // and shared semantic accent tokens follow that accent in this base theme.
+                resources[SelectedForegroundKey] = Frozen(displayAccent);
+                break;
             case RibbonTheme.Office2024:
                 resources[SelectedUnderlineKey] = Frozen(accent);
                 resources[SelectedForegroundKey] = Frozen(accent);
@@ -417,6 +513,16 @@ public static class ThemeManager
                 // SelectedForeground stays the theme's dark blue, as in 2010: a custom accent
                 // should not tint the label on a light connected tab.
                 break;
+        }
+        resources[OptionsNavigationSelectedForegroundKey] = theme == RibbonTheme.CrystalLight
+            ? resources[SelectedForegroundKey]
+            : resources[AccentKey];
+        resources[OptionsPrimaryFocusBorderKey] = theme == RibbonTheme.CrystalLight
+            ? resources[AccentKey]
+            : resources[DialogPrimaryBorderKey];
+        if (theme != RibbonTheme.CrystalLight && resources.Contains(CheckedKey))
+        {
+            resources[OptionsNavigationSelectedBackgroundKey] = resources[CheckedKey];
         }
     }
 
@@ -596,11 +702,13 @@ public static class ThemeManager
         resources.Remove(AppButtonMenuOpenBackgroundKey);
         resources.Remove(AppButtonMenuOpenBottomKey);
         resources.Remove(AppButtonMenuOpenForegroundKey);
+        resources.Remove(QatTitleBarColoredKey);
+        resources.Remove(QatTabRowColoredKey);
         // Menu-open tokens normally preserve the old checked-state contract: accent fill and
         // white text, including when a custom accent is active. Office 2010 keeps its smooth
         // gel rather than flattening the open File tab; the Office 2019 colored-band branch
         // below replaces this baseline with the menu's neutral frame surface.
-        if (_accent is Color customAccent)
+        if (_accent is Color customAccent && CurrentTheme != RibbonTheme.CrystalLight)
         {
             if ((CurrentTheme ?? RibbonTheme.Office2024) == RibbonTheme.Office2010)
             {
@@ -679,6 +787,7 @@ public static class ThemeManager
         };
         resources[TitleBarBackgroundKey] = titleBar;
         resources[TitleBarForegroundKey] = Frozen(Colors.White);
+        resources[QatTitleBarColoredKey] = true;
 
         // The caption buttons follow the band they sit on: flat chips on a glass caption were
         // exactly the mismatch the glass treatment was added to remove. Gel for 2010, the
@@ -707,6 +816,7 @@ public static class ThemeManager
         // tabs. Other themes keep a neutral strip.
         if (CurrentTheme == RibbonTheme.Office2019)
         {
+            resources[QatTabRowColoredKey] = true;
             Color stripHover = Mix(accent, Colors.White, 0.18);
             Color stripPressed = Mix(accent, Colors.Black, 0.15);
             resources[RibbonBackgroundKey] = Frozen(accent);

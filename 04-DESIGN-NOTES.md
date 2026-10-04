@@ -608,17 +608,236 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [Correction and verification](docs/history/02-writer-foundation.md#3163-writer-insert-dialog-theming--2026-09-16).
 
+### 3.164 Crystal contextual tab study and compact button refinement — 2026-09-21
+
+[Implementation and verification](docs/history/01-library.md#3164-crystal-contextual-tab-study-and-compact-button-refinement--2026-09-21).
+
+### 3.165 Crystal Light theme selection — 2026-09-24
+
+[Implementation and verification](docs/history/01-library.md#3165-crystal-light-theme-selection--2026-09-24).
+
+### 3.166 Crystal main Showcase presentation — 2026-09-24
+
+[Screenshot finding and focused correction](docs/history/01-library.md#3166-crystal-main-showcase-presentation--2026-09-24).
+
+### 3.167 Crystal Light first-phase gaps — 2026-09-24
+
+[Screenshot findings and focused implementation](docs/history/01-library.md#3167-crystal-light-first-phase-gaps--2026-09-24).
+
+### 3.168 Crystal Backstage designs and shared split hover — 2026-09-27
+
+[Independent layout entries and theme-token parity](docs/history/01-library.md#3168-crystal-backstage-designs-and-shared-split-hover--2026-09-27).
+
+### 3.169 Crystal File hover rim in the shared template — 2026-09-27
+
+[Template and token promotion](docs/history/01-library.md#3169-crystal-file-hover-rim-in-the-shared-template--2026-09-27).
+
+### 3.170 Minimized tab shape in the shared template — 2026-09-27
+
+[State-driven tab geometry and Office token parity](docs/history/01-library.md#3170-minimized-tab-shape-in-the-shared-template--2026-09-27).
+
+### 3.171 Crystal body-scroll geometry in the shared template — 2026-09-27
+
+[Body-arrow tokens and utility-helper boundary](docs/history/01-library.md#3171-crystal-body-scroll-geometry-in-the-shared-template--2026-09-27).
+
+### 3.172 Compact Showcase theme and Backstage choices — 2026-09-27
+
+[View-tab gallery, layout dropdown, and startup selection](docs/history/01-library.md#3172-compact-showcase-theme-and-backstage-choices--2026-09-27).
+
+### 3.173 Crystal Acrylic surface transparency — 2026-09-27
+
+[Ribbon body token split and Acrylic-only Crystal opacity](docs/history/01-library.md#3173-crystal-acrylic-surface-transparency--2026-09-27).
+
+### 3.174 Optional Acrylic glass treatment across Showcase themes — 2026-09-27
+
+[Shared token overlay, tab and split hover, and opt-in behavior](docs/history/01-library.md#3174-optional-acrylic-glass-treatment-across-showcase-themes--2026-09-27).
+
+### 3.175 Crystal translucent Backstage option — 2026-09-27
+
+[Crystal layout templates honor the existing Translucent setting](docs/history/01-library.md#3175-crystal-translucent-backstage-option--2026-09-27).
+
+### 3.176 Acrylic hover accent and File wash — 2026-09-27
+
+[Accent-tinted command hover and brighter File hover](docs/history/01-library.md#3176-acrylic-hover-accent-and-file-wash--2026-09-27).
+
+### 3.177 Crystal selected-tab bridge — 2026-09-27
+
+[Enable the existing foot and body notch for Crystal](docs/history/01-library.md#3177-crystal-selected-tab-bridge--2026-09-27).
+
+### 3.178 Crystal hover tab closes below the header — 2026-09-27
+
+[Shared hover outline tokens without tab or body movement](docs/history/01-library.md#3178-crystal-hover-tab-closes-below-the-header--2026-09-27).
+
+### 3.179 Crystal hover and selected tabs share an open lower edge — 2026-09-27
+
+[Connected hover geometry and minimized-tab preservation](docs/history/01-library.md#3179-crystal-hover-and-selected-tabs-share-an-open-lower-edge--2026-09-27).
+
+### 3.180 Crystal hover foot clipping — 2026-09-27
+
+[Hover foot stays inside the clipped tab strip](docs/history/01-library.md#3180-crystal-hover-foot-clipping--2026-09-27).
+
+### 3.181 Crystal hover uses one translucent surface — 2026-09-27
+
+[Remove the overlapping hover foot while retaining the selected connector](docs/history/01-library.md#3181-crystal-hover-uses-one-translucent-surface--2026-09-27).
+
+### 3.182 Crystal hover rounding and accent-tinted QAT glass — 2026-09-27
+
+[Round the measured hover chrome and give the QAT its own shared background token](docs/history/01-library.md#3182-crystal-hover-rounding-and-accent-tinted-qat-glass--2026-09-27).
+
+### 3.183 Glass tab hover follows the accent — 2026-09-27
+
+[Remove the fixed blue-white tab hover cast while keeping its quiet opacity](docs/history/01-library.md#3183-glass-tab-hover-follows-the-accent--2026-09-27).
+
+### 3.184 Crystal Light MDI Demo integration — 2026-09-27
+
+[Shared MDI tokens and detached Showcase presentation](docs/history/01-library.md#3184-crystal-light-mdi-demo-integration--2026-09-27).
+
+### 3.185 Connected first tab with no File button — 2026-09-27
+
+[Shared header-row QAT or tab inset for hidden application buttons](docs/history/01-library.md#3185-connected-first-tab-with-no-file-button--2026-09-27).
+
+### 3.186 Crystal Light Localization/RTL lab and Backstage templates — 2026-09-28
+
+[Reuse Showcase presentation in the detached lab and localize Crystal Backstage](docs/history/01-library.md#3186-crystal-light-localizationrtl-lab-and-backstage-templates--2026-09-28).
+
+### 3.187 Crystal Light Print Preview host paint — 2026-09-28
+
+[Reuse the shared modal tab and scope preview paint to Showcase](docs/history/01-library.md#3187-crystal-light-print-preview-host-paint--2026-09-28).
+
+### 3.188 Crystal dark palette — 2026-09-28
+
+[Dark token overlay, Showcase materials and focused switching checks](docs/history/01-library.md#3188-crystal-dark-palette--2026-09-28).
+
+### 3.189 Crystal duplicate audit — 2026-09-28
+
+[Keep distinct option lenses and remove the redundant Backstage resource wrapper](docs/history/01-library.md#3189-crystal-duplicate-audit--2026-09-28).
+
+### 3.190 Crystal customization list frames — 2026-09-28
+
+[Round the four list and tree frames in Showcase while retaining native scrolling](docs/history/01-library.md#3190-crystal-customization-list-frames--2026-09-28).
+
+### 3.191 Showcase presentation portability audit — 2026-09-28
+
+[Separate reusable Crystal control styling from optional host effects](docs/history/01-library.md#3191-showcase-presentation-portability-audit--2026-09-28).
+
+### 3.192 Theme-native Office 2007 orb default — 2026-09-28
+
+[Shared token default, explicit override and consumer proof](docs/history/01-library.md#3192-theme-native-office-2007-orb-default--2026-09-28).
+
+### 3.193 Theme-owned no-application header inset and snapshot renewal — 2026-09-28
+
+[Audit zero and rounded-corner insets across themes](docs/history/01-library.md#3193-theme-owned-no-application-header-inset-and-snapshot-renewal--2026-09-28).
+
+### 3.194 Portable application-orb glyph template — 2026-09-28
+
+[Shared orb chrome and live host glyph in the real button and Classic2007 proxy](docs/history/01-library.md#3194-portable-application-orb-glyph-template--2026-09-28).
+
+### 3.195 Shared Crystal control resources — 2026-09-28
+
+[Promote control materials and preserve local popup overrides](docs/history/01-library.md#3195-shared-crystal-control-resources--2026-09-28).
+
+### 3.196 Shared Crystal customization pages — 2026-09-30
+
+[Promote Options visuals, preserve Office density and verify a RibbonKit-only consumer](docs/history/01-library.md#3196-shared-crystal-customization-pages--2026-09-30).
+
+### 3.197 Shared Crystal QAT drawer — 2026-09-30
+
+[Promote QAT paint, geometry and body coordination without the Showcase helper](docs/history/01-library.md#3197-shared-crystal-qat-drawer--2026-09-30).
+
+### 3.198 Minimized Crystal QAT corners above messages — 2026-09-30
+
+[Preserve all four minimized drawer corners without changing Office geometry](docs/history/01-library.md#3198-minimized-crystal-qat-corners-above-messages--2026-09-30).
+
+### 3.199 Shared Crystal message bars — 2026-09-30
+
+[Promote message actions and body rounding without the Showcase adapter](docs/history/01-library.md#3199-shared-crystal-message-bars--2026-09-30).
+
+### 3.200 Shared Crystal application menu — 2026-09-30
+
+[Promote menu paint, responsive geometry and outside-only shadows while preserving host capture](docs/history/01-library.md#3200-shared-crystal-application-menu--2026-09-30).
+
+### 3.201 RTL lab bilingual application-menu header — 2026-09-30
+
+[Wrap the lab-owned Save As label through the existing header template](docs/history/01-library.md#3201-rtl-lab-bilingual-application-menu-header--2026-09-30).
+
+### 3.202 Application-menu footer at limited viewport height — 2026-09-30
+
+[Bound the shared frame, scroll content and keep captured blur out of measurement](docs/history/01-library.md#3202-application-menu-footer-at-limited-viewport-height--2026-09-30).
+
+### 3.203 Application-menu scrollbar clicks preserve the open menu — 2026-09-30
+
+[Exempt scrollbar buttons from command-click dismissal](docs/history/01-library.md#3203-application-menu-scrollbar-clicks-preserve-the-open-menu--2026-09-30).
+
+### 3.204 Shared Crystal utility buttons and scrollbars — 2026-09-30
+
+[Promote utility rims and native scrollbar material with scoped overrides](docs/history/01-library.md#3204-shared-crystal-utility-buttons-and-scrollbars--2026-09-30).
+
+### 3.205 Customization scrollbar insets and slice 7 live review — 2026-09-30
+
+[Match list/tree clearance by theme and record accepted utility checks](docs/history/01-library.md#3205-customization-scrollbar-insets-and-slice-7-live-review--2026-09-30).
+
+### 3.206 Customization scrollbar pixel gaps — 2026-10-01
+
+[Round inset edges consistently and record accepted native scrolling](docs/history/01-library.md#3206-customization-scrollbar-pixel-gaps--2026-10-01).
+
+### 3.207 Slice 7 bounded live review complete — 2026-10-01
+
+[Record spacing and DPI-return acceptance for both reviewed themes](docs/history/01-library.md#3207-slice-7-bounded-live-review-complete--2026-10-01).
+
+### 3.208 Shared Crystal contextual material and scoped palettes — 2026-10-01
+
+[Replace the Showcase tab subclass and expose an independent generic palette factory](docs/history/01-library.md#3208-shared-crystal-contextual-material-and-scoped-palettes--2026-10-01).
+
+### 3.209 Popup border and shadow DPI diagnostics — 2026-10-01
+
+[Observe native popup bounds and distinguish simulated owner DPI from display-scale transitions](docs/history/01-library.md#3209-popup-border-and-shadow-dpi-diagnostics--2026-10-01).
+
+### 3.210 Popup margins follow the DPI pixel grid — 2026-10-01
+
+[Keep shared dropdown/split-button layout and shadow clearance on matching rounded margins](docs/history/01-library.md#3210-popup-margins-follow-the-dpi-pixel-grid--2026-10-01).
+
+### 3.211 Vertical split hover width and diagnostic cleanup — 2026-10-01
+
+[Align flat Office split-button paint and retire the temporary DPI observer](docs/history/01-library.md#3211-vertical-split-hover-width-and-diagnostic-cleanup--2026-10-01).
+
+### 3.212 Optional captured backdrops and scoped glass overlays — 2026-10-01
+
+[Provide per-control host capture and cross-theme glass paint with explicit lifecycle ownership](docs/history/01-library.md#3212-optional-captured-backdrops-and-scoped-glass-overlays--2026-10-01).
+
+### 3.213 Main Showcase consolidation — 2026-10-01
+
+[Move useful Crystal study demonstrations into the main window and retire the separate preview](docs/history/01-library.md#3213-main-showcase-consolidation--2026-10-01).
+
+### 3.214 Theme gallery clipping and deferred test corrections — 2026-10-01
+
+[Fit Showcase Theme tiles into the strip and correct the RTL fixture and Office 2010 hover contract](docs/history/01-library.md#3214-theme-gallery-clipping-and-deferred-test-corrections--2026-10-01).
+
+### 3.215 Gallery selected-row retention after tab reload — 2026-10-01
+
+[Restore the shared gallery's visible selected row after loading or template replacement](docs/history/01-library.md#3215-gallery-selected-row-retention-after-tab-reload--2026-10-01).
+
+### 3.216 Writer Crystal integration and deferred validation — 2026-10-02
+
+[Writer appearance, shared W glyph and optional-effect integration with unfiltered automated evidence](docs/history/02-writer-foundation.md#3216-writer-crystal-integration-and-deferred-validation--2026-10-02).
+
+### 3.217 Crystal pre-merge scope and resource cleanup — 2026-10-04
+
+[Scoped QAT policy, dynamic capture registration and shared action/Backstage resources](docs/history/01-library.md#3217-crystal-pre-merge-scope-and-resource-cleanup--2026-10-04).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),
 and the [WPF workflow skill](.agents/skills/ribbonkit-wpf-workflow/SKILL.md).
-Keep current status here, product scope in the relevant plan, and dated evidence in
-`docs/history/`. Add future numbered implementation entries to the relevant history
-file and this index; update §5 only as supported by verification.
+Keep §5 as a brief subsystem summary and pointer. The active plan owns its current
+slice status and live acceptance; `docs/history/` owns detailed implementation,
+automated evidence and pitfalls. Follow the [quick documentation workflow](AGENTS.md#quick-documentation-and-acceptance-updates)
+for routine confirmations. Update the plan once, without duplicating the result
+here or adding another numbered history/index entry. Add those entries when new
+technical evidence warrants them; preserve existing dated records.
 
 ## 5. Current State & Next Steps
 
-> Authoritative summary of recorded evidence through 2026-09-15.
+> Subsystem summary; linked active plans own current slice and acceptance status.
 > Counts below are dated results with their stated verification scope.
 
 ### Complete
@@ -642,6 +861,10 @@ file and this index; update §5 only as supported by verification.
 
 ### Remaining or intentionally deferred
 
+- **Theme gallery review and deferred test follow-up:** implementation and
+  automated evidence are in §3.214–§3.215. Native Theme gallery review and the
+  bounded scope of the RTL/Office 2010 hover corrections are maintained in the
+  [deferred layout list](docs/13-CRYSTAL-PORTABILITY-AND-ORB-PLAN.md#deferred-layout-observations-at-200).
 - **Expanding Paper is the default again, by user direction (§3.162).** One native editor
   sits on a centered sheet with fixed page width and minimum page height. The sheet and
   dotted margin guide grow downward with content; preview/print retain physical pagination.
@@ -657,16 +880,26 @@ file and this index; update §5 only as supported by verification.
   (M1–M3); Office 2010 Aero live visual approval (§3.97/§3.125); optional designer
   scalar reset actions; touch density, richer QAT/custom-control projections and
   future themes. Complete Windows contrast-theme support is not claimed.
+- **Crystal portability and Office 2007 orb defaults:** use the
+  [active plan's status and acceptance table](docs/13-CRYSTAL-PORTABILITY-AND-ORB-PLAN.md#current-status-and-acceptance)
+  for slice progress, remaining live review and deferred issues. Shared work
+  covers the theme-following orb/glyph hook, control materials, customization,
+  QAT/message/application-menu chrome, utility/native-scrollbar material and
+  contextual material/scoped palettes and optional host effects. Detailed evidence
+  remains in §3.189–§3.215.
+  Update current acceptance in the
+  plan only; do not append each confirmation to this summary. Writer's Crystal
+  appearance and W-glyph migration are implemented (§3.216); the active plan's
+  Writer row owns its remaining live acceptance.
+
 - Automatic `Icons.xaml` discovery remains best-effort; the manual browser is the
   fallback for no match, ambiguity, inaccessible paths or parse failure.
 
 ### Verification checkpoint
 
-- Latest cleanup: 77 focused Writer tests passed across separate runs; Release Writer build
-  **0 warnings / 0 errors**. The combined window run hit the known WPF WindowChrome
-  cross-thread cache issue; the affected table check passed in a fresh process.
-  No full-suite, new live UI, physical-printer, OS IME or mixed-DPI acceptance is claimed.
-- Latest recorded full solution gate in this checkpoint list: §3.128 (2026-08-30),
+- Latest Writer/Crystal integration and unfiltered solution evidence: §3.216
+  (2026-10-02). The linked history separates automated checks from remaining live gates.
+- Earlier recorded full solution gate: §3.128 (2026-08-30),
   Release build with zero warnings/errors; RibbonKit 392/392, Writer 439/439, visual
   1/1 covering 63 approved images. These are historical counts, not today's inventory.
 - Earlier full/focused results and acceptance limits remain in the

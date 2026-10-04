@@ -26,6 +26,17 @@ internal partial class WriterAppearancePage : UserControl
 
     public WriterAppearancePreferences Preferences => BuildPreferences();
 
+    private void OnAppearanceSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        if (AppearanceColumns is null) return;
+        bool twoColumns = e.NewSize.Width >= 520;
+        Grid.SetColumnSpan(AppearanceLeftColumn, twoColumns ? 1 : 3);
+        Grid.SetColumn(AppearanceRightColumn, twoColumns ? 2 : 0);
+        Grid.SetRow(AppearanceRightColumn, twoColumns ? 0 : 1);
+        Grid.SetColumnSpan(AppearanceRightColumn, twoColumns ? 1 : 3);
+        AppearanceRightColumn.Margin = twoColumns ? new Thickness() : new Thickness(0, 12, 0, 0);
+    }
+
     public void SetPreferences(WriterAppearancePreferences preferences)
     {
         ArgumentNullException.ThrowIfNull(preferences);
@@ -46,6 +57,8 @@ internal partial class WriterAppearancePage : UserControl
             Select(ApplicationButtonCombo, preferences.ApplicationButtonShape);
             Select(AnimationCombo, preferences.AnimationLevel);
             BackstageTranslucentCheck.IsChecked = preferences.BackstageTranslucent;
+            GlassSurfacesCheck.IsChecked = preferences.GlassSurfaces;
+            CapturedPopupBackdropCheck.IsChecked = preferences.CapturedPopupBackdrop;
             RespectReducedMotionCheck.IsChecked = preferences.RespectSystemReducedMotion;
             ShowRulerCheck.IsChecked = preferences.ShowRuler;
             ShowMarginGuidesCheck.IsChecked = preferences.ShowMarginGuides;
@@ -74,6 +87,8 @@ internal partial class WriterAppearancePage : UserControl
             ApplicationButtonShape = Selected<RibbonApplicationButtonShape>(ApplicationButtonCombo),
             AnimationLevel = Selected<RibbonAnimationLevel>(AnimationCombo),
             BackstageTranslucent = BackstageTranslucentCheck.IsChecked == true,
+            GlassSurfaces = GlassSurfacesCheck.IsChecked == true,
+            CapturedPopupBackdrop = CapturedPopupBackdropCheck.IsChecked == true,
             RespectSystemReducedMotion = RespectReducedMotionCheck.IsChecked == true,
             ShowRuler = ShowRulerCheck.IsChecked == true,
             ShowMarginGuides = ShowMarginGuidesCheck.IsChecked == true,
@@ -178,6 +193,7 @@ internal partial class WriterAppearancePage : UserControl
             : "The File tab is used automatically outside Office 2007.");
         if (!translucent)
             notes.Add("Backstage translucency needs an active supported backdrop and is unavailable for Classic 2007.");
+        notes.Add("Glass treatment and ribbon popup blur are optional and work without native Acrylic. Popup blur applies to supported dropdowns and collapsed groups; Backstage keeps its shared theme surface.");
 
         CompatibilityText.Text = string.Join(" ", notes);
     }

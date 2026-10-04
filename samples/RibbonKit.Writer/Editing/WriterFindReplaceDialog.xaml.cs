@@ -14,6 +14,7 @@ public partial class WriterFindReplaceDialog : Window
     {
         _service = service ?? throw new ArgumentNullException(nameof(service));
         InitializeComponent();
+        RibbonKit.Writer.Appearance.WriterDialogAppearance.Initialize(this);
         if (!showReplace)
             HideReplaceControls();
         Loaded += (_, _) =>

@@ -63,13 +63,14 @@ public sealed class DarkModeTemplateContractTests
             controls,
             element => (string?)element.Attribute(Xaml + "Name") == "PART_Tree");
         XElement itemStyle = Assert.Single(
-            tree.Descendants(Presentation + "Style"),
-            element => (string?)element.Attribute("TargetType") == "{x:Type TreeViewItem}");
+            document.Root!.Elements(Presentation + "Style"),
+            element => (string?)element.Attribute(Xaml + "Key")
+                == "RibbonKit.Customize.TreeContainerStyle");
         XElement foreground = Assert.Single(
             itemStyle.Elements(Presentation + "Setter"),
             element => (string?)element.Attribute("Property") == "Foreground");
         Assert.Equal(
-            "{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type TreeView}}}",
+            "{DynamicResource RibbonKit.Brushes.Text.Primary}",
             (string?)foreground.Attribute("Value"));
     }
 
@@ -91,12 +92,12 @@ public sealed class DarkModeTemplateContractTests
     }
 
     [Fact]
-    public void Combo_and_in_ribbon_gallery_use_the_control_surface_background()
+    public void Combo_and_in_ribbon_gallery_use_dedicated_theme_surfaces()
     {
         XDocument dropdowns = XDocument.Load(ThemePart("Controls.DropDowns.xaml"));
         XElement combo = Template(dropdowns, "RibbonComboBox");
         Assert.Equal(
-            ControlSurfaceBackground,
+            "{DynamicResource RibbonKit.Brushes.Input.SurfaceBackground}",
             (string?)Named(combo, "Border", "Chrome").Attribute("Background"));
 
         XDocument galleries = XDocument.Load(ThemePart("Controls.Galleries.xaml"));
@@ -104,7 +105,8 @@ public sealed class DarkModeTemplateContractTests
         XElement surface = Assert.Single(
             gallery.Descendants(Presentation + "Border"),
             element => (string?)element.Attribute("Grid.ColumnSpan") == "2");
-        Assert.Equal(ControlSurfaceBackground, (string?)surface.Attribute("Background"));
+        Assert.Equal("{DynamicResource RibbonKit.Brushes.InRibbonGallery.SurfaceBackground}",
+            (string?)surface.Attribute("Background"));
     }
 
     [Fact]

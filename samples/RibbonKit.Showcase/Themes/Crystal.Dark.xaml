@@ -1,0 +1,12 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Showcase-owned resources follow the same two-layer palette as RibbonKit. -->
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/RibbonKit;component/Themes/Tokens.Crystal.Light.xaml" />
+        <ResourceDictionary Source="/RibbonKit;component/Themes/Tokens.Crystal.Dark.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+    <SolidColorBrush x:Key="Showcase.Brushes.PrintPreview.Canvas" Color="#111B24" />
+    <SolidColorBrush x:Key="Showcase.Brushes.PrintPreview.PageBorder" Color="#66879E" />
+    <SolidColorBrush x:Key="Showcase.Brushes.PrintPreview.TitleForeground" Color="#20364A" />
+    <SolidColorBrush x:Key="Showcase.Brushes.PrintPreview.BodyForeground" Color="#4F6476" />
+</ResourceDictionary>

@@ -7,6 +7,7 @@ using System.Windows.Automation.Peers;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Data;
+using System.Windows.Media;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Markup;
@@ -194,6 +195,14 @@ public class Ribbon : Control
             new FrameworkPropertyMetadata(
                 RibbonApplicationButtonShape.Tab,
                 OnApplicationButtonShapeChanged));
+
+    /// <summary>Identifies the <see cref="ApplicationOrbGlyphTemplate"/> dependency property.</summary>
+    public static readonly DependencyProperty ApplicationOrbGlyphTemplateProperty =
+        DependencyProperty.Register(
+            nameof(ApplicationOrbGlyphTemplate),
+            typeof(DataTemplate),
+            typeof(Ribbon),
+            new FrameworkPropertyMetadata(null));
 
     /// <summary>
     /// Attached flag the ribbon sets on a QAT button while it sits on a colored surface
@@ -1545,15 +1554,27 @@ public class Ribbon : Control
             == BaseValueSource.Default;
 
     /// <summary>
-    /// Whether the application button renders as a rectangular File tab (default) or as the round
-    /// Office 2007 orb. This is an application choice, not a theme one: the theme system colors
-    /// controls through tokens and never changes their shape, so an app pairing the Office 2007
-    /// theme with the orb sets this explicitly.
+    /// Whether the application button renders as a rectangular File tab or as the round
+    /// Office 2007 orb. Without an explicit value, the theme supplies the shape: Office 2007
+    /// uses the orb and other themes use the File tab. An explicit value overrides that default
+    /// across theme changes; clearing it resumes the theme default.
     /// </summary>
     public RibbonApplicationButtonShape ApplicationButtonShape
     {
         get => (RibbonApplicationButtonShape)GetValue(ApplicationButtonShapeProperty);
         set => SetValue(ApplicationButtonShapeProperty, value);
+    }
+
+    /// <summary>
+    /// Gets or sets the vector glyph template inside the application orb. A <see langword="null"/>
+    /// value uses RibbonKit's four-square glyph. The orb sphere, button state and accessible
+    /// name remain theme-owned; Classic2007 Backstage creates a separate visual from this template.
+    /// The template is rendered within the orb's 16-DIP glyph canvas.
+    /// </summary>
+    public DataTemplate? ApplicationOrbGlyphTemplate
+    {
+        get => (DataTemplate?)GetValue(ApplicationOrbGlyphTemplateProperty);
+        set => SetValue(ApplicationOrbGlyphTemplateProperty, value);
     }
 
     private BackstageAdorner? _backstageAdorner;
@@ -2155,11 +2176,15 @@ public class Ribbon : Control
         if (e.OldValue is RibbonApplicationMenu oldMenu)
         {
             oldMenu.CloseRequested -= ribbon.OnApplicationMenuCloseRequested;
+            BindingOperations.ClearBinding(oldMenu, ApplicationMenuGeometryConverter.AvailableWidthProperty);
+            oldMenu.ClearValue(ApplicationMenuGeometryConverter.AvailableHeightProperty);
         }
 
         if (e.NewValue is RibbonApplicationMenu newMenu)
         {
             newMenu.CloseRequested += ribbon.OnApplicationMenuCloseRequested;
+            BindingOperations.SetBinding(newMenu, ApplicationMenuGeometryConverter.AvailableWidthProperty,
+                new Binding(nameof(ActualWidth)) { Source = ribbon });
         }
 
         // Assigning or clearing a menu changes WHICH surface IsBackstageOpen means, so the
@@ -2237,9 +2262,7 @@ public class Ribbon : Control
             var theme = (Theming.RibbonTheme)preview;
             var dictionary = new ResourceDictionary
             {
-                Source = new Uri(
-                    $"pack://application:,,,/RibbonKit;component/Themes/Tokens.{theme}.xaml",
-                    UriKind.Absolute),
+                Source = Theming.ThemeManager.TokenDictionaryUri(theme),
             };
             Resources.MergedDictionaries.Add(dictionary);
             _designPreviewThemeDictionary = dictionary;
@@ -2392,6 +2415,12 @@ public class Ribbon : Control
             button,
             AutomationProperties.NameProperty,
             new Binding(nameof(EffectiveApplicationButtonHeader)) { Source = this });
+        // The real button can move into the application-menu overlay, so the shared orb chrome
+        // reads this stable owner binding instead of looking for a Ribbon visual ancestor.
+        BindingOperations.SetBinding(
+            button,
+            FrameworkElement.TagProperty,
+            new Binding(nameof(ApplicationOrbGlyphTemplate)) { Source = this });
     }
 
     private void UpdateApplicationMenuOverlayPlacement()
@@ -2419,10 +2448,45 @@ public class Ribbon : Control
             }
 
             bool anchorBelow = TryFindResource(ApplicationMenuAnchorBelowButtonResourceKey) is true;
+            double top = origin.Y + (anchorBelow ? _applicationButton.ActualHeight : 0d);
             Canvas.SetLeft(_applicationMenuOverlayPresenter, origin.X);
-            Canvas.SetTop(
-                _applicationMenuOverlayPresenter,
-                origin.Y + (anchorBelow ? _applicationButton.ActualHeight : 0d));
+            Canvas.SetTop(_applicationMenuOverlayPresenter, top);
+
+            // Canvas measures overlays with infinite height. Bound the shared frame to the
+            // window's client content instead of the ribbon's own (much shorter) height.
+            // Recomputed on layout so resizing and live DPI changes keep the footer reachable.
+            if (ApplicationMenu is RibbonApplicationMenu menu
+                && Window.GetWindow(this) is { Content: FrameworkElement content } window)
+            {
+                FrameworkElement viewport = content;
+                // Content itself may align to the top (including a Window containing only
+                // Ribbon). Its presenter represents the full client area in that case.
+                for (DependencyObject? parent = VisualTreeHelper.GetParent(content);
+                    parent is not null && parent != window;
+                    parent = VisualTreeHelper.GetParent(parent))
+                {
+                    if (parent is ContentPresenter presenter && ReferenceEquals(presenter.Content, content))
+                    {
+                        viewport = presenter;
+                        break;
+                    }
+                }
+
+                if (viewport.ActualHeight <= 0d) return;
+                double bottom = viewport.TransformToVisual(_applicationMenuOverlayLayer)
+                    .Transform(new Point(0d, viewport.ActualHeight)).Y;
+                Thickness presenterMargin = _applicationMenuOverlayPresenter.Margin;
+                double available = Math.Max(0d, bottom - top - presenterMargin.Top
+                    - presenterMargin.Bottom - menu.Margin.Top - menu.Margin.Bottom);
+                if (ApplicationMenuGeometryConverter.GetAvailableHeight(menu) != available)
+                {
+                    ApplicationMenuGeometryConverter.SetAvailableHeight(menu, available);
+                }
+            }
+            else if (ApplicationMenu is RibbonApplicationMenu detachedMenu)
+            {
+                detachedMenu.ClearValue(ApplicationMenuGeometryConverter.AvailableHeightProperty);
+            }
         }
         catch (InvalidOperationException)
         {
@@ -2575,6 +2639,10 @@ public class Ribbon : Control
                 Source = RibbonLocalizationBindingSource.Instance,
                 Mode = BindingMode.OneWay,
             });
+        BindingOperations.SetBinding(
+            proxy,
+            FrameworkElement.TagProperty,
+            new Binding(nameof(ApplicationOrbGlyphTemplate)) { Source = this });
         WindowChrome.SetIsHitTestVisibleInChrome(proxy, true);
         proxy.Template = CreateClassicBackstageOrbProxyTemplate();
 
@@ -3024,6 +3092,10 @@ public class Ribbon : Control
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
+        if (ApplicationMenu is RibbonApplicationMenu menu)
+        {
+            menu.ClearValue(ApplicationMenuGeometryConverter.AvailableHeightProperty);
+        }
         Theming.ThemeManager.Changed -= OnThemeConfigurationChanged;
         UnregisterRibbonWindowApplicationButtonShape();
         if (_ribbonTabControl is not null)
@@ -3133,13 +3205,14 @@ public class Ribbon : Control
     /// the surrounding band's hover. Applied directly (not via inheritance) so it is robust
     /// regardless of how the items are hosted.
     /// </summary>
-    private void UpdateQatButtonContext()
+    internal void UpdateQatButtonContext()
     {
-        bool accentTitleBar = Theming.ThemeManager.IsAccentedTitleBar;
-        bool titleBarColored = QuickAccessPosition == RibbonQuickAccessPosition.TitleBar && accentTitleBar;
+        // Resolve the band's policy in this ribbon's resource scope. A window palette
+        // can replace the application theme without sharing its title-bar preferences.
+        bool titleBarColored = QuickAccessPosition == RibbonQuickAccessPosition.TitleBar
+            && UtilityChrome.GetQatTitleBarColored(this);
         bool tabRowColored = QuickAccessPosition == RibbonQuickAccessPosition.TabRow
-            && accentTitleBar
-            && Theming.ThemeManager.CurrentTheme == Theming.RibbonTheme.Office2019;
+            && UtilityChrome.GetQatTabRowColored(this);
         bool colored = titleBarColored || tabRowColored;
 
         // Match the hover of the neighbouring chrome: the caption buttons in the title bar,

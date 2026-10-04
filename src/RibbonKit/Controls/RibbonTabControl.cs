@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Shapes;
@@ -256,9 +257,9 @@ public class RibbonTabControl : TabControl
 
         // Tint: a selected contextual tab underlines in its own colour; otherwise the theme's
         // accent underline token (which flat themes set Transparent, hiding the marker there).
-        if (tab.IsContextual && tab.ContextualBrush is { } contextual)
+        if (tab.IsContextual && tab.ContextualBrush is not null)
         {
-            _marker.Fill = contextual;
+            _marker.SetBinding(Shape.FillProperty, ContextualMaterialConverter.MarkerBinding(tab));
         }
         else
         {

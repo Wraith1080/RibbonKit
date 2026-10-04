@@ -37,6 +37,7 @@ public partial class WriterFontDialog : Window
         ArgumentNullException.ThrowIfNull(initial);
         ArgumentNullException.ThrowIfNull(catalog);
         InitializeComponent();
+        RibbonKit.Writer.Appearance.WriterDialogAppearance.Initialize(this);
         if (owner is not null)
             Owner = owner;
         if (SystemParameters.HighContrast)

@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls.Primitives;
+using System.Windows.Media;
 using RibbonKit.Controls;
 using RibbonKit.Localization;
 
@@ -18,6 +19,7 @@ public partial class LocalizationRtlDemo : RibbonWindow
     private readonly string _baselineLayout;
     private IRibbonLocalizationProvider? _providerBeforePseudoLocalization;
     private MainWindow? _applicationSurfaceSource;
+    private CrystalMainWindowPresentation? _crystalPresentation;
 
     public LocalizationRtlDemo()
     {
@@ -39,6 +41,16 @@ public partial class LocalizationRtlDemo : RibbonWindow
         _applicationSurfaceSource = source;
         source.ApplicationSurfaceChanged += OnApplicationSurfaceChanged;
         ApplyApplicationSurfaceState(source.ApplicationSurfaceState);
+    }
+
+    internal void ApplyCrystal(bool enabled, Color? tint = null)
+    {
+        if (enabled)
+            (_crystalPresentation ??= new CrystalMainWindowPresentation(
+                this, DemoRibbon, _applicationMenu, DemoBackstage))
+                .Apply(true, tint);
+        else
+            _crystalPresentation?.Apply(false);
     }
 
     protected override void OnClosed(EventArgs e)
@@ -156,7 +168,10 @@ public partial class LocalizationRtlDemo : RibbonWindow
         UpdateStatus("Security settings reviewed from the message bar");
     }
 
-    private void OpenOptionsDialog(bool showQuickAccessPage)
+    private void OpenOptionsDialog(bool showQuickAccessPage) =>
+        CreateOptionsDialog(showQuickAccessPage).ShowDialog();
+
+    internal RibbonOptionsDialog CreateOptionsDialog(bool showQuickAccessPage)
     {
         var customizePage = new RibbonOptionsPage
         {
@@ -181,7 +196,12 @@ public partial class LocalizationRtlDemo : RibbonWindow
         dialog.Pages.Add(customizePage);
         dialog.Pages.Add(quickAccessPage);
         dialog.SelectedPage = showQuickAccessPage ? quickAccessPage : customizePage;
-        dialog.ShowDialog();
+        if (_crystalPresentation?.Palette is { } palette)
+        {
+            dialog.Resources.MergedDictionaries.Add(palette);
+            dialog.Resources["RibbonKit.Brushes.ScrollBar.WashAccent"] = dialog.FindResource("RibbonKit.Brushes.Accent");
+        }
+        return dialog;
     }
 
     private void DisablePseudoLocalization()

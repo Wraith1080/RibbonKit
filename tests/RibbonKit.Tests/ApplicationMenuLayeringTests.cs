@@ -130,7 +130,7 @@ public class ApplicationMenuLayeringTests
     }
 
     [Fact]
-    public void Orb_menu_uses_outer_overlay_and_real_button_host_without_promoting_tab_control()
+    public void Orb_menu_uses_outer_overlay_above_the_theme_owned_qat_seam_layer()
     {
         var document = XDocument.Load(RibbonChromePath());
 
@@ -142,10 +142,21 @@ public class ApplicationMenuLayeringTests
         Assert.Same(overlay, buttonOverlay.Parent);
         Assert.True(ZIndex(buttonOverlay) > ZIndex(presenter));
         Assert.Equal("Collapsed", (string?)buttonOverlay.Attribute("Visibility"));
-        Assert.DoesNotContain(
+        var seamLayer = Assert.Single(
             document.Descendants(Presentation + "Setter"),
             setter => (string?)setter.Attribute("TargetName") == "TabControlHost"
                 && (string?)setter.Attribute("Property") == "Panel.ZIndex");
+        Assert.Equal("QuickAccessPosition", (string?)seamLayer.Parent!.Attribute("Property"));
+        Assert.Equal("BelowRibbon", (string?)seamLayer.Parent.Attribute("Value"));
+        Assert.Equal("{DynamicResource RibbonKit.Metrics.ContentZIndexQatBelow}",
+            (string?)seamLayer.Attribute("Value"));
+        foreach (string theme in new[] { "Office2007", "Office2010", "Office2013", "Office2019", "Office2024", "Crystal.Light" })
+        {
+            int bodyLayer = int.Parse(Resource(XDocument.Load(ThemePath(theme)),
+                "RibbonKit.Metrics.ContentZIndexQatBelow").Value);
+            Assert.True(ZIndex(overlay) > bodyLayer);
+            Assert.Equal(theme == "Crystal.Light" ? 1 : 0, bodyLayer);
+        }
     }
 
     [Fact]

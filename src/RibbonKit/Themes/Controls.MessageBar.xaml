@@ -4,6 +4,10 @@
     xmlns:controls="clr-namespace:RibbonKit.Controls"
     xmlns:localization="clr-namespace:RibbonKit.Localization">
 
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.Actions.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
     <!-- Repeatable Office-style warning/information strips. Colours come entirely from the
          active token dictionary; hosts may still override Background/Foreground per message. -->
     <Style TargetType="{x:Type controls:RibbonMessageBar}">
@@ -40,6 +44,7 @@
 
     <Style TargetType="{x:Type controls:RibbonMessage}">
         <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.MessageBar.Background}" />
+        <Setter Property="Margin" Value="{DynamicResource RibbonKit.Metrics.MessageBar.ItemMargin}" />
         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.MessageBar.Foreground}" />
         <Setter Property="HorizontalAlignment" Value="Stretch" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
@@ -50,12 +55,20 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type controls:RibbonMessage}">
+                    <ControlTemplate.Resources>
+                        <ResourceDictionary>
+                            <ResourceDictionary.MergedDictionaries>
+                                <!-- Keep realized parts stable across palette/style replacement. -->
+                                <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.ActionTemplates.xaml" />
+                            </ResourceDictionary.MergedDictionaries>
+                        </ResourceDictionary>
+                    </ControlTemplate.Resources>
                     <Border x:Name="PART_Root"
                             MinHeight="{TemplateBinding MinHeight}"
                             Background="{TemplateBinding Background}"
                             BorderBrush="{DynamicResource RibbonKit.Brushes.MessageBar.Border}"
                             BorderThickness="{DynamicResource RibbonKit.Metrics.MessageBar.BorderThickness}"
-                            CornerRadius="0"
+                            CornerRadius="{DynamicResource RibbonKit.Metrics.MessageBar.ItemCornerRadius}"
                             TextElement.Foreground="{TemplateBinding Foreground}"
                             SnapsToDevicePixels="True">
                         <Grid>
@@ -109,50 +122,14 @@
 
                             <Button x:Name="PART_ActionButton"
                                     Grid.Column="3"
+                                    Style="{DynamicResource RibbonKit.Styles.MessageBar.ActionButton}"
                                     MinHeight="26"
                                     Margin="10,3"
                                     Padding="9,2"
                                     VerticalAlignment="Center"
                                     Content="{TemplateBinding ActionContent}"
                                     Command="{TemplateBinding ActionCommand}"
-                                    CommandParameter="{TemplateBinding ActionCommandParameter}">
-                                <Button.Style>
-                                    <Style TargetType="{x:Type Button}">
-                                        <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Control.SurfaceBackground}" />
-                                        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
-                                        <Setter Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}" />
-                                        <Setter Property="BorderThickness" Value="1" />
-                                        <Setter Property="Template">
-                                            <Setter.Value>
-                                                <ControlTemplate TargetType="{x:Type Button}">
-                                                    <Border x:Name="Chrome"
-                                                            Background="{TemplateBinding Background}"
-                                                            BorderBrush="{TemplateBinding BorderBrush}"
-                                                            BorderThickness="{TemplateBinding BorderThickness}"
-                                                            CornerRadius="{DynamicResource RibbonKit.Metrics.SmallControlCornerRadius}">
-                                                        <ContentPresenter Margin="{TemplateBinding Padding}"
-                                                                          HorizontalAlignment="Center"
-                                                                          VerticalAlignment="Center" />
-                                                    </Border>
-                                                    <ControlTemplate.Triggers>
-                                                        <Trigger Property="IsMouseOver" Value="True">
-                                                            <Setter TargetName="Chrome" Property="Background"
-                                                                    Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
-                                                        </Trigger>
-                                                        <Trigger Property="IsPressed" Value="True">
-                                                            <Setter TargetName="Chrome" Property="Background"
-                                                                    Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
-                                                        </Trigger>
-                                                        <Trigger Property="IsEnabled" Value="False">
-                                                            <Setter Property="Opacity" Value="0.45" />
-                                                        </Trigger>
-                                                    </ControlTemplate.Triggers>
-                                                </ControlTemplate>
-                                            </Setter.Value>
-                                        </Setter>
-                                    </Style>
-                                </Button.Style>
-                            </Button>
+                                    CommandParameter="{TemplateBinding ActionCommandParameter}" />
 
                             <Button x:Name="PART_CloseButton"
                                     Grid.Column="4"

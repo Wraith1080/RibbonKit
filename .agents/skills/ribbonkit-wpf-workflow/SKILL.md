@@ -25,6 +25,13 @@ Choose the narrowest shared location within the authorized scope. Update a test,
 Showcase scenario, and public documentation when they provide relevant coverage.
 Select the validation tier in `CONTRIBUTING.md` before running checks.
 
+For work first demonstrated in Showcase, identify which visuals and behaviors
+belong to RibbonKit controls. Make those reusable through shared templates,
+tokens, behavior or public extension points before treating the Showcase result
+as portable. Keep host-owned content and integrations in the app; give reusable
+host-dependent effects an optional library contract. Check a separate consumer
+without Showcase resources or helpers, and report any parity gap still open.
+
 WPF evidence needs the right surface:
 
 - Use the existing STA/Dispatcher test patterns for controls, popups, and deferred templates. Inspect realized template parts, resource lookup, and native scrolling when those cause the failure.

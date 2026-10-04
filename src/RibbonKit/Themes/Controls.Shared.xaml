@@ -27,6 +27,32 @@
          ============================================================ -->
     <BooleanToVisibilityConverter x:Key="RibbonKit.BoolToVis" />
 
+    <!-- Shared utility rims are paint only. Office keeps zero state opacity;
+         Crystal enables hover/pressed/checked rims through its token layer. -->
+    <Style x:Key="RibbonKit.UtilityRim" TargetType="{x:Type Border}">
+        <Setter Property="IsHitTestVisible" Value="False" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
+        <Setter Property="Opacity" Value="0" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource TemplatedParent}}" Value="True">
+                <Setter Property="Opacity" Value="{DynamicResource RibbonKit.Metrics.UtilityRimActiveOpacity}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding IsPressed, RelativeSource={RelativeSource TemplatedParent}}" Value="True">
+                <Setter Property="Opacity" Value="{DynamicResource RibbonKit.Metrics.UtilityRimActiveOpacity}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Control.PressedBorder}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+    <Style x:Key="RibbonKit.UtilityToggleRim" TargetType="{x:Type Border}" BasedOn="{StaticResource RibbonKit.UtilityRim}">
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource TemplatedParent}}" Value="True">
+                <Setter Property="Opacity" Value="{DynamicResource RibbonKit.Metrics.UtilityRimActiveOpacity}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
     <!-- Window buttons for a caption merged into the ribbon row (classic MDI's maximized child).
          Chrome matches the minimize chevron beside them — same TabStrip tokens — so the cluster
          reads as one control group and themes across all four generations with no new tokens.
@@ -42,12 +68,17 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type Button}">
-                    <Border x:Name="Chrome"
-                            Background="Transparent"
-                            CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
-                            SnapsToDevicePixels="True">
-                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                    </Border>
+                    <Grid>
+                        <Border x:Name="Chrome"
+                                Background="Transparent"
+                                CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <Border x:Name="CrystalUtilityRim" Style="{StaticResource RibbonKit.UtilityRim}"
+                                Margin="{Binding Margin, ElementName=Chrome}"
+                                CornerRadius="{Binding CornerRadius, ElementName=Chrome}" />
+                    </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="Chrome" Property="Background"
@@ -107,24 +138,29 @@
                                         <Setter Property="Template">
                                             <Setter.Value>
                                                 <ControlTemplate TargetType="{x:Type ToggleButton}">
-                                                    <Border x:Name="Chrome"
-                                                            Background="Transparent"
-                                                            CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
-                                                            SnapsToDevicePixels="True">
-                                                        <!-- Chevrons + a baseline bar: Office's
-                                                             "more commands" mark. -->
-                                                        <Grid Width="10" Height="10"
-                                                              HorizontalAlignment="Center"
-                                                              VerticalAlignment="Center">
-                                                            <Path x:Name="Chevron"
-                                                                  Data="M0.5,1 L4,4.5 L0.5,8 M4.5,1 L8,4.5 L4.5,8"
-                                                                  Stroke="{DynamicResource RibbonKit.Brushes.TabStrip.Foreground}"
-                                                                  StrokeThickness="1.2"
-                                                                  StrokeStartLineCap="Round"
-                                                                  StrokeEndLineCap="Round"
-                                                                  VerticalAlignment="Top" />
-                                                        </Grid>
-                                                    </Border>
+                                                    <Grid>
+                                                        <Border x:Name="Chrome"
+                                                                Background="Transparent"
+                                                                CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                                                SnapsToDevicePixels="True">
+                                                            <!-- Chevrons + a baseline bar: Office's
+                                                                 "more commands" mark. -->
+                                                            <Grid Width="10" Height="10"
+                                                                  HorizontalAlignment="Center"
+                                                                  VerticalAlignment="Center">
+                                                                <Path x:Name="Chevron"
+                                                                      Data="M0.5,1 L4,4.5 L0.5,8 M4.5,1 L8,4.5 L4.5,8"
+                                                                      Stroke="{DynamicResource RibbonKit.Brushes.TabStrip.Foreground}"
+                                                                      StrokeThickness="1.2"
+                                                                      StrokeStartLineCap="Round"
+                                                                      StrokeEndLineCap="Round"
+                                                                      VerticalAlignment="Top" />
+                                                            </Grid>
+                                                        </Border>
+                                                        <Border x:Name="CrystalUtilityRim" Style="{StaticResource RibbonKit.UtilityToggleRim}"
+                                                                Margin="{Binding Margin, ElementName=Chrome}"
+                                                                CornerRadius="{Binding CornerRadius, ElementName=Chrome}" />
+                                                    </Grid>
                                                     <ControlTemplate.Triggers>
                                                         <Trigger Property="IsMouseOver" Value="True">
                                                             <Setter TargetName="Chrome" Property="Background"
@@ -242,6 +278,7 @@
     </Style>
 
     <Style x:Key="RibbonKit.ScrollLeftButton" TargetType="{x:Type RepeatButton}">
+        <Setter Property="controls:UtilityChrome.UseScrollMaterial" Value="{DynamicResource RibbonKit.Metrics.UseUtilityScrollMaterial}" />
         <Setter Property="Width" Value="22" />
         <Setter Property="Focusable" Value="False" />
         <Setter Property="Delay" Value="300" />
@@ -251,65 +288,83 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type RepeatButton}">
-                    <Border x:Name="Chrome"
-                            Background="{TemplateBinding Background}"
-                            BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}"
-                            BorderThickness="1"
-                            CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
-                            Margin="2"
-                            SnapsToDevicePixels="True">
-                        <Path Data="M4.5,0 L0,4.5 L4.5,9"
-                              Stroke="{DynamicResource RibbonKit.Brushes.Text.Primary}"
-                              StrokeThickness="1.6"
-                              StrokeStartLineCap="Round"
-                              StrokeEndLineCap="Round"
-                              HorizontalAlignment="Center"
-                              VerticalAlignment="Center" />
-                    </Border>
+                    <Grid>
+                        <Border x:Name="Chrome"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}"
+                                BorderThickness="1"
+                                CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                Margin="2"
+                                SnapsToDevicePixels="True">
+                            <Path Data="M4.5,0 L0,4.5 L4.5,9"
+                                  Stroke="{DynamicResource RibbonKit.Brushes.Text.Primary}"
+                                  StrokeThickness="1.6"
+                                  StrokeStartLineCap="Round"
+                                  StrokeEndLineCap="Round"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center" />
+                        </Border>
+                        <Border x:Name="CrystalUtilityRim" Style="{StaticResource RibbonKit.UtilityRim}"
+                                Margin="{Binding Margin, ElementName=Chrome}"
+                                CornerRadius="{Binding CornerRadius, ElementName=Chrome}" />
+                    </Grid>
                     <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Chrome" Property="Background"
-                                    Value="{DynamicResource RibbonKit.Brushes.TabStrip.ControlHoverBackground}" />
-                        </Trigger>
-                        <!-- Pressed after hover, so the held state wins. -->
-                        <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="Chrome" Property="Background"
-                                    Value="{DynamicResource RibbonKit.Brushes.TabStrip.ControlPressedBackground}" />
+                        <Trigger Property="Tag" Value="BodyScroll">
+                            <Setter TargetName="Chrome" Property="CornerRadius"
+                                    Value="{DynamicResource RibbonKit.Metrics.BodyScrollButtonCornerRadius}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+        <Style.Triggers>
+            <Trigger Property="controls:UtilityChrome.UseScrollMaterial" Value="True">
+                <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.TabStrip.ControlHoverBackground}" />
+            </Trigger>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.TabStrip.ControlHoverBackground}" />
+            </Trigger>
+            <MultiTrigger>
+                <MultiTrigger.Conditions>
+                    <Condition Property="IsMouseOver" Value="True" />
+                    <Condition Property="controls:UtilityChrome.UseScrollMaterial" Value="True" />
+                </MultiTrigger.Conditions>
+                <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.TabStrip.ScrollButtonBackground}" />
+            </MultiTrigger>
+            <Trigger Property="IsPressed" Value="True">
+                <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.TabStrip.ControlPressedBackground}" />
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
     <Style x:Key="RibbonKit.ScrollRightButton" TargetType="{x:Type RepeatButton}" BasedOn="{StaticResource RibbonKit.ScrollLeftButton}">
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type RepeatButton}">
-                    <Border x:Name="Chrome"
-                            Background="{TemplateBinding Background}"
-                            BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}"
-                            BorderThickness="1"
-                            CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
-                            Margin="2"
-                            SnapsToDevicePixels="True">
-                        <Path Data="M0,0 L4.5,4.5 L0,9"
-                              Stroke="{DynamicResource RibbonKit.Brushes.Text.Primary}"
-                              StrokeThickness="1.6"
-                              StrokeStartLineCap="Round"
-                              StrokeEndLineCap="Round"
-                              HorizontalAlignment="Center"
-                              VerticalAlignment="Center" />
-                    </Border>
+                    <Grid>
+                        <Border x:Name="Chrome"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}"
+                                BorderThickness="1"
+                                CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                Margin="2"
+                                SnapsToDevicePixels="True">
+                            <Path Data="M0,0 L4.5,4.5 L0,9"
+                                  Stroke="{DynamicResource RibbonKit.Brushes.Text.Primary}"
+                                  StrokeThickness="1.6"
+                                  StrokeStartLineCap="Round"
+                                  StrokeEndLineCap="Round"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center" />
+                        </Border>
+                        <Border x:Name="CrystalUtilityRim" Style="{StaticResource RibbonKit.UtilityRim}"
+                                Margin="{Binding Margin, ElementName=Chrome}"
+                                CornerRadius="{Binding CornerRadius, ElementName=Chrome}" />
+                    </Grid>
                     <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Chrome" Property="Background"
-                                    Value="{DynamicResource RibbonKit.Brushes.TabStrip.ControlHoverBackground}" />
-                        </Trigger>
-                        <!-- Pressed after hover, so the held state wins. -->
-                        <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="Chrome" Property="Background"
-                                    Value="{DynamicResource RibbonKit.Brushes.TabStrip.ControlPressedBackground}" />
+                        <Trigger Property="Tag" Value="BodyScroll">
+                            <Setter TargetName="Chrome" Property="CornerRadius"
+                                    Value="{DynamicResource RibbonKit.Metrics.BodyScrollButtonCornerRadius}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -317,4 +372,10 @@
         </Setter>
     </Style>
 
+    <Style x:Key="RibbonKit.TabScrollLeftButton" TargetType="{x:Type RepeatButton}" BasedOn="{StaticResource RibbonKit.ScrollLeftButton}">
+        <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.TabStrip.ScrollButtonBackground}" />
+    </Style>
+    <Style x:Key="RibbonKit.TabScrollRightButton" TargetType="{x:Type RepeatButton}" BasedOn="{StaticResource RibbonKit.ScrollRightButton}">
+        <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.TabStrip.ScrollButtonBackground}" />
+    </Style>
 </ResourceDictionary>

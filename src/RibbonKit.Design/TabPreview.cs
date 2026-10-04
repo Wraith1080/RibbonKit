@@ -26,6 +26,7 @@ internal enum ThemePreview
     Office2013 = 2,
     Office2010 = 3,
     Office2007 = 4,
+    CrystalLight = 5,
 }
 
 /// <summary>

@@ -17,14 +17,13 @@
 
     <Style x:Key="OptionsDialogActionButtonStyle" TargetType="{x:Type Button}">
         <Setter Property="MinWidth" Value="88" />
+        <Setter Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.OptionsDialog.ActionMinHeight}" />
         <Setter Property="Padding" Value="14,6" />
         <Setter Property="Focusable" Value="True" />
         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
         <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Dialog.ActionBackground}" />
         <Setter Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Dialog.ActionBorder}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="controls:RibbonScrollBar.ButtonCornerRadius"
-                Value="{DynamicResource RibbonKit.Metrics.ScrollBar.ButtonCornerRadius}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type Button}">
@@ -32,7 +31,7 @@
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="{Binding Path=(controls:RibbonScrollBar.ButtonCornerRadius), RelativeSource={RelativeSource TemplatedParent}}"
+                            CornerRadius="{DynamicResource RibbonKit.Metrics.OptionsDialog.ActionCornerRadius}"
                             SnapsToDevicePixels="True">
                         <ContentPresenter Margin="{TemplateBinding Padding}"
                                           HorizontalAlignment="Center"
@@ -42,7 +41,7 @@
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter Property="Background"
-                                    Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
+                                    Value="{DynamicResource RibbonKit.Brushes.OptionsDialog.ActionHoverBackground}" />
                             <Setter Property="BorderBrush"
                                     Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
                         </Trigger>
@@ -51,6 +50,9 @@
                                     Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
                             <Setter Property="BorderBrush"
                                     Value="{DynamicResource RibbonKit.Brushes.Control.PressedBorder}" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Accent}" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.4" />
@@ -73,7 +75,8 @@
              via ThemeManager). -->
         <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Dialog.PrimaryBackground}" />
         <Setter Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Dialog.PrimaryBorder}" />
-        <Setter Property="Foreground" Value="#FFFFFF" />
+        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.OptionsDialog.PrimaryForeground}" />
+        <Setter Property="FontWeight" Value="{DynamicResource RibbonKit.Metrics.OptionsDialog.PrimaryFontWeight}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type Button}">
@@ -84,17 +87,21 @@
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="1"
-                            CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                            CornerRadius="{DynamicResource RibbonKit.Metrics.OptionsDialog.PrimaryCornerRadius}"
                             SnapsToDevicePixels="True">
                         <Grid>
                             <!-- Inner light rim just inside the outer border (glass look; 2010 only). -->
                             <Border BorderBrush="{DynamicResource RibbonKit.Brushes.Control.InnerGlow}"
                                     BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
-                                    CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}" />
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.OptionsDialog.PrimaryCornerRadius}" />
                             <!-- Wash fills the Chrome, over the accent fill, under the label. -->
                             <Border x:Name="Wash"
-                                    CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.OptionsDialog.PrimaryCornerRadius}"
                                     Opacity="0" />
+                            <Border Background="{DynamicResource RibbonKit.Brushes.Accent}"
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.OptionsDialog.PrimaryCornerRadius}"
+                                    Opacity="{DynamicResource RibbonKit.Metrics.OptionsDialog.PrimaryTintOpacity}"
+                                    IsHitTestVisible="False" />
                             <ContentPresenter Margin="{TemplateBinding Padding}"
                                               HorizontalAlignment="Center"
                                               VerticalAlignment="Center" />
@@ -102,12 +109,15 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Wash" Property="Background" Value="#FFFFFF" />
-                            <Setter TargetName="Wash" Property="Opacity" Value="0.22" />
+                            <Setter TargetName="Wash" Property="Background" Value="{DynamicResource RibbonKit.Brushes.OptionsDialog.PrimaryHoverWash}" />
+                            <Setter TargetName="Wash" Property="Opacity" Value="{DynamicResource RibbonKit.Metrics.OptionsDialog.PrimaryHoverOpacity}" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="Wash" Property="Background" Value="#000000" />
-                            <Setter TargetName="Wash" Property="Opacity" Value="0.16" />
+                            <Setter TargetName="Wash" Property="Background" Value="{DynamicResource RibbonKit.Brushes.OptionsDialog.PrimaryPressedWash}" />
+                            <Setter TargetName="Wash" Property="Opacity" Value="{DynamicResource RibbonKit.Metrics.OptionsDialog.PrimaryPressedOpacity}" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.OptionsDialog.PrimaryFocusBorder}" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.4" />
@@ -123,8 +133,8 @@
     <Style x:Key="OptionsDialogReorderButtonStyle"
            TargetType="{x:Type Button}"
            BasedOn="{StaticResource OptionsDialogActionButtonStyle}">
-        <Setter Property="MinWidth" Value="40" />
-        <Setter Property="Padding" Value="6" />
+        <Setter Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.OptionsDialog.ReorderMinWidth}" />
+        <Setter Property="Padding" Value="{DynamicResource RibbonKit.Metrics.OptionsDialog.ReorderPadding}" />
         <Setter Property="FontSize" Value="11" />
     </Style>
 
@@ -135,13 +145,12 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type controls:RibbonOptionsPage}">
-                    <Grid Background="Transparent">
+                    <Grid Background="Transparent" Margin="{DynamicResource RibbonKit.Metrics.OptionsDialog.NavigationMargin}">
                         <Border x:Name="Chrome"
                                 Background="Transparent"
                                 BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
                                 CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
-                                Padding="14,8"
-                                Margin="8,1"
+                                Padding="{DynamicResource RibbonKit.Metrics.OptionsDialog.NavigationPadding}"
                                 SnapsToDevicePixels="True">
                             <ContentPresenter ContentSource="Header"
                                               TextElement.Foreground="{TemplateBinding Foreground}"
@@ -151,30 +160,42 @@
                                    Width="3"
                                    RadiusX="1.5"
                                    RadiusY="1.5"
-                                   Margin="8,9"
+                                   Margin="0,8"
                                    HorizontalAlignment="Left"
                                    Fill="{DynamicResource RibbonKit.Brushes.Accent}"
+                                   Opacity="{DynamicResource RibbonKit.Metrics.OptionsDialog.SideMarkerOpacity}"
                                    Visibility="Collapsed" />
+                        <Rectangle x:Name="BottomMarker" Width="36" Height="3"
+                                   RadiusX="1.5" RadiusY="1.5" Margin="0,0,0,3"
+                                   VerticalAlignment="Bottom" HorizontalAlignment="Center"
+                                   Fill="{DynamicResource RibbonKit.Brushes.Tab.SelectedUnderline}"
+                                   Opacity="{DynamicResource RibbonKit.Metrics.OptionsDialog.BottomMarkerOpacity}"
+                                   Visibility="Collapsed" IsHitTestVisible="False" />
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="Chrome" Property="Background"
-                                    Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
+                                    Value="{DynamicResource RibbonKit.Brushes.OptionsDialog.NavigationHoverBackground}" />
                             <Setter TargetName="Chrome" Property="BorderBrush"
-                                    Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
+                                    Value="{DynamicResource RibbonKit.Brushes.OptionsDialog.NavigationHoverBorder}" />
                             <Setter TargetName="Chrome" Property="BorderThickness"
                                     Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
                         </Trigger>
                         <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType={x:Type ListBoxItem}}}"
                                      Value="True">
                             <Setter TargetName="Chrome" Property="Background"
-                                    Value="{DynamicResource RibbonKit.Brushes.Control.CheckedBackground}" />
+                                    Value="{DynamicResource RibbonKit.Brushes.OptionsDialog.NavigationSelectedBackground}" />
                             <Setter TargetName="Chrome" Property="BorderBrush"
-                                    Value="{DynamicResource RibbonKit.Brushes.Control.CheckedBorder}" />
+                                    Value="{DynamicResource RibbonKit.Brushes.OptionsDialog.NavigationSelectedBorder}" />
                             <Setter TargetName="Chrome" Property="BorderThickness"
                                     Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
                             <Setter TargetName="SelectedBar" Property="Visibility" Value="Visible" />
-                            <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Accent}" />
+                            <Setter TargetName="BottomMarker" Property="Visibility" Value="Visible" />
+                            <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.OptionsDialog.NavigationSelectedForeground}" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding IsKeyboardFocusWithin, RelativeSource={RelativeSource AncestorType={x:Type ListBoxItem}}}"
+                                     Value="True">
+                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Accent}" />
                         </DataTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -303,6 +324,7 @@
                                                     <!-- The page control draws its own hover/selection;
                                                          the container contributes no chrome. -->
                                                     <Style TargetType="{x:Type ListBoxItem}">
+                                                        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
                                                         <Setter Property="Template">
                                                             <Setter.Value>
                                                                 <ControlTemplate TargetType="{x:Type ListBoxItem}">

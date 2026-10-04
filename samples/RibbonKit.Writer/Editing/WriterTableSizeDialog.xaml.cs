@@ -13,6 +13,7 @@ public partial class WriterTableSizeDialog : Window
     public WriterTableSizeDialog(int rows = 4, int columns = 4)
     {
         InitializeComponent();
+        RibbonKit.Writer.Appearance.WriterDialogAppearance.Initialize(this);
         RowsBox.Text = rows.ToString(CultureInfo.CurrentCulture);
         ColumnsBox.Text = columns.ToString(CultureInfo.CurrentCulture);
         _initialized = true;

@@ -762,6 +762,7 @@ internal sealed class RibbonEditorWindow : Window
         AddThemePreview("Office 2013", ThemePreview.Office2013);
         AddThemePreview("Office 2010", ThemePreview.Office2010);
         AddThemePreview("Office 2007", ThemePreview.Office2007);
+        AddThemePreview("Crystal Light", ThemePreview.CrystalLight);
 
         ThemePreview theme = TabPreviewCoordinator.TryGetTheme(_ribbon, out ThemePreview current)
             ? current

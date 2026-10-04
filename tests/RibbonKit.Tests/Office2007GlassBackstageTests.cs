@@ -201,7 +201,7 @@ public class Office2007GlassBackstageTests
             "RibbonKit.Showcase",
             "MainWindow.xaml"));
         XElement choice = Assert.Single(
-            showcase.Descendants(RibbonKit + "RibbonButton"),
+            showcase.Descendants(RibbonKit + "RibbonMenuItem"),
             element => (string?)element.Attribute("Tag") == "Glass2007");
         Assert.Equal("2007 Modern", (string?)choice.Attribute("Header"));
 

@@ -11,6 +11,41 @@ namespace RibbonKit.Writer.Tests.Appearance;
 
 public sealed class WriterAppearancePreferencesTests
 {
+    [Theory]
+    [InlineData(false, RibbonBackstageDesign.CrystalSidebar)]
+    [InlineData(true, RibbonBackstageDesign.CrystalFloating)]
+    public void CrystalSettingsRoundTripAndRestartWithCompatibleDefaults(bool dark, RibbonBackstageDesign design)
+    {
+        var expected = new WriterAppearancePreferences
+        {
+            Theme = RibbonTheme.CrystalLight, DarkPalette = dark, BackstageDesign = design,
+            Accent = "#FF7030A0", GlassSurfaces = true, CapturedPopupBackdrop = true,
+        };
+        Assert.True(WriterAppearancePreferencesSerializer.TryDeserialize(
+            WriterAppearancePreferencesSerializer.Serialize(expected), out var actual));
+        Assert.Equal(expected, actual);
+        Assert.Equal(RibbonBackstageDesign.CrystalSidebar, WriterAppearanceCompatibility.Normalize(
+            expected with { BackstageDesign = RibbonBackstageDesign.Modern }).BackstageDesign);
+        Assert.Equal(RibbonBackstageDesign.Modern, WriterAppearanceCompatibility.Normalize(
+            expected with { Theme = RibbonTheme.Office2024 }).BackstageDesign);
+        Assert.Equal(RibbonWindowFrameAppearance.Default, WriterAppearanceCompatibility.Normalize(
+            expected with { FrameAppearance = RibbonWindowFrameAppearance.Office2007Aero }).FrameAppearance);
+        Assert.False(WriterAppearanceCompatibility.CanUseBackstageTranslucency(expected, false));
+        Assert.Equal(RibbonApplicationButtonShape.Tab, actual.ApplicationButtonShape);
+        Assert.False(new WriterAppearancePreferences().GlassSurfaces);
+        Assert.False(new WriterAppearancePreferences().CapturedPopupBackdrop);
+    }
+
+    [Fact]
+    public void ExistingVersionOneSettingsKeepOptionalEffectsDisabled()
+    {
+        Assert.True(WriterAppearancePreferencesSerializer.TryDeserialize(
+            "{\"SchemaVersion\":1,\"Theme\":\"Office2010\",\"BackstageDesign\":\"Classic2010\"}", out var restored));
+        Assert.Equal(RibbonTheme.Office2010, restored.Theme);
+        Assert.False(restored.GlassSurfaces);
+        Assert.False(restored.CapturedPopupBackdrop);
+    }
+
     [Fact]
     public void RulerRevealsMaterialOnlyForActiveOffice2024Backdrop()
     {
@@ -30,6 +65,12 @@ public sealed class WriterAppearancePreferencesTests
             RibbonTheme.Office2024,
             isBackdropActive: true,
             highContrast: true));
+        Assert.True(MainWindow.ShouldUseTransparentRulerSurface(
+            RibbonTheme.CrystalLight, isBackdropActive: true, highContrast: false));
+        Assert.False(MainWindow.ShouldUseTransparentRulerSurface(
+            RibbonTheme.CrystalLight, isBackdropActive: false, highContrast: false));
+        Assert.False(MainWindow.ShouldUseTransparentRulerSurface(
+            RibbonTheme.CrystalLight, isBackdropActive: true, highContrast: true));
     }
 
     [Fact]

@@ -8,6 +8,16 @@ namespace RibbonKit.Tests;
 public class ShowcaseAppearancePreferencesTests
 {
     [Fact]
+    public void Crystal_light_selection_round_trips_as_a_theme_preference()
+    {
+        string json = ShowcaseAppearancePreferencesSerializer.Serialize(
+            new ShowcaseAppearancePreferences { Theme = RibbonTheme.CrystalLight });
+
+        Assert.True(ShowcaseAppearancePreferencesSerializer.TryDeserialize(json, out var restored));
+        Assert.Equal(RibbonTheme.CrystalLight, restored.Theme);
+    }
+
+    [Fact]
     public void Round_trip_preserves_every_appearance_preference()
     {
         var source = new ShowcaseAppearancePreferences
@@ -23,6 +33,7 @@ public class ShowcaseAppearancePreferencesTests
             BackstageTranslucent = true,
             FileSurface = ShowcaseFileSurface.ApplicationMenu,
             Backdrop = ShowcaseBackdropPreference.Acrylic,
+            GlassTreatment = true,
         };
 
         string json = ShowcaseAppearancePreferencesSerializer.Serialize(source);
@@ -40,6 +51,7 @@ public class ShowcaseAppearancePreferencesTests
         Assert.True(restored.BackstageTranslucent);
         Assert.Equal(ShowcaseFileSurface.ApplicationMenu, restored.FileSurface);
         Assert.Equal(ShowcaseBackdropPreference.Acrylic, restored.Backdrop);
+        Assert.True(restored.GlassTreatment);
 
         Assert.Contains("\"theme\": \"Office2010\"", json, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("\"backdrop\": \"Acrylic\"", json, StringComparison.OrdinalIgnoreCase);
@@ -66,6 +78,7 @@ public class ShowcaseAppearancePreferencesTests
         Assert.False(defaults.BackstageTranslucent);
         Assert.Equal(ShowcaseFileSurface.Backstage, defaults.FileSurface);
         Assert.Equal(ShowcaseBackdropPreference.None, defaults.Backdrop);
+        Assert.Null(defaults.GlassTreatment);
     }
 
     [Theory]
@@ -156,6 +169,19 @@ public class ShowcaseAppearancePreferencesTests
         Assert.True(ShowcaseAppearancePreferencesSerializer.TryDeserialize(json, out var restored));
         Assert.Equal(RibbonBackstageDesign.Classic2007, restored.BackstageDesign);
         Assert.True(restored.BackstageTranslucent);
+    }
+
+    [Theory]
+    [InlineData(RibbonBackstageDesign.CrystalSidebar)]
+    [InlineData(RibbonBackstageDesign.CrystalFloating)]
+    public void Crystal_backstage_layout_choice_round_trips(RibbonBackstageDesign design)
+    {
+        var source = new ShowcaseAppearancePreferences { BackstageDesign = design };
+
+        string json = ShowcaseAppearancePreferencesSerializer.Serialize(source);
+
+        Assert.True(ShowcaseAppearancePreferencesSerializer.TryDeserialize(json, out var restored));
+        Assert.Equal(design, restored.BackstageDesign);
     }
 
     [Theory]

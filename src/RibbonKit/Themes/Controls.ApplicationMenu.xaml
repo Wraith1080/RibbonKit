@@ -3,6 +3,8 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="clr-namespace:RibbonKit.Controls">
 
+    <controls:ApplicationMenuGeometryConverter x:Key="ApplicationMenuGeometry" />
+
     <!-- Part of the shared RibbonKit control-template dictionary; merged by Office2024.xaml.
          RibbonApplicationMenu and its three companions. Colours/metrics come from
          Tokens.Office20XX.xaml via {DynamicResource}.
@@ -48,6 +50,7 @@
          RibbonApplicationMenuItem — one row of the left command column
          ============================================================ -->
     <Style TargetType="{x:Type controls:RibbonApplicationMenuItem}">
+        <Setter Property="Margin" Value="{DynamicResource RibbonKit.Metrics.ApplicationMenuItemMargin}" />
         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.ApplicationMenu.Foreground}" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
@@ -57,90 +60,99 @@
                     <!-- Background=Transparent, not null: the row's IsMouseOver is what lights BOTH
                          halves, so the gaps between the two buttons must be hit-testable too or the
                          highlight would blink off as the pointer crossed the hairline. -->
-                    <Grid x:Name="Root"
-                          Height="{DynamicResource RibbonKit.Metrics.ApplicationMenuItemHeight}"
-                          Background="Transparent"
-                          SnapsToDevicePixels="True">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
+                    <Border x:Name="RowShape" CornerRadius="{DynamicResource RibbonKit.Metrics.ApplicationMenuItemClipCornerRadius}">
+                        <Grid x:Name="Root"
+                              Height="{DynamicResource RibbonKit.Metrics.ApplicationMenuItemHeight}"
+                              Background="Transparent"
+                              SnapsToDevicePixels="True">
+                            <Grid.Clip>
+                                <MultiBinding Converter="{StaticResource ApplicationMenuGeometry}">
+                                    <Binding Path="ActualWidth" RelativeSource="{RelativeSource Self}" />
+                                    <Binding Path="ActualHeight" RelativeSource="{RelativeSource Self}" />
+                                    <Binding Path="CornerRadius" ElementName="RowShape" />
+                                </MultiBinding>
+                            </Grid.Clip>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
 
-                        <!-- THE TWO FILLS. They are independent because a split row whose pane is
-                             being used keeps its command half dimmed and its arrow fully active. A
-                             non-split dropdown uses both together and reads as one merged surface. -->
-                        <Border x:Name="MainFill"
-                                Grid.Column="0"
-                                Opacity="0"
-                                Background="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}">
-                            <Border BorderBrush="{DynamicResource RibbonKit.Brushes.Control.InnerGlow}"
-                                    BorderThickness="1,1,0,1" />
-                        </Border>
-                        <Border x:Name="ArrowFill"
-                                Grid.Column="1"
-                                Opacity="0"
-                                Width="{DynamicResource RibbonKit.Metrics.ApplicationMenuArrowWidth}"
-                                Background="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}">
-                            <Border BorderBrush="{DynamicResource RibbonKit.Brushes.Control.InnerGlow}"
-                                    BorderThickness="0,1,1,1" />
-                        </Border>
-
-                        <!-- The hairline identifies the two click targets, so it appears while a
-                             split row is physically hovered or its pane is active. It is hidden
-                             only in the fully neutral resting state. -->
-                        <StackPanel x:Name="SplitLine"
+                            <!-- THE TWO FILLS. They are independent because a split row whose pane is
+                                 being used keeps its command half dimmed and its arrow fully active. A
+                                 non-split dropdown uses both together and reads as one merged surface. -->
+                            <Border x:Name="MainFill"
+                                    Grid.Column="0"
+                                    Opacity="0"
+                                    Background="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}">
+                                <Border BorderBrush="{DynamicResource RibbonKit.Brushes.Control.InnerGlow}"
+                                        BorderThickness="1,1,0,1" />
+                            </Border>
+                            <Border x:Name="ArrowFill"
                                     Grid.Column="1"
-                                    Orientation="Horizontal"
-                                    HorizontalAlignment="Left"
-                                    Margin="0,1"
-                                    Visibility="Collapsed">
-                            <Rectangle Width="1" Fill="{DynamicResource RibbonKit.Brushes.Control.InnerGlow}" />
-                            <Rectangle Width="1" Fill="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
-                        </StackPanel>
+                                    Opacity="0"
+                                    Width="{DynamicResource RibbonKit.Metrics.ApplicationMenuArrowWidth}"
+                                    Background="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}">
+                                <Border BorderBrush="{DynamicResource RibbonKit.Brushes.Control.InnerGlow}"
+                                        BorderThickness="0,1,1,1" />
+                            </Border>
 
-                        <!-- Full-row outline for ordinary hover and merged dropdown states. -->
-                        <Border x:Name="Outline"
-                                Grid.ColumnSpan="2"
-                                Opacity="0"
-                                IsHitTestVisible="False"
-                                BorderBrush="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}"
-                                BorderThickness="1"
-                                CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}" />
+                            <!-- The hairline identifies the two click targets, so it appears while a
+                                 split row is physically hovered or its pane is active. It is hidden
+                                 only in the fully neutral resting state. -->
+                            <StackPanel x:Name="SplitLine"
+                                        Grid.Column="1"
+                                        Orientation="Horizontal"
+                                        HorizontalAlignment="Left"
+                                        Margin="0,1"
+                                        Visibility="Collapsed">
+                                <Rectangle Width="1" Fill="{DynamicResource RibbonKit.Brushes.Control.InnerGlow}" />
+                                <Rectangle Width="1" Fill="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
+                            </StackPanel>
 
-                        <Button x:Name="PART_Primary"
-                                Grid.Column="0"
-                                Style="{StaticResource RibbonKit.ApplicationMenuHitArea}">
-                            <Grid Margin="8,0,6,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <Image Grid.Column="0"
-                                       Source="{TemplateBinding Icon}"
-                                       Width="32"
-                                       Height="32"
-                                       Stretch="Uniform"
-                                       VerticalAlignment="Center" />
-                                <ContentPresenter Grid.Column="1"
-                                                  ContentSource="Header"
-                                                  Margin="12,0,0,0"
-                                                  VerticalAlignment="Center" />
-                            </Grid>
-                        </Button>
+                            <!-- Full-row outline for ordinary hover and merged dropdown states. -->
+                            <Border x:Name="Outline"
+                                    Grid.ColumnSpan="2"
+                                    Opacity="0"
+                                    IsHitTestVisible="False"
+                                    BorderBrush="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}"
+                                    BorderThickness="1"
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}" />
 
-                        <!-- Focusable=False: two tab stops per row would double the length of the
-                             keyboard walk down the column for a control that hover already drives. -->
-                        <Button x:Name="PART_Arrow"
-                                Grid.Column="1"
-                                Focusable="False"
-                                Width="{DynamicResource RibbonKit.Metrics.ApplicationMenuArrowWidth}"
-                                Style="{StaticResource RibbonKit.ApplicationMenuHitArea}"
-                                HorizontalContentAlignment="Center"
-                                VerticalContentAlignment="Center">
-                            <Path Data="M0,0 L4.5,4.5 L0,9 Z"
-                                  Fill="{DynamicResource RibbonKit.Brushes.ApplicationMenu.SecondaryForeground}" />
-                        </Button>
-                    </Grid>
+                            <Button x:Name="PART_Primary"
+                                    Grid.Column="0"
+                                    Style="{StaticResource RibbonKit.ApplicationMenuHitArea}">
+                                <Grid Margin="8,0,6,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Image Grid.Column="0"
+                                           Source="{TemplateBinding Icon}"
+                                           Width="32"
+                                           Height="32"
+                                           Stretch="Uniform"
+                                           VerticalAlignment="Center" />
+                                    <ContentPresenter Grid.Column="1"
+                                                      ContentSource="Header"
+                                                      Margin="12,0,0,0"
+                                                      VerticalAlignment="Center" />
+                                </Grid>
+                            </Button>
+
+                            <!-- Focusable=False: two tab stops per row would double the length of the
+                                 keyboard walk down the column for a control that hover already drives. -->
+                            <Button x:Name="PART_Arrow"
+                                    Grid.Column="1"
+                                    Focusable="False"
+                                    Width="{DynamicResource RibbonKit.Metrics.ApplicationMenuArrowWidth}"
+                                    Style="{StaticResource RibbonKit.ApplicationMenuHitArea}"
+                                    HorizontalContentAlignment="Center"
+                                    VerticalContentAlignment="Center">
+                                <Path Data="M0,0 L4.5,4.5 L0,9 Z"
+                                      Fill="{DynamicResource RibbonKit.Brushes.ApplicationMenu.SecondaryForeground}" />
+                            </Button>
+                        </Grid>
+                    </Border>
                     <ControlTemplate.Triggers>
                         <!-- No pane: no arrow half at all, and the Auto column collapses to zero so
                              the command half runs the full width of the row. -->
@@ -266,6 +278,7 @@
          through Generic.xaml like every other control here, with no lookup at all.
          ============================================================ -->
     <Style TargetType="{x:Type controls:RibbonApplicationMenuSeparator}">
+        <Setter Property="Margin" Value="{DynamicResource RibbonKit.Metrics.ApplicationMenuSeparatorMargin}" />
         <Setter Property="Focusable" Value="False" />
         <Setter Property="IsTabStop" Value="False" />
         <Setter Property="Template">
@@ -441,136 +454,200 @@
                          invisible wrapper the surface lets the whole visible menu glide in while the
                          wrapper stays put. Painting the border here instead would have slid the
                          menu's insides against their own frame. (§3.42.) -->
-                    <Border x:Name="PART_Frame" Background="Transparent">
-                        <Border x:Name="Frame"
-                                Background="{DynamicResource RibbonKit.Brushes.ApplicationMenu.FrameBand}"
-                                BorderBrush="{DynamicResource RibbonKit.Brushes.ApplicationMenu.FrameBorder}"
-                                BorderThickness="1"
-                                CornerRadius="{DynamicResource RibbonKit.Metrics.ApplicationMenuCornerRadius}"
-                                Effect="{DynamicResource RibbonKit.Effects.ApplicationMenuShadow}"
-                                SnapsToDevicePixels="True">
-                            <Border BorderBrush="{DynamicResource RibbonKit.Brushes.ApplicationMenu.FrameRim}"
+                    <Border x:Name="PART_Frame" Background="Transparent"
+                            MaxHeight="{Binding Path=(controls:ApplicationMenuGeometryConverter.AvailableHeight), RelativeSource={RelativeSource TemplatedParent}}">
+                        <Grid x:Name="MenuSurface">
+                            <Grid x:Name="OutsideShadow" IsHitTestVisible="False"
+                                  Visibility="{DynamicResource RibbonKit.Visibilities.ApplicationMenuOutsideShadow}">
+                                <Grid.Clip>
+                                    <MultiBinding Converter="{StaticResource ApplicationMenuGeometry}" ConverterParameter="Outside">
+                                        <Binding Path="ActualWidth" ElementName="Frame" />
+                                        <Binding Path="ActualHeight" ElementName="Frame" />
+                                        <Binding Path="CornerRadius" ElementName="Frame" />
+                                        <Binding Path="Effect.BlurRadius" ElementName="ShadowCaster" />
+                                        <Binding Path="Effect.ShadowDepth" ElementName="ShadowCaster" />
+                                    </MultiBinding>
+                                </Grid.Clip>
+                                <Border x:Name="ShadowCaster"
+                                        Background="{DynamicResource RibbonKit.Brushes.ApplicationMenu.ShadowCaster}"
+                                        CornerRadius="{Binding CornerRadius, ElementName=Frame}"
+                                        Effect="{DynamicResource RibbonKit.Effects.ApplicationMenuShadow}" />
+                            </Grid>
+                            <Border x:Name="Frame"
+                                    Background="{DynamicResource RibbonKit.Brushes.ApplicationMenu.FrameBand}"
+                                    BorderBrush="{DynamicResource RibbonKit.Brushes.ApplicationMenu.FrameBorder}"
                                     BorderThickness="1"
-                                    CornerRadius="{DynamicResource RibbonKit.Metrics.ApplicationMenuInnerCornerRadius}">
-                                <Grid>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="*" />
-                                        <RowDefinition Height="Auto" />
-                                    </Grid.RowDefinitions>
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.ApplicationMenuCornerRadius}"
+                                    Effect="{DynamicResource RibbonKit.Effects.ApplicationMenuShadow}"
+                                    SnapsToDevicePixels="True">
+                                <Border BorderBrush="{DynamicResource RibbonKit.Brushes.ApplicationMenu.FrameRim}"
+                                        BorderThickness="1"
+                                        CornerRadius="{DynamicResource RibbonKit.Metrics.ApplicationMenuInnerCornerRadius}">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="*" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
 
-                                    <!-- Top glass band. Taller than the 3px sides because the orb
-                                         sits half inside it — that is what it is FOR. -->
-                                    <Border x:Name="TopBand"
-                                            Grid.Row="0"
-                                            Height="{DynamicResource RibbonKit.Metrics.ApplicationMenuTopBandHeight}"
-                                            CornerRadius="{DynamicResource RibbonKit.Metrics.ApplicationMenuTopBandCornerRadius}"
-                                            Background="{DynamicResource RibbonKit.Brushes.ApplicationMenu.TopBandBackground}" />
+                                        <!-- Top glass band. Taller than the 3px sides because the orb
+                                             sits half inside it — that is what it is FOR. -->
+                                        <Border x:Name="TopBand"
+                                                Grid.Row="0"
+                                                Height="{DynamicResource RibbonKit.Metrics.ApplicationMenuTopBandHeight}"
+                                                CornerRadius="{DynamicResource RibbonKit.Metrics.ApplicationMenuTopBandCornerRadius}"
+                                                Background="{DynamicResource RibbonKit.Brushes.ApplicationMenu.TopBandBackground}" />
 
-                                    <Border Grid.Row="1"
-                                            Margin="3,0,3,0"
-                                            BorderBrush="{DynamicResource RibbonKit.Brushes.ApplicationMenu.FrameRim}"
-                                            BorderThickness="1">
-                                        <Border BorderBrush="{DynamicResource RibbonKit.Brushes.ApplicationMenu.FrameBorder}"
+                                        <Border x:Name="ContentRim" Grid.Row="1"
+                                                Margin="3,0,3,0"
+                                                CornerRadius="{DynamicResource RibbonKit.Metrics.ApplicationMenuContentRimCornerRadius}"
+                                                BorderBrush="{DynamicResource RibbonKit.Brushes.ApplicationMenu.FrameRim}"
                                                 BorderThickness="1">
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto" />
-                                                    <ColumnDefinition Width="Auto" />
-                                                    <ColumnDefinition Width="Auto" />
-                                                </Grid.ColumnDefinitions>
+                                            <Border x:Name="ContentOutline"
+                                                    CornerRadius="{DynamicResource RibbonKit.Metrics.ApplicationMenuContentOutlineCornerRadius}"
+                                                    BorderBrush="{DynamicResource RibbonKit.Brushes.ApplicationMenu.InnerOutline}"
+                                                    BorderThickness="1">
+                                                <Grid x:Name="InnerContent">
+                                                    <Grid.Clip>
+                                                        <MultiBinding Converter="{StaticResource ApplicationMenuGeometry}" ConverterParameter="Inner">
+                                                            <Binding Path="ActualWidth" RelativeSource="{RelativeSource Self}" />
+                                                            <Binding Path="ActualHeight" RelativeSource="{RelativeSource Self}" />
+                                                            <Binding Path="CornerRadius" ElementName="ContentOutline" />
+                                                        </MultiBinding>
+                                                    </Grid.Clip>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
 
-                                                <Border Grid.Column="0"
-                                                        Width="{DynamicResource RibbonKit.Metrics.ApplicationMenuNavWidth}"
-                                                        Background="{DynamicResource RibbonKit.Brushes.ApplicationMenu.NavBackground}">
-                                                    <ItemsPresenter />
-                                                </Border>
+                                                    <Border x:Name="Navigation" Grid.Column="0"
+                                                            Width="{DynamicResource RibbonKit.Metrics.ApplicationMenuNavWidth}"
+                                                            Background="{DynamicResource RibbonKit.Brushes.ApplicationMenu.NavBackground}">
+                                                        <ScrollViewer x:Name="NavigationScroll"
+                                                                      VerticalScrollBarVisibility="Auto"
+                                                                      HorizontalScrollBarVisibility="Disabled"
+                                                                      HorizontalContentAlignment="Stretch"
+                                                                      VerticalContentAlignment="Stretch"
+                                                                      Focusable="False">
+                                                            <ItemsPresenter />
+                                                        </ScrollViewer>
+                                                    </Border>
 
-                                                <StackPanel Grid.Column="1" Orientation="Horizontal" SnapsToDevicePixels="True">
-                                                    <Rectangle Width="1"
-                                                               Fill="{DynamicResource RibbonKit.Brushes.ApplicationMenu.Separator}" />
-                                                    <Rectangle Width="1"
-                                                               Fill="{DynamicResource RibbonKit.Brushes.ApplicationMenu.SeparatorHighlight}" />
-                                                </StackPanel>
+                                                    <StackPanel Grid.Column="1" Orientation="Horizontal" SnapsToDevicePixels="True">
+                                                        <Rectangle Width="1"
+                                                                   Fill="{DynamicResource RibbonKit.Brushes.ApplicationMenu.Separator}" />
+                                                        <Rectangle Width="1"
+                                                                   Fill="{DynamicResource RibbonKit.Brushes.ApplicationMenu.SeparatorHighlight}" />
+                                                    </StackPanel>
 
-                                                <!-- PART_Pane remains a stable template contract,
-                                                     but pane ownership no longer reads hover from
-                                                     it: the separator gap and this surface are
-                                                     neutral territory once a nav row claims them. -->
-                                                <Border x:Name="PART_Pane"
-                                                        Grid.Column="2"
-                                                        Width="{DynamicResource RibbonKit.Metrics.ApplicationMenuPaneWidth}"
-                                                        Background="{DynamicResource RibbonKit.Brushes.ApplicationMenu.PaneBackground}">
-                                                    <Grid>
-                                                        <!-- The DEFAULT page renders BARE — no frame,
-                                                             no header band — which is how Office 2007
-                                                             draws Recent Documents. Its heading is
-                                                             part of the content. -->
-                                                        <ContentPresenter x:Name="DefaultPage"
-                                                                          Content="{TemplateBinding DefaultContent}"
-                                                                          Margin="10,8,10,10" />
+                                                    <!-- PART_Pane remains a stable template contract,
+                                                         but pane ownership no longer reads hover from
+                                                         it: the separator gap and this surface are
+                                                         neutral territory once a nav row claims them. -->
+                                                    <Border x:Name="PART_Pane"
+                                                            Grid.Column="2"
+                                                            controls:ApplicationMenuGeometryConverter.PaneMinimumWidth="{DynamicResource RibbonKit.Metrics.ApplicationMenuPaneMinimumWidth}"
+                                                            controls:ApplicationMenuGeometryConverter.PaneMaximumWidth="{DynamicResource RibbonKit.Metrics.ApplicationMenuPaneWidth}"
+                                                            controls:ApplicationMenuGeometryConverter.ViewportInset="{DynamicResource RibbonKit.Metrics.ApplicationMenuPaneViewportInset}"
+                                                            Background="{DynamicResource RibbonKit.Brushes.ApplicationMenu.PaneBackground}">
+                                                        <Border.Width>
+                                                            <MultiBinding Converter="{StaticResource ApplicationMenuGeometry}" ConverterParameter="PaneWidth">
+                                                                <Binding Path="(controls:ApplicationMenuGeometryConverter.AvailableWidth)" RelativeSource="{RelativeSource TemplatedParent}" />
+                                                                <Binding Path="Width" ElementName="Navigation" />
+                                                                <Binding Path="(controls:ApplicationMenuGeometryConverter.PaneMinimumWidth)" RelativeSource="{RelativeSource Self}" />
+                                                                <Binding Path="(controls:ApplicationMenuGeometryConverter.PaneMaximumWidth)" RelativeSource="{RelativeSource Self}" />
+                                                                <Binding Path="(controls:ApplicationMenuGeometryConverter.ViewportInset)" RelativeSource="{RelativeSource Self}" />
+                                                            </MultiBinding>
+                                                        </Border.Width>
+                                                        <Grid>
+                                                            <!-- The DEFAULT page renders BARE — no frame,
+                                                                 no header band — which is how Office 2007
+                                                                 draws Recent Documents. Its heading is
+                                                                 part of the content. -->
+                                                            <ScrollViewer x:Name="DefaultPaneScroll"
+                                                                          VerticalScrollBarVisibility="Auto"
+                                                                          HorizontalScrollBarVisibility="Disabled"
+                                                                          HorizontalContentAlignment="Stretch"
+                                                                          VerticalContentAlignment="Stretch"
+                                                                          Focusable="False">
+                                                                <ContentPresenter x:Name="DefaultPage"
+                                                                                  Content="{TemplateBinding DefaultContent}"
+                                                                                  Margin="10,8,10,10" />
+                                                            </ScrollViewer>
 
-                                                        <!-- A nav item's page is FRAMED and gets the
-                                                             shaded header band. -->
-                                                        <Border x:Name="ActivePage"
-                                                                Visibility="Collapsed"
-                                                                Margin="0,0,2,2"
-                                                                Background="{DynamicResource RibbonKit.Brushes.ApplicationMenu.PaneSurface}"
-                                                                BorderBrush="{DynamicResource RibbonKit.Brushes.ApplicationMenu.PaneBorder}"
-                                                                BorderThickness="1">
-                                                            <Grid>
-                                                                <Grid.RowDefinitions>
-                                                                    <RowDefinition Height="Auto" />
-                                                                    <RowDefinition Height="*" />
-                                                                </Grid.RowDefinitions>
-                                                                <Border x:Name="HeaderBand"
-                                                                        Grid.Row="0"
-                                                                        Padding="10,5"
-                                                                        Background="{DynamicResource RibbonKit.Brushes.ApplicationMenu.HeaderBackground}"
-                                                                        BorderBrush="{DynamicResource RibbonKit.Brushes.ApplicationMenu.Separator}"
-                                                                        BorderThickness="0,0,0,1">
-                                                                    <TextBlock Text="{TemplateBinding ActivePaneHeader}"
-                                                                               FontWeight="Bold"
-                                                                               TextTrimming="CharacterEllipsis"
-                                                                               Foreground="{DynamicResource RibbonKit.Brushes.ApplicationMenu.HeadingForeground}" />
-                                                                </Border>
-                                                                <!-- Shows the ACTIVE ITEM's Content.
-                                                                     The item is that content's
-                                                                     LOGICAL parent and never presents
-                                                                     it itself, so this presenter is
-                                                                     free to be its visual host —
-                                                                     the same split TabControl uses
-                                                                     for a TabItem's content. -->
-                                                                <ContentPresenter Grid.Row="1"
-                                                                                  Content="{TemplateBinding ActivePaneContent}"
-                                                                                  Margin="4" />
-                                                            </Grid>
-                                                        </Border>
-                                                    </Grid>
-                                                </Border>
-                                            </Grid>
+                                                            <!-- A nav item's page is FRAMED and gets the
+                                                                 shaded header band. -->
+                                                            <Border x:Name="ActivePage"
+                                                                    Visibility="Collapsed"
+                                                                    Margin="{DynamicResource RibbonKit.Metrics.ApplicationMenuActivePageMargin}"
+                                                                    Background="{DynamicResource RibbonKit.Brushes.ApplicationMenu.PaneSurface}"
+                                                                    BorderBrush="{DynamicResource RibbonKit.Brushes.ApplicationMenu.PaneBorder}"
+                                                                    BorderThickness="{DynamicResource RibbonKit.Metrics.ApplicationMenuActivePageBorderThickness}">
+                                                                <Grid>
+                                                                    <Grid.RowDefinitions>
+                                                                        <RowDefinition Height="Auto" />
+                                                                        <RowDefinition Height="*" />
+                                                                    </Grid.RowDefinitions>
+                                                                    <Border x:Name="HeaderBand"
+                                                                            Grid.Row="0"
+                                                                            Padding="10,5"
+                                                                            Background="{DynamicResource RibbonKit.Brushes.ApplicationMenu.HeaderBackground}"
+                                                                            BorderBrush="{DynamicResource RibbonKit.Brushes.ApplicationMenu.Separator}"
+                                                                            BorderThickness="0,0,0,1">
+                                                                        <TextBlock Text="{TemplateBinding ActivePaneHeader}"
+                                                                                   FontWeight="Bold"
+                                                                                   TextTrimming="CharacterEllipsis"
+                                                                                   Foreground="{DynamicResource RibbonKit.Brushes.ApplicationMenu.HeadingForeground}" />
+                                                                    </Border>
+                                                                    <!-- Shows the ACTIVE ITEM's Content.
+                                                                         The item is that content's
+                                                                         LOGICAL parent and never presents
+                                                                         it itself, so this presenter is
+                                                                         free to be its visual host —
+                                                                         the same split TabControl uses
+                                                                         for a TabItem's content. -->
+                                                                    <ScrollViewer x:Name="ActivePaneScroll" Grid.Row="1"
+                                                                                  VerticalScrollBarVisibility="Auto"
+                                                                                  HorizontalScrollBarVisibility="Disabled"
+                                                                                  HorizontalContentAlignment="Stretch"
+                                                                                  VerticalContentAlignment="Stretch"
+                                                                                  Focusable="False">
+                                                                        <ContentPresenter Content="{TemplateBinding ActivePaneContent}"
+                                                                                          Margin="4" />
+                                                                    </ScrollViewer>
+                                                                </Grid>
+                                                            </Border>
+                                                        </Grid>
+                                                    </Border>
+                                                </Grid>
+                                            </Border>
                                         </Border>
-                                    </Border>
 
-                                    <!-- Footer bar. It IS the frame's bottom band — there is no
-                                         separate border between the two, which is why it is a row of
-                                         this grid and not a child of the content frame. -->
-                                    <Border x:Name="FooterBand"
-                                            Grid.Row="2"
-                                            Height="{DynamicResource RibbonKit.Metrics.ApplicationMenuFooterHeight}"
-                                            CornerRadius="{DynamicResource RibbonKit.Metrics.ApplicationMenuFooterCornerRadius}"
-                                            Background="{DynamicResource RibbonKit.Brushes.ApplicationMenu.FooterBackground}">
-                                        <ContentPresenter Content="{TemplateBinding FooterContent}"
-                                                          HorizontalAlignment="Right"
-                                                          VerticalAlignment="Center"
-                                                          Margin="0,0,8,0" />
-                                    </Border>
-                                </Grid>
+                                        <!-- Footer bar. It IS the frame's bottom band — there is no
+                                             separate border between the two, which is why it is a row of
+                                             this grid and not a child of the content frame. -->
+                                        <Border x:Name="FooterBand"
+                                                Grid.Row="2"
+                                                Height="{DynamicResource RibbonKit.Metrics.ApplicationMenuFooterHeight}"
+                                                CornerRadius="{DynamicResource RibbonKit.Metrics.ApplicationMenuFooterCornerRadius}"
+                                                Background="{DynamicResource RibbonKit.Brushes.ApplicationMenu.FooterBackground}">
+                                            <ContentPresenter Content="{TemplateBinding FooterContent}"
+                                                              HorizontalAlignment="Right"
+                                                              VerticalAlignment="Center"
+                                                              Margin="0,0,8,0" />
+                                        </Border>
+                                    </Grid>
+                                </Border>
                             </Border>
-                        </Border>
+                        </Grid>
                     </Border>
                     <ControlTemplate.Triggers>
+                        <Trigger SourceName="OutsideShadow" Property="Visibility" Value="Visible">
+                            <Setter TargetName="Frame" Property="Effect" Value="{x:Null}" />
+                        </Trigger>
                         <Trigger Property="HasActivePane" Value="True">
+                            <Setter TargetName="DefaultPaneScroll" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="DefaultPage" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="ActivePage" Property="Visibility" Value="Visible" />
                         </Trigger>

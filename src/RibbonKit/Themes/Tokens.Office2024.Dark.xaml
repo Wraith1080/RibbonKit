@@ -9,8 +9,11 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Window.Background" Color="#181818" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Background" Color="#181818" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.ContentBackground" Color="#202020" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.QatExtender.Background" Color="#202020" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.BodyBackground" Color="#202020" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.SurfaceBackground" Color="#202020" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Border" Color="#3A3A3A" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.QatExtender.Border" Color="#3A3A3A" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Primary" Color="#F2F2F2" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Text.Secondary" Color="#B8B8B8" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ScrollBar.Track" Color="#292929" />
@@ -32,6 +35,7 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Input.Glyph" Color="#FFFFFF" />
 
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.HoverBackground" Color="#333333" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.SplitActiveHover" Color="#333333" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.PressedBackground" Color="#404040" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CheckedBackground" Color="#233F59" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CheckedHoverBackground" Color="#2B4D6C" />
@@ -133,4 +137,43 @@
     <CornerRadius x:Key="RibbonKit.Metrics.MessageBar.LastCornerRadius">0,0,8,8</CornerRadius>
     <Thickness x:Key="RibbonKit.Metrics.MessageBar.BorderThickness">1,0,1,1</Thickness>
     <SolidColorBrush x:Key="RibbonKit.Brushes.MessageBar.CloseHoverBorder" Color="#707070" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Input.SurfaceBackground" Color="#202020" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Input.Border" Color="#555555" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Input.HoverBorder" Color="#B8B8B8" />
+    <!-- Gallery values keep the Office visuals while allowing Crystal-specific materials. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.GalleryItem.HoverBorder" Color="#404040" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.InRibbonGallery.Border" Color="#555555" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.InRibbonGallery.SurfaceBackground" Color="#202020" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.InRibbonGallery.PopupBackground" Color="#202020" />
+    <!-- Separate option resources preserve the Office indicator and focus appearance. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Option.IdleSurface" Color="#202020" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Option.IdleBorder" Color="#B8B8B8" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Option.Glyph" Color="#FFFFFF" />
+    <!-- ScreenTip decoration; Office geometry and paint match the prior shared template. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.Surface" Color="#2B2B2B" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.OuterBorder" Color="#555555" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.OptionsDialog.NavigationHoverBackground" Color="#333333" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.OptionsDialog.NavigationSelectedBackground" Color="#233F59" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.OptionsDialog.ActionHoverBackground" Color="#333333" />
+
+    <!-- Shared application-menu geometry; Office retains its original compact surfaces. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.InnerOutline" Color="#555555" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.ShadowCaster" Color="Black" />
+    <Visibility x:Key="RibbonKit.Visibilities.ApplicationMenuOutsideShadow">Collapsed</Visibility>
+    <CornerRadius x:Key="RibbonKit.Metrics.ApplicationMenuContentRimCornerRadius">0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.ApplicationMenuContentOutlineCornerRadius">0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.ApplicationMenuItemClipCornerRadius">0</CornerRadius>
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuItemMargin">0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuSeparatorMargin">0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuActivePageBorderThickness">1</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuActivePageMargin">0,0,2,2</Thickness>
+    <system:Double x:Key="RibbonKit.Metrics.ApplicationMenuPaneMinimumWidth">0</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.ApplicationMenuPaneViewportInset">0</system:Double>
+
+    <!-- Utility and scrollbar material. -->
+    <system:Double x:Key="RibbonKit.Metrics.UtilityRimActiveOpacity">0</system:Double>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScrollBar.WashAccent" Color="Transparent" />
+    <system:Boolean x:Key="RibbonKit.Metrics.UseUtilityScrollMaterial">False</system:Boolean>
+    <system:Boolean x:Key="RibbonKit.Metrics.ContextualUseCrystalMaterial">False</system:Boolean>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ContextualForeground" Color="Transparent" />
 </ResourceDictionary>

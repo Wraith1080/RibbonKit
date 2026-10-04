@@ -44,7 +44,7 @@ below describes the current checkout, including post-release additions; see
 ### Application-level
 
 - File tab or Office 2007 orb, two-pane application menu, and Backstage with Modern,
-  Classic, Classic2010, Glass2007 and Classic2007 designs.
+  Classic, Classic2010, Glass2007, Classic2007, CrystalSidebar and CrystalFloating designs.
 - Repeatable message bars with actions/dismissal; Backstage page/footer/recent patterns.
 - Three QAT placements, overflow and source-linked button/toggle/split/dropdown proxies.
 - Contextual tabs, tab/group merging and modal-tab lifetimes.
@@ -63,9 +63,122 @@ mode is **not supported**; gallery/scrollbar system-color fallbacks are narrower
 ### Theming & rendering
 
 Office 2007, 2010, 2013, 2019 and 2024 each have light and dark/black palettes, with
-live theme/accent switching. Shared `Controls.*.xaml` templates use dynamic tokens.
+live theme/accent switching. The Crystal Light theme choice now has both light and
+dark palettes for the same shared `Controls.*.xaml` templates. Shared Crystal
+resources cover menu rows, inputs, galleries, check/radio controls, ScreenTips
+and the built-in Ribbon/QAT customization pages, QAT drawer, message bars and
+the two-pane application menu in applications using `ThemeManager.Apply`.
+The drawer retains its inset, rim,
+shadow and body rounding through light/dark, minimized and message states.
+Its shared `QatExtender.*`, `QatExtenderShadow`, `ContentCornerRadiusQatBelow`
+and `ContentZIndexQatBelow` theme resources support scoped overrides;
+explicit local part values retain WPF precedence. Message rows retain semantic
+amber paint, independent dismissal and actions. The shared
+`RibbonKit.Styles.MessageBar.ActionButton` style uses one action template and state
+implementation shared with Crystal Backstage. `RibbonKit.Metrics.MessageBar.ActionCornerRadius`,
+`ActionUseGlassMaterial` and `ActionDisabledOpacity` preserve Crystal's 12-DIP glass
+action and Office's compact appearance. Explicit message styles and the scoped
+`RibbonKit.Templates.MessageBar.ActionButton` template key remain available.
+`RibbonKit.Metrics.ContentCornerRadiusTop` keeps Crystal's body rounded above
+messages. Scoped resources and explicit action styles/values retain WPF precedence.
+QAT icon/hover policy follows the ribbon's effective resource scope through
+`RibbonKit.Metrics.QatTitleBarColored` and `QatTabRowColored`. ThemeManager sets
+these alongside its accent bands; independent palettes retain their own defaults.
+Crystal Sidebar/Floating Backstage geometry can be overridden through
+`RibbonKit.Metrics.Backstage.*`, including `SidebarWidth`, `FloatingMargin` and
+`ActionCornerRadius`. Those layouts contain no fixed application branding.
+The application menu receives its translucent paint, 14-DIP outer corners,
+rounded content/split rows, responsive pane width and outside-only shadow from
+shared resources. `RibbonKit.Metrics.ApplicationMenuPaneWidth`,
+`ApplicationMenuPaneMinimumWidth` and `ApplicationMenuPaneViewportInset` set its
+preferred width, lower bound and viewport allowance; scoped resources and local
+part values retain WPF precedence. The shared frame stays within the window's
+available height, with scrolling navigation and pane content and a visible footer.
+Office keeps its existing menu geometry when it fits.
+Shared utility templates provide Crystal rims for minimize, modal close, QAT
+overflow, ribbon/tab scroll arrows and merged-caption buttons. Native scrollbars
+in Crystal scope use the shared 14-DIP template with 4-DIP corners and layered
+6/8/11-percent thumb washes, including Options/customization pages. Scoped
+scrollbar tokens and explicit styles/paint retain WPF precedence;
+`RibbonKit.Brushes.ScrollBar.WashAccent` scopes the wash independently of text.
+Customization list/tree frames share `RibbonKit.Metrics.Customize.FrameInset`:
+2 DIPs in Crystal and 1 DIP in Office, with explicit control padding added to it.
+The pages round inset edges individually to keep painted native-scrollbar gaps
+equal at fractional DPI.
+Ordinary `RibbonTab` controls in Crystal scope derive contextual glass headers,
+rims, text and reflective markers from a solid `ContextualColor`; gradient/custom
+brushes retain the ordinary renderer. Local foreground/marker values and scoped
+paint overrides retain precedence. No Showcase contextual subclass is needed.
+
+`ThemeManager.CreatePalette(theme, accent: null, dark: false)` creates an independent
+palette for a window or control. Office uses its normal accent treatment; Crystal
+tints the glass material while retaining highlight geometry, readable text and
+semantic notice colors. Merge the returned dictionary into the owner's resources;
+replace or remove it to change or clear that scope. Creation does not change the
+global theme, accent preferences or other windows. For example:
+
+```csharp
+var palette = ThemeManager.CreatePalette(RibbonTheme.CrystalLight, Colors.Purple, dark: true);
+window.Resources.MergedDictionaries.Add(palette);
+```
+
+`ThemeManager.SetAccent` retains its existing application accent behavior.
+Showcase still owns document paint and document-under-QAT treatment. Optional
+menu/popup capture is available through `CapturedBackdrop` in `RibbonKit.Controls`:
+
+```csharp
+var capture = new CapturedBackdrop(fileMenu, window);
+capture.Apply(true);       // Also supports dropdown/split buttons and ribbon groups.
+capture.Refresh();         // After the host changes document paint.
+capture.Apply(false);      // Restores the ordinary shared surface.
+capture.Dispose();         // When the registration/host is retired.
+```
+
+The host supplies a loaded WPF visual on the same dispatcher. For File menus it
+must be an ancestor of the menu surface; popup capture can sample another visual
+in the host window. Capture samples that visual, with a 6-DIP Gaussian blur and
+24-DIP sampling margin. It excludes menu foreground, keeps captured pixels out of
+measurement/input/focus, and follows scrolling, geometry, DPI, reopening and
+template changes. Popup tint uses the scoped
+`RibbonKit.Brushes.ApplicationMenu.FrameBand` token; explicit surface backgrounds
+and bindings retain precedence. `Refresh` coalesces host paint/palette updates.
+Unload releases paint and load reattaches while enabled; dispose removes all
+registration handlers. Templates without the shared surface parts keep their
+ordinary paint. Core Crystal needs neither capture nor a native window material.
+
+The separate optional cross-theme glass treatment is a scoped resource overlay:
+
+```csharp
+var glass = ThemeManager.CreateGlassOverlay(window, dark: true);
+window.Resources.MergedDictionaries.Add(glass);
+// Remove glass before regenerating after theme/accent/palette changes.
+window.Resources.MergedDictionaries.Remove(glass);
+```
+
+The factory clones the scope's effective brushes without changing global state.
+Direct scoped and child resources keep normal WPF precedence. The host owns
+replacement/removal and the decision to use glass after native Acrylic activation
+succeeds; the factory itself does not activate Acrylic. WPF capture samples app
+content rather than the desktop or native DWM material. Document content, update
+timing, preferences, native backdrop activation and window integration stay in
+the host.
+
+Office 2007 defaults to the round application orb, including its black palette;
+other themes default to a File tab. Set `Ribbon.ApplicationButtonShape` to `Tab`
+or `Orb` to override the theme, and clear that local value to follow the theme again.
+The application menu or Backstage surface remains the host's choice.
+Set `Ribbon.ApplicationOrbGlyphTemplate` to a `DataTemplate` for a custom vector
+mark in the orb's 16-DIP glyph canvas. `null` keeps the built-in four-square mark.
+The sphere and Classic2007 Backstage Back button use the same chrome, while the
+glyph template is instantiated separately in each button.
+
 `RibbonWindow` supports compatible Mica/Acrylic backdrops and separate optional
 frame appearance. Theme selection does not silently enable a material.
+Contextual tabs can optionally set `RibbonTab.ContextualSelectionBrush` for a distinct
+selection marker; null uses the contextual tint or Crystal's reflective treatment
+of it. Showcase's **Samples** tab compares Crystal with Office 2024 and demonstrates
+tab/body scrolling, QAT overflow, option states and optional document edge effects.
+Use **View** for theme, tint, File layout and native backdrop selection.
 Motion honors reduced-motion settings. Recorded DPI checks include 100/125/150/175/200%
 and mixed-monitor scenarios; new changes still need their applicable checks.
 
