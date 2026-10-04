@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Documents;
+using System.Windows.Input;
 using System.Windows.Media;
 using RibbonKit.Controls;
 using RibbonKit.Theming;
@@ -12,6 +13,10 @@ namespace RibbonKit.Showcase;
 
 public partial class MainWindow
 {
+    // No command binding: only this sample action is unavailable, not its message row.
+    public static RoutedUICommand UnavailableMessageActionCommand { get; } =
+        new("Enable Content", "UnavailableMessageAction", typeof(MainWindow));
+
     private readonly List<RibbonTab> _scrollPreviewTabs = new();
     private readonly Dictionary<RibbonGroup, bool> _savedHomeResizing = new();
     private readonly List<RibbonButton> _overflowPreviewItems = new();
@@ -98,6 +103,7 @@ public partial class MainWindow
     {
         ProtectedViewMessage.Dismiss();
         SecurityNoticeMessage.Dismiss();
+        UnavailableActionMessage.Dismiss();
         StatusReady.Content = "Sample messages dismissed";
     }
 

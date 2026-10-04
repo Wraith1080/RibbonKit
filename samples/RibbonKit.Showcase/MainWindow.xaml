@@ -67,6 +67,12 @@
                                       Message="Macros have been disabled in this sample document."
                                       ActionContent="Review Settings"
                                       ActionClick="OnReviewSecurityMessage" />
+                    <rk:RibbonMessage x:Name="UnavailableActionMessage"
+                                      IsOpen="False"
+                                      Title="CONTENT BLOCKED"
+                                      Message="Enable Content is unavailable for this sample document."
+                                      ActionContent="Enable Content"
+                                      ActionCommand="{x:Static local:MainWindow.UnavailableMessageActionCommand}" />
                 </rk:RibbonMessageBar>
             </rk:Ribbon.MessageBar>
 

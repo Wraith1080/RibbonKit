@@ -305,7 +305,7 @@ public sealed class RibbonMessageBarTests
         {
             XDocument document = XDocument.Load(Path.Combine(sampleRoot, xamlName));
             XElement[] messages = document.Descendants(RibbonKitNamespace + "RibbonMessage").ToArray();
-            Assert.Equal(2, messages.Length);
+            Assert.Equal(xamlName == "MainWindow.xaml" ? 3 : 2, messages.Length);
             Assert.All(messages, message => Assert.Equal("False", (string?)message.Attribute("IsOpen")));
             Assert.Contains(
                 document.Descendants(RibbonKitNamespace + "RibbonButton"),

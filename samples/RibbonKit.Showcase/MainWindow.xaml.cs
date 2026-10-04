@@ -292,7 +292,7 @@ public partial class MainWindow : RibbonWindow
 
     private void OnAddMessage(object sender, RoutedEventArgs e)
     {
-        RibbonMessage? nextMessage = new[] { ProtectedViewMessage, SecurityNoticeMessage }
+        RibbonMessage? nextMessage = new[] { ProtectedViewMessage, SecurityNoticeMessage, UnavailableActionMessage }
             .FirstOrDefault(message => !message.IsOpen);
 
         if (nextMessage is null)

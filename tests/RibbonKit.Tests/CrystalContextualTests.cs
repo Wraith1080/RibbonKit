@@ -1964,6 +1964,22 @@ public class CrystalContextualTests
             LayoutMessages();
             Assert.False(ribbon.HasOpenMessages);
             Assert.Equal(new Thickness(), bar.Margin);
+            // The third sample disables its action through ordinary command routing,
+            // while leaving the row and dismissal available.
+            for (int index = 0; index < 3; index++)
+                show.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            LayoutMessages();
+            var unavailable = window.UnavailableActionMessage;
+            Assert.True(unavailable.IsOpen);
+            Assert.True(unavailable.IsEnabled);
+            var disabledAction = (Button)unavailable.Template.FindName("PART_ActionButton", unavailable);
+            Assert.False(disabledAction.IsEnabled);
+            Assert.Equal(0.4, disabledAction.Opacity);
+            Assert.True(((Button)unavailable.Template.FindName("PART_CloseButton", unavailable)).IsEnabled);
+            ((RibbonMenuItem)window.LayoutDemosButton.Items[4]).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            LayoutMessages();
+            Assert.False(unavailable.IsOpen);
+            Assert.False(ribbon.HasOpenMessages);
             ribbon.QuickAccessPosition = RibbonQuickAccessPosition.BelowRibbon;
             LayoutMessages();
             Assert.Equal(drawerRadius, drawer.CornerRadius);

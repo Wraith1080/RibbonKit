@@ -6692,3 +6692,17 @@ The agent did not manually launch Showcase or Writer, commit, push or publish.
 The active plan owns bounded live review of the revised Backstage appearance and
 dynamic popup/QAT capture. Existing native DPI, motion, open-menu scaling and
 mixed-monitor gates retain their separate scope; automated proof does not close them.
+
+The follow-up Showcase review needed a visible disabled message action. Main
+Showcase now adds a third, initially closed `CONTENT BLOCKED` message through
+the existing Add message control. Its Enable Content action uses an unbound
+host-owned routed command, so native command routing disables only the action;
+the row and dismiss button stay enabled. Dismiss messages includes the new row.
+No shared control, template, token, Writer code or RibbonKit public API changed.
+The existing sample markup check now expects three main-window messages and
+two RTL-lab messages. The existing Crystal integration fixture opens all three,
+checks the disabled action's 0.4 opacity and enabled row/dismissal, then verifies
+Dismiss messages closes the new row. All seven focused existing tests passed.
+Normal Release and Debug Showcase builds passed with zero warnings/errors and
+updated the default review executable. The full suite and visual snapshots were
+not repeated for this host-only example; its live appearance remains in the plan.
