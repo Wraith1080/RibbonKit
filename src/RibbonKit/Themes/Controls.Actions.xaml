@@ -1,0 +1,71 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:controls="clr-namespace:RibbonKit.Controls">
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.ActionTemplates.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+    <!-- Shared message/Backstage action behavior. Palettes supply material and metrics. -->
+    <Style x:Key="RibbonKit.Styles.ActionButton" TargetType="{x:Type Button}">
+        <Setter Property="Template" Value="{StaticResource RibbonKit.Templates.MessageBar.ActionButton}" />
+        <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Control.SurfaceBackground}" />
+        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
+            </Trigger>
+            <MultiTrigger>
+                <MultiTrigger.Conditions>
+                    <Condition Property="controls:ActionChrome.UseGlassMaterial" Value="True" />
+                    <Condition Property="IsMouseOver" Value="True" />
+                </MultiTrigger.Conditions>
+                <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Tab.SelectedBackground}" />
+            </MultiTrigger>
+            <Trigger Property="IsPressed" Value="True">
+                <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
+            </Trigger>
+            <MultiTrigger>
+                <MultiTrigger.Conditions>
+                    <Condition Property="controls:ActionChrome.UseGlassMaterial" Value="True" />
+                    <Condition Property="IsKeyboardFocused" Value="True" />
+                </MultiTrigger.Conditions>
+                <Setter Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Accent}" />
+            </MultiTrigger>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" Value="{Binding Path=(controls:ActionChrome.DisabledOpacity), RelativeSource={RelativeSource Self}}" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+    <Style x:Key="RibbonKit.Styles.ActionButton.Glass" TargetType="{x:Type Button}"
+           BasedOn="{StaticResource RibbonKit.Styles.ActionButton}">
+        <!-- Defaults are setters so a derived host style can replace idle paint. -->
+        <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Control.CheckedBackground}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="controls:ActionChrome.UseGlassMaterial" Value="True" />
+    </Style>
+    <Style x:Key="RibbonKit.Styles.MessageBar.ActionButton" TargetType="{x:Type Button}"
+           BasedOn="{StaticResource RibbonKit.Styles.ActionButton}">
+        <!-- Preserve the message's scoped template extension point. -->
+        <Setter Property="Template" Value="{DynamicResource RibbonKit.Templates.MessageBar.ActionButton}" />
+        <Setter Property="controls:ActionChrome.CornerRadius" Value="{DynamicResource RibbonKit.Metrics.MessageBar.ActionCornerRadius}" />
+        <Setter Property="controls:ActionChrome.RecognizesAccessKey" Value="{DynamicResource RibbonKit.Metrics.MessageBar.ActionRecognizesAccessKey}" />
+        <Setter Property="controls:ActionChrome.UseGlassMaterial" Value="{DynamicResource RibbonKit.Metrics.MessageBar.ActionUseGlassMaterial}" />
+        <Setter Property="controls:ActionChrome.DisabledOpacity" Value="{DynamicResource RibbonKit.Metrics.MessageBar.ActionDisabledOpacity}" />
+    </Style>
+    <Style x:Key="RibbonKit.Styles.MessageBar.CrystalActionButton" TargetType="{x:Type Button}"
+           BasedOn="{StaticResource RibbonKit.Styles.MessageBar.ActionButton}">
+        <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Control.CheckedBackground}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style x:Key="Crystal.Backstage.Action" TargetType="{x:Type Button}"
+           BasedOn="{StaticResource RibbonKit.Styles.ActionButton.Glass}">
+        <Setter Property="Padding" Value="{DynamicResource RibbonKit.Metrics.Backstage.ActionPadding}" />
+        <Setter Property="controls:ActionChrome.CornerRadius" Value="{DynamicResource RibbonKit.Metrics.Backstage.ActionCornerRadius}" />
+        <Setter Property="controls:ActionChrome.RecognizesAccessKey" Value="True" />
+        <Setter Property="controls:ActionChrome.UseGlassMaterial" Value="True" />
+        <Setter Property="controls:ActionChrome.DisabledOpacity" Value="{DynamicResource RibbonKit.Metrics.Backstage.ActionDisabledOpacity}" />
+    </Style>
+</ResourceDictionary>

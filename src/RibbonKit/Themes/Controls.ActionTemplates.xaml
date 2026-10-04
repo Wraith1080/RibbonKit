@@ -1,0 +1,14 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:controls="clr-namespace:RibbonKit.Controls">
+    <!-- The stable shared template is also merged into the message template's scope. -->
+    <ControlTemplate x:Key="RibbonKit.Templates.MessageBar.ActionButton" TargetType="{x:Type Button}">
+        <Border x:Name="Chrome" Background="{TemplateBinding Background}"
+                BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}"
+                CornerRadius="{TemplateBinding controls:ActionChrome.CornerRadius}">
+            <ContentPresenter Margin="{TemplateBinding Padding}"
+                              RecognizesAccessKey="{TemplateBinding controls:ActionChrome.RecognizesAccessKey}"
+                              HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </Border>
+    </ControlTemplate>
+</ResourceDictionary>

@@ -6,6 +6,7 @@
          controls; these overrides keep Crystal's glass geometry on dark surfaces. -->
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/RibbonKit;component/Themes/Tokens.Office2024.Dark.xaml" />
+        <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.Actions.xaml" />
         <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.ScrollBars.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
@@ -367,27 +368,6 @@
     </DrawingBrush>
     <DrawingBrush x:Key="RibbonKit.Brushes.Dialog.PrimaryBorder" Drawing="{StaticResource Crystal.Drawing.GlassRim}"
                   Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
-    <!-- Shared message action template, with the accepted Crystal action material. -->
-    <Style x:Key="RibbonKit.Styles.MessageBar.ActionButton" TargetType="{x:Type Button}">
-        <Setter Property="Template" Value="{DynamicResource RibbonKit.Templates.MessageBar.ActionButton}" />
-        <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Control.CheckedBackground}" />
-        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="Cursor" Value="Hand" />
-        <Style.Triggers>
-            <Trigger Property="IsMouseOver" Value="True">
-                <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Tab.SelectedBackground}" />
-            </Trigger>
-            <Trigger Property="IsPressed" Value="True">
-                <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
-            </Trigger>
-            <Trigger Property="IsKeyboardFocused" Value="True">
-                <Setter Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Accent}" />
-            </Trigger>
-            <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.4" /></Trigger>
-        </Style.Triggers>
-    </Style>
     <CornerRadius x:Key="RibbonKit.Metrics.MessageBar.ActionCornerRadius">12</CornerRadius>
     <system:Boolean x:Key="RibbonKit.Metrics.MessageBar.ActionRecognizesAccessKey">True</system:Boolean>
 
@@ -500,4 +480,7 @@
     <system:Boolean x:Key="RibbonKit.Metrics.ContextualUseCrystalMaterial">True</system:Boolean>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ContextualForeground" Color="Transparent" controls:ContextualMaterial.Enabled="True" />
     <system:Double x:Key="RibbonKit.Metrics.ContextualUnselectedOpacity">0.85</system:Double>
+    <!-- Keep the same shared glass defaults above the Office dark fallback. -->
+    <Style x:Key="RibbonKit.Styles.MessageBar.ActionButton" TargetType="{x:Type Button}"
+           BasedOn="{StaticResource RibbonKit.Styles.MessageBar.CrystalActionButton}" />
 </ResourceDictionary>

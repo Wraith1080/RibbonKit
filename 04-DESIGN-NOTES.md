@@ -820,6 +820,10 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [Writer appearance, shared W glyph and optional-effect integration with unfiltered automated evidence](docs/history/02-writer-foundation.md#3216-writer-crystal-integration-and-deferred-validation--2026-10-02).
 
+### 3.217 Crystal pre-merge scope and resource cleanup — 2026-10-04
+
+[Scoped QAT policy, dynamic capture registration and shared action/Backstage resources](docs/history/01-library.md#3217-crystal-pre-merge-scope-and-resource-cleanup--2026-10-04).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),

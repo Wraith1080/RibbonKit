@@ -3205,13 +3205,14 @@ public class Ribbon : Control
     /// the surrounding band's hover. Applied directly (not via inheritance) so it is robust
     /// regardless of how the items are hosted.
     /// </summary>
-    private void UpdateQatButtonContext()
+    internal void UpdateQatButtonContext()
     {
-        bool accentTitleBar = Theming.ThemeManager.IsAccentedTitleBar;
-        bool titleBarColored = QuickAccessPosition == RibbonQuickAccessPosition.TitleBar && accentTitleBar;
+        // Resolve the band's policy in this ribbon's resource scope. A window palette
+        // can replace the application theme without sharing its title-bar preferences.
+        bool titleBarColored = QuickAccessPosition == RibbonQuickAccessPosition.TitleBar
+            && UtilityChrome.GetQatTitleBarColored(this);
         bool tabRowColored = QuickAccessPosition == RibbonQuickAccessPosition.TabRow
-            && accentTitleBar
-            && Theming.ThemeManager.CurrentTheme == Theming.RibbonTheme.Office2019;
+            && UtilityChrome.GetQatTabRowColored(this);
         bool colored = titleBarColored || tabRowColored;
 
         // Match the hover of the neighbouring chrome: the caption buttons in the title bar,

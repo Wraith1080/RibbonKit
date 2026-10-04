@@ -828,27 +828,6 @@
     <FontWeight x:Key="RibbonKit.Metrics.OptionsDialog.PrimaryFontWeight">SemiBold</FontWeight>
     <CornerRadius x:Key="RibbonKit.Metrics.OptionsDialog.PrimaryCornerRadius">12</CornerRadius>
     <sys:Double x:Key="RibbonKit.Metrics.OptionsDialog.PrimaryTintOpacity">0.12</sys:Double>
-    <!-- Shared message action template, with the accepted Crystal action material. -->
-    <Style x:Key="RibbonKit.Styles.MessageBar.ActionButton" TargetType="{x:Type Button}">
-        <Setter Property="Template" Value="{DynamicResource RibbonKit.Templates.MessageBar.ActionButton}" />
-        <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Control.CheckedBackground}" />
-        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="Cursor" Value="Hand" />
-        <Style.Triggers>
-            <Trigger Property="IsMouseOver" Value="True">
-                <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Tab.SelectedBackground}" />
-            </Trigger>
-            <Trigger Property="IsPressed" Value="True">
-                <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
-            </Trigger>
-            <Trigger Property="IsKeyboardFocused" Value="True">
-                <Setter Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Accent}" />
-            </Trigger>
-            <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.4" /></Trigger>
-        </Style.Triggers>
-    </Style>
     <CornerRadius x:Key="RibbonKit.Metrics.MessageBar.ActionCornerRadius">12</CornerRadius>
     <sys:Boolean x:Key="RibbonKit.Metrics.MessageBar.ActionRecognizesAccessKey">True</sys:Boolean>
 
@@ -1012,4 +991,9 @@
     <sys:Boolean x:Key="RibbonKit.Metrics.ContextualUseCrystalMaterial">True</sys:Boolean>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ContextualForeground" Color="Transparent" controls:ContextualMaterial.Enabled="True" />
     <sys:Double x:Key="RibbonKit.Metrics.ContextualUnselectedOpacity">0.85</sys:Double>
+    <sys:Boolean x:Key="RibbonKit.Metrics.MessageBar.ActionUseGlassMaterial">True</sys:Boolean>
+    <sys:Double x:Key="RibbonKit.Metrics.MessageBar.ActionDisabledOpacity">0.4</sys:Double>
+    <!-- Select shared glass defaults without duplicating template/state behavior. -->
+    <Style x:Key="RibbonKit.Styles.MessageBar.ActionButton" TargetType="{x:Type Button}"
+           BasedOn="{StaticResource RibbonKit.Styles.MessageBar.CrystalActionButton}" />
 </ResourceDictionary>

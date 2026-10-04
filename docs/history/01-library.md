@@ -6626,3 +6626,69 @@ The supplied recording was inspected through extracted frames. No manual
 Showcase launch, commit, push or publication occurred. Live confirmation of its
 tab-switch sequence remains in the active plan; synthetic visual DPI coverage
 does not close native popup/monitor-transition or broader motion acceptance.
+
+### 3.217 Crystal pre-merge scope and resource cleanup — 2026-10-04
+
+The project-wide audit reproduced a QAT policy leak: an independent Crystal
+window palette inherited the global accented Office 2019 icon treatment because
+`Ribbon.UpdateQatButtonContext` read global theme flags. The shared Ribbon style
+now resolves `QatTitleBarColored` and `QatTabRowColored` metrics in its own resource
+scope. ThemeManager sets these alongside application accent-band overrides;
+every base palette supplies neutral defaults. Internal attached selectors refresh
+existing QAT items when effective scoped values change. No public C# API was added.
+The RibbonKit-only consumer covers independent Crystal light/dark scopes against
+global Office 2019, Office 2024 and Crystal, every QAT placement, nearer metric
+overrides, palette removal and accent-band toggling.
+
+`CrystalMainWindowPresentation` remains Showcase's host adapter for palette and
+optional `CapturedBackdrop` registration. Its previous tab-only discovery missed
+QAT dropdowns and additions to existing groups, and retained removed dropdowns.
+It now watches the tab, group, QAT and nested ItemsControl collections while enabled,
+reconciles registrations and disposes removed captures. Disabling or closing
+detaches collection handlers and disposes the remaining registrations. A focused
+test checks an actual QAT popup's captured brush, subsequent additions/removals,
+collection resets, disable/re-enable and close. Capture implementation remains in
+the existing optional library contract; document fade/underlay paint is host-owned.
+
+`Controls.ActionTemplates.xaml` holds the shared message/Crystal Backstage action
+template, and `Controls.Actions.xaml` holds its styles and interaction states.
+Office palettes use its standard defaults; Crystal light
+and dark select its glass defaults with thin style references. Geometry, access-key
+recognition and disabled opacity use typed metrics. Idle paint uses ordinary
+setters so a derived host style retains its WPF precedence; it is not supplied by
+a material trigger. The existing message style and scoped template keys are kept,
+including direct Button values and live brush lookup. Palette dictionaries merge
+the shared actions so manually merged palettes also expose the keyed resources.
+The dark palette merges them directly because tint construction can realize its
+styles before attaching the combined palette. The message template also merges
+the shared template dictionary in its own stable scope: replacing a palette's
+style must not replace the button template and discard local part values.
+The separate consumer retains light/dark and all-Office action coverage, adds
+disabled opacity checks and verifies replacement/removal of the existing scoped
+template key.
+
+The Crystal Sidebar/Floating layouts use `RibbonKit.Metrics.Backstage.*` for
+navigation, action and container geometry. Every base palette supplies the former
+values, preserving an independently selected Backstage design under an Office
+palette. The fixed `CRYSTAL` text is removed from the reusable floating template.
+Shared-resource tests check back-action paint and scoped corner, padding, floating
+margin and sidebar-width replacement/removal. Stale Office 2007 orb and Writer
+glyph-migration wording is corrected in the public/theme documentation.
+
+Normal Release and Debug solution builds passed with **0 warnings / 0 errors**
+for both runtime targets and refreshed the default Showcase/Writer review outputs.
+The final serialized, unfiltered Release solution run passed **466 runtime tests**,
+**482 Writer tests**, the visual aggregate covering **113 approved scenes**, and
+the RibbonKit-only consumer aggregate in **2m28s**: **950 tests, 0 failed / 0 skipped**.
+Each test project records `crystal-cleanup-release.trx` in its TestResults folder.
+The final consumer also passed independently in 2m42s
+(`crystal-cleanup-consumer.trx`). Visual approvals and tolerances are unchanged.
+All **338** shared brush/metric/effect references resolve across the twelve
+effective light/dark palettes; the 31 new metric defaults have matching types and
+values across all Office bases. The final diff/content/links were reviewed and
+`git diff --check` passed.
+
+The agent did not manually launch Showcase or Writer, commit, push or publish.
+The active plan owns bounded live review of the revised Backstage appearance and
+dynamic popup/QAT capture. Existing native DPI, motion, open-menu scaling and
+mixed-monitor gates retain their separate scope; automated proof does not close them.

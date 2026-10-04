@@ -4,7 +4,6 @@ using System.Collections.Specialized;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using RibbonKit.Controls;
 using RibbonKit.Theming;
@@ -20,9 +19,11 @@ internal sealed class CrystalMainWindowPresentation
     private readonly ResourceDictionary _backstageScope = new();
     private readonly CapturedBackdrop _menuBackdrop;
     private readonly Dictionary<Control, CapturedBackdrop> _popups = new();
-    private readonly HashSet<RibbonTab> _tabs = new();
+    private readonly HashSet<INotifyCollectionChanged> _collections = new();
     private ResourceDictionary? _palette;
     private bool _enabled;
+    private bool _refreshing;
+    private bool _closed;
 
     public ResourceDictionary? Palette => _palette;
 
@@ -33,21 +34,19 @@ internal sealed class CrystalMainWindowPresentation
         _ribbon = ribbon;
         _backstage = backstage;
         _menuBackdrop = new CapturedBackdrop(menu, window);
-        foreach (RibbonTab tab in ribbon.Tabs)
-            AttachTab(tab);
-        ribbon.Tabs.CollectionChanged += OnTabsChanged;
+        ribbon.Loaded += OnRibbonLoaded;
         window.Closed += (_, _) =>
         {
-            ribbon.Tabs.CollectionChanged -= OnTabsChanged;
+            _closed = true;
+            ribbon.Loaded -= OnRibbonLoaded;
             _menuBackdrop.Dispose();
-            foreach (var popup in _popups.Values) popup.Dispose();
-            _popups.Clear();
-            _tabs.Clear();
+            ClearRegistrations();
         };
     }
 
     public void Apply(bool enabled, Color? tint = null)
     {
+        if (_closed) return;
         _enabled = enabled;
         if (_palette != null)
         {
@@ -71,74 +70,77 @@ internal sealed class CrystalMainWindowPresentation
             _backstage.Resources.MergedDictionaries.Remove(_backstageScope);
         }
         _menuBackdrop.Apply(enabled);
-        foreach (var popup in _popups.Values) popup.Apply(enabled);
+        if (enabled) RefreshRegistrations();
+        else ClearRegistrations();
     }
 
-    private void OnTabsChanged(object? sender, NotifyCollectionChangedEventArgs e)
-    {
-        if (e.Action == NotifyCollectionChangedAction.Reset)
-        {
-            foreach (RibbonTab tab in _tabs.ToArray()) RemoveTab(tab);
-            foreach (RibbonTab tab in _ribbon.Tabs) AttachTab(tab);
-            return;
-        }
-        if (e.OldItems != null)
-            foreach (RibbonTab tab in e.OldItems)
-                RemoveTab(tab);
-        if (e.NewItems != null)
-            foreach (RibbonTab tab in e.NewItems)
-                AttachTab(tab);
-    }
+    private void OnRibbonLoaded(object sender, RoutedEventArgs e) => RefreshRegistrations();
+    private void OnControlsChanged(object? sender, NotifyCollectionChangedEventArgs e) => RefreshRegistrations();
 
-    private void AttachTab(RibbonTab tab)
+    private void RefreshRegistrations()
     {
-        if (!_tabs.Add(tab)) return;
-        foreach (RibbonGroup group in tab.Groups)
+        if (!_enabled || _closed || _refreshing) return;
+        _refreshing = true;
+        try
         {
-            AddPopup(group);
-            foreach (var dropDown in DropDowns(group))
+            var controls = new HashSet<Control>();
+            var collections = new HashSet<INotifyCollectionChanged>
             {
-                AddPopup(dropDown);
+                _ribbon.Tabs,
+                _ribbon.QuickAccessItems,
+            };
+            var visited = new HashSet<DependencyObject>();
+            foreach (RibbonTab tab in _ribbon.Tabs)
+            {
+                collections.Add(tab.Groups);
+                foreach (RibbonGroup group in tab.Groups) Visit(group);
+            }
+            foreach (DependencyObject item in _ribbon.QuickAccessItems.OfType<DependencyObject>()) Visit(item);
+
+            foreach (INotifyCollectionChanged obsolete in _collections.Except(collections).ToArray())
+            {
+                obsolete.CollectionChanged -= OnControlsChanged;
+                _collections.Remove(obsolete);
+            }
+            foreach (INotifyCollectionChanged collection in collections)
+                if (_collections.Add(collection)) collection.CollectionChanged += OnControlsChanged;
+
+            foreach (Control obsolete in _popups.Keys.Except(controls).ToArray())
+            {
+                _popups[obsolete].Dispose();
+                _popups.Remove(obsolete);
+            }
+            foreach (Control control in controls)
+            {
+                if (!_popups.TryGetValue(control, out var popup))
+                    _popups.Add(control, popup = new CapturedBackdrop(control, _window));
+                popup.Apply(true);
+            }
+
+            void Visit(DependencyObject node)
+            {
+                if (!visited.Add(node)) return;
+                if (node is RibbonDropDownButton or RibbonGroup) controls.Add((Control)node);
+                if (node is ItemsControl items)
+                {
+                    collections.Add((INotifyCollectionChanged)items.Items);
+                    foreach (DependencyObject item in items.Items.OfType<DependencyObject>()) Visit(item);
+                }
+                foreach (DependencyObject child in LogicalTreeHelper.GetChildren(node).OfType<DependencyObject>()) Visit(child);
             }
         }
-    }
-
-    private void RemoveTab(RibbonTab tab)
-    {
-        if (!_tabs.Remove(tab)) return;
-        foreach (RibbonGroup group in tab.Groups) RemovePopup(group);
-    }
-
-    private void AddPopup(Control control)
-    {
-        if (_popups.ContainsKey(control)) return;
-        var popup = new CapturedBackdrop(control, _window);
-        _popups.Add(control, popup);
-        if (_enabled) popup.Apply(true);
-    }
-
-    private void RemovePopup(RibbonGroup group)
-    {
-        Remove(group);
-        foreach (var dropDown in DropDowns(group))
+        finally
         {
-            Remove(dropDown);
-        }
-        void Remove(Control control)
-        {
-            if (!_popups.Remove(control, out var popup)) return;
-            popup.Dispose();
+            _refreshing = false;
         }
     }
 
-    private static IEnumerable<RibbonDropDownButton> DropDowns(DependencyObject root)
+    private void ClearRegistrations()
     {
-        if (root is RibbonDropDownButton button)
-        {
-            yield return button;
-            yield break;
-        }
-        foreach (var child in LogicalTreeHelper.GetChildren(root).OfType<DependencyObject>())
-            foreach (var nested in DropDowns(child)) yield return nested;
+        foreach (INotifyCollectionChanged collection in _collections)
+            collection.CollectionChanged -= OnControlsChanged;
+        _collections.Clear();
+        foreach (var popup in _popups.Values) popup.Dispose();
+        _popups.Clear();
     }
 }

@@ -177,6 +177,18 @@ internal static class CrystalMessagePortabilityChecks
             Layout();
             Assert.Same(first.FindResource("RibbonKit.Styles.MessageBar.ActionButton"), action.Style);
 
+            // The existing template key remains an independently scoped extension point.
+            const string templateKey = "RibbonKit.Templates.MessageBar.ActionButton";
+            var hostTemplate = new ControlTemplate(typeof(Button))
+            { VisualTree = new FrameworkElementFactory(typeof(Border), "HostActionChrome") };
+            first.Resources[templateKey] = hostTemplate;
+            Layout();
+            Assert.Same(hostTemplate, action.Template);
+            Assert.NotNull(hostTemplate.FindName("HostActionChrome", action));
+            first.Resources.Remove(templateKey);
+            Layout();
+            chrome = Part<Border>(action, "Chrome");
+
             var semanticBackground = root.Background;
             ThemeManager.SetAccent(application, Colors.Purple);
             Layout();
@@ -195,6 +207,12 @@ internal static class CrystalMessagePortabilityChecks
                 Assert.Equal(first.FindResource("RibbonKit.Metrics.SmallControlCornerRadius"), chrome.CornerRadius);
                 Assert.Same(first.FindResource("RibbonKit.Brushes.Control.SurfaceBackground"), chrome.Background);
                 Assert.Same(first.FindResource("RibbonKit.Brushes.ScreenTip.Border"), chrome.BorderBrush);
+                action.IsEnabled = false;
+                Layout();
+                Assert.Equal(0.45, action.Opacity);
+                action.ClearValue(UIElement.IsEnabledProperty);
+                Layout();
+                Assert.Equal(1, action.Opacity);
                 Assert.Equal(first.FindResource("RibbonKit.Metrics.ContentCornerRadiusTop"), body.CornerRadius);
                 Assert.Equal(first.FindResource("RibbonKit.Metrics.MessageBar.LastCornerRadius"), root.CornerRadius);
             }

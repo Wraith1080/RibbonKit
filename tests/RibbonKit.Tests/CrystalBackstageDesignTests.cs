@@ -9,6 +9,47 @@ namespace RibbonKit.Tests;
 public sealed class CrystalBackstageDesignTests
 {
     [Fact]
+    public void Crystal_layout_metrics_remain_scoped_and_back_action_uses_shared_chrome() => Sta.Run(() =>
+    {
+        var host = new Grid();
+        host.Resources.MergedDictionaries.Add(new ResourceDictionary
+        { Source = new Uri("/RibbonKit;component/Themes/Office2024.xaml", UriKind.Relative) });
+        host.Resources.MergedDictionaries.Add(new ResourceDictionary
+        { Source = new Uri("/RibbonKit;component/Themes/Tokens.Crystal.Light.xaml", UriKind.Relative) });
+        var stage = new Backstage { Design = RibbonBackstageDesign.CrystalFloating };
+        stage.Items.Add(new BackstageTabItem { Header = "Overview", Content = new TextBlock { Text = "Document" } });
+        host.Children.Add(stage);
+        Layout();
+        Assert.Null(stage.Template.FindName("CrystalBrand", stage));
+        var back = Assert.IsType<Button>(stage.Template.FindName("PART_BackButton", stage));
+        var chrome = Assert.IsType<Border>(back.Template.FindName("Chrome", back));
+        Assert.Equal(new CornerRadius(12), chrome.CornerRadius);
+        Assert.Same(stage.FindResource("RibbonKit.Brushes.Control.CheckedBackground"), chrome.Background);
+        back.IsEnabled = false;
+        Assert.Equal(0.4, back.Opacity);
+        back.IsEnabled = true;
+        stage.Resources["RibbonKit.Metrics.Backstage.ActionCornerRadius"] = new CornerRadius(6);
+        stage.Resources["RibbonKit.Metrics.Backstage.ActionPadding"] = new Thickness(8, 4, 8, 4);
+        stage.Resources["RibbonKit.Metrics.Backstage.FloatingMargin"] = new Thickness(40, 24, 40, 24);
+        Layout();
+        Assert.Equal(new CornerRadius(6), chrome.CornerRadius);
+        Assert.Equal(new Thickness(8, 4, 8, 4), back.Padding);
+        Assert.Equal(stage.ActualWidth - 80, Assert.IsType<Grid>(stage.Template.FindName("ContentArea", stage)).ActualWidth, 1);
+        stage.Design = RibbonBackstageDesign.CrystalSidebar;
+        stage.Resources["RibbonKit.Metrics.Backstage.SidebarWidth"] = new GridLength(230);
+        Layout();
+        Assert.Equal(230, Assert.IsType<Border>(stage.Template.FindName("NavColumn", stage)).ActualWidth, 1);
+        stage.Resources.Remove("RibbonKit.Metrics.Backstage.SidebarWidth");
+        Layout();
+        Assert.Equal(196, Assert.IsType<Border>(stage.Template.FindName("NavColumn", stage)).ActualWidth, 1);
+        void Layout()
+        {
+            host.Measure(new Size(720, 440)); host.Arrange(new Rect(0, 0, 720, 440));
+            host.UpdateLayout(); Sta.Drain();
+        }
+    });
+
+    [Fact]
     public void Detached_backstage_uses_crystal_layout_when_opened() => Sta.Run(() =>
     {
         var stage = new Backstage { Design = RibbonBackstageDesign.CrystalSidebar };

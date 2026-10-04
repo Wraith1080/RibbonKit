@@ -366,6 +366,7 @@ public sealed class ApplicationButtonShapeThemeTests
             VerifyCustomizationPages(application);
             CapturedBackdropPortabilityChecks.Verify(application);
             GallerySelectionPortabilityChecks.Verify(application);
+            QuickAccessScopePortabilityChecks.Verify(application);
         }
         finally
         {

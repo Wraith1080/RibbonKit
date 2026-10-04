@@ -184,10 +184,9 @@ Backstage layouts, Aero frame and their behavior are implemented in RibbonKit.
 shape override. It does not select a File surface for another app; that remains
 an independent host decision.
 
-The shared orb now accepts a host `ApplicationOrbGlyphTemplate`; `null` retains
-the built-in glyph. Writer still uses its app-owned W workaround. Its migration
-to the public hook remains deferred under `RKWF-026`; Showcase does not customize
-the glyph.
+The shared orb accepts a host `ApplicationOrbGlyphTemplate`; `null` retains
+the built-in glyph. Writer migrated its W mark to that hook on 2026-10-02;
+the active portability plan owns current acceptance. Showcase uses the built-in glyph.
 
 Promote one bounded control family at a time with Office light/dark parity,
 theme-switch cleanup, RTL/localization checks and a separate consumer test.

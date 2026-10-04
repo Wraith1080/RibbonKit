@@ -3,6 +3,9 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:system="clr-namespace:System;assembly=System.Runtime"
     xmlns:rk="clr-namespace:RibbonKit">
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.Actions.xaml" />
+    </ResourceDictionary.MergedDictionaries>
 
     <x:Static x:Key="RibbonKit.ApplicationButtonShape.Default"
               Member="rk:RibbonApplicationButtonShape.Tab" />
@@ -494,23 +497,6 @@
     <FontWeight x:Key="RibbonKit.Metrics.OptionsDialog.PrimaryFontWeight">Normal</FontWeight>
     <CornerRadius x:Key="RibbonKit.Metrics.OptionsDialog.PrimaryCornerRadius">4</CornerRadius>
     <system:Double x:Key="RibbonKit.Metrics.OptionsDialog.PrimaryTintOpacity">0</system:Double>
-    <!-- Action paint is resolved on the button, preserving live accents and host values. -->
-    <Style x:Key="RibbonKit.Styles.MessageBar.ActionButton" TargetType="{x:Type Button}">
-        <Setter Property="Template" Value="{DynamicResource RibbonKit.Templates.MessageBar.ActionButton}" />
-        <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Control.SurfaceBackground}" />
-        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Style.Triggers>
-            <Trigger Property="IsMouseOver" Value="True">
-                <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
-            </Trigger>
-            <Trigger Property="IsPressed" Value="True">
-                <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
-            </Trigger>
-            <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.45" /></Trigger>
-        </Style.Triggers>
-    </Style>
     <system:Boolean x:Key="RibbonKit.Metrics.MessageBar.ActionRecognizesAccessKey">False</system:Boolean>
     <CornerRadius x:Key="RibbonKit.Metrics.MessageBar.ActionCornerRadius">2</CornerRadius>
 
@@ -534,4 +520,35 @@
     <system:Boolean x:Key="RibbonKit.Metrics.UseUtilityScrollMaterial">False</system:Boolean>
     <system:Boolean x:Key="RibbonKit.Metrics.ContextualUseCrystalMaterial">False</system:Boolean>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ContextualForeground" Color="Transparent" />
+    <system:Boolean x:Key="RibbonKit.Metrics.QatTitleBarColored">False</system:Boolean>
+    <system:Boolean x:Key="RibbonKit.Metrics.QatTabRowColored">False</system:Boolean>
+    <system:Boolean x:Key="RibbonKit.Metrics.MessageBar.ActionUseGlassMaterial">False</system:Boolean>
+    <system:Double x:Key="RibbonKit.Metrics.MessageBar.ActionDisabledOpacity">0.45</system:Double>
+    <!-- Metrics for the independently selected floating/sidebar Backstage layouts. -->
+    <Thickness x:Key="RibbonKit.Metrics.Backstage.ActionPadding">18,11</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.Backstage.ActionCornerRadius">12</CornerRadius>
+    <system:Double x:Key="RibbonKit.Metrics.Backstage.NavigationFontSize">14</system:Double>
+    <Thickness x:Key="RibbonKit.Metrics.Backstage.NavigationPadding">20,11</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.Backstage.NavigationCornerRadius">12</CornerRadius>
+    <Thickness x:Key="RibbonKit.Metrics.Backstage.NavigationMargin">3</Thickness>
+    <system:Double x:Key="RibbonKit.Metrics.Backstage.NavigationIconSize">18</system:Double>
+    <Thickness x:Key="RibbonKit.Metrics.Backstage.NavigationIconMargin">0,0,12,0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.Backstage.BackLabelMargin">6,0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.Backstage.SidebarNavigationPadding">14,12</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.Backstage.FloatingMargin">28,24</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.Backstage.FloatingNavigationMargin">0,24,0,24</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.Backstage.FloatingNavigationPadding">5</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.Backstage.FloatingNavigationCornerRadius">20</CornerRadius>
+    <Thickness x:Key="RibbonKit.Metrics.Backstage.SidebarMargin">16</Thickness>
+    <GridLength x:Key="RibbonKit.Metrics.Backstage.SidebarWidth">196</GridLength>
+    <GridLength x:Key="RibbonKit.Metrics.Backstage.SidebarGap">16</GridLength>
+    <CornerRadius x:Key="RibbonKit.Metrics.Backstage.SidebarCornerRadius">18</CornerRadius>
+    <Thickness x:Key="RibbonKit.Metrics.Backstage.SidebarInnerMargin">8,12</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.Backstage.SidebarHeaderMargin">6,0,6,22</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.Backstage.SidebarBackPadding">14,9</Thickness>
+    <system:Double x:Key="RibbonKit.Metrics.Backstage.SidebarHeadingFontSize">26</system:Double>
+    <Thickness x:Key="RibbonKit.Metrics.Backstage.SidebarHeadingMargin">8,24,0,4</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.Backstage.SidebarContentCornerRadius">20</CornerRadius>
+    <Thickness x:Key="RibbonKit.Metrics.Backstage.SidebarContentPadding">24</Thickness>
+    <system:Double x:Key="RibbonKit.Metrics.Backstage.ActionDisabledOpacity">0.4</system:Double>
 </ResourceDictionary>

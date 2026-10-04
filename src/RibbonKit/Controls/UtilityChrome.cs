@@ -3,9 +3,24 @@ using System.Windows.Media;
 
 namespace RibbonKit.Controls;
 
-// Template-only material selector. It carries no input, layout or host behavior.
+// Internal material and surface selectors for the shared templates.
 internal static class UtilityChrome
 {
+    public static readonly DependencyProperty QatTitleBarColoredProperty = DependencyProperty.RegisterAttached(
+        "QatTitleBarColored", typeof(bool), typeof(UtilityChrome), new FrameworkPropertyMetadata(false, OnQatSurfaceChanged));
+    public static bool GetQatTitleBarColored(DependencyObject target) => (bool)target.GetValue(QatTitleBarColoredProperty);
+    public static void SetQatTitleBarColored(DependencyObject target, bool value) => target.SetValue(QatTitleBarColoredProperty, value);
+
+    public static readonly DependencyProperty QatTabRowColoredProperty = DependencyProperty.RegisterAttached(
+        "QatTabRowColored", typeof(bool), typeof(UtilityChrome), new FrameworkPropertyMetadata(false, OnQatSurfaceChanged));
+    public static bool GetQatTabRowColored(DependencyObject target) => (bool)target.GetValue(QatTabRowColoredProperty);
+    public static void SetQatTabRowColored(DependencyObject target, bool value) => target.SetValue(QatTabRowColoredProperty, value);
+
+    private static void OnQatSurfaceChanged(DependencyObject target, DependencyPropertyChangedEventArgs args)
+    {
+        if (target is Ribbon ribbon) ribbon.UpdateQatButtonContext();
+    }
+
     public static readonly DependencyProperty UseScrollMaterialProperty = DependencyProperty.RegisterAttached(
         "UseScrollMaterial", typeof(bool), typeof(UtilityChrome), new FrameworkPropertyMetadata(false));
 

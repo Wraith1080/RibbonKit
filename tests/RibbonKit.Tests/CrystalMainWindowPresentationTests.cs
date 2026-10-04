@@ -16,6 +16,83 @@ namespace RibbonKit.Tests;
 public sealed class CrystalMainWindowPresentationTests
 {
     [Fact]
+    public void Capture_discovery_tracks_group_items_qat_reset_and_disable() => Sta.Run(() =>
+    {
+        var application = Sta.UseApplication();
+        ThemeManager.Apply(application, RibbonTheme.CrystalLight);
+        var menu = new RibbonApplicationMenu();
+        var backstage = new Backstage();
+        var ribbon = new Ribbon { ApplicationMenu = menu, Backstage = backstage };
+        var tab = new RibbonTab { Header = "Home" };
+        var group = new RibbonGroup { Header = "Commands" };
+        var initial = DropDown("Initial");
+        group.Items.Add(initial); tab.Groups.Add(group); ribbon.Tabs.Add(tab);
+        var qat = DropDown("QAT");
+        ribbon.QuickAccessItems.Add(qat);
+        var window = new RibbonWindow { Content = ribbon, Width = 720, Height = 400,
+            Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
+        var presentation = new CrystalMainWindowPresentation(window, ribbon, menu, backstage);
+        var registrations = (System.Collections.Generic.Dictionary<Control, CapturedBackdrop>)
+            typeof(CrystalMainWindowPresentation).GetField("_popups",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.GetValue(presentation)!;
+        try
+        {
+            window.Show();
+            presentation.Apply(true);
+            Sta.Drain();
+            Assert.Contains(initial, registrations.Keys);
+            Assert.Contains(qat, registrations.Keys);
+            qat.IsDropDownOpen = true;
+            Sta.Drain(); window.UpdateLayout(); Sta.Drain();
+            Assert.IsType<DrawingBrush>(Assert.IsAssignableFrom<Border>(qat.Template.FindName("PART_MenuHost", qat)).Background);
+            qat.IsDropDownOpen = false;
+
+            var later = DropDown("Added later");
+            group.Items.Add(later);
+            var laterGroup = new RibbonGroup { Header = "Added group" };
+            tab.Groups.Add(laterGroup);
+            Assert.Contains(later, registrations.Keys);
+            Assert.Contains(laterGroup, registrations.Keys);
+            var retired = registrations[initial];
+            group.Items.Remove(initial);
+            Assert.DoesNotContain(initial, registrations.Keys);
+            Assert.Throws<ObjectDisposedException>(retired.Refresh);
+            var retiredGroup = registrations[laterGroup];
+            tab.Groups.Remove(laterGroup);
+            Assert.Throws<ObjectDisposedException>(retiredGroup.Refresh);
+            var retiredQat = registrations[qat];
+            ribbon.QuickAccessItems.Clear();
+            Assert.DoesNotContain(qat, registrations.Keys);
+            Assert.Throws<ObjectDisposedException>(retiredQat.Refresh);
+            group.Items.Clear();
+            Assert.DoesNotContain(later, registrations.Keys);
+            ribbon.Tabs.Clear();
+            Assert.Empty(registrations);
+
+            ribbon.Tabs.Add(tab);
+            var beforeDisable = registrations[group];
+            presentation.Apply(false);
+            Assert.Empty(registrations);
+            Assert.Throws<ObjectDisposedException>(beforeDisable.Refresh);
+            ribbon.QuickAccessItems.Add(qat);
+            Assert.Empty(registrations);
+            presentation.Apply(true);
+            Assert.Contains(qat, registrations.Keys);
+            var beforeClose = registrations[qat];
+            window.Close();
+            Assert.Empty(registrations);
+            Assert.Throws<ObjectDisposedException>(beforeClose.Refresh);
+        }
+        finally { qat.IsDropDownOpen = false; window.Close(); Sta.ResetApplication(); }
+        static RibbonDropDownButton DropDown(string header)
+        {
+            var result = new RibbonDropDownButton { Header = header };
+            result.Items.Add(new RibbonMenuItem { Header = "Open" });
+            return result;
+        }
+    });
+
+    [Fact]
     public void Crystal_host_details_restore_office_presentation_when_theme_changes() => Sta.Run(() =>
     {
         var application = Sta.UseApplication();

@@ -74,11 +74,19 @@ Its shared `QatExtender.*`, `QatExtenderShadow`, `ContentCornerRadiusQatBelow`
 and `ContentZIndexQatBelow` theme resources support scoped overrides;
 explicit local part values retain WPF precedence. Message rows retain semantic
 amber paint, independent dismissal and actions. The shared
-`RibbonKit.Styles.MessageBar.ActionButton` style and
-`RibbonKit.Metrics.MessageBar.ActionCornerRadius`
-metric provide Crystal action paint and 12-DIP corners; Office retains its compact
-action appearance. `RibbonKit.Metrics.ContentCornerRadiusTop` keeps Crystal's body rounded above
+`RibbonKit.Styles.MessageBar.ActionButton` style uses one action template and state
+implementation shared with Crystal Backstage. `RibbonKit.Metrics.MessageBar.ActionCornerRadius`,
+`ActionUseGlassMaterial` and `ActionDisabledOpacity` preserve Crystal's 12-DIP glass
+action and Office's compact appearance. Explicit message styles and the scoped
+`RibbonKit.Templates.MessageBar.ActionButton` template key remain available.
+`RibbonKit.Metrics.ContentCornerRadiusTop` keeps Crystal's body rounded above
 messages. Scoped resources and explicit action styles/values retain WPF precedence.
+QAT icon/hover policy follows the ribbon's effective resource scope through
+`RibbonKit.Metrics.QatTitleBarColored` and `QatTabRowColored`. ThemeManager sets
+these alongside its accent bands; independent palettes retain their own defaults.
+Crystal Sidebar/Floating Backstage geometry can be overridden through
+`RibbonKit.Metrics.Backstage.*`, including `SidebarWidth`, `FloatingMargin` and
+`ActionCornerRadius`. Those layouts contain no fixed application branding.
 The application menu receives its translucent paint, 14-DIP outer corners,
 rounded content/split rows, responsive pane width and outside-only shadow from
 shared resources. `RibbonKit.Metrics.ApplicationMenuPaneWidth`,

@@ -26,7 +26,7 @@ public enum RibbonTheme
     /// Office 2007 ("Blue"): the glossiest generation — hard-crease glass gels on every hot
     /// state (gold on hover, saturated orange when pressed), a "valley" gradient on both the
     /// title bar and the ribbon body, a flat light-blue tab strip, dark-blue tab labels, and a
-    /// connected selected tab. The round Office orb is opt-in via
+    /// connected selected tab. The round Office orb is the theme default; override it via
     /// <see cref="RibbonKit.Controls.Ribbon"/>'s application-button shape; see
     /// docs/07-OFFICE-2007-THEME-PLAN.md.
     /// </summary>
@@ -143,6 +143,8 @@ public static class ThemeManager
     private const string TabHoverKey = "RibbonKit.Brushes.Tab.HoverBackground";
     private const string TabStripControlHoverKey = "RibbonKit.Brushes.TabStrip.ControlHoverBackground";
     private const string TabStripControlPressedKey = "RibbonKit.Brushes.TabStrip.ControlPressedBackground";
+    private const string QatTitleBarColoredKey = "RibbonKit.Metrics.QatTitleBarColored";
+    private const string QatTabRowColoredKey = "RibbonKit.Metrics.QatTabRowColored";
 
     // Hover/press washes for the small chrome buttons (minimize chevron, modal-tab close, merged
     // caption buttons, QAT overflow, scroll chevrons, caption buttons, the pressed File button)
@@ -700,6 +702,8 @@ public static class ThemeManager
         resources.Remove(AppButtonMenuOpenBackgroundKey);
         resources.Remove(AppButtonMenuOpenBottomKey);
         resources.Remove(AppButtonMenuOpenForegroundKey);
+        resources.Remove(QatTitleBarColoredKey);
+        resources.Remove(QatTabRowColoredKey);
         // Menu-open tokens normally preserve the old checked-state contract: accent fill and
         // white text, including when a custom accent is active. Office 2010 keeps its smooth
         // gel rather than flattening the open File tab; the Office 2019 colored-band branch
@@ -783,6 +787,7 @@ public static class ThemeManager
         };
         resources[TitleBarBackgroundKey] = titleBar;
         resources[TitleBarForegroundKey] = Frozen(Colors.White);
+        resources[QatTitleBarColoredKey] = true;
 
         // The caption buttons follow the band they sit on: flat chips on a glass caption were
         // exactly the mismatch the glass treatment was added to remove. Gel for 2010, the
@@ -811,6 +816,7 @@ public static class ThemeManager
         // tabs. Other themes keep a neutral strip.
         if (CurrentTheme == RibbonTheme.Office2019)
         {
+            resources[QatTabRowColoredKey] = true;
             Color stripHover = Mix(accent, Colors.White, 0.18);
             Color stripPressed = Mix(accent, Colors.Black, 0.15);
             resources[RibbonBackgroundKey] = Frozen(accent);

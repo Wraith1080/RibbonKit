@@ -91,6 +91,10 @@
          Ribbon
          ============================================================ -->
     <Style TargetType="{x:Type controls:Ribbon}">
+        <Setter Property="controls:UtilityChrome.QatTitleBarColored"
+                Value="{DynamicResource RibbonKit.Metrics.QatTitleBarColored}" />
+        <Setter Property="controls:UtilityChrome.QatTabRowColored"
+                Value="{DynamicResource RibbonKit.Metrics.QatTabRowColored}" />
         <Setter Property="ApplicationButtonShape"
                 Value="{DynamicResource RibbonKit.ApplicationButtonShape.Default}" />
         <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Ribbon.Background}" />

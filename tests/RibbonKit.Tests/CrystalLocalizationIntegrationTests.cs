@@ -256,13 +256,15 @@ public sealed class CrystalLocalizationIntegrationTests
     private static void AssertFloatingHeaderSides(Backstage stage, bool rtl)
     {
         var button = Assert.IsType<Button>(stage.Template.FindName("PART_BackButton", stage));
-        var brand = Assert.IsType<TextBlock>(stage.Template.FindName("CrystalBrand", stage));
-        double backLeft = ScreenX(button).left;
-        double brandLeft = ScreenX(brand).left;
+        Assert.Null(stage.Template.FindName("CrystalBrand", stage));
+        var content = Assert.IsType<Grid>(stage.Template.FindName("ContentArea", stage));
+        var (backLeft, backRight) = ScreenX(button);
+        var (contentLeft, contentRight) = ScreenX(content);
+        Assert.True(button.ActualWidth > 0);
         if (rtl)
-            Assert.True(backLeft > brandLeft);
+            Assert.True(Math.Abs(backRight - contentRight) <= 1, $"back={backRight}, content={contentRight}");
         else
-            Assert.True(backLeft < brandLeft);
+            Assert.True(Math.Abs(backLeft - contentLeft) <= 1, $"back={backLeft}, content={contentLeft}");
     }
 
     private static void AssertOptionIndicatorSide(Control option, bool rtl, double scale)
