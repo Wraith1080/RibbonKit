@@ -6706,3 +6706,63 @@ Dismiss messages closes the new row. All seven focused existing tests passed.
 Normal Release and Debug Showcase builds passed with zero warnings/errors and
 updated the default review executable. The full suite and visual snapshots were
 not repeated for this host-only example; its live appearance remains in the plan.
+
+### 3.218 Keyboard focus and application-menu navigation — 2026-10-04
+
+The user reported a dotted focus rectangle around the whole Ribbon, duplicate Tab
+stops on ordinary application-menu navigation rows, an unreachable split arrow,
+and Enter failing on a focused row. `Ribbon` and `RibbonApplicationMenuItem`
+inherited focusability from `Control`; each navigation row also contained a native
+Button, while its arrow explicitly disabled focus. The container had no native
+button activation behavior.
+
+The shared defaults now exclude the Ribbon and navigation-row containers from
+keyboard focus and Tab traversal. Native template buttons own Enter/Space,
+command execution and Click routing. Plain commands and dropdown rows have one
+Tab stop; split commands and their arrows have separate stops. A dropdown's primary
+target spans the whole row, with a token-sized spacer preserving the header's
+original layout area. Keyboard navigation claims the same panes as pointer hover.
+
+The menu keeps a fallback focus target without an outline for empty content, excluded
+from the cyclic Tab order. Opening defers focus to the first enabled action until
+layout realizes its template. This initial transfer does not claim a pane: opening
+still shows the default page, including menus whose first item has pane content.
+That distinction preserves the existing viewport/default-page contract. Subsequent
+navigation updates pane ownership; pane commands do not reset their own pane.
+Scrollbar-button dismissal exemptions and native scrolling remain intact.
+
+`Controls.Focus.xaml` supplies one solid, inset, theme-colored WPF focus adorner.
+Ribbon buttons/toggles/options, tabs, split/dropdown template buttons, menu rows,
+gallery tiles and utility actions reference it from their shared dictionaries.
+Its brush and rounding use existing input-focus and control-corner tokens.
+WPF retains keyboard-only focus display, rather than adding persistent mouse-focus
+outlines. The menu fallback suppresses its own focus visual. No public API or
+Showcase/Writer implementation was added.
+
+The RibbonKit-only consumer regression traverses ordinary, disabled, separator,
+split and dropdown rows, pane commands and the footer in both directions. It checks
+focus cycling without entering the document, native Enter/Space Click activation,
+routed command/parameter execution, command dismissal, pane-open retention and Esc,
+across all six themes, light/dark and LTR/RTL. It also realizes WPF's actual focus
+adorner and checks its brush and bounds. Optional `RIBBONKIT_FOCUS_DIAGNOSTICS`
+exports Crystal command/arrow/dropdown PNGs. All six light/dark diagnostic images
+were inspected; the split ring surrounds the arrow alone and the dropdown ring
+surrounds the full row.
+
+The offscreen fixture forces WPF's keyboard-focus visual display through its
+internal keyboard-navigation hook and raises routed key events. This verifies
+realized control/template behavior, rather than physical keyboard or target-machine
+appearance acceptance. Native Showcase keyboard review, DPI/mixed-monitor behavior
+and final visual acceptance remain separate live gates.
+
+Normal Release and Debug solution builds passed with zero warnings/errors for
+both runtime targets and refreshed the default Showcase/Writer review outputs.
+The final serialized Release solution run passed **950 tests, 0 failed / 0 skipped**:
+**466 runtime**, **482 Writer**, the visual aggregate covering **113 approved scenes**,
+and the RibbonKit-only consumer aggregate. Results are recorded as
+`keyboard-focus-release-final.trx` in each test project's TestResults folder.
+The final consumer also passed independently (`keyboard-focus-consumer.trx`).
+Visual approvals/tolerances and the public API baseline are unchanged. The final
+diff and documentation pointer were reviewed; `git diff --check` passed.
+Showcase/Writer were not manually launched, and nothing was committed, pushed or
+published.

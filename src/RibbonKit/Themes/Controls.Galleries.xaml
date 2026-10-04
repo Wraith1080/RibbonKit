@@ -8,6 +8,7 @@
          Import it here as well because deferred gallery templates resolve StaticResource
          only within their own dictionary/merged dictionaries, not aggregator siblings. -->
     <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.Focus.xaml" />
         <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.ScrollBars.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
@@ -53,6 +54,7 @@
          RibbonGalleryItem — selectable tile with hover/selected chrome
          ============================================================ -->
     <Style TargetType="{x:Type controls:RibbonGalleryItem}">
+        <Setter Property="FocusVisualStyle" Value="{StaticResource RibbonKit.KeyboardFocusVisual}" />
         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
         <Setter Property="Template">
             <Setter.Value>

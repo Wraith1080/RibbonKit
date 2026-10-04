@@ -5,6 +5,10 @@
     xmlns:localization="clr-namespace:RibbonKit.Localization"
     xmlns:layout="clr-namespace:RibbonKit.Layout">
 
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.Focus.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
     <!-- Part of the shared RibbonKit control-template dictionary; merged by Office2024.xaml.
          RibbonTab, RibbonGroupsHost, RibbonGroup.
          Colours/metrics come from Tokens.Office20XX.xaml via {DynamicResource}. -->
@@ -15,6 +19,7 @@
          ============================================================ -->
     <controls:ContextualMaterialConverter x:Key="RibbonKit.ContextualMaterial" />
     <Style TargetType="{x:Type controls:RibbonTab}">
+        <Setter Property="FocusVisualStyle" Value="{StaticResource RibbonKit.KeyboardFocusVisual}" />
         <Setter Property="controls:ContextualMaterial.Enabled" Value="{DynamicResource RibbonKit.Metrics.ContextualUseCrystalMaterial}" />
         <Setter Property="controls:ContextualMaterial.SelectedBackground" Value="{DynamicResource RibbonKit.Brushes.Tab.SelectedBackground}" />
         <Setter Property="controls:ContextualMaterial.HoverBackground" Value="{DynamicResource RibbonKit.Brushes.Tab.HoverBackground}" />
@@ -544,6 +549,7 @@
                                             Command="{TemplateBinding DialogLauncherCommand}">
                                         <Button.Style>
                                             <Style TargetType="{x:Type Button}">
+                                                <Setter Property="FocusVisualStyle" Value="{StaticResource RibbonKit.KeyboardFocusVisual}" />
                                                 <Setter Property="Template">
                                                     <Setter.Value>
                                                         <ControlTemplate TargetType="{x:Type Button}">
@@ -591,6 +597,7 @@
                                       Visibility="Collapsed">
                             <ToggleButton.Style>
                                 <Style TargetType="{x:Type ToggleButton}">
+                                    <Setter Property="FocusVisualStyle" Value="{StaticResource RibbonKit.KeyboardFocusVisual}" />
                                     <Setter Property="Focusable" Value="True" />
                                     <Setter Property="Foreground"
                                             Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />

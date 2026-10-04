@@ -4,6 +4,10 @@
     xmlns:controls="clr-namespace:RibbonKit.Controls"
     xmlns:layout="clr-namespace:RibbonKit.Layout">
 
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.Focus.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
     <!-- Part of the shared RibbonKit control-template dictionary; merged by Office2024.xaml.
          RibbonButton, RibbonScreenTip, RibbonToggleButton, RibbonCheckBox, RibbonRadioButton.
          Colours/metrics come from Tokens.Office20XX.xaml via {DynamicResource}. -->
@@ -12,6 +16,7 @@
          RibbonButton — Large / Medium / Small layouts via triggers
          ============================================================ -->
     <Style TargetType="{x:Type controls:RibbonButton}">
+        <Setter Property="FocusVisualStyle" Value="{StaticResource RibbonKit.KeyboardFocusVisual}" />
         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
         <Setter Property="Focusable" Value="True" />
         <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
@@ -208,6 +213,7 @@
          RibbonToggleButton — like RibbonButton + checked accent tint
          ============================================================ -->
     <Style TargetType="{x:Type controls:RibbonToggleButton}">
+        <Setter Property="FocusVisualStyle" Value="{StaticResource RibbonKit.KeyboardFocusVisual}" />
         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
         <Setter Property="Focusable" Value="True" />
         <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
@@ -363,6 +369,7 @@
          Compact option controls — CheckBox / RadioButton
          ============================================================ -->
     <Style TargetType="{x:Type controls:RibbonCheckBox}">
+        <Setter Property="FocusVisualStyle" Value="{StaticResource RibbonKit.KeyboardFocusVisual}" />
         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
         <Setter Property="Focusable" Value="True" />
         <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
@@ -465,6 +472,7 @@
     </Style>
 
     <Style TargetType="{x:Type controls:RibbonRadioButton}">
+        <Setter Property="FocusVisualStyle" Value="{StaticResource RibbonKit.KeyboardFocusVisual}" />
         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
         <Setter Property="Focusable" Value="True" />
         <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />

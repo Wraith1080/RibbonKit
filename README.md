@@ -60,6 +60,11 @@ provider refresh, mirroring, popup edges and customization. Application-authored
 labels remain the application's responsibility. A complete Windows contrast-theme
 mode is **not supported**; gallery/scrollbar system-color fallbacks are narrower.
 
+Ribbon actions use a solid theme-colored keyboard-focus outline. The ribbon container
+is excluded from the tab order. Application-menu commands and dropdown rows have one
+Tab stop; split rows expose their command and arrow separately. Enter or Space invokes
+the focused action, and keyboard navigation updates the corresponding menu pane.
+
 ### Theming & rendering
 
 Office 2007, 2010, 2013, 2019 and 2024 each have light and dark/black palettes, with

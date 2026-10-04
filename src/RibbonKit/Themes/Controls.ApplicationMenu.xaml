@@ -3,6 +3,10 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="clr-namespace:RibbonKit.Controls">
 
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.Focus.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
     <controls:ApplicationMenuGeometryConverter x:Key="ApplicationMenuGeometry" />
 
     <!-- Part of the shared RibbonKit control-template dictionary; merged by Office2024.xaml.
@@ -27,6 +31,7 @@
          would cut the fill in two. These exist purely to split the row into two click regions and
          to publish IsPressed for the row's triggers. -->
     <Style x:Key="RibbonKit.ApplicationMenuHitArea" TargetType="{x:Type Button}">
+        <Setter Property="FocusVisualStyle" Value="{StaticResource RibbonKit.KeyboardFocusVisual}" />
         <Setter Property="Foreground"
                 Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type controls:RibbonApplicationMenuItem}}}" />
         <Setter Property="Background" Value="Transparent" />
@@ -121,29 +126,35 @@
                             <Button x:Name="PART_Primary"
                                     Grid.Column="0"
                                     Style="{StaticResource RibbonKit.ApplicationMenuHitArea}">
-                                <Grid Margin="8,0,6,0">
+                                <Grid>
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
-                                    <Image Grid.Column="0"
-                                           Source="{TemplateBinding Icon}"
-                                           Width="32"
-                                           Height="32"
-                                           Stretch="Uniform"
-                                           VerticalAlignment="Center" />
-                                    <ContentPresenter Grid.Column="1"
-                                                      ContentSource="Header"
-                                                      Margin="12,0,0,0"
-                                                      VerticalAlignment="Center" />
+                                    <Grid Margin="8,0,6,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Image Grid.Column="0"
+                                               Source="{TemplateBinding Icon}"
+                                               Width="32"
+                                               Height="32"
+                                               Stretch="Uniform"
+                                               VerticalAlignment="Center" />
+                                        <ContentPresenter Grid.Column="1"
+                                                          ContentSource="Header"
+                                                          Margin="12,0,0,0"
+                                                          VerticalAlignment="Center" />
+                                    </Grid>
+                                    <Border x:Name="DropdownArrowSpacer" Grid.Column="1"
+                                            Width="{DynamicResource RibbonKit.Metrics.ApplicationMenuArrowWidth}"
+                                            Visibility="Collapsed" />
                                 </Grid>
                             </Button>
 
-                            <!-- Focusable=False: two tab stops per row would double the length of the
-                                 keyboard walk down the column for a control that hover already drives. -->
                             <Button x:Name="PART_Arrow"
                                     Grid.Column="1"
-                                    Focusable="False"
                                     Width="{DynamicResource RibbonKit.Metrics.ApplicationMenuArrowWidth}"
                                     Style="{StaticResource RibbonKit.ApplicationMenuHitArea}"
                                     HorizontalContentAlignment="Center"
@@ -154,9 +165,17 @@
                         </Grid>
                     </Border>
                     <ControlTemplate.Triggers>
+                        <!-- A dropdown row is one action; a split row has two keyboard targets. -->
+                        <Trigger Property="IsSplitPresentation" Value="False">
+                            <Setter TargetName="PART_Primary" Property="Grid.ColumnSpan" Value="2" />
+                            <Setter TargetName="DropdownArrowSpacer" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="PART_Arrow" Property="Focusable" Value="False" />
+                            <Setter TargetName="PART_Arrow" Property="IsTabStop" Value="False" />
+                        </Trigger>
                         <!-- No pane: no arrow half at all, and the Auto column collapses to zero so
                              the command half runs the full width of the row. -->
                         <Trigger Property="HasPane" Value="False">
+                            <Setter TargetName="DropdownArrowSpacer" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="ArrowFill" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="PART_Arrow" Property="Visibility" Value="Collapsed" />
                         </Trigger>
@@ -299,6 +318,7 @@
          RibbonApplicationMenuPaneItem — a row inside the right pane
          ============================================================ -->
     <Style TargetType="{x:Type controls:RibbonApplicationMenuPaneItem}">
+        <Setter Property="FocusVisualStyle" Value="{StaticResource RibbonKit.KeyboardFocusVisual}" />
         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.ApplicationMenu.Foreground}" />
         <Setter Property="HorizontalContentAlignment" Value="Left" />
         <Setter Property="Padding" Value="6,5" />
@@ -374,6 +394,7 @@
          RibbonApplicationMenuButton — the footer bar's buttons
          ============================================================ -->
     <Style TargetType="{x:Type controls:RibbonApplicationMenuButton}">
+        <Setter Property="FocusVisualStyle" Value="{StaticResource RibbonKit.KeyboardFocusVisual}" />
         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.ApplicationMenu.Foreground}" />
         <Setter Property="Padding" Value="9,3" />
         <Setter Property="Margin" Value="4,0,0,0" />
@@ -436,6 +457,7 @@
          RibbonApplicationMenu — the two-pane drop-down itself
          ============================================================ -->
     <Style TargetType="{x:Type controls:RibbonApplicationMenu}">
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.ApplicationMenu.Foreground}" />
         <Setter Property="HorizontalAlignment" Value="Left" />
         <Setter Property="VerticalAlignment" Value="Top" />

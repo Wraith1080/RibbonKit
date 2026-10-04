@@ -824,6 +824,10 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [Scoped QAT policy, dynamic capture registration and shared action/Backstage resources](docs/history/01-library.md#3217-crystal-pre-merge-scope-and-resource-cleanup--2026-10-04).
 
+### 3.218 Keyboard focus and application-menu navigation — 2026-10-04
+
+[Shared focus outlines, actionable tab stops and native keyboard activation](docs/history/01-library.md#3218-keyboard-focus-and-application-menu-navigation--2026-10-04).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),

@@ -309,6 +309,8 @@ public class Ribbon : Control
 
     static Ribbon()
     {
+        FocusableProperty.OverrideMetadata(typeof(Ribbon), new FrameworkPropertyMetadata(false));
+        IsTabStopProperty.OverrideMetadata(typeof(Ribbon), new FrameworkPropertyMetadata(false));
         DefaultStyleKeyProperty.OverrideMetadata(
             typeof(Ribbon),
             new FrameworkPropertyMetadata(typeof(Ribbon)));

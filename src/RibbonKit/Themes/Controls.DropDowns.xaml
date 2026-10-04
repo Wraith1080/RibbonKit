@@ -4,6 +4,10 @@
     xmlns:controls="clr-namespace:RibbonKit.Controls"
     xmlns:layout="clr-namespace:RibbonKit.Layout">
 
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.Focus.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
     <!-- Part of the shared RibbonKit control-template dictionary; merged by Office2024.xaml.
          RibbonDropDownButton, RibbonSplitButton, RibbonMenuItem, RibbonComboBox, RibbonTextBox.
          Colours/metrics come from Tokens.Office20XX.xaml via {DynamicResource}. -->
@@ -31,6 +35,7 @@
                                       IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
                             <ToggleButton.Style>
                                 <Style TargetType="{x:Type ToggleButton}">
+                                    <Setter Property="FocusVisualStyle" Value="{StaticResource RibbonKit.KeyboardFocusVisual}" />
                                     <Setter Property="Template">
                                         <Setter.Value>
                                             <ControlTemplate TargetType="{x:Type ToggleButton}">
@@ -261,6 +266,7 @@
                                 CommandParameter="{TemplateBinding CommandParameter}">
                             <Button.Style>
                                 <Style TargetType="{x:Type Button}">
+                                    <Setter Property="FocusVisualStyle" Value="{StaticResource RibbonKit.KeyboardFocusVisual}" />
                                     <Setter Property="Template">
                                         <Setter.Value>
                                             <ControlTemplate TargetType="{x:Type Button}">
@@ -408,6 +414,7 @@
                                       IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
                             <ToggleButton.Style>
                                 <Style TargetType="{x:Type ToggleButton}">
+                                    <Setter Property="FocusVisualStyle" Value="{StaticResource RibbonKit.KeyboardFocusVisual}" />
                                     <Setter Property="Template">
                                         <Setter.Value>
                                             <ControlTemplate TargetType="{x:Type ToggleButton}">
@@ -637,6 +644,7 @@
          RibbonMenuItem — row inside dropdown flyouts
          ============================================================ -->
     <Style TargetType="{x:Type controls:RibbonMenuItem}">
+        <Setter Property="FocusVisualStyle" Value="{StaticResource RibbonKit.KeyboardFocusVisual}" />
         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
         <Setter Property="MinWidth" Value="160" />
         <Setter Property="Template">
@@ -764,6 +772,7 @@
                                           IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
                                 <ToggleButton.Style>
                                     <Style TargetType="{x:Type ToggleButton}">
+                                        <Setter Property="FocusVisualStyle" Value="{StaticResource RibbonKit.KeyboardFocusVisual}" />
                                         <Setter Property="Template">
                                             <Setter.Value>
                                                 <ControlTemplate TargetType="{x:Type ToggleButton}">

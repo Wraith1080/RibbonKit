@@ -16,6 +16,7 @@
          RibbonKit.MergedCaptionButton are used by StaticResource below.
          (Also listed in Office2024.xaml; WPF caches dictionaries by Source URI.) -->
     <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.Focus.xaml" />
         <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.Shared.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
@@ -379,6 +380,7 @@
                                           IsChecked="{Binding IsBackstageOpen, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}, Mode=TwoWay}">
                                 <ToggleButton.Style>
                                     <Style TargetType="{x:Type ToggleButton}">
+                                        <Setter Property="FocusVisualStyle" Value="{StaticResource RibbonKit.KeyboardFocusVisual}" />
                                         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.ApplicationButton.Foreground}" />
                                         <Setter Property="Margin" Value="{DynamicResource RibbonKit.Metrics.ApplicationButtonMargin}" />
                                         <Setter Property="Padding" Value="{DynamicResource RibbonKit.Metrics.ApplicationButtonPadding}" />
@@ -623,6 +625,7 @@
                                     Visibility="{Binding CanCloseModal, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}, Converter={StaticResource RibbonKit.BoolToVis}}">
                                 <Button.Style>
                                     <Style TargetType="{x:Type Button}">
+                                        <Setter Property="FocusVisualStyle" Value="{StaticResource RibbonKit.KeyboardFocusVisual}" />
                                         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.TabStrip.Foreground}" />
                                         <Setter Property="Template">
                                             <Setter.Value>
@@ -686,6 +689,7 @@
                                           IsChecked="{Binding IsMinimized, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}, Mode=TwoWay}">
                                 <ToggleButton.Style>
                                     <Style TargetType="{x:Type ToggleButton}">
+                                        <Setter Property="FocusVisualStyle" Value="{StaticResource RibbonKit.KeyboardFocusVisual}" />
                                         <Setter Property="Template">
                                             <Setter.Value>
                                                 <ControlTemplate TargetType="{x:Type ToggleButton}">

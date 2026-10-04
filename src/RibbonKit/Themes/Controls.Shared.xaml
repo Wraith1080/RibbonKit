@@ -5,6 +5,10 @@
     xmlns:localization="clr-namespace:RibbonKit.Localization"
     xmlns:layout="clr-namespace:RibbonKit.Layout">
 
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.Focus.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
     <!-- Part of the shared RibbonKit control-template dictionary; merged by Office2024.xaml.
          Shared helpers: bool-to-visibility converter, merged-caption button, QAT, scroll chrome.
          Colours/metrics come from Tokens.Office20XX.xaml via {DynamicResource}. -->
@@ -58,6 +62,7 @@
          reads as one control group and themes across all four generations with no new tokens.
          The glyph is supplied per button as Content. -->
     <Style x:Key="RibbonKit.MergedCaptionButton" TargetType="{x:Type Button}">
+        <Setter Property="FocusVisualStyle" Value="{StaticResource RibbonKit.KeyboardFocusVisual}" />
         <Setter Property="Width" Value="24" />
         <Setter Property="Height" Value="22" />
         <Setter Property="Margin" Value="0,6,0,0" />
@@ -135,6 +140,7 @@
                                           Visibility="{Binding HasOverflow, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource RibbonKit.BoolToVis}}">
                                 <ToggleButton.Style>
                                     <Style TargetType="{x:Type ToggleButton}">
+                                        <Setter Property="FocusVisualStyle" Value="{StaticResource RibbonKit.KeyboardFocusVisual}" />
                                         <Setter Property="Template">
                                             <Setter.Value>
                                                 <ControlTemplate TargetType="{x:Type ToggleButton}">
@@ -278,6 +284,7 @@
     </Style>
 
     <Style x:Key="RibbonKit.ScrollLeftButton" TargetType="{x:Type RepeatButton}">
+        <Setter Property="FocusVisualStyle" Value="{StaticResource RibbonKit.KeyboardFocusVisual}" />
         <Setter Property="controls:UtilityChrome.UseScrollMaterial" Value="{DynamicResource RibbonKit.Metrics.UseUtilityScrollMaterial}" />
         <Setter Property="Width" Value="22" />
         <Setter Property="Focusable" Value="False" />
