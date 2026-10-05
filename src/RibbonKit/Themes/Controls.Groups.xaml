@@ -20,6 +20,7 @@
     <controls:ContextualMaterialConverter x:Key="RibbonKit.ContextualMaterial" />
     <Style TargetType="{x:Type controls:RibbonTab}">
         <Setter Property="FocusVisualStyle" Value="{StaticResource RibbonKit.KeyboardFocusVisual}" />
+        <Setter Property="controls:FocusVisualTracking.Background" Value="{DynamicResource RibbonKit.Brushes.Ribbon.Background}" />
         <Setter Property="controls:ContextualMaterial.Enabled" Value="{DynamicResource RibbonKit.Metrics.ContextualUseCrystalMaterial}" />
         <Setter Property="controls:ContextualMaterial.SelectedBackground" Value="{DynamicResource RibbonKit.Brushes.Tab.SelectedBackground}" />
         <Setter Property="controls:ContextualMaterial.HoverBackground" Value="{DynamicResource RibbonKit.Brushes.Tab.HoverBackground}" />

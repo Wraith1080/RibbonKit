@@ -19,6 +19,196 @@ namespace RibbonKit.Tests;
 public class KeyboardFocusInteractionTests
 {
     [Theory]
+    [InlineData(RibbonTheme.Office2013, FlowDirection.LeftToRight)]
+    [InlineData(RibbonTheme.Office2013, FlowDirection.RightToLeft)]
+    [InlineData(RibbonTheme.Office2019, FlowDirection.LeftToRight)]
+    [InlineData(RibbonTheme.Office2019, FlowDirection.RightToLeft)]
+    public void Native_focus_remains_visible_on_accent_rails_and_colored_headers(RibbonTheme theme, FlowDirection flow) => Sta.Run(() =>
+    {
+        var application = Sta.UseApplication();
+        var animationLevel = RibbonAnimation.GlobalLevel;
+        RibbonAnimation.GlobalLevel = RibbonAnimationLevel.None;
+        ThemeManager.Apply(application, theme);
+        var home = new BackstageTabItem { Header = "Home", Content = new Button { Content = "Page action" } };
+        var info = new BackstageTabItem { Header = "Info", Content = new Button { Content = "Info action" } };
+        var backstage = new Backstage { Design = RibbonBackstageDesign.Classic };
+        backstage.Items.Add(home);
+        backstage.Items.Add(info);
+        var ribbon = new Ribbon { Backstage = backstage, ApplicationButtonShape = RibbonApplicationButtonShape.Tab };
+        var tab = new RibbonTab { Header = "Home" };
+        ribbon.Tabs.Add(tab);
+        ribbon.Tabs.Add(new RibbonTab { Header = "Other" });
+        var document = new TextBox();
+        var content = new DockPanel();
+        DockPanel.SetDock(ribbon, Dock.Top);
+        content.Children.Add(ribbon);
+        content.Children.Add(document);
+        var window = CreateWindow(new AdornerDecorator { Child = content }, flow);
+        window.Height = 600;
+        try
+        {
+            window.Show();
+            foreach (bool dark in new[] { false, true })
+            foreach (Color accent in new[] { Color.FromRgb(43, 87, 154), Color.FromRgb(138, 62, 129), Color.FromRgb(255, 224, 138) })
+            {
+                ThemeManager.SetDarkMode(application, dark);
+                ThemeManager.SetAccent(application, accent);
+                ThemeManager.SetAccentedTitleBar(application, true);
+                Sta.Drain();
+                window.UpdateLayout();
+                var tabs = Assert.IsType<RibbonTabControl>(ribbon.Template.FindName("TabControlHost", ribbon));
+                var file = Assert.IsType<ToggleButton>(tabs.Template.FindName("PART_ApplicationButton", tabs));
+                var collapse = Assert.IsType<ToggleButton>(tabs.Template.FindName("MinimizeToggle", tabs));
+                Color band = ColorOf(ribbon.FindResource("RibbonKit.Brushes.Ribbon.Background"));
+                AssertVisible(file, EffectiveBackground(file, band), "file");
+                AssertVisible(collapse, EffectiveBackground(collapse, band), "collapse");
+                var header = Assert.IsType<Border>(tab.Template.FindName("HeaderChrome", tab));
+                AssertVisible(tab, band, "selected-tab");
+                // Exercise the same header on the colored band, independent of WPF's
+                // automatic selection when a tab header gains keyboard focus.
+                header.Background = Brushes.Transparent;
+                AssertVisible(tab, band, "band-tab");
+                header.ClearValue(Border.BackgroundProperty);
+                Assert.True(collapse.Focus());
+                ShowFocusVisual();
+                ThemeManager.SetAccentedTitleBar(application, false);
+                Sta.Drain();
+                window.UpdateLayout();
+                AssertVisible(collapse, EffectiveBackground(collapse,
+                    ColorOf(ribbon.FindResource("RibbonKit.Brushes.Ribbon.Background"))), "uncolored-collapse", refocus: false);
+
+                ribbon.IsBackstageOpen = true;
+                Sta.Drain();
+                window.UpdateLayout();
+                Color rail = ColorOf(((Border)backstage.Template.FindName("NavColumn", backstage)).Background);
+                foreach (var item in new[] { home, info })
+                {
+                    AssertVisible(item, EffectiveBackground(item, rail), "nav-" + item.Header);
+                    var chrome = Assert.IsType<Border>(item.Template.FindName("Chrome", item));
+                    chrome.Background = (Brush)item.FindResource("RibbonKit.Brushes.Backstage.ItemHoverBackground");
+                    AssertVisible(item, ColorOf(chrome.Background), "hover-" + item.Header, refocus: false);
+                    chrome.ClearValue(Border.BackgroundProperty);
+                }
+                var back = Assert.IsType<Button>(backstage.Template.FindName("PART_BackButton", backstage));
+                AssertVisible(back, rail, "back");
+                ribbon.IsBackstageOpen = false;
+                Sta.Drain();
+            }
+        }
+        finally { window.Close(); Sta.ResetApplication(); RibbonAnimation.GlobalLevel = animationLevel; }
+
+        void AssertVisible(Control target, Color background, string name, bool refocus = true)
+        {
+            if (refocus) Assert.True(target.Focus());
+            ShowFocusVisual();
+            window.UpdateLayout();
+            PumpFrames();
+            var adorner = Assert.Single(AdornerLayer.GetAdornerLayer(target)!.GetAdorners(target)!);
+            Brush stroke = FindNamed<Ellipse>(adorner, "FocusRing")?.Stroke ?? FindBorder(adorner)!.BorderBrush;
+            background = EffectiveBackground(target, background);
+            double contrast = Contrast(ColorOf(stroke), background);
+            SaveReview(window, $"contrast-{theme}-{flow}-{ThemeManager.IsDarkMode}-{ColorOf(target.FindResource("RibbonKit.Brushes.Accent"))}-{name}");
+            Assert.True(contrast >= 3, $"{name}: outline={ColorOf(stroke)}, background={background}, contrast={contrast}");
+        }
+    });
+
+    private static Color EffectiveBackground(Control target, Color band) =>
+        (target.Template.FindName("Chrome", target) ?? target.Template.FindName("HeaderChrome", target))
+            is Border { Background: SolidColorBrush brush } && brush.Color.A == 255
+            ? brush.Color : band;
+
+    private static Color ColorOf(object brush) => Assert.IsType<SolidColorBrush>(brush).Color;
+
+    private static double Contrast(Color a, Color b)
+    {
+        double x = Luminance(a), y = Luminance(b);
+        return (Math.Max(x, y) + 0.05) / (Math.Min(x, y) + 0.05);
+        static double Luminance(Color color) => 0.2126 * Linear(color.R) + 0.7152 * Linear(color.G) + 0.0722 * Linear(color.B);
+        static double Linear(byte value)
+        {
+            double channel = value / 255d;
+            return channel <= 0.04045 ? channel / 12.92 : Math.Pow((channel + 0.055) / 1.055, 2.4);
+        }
+    }
+
+    [Theory]
+    [InlineData(RibbonTheme.Office2024, FlowDirection.LeftToRight)]
+    [InlineData(RibbonTheme.Office2024, FlowDirection.RightToLeft)]
+    [InlineData(RibbonTheme.CrystalLight, FlowDirection.LeftToRight)]
+    [InlineData(RibbonTheme.CrystalLight, FlowDirection.RightToLeft)]
+    public void Native_focus_uses_the_visible_chrome_bounds_and_corners(RibbonTheme theme, FlowDirection flow) => Sta.Run(() =>
+    {
+        var application = Sta.UseApplication();
+        ThemeManager.Apply(application, theme);
+        var toggle = new RibbonToggleButton { Header = "Colored title bar", Width = 130, Height = 90, IsChecked = true };
+        var tile = new RibbonGalleryItem { Content = "Auto", Width = 100, Height = 65, IsSelected = true };
+        var crystalTemplates = new ResourceDictionary
+            { Source = new Uri("/RibbonKit;component/Themes/Controls.CrystalBackstage.xaml", UriKind.Relative) };
+        var row = new BackstageTabItem { Header = "Home", Width = 220,
+            Style = (Style)crystalTemplates["Crystal.Backstage.Tab"], IsSelected = true };
+        var content = new StackPanel { Margin = new Thickness(20), HorizontalAlignment = HorizontalAlignment.Left };
+        content.Children.Add(toggle);
+        content.Children.Add(tile);
+        content.Children.Add(row);
+        var window = CreateWindow(new AdornerDecorator { Child = content }, flow);
+        window.Height = 400;
+        try
+        {
+            window.Show();
+            Sta.Drain();
+            window.UpdateLayout();
+            foreach (var target in new Control[] { toggle, tile, row })
+            {
+                Assert.True(target.Focus());
+                ShowFocusVisual();
+                window.UpdateLayout();
+                PumpFrames();
+                var chrome = Assert.IsType<Border>(target.Template.FindName("Chrome", target));
+                AssertChrome(chrome, target.GetType().Name);
+                // Geometry must refresh after a template surface changes while it retains focus.
+                chrome.Margin = new Thickness(13, 4, 7, 9);
+                chrome.CornerRadius = new CornerRadius(18, 12, 6, 3);
+                chrome.RenderTransform = new TransformGroup { Children =
+                    { new ScaleTransform(0.8, 0.9), new RotateTransform(7), new TranslateTransform(5, 3) } };
+                PumpFrames();
+                AssertChrome(chrome, "changed-" + target.GetType().Name);
+            }
+        }
+        finally { window.Close(); Sta.ResetApplication(); }
+
+        void AssertChrome(Border chrome, string name)
+        {
+            var adorner = Assert.Single(AdornerLayer.GetAdornerLayer(chrome)!.GetAdorners((UIElement)chrome.TemplatedParent)!);
+            var ring = FindBorder(adorner);
+            Assert.NotNull(ring);
+            Rect actual = ring.TransformToVisual(window).TransformBounds(new Rect(ring.RenderSize));
+            Rect expected = chrome.TransformToVisual(window).TransformBounds(
+                new Rect(2, 2, chrome.ActualWidth - 4, chrome.ActualHeight - 4));
+            SaveReview(window, $"chrome-{theme}-{flow}-{name}");
+            Assert.True(Math.Abs(actual.Left - expected.Left) < 0.1 && Math.Abs(actual.Top - expected.Top) < 0.1
+                && Math.Abs(actual.Width - expected.Width) < 0.1 && Math.Abs(actual.Height - expected.Height) < 0.1,
+                $"{name}: ring={actual}, chrome inset={expected}");
+            Assert.Equal(new CornerRadius(Math.Max(0, chrome.CornerRadius.TopLeft - 2),
+                Math.Max(0, chrome.CornerRadius.TopRight - 2), Math.Max(0, chrome.CornerRadius.BottomRight - 2),
+                Math.Max(0, chrome.CornerRadius.BottomLeft - 2)), ring.CornerRadius);
+        }
+    });
+
+    private static void SaveReview(Window window, string name)
+    {
+        var directory = Environment.GetEnvironmentVariable("RIBBONKIT_FOCUS_DIAGNOSTICS");
+        if (string.IsNullOrEmpty(directory)) return;
+        Directory.CreateDirectory(directory);
+        var bitmap = new System.Windows.Media.Imaging.RenderTargetBitmap((int)Math.Ceiling(window.ActualWidth),
+            (int)Math.Ceiling(window.ActualHeight), 96, 96, PixelFormats.Pbgra32);
+        bitmap.Render(window);
+        var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder();
+        encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bitmap));
+        using var output = File.Create(Path.Combine(directory, name + ".png"));
+        encoder.Save(output);
+    }
+
+    [Theory]
     [InlineData(FlowDirection.LeftToRight)]
     [InlineData(FlowDirection.RightToLeft)]
     public void Circular_focus_follows_back_discs_real_orbs_and_classic_proxies(FlowDirection flow) => Sta.Run(() =>
@@ -117,14 +307,13 @@ public class KeyboardFocusInteractionTests
                 using var output = File.Create(Path.Combine(directory, $"circular-{name}-{flow}.png"));
                 encoder.Save(output);
             }
-            // The orb is layout-rounded in the ribbon, while WPF's focus branch is
-            // separate. Bound that fractional-DPI difference to one physical pixel.
-            var dpi = VisualTreeHelper.GetDpi(window);
-            Assert.True(Math.Abs(actual.Left - expected.Left) <= 1 / dpi.DpiScaleX,
+            // Placement uses the realized disc, so native-focus layout rounding does
+            // not introduce a separate approximation at fractional DPI.
+            Assert.True(Math.Abs(actual.Left - expected.Left) < 0.1,
                 $"{name}: ring={actual}, face inset={expected}, DPI={VisualTreeHelper.GetDpi(window).DpiScaleX}");
-            Assert.InRange(Math.Abs(actual.Top - expected.Top), 0, 1 / dpi.DpiScaleY);
-            Assert.InRange(Math.Abs(actual.Width - expected.Width), 0, 1 / dpi.DpiScaleX);
-            Assert.InRange(Math.Abs(actual.Height - expected.Height), 0, 1 / dpi.DpiScaleY);
+            Assert.InRange(Math.Abs(actual.Top - expected.Top), 0, 0.1);
+            Assert.InRange(Math.Abs(actual.Width - expected.Width), 0, 0.1);
+            Assert.InRange(Math.Abs(actual.Height - expected.Height), 0, 0.1);
             Assert.Equal(ring.ActualWidth, ring.ActualHeight, 5);
         }
     });

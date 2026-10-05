@@ -7017,3 +7017,108 @@ approvals/tolerances and the public API baseline are unchanged. No application
 was manually launched. Live circular-focus and DPI acceptance remain with the user.
 The final diff and new documentation pointer were reviewed; git diff --check passed.
 Changes remain uncommitted.
+
+### 3.224 Focus outlines follow rendered button surfaces — 2026-10-05
+
+User screenshots showed an offset focus outline on the Colored Title Bar toggle
+and mismatched corners on a Crystal Backstage navigation row. The native focus
+template used the whole control's bounds and a generic corner radius; shared
+templates paint their visible Chrome border inside that slot with independent
+margins and corner geometry.
+
+FocusVisualTracking now measures the realized Chrome border for ordinary shared
+actions and the visible OrbFill ellipse for application orbs and Classic2007
+proxies. Other templates retain the control-bounds fallback. A two-DIP inset
+contour follows the surface, with correspondingly reduced border corner radii.
+The focus template uses a vector border or ellipse in a local LTR canvas and maps
+the surface's full coordinate basis into it. This preserves margins, alignment,
+RTL, scale and rotation without a separate layout-rounding approximation. Orb
+focus reuses the circular style instead of duplicating sphere layout metrics.
+Loaded-only layout/render tracking refreshes geometry and motion; unloading or
+disabling the tracker releases both subscriptions. WPF still owns keyboard-only
+display, and the existing focus brush follows the palette. No public API, theme
+token, Showcase helper or input behavior was added.
+
+Four new native-focus regressions cover Office2024/Crystal and LTR/RTL. They fail
+on the former toggle bounds, then verify toggle, gallery-tile and Crystal navigation
+surfaces, including changed margins, unequal corners and render transforms while
+focus remains on the same control. All **12 focused interaction cases** passed,
+including the existing motion, circular/proxy and collapsed-group cases. Disc
+and border geometry now agree within **0.1 DIP**, replacing the previous one-
+physical-pixel circle approximation. Actual before/after, transformed RTL,
+circular and independent-consumer light/dark PNGs were inspected.
+
+The independent RibbonKit-only consumer checks realized toggle and gallery-tile
+focus across all six themes, light/dark and LTR/RTL, plus the existing navigation,
+Backstage and orb matrix. The helper now processes the focus template's Loaded
+event before measuring it, and compares popup geometry within its own adorner
+instead of across separate presentation roots. Shape checks run first; any
+navigation failure records the last key, modifiers and focus/window state.
+These are verification changes, not input-behavior workarounds.
+
+Normal Debug and Release solution builds passed for both runtime targets with
+zero warnings/errors. Passing evidence covers **962 tests, 0 skipped** across
+the full run and targeted retries: **478 runtime**, **482 Writer**, the visual
+aggregate covering **113 approved scenes**, and the complete independent consumer.
+The initial visual run reached its 30-second limit; a separate unchanged retry
+passed in 26 seconds (`surface-focus-visual-retry.trx`). The Writer F10 check
+detected Alt during the initial run and passed unchanged in a fresh process
+(`surface-focus-writer-retry.trx`). After correcting the geometry helper, two
+consumer attempts lost focus at different existing navigation assertions; no
+runtime navigation code or assertions were weakened. The final full consumer
+passed in **4m39s** (`surface-focus-consumer-final.trx`). The cause of those
+intermittent input failures was not confirmed. This is combined passing evidence,
+not a claim that the initial full-suite invocation was clean.
+
+Default Debug outputs are refreshed. Public API and visual approvals/tolerances
+are unchanged. Final appearance and native DPI/mixed-monitor acceptance remain
+with the user; no application was manually launched. The final diff and history
+pointer were reviewed and git diff --check passed. This correction is uncommitted
+on top of the user's `7cc425c` keyboard-improvements checkpoint.
+
+## 3.225 Focus contrast on accent-filled rails and headers — 2026-10-05
+
+Office 2013/2019 Classic Backstage rows used the accent focus brush over an
+accent-derived selected/hover fill. Office 2019's colored title-bar option also
+painted the ribbon header band with that same accent, hiding focus on File,
+unselected tab headers and the collapse button. Native-focus checks reproduced
+the exact blue-on-blue failure with a contrast ratio of 1.
+
+Shared templates now mark the underlying focus surface for File, ribbon tabs,
+the collapse button, Classic Backstage rows and the shared Back button. The
+internal focus tracker composites a solid Chrome fill over that surface and
+keeps the ordinary focus brush when it provides at least 3:1 contrast. Otherwise
+it selects the more contrasting KeyboardFocus.Light or KeyboardFocus.Dark brush;
+both keys exist in all twelve theme token dictionaries. Selected tabs with a
+neutral fill retain the accent outline when readable. Orb focus retains its
+existing treatment. HeaderChrome is recognized alongside Chrome for tab geometry.
+
+Palette, hover/selection fill and colored-title-bar changes refresh the native
+adorner while focus stays on the same control. Navigation fills, text colors,
+keyboard behavior and public C# API are unchanged. The implementation lives in
+RibbonKit and requires no Showcase resources or host patch.
+
+Four new native-focus cases cover Office 2013/2019, light/dark, LTR/RTL and blue,
+purple and pale-yellow accents, including selected/hovered Backstage rows, Back,
+File, neutral/colored tab headers and the collapse button. The independent
+RibbonKit-only consumer also checks the realized outlines and geometry on both
+themes' colored headers and Classic rails.
+
+Normal Debug and Release solution builds passed for both runtime targets with
+zero warnings/errors; default Debug consumer outputs are refreshed. Passing
+Release evidence covers **966 tests, 0 skipped**: **482 runtime**, **482 Writer**,
+the visual aggregate (**113 unchanged approved scenes**), and the independent
+consumer. The first two consumer runs missed Space activation at different
+existing assertions. The user confirmed they were interacting with the keyboard;
+after leaving input idle, the complete consumer passed in **3m21s**
+(`contrast-focus-consumer-final.trx`). Assertions and runtime input behavior were
+not weakened. The consumer fixture switches its File surface from the application
+menu to Backstage before inspecting the new rail cases, and activation failures
+now include modifier/focus diagnostics. These totals combine the full run with
+that consumer retry, rather than describing the initial invocation as clean.
+
+Actual before/after blue, purple, pale-accent, dark and RTL focus renders were
+inspected, including the independent consumer's colored header. No snapshot
+approvals or tolerances changed. Final appearance and native DPI/mixed-monitor
+acceptance remain with the user; no app was manually launched. Changes remain
+uncommitted on the user's keyboard-improvements branch.

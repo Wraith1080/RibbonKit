@@ -14,6 +14,7 @@ namespace RibbonKit.Portability.Tests;
 internal static class KeyboardNavigationPortabilityChecks
 {
     private static FlowDirection _direction;
+    private static string _lastInput = "";
 
     internal static void Verify(Application application)
     {
@@ -27,11 +28,13 @@ internal static class KeyboardNavigationPortabilityChecks
                 foreach (Action check in new Action[] { VerifyQatOrder, VerifyQatOverflow, VerifyDropdowns,
                              VerifyApplicationMenu, VerifyBackstage, VerifyBackstageEntry, VerifyCollapsedGroup })
                 {
+                    _lastInput = "";
                     try { check(); }
                     catch (Exception error)
                     {
                         failures.Add($"{theme}/{direction}/{check.Method.Name}: {error.Message} "
-                            + error.StackTrace?.Split('\n').FirstOrDefault(line => line.Contains("Portability.Tests")));
+                            + error.StackTrace?.Split('\n').FirstOrDefault(line => line.Contains("Portability.Tests"))
+                            + $"; last input: {_lastInput}");
                     }
                 }
             }
@@ -550,12 +553,14 @@ internal static class KeyboardNavigationPortabilityChecks
     private static void Press(Key key)
     {
         var target = Assert.IsAssignableFrom<UIElement>(Keyboard.FocusedElement);
+        string before = InputState(target);
         var source = PresentationSource.FromVisual(target)!;
         InputManager.Current.ProcessInput(new KeyEventArgs(Keyboard.PrimaryDevice, source, Environment.TickCount, key)
         { RoutedEvent = Keyboard.PreviewKeyDownEvent });
         InputManager.Current.ProcessInput(new KeyEventArgs(Keyboard.PrimaryDevice, source, Environment.TickCount, key)
         { RoutedEvent = Keyboard.PreviewKeyUpEvent });
         Drain();
+        _lastInput = $"{key}: before [{before}], after [{InputState(target)}]";
     }
 
     private static void InWindow(UIElement content, Action<Window> verify)
@@ -578,10 +583,16 @@ internal static class KeyboardNavigationPortabilityChecks
     private static void Previous(UIElement from, UIElement to)
     {
         Assert.Same(from, Keyboard.FocusedElement);
+        string before = InputState(from);
         Assert.True(from.MoveFocus(new TraversalRequest(FocusNavigationDirection.Previous)));
         Drain();
+        _lastInput = $"Previous: before [{before}], after [{InputState(from)}]";
         Assert.Same(to, Keyboard.FocusedElement);
     }
+
+    private static string InputState(UIElement target) =>
+        $"modifiers={Keyboard.Modifiers}, focused={Describe(Keyboard.FocusedElement)}, "
+        + $"visible={target.IsVisible}, active={Window.GetWindow(target)?.IsActive}";
 
     private static string Describe(IInputElement? element) => element switch
     {

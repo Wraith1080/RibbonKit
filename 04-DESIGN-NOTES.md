@@ -848,6 +848,14 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [Match focus rings to circular Back buttons, application orbs and Classic2007 return proxies](docs/history/01-library.md#3223-circular-back-and-application-orb-focus--2026-10-04).
 
+### 3.224 Focus outlines follow rendered button surfaces — 2026-10-05
+
+[Measure visible borders and discs for focus placement and corner geometry](docs/history/01-library.md#3224-focus-outlines-follow-rendered-button-surfaces--2026-10-05).
+
+### 3.225 Focus contrast on accent-filled rails and headers — 2026-10-05
+
+[Keep focus visible on Classic Backstage and colored Office 2019 ribbon headers](docs/history/01-library.md#3225-focus-contrast-on-accent-filled-rails-and-headers--2026-10-05).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),

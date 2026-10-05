@@ -79,7 +79,12 @@ use one shared focus outline.
 The outline follows animated surfaces during movement. Collapsed-group flyouts
 focus their commands on opening, cycle through Tab and arrow navigation, and
 return focus to their opener on keyboard dismissal.
-Circular Back buttons and application orbs use rings that follow their visible discs.
+Focus outlines follow the visible template border's position and corner shape,
+including inset margins, RTL and render transforms. Circular Back buttons and
+application orbs use rings that follow their visible discs.
+Accent-filled Backstage rails and ribbon headers use a contrasting light or dark
+outline when the usual accent outline would blend into the surface. The outline
+refreshes when the palette or title-bar coloring changes while focus is retained.
 
 ### Theming & rendering
 

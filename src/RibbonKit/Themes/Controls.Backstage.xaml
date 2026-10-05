@@ -86,6 +86,7 @@
                                         Visibility="Collapsed" />
                                 <DockPanel LastChildFill="True">
                                 <Button x:Name="PART_BackButton"
+                                        controls:FocusVisualTracking.Background="{Binding Background, ElementName=NavColumn}"
                                         DockPanel.Dock="Top"
                                         Width="{DynamicResource RibbonKit.Metrics.BackstageBackButtonSize}"
                                         Height="{DynamicResource RibbonKit.Metrics.BackstageBackButtonSize}"
@@ -516,6 +517,10 @@
                     </Grid>
                     <ControlTemplate.Triggers>
                         <!-- Classic (accent column): full-width fills. -->
+                        <Trigger Property="controls:Backstage.Design" Value="Classic">
+                            <Setter Property="controls:FocusVisualTracking.Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.Backstage.Classic.NavBackground}" />
+                        </Trigger>
                         <Trigger SourceName="Chrome" Property="IsMouseOver" Value="True">
                             <Setter TargetName="Chrome" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Backstage.ItemHoverBackground}" />

@@ -142,8 +142,8 @@ public sealed class ApplicationButtonShapeThemeTests
     {
         var application = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
         ThemeManager.Apply(application, RibbonTheme.Office2024);
-        KeyboardNavigationPortabilityChecks.Verify(application);
         KeyboardFocusPortabilityChecks.Verify(application);
+        KeyboardNavigationPortabilityChecks.Verify(application);
         CustomizationScrollSpacingChecks.Verify(application);
         CrystalUtilityPortabilityChecks.Verify(application);
         CrystalTintPortabilityChecks.Verify(application);

@@ -483,4 +483,7 @@
     <!-- Keep the same shared glass defaults above the Office dark fallback. -->
     <Style x:Key="RibbonKit.Styles.MessageBar.ActionButton" TargetType="{x:Type Button}"
            BasedOn="{StaticResource RibbonKit.Styles.MessageBar.CrystalActionButton}" />
+    <!-- Contrasting keyboard outlines for accent-filled ribbon and Backstage surfaces. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.KeyboardFocus.Light" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.KeyboardFocus.Dark" Color="#000000" />
 </ResourceDictionary>

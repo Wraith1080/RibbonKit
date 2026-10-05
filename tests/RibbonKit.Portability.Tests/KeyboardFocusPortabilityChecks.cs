@@ -17,6 +17,8 @@ namespace RibbonKit.Portability.Tests;
 
 internal static class KeyboardFocusPortabilityChecks
 {
+    private static string? _lastInput;
+
     internal static void Verify(Application application)
     {
         var plain = new RibbonApplicationMenuItem { Header = "Save" };
@@ -36,7 +38,16 @@ internal static class KeyboardFocusPortabilityChecks
         menu.Items.Add(split);
         menu.Items.Add(dropdown);
         var ribbon = new Ribbon { ApplicationMenu = menu };
-        ribbon.Tabs.Add(new RibbonTab { Header = "Home" });
+        var toggle = new RibbonToggleButton { Header = "Colored title bar", IsChecked = true };
+        var tile = new RibbonGalleryItem { Content = "Auto", IsSelected = true };
+        var gallery = new InRibbonGallery();
+        gallery.Items.Add(tile);
+        var group = new RibbonGroup { Header = "Focus surfaces" };
+        group.Items.Add(toggle);
+        group.Items.Add(gallery);
+        var home = new RibbonTab { Header = "Home" };
+        home.Groups.Add(group);
+        ribbon.Tabs.Add(home);
         var document = new TextBox();
         var root = new DockPanel();
         DockPanel.SetDock(ribbon, Dock.Top);
@@ -170,13 +181,58 @@ internal static class KeyboardFocusPortabilityChecks
                     Assert.True(file.Focus());
                     VerifyFocusVisual(file);
                 }
+                if (theme is RibbonTheme.Office2013 or RibbonTheme.Office2019)
+                {
+                    // All color and geometry come from RibbonKit in this consumer:
+                    // no Showcase resources, templates or focus helper participate.
+                    var collapse = Assert.IsType<ToggleButton>(tabs.Template.FindName("MinimizeToggle", tabs));
+                    foreach (bool colored in new[] { true, false })
+                    {
+                        ThemeManager.SetAccentedTitleBar(application, colored);
+                        Drain();
+                        window.UpdateLayout();
+                        foreach (var target in new Control[] { file, home, collapse })
+                        {
+                            Assert.True(target.Focus());
+                            VerifyFocusVisual(target, $"contrast-{theme}-{dark}-{direction}-{colored}-{target.GetType().Name}", window);
+                        }
+                    }
+                    var backstage = new Backstage { Design = RibbonBackstageDesign.Classic };
+                    var row = new BackstageTabItem { Header = "Home", Content = new Button { Content = "Page action" } };
+                    backstage.Items.Add(row);
+                    ribbon.ApplicationMenu = null;
+                    ribbon.Backstage = backstage;
+                    ribbon.IsBackstageOpen = true;
+                    Drain();
+                    window.UpdateLayout();
+                    Assert.True(row.Focus());
+                    VerifyFocusVisual(row, $"contrast-{theme}-{dark}-{direction}-nav", window);
+                    var back = Assert.IsType<Button>(backstage.Template.FindName("PART_BackButton", backstage));
+                    Assert.True(back.Focus());
+                    VerifyFocusVisual(back, $"contrast-{theme}-{dark}-{direction}-back", window);
+                    ribbon.IsBackstageOpen = false;
+                    ribbon.Backstage = null;
+                    Drain();
+                    ribbon.ApplicationMenu = menu;
+                }
                 ribbon.ClearValue(Ribbon.ApplicationButtonShapeProperty);
+                foreach (var target in new Control[] { toggle, tile })
+                {
+                    Assert.True(target.Focus());
+                    VerifyFocusVisual(target, reviewName is null ? null : $"{reviewName}-{target.GetType().Name}", window);
+                }
             }
+        }
+        catch (Exception exception)
+        {
+            throw new InvalidOperationException($"{ThemeManager.CurrentTheme}, dark={ThemeManager.IsDarkMode}, "
+                + $"direction={ribbon.FlowDirection}: {_lastInput}", exception);
         }
         finally
         {
             window.Close();
             ThemeManager.SetDarkMode(application, false);
+            ThemeManager.SetAccentedTitleBar(application, false);
         }
     }
 
@@ -200,6 +256,10 @@ internal static class KeyboardFocusPortabilityChecks
         var window = owner ?? Window.GetWindow(target);
         Assert.NotNull(window);
         window.UpdateLayout();
+        // The real focus template attaches its geometry tracker on Loaded. Process
+        // that lifecycle event before inspecting the newly created native adorner.
+        Drain();
+        window.UpdateLayout();
         var layer = AdornerLayer.GetAdornerLayer(target);
         Assert.NotNull(layer);
         var adorners = layer.GetAdorners(target);
@@ -210,26 +270,35 @@ internal static class KeyboardFocusPortabilityChecks
         {
             var ring = FindNamed<Ellipse>(adorner, "FocusRing");
             Assert.NotNull(ring);
-            Assert.Same(target.FindResource("RibbonKit.Brushes.Input.FocusBorder"), ring.Stroke);
+            VerifyBrush(ring.Stroke);
             FrameworkElement face = sphere is { IsVisible: true } ? sphere : target;
             Rect bounds = ring.TransformToVisual(adorner).TransformBounds(new Rect(ring.RenderSize));
             Rect expected = face.TransformToVisual(adorner).TransformBounds(
                 new Rect(2, 2, face.ActualWidth - 4, face.ActualHeight - 4));
-            var dpi = VisualTreeHelper.GetDpi(target);
-            Assert.InRange(Math.Abs(bounds.Left - expected.Left), 0, 1 / dpi.DpiScaleX);
-            Assert.InRange(Math.Abs(bounds.Top - expected.Top), 0, 1 / dpi.DpiScaleY);
-            Assert.InRange(Math.Abs(bounds.Width - expected.Width), 0, 1 / dpi.DpiScaleX);
-            Assert.InRange(Math.Abs(bounds.Height - expected.Height), 0, 1 / dpi.DpiScaleY);
+            Assert.True(Math.Abs(bounds.Left - expected.Left) < 0.1 && Math.Abs(bounds.Top - expected.Top) < 0.1
+                && Math.Abs(bounds.Width - expected.Width) < 0.1 && Math.Abs(bounds.Height - expected.Height) < 0.1,
+                $"{reviewName}/{target.GetType().Name}: ring={bounds}, disc inset={expected}");
             Assert.Equal(ring.ActualWidth, ring.ActualHeight, 5);
         }
         else
         {
             var ring = FindBorder(adorner);
             Assert.NotNull(ring);
-            Assert.Same(target.FindResource("RibbonKit.Brushes.Input.FocusBorder"), ring.BorderBrush);
-            Rect bounds = ring.TransformToAncestor(adorner).TransformBounds(new Rect(ring.RenderSize));
-            Assert.True(bounds.Left >= 0 && bounds.Top >= 0
-                && bounds.Right <= target.ActualWidth && bounds.Bottom <= target.ActualHeight);
+            VerifyBrush(ring.BorderBrush);
+            var chrome = (target.Template.FindName("Chrome", target)
+                ?? target.Template.FindName("HeaderChrome", target)) as Border;
+            FrameworkElement surface = chrome is { IsVisible: true } ? chrome : target;
+            // Popup commands have a separate presentation root from their owning window.
+            Rect bounds = ring.TransformToVisual(adorner).TransformBounds(new Rect(ring.RenderSize));
+            Rect expected = surface.TransformToVisual(adorner).TransformBounds(
+                new Rect(2, 2, surface.ActualWidth - 4, surface.ActualHeight - 4));
+            Assert.True(Math.Abs(bounds.Left - expected.Left) < 0.1 && Math.Abs(bounds.Top - expected.Top) < 0.1
+                && Math.Abs(bounds.Width - expected.Width) < 0.1 && Math.Abs(bounds.Height - expected.Height) < 0.1,
+                $"{reviewName}/{target.GetType().Name}: ring={bounds}, surface inset={expected}, loaded={ring.IsLoaded}");
+            if (surface is Border border)
+                Assert.Equal(new CornerRadius(Math.Max(0, border.CornerRadius.TopLeft - 2),
+                    Math.Max(0, border.CornerRadius.TopRight - 2), Math.Max(0, border.CornerRadius.BottomRight - 2),
+                    Math.Max(0, border.CornerRadius.BottomLeft - 2)), ring.CornerRadius);
         }
         string? reviewDirectory = Environment.GetEnvironmentVariable("RIBBONKIT_FOCUS_DIAGNOSTICS");
         if (reviewName is not null && !string.IsNullOrEmpty(reviewDirectory))
@@ -243,6 +312,43 @@ internal static class KeyboardFocusPortabilityChecks
             using var file = File.Create(Path.Combine(reviewDirectory, $"{reviewName}.png"));
             encoder.Save(file);
         }
+
+        void VerifyBrush(Brush actual)
+        {
+            Brush? backdrop = null;
+            if (target is RibbonTab || target.Name == "MinimizeToggle"
+                || target.Name == "PART_ApplicationButton" && sphere is not { IsVisible: true })
+                backdrop = (Brush)target.FindResource("RibbonKit.Brushes.Ribbon.Background");
+            else if (target is BackstageTabItem && Backstage.GetDesign(target) == RibbonBackstageDesign.Classic)
+                backdrop = (Brush)target.FindResource("RibbonKit.Brushes.Backstage.Classic.NavBackground");
+            else if (target.Name == "PART_BackButton"
+                && target.TemplatedParent is Backstage ownerBackstage
+                && ownerBackstage.Template.FindName("NavColumn", ownerBackstage) is Border rail)
+                backdrop = rail.Background;
+
+            if (backdrop is not SolidColorBrush { Color.A: 255, Opacity: 1 } band)
+            {
+                Assert.Same(target.FindResource("RibbonKit.Brushes.Input.FocusBorder"), actual);
+                return;
+            }
+            var chrome = (target.Template.FindName("Chrome", target)
+                ?? target.Template.FindName("HeaderChrome", target)) as Border;
+            Color background = chrome?.Background is SolidColorBrush { Color.A: 255, Opacity: 1 } fill
+                ? fill.Color : band.Color;
+            Color stroke = Assert.IsType<SolidColorBrush>(actual).Color;
+            double light = Luminance(stroke), dark = Luminance(background);
+            double contrast = (Math.Max(light, dark) + 0.05) / (Math.Min(light, dark) + 0.05);
+            Assert.True(contrast >= 3, $"{target.GetType().Name}/{target.Name}: outline={stroke}, surface={background}, contrast={contrast}");
+        }
+    }
+
+    private static double Luminance(Color color) =>
+        0.2126 * Linear(color.R) + 0.7152 * Linear(color.G) + 0.0722 * Linear(color.B);
+
+    private static double Linear(byte channel)
+    {
+        double value = channel / 255d;
+        return value <= 0.04045 ? value / 12.92 : Math.Pow((value + 0.055) / 1.055, 2.4);
     }
 
     private static Border? FindBorder(DependencyObject node)
@@ -282,6 +388,8 @@ internal static class KeyboardFocusPortabilityChecks
 
     private static void Press(UIElement target, Key key)
     {
+        _lastInput = $"key={key}, modifiers={Keyboard.Modifiers}, target={target.GetType().Name}, "
+            + $"focused={target.IsKeyboardFocused}, window active={Window.GetWindow(target)?.IsActive}";
         var source = PresentationSource.FromVisual(target)!;
         var preview = new KeyEventArgs(Keyboard.PrimaryDevice, source, 0, key)
         { RoutedEvent = Keyboard.PreviewKeyDownEvent };
@@ -289,9 +397,11 @@ internal static class KeyboardFocusPortabilityChecks
         if (!preview.Handled)
             target.RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice, source, 0, key)
             { RoutedEvent = Keyboard.KeyDownEvent });
+        _lastInput += $", down pressed={(target as ButtonBase)?.IsPressed}, down focused={target.IsKeyboardFocused}";
         target.RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice, source, 0, key)
         { RoutedEvent = Keyboard.KeyUpEvent });
         Drain();
+        _lastInput += $", up modifiers={Keyboard.Modifiers}, up focused={target.IsKeyboardFocused}";
     }
 
     private static void Drain() =>
