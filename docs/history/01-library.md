@@ -7261,3 +7261,19 @@ cannot push the bevel into document content. No public API changed. One focused
 Debug consumer test with RibbonKit resources covers all QAT placements, larger
 header text, RTL, scoped margins and compact restoration; actual renders were
 inspected and normal Debug output refreshed.
+
+Full Release validation on 2026-10-07 resumed the previously deferred consumer
+gate. All 974 tests passed (490 runtime, 482 Writer, the full independent consumer,
+and the visual aggregate covering 113 scenes), with no failures/skips. The consumer
+ran in its default scope and completed in 2m56s. Both runtime targets built without
+warnings/errors; package validation also passed for clean net8/net9 WPF consumers.
+
+The initial run exposed two stale structural/paint contracts: one assumed a single
+WindowChrome despite the new touch-caption branch, and another assumed Office2010's
+QAT retained a gradient. The updated contracts verify both caption configurations'
+shared native settings and the flat QAT's match to the body ramp's end color in
+light/dark palettes. The full runtime retry passed. A deterministic capture of all
+113 visual scenes isolated the sole comparison failure to that intentional flat
+QAT strip in `office2010-message-bar-connected-100`; its actual/diff images were
+inspected before updating only that approved PNG. The final aggregate passed with
+unchanged comparison tolerances and no product-code edits during validation.

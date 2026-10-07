@@ -104,7 +104,14 @@ public class Office2007WindowFrameTests
         XElement titleBackground = NamedElement(template, "TitleBarBackgroundLayer");
         XElement windowChrome = Assert.Single(
             template.Descendants(),
-            element => element.Name.LocalName == "WindowChrome");
+            element => element.Name.LocalName == "WindowChrome"
+                && (string?)element.Attribute("CaptionHeight") == "{DynamicResource RibbonKit.Metrics.WindowFrame.CaptionHeight}");
+        XElement touchChrome = Assert.Single(
+            template.Descendants(),
+            element => element.Name.LocalName == "WindowChrome"
+                && (string?)element.Attribute("CaptionHeight") == "{DynamicResource RibbonKit.Metrics.Touch.TitleBarHeight}");
+        foreach (string property in new[] { "GlassFrameThickness", "ResizeBorderThickness", "CornerRadius", "UseAeroCaptionButtons" })
+            Assert.Equal((string?)windowChrome.Attribute(property), (string?)touchChrome.Attribute(property));
 
         Assert.Same(physicalHost, aeroFrameHost.Parent);
         Assert.Same(aeroFrameHost, windowRoot.Parent);
