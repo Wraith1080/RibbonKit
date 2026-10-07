@@ -495,6 +495,7 @@
     <CornerRadius x:Key="RibbonKit.Metrics.MessageBar.LastCornerRadius">10</CornerRadius>
     <Thickness x:Key="RibbonKit.Metrics.MessageBar.ItemMargin">0,2,0,2</Thickness>
     <sys:Double x:Key="RibbonKit.Metrics.QatExtenderMinHeight">32</sys:Double>
+    <sys:Boolean x:Key="RibbonKit.Behaviors.QatExtenderClipTopShadow">False</sys:Boolean>
     <!-- Inset drawer under the rounded body; minimized draws a complete rim.
          A minimized drawer keeps all four corners even when a message is present. -->
     <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadiusQatBelow">14</CornerRadius>

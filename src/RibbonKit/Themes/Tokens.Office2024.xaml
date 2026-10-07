@@ -343,6 +343,7 @@
          border to merge with the card's square bottom, rounded bottom corners). -->
     <Thickness x:Key="RibbonKit.Metrics.QatExtenderMargin">7,0,7,7</Thickness>
     <system:Double x:Key="RibbonKit.Metrics.QatExtenderMinHeight">0</system:Double>
+    <system:Boolean x:Key="RibbonKit.Behaviors.QatExtenderClipTopShadow">True</system:Boolean>
     <system:Double x:Key="RibbonKit.Metrics.BodyScrollButtonWidth">22</system:Double>
     <CornerRadius x:Key="RibbonKit.Metrics.BodyScrollButtonCornerRadius">4</CornerRadius>
     <Thickness x:Key="RibbonKit.Metrics.QatExtenderBorderThickness">1,0,1,1</Thickness>

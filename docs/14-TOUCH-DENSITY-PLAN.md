@@ -1,7 +1,7 @@
 # RibbonKit touch density
 
-> Adaptive-layout follow-up has focused Release verification, 2026-10-07.
-> The full Release checkpoint predates this follow-up; native acceptance remains separate.
+> Office2024 lower-QAT seam correction has focused Debug verification, 2026-10-07.
+> The full Release checkpoint predates this and the adaptive follow-up; native acceptance remains separate.
 
 ## Contract and API review
 
@@ -85,6 +85,8 @@ The screenshot cleanup, refinements and subsequent spacing/paint polish address:
   Returning that content to compact density or moving the QAT clears the reservation.
 - Start Office2010 Aero side bevels beneath the actual touch tab-header row,
   including the taller caption when the QAT occupies the title bar.
+- Clip the expanded Office2024 lower QAT's upward shadow at the connected body edge,
+  preserving its outer halo and the minimized QAT's floating shadow in both densities.
 
 Only touch-specific tests ran during the implementation iterations. Full tests
 were deferred until rendered cleanup review. Full runs exposed an existing
@@ -172,8 +174,18 @@ consumer passed in Debug and Release (the final Release run took 44s), recorded 
 `artifacts/touch-validation/touch-adaptive-consumer-release.trx`. Normal Debug
 Showcase output is refreshed. Startup and Office2024/Crystal overflow renders
 were inspected in `artifacts/touch-adaptive-diagnostics`. The earlier full suite
-has not been rerun after this correction; live startup/toggle acceptance remains
-with the user.
+has not been rerun after this correction.
+
+The Office2024 seam follow-up clips the lower QAT's rendered child effect through
+a parent geometry. Clipping the effect-bearing border itself would leave its
+upward halo intact. A matching boolean token enables this only for connected
+Office2024 drawers; minimized or top-inset drawers and other palettes keep their
+previous shadow path. One Debug regression check using only shared RibbonKit
+resources passed for compact/touch and light/dark paint, retained bottom and
+minimized shadows, and Crystal/Office2010 isolation. Actual light/dark touch renders
+were inspected under `artifacts/office2024-qat-shadow-diagnostics`; the result is
+`artifacts/touch-validation/office2024-qat-shadow.trx`. Testing was minimal at the
+user's request: no full-suite, snapshot approval or native-input retry.
 
 | Gate | Status and exact scope |
 | --- | --- |
@@ -181,8 +193,8 @@ with the user.
 | Touch cleanup checks | Passed 2026-10-07 in the final Release suite: six actual Showcase theme cases, caption-button and Office2010 Aero-bevel regressions, File width/edge spacing, gallery fill/selection and compact/touch neighbor spacing, large/three-row sizing, modal Close, Font separator, message targets/normal fonts, stable title height through Backstage, and actual Classic2007 rail/page paint alignment; independent consumer across every theme/light-dark/LTR-RTL combination and all seven Backstage designs |
 | RibbonKit-only consumer | Adaptive follow-up touch-only scope passed 2026-10-07 in Debug and Release (final Release 44s), including repeated open-flyout density changes and immediate overflow arrows. The earlier full default scope passed in 2m56s before the follow-up, including keyboard/focus/navigation and the corrected Backstage fixture |
 | Release solution build and tests | Full checkpoint passed 2026-10-07 before the adaptive-layout follow-up: both runtime targets, zero build warnings/errors, all 974 tests passed with zero failed/skipped (490 runtime, 482 Writer, full consumer aggregate and 113-scene visual aggregate); package contents/designer assets and clean net8/net9 WPF package consumption validated. The follow-up has a fresh clean Release solution build and 64 passing focused runtime checks; no new full-suite run |
-| Normal Debug Showcase output | Passed 2026-10-07: default Debug Showcase/net8 runtime output refreshed after the adaptive-layout follow-up with zero warnings/errors |
-| Visual acceptance | Adaptive follow-up startup and overflow renders inspected 2026-10-07. The 113-scene automated checkpoint predates the follow-up. Final target-machine startup/toggle/appearance acceptance remains separate |
+| Normal Debug Showcase output | Passed 2026-10-07: default Debug Showcase/net8 runtime output refreshed after the Office2024 lower-QAT seam correction; its single focused regression check passed |
+| Visual acceptance | User confirmed the adaptive collapse/scroller correction on 2026-10-07. Office2024 light/dark touch seam renders inspected; target-machine acceptance of this small shadow correction remains pending. The 113-scene automated checkpoint predates both follow-ups |
 | Native touch input | Pending: split halves, tap invocation, panning without accidental selection, nested popup dismissal and editable inputs |
 | DPI / RTL / keyboard | Full automated keyboard/focus/navigation, touch LTR/RTL and rendered 100/125/150/200% checks passed 2026-10-07; physical input, native monitor/DPI transitions, IME and reduced-motion live review remain separate |
 

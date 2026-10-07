@@ -18,6 +18,91 @@ namespace RibbonKit.Tests;
 public class TouchModeShowcaseTests
 {
     [Fact]
+    public void Office2024_connected_qat_shadow_does_not_bleed_into_the_body() => Sta.Run(() =>
+    {
+        var application = Sta.UseApplication();
+        ThemeManager.Apply(application, RibbonTheme.Office2024);
+        var tab = new RibbonTab { Header = "Home" };
+        var group = new RibbonGroup { Header = "Commands" };
+        group.Items.Add(new RibbonButton { Header = "Save", Size = RibbonControlSize.Large });
+        tab.Groups.Add(group);
+        var ribbon = new Ribbon { QuickAccessPosition = RibbonQuickAccessPosition.BelowRibbon, Margin = new Thickness(16) };
+        ribbon.Tabs.Add(tab); ribbon.SelectedTab = tab;
+        ribbon.QuickAccessItems.Add(new RibbonButton { Header = "Save", Size = RibbonControlSize.Small });
+        var root = new Grid(); root.SetResourceReference(Panel.BackgroundProperty, "RibbonKit.Brushes.Window.Background");
+        root.Children.Add(ribbon);
+        var window = new Window { Content = root, Width = 650, Height = 400,
+            Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
+        try
+        {
+            window.Show(); Layout(window);
+            var qat = Part<Border>(ribbon, "QatBelowHost");
+            foreach (bool dark in new[] { false, true })
+            foreach (var density in Enum.GetValues<RibbonDensity>())
+            {
+                ThemeManager.SetDarkMode(application, dark);
+                ribbon.Density = density; Layout(window);
+                var effect = Assert.IsType<System.Windows.Media.Effects.DropShadowEffect>(qat.Effect);
+                Assert.True(effect.Opacity > 0);
+                Assert.Equal(0, Part<Grid>(ribbon, "QatBelowShadowHost").Clip.Bounds.Top);
+                byte[] shadow = Render();
+                var invisibleShadow = effect.CloneCurrentValue(); invisibleShadow.Opacity = 0;
+                qat.Effect = invisibleShadow; Layout(window);
+                byte[] plain = Render();
+                var top = qat.TranslatePoint(new Point(qat.ActualWidth / 2, 0), root);
+                var bottom = qat.TranslatePoint(new Point(qat.ActualWidth / 2, qat.ActualHeight), root);
+                // Ignore the joint's rasterized separator row and allow one channel step for effect quantization.
+                Assert.InRange(Difference(shadow, plain, top, -6, -2), 0, 1);
+                Assert.True(Difference(shadow, plain, bottom, 1, 6) > 0, "The outer bottom shadow must remain.");
+                qat.SetResourceReference(UIElement.EffectProperty, "RibbonKit.Effects.QatExtenderShadow");
+                Layout(window);
+                Save(root, $"Office2024-qat-join-{density}-{dark}");
+            }
+            ribbon.IsMinimized = true; Layout(window);
+            byte[] floatingShadow = Render();
+            var floatingEffect = ((System.Windows.Media.Effects.DropShadowEffect)qat.Effect).CloneCurrentValue();
+            floatingEffect.Opacity = 0; qat.Effect = floatingEffect; Layout(window);
+            byte[] floatingPlain = Render();
+            var floatingTop = qat.TranslatePoint(new Point(qat.ActualWidth / 2, 0), root);
+            Assert.True(Difference(floatingShadow, floatingPlain, floatingTop, -6, -1) > 0,
+                "A minimized floating QAT keeps its upper shadow.");
+            qat.SetResourceReference(UIElement.EffectProperty, "RibbonKit.Effects.QatExtenderShadow");
+            ribbon.IsMinimized = false;
+            foreach (var theme in new[] { RibbonTheme.CrystalLight, RibbonTheme.Office2010 })
+            {
+                ThemeManager.Apply(application, theme); Layout(window);
+                Assert.Null(Part<Grid>(ribbon, "QatBelowShadowHost").Clip);
+            }
+        }
+        finally { window.Close(); Sta.ResetApplication(); }
+
+        byte[] Render()
+        {
+            // Render at the live DPI so resampling cannot soften the clip edge into the body.
+            var dpi = VisualTreeHelper.GetDpi(root);
+            var bitmap = new RenderTargetBitmap((int)Math.Ceiling(root.ActualWidth * dpi.DpiScaleX),
+                (int)Math.Ceiling(root.ActualHeight * dpi.DpiScaleY), dpi.PixelsPerInchX, dpi.PixelsPerInchY, PixelFormats.Pbgra32);
+            bitmap.Render(root);
+            var pixels = new byte[bitmap.PixelWidth * bitmap.PixelHeight * 4];
+            bitmap.CopyPixels(pixels, bitmap.PixelWidth * 4, 0);
+            return pixels;
+        }
+
+        int Difference(byte[] left, byte[] right, Point edge, int firstRow, int lastRow)
+        {
+            var dpi = VisualTreeHelper.GetDpi(root);
+            edge = new Point(edge.X * dpi.DpiScaleX, edge.Y * dpi.DpiScaleY);
+            int stride = (int)Math.Ceiling(root.ActualWidth * dpi.DpiScaleX) * 4;
+            int difference = 0;
+            for (int y = (int)Math.Floor(edge.Y) + firstRow; y <= (int)Math.Floor(edge.Y) + lastRow; y++)
+            for (int x = (int)edge.X - 20; x <= (int)edge.X + 20; x++)
+            for (int channel = 0; channel < 3; channel++)
+                difference = Math.Max(difference, Math.Abs(left[y * stride + x * 4 + channel] - right[y * stride + x * 4 + channel]));
+            return difference;
+        }
+    });
+
+    [Fact]
     public void Office2010_aero_touch_bevel_starts_below_the_live_tab_row() => Sta.Run(() =>
     {
         var application = Sta.UseApplication();

@@ -7295,3 +7295,12 @@ content. A clean Release solution build and 64 focused Release checks passed.
 The RibbonKit-only touch consumer and rendered startup/overflow evidence are
 tracked in the active touch plan. The earlier 974-test full checkpoint predates
 this correction; no public API, theme metrics or visual approval changed.
+
+The later Office2024 lower-QAT seam correction clips its upward blur in a parent
+visual, after the child's DropShadowEffect renders. Clipping the effect-bearing
+border alone would occur before that effect. A matching boolean token enables
+the clip for expanded, flush Office2024 drawers while keeping the outer halo,
+minimized floating shadow, scoped top insets and other palettes' existing paint.
+One shared-resource Debug regression covers both densities and light/dark paint,
+retained outer/minimized shadows and Crystal/Office2010 isolation; actual touch
+renders were inspected. No public API, snapshot approval or full-suite retry changed.
