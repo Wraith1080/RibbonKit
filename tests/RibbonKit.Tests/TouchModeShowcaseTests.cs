@@ -18,6 +18,54 @@ namespace RibbonKit.Tests;
 public class TouchModeShowcaseTests
 {
     [Fact]
+    public void Office2010_aero_touch_bevel_starts_below_the_live_tab_row() => Sta.Run(() =>
+    {
+        var application = Sta.UseApplication();
+        ThemeManager.Apply(application, RibbonTheme.Office2010);
+        var tab = new RibbonTab { Header = "Home" };
+        var group = new RibbonGroup { Header = "Commands" };
+        group.Items.Add(new RibbonButton { Header = "Save", Size = RibbonControlSize.Large });
+        tab.Groups.Add(group);
+        var ribbon = new Ribbon(); ribbon.Tabs.Add(tab); ribbon.SelectedTab = tab;
+        ribbon.QuickAccessItems.Add(new RibbonButton { Header = "Save", Size = RibbonControlSize.Small });
+        var content = new DockPanel(); DockPanel.SetDock(ribbon, Dock.Top); content.Children.Add(ribbon);
+        content.Children.Add(new Border());
+        var window = new RibbonWindow { Content = content, FrameAppearance = RibbonWindowFrameAppearance.Office2010Aero,
+            Width = 650, Height = 350, Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
+        try
+        {
+            window.Show(); Layout(window);
+            var bevel = Part<Border>(window, "AeroFrameInnerHighlight");
+            var tabs = Part<RibbonTabControl>(ribbon, "TabControlHost");
+            var body = Part<Border>(tabs, "ContentHost");
+            foreach (var position in Enum.GetValues<RibbonQuickAccessPosition>())
+            {
+                ribbon.QuickAccessPosition = position;
+                ribbon.Density = RibbonDensity.Touch; Layout(window);
+                AssertAligned();
+                Save(window, $"Office2010-aero-touch-{position}");
+                ribbon.Density = RibbonDensity.Compact; Layout(window);
+                Assert.Equal(new Thickness(0, 69, 0, 0), bevel.Margin);
+            }
+            ribbon.Density = RibbonDensity.Touch;
+            tab.FontSize = 24; Layout(window); AssertAligned();
+            ribbon.FlowDirection = FlowDirection.RightToLeft; Layout(window); AssertAligned();
+            window.Resources["RibbonKit.Metrics.WindowFrame.AeroInnerHighlightMargin"] = new Thickness(2, 71, 3, 4);
+            Layout(window); AssertAligned();
+            Assert.Equal(2, bevel.Margin.Left); Assert.Equal(3, bevel.Margin.Right); Assert.Equal(4, bevel.Margin.Bottom);
+            ribbon.Density = RibbonDensity.Compact; Layout(window);
+            Assert.Equal(new Thickness(2, 71, 3, 4), bevel.Margin);
+
+            void AssertAligned()
+            {
+                double expected = body.TranslatePoint(new Point(), window).Y;
+                Assert.InRange(bevel.TranslatePoint(new Point(), window).Y, expected - 1, expected + 1);
+            }
+        }
+        finally { window.Close(); Sta.ResetApplication(); }
+    });
+
+    [Fact]
     public void Title_bar_touch_caption_buttons_fill_the_touch_band() => Sta.Run(() =>
     {
         // Shared resources only; this also checks the default consumer window template.

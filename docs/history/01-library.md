@@ -7249,3 +7249,15 @@ maximize/restore and close the same 46-DIP height as that band, including their
 hover surfaces. A single Debug consumer check with shared resources verifies
 painted height, hidden title content, compact return and moving the QAT out of the
 title bar. Broader testing remains deferred under the user's minimal-test request.
+
+Office2010 Aero's side bevel still began at the compact 69-DIP title/tab offset,
+leaving two short rules protruding into the taller touch tab row. The owning ribbon
+now supplies the rendered header bottom in frame coordinates during its existing
+layout callback. Private window/template plumbing uses that edge only for
+Office2010 Aero touch geometry, preserves the palette's horizontal/bottom margins,
+and resumes the original token on compact return or owner detachment. Equal values
+do not invalidate layout repeatedly; a secondary ribbon below the main header
+cannot push the bevel into document content. No public API changed. One focused
+Debug consumer test with RibbonKit resources covers all QAT placements, larger
+header text, RTL, scoped margins and compact restoration; actual renders were
+inspected and normal Debug output refreshed.

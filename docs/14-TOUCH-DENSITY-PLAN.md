@@ -83,6 +83,8 @@ The screenshot cleanup, refinements and subsequent spacing/paint polish address:
   content has touch density, including when Backstage hides the QAT presenter.
   Minimize, maximize/restore and close targets fill that 46-DIP band.
   Returning that content to compact density or moving the QAT clears the reservation.
+- Start Office2010 Aero side bevels beneath the actual touch tab-header row,
+  including the taller caption when the QAT occupies the title bar.
 
 Only touch-specific tests ran during the implementation iterations. Full tests
 were deferred until rendered cleanup review. Full runs exposed an existing
@@ -123,6 +125,14 @@ height, hidden title content, compact return and moving the QAT below the ribbon
 Its rendered title band was inspected. Testing stayed minimal at the user's request;
 the earlier Release and broader touch results precede this four-setter adjustment.
 
+The Office2010 Aero follow-up replaces its fixed compact 69-DIP bevel start with
+the rendered header's bottom edge in touch mode. Shared internal geometry plumbing
+updates only when that edge changes; compact/non-Aero/Office2007 margins retain
+their token path. One Debug consumer check using only RibbonKit resources passed
+on 2026-10-07 for all three QAT placements, larger header text, RTL, compact return
+and scoped left/right/bottom margin values. Actual below-ribbon and title-bar QAT
+renders were inspected. This follow-up adds no public API and keeps testing focused.
+
 For the touch-only consumer, set `RIBBONKIT_PORTABILITY_SCOPE=Touch` for that test
 process; omit/clear it for the full consumer. This avoids running the existing
 keyboard/navigation aggregate during each visual iteration.
@@ -132,8 +142,8 @@ keyboard/navigation aggregate during each visual iteration.
 | Shared implementation and API documentation | Passed 2026-10-07: documented additive API; shipped baseline unchanged; matching Touch metrics in all six base themes |
 | Touch cleanup checks | Passed 2026-10-07 in Debug and Release: six actual Showcase theme cases, including File width/edge spacing, gallery fill/selection and compact/touch neighbor spacing, large/three-row sizing, modal Close, Font separator, message targets/normal fonts, stable title height through Backstage, and actual Classic2007 rail/page paint alignment; independent consumer across every theme/light-dark/LTR-RTL combination and all seven Backstage designs, including title/caption height, left-aligned overflow dropdown/split rows, message dismissal/disabled action, orb/menu clearance and flat Office2010 light/dark QAT paint |
 | RibbonKit-only consumer | Touch scope passed 2026-10-07: local overrides, detached QAT, overflow/context menus, long-menu reachability, retained gallery selection, adaptive widths and routed touch dismissal; corrected full-consumer retry deferred at the user's request on 2026-10-07 |
-| Release solution build and tests | Last build passed 2026-10-07 for both runtime targets with zero warnings/errors; focused Showcase and touch-only consumer checks passed before the final caption-button adjustment, which received only a focused Debug check at the user's request. The earlier cleanup had 971 passing full-suite tests (488 runtime, 482 Writer, 1 visual aggregate), preceding subsequent refinements, polish and message/title/overflow changes. Full tests await visual readiness and the full consumer retry remains deferred by the user |
-| Normal Debug Showcase output | Passed 2026-10-07: default Debug Showcase/net8 runtime output refreshed after the caption-button correction; one focused shared-resource consumer check passed. The preceding normal solution build covered both runtime targets with zero warnings/errors |
+| Release solution build and tests | Last build passed 2026-10-07 for both runtime targets with zero warnings/errors; focused Showcase and touch-only consumer checks passed before the final caption-button and Aero-bevel adjustments, which received focused Debug checks under the user's minimal-test instruction. The earlier cleanup had 971 passing full-suite tests (488 runtime, 482 Writer, 1 visual aggregate), preceding subsequent refinements, polish and message/title/overflow changes. Full tests await visual readiness and the full consumer retry remains deferred by the user |
+| Normal Debug Showcase output | Passed 2026-10-07: default Debug Showcase/net8 runtime output refreshed after the Office2010 Aero-bevel correction; its focused shared-resource consumer check passed. The preceding normal solution build covered both runtime targets with zero warnings/errors |
 | Visual acceptance | Pending: Office and Crystal, normal/minimized ribbon, narrow widths, QAT placements/overflow, message targets, title/Backstage transition, gallery and File surfaces |
 | Native touch input | Pending: split halves, tap invocation, panning without accidental selection, nested popup dismissal and editable inputs |
 | DPI / RTL / keyboard | Current automated touch LTR/RTL checks passed; prior-cleanup Writer native keyboard checks passed. Full consumer keyboard retry deferred by the user on 2026-10-07; live review pending at 100/125/150/200%, monitor transitions, touch-mode Tab/KeyTips/Esc and reduced motion |
@@ -157,6 +167,9 @@ Office2024/Crystal message and title/Backstage renders, plus independent overflo
 renders, were inspected under `artifacts/touch-surfaces-diagnostics`.
 The final caption-only result is `touch-caption-buttons.trx` in the same validation
 directory, with the inspected `touch-caption-buttons.png` in that render directory.
+The Aero-bevel result is `touch-aero-bevel.trx`, with inspected
+`Office2010-aero-touch-BelowRibbon.png` and `Office2010-aero-touch-TitleBar.png`
+in the same render directory.
 Corrected-build full results are under `artifacts/touch-validation/cleanup-confirmed`;
 the stopped initial cleanup run is under `cleanup-final`. Both consumer failures
 occurred at the Classic nav row's initial focus, in different theme/direction cases.

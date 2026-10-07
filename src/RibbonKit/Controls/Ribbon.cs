@@ -3140,6 +3140,7 @@ public class Ribbon : Control
 
     private void OnLayoutUpdated(object? sender, EventArgs e)
     {
+        _applicationButtonShapeWindow?.UpdateAeroFrameHeaderBottom(this, _ribbonTabControl?.TabHeaderHost);
         if (IsApplicationMenuOpen)
         {
             UpdateApplicationButtonOverlay();
