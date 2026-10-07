@@ -744,8 +744,9 @@
                             <Setter TargetName="PART_LauncherSpacer" Property="Visibility" Value="Hidden" />
                         </Trigger>
                         <Trigger Property="controls:Ribbon.Density" Value="Touch">
+                            <!-- Keep the launcher's normal height so it cannot enlarge
+                                 the caption band relative to groups without a launcher. -->
                             <Setter TargetName="PART_DialogLauncher" Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
-                            <Setter TargetName="PART_DialogLauncher" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
                             <Setter TargetName="PART_LauncherSpacer" Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
                             <Setter TargetName="PART_CollapsedButton" Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
                             <Setter TargetName="GroupCaption" Property="VerticalAlignment" Value="Bottom" />

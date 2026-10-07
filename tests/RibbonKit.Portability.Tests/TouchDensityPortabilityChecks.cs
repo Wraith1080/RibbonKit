@@ -20,6 +20,7 @@ internal static class TouchDensityPortabilityChecks
 {
     internal static void Verify(Application application)
     {
+        VerifyGroupLauncher(application);
         var animation = RibbonAnimation.GlobalLevel;
         RibbonAnimation.GlobalLevel = RibbonAnimationLevel.None;
         var button = new RibbonButton { Header = "Copy", Size = RibbonControlSize.Small, SizeDefinition = "Small,Small,Small", HorizontalAlignment = HorizontalAlignment.Left };
@@ -127,7 +128,7 @@ internal static class TouchDensityPortabilityChecks
                     message.IsOpen = true; Layout(window);
                     Assert.True(home.ActualHeight >= 44);
                     Assert.True(Part<Button>(commands, "PART_DialogLauncher").ActualWidth >= 44);
-                    Assert.True(Part<Button>(commands, "PART_DialogLauncher").ActualHeight >= 44);
+                    Assert.Equal(14, Part<Button>(commands, "PART_DialogLauncher").Height);
                     VerifySplit(split); VerifySplit(verticalSplit);
                     Assert.Equal(44, Part<Grid>(combo, "InputBox").ActualHeight);
                     Assert.Equal(44, Part<Grid>(text, "InputBox").ActualHeight);
@@ -648,6 +649,62 @@ internal static class TouchDensityPortabilityChecks
             }
         }
         finally { window.Close(); }
+    }
+
+    internal static void VerifyGroupLauncher(Application application)
+    {
+        var animation = RibbonAnimation.GlobalLevel;
+        RibbonAnimation.GlobalLevel = RibbonAnimationLevel.None;
+        var plain = new RibbonGroup { Header = "Clipboard", CanResize = false, Width = 200 };
+        var launched = new RibbonGroup { Header = "Font", CanResize = false, Width = 200,
+            ShowDialogLauncher = true };
+        foreach (var group in new[] { plain, launched })
+            group.Items.Add(new RibbonButton { Header = "Command", Size = RibbonControlSize.Large });
+        var tab = new RibbonTab { Header = "Home" }; tab.Groups.Add(plain); tab.Groups.Add(launched);
+        var ribbon = new Ribbon(); ribbon.Tabs.Add(tab); ribbon.SelectedTab = tab;
+        var window = Window(ribbon, 620, 350);
+        try
+        {
+            window.Show(); Layout(window);
+            foreach (RibbonTheme theme in Enum.GetValues<RibbonTheme>())
+            foreach (bool dark in new[] { false, true })
+            foreach (FlowDirection flow in new[] { FlowDirection.LeftToRight, FlowDirection.RightToLeft })
+            {
+                ThemeManager.Apply(application, theme); ThemeManager.SetDarkMode(application, dark);
+                ribbon.FlowDirection = flow;
+                foreach (RibbonDensity density in new[] { RibbonDensity.Compact, RibbonDensity.Touch, RibbonDensity.Compact })
+                {
+                    ribbon.Density = density; Layout(window);
+                    var launcher = Part<Button>(launched, "PART_DialogLauncher");
+                    double pixel = 1d / VisualTreeHelper.GetDpi(launcher).DpiScaleY;
+                    Assert.Equal(14, launcher.Height);
+                    Assert.InRange(launcher.ActualHeight, 14 - pixel / 2 - 0.01, 14 + pixel / 2 + 0.01);
+                    double width = density == RibbonDensity.Touch ? 44 : 18;
+                    Assert.Equal(width, launcher.Width);
+                    Assert.InRange(launcher.ActualWidth, width - pixel / 2 - 0.01, width + pixel / 2 + 0.01);
+                    var caption = Part<TextBlock>(launched, "GroupCaption");
+                    var otherCaption = Part<TextBlock>(plain, "GroupCaption");
+                    var label = Assert.IsAssignableFrom<FrameworkElement>(caption.Parent);
+                    var otherLabel = Assert.IsAssignableFrom<FrameworkElement>(otherCaption.Parent);
+                    Assert.Equal(otherLabel.ActualHeight, label.ActualHeight);
+                    Assert.InRange(caption.TranslatePoint(new Point(), ribbon).Y,
+                        otherCaption.TranslatePoint(new Point(), ribbon).Y - 0.5,
+                        otherCaption.TranslatePoint(new Point(), ribbon).Y + 0.5);
+                    Assert.True(label.ActualHeight < 20, $"{theme}/{flow}/{density}: caption band {label.ActualHeight}");
+                    Assert.Equal(Visibility.Visible, launcher.Visibility);
+                    Assert.Equal(launcher.ActualWidth, Part<Border>(launched, "PART_LauncherSpacer").ActualWidth);
+                    if (density == RibbonDensity.Touch && !dark && flow == FlowDirection.LeftToRight
+                        && theme == RibbonTheme.Office2007)
+                        SavePreview(ribbon, "Office2007-touch-launcher-caption");
+                }
+                launched.ShowDialogLauncher = false; Layout(window);
+                Assert.Equal(Visibility.Collapsed, Part<Button>(launched, "PART_DialogLauncher").Visibility);
+                Assert.Equal(Part<TextBlock>(plain, "GroupCaption").ActualHeight,
+                    Part<TextBlock>(launched, "GroupCaption").ActualHeight);
+                launched.ShowDialogLauncher = true;
+            }
+        }
+        finally { window.Close(); RibbonAnimation.GlobalLevel = animation; }
     }
 
     private static bool VisibleBrush(Brush? brush) => brush is not null && brush.Opacity > 0

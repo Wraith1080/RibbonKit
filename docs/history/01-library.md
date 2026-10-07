@@ -7340,3 +7340,15 @@ focused easing/policy test and live RibbonKit-only transition consumer passed in
 Release, including a stronger early-opacity observation and completion/interruption.
 Normal Debug Showcase output is refreshed for renewed visual review; no full-suite
 or native-input retry ran.
+
+The next Touch screenshot exposed the dialog launcher's 44-DIP height enlarging
+its group's caption band relative to adjacent groups. Removing only that shared
+template height setter retains the normal 14-DIP launcher height while keeping
+its 44-DIP Touch width and mirrored spacer. No API or theme token changes.
+The independent launcher consumer checks matching neighboring caption bands and
+baselines, DPI-rounded dimensions, density reversals and visibility across all
+six themes, light/dark modes and both text directions. That Release aggregate and
+the broader Touch consumer passed; an Office2007 render was inspected. Normal
+Release solution and Debug Showcase builds have zero warnings/errors. The active
+touch plan records the evidence and separate user review; no full-suite, snapshot
+approval or native-input retry ran.

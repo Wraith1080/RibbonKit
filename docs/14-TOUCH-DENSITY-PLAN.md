@@ -1,6 +1,6 @@
 # RibbonKit touch density
 
-> Live density settle refined with focused automated verification, 2026-10-08; visual review is pending.
+> Revised live density settle visually accepted 2026-10-08. Group launcher caption-height correction has focused verification; visual review is pending.
 > The full Release checkpoint predates the animation, adaptive and QAT seam follow-ups; visual/native acceptance remains separate.
 
 ## Contract and API review
@@ -30,7 +30,8 @@ persistence; density is excluded from ribbon customization serialization.
    Touch uses 44-DIP command targets, visible spacing and larger vector icons.
 2. Ribbon surfaces: tab/File/utility buttons, stacked group space, dialog
    launchers, group flyouts and minimized ribbon content. Refresh cached adaptive
-   widths and selection chrome when density changes.
+   widths and selection chrome when density changes. The dialog launcher retains
+   its normal 14-DIP height and gains only Touch width, keeping caption bands aligned.
 3. Quick Access Toolbar: all three placements, overflow, customization opener
    and the native QAT context menu. Explicitly connect the detached title-bar
    toolbar to its owning ribbon's density.
@@ -125,8 +126,28 @@ and `density-transition-refinement-release.trx`. The revised consumer check obse
 the stronger early dip as well as completion, interruption, disabled policy,
 startup and the existing adaptive/QAT regressions. A settling render was inspected
 under `artifacts/density-animation-refinement-diagnostics`; normal Debug Showcase
-output is refreshed. The earlier broad evidence above predates this refinement;
-the next gate is user review of the revised visible effect.
+output is refreshed. The earlier broad evidence above predates this refinement.
+
+### Group launcher caption height — 2026-10-08
+
+The Touch trigger no longer overrides the dialog launcher's normal 14-DIP height.
+Its width and mirrored caption spacer still use the 44-DIP Touch target, keeping
+the wider hit area while preserving the same caption-band height as adjacent
+groups without a launcher. This is one shared-template setter removal; it adds
+no public API or theme metric and does not alter other Touch command targets.
+
+The RibbonKit-only launcher aggregate passed in Release across all six themes,
+light/dark modes, LTR/RTL, Compact/Touch/Compact toggles and launcher visibility.
+It checks the nominal height plus DPI-rounded rendered size, neighboring caption
+band/baseline alignment, and unchanged launcher/spacer widths. Its Office2007 Touch
+render was inspected under `artifacts/touch-launcher-diagnostics`.
+The broader Touch consumer also passed in Release (26 seconds), covering the
+existing adaptive, gallery, QAT, message and title/Backstage geometry checks.
+Results are `touch-group-launcher-release.trx` and
+`touch-launcher-consumer-release.trx` under `artifacts/touch-validation`.
+The normal Release solution and Debug Showcase builds passed with zero warnings
+or errors. User review of the launcher correction remains pending; the full suite,
+snapshot approval and native keyboard/input checks were not rerun.
 
 ### Earlier geometry and adaptive evidence
 
@@ -272,11 +293,12 @@ user's request: no full-suite, snapshot approval or native-input retry.
 | --- | --- |
 | Shared implementation and API documentation | Passed 2026-10-07: documented additive API; shipped baseline unchanged; matching Touch metrics in all six base themes |
 | Live density transition | Refined 2026-10-08 to 85% opacity and cubic EaseInOut; clean Release runtime builds for both targets, passing focused policy/easing test and independent Release transition aggregate. The initial 2026-10-07 implementation had a clean Release solution build, 33 selected runtime checks and independent Debug/Release and broader Touch evidence. Completion/interruption, startup, disabled policy, bindings, template/unload, QAT placements, popup anchors and affected adaptive geometry covered. Full suite and native keyboard/input deferred until visual review |
+| Group launcher caption height | Passed focused Release verification 2026-10-08: RibbonKit-only six-theme/light-dark/LTR-RTL launcher aggregate and broader Touch consumer; nominal 14-DIP height, equal neighboring caption bands, retained Touch width and visibility toggles. Office2007 render inspected; user visual review pending |
 | Touch cleanup checks | Passed 2026-10-07 in the final Release suite: six actual Showcase theme cases, caption-button and Office2010 Aero-bevel regressions, File width/edge spacing, gallery fill/selection and compact/touch neighbor spacing, large/three-row sizing, modal Close, Font separator, message targets/normal fonts, stable title height through Backstage, and actual Classic2007 rail/page paint alignment; independent consumer across every theme/light-dark/LTR-RTL combination and all seven Backstage designs |
 | RibbonKit-only consumer | Adaptive follow-up touch-only scope passed 2026-10-07 in Debug and Release (final Release 44s), including repeated open-flyout density changes and immediate overflow arrows. The earlier full default scope passed in 2m56s before the follow-up, including keyboard/focus/navigation and the corrected Backstage fixture |
 | Release solution build and tests | Full checkpoint passed 2026-10-07 before the adaptive-layout follow-up: both runtime targets, zero build warnings/errors, all 974 tests passed with zero failed/skipped (490 runtime, 482 Writer, full consumer aggregate and 113-scene visual aggregate); package contents/designer assets and clean net8/net9 WPF package consumption validated. The follow-up has a fresh clean Release solution build and 64 passing focused runtime checks; no new full-suite run |
-| Normal Debug Showcase output | Passed 2026-10-08: default Debug Showcase/net8 runtime output refreshed for the stronger opacity settle and gentler easing; zero warnings/errors. The preceding Office2024 lower-QAT seam check also has a passing focused Release retry with density motion disabled for static paint comparison |
-| Visual acceptance | Initial settle judged too faint from the 2026-10-08 recording; revised 85% EaseInOut settle awaits user review. Independent settling render inspected. User confirmed the adaptive collapse/scroller correction on 2026-10-07. Office2024 light/dark touch seam renders inspected; target-machine acceptance of that shadow correction remains pending. The 113-scene automated checkpoint predates the adaptive, shadow and animation follow-ups |
+| Normal Debug Showcase output | Passed 2026-10-08: default Debug Showcase/net8 runtime output refreshed for the group launcher caption-height correction after the stronger opacity settle and gentler easing; zero warnings/errors. The preceding Office2024 lower-QAT seam check also has a passing focused Release retry with density motion disabled for static paint comparison |
+| Visual acceptance | User accepted the revised 85% EaseInOut density settle on 2026-10-08 after live review. Group launcher caption-height correction awaits review separately. User confirmed the adaptive collapse/scroller correction on 2026-10-07. Office2024 light/dark touch seam renders inspected; target-machine acceptance of that shadow correction remains pending. The 113-scene automated checkpoint predates the adaptive, shadow and animation follow-ups |
 | Native touch input | Pending: split halves, tap invocation, panning without accidental selection, nested popup dismissal and editable inputs |
 | DPI / RTL / keyboard | Full automated keyboard/focus/navigation, touch LTR/RTL and rendered 100/125/150/200% checks passed 2026-10-07; physical input, native monitor/DPI transitions, IME and reduced-motion live review remain separate |
 
