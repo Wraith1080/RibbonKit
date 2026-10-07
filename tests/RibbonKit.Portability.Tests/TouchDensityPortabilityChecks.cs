@@ -691,7 +691,7 @@ internal static class TouchDensityPortabilityChecks
                     first.IsOpen = state is 1 or 2; second.IsOpen = state is 2 or 3; ribbon.IsMinimized = true;
                     Layout(window);
                     var topEdge = Part<Border>(messages, "ExposedTopBorder");
-                    double expectedTop = theme == RibbonTheme.Office2007 && count > 0
+                    double expectedTop = theme != RibbonTheme.CrystalLight && count > 0
                         && position != RibbonQuickAccessPosition.BelowRibbon ? 1 : 0;
                     Assert.Equal(new Thickness(0, expectedTop, 0, 0), topEdge.BorderThickness);
                     Assert.Same(messages.FindResource("RibbonKit.Brushes.MessageBar.Border"), topEdge.BorderBrush);
@@ -718,9 +718,9 @@ internal static class TouchDensityPortabilityChecks
                         Assert.Equal(ribbon.ActualWidth, divider.ActualWidth);
                     }
                     else Assert.Equal(0, divider.ActualHeight);
-                    if (theme == RibbonTheme.Office2007 && flow == FlowDirection.LeftToRight
+                    if (flow == FlowDirection.LeftToRight
                         && position is RibbonQuickAccessPosition.TitleBar or RibbonQuickAccessPosition.BelowRibbon && count is 0 or 2)
-                        SavePreview(dock, $"Office2007-{(dark ? "dark" : "light")}-{density}-{position}-minimized-divider-{count}-messages");
+                        SavePreview(dock, $"{theme}-{(dark ? "dark" : "light")}-{density}-{position}-minimized-divider-{count}-messages");
                     ribbon.IsMinimized = false; Layout(window);
                     Assert.Equal(new Thickness(0), topEdge.BorderThickness);
                     Assert.Equal(Visibility.Collapsed, divider.Visibility);

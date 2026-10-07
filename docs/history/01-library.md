@@ -7395,3 +7395,12 @@ first-row-dismissal matrix and six runtime message checks passed in Release;
 actual light/dark/connected renders were inspected and normal Debug output
 refreshed. Current evidence and separate visual/native gates remain in the active
 touch plan.
+
+Further review found the same exposed edge missing in the other Office themes.
+The existing metric was enabled for Office2010/2013/2019/2024 light/dark, leaving
+Crystal's card borders unchanged. No new key, template behavior or C# API was
+needed. The updated RibbonKit-only theme/density/QAT/dismissal matrix and all six
+runtime message checks passed in Release. Office and unchanged Crystal renders
+were inspected, and normal Release solution and Debug Showcase builds passed
+with zero warnings/errors. The active touch plan records these latest results
+separately from the original Office2007 evidence and deferred visual/native gates.
