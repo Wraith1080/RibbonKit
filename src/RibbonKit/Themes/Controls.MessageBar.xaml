@@ -80,7 +80,7 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
 
-                            <Grid Grid.Column="0"
+                            <Grid x:Name="MessageIconHost" Grid.Column="0"
                                   Width="18" Height="18"
                                   Margin="12,0,8,0"
                                   VerticalAlignment="Center">
@@ -200,9 +200,27 @@
                             <Setter TargetName="PART_Root" Property="CornerRadius"
                                     Value="{DynamicResource RibbonKit.Metrics.MessageBar.LastCornerRadius}" />
                         </Trigger>
+                        <Trigger Property="controls:Ribbon.Density" Value="Touch">
+                            <Setter TargetName="PART_ActionButton" Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                            <Setter TargetName="PART_ActionButton" Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                            <Setter TargetName="PART_ActionButton" Property="Padding" Value="{DynamicResource RibbonKit.Metrics.Touch.MessageActionPadding}" />
+                            <Setter TargetName="PART_CloseButton" Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                            <Setter TargetName="PART_CloseButton" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                            <Setter TargetName="MessageIconHost" Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.IconSize}" />
+                            <Setter TargetName="MessageIconHost" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.IconSize}" />
+                            <Setter TargetName="CustomIcon" Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.IconSize}" />
+                            <Setter TargetName="CustomIcon" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.IconSize}" />
+                            <Setter TargetName="DefaultIcon" Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.IconSize}" />
+                            <Setter TargetName="DefaultIcon" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.IconSize}" />
+                        </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+        <Style.Triggers>
+            <Trigger Property="controls:Ribbon.Density" Value="Touch">
+                <Setter Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.MessageRowHeight}" />
+            </Trigger>
+        </Style.Triggers>
     </Style>
 </ResourceDictionary>

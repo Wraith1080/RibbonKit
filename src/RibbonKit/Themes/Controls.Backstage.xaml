@@ -432,6 +432,7 @@
                                 <Condition Property="Design" Value="Classic2007" />
                             </MultiTrigger.Conditions>
                             <Setter TargetName="NavColumn" Property="Margin" Value="{DynamicResource RibbonKit.Metrics.Touch.ClassicRailMargin}" />
+                            <Setter TargetName="NavColumn" Property="Padding" Value="{DynamicResource RibbonKit.Metrics.Touch.ClassicRailPadding}" />
                         </MultiTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

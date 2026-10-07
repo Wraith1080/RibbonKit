@@ -139,6 +139,7 @@
          InRibbonGallery — strip + scroll/expand buttons + overlay popup
          ============================================================ -->
     <Style TargetType="{x:Type controls:InRibbonGallery}">
+        <Setter Property="Margin" Value="{DynamicResource RibbonKit.Metrics.InRibbonGalleryMargin}" />
         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
         <Setter Property="VerticalAlignment" Value="Center" />
         <!-- Height = exactly one tile row (48 min-height incl. border + 2 margin = 50)

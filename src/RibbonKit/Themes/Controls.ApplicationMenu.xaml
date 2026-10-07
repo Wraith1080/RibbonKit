@@ -707,6 +707,13 @@
                             <Setter TargetName="FooterBand" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.FooterHeight}" />
                             <Setter TargetName="Navigation" Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.MenuNavWidth}" />
                         </Trigger>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding Path=(controls:Ribbon.Density), RelativeSource={RelativeSource Self}}" Value="Touch" />
+                                <Condition Binding="{Binding ApplicationButtonShape, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}" Value="Orb" />
+                            </MultiDataTrigger.Conditions>
+                            <Setter TargetName="TopBand" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.MenuTopBandHeight}" />
+                        </MultiDataTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>

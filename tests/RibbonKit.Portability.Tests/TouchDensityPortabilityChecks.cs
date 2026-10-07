@@ -6,6 +6,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Shell;
 using System.Windows.Threading;
 using RibbonKit.Animation;
 using RibbonKit.Controls;
@@ -57,11 +58,18 @@ internal static class TouchDensityPortabilityChecks
         var backstageTab = new BackstageTabItem { Header = "Information", Content = new TextBlock { Text = "Consumer content" } };
         backstage.Items.Add(backstageTab);
         var ribbon = new Ribbon { Backstage = backstage, QuickAccessMaxWidth = 120 };
+        var message = new RibbonMessage { Title = "NOTICE", Message = "Consumer message", ActionContent = "Continue" };
+        var unavailableMessage = new RibbonMessage { Message = "Unavailable action", ActionContent = "Unavailable",
+            Icon = icon, ActionCommand = new UnavailableCommand() };
+        var messages = new RibbonMessageBar();
+        messages.Items.Add(message); messages.Items.Add(unavailableMessage); ribbon.MessageBar = messages;
         ribbon.Tabs.Add(home); ribbon.SelectedTab = home;
         var qat = new RibbonButton { Header = "Save", Size = RibbonControlSize.Small };
         qat.Icon = icon;
         ribbon.QuickAccessItems.Add(qat);
         for (int i = 0; i < 6; i++) ribbon.QuickAccessItems.Add(new RibbonButton { Header = $"QAT {i + 1}", Size = RibbonControlSize.Small });
+        ribbon.QuickAccessItems.Add(new RibbonDropDownButton { Header = "Overflow dropdown", Icon = icon, Size = RibbonControlSize.Small });
+        ribbon.QuickAccessItems.Add(new RibbonSplitButton { Header = "Overflow split", Icon = icon, Size = RibbonControlSize.Small });
         var unrelated = new RibbonButton { Header = "Separate consumer", Size = RibbonControlSize.Small };
         var content = new DockPanel();
         DockPanel.SetDock(ribbon, Dock.Top); content.Children.Add(ribbon);
@@ -83,6 +91,10 @@ internal static class TouchDensityPortabilityChecks
                     ribbon.Density = RibbonDensity.Compact;
                     Layout(window);
                     double compactHeight = ribbon.ActualHeight;
+                    double messageFont = Part<TextBlock>(message, "MessageText").FontSize;
+                    double actionFont = Part<Button>(message, "PART_ActionButton").FontSize;
+                    Assert.True(Part<Button>(message, "PART_ActionButton").ActualHeight < 44);
+                    Assert.True(Part<Button>(message, "PART_CloseButton").ActualHeight < 44);
                     Assert.True(button.ActualWidth < 44, $"Compact button width: {button.ActualWidth}");
                     Assert.Equal(24, Part<Grid>(combo, "InputBox").ActualHeight);
                     AssertGalleryHeight(gallery, 54);
@@ -96,6 +108,23 @@ internal static class TouchDensityPortabilityChecks
                         Assert.True(control.ActualWidth >= 44);
                     }
                     Assert.Equal(RibbonDensity.Compact, Ribbon.GetDensity(unrelated));
+                    foreach (var row in new[] { message, unavailableMessage })
+                    {
+                        Assert.Equal(RibbonDensity.Touch, Ribbon.GetDensity(row));
+                        Assert.True(row.ActualHeight >= 52);
+                        var action = Part<Button>(row, "PART_ActionButton");
+                        var close = Part<Button>(row, "PART_CloseButton");
+                        Assert.True(action.ActualWidth >= 44 && action.ActualHeight >= 44);
+                        Assert.True(close.ActualWidth >= 44 && close.ActualHeight >= 44);
+                        Assert.Equal(messageFont, Part<TextBlock>(row, "MessageText").FontSize);
+                        Assert.Equal(actionFont, action.FontSize);
+                        Assert.Equal(20, Part<Grid>(row, "MessageIconHost").ActualWidth);
+                    }
+                    Assert.False(Part<Button>(unavailableMessage, "PART_ActionButton").IsEnabled);
+                    Part<Button>(message, "PART_CloseButton").RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));
+                    Layout(window); Assert.False(message.IsOpen);
+                    Assert.True(messages.HasOpenMessages);
+                    message.IsOpen = true; Layout(window);
                     Assert.True(home.ActualHeight >= 44);
                     Assert.True(Part<Button>(commands, "PART_DialogLauncher").ActualWidth >= 44);
                     Assert.True(Part<Button>(commands, "PART_DialogLauncher").ActualHeight >= 44);
@@ -158,7 +187,17 @@ internal static class TouchDensityPortabilityChecks
                     _ => Part<Border>(ribbon, "QatBelowHost"),
                 };
                 if (position == RibbonQuickAccessPosition.TitleBar)
+                {
                     Assert.True(qat.TranslatePoint(new Point(0, qat.ActualHeight), window).Y <= ribbon.TranslatePoint(new Point(), window).Y);
+                    double titleHeight = Part<Grid>(window, "TitleBarBand").ActualHeight;
+                    Assert.True(titleHeight >= 46);
+                    Assert.Equal(46, WindowChrome.GetWindowChrome(window).CaptionHeight);
+                    ribbon.IsBackstageOpen = true; Layout(window);
+                    Assert.False(window.IsTitleBarContentVisible);
+                    Assert.Equal(titleHeight, Part<Grid>(window, "TitleBarBand").ActualHeight);
+                    ribbon.IsBackstageOpen = false; Layout(window);
+                    Assert.Equal(titleHeight, Part<Grid>(window, "TitleBarBand").ActualHeight);
+                }
                 if (host is RibbonQuickAccessToolBar toolbar)
                 {
                     var opener = Part<ToggleButton>(toolbar, "PART_OverflowButton");
@@ -170,6 +209,19 @@ internal static class TouchDensityPortabilityChecks
                     var overflowButtons = Descendants(popup.Child).OfType<RibbonButton>().ToArray();
                     Assert.NotEmpty(overflowButtons);
                     Assert.All(overflowButtons, b => Assert.True(b.ActualHeight >= 44));
+                    var overflowDropdown = Descendants(popup.Child).OfType<RibbonDropDownButton>()
+                        .Single(control => Equals(control.Header, "Overflow dropdown"));
+                    var overflowSplit = Descendants(popup.Child).OfType<RibbonSplitButton>().Single();
+                    foreach (var control in new Control[] { overflowDropdown, overflowSplit })
+                    {
+                        Assert.Equal(HorizontalAlignment.Left, control.HorizontalContentAlignment);
+                        var primary = control is RibbonSplitButton ? Part<ButtonBase>(control, "PART_Primary")
+                            : Part<ButtonBase>(control, "PART_Toggle");
+                        var presenter = Part<ContentPresenter>(primary, "NativeContent");
+                        Assert.Equal(HorizontalAlignment.Left, presenter.HorizontalAlignment);
+                        Assert.InRange(presenter.TranslatePoint(new Point(), primary).X, 0, 2);
+                    }
+                    SavePreview(Assert.IsAssignableFrom<FrameworkElement>(popup.Child), $"qat-{position}-touch-overflow");
                     opener.IsChecked = false; Layout(window);
                 }
                 var context = Assert.IsType<ContextMenu>(host.ContextMenu);
@@ -181,6 +233,11 @@ internal static class TouchDensityPortabilityChecks
                 context.IsOpen = false;
                 ribbon.Density = RibbonDensity.Compact; Layout(window);
                 Assert.Equal(RibbonDensity.Compact, Ribbon.GetDensity(qat));
+                if (position == RibbonQuickAccessPosition.TitleBar)
+                {
+                    Assert.True(Part<Grid>(window, "TitleBarBand").ActualHeight < 46);
+                    Assert.True(WindowChrome.GetWindowChrome(window).CaptionHeight < 46);
+                }
                 ribbon.Density = RibbonDensity.Touch;
             }
 
@@ -343,7 +400,9 @@ internal static class TouchDensityPortabilityChecks
         var longToggle = new RibbonToggleButton { Header = "Colored Title Bar", Size = RibbonControlSize.Large };
         large.LargeIcon = shortToggle.LargeIcon = longToggle.LargeIcon = icon;
         var group = new RibbonGroup { Header = "Commands", CanResize = false };
-        group.Items.Add(large); group.Items.Add(shortToggle); group.Items.Add(longToggle);
+        var adjacentGallery = new InRibbonGallery { Width = 184 };
+        adjacentGallery.Items.Add(new RibbonGalleryItem { Content = "Tile" });
+        group.Items.Add(large); group.Items.Add(adjacentGallery); group.Items.Add(shortToggle); group.Items.Add(longToggle);
         var smallStack = Column(new RibbonButton { Size = RibbonControlSize.Small, Icon = icon },
             new RibbonButton { Size = RibbonControlSize.Small, Icon = icon },
             new RibbonButton { Size = RibbonControlSize.Small, Icon = icon });
@@ -354,7 +413,8 @@ internal static class TouchDensityPortabilityChecks
         var backstage = new Backstage();
         var row = new BackstageTabItem { Header = "Information", Content = new TextBlock { Text = "Consumer page" } };
         backstage.Items.Add(row);
-        var ribbon = new Ribbon { Backstage = backstage, Density = RibbonDensity.Touch };
+        var ribbon = new Ribbon { Backstage = backstage, Density = RibbonDensity.Touch,
+            QuickAccessPosition = RibbonQuickAccessPosition.TitleBar };
         ribbon.Tabs.Add(unselected); ribbon.Tabs.Add(selected); ribbon.SelectedTab = selected;
         var qat = new RibbonButton { Size = RibbonControlSize.Small };
         qat.Icon = icon;
@@ -375,10 +435,22 @@ internal static class TouchDensityPortabilityChecks
                 ThemeManager.Apply(application, theme); ThemeManager.SetDarkMode(application, dark);
                 TraceReview($"{theme}/{dark}/{flow}: ribbon layout");
                 ribbon.FlowDirection = flow; Layout(window);
+                double titleHeight = Part<Grid>(window, "TitleBarBand").ActualHeight;
+                Assert.True(titleHeight >= 46);
+                Assert.Equal(46, WindowChrome.GetWindowChrome(window).CaptionHeight);
                 Assert.Equal(136, large.ActualHeight); Assert.Equal(large.ActualHeight, shortToggle.ActualHeight);
                 Assert.InRange(large.ActualHeight + large.Margin.Top + large.Margin.Bottom,
                     smallStack.ActualHeight - 1, smallStack.ActualHeight + 1);
                 Assert.Equal(large.ActualHeight, longToggle.ActualHeight);
+                foreach (var neighbor in new FrameworkElement[] { large, shortToggle })
+                {
+                    var neighborBounds = neighbor.TransformToAncestor(window).TransformBounds(new Rect(neighbor.RenderSize));
+                    var galleryBounds = adjacentGallery.TransformToAncestor(window).TransformBounds(new Rect(adjacentGallery.RenderSize));
+                    double gap = Math.Max(galleryBounds.Left - neighborBounds.Right, neighborBounds.Left - galleryBounds.Right);
+                    Assert.True(gap >= 4, $"{theme}/{flow}: gallery spacing {gap}");
+                }
+                if (theme == RibbonTheme.Office2010)
+                    Assert.IsType<SolidColorBrush>(Part<Border>(ribbon, "QatBelowHost").Background);
                 Assert.Equal(36, Part<Image>(large, "LargeImage").ActualWidth);
                 Assert.Equal(20, Part<Image>(qat, "SmallImage").ActualWidth);
                 Assert.Equal(20, Part<Grid>(qatDropDown, "SmallIconHost").ActualWidth);
@@ -403,6 +475,7 @@ internal static class TouchDensityPortabilityChecks
                     var caption = Part<ContentPresenter>(file, "ApplicationCaption");
                     var tabCaption = Part<ContentPresenter>(selected, "HeaderText");
                     Assert.InRange(file.ActualHeight, header.ActualHeight - 1, header.ActualHeight + 1);
+                    Assert.True(file.ActualWidth >= 64);
                     double center = caption.TranslatePoint(new Point(0, caption.ActualHeight / 2), tabs).Y;
                     double tabCenter = tabCaption.TranslatePoint(new Point(0, tabCaption.ActualHeight / 2), tabs).Y;
                     Assert.InRange(center, tabCenter - 1, tabCenter + 1);
@@ -440,6 +513,7 @@ internal static class TouchDensityPortabilityChecks
                             design == RibbonBackstageDesign.CrystalFloating ? "Crystal.Backstage.Style" : "Crystal.Backstage.Sidebar");
                     else backstage.ClearValue(FrameworkElement.StyleProperty);
                     ribbon.IsBackstageOpen = true; Layout(window);
+                    Assert.Equal(titleHeight, Part<Grid>(window, "TitleBarBand").ActualHeight);
                     Assert.True(row.ActualHeight >= 52, $"{theme}/{design}: nav row {row.ActualHeight}");
                     double touchFont = row.FontSize;
                     ribbon.Density = RibbonDensity.Compact; Layout(window);
@@ -453,6 +527,13 @@ internal static class TouchDensityPortabilityChecks
                         Assert.Equal(RibbonDensity.Touch, Ribbon.GetDensity(proxy));
                         var surface = Descendants(proxy).OfType<Grid>().Single(grid => grid.Name == "OrbSurface");
                         Assert.Equal(52, surface.ActualHeight); Assert.Equal(52, surface.ActualWidth);
+                        var nav = Part<Border>(backstage, "NavColumn");
+                        var page = Part<Border>(backstage, "ContentArea");
+                        Assert.Equal(page.Margin.Top, nav.Margin.Top);
+                        Assert.Same(page.Background, nav.Background);
+                        Assert.Equal(page.TranslatePoint(new Point(), window).Y,
+                            nav.TranslatePoint(new Point(), window).Y);
+                        Assert.InRange(nav.Padding.Top, 16, 16);
                         var rowChrome = Part<Border>(row, "Chrome");
                         Assert.True(rowChrome.TranslatePoint(new Point(), window).Y
                             >= surface.TranslatePoint(new Point(0, surface.ActualHeight), window).Y + 4);
@@ -464,6 +545,7 @@ internal static class TouchDensityPortabilityChecks
                             || theme == RibbonTheme.CrystalLight && design == RibbonBackstageDesign.CrystalSidebar))
                         SavePreview(window, $"{theme}-{design}-touch-backstage");
                     ribbon.IsBackstageOpen = false; Layout(window);
+                    Assert.Equal(titleHeight, Part<Grid>(window, "TitleBarBand").ActualHeight);
                 }
                 ribbon.Backstage = null;
                 var menu = new RibbonApplicationMenu();
@@ -478,6 +560,16 @@ internal static class TouchDensityPortabilityChecks
                 Assert.Equal(menuFont, split.FontSize);
                 Assert.Equal(menuFont, dropdown.FontSize);
                 ribbon.Density = RibbonDensity.Touch; Layout(window);
+                if (theme == RibbonTheme.Office2007)
+                {
+                    var app = Part<ToggleButton>(tabs, "PART_ApplicationButton");
+                    var orb = Part<ContentPresenter>(app, "Orb");
+                    var surface = Assert.IsType<Grid>(orb.ContentTemplate.FindName("OrbSurface", orb));
+                    Assert.True(split.TranslatePoint(new Point(), window).Y
+                        >= surface.TranslatePoint(new Point(0, surface.ActualHeight), window).Y + 2);
+                    if (!dark && flow == FlowDirection.LeftToRight)
+                        SavePreview(window, "Office2007-orb-menu-clearance");
+                }
                 TraceReview($"{theme}/{dark}/{flow}: application menu open");
                 foreach (var item in new[] { split, dropdown })
                 {
@@ -514,6 +606,13 @@ internal static class TouchDensityPortabilityChecks
 
     private static bool VisibleBrush(Brush? brush) => brush is not null && brush.Opacity > 0
         && (brush is not SolidColorBrush solid || solid.Color.A > 0);
+
+    private sealed class UnavailableCommand : ICommand
+    {
+        public bool CanExecute(object? parameter) => false;
+        public void Execute(object? parameter) => throw new InvalidOperationException("Disabled action invoked");
+        public event EventHandler? CanExecuteChanged { add { } remove { } }
+    }
 
     private static void TraceReview(string stage)
     {

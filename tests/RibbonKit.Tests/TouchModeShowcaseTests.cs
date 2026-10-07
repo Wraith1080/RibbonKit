@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Shell;
 using System.Windows.Threading;
 using RibbonKit.Animation;
 using RibbonKit.Controls;
@@ -16,6 +17,49 @@ namespace RibbonKit.Tests;
 
 public class TouchModeShowcaseTests
 {
+    [Fact]
+    public void Title_bar_touch_caption_buttons_fill_the_touch_band() => Sta.Run(() =>
+    {
+        // Shared resources only; this also checks the default consumer window template.
+        var application = Sta.UseApplication();
+        ThemeManager.Apply(application, RibbonTheme.Office2024);
+        var ribbon = new Ribbon { QuickAccessPosition = RibbonQuickAccessPosition.TitleBar };
+        ribbon.QuickAccessItems.Add(new RibbonButton { Header = "Save", Size = RibbonControlSize.Small });
+        var window = new RibbonWindow { Content = ribbon, Width = 600, Height = 300,
+            Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
+        try
+        {
+            window.Show(); Layout(window);
+            AssertCaptionHeight(34);
+            ribbon.Density = RibbonDensity.Touch; Layout(window);
+            AssertCaptionHeight(46);
+            window.IsTitleBarContentVisible = false; Layout(window);
+            AssertCaptionHeight(46);
+            Save(window, "touch-caption-buttons");
+            window.IsTitleBarContentVisible = true;
+            ribbon.Density = RibbonDensity.Compact; Layout(window);
+            AssertCaptionHeight(34);
+            ribbon.Density = RibbonDensity.Touch;
+            ribbon.QuickAccessPosition = RibbonQuickAccessPosition.BelowRibbon; Layout(window);
+            AssertCaptionHeight(34);
+        }
+        finally { window.Close(); Sta.ResetApplication(); }
+
+        void AssertCaptionHeight(double expected)
+        {
+            foreach (string name in new[] { "PART_MinimizeButton", "PART_MaximizeButton", "PART_RestoreButton", "PART_CloseButton" })
+            {
+                var button = Part<Button>(window, name);
+                Assert.Equal(expected, button.Height);
+                if (!button.IsVisible) continue;
+                Assert.InRange(button.ActualHeight, expected - 1, expected + 1);
+                Assert.Equal(46, button.ActualWidth);
+                Assert.Equal(Part<Grid>(window, "TitleBarBand").ActualHeight, button.ActualHeight);
+                Assert.Equal(button.ActualHeight, Part<Border>(button, "Chrome").ActualHeight);
+            }
+        }
+    });
+
     [Theory]
     [InlineData(RibbonTheme.Office2007)]
     [InlineData(RibbonTheme.Office2010)]
@@ -44,11 +88,30 @@ public class TouchModeShowcaseTests
                 .Single(item => Equals(item.Tag, theme.ToString()));
             window.MainRibbon.SelectedTab = window.MainRibbon.Tabs.Single(tab => Equals(tab.Header, "View"));
             window.MainRibbon.Density = RibbonDensity.Compact; Layout(window);
+            var messages = new[] { window.ProtectedViewMessage, window.SecurityNoticeMessage, window.UnavailableActionMessage };
+            foreach (var message in messages) message.IsOpen = true;
+            Layout(window);
+            double messageFont = Part<TextBlock>(messages[0], "MessageText").FontSize;
+            double actionFont = Part<Button>(messages[0], "PART_ActionButton").FontSize;
+            Assert.True(Part<Button>(messages[0], "PART_ActionButton").ActualHeight < 44);
+            AssertGallerySpacing(window);
             var tabs = Part<RibbonTabControl>(window.MainRibbon, "TabControlHost");
             var body = Part<Border>(tabs, "ContentHost");
             double compactIcon = Part<Image>(window.TouchModeToggle, "LargeImage").ActualWidth;
             window.TouchModeToggle.IsChecked = true; Layout(window);
             Assert.Equal(RibbonDensity.Touch, window.MainRibbon.Density);
+            foreach (var message in messages)
+            {
+                Assert.Equal(RibbonDensity.Touch, Ribbon.GetDensity(message));
+                Assert.True(message.ActualHeight >= 52);
+                var action = Part<Button>(message, "PART_ActionButton");
+                var dismiss = Part<Button>(message, "PART_CloseButton");
+                Assert.True(action.ActualHeight >= 44 && action.ActualWidth >= 44);
+                Assert.True(dismiss.ActualHeight >= 44 && dismiss.ActualWidth >= 44);
+                Assert.Equal(messageFont, Part<TextBlock>(message, "MessageText").FontSize);
+                Assert.Equal(actionFont, action.FontSize);
+            }
+            Assert.False(Part<Button>(window.UnavailableActionMessage, "PART_ActionButton").IsEnabled);
             Assert.InRange(body.ActualHeight, window.TouchModeToggle.ActualHeight,
                 window.TouchModeToggle.ActualHeight + 48);
             Assert.True(Part<Image>(window.TouchModeToggle, "LargeImage").ActualWidth > compactIcon);
@@ -67,12 +130,19 @@ public class TouchModeShowcaseTests
                     var headerChrome = Part<Border>(header, "HeaderChrome");
                     var headerText = Part<ContentPresenter>(header, "HeaderText");
                     Assert.InRange(file.ActualHeight, headerChrome.ActualHeight - 1, headerChrome.ActualHeight + 1);
+                    Assert.True(file.ActualWidth >= 64);
+                    double expectedInset = theme is RibbonTheme.Office2013 or RibbonTheme.Office2019 ? 0
+                        : theme is RibbonTheme.Office2024 or RibbonTheme.CrystalLight ? 8 : 2;
+                    Assert.InRange(file.TranslatePoint(new Point(), tabs).X, expectedInset - 1, expectedInset + 1);
                     double labelCenter = caption.TranslatePoint(new Point(0, caption.ActualHeight / 2), tabs).Y;
                     double tabCenter = headerText.TranslatePoint(new Point(0, headerText.ActualHeight / 2), tabs).Y;
                     Assert.InRange(labelCenter, tabCenter - 1, tabCenter + 1);
                 }
             }
             var viewport = Part<ScrollViewer>(window.ThemeGallery, "PART_ScrollViewer");
+            AssertGallerySpacing(window);
+            if (theme == RibbonTheme.Office2010)
+                Assert.IsType<SolidColorBrush>(Part<Border>(window.MainRibbon, "QatBelowHost").Background);
             var selectedTile = Assert.IsType<RibbonGalleryItem>(window.ThemeGallery.SelectedItem);
             Assert.True(selectedTile.ActualWidth <= viewport.ActualWidth + 1,
                 $"{theme}: theme tile {selectedTile.ActualWidth}, viewport {viewport.ActualWidth}");
@@ -107,6 +177,35 @@ public class TouchModeShowcaseTests
             Assert.InRange(close.TranslatePoint(new Point(close.ActualWidth, 0), window).X, 0, window.ActualWidth);
             Save(window.MainRibbon, $"{theme}-showcase-modal");
             window.MainRibbon.ExitModal(); Layout(window);
+            window.MainRibbon.QuickAccessPosition = RibbonQuickAccessPosition.TitleBar; Layout(window);
+            double titleHeight = Part<Grid>(window, "TitleBarBand").ActualHeight;
+            Assert.True(titleHeight >= 46);
+            Assert.Equal(46, WindowChrome.GetWindowChrome(window).CaptionHeight);
+            Save(window, $"{theme}-showcase-touch-title-messages");
+            window.ApplicationMenuToggle.IsChecked = false;
+            var fileSurface = Assert.IsType<Backstage>(window.MainRibbon.Backstage);
+            fileSurface.Design = RibbonBackstageDesign.Modern;
+            window.MainRibbon.IsBackstageOpen = true; Layout(window);
+            Assert.False(window.IsTitleBarContentVisible);
+            Assert.Equal(titleHeight, Part<Grid>(window, "TitleBarBand").ActualHeight);
+            Assert.Equal(46, WindowChrome.GetWindowChrome(window).CaptionHeight);
+            Save(window, $"{theme}-showcase-touch-title-backstage");
+            window.MainRibbon.IsBackstageOpen = false; Layout(window);
+            Assert.Equal(titleHeight, Part<Grid>(window, "TitleBarBand").ActualHeight);
+            if (theme == RibbonTheme.Office2007)
+            {
+                window.ApplicationMenuToggle.IsChecked = false;
+                var backstage = Assert.IsType<Backstage>(window.MainRibbon.Backstage);
+                backstage.Design = RibbonBackstageDesign.Classic2007;
+                window.MainRibbon.IsBackstageOpen = true; Layout(window);
+                var nav = Part<Border>(backstage, "NavColumn");
+                var page = Part<Border>(backstage, "ContentArea");
+                Assert.Same(page.Background, nav.Background);
+                Assert.Equal(page.TranslatePoint(new Point(), window).Y,
+                    nav.TranslatePoint(new Point(), window).Y);
+                Save(window, "Office2007-showcase-classic-backstage");
+                window.MainRibbon.IsBackstageOpen = false; Layout(window);
+            }
         }
         finally
         {
@@ -118,6 +217,15 @@ public class TouchModeShowcaseTests
 
     private static T Part<T>(Control owner, string name) where T : DependencyObject =>
         Assert.IsAssignableFrom<T>(owner.Template.FindName(name, owner));
+
+    private static void AssertGallerySpacing(MainWindow window)
+    {
+        var command = window.AccentedTitleBarToggle;
+        var gallery = window.AccentGallery;
+        double gap = gallery.TranslatePoint(new Point(), window).X
+            - command.TranslatePoint(new Point(command.ActualWidth, 0), window).X;
+        Assert.True(gap >= 4, $"{window.MainRibbon.Density}: button/gallery spacing {gap}");
+    }
 
     private static void Layout(Window window)
     {

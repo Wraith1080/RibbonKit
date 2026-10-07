@@ -7208,3 +7208,44 @@ to reveal the selected row. Focused checks assert selection visibility after
 density changes, popup return and strip resizing, alongside geometry and normal
 font sizes. This pass used touch-only tests; the full consumer retry stays deferred
 under the user's instruction recorded in the active plan.
+
+Further screenshot feedback exposed the cost of uniform touch File geometry:
+Office2013/2019 acquired a leading gutter, while Office2024/Crystal lost their
+rounded-body inset and every tab-shaped File target became too narrow. Shared
+touch tokens now retain those theme differences, with a 64-DIP minimum width and
+wider theme-specific caption padding. The Office2007 application's touch top band
+grows to keep its first menu row below the enlarged orb.
+
+Classic2007 Backstage clearance previously moved the navigation background's
+outer margin below the content pane, exposing a different-colored shell strip.
+The rail returns to the content pane's 36-DIP top edge; 16-DIP inner padding keeps
+the first row clear of the orb. Both the actual Showcase surface and the independent
+consumer check painted-edge alignment. Separately requested shared changes give
+in-ribbon galleries four-DIP horizontal outer spacing and flatten Office2010's
+lower QAT in light/dark themes using the body gradient's end color. These defaults
+apply in compact and touch modes, retain local/scoped overrides, and intentionally
+affect compact visual scenes. The current plan records focused evidence and the
+still-deferred full/native/visual gates; snapshot approvals were not changed.
+
+The next touch pass fixes dropdown/split alignment in QAT overflow by moving
+centering from a nested template trigger to the outer style's density default.
+The existing overflow proxy's local left alignment now reaches its native content
+presenter, while normal ribbon commands stay centered. No proxy/factory API changed.
+Message rows use a 52-DIP minimum, 44-DIP action/dismiss targets and 20-DIP icons;
+message/action fonts, command bindings and dismissal behavior are retained.
+
+The shared window template reserves a 46-DIP title band and native caption area
+when retained title-bar content has touch density. Backstage hides that content's
+presenter without removing its density, so the title and caption buttons no longer
+shrink during the transition. Compact density or moving the QAT away from the title
+clears the reservation. The six Showcase cases and RibbonKit-only touch consumer
+pass in normal Debug and Release, including the all-theme/light-dark/LTR-RTL and
+seven-design Backstage matrix. Actual message/title and overflow renders were
+inspected; the active plan retains full/native retries and live appearance gates.
+
+The caption styles still fixed their buttons at 34 DIP despite the enlarged title
+band. Four setters in the existing touch-title trigger now give minimize,
+maximize/restore and close the same 46-DIP height as that band, including their
+hover surfaces. A single Debug consumer check with shared resources verifies
+painted height, hidden title content, compact return and moving the QAT out of the
+title bar. Broader testing remains deferred under the user's minimal-test request.

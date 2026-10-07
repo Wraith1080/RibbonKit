@@ -654,6 +654,24 @@
                             <Setter TargetName="PART_WindowIcon" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="TitleBarContentHost" Property="Margin" Value="10,0,6,0" />
                         </Trigger>
+                        <!-- The title QAT keeps its density while Backstage hides its presenter.
+                             Reserve its touch row and caption hit area through that transition. -->
+                        <DataTrigger Binding="{Binding Path=TitleBarContent.(controls:Ribbon.Density), RelativeSource={RelativeSource Self}}" Value="Touch">
+                            <Setter TargetName="TitleBarBand" Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.TitleBarHeight}" />
+                            <Setter TargetName="PART_MinimizeButton" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.TitleBarHeight}" />
+                            <Setter TargetName="PART_MaximizeButton" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.TitleBarHeight}" />
+                            <Setter TargetName="PART_RestoreButton" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.TitleBarHeight}" />
+                            <Setter TargetName="PART_CloseButton" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.TitleBarHeight}" />
+                            <Setter Property="WindowChrome.WindowChrome">
+                                <Setter.Value>
+                                    <WindowChrome CaptionHeight="{DynamicResource RibbonKit.Metrics.Touch.TitleBarHeight}"
+                                                  GlassFrameThickness="-1"
+                                                  ResizeBorderThickness="{x:Static SystemParameters.WindowResizeBorderThickness}"
+                                                  CornerRadius="0"
+                                                  UseAeroCaptionButtons="False" />
+                                </Setter.Value>
+                            </Setter>
+                        </DataTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>

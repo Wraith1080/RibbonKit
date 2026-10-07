@@ -88,7 +88,6 @@
                                                     </MultiTrigger>
                                                     <Trigger Property="controls:Ribbon.Density" Value="Touch">
                                                         <Setter TargetName="Chrome" Property="Margin" Value="{DynamicResource RibbonKit.Metrics.Touch.ChromeMargin}" />
-                                                        <Setter TargetName="NativeContent" Property="HorizontalAlignment" Value="Center" />
                                                         <Setter TargetName="NativeContent" Property="VerticalAlignment" Value="Center" />
                                                     </Trigger>
                                                 </ControlTemplate.Triggers>
@@ -248,6 +247,7 @@
                 <Setter Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
                 <Setter Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.Touch.DropDownMinWidth}" />
                 <Setter Property="Margin" Value="{DynamicResource RibbonKit.Metrics.Touch.ControlMargin}" />
+                <Setter Property="HorizontalContentAlignment" Value="Center" />
             </Trigger>
             <MultiTrigger>
                 <MultiTrigger.Conditions>
@@ -392,7 +392,6 @@
                                                     </MultiTrigger>
                                                     <Trigger Property="controls:Ribbon.Density" Value="Touch">
                                                         <Setter TargetName="Chrome" Property="Margin" Value="{DynamicResource RibbonKit.Metrics.Touch.ChromeMargin}" />
-                                                        <Setter TargetName="NativeContent" Property="HorizontalAlignment" Value="Center" />
                                                         <Setter TargetName="NativeContent" Property="VerticalAlignment" Value="Center" />
                                                     </Trigger>
                                                 </ControlTemplate.Triggers>
@@ -716,6 +715,7 @@
                 <Setter Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
                 <Setter Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
                 <Setter Property="Margin" Value="{DynamicResource RibbonKit.Metrics.Touch.ControlMargin}" />
+                <Setter Property="HorizontalContentAlignment" Value="Center" />
             </Trigger>
             <MultiTrigger>
                 <MultiTrigger.Conditions>

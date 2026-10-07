@@ -28,10 +28,7 @@
         <GradientStop Offset="0" Color="#D5D7D8" />
         <GradientStop Offset="1" Color="#B5B8BA" />
     </LinearGradientBrush>
-    <LinearGradientBrush x:Key="RibbonKit.Brushes.QatExtender.Background" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Offset="0" Color="#D5D7D8" />
-        <GradientStop Offset="1" Color="#B5B8BA" />
-    </LinearGradientBrush>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.QatExtender.Background" Color="#B5B8BA" />
     <LinearGradientBrush x:Key="RibbonKit.Brushes.Ribbon.BodyBackground" StartPoint="0,0" EndPoint="0,1">
         <GradientStop Offset="0" Color="#D5D7D8" />
         <GradientStop Offset="1" Color="#B5B8BA" />

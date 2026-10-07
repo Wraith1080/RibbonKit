@@ -1085,8 +1085,9 @@
                                 <Condition Binding="{Binding ApplicationButtonShape, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}" Value="Tab" />
                             </MultiDataTrigger.Conditions>
                             <Setter TargetName="PART_ApplicationButton" Property="Height" Value="{Binding ActualHeight, ElementName=PART_TabItemsPanel}" />
+                            <Setter TargetName="PART_ApplicationButton" Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.Touch.ApplicationButtonMinWidth}" />
                             <Setter TargetName="PART_ApplicationButton" Property="Margin" Value="{DynamicResource RibbonKit.Metrics.Touch.ApplicationButtonMargin}" />
-                            <Setter TargetName="PART_ApplicationButton" Property="Padding" Value="{DynamicResource RibbonKit.Metrics.Touch.TabPadding}" />
+                            <Setter TargetName="PART_ApplicationButton" Property="Padding" Value="{DynamicResource RibbonKit.Metrics.Touch.ApplicationButtonPadding}" />
                             <Setter TargetName="PART_ApplicationButton" Property="VerticalAlignment" Value="Bottom" />
                         </MultiDataTrigger>
                     </ControlTemplate.Triggers>
