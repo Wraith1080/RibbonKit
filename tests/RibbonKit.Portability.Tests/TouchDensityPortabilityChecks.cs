@@ -693,13 +693,45 @@ internal static class TouchDensityPortabilityChecks
                     var topEdge = Part<Border>(messages, "ExposedTopBorder");
                     double expectedTop = theme != RibbonTheme.CrystalLight && count > 0
                         && position != RibbonQuickAccessPosition.BelowRibbon ? 1 : 0;
-                    Assert.Equal(new Thickness(0, expectedTop, 0, 0), topEdge.BorderThickness);
+                    Assert.Equal(new Thickness(0, expectedTop, 0, 0), topEdge.Tag);
                     Assert.Same(messages.FindResource("RibbonKit.Brushes.MessageBar.Border"), topEdge.BorderBrush);
+                    double radius = expectedTop > 0 ? theme switch
+                    {
+                        RibbonTheme.Office2007 => 3,
+                        RibbonTheme.Office2024 => 8,
+                        _ => 0,
+                    } : 0;
+                    Assert.Equal(new CornerRadius(radius, radius, 0, 0), topEdge.CornerRadius);
+                    var stack = Assert.IsType<Grid>(VisualTreeHelper.GetParent(topEdge));
+                    Assert.Null(stack.Clip);
+                    var content = Assert.Single(stack.Children.OfType<ItemsPresenter>());
+                    var rowBorder = Assert.IsType<Thickness>(messages.FindResource("RibbonKit.Metrics.MessageBar.BorderThickness"));
+                    Assert.Equal(radius > 0 ? new Thickness(rowBorder.Left, expectedTop, rowBorder.Right, 0)
+                        : new Thickness(0, expectedTop, 0, 0), topEdge.BorderThickness);
+                    if (radius > 0)
+                    {
+                        Assert.NotNull(content.Clip);
+                        Assert.False(content.Clip.FillContains(new Point(0.1, 0.1)));
+                        Assert.False(content.Clip.FillContains(new Point(content.ActualWidth - 0.1, 0.1)));
+                        Assert.True(content.Clip.FillContains(new Point(content.ActualWidth / 2, 0.1)));
+                        Assert.True(content.Clip.FillContains(new Point(0.1, content.ActualHeight - 0.1)));
+                        Assert.NotNull(topEdge.Clip);
+                        if (state == 1 && flow == FlowDirection.LeftToRight
+                            && position == RibbonQuickAccessPosition.TitleBar)
+                            AssertMessageCornerRim(topEdge, rowBorder, radius);
+                    }
+                    else { Assert.Null(content.Clip); Assert.Null(topEdge.Clip); }
                     if (count > 0)
                     {
                         foreach (var message in new[] { first, second }.Where(m => m.IsOpen))
+                        {
                             Assert.Equal(message.FindResource("RibbonKit.Metrics.MessageBar.BorderThickness"),
                                 Part<Border>(message, "PART_Root").BorderThickness);
+                            Assert.Equal(message.FindResource(message.IsLastOpenMessage
+                                ? "RibbonKit.Metrics.MessageBar.LastCornerRadius"
+                                : "RibbonKit.Metrics.MessageBar.ItemCornerRadius"),
+                                Part<Border>(message, "PART_Root").CornerRadius);
+                        }
                         if (expectedTop > 0)
                             Assert.True(Part<Border>(first.IsOpen ? first : second, "PART_Root")
                                 .TranslatePoint(new Point(), messages).Y > 0);
@@ -723,12 +755,57 @@ internal static class TouchDensityPortabilityChecks
                         SavePreview(dock, $"{theme}-{(dark ? "dark" : "light")}-{density}-{position}-minimized-divider-{count}-messages");
                     ribbon.IsMinimized = false; Layout(window);
                     Assert.Equal(new Thickness(0), topEdge.BorderThickness);
+                    Assert.Equal(new CornerRadius(), topEdge.CornerRadius);
+                    Assert.Null(stack.Clip);
+                    Assert.Null(content.Clip);
+                    Assert.Null(topEdge.Clip);
                     Assert.Equal(Visibility.Collapsed, divider.Visibility);
                     Assert.Equal(0, divider.ActualHeight);
                 }
             }
         }
         finally { window.Close(); RibbonAnimation.GlobalLevel = animation; }
+    }
+
+    private static void AssertMessageCornerRim(Border top, Thickness rowBorder, double radius)
+    {
+        // The band clip must preserve every native top-corner pixel. Compare at an
+        // integral capture size, using the row's side thickness and existing radius.
+        const int width = 40, height = 40;
+        var rim = new Border
+        {
+            Width = width, Height = height, BorderBrush = top.BorderBrush,
+            BorderThickness = top.BorderThickness, CornerRadius = top.CornerRadius, Clip = top.Clip,
+            SnapsToDevicePixels = top.SnapsToDevicePixels, UseLayoutRounding = top.UseLayoutRounding,
+        };
+        var reference = new Border
+        {
+            Width = width, Height = height,
+            BorderBrush = top.BorderBrush, BorderThickness = new Thickness(rowBorder.Left, top.BorderThickness.Top, rowBorder.Right, 0),
+            CornerRadius = new CornerRadius(radius, radius, 0, 0),
+            SnapsToDevicePixels = top.SnapsToDevicePixels, UseLayoutRounding = top.UseLayoutRounding,
+        };
+        VisualTreeHelper.SetRootDpi(rim, VisualTreeHelper.GetDpi(top));
+        VisualTreeHelper.SetRootDpi(reference, VisualTreeHelper.GetDpi(top));
+        rim.Measure(new Size(width, height)); rim.Arrange(new Rect(0, 0, width, height));
+        reference.Measure(new Size(width, height)); reference.Arrange(new Rect(0, 0, width, height));
+        byte[] topPixels = Pixels(rim), referencePixels = Pixels(reference);
+        int extent = (int)Math.Ceiling(radius + 1);
+        for (int y = 0; y < extent; y++)
+        for (int x = 0; x < extent; x++)
+        {
+            int topAlpha = topPixels[(y * width + x) * 4 + 3];
+            int referenceAlpha = referencePixels[(y * width + x) * 4 + 3];
+            Assert.Equal(referenceAlpha, topAlpha);
+        }
+        byte[] Pixels(Visual visual)
+        {
+            var bitmap = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);
+            bitmap.Render(visual);
+            var pixels = new byte[width * height * 4];
+            bitmap.CopyPixels(pixels, width * 4, 0);
+            return pixels;
+        }
     }
 
     internal static void VerifyChrome(Application application)
@@ -798,21 +875,23 @@ internal static class TouchDensityPortabilityChecks
                     Layout(window);
                     var drawer = Part<Border>(ribbon, "QatBelowHost");
                     Assert.Equal(notice, ribbon.HasOpenMessages);
-                    CornerRadius expected = theme == RibbonTheme.Office2024
-                        ? notice ? minimized ? new CornerRadius(8, 8, 0, 0) : new CornerRadius(0)
-                            : minimized ? new CornerRadius(8) : new CornerRadius(0, 0, 8, 8)
+                    double radius = theme == RibbonTheme.Office2007 ? 3 : 8;
+                    CornerRadius expected = theme is RibbonTheme.Office2007 or RibbonTheme.Office2024
+                        ? notice ? minimized ? new CornerRadius(radius, radius, 0, 0) : new CornerRadius(0)
+                            : minimized ? new CornerRadius(radius) : new CornerRadius(0, 0, radius, radius)
                         : Assert.IsType<CornerRadius>(ribbon.FindResource(minimized
                             ? notice ? "RibbonKit.Metrics.QatExtenderCornerRadiusMinimizedMessageBar"
                                 : "RibbonKit.Metrics.QatExtenderCornerRadiusMinimized"
                             : notice ? "RibbonKit.Metrics.QatExtenderCornerRadiusMessageBar"
                                 : "RibbonKit.Metrics.QatExtenderCornerRadius"));
                     Assert.Equal(expected, drawer.CornerRadius);
-                    if (notice && theme == RibbonTheme.Office2024)
+                    if (notice && theme is RibbonTheme.Office2007 or RibbonTheme.Office2024)
                         Assert.InRange(messages.TranslatePoint(new Point(), ribbon).Y,
                             drawer.TranslatePoint(new Point(0, drawer.ActualHeight), ribbon).Y - 0.5,
                             drawer.TranslatePoint(new Point(0, drawer.ActualHeight), ribbon).Y + 0.5);
-                    if (theme == RibbonTheme.Office2024 && minimized && notice && flow == FlowDirection.LeftToRight)
-                        SavePreview(ribbon, $"Office2024-{(dark ? "dark" : "light")}-{density}-minimized-message");
+                    if (theme is RibbonTheme.Office2007 or RibbonTheme.Office2024
+                        && minimized && notice && flow == FlowDirection.LeftToRight)
+                        SavePreview(ribbon, $"{theme}-{(dark ? "dark" : "light")}-{density}-minimized-message");
                 }
                 ribbon.IsMinimized = false; message.IsOpen = false;
             }

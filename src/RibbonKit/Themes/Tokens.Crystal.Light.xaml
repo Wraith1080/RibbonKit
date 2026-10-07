@@ -492,6 +492,7 @@
     <Thickness x:Key="RibbonKit.Metrics.MessageBar.Margin">7,3,7,7</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.MessageBar.BorderThickness">1</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.MessageBar.ExposedTopBorderThickness">0</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.MessageBar.ExposedTopCornerRadius">0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.MessageBar.ItemCornerRadius">10</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.MessageBar.LastCornerRadius">10</CornerRadius>
     <Thickness x:Key="RibbonKit.Metrics.MessageBar.ItemMargin">0,2,0,2</Thickness>

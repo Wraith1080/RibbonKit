@@ -6640,6 +6640,16 @@ The RibbonKit-only consumer covers independent Crystal light/dark scopes against
 global Office 2019, Office 2024 and Crystal, every QAT placement, nearer metric
 overrides, palette removal and accent-band toggling.
 
+A 2026-10-08 startup follow-up reproduced `QatTabRowColored` throwing when the
+saved tab-row QAT was restored before the first theme apply. Removing the manual
+App.xaml palette synchronously invalidated the style selectors; their callback
+read a second selector during the temporary resource gap. `ThemeManager.Apply`
+now merges the replacement before retiring earlier dictionaries, and first-call
+cleanup excludes that replacement. No selector fallback, deferred refresh or
+public API change was needed. Actual Showcase startup and independent consumer
+checks passed; current evidence and deferred gates are in the
+[touch plan](../14-TOUCH-DENSITY-PLAN.md#startup-theme-replacement--2026-10-08).
+
 `CrystalMainWindowPresentation` remains Showcase's host adapter for palette and
 optional `CapturedBackdrop` registration. Its previous tab-only discovery missed
 QAT dropdowns and additions to existing groups, and retained removed dropdowns.
@@ -7404,3 +7414,31 @@ runtime message checks passed in Release. Office and unchanged Crystal renders
 were inspected, and normal Release solution and Debug Showcase builds passed
 with zero warnings/errors. The active touch plan records these latest results
 separately from the original Office2007 evidence and deferred visual/native gates.
+
+The next minimized-state review requested exposed upper message corners in
+Office2007/2024 and retained Office2007 QAT upper corners above messages. The
+shared message stack now uses an additive `MessageBar.ExposedTopCornerRadius`
+metric (3/8 DIP in those themes, zero elsewhere), with matching light/dark keys
+and the existing rounded-geometry converter. Its rows are clipped to the exposed
+silhouette, and the single top rim draws afterward so a square row background
+cannot paint over the curve. This follows first-row dismissal without container
+flags; below-QAT joins, row borders and lower corners retain their own geometry.
+Office2007's existing minimized/message QAT metric now uses `3,3,0,0`, inherited
+by its dark palette. No public C# API or shipped baseline changed. The independent
+message and chrome matrices passed after reproducing the square QAT failure;
+sixteen selected runtime checks and normal Release/Debug builds passed. Actual
+message/QAT renders were inspected; the active touch plan records current
+evidence and separate visual/native gates.
+
+A subsequent Office2024 screenshot and Office2007 observation exposed a pitfall
+in the initial corner treatment: clipping the whole stack also cut the native
+rim, and a nominal circular clip did not follow Border's half-stroke geometry.
+The refined shared template clips only row paint inside the native upper rim.
+Private message-specific geometry accounts for the existing stroke and rounded
+layout inset, while the rim uses the rows' side thickness and a rectangular band
+that does not trim its curve. Lower borders, layout, QAT joins and the application
+menu geometry path are unchanged. The independent consumer now compares corner
+alpha against an unclipped native border; it passed at current 125% DPI together
+with dismissal/cleanup and the QAT/chrome matrix. Sixteen focused runtime checks,
+normal builds and actual light/dark render inspection passed. Current results
+and deferred review gates remain in the active touch plan.

@@ -151,6 +151,11 @@ messages. Scoped resources and explicit action styles/values retain WPF preceden
 when messages meet a minimized header without a below-ribbon QAT. All Office
 palettes use `0,1,0,0`; Crystal uses `0` and retains its existing card borders.
 Individual row seams remain unchanged.
+`RibbonKit.Metrics.MessageBar.ExposedTopCornerRadius` rounds that exposed edge:
+`3,3,0,0` in Office2007, `8,8,0,0` in Office2024, and `0` in the other palettes.
+The shared stack clips the first row's paint to those corners and retains its
+single border through dismissal. Below-ribbon QAT placement keeps the join square;
+the minimized Office2007/2024 QAT retains its own exposed upper corners above messages.
 QAT icon/hover policy follows the ribbon's effective resource scope through
 `RibbonKit.Metrics.QatTitleBarColored` and `QatTabRowColored`. ThemeManager sets
 these alongside its accent bands; independent palettes retain their own defaults.

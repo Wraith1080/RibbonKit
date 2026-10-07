@@ -1,6 +1,6 @@
 # RibbonKit touch density
 
-> Exposed message top border corrected across all Office themes with focused verification, 2026-10-08; visual review is pending.
+> Exposed Office2007/2024 message corners and Office2007 QAT corners above messages corrected with focused verification, 2026-10-08. Visual review is pending.
 > The full Release checkpoint predates the later geometry and animation follow-ups; visual/native acceptance remains separate.
 
 ## Contract and API review
@@ -253,6 +253,84 @@ Debug Showcase builds passed with zero warnings/errors. This extension adds no
 new resource key, template behavior or C# API. User visual review remains pending;
 full-suite, snapshot approvals and native-input checks were not rerun.
 
+### Minimized exposed message and Office2007 QAT corners — 2026-10-08
+
+When messages directly meet a minimized header, Office2007 now rounds the exposed
+message stack's upper corners to 3 DIP and Office2024 to 8 DIP. The additive
+`RibbonKit.Metrics.MessageBar.ExposedTopCornerRadius` resource has matching keys
+in all twelve palettes: `3,3,0,0` for Office2007, `8,8,0,0` for Office2024 and `0`
+elsewhere. The shared stack clips the rows' paint inside a native top rim, then
+draws that rim above the rows so the first background cannot cover the curved
+border. This avoids first-container state, preserves
+individual message borders and lower corners, follows first-row dismissal, and
+releases the clip on restore, empty state or below-ribbon QAT placement. Existing
+row margins, action targets and message animation behavior remain.
+
+Office2007's existing `QatExtenderCornerRadiusMinimizedMessageBar` metric now uses
+`3,3,0,0`, inherited by its dark palette. As with Office2024, a minimized lower
+QAT keeps its exposed upper corners while its lower edge joins messages flush.
+Both changes are in RibbonKit; no C# API or shipped baseline changed. The new
+theme resource is documented in README.
+
+The RibbonKit-only exposed-message matrix passed in Release (5 seconds), covering
+all six themes, light/dark, LTR/RTL, both densities, every QAT placement, zero/one/two
+messages, first-row dismissal and restore. It checks the rounded clip as well as
+the radius, row borders and accepted divider policy. The Office2007 QAT case first
+failed with square corners, then the focused chrome matrix passed (3 seconds),
+including Office2007/2024 joined-message corners and Touch modal geometry.
+Results are `minimized-message-corners-consumer-release.trx` and
+`minimized-qat-corners-consumer-release.trx` under `artifacts/touch-validation`.
+Sixteen message-bar, Showcase startup and theme-resource checks passed in Release
+(`minimized-corners-runtime-release.trx`). Office2007 light/dark QAT and exposed
+Office2007/2024 message renders were inspected under
+`artifacts/minimized-top-corner-diagnostics`. Normal Release solution and Debug
+Showcase builds passed with zero warnings/errors. Full-suite, snapshot approvals
+and native-input checks were not rerun; user visual review remains pending.
+
+The next screenshots exposed a clipped-looking curve in both Office2007 and
+Office2024. The initial whole-stack circular clip also trimmed the native rim,
+whose rendered radius includes border thickness. The shared template now clips
+only the ItemsPresenter. A private `MessageBarGeometryConverter` follows the
+native border's inner curve and layout-rounded stroke/inset; the native top rim
+uses the rows' side thickness and a rectangular top band that leaves its curve
+untouched. This matches the lower corners without altering the existing top
+inset, row layout or lower borders. No additional public API or theme key was
+added. The previous application-menu geometry converter is unchanged.
+
+The refined RibbonKit-only exposed-message matrix passed in Release (5 seconds),
+including an exact corner-alpha comparison against an unclipped native border
+at the consumer's current 125% DPI, first-row dismissal, all themes/light-dark,
+both densities, QAT placements and restore/empty cleanup. The separate chrome
+matrix passed (4 seconds), preserving Office2007/2024 QAT joins and Touch modal
+geometry. Sixteen message/startup/resource-scope checks and normal Release/Debug
+builds passed. Latest results are `message-corner-clip-consumer-release.trx`,
+`message-corner-clip-qat-consumer-release.trx` and
+`message-corner-clip-runtime-release.trx` under `artifacts/touch-validation`.
+Office2007/2024 light/dark renders and the supplied enlarged corner were inspected
+under `artifacts/message-corner-clip-diagnostics`. Full/native/snapshot gates remain
+deferred; the refreshed Debug Showcase is ready for renewed visual review.
+
+### Startup theme replacement — 2026-10-08
+
+Restoring a tab-row QAT before the first theme application could throw
+`InvalidOperationException` for `QatTabRowColored`. The actual Showcase startup
+reproduction failed with the user's stack: removing App.xaml's palette synchronously
+invalidated the shared QAT selectors, whose callback read another selector while
+no palette was available. `ThemeManager.Apply` now merges the replacement first,
+then removes prior palettes while excluding the replacement from first-call
+cleanup. Existing WPF precedence, scoped palettes and accent-band policy remain.
+No public API or shipped baseline changed; saved preferences were not modified.
+
+Focused Release verification passed 12 tests, including six actual Showcase
+startup cases and existing Crystal theme/resource-scope checks
+(`qat-showcase-startup-release.trx`). The RibbonKit-only consumer passed its
+startup and live theme matrix across all six themes, both densities, light/dark
+and accent toggles, plus scoped-policy/QAT-placement checks (9 seconds,
+`qat-theme-restore-consumer-release.trx`). Both result files are under
+`artifacts/touch-validation`. Normal Release solution and Debug Showcase builds
+passed with zero warnings/errors. Offscreen startup was verified; full-suite,
+snapshot and native-input checks remain deferred.
+
 ### Earlier geometry and adaptive evidence
 
 The screenshot cleanup, refinements and subsequent spacing/paint polish address:
@@ -398,13 +476,14 @@ user's request: no full-suite, snapshot approval or native-input retry.
 | Shared implementation and API documentation | Passed 2026-10-07: documented additive API; shipped baseline unchanged; matching Touch metrics in all six base themes |
 | Live density transition | Refined 2026-10-08 to 85% opacity and cubic EaseInOut; clean Release runtime builds for both targets, passing focused policy/easing test and independent Release transition aggregate. The initial 2026-10-07 implementation had a clean Release solution build, 33 selected runtime checks and independent Debug/Release and broader Touch evidence. Completion/interruption, startup, disabled policy, bindings, template/unload, QAT placements, popup anchors and affected adaptive geometry covered. Full suite and native keyboard/input deferred until visual review |
 | Group launcher caption height | Passed focused Release verification 2026-10-08: RibbonKit-only six-theme/light-dark/LTR-RTL launcher aggregate and broader Touch consumer; nominal 14-DIP height, equal neighboring caption bands, retained Touch width and visibility toggles. Office2007 render inspected; user visual review pending |
-| Minimized QAT/message and Touch modal geometry | Passed focused Release verification 2026-10-08: independent chrome and broader Touch aggregates, 13 selected runtime checks and clean solution build. Office2024 rounds only exposed upper QAT corners above messages in both densities; Touch modal entry/exit preserves header/body position across all themes and QAT placements. Renders inspected; user review pending |
+| Minimized QAT/message and Touch modal geometry | Passed focused Release verification 2026-10-08 after adding Office2007 to the upper-corner correction: independent chrome aggregate checks Office2007/2024 exposed upper QAT corners, flush message seams, both densities and Touch modal position across all themes/placements. Initial Office2024 fix's broader Touch aggregate and 13 runtime checks remain earlier evidence. Latest renders inspected; user review pending |
 | Minimized document-boundary divider | User accepted the conditional divider on 2026-10-08: it appears only below an exposed minimized header and is suppressed with a lower QAT or open messages. Focused Release six-theme/both-density visibility matrix passed. Initial relocation's broader Touch consumer and 24 runtime checks predate this refinement; full/native gates remain separate |
-| Office exposed message top border | Passed focused Release verification 2026-10-08 after extending the existing metric to all five Office themes: RibbonKit-only six-theme/light-dark/LTR-RTL/both-density/QAT-placement matrix and six message-bar checks. One top edge appears only for exposed Office messages, persists after first-row dismissal, and releases on restore/empty state. Crystal retains its existing card borders. Renders inspected; user review pending |
+| Office exposed message top border and corners | Refined after the clipped-corner report on 2026-10-08: only row paint is clipped inside a native rim with matching side thickness. RibbonKit-only six-theme/light-dark/LTR-RTL/both-density/QAT-placement matrix and exact native-corner alpha comparison at current 125% DPI passed, including dismissal and cleanup. QAT/chrome aggregate and sixteen runtime checks passed; latest renders inspected; user review pending |
+| Startup theme replacement | User confirmed startup runs correctly on 2026-10-08. Focused Release evidence reproduced the exact tab-row QAT exception, then passed six actual Showcase startup cases, six existing theme/resource-scope tests and the RibbonKit-only startup/live-switch/scoped-policy aggregate. Replacement palettes remain available during cleanup; public API and saved preferences unchanged |
 | Touch cleanup checks | Passed 2026-10-07 in the final Release suite: six actual Showcase theme cases, caption-button and Office2010 Aero-bevel regressions, File width/edge spacing, gallery fill/selection and compact/touch neighbor spacing, large/three-row sizing, modal Close, Font separator, message targets/normal fonts, stable title height through Backstage, and actual Classic2007 rail/page paint alignment; independent consumer across every theme/light-dark/LTR-RTL combination and all seven Backstage designs |
 | RibbonKit-only consumer | Adaptive follow-up touch-only scope passed 2026-10-07 in Debug and Release (final Release 44s), including repeated open-flyout density changes and immediate overflow arrows. The earlier full default scope passed in 2m56s before the follow-up, including keyboard/focus/navigation and the corrected Backstage fixture |
 | Release solution build and tests | Full checkpoint passed 2026-10-07 before the adaptive-layout follow-up: both runtime targets, zero build warnings/errors, all 974 tests passed with zero failed/skipped (490 runtime, 482 Writer, full consumer aggregate and 113-scene visual aggregate); package contents/designer assets and clean net8/net9 WPF package consumption validated. The follow-up has a fresh clean Release solution build and 64 passing focused runtime checks; no new full-suite run |
-| Normal Debug Showcase output | Passed 2026-10-08: default Debug Showcase/net8 runtime output refreshed for the exposed message top border across all Office themes after the divider, QAT/message, modal, launcher and animation changes; zero warnings/errors. The preceding connected lower-QAT shadow regression passed with density motion disabled for static paint comparison |
+| Normal Debug Showcase output | Passed 2026-10-08: default Debug Showcase/net8 runtime output refreshed for the message-corner clipping refinement after the QAT corner, startup, border, divider, modal, launcher and animation fixes; zero warnings/errors. The preceding connected lower-QAT shadow regression passed with density motion disabled for static paint comparison |
 | Visual acceptance | User accepted the revised 85% EaseInOut density settle on 2026-10-08 after live review. Group launcher caption-height correction awaits review separately. User confirmed the adaptive collapse/scroller correction on 2026-10-07. Office2024 light/dark touch seam renders inspected; target-machine acceptance of that shadow correction remains pending. The 113-scene automated checkpoint predates the adaptive, shadow and animation follow-ups |
 | Native touch input | Pending: split halves, tap invocation, panning without accidental selection, nested popup dismissal and editable inputs |
 | DPI / RTL / keyboard | Full automated keyboard/focus/navigation, touch LTR/RTL and rendered 100/125/150/200% checks passed 2026-10-07; physical input, native monitor/DPI transitions, IME and reduced-motion live review remain separate |

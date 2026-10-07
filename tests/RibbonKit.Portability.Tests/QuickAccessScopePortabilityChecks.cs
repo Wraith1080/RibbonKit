@@ -9,6 +9,53 @@ namespace RibbonKit.Portability.Tests;
 
 internal static class QuickAccessScopePortabilityChecks
 {
+    internal static void VerifyThemeRestore(Application application)
+    {
+        // App.xaml's palette and saved QAT placement are realized before restoring the theme.
+        var initialPalette = new ResourceDictionary
+        {
+            Source = new Uri("/RibbonKit;component/Themes/Tokens.Office2024.xaml", UriKind.Relative),
+        };
+        application.Resources.MergedDictionaries.Add(initialPalette);
+        var ribbon = new Ribbon { QuickAccessPosition = RibbonQuickAccessPosition.TabRow };
+        ribbon.Tabs.Add(new RibbonTab { Header = "Home" });
+        var button = new RibbonButton { Header = "Save" };
+        ribbon.QuickAccessItems.Add(button);
+        var window = Window(ribbon);
+        try
+        {
+            window.Loaded += (_, _) => ThemeManager.Apply(application, RibbonTheme.CrystalLight);
+            window.Show();
+            Layout();
+            Assert.DoesNotContain(initialPalette, application.Resources.MergedDictionaries);
+            foreach (var density in Enum.GetValues<RibbonDensity>())
+            foreach (bool dark in new[] { false, true })
+            foreach (bool colored in new[] { false, true })
+            foreach (var theme in Enum.GetValues<RibbonTheme>())
+            {
+                ribbon.Density = density;
+                ThemeManager.Apply(application, theme);
+                ThemeManager.SetDarkMode(application, dark);
+                ThemeManager.SetAccentedTitleBar(application, colored);
+                Layout();
+                Assert.Equal(colored && theme == RibbonTheme.Office2019,
+                    Ribbon.GetQatOnColoredSurface(button));
+            }
+        }
+        finally
+        {
+            window.Close();
+            ThemeManager.SetAccentedTitleBar(application, false);
+            ThemeManager.SetDarkMode(application, false);
+            ThemeManager.Apply(application, RibbonTheme.Office2024);
+        }
+        void Layout()
+        {
+            Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
+            window.UpdateLayout();
+        }
+    }
+
     internal static void Verify(Application application)
     {
         var ribbon = new Ribbon { Backstage = new Backstage() };

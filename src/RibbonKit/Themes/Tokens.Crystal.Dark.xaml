@@ -236,6 +236,7 @@
     <Thickness x:Key="RibbonKit.Metrics.MessageBar.Margin">7,3,7,7</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.MessageBar.BorderThickness">1</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.MessageBar.ExposedTopBorderThickness">0</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.MessageBar.ExposedTopCornerRadius">0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.MessageBar.LastCornerRadius">10</CornerRadius>
     <DropShadowEffect x:Key="Crystal.Effects.ApplicationMenuShadow" Color="#000000" BlurRadius="16" ShadowDepth="0" Opacity="0.45" RenderingBias="Performance" />
     <DropShadowEffect x:Key="RibbonKit.Effects.ContentShadow" Color="#000000" BlurRadius="16" ShadowDepth="3" Opacity="0.38" RenderingBias="Performance" />

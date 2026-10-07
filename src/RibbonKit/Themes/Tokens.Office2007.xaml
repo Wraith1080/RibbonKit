@@ -616,7 +616,7 @@
     <CornerRadius x:Key="RibbonKit.Metrics.QatExtenderCornerRadius">0,0,3,3</CornerRadius>
     <Thickness x:Key="RibbonKit.Metrics.QatExtenderMarginMessageBar">2,0,2,0</Thickness>
     <CornerRadius x:Key="RibbonKit.Metrics.QatExtenderCornerRadiusMessageBar">0</CornerRadius>
-    <CornerRadius x:Key="RibbonKit.Metrics.QatExtenderCornerRadiusMinimizedMessageBar">0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.QatExtenderCornerRadiusMinimizedMessageBar">3,3,0,0</CornerRadius>
 
     <!-- Minimized: the ribbon body is gone, so the strip is the whole chrome and closes on all
          four sides instead of continuing something above it. -->
@@ -742,6 +742,7 @@
     <Thickness x:Key="RibbonKit.Metrics.MessageBar.ItemMargin">0</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.MessageBar.BorderThickness">1,0,1,1</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.MessageBar.ExposedTopBorderThickness">0,1,0,0</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.MessageBar.ExposedTopCornerRadius">3,3,0,0</CornerRadius>
     <SolidColorBrush x:Key="RibbonKit.Brushes.MessageBar.CloseHoverBorder" Color="#A97F2A" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Input.SurfaceBackground" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Input.Border" Color="#8DB2E3" />

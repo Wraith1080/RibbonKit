@@ -141,6 +141,12 @@ public sealed class ApplicationButtonShapeThemeTests
     public void Theme_default_and_local_value_follow_wpf_precedence() => RunSta(() =>
     {
         var application = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "QatThemeRestore")
+        {
+            QuickAccessScopePortabilityChecks.VerifyThemeRestore(application);
+            QuickAccessScopePortabilityChecks.Verify(application);
+            return;
+        }
         if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "MinimizedDivider")
         {
             TouchDensityPortabilityChecks.VerifyMinimizedDivider(application);
@@ -161,6 +167,8 @@ public sealed class ApplicationButtonShapeThemeTests
             DensityTransitionPortabilityChecks.Verify(application);
             return;
         }
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") != "Touch")
+            QuickAccessScopePortabilityChecks.VerifyThemeRestore(application);
         TouchDensityPortabilityChecks.Verify(application);
         // WPF allows only one Application per process. The explicit local touch scope
         // reuses this entry point while leaving the default full consumer run intact.

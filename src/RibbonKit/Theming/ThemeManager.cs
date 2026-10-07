@@ -230,6 +230,11 @@ public static class ThemeManager
             Source = TokenDictionaryUri(theme),
         };
 
+        // Resource changes synchronously re-evaluate style setters and their callbacks.
+        // Keep a complete palette available when a QAT callback reads another selector
+        // during startup or a live switch. The last merged dictionary takes precedence.
+        application.Resources.MergedDictionaries.Add(dictionary);
+
         // Remove the dictionaries we added last time...
         if (_currentVariant is not null)
         {
@@ -245,10 +250,9 @@ public static class ThemeManager
         {
             // ...or, on the first call, remove whatever token dictionary the app
             // merged manually (identified by a known token key) so we don't stack two.
-            RemoveExistingTokenDictionaries(application);
+            RemoveExistingTokenDictionaries(application, dictionary);
         }
 
-        application.Resources.MergedDictionaries.Add(dictionary);
         _current = dictionary;
         CurrentTheme = theme;
         ApplyDarkModeDictionary(application);
@@ -868,11 +872,12 @@ public static class ThemeManager
         return Color.FromArgb(255, Channel(a.R, b.R), Channel(a.G, b.G), Channel(a.B, b.B));
     }
 
-    private static void RemoveExistingTokenDictionaries(Application application)
+    private static void RemoveExistingTokenDictionaries(Application application, ResourceDictionary replacement)
     {
         for (int i = application.Resources.MergedDictionaries.Count - 1; i >= 0; i--)
         {
-            if (application.Resources.MergedDictionaries[i].Contains(AccentKey))
+            if (!ReferenceEquals(application.Resources.MergedDictionaries[i], replacement)
+                && application.Resources.MergedDictionaries[i].Contains(AccentKey))
             {
                 application.Resources.MergedDictionaries.RemoveAt(i);
             }

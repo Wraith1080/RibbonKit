@@ -134,6 +134,7 @@
     <CornerRadius x:Key="RibbonKit.Metrics.MessageBar.LastCornerRadius">0</CornerRadius>
     <Thickness x:Key="RibbonKit.Metrics.MessageBar.BorderThickness">0,0,0,1</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.MessageBar.ExposedTopBorderThickness">0,1,0,0</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.MessageBar.ExposedTopCornerRadius">0</CornerRadius>
     <SolidColorBrush x:Key="RibbonKit.Brushes.MessageBar.CloseHoverBorder" Color="#707070" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Input.SurfaceBackground" Color="#1E1E1E" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Input.Border" Color="#585858" />
