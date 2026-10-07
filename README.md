@@ -60,6 +60,32 @@ provider refresh, mirroring, popup edges and customization. Application-authored
 labels remain the application's responsibility. A complete Windows contrast-theme
 mode is **not supported**; gallery/scrollbar system-color fallbacks are narrower.
 
+Ribbon actions use a solid theme-colored keyboard-focus outline. The ribbon container
+is excluded from the tab order. Application-menu commands and dropdown rows have one
+Tab stop; split rows expose their command and arrow separately. Enter or Space invokes
+the focused action, and keyboard navigation updates the corresponding menu pane.
+The Tab sequence follows ribbon headers and commands before a QAT placed below the
+ribbon. Dropdown and split menus focus their items on opening, support cyclic Tab
+and arrow navigation, and return focus to their opener on keyboard dismissal.
+Application-menu arrows move between navigation rows, split targets and pane
+commands, mirrored in RTL. Backstage cycles through navigation, page commands and
+the return button; action entries such as Options and Exit accept focus without
+changing the selected page.
+Entering the ribbon from document content starts at File when present. QAT commands
+that have moved into overflow are excluded from keyboard navigation until they
+return to the strip. Opening Backstage focuses its active navigation item, falling
+back to the first available item when needed. Its navigation and return actions
+use one shared focus outline.
+The outline follows animated surfaces during movement. Collapsed-group flyouts
+focus their commands on opening, cycle through Tab and arrow navigation, and
+return focus to their opener on keyboard dismissal.
+Focus outlines follow the visible template border's position and corner shape,
+including inset margins, RTL and render transforms. Circular Back buttons and
+application orbs use rings that follow their visible discs.
+Accent-filled Backstage rails and ribbon headers use a contrasting light or dark
+outline when the usual accent outline would blend into the surface. The outline
+refreshes when the palette or title-bar coloring changes while focus is retained.
+
 ### Theming & rendering
 
 Office 2007, 2010, 2013, 2019 and 2024 each have light and dark/black palettes, with

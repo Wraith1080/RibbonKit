@@ -287,4 +287,7 @@
     <system:Boolean x:Key="RibbonKit.Metrics.UseUtilityScrollMaterial">False</system:Boolean>
     <system:Boolean x:Key="RibbonKit.Metrics.ContextualUseCrystalMaterial">False</system:Boolean>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ContextualForeground" Color="Transparent" />
+    <!-- Contrasting keyboard outlines for accent-filled ribbon and Backstage surfaces. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.KeyboardFocus.Light" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.KeyboardFocus.Dark" Color="#000000" />
 </ResourceDictionary>

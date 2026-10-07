@@ -35,6 +35,7 @@
          of the keyed Crystal templates merged before this dictionary.
          ============================================================ -->
     <Style TargetType="{x:Type controls:Backstage}">
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
         <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Backstage.ContentBackground}" />
         <!-- Nav-column foreground (back arrow + item text). White for the accent column;
              the Modern trigger switches it to the active neutral-rail foreground. -->
@@ -42,7 +43,10 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type controls:Backstage}">
-                    <Grid x:Name="RootGrid" Background="{TemplateBinding Background}">
+                    <!-- Cycle on the visual root avoids TabControl's remembered selected-header
+                         entry point when focus wraps from the page back to navigation. -->
+                    <Grid x:Name="RootGrid" Background="{TemplateBinding Background}"
+                          KeyboardNavigation.TabNavigation="Cycle">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition x:Name="NavColumnDef" Width="220" />
                             <ColumnDefinition Width="*" />
@@ -82,6 +86,7 @@
                                         Visibility="Collapsed" />
                                 <DockPanel LastChildFill="True">
                                 <Button x:Name="PART_BackButton"
+                                        controls:FocusVisualTracking.Background="{Binding Background, ElementName=NavColumn}"
                                         DockPanel.Dock="Top"
                                         Width="{DynamicResource RibbonKit.Metrics.BackstageBackButtonSize}"
                                         Height="{DynamicResource RibbonKit.Metrics.BackstageBackButtonSize}"
@@ -92,6 +97,7 @@
                                         ToolTip="{localization:RibbonString Key=Back}">
                                     <Button.Style>
                                         <Style TargetType="{x:Type Button}">
+                                            <Setter Property="FocusVisualStyle" Value="{StaticResource RibbonKit.CircularKeyboardFocusVisual}" />
                                             <Setter Property="Template">
                                                 <Setter.Value>
                                                     <ControlTemplate TargetType="{x:Type Button}">
@@ -440,6 +446,7 @@
          BackstageTabItem — nav row in the accent column
          ============================================================ -->
     <Style TargetType="{x:Type controls:BackstageTabItem}">
+        <Setter Property="FocusVisualStyle" Value="{StaticResource RibbonKit.KeyboardFocusVisual}" />
         <!-- Container Foreground is the PAGE CONTENT colour, NOT the nav-text colour: the page
              shown for the selected item inherits this container Foreground. It must be a
              content-safe (non-white) brush — a white value here leaks white text into the page
@@ -510,6 +517,10 @@
                     </Grid>
                     <ControlTemplate.Triggers>
                         <!-- Classic (accent column): full-width fills. -->
+                        <Trigger Property="controls:Backstage.Design" Value="Classic">
+                            <Setter Property="controls:FocusVisualTracking.Background"
+                                    Value="{DynamicResource RibbonKit.Brushes.Backstage.Classic.NavBackground}" />
+                        </Trigger>
                         <Trigger SourceName="Chrome" Property="IsMouseOver" Value="True">
                             <Setter TargetName="Chrome" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Backstage.ItemHoverBackground}" />

@@ -824,6 +824,38 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [Scoped QAT policy, dynamic capture registration and shared action/Backstage resources](docs/history/01-library.md#3217-crystal-pre-merge-scope-and-resource-cleanup--2026-10-04).
 
+### 3.218 Keyboard focus and application-menu navigation — 2026-10-04
+
+[Shared focus outlines, actionable tab stops and native keyboard activation](docs/history/01-library.md#3218-keyboard-focus-and-application-menu-navigation--2026-10-04).
+
+### 3.219 QAT order, menu traversal and Backstage focus cycling — 2026-10-04
+
+[Order focus independently of painting and traverse flyouts and Backstage actions](docs/history/01-library.md#3219-qat-order-menu-traversal-and-backstage-focus-cycling--2026-10-04).
+
+### 3.220 File-first entry, QAT overflow and Backstage opening focus — 2026-10-04
+
+[Enter the ribbon at File, skip hidden QAT originals and focus Backstage actions](docs/history/01-library.md#3220-file-first-entry-qat-overflow-and-backstage-opening-focus--2026-10-04).
+
+### 3.221 Active Backstage entry and a single focus outline — 2026-10-04
+
+[Focus the selected Backstage page and avoid duplicate Crystal focus borders](docs/history/01-library.md#3221-active-backstage-entry-and-a-single-focus-outline--2026-10-04).
+
+### 3.222 Animated focus placement and collapsed-group navigation — 2026-10-04
+
+[Follow moving focus targets and enter collapsed-group flyouts with the keyboard](docs/history/01-library.md#3222-animated-focus-placement-and-collapsed-group-navigation--2026-10-04).
+
+### 3.223 Circular Back and application-orb focus — 2026-10-04
+
+[Match focus rings to circular Back buttons, application orbs and Classic2007 return proxies](docs/history/01-library.md#3223-circular-back-and-application-orb-focus--2026-10-04).
+
+### 3.224 Focus outlines follow rendered button surfaces — 2026-10-05
+
+[Measure visible borders and discs for focus placement and corner geometry](docs/history/01-library.md#3224-focus-outlines-follow-rendered-button-surfaces--2026-10-05).
+
+### 3.225 Focus contrast on accent-filled rails and headers — 2026-10-05
+
+[Keep focus visible on Classic Backstage and colored Office 2019 ribbon headers](docs/history/01-library.md#3225-focus-contrast-on-accent-filled-rails-and-headers--2026-10-05).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),

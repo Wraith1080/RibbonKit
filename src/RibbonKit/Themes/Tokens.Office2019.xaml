@@ -527,4 +527,7 @@
     <CornerRadius x:Key="RibbonKit.Metrics.Backstage.SidebarContentCornerRadius">20</CornerRadius>
     <Thickness x:Key="RibbonKit.Metrics.Backstage.SidebarContentPadding">24</Thickness>
     <system:Double x:Key="RibbonKit.Metrics.Backstage.ActionDisabledOpacity">0.4</system:Double>
+    <!-- Contrasting keyboard outlines for accent-filled ribbon and Backstage surfaces. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.KeyboardFocus.Light" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.KeyboardFocus.Dark" Color="#000000" />
 </ResourceDictionary>

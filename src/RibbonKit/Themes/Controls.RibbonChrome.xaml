@@ -16,6 +16,7 @@
          RibbonKit.MergedCaptionButton are used by StaticResource below.
          (Also listed in Office2024.xaml; WPF caches dictionaries by Source URI.) -->
     <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.Focus.xaml" />
         <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.Shared.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
@@ -91,6 +92,7 @@
          Ribbon
          ============================================================ -->
     <Style TargetType="{x:Type controls:Ribbon}">
+        <Setter Property="KeyboardNavigation.TabNavigation" Value="Local" />
         <Setter Property="controls:UtilityChrome.QatTitleBarColored"
                 Value="{DynamicResource RibbonKit.Metrics.QatTitleBarColored}" />
         <Setter Property="controls:UtilityChrome.QatTabRowColored"
@@ -139,6 +141,8 @@
                                  card (Office 2024); flat themes render a plain strip. -->
                             <Border x:Name="QatBelowHost"
                                     Grid.Row="1"
+                                    KeyboardNavigation.TabNavigation="Local"
+                                    KeyboardNavigation.TabIndex="1"
                                     HorizontalAlignment="Stretch"
                                     MinHeight="{DynamicResource RibbonKit.Metrics.QatExtenderMinHeight}"
                                     Margin="{DynamicResource RibbonKit.Metrics.QatExtenderMargin}"
@@ -286,7 +290,9 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type controls:RibbonTabControl}">
-                    <Grid>
+                    <!-- Scope order to the visual root rather than TabControl's remembered
+                         selected header. Z-order for shadows/notches must not order Tab stops. -->
+                    <Grid KeyboardNavigation.TabNavigation="Local" KeyboardNavigation.TabIndex="0">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
@@ -296,6 +302,8 @@
                              the tab must paint OVER the body's top border to connect into it. -->
                         <Grid x:Name="PART_TabHeaderHost"
                               Grid.Row="0"
+                              KeyboardNavigation.TabNavigation="Local"
+                              KeyboardNavigation.TabIndex="0"
                               Panel.ZIndex="1">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
@@ -350,6 +358,8 @@
                             <StackPanel x:Name="ApplicationButtonLayer"
                                         Grid.Column="0"
                                         Panel.ZIndex="2"
+                                        KeyboardNavigation.TabNavigation="Local"
+                                        KeyboardNavigation.TabIndex="0"
                                         Orientation="Horizontal"
                                         VerticalAlignment="Stretch">
                             <Image x:Name="PART_MergedCaptionIcon"
@@ -379,6 +389,8 @@
                                           IsChecked="{Binding IsBackstageOpen, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}, Mode=TwoWay}">
                                 <ToggleButton.Style>
                                     <Style TargetType="{x:Type ToggleButton}">
+                                        <Setter Property="FocusVisualStyle" Value="{StaticResource RibbonKit.KeyboardFocusVisual}" />
+                                        <Setter Property="controls:FocusVisualTracking.Background" Value="{DynamicResource RibbonKit.Brushes.Ribbon.Background}" />
                                         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.ApplicationButton.Foreground}" />
                                         <Setter Property="Margin" Value="{DynamicResource RibbonKit.Metrics.ApplicationButtonMargin}" />
                                         <Setter Property="Padding" Value="{DynamicResource RibbonKit.Metrics.ApplicationButtonPadding}" />
@@ -486,6 +498,8 @@
                                                              a property wins, so this must follow them. -->
                                                         <DataTrigger Binding="{Binding ApplicationButtonShape, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
                                                                      Value="Orb">
+                                                            <Setter Property="FocusVisualStyle" Value="{StaticResource RibbonKit.ApplicationOrbKeyboardFocusVisual}" />
+                                                            <Setter Property="controls:FocusVisualTracking.Background" Value="{x:Null}" />
                                                             <Setter TargetName="Chrome" Property="Visibility" Value="Collapsed" />
                                                             <Setter TargetName="HoverUnderline" Property="Visibility" Value="Collapsed" />
                                                             <Setter TargetName="Orb" Property="Visibility" Value="Visible" />
@@ -536,11 +550,14 @@
                             <controls:RibbonQuickAccessToolBar
                                 x:Name="QatTabRowHost"
                                 Grid.Column="1"
+                                KeyboardNavigation.TabNavigation="Local"
+                                KeyboardNavigation.TabIndex="1"
                                 VerticalAlignment="Center"
                                 Visibility="Collapsed"
                                 Margin="2,4,4,0"
                                 MaxWidth="{Binding QuickAccessMaxWidth, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}" />
-                            <Grid Grid.Column="2">
+                            <Grid Grid.Column="2" KeyboardNavigation.TabNavigation="Local"
+                                  KeyboardNavigation.TabIndex="2">
                                 <!-- Tab strip in a horizontal scroller: when there are more tabs than
                                      fit, chevron buttons appear and scroll the strip. The gliding
                                      PART_TabMarker lives INSIDE the scroller with the TabPanel so it
@@ -623,6 +640,7 @@
                                     Visibility="{Binding CanCloseModal, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}, Converter={StaticResource RibbonKit.BoolToVis}}">
                                 <Button.Style>
                                     <Style TargetType="{x:Type Button}">
+                                        <Setter Property="FocusVisualStyle" Value="{StaticResource RibbonKit.KeyboardFocusVisual}" />
                                         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.TabStrip.Foreground}" />
                                         <Setter Property="Template">
                                             <Setter.Value>
@@ -679,13 +697,16 @@
                             </Button>
                             <!-- Minimize chevron: toggles Ribbon.IsMinimized -->
                             <ToggleButton x:Name="MinimizeToggle"
+                                          KeyboardNavigation.TabIndex="3"
                                           Width="24" Height="22"
                                           Margin="0,6,8,0"
                                           VerticalAlignment="Center"
                                           ToolTip="{localization:RibbonString Key=MinimizeRibbon}"
+                                          controls:FocusVisualTracking.Background="{DynamicResource RibbonKit.Brushes.Ribbon.Background}"
                                           IsChecked="{Binding IsMinimized, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}, Mode=TwoWay}">
                                 <ToggleButton.Style>
                                     <Style TargetType="{x:Type ToggleButton}">
+                                        <Setter Property="FocusVisualStyle" Value="{StaticResource RibbonKit.KeyboardFocusVisual}" />
                                         <Setter Property="Template">
                                             <Setter.Value>
                                                 <ControlTemplate TargetType="{x:Type ToggleButton}">
@@ -802,6 +823,8 @@
                              collapsing it back to a full-width strip — all via tokens. -->
                         <Border x:Name="ContentHost"
                                 Grid.Row="1"
+                                KeyboardNavigation.TabNavigation="Local"
+                                KeyboardNavigation.TabIndex="1"
                                 Background="{DynamicResource RibbonKit.Brushes.Ribbon.BodyBackground}"
                                 BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}"
                                 BorderThickness="{DynamicResource RibbonKit.Metrics.ContentBorderThickness}"

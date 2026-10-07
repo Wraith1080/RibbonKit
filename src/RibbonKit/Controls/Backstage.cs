@@ -5,6 +5,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 using RibbonKit.Animation;
 
 namespace RibbonKit.Controls;
@@ -102,6 +103,36 @@ public class Backstage : TabControl
     /// can move between its normal ribbon host and the Backstage adorner without an app restart.
     /// </summary>
     internal event EventHandler? DesignChanged;
+
+    internal void FocusInitialAction()
+    {
+        // Own Escape immediately, then enter the realized chrome rather than leaving the
+        // overlay itself as a keyboard stop. Do not steal focus if the user moved it meanwhile.
+        Focus();
+        IInputElement? initialFocus = Keyboard.FocusedElement;
+        Dispatcher.BeginInvoke(DispatcherPriority.Input, (Action)(() =>
+        {
+            if (!IsVisible) return;
+            // TabControl may choose its selected header while its containers are generated.
+            // That automatic move is part of opening; other user focus changes take precedence.
+            var selectedHeader = ItemContainerGenerator.ContainerFromIndex(SelectedIndex);
+            if (Keyboard.FocusedElement != initialFocus && Keyboard.FocusedElement != selectedHeader) return;
+            ApplyTemplate();
+            UpdateLayout();
+            if (ItemContainerGenerator.ContainerFromIndex(SelectedIndex)
+                is UIElement { IsVisible: true, IsEnabled: true, Focusable: true } active
+                && active.Focus()) return;
+            for (int index = 0; index < Items.Count; index++)
+            {
+                if (ItemContainerGenerator.ContainerFromIndex(index)
+                    is UIElement { IsVisible: true, IsEnabled: true, Focusable: true } item
+                    && item.Focus()) return;
+            }
+            if (_backButton is { IsVisible: true, IsEnabled: true, Focusable: true }
+                && _backButton.Focus()) return;
+            MoveFocus(new TraversalRequest(FocusNavigationDirection.First));
+        }));
+    }
 
     /// <summary>
     /// Binds private frame chrome to the real host window. The Backstage adorner is a separate
@@ -302,9 +333,8 @@ public class Backstage : TabControl
     /// <inheritdoc />
     protected override void OnSelectionChanged(SelectionChangedEventArgs e)
     {
-        // A button item (Options / Exit …) is an ACTION, never a page: if selection lands on one
-        // (e.g. via keyboard), bounce it straight back to the previous page. Actual invocation
-        // happens on click/Enter in BackstageTabItem, not here — so arrowing past one does nothing.
+        // Guard programmatic SelectedItem changes as well as the container's IsSelected
+        // coercion. Action focus leaves selection alone; only click/Enter/Space invokes it.
         if (!_revertingSelection && SelectedItem is BackstageTabItem { IsButton: true })
         {
             _revertingSelection = true;
@@ -361,7 +391,7 @@ public class BackstageTabItem : TabItem
             nameof(IsButton),
             typeof(bool),
             typeof(BackstageTabItem),
-            new FrameworkPropertyMetadata(false));
+            new FrameworkPropertyMetadata(false, OnIsButtonChanged));
 
     /// <summary>Identifies the <see cref="Command"/> dependency property.</summary>
     public static readonly DependencyProperty CommandProperty =
@@ -388,10 +418,20 @@ public class BackstageTabItem : TabItem
 
     static BackstageTabItem()
     {
+        // TabItem selects itself during PreviewGotKeyboardFocus. An action must remain
+        // unselected without bouncing selection back (which also moves focus back).
+        IsSelectedProperty.OverrideMetadata(typeof(BackstageTabItem),
+            new FrameworkPropertyMetadata(false, null, CoerceIsSelected));
         DefaultStyleKeyProperty.OverrideMetadata(
             typeof(BackstageTabItem),
             new FrameworkPropertyMetadata(typeof(BackstageTabItem)));
     }
+
+    private static object CoerceIsSelected(DependencyObject d, object value) =>
+        ((BackstageTabItem)d).IsButton ? false : value;
+
+    private static void OnIsButtonChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
+        d.CoerceValue(IsSelectedProperty);
 
     /// <summary>Raised when a <see cref="IsButton"/> item is activated (click or Enter/Space).</summary>
     public event RoutedEventHandler Click

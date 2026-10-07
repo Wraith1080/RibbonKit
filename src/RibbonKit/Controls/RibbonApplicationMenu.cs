@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 using RibbonKit.Animation;
 
 namespace RibbonKit.Controls;
@@ -130,6 +131,9 @@ public class RibbonApplicationMenu : ItemsControl
 
     private Window? _dismissWindow;
 
+    private bool _focusingInitialAction;
+    private RibbonApplicationMenuItem? _focusedNavigationItem;
+
     static RibbonApplicationMenu()
     {
         DefaultStyleKeyProperty.OverrideMetadata(
@@ -152,8 +156,9 @@ public class RibbonApplicationMenu : ItemsControl
         // keyboard-focus tree, so without this Tab walks straight into controls the user cannot see.
         KeyboardNavigation.SetTabNavigation(this, KeyboardNavigationMode.Cycle);
 
-        // So the menu can take focus the moment it opens and Esc works without a click first.
+        // Keep a fallback focus target for an empty menu, without adding a container tab stop.
         Focusable = true;
+        IsTabStop = false;
 
         IsVisibleChanged += OnIsVisibleChanged;
     }
@@ -265,11 +270,59 @@ public class RibbonApplicationMenu : ItemsControl
     protected override void OnPreviewKeyDown(KeyEventArgs e)
     {
         base.OnPreviewKeyDown(e);
+        if (e.Handled) return;
 
         if (e.Key == Key.Escape)
         {
             RequestClose();
             e.Handled = true;
+            return;
+        }
+
+        if (Keyboard.FocusedElement is not ButtonBase focused || Keyboard.Modifiers != ModifierKeys.None) return;
+        if (e.Key is Key.Up or Key.Down && focused.TemplatedParent is RibbonDropDownButton) return;
+        var rows = Items.Cast<object>().Select(item => ItemContainerGenerator.ContainerFromItem(item))
+            .OfType<RibbonApplicationMenuItem>()
+            .Where(row => row.PrimaryPart is { IsVisible: true, IsEnabled: true }).ToList();
+        int index = rows.FindIndex(row => ReferenceEquals(focused, row.PrimaryPart) || ReferenceEquals(focused, row.ArrowPart));
+        if (index >= 0)
+        {
+            if (e.Key is Key.Home or Key.End)
+                e.Handled = rows[e.Key == Key.Home ? 0 : rows.Count - 1].PrimaryPart!.Focus();
+            else if (e.Key is Key.Up or Key.Down)
+            {
+                int step = e.Key == Key.Down ? 1 : -1;
+                e.Handled = rows[(index + step + rows.Count) % rows.Count].PrimaryPart!.Focus();
+            }
+            else if (e.Key == (FlowDirection == FlowDirection.RightToLeft ? Key.Left : Key.Right))
+            {
+                var row = rows[index];
+                if (ReferenceEquals(focused, row.PrimaryPart) && row.IsSplitPresentation
+                    && row.ArrowPart is { IsVisible: true, Focusable: true } arrow)
+                    e.Handled = arrow.Focus();
+                else
+                {
+                    NotifyItemClaimed(row);
+                    UpdateLayout();
+                    e.Handled = (GetTemplateChild(PanePartName) as UIElement)?
+                        .MoveFocus(new TraversalRequest(FocusNavigationDirection.First)) == true;
+                }
+            }
+            else if (e.Key == (FlowDirection == FlowDirection.RightToLeft ? Key.Right : Key.Left)
+                     && ReferenceEquals(focused, rows[index].ArrowPart))
+                e.Handled = rows[index].PrimaryPart!.Focus();
+        }
+        else if (GetTemplateChild(PanePartName) is UIElement { IsKeyboardFocusWithin: true } pane)
+        {
+            if (e.Key == (FlowDirection == FlowDirection.RightToLeft ? Key.Right : Key.Left)
+                && _focusedNavigationItem is { } row)
+                e.Handled = (row.IsSplitPresentation ? row.ArrowPart : row.PrimaryPart)?.Focus() == true;
+            else if (e.Key is Key.Up or Key.Down)
+                e.Handled = focused.MoveFocus(new TraversalRequest(e.Key == Key.Down
+                    ? FocusNavigationDirection.Down : FocusNavigationDirection.Up));
+            else if (e.Key is Key.Home or Key.End)
+                e.Handled = pane.MoveFocus(new TraversalRequest(e.Key == Key.Home
+                    ? FocusNavigationDirection.First : FocusNavigationDirection.Last));
         }
     }
 
@@ -296,6 +349,15 @@ public class RibbonApplicationMenu : ItemsControl
     internal void NotifyItemClaimed(RibbonApplicationMenuItem item)
     {
         SetActive(item.HasPane ? item : null);
+    }
+
+    internal void NotifyItemFocused(RibbonApplicationMenuItem item)
+    {
+        _focusedNavigationItem = item;
+        // Opening still shows the default page, even when the first row is a split/dropdown.
+        // Subsequent keyboard navigation follows the same pane ownership as pointer hover.
+        if (!_focusingInitialAction)
+            NotifyItemClaimed(item);
     }
 
     private void SetActive(RibbonApplicationMenuItem? item)
@@ -353,10 +415,22 @@ public class RibbonApplicationMenu : ItemsControl
             Focus(); // So Esc works without a click first.
 
             ApplyTemplate();
+            // Visibility can change before the row templates are realized. Let WPF choose the
+            // first enabled action after layout, skipping separators and non-action containers.
+            Dispatcher.BeginInvoke(DispatcherPriority.Input, new Action(() =>
+            {
+                if (IsVisible && (Keyboard.FocusedElement == this || !IsKeyboardFocusWithin))
+                {
+                    _focusingInitialAction = true;
+                    try { MoveFocus(new TraversalRequest(FocusNavigationDirection.First)); }
+                    finally { _focusingInitialAction = false; }
+                }
+            }));
             RibbonMotion.PlayFlyoutOpen(_frame, RibbonAnimationAction.DropdownMenu);
         }
         else
         {
+            _focusedNavigationItem = null;
             UnhookDismissal();
         }
     }
@@ -576,9 +650,18 @@ public class RibbonApplicationMenuItem : HeaderedContentControl
 
     static RibbonApplicationMenuItem()
     {
+        // The template's real buttons own focus and native Enter/Space activation.
+        FocusableProperty.OverrideMetadata(typeof(RibbonApplicationMenuItem), new FrameworkPropertyMetadata(false));
+        IsTabStopProperty.OverrideMetadata(typeof(RibbonApplicationMenuItem), new FrameworkPropertyMetadata(false));
         DefaultStyleKeyProperty.OverrideMetadata(
             typeof(RibbonApplicationMenuItem),
             new FrameworkPropertyMetadata(typeof(RibbonApplicationMenuItem)));
+    }
+
+    /// <summary>Initializes a new application-menu navigation row.</summary>
+    public RibbonApplicationMenuItem()
+    {
+        AddHandler(Keyboard.GotKeyboardFocusEvent, new KeyboardFocusChangedEventHandler(OnNavigationFocus));
     }
 
     /// <summary>Raised when the row's command half is invoked.</summary>
@@ -709,6 +792,14 @@ public class RibbonApplicationMenuItem : HeaderedContentControl
     {
         base.OnMouseLeave(e);
         OwnerMenu?.NotifyItemHoverChanged(this, isOver: false);
+    }
+
+    private void OnNavigationFocus(object sender, KeyboardFocusChangedEventArgs e)
+    {
+        // Pane content is also a logical child of this row. Only navigation-button focus
+        // changes ownership; tabbing through commands in the pane must leave it in place.
+        if (ReferenceEquals(e.NewFocus, _primary) || ReferenceEquals(e.NewFocus, _arrow))
+            OwnerMenu?.NotifyItemFocused(this);
     }
 
     internal void SetActive(bool value) => IsActive = value;

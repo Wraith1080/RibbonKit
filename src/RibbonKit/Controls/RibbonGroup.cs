@@ -150,6 +150,8 @@ public class RibbonGroup : HeaderedItemsControl
     private ToggleButton? _collapsedButton;
     private ButtonBase? _dialogLauncher;
     private PopupDismissHelper? _dismissHelper;
+    private bool _focusLastItem;
+    private bool _returnFocusOnClose;
 
     static RibbonGroup()
     {
@@ -351,7 +353,11 @@ public class RibbonGroup : HeaderedItemsControl
         if (_popupHost is not null)
         {
             _popupHost.RemoveHandler(ButtonBase.ClickEvent, new RoutedEventHandler(OnFlyoutInvoked));
+            _popupHost.PreviewKeyDown -= OnFlyoutKeyDown;
         }
+
+        if (_collapsedButton is not null)
+            _collapsedButton.PreviewKeyDown -= OnCollapsedButtonKeyDown;
 
         if (_dialogLauncher is not null)
         {
@@ -375,7 +381,13 @@ public class RibbonGroup : HeaderedItemsControl
         if (_popupHost is not null)
         {
             _popupHost.AddHandler(ButtonBase.ClickEvent, new RoutedEventHandler(OnFlyoutInvoked));
+            KeyboardNavigation.SetTabNavigation(_popupHost, KeyboardNavigationMode.Cycle);
+            KeyboardNavigation.SetDirectionalNavigation(_popupHost, KeyboardNavigationMode.Cycle);
+            _popupHost.PreviewKeyDown += OnFlyoutKeyDown;
         }
+
+        if (_collapsedButton is not null)
+            _collapsedButton.PreviewKeyDown += OnCollapsedButtonKeyDown;
 
         if (_dialogLauncher is not null)
         {
@@ -434,8 +446,9 @@ public class RibbonGroup : HeaderedItemsControl
         _dismissHelper ??= new PopupDismissHelper(
             this,
             () => _popup,
-            () => _collapsedButton?.SetCurrentValue(ToggleButton.IsCheckedProperty, false));
+            CloseFlyout);
         _dismissHelper.OnOpened();
+        _returnFocusOnClose = false;
 
         // Move the group's content grid from the (hidden) in-ribbon host into the flyout.
         if (_normalHost?.Child is { } content && _popupHost is not null)
@@ -448,6 +461,56 @@ public class RibbonGroup : HeaderedItemsControl
         // (§3.42). Animating _popupHost rather than its Child is also the more stable target
         // here: the Child is swapped in and out on every open and close.
         RibbonMotion.PlayFlyoutOpen(_popupHost, RibbonAnimationAction.DropdownMenu);
+
+        var host = _popupHost;
+        bool last = _focusLastItem;
+        _focusLastItem = false;
+        Dispatcher.BeginInvoke(DispatcherPriority.Input, new Action(() =>
+        {
+            if (_popup is { IsOpen: true } && ReferenceEquals(host, _popupHost)
+                && host is { IsKeyboardFocusWithin: false })
+                host.MoveFocus(new TraversalRequest(last ? FocusNavigationDirection.Last : FocusNavigationDirection.First));
+        }));
+    }
+
+    private void OnCollapsedButtonKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Handled || _popup is { IsOpen: true } || Keyboard.Modifiers != ModifierKeys.None) return;
+        if (e.Key is not (Key.Down or Key.Up)) return;
+        _focusLastItem = e.Key == Key.Up;
+        _collapsedButton?.SetCurrentValue(ToggleButton.IsCheckedProperty, true);
+        e.Handled = true;
+    }
+
+    private void OnFlyoutKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Handled) return;
+        if (e.Key == Key.Escape)
+        {
+            e.Handled = _dismissHelper?.TryDismissTopmostForEscape() == true;
+            return;
+        }
+        // Editors keep caret/selection keys. Buttons use the flyout's spatial order.
+        if (Keyboard.FocusedElement is not ButtonBase button || Keyboard.Modifiers != ModifierKeys.None) return;
+        FocusNavigationDirection? direction = e.Key switch
+        {
+            Key.Down => FocusNavigationDirection.Down,
+            Key.Up => FocusNavigationDirection.Up,
+            Key.Left => FocusNavigationDirection.Left,
+            Key.Right => FocusNavigationDirection.Right,
+            Key.Home => FocusNavigationDirection.First,
+            Key.End => FocusNavigationDirection.Last,
+            _ => null,
+        };
+        if (direction is { } move)
+            e.Handled = (move is FocusNavigationDirection.First or FocusNavigationDirection.Last ? (UIElement)_popupHost! : button)
+                .MoveFocus(new TraversalRequest(move));
+    }
+
+    private void CloseFlyout()
+    {
+        _returnFocusOnClose = _popupHost?.IsKeyboardFocusWithin == true;
+        _collapsedButton?.SetCurrentValue(ToggleButton.IsCheckedProperty, false);
     }
 
     /// <summary>
@@ -482,7 +545,7 @@ public class RibbonGroup : HeaderedItemsControl
         // priority also lets a nested drop-down finish closing itself first.
         Dispatcher.BeginInvoke(
             DispatcherPriority.Background,
-            new Action(() => _collapsedButton?.SetCurrentValue(ToggleButton.IsCheckedProperty, false)));
+            new Action(CloseFlyout));
     }
 
     /// <summary>
@@ -511,6 +574,8 @@ public class RibbonGroup : HeaderedItemsControl
 
     private void OnPopupClosed(object? sender, EventArgs e)
     {
+        bool returnFocus = _returnFocusOnClose || _popupHost?.IsKeyboardFocusWithin == true;
+        _returnFocusOnClose = false;
         _dismissHelper?.OnClosed();
 
         // Any gallery still expanded inside this flyout must close FIRST, so it
@@ -528,6 +593,9 @@ public class RibbonGroup : HeaderedItemsControl
             _popupHost.Child = null;
             _normalHost.Child = content;
         }
+
+        if (returnFocus && _collapsedButton is { IsVisible: true, IsEnabled: true })
+            _collapsedButton.Focus();
     }
 
     private static void CloseNestedFlyouts(DependencyObject node)

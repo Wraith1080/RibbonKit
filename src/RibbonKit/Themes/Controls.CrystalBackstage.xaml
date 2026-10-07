@@ -10,6 +10,7 @@
     <ItemsPanelTemplate x:Key="Crystal.Backstage.SidebarItemsPanel"><rk:BackstageNavPanel /></ItemsPanelTemplate>
 
     <Style x:Key="Crystal.Backstage.Tab" TargetType="{x:Type rk:BackstageTabItem}">
+        <Setter Property="FocusVisualStyle" Value="{StaticResource RibbonKit.KeyboardFocusVisual}" />
         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
         <Setter Property="FontSize" Value="{DynamicResource RibbonKit.Metrics.Backstage.NavigationFontSize}" />
         <Setter Property="Padding" Value="{DynamicResource RibbonKit.Metrics.Backstage.NavigationPadding}" />
@@ -40,9 +41,6 @@
                             <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
                             <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Accent}" />
                         </Trigger>
-                        <Trigger Property="IsKeyboardFocused" Value="True">
-                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Accent}" />
-                        </Trigger>
                         <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.4" /></Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -60,7 +58,8 @@
         </Style.Triggers>
     </Style>
     <ControlTemplate x:Key="Crystal.Backstage.FloatingTemplate" TargetType="{x:Type rk:Backstage}">
-                    <Grid x:Name="RootGrid" Background="{DynamicResource RibbonKit.Brushes.Window.Background}">
+                    <Grid x:Name="RootGrid" Background="{DynamicResource RibbonKit.Brushes.Window.Background}"
+                          KeyboardNavigation.TabNavigation="Cycle">
                         <Grid Margin="{DynamicResource RibbonKit.Metrics.Backstage.FloatingMargin}">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
@@ -98,6 +97,7 @@
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
     <Style x:Key="Crystal.Backstage.Style" TargetType="{x:Type rk:Backstage}">
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
         <Setter Property="ItemContainerStyle" Value="{StaticResource Crystal.Backstage.Tab}" />
         <Setter Property="ItemsPanel" Value="{StaticResource Crystal.Backstage.FloatingItemsPanel}" />
         <Setter Property="Template" Value="{StaticResource Crystal.Backstage.FloatingTemplate}" />
@@ -109,7 +109,8 @@
     <!-- Familiar full-height navigation and page area, with Crystal material and
          shallow separation at their edges. The floating layout remains independent. -->
     <ControlTemplate x:Key="Crystal.Backstage.SidebarTemplate" TargetType="{x:Type rk:Backstage}">
-                    <Grid x:Name="RootGrid" Background="{DynamicResource RibbonKit.Brushes.Window.Background}">
+                    <Grid x:Name="RootGrid" Background="{DynamicResource RibbonKit.Brushes.Window.Background}"
+                          KeyboardNavigation.TabNavigation="Cycle">
                         <Grid Margin="{DynamicResource RibbonKit.Metrics.Backstage.SidebarMargin}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="{DynamicResource RibbonKit.Metrics.Backstage.SidebarWidth}" />
@@ -154,6 +155,7 @@
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
     <Style x:Key="Crystal.Backstage.Sidebar" TargetType="{x:Type rk:Backstage}">
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
         <Setter Property="ItemContainerStyle" Value="{StaticResource Crystal.Backstage.SidebarTab}" />
         <Setter Property="ItemsPanel" Value="{StaticResource Crystal.Backstage.SidebarItemsPanel}" />
         <Setter Property="Template" Value="{StaticResource Crystal.Backstage.SidebarTemplate}" />
