@@ -64,7 +64,7 @@
                                           FlowDirection="{TemplateBinding FlowDirection}">
                         <Grid>
                             <Grid.RowDefinitions>
-                                <RowDefinition Height="34" />
+                                <RowDefinition Height="Auto" MinHeight="34" />
                                 <RowDefinition Height="*" />
                             </Grid.RowDefinitions>
 

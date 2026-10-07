@@ -983,6 +983,15 @@
                                            Unchecked="OnToggleAcrylic"
                                            ScreenTipTitle="Acrylic backdrop (Windows 11)"
                                            ScreenTipText="Apply the Windows 11 Acrylic material — a translucent blur of whatever is behind the window. Replaces Mica when both are toggled. Requires Windows 11 22H2+." />
+                    <rk:RibbonToggleButton x:Name="TouchModeToggle"
+                                           Header="Touch mode"
+                                           Size="Large"
+                                           LargeIcon="{StaticResource Icon.Gear}"
+                                           Icon="{StaticResource Icon.Gear}"
+                                           Checked="OnToggleTouchMode"
+                                           Unchecked="OnToggleTouchMode"
+                                           ScreenTipTitle="Touch mode"
+                                           ScreenTipText="Use larger command targets and more spacing throughout the ribbon, menus and Quick Access Toolbar." />
                     <rk:RibbonToggleButton x:Name="GlassTreatmentToggle"
                                            Header="Glass look"
                                            Size="Large"

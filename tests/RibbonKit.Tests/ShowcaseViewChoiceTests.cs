@@ -35,6 +35,10 @@ public sealed class ShowcaseViewChoiceTests
                 // persisted Showcase appearance from this headless test.
                 typeof(MainWindow).GetField("_restoringAppearance",
                     BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(window, true);
+                window.TouchModeToggle.IsChecked = true;
+                Assert.Equal(RibbonDensity.Touch, window.MainRibbon.Density);
+                window.TouchModeToggle.IsChecked = false;
+                Assert.Equal(RibbonDensity.Compact, window.MainRibbon.Density);
                 window.ThemeGallery.SelectedItem = window.ThemeGallery.Items[2];
                 Assert.Equal(RibbonTheme.Office2019, ThemeManager.CurrentTheme);
                 var floating = (RibbonMenuItem)window.BackstageLayoutSelector.Items[6];

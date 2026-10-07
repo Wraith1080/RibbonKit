@@ -7122,3 +7122,89 @@ inspected, including the independent consumer's colored header. No snapshot
 approvals or tolerances changed. Final appearance and native DPI/mixed-monitor
 acceptance remain with the user; no app was manually launched. Changes remain
 uncommitted on the user's keyboard-improvements branch.
+
+## 3.226 Shared Compact/Touch density — 2026-10-07
+
+Added the documented `RibbonDensity` enum and inherited attached `Ribbon.Density`
+property, with Compact as the default and additive entries in the unshipped API
+baseline. Density is independent of theme, DPI, command size and customization
+state. Hosts own the selector and preference persistence; local values retain
+ordinary WPF precedence. Showcase demonstrates the library setting through
+View → Touch mode and saves it with appearance preferences.
+
+One shared template set consumes matching Touch metrics in all six base
+palettes; dark overlays inherit geometry. Commands, split halves, input boxes,
+tabs, launchers, QAT openers, File navigation and shared actions use 44-DIP targets.
+The body sizes to its command stacks with a 136-DIP minimum. In-ribbon galleries
+retain one tile row with a single 44-DIP popup opener beside it. Long dropdown
+menus gain a scrollable viewport, and native vertical panning is enabled in menu
+and gallery viewers. Popup, detached title-bar QAT, native context menu and
+Backstage roots explicitly follow the owning density. Outside-touch dismissal
+shares existing popup rules and leaves the routed event available to the target.
+
+Switching density invalidates the adaptive width cache and the group's measurement
+subtree. Clearing the cache alone left stale widths when an individual command
+changed density while the group remained in its Large state; the independent
+consumer reproduces collapse and recovery for both local and ribbon-wide changes.
+The gallery opener column uses GridLength, and body-scroll arrows set MinWidth so
+the template's local compact Width cannot leave a narrow touch target.
+
+The RibbonKit-only consumer verifies both modes across all themes, light/dark and
+LTR/RTL, split geometry, retained values, gallery viewport/opener layout, all QAT
+placements, overflow and context menus, File surfaces, token overrides, adaptive
+reduction and routed outside-touch dismissal. Physical input and mouse promotion
+remain separate acceptance gates. Current evidence and remaining live review are
+recorded in the [active touch plan](../14-TOUCH-DENSITY-PLAN.md#verification-and-acceptance).
+
+The user's screenshots led to a geometry cleanup: large commands share a 96-DIP
+height with 36-DIP icons, small/QAT icons grow to 20 DIP, and horizontal split
+content centers within its primary target. Bottom-aligning the tab panel removes
+the enlarged-row seam at the connected notch/hover foot. Application-menu fills
+and arrow spacers match the actual touch arrow width; 56-DIP rows and a wider
+nav column avoid shrinking the Office2007 menu or clipping labels. Shared and
+Crystal Backstage rows use larger text/height, separators stretch with command
+stacks, and the orb/proxy share adjusted touch geometry.
+
+A 96-DIP separator minimum also enlarged the compact Font row, despite its local
+20-DIP Height. Using a 44-DIP minimum with stretch follows the adjacent controls:
+the Font row stays button-height while a large-command divider grows with the
+taller stack. The actual Showcase check compares the separator to its neighboring
+button, rather than only checking the separator's own outer height.
+
+The expanded consumer exposed an Office2007/Classic2007 layout loop. Ribbon
+reconciles the orb proxy from LayoutUpdated; reassigning identical templates,
+focus styles and direction or remeasuring a valid proxy repeatedly invalidated
+layout. Stable proxy bounds now skip adorner invalidation, and reconciliation
+updates only changed values. The all-theme/Backstage matrix reaches layout idle.
+
+The final full consumer exposed a separate fixture race in the existing Classic
+focus cases: after closing Backstage it immediately cleared the content and
+restored the application menu, while the exit animation still owned the old
+adorner. A later Backstage could therefore try to focus a row outside the realized
+surface. The fixture now pumps the dispatcher until that surface detaches before
+replacing it, with a bounded timeout and unchanged focus/activation assertions.
+Initial-focus failures include the row's visibility and visual-parent diagnostics.
+
+Cleanup verification stayed touch-specific: six actual Showcase theme cases and
+the independent consumer's expanded light/dark/LTR/RTL matrix, including all
+seven Backstage designs. Actual Showcase, File-menu, orb and Backstage renders
+were inspected. Normal Debug outputs are refreshed. The final Release suite and
+remaining live gates are recorded in the active plan; snapshot approvals and
+tolerances remain unchanged. No app was manually launched or changes committed.
+
+The next eight screenshot refinements aligned tab-shaped File buttons with the
+tab panel's height/padding and allowed modal Close labels to determine width.
+Large targets now use 136 DIP to match three 44-DIP command rows including their
+margins. Horizontal dropdowns use a 56-DIP minimum, a correctly sized icon wrapper
+and more icon/arrow spacing. Navigation fonts return to their ordinary size;
+only the touch areas grow. Classic2007 navigation receives extra top clearance.
+
+The shared default in-ribbon panel derives equal touch cells from natural tile
+width and the native strip viewport, filling one row's height and width. Compact,
+expanded and explicitly sized panels retain WrapPanel layout. Resizing initially
+left the old scroll offset in place, cutting the selected theme across two rows.
+Cell geometry and density changes now use the existing deferred gallery refresh
+to reveal the selected row. Focused checks assert selection visibility after
+density changes, popup return and strip resizing, alongside geometry and normal
+font sizes. This pass used touch-only tests; the full consumer retry stays deferred
+under the user's instruction recorded in the active plan.

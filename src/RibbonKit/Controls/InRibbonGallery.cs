@@ -541,6 +541,12 @@ public class InRibbonGallery : RibbonGallery
             queueRenderPass: true);
     }
 
+    internal void RefreshStripGeometry()
+    {
+        if (IsLoaded && !IsDropDownOpen && SelectedItem is not null)
+            QueueViewportRefresh();
+    }
+
     private void QueueViewportRefreshPass(
         int generation,
         ScrollViewer expectedScrollViewer,

@@ -100,6 +100,12 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+        <Style.Triggers>
+            <Trigger Property="controls:Ribbon.Density" Value="Touch">
+                <Setter Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                <Setter Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
     <!-- ============================================================
@@ -223,6 +229,9 @@
                                                             <Setter TargetName="Chrome" Property="Background"
                                                                     Value="{DynamicResource RibbonKit.Brushes.Qat.ColoredPressedBackground}" />
                                                         </MultiTrigger>
+                                                        <Trigger Property="controls:Ribbon.Density" Value="Touch">
+                                                            <Setter TargetName="Chrome" Property="Margin" Value="{DynamicResource RibbonKit.Metrics.Touch.ChromeMargin}" />
+                                                        </Trigger>
                                                     </ControlTemplate.Triggers>
                                                 </ControlTemplate>
                                             </Setter.Value>
@@ -237,7 +246,7 @@
                              rule for every RibbonKit flyout: WPF's own light-dismiss captures the
                              mouse and races the opener button, so a second click on » would close
                              and immediately reopen the flyout. -->
-                        <Popup x:Name="PART_OverflowPopup"
+                        <Popup controls:Ribbon.Density="{Binding Path=(controls:Ribbon.Density), RelativeSource={RelativeSource TemplatedParent}}" x:Name="PART_OverflowPopup"
                                AllowsTransparency="True"
                                StaysOpen="True"
                                Placement="Bottom"
@@ -278,6 +287,12 @@
                             </AdornerDecorator>
                         </Popup>
                     </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="controls:Ribbon.Density" Value="Touch">
+                            <Setter TargetName="PART_OverflowButton" Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                            <Setter TargetName="PART_OverflowButton" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
@@ -320,6 +335,9 @@
                             <Setter TargetName="Chrome" Property="CornerRadius"
                                     Value="{DynamicResource RibbonKit.Metrics.BodyScrollButtonCornerRadius}" />
                         </Trigger>
+                        <Trigger Property="controls:Ribbon.Density" Value="Touch">
+                            <Setter TargetName="Chrome" Property="Margin" Value="{DynamicResource RibbonKit.Metrics.Touch.ChromeMargin}" />
+                        </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
@@ -340,6 +358,11 @@
             </MultiTrigger>
             <Trigger Property="IsPressed" Value="True">
                 <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.TabStrip.ControlPressedBackground}" />
+            </Trigger>
+            <Trigger Property="controls:Ribbon.Density" Value="Touch">
+                <Setter Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                <Setter Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                <Setter Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
             </Trigger>
         </Style.Triggers>
     </Style>
@@ -373,10 +396,20 @@
                             <Setter TargetName="Chrome" Property="CornerRadius"
                                     Value="{DynamicResource RibbonKit.Metrics.BodyScrollButtonCornerRadius}" />
                         </Trigger>
+                        <Trigger Property="controls:Ribbon.Density" Value="Touch">
+                            <Setter TargetName="Chrome" Property="Margin" Value="{DynamicResource RibbonKit.Metrics.Touch.ChromeMargin}" />
+                        </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+        <Style.Triggers>
+            <Trigger Property="controls:Ribbon.Density" Value="Touch">
+                <Setter Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                <Setter Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                <Setter Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
     <Style x:Key="RibbonKit.TabScrollLeftButton" TargetType="{x:Type RepeatButton}" BasedOn="{StaticResource RibbonKit.ScrollLeftButton}">

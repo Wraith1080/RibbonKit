@@ -205,12 +205,16 @@ internal static class KeyboardFocusPortabilityChecks
                     ribbon.IsBackstageOpen = true;
                     Drain();
                     window.UpdateLayout();
-                    Assert.True(row.Focus());
+                    Assert.True(row.Focus(), $"nav focus: visible={row.IsVisible}, loaded={row.IsLoaded}, "
+                        + $"parent={VisualTreeHelper.GetParent(row)?.GetType().Name}, open={ribbon.IsBackstageOpen}");
                     VerifyFocusVisual(row, $"contrast-{theme}-{dark}-{direction}-nav", window);
                     var back = Assert.IsType<Button>(backstage.Template.FindName("PART_BackButton", backstage));
                     Assert.True(back.Focus());
                     VerifyFocusVisual(back, $"contrast-{theme}-{dark}-{direction}-back", window);
                     ribbon.IsBackstageOpen = false;
+                    // This fixture replaces the File surface. Let the animated close
+                    // detach its old adorner before assigning another Backstage instance.
+                    WaitForBackstageExit(backstage);
                     ribbon.Backstage = null;
                     Drain();
                     ribbon.ApplicationMenu = menu;
@@ -402,6 +406,21 @@ internal static class KeyboardFocusPortabilityChecks
         { RoutedEvent = Keyboard.KeyUpEvent });
         Drain();
         _lastInput += $", up modifiers={Keyboard.Modifiers}, up focused={target.IsKeyboardFocused}";
+    }
+
+    private static void WaitForBackstageExit(Backstage backstage)
+    {
+        if (VisualTreeHelper.GetParent(backstage) is null) return;
+        var frame = new DispatcherFrame();
+        DateTime deadline = DateTime.UtcNow.AddSeconds(2);
+        var timer = new DispatcherTimer(DispatcherPriority.Background)
+        { Interval = TimeSpan.FromMilliseconds(10) };
+        timer.Tick += (_, _) => frame.Continue = VisualTreeHelper.GetParent(backstage) is not null
+            && DateTime.UtcNow < deadline;
+        timer.Start();
+        try { Dispatcher.PushFrame(frame); }
+        finally { timer.Stop(); }
+        Assert.Null(VisualTreeHelper.GetParent(backstage));
     }
 
     private static void Drain() =>

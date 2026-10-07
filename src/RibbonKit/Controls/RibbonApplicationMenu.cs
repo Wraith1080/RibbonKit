@@ -446,6 +446,7 @@ public class RibbonApplicationMenu : ItemsControl
         }
 
         _dismissWindow.PreviewMouseDown += OnWindowPreviewMouseDown;
+        _dismissWindow.PreviewTouchDown += OnWindowPreviewTouchDown;
         _dismissWindow.PreviewKeyDown += OnWindowPreviewKeyDown;
         _dismissWindow.Deactivated += OnWindowDeactivated;
         _dismissWindow.LocationChanged += OnWindowMoved;
@@ -460,6 +461,7 @@ public class RibbonApplicationMenu : ItemsControl
         }
 
         _dismissWindow.PreviewMouseDown -= OnWindowPreviewMouseDown;
+        _dismissWindow.PreviewTouchDown -= OnWindowPreviewTouchDown;
         _dismissWindow.PreviewKeyDown -= OnWindowPreviewKeyDown;
         _dismissWindow.Deactivated -= OnWindowDeactivated;
         _dismissWindow.LocationChanged -= OnWindowMoved;
@@ -468,8 +470,14 @@ public class RibbonApplicationMenu : ItemsControl
     }
 
     private void OnWindowPreviewMouseDown(object sender, MouseButtonEventArgs e)
+        => DismissOutside(e.OriginalSource);
+
+    private void OnWindowPreviewTouchDown(object? sender, TouchEventArgs e)
+        => DismissOutside(e.OriginalSource);
+
+    private void DismissOutside(object originalSource)
     {
-        if (e.OriginalSource is not DependencyObject source)
+        if (originalSource is not DependencyObject source)
         {
             return;
         }

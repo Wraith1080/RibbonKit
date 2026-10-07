@@ -74,7 +74,7 @@
                                         Margin="4,2"
                                         VerticalAlignment="Center"
                                         Visibility="Collapsed">
-                                <Image Source="{TemplateBinding Icon}"
+                                <Image x:Name="MediumImage" Source="{TemplateBinding Icon}"
                                        Width="16" Height="16"
                                        Stretch="Uniform"
                                        VerticalAlignment="Center" />
@@ -152,10 +152,38 @@
                             <Setter TargetName="Chrome" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Qat.ColoredPressedBackground}" />
                         </MultiTrigger>
+                        <Trigger Property="controls:Ribbon.Density" Value="Touch">
+                            <Setter TargetName="Chrome" Property="Margin" Value="{DynamicResource RibbonKit.Metrics.Touch.ChromeMargin}" />
+                            <Setter TargetName="SmallImage" Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.IconSize}" />
+                            <Setter TargetName="SmallImage" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.IconSize}" />
+                            <Setter TargetName="SmallImageTint" Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.IconSize}" />
+                            <Setter TargetName="SmallImageTint" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.IconSize}" />
+                            <Setter TargetName="MediumImage" Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.IconSize}" />
+                            <Setter TargetName="MediumImage" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.IconSize}" />
+                            <Setter TargetName="LargeImage" Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.LargeIconSize}" />
+                            <Setter TargetName="LargeImage" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.LargeIconSize}" />
+                            <Setter TargetName="LargeLayout" Property="Margin" Value="{DynamicResource RibbonKit.Metrics.Touch.LargeLayoutMargin}" />
+                        </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+        <Style.Triggers>
+            <Trigger Property="controls:Ribbon.Density" Value="Touch">
+                <Setter Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                <Setter Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                <Setter Property="Margin" Value="{DynamicResource RibbonKit.Metrics.Touch.ControlMargin}" />
+            </Trigger>
+            <MultiTrigger>
+                <MultiTrigger.Conditions>
+                    <Condition Property="controls:Ribbon.Density" Value="Touch" />
+                    <Condition Property="Size" Value="Large" />
+                </MultiTrigger.Conditions>
+                <Setter Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.LargeButtonHeight}" />
+                <Setter Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.Touch.LargeButtonMinWidth}" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+            </MultiTrigger>
+        </Style.Triggers>
     </Style>
 
     <!-- ============================================================
@@ -280,7 +308,7 @@
                                         Margin="4,2"
                                         VerticalAlignment="Center"
                                         Visibility="Collapsed">
-                                <Image Source="{TemplateBinding Icon}"
+                                <Image x:Name="MediumImage" Source="{TemplateBinding Icon}"
                                        Width="16" Height="16"
                                        Stretch="Uniform"
                                        VerticalAlignment="Center" />
@@ -359,10 +387,40 @@
                             <Setter TargetName="Chrome" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Qat.ColoredPressedBackground}" />
                         </MultiTrigger>
+                        <Trigger Property="controls:Ribbon.Density" Value="Touch">
+                            <Setter TargetName="Chrome" Property="Margin" Value="{DynamicResource RibbonKit.Metrics.Touch.ChromeMargin}" />
+                            <Setter TargetName="SmallImage" Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.IconSize}" />
+                            <Setter TargetName="SmallImage" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.IconSize}" />
+                            <Setter TargetName="SmallImageTint" Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.IconSize}" />
+                            <Setter TargetName="SmallImageTint" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.IconSize}" />
+                            <Setter TargetName="MediumImage" Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.IconSize}" />
+                            <Setter TargetName="MediumImage" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.IconSize}" />
+                            <Setter TargetName="LargeImage" Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.LargeIconSize}" />
+                            <Setter TargetName="LargeImage" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.LargeIconSize}" />
+                            <Setter TargetName="LargeLayout" Property="Margin" Value="{DynamicResource RibbonKit.Metrics.Touch.LargeLayoutMargin}" />
+                            <Setter TargetName="SmallLayout" Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.IconSize}" />
+                            <Setter TargetName="SmallLayout" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.IconSize}" />
+                        </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+        <Style.Triggers>
+            <Trigger Property="controls:Ribbon.Density" Value="Touch">
+                <Setter Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                <Setter Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                <Setter Property="Margin" Value="{DynamicResource RibbonKit.Metrics.Touch.ControlMargin}" />
+            </Trigger>
+            <MultiTrigger>
+                <MultiTrigger.Conditions>
+                    <Condition Property="controls:Ribbon.Density" Value="Touch" />
+                    <Condition Property="Size" Value="Large" />
+                </MultiTrigger.Conditions>
+                <Setter Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.LargeButtonHeight}" />
+                <Setter Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.Touch.LargeButtonMinWidth}" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+            </MultiTrigger>
+        </Style.Triggers>
     </Style>
 
     <!-- ============================================================
@@ -469,6 +527,13 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+        <Style.Triggers>
+            <Trigger Property="controls:Ribbon.Density" Value="Touch">
+                <Setter Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                <Setter Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                <Setter Property="Margin" Value="{DynamicResource RibbonKit.Metrics.Touch.ControlMargin}" />
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
     <Style TargetType="{x:Type controls:RibbonRadioButton}">
@@ -555,6 +620,13 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+        <Style.Triggers>
+            <Trigger Property="controls:Ribbon.Density" Value="Touch">
+                <Setter Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                <Setter Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                <Setter Property="Margin" Value="{DynamicResource RibbonKit.Metrics.Touch.ControlMargin}" />
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
 </ResourceDictionary>

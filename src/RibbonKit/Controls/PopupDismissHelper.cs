@@ -49,6 +49,7 @@ internal sealed class PopupDismissHelper
         }
 
         _window.PreviewMouseDown += OnWindowPreviewMouseDown;
+        _window.PreviewTouchDown += OnWindowPreviewTouchDown;
         _window.PreviewKeyDown += OnWindowPreviewKeyDown;
         _window.Deactivated += OnWindowDeactivated;
         _window.LocationChanged += OnWindowLocationChanged;
@@ -69,6 +70,7 @@ internal sealed class PopupDismissHelper
 
         Window window = _window;
         window.PreviewMouseDown -= OnWindowPreviewMouseDown;
+        window.PreviewTouchDown -= OnWindowPreviewTouchDown;
         window.PreviewKeyDown -= OnWindowPreviewKeyDown;
         window.Deactivated -= OnWindowDeactivated;
         window.LocationChanged -= OnWindowLocationChanged;
@@ -91,6 +93,14 @@ internal sealed class PopupDismissHelper
         {
             _close();
         }
+    }
+
+    private void OnWindowPreviewTouchDown(object? sender, TouchEventArgs e)
+    {
+        // Dismiss even when a host handles touch and suppresses mouse promotion.
+        // Leave the event available to the touched control's own interaction.
+        if (e.OriginalSource is DependencyObject source && !IsInsideOwnerOrPopup(source))
+            _close();
     }
 
     private void OnWindowPreviewKeyDown(object sender, KeyEventArgs e)

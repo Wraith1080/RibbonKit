@@ -620,6 +620,14 @@ public class RibbonGroup : HeaderedItemsControl
         }
     }
 
+    internal void InvalidateDensityLayout()
+    {
+        // Intermediate presenters can otherwise short-circuit a width probe after
+        // a descendant changes density while the group's size state stays Large.
+        InvalidateMeasureRecursive(this);
+        InvalidateHostPanel();
+    }
+
     private void InvalidateHostPanel()
     {
         if (VisualTreeHelper.GetParent(this) is RibbonGroupsPanel panel)

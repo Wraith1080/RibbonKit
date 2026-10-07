@@ -36,6 +36,58 @@ namespace RibbonKit.Controls;
 [TemplatePart(Name = ApplicationButtonOverlayPartName, Type = typeof(Border))]
 public class Ribbon : Control
 {
+    /// <summary>Identifies the inherited attached <see cref="Density"/> dependency property.</summary>
+    public static readonly DependencyProperty DensityProperty = DependencyProperty.RegisterAttached(
+        nameof(Density), typeof(RibbonDensity), typeof(Ribbon),
+        new FrameworkPropertyMetadata(RibbonDensity.Compact,
+            FrameworkPropertyMetadataOptions.Inherits | FrameworkPropertyMetadataOptions.AffectsMeasure,
+            OnDensityChanged),
+        value => value is RibbonDensity.Compact or RibbonDensity.Touch);
+
+    /// <summary>
+    /// Gets or sets command target size and spacing. The default is
+    /// <see cref="RibbonDensity.Compact"/>. The value is inherited by ribbon controls;
+    /// hosts own the mode selector and preference persistence.
+    /// </summary>
+    public RibbonDensity Density
+    {
+        get => GetDensity(this);
+        set => SetDensity(this, value);
+    }
+
+    /// <summary>Gets the density inherited or explicitly set on an element.</summary>
+    public static RibbonDensity GetDensity(DependencyObject element) =>
+        (RibbonDensity)element.GetValue(DensityProperty);
+
+    /// <summary>Sets a density scope for a ribbon, detached menu or standalone ribbon control.</summary>
+    public static void SetDensity(DependencyObject element, RibbonDensity value) =>
+        element.SetValue(DensityProperty, value);
+
+    private static void OnDensityChanged(DependencyObject element, DependencyPropertyChangedEventArgs args)
+    {
+        if (element is InRibbonGallery gallery) gallery.RefreshStripGeometry();
+        // Geometry changes invalidate the reduction engine's measured widths, including
+        // local overrides within a group. The next layout pass probes the new density.
+        if (element is RibbonGroup group) group.InvalidateDensityLayout();
+        else if (element is RibbonButton or RibbonToggleButton or RibbonDropDownButton
+            or RibbonComboBox or RibbonTextBox or RibbonCheckBox or RibbonRadioButton
+            or InRibbonGallery or RibbonGallery or RibbonGalleryItem or RibbonMenuItem)
+        {
+            for (DependencyObject? node = LogicalTreeHelper.GetParent(element)
+                ?? (element is Visual visual ? VisualTreeHelper.GetParent(visual) : null);
+                node is not null;
+                node = LogicalTreeHelper.GetParent(node)
+                    ?? (node is Visual parentVisual ? VisualTreeHelper.GetParent(parentVisual) : null))
+            {
+                if (node is not RibbonGroup owner) continue;
+                owner.InvalidateDensityLayout();
+                break;
+            }
+        }
+        if (element is Layout.RibbonGroupsPanel panel) panel.InvalidateStateCache();
+        if (element is Ribbon ribbon) ribbon.RequestSelectionVisualsRefresh();
+    }
+
     private static readonly DependencyPropertyKey TabsPropertyKey =
         DependencyProperty.RegisterReadOnly(
             nameof(Tabs),
@@ -1312,6 +1364,8 @@ public class Ribbon : Control
             // mirror with the owning ribbon.
             FlowDirection = target.FlowDirection,
         };
+        menu.SetBinding(DensityProperty,
+            new Binding { Source = target, Path = new PropertyPath(DensityProperty) });
         ApplyModernMenuStyle(menu);
         menu.Items.Add(addItem);
         menu.Items.Add(customizeItem);
@@ -2600,16 +2654,21 @@ public class Ribbon : Control
             }
 
             Button proxy = GetOrCreateClassicBackstageOrbProxy(orbTemplate);
-            proxy.SetCurrentValue(Control.FocusVisualStyleProperty, button.FocusVisualStyle);
-            proxy.SetCurrentValue(FlowDirectionProperty, button.FlowDirection);
+            if (!ReferenceEquals(proxy.FocusVisualStyle, button.FocusVisualStyle))
+                proxy.SetCurrentValue(Control.FocusVisualStyleProperty, button.FocusVisualStyle);
+            if (proxy.FlowDirection != button.FlowDirection)
+                proxy.SetCurrentValue(FlowDirectionProperty, button.FlowDirection);
             var proxySize = new Size(button.ActualWidth, button.ActualHeight);
             _backstageAdorner.AttachClassicOrbProxy(proxy, origin, proxySize);
 
             // Give the shared DataTemplate its first realization opportunity before requesting
             // rotation. A newly attached proxy can still defer OrbGlyph until Loaded/LayoutUpdated;
             // PlayClassicBackstageOrbRotation queues that first request when necessary.
-            proxy.ApplyTemplate();
-            proxy.Measure(proxySize);
+            if (!proxy.IsMeasureValid)
+            {
+                proxy.ApplyTemplate();
+                proxy.Measure(proxySize);
+            }
         }
         catch (InvalidOperationException)
         {
@@ -2622,7 +2681,8 @@ public class Ribbon : Control
     {
         if (_classicBackstageOrbProxy is not null)
         {
-            _classicBackstageOrbProxy.ContentTemplate = orbTemplate;
+            if (!ReferenceEquals(_classicBackstageOrbProxy.ContentTemplate, orbTemplate))
+                _classicBackstageOrbProxy.ContentTemplate = orbTemplate;
             return _classicBackstageOrbProxy;
         }
 
@@ -3504,6 +3564,7 @@ public class Ribbon : Control
         _qatRemoveSeparator = new System.Windows.Controls.Separator();
 
         _qatContextMenu = new System.Windows.Controls.ContextMenu();
+        _qatContextMenu.SetBinding(DensityProperty, new Binding(nameof(Density)) { Source = this });
         ApplyModernMenuStyle(_qatContextMenu);
         _qatContextMenu.Items.Add(_qatRemoveItem);
         _qatContextMenu.Items.Add(_qatRemoveSeparator);
@@ -3579,6 +3640,7 @@ public class Ribbon : Control
         if (host is RibbonQuickAccessToolBar toolBar)
         {
             toolBar.Owner = this;
+            toolBar.SetBinding(DensityProperty, new Binding(nameof(Density)) { Source = this });
         }
     }
 

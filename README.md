@@ -29,6 +29,7 @@ below describes the current checkout, including post-release additions; see
 - Collapsed-group flyouts, minimized ribbon, double-click/chevron/Ctrl+F1 toggle.
 - Tab/group horizontal scrolling and optional `RibbonWindow` title/QAT/contextual integration.
 - Arbitrary WPF group content, with optional `IRibbonSizeAware` participation.
+- Opt-in Compact/Touch density, shared by ribbon controls, menus, galleries, QAT and File navigation.
 - Simplified single-row ribbon remains a candidate.
 
 ### Controls
@@ -85,6 +86,37 @@ application orbs use rings that follow their visible discs.
 Accent-filled Backstage rails and ribbon headers use a contrasting light or dark
 outline when the usual accent outline would blend into the surface. The outline
 refreshes when the palette or title-bar coloring changes while focus is retained.
+
+### Touch density
+
+Set `Density="Touch"` on a `Ribbon`, or switch it at runtime:
+
+```csharp
+ribbon.Density = RibbonDensity.Touch;
+// Return to the standard geometry.
+ribbon.Density = RibbonDensity.Compact;
+```
+
+Compact is the default. Touch enlarges command targets, vector icons and spacing,
+fits the body to its command stacks, and gives galleries a single popup opener
+beside tiles that fill the strip. File navigation uses larger targets while keeping
+its normal text size. Theme selection stays
+independent of density. Detached QAT hosts, popups and Backstage follow the owning
+ribbon; changing density refreshes adaptive group measurements. Menu and gallery
+scroll viewers support native vertical touch panning.
+
+`Ribbon.Density` is also an inherited attached property: use
+`Ribbon.SetDensity(scope, RibbonDensity.Touch)` for standalone ribbon controls or
+detached host content. Local overrides follow WPF precedence; `ClearValue` on
+`Ribbon.DensityProperty` restores inheritance. Custom templates can consume the
+setting and matching `RibbonKit.Metrics.Touch.*` theme keys. Application/window
+resources can override touch metrics consistently across detached surfaces.
+
+Hosts own the selector and persistence. Showcase offers **View → Touch mode** and
+saves it with appearance preferences; customization import/reset does not change
+density. Application-authored fixed-size content and native window/document UI
+remain host-owned. See the [touch plan](docs/14-TOUCH-DENSITY-PLAN.md#verification-and-acceptance)
+for automated evidence and pending native touch, visual and DPI acceptance.
 
 ### Theming & rendering
 

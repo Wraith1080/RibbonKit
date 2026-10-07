@@ -88,10 +88,19 @@
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.4" />
                         </Trigger>
+                        <Trigger Property="controls:Ribbon.Density" Value="Touch">
+                            <Setter TargetName="Chrome" Property="Margin" Value="{DynamicResource RibbonKit.Metrics.Touch.ControlMargin}" />
+                        </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+        <Style.Triggers>
+            <Trigger Property="controls:Ribbon.Density" Value="Touch">
+                <Setter Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                <Setter Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
     <!-- ============================================================
@@ -111,7 +120,7 @@
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type controls:RibbonGallery}">
                     <Border Background="{TemplateBinding Background}">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                        <ScrollViewer PanningMode="VerticalOnly" VerticalScrollBarVisibility="Auto"
                                       HorizontalScrollBarVisibility="Disabled"
                                       MaxHeight="340">
                             <ScrollViewer.Resources>
@@ -139,7 +148,7 @@
         <Setter Property="ItemsPanel">
             <Setter.Value>
                 <ItemsPanelTemplate>
-                    <WrapPanel />
+                    <layout:InRibbonGalleryPanel />
                 </ItemsPanelTemplate>
             </Setter.Value>
         </Setter>
@@ -149,7 +158,7 @@
                     <Grid UseLayoutRounding="True">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="17" />
+                            <ColumnDefinition x:Name="GallerySideColumn" Width="17" />
                         </Grid.ColumnDefinitions>
                         <Border Grid.ColumnSpan="2"
                                  Background="{DynamicResource RibbonKit.Brushes.InRibbonGallery.SurfaceBackground}"
@@ -161,7 +170,7 @@
                             <!-- Keep the strip viewport permanently in the main-window tree.
                                  Only PART_ItemsPresenter moves to the popup, so a per-monitor
                                  DPI transition cannot carry an HWND-specific viewport/clip back. -->
-                            <ScrollViewer x:Name="PART_ScrollViewer"
+                            <ScrollViewer PanningMode="VerticalOnly" x:Name="PART_ScrollViewer"
                                           VerticalScrollBarVisibility="Hidden"
                                           HorizontalScrollBarVisibility="Disabled"
                                           Focusable="False">
@@ -265,7 +274,7 @@
                             </ToggleButton>
                         </Grid>
                         <!-- Expanded gallery: overlays the strip, like Office -->
-                        <Popup x:Name="PART_Popup"
+                        <Popup controls:Ribbon.Density="{Binding Path=(controls:Ribbon.Density), RelativeSource={RelativeSource TemplatedParent}}" x:Name="PART_Popup"
                                AllowsTransparency="True"
                                StaysOpen="True"
                                Placement="Custom"
@@ -292,7 +301,7 @@
                                 </Border.Effect>
                                 <!-- This viewport remains owned by the popup HWND. The single
                                      ItemsPresenter is attached here only while the popup is open. -->
-                                <ScrollViewer x:Name="PART_PopupScrollViewer"
+                                <ScrollViewer PanningMode="VerticalOnly" x:Name="PART_PopupScrollViewer"
                                               VerticalScrollBarVisibility="Auto"
                                               HorizontalScrollBarVisibility="Disabled"
                                               Focusable="False">
@@ -308,10 +317,23 @@
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.4" />
                         </Trigger>
+                        <Trigger Property="controls:Ribbon.Density" Value="Touch">
+                            <Setter TargetName="GallerySideColumn" Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.GalleryOpenerWidth}" />
+                            <Setter TargetName="PART_LineUp" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="PART_LineDown" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="PART_ExpandToggle" Property="Grid.Row" Value="0" />
+                            <Setter TargetName="PART_ExpandToggle" Property="Grid.RowSpan" Value="3" />
+                        </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+        <Style.Triggers>
+            <Trigger Property="controls:Ribbon.Density" Value="Touch">
+                <Setter Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.GalleryHeight}" />
+                <Setter Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.Touch.GalleryMinWidth}" />
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
 </ResourceDictionary>
