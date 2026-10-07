@@ -7304,3 +7304,39 @@ minimized floating shadow, scoped top insets and other palettes' existing paint.
 One shared-resource Debug regression covers both densities and light/dark paint,
 retained outer/minimized shadows and Crystal/Office2010 isolation; actual touch
 renders were inspected. No public API, snapshot approval or full-suite retry changed.
+
+The density-animation follow-up appends `RibbonAnimationAction.DensityChange = 15`
+to the unshipped API, retaining every shipped action value. A ribbon queues one
+transition after inherited geometry invalidation and deferred consumer-host layout,
+then completes the window/adaptive layout before a gentle 90%-to-rest opacity settle.
+Subtle uses 160 ms; Expressive uses the shared 1.4 timing and 1.8 travel multipliers.
+Only an expanded below-ribbon QAT translates (four DIP at Subtle), using a private
+layer that restores its existing transform and bindings. An open QAT popup/context
+menu suppresses that glide so its native anchor stays at final layout geometry.
+
+The first-render gate matters: hosts such as Showcase restore preferences in
+`Loaded`, after `IsLoaded` becomes true. Those startup changes must still snap.
+Pending/current transitions are replaced on live toggles; a generation check guards
+layout reentrancy. Unload, root-template replacement, motion-policy/system changes,
+theme/QAT moves and minimize release the transition. Replacing the root template
+also reacquires the nested tab/QAT/body hosts instead of retaining detached visuals.
+Opacity animation does not overwrite its base/binding; completion clears the clock.
+
+The static Office2024 shadow fixture now disables only density motion while comparing
+its two raster samples, then restores the prior action override. Comparing samples
+from different opacity frames caused a two-channel-step mismatch; its tolerance,
+clip geometry and approvals are unchanged. An independent RibbonKit-only consumer
+keeps motion enabled for startup/completion/interruption and adaptive/popup coverage
+across six themes and every QAT placement. Focused results and remaining live gates
+are recorded in the [active touch plan](../14-TOUCH-DENSITY-PLAN.md#live-density-transition--2026-10-07).
+The full historical 974-test checkpoint precedes this animation; no new full-suite
+or native keyboard/input gate is claimed.
+
+The 2026-10-08 recording review found the initial 90% fast ease-out too faint beside
+the QAT glide. The approved refinement deepens the settle to the theme-switch's 85%
+opacity and gives only DensityChange a frozen cubic EaseInOut curve at both levels.
+Durations, travel, final geometry and lifecycle handling remain as before. The
+focused easing/policy test and live RibbonKit-only transition consumer passed in
+Release, including a stronger early-opacity observation and completion/interruption.
+Normal Debug Showcase output is refreshed for renewed visual review; no full-suite
+or native-input retry ran.

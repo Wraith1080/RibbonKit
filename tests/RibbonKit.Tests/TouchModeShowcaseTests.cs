@@ -22,6 +22,10 @@ public class TouchModeShowcaseTests
     {
         var application = Sta.UseApplication();
         ThemeManager.Apply(application, RibbonTheme.Office2024);
+        var densityMotion = RibbonAnimation.GetActionOverride(RibbonAnimationAction.DensityChange);
+        // Compare the settled seam's paint, not two different opacity-animation frames.
+        // Live transition geometry/completion is covered by the independent consumer.
+        RibbonAnimation.SetActionLevel(RibbonAnimationAction.DensityChange, RibbonAnimationLevel.None);
         var tab = new RibbonTab { Header = "Home" };
         var group = new RibbonGroup { Header = "Commands" };
         group.Items.Add(new RibbonButton { Header = "Save", Size = RibbonControlSize.Large });
@@ -74,7 +78,12 @@ public class TouchModeShowcaseTests
                 Assert.Null(Part<Grid>(ribbon, "QatBelowShadowHost").Clip);
             }
         }
-        finally { window.Close(); Sta.ResetApplication(); }
+        finally
+        {
+            window.Close(); Sta.ResetApplication();
+            if (densityMotion is { } level) RibbonAnimation.SetActionLevel(RibbonAnimationAction.DensityChange, level);
+            else RibbonAnimation.ClearActionLevel(RibbonAnimationAction.DensityChange);
+        }
 
         byte[] Render()
         {

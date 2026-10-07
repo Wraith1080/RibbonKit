@@ -29,6 +29,16 @@ internal sealed class PopupDismissHelper
     private readonly Action _close;
     private Window? _window;
 
+    // Moving an open flyout's anchor with a render-only glide would leave its
+    // native popup window at the final layout position until the next placement pass.
+    internal static bool HasOpenPopupWithin(FrameworkElement surface)
+    {
+        var window = Window.GetWindow(surface);
+        return window is not null && OpenStackByWindow.TryGetValue(window, out var stack)
+            && stack.Any(helper => helper._getPopup()?.IsOpen == true
+                && (ReferenceEquals(surface, helper._owner) || surface.IsAncestorOf(helper._owner)));
+    }
+
     public PopupDismissHelper(FrameworkElement owner, Func<Popup?> getPopup, Action close)
     {
         _owner = owner;

@@ -858,7 +858,7 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 ### 3.226 Shared Compact/Touch density — 2026-10-07
 
-[Inherited density, detached surfaces and adaptive width refresh](docs/history/01-library.md#3226-shared-compacttouch-density--2026-10-07).
+[Inherited density, detached surfaces, adaptive width refresh and live transitions](docs/history/01-library.md#3226-shared-compacttouch-density--2026-10-07).
 
 ## 4. Workflow / Session Conventions
 

@@ -105,6 +105,14 @@ independent of density. Detached QAT hosts, popups and Backstage follow the owni
 ribbon; changing density refreshes adaptive group measurements. Menu and gallery
 scroll viewers support native vertical touch panning.
 
+Live density changes settle gently after the final adaptive layout; ribbon height
+and window caption geometry update immediately. `RibbonAnimationAction.DensityChange`
+follows the global None/Subtle/Expressive level and reduced-motion policy, and can
+be overridden with `RibbonAnimation.SetActionLevel`. Subtle uses 160 ms; Expressive
+uses 224 ms. Only opacity and a small below-ribbon QAT translation animate, without
+scaling text or icons. Initial density, including preferences restored during
+`Loaded` before the first render, appears immediately.
+
 `Ribbon.Density` is also an inherited attached property: use
 `Ribbon.SetDensity(scope, RibbonDensity.Touch)` for standalone ribbon controls or
 detached host content. Local overrides follow WPF precedence; `ClearValue` on

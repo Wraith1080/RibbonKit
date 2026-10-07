@@ -1,7 +1,7 @@
 # RibbonKit touch density
 
-> Office2024 lower-QAT seam correction has focused Debug verification, 2026-10-07.
-> The full Release checkpoint predates this and the adaptive follow-up; native acceptance remains separate.
+> Live density settle refined with focused automated verification, 2026-10-08; visual review is pending.
+> The full Release checkpoint predates the animation, adaptive and QAT seam follow-ups; visual/native acceptance remains separate.
 
 ## Contract and API review
 
@@ -9,6 +9,12 @@ Add `RibbonDensity` (`Compact = 0`, `Touch = 1`) and an inherited attached
 `Ribbon.Density` dependency property, including the normal ribbon CLR property
 and `GetDensity`/`SetDensity` accessors. Compact remains the default. This additive
 API belongs in `PublicAPI.Unshipped.txt`; the shipped baseline is unchanged.
+
+The transition adds `RibbonAnimationAction.DensityChange = 15` after `MessageBar`,
+without renumbering any existing action. This is an intentional compatible addition
+to the unshipped baseline: consumers need independent control over density motion
+through the existing per-action API. Its XML documentation and duration token use
+the same global level and reduced-motion policy as the other actions.
 
 Density describes geometry, independently of theme, accent, dark mode, DPI,
 command size and customization layout. An attached property also lets a consumer
@@ -48,6 +54,81 @@ roots explicitly receive their owning control's density. No global input hooks
 or automatic mode switching.
 
 ## Verification and acceptance
+
+### Live density transition — 2026-10-07
+
+The final density is applied before any motion. A coalesced dispatcher operation
+runs after inherited callbacks, binding/layout, selection/gallery viewport refresh
+and deferred QAT placement. It completes the window/adaptive layout and selection
+chrome before starting an 85%-to-rest opacity settle. Actual ribbon/body height,
+overflow-arrow availability, caption targets and Backstage sizing therefore follow
+the final density throughout the transition. Text/icons keep their final unscaled
+geometry; no Width, Height, Margin or LayoutTransform is animated.
+
+Subtle uses 160 ms; Expressive follows the existing 1.4 duration multiplier
+(224 ms). Both use a frozen cubic EaseInOut curve so the early opacity dip stays
+visible while the eye follows the geometry change. The expanded below-ribbon QAT gets
+a four-DIP settle (7.2 DIP in Expressive), upward from the final Touch position or
+downward from the final Compact position. Tab-row and title-bar QATs only fade.
+Below-ribbon glide is suppressed while a flyout/context menu is anchored there or
+the ribbon is minimized. This keeps popup placement and the existing minimize
+glide intact. Density motion lives entirely in RibbonKit; Showcase uses its
+existing selector and Motion controls.
+
+Motion becomes eligible after the first render, so density set before load or
+restored during `Loaded` appears immediately. New toggles cancel the pending/current
+transition; a generation guard also handles density/template changes during layout.
+Completion, unload, template replacement, QAT moves, minimize and disabled motion
+release opacity clocks and the private translation. Consumer opacity/transform
+bindings and prior render transforms survive. Loaded controls observe both animation
+configuration changes and the system client-area motion setting, unsubscribing on
+unload. The shipped API and density template/token geometry remain unchanged.
+
+The focused RibbonKit-only transition consumer covers all six themes, every QAT
+placement, LTR/RTL, pre-load and Loaded restoration, Subtle/Expressive completion,
+rapid queued/running reversals, global/per-action None, reduced-motion policy,
+bindings, template replacement, running/pending unload, popup anchors and minimize
+interruption. Its live-motion cases also cover flyout reclamation, collapse states,
+immediate overflow arrows, gallery selected-tile visibility, message targets and
+title-bar caption geometry. Set `RIBBONKIT_PORTABILITY_SCOPE=DensityTransition`
+for this focused process; the default consumer also includes it. The existing
+`Touch` scope continues to cover the broader density geometry checks without native
+keyboard/navigation checks.
+
+Normal Release solution build passed for both runtime targets with zero warnings
+or errors. The 33 selected runtime checks passed in combined evidence: 32 passed
+on the first run, and the sole static QAT-shadow comparison passed on its focused
+retry after the fixture disabled only `DensityChange` and restored the prior
+override. Its original pixel tolerance and product shadow geometry are unchanged;
+comparing two changing opacity frames was inappropriate for a static paint gate.
+These results are `density-animation-runtime-release.trx` and
+`density-animation-shadow-release.trx` under `artifacts/touch-validation`.
+
+The independent transition aggregate passed in Debug and Release; the Release
+run took 27 seconds and the broader touch-only consumer also passed in Release
+(33 seconds). Results are `density-transition-debug.trx`,
+`density-transition-release.trx` and `density-animation-touch-release.trx` in the
+same directory. Office2024 Compact/rest, Touch/settling and Touch/rest consumer
+renders were inspected under `artifacts/density-transition-diagnostics`.
+Normal Debug Showcase output is refreshed. The full suite, automated visual
+aggregate and native keyboard/input checks remain deferred until visual review;
+the historical 974-test checkpoint does not validate this animation. Live timing,
+native reduced-motion changes and mixed-monitor/DPI acceptance remain separate.
+
+The recording reviewed on 2026-10-08 showed that the initial 90% dip with fast
+ease-out left almost all visible motion in the QAT. The agreed refinement uses
+85% opacity and frozen cubic EaseInOut at both levels, preserving the 160/224-ms
+timing and final geometry. Both runtime targets build cleanly in Release; the
+focused policy/easing test and RibbonKit-only transition aggregate passed again
+(36 seconds for the consumer). Results are `density-animation-refinement-release.trx`
+and `density-transition-refinement-release.trx`. The revised consumer check observes
+the stronger early dip as well as completion, interruption, disabled policy,
+startup and the existing adaptive/QAT regressions. A settling render was inspected
+under `artifacts/density-animation-refinement-diagnostics`; normal Debug Showcase
+output is refreshed. The earlier broad evidence above predates this refinement;
+the next gate is user review of the revised visible effect.
+
+### Earlier geometry and adaptive evidence
 
 The screenshot cleanup, refinements and subsequent spacing/paint polish address:
 
@@ -190,11 +271,12 @@ user's request: no full-suite, snapshot approval or native-input retry.
 | Gate | Status and exact scope |
 | --- | --- |
 | Shared implementation and API documentation | Passed 2026-10-07: documented additive API; shipped baseline unchanged; matching Touch metrics in all six base themes |
+| Live density transition | Refined 2026-10-08 to 85% opacity and cubic EaseInOut; clean Release runtime builds for both targets, passing focused policy/easing test and independent Release transition aggregate. The initial 2026-10-07 implementation had a clean Release solution build, 33 selected runtime checks and independent Debug/Release and broader Touch evidence. Completion/interruption, startup, disabled policy, bindings, template/unload, QAT placements, popup anchors and affected adaptive geometry covered. Full suite and native keyboard/input deferred until visual review |
 | Touch cleanup checks | Passed 2026-10-07 in the final Release suite: six actual Showcase theme cases, caption-button and Office2010 Aero-bevel regressions, File width/edge spacing, gallery fill/selection and compact/touch neighbor spacing, large/three-row sizing, modal Close, Font separator, message targets/normal fonts, stable title height through Backstage, and actual Classic2007 rail/page paint alignment; independent consumer across every theme/light-dark/LTR-RTL combination and all seven Backstage designs |
 | RibbonKit-only consumer | Adaptive follow-up touch-only scope passed 2026-10-07 in Debug and Release (final Release 44s), including repeated open-flyout density changes and immediate overflow arrows. The earlier full default scope passed in 2m56s before the follow-up, including keyboard/focus/navigation and the corrected Backstage fixture |
 | Release solution build and tests | Full checkpoint passed 2026-10-07 before the adaptive-layout follow-up: both runtime targets, zero build warnings/errors, all 974 tests passed with zero failed/skipped (490 runtime, 482 Writer, full consumer aggregate and 113-scene visual aggregate); package contents/designer assets and clean net8/net9 WPF package consumption validated. The follow-up has a fresh clean Release solution build and 64 passing focused runtime checks; no new full-suite run |
-| Normal Debug Showcase output | Passed 2026-10-07: default Debug Showcase/net8 runtime output refreshed after the Office2024 lower-QAT seam correction; its single focused regression check passed |
-| Visual acceptance | User confirmed the adaptive collapse/scroller correction on 2026-10-07. Office2024 light/dark touch seam renders inspected; target-machine acceptance of this small shadow correction remains pending. The 113-scene automated checkpoint predates both follow-ups |
+| Normal Debug Showcase output | Passed 2026-10-08: default Debug Showcase/net8 runtime output refreshed for the stronger opacity settle and gentler easing; zero warnings/errors. The preceding Office2024 lower-QAT seam check also has a passing focused Release retry with density motion disabled for static paint comparison |
+| Visual acceptance | Initial settle judged too faint from the 2026-10-08 recording; revised 85% EaseInOut settle awaits user review. Independent settling render inspected. User confirmed the adaptive collapse/scroller correction on 2026-10-07. Office2024 light/dark touch seam renders inspected; target-machine acceptance of that shadow correction remains pending. The 113-scene automated checkpoint predates the adaptive, shadow and animation follow-ups |
 | Native touch input | Pending: split halves, tap invocation, panning without accidental selection, nested popup dismissal and editable inputs |
 | DPI / RTL / keyboard | Full automated keyboard/focus/navigation, touch LTR/RTL and rendered 100/125/150/200% checks passed 2026-10-07; physical input, native monitor/DPI transitions, IME and reduced-motion live review remain separate |
 

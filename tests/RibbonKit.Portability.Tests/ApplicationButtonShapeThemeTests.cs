@@ -141,11 +141,17 @@ public sealed class ApplicationButtonShapeThemeTests
     public void Theme_default_and_local_value_follow_wpf_precedence() => RunSta(() =>
     {
         var application = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "DensityTransition")
+        {
+            DensityTransitionPortabilityChecks.Verify(application);
+            return;
+        }
         TouchDensityPortabilityChecks.Verify(application);
         // WPF allows only one Application per process. The explicit local touch scope
         // reuses this entry point while leaving the default full consumer run intact.
         if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "Touch")
             return;
+        DensityTransitionPortabilityChecks.Verify(application);
         ThemeManager.Apply(application, RibbonTheme.Office2024);
         KeyboardFocusPortabilityChecks.Verify(application);
         KeyboardNavigationPortabilityChecks.Verify(application);
