@@ -167,14 +167,19 @@ public class ApplicationMenuLayeringTests
         XElement overlay = Named(document, "ApplicationMenuOverlayLayer");
         XElement presenter = Named(document, "PART_ApplicationMenuOverlayPresenter");
         XElement qat = Named(document, "QatBelowHost");
+        XElement qatShadow = Named(document, "QatBelowShadowHost");
         XElement messages = Named(document, "MessageBarHost");
+        XElement divider = Named(document, "MinimizedDivider");
         XElement nestedPresenter = Named(document, RibbonTabControl.ApplicationMenuPresenterPartName);
 
         Assert.Same(overlay, presenter.Parent);
-        Assert.Same(qat.Parent, overlay.Parent);
+        Assert.Same(qatShadow, qat.Parent);
+        Assert.Same(qatShadow.Parent, overlay.Parent);
         Assert.Same(messages.Parent, overlay.Parent);
-        Assert.True(ZIndex(overlay) > ZIndex(qat));
+        Assert.Same(divider.Parent, overlay.Parent);
+        Assert.True(ZIndex(overlay) > ZIndex(qatShadow));
         Assert.True(ZIndex(overlay) > ZIndex(messages));
+        Assert.True(ZIndex(overlay) > ZIndex(divider));
         Assert.Null(nestedPresenter.Attribute("Content"));
         Assert.Equal("Collapsed", (string?)nestedPresenter.Attribute("Visibility"));
         Assert.DoesNotContain(

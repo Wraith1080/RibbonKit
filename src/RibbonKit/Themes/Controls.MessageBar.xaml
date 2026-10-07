@@ -27,7 +27,28 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type controls:RibbonMessageBar}">
-                    <ItemsPresenter />
+                    <!-- One exposed stack edge survives first-row dismissal without
+                         changing the connected borders between individual messages. -->
+                    <Border x:Name="ExposedTopBorder"
+                            BorderBrush="{DynamicResource RibbonKit.Brushes.MessageBar.Border}"
+                            BorderThickness="0"
+                            SnapsToDevicePixels="True">
+                        <ItemsPresenter />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding HasOpenMessages, RelativeSource={RelativeSource Self}}" Value="True" />
+                                <Condition Binding="{Binding IsMinimized, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}" Value="True" />
+                            </MultiDataTrigger.Conditions>
+                            <Setter TargetName="ExposedTopBorder" Property="BorderThickness"
+                                    Value="{DynamicResource RibbonKit.Metrics.MessageBar.ExposedTopBorderThickness}" />
+                        </MultiDataTrigger>
+                        <DataTrigger Binding="{Binding QuickAccessPosition, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
+                                     Value="BelowRibbon">
+                            <Setter TargetName="ExposedTopBorder" Property="BorderThickness" Value="0" />
+                        </DataTrigger>
+                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>

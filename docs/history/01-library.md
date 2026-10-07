@@ -7365,3 +7365,33 @@ light/dark, LTR/RTL and QAT-placement aggregate and the broader Touch consumer
 passed in Release. Thirteen selected runtime checks, normal Release solution and
 Debug Showcase builds passed; actual corner and before/modal renders were
 inspected. The active touch plan retains separate live review and deferred gates.
+
+The Office2007 minimized divider still belonged to the tab control's body row,
+which placed it above a lower QAT or messages instead of at the document edge.
+It now lives in the owning ribbon's footer; overlays span that row. Subsequent
+review found its extra edge too thick beside the QAT/messages' existing borders,
+so it is suppressed for BelowRibbon QAT placement or any open message, appearing
+only when the minimized header directly meets the document. Existing height/brush
+tokens and the immediate minimized-state trigger
+remain, including the other bordered themes and zero-height opt-outs. No API,
+token or runtime coordinator was added. The RibbonKit-only divider matrix first
+reproduced the failure, then passed across themes, densities, QAT placements,
+message counts, RTL and restore cycles. The broader Touch consumer and 24 focused
+Release checks passed for the initial relocation. The updated visibility matrix
+passed again in Release; Office2007 renders were inspected and normal Debug output
+refreshed. One stale layering contract now recognizes the prior shadow wrapper
+and verifies the menu stays above it and the footer. Full/native gates remain
+separate in the active touch plan.
+
+The next Office2007 minimized screenshot exposed the first message's missing
+upper edge when the QAT was in the title/tab row. Individual rows omit that edge
+to connect to the body or lower QAT. A shared message-bar template border now
+supplies one exposed stack edge, retaining presentation-state cleanup and the
+existing row seams through first-row dismissal. The matching
+`MessageBar.ExposedTopBorderThickness` metric is `0,1,0,0` for Office2007 and zero
+elsewhere, with keys in every light/dark palette and the existing border brush.
+No C# API or shipped baseline changed. The independent all-theme/density/QAT and
+first-row-dismissal matrix and six runtime message checks passed in Release;
+actual light/dark/connected renders were inspected and normal Debug output
+refreshed. Current evidence and separate visual/native gates remain in the active
+touch plan.

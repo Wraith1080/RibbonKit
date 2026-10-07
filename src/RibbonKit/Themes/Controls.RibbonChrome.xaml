@@ -138,6 +138,7 @@
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
                             <controls:RibbonTabControl
                                 x:Name="TabControlHost"
@@ -195,6 +196,18 @@
                                               Content="{TemplateBinding MessageBar}"
                                               Focusable="False" />
 
+                            <!-- The minimized tab header needs a document boundary only when
+                                 no lower QAT or open message supplies its own border. Bordered
+                                 themes keep their hairline; zero-height themes still opt out. -->
+                            <Border x:Name="MinimizedDivider"
+                                    Grid.Row="3"
+                                    Height="{DynamicResource RibbonKit.Metrics.MinimizedDividerHeight}"
+                                    VerticalAlignment="Top"
+                                    Background="{DynamicResource RibbonKit.Brushes.Ribbon.Border}"
+                                    Visibility="Collapsed"
+                                    IsHitTestVisible="False"
+                                    SnapsToDevicePixels="True" />
+
                             <!-- Application menus are direct ribbon-template siblings. This lets
                                  the menu cover the QAT/messages without promoting the
                                  RibbonTabControl body (and its shadow) with it. Ribbon assigns and
@@ -205,7 +218,7 @@
                                  layer. -->
                             <Canvas x:Name="ApplicationMenuOverlayLayer"
                                     Grid.Row="0"
-                                    Grid.RowSpan="3"
+                                    Grid.RowSpan="4"
                                     Panel.ZIndex="2"
                                     Width="0"
                                     Height="0"
@@ -229,14 +242,20 @@
                                  preview room on the surface; it has no effect while Collapsed. -->
                             <Border x:Name="PART_DesignBackstageHost"
                                     Grid.Row="0"
-                                    Grid.RowSpan="3"
+                                    Grid.RowSpan="4"
                                     Visibility="Collapsed"
                                     MinHeight="440"
                                     Background="{DynamicResource RibbonKit.Brushes.Backstage.ContentBackground}" />
                         </Grid>
                     </Border>
                     <ControlTemplate.Triggers>
+                        <!-- Use IsMinimized immediately; body collapse can finish after
+                             its render-only transition without delaying this boundary. -->
+                        <Trigger Property="IsMinimized" Value="True">
+                            <Setter TargetName="MinimizedDivider" Property="Visibility" Value="Visible" />
+                        </Trigger>
                         <Trigger Property="QuickAccessPosition" Value="BelowRibbon">
+                            <Setter TargetName="MinimizedDivider" Property="Visibility" Value="Collapsed" />
                             <!-- Crystal raises the body shadow above its inset drawer. Office
                                  retains declaration order; the application-menu overlay stays above both. -->
                             <Setter TargetName="TabControlHost" Property="Panel.ZIndex"
@@ -274,6 +293,7 @@
                              begins at the very next pixel. Keep the QAT shadow: the connected
                              ribbon and message stack intentionally retain their own depth layers. -->
                         <Trigger Property="HasOpenMessages" Value="True">
+                            <Setter TargetName="MinimizedDivider" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="QatBelowHost" Property="CornerRadius"
                                     Value="{DynamicResource RibbonKit.Metrics.QatExtenderCornerRadiusMessageBar}" />
                             <Setter TargetName="QatBelowHost" Property="Margin"
@@ -877,29 +897,6 @@
                                               Visibility="{Binding CanScrollRight, ElementName=PART_ContentScroll, Converter={StaticResource RibbonKit.BoolToVis}}" />
                             </Grid>
                         </Border>
-                        <!-- MINIMIZED divider. With the body collapsed its outline goes with it,
-                             and in the bordered generations (2007/2010/2013) the tab strip then
-                             butts straight into the app's content with no boundary at all. This
-                             hairline stands in for the outline's top edge, in the same
-                             Ribbon.Border colour, so a minimized ribbon still terminates.
-
-                             Height is a per-theme token rather than a trigger: 2019 (tinted band)
-                             and 2024 (floating card) set it to 0, which also costs them no layout
-                             height, exactly as ContextualUnderlineHeight is zeroed to switch off
-                             the contextual underline. Full width by design, including 2007, whose
-                             body is inset 2px a side — a rule that stops short of the window edge
-                             reads as a mistake rather than a boundary.
-
-                             Never visible at the same time as PART_ConnectNotch below (that one
-                             mirrors ContentHost), so their declaration order does not matter. -->
-                        <Border x:Name="MinimizedDivider"
-                                Grid.Row="1"
-                                Height="{DynamicResource RibbonKit.Metrics.MinimizedDividerHeight}"
-                                VerticalAlignment="Top"
-                                Background="{DynamicResource RibbonKit.Brushes.Ribbon.Border}"
-                                Visibility="Collapsed"
-                                IsHitTestVisible="False"
-                                SnapsToDevicePixels="True" />
                         <!-- Body-border NOTCH: a 1px body-coloured sliver lying OVER the body's
                              top border, directly under the selected tab, cutting a tab-wide gap
                              into the border so the active tab opens seamlessly into the body
@@ -937,16 +934,6 @@
                         </Border>
                     </Grid>
                     <ControlTemplate.Triggers>
-                        <!-- The ribbon body's Visibility while minimized is managed in code
-                             (Ribbon.OnIsMinimizedChanged) so it can slide up + fade out before
-                             collapsing, and slide back in on restore. The divider keys off
-                             IsMinimized rather than the body's Visibility, so it is already in
-                             place under the body as that slides up and away — appearing only
-                             after the collapse would pop a line in a frame late. -->
-                        <DataTrigger Binding="{Binding IsMinimized, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
-                                     Value="True">
-                            <Setter TargetName="MinimizedDivider" Property="Visibility" Value="Visible" />
-                        </DataTrigger>
                         <DataTrigger Binding="{Binding QuickAccessPosition, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
                                      Value="TabRow">
                             <Setter TargetName="QatTabRowHost" Property="Visibility" Value="Visible" />

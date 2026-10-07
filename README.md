@@ -147,6 +147,9 @@ action and Office's compact appearance. Explicit message styles and the scoped
 `RibbonKit.Templates.MessageBar.ActionButton` template key remain available.
 `RibbonKit.Metrics.ContentCornerRadiusTop` keeps Crystal's body rounded above
 messages. Scoped resources and explicit action styles/values retain WPF precedence.
+`RibbonKit.Metrics.MessageBar.ExposedTopBorderThickness` supplies one top edge
+when messages meet a minimized header without a below-ribbon QAT. Office2007
+uses `0,1,0,0`; other palettes default to `0`. Individual row seams remain unchanged.
 QAT icon/hover policy follows the ribbon's effective resource scope through
 `RibbonKit.Metrics.QatTitleBarColored` and `QatTabRowColored`. ThemeManager sets
 these alongside its accent bands; independent palettes retain their own defaults.

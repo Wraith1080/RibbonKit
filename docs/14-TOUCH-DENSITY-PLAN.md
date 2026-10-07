@@ -1,6 +1,6 @@
 # RibbonKit touch density
 
-> QAT/message corners and Touch modal geometry corrected with focused verification, 2026-10-08; visual review is pending.
+> Office2007 exposed message top border corrected with focused verification, 2026-10-08; visual review is pending.
 > The full Release checkpoint predates the later geometry and animation follow-ups; visual/native acceptance remains separate.
 
 ## Contract and API review
@@ -180,6 +180,70 @@ under `artifacts/touch-chrome-diagnostics`. Normal Release solution and Debug
 Showcase builds passed with zero warnings/errors. User visual review remains
 pending; full-suite, snapshot approvals and native keyboard/input were not rerun.
 
+### Minimized document-boundary divider — 2026-10-08
+
+The divider previously lived in RibbonTabControl's body row, so a minimized
+ribbon left it above a below-ribbon QAT or open messages. It now belongs to the
+owning Ribbon template's footer row, after both surfaces and immediately above
+the document. The application-menu overlay and design Backstage host span that
+footer too. The user's subsequent review found a duplicate edge too thick when
+the QAT or messages already provide their own border. The divider is therefore
+collapsed when QAT placement is BelowRibbon or any message is open. It appears
+only for the minimized header directly above the document. Its existing full-width
+brush, height token, hit transparency and immediate minimized-state trigger remain;
+expanded ribbons and suppressed dividers reserve no footer height.
+Office2007/2010/2013 keep their hairline, while the zero-height palettes retain
+their opt-out. No public API, new resource key or consumer helper was added.
+
+A RibbonKit-only consumer first reproduced the misplaced edge. The updated
+visibility aggregate passed in Release across all six themes, light/dark and
+LTR/RTL, both densities, all three
+QAT placements, zero/one/two messages and repeated minimized/expanded changes.
+It starts minimized and asserts the exposed divider ends at the document's top
+and keeps full ribbon width, while QAT/message and expanded states contribute no
+divider height. Office2007 exposed-header, lower-QAT and stacked-message renders
+were inspected under `artifacts/minimized-divider-diagnostics`. The current focused
+result is `minimized-divider-refinement-release.trx` under `artifacts/touch-validation`.
+The initial relocation aggregate and broader Touch consumer (30 seconds) are
+`minimized-divider-consumer-release.trx` and `minimized-divider-broader-consumer-release.trx`.
+
+The initial relocation pass also had 24 passing selected layering, message-bar
+and connected-QAT-shadow checks in Release, recorded in
+`minimized-divider-runtime-release.trx`. These and the broader Touch run precede
+the visibility refinement. The initial layering
+check still assumed the QAT border was a direct overlay sibling, predating its
+shadow-clip wrapper; it now checks that wrapper and the new divider remain below
+the application menu. Product shadow geometry and visual approvals are unchanged.
+Normal Release solution and Debug Showcase builds passed with zero warnings or
+errors. The full suite, snapshots and native-input checks were not rerun.
+
+### Office2007 exposed message top border — 2026-10-08
+
+Office2007 message rows omit their top border to join the body or lower QAT.
+When the ribbon is minimized and the QAT is elsewhere, the message stack now
+supplies its own single top edge. The shared RibbonMessageBar template draws it
+only while messages remain presented and no below-ribbon QAT provides that edge.
+The stack border survives dismissal of the first row without tracking row order;
+individual message borders, action targets and inter-row seams are unchanged.
+
+The new `RibbonKit.Metrics.MessageBar.ExposedTopBorderThickness` theme metric is
+`0,1,0,0` in Office2007 light/dark and `0` in every other palette. It is defined
+in all twelve dictionaries and resolves through DynamicResource; the edge uses
+the existing message-border brush. This adds no C# API and leaves the shipped
+baseline unchanged. The resource extension is documented in README.
+
+The RibbonKit-only focused Release consumer passed across all six themes,
+light/dark, LTR/RTL, both densities and every QAT placement. It covers zero/one/two
+messages, first-row dismissal with the next row still open, restore and empty-bar
+cleanup. It checks the stack edge, unchanged individual borders and the accepted
+divider visibility rule. Six message-bar runtime checks also passed in Release.
+Results are `message-top-border-consumer-release.trx` and
+`message-top-border-runtime-release.trx` under `artifacts/touch-validation`.
+Office2007 exposed light/dark and connected-QAT renders were inspected under
+`artifacts/message-top-border-diagnostics`. Normal Release solution and Debug
+Showcase builds passed with zero warnings/errors. User visual review remains
+pending; full-suite, snapshot approvals and native-input checks were not rerun.
+
 ### Earlier geometry and adaptive evidence
 
 The screenshot cleanup, refinements and subsequent spacing/paint polish address:
@@ -326,10 +390,12 @@ user's request: no full-suite, snapshot approval or native-input retry.
 | Live density transition | Refined 2026-10-08 to 85% opacity and cubic EaseInOut; clean Release runtime builds for both targets, passing focused policy/easing test and independent Release transition aggregate. The initial 2026-10-07 implementation had a clean Release solution build, 33 selected runtime checks and independent Debug/Release and broader Touch evidence. Completion/interruption, startup, disabled policy, bindings, template/unload, QAT placements, popup anchors and affected adaptive geometry covered. Full suite and native keyboard/input deferred until visual review |
 | Group launcher caption height | Passed focused Release verification 2026-10-08: RibbonKit-only six-theme/light-dark/LTR-RTL launcher aggregate and broader Touch consumer; nominal 14-DIP height, equal neighboring caption bands, retained Touch width and visibility toggles. Office2007 render inspected; user visual review pending |
 | Minimized QAT/message and Touch modal geometry | Passed focused Release verification 2026-10-08: independent chrome and broader Touch aggregates, 13 selected runtime checks and clean solution build. Office2024 rounds only exposed upper QAT corners above messages in both densities; Touch modal entry/exit preserves header/body position across all themes and QAT placements. Renders inspected; user review pending |
+| Minimized document-boundary divider | User accepted the conditional divider on 2026-10-08: it appears only below an exposed minimized header and is suppressed with a lower QAT or open messages. Focused Release six-theme/both-density visibility matrix passed. Initial relocation's broader Touch consumer and 24 runtime checks predate this refinement; full/native gates remain separate |
+| Office2007 exposed message top border | Passed focused Release verification 2026-10-08: RibbonKit-only six-theme/light-dark/LTR-RTL/both-density/QAT-placement matrix and six message-bar checks. One top edge appears only for exposed Office2007 messages, persists after first-row dismissal, and releases on restore/empty state. Renders inspected; user review pending |
 | Touch cleanup checks | Passed 2026-10-07 in the final Release suite: six actual Showcase theme cases, caption-button and Office2010 Aero-bevel regressions, File width/edge spacing, gallery fill/selection and compact/touch neighbor spacing, large/three-row sizing, modal Close, Font separator, message targets/normal fonts, stable title height through Backstage, and actual Classic2007 rail/page paint alignment; independent consumer across every theme/light-dark/LTR-RTL combination and all seven Backstage designs |
 | RibbonKit-only consumer | Adaptive follow-up touch-only scope passed 2026-10-07 in Debug and Release (final Release 44s), including repeated open-flyout density changes and immediate overflow arrows. The earlier full default scope passed in 2m56s before the follow-up, including keyboard/focus/navigation and the corrected Backstage fixture |
 | Release solution build and tests | Full checkpoint passed 2026-10-07 before the adaptive-layout follow-up: both runtime targets, zero build warnings/errors, all 974 tests passed with zero failed/skipped (490 runtime, 482 Writer, full consumer aggregate and 113-scene visual aggregate); package contents/designer assets and clean net8/net9 WPF package consumption validated. The follow-up has a fresh clean Release solution build and 64 passing focused runtime checks; no new full-suite run |
-| Normal Debug Showcase output | Passed 2026-10-08: default Debug Showcase/net8 runtime output refreshed for the minimized QAT/message corners and Touch modal-header correction after the launcher/animation changes; zero warnings/errors. The connected lower-QAT shadow regression also passed again with density motion disabled for static paint comparison |
+| Normal Debug Showcase output | Passed 2026-10-08: default Debug Showcase/net8 runtime output refreshed for the Office2007 exposed message top border after the divider, QAT/message, modal, launcher and animation changes; zero warnings/errors. The preceding connected lower-QAT shadow regression passed with density motion disabled for static paint comparison |
 | Visual acceptance | User accepted the revised 85% EaseInOut density settle on 2026-10-08 after live review. Group launcher caption-height correction awaits review separately. User confirmed the adaptive collapse/scroller correction on 2026-10-07. Office2024 light/dark touch seam renders inspected; target-machine acceptance of that shadow correction remains pending. The 113-scene automated checkpoint predates the adaptive, shadow and animation follow-ups |
 | Native touch input | Pending: split halves, tap invocation, panning without accidental selection, nested popup dismissal and editable inputs |
 | DPI / RTL / keyboard | Full automated keyboard/focus/navigation, touch LTR/RTL and rendered 100/125/150/200% checks passed 2026-10-07; physical input, native monitor/DPI transitions, IME and reduced-motion live review remain separate |

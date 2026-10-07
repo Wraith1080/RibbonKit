@@ -20,6 +20,7 @@ internal static class TouchDensityPortabilityChecks
 {
     internal static void Verify(Application application)
     {
+        VerifyMinimizedDivider(application);
         VerifyChrome(application);
         VerifyGroupLauncher(application);
         var animation = RibbonAnimation.GlobalLevel;
@@ -650,6 +651,84 @@ internal static class TouchDensityPortabilityChecks
             }
         }
         finally { window.Close(); }
+    }
+
+    internal static void VerifyMinimizedDivider(Application application)
+    {
+        var animation = RibbonAnimation.GlobalLevel;
+        RibbonAnimation.GlobalLevel = RibbonAnimationLevel.None;
+        var home = new RibbonTab { Header = "Home" };
+        var group = new RibbonGroup { Header = "Commands", CanResize = false };
+        group.Items.Add(new RibbonButton { Header = "Print", Size = RibbonControlSize.Large });
+        home.Groups.Add(group);
+        var ribbon = new Ribbon { IsMinimized = true }; ribbon.Tabs.Add(home); ribbon.SelectedTab = home;
+        ribbon.QuickAccessItems.Add(new RibbonButton { Header = "Save", Size = RibbonControlSize.Small,
+            Icon = new DrawingImage(new GeometryDrawing(Brushes.SteelBlue, null, new RectangleGeometry(new Rect(0, 0, 16, 16)))) });
+        var messages = new RibbonMessageBar();
+        var first = new RibbonMessage { Title = "NOTICE", Message = "First consumer message", IsOpen = false };
+        var second = new RibbonMessage { Title = "NOTICE", Message = "Second consumer message", IsOpen = false };
+        messages.Items.Add(first); messages.Items.Add(second); ribbon.MessageBar = messages;
+        var document = new Border { Background = Brushes.WhiteSmoke,
+            Child = new TextBlock { Text = "Consumer document", Margin = new Thickness(12) } };
+        var dock = new DockPanel(); DockPanel.SetDock(ribbon, Dock.Top);
+        dock.Children.Add(ribbon); dock.Children.Add(document);
+        var window = Window(dock, 800, 450);
+        try
+        {
+            window.Show(); Layout(window);
+            foreach (RibbonTheme theme in Enum.GetValues<RibbonTheme>())
+            foreach (bool dark in new[] { false, true })
+            foreach (FlowDirection flow in new[] { FlowDirection.LeftToRight, FlowDirection.RightToLeft })
+            {
+                ThemeManager.Apply(application, theme); ThemeManager.SetDarkMode(application, dark);
+                ribbon.FlowDirection = flow;
+                foreach (RibbonDensity density in new[] { RibbonDensity.Compact, RibbonDensity.Touch })
+                foreach (RibbonQuickAccessPosition position in Enum.GetValues<RibbonQuickAccessPosition>())
+                foreach (int state in new[] { 0, 1, 2, 3, 0 })
+                {
+                    int count = state == 2 ? 2 : state == 0 ? 0 : 1;
+                    ribbon.Density = density; ribbon.QuickAccessPosition = position;
+                    first.IsOpen = state is 1 or 2; second.IsOpen = state is 2 or 3; ribbon.IsMinimized = true;
+                    Layout(window);
+                    var topEdge = Part<Border>(messages, "ExposedTopBorder");
+                    double expectedTop = theme == RibbonTheme.Office2007 && count > 0
+                        && position != RibbonQuickAccessPosition.BelowRibbon ? 1 : 0;
+                    Assert.Equal(new Thickness(0, expectedTop, 0, 0), topEdge.BorderThickness);
+                    Assert.Same(messages.FindResource("RibbonKit.Brushes.MessageBar.Border"), topEdge.BorderBrush);
+                    if (count > 0)
+                    {
+                        foreach (var message in new[] { first, second }.Where(m => m.IsOpen))
+                            Assert.Equal(message.FindResource("RibbonKit.Metrics.MessageBar.BorderThickness"),
+                                Part<Border>(message, "PART_Root").BorderThickness);
+                        if (expectedTop > 0)
+                            Assert.True(Part<Border>(first.IsOpen ? first : second, "PART_Root")
+                                .TranslatePoint(new Point(), messages).Y > 0);
+                    }
+                    var divider = Assert.Single(Descendants(ribbon).OfType<Border>(), b => b.Name == "MinimizedDivider");
+                    double expectedHeight = theme is RibbonTheme.Office2007 or RibbonTheme.Office2010 or RibbonTheme.Office2013 ? 1 : 0;
+                    Assert.Equal(expectedHeight, divider.Height);
+                    bool shown = position != RibbonQuickAccessPosition.BelowRibbon && count == 0;
+                    Assert.Equal(shown ? Visibility.Visible : Visibility.Collapsed, divider.Visibility);
+                    Assert.False(divider.IsHitTestVisible);
+                    if (shown)
+                    {
+                        double bottom = divider.TranslatePoint(new Point(0, divider.ActualHeight), window).Y;
+                        double documentTop = document.TranslatePoint(new Point(), window).Y;
+                        Assert.InRange(bottom, documentTop - 0.05, documentTop + 0.05);
+                        Assert.Equal(ribbon.ActualWidth, divider.ActualWidth);
+                    }
+                    else Assert.Equal(0, divider.ActualHeight);
+                    if (theme == RibbonTheme.Office2007 && flow == FlowDirection.LeftToRight
+                        && position is RibbonQuickAccessPosition.TitleBar or RibbonQuickAccessPosition.BelowRibbon && count is 0 or 2)
+                        SavePreview(dock, $"Office2007-{(dark ? "dark" : "light")}-{density}-{position}-minimized-divider-{count}-messages");
+                    ribbon.IsMinimized = false; Layout(window);
+                    Assert.Equal(new Thickness(0), topEdge.BorderThickness);
+                    Assert.Equal(Visibility.Collapsed, divider.Visibility);
+                    Assert.Equal(0, divider.ActualHeight);
+                }
+            }
+        }
+        finally { window.Close(); RibbonAnimation.GlobalLevel = animation; }
     }
 
     internal static void VerifyChrome(Application application)
