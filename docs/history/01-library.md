@@ -7352,3 +7352,16 @@ the broader Touch consumer passed; an Office2007 render was inspected. Normal
 Release solution and Debug Showcase builds have zero warnings/errors. The active
 touch plan records the evidence and separate user review; no full-suite, snapshot
 approval or native-input retry ran.
+
+The next minimized/message screenshot exposed Office2024's combined-state token
+still selecting square upper QAT corners. That existing token now uses `8,8,0,0`
+in both densities, inherited by the dark palette, retaining the flush lower seam
+and other palettes' geometry. The Touch Print Preview jump came from its modal
+Close margin removing the minimize chevron's six-DIP top inset. Dropping that
+Touch override keeps the replacement's 44-DIP target and the same header extent;
+modal services and adaptive layout need no special case. No API or resource key
+was added. Both failures reproduced in a RibbonKit-only consumer; its all-theme,
+light/dark, LTR/RTL and QAT-placement aggregate and the broader Touch consumer
+passed in Release. Thirteen selected runtime checks, normal Release solution and
+Debug Showcase builds passed; actual corner and before/modal renders were
+inspected. The active touch plan retains separate live review and deferred gates.

@@ -20,6 +20,7 @@ internal static class TouchDensityPortabilityChecks
 {
     internal static void Verify(Application application)
     {
+        VerifyChrome(application);
         VerifyGroupLauncher(application);
         var animation = RibbonAnimation.GlobalLevel;
         RibbonAnimation.GlobalLevel = RibbonAnimationLevel.None;
@@ -649,6 +650,95 @@ internal static class TouchDensityPortabilityChecks
             }
         }
         finally { window.Close(); }
+    }
+
+    internal static void VerifyChrome(Application application)
+    {
+        var animation = RibbonAnimation.GlobalLevel;
+        RibbonAnimation.GlobalLevel = RibbonAnimationLevel.None;
+        var home = new RibbonTab { Header = "Home" };
+        var preview = new RibbonTab { Header = "Print Preview", IsModal = true,
+            CloseButtonText = "Close Print Preview", Visibility = Visibility.Collapsed };
+        foreach (var tab in new[] { home, preview })
+        {
+            var group = new RibbonGroup { Header = "Commands", CanResize = false };
+            group.Items.Add(new RibbonButton { Header = "Print", Size = RibbonControlSize.Large });
+            tab.Groups.Add(group);
+        }
+        var ribbon = new Ribbon(); ribbon.Tabs.Add(home); ribbon.Tabs.Add(preview); ribbon.SelectedTab = home;
+        ribbon.QuickAccessItems.Add(new RibbonButton { Header = "Save", Size = RibbonControlSize.Small });
+        var message = new RibbonMessage { Title = "NOTICE", Message = "Consumer message", IsOpen = false };
+        var messages = new RibbonMessageBar(); messages.Items.Add(message); ribbon.MessageBar = messages;
+        var window = Window(ribbon, 800, 450);
+        try
+        {
+            window.Show(); Layout(window);
+            foreach (RibbonTheme theme in Enum.GetValues<RibbonTheme>())
+            foreach (bool dark in new[] { false, true })
+            foreach (FlowDirection flow in new[] { FlowDirection.LeftToRight, FlowDirection.RightToLeft })
+            {
+                ThemeManager.Apply(application, theme); ThemeManager.SetDarkMode(application, dark);
+                ribbon.FlowDirection = flow;
+                foreach (RibbonQuickAccessPosition position in Enum.GetValues<RibbonQuickAccessPosition>())
+                {
+                    ribbon.QuickAccessPosition = position;
+                    ribbon.Density = RibbonDensity.Touch; Layout(window);
+                    var tabs = Part<RibbonTabControl>(ribbon, "TabControlHost");
+                    var header = Part<Grid>(tabs, "PART_TabHeaderHost");
+                    var body = Part<Border>(tabs, "ContentHost");
+                    double headerHeight = header.ActualHeight;
+                    double bodyTop = body.TranslatePoint(new Point(), window).Y;
+                    double ribbonHeight = ribbon.ActualHeight;
+                    if (theme == RibbonTheme.Office2024 && !dark && flow == FlowDirection.LeftToRight
+                        && position == RibbonQuickAccessPosition.BelowRibbon)
+                        SavePreview(ribbon, "Office2024-touch-before-modal");
+                    foreach (string? label in new string?[] { "Close Print Preview", null })
+                    {
+                        preview.CloseButtonText = label;
+                        Assert.True(ribbon.EnterModal(preview)); Layout(window);
+                        Assert.Equal(headerHeight, header.ActualHeight);
+                        Assert.Equal(bodyTop, body.TranslatePoint(new Point(), window).Y);
+                        Assert.Equal(ribbonHeight, ribbon.ActualHeight);
+                        Assert.True(Part<Button>(tabs, "PART_ModalClose").ActualHeight >= 44);
+                        Assert.False(Part<ToggleButton>(tabs, "MinimizeToggle").IsVisible);
+                        if (label is not null && theme == RibbonTheme.Office2024 && !dark
+                            && flow == FlowDirection.LeftToRight && position == RibbonQuickAccessPosition.BelowRibbon)
+                            SavePreview(ribbon, "Office2024-touch-modal");
+                        Assert.True(ribbon.ExitModal()); Layout(window);
+                        Assert.Equal(headerHeight, header.ActualHeight);
+                        Assert.Equal(bodyTop, body.TranslatePoint(new Point(), window).Y);
+                        Assert.Same(home, ribbon.SelectedTab);
+                    }
+                }
+                ribbon.QuickAccessPosition = RibbonQuickAccessPosition.BelowRibbon;
+                foreach (RibbonDensity density in new[] { RibbonDensity.Compact, RibbonDensity.Touch })
+                foreach (bool minimized in new[] { false, true })
+                foreach (bool notice in new[] { false, true })
+                {
+                    ribbon.Density = density; ribbon.IsMinimized = minimized; message.IsOpen = notice;
+                    Layout(window);
+                    var drawer = Part<Border>(ribbon, "QatBelowHost");
+                    Assert.Equal(notice, ribbon.HasOpenMessages);
+                    CornerRadius expected = theme == RibbonTheme.Office2024
+                        ? notice ? minimized ? new CornerRadius(8, 8, 0, 0) : new CornerRadius(0)
+                            : minimized ? new CornerRadius(8) : new CornerRadius(0, 0, 8, 8)
+                        : Assert.IsType<CornerRadius>(ribbon.FindResource(minimized
+                            ? notice ? "RibbonKit.Metrics.QatExtenderCornerRadiusMinimizedMessageBar"
+                                : "RibbonKit.Metrics.QatExtenderCornerRadiusMinimized"
+                            : notice ? "RibbonKit.Metrics.QatExtenderCornerRadiusMessageBar"
+                                : "RibbonKit.Metrics.QatExtenderCornerRadius"));
+                    Assert.Equal(expected, drawer.CornerRadius);
+                    if (notice && theme == RibbonTheme.Office2024)
+                        Assert.InRange(messages.TranslatePoint(new Point(), ribbon).Y,
+                            drawer.TranslatePoint(new Point(0, drawer.ActualHeight), ribbon).Y - 0.5,
+                            drawer.TranslatePoint(new Point(0, drawer.ActualHeight), ribbon).Y + 0.5);
+                    if (theme == RibbonTheme.Office2024 && minimized && notice && flow == FlowDirection.LeftToRight)
+                        SavePreview(ribbon, $"Office2024-{(dark ? "dark" : "light")}-{density}-minimized-message");
+                }
+                ribbon.IsMinimized = false; message.IsOpen = false;
+            }
+        }
+        finally { window.Close(); RibbonAnimation.GlobalLevel = animation; }
     }
 
     internal static void VerifyGroupLauncher(Application application)

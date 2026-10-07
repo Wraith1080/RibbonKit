@@ -141,6 +141,11 @@ public sealed class ApplicationButtonShapeThemeTests
     public void Theme_default_and_local_value_follow_wpf_precedence() => RunSta(() =>
     {
         var application = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "TouchChrome")
+        {
+            TouchDensityPortabilityChecks.VerifyChrome(application);
+            return;
+        }
         if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "GroupLauncher")
         {
             TouchDensityPortabilityChecks.VerifyGroupLauncher(application);

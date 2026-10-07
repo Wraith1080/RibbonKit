@@ -1,7 +1,7 @@
 # RibbonKit touch density
 
-> Revised live density settle visually accepted 2026-10-08. Group launcher caption-height correction has focused verification; visual review is pending.
-> The full Release checkpoint predates the animation, adaptive and QAT seam follow-ups; visual/native acceptance remains separate.
+> QAT/message corners and Touch modal geometry corrected with focused verification, 2026-10-08; visual review is pending.
+> The full Release checkpoint predates the later geometry and animation follow-ups; visual/native acceptance remains separate.
 
 ## Contract and API review
 
@@ -149,6 +149,37 @@ The normal Release solution and Debug Showcase builds passed with zero warnings
 or errors. User review of the launcher correction remains pending; the full suite,
 snapshot approval and native keyboard/input checks were not rerun.
 
+### Minimized QAT/message corners and Touch modal height — 2026-10-08
+
+Office2024's existing combined minimized/message corner token now uses `8,8,0,0`.
+The exposed QAT upper edge is rounded in both densities, while the lower edge
+still joins the first message flush. Its dark palette inherits the same metric;
+other palettes, drawer spacing, border and shadow rules are unchanged.
+
+The Touch modal-close trigger retains the default six-DIP top inset used by the
+minimize chevron it replaces. Removing its margin override preserves the normal
+Touch header height on modal entry and exit, including labeled and icon-only
+Close buttons. The 44-DIP Close target and bottom alignment remain. Both fixes
+use existing shared templates/tokens and add no public API or resource key.
+
+Both failures were reproduced in a RibbonKit-only consumer before their fixes.
+The focused Release aggregate now passes across all six themes, light/dark and
+LTR/RTL, all QAT placements, Touch modal entry/exit, and Compact/Touch minimized
+message combinations. It checks header/body position, ribbon height, QAT corners
+and Office2024's flush message seam. Results are
+`touch-chrome-consumer-release.trx` under `artifacts/touch-validation`.
+The broader Touch consumer passed in Release (26 seconds), including existing
+adaptive, gallery, launcher, QAT and title/Backstage checks, recorded in
+`touch-chrome-broader-consumer-release.trx`.
+
+The six actual Showcase Touch cases, six message-bar tests and existing connected
+QAT shadow regression passed in Release (13 selected runtime checks), recorded in
+`touch-chrome-runtime-release.trx` and `touch-chrome-shadow-release.trx`.
+Office2024 light/dark minimized-message and before/modal renders were inspected
+under `artifacts/touch-chrome-diagnostics`. Normal Release solution and Debug
+Showcase builds passed with zero warnings/errors. User visual review remains
+pending; full-suite, snapshot approvals and native keyboard/input were not rerun.
+
 ### Earlier geometry and adaptive evidence
 
 The screenshot cleanup, refinements and subsequent spacing/paint polish address:
@@ -294,10 +325,11 @@ user's request: no full-suite, snapshot approval or native-input retry.
 | Shared implementation and API documentation | Passed 2026-10-07: documented additive API; shipped baseline unchanged; matching Touch metrics in all six base themes |
 | Live density transition | Refined 2026-10-08 to 85% opacity and cubic EaseInOut; clean Release runtime builds for both targets, passing focused policy/easing test and independent Release transition aggregate. The initial 2026-10-07 implementation had a clean Release solution build, 33 selected runtime checks and independent Debug/Release and broader Touch evidence. Completion/interruption, startup, disabled policy, bindings, template/unload, QAT placements, popup anchors and affected adaptive geometry covered. Full suite and native keyboard/input deferred until visual review |
 | Group launcher caption height | Passed focused Release verification 2026-10-08: RibbonKit-only six-theme/light-dark/LTR-RTL launcher aggregate and broader Touch consumer; nominal 14-DIP height, equal neighboring caption bands, retained Touch width and visibility toggles. Office2007 render inspected; user visual review pending |
+| Minimized QAT/message and Touch modal geometry | Passed focused Release verification 2026-10-08: independent chrome and broader Touch aggregates, 13 selected runtime checks and clean solution build. Office2024 rounds only exposed upper QAT corners above messages in both densities; Touch modal entry/exit preserves header/body position across all themes and QAT placements. Renders inspected; user review pending |
 | Touch cleanup checks | Passed 2026-10-07 in the final Release suite: six actual Showcase theme cases, caption-button and Office2010 Aero-bevel regressions, File width/edge spacing, gallery fill/selection and compact/touch neighbor spacing, large/three-row sizing, modal Close, Font separator, message targets/normal fonts, stable title height through Backstage, and actual Classic2007 rail/page paint alignment; independent consumer across every theme/light-dark/LTR-RTL combination and all seven Backstage designs |
 | RibbonKit-only consumer | Adaptive follow-up touch-only scope passed 2026-10-07 in Debug and Release (final Release 44s), including repeated open-flyout density changes and immediate overflow arrows. The earlier full default scope passed in 2m56s before the follow-up, including keyboard/focus/navigation and the corrected Backstage fixture |
 | Release solution build and tests | Full checkpoint passed 2026-10-07 before the adaptive-layout follow-up: both runtime targets, zero build warnings/errors, all 974 tests passed with zero failed/skipped (490 runtime, 482 Writer, full consumer aggregate and 113-scene visual aggregate); package contents/designer assets and clean net8/net9 WPF package consumption validated. The follow-up has a fresh clean Release solution build and 64 passing focused runtime checks; no new full-suite run |
-| Normal Debug Showcase output | Passed 2026-10-08: default Debug Showcase/net8 runtime output refreshed for the group launcher caption-height correction after the stronger opacity settle and gentler easing; zero warnings/errors. The preceding Office2024 lower-QAT seam check also has a passing focused Release retry with density motion disabled for static paint comparison |
+| Normal Debug Showcase output | Passed 2026-10-08: default Debug Showcase/net8 runtime output refreshed for the minimized QAT/message corners and Touch modal-header correction after the launcher/animation changes; zero warnings/errors. The connected lower-QAT shadow regression also passed again with density motion disabled for static paint comparison |
 | Visual acceptance | User accepted the revised 85% EaseInOut density settle on 2026-10-08 after live review. Group launcher caption-height correction awaits review separately. User confirmed the adaptive collapse/scroller correction on 2026-10-07. Office2024 light/dark touch seam renders inspected; target-machine acceptance of that shadow correction remains pending. The 113-scene automated checkpoint predates the adaptive, shadow and animation follow-ups |
 | Native touch input | Pending: split halves, tap invocation, panning without accidental selection, nested popup dismissal and editable inputs |
 | DPI / RTL / keyboard | Full automated keyboard/focus/navigation, touch LTR/RTL and rendered 100/125/150/200% checks passed 2026-10-07; physical input, native monitor/DPI transitions, IME and reduced-motion live review remain separate |

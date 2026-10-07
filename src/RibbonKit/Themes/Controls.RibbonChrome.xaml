@@ -279,8 +279,8 @@
                             <Setter TargetName="QatBelowHost" Property="Margin"
                                     Value="{DynamicResource RibbonKit.Metrics.QatExtenderMarginMessageBar}" />
                         </Trigger>
-                        <!-- The minimized Crystal drawer stays rounded on all four corners
-                             above a message. Office retains its connected message-row geometry. -->
+                        <!-- A minimized drawer keeps its exposed upper corners above a
+                             message; each palette controls its connected lower seam. -->
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
                                 <Condition Property="QuickAccessPosition" Value="BelowRibbon" />
@@ -1093,7 +1093,8 @@
                             <Setter TargetName="PART_MergedCaptionClose" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
                             <Setter TargetName="PART_MergedCaptionClose" Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
                             <Setter TargetName="PART_TabItemsPanel" Property="VerticalAlignment" Value="Bottom" />
-                            <Setter TargetName="PART_ModalClose" Property="Margin" Value="{DynamicResource RibbonKit.Metrics.Touch.UtilityMargin}" />
+                            <!-- Retain the minimize chevron's top inset so its modal
+                                 replacement reserves the same Touch header height. -->
                             <Setter TargetName="PART_ModalClose" Property="VerticalAlignment" Value="Bottom" />
                         </Trigger>
                         <MultiDataTrigger>

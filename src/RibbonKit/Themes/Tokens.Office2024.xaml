@@ -350,7 +350,7 @@
     <CornerRadius x:Key="RibbonKit.Metrics.QatExtenderCornerRadius">0,0,8,8</CornerRadius>
     <Thickness x:Key="RibbonKit.Metrics.QatExtenderMarginMessageBar">7,0,7,0</Thickness>
     <CornerRadius x:Key="RibbonKit.Metrics.QatExtenderCornerRadiusMessageBar">0</CornerRadius>
-    <CornerRadius x:Key="RibbonKit.Metrics.QatExtenderCornerRadiusMinimizedMessageBar">0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.QatExtenderCornerRadiusMinimizedMessageBar">8,8,0,0</CornerRadius>
 
     <!-- When the ribbon is minimized the body card disappears and the QAT bar stands
          alone, so it becomes a fully rounded, fully bordered floating card with a small

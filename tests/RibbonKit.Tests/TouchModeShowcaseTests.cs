@@ -309,7 +309,12 @@ public class TouchModeShowcaseTests
             Assert.InRange(paste.ActualHeight + paste.Margin.Top + paste.Margin.Bottom,
                 smallStack.ActualHeight - 2, smallStack.ActualHeight + 2);
             Save(window.MainRibbon, $"{theme}-showcase-home");
+            var modalHeader = Part<Grid>(tabs, "PART_TabHeaderHost");
+            double headerHeight = modalHeader.ActualHeight;
+            double bodyTop = Part<Border>(tabs, "ContentHost").TranslatePoint(new Point(), window).Y;
             window.MainRibbon.EnterModal(window.PrintPreviewTab); Layout(window);
+            Assert.Equal(headerHeight, modalHeader.ActualHeight);
+            Assert.Equal(bodyTop, Part<Border>(tabs, "ContentHost").TranslatePoint(new Point(), window).Y);
             var close = Part<Button>(tabs, "PART_ModalClose");
             var closeLabel = Part<ContentPresenter>(close, "Label");
             Assert.True(close.IsVisible && close.ActualWidth > 44);
@@ -319,6 +324,8 @@ public class TouchModeShowcaseTests
             Assert.InRange(close.TranslatePoint(new Point(close.ActualWidth, 0), window).X, 0, window.ActualWidth);
             Save(window.MainRibbon, $"{theme}-showcase-modal");
             window.MainRibbon.ExitModal(); Layout(window);
+            Assert.Equal(headerHeight, modalHeader.ActualHeight);
+            Assert.Equal(bodyTop, Part<Border>(tabs, "ContentHost").TranslatePoint(new Point(), window).Y);
             window.MainRibbon.QuickAccessPosition = RibbonQuickAccessPosition.TitleBar; Layout(window);
             double titleHeight = Part<Grid>(window, "TitleBarBand").ActualHeight;
             Assert.True(titleHeight >= 46);
