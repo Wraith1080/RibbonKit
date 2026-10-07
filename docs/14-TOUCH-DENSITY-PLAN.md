@@ -1,7 +1,7 @@
 # RibbonKit touch density
 
-> Implementation and full automated Release validation passed, 2026-10-07.
-> Automated evidence and native acceptance are recorded separately below.
+> Adaptive-layout follow-up has focused Release verification, 2026-10-07.
+> The full Release checkpoint predates this follow-up; native acceptance remains separate.
 
 ## Contract and API review
 
@@ -154,14 +154,35 @@ its actual/diff images showed only the intended flat QAT strip. Only that approv
 PNG was refreshed, then the entire visual aggregate passed. Comparison tolerances
 and product code were unchanged during this validation pass.
 
+The subsequent recording exposed a collapsed-group width-probe race: changing
+density from the open Backstage-group flyout could probe the normal host while
+its commands still belonged to the popup. The group now closes and reclaims that
+content synchronously before the probe, retaining the existing focus-return and
+nested-popup cleanup behavior. The scroller also retains the panel's true width
+when WPF reuses a cached measure, rather than replacing it with a viewport-clamped
+DesiredSize. Empty rows report zero and replacing the hosted child clears the old
+report. No public API or template/token geometry changed.
+
+Focused Release checks cover repeated flyout density changes from both initial
+modes across all six themes, serialized-layout/touch initialization before and
+after Showcase realization, cached overflow, empty/replaced content, forced
+expansion, and immediate body-arrow visibility. The Release solution build has
+zero warnings/errors and 64 focused runtime checks pass. The touch-only independent
+consumer passed in Debug and Release (the final Release run took 44s), recorded in
+`artifacts/touch-validation/touch-adaptive-consumer-release.trx`. Normal Debug
+Showcase output is refreshed. Startup and Office2024/Crystal overflow renders
+were inspected in `artifacts/touch-adaptive-diagnostics`. The earlier full suite
+has not been rerun after this correction; live startup/toggle acceptance remains
+with the user.
+
 | Gate | Status and exact scope |
 | --- | --- |
 | Shared implementation and API documentation | Passed 2026-10-07: documented additive API; shipped baseline unchanged; matching Touch metrics in all six base themes |
 | Touch cleanup checks | Passed 2026-10-07 in the final Release suite: six actual Showcase theme cases, caption-button and Office2010 Aero-bevel regressions, File width/edge spacing, gallery fill/selection and compact/touch neighbor spacing, large/three-row sizing, modal Close, Font separator, message targets/normal fonts, stable title height through Backstage, and actual Classic2007 rail/page paint alignment; independent consumer across every theme/light-dark/LTR-RTL combination and all seven Backstage designs |
-| RibbonKit-only consumer | Full default scope passed 2026-10-07 in 2m56s, including touch geometry, local overrides, detached QAT/overflow/context menus, gallery/adaptive layout, keyboard/focus/navigation, application menus and the corrected Backstage fixture; no touch-only filter |
-| Release solution build and tests | Passed 2026-10-07: both runtime targets, zero build warnings/errors, all 974 tests passed with zero failed/skipped (490 runtime, 482 Writer, full consumer aggregate and 113-scene visual aggregate); package contents/designer assets and clean net8/net9 WPF package consumption validated |
-| Normal Debug Showcase output | Passed 2026-10-07: default Debug Showcase/net8 runtime output refreshed after the Office2010 Aero-bevel correction; its focused shared-resource consumer check passed. The preceding normal solution build covered both runtime targets with zero warnings/errors |
-| Visual acceptance | Screenshot refinements addressed and user proceeded to full testing on 2026-10-07; actual touch renders inspected and all 113 automated visual scenes passed. Final target-machine appearance/touch acceptance remains separate |
+| RibbonKit-only consumer | Adaptive follow-up touch-only scope passed 2026-10-07 in Debug and Release (final Release 44s), including repeated open-flyout density changes and immediate overflow arrows. The earlier full default scope passed in 2m56s before the follow-up, including keyboard/focus/navigation and the corrected Backstage fixture |
+| Release solution build and tests | Full checkpoint passed 2026-10-07 before the adaptive-layout follow-up: both runtime targets, zero build warnings/errors, all 974 tests passed with zero failed/skipped (490 runtime, 482 Writer, full consumer aggregate and 113-scene visual aggregate); package contents/designer assets and clean net8/net9 WPF package consumption validated. The follow-up has a fresh clean Release solution build and 64 passing focused runtime checks; no new full-suite run |
+| Normal Debug Showcase output | Passed 2026-10-07: default Debug Showcase/net8 runtime output refreshed after the adaptive-layout follow-up with zero warnings/errors |
+| Visual acceptance | Adaptive follow-up startup and overflow renders inspected 2026-10-07. The 113-scene automated checkpoint predates the follow-up. Final target-machine startup/toggle/appearance acceptance remains separate |
 | Native touch input | Pending: split halves, tap invocation, panning without accidental selection, nested popup dismissal and editable inputs |
 | DPI / RTL / keyboard | Full automated keyboard/focus/navigation, touch LTR/RTL and rendered 100/125/150/200% checks passed 2026-10-07; physical input, native monitor/DPI transitions, IME and reduced-motion live review remain separate |
 
@@ -197,6 +218,13 @@ initial failures and capture evidence are under `merge-full`. Only
 `office2010-message-bar-connected-100.png` was reapproved after actual/diff review.
 Comparison tolerances remain unchanged. No application was manually
 launched; live acceptance remains with the user.
+
+The adaptive follow-up results are `touch-adaptive-debug.trx` (60 focused checks),
+`touch-adaptive-release.trx` (64 focused checks including collapsed templates and
+nested dismissal), and `touch-adaptive-consumer-debug.trx` /
+`touch-adaptive-consumer-release.trx` (touch-only independent consumer) in the same
+validation directory. The initial flyout and cached-overflow reproduction results
+are preserved separately. These focused runs do not replace the earlier full gate.
 
 Native touch input cannot be inferred from synthetic mouse or keyboard tests.
 Custom templates can consume the inherited setting and touch metric keys; fixed

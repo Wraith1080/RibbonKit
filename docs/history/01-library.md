@@ -7277,3 +7277,21 @@ light/dark palettes. The full runtime retry passed. A deterministic capture of a
 QAT strip in `office2010-message-bar-connected-100`; its actual/diff images were
 inspected before updating only that approved PNG. The final aggregate passed with
 unchanged comparison tolerances and no product-code edits during validation.
+
+A later touch recording exposed two adaptive-layout pitfalls. A width probe can
+expand a collapsed group while its flyout is open; waiting for Popup.Closed leaves
+the normal host empty during that synchronous probe, caching a false expanded
+width. RibbonGroup now reclaims the flyout content before measuring, with shared
+nested-popup cleanup and preserved focus-return bookkeeping. Separately, resetting
+the scroller's reported width on every measure loses overflow when WPF short-circuits
+the child's unchanged measure. The last report now survives for the same child;
+empty panels report zero and replacing the child clears the report.
+
+The flyout regression failed in all six themes before the fix; an independent
+cached-measure case also reproduced the missing arrows. Focused coverage includes
+both initial densities, repeated switches from open flyouts, actual Showcase
+serialized-layout/touch initialization, non-resizable overflow and empty/replaced
+content. A clean Release solution build and 64 focused Release checks passed.
+The RibbonKit-only touch consumer and rendered startup/overflow evidence are
+tracked in the active touch plan. The earlier 974-test full checkpoint predates
+this correction; no public API, theme metrics or visual approval changed.

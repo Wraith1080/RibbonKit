@@ -270,6 +270,7 @@ internal static class TouchDensityPortabilityChecks
             Assert.True(button.ActualWidth >= 48);
             ribbon.Resources.Remove("RibbonKit.Metrics.Touch.TargetSize"); Layout(window);
             VerifyAdaptiveRefresh();
+            VerifyCollapsedFlyoutDensity(application);
             VerifyReviewSurfaces(application, icon);
         }
         finally
@@ -375,6 +376,51 @@ internal static class TouchDensityPortabilityChecks
             Assert.All(home.Groups, g => Assert.NotEqual(RibbonGroupSizeState.Collapsed, g.SizeState));
         }
         finally { window.Close(); }
+    }
+
+    private static void VerifyCollapsedFlyoutDensity(Application application)
+    {
+        foreach (var theme in Enum.GetValues<RibbonTheme>())
+        foreach (bool startTouch in new[] { false, true })
+        {
+            ThemeManager.Apply(application, theme);
+            var tab = new RibbonTab { Header = "View" };
+            var fixedGroup = new RibbonGroup { Header = "Fixed", CanResize = false, Width = 340 };
+            fixedGroup.Items.Add(new RibbonButton { Header = "Fixed", Size = RibbonControlSize.Large });
+            tab.Groups.Add(fixedGroup);
+            var group = new RibbonGroup { Header = "Backstage" };
+            for (int i = 0; i < 7; i++) group.Items.Add(new RibbonToggleButton
+                { Header = $"Command {i}", Size = RibbonControlSize.Large });
+            tab.Groups.Add(group);
+            var ribbon = new Ribbon { Density = startTouch ? RibbonDensity.Touch : RibbonDensity.Compact };
+            ribbon.Tabs.Add(tab); ribbon.SelectedTab = tab;
+            var window = Window(ribbon, 560, 400);
+            try
+            {
+                window.Show(); Layout(window);
+                Assert.Equal(RibbonGroupSizeState.Collapsed, group.SizeState);
+                for (int iteration = 0; iteration < 4; iteration++)
+                {
+                    Part<ToggleButton>(group, "PART_CollapsedButton").IsChecked = true;
+                    Layout(window);
+                    Assert.NotNull(Part<Border>(group, "PART_PopupHost").Child);
+                    ribbon.Density = ribbon.Density == RibbonDensity.Compact ? RibbonDensity.Touch : RibbonDensity.Compact;
+                    Layout(window);
+                    Assert.Equal(RibbonGroupSizeState.Collapsed, group.SizeState);
+                }
+                group.CanResize = false; Layout(window);
+                var tabs = Part<RibbonTabControl>(ribbon, "TabControlHost");
+                var scroll = Part<RibbonKit.Layout.RibbonScrollContentHost>(tabs, "PART_ContentScroll");
+                Assert.True(scroll.ExtentWidth > scroll.ViewportWidth);
+                Assert.True(scroll.CanScrollRight);
+                Assert.Contains(Descendants(Part<Border>(tabs, "ContentHost")).OfType<RepeatButton>(),
+                    b => Equals(b.Tag, "BodyScroll") && b.IsVisible);
+                SavePreview(ribbon, $"{theme}-adaptive-overflow-{startTouch}");
+                scroll.InvalidateMeasure(); Layout(window);
+                Assert.True(scroll.CanScrollRight);
+            }
+            finally { window.Close(); }
+        }
     }
 
     private static void VerifySplit(RibbonSplitButton split)

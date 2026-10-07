@@ -68,6 +68,7 @@ public class RibbonGroupsPanel : Panel
         int count = InternalChildren.Count;
         if (count == 0)
         {
+            (_scrollHost ??= FindScrollHost())?.ReportContentWidth(0d);
             return new Size(0, 0);
         }
 
