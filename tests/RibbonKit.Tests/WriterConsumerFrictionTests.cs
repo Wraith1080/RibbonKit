@@ -388,10 +388,15 @@ public sealed class WriterConsumerFrictionTests
             Assert.Same(stripScrollViewer, contentHost.Child);
             Assert.Same(popupLayout, popupHost.Child);
             Assert.Same(popupLayout, popupScrollViewer.Parent);
-            Assert.IsType<DrawingImage>(Assert.IsType<Image>(stripScrollViewer.Content).Source);
+            Assert.Null(stripScrollViewer.Content);
+            var stripPreview = Assert.IsType<Decorator>(gallery.Template.FindName("PART_StripPreviewHost", gallery));
+            Assert.IsType<DrawingImage>(Assert.IsType<Image>(stripPreview.Child).Source);
             Assert.Same(itemsPresenter, popupScrollViewer.Content);
 
             gallery.IsDropDownOpen = false;
+            // The presenter returns behind the independent picture after collapsed
+            // bindings have transferred at the next render boundary.
+            Sta.Drain(DispatcherPriority.Render);
             Assert.Same(stripScrollViewer, contentHost.Child);
             Assert.Same(popupLayout, popupHost.Child);
             Assert.Same(popupLayout, popupScrollViewer.Parent);
@@ -591,9 +596,9 @@ public sealed class WriterConsumerFrictionTests
 
             // Popup paging remains owned by the popup viewport; the presenter returns
             // to the main-window strip without bringing that offset or clip with it.
-            Assert.Equal(0d, popupScrollViewer.VerticalOffset, precision: 6);
             Assert.Equal(0d, stripScrollViewer.VerticalOffset, precision: 6);
             Sta.Drain(DispatcherPriority.Render);
+            Assert.Equal(0d, popupScrollViewer.VerticalOffset, precision: 6);
             Assert.Equal(0d, stripScrollViewer.VerticalOffset, precision: 6);
         }
         finally

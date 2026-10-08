@@ -10,7 +10,8 @@ internal static class GalleryStripPreview
 {
     internal static Image? Create(ScrollViewer viewport)
     {
-        viewport.UpdateLayout();
+        // Copy the row that is already painted. Flushing layout here can process
+        // a pending focus/scroll request before the picture has been frozen.
         Size size = viewport.RenderSize;
         if (size.Width <= 0 || size.Height <= 0) return null;
         var picture = Capture(viewport);

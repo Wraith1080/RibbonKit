@@ -7819,3 +7819,55 @@ approvals changed. Release solution and normal Debug Showcase builds passed with
 zero warnings and errors. Full-suite testing remains deferred; live review of repeated
 direction toggles, animated opening/closing and native mixed-monitor DPI remains
 for the user.
+
+### 3.232 Native gallery dismissal preserves the viewed row — 2026-10-09
+
+Follow-up live recording showed the original gallery exposing its first row for
+one frame on dismissal, then jumping back to Emphasis without a new selection.
+The earlier opening checks did not inspect the first uncovered strip frame.
+New frame sampling also exposed a Touch panel's measure notification queuing
+another viewport reset after the strip had already been returned and restored.
+
+The initial Render-priority return passed 112 focused checks and 96 consumer
+combinations, but live retesting still exposed a transient row. The user also
+reproduced it through QAT and noted that Escape after closing could select the
+first focused tile. Eight new checks reproduce a focused rich-text gallery in a
+ribbon, pumping rendered frames across the whole open/close boundary without
+first forcing layout. All eight failed with the initial implementation.
+
+The shared template now supplies `PART_StripPreviewHost`, a noninteractive
+decorator outside the scrolling surface. Both native and QAT borrowing keep the
+same frozen vector row there while the live viewport is transparent. Capture
+uses already painted drawings without flushing pending focus/scroll layout.
+Native closing waits for collapsed wrapping/headings to transfer, hides the
+popup HWND before removing its content, then returns the presenter behind the
+picture. The picture remains through WPF's Loaded/Render work; Input priority
+restores the viewed offset/focus and uncovers the live strip. A reentrant Touch
+geometry refresh is suppressed during that return. No controls, bindings or
+application handlers are cloned, and legacy template parts retain their fallback.
+
+Cancellation through either popup preserves the viewed row, even when browsed
+away from the selection. Only a different selection runs the existing reveal;
+native focus then follows the new pick rather than reselecting the previous tile.
+QAT focus returns to its opener. Reopening cancels a pending return, and native/QAT
+takeovers retain the frozen row's original offset rather than an empty viewport's
+zero. Template replacement/QAT borrowing flush a pending native return before
+taking the presenter. No public API or shared animation policy changed.
+
+The final focused Release run passed 120 checks. Twelve Crystal cases sample
+every rendered frame for 300 ms after cancellation across LTR/RTL, selected or
+browsed rows, motion disabled/enabled and Compact/Touch. Additional cases check
+changed selections, rapid reopening and native-to-QAT handoff. Existing native
+viewport tests wait for the render boundary before checking presenter return
+and popup-page reset, while retaining their scroller identity/DPI assertions. The
+eight focused rich-text cases additionally check every open/close frame, Escape
+after dismissal, focus after a different pick, and QAT-to-native takeover.
+
+The separate RibbonKit-only consumer passed 96 theme, palette, density, direction
+and simulated-DPI combinations. Its Office/Crystal checks capture the first
+`Popup.Closed` strip surface and sample animated focused native and QAT borrowing
+in eight cases per path. Before/open/first-close and focused-return images were
+inspected; no snapshot approvals changed. Release
+solution and normal Debug Showcase builds passed with zero warnings and errors.
+User live retesting remains pending. The full suite and native mixed-monitor
+DPI gate remain deferred.

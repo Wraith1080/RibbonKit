@@ -67,7 +67,11 @@ public class RibbonGallery : ListBox
     internal bool BeginQuickAccess(ScrollViewer viewport, Action close)
     {
         _closeQuickAccess?.Invoke();
-        if (this is InRibbonGallery gallery) gallery.SetCurrentValue(InRibbonGallery.IsDropDownOpenProperty, false);
+        if (this is InRibbonGallery gallery)
+        {
+            gallery.SetCurrentValue(InRibbonGallery.IsDropDownOpenProperty, false);
+            gallery.FlushPendingNativeClose();
+        }
         ApplyTemplate();
         if (!IsLoaded)
         {
@@ -85,7 +89,8 @@ public class RibbonGallery : ListBox
         // Keep the ribbon's visible strip painted while its live presenter is in
         // the QAT popup. Capture before expanded layout changes headings/wrapping.
         // A DrawingImage retains vector glyphs/geometry at the destination DPI.
-        var preview = IsVisible ? GalleryStripPreview.Create(original) : null;
+        bool separatePreview = this is InRibbonGallery native && native.FreezeStripForQuickAccess();
+        var preview = IsVisible && !separatePreview ? GalleryStripPreview.Create(original) : null;
         SetValue(IsQuickAccessOpenProperty, true);
         original.Content = preview;
         viewport.Content = presenter;

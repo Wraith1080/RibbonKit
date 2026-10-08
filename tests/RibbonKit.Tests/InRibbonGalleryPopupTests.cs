@@ -4,6 +4,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 using RibbonKit.Animation;
 using RibbonKit.Controls;
 using RibbonKit.Theming;
@@ -14,6 +15,137 @@ namespace RibbonKit.Tests;
 
 public sealed class InRibbonGalleryPopupTests
 {
+    [Theory]
+    [InlineData(FlowDirection.LeftToRight, false, RibbonAnimationLevel.None, RibbonDensity.Compact)]
+    [InlineData(FlowDirection.RightToLeft, false, RibbonAnimationLevel.None, RibbonDensity.Compact)]
+    [InlineData(FlowDirection.LeftToRight, true, RibbonAnimationLevel.None, RibbonDensity.Compact)]
+    [InlineData(FlowDirection.RightToLeft, true, RibbonAnimationLevel.None, RibbonDensity.Compact)]
+    [InlineData(FlowDirection.LeftToRight, false, RibbonAnimationLevel.Subtle, RibbonDensity.Compact)]
+    [InlineData(FlowDirection.RightToLeft, false, RibbonAnimationLevel.Subtle, RibbonDensity.Compact)]
+    [InlineData(FlowDirection.LeftToRight, true, RibbonAnimationLevel.Subtle, RibbonDensity.Compact)]
+    [InlineData(FlowDirection.RightToLeft, true, RibbonAnimationLevel.Subtle, RibbonDensity.Compact)]
+    [InlineData(FlowDirection.LeftToRight, false, RibbonAnimationLevel.Subtle, RibbonDensity.Touch)]
+    [InlineData(FlowDirection.RightToLeft, false, RibbonAnimationLevel.Subtle, RibbonDensity.Touch)]
+    [InlineData(FlowDirection.LeftToRight, true, RibbonAnimationLevel.Subtle, RibbonDensity.Touch)]
+    [InlineData(FlowDirection.RightToLeft, true, RibbonAnimationLevel.Subtle, RibbonDensity.Touch)]
+    public void Dismiss_without_a_pick_preserves_the_first_uncovered_strip_frame(FlowDirection flow, bool browseAway, RibbonAnimationLevel level, RibbonDensity density) => Sta.Run(() =>
+    {
+        var application = Sta.UseApplication(); ThemeManager.Apply(application, RibbonTheme.CrystalLight);
+        var motion = RibbonAnimation.GlobalLevel; RibbonAnimation.GlobalLevel = level;
+        var gallery = new InRibbonGallery { Width = 258, SelectedIndex = 7, DropDownHeader = "Choose a style" };
+        Ribbon.SetDensity(gallery, density);
+        for (int i = 0; i < 9; i++) gallery.Items.Add(new RibbonGalleryItem { Content = new Border { Width = 64, Height = 40, Background = i == (browseAway ? 4 : 7) ? Brushes.Red : Brushes.SeaGreen } });
+        var window = new Window { Content = gallery, FlowDirection = flow, Width = 1000, Height = 400, Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
+        try
+        {
+            window.Show(); Layout();
+            var strip = Assert.IsType<ScrollViewer>(gallery.Template.FindName("PART_ScrollViewer", gallery));
+            if (browseAway)
+            {
+                var browsed = Assert.IsType<RibbonGalleryItem>(gallery.ItemContainerGenerator.ContainerFromIndex(4));
+                strip.ScrollToVerticalOffset(strip.VerticalOffset + browsed.TransformToVisual(strip).Transform(default).Y); Layout();
+            }
+            double offset = strip.VerticalOffset;
+            int before = RedPixels(Render(window)); Assert.True(before > 200);
+            gallery.IsDropDownOpen = true; Layout();
+            var frames = new List<(int Pixels, double Offset)>();
+            var popup = Assert.IsType<Popup>(gallery.Template.FindName("PART_Popup", gallery));
+            EventHandler frame = (_, _) => { if (!popup.IsOpen) frames.Add((RedPixels(Render(window)), strip.VerticalOffset)); };
+            CompositionTarget.Rendering += frame;
+            try
+            {
+                gallery.IsDropDownOpen = false;
+                if (!popup.IsOpen) Assert.True(RedPixels(Render(window)) >= before * .9, $"immediate: {strip.VerticalOffset}, expected {offset}");
+                Sta.Drain(DispatcherPriority.Render);
+                if (!popup.IsOpen) Assert.True(RedPixels(Render(window)) >= before * .9, $"render: {strip.VerticalOffset}, expected {offset}");
+                Layout();
+                PumpFrames(300);
+                Assert.False(popup.IsOpen);
+                Assert.NotEmpty(frames);
+                Assert.True(frames.All(f => f.Pixels >= before * .9), $"frames: {string.Join(", ", frames)}");
+                Assert.True(RedPixels(Render(window)) >= before * .9, $"settled: {strip.VerticalOffset}, expected {offset}");
+                Assert.InRange(strip.VerticalOffset - offset, -2, 2); Assert.Equal(7, gallery.SelectedIndex);
+            }
+            finally { CompositionTarget.Rendering -= frame; }
+        }
+        finally { window.Close(); RibbonAnimation.GlobalLevel = motion; Sta.ResetApplication(); }
+        void Layout() { Sta.Drain(); window.UpdateLayout(); Sta.Drain(); }
+    });
+
+    private static void PumpFrames(int milliseconds)
+    {
+        var frame = new DispatcherFrame();
+        var timer = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromMilliseconds(milliseconds) };
+        timer.Tick += (_, _) => { timer.Stop(); frame.Continue = false; };
+        timer.Start(); Dispatcher.PushFrame(frame);
+    }
+
+    [Theory]
+    [InlineData(FlowDirection.LeftToRight)]
+    [InlineData(FlowDirection.RightToLeft)]
+    public void Reopening_and_qat_handoff_do_not_lose_the_pending_strip_return(FlowDirection flow) => Sta.Run(() =>
+    {
+        Sta.UseApplication();
+        var gallery = new InRibbonGallery { Header = "Styles", Width = 258, SelectedIndex = 7 };
+        for (int i = 0; i < 9; i++) gallery.Items.Add(new RibbonGalleryItem { Content = new Border { Width = 64, Height = 40, Background = i == 7 ? Brushes.Red : Brushes.SeaGreen } });
+        var ribbon = new Ribbon(); var tab = new RibbonTab { Header = "Home" };
+        var group = new RibbonGroup { Header = "Styles", CanResize = false }; group.Items.Add(gallery);
+        tab.Groups.Add(group); ribbon.Tabs.Add(tab); ribbon.SelectedTab = tab; ribbon.AddToQuickAccess(gallery);
+        var window = new Window { Content = ribbon, FlowDirection = flow, Width = 1000, Height = 400,
+            Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
+        try
+        {
+            window.Show(); Layout();
+            var strip = Assert.IsType<ScrollViewer>(gallery.Template.FindName("PART_ScrollViewer", gallery));
+            var presenter = Assert.IsType<ItemsPresenter>(strip.Content);
+            int before = RedPixels(Render(window)); Assert.True(before > 200);
+            gallery.IsDropDownOpen = true; Layout();
+            gallery.IsDropDownOpen = false; gallery.IsDropDownOpen = true; Layout();
+            var viewport = Assert.IsType<ScrollViewer>(gallery.Template.FindName("PART_PopupScrollViewer", gallery));
+            Assert.Same(presenter, viewport.Content);
+            gallery.IsDropDownOpen = false; Layout();
+            Assert.Same(presenter, strip.Content); Assert.True(RedPixels(Render(window)) >= before * .9);
+
+            gallery.IsDropDownOpen = true; Layout();
+            var proxy = Assert.IsAssignableFrom<RibbonDropDownButton>(Assert.Single(ribbon.QuickAccessItems));
+            proxy.IsDropDownOpen = true; Layout();
+            Assert.False(gallery.IsDropDownOpen); Assert.False(Assert.IsType<Popup>(gallery.Template.FindName("PART_Popup", gallery)).IsOpen);
+            Assert.Same(presenter, Assert.IsAssignableFrom<ScrollViewer>(Assert.Single(proxy.Items)).Content);
+            Assert.True(RedPixels(Render(window)) >= before * .9);
+            proxy.IsDropDownOpen = false; Layout();
+            Assert.Same(presenter, strip.Content); Assert.Equal(7, gallery.SelectedIndex);
+        }
+        finally { window.Close(); Sta.ResetApplication(); }
+        void Layout() { Sta.Drain(); window.UpdateLayout(); Sta.Drain(); }
+    });
+
+    [Theory]
+    [InlineData(FlowDirection.LeftToRight)]
+    [InlineData(FlowDirection.RightToLeft)]
+    public void A_different_pick_still_reveals_its_row(FlowDirection flow) => Sta.Run(() =>
+    {
+        Sta.UseApplication();
+        var motion = RibbonAnimation.GlobalLevel; RibbonAnimation.GlobalLevel = RibbonAnimationLevel.Subtle;
+        var gallery = new InRibbonGallery { Width = 258, SelectedIndex = 7 };
+        for (int i = 0; i < 9; i++) gallery.Items.Add(new RibbonGalleryItem { Content = new Border { Width = 64, Height = 40, Background = Brushes.SeaGreen } });
+        var window = new Window { Content = gallery, FlowDirection = flow, Width = 900, Height = 400,
+            Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
+        try
+        {
+            window.Show(); Layout(); gallery.IsDropDownOpen = true; Layout();
+            gallery.SelectedIndex = 4; gallery.IsDropDownOpen = false; Layout(); PumpFrames(300);
+            Assert.Equal(4, gallery.SelectedIndex);
+            var strip = Assert.IsType<ScrollViewer>(gallery.Template.FindName("PART_ScrollViewer", gallery));
+            var chosen = Assert.IsType<RibbonGalleryItem>(gallery.ItemContainerGenerator.ContainerFromIndex(4));
+            var chrome = Assert.IsType<Border>(chosen.Template.FindName("Chrome", chosen));
+            Rect bounds = chrome.TransformToVisual(strip).TransformBounds(new Rect(chrome.RenderSize));
+            Assert.True(bounds.Top >= -1 && bounds.Bottom <= strip.ActualHeight + 1, $"{bounds}, strip {strip.RenderSize}");
+            Assert.InRange(strip.VerticalOffset, 40, 60);
+        }
+        finally { window.Close(); RibbonAnimation.GlobalLevel = motion; Sta.ResetApplication(); }
+        void Layout() { Sta.Drain(); window.UpdateLayout(); Sta.Drain(); }
+    });
+
     [Theory]
     [InlineData(FlowDirection.LeftToRight)]
     [InlineData(FlowDirection.RightToLeft)]

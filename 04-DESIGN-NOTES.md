@@ -880,6 +880,10 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [Refresh the complete viewport path after RTL changes and retain the visible row while opening](docs/history/01-library.md#3231-native-gallery-direction-changes-popup-origin-and-strip-retention--2026-10-08).
 
+### 3.232 Native gallery dismissal preserves the viewed row — 2026-10-09
+
+[Freeze the strip outside scrolling through native/QAT handoffs and preserve cancellation focus and row](docs/history/01-library.md#3232-native-gallery-dismissal-preserves-the-viewed-row--2026-10-09).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),

@@ -48,6 +48,7 @@ namespace RibbonKit.Controls;
 [TemplatePart(Name = ScrollViewerPartName, Type = typeof(ScrollViewer))]
 [TemplatePart(Name = PopupScrollViewerPartName, Type = typeof(ScrollViewer))]
 [TemplatePart(Name = ItemsPresenterPartName, Type = typeof(ItemsPresenter))]
+[TemplatePart(Name = StripPreviewHostPartName, Type = typeof(Decorator))]
 [TemplatePart(Name = LineUpPartName, Type = typeof(ButtonBase))]
 [TemplatePart(Name = LineDownPartName, Type = typeof(ButtonBase))]
 public class InRibbonGallery : RibbonGallery
@@ -58,6 +59,7 @@ public class InRibbonGallery : RibbonGallery
     private const string ScrollViewerPartName = "PART_ScrollViewer";
     private const string PopupScrollViewerPartName = "PART_PopupScrollViewer";
     private const string ItemsPresenterPartName = "PART_ItemsPresenter";
+    private const string StripPreviewHostPartName = "PART_StripPreviewHost";
     private const string LineUpPartName = "PART_LineUp";
     private const string LineDownPartName = "PART_LineDown";
     private const string PopupBackgroundResourceKey =
@@ -99,17 +101,23 @@ public class InRibbonGallery : RibbonGallery
     private ButtonBase? _lineDown;
     private Window? _dpiOwner;
     private int _viewportRefreshGeneration;
-    private Image? _nativeStripPreview;
+    private Decorator? _stripPreviewHost;
+    private Image? _stripPreview;
+    private double _stripOpacity;
+    private UIElement? _stripFocusBeforeOpen;
+    private int _stripReturnGeneration;
+    private bool _restoringStrip;
+    private Action? _pendingNativeClose;
 
     // A mouse pick is committed but the close is being held until the button is
     // released (see the class remarks — closing while the button is down drag-follows
     // the selection to the tile below).
     private bool _commitPending;
 
-    // The strip's scroll offset captured just before the popup opens (before it is zeroed
-    // for hit-testing). The strip reveal glides FROM this so a higher pick slides up and a
-    // lower pick slides down, instead of always gliding down from the top.
+    // Remember the viewed row before the presenter leaves the strip. Cancellation
+    // restores it; a different pick reveals its row by gliding from this position.
     private double _stripOffsetBeforeOpen;
+    private object? _selectedItemBeforeOpen;
 
     static InRibbonGallery()
     {
@@ -211,6 +219,10 @@ public class InRibbonGallery : RibbonGallery
     /// <inheritdoc />
     public override void OnApplyTemplate()
     {
+        FlushPendingNativeClose();
+        _stripReturnGeneration++;
+        HideStripPreview();
+        _restoringStrip = false;
         if (_lineUp is not null)
         {
             _lineUp.Click -= OnLineUpClick;
@@ -249,6 +261,7 @@ public class InRibbonGallery : RibbonGallery
         _stripScrollViewer = GetTemplateChild(ScrollViewerPartName) as ScrollViewer;
         _popupScrollViewer = GetTemplateChild(PopupScrollViewerPartName) as ScrollViewer;
         _itemsPresenter = GetTemplateChild(ItemsPresenterPartName) as ItemsPresenter;
+        _stripPreviewHost = GetTemplateChild(StripPreviewHostPartName) as Decorator;
         _lineUp = GetTemplateChild(LineUpPartName) as ButtonBase;
         _lineDown = GetTemplateChild(LineDownPartName) as ButtonBase;
 
@@ -384,7 +397,7 @@ public class InRibbonGallery : RibbonGallery
         // immediately invalidate wrapping before the popup's HWND has appeared.
         if (value is true && !gallery.IsDropDownOpen && gallery.IsVisible
             && gallery._stripScrollViewer is { } strip)
-            gallery._nativeStripPreview = strip.Content as Image ?? GalleryStripPreview.Create(strip);
+            gallery.CaptureStripPreview(strip);
         return value;
     }
 
@@ -392,7 +405,6 @@ public class InRibbonGallery : RibbonGallery
     {
         var gallery = (InRibbonGallery)d;
         if (gallery.IsDropDownOpen) gallery.SetCurrentValue(IsDropDownOpenProperty, false);
-        gallery._nativeStripPreview = null;
         if (gallery.IsLoaded && gallery.SelectedItem is not null) gallery.QueueViewportRefresh();
     }
 
@@ -415,17 +427,25 @@ public class InRibbonGallery : RibbonGallery
         CancelPendingCommit();
         // It also invalidates a deferred viewport pass for the previous host. An open
         // transition queues a fresh popup pass from OnPopupOpened; a close transition
-        // lets ScrollSelectedIntoStrip own the newly re-homed strip layout.
+        // restores the strip before uncovering it.
         _viewportRefreshGeneration++;
 
         if (open)
         {
+            _stripReturnGeneration++;
+            _restoringStrip = false;
+            bool returning = _pendingNativeClose is not null;
+            _pendingNativeClose = null;
             CloseQuickAccess();
             _dismissHelper.OnOpened();
 
             // Remember where the strip sat so the reveal can glide FROM here later (an
             // upper pick then slides up, a lower pick down). Captured before zeroing.
-            _stripOffsetBeforeOpen = _stripScrollViewer?.VerticalOffset ?? 0d;
+            if (!returning)
+            {
+                if (_stripPreview is null) _stripOffsetBeforeOpen = _stripScrollViewer?.VerticalOffset ?? 0d;
+                _selectedItemBeforeOpen = SelectedItem;
+            }
 
             // The strip viewport never crosses into the Popup HWND. Stop any strip
             // reveal still in flight, reset the popup's independent viewport, then
@@ -445,29 +465,110 @@ public class InRibbonGallery : RibbonGallery
         else
         {
             _dismissHelper.OnClosed();
-
-            // Clear the popup's page while it remains in the Popup HWND, then return
-            // only the presenter. The strip's viewport/clip object has never left the
-            // main window and therefore cannot inherit the popup's stale DPI geometry.
-            RibbonMotion.StopScrollAnimation(_popupScrollViewer);
-            _popupScrollViewer?.ScrollToVerticalOffset(0d);
-            MoveGalleryContent(open: false);
-
-            if (_stripScrollViewer is not null)
+            // Bindings for collapsed wrapping/headings transfer after this callback.
+            // Keep the vector strip in place until the live row can be returned and
+            // restored before the popup uncovers it. Reopening cancels this return.
+            Action close = new Action(CompleteNativeClose);
+            _pendingNativeClose = close;
+            Dispatcher.BeginInvoke(DispatcherPriority.Render, new Action(() =>
             {
-                RefreshViewportLayout(_stripScrollViewer);
-                _stripScrollViewer.ScrollToVerticalOffset(_stripOffsetBeforeOpen);
-                _stripScrollViewer.UpdateLayout();
-            }
-            _nativeStripPreview = null;
-            _popup?.SetCurrentValue(Popup.IsOpenProperty, false);
-
-            // Reveal the committed pick in the collapsed strip — AFTER the presenter is
-            // back in the strip and has re-measured its one-row viewport. Doing this
-            // synchronously here reads a stale viewport (design notes §3.13); deferring
-            // to Loaded lets the strip lay out first.
-            ScrollSelectedIntoStrip();
+                if (ReferenceEquals(_pendingNativeClose, close)) FlushPendingNativeClose();
+            }));
         }
+    }
+
+    // Presenter borrowers and template replacement need a synchronous handoff.
+    internal void FlushPendingNativeClose()
+    {
+        Action? close = _pendingNativeClose;
+        _pendingNativeClose = null;
+        close?.Invoke();
+    }
+
+    private void CompleteNativeClose()
+    {
+        if (!ReferenceEquals(_selectedItemBeforeOpen, SelectedItem))
+            _stripFocusBeforeOpen = SelectedItem is null ? null
+                : ItemContainerGenerator.ContainerFromItem(SelectedItem) as UIElement;
+        // Close the native window before its live presenter is removed. Otherwise
+        // an UpdateLayout during the return can briefly paint a heading-only card.
+        _popup?.SetCurrentValue(Popup.IsOpenProperty, false);
+        RibbonMotion.StopScrollAnimation(_popupScrollViewer);
+        _popupScrollViewer?.ScrollToVerticalOffset(0d);
+        MoveGalleryContent(open: false);
+        RestoreStripAfterBorrow();
+    }
+
+    private void CaptureStripPreview(ScrollViewer strip)
+    {
+        if (_stripPreview is null)
+        {
+            _stripPreview = strip.Content as Image ?? GalleryStripPreview.Create(strip);
+            _stripOffsetBeforeOpen = strip.VerticalOffset;
+            _stripFocusBeforeOpen = IsKeyboardFocusWithin ? Keyboard.FocusedElement as UIElement : null;
+        }
+        if (_stripPreview is not null && _stripPreviewHost is not null && _stripPreviewHost.Child is null)
+        {
+            _stripOpacity = strip.Opacity;
+            strip.SetCurrentValue(OpacityProperty, 0d);
+            _stripPreviewHost.Child = _stripPreview;
+        }
+    }
+
+    internal bool FreezeStripForQuickAccess()
+    {
+        _stripReturnGeneration++;
+        _restoringStrip = false;
+        if (IsVisible && _stripScrollViewer is { } strip) CaptureStripPreview(strip);
+        _selectedItemBeforeOpen = SelectedItem;
+        // The QAT dropdown returns focus to its own opener.
+        _stripFocusBeforeOpen = null;
+        RibbonMotion.StopScrollAnimation(_stripScrollViewer);
+        return _stripPreviewHost?.Child is not null;
+    }
+
+    private void HideStripPreview()
+    {
+        if (_stripPreviewHost?.Child is not null)
+        {
+            _stripPreviewHost.Child = null;
+            _stripScrollViewer?.SetCurrentValue(OpacityProperty, _stripOpacity);
+        }
+        _stripPreview = null;
+    }
+
+    private void RestoreStripAfterBorrow()
+    {
+        int generation = ++_stripReturnGeneration;
+        _restoringStrip = true;
+        RestoreViewedStripOffset();
+        // Keep the separate picture through WPF's Loaded/Render work for the
+        // reattached presenter. Input priority runs after those layout/focus passes;
+        // the source never exposes the interim zero offset or first focused tile.
+        Dispatcher.BeginInvoke(DispatcherPriority.Input, new Action(() =>
+        {
+            if (generation != _stripReturnGeneration || IsDropDownOpen || IsQuickAccessOpen) return;
+            if (_stripFocusBeforeOpen is { IsVisible: true, IsEnabled: true } focus
+                && (Keyboard.FocusedElement is null || IsKeyboardFocusWithin))
+                focus.Focus();
+            RestoreViewedStripOffset();
+            _restoringStrip = false;
+            HideStripPreview();
+
+            // Dismissal keeps the browsed row. A different pick gets its reveal.
+            if (!ReferenceEquals(_selectedItemBeforeOpen, SelectedItem)) ScrollSelectedIntoStrip();
+            _selectedItemBeforeOpen = null;
+            _stripFocusBeforeOpen = null;
+        }));
+    }
+
+    private void RestoreViewedStripOffset()
+    {
+        if (_stripScrollViewer is not { } strip) return;
+        RefreshViewportLayout(strip);
+        strip.ScrollToVerticalOffset(_stripOffsetBeforeOpen);
+        (PresentationSource.FromVisual(strip)?.RootVisual as UIElement)?.UpdateLayout();
+        strip.UpdateLayout();
     }
 
     private bool UsesHostSpecificScrollers =>
@@ -494,7 +595,16 @@ public class InRibbonGallery : RibbonGallery
             ? _popupScrollViewer
             : _stripScrollViewer);
 
-    internal void RefreshAfterQuickAccess() => ScrollSelectedIntoStrip();
+    internal void RefreshAfterQuickAccess()
+    {
+        _restoringStrip = true;
+        int generation = ++_stripReturnGeneration;
+        Dispatcher.BeginInvoke(DispatcherPriority.Render, new Action(() =>
+        {
+            if (generation == _stripReturnGeneration && !IsDropDownOpen && !IsQuickAccessOpen)
+                RestoreStripAfterBorrow();
+        }));
+    }
 
     private void MoveGalleryContent(bool open)
     {
@@ -505,7 +615,7 @@ public class InRibbonGallery : RibbonGallery
 
             if (ReferenceEquals(source.Content, _itemsPresenter))
             {
-                source.Content = open ? _nativeStripPreview : null;
+                source.Content = open && _stripPreviewHost?.Child is null ? _stripPreview : null;
             }
 
             if (!ReferenceEquals(destination.Content, _itemsPresenter))
@@ -650,7 +760,9 @@ public class InRibbonGallery : RibbonGallery
 
     internal void RefreshStripGeometry()
     {
-        if (IsLoaded && !IsDropDownOpen && !IsQuickAccessOpen && SelectedItem is not null)
+        // Re-homing already refreshes and restores the strip. A Touch panel's
+        // measure notification must not queue a second reset to the selected row.
+        if (IsLoaded && !IsDropDownOpen && !IsQuickAccessOpen && !_restoringStrip && SelectedItem is not null)
             QueueViewportRefresh();
     }
 

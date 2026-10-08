@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Data;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
@@ -41,6 +42,8 @@ internal static class NativeGalleryPopupPortabilityChecks
         var mode = new RibbonTab { Header = "Direction" };
         mode.Groups.Add(new RibbonGroup { Header = "Direction" }); ribbon.Tabs.Add(mode);
         ribbon.SelectedTab = home;
+        ribbon.AddToQuickAccess(gallery);
+        var proxy = Assert.IsAssignableFrom<RibbonDropDownButton>(Assert.Single(ribbon.QuickAccessItems));
         var window = new Window { Content = ribbon, Width = 600, Height = 400, Left = 50, Top = 50,
             WindowStyle = WindowStyle.None, ShowActivated = false, ShowInTaskbar = false };
         ThemeManager.Apply(application, RibbonTheme.Office2024);
@@ -70,7 +73,9 @@ internal static class NativeGalleryPopupPortabilityChecks
                 EventHandler opened = (_, _) => Assert.True(viewport.ActualHeight > 200, $"{context}: {viewport.RenderSize}");
                 popup.Opened += opened;
                 gallery.IsDropDownOpen = true;
-                Assert.IsType<DrawingImage>(Assert.IsType<Image>(strip.Content).Source);
+                Assert.Null(strip.Content);
+                var preview = Assert.IsType<Decorator>(gallery.Template.FindName("PART_StripPreviewHost", gallery));
+                Assert.IsType<DrawingImage>(Assert.IsType<Image>(preview.Child).Source);
                 if (capture)
                 {
                     var during = RenderStrip(window, gallery);
@@ -102,12 +107,51 @@ internal static class NativeGalleryPopupPortabilityChecks
                     var bitmap = new RenderTargetBitmap((int)Math.Ceiling(root.ActualWidth * dpi.DpiScaleX), (int)Math.Ceiling(root.ActualHeight * dpi.DpiScaleY), dpi.PixelsPerInchX, dpi.PixelsPerInchY, PixelFormats.Pbgra32);
                     bitmap.Render(root); Save(bitmap, name + "-popup");
                 }
-                gallery.IsDropDownOpen = false; Layout(window);
+                BitmapSource? firstClose = null;
+                EventHandler closed = (_, _) => { if (capture) firstClose = RenderStrip(window, gallery); };
+                popup.Closed += closed;
+                gallery.IsDropDownOpen = false;
+                Layout(window); popup.Closed -= closed;
+                if (capture)
+                {
+                    var restored = Assert.IsAssignableFrom<BitmapSource>(firstClose);
+                    Assert.True(RedPixels(restored) >= RedPixels(before!) * .9, $"{context}: first uncovered strip");
+                    Save(restored, $"{theme}-{density}-{flow}-strip-first-close");
+                }
                 Assert.Same(presenter, strip.Content);
                 var selected = Assert.IsType<RibbonGalleryItem>(gallery.ItemContainerGenerator.ContainerFromIndex(4));
                 var chrome = Part<Border>(selected, "Chrome");
                 Rect bounds = chrome.TransformToVisual(strip).TransformBounds(new Rect(chrome.RenderSize));
                 Assert.True(bounds.Top >= -1 && bounds.Bottom <= strip.ActualHeight + 1, $"{context}: {bounds}, strip {strip.RenderSize}");
+                if (capture)
+                {
+                    Assert.Same(selected, Keyboard.Focus(selected)); Layout(window);
+                    RibbonAnimation.GlobalLevel = RibbonAnimationLevel.Subtle;
+                    try
+                    {
+                        foreach (bool qat in new[] { false, true })
+                        {
+                            int expected = RedPixels(RenderStrip(window, gallery));
+                            Assert.True(expected > 200, context);
+                            var frames = new List<int>();
+                            EventHandler frame = (_, _) => frames.Add(RedPixels(RenderStrip(window, gallery)));
+                            CompositionTarget.Rendering += frame;
+                            try
+                            {
+                                if (qat) proxy.IsDropDownOpen = true; else gallery.IsDropDownOpen = true;
+                                Pump(220);
+                                if (qat) proxy.IsDropDownOpen = false; else gallery.IsDropDownOpen = false;
+                                Pump(250);
+                                Assert.NotEmpty(frames);
+                                Assert.True(frames.All(pixels => pixels >= expected * .9), $"{context}, QAT={qat}: {string.Join(", ", frames)}");
+                                Save(RenderStrip(window, gallery), $"{theme}-{density}-{flow}-focused-{(qat ? "qat" : "native")}-close");
+                                Assert.Equal(4, gallery.SelectedIndex);
+                            }
+                            finally { CompositionTarget.Rendering -= frame; }
+                        }
+                    }
+                    finally { RibbonAnimation.GlobalLevel = RibbonAnimationLevel.None; }
+                }
             }
         }
         finally { gallery.IsDropDownOpen = false; window.Close(); RibbonAnimation.GlobalLevel = motion; ThemeManager.SetDarkMode(application, false); }
@@ -116,6 +160,13 @@ internal static class NativeGalleryPopupPortabilityChecks
     private sealed record Choice(string Name, string Section, Brush Color);
     private static T Part<T>(Control owner, string name) where T : DependencyObject => Assert.IsAssignableFrom<T>(owner.Template.FindName(name, owner));
     private static void Layout(Window window) { Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.Background); window.UpdateLayout(); Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.Background); }
+    private static void Pump(int milliseconds)
+    {
+        var frame = new DispatcherFrame();
+        var timer = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromMilliseconds(milliseconds) };
+        timer.Tick += (_, _) => { timer.Stop(); frame.Continue = false; };
+        timer.Start(); Dispatcher.PushFrame(frame);
+    }
     private static Rect ScreenBounds(FrameworkElement element) => new(element.PointToScreen(default), element.PointToScreen(new Point(element.ActualWidth, element.ActualHeight)));
     private static IEnumerable<T> Descendants<T>(DependencyObject parent) where T : DependencyObject
     {

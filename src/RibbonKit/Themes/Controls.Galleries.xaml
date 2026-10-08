@@ -228,6 +228,10 @@
                                 </ItemsPresenter>
                             </ScrollViewer>
                         </Decorator>
+                        <!-- The borrowed strip picture has its own surface. Returning the
+                             live presenter can reset scrolling/focus before layout settles. -->
+                        <Decorator x:Name="PART_StripPreviewHost" Grid.Column="0" Margin="2"
+                                   IsHitTestVisible="False" />
                         <Grid x:Name="SideButtonHost"
                               Grid.Column="1"
                               Margin="0,1"

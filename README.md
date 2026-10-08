@@ -150,7 +150,9 @@ retains automatic sizing and wrapping at the strip width. Showcase's Theme
 gallery uses a 440-DIP popup for Modern, Office Modern and Office Legacy,
 with one row of tiles per section. The native expanded card starts at the gallery's
 top-left corner in LTR and top-right corner in RTL, including its side buttons;
-WPF keeps the popup inside the available screen area. Set `IsSynchronizedWithCurrentItem="False"`
+WPF keeps the popup inside the available screen area. Dismissing without changing
+the selection keeps the viewed strip row; a different selection reveals its row.
+Set `IsSynchronizedWithCurrentItem="False"`
 when the application owns selection independently of the collection view's
 current item. Dropdown and split buttons retain a single `DropDownHeader`;
 multiple sections can be composed inside their popup content.
@@ -250,9 +252,13 @@ The source gallery keeps its items and ownership. Its existing items presenter
 temporarily moves into the copy's separate popup viewport and returns on close,
 removal or template replacement. A temporary vector preview keeps the visible
 ribbon strip painted while the copy is open; closing restores the live strip
-and reveals the selected tile. One copy can display a source gallery at a time;
+at its viewed row when selection is unchanged, or reveals a different selected
+tile. The preview stays outside the scrolling surface until return layout and
+focus settle. One copy can display a source gallery at a time;
 opening another copy or the source's native flyout closes the previous copy.
 Custom gallery templates must keep their items presenter inside a `ScrollViewer`.
+The shared `InRibbonGallery` template also has a noninteractive
+`PART_StripPreviewHost` decorator beside its viewport for this frozen strip view.
 
 ### Theming & rendering
 
