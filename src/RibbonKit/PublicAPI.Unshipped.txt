@@ -1,4 +1,5 @@
 #nullable enable
+override RibbonKit.Controls.RibbonMessageBar.OnApplyTemplate() -> void
 RibbonKit.Animation.RibbonAnimationAction.DensityChange = 15 -> RibbonKit.Animation.RibbonAnimationAction
 RibbonKit.RibbonDensity
 RibbonKit.RibbonDensity.Compact = 0 -> RibbonKit.RibbonDensity

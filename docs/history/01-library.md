@@ -7442,3 +7442,20 @@ alpha against an unclipped native border; it passed at current 125% DPI together
 with dismissal/cleanup and the QAT/chrome matrix. Sixteen focused runtime checks,
 normal builds and actual light/dark render inspection passed. Current results
 and deferred review gates remain in the active touch plan.
+
+The exposed message rim also sat outside the rows' animation roots, leaving a
+fully opaque edge during first-row entrance/dismissal. The message bar now tracks
+its first presented row and mirrors that root's effective opacity onto the rim,
+sharing existing MessageBar timing/policy without another clock. The rim stays
+anchored to the corner clip: separately sliding it briefly separated the border
+from the clipped fill in intermediate renders. It hands off after first-row
+dismissal and releases/rebinds on empty state, unload and template replacement,
+including generated MVVM containers. The inherited `RibbonMessageBar.OnApplyTemplate`
+override is recorded additively in Unshipped; the shipped baseline and theme keys
+are unchanged. A RibbonKit-only live-clock aggregate reproduced the opaque rim,
+then passed in Release for opening/closing, interruption, disabled motion and
+lifecycle handoff. Render-frame observation avoids missing the short transition
+under offscreen theme/layout work. The six-theme native-corner/divider matrix,
+sixteen focused runtime checks, normal Release/Debug builds and intermediate
+render inspection passed. Current evidence and separate live/full/native gates
+remain in the active touch plan.

@@ -154,7 +154,9 @@ Individual row seams remain unchanged.
 `RibbonKit.Metrics.MessageBar.ExposedTopCornerRadius` rounds that exposed edge:
 `3,3,0,0` in Office2007, `8,8,0,0` in Office2024, and `0` in the other palettes.
 The shared stack clips the first row's paint to those corners and retains its
-single border through dismissal. Below-ribbon QAT placement keeps the join square;
+single border through dismissal. The exposed rim fades with the first presented
+message, stays aligned with the corner clip during the row's glide, and follows
+the next row after dismissal. Below-ribbon QAT placement keeps the join square;
 the minimized Office2007/2024 QAT retains its own exposed upper corners above messages.
 QAT icon/hover policy follows the ribbon's effective resource scope through
 `RibbonKit.Metrics.QatTitleBarColored` and `QatTabRowColored`. ThemeManager sets

@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Automation.Peers;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using RibbonKit.Animation;
@@ -42,6 +43,9 @@ public class RibbonMessageBar : ItemsControl
         HasOpenMessagesPropertyKey.DependencyProperty;
 
     private readonly List<RibbonMessage> _trackedMessages = [];
+    private RibbonMessage? _firstPresentedMessage;
+    private FrameworkElement? _exposedTopBorder;
+    private FrameworkElement? _rimPresentationRoot;
 
     internal event EventHandler? OpenMessagesChanged;
 
@@ -50,6 +54,22 @@ public class RibbonMessageBar : ItemsControl
         DefaultStyleKeyProperty.OverrideMetadata(
             typeof(RibbonMessageBar),
             new FrameworkPropertyMetadata(typeof(RibbonMessageBar)));
+    }
+
+    /// <summary>Initializes a new instance of the <see cref="RibbonMessageBar"/> class.</summary>
+    public RibbonMessageBar()
+    {
+        Loaded += (_, _) => UpdateExposedTopMotion();
+        Unloaded += (_, _) => ClearExposedTopMotion();
+    }
+
+    /// <inheritdoc />
+    public override void OnApplyTemplate()
+    {
+        ClearExposedTopMotion();
+        base.OnApplyTemplate();
+        _exposedTopBorder = GetTemplateChild("ExposedTopBorder") as FrameworkElement;
+        UpdateHasOpenMessages();
     }
 
     /// <inheritdoc />
@@ -75,6 +95,7 @@ public class RibbonMessageBar : ItemsControl
             foreach (RibbonMessage message in _trackedMessages)
             {
                 message.PresentationStateChanged -= OnMessagePresentationStateChanged;
+                message.PresentationRootChanged -= OnMessagePresentationRootChanged;
             }
 
             _trackedMessages.Clear();
@@ -146,6 +167,7 @@ public class RibbonMessageBar : ItemsControl
         {
             _trackedMessages.Add(message);
             message.PresentationStateChanged += OnMessagePresentationStateChanged;
+            message.PresentationRootChanged += OnMessagePresentationRootChanged;
         }
     }
 
@@ -154,14 +176,51 @@ public class RibbonMessageBar : ItemsControl
         if (_trackedMessages.Remove(message))
         {
             message.PresentationStateChanged -= OnMessagePresentationStateChanged;
+            message.PresentationRootChanged -= OnMessagePresentationRootChanged;
             message.SetIsLastOpenMessage(false);
         }
     }
 
     private void OnMessagePresentationStateChanged(object? sender, EventArgs e) => UpdateHasOpenMessages();
 
+    private void OnMessagePresentationRootChanged(object? sender, EventArgs e) => UpdateExposedTopMotion();
+
+    private void UpdateExposedTopMotion()
+    {
+        FrameworkElement? root = IsLoaded ? _firstPresentedMessage?.PresentationRoot : null;
+        if (_exposedTopBorder is null || ReferenceEquals(root, _rimPresentationRoot))
+        {
+            return;
+        }
+
+        ClearExposedTopMotion();
+        if (root is null)
+        {
+            return;
+        }
+
+        // The exposed rim is stack-owned, but its paint belongs to the first presented row.
+        // Mirror that row's effective opacity instead of starting a second transition that can
+        // drift or outlive an interrupted dismissal. Keep the rim anchored to the stack's fixed
+        // corner clip while the row glides inside it, so the top edge cannot float above its fill.
+        _rimPresentationRoot = root;
+        BindingOperations.SetBinding(_exposedTopBorder, OpacityProperty,
+            new Binding(nameof(Opacity)) { Source = root, Mode = BindingMode.OneWay });
+    }
+
+    private void ClearExposedTopMotion()
+    {
+        if (_exposedTopBorder is not null && _rimPresentationRoot is not null)
+        {
+            BindingOperations.ClearBinding(_exposedTopBorder, OpacityProperty);
+        }
+
+        _rimPresentationRoot = null;
+    }
+
     private void UpdateHasOpenMessages()
     {
+        RibbonMessage? firstPresentedMessage = null;
         RibbonMessage? lastPresentedMessage = null;
         for (int index = 0; index < Items.Count; index++)
         {
@@ -169,6 +228,7 @@ public class RibbonMessageBar : ItemsControl
                 ?? ItemContainerGenerator.ContainerFromIndex(index) as RibbonMessage;
             if (message?.IsPresented == true)
             {
+                firstPresentedMessage ??= message;
                 lastPresentedMessage = message;
             }
         }
@@ -182,6 +242,7 @@ public class RibbonMessageBar : ItemsControl
             {
                 if (message.IsPresented)
                 {
+                    firstPresentedMessage ??= message;
                     lastPresentedMessage = message;
                 }
             }
@@ -191,6 +252,9 @@ public class RibbonMessageBar : ItemsControl
         {
             message.SetIsLastOpenMessage(ReferenceEquals(message, lastPresentedMessage));
         }
+
+        _firstPresentedMessage = firstPresentedMessage;
+        UpdateExposedTopMotion();
 
         bool hasOpenMessages = lastPresentedMessage is not null;
         if (hasOpenMessages == HasOpenMessages)
@@ -331,6 +395,9 @@ public class RibbonMessage : Control
     private int _transitionVersion;
 
     internal event EventHandler? PresentationStateChanged;
+    internal event EventHandler? PresentationRootChanged;
+
+    internal FrameworkElement? PresentationRoot => _presentationRoot;
 
     static RibbonMessage()
     {
@@ -451,6 +518,7 @@ public class RibbonMessage : Control
         base.OnApplyTemplate();
 
         _presentationRoot = GetTemplateChild(RootPartName) as FrameworkElement;
+        PresentationRootChanged?.Invoke(this, EventArgs.Empty);
         _actionButton = GetTemplateChild(ActionButtonPartName) as ButtonBase;
         _closeButton = GetTemplateChild(CloseButtonPartName) as ButtonBase;
 
