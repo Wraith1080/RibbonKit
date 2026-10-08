@@ -120,11 +120,47 @@ detached host content. Local overrides follow WPF precedence; `ClearValue` on
 setting and matching `RibbonKit.Metrics.Touch.*` theme keys. Application/window
 resources can override touch metrics consistently across detached surfaces.
 
-Hosts own the selector and persistence. Showcase offers **View → Touch mode** and
-saves it with appearance preferences; customization import/reset does not change
+Hosts own the selector and persistence. Showcase offers **View → Touch/Mouse Mode**
+with Mouse (Compact) and Touch choices, and saves the choice with appearance
+preferences; customization import/reset does not change
 density. Application-authored fixed-size content and native window/document UI
 remain host-owned. See the [touch plan](docs/14-TOUCH-DENSITY-PLAN.md#verification-and-acceptance)
 for automated evidence and pending native touch, visual and DPI acceptance.
+
+### Dropdown headings and descriptive rows
+
+`RibbonDropDownButton.DropDownHeader` adds a noninteractive heading above the
+scrollable popup items. `RibbonSplitButton` inherits it, and QAT proxies follow
+the source heading. Null or empty keeps the original popup layout. The heading
+uses the shared theme's `RibbonKit.Brushes.ApplicationMenu.HeaderBackground` and
+primary text brush, including scoped resource overrides.
+`RibbonKit.Metrics.DropDownHeaderCornerRadius` rounds all four heading
+corners: 3 DIP for Office2007/2010, 6 for Office2024 and 8 for Crystal; the other
+Office themes remain square. Dark palettes inherit the same geometry.
+
+`RibbonMenuItem.Description` adds wrapped explanatory text below an emphasized
+label and supplies the default UI Automation help text. `LargeIcon` takes
+precedence over `Icon`, using 32 DIP in Compact and the theme's large-icon metric
+in Touch. Leaving these properties unset retains ordinary menu-row geometry.
+
+```xml
+<rk:RibbonDropDownButton Header="Touch/Mouse Mode"
+                       DropDownHeader="Optimize spacing between commands">
+    <rk:RibbonMenuItem Header="Mouse"
+                       Description="Standard ribbon and commands."
+                       LargeIcon="{StaticResource MouseIcon}"
+                       Command="{Binding MouseModeCommand}" />
+    <rk:RibbonMenuItem Header="Touch"
+                       Description="More space between commands."
+                       LargeIcon="{StaticResource TouchIcon}"
+                       Command="{Binding TouchModeCommand}" />
+</rk:RibbonDropDownButton>
+```
+
+Applications provide the icons, commands and chosen-mode state; the menu item's
+existing `Background` can reflect that choice through bindings or style triggers.
+The heading and row presentation are shared RibbonKit behavior and require no
+Showcase resources or helpers.
 
 ### Theming & rendering
 

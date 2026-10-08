@@ -1223,6 +1223,16 @@ public class Ribbon : Control
             }
         }
 
+        if (proxy is RibbonDropDownButton proxyMenu && source is RibbonDropDownButton sourceMenu)
+        {
+            proxyMenu.SetBinding(RibbonDropDownButton.DropDownHeaderProperty,
+                new System.Windows.Data.Binding(nameof(RibbonDropDownButton.DropDownHeader))
+                {
+                    Source = sourceMenu,
+                    Mode = System.Windows.Data.BindingMode.OneWay,
+                });
+        }
+
         proxy.SetValue(QuickAccessSourcePropertyKey, source);
         MirrorEnabledState(proxy, source);
         return proxy;

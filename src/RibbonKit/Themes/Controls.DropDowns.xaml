@@ -189,16 +189,37 @@
                                 <!-- AdornerDecorator gives the popup its own adorner layer so
                                      KeyTip badges can render over the menu items. -->
                                 <AdornerDecorator>
-                                    <ScrollViewer x:Name="PART_PopupScrollViewer" PanningMode="VerticalOnly"
-                                                  Focusable="False" VerticalScrollBarVisibility="Auto"
-                                                  HorizontalScrollBarVisibility="Disabled">
-                                        <ItemsPresenter />
-                                    </ScrollViewer>
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="*" />
+                                        </Grid.RowDefinitions>
+                                        <Border x:Name="DropDownHeaderHost" Padding="8,6"
+                                                Background="{DynamicResource RibbonKit.Brushes.ApplicationMenu.HeaderBackground}"
+                                                CornerRadius="{DynamicResource RibbonKit.Metrics.DropDownHeaderCornerRadius}"
+                                                IsHitTestVisible="False">
+                                            <TextBlock x:Name="DropDownHeaderText"
+                                                       Text="{TemplateBinding DropDownHeader}"
+                                                       Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}"
+                                                       FontWeight="SemiBold" TextWrapping="Wrap" />
+                                        </Border>
+                                        <ScrollViewer x:Name="PART_PopupScrollViewer" Grid.Row="1" PanningMode="VerticalOnly"
+                                                      Focusable="False" VerticalScrollBarVisibility="Auto"
+                                                      HorizontalScrollBarVisibility="Disabled">
+                                            <ItemsPresenter />
+                                        </ScrollViewer>
+                                    </Grid>
                                 </AdornerDecorator>
                             </controls:PopupBorder>
                         </Popup>
                     </Grid>
                     <ControlTemplate.Triggers>
+                        <Trigger Property="DropDownHeader" Value="{x:Null}">
+                            <Setter TargetName="DropDownHeaderHost" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="DropDownHeader" Value="">
+                            <Setter TargetName="DropDownHeaderHost" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
                         <Trigger Property="LargeIcon" Value="{x:Null}">
                             <Setter TargetName="LargeImage" Property="Source"
                                     Value="{Binding Icon, RelativeSource={RelativeSource TemplatedParent}}" />
@@ -611,16 +632,37 @@
                                 <!-- AdornerDecorator gives the popup its own adorner layer so
                                      KeyTip badges can render over the menu items. -->
                                 <AdornerDecorator>
-                                    <ScrollViewer x:Name="PART_PopupScrollViewer" PanningMode="VerticalOnly"
-                                                  Focusable="False" VerticalScrollBarVisibility="Auto"
-                                                  HorizontalScrollBarVisibility="Disabled">
-                                        <ItemsPresenter />
-                                    </ScrollViewer>
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="*" />
+                                        </Grid.RowDefinitions>
+                                        <Border x:Name="DropDownHeaderHost" Padding="8,6"
+                                                Background="{DynamicResource RibbonKit.Brushes.ApplicationMenu.HeaderBackground}"
+                                                CornerRadius="{DynamicResource RibbonKit.Metrics.DropDownHeaderCornerRadius}"
+                                                IsHitTestVisible="False">
+                                            <TextBlock x:Name="DropDownHeaderText"
+                                                       Text="{TemplateBinding DropDownHeader}"
+                                                       Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}"
+                                                       FontWeight="SemiBold" TextWrapping="Wrap" />
+                                        </Border>
+                                        <ScrollViewer x:Name="PART_PopupScrollViewer" Grid.Row="1" PanningMode="VerticalOnly"
+                                                      Focusable="False" VerticalScrollBarVisibility="Auto"
+                                                      HorizontalScrollBarVisibility="Disabled">
+                                            <ItemsPresenter />
+                                        </ScrollViewer>
+                                    </Grid>
                                 </AdornerDecorator>
                             </controls:PopupBorder>
                         </Popup>
                     </Grid>
                     <ControlTemplate.Triggers>
+                        <Trigger Property="DropDownHeader" Value="{x:Null}">
+                            <Setter TargetName="DropDownHeaderHost" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="DropDownHeader" Value="">
+                            <Setter TargetName="DropDownHeaderHost" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
                         <Trigger Property="LargeIcon" Value="{x:Null}">
                             <Setter TargetName="LargeImage" Property="Source"
                                     Value="{Binding Icon, RelativeSource={RelativeSource TemplatedParent}}" />
@@ -735,34 +777,60 @@
     <Style TargetType="{x:Type controls:RibbonMenuItem}">
         <Setter Property="FocusVisualStyle" Value="{StaticResource RibbonKit.KeyboardFocusVisual}" />
         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+        <Setter Property="Background" Value="Transparent" />
         <Setter Property="MinWidth" Value="160" />
+        <Setter Property="AutomationProperties.HelpText" Value="{Binding Description, RelativeSource={RelativeSource Self}, TargetNullValue=''}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type controls:RibbonMenuItem}">
                     <Border x:Name="Chrome"
-                            Background="Transparent"
+                            Background="{TemplateBinding Background}"
                             BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
                             CornerRadius="{DynamicResource RibbonKit.Metrics.MenuItemCornerRadius}"
                             Padding="6,5"
                             SnapsToDevicePixels="True">
                         <Grid>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="24" />
+                                <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
-                            <Image Grid.Column="0"
+                            <Image x:Name="SmallImage" Grid.Column="0"
                                    Source="{TemplateBinding Icon}"
                                    Width="16" Height="16"
+                                   Margin="0,0,8,0"
+                                   Visibility="Collapsed"
                                    Stretch="Uniform"
                                    HorizontalAlignment="Left"
                                    VerticalAlignment="Center" />
-                            <TextBlock Grid.Column="1"
-                                       Text="{TemplateBinding Header}"
-                                       VerticalAlignment="Center"
-                                       Margin="2,0,8,0" />
+                            <Image x:Name="LargeImage" Grid.Column="0"
+                                   Source="{TemplateBinding LargeIcon}"
+                                   Width="32" Height="32" Margin="0,0,8,0"
+                                   Stretch="Uniform" HorizontalAlignment="Left" VerticalAlignment="Center" />
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="2,0,8,0">
+                                <TextBlock x:Name="HeaderText" Text="{TemplateBinding Header}" FontWeight="SemiBold" />
+                                <TextBlock x:Name="DescriptionText" Text="{TemplateBinding Description}"
+                                           Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
+                                           TextWrapping="Wrap" MaxWidth="260" Margin="0,2,0,0" />
+                            </StackPanel>
                         </Grid>
                     </Border>
                     <ControlTemplate.Triggers>
+                        <Trigger Property="LargeIcon" Value="{x:Null}">
+                            <Setter TargetName="LargeImage" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="SmallImage" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="Description" Value="{x:Null}">
+                            <Setter TargetName="DescriptionText" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="HeaderText" Property="FontWeight" Value="{Binding FontWeight, RelativeSource={RelativeSource TemplatedParent}}" />
+                        </Trigger>
+                        <Trigger Property="Description" Value="">
+                            <Setter TargetName="DescriptionText" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="HeaderText" Property="FontWeight" Value="{Binding FontWeight, RelativeSource={RelativeSource TemplatedParent}}" />
+                        </Trigger>
+                        <Trigger Property="controls:Ribbon.Density" Value="Touch">
+                            <Setter TargetName="LargeImage" Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.LargeIconSize}" />
+                            <Setter TargetName="LargeImage" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.LargeIconSize}" />
+                        </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="Chrome" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />

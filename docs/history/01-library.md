@@ -7459,3 +7459,42 @@ under offscreen theme/layout work. The six-theme native-corner/divider matrix,
 sixteen focused runtime checks, normal Release/Debug builds and intermediate
 render inspection passed. Current evidence and separate live/full/native gates
 remain in the active touch plan.
+
+The 2026-10-08 Touch/Mouse selector follow-up adds native dropdown headings and
+descriptive rows rather than an application-specific popup template.
+`RibbonDropDownButton.DropDownHeader` sits above the native scrolling items and
+is inherited by split buttons and bound by QAT proxies. `RibbonMenuItem.Description`
+adds secondary text/default UI Automation help; `LargeIcon` uses 32 DIP in Compact
+and the existing Touch metric. Null/empty defaults preserve ordinary menus, and
+the existing `Background` now paints row chrome under the usual hover/pressed
+precedence. These three documented properties add nine Unshipped API symbols;
+the shipped baseline and theme-key set remain unchanged. Showcase owns the
+Mouse/Touch commands, highlight, vector icons and existing Boolean preference.
+The former toggle's explicit legacy command ID preserves serialized QAT entries.
+
+The RibbonKit-only heading/row matrix passed across themes, light/dark, densities
+and text directions, plus split/dropdown QAT cases in all three placements.
+Focused Showcase checks verify selected paint, popup dismissal, borrowed-item
+return and legacy customization round trips without changing user preferences.
+An initial Office2019 assertion mistook hover paint for missing selection; the
+fixture now respects the existing hover/pressed precedence while still checking
+the selected background. Final focused checks, normal builds and popup renders
+passed; the [active touch plan](../14-TOUCH-DENSITY-PLAN.md#touchmouse-dropdown-selector--2026-10-08)
+records the exact combined evidence and deferred visual/full/native gates.
+
+The heading's square fill was subsequently refined with the shared
+`DropDownHeaderCornerRadius` metric: upper radii 3 DIP in Office2007/2010, 6 in
+Office2024 and 8 in Crystal, with square lower edges and zero rounding in
+Office2013/2019. Six base palettes define the metric and dark overlays inherit
+it. Both dropdown and split templates consume it without changing popup
+outlines, padding, rows or scrolling; no C# API was added. The updated independent
+matrix and seven Showcase selector checks passed, native-heading renders were
+inspected, and normal Release runtime/Debug Showcase output was rebuilt. The
+active touch plan retains the separate user review and deferred full/native gates.
+
+The next review requested matching lower heading corners beside the rounded
+selection/hover surfaces. The existing metric now uses uniform 3/6/8-DIP radii
+in Office2007/2010, Office2024 and Crystal respectively; the square themes retain
+zero. Minimal verification reran only the updated independent selector scope,
+inspected current native-heading renders and refreshed normal Debug Showcase.
+No API or layout behavior changed; full/native testing remains deferred.

@@ -180,7 +180,7 @@ public partial class MainWindow : RibbonWindow
             ApplyTheme(preferences.Theme);
 
             DarkModeToggle.IsChecked = preferences.DarkMode;
-            TouchModeToggle.IsChecked = preferences.TouchMode;
+            MainRibbon.Density = preferences.TouchMode ? RibbonDensity.Touch : RibbonDensity.Compact;
             AccentedTitleBarToggle.IsChecked = preferences.AccentedTitleBar;
             ApplyAccentPreference(preferences.Accent);
 
@@ -504,11 +504,10 @@ public partial class MainWindow : RibbonWindow
         SaveAppearancePreferences();
     }
 
-    private void OnToggleTouchMode(object sender, RoutedEventArgs e)
+    private void OnSelectDensity(object sender, RoutedEventArgs e)
     {
-        if (MainRibbon is null || TouchModeToggle is null) return;
-        MainRibbon.Density = TouchModeToggle.IsChecked == true
-            ? RibbonDensity.Touch : RibbonDensity.Compact;
+        if (MainRibbon is null || sender is not RibbonMenuItem { Tag: RibbonDensity density }) return;
+        MainRibbon.Density = density;
         SaveAppearancePreferences();
     }
 

@@ -40,14 +40,14 @@ public class TouchAdaptiveLayoutTests
             if (setBeforeShow)
             {
                 RibbonCustomizationSerializer.Apply(ribbon, savedLayout);
-                window.TouchModeToggle.IsChecked = true;
+                window.TouchModeChoice.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
                 ribbon.SelectedTab = view;
             }
             window.Show(); Layout(window);
             if (!setBeforeShow)
             {
                 RibbonCustomizationSerializer.Apply(ribbon, savedLayout);
-                window.TouchModeToggle.IsChecked = true;
+                window.TouchModeChoice.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
                 Layout(window);
             }
             ribbon.SelectedTab = view; Layout(window);

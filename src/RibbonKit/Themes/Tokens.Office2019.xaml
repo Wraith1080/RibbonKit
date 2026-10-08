@@ -292,6 +292,7 @@
     <CornerRadius x:Key="RibbonKit.Metrics.OptionCornerRadius">0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.SmallControlCornerRadius">0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.PopupCornerRadius">0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.DropDownHeaderCornerRadius">0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.TabCornerRadius">0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.TabHoverCornerRadius">0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.TabMinimizedCornerRadius">0</CornerRadius>

@@ -42,6 +42,14 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
             typeof(RibbonDropDownButton),
             new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsMeasure));
 
+    /// <summary>Identifies the <see cref="DropDownHeader"/> dependency property.</summary>
+    public static readonly DependencyProperty DropDownHeaderProperty =
+        DependencyProperty.Register(
+            nameof(DropDownHeader),
+            typeof(string),
+            typeof(RibbonDropDownButton),
+            new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsMeasure));
+
     /// <summary>Identifies the <see cref="Icon"/> dependency property.</summary>
     public static readonly DependencyProperty IconProperty =
         DependencyProperty.Register(
@@ -136,6 +144,16 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
     {
         get => (string?)GetValue(HeaderProperty);
         set => SetValue(HeaderProperty, value);
+    }
+
+    /// <summary>
+    /// Optional noninteractive heading above the dropdown's scrollable items. Null or empty
+    /// hides the heading. Inherited by <see cref="RibbonSplitButton"/> and mirrored by QAT proxies.
+    /// </summary>
+    public string? DropDownHeader
+    {
+        get => (string?)GetValue(DropDownHeaderProperty);
+        set => SetValue(DropDownHeaderProperty, value);
     }
 
     /// <summary>The 16px icon used by the Medium and Small layouts.</summary>

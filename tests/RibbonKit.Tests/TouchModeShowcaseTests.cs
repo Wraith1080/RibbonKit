@@ -239,8 +239,8 @@ public class TouchModeShowcaseTests
             AssertGallerySpacing(window);
             var tabs = Part<RibbonTabControl>(window.MainRibbon, "TabControlHost");
             var body = Part<Border>(tabs, "ContentHost");
-            double compactIcon = Part<Image>(window.TouchModeToggle, "LargeImage").ActualWidth;
-            window.TouchModeToggle.IsChecked = true; Layout(window);
+            double compactIcon = Part<Image>(window.TouchModeSelector, "LargeImage").ActualWidth;
+            window.TouchModeChoice.RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); Layout(window);
             Assert.Equal(RibbonDensity.Touch, window.MainRibbon.Density);
             foreach (var message in messages)
             {
@@ -254,16 +254,16 @@ public class TouchModeShowcaseTests
                 Assert.Equal(actionFont, action.FontSize);
             }
             Assert.False(Part<Button>(window.UnavailableActionMessage, "PART_ActionButton").IsEnabled);
-            Assert.InRange(body.ActualHeight, window.TouchModeToggle.ActualHeight,
-                window.TouchModeToggle.ActualHeight + 48);
-            Assert.True(Part<Image>(window.TouchModeToggle, "LargeImage").ActualWidth > compactIcon);
+            Assert.InRange(body.ActualHeight, window.TouchModeSelector.ActualHeight,
+                window.TouchModeSelector.ActualHeight + 48);
+            Assert.True(Part<Image>(window.TouchModeSelector, "LargeImage").ActualWidth > compactIcon);
             foreach (bool colored in new[] { false, true })
             {
                 window.AccentedTitleBarToggle.IsChecked = colored; Layout(window);
-                foreach (var command in new[] { window.DarkModeToggle, window.AccentedTitleBarToggle,
-                    window.TouchModeToggle, window.GlassTreatmentToggle, window.MicaToggle, window.AcrylicToggle })
-                    Assert.InRange(command.ActualHeight, window.TouchModeToggle.ActualHeight - 1,
-                        window.TouchModeToggle.ActualHeight + 1);
+                foreach (var command in new Control[] { window.DarkModeToggle, window.AccentedTitleBarToggle,
+                    window.TouchModeSelector, window.GlassTreatmentToggle, window.MicaToggle, window.AcrylicToggle })
+                    Assert.InRange(command.ActualHeight, window.TouchModeSelector.ActualHeight - 1,
+                        window.TouchModeSelector.ActualHeight + 1);
                 if (window.MainRibbon.ApplicationButtonShape == RibbonApplicationButtonShape.Tab)
                 {
                     var file = Part<ToggleButton>(tabs, "PART_ApplicationButton");

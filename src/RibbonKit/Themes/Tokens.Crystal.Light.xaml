@@ -329,6 +329,7 @@
     <CornerRadius x:Key="RibbonKit.Metrics.MenuItemCornerRadius">4</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.SmallControlCornerRadius">5</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.PopupCornerRadius">8</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.DropDownHeaderCornerRadius">8</CornerRadius>
     <!-- A persistent boundary needs less white than a transient hover rim: the
          gallery is surrounded by pale surfaces on both sides of this outline. -->
     <DrawingGroup x:Key="Crystal.Drawing.GalleryRim">
