@@ -7,7 +7,8 @@ namespace RibbonKit.Controls;
 internal sealed class GalleryPopupWidthConverter : IMultiValueConverter
 {
     public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture) =>
-        values[2] is true && values[1] is double popupWidth && double.IsFinite(popupWidth)
+        values.Length > 3 && values[3] is true ? double.PositiveInfinity
+        : values[2] is true && values[1] is double popupWidth && double.IsFinite(popupWidth)
             ? popupWidth
             : values[0] is double stripWidth ? stripWidth : double.PositiveInfinity;
 

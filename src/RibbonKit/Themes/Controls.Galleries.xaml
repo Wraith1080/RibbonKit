@@ -32,10 +32,13 @@
                         <ItemsPresenter />
                     </StackPanel>
                     <ControlTemplate.Triggers>
-                        <DataTrigger Binding="{Binding TemplatedParent.IsDropDownOpen, RelativeSource={RelativeSource AncestorType={x:Type ItemsPresenter}}}"
-                                     Value="False">
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding TemplatedParent.IsDropDownOpen, RelativeSource={RelativeSource AncestorType={x:Type ItemsPresenter}}}" Value="False" />
+                                <Condition Binding="{Binding TemplatedParent.IsQuickAccessOpen, RelativeSource={RelativeSource AncestorType={x:Type ItemsPresenter}}}" Value="False" />
+                            </MultiDataTrigger.Conditions>
                             <Setter TargetName="GroupHeaderHost" Property="Visibility" Value="Collapsed" />
-                        </DataTrigger>
+                        </MultiDataTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
@@ -137,6 +140,10 @@
          RibbonGallery — wrapped tiles (for use inside flyouts)
          ============================================================ -->
     <Style TargetType="{x:Type controls:RibbonGallery}">
+        <Style.Resources>
+            <Style x:Key="RibbonKit.GalleryGroupStyle" TargetType="{x:Type GroupItem}"
+                   BasedOn="{StaticResource RibbonKit.GalleryGroupStyle}" />
+        </Style.Resources>
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="ItemsPanel">
@@ -215,6 +222,7 @@
                                             <Binding Path="ActualWidth" RelativeSource="{RelativeSource TemplatedParent}" />
                                             <Binding Path="PopupWidth" RelativeSource="{RelativeSource TemplatedParent}" />
                                             <Binding Path="IsDropDownOpen" RelativeSource="{RelativeSource TemplatedParent}" />
+                                            <Binding Path="IsQuickAccessOpen" RelativeSource="{RelativeSource TemplatedParent}" />
                                         </MultiBinding>
                                     </ItemsPresenter.MaxWidth>
                                 </ItemsPresenter>

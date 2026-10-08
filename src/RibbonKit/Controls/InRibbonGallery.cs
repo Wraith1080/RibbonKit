@@ -387,6 +387,7 @@ public class InRibbonGallery : RibbonGallery
 
         if (open)
         {
+            CloseQuickAccess();
             _dismissHelper.OnOpened();
 
             // Remember where the strip sat so the reveal can glide FROM here later (an
@@ -439,9 +440,11 @@ public class InRibbonGallery : RibbonGallery
         && _itemsPresenter is not null;
 
     private ScrollViewer? ActiveScrollViewer =>
-        IsDropDownOpen && UsesHostSpecificScrollers
+        QuickAccessViewport ?? (IsDropDownOpen && UsesHostSpecificScrollers
             ? _popupScrollViewer
-            : _stripScrollViewer;
+            : _stripScrollViewer);
+
+    internal void RefreshAfterQuickAccess() => ScrollSelectedIntoStrip();
 
     private void MoveGalleryContent(bool open)
     {
@@ -582,7 +585,7 @@ public class InRibbonGallery : RibbonGallery
 
     internal void RefreshStripGeometry()
     {
-        if (IsLoaded && !IsDropDownOpen && SelectedItem is not null)
+        if (IsLoaded && !IsDropDownOpen && !IsQuickAccessOpen && SelectedItem is not null)
             QueueViewportRefresh();
     }
 
@@ -613,7 +616,7 @@ public class InRibbonGallery : RibbonGallery
                         DispatcherPriority.Render,
                         queueRenderPass: false);
                 }
-                else if (!IsDropDownOpen)
+                else if (!IsDropDownOpen && !IsQuickAccessOpen)
                 {
                     RestoreSelectedStripOffset(expectedScrollViewer);
                 }
@@ -748,7 +751,7 @@ public class InRibbonGallery : RibbonGallery
             DispatcherPriority.Loaded,
             new Action(() =>
             {
-                if (IsDropDownOpen || _stripScrollViewer is null)
+                if (IsDropDownOpen || IsQuickAccessOpen || _stripScrollViewer is null)
                 {
                     return;
                 }

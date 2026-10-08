@@ -47,7 +47,7 @@ below describes the current checkout, including post-release additions; see
 - File tab or Office 2007 orb, two-pane application menu, and Backstage with Modern,
   Classic, Classic2010, Glass2007, Classic2007, CrystalSidebar and CrystalFloating designs.
 - Repeatable message bars with actions/dismissal; Backstage page/footer/recent patterns.
-- Three QAT placements, overflow and source-linked button/toggle/split/dropdown/combo proxies.
+- Three QAT placements, overflow and source-linked button/toggle/split/dropdown/combo/gallery proxies.
 - Contextual tabs, tab/group merging and modal-tab lifetimes.
 - Ribbon/QAT customization with JSON Import/Export/Reset and application-controlled storage.
 
@@ -179,7 +179,7 @@ Showcase resources or helpers.
 
 ### Commands declared only in QAT
 
-Buttons, toggles, dropdowns, split buttons and combo boxes declared directly in
+Buttons, toggles, dropdowns, split buttons, combo boxes and galleries declared directly in
 `Ribbon.QuickAccessItems` appear in both customization pages' available-command
 lists, even after removal from QAT. They can be re-added to QAT or copied into a
 custom ribbon group. RibbonKit retains these command sources for the ribbon's
@@ -193,7 +193,7 @@ and assign each a stable `Ribbon.CommandId` (for example `cmd.undo`). Removed
 commands then remain available after restart, custom-group copies resolve to the
 new application's source, and Reset restores the original QAT items. Untagged
 QAT-only commands remain available in the current instance but are not persisted.
-Combo boxes are displayed as dropdown copies, including after Reset.
+Combo boxes and galleries are displayed as dropdown copies, including after Reset.
 
 ### Combo boxes in QAT
 
@@ -221,6 +221,36 @@ presentation. Directly authored visual elements are represented by their text
 or accessible name, so each original item keeps its parent. Editable combos also
 offer their existing choices in QAT; typing and the text-editing context menu
 remain on the original input. Assign a stable command ID for saved customization.
+
+### Galleries in QAT
+
+`RibbonGallery.Header` and `Icon` provide the customization caption and optional
+dropdown image, including on `InRibbonGallery`. Add a gallery through either
+customization page, its ribbon context menu, or `Ribbon.AddToQuickAccess(gallery)`.
+Custom ribbon groups use the same dropdown representation.
+
+```xml
+<rk:InRibbonGallery Header="Styles" Icon="{StaticResource StylesIcon}"
+                    rk:Ribbon.CommandId="command.styles" PopupWidth="320"
+                    ItemsSource="{Binding Styles}"
+                    ItemTemplate="{StaticResource StylePreviewTemplate}"
+                    SelectedItem="{Binding SelectedStyle, Mode=TwoWay}" />
+```
+
+The popup retains the original rich tiles, native groups and `GroupStyle`, item
+templates, selection bindings, `SelectionChanged`, `ItemPreview` and
+`ItemPreviewCancelled` handlers. `InRibbonGallery.DropDownHeader` and `PopupWidth`
+also apply to its copies. It works from inactive tabs and QAT overflow, across
+all three placements. Arrows navigate tiles; Enter/Space picks and closes; Escape
+closes. Mouse picks close after release, and closing cancels an active preview.
+
+The source gallery keeps its items and ownership. Its existing items presenter
+temporarily moves into the copy's separate popup viewport and returns on close,
+removal or template replacement. A temporary vector preview keeps the visible
+ribbon strip painted while the copy is open; closing restores the live strip
+and reveals the selected tile. One copy can display a source gallery at a time;
+opening another copy or the source's native flyout closes the previous copy.
+Custom gallery templates must keep their items presenter inside a `ScrollViewer`.
 
 ### Theming & rendering
 

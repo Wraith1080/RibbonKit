@@ -1081,13 +1081,15 @@ public class Ribbon : Control
         RibbonCustomizeRequested?.Invoke(this, EventArgs.Empty);
 
     /// <summary>
-    /// Adds <paramref name="source"/> (a button, toggle, split button, dropdown, or combo box) to
+    /// Adds <paramref name="source"/> (a button, toggle, split button, dropdown, combo box or gallery) to
     /// the quick access toolbar. A removed directly declared QAT item is restored as itself,
-    /// except combo boxes, which use dropdown copies.
+    /// except combo boxes and galleries, which use dropdown copies.
     /// For a ribbon-group source, a small PROXY button is created that mirrors its
     /// 16px icon and ScreenTip and invokes it (toggles stay state-synced via a two-way IsChecked
     /// binding). Combo boxes use an icon dropdown that selects from their existing items;
-    /// editable text input stays on the original combo. Returns <see langword="false"/> when the control is already in the QAT or its type
+    /// editable text input stays on the original combo. Galleries retain their native tiles,
+    /// grouping, selection and preview handlers in the copy's popup.
+    /// Returns <see langword="false"/> when the control is already in the QAT or its type
     /// does not have a supported quick-access representation.
     /// </summary>
     public bool AddToQuickAccess(FrameworkElement source)
@@ -1099,7 +1101,7 @@ public class Ribbon : Control
             return false;
         }
 
-        if (_declaredQuickAccessCommands.Contains(source) && source is not RibbonComboBox)
+        if (_declaredQuickAccessCommands.Contains(source) && source is not (RibbonComboBox or RibbonGallery))
         {
             // Restore the authored item itself, including its command bindings/handlers.
             QuickAccessItems.Add(source);
@@ -1122,7 +1124,7 @@ public class Ribbon : Control
     }
 
     private static bool IsSupportedQuickAccessSource(FrameworkElement source) =>
-        source is RibbonButton or RibbonToggleButton or RibbonDropDownButton or RibbonComboBox;
+        source is RibbonButton or RibbonToggleButton or RibbonDropDownButton or RibbonComboBox or RibbonGallery;
 
     // Directly declared QAT commands may have no ribbon-group counterpart. Keep their
     // source objects for this ribbon's lifetime so Remove/Clear/Apply cannot erase the
@@ -1170,16 +1172,16 @@ public class Ribbon : Control
                     }
                 }
 
-                if (item is RibbonComboBox combo)
+                if (item is FrameworkElement choice && item is (RibbonComboBox or RibbonGallery))
                 {
-                    // Normalize directly authored QAT combos after collection notification.
+                    // Normalize directly authored QAT choices after collection notification.
                     // The source stays retained/logically owned for bindings and Reset.
                     Dispatcher.BeginInvoke(DispatcherPriority.DataBind, new Action(() =>
                     {
-                        int index = QuickAccessItems.IndexOf(combo);
+                        int index = QuickAccessItems.IndexOf(choice);
                         if (index < 0) return;
-                        var proxy = CreateCommandProxy(combo, RibbonControlSize.Small);
-                        if (GetMergeSource(combo) is { } mergeSource) SetMergeSourceInternal(proxy, mergeSource);
+                        var proxy = CreateCommandProxy(choice, RibbonControlSize.Small);
+                        if (GetMergeSource(choice) is { } mergeSource) SetMergeSourceInternal(proxy, mergeSource);
                         QuickAccessItems[index] = proxy;
                     }));
                 }
@@ -1206,6 +1208,11 @@ public class Ribbon : Control
         FrameworkElement proxy;
         switch (source)
         {
+            case RibbonGallery gallery:
+                proxy = new RibbonGalleryQuickAccessProxy(gallery, this) { Size = size };
+                proxy.SetBinding(FlowDirectionProperty, new Binding(nameof(FlowDirection)) { Source = this });
+                break;
+
             case RibbonComboBox combo:
                 proxy = new RibbonComboBoxQuickAccessProxy(combo, this) { Size = size };
                 // Title-bar and overflow hosts can be outside this ribbon's tree.

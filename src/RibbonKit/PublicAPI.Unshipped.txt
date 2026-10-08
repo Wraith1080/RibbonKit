@@ -1,4 +1,11 @@
 #nullable enable
+RibbonKit.Controls.RibbonGallery.Header.get -> string?
+RibbonKit.Controls.RibbonGallery.Header.set -> void
+RibbonKit.Controls.RibbonGallery.Icon.get -> System.Windows.Media.ImageSource?
+RibbonKit.Controls.RibbonGallery.Icon.set -> void
+static readonly RibbonKit.Controls.RibbonGallery.HeaderProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonGallery.IconProperty -> System.Windows.DependencyProperty!
+override RibbonKit.Controls.RibbonGallery.OnApplyTemplate() -> void
 RibbonKit.Controls.RibbonComboBox.Icon.get -> System.Windows.Media.ImageSource?
 RibbonKit.Controls.RibbonComboBox.Icon.set -> void
 static readonly RibbonKit.Controls.RibbonComboBox.IconProperty -> System.Windows.DependencyProperty!

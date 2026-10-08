@@ -29,7 +29,7 @@ internal sealed class InRibbonGalleryPanel : WrapPanel
         double width = constraint.Width;
         _visibleChildren.Clear();
         if (gallery is null || Ribbon.GetDensity(gallery) != RibbonDensity.Touch
-            || gallery.IsDropDownOpen || Orientation != Orientation.Horizontal
+            || gallery.IsDropDownOpen || gallery.IsQuickAccessOpen || Orientation != Orientation.Horizontal
             || !double.IsNaN(ItemWidth) || !double.IsNaN(ItemHeight)
             || !double.IsFinite(width) || width <= 0 || height <= 0
             || InternalChildren.Count == 0)

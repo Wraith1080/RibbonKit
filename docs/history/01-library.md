@@ -7671,9 +7671,10 @@ disabled-item skipping, End scrolling, Enter/Space selection, Escape/focus retur
 outer-popup dismissal and removal/re-addition. Office/Crystal Compact/Touch
 consumer previews were inspected.
 
-The full runtime/Writer/visual/consumer suite remains deferred at the user's
-request. Native mouse interaction, mixed-monitor DPI and user visual acceptance
-are separate unrecorded gates.
+User live review (2026-10-08) accepted the popup mouse highlighting and dropdown
+copies added to a new custom tab and group. The full runtime/Writer/visual/consumer
+suite remains deferred at the user's request; mixed-monitor DPI was outside this
+review.
 
 Mouse-hover follow-up (2026-10-08): the user found that the first enabled row
 retained the opening keyboard focus while another choice was hovered, producing
@@ -7690,3 +7691,78 @@ passed 64 checks, including an Office2007/Crystal Compact/Touch hover regression
 and the existing ordinary dropdown borrowing checks. The 288-case combo consumer
 matrix and its overflow/keyboard checks passed again. Full-suite and user live
 acceptance remain separate from these synthetic-input results.
+
+### 3.230 Gallery dropdown copies for QAT and customization — 2026-10-08
+
+`RibbonGallery` now exposes optional `Header` and `Icon` metadata. Both gallery
+types appear as whole commands in the customization catalog, without descending
+into tiles. QAT, overflow and custom-group copies use a shared internal dropdown
+projection. Showcase gives Styles, Theme and Accent galleries icons, captions
+and stable command IDs. Directly declared QAT galleries are normalized to copies
+and retained for removal/re-addition and persistence, like combo boxes. Gallery
+automatic IDs use a separate counter so previous button/combo IDs stay stable.
+Seven compatible Unshipped API symbols were added; the shipped baseline is unchanged.
+
+The source keeps its control, items, native containers, templates, collection-view
+groups, selection bindings and application handlers. Only its existing items
+presenter is borrowed while a copy is open; every copy keeps a separate popup
+viewport. This preserves arbitrary authored visual tiles as well as templated
+data, including on an inactive source tab. Opening another copy or the native
+gallery popup closes the previous copy before transferring the presenter.
+Close, removal, overflow dismissal and template replacement return it; the
+source strip reveals the selected tile when it becomes visible again.
+
+The user's first live QAT/overflow review exposed an empty original Styles strip
+while its presenter was borrowed. A temporary vector preview now keeps that
+visible strip painted until close. It copies the visible drawings, transforms,
+clipping, opacity and pixel-snapping guidelines without cloning controls, items,
+bindings or handlers. Matching the viewport's flow direction preserves RTL tile
+positions and text. Closing returns the live presenter and reveals the chosen
+tile through the existing selection path. This fix adds no public API.
+
+Native tile selection events need an explicit relay because the original selector
+is outside the copy's visual event route. The relay preserves source selection
+and binding behavior. Arrows/Home/End navigate visible tiles and select through
+the native container; Enter/Space commits the focused tile and closes. Mouse
+close waits for release, including capture on the original selector. Closing
+releases gallery-owned capture before returning the presenter and cancels an
+active preview. The viewport's automation peer exposes the source's native item
+and selection providers alongside native scrolling. Group headings, gallery
+scrollbars and tile paint use shared templates/tokens; popup width and heading
+bindings remain live. Custom gallery templates require a presenter in a scroller.
+
+Release solution and normal Debug Showcase builds passed with zero warnings and
+errors. The initial focused runtime run passed 71 checks covering gallery behavior,
+combo/button compatibility, customization persistence and Showcase's real Theme
+selection handler. An independent RibbonKit-only consumer passed 288 combinations
+of six themes, light/dark, Compact/Touch, LTR/RTL, simulated 125%/200% DPI and all
+three QAT placements. It checks the customization pages, inactive sources, group
+headings, one row per section, bounds, native UIA selection and presenter return.
+Its synthetic keyboard/mouse checks passed disabled-item fallback, arrow picks,
+Up/last-item opening, Enter/Space commit, Escape/focus return, nested overflow
+dismissal, preview/cancel events and removal. Office/Crystal Compact/Touch popup
+images were inspected; no snapshot approvals changed.
+
+After the visible-strip fix, the final focused runtime run passed 75 checks,
+including four new Office/Crystal, Compact/Touch and LTR/RTL cases at simulated
+125%/200% DPI. They cover both a direct QAT popup and nested overflow, selected
+tile preservation, presenter return and reveal after an overflow pick. An
+earlier combined run failed one existing native-popup selection-reveal case;
+its four cases passed in a fresh process, then all 75 passed together without
+changing that test. The transient failure's cause is unconfirmed.
+
+The independent consumer's existing 288 inactive-source combinations completed
+again. A separate follow-up run passed 48 visible, data-templated source-strip
+combinations across Office/Crystal, Compact/Touch, LTR/RTL, simulated 125%/200%
+DPI and all QAT placements, plus visible overflow dismissal and the existing
+keyboard/mouse checks. Its initial follow-up fixture needed selection set
+before load so the native strip revealed that row before testing QAT. Cropped
+window renders preserve the actual RTL coordinate context; Office/Crystal
+before/open images were inspected with matching tile positions, text and chrome.
+Release solution and normal Debug Showcase builds passed with zero warnings and
+errors. No snapshot approvals changed.
+
+The full runtime/Writer/visual/consumer suite remains deferred at the user's
+request. User live gallery acceptance and native mixed-monitor DPI are pending.
+Group-to-QAT support is a later slice; group entries must be available only in
+Customize QAT, excluded from Customize Ribbon.

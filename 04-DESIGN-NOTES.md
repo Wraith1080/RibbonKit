@@ -872,6 +872,10 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [Optional combo icons, source-owned choices and selection, overflow and independent-consumer checks](docs/history/01-library.md#3229-combo-box-dropdown-copies-for-qat-and-customization--2026-10-08).
 
+### 3.230 Gallery dropdown copies for QAT and customization — 2026-10-08
+
+[Gallery metadata, native rich-tile borrowing, selection/preview routing and consumer checks](docs/history/01-library.md#3230-gallery-dropdown-copies-for-qat-and-customization--2026-10-08).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),

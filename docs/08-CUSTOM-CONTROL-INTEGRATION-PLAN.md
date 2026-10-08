@@ -4,6 +4,20 @@ No public projection-provider API is frozen. Ordinary `FrameworkElement` content
 already works in a `RibbonGroup`; `IRibbonSizeAware` is an optional reduction hook.
 The proposal below adds customization/QAT participation without changing that baseline.
 
+Built-in combo and gallery dropdown copies are now implemented separately
+([library history §3.229](history/01-library.md#3229-combo-box-dropdown-copies-for-qat-and-customization--2026-10-08),
+[§3.230](history/01-library.md#3230-gallery-dropdown-copies-for-qat-and-customization--2026-10-08)).
+They do not introduce the generic provider API proposed below. Gallery copies
+retain the native source presenter, borrowing it between separate permanent
+viewports as `InRibbonGallery` already does for its own expansion. The generic
+fresh-view contract below remains a candidate for third-party controls. A temporary
+vector preview preserves the visible source strip while a gallery copy is open;
+closing restores the live strip and reveals the committed selection.
+
+Group-to-QAT support remains a later slice. The user requires group entries to
+appear and be addable only in Customize QAT, with those entries excluded from
+Customize Ribbon. Individual commands keep their normal customization availability.
+
 ## Capability and lifetime contract
 
 Customization eligibility needs stable `Ribbon.CommandId`, display name and small

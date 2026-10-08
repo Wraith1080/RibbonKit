@@ -18,6 +18,33 @@ namespace RibbonKit.Tests;
 public sealed class ShowcaseViewChoiceTests
 {
     [Fact]
+    public void Theme_gallery_qat_preserves_authored_visuals_and_the_real_selection_handler() => Sta.Run(() =>
+    {
+        var application = Sta.UseApplication(showcaseResources: true);
+        ThemeManager.Apply(application, RibbonTheme.Office2024);
+        var motion = RibbonAnimation.GlobalLevel; RibbonAnimation.GlobalLevel = RibbonAnimationLevel.None;
+        var main = new MainWindow();
+        typeof(MainWindow).GetField("_restoringAppearance", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(main, true);
+        Assert.True(main.MainRibbon.AddToQuickAccess(main.ThemeGallery));
+        var proxy = main.MainRibbon.QuickAccessItems.OfType<RibbonDropDownButton>().Single(item => ReferenceEquals(Ribbon.GetQuickAccessSource(item), main.ThemeGallery));
+        var host = new Window { Content = proxy, Width = 600, Height = 400, Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
+        try
+        {
+            host.Show(); Sta.Drain(); host.UpdateLayout(); Sta.Drain();
+            foreach (var tile in main.ThemeGallery.Items.Cast<RibbonGalleryItem>().ToArray())
+            {
+                proxy.IsDropDownOpen = true; Sta.Drain(); host.UpdateLayout(); Sta.Drain();
+                Assert.True(tile.ActualWidth > 0); Assert.Same(tile, main.ThemeGallery.ItemContainerGenerator.ContainerFromItem(tile));
+                tile.IsSelected = true; Sta.Drain(); host.UpdateLayout(); Sta.Drain();
+                Assert.Equal(Enum.Parse<RibbonTheme>(tile.Tag!.ToString()!), ThemeManager.CurrentTheme);
+                Assert.Same(tile, main.ThemeGallery.SelectedItem);
+                proxy.IsDropDownOpen = false; Sta.Drain(); Assert.Equal(6, main.ThemeGallery.Items.Count);
+            }
+        }
+        finally { host.Close(); main.Close(); RibbonAnimation.GlobalLevel = motion; Sta.ResetApplication(); }
+    });
+
+    [Fact]
     public void Main_window_constructs_with_theme_gallery_and_backstage_dropdown() => Sta.Run(() =>
     {
         var application = Sta.UseApplication(showcaseResources: true);
@@ -44,6 +71,8 @@ public sealed class ShowcaseViewChoiceTests
                 Assert.All(combos, combo => Assert.NotNull(combo.Icon));
                 Assert.Contains(combos, combo => Ribbon.GetCommandId(combo) == "command.home.font.family");
                 Assert.Contains(combos, combo => Ribbon.GetCommandId(combo) == "command.home.font.size");
+                var galleries = RibbonCommandCatalog.CollectAvailable(window.MainRibbon).Select(entry => entry.Control).OfType<RibbonGallery>().ToArray();
+                Assert.Equal(3, galleries.Length); Assert.All(galleries, gallery => Assert.NotNull(gallery.Icon));
 
                 // Exercise the real selection handlers without writing the user's
                 // persisted Showcase appearance from this headless test.

@@ -608,6 +608,8 @@
                 <rk:RibbonGroup Header="Styles" rk:Ribbon.CommandId="group.home.styles" Icon="{StaticResource Icon.Style}" ReductionPriority="10">
                     <!-- Width fits exactly 3 tile columns (3 × 78px tiles + 21px chrome/buttons) -->
                     <rk:InRibbonGallery x:Name="StylesGallery"
+                                        Header="Styles" Icon="{StaticResource Icon.Style}"
+                                        rk:Ribbon.CommandId="command.styles"
                                         DropDownHeader="Choose a style"
                                         Width="258"
                                         SelectedIndex="0"
@@ -822,6 +824,8 @@
                 <!-- Runtime theme switch — same templates, different token dictionary -->
                 <rk:RibbonGroup Header="Theme" rk:Ribbon.CommandId="group.view.theme" Icon="{StaticResource Icon.Palette}">
                     <rk:InRibbonGallery x:Name="ThemeGallery"
+                                        Header="Theme" Icon="{StaticResource Icon.Palette}"
+                                        rk:Ribbon.CommandId="command.theme"
                                         Width="158"
                                         PopupWidth="440"
                                         IsSynchronizedWithCurrentItem="False"
@@ -903,6 +907,8 @@
                                            ScreenTipText="Color the title bar with the accent color (best in the Office 2024 theme)." />
                     <!-- Accent swatches as a gallery: pick a color to recolor the theme -->
                     <rk:InRibbonGallery x:Name="AccentGallery"
+                                        Header="Accent" Icon="{StaticResource Icon.ColorDrop}"
+                                        rk:Ribbon.CommandId="command.accent"
                                         DropDownHeader="Choose an accent color"
                                         Width="150"
                                         VerticalAlignment="Center"
