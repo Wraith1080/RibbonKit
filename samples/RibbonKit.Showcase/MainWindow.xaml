@@ -493,6 +493,7 @@
                          narrows and the sizing engine steps it to Medium the button falls back to
                          the horizontal arrangement on its own. -->
                     <rk:RibbonSplitButton Header="Paste"
+                                          DropDownHeader="Paste options"
                                           x:Name="DemoSplitTarget"
                                           rk:Ribbon.CommandId="cmd.paste"
                                           Layout="Vertical"
@@ -603,6 +604,7 @@
                 <rk:RibbonGroup Header="Styles" rk:Ribbon.CommandId="group.home.styles" Icon="{StaticResource Icon.Style}" ReductionPriority="10">
                     <!-- Width fits exactly 3 tile columns (3 × 78px tiles + 21px chrome/buttons) -->
                     <rk:InRibbonGallery x:Name="StylesGallery"
+                                        DropDownHeader="Choose a style"
                                         Width="258"
                                         SelectedIndex="0"
                                         ItemPreview="OnStylePreview"
@@ -817,45 +819,62 @@
                 <rk:RibbonGroup Header="Theme" rk:Ribbon.CommandId="group.view.theme" Icon="{StaticResource Icon.Palette}">
                     <rk:InRibbonGallery x:Name="ThemeGallery"
                                         Width="158"
+                                        PopupWidth="440"
+                                        IsSynchronizedWithCurrentItem="False"
                                         VerticalAlignment="Center"
                                         AutomationProperties.Name="Theme"
                                         SelectionChanged="OnThemeGalleryChanged">
-                        <rk:RibbonGalleryItem Tag="CrystalLight" ToolTip="Crystal">
-                            <StackPanel Orientation="Horizontal" Width="112" Height="40">
-                                <Image Source="{StaticResource Icon.Mica}" Width="22" Height="22" Margin="4,0,6,0" />
-                                <TextBlock Text="Crystal" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </rk:RibbonGalleryItem>
-                        <rk:RibbonGalleryItem Tag="Office2024" ToolTip="Office 2024">
-                            <StackPanel Orientation="Horizontal" Width="112" Height="40">
-                                <Image Source="{StaticResource Icon.Palette}" Width="22" Height="22" Margin="4,0,6,0" />
-                                <TextBlock Text="Office 2024" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </rk:RibbonGalleryItem>
-                        <rk:RibbonGalleryItem Tag="Office2019" ToolTip="Office 2019">
-                            <StackPanel Orientation="Horizontal" Width="112" Height="40">
-                                <Image Source="{StaticResource Icon.Palette}" Width="22" Height="22" Margin="4,0,6,0" />
-                                <TextBlock Text="Office 2019" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </rk:RibbonGalleryItem>
-                        <rk:RibbonGalleryItem Tag="Office2013" ToolTip="Office 2013">
-                            <StackPanel Orientation="Horizontal" Width="112" Height="40">
-                                <Image Source="{StaticResource Icon.Palette}" Width="22" Height="22" Margin="4,0,6,0" />
-                                <TextBlock Text="Office 2013" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </rk:RibbonGalleryItem>
-                        <rk:RibbonGalleryItem Tag="Office2010" ToolTip="Office 2010">
-                            <StackPanel Orientation="Horizontal" Width="112" Height="40">
-                                <Image Source="{StaticResource Icon.Palette}" Width="22" Height="22" Margin="4,0,6,0" />
-                                <TextBlock Text="Office 2010" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </rk:RibbonGalleryItem>
-                        <rk:RibbonGalleryItem Tag="Office2007" ToolTip="Office 2007">
-                            <StackPanel Orientation="Horizontal" Width="112" Height="40">
-                                <Image Source="{StaticResource Icon.Palette}" Width="22" Height="22" Margin="4,0,6,0" />
-                                <TextBlock Text="Office 2007" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </rk:RibbonGalleryItem>
+                        <rk:InRibbonGallery.Resources>
+                            <local:ThemeGalleryGroupingConverter x:Key="ThemeFamily" />
+                            <CollectionViewSource x:Key="ThemeChoices">
+                                <CollectionViewSource.GroupDescriptions>
+                                    <PropertyGroupDescription PropertyName="Tag" Converter="{StaticResource ThemeFamily}" />
+                                </CollectionViewSource.GroupDescriptions>
+                                <CollectionViewSource.Source>
+                                    <x:Array Type="{x:Type rk:RibbonGalleryItem}">
+                                        <rk:RibbonGalleryItem Tag="CrystalLight" ToolTip="Crystal">
+                                            <StackPanel Orientation="Horizontal" Width="112" Height="40">
+                                                <Image Source="{StaticResource Icon.Mica}" Width="22" Height="22" Margin="4,0,6,0" />
+                                                <TextBlock Text="Crystal" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </rk:RibbonGalleryItem>
+                                        <rk:RibbonGalleryItem Tag="Office2024" ToolTip="Office 2024">
+                                            <StackPanel Orientation="Horizontal" Width="112" Height="40">
+                                                <Image Source="{StaticResource Icon.Palette}" Width="22" Height="22" Margin="4,0,6,0" />
+                                                <TextBlock Text="Office 2024" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </rk:RibbonGalleryItem>
+                                        <rk:RibbonGalleryItem Tag="Office2019" ToolTip="Office 2019">
+                                            <StackPanel Orientation="Horizontal" Width="112" Height="40">
+                                                <Image Source="{StaticResource Icon.Palette}" Width="22" Height="22" Margin="4,0,6,0" />
+                                                <TextBlock Text="Office 2019" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </rk:RibbonGalleryItem>
+                                        <rk:RibbonGalleryItem Tag="Office2013" ToolTip="Office 2013">
+                                            <StackPanel Orientation="Horizontal" Width="112" Height="40">
+                                                <Image Source="{StaticResource Icon.Palette}" Width="22" Height="22" Margin="4,0,6,0" />
+                                                <TextBlock Text="Office 2013" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </rk:RibbonGalleryItem>
+                                        <rk:RibbonGalleryItem Tag="Office2010" ToolTip="Office 2010">
+                                            <StackPanel Orientation="Horizontal" Width="112" Height="40">
+                                                <Image Source="{StaticResource Icon.Palette}" Width="22" Height="22" Margin="4,0,6,0" />
+                                                <TextBlock Text="Office 2010" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </rk:RibbonGalleryItem>
+                                        <rk:RibbonGalleryItem Tag="Office2007" ToolTip="Office 2007">
+                                            <StackPanel Orientation="Horizontal" Width="112" Height="40">
+                                                <Image Source="{StaticResource Icon.Palette}" Width="22" Height="22" Margin="4,0,6,0" />
+                                                <TextBlock Text="Office 2007" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </rk:RibbonGalleryItem>
+                                    </x:Array>
+                                </CollectionViewSource.Source>
+                            </CollectionViewSource>
+                        </rk:InRibbonGallery.Resources>
+                        <rk:InRibbonGallery.ItemsSource>
+                            <Binding Source="{StaticResource ThemeChoices}" />
+                        </rk:InRibbonGallery.ItemsSource>
                     </rk:InRibbonGallery>
                 </rk:RibbonGroup>
                 <!-- Accent customization: title-bar accent toggle + swappable accent color -->
@@ -880,6 +899,7 @@
                                            ScreenTipText="Color the title bar with the accent color (best in the Office 2024 theme)." />
                     <!-- Accent swatches as a gallery: pick a color to recolor the theme -->
                     <rk:InRibbonGallery x:Name="AccentGallery"
+                                        DropDownHeader="Choose an accent color"
                                         Width="150"
                                         VerticalAlignment="Center"
                                         SelectionChanged="OnAccentGalleryChanged">

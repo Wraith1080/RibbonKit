@@ -131,12 +131,27 @@ for automated evidence and pending native touch, visual and DPI acceptance.
 
 `RibbonDropDownButton.DropDownHeader` adds a noninteractive heading above the
 scrollable popup items. `RibbonSplitButton` inherits it, and QAT proxies follow
-the source heading. Null or empty keeps the original popup layout. The heading
+the source heading. `InRibbonGallery.DropDownHeader` adds the same heading above
+the expanded gallery's tiles, outside their scroll viewport, without changing
+the collapsed strip. Null or empty keeps the original popup layout. The heading
 uses the shared theme's `RibbonKit.Brushes.ApplicationMenu.HeaderBackground` and
 primary text brush, including scoped resource overrides.
 `RibbonKit.Metrics.DropDownHeaderCornerRadius` rounds all four heading
 corners: 3 DIP for Office2007/2010, 6 for Office2024 and 8 for Crystal; the other
 Office themes remain square. Dark palettes inherit the same geometry.
+
+For multiple gallery sections, bind `InRibbonGallery.ItemsSource` to a grouped
+WPF collection view (for example, `CollectionViewSource.GroupDescriptions` with
+`PropertyGroupDescription`). The shared template shows each group name above
+its wrapped tiles in the popup and hides those headings in the collapsed strip.
+Consumer-provided `GroupStyle` takes precedence. `InRibbonGallery.PopupWidth`
+sets the expanded card width independently of the strip; its default `NaN`
+retains automatic sizing and wrapping at the strip width. Showcase's Theme
+gallery uses a 440-DIP popup for Modern, Office Modern and Office Legacy,
+with one row of tiles per section. Set `IsSynchronizedWithCurrentItem="False"`
+when the application owns selection independently of the collection view's
+current item. Dropdown and split buttons retain a single `DropDownHeader`;
+multiple sections can be composed inside their popup content.
 
 `RibbonMenuItem.Description` adds wrapped explanatory text below an emphasized
 label and supplies the default UI Automation help text. `LargeIcon` takes
@@ -161,6 +176,23 @@ Applications provide the icons, commands and chosen-mode state; the menu item's
 existing `Background` can reflect that choice through bindings or style triggers.
 The heading and row presentation are shared RibbonKit behavior and require no
 Showcase resources or helpers.
+
+### Commands declared only in QAT
+
+Buttons, toggles, dropdowns and split buttons declared directly in
+`Ribbon.QuickAccessItems` appear in both customization pages' available-command
+lists, even after removal from QAT. They can be re-added to QAT or copied into a
+custom ribbon group. RibbonKit retains these command sources for the ribbon's
+lifetime and keeps parentless sources in its logical tree so inherited bindings,
+resources and routed commands remain connected after removal. Local data-context
+overrides still take precedence. Generated proxies and transient merge commands
+do not enter this catalog.
+
+Declare the application's default QAT items before applying saved customization,
+and assign each a stable `Ribbon.CommandId` (for example `cmd.undo`). Removed
+commands then remain available after restart, custom-group copies resolve to the
+new application's source, and Reset restores the original QAT items. Untagged
+QAT-only commands remain available in the current instance but are not persisted.
 
 ### Theming & rendering
 

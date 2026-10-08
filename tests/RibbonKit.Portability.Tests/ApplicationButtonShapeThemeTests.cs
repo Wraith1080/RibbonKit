@@ -141,6 +141,16 @@ public sealed class ApplicationButtonShapeThemeTests
     public void Theme_default_and_local_value_follow_wpf_precedence() => RunSta(() =>
     {
         var application = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "GroupedGalleries")
+        {
+            GroupedGalleryPortabilityChecks.Verify(application);
+            return;
+        }
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "GalleryHeadersAndQatCommands")
+        {
+            GalleryHeaderAndQatCommandChecks.Verify(application);
+            return;
+        }
         if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "DensitySelector")
         {
             DropDownHeaderPortabilityChecks.Verify(application);
@@ -187,6 +197,9 @@ public sealed class ApplicationButtonShapeThemeTests
         DensityTransitionPortabilityChecks.Verify(application);
         MessageTransitionPortabilityChecks.Verify(application);
         DropDownHeaderPortabilityChecks.Verify(application);
+        GalleryHeaderAndQatCommandChecks.Verify(application);
+
+        GroupedGalleryPortabilityChecks.Verify(application);
         ThemeManager.Apply(application, RibbonTheme.Office2024);
         KeyboardFocusPortabilityChecks.Verify(application);
         KeyboardNavigationPortabilityChecks.Verify(application);

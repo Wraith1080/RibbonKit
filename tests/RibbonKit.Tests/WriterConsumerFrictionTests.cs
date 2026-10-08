@@ -373,7 +373,8 @@ public sealed class WriterConsumerFrictionTests
 
             Assert.NotSame(stripScrollViewer, popupScrollViewer);
             Assert.Same(stripScrollViewer, contentHost.Child);
-            Assert.Same(popupScrollViewer, popupHost.Child);
+            var popupLayout = Assert.IsType<Grid>(popupHost.Child);
+            Assert.Same(popupLayout, popupScrollViewer.Parent);
             Assert.Same(itemsPresenter, stripScrollViewer.Content);
             Assert.Null(popupScrollViewer.Content);
 
@@ -385,13 +386,15 @@ public sealed class WriterConsumerFrictionTests
             Sta.Drain(DispatcherPriority.Loaded);
             Sta.Drain(DispatcherPriority.Render);
             Assert.Same(stripScrollViewer, contentHost.Child);
-            Assert.Same(popupScrollViewer, popupHost.Child);
+            Assert.Same(popupLayout, popupHost.Child);
+            Assert.Same(popupLayout, popupScrollViewer.Parent);
             Assert.Null(stripScrollViewer.Content);
             Assert.Same(itemsPresenter, popupScrollViewer.Content);
 
             gallery.IsDropDownOpen = false;
             Assert.Same(stripScrollViewer, contentHost.Child);
-            Assert.Same(popupScrollViewer, popupHost.Child);
+            Assert.Same(popupLayout, popupHost.Child);
+            Assert.Same(popupLayout, popupScrollViewer.Parent);
             Assert.Same(itemsPresenter, stripScrollViewer.Content);
             Assert.Null(popupScrollViewer.Content);
         }

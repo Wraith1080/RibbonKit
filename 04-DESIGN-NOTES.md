@@ -860,6 +860,14 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [Inherited density, detached surfaces, adaptive width refresh and live transitions](docs/history/01-library.md#3226-shared-compacttouch-density--2026-10-07).
 
+### 3.227 Gallery popup headings and QAT-only command recovery — 2026-10-08
+
+[Shared gallery headings and retained command sources for both customization pages and persistence](docs/history/01-library.md#3227-gallery-popup-headings-and-qat-only-command-recovery--2026-10-08).
+
+### 3.228 Grouped Theme gallery with an independent popup width — 2026-10-08
+
+[Native collection-view groups, shared headings and one-row Theme sections](docs/history/01-library.md#3228-grouped-theme-gallery-with-an-independent-popup-width--2026-10-08).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),

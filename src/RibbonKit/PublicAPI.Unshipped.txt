@@ -1,4 +1,11 @@
 #nullable enable
+RibbonKit.Controls.InRibbonGallery.PopupWidth.get -> double
+RibbonKit.Controls.InRibbonGallery.PopupWidth.set -> void
+static readonly RibbonKit.Controls.InRibbonGallery.PopupWidthProperty -> System.Windows.DependencyProperty!
+override RibbonKit.Controls.Ribbon.LogicalChildren.get -> System.Collections.IEnumerator!
+RibbonKit.Controls.InRibbonGallery.DropDownHeader.get -> string?
+RibbonKit.Controls.InRibbonGallery.DropDownHeader.set -> void
+static readonly RibbonKit.Controls.InRibbonGallery.DropDownHeaderProperty -> System.Windows.DependencyProperty!
 RibbonKit.Controls.RibbonDropDownButton.DropDownHeader.get -> string?
 RibbonKit.Controls.RibbonDropDownButton.DropDownHeader.set -> void
 static readonly RibbonKit.Controls.RibbonDropDownButton.DropDownHeaderProperty -> System.Windows.DependencyProperty!

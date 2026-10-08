@@ -65,6 +65,17 @@ public class InRibbonGallery : RibbonGallery
     private const string LegacyPopupBackgroundResourceKey =
         "RibbonKit.Brushes.Ribbon.ContentBackground";
 
+    /// <summary>Identifies the <see cref="DropDownHeader"/> dependency property.</summary>
+    public static readonly DependencyProperty DropDownHeaderProperty =
+        RibbonDropDownButton.DropDownHeaderProperty.AddOwner(typeof(InRibbonGallery));
+
+    /// <summary>Identifies the <see cref="PopupWidth"/> dependency property.</summary>
+    public static readonly DependencyProperty PopupWidthProperty =
+        DependencyProperty.Register(
+            nameof(PopupWidth), typeof(double), typeof(InRibbonGallery),
+            new FrameworkPropertyMetadata(double.NaN, FrameworkPropertyMetadataOptions.AffectsMeasure),
+            value => value is double width && (double.IsNaN(width) || (width > 0 && double.IsFinite(width))));
+
     /// <summary>Identifies the <see cref="IsDropDownOpen"/> dependency property.</summary>
     public static readonly DependencyProperty IsDropDownOpenProperty =
         DependencyProperty.Register(
@@ -161,6 +172,27 @@ public class InRibbonGallery : RibbonGallery
         }
     }
 
+    /// <summary>
+    /// Optional noninteractive heading above the expanded gallery's scrollable tiles.
+    /// Null or empty hides the heading without changing the collapsed strip.
+    /// </summary>
+    public string? DropDownHeader
+    {
+        get => (string?)GetValue(DropDownHeaderProperty);
+        set => SetValue(DropDownHeaderProperty, value);
+    }
+
+    /// <summary>
+    /// Width of the expanded gallery card in device-independent units.
+    /// The default, <see cref="double.NaN"/>, sizes the popup from tiles wrapped
+    /// at the strip's width. An explicit width changes only the expanded layout.
+    /// </summary>
+    public double PopupWidth
+    {
+        get => (double)GetValue(PopupWidthProperty);
+        set => SetValue(PopupWidthProperty, value);
+    }
+
     /// <summary>Whether the expanded gallery popup is open.</summary>
     public bool IsDropDownOpen
     {
@@ -188,6 +220,13 @@ public class InRibbonGallery : RibbonGallery
         }
 
         CancelPendingCommit();
+
+        // WPF collection views own grouping and selection. Supply shared heading
+        // chrome only when the consumer has not provided its own GroupStyle.
+        if (GroupStyle.Count == 0 && TryFindResource("RibbonKit.GalleryGroupStyle") is Style groupStyle)
+        {
+            GroupStyle.Add(new GroupStyle { ContainerStyle = groupStyle });
+        }
 
         base.OnApplyTemplate();
 

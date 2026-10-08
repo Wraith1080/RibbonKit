@@ -12,7 +12,7 @@ namespace RibbonKit.Controls;
 /// </summary>
 internal static class RibbonCommandCatalog
 {
-    /// <summary>All commandable controls in the ribbon's groups, with their tab › group path.</summary>
+    /// <summary>Group commands with their tab › group path, plus directly declared QAT commands.</summary>
     internal static ObservableCollection<RibbonCommandEntry> CollectAvailable(Ribbon ribbon)
     {
         var entries = new ObservableCollection<RibbonCommandEntry>();
@@ -28,6 +28,14 @@ internal static class RibbonCommandCatalog
                     entries.Add(new RibbonCommandEntry(
                         control, $"{tabName} › {groupName} › {described.DisplayName}", described.Icon));
                 }
+            }
+        }
+
+        foreach (FrameworkElement control in ribbon.DeclaredQuickAccessCommands)
+        {
+            if (!entries.Any(entry => ReferenceEquals(entry.Control, control)))
+            {
+                entries.Add(Describe(control));
             }
         }
 
@@ -147,6 +155,11 @@ internal static class RibbonCommandCatalog
                     Add(Describe(control).Icon);
                 }
             }
+        }
+
+        foreach (FrameworkElement control in ribbon.DeclaredQuickAccessCommands)
+        {
+            Add(Describe(control).Icon);
         }
 
         return icons;

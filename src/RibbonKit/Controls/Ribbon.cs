@@ -386,7 +386,7 @@ public class Ribbon : Control
         tabs.CollectionChanged += OnTabsCollectionChanged;
         SetValue(TabsPropertyKey, tabs);
         var quickAccessItems = new ObservableCollection<object>();
-        quickAccessItems.CollectionChanged += (_, _) => UpdateQatButtonContext();
+        quickAccessItems.CollectionChanged += OnQuickAccessItemsCollectionChanged;
         SetValue(QuickAccessItemsPropertyKey, quickAccessItems);
         _keyTipService = new KeyTipService(this);
         PropertyChangedEventManager.AddHandler(
@@ -406,8 +406,9 @@ public class Ribbon : Control
     /// <summary>
     /// Small controls (typically <see cref="RibbonButton"/>s with
     /// <c>Size="Small"</c>) shown in the quick access strip next to the application
-    /// button — Save/Undo/Redo territory. Moves into the title bar once RibbonWindow
-    /// chrome integration lands.
+    /// button — Save/Undo/Redo territory. Directly declared command controls remain
+    /// available in both customization pages after removal. Assign a stable
+    /// <see cref="CommandIdProperty"/> to restore them from saved customization.
     /// </summary>
     public ObservableCollection<object> QuickAccessItems =>
         (ObservableCollection<object>)GetValue(QuickAccessItemsProperty);
@@ -1080,9 +1081,9 @@ public class Ribbon : Control
         RibbonCustomizeRequested?.Invoke(this, EventArgs.Empty);
 
     /// <summary>
-    /// Adds <paramref name="source"/> (a button, toggle, split button, or drop-down button living
-    /// in a ribbon group) to the quick access toolbar. Because a WPF element can only have one
-    /// visual parent, the control is not moved: a small PROXY button is created that mirrors its
+    /// Adds <paramref name="source"/> (a button, toggle, split button, or drop-down button) to
+    /// the quick access toolbar. A removed directly declared QAT item is restored as itself.
+    /// For a ribbon-group source, a small PROXY button is created that mirrors its
     /// 16px icon and ScreenTip and invokes it (toggles stay state-synced via a two-way IsChecked
     /// binding). Returns <see langword="false"/> when the control is already in the QAT or its type
     /// does not have a supported quick-access representation.
@@ -1094,6 +1095,13 @@ public class Ribbon : Control
         if (!IsSupportedQuickAccessSource(source) || IsInQuickAccess(source))
         {
             return false;
+        }
+
+        if (_declaredQuickAccessCommands.Contains(source))
+        {
+            // Restore the authored item itself, including its command bindings/handlers.
+            QuickAccessItems.Add(source);
+            return true;
         }
 
         FrameworkElement proxy = CreateCommandProxy(source, RibbonControlSize.Small);
@@ -1113,6 +1121,57 @@ public class Ribbon : Control
 
     private static bool IsSupportedQuickAccessSource(FrameworkElement source) =>
         source is RibbonButton or RibbonToggleButton or RibbonDropDownButton;
+
+    // Directly declared QAT commands may have no ribbon-group counterpart. Keep their
+    // source objects for this ribbon's lifetime so Remove/Clear/Apply cannot erase the
+    // catalog. Proxies and transient merge commands must never become catalog sources.
+    private readonly List<FrameworkElement> _declaredQuickAccessCommands = new();
+
+    internal IReadOnlyList<FrameworkElement> DeclaredQuickAccessCommands => _declaredQuickAccessCommands;
+
+    /// <inheritdoc />
+    protected override System.Collections.IEnumerator LogicalChildren
+    {
+        get
+        {
+            var children = new List<object>();
+            if (base.LogicalChildren is { } inherited)
+            {
+                while (inherited.MoveNext())
+                {
+                    children.Add(inherited.Current);
+                }
+            }
+
+            children.AddRange(_declaredQuickAccessCommands.Where(source => ReferenceEquals(source.Parent, this)));
+            return children.GetEnumerator();
+        }
+    }
+
+    private void OnQuickAccessItemsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (e.NewItems is not null)
+        {
+            foreach (object item in e.NewItems)
+            {
+                if (item is FrameworkElement source && IsSupportedQuickAccessSource(source)
+                    && GetQuickAccessSource(source) is null && GetMergeSource(source) is null
+                    && !_declaredQuickAccessCommands.Contains(source))
+                {
+                    _declaredQuickAccessCommands.Add(source);
+                    if (source.Parent is null)
+                    {
+                        // ItemsSource hosts give the item a visual container; the ribbon keeps
+                        // logical ownership so inherited bindings/resources and routed commands
+                        // still work when the item has been removed from the visible QAT.
+                        AddLogicalChild(source);
+                    }
+                }
+            }
+        }
+
+        UpdateQatButtonContext();
+    }
 
     /// <summary>Whether <paramref name="source"/> is already in the quick access toolbar,
     /// either directly or via a proxy created by <see cref="AddToQuickAccess"/>.</summary>

@@ -7516,3 +7516,114 @@ unchanged. Only the two Office2024 LTR/RTL message-stack approvals were refreshe
 after actual/diff review confirmed the intended connected-QAT upward-shadow
 removal; the other 111 scenes matched. The active touch plan records final and
 initial evidence separately from remaining live review, without a commit or merge.
+
+### 3.227 Gallery popup headings and QAT-only command recovery — 2026-10-08
+
+`InRibbonGallery.DropDownHeader` reuses the dropdown heading dependency property
+through `AddOwner`. The shared gallery template pins the noninteractive heading
+above the popup scroller; null/empty leaves the original collapsed strip and
+popup geometry. Paint and corner geometry use the existing heading tokens in
+every theme. Split buttons already inherit this property and QAT copies bind it.
+Showcase now demonstrates headings on Paste and the Styles/Theme/Accent galleries.
+The compatible API addition is three gallery symbols plus the protected
+`Ribbon.LogicalChildren` override in Unshipped; the shipped baseline is unchanged.
+
+Both customization pages previously discovered only group commands, so a directly
+declared Undo/Redo item disappeared from their available lists when removed from
+QAT. RibbonKit now retains supported directly declared command sources for each
+ribbon's lifetime and includes them once in the shared command/icon catalog.
+Generated proxies and transient merge commands do not become retained definitions.
+Re-adding a declared QAT item restores the original object; custom groups use the
+existing source-linked proxy factory.
+
+Retaining a reference alone is insufficient: removing the visual item also loses
+inherited DataContext and can break routed commands. Parentless declared sources
+therefore remain logical children of the ribbon, preserving bindings/resources,
+inherited changes and the route to window command bindings. Existing logical
+parents and local DataContext overrides retain precedence. This introduces no
+public command-registry API or new application-owned presentation helper.
+
+Persistence includes retained sources and their icons in identity resolution.
+Applications declare default QAT commands before applying saved customization and
+assign stable CommandIds. Removed commands then remain discoverable after restart;
+custom-group copies, re-add and repeated Reset resolve the fresh application's
+source. Untagged QAT-only commands remain available only in the current instance.
+Existing directly declared unsupported elements retain their serializer behavior.
+
+Five focused command regressions cover remove/replace/clear, deduplication,
+icon discovery, repeated Reset, fresh-consumer custom-group restore, enabled
+state, inherited/local binding precedence and window command execution. An
+independent RibbonKit-only consumer checks both actual customization pages and
+96 gallery combinations across six themes, light/dark, Compact/Touch, LTR/RTL
+and simulated 125%/200% DPI. Rendered heading previews were inspected. Initial
+click assertions needed dispatcher delivery of WPF's asynchronous Invoke provider;
+no product delay or activation workaround was added. The existing permanent-
+scroller DPI test now verifies the scroller under the heading grid rather than
+assuming it is the popup border's direct child.
+
+Release solution and normal Debug Showcase builds passed with no warnings/errors.
+The full runtime run passed 523 of 524 checks before the affected scroller
+assertion was updated; that check then passed in isolation. Writer passed all
+482 checks. All 113 visual scenes passed after actual/diff review and refresh
+of only `office2024-rtl-qat-customize-100`: its scrollbar thumb reflects the two
+additional QAT-only entries. The full independent-consumer aggregate timed out
+at its existing 300-second limit during the concurrent solution run, then passed
+unchanged in a fresh process by itself in 234 seconds. Combined final evidence
+covers 524 runtime checks, 482 Writer checks and both full aggregates (1008 test
+cases, with the runtime scroller check's focused retry recorded above). The final
+41-check focused runtime run also passed. No test timeout or pixel tolerance
+was increased.
+Live mouse/keyboard appearance acceptance and native/mixed-monitor DPI remain
+separate from these automated checks.
+
+Gallery, combo-box and group QAT representations were assessed as feasible but
+not implemented in this slice. Gallery dropdowns need shared selection/live
+preview and careful presenter ownership; combo copies need synchronized
+selection/text and editable-input semantics; groups need a compact flyout with
+reusable contents. Their catalog, overflow, KeyTips, persistence and portability
+contracts require a separate bounded implementation.
+
+### 3.228 Grouped Theme gallery with an independent popup width — 2026-10-08
+
+Showcase's Theme picker now groups its six existing tiles into Modern (Crystal),
+Office Modern (2024/2019/2013) and Office Legacy (2010/2007). A native
+`CollectionViewSource` groups the flat item list by the host's theme-family
+converter. Tags, selection handlers and saved theme identity remain unchanged.
+`IsSynchronizedWithCurrentItem="False"` keeps view initialization from selecting
+Crystal before the rest of the window has initialized.
+
+`InRibbonGallery` supplies a shared `GroupItem` template when consumers have not
+provided a `GroupStyle`. Group names use existing heading paint/text/corner
+tokens, are noninteractive, and disappear in the collapsed strip. Native WPF
+group presenters retain the gallery's leaf items panel, selection and generated
+containers. A style-local alias makes the shared group style discoverable through
+the control's default theme style, rather than relying on application resources.
+
+The compatible `PopupWidth` dependency property adds three Unshipped symbols;
+the shipped baseline is unchanged. Its default `NaN` preserves previous automatic
+sizing. An explicit positive finite width sizes the popup card and changes
+presenter wrapping only while expanded. Showcase uses 440 DIP, enough for all
+three Office Modern tiles in one row in Compact and Touch. Width bindings update
+an already open popup; closing restores the strip's own wrapping and reveals the
+selected tile. The strip and popup continue to own separate permanent scrollers.
+
+Release solution and normal Debug Showcase builds passed with zero warnings and
+errors. All 15 focused runtime checks passed, including Showcase construction,
+theme/selection integration, popup-width validation and existing gallery
+retention checks. An independent RibbonKit-only grouped-data consumer passed
+96 combinations of six themes, light/dark, Compact/Touch, LTR/RTL and simulated
+125%/200% DPI. It checks section order, one row per section, bounds, shared paint,
+width-binding updates, presenter ownership and selected-tile reveal. The actual
+Showcase popup and Office/Crystal consumer previews were inspected.
+
+The existing visual snapshot aggregate also completed successfully; no snapshot
+approvals changed in this follow-up. At the user's request the full runtime and
+Writer runs were interrupted, and the full independent-consumer aggregate was
+deferred. Those are pending gates, distinct from the focused passing checks.
+Native interaction and mixed-monitor DPI acceptance remain unrecorded.
+
+An icon dropdown projection was assessed as simpler for selection-only QAT
+combo boxes. Editable typing semantics and the remaining catalog/proxy/overflow
+integration require a later implementation. Dropdown and split buttons still
+offer one `DropDownHeader`; multiple sections currently use composed popup
+content. This follow-up does not add a QAT combo projection or a menu-section API.

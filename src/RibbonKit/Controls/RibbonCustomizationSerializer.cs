@@ -298,10 +298,9 @@ public static class RibbonCustomizationSerializer
 
         // Hand-declared QAT items are also re-addable sources (keyed by their own id).
         var declaredQat = new Dictionary<string, FrameworkElement>();
-        foreach (object item in ribbon.QuickAccessItems)
+        foreach (FrameworkElement fe in ribbon.DeclaredQuickAccessCommands.Concat(ribbon.QuickAccessItems.OfType<FrameworkElement>()))
         {
-            if (item is FrameworkElement fe && Ribbon.GetQuickAccessSource(fe) is null
-                && Ribbon.GetCommandId(fe) is { } id)
+            if (Ribbon.GetQuickAccessSource(fe) is null && Ribbon.GetCommandId(fe) is { } id)
             {
                 declaredQat.TryAdd(id, fe);
                 sources.TryAdd(id, fe);
@@ -551,6 +550,23 @@ public static class RibbonCustomizationSerializer
                         iconById.TryAdd(autoId, ci);
                     }
                 }
+            }
+        }
+
+        // Removed QAT-only commands still resolve for custom-group proxies and Reset.
+        // Explicit ids keep this independent of QAT order and the localized caption.
+        foreach (FrameworkElement control in ribbon.DeclaredQuickAccessCommands)
+        {
+            if (Ribbon.GetCommandId(control) is not { } id)
+            {
+                continue;
+            }
+
+            byId.TryAdd(id, control);
+            idOf.TryAdd(control, id);
+            if (RibbonCommandCatalog.Describe(control).Icon is { } icon)
+            {
+                iconById.TryAdd(id, icon);
             }
         }
     }
