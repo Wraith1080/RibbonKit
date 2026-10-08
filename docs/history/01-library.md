@@ -7498,3 +7498,21 @@ in Office2007/2010, Office2024 and Crystal respectively; the square themes retai
 zero. Minimal verification reran only the updated independent selector scope,
 inspected current native-heading renders and refreshed normal Debug Showcase.
 No API or layout behavior changed; full/native testing remains deferred.
+
+The 2026-10-08 full Release validation covers the later adaptive, QAT-shadow,
+message-rim and dropdown refinements, superseding the historical 974-test gate.
+Combined final results passed all 1003 tests (519 runtime, 482 Writer and the two
+full aggregates, including 113 visual scenes), with clean both-target builds and
+package/designer/net8/net9 consumption validation. Initial Writer keyboard input
+interference cleared on its unchanged serial full retry after input was idle.
+Three fixture pitfalls were corrected without runtime changes: static QAT paint
+must disable theme/minimize motion as well as density motion; the minimized QAT
+with messages consumes its combined-state corner metric; a short offscreen fade
+can miss a middle-opacity observation after earlier theme/layout matrices.
+The message fixture now saves a nonterminal frame's exact row/rim values and
+temporarily uses software rendering, retaining completion/interruption/cleanup
+and identity-transform assertions. Static pixel and snapshot tolerances remain
+unchanged. Only the two Office2024 LTR/RTL message-stack approvals were refreshed
+after actual/diff review confirmed the intended connected-QAT upward-shadow
+removal; the other 111 scenes matched. The active touch plan records final and
+initial evidence separately from remaining live review, without a commit or merge.

@@ -4,6 +4,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
@@ -22,6 +23,10 @@ internal static class MessageTransitionPortabilityChecks
         RibbonAnimationLevel level = RibbonAnimation.GlobalLevel;
         bool reduce = RibbonAnimation.RespectSystemReduceMotion;
         RibbonAnimationLevel? action = RibbonAnimation.GetActionOverride(RibbonAnimationAction.MessageBar);
+        RenderMode rendering = RenderOptions.ProcessRenderMode;
+        // Offscreen windows can be throttled by hardware composition long enough to
+        // skip a short fade entirely. Use the same software path as snapshot fixtures.
+        RenderOptions.ProcessRenderMode = RenderMode.SoftwareOnly;
         RibbonAnimation.GlobalLevel = RibbonAnimationLevel.Subtle;
         RibbonAnimation.RespectSystemReduceMotion = false;
         RibbonAnimation.ClearActionLevel(RibbonAnimationAction.MessageBar);
@@ -45,6 +50,7 @@ internal static class MessageTransitionPortabilityChecks
             RibbonAnimation.RespectSystemReduceMotion = reduce;
             if (action is { } value) RibbonAnimation.SetActionLevel(RibbonAnimationAction.MessageBar, value);
             else RibbonAnimation.ClearActionLevel(RibbonAnimationAction.MessageBar);
+            RenderOptions.ProcessRenderMode = rendering;
         }
     }
 
@@ -73,7 +79,7 @@ internal static class MessageTransitionPortabilityChecks
             // Adding a lower row must not replay the stack's exposed upper edge.
             second.IsOpen = true;
             var secondRoot = Part<FrameworkElement>(second, "PART_Root");
-            PumpUntil(() => secondRoot.Opacity > .1 && secondRoot.Opacity < .9);
+            PumpUntil(() => IsTransitionFrame(secondRoot.Opacity));
             Assert.Equal(1d, rim.Opacity);
             Assert.Equal(Matrix.Identity, rim.RenderTransform.Value);
             Finish(secondRoot);
@@ -222,14 +228,39 @@ internal static class MessageTransitionPortabilityChecks
     private static void SampleTransition(FrameworkElement root, Border rim, bool opening)
     {
         Assert.True(root.HasAnimatedProperties);
-        PumpUntil(() => root.Opacity > .1 && root.Opacity < .9);
-        Assert.Equal(root.Opacity, rim.Opacity, 6);
-        Assert.Equal(Matrix.Identity, rim.RenderTransform.Value);
-        Assert.True(root.RenderTransform.Value.OffsetY < 0, opening ? "Entrance glide" : "Exit glide");
-        Assert.Equal(Transform.Identity, rim.LayoutTransform);
+        var sampleWatch = Stopwatch.StartNew();
+        var trace = new List<string>();
+        (double RootOpacity, double RimOpacity, Matrix RootTransform, Matrix RimTransform,
+            Matrix RootLayout, Matrix RimLayout)? sample = null;
+        // Keep values from the observed frame. An exit can finish and hand the rim to
+        // the next row before the dispatcher frame returns to this method.
+        PumpUntil(() =>
+        {
+            if (sample.HasValue) return true;
+            double opacity = root.Opacity;
+            if (trace.Count < 12) trace.Add($"{sampleWatch.ElapsedMilliseconds}ms:{opacity:F3}/{root.HasAnimatedProperties}");
+            if (!IsTransitionFrame(opacity)) return false;
+            sample = (opacity, rim.Opacity, root.RenderTransform.Value, rim.RenderTransform.Value,
+                root.LayoutTransform.Value, rim.LayoutTransform.Value);
+            return true;
+        }, () =>
+            $"opening={opening}, opacity={root.Opacity}, animated={root.HasAnimatedProperties}, " +
+            $"visible={root.IsVisible}, rim={rim.Opacity}, offset={root.RenderTransform.Value.OffsetY}, " +
+            $"presented={(root.TemplatedParent as RibbonMessage)?.IsPresented}, samples={string.Join(", ", trace)}");
+        var observed = sample!.Value;
+        Assert.Equal(observed.RootOpacity, observed.RimOpacity, 6);
+        Assert.Equal(Matrix.Identity, observed.RimTransform);
+        Assert.True(observed.RootTransform.OffsetY < 0, opening ? "Entrance glide" : "Exit glide");
+        Assert.Equal(Matrix.Identity, observed.RootLayout);
+        Assert.Equal(Matrix.Identity, observed.RimLayout);
     }
 
     private static void Finish(FrameworkElement root) => PumpUntil(() => !root.HasAnimatedProperties);
+
+    // Offscreen composition can skip the middle of a short eased fade after the
+    // earlier consumer matrices. Keep clear of its endpoints by much more than
+    // the six-decimal opacity assertion, so an opaque rim still fails the check.
+    private static bool IsTransitionFrame(double opacity) => opacity > .001 && opacity < .999;
 
     private static void AssertRest(FrameworkElement element)
     {
@@ -261,20 +292,25 @@ internal static class MessageTransitionPortabilityChecks
         using var file = File.Create(Path.Combine(directory, name + ".png")); encoder.Save(file);
     }
 
-    private static void PumpUntil(Func<bool> condition)
+    private static void PumpUntil(Func<bool> condition, Func<string>? diagnostics = null)
     {
         if (condition()) return;
         var frame = new DispatcherFrame();
         var watch = Stopwatch.StartNew();
+        bool reached = false;
         // Observe actual render frames; background polling can miss a short fade while WPF
         // is processing template/theme work, especially when capturing transition renders.
-        EventHandler render = (_, _) => { if (condition()) frame.Continue = false; };
+        EventHandler render = (_, _) => { if (condition()) { reached = true; frame.Continue = false; } };
         CompositionTarget.Rendering += render;
         var timer = new DispatcherTimer(DispatcherPriority.Normal) { Interval = TimeSpan.FromMilliseconds(10) };
-        timer.Tick += (_, _) => { if (condition() || watch.Elapsed > TimeSpan.FromSeconds(2)) frame.Continue = false; };
+        timer.Tick += (_, _) =>
+        {
+            if (condition()) { reached = true; frame.Continue = false; }
+            else if (watch.Elapsed > TimeSpan.FromSeconds(2)) frame.Continue = false;
+        };
         timer.Start();
         try { Dispatcher.PushFrame(frame); }
         finally { timer.Stop(); CompositionTarget.Rendering -= render; }
-        Assert.True(condition(), "The message transition did not reach its expected state within two seconds.");
+        Assert.True(reached || condition(), "The message transition did not reach its expected state within two seconds. " + diagnostics?.Invoke());
     }
 }

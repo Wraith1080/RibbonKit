@@ -1,7 +1,7 @@
 # RibbonKit touch density
 
-> Touch/Mouse dropdown implemented with shared popup headings and descriptive rows; heading corners refined for Office2007/2010/2024 and Crystal, 2026-10-08. Focused verification passed; visual review is pending.
-> The full Release checkpoint predates the later geometry and animation follow-ups; visual/native acceptance remains separate.
+> Touch/Mouse dropdown implemented with shared popup headings and descriptive rows; heading corners refined for Office2007/2010/2024 and Crystal, 2026-10-08. Heading visual review is pending.
+> Current full Release validation passed 2026-10-08: 1003 tests in combined final results, including the full RibbonKit-only consumer and 113 visual scenes. Package validation passed; visual/native acceptance remains separate.
 
 ## Contract and API review
 
@@ -62,6 +62,71 @@ or automatic mode switching.
 
 ## Verification and acceptance
 
+### Full Release validation — 2026-10-08
+
+Validation covers `codex/touch-mode` at `28c37f9` plus the test-fixture and snapshot
+corrections below. Restore and the normal Release solution build passed for both
+runtime targets with zero warnings/errors. Combined final results cover all four
+test projects: 519 runtime tests, 482 Writer tests, the default independent-consumer
+aggregate and the visual aggregate covering 113 scenes, totaling 1003 tests with
+zero failures or skips. These are final per-project results after investigation
+and retries, rather than a claim that the initial solution run passed. This
+checkpoint supersedes the earlier deferred full-test statuses in the dated
+implementation notes; the historical 974-test result is not current evidence.
+
+The full consumer ran with `RIBBONKIT_PORTABILITY_SCOPE` cleared and passed in
+3m10s, including density/adaptive regressions, message transitions, popup headings,
+QAT placements, keyboard/focus/navigation, galleries, application menus and
+Backstage. It references RibbonKit without Showcase resources or helpers. Writer's
+initial native keyboard check observed Ctrl held; the serial full retry passed
+unchanged after the user confirmed input would remain idle. WPF test projects
+were serialized for retries so their windows did not compete for focus.
+
+Three test fixtures needed corrections, without runtime changes. The static
+Office2024 QAT-shadow comparison now disables all motion while sampling paint,
+including theme/minimize transitions, and restores the prior global setting.
+Its pixel tolerance remains unchanged. The non-Crystal QAT matrix now reads the
+combined minimized/message corner token when both states apply. Message-transition
+checks retain values from the observed frame, accept nonterminal opacity rather
+than requiring the middle of a short fade, and use software rendering only for
+that offscreen fixture, restoring the previous process setting afterward. Traces
+showed the first observed frame arriving at 131–164ms, sometimes after the 160ms
+fade ended. Exact row/rim opacity matching, render/layout transform checks,
+completion, interruption and cleanup assertions remain; runtime timings and
+animation policy are unchanged.
+
+All 113 visual scenes were captured and their comparison results inspected. Only
+`office2024-message-bar-stack-100.png` and
+`office2024-rtl-message-bar-stack-100.png` differed: actual/diff review showed the
+intended removal of the connected lower-QAT's upward shadow at the body seam.
+Only those two approvals were refreshed; the other 111 matched. The normal full
+comparison then passed with unchanged tolerances. This verifies snapshots, not
+new user acceptance of every visual state.
+
+Release package creation and `eng/Validate-Package.ps1` passed, including package
+layout, XML documentation, designer assets and clean net8/net9 WPF consumption
+builds. Older package files were preserved; only the current 1.0.0 package pair
+was supplied to the validator. Package-consumer runtime launch was not requested
+or run. The shipped API baseline is unchanged. Normal Debug Showcase output was
+already refreshed for the committed heading refinement; this pass changed no
+runtime or Showcase code and did not manually launch an application.
+
+Evidence is under `artifacts/touch-validation/dropdown-full-20261008`:
+
+- `build-verified-release.log`: final normal Release solution build.
+- `runtime-final.trx`: all 519 runtime tests passed.
+- `serial/LENOVO_BRIN-MM-2026-00_2026-10-08_10_23_44_net8.0.trx`: all 482 Writer tests passed.
+- `consumer-software-rendering.trx`: default full consumer passed, with no scope filter.
+- `message-transition-final.trx`: final focused retry passed after also retaining both root and rim layout-transform checks in the saved frame.
+- `visual-reviewed.trx`: normal 113-scene comparison passed after reviewed approvals.
+- `visual-capture.trx`, `TestResults/visual-capture` and `visual-capture-start.txt`: capture/review evidence.
+- `pack-release.log` and `package-validation.log`: package and clean consumption validation.
+
+Initial failures and intermediate diagnostic attempts remain in the same evidence
+directory. Live heading review, physical touch, mixed-monitor/native DPI changes,
+IME and target-machine reduced-motion review remain separate. No commit, push or
+merge was performed.
+
 ### Touch/Mouse dropdown selector — 2026-10-08
 
 Showcase's View-tab toggle is now a Touch/Mouse Mode dropdown with a heading,
@@ -110,8 +175,8 @@ Office2007, Office2024 and Crystal actual popup renders were inspected under
 `artifacts/density-selector-showcase-diagnostics`; independent consumer renders
 are under `artifacts/density-selector-consumer-diagnostics`. TRX results are in
 `artifacts/touch-validation`. Normal Debug Showcase output is refreshed for
-review. The full suite, automated snapshot approvals, native keyboard/input and
-mixed-monitor gates remain deferred. The historical 974-test checkpoint does
+review. These focused runs preceded the current full checkpoint above. Live
+input and mixed-monitor gates remain separate. The historical 974-test checkpoint does
 not validate this dropdown or the preceding adaptive and animation follow-ups.
 
 The initial heading-corner refinement used the shared
@@ -137,8 +202,8 @@ selector scope passed, and normal Debug Showcase output was refreshed with zero
 warnings/errors. Current actual renders are under
 `artifacts/density-selector-all-corner-diagnostics`. The preceding seven Showcase
 checks and both-target Release build cover the upper-corner pass, not a fresh
-full run. The new heading appearance awaits user review; full/native gates stay
-deferred.
+full run. The current full checkpoint above covers the lower-corner refinement;
+the new heading appearance awaits user review and live native gates stay separate.
 
 ### Live density transition — 2026-10-07
 
@@ -579,7 +644,8 @@ consumer passed in Debug and Release (the final Release run took 44s), recorded 
 `artifacts/touch-validation/touch-adaptive-consumer-release.trx`. Normal Debug
 Showcase output is refreshed. Startup and Office2024/Crystal overflow renders
 were inspected in `artifacts/touch-adaptive-diagnostics`. The earlier full suite
-has not been rerun after this correction.
+had not been rerun at that focused checkpoint; the current 2026-10-08 full results
+above include this correction.
 
 The Office2024 seam follow-up clips the lower QAT's rendered child effect through
 a parent geometry. Clipping the effect-bearing border itself would leave its
@@ -595,20 +661,20 @@ user's request: no full-suite, snapshot approval or native-input retry.
 | Gate | Status and exact scope |
 | --- | --- |
 | Shared implementation and API documentation | Passed 2026-10-07: documented additive API; shipped baseline unchanged; matching Touch metrics in all six base themes |
-| Touch/Mouse dropdown selector | Implemented and all four heading corners refined 2026-10-08: three documented shared properties, nine additive Unshipped symbols, shipped baseline unchanged. Updated RibbonKit-only six-theme/light-dark/density/RTL dropdown and split-button matrix and all-placement QAT cases passed for uniform rounding. Seven Showcase selector checks passed for the preceding upper-corner pass; earlier 61 existing focused runtime checks and 18 view-choice/popup/DPI/dark checks remain separate evidence. Actual renders inspected; user review pending. Full/native gates deferred |
-| Live density transition | Refined 2026-10-08 to 85% opacity and cubic EaseInOut; clean Release runtime builds for both targets, passing focused policy/easing test and independent Release transition aggregate. The initial 2026-10-07 implementation had a clean Release solution build, 33 selected runtime checks and independent Debug/Release and broader Touch evidence. Completion/interruption, startup, disabled policy, bindings, template/unload, QAT placements, popup anchors and affected adaptive geometry covered. Full suite and native keyboard/input deferred until visual review |
+| Touch/Mouse dropdown selector | Full Release runtime and RibbonKit-only consumer passed 2026-10-08 for the final uniformly rounded headings, dropdown/split-button matrix and all QAT placements. Three documented shared properties, nine additive Unshipped symbols; shipped baseline unchanged. Actual renders inspected; heading user review pending |
+| Live density transition | Refined to 85% opacity and cubic EaseInOut, visually accepted 2026-10-08. Current full Release runtime and independent consumer passed, covering completion/interruption, startup, disabled policy, bindings, template/unload, QAT placements, popup anchors and adaptive geometry. Physical input and live reduced-motion review remain separate |
 | Group launcher caption height | Passed focused Release verification 2026-10-08: RibbonKit-only six-theme/light-dark/LTR-RTL launcher aggregate and broader Touch consumer; nominal 14-DIP height, equal neighboring caption bands, retained Touch width and visibility toggles. Office2007 render inspected; user visual review pending |
 | Minimized QAT/message and Touch modal geometry | Passed focused Release verification 2026-10-08 after adding Office2007 to the upper-corner correction: independent chrome aggregate checks Office2007/2024 exposed upper QAT corners, flush message seams, both densities and Touch modal position across all themes/placements. Initial Office2024 fix's broader Touch aggregate and 13 runtime checks remain earlier evidence. Latest renders inspected; user review pending |
 | Minimized document-boundary divider | User accepted the conditional divider on 2026-10-08: it appears only below an exposed minimized header and is suppressed with a lower QAT or open messages. Focused Release six-theme/both-density visibility matrix passed. Initial relocation's broader Touch consumer and 24 runtime checks predate this refinement; full/native gates remain separate |
-| Office exposed message top border and corners | Refined 2026-10-08: the native rim retains its corner geometry and now mirrors the first presented row's opacity while staying anchored to the clip. RibbonKit-only live-transition aggregate passed for Office2007/2024 light/dark, both densities, QAT placements, interruption, disabled motion and template/unload/generated-container cleanup. Six-theme geometry/native-corner-alpha matrix and sixteen runtime checks passed again; transition renders inspected. User visually accepted the message-rim fade and corner appearance on 2026-10-08. A fresh full test run is required before merge; testing and merge are deferred at the user's request. Native gates remain separate |
+| Office exposed message top border and corners | User visually accepted the message-rim fade and corner appearance on 2026-10-08. Current full Release runtime and consumer passed, including Office2007/2024 light/dark, both densities, QAT placements, interruption, disabled motion, template/unload/generated-container cleanup and the six-theme native-corner geometry matrix. Native gates remain separate |
 | Startup theme replacement | User confirmed startup runs correctly on 2026-10-08. Focused Release evidence reproduced the exact tab-row QAT exception, then passed six actual Showcase startup cases, six existing theme/resource-scope tests and the RibbonKit-only startup/live-switch/scoped-policy aggregate. Replacement palettes remain available during cleanup; public API and saved preferences unchanged |
 | Touch cleanup checks | Passed 2026-10-07 in the final Release suite: six actual Showcase theme cases, caption-button and Office2010 Aero-bevel regressions, File width/edge spacing, gallery fill/selection and compact/touch neighbor spacing, large/three-row sizing, modal Close, Font separator, message targets/normal fonts, stable title height through Backstage, and actual Classic2007 rail/page paint alignment; independent consumer across every theme/light-dark/LTR-RTL combination and all seven Backstage designs |
-| RibbonKit-only consumer | Adaptive follow-up touch-only scope passed 2026-10-07 in Debug and Release (final Release 44s), including repeated open-flyout density changes and immediate overflow arrows. The earlier full default scope passed in 2m56s before the follow-up, including keyboard/focus/navigation and the corrected Backstage fixture |
-| Release solution build and tests | Full checkpoint passed 2026-10-07 before the adaptive-layout follow-up: both runtime targets, zero build warnings/errors, all 974 tests passed with zero failed/skipped (490 runtime, 482 Writer, full consumer aggregate and 113-scene visual aggregate); package contents/designer assets and clean net8/net9 WPF package consumption validated. The follow-up has a fresh clean Release solution build and 64 passing focused runtime checks; no new full-suite run |
+| RibbonKit-only consumer | Default full scope passed 2026-10-08 in Release (3m10s), with no scope filter and no Showcase resources/helpers. Includes all adaptive, transition, heading, QAT, message, keyboard/focus/navigation and Backstage matrices |
+| Release solution build and tests | Current full checkpoint passed 2026-10-08: both runtime targets, zero build warnings/errors, 1003 tests in combined final results with zero failed/skipped (519 runtime, 482 Writer, full consumer aggregate and 113-scene visual aggregate). Package contents/designer assets and clean net8/net9 WPF package consumption validated. Initial failures and reviewed fixture/snapshot corrections are recorded above |
 | Normal Debug Showcase output | Passed 2026-10-08: default Debug Showcase/net8 runtime output refreshed for the Touch/Mouse dropdown after the message-rim, corner, QAT, startup, border, divider, modal, launcher and density animation fixes; zero warnings/errors. The preceding connected lower-QAT shadow regression passed with density motion disabled for static paint comparison |
-| Visual acceptance | User accepted the revised 85% EaseInOut density settle on 2026-10-08 after live review. Group launcher caption-height correction awaits review separately. User confirmed the adaptive collapse/scroller correction on 2026-10-07. Office2024 light/dark touch seam renders inspected; target-machine acceptance of that shadow correction remains pending. The 113-scene automated checkpoint predates the adaptive, shadow and animation follow-ups |
+| Visual acceptance | User accepted the revised density settle, adaptive collapse/scroller correction and message-rim appearance. Heading and separate launcher/shadow target-machine review remain pending. Current 113-scene automated comparison passed 2026-10-08 after review of only the two intended Office2024 connected-QAT shadow changes; automated snapshots do not replace live acceptance |
 | Native touch input | Pending: split halves, tap invocation, panning without accidental selection, nested popup dismissal and editable inputs |
-| DPI / RTL / keyboard | Full automated keyboard/focus/navigation, touch LTR/RTL and rendered 100/125/150/200% checks passed 2026-10-07; physical input, native monitor/DPI transitions, IME and reduced-motion live review remain separate |
+| DPI / RTL / keyboard | Current full automated keyboard/focus/navigation, touch LTR/RTL and rendered DPI matrices passed 2026-10-08. Writer's full native keyboard retry passed with input idle. Physical touch, native monitor/DPI transitions, IME and reduced-motion live review remain separate |
 
 The first pass had combined passing evidence for 966 tests (482 runtime, 482 Writer,
 the visual aggregate covering 113 scenes, and the independent consumer), including
@@ -653,6 +719,14 @@ are preserved separately. These focused runs do not replace the earlier full gat
 Native touch input cannot be inferred from synthetic mouse or keyboard tests.
 Custom templates can consume the inherited setting and touch metric keys; fixed
 heights in application-authored content may need corresponding host adjustments.
+
+## Popup title follow-up
+
+Requested 2026-10-08: add an optional title to gallery dropdown popups with the
+same shared, themed heading treatment. Split-button dropdowns already inherit
+`DropDownHeader` and use that treatment; retain them in the follow-up's consumer
+examples and parity checks. This future gallery work is outside the current
+merge-validation run and is not implemented here.
 
 ## Sources
 

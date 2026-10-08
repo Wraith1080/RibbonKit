@@ -198,8 +198,10 @@ internal static class CrystalQuickAccessPortabilityChecks
                     Assert.Equal(0, drawer.MinHeight);
                     Assert.Equal((Thickness)ribbon.FindResource("RibbonKit.Metrics.QatExtenderMargin" +
                         (notice ? "MessageBar" : minimized ? "Minimized" : "")), drawer.Margin);
+                    string cornerSuffix = minimized && notice ? "MinimizedMessageBar"
+                        : notice ? "MessageBar" : minimized ? "Minimized" : "";
                     Assert.Equal((CornerRadius)ribbon.FindResource("RibbonKit.Metrics.QatExtenderCornerRadius" +
-                        (notice ? "MessageBar" : minimized ? "Minimized" : "")), drawer.CornerRadius);
+                        cornerSuffix), drawer.CornerRadius);
                     Assert.Equal((CornerRadius)ribbon.FindResource("RibbonKit.Metrics.ContentCornerRadiusTop"), body.CornerRadius);
                     Assert.Equal(Assert.IsType<SolidColorBrush>(ribbon.FindResource("RibbonKit.Brushes.Ribbon.Border")).Color,
                         Assert.IsType<SolidColorBrush>(drawer.BorderBrush).Color);
