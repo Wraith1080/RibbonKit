@@ -983,6 +983,45 @@
                                            Unchecked="OnToggleAcrylic"
                                            ScreenTipTitle="Acrylic backdrop (Windows 11)"
                                            ScreenTipText="Apply the Windows 11 Acrylic material — a translucent blur of whatever is behind the window. Replaces Mica when both are toggled. Requires Windows 11 22H2+." />
+                    <!-- Keep the former toggle's serialized command identity for saved QAT/layouts. -->
+                    <rk:RibbonDropDownButton x:Name="TouchModeSelector"
+                                             rk:Ribbon.CommandId="auto:tab.view/group.view.backstage/Touch mode#2"
+                                             Header="Touch/Mouse Mode"
+                                             DropDownHeader="Optimize spacing between commands"
+                                             Size="Large"
+                                             LargeIcon="{StaticResource Icon.Touch}"
+                                             Icon="{StaticResource Icon.Touch}"
+                                             ScreenTipTitle="Touch/Mouse Mode"
+                                             ScreenTipText="Choose Mouse for standard spacing or Touch for larger command targets and more space between commands.">
+                        <rk:RibbonMenuItem x:Name="MouseModeChoice" Header="Mouse"
+                                           Description="Standard ribbon and commands.&#x0a;Optimized for use with mouse."
+                                           LargeIcon="{StaticResource Icon.Mouse}"
+                                           Tag="{x:Static rk:RibbonDensity.Compact}" Click="OnSelectDensity">
+                            <rk:RibbonMenuItem.Style>
+                                <Style TargetType="{x:Type rk:RibbonMenuItem}" BasedOn="{StaticResource {x:Type rk:RibbonMenuItem}}">
+                                    <Style.Triggers>
+                                        <Trigger Property="rk:Ribbon.Density" Value="Compact">
+                                            <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Control.CheckedBackground}" />
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </rk:RibbonMenuItem.Style>
+                        </rk:RibbonMenuItem>
+                        <rk:RibbonMenuItem x:Name="TouchModeChoice" Header="Touch"
+                                           Description="More space between commands.&#x0a;Optimized for use with touch."
+                                           LargeIcon="{StaticResource Icon.Touch}"
+                                           Tag="{x:Static rk:RibbonDensity.Touch}" Click="OnSelectDensity">
+                            <rk:RibbonMenuItem.Style>
+                                <Style TargetType="{x:Type rk:RibbonMenuItem}" BasedOn="{StaticResource {x:Type rk:RibbonMenuItem}}">
+                                    <Style.Triggers>
+                                        <Trigger Property="rk:Ribbon.Density" Value="Touch">
+                                            <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Control.CheckedBackground}" />
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </rk:RibbonMenuItem.Style>
+                        </rk:RibbonMenuItem>
+                    </rk:RibbonDropDownButton>
                     <rk:RibbonToggleButton x:Name="GlassTreatmentToggle"
                                            Header="Glass look"
                                            Size="Large"

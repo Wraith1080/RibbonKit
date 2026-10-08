@@ -10,7 +10,8 @@ namespace RibbonKit.Controls;
 
 /// <summary>
 /// A menu row inside a <see cref="RibbonDropDownButton"/> or
-/// <see cref="RibbonSplitButton"/> dropdown: 16px icon + text with hover highlight.
+/// <see cref="RibbonSplitButton"/> dropdown: an icon and label with hover highlight,
+/// optionally a larger icon and wrapped description.
 /// Clicking it raises Click/Command like a normal button and closes the dropdown.
 /// Submenus arrive in a later phase.
 /// </summary>
@@ -32,6 +33,18 @@ public class RibbonMenuItem : Button
             typeof(RibbonMenuItem),
             new FrameworkPropertyMetadata(null));
 
+    /// <summary>Identifies the <see cref="LargeIcon"/> dependency property.</summary>
+    public static readonly DependencyProperty LargeIconProperty =
+        DependencyProperty.Register(
+            nameof(LargeIcon), typeof(ImageSource), typeof(RibbonMenuItem),
+            new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsMeasure));
+
+    /// <summary>Identifies the <see cref="Description"/> dependency property.</summary>
+    public static readonly DependencyProperty DescriptionProperty =
+        DependencyProperty.Register(
+            nameof(Description), typeof(string), typeof(RibbonMenuItem),
+            new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsMeasure));
+
     static RibbonMenuItem()
     {
         DefaultStyleKeyProperty.OverrideMetadata(
@@ -51,6 +64,26 @@ public class RibbonMenuItem : Button
     {
         get => (ImageSource?)GetValue(IconProperty);
         set => SetValue(IconProperty, value);
+    }
+
+    /// <summary>
+    /// Optional 32-DIP icon for a descriptive menu row; it takes precedence over <see cref="Icon"/>.
+    /// Touch density uses the theme's large-icon metric. Null retains the compact 16-DIP layout.
+    /// </summary>
+    public ImageSource? LargeIcon
+    {
+        get => (ImageSource?)GetValue(LargeIconProperty);
+        set => SetValue(LargeIconProperty, value);
+    }
+
+    /// <summary>
+    /// Optional wrapped text below the emphasized <see cref="Header"/>. Null or empty retains
+    /// the ordinary single-line row. Also supplies the default UI Automation help text.
+    /// </summary>
+    public string? Description
+    {
+        get => (string?)GetValue(DescriptionProperty);
+        set => SetValue(DescriptionProperty, value);
     }
 
     /// <inheritdoc />

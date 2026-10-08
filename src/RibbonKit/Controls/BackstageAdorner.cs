@@ -29,6 +29,8 @@ internal sealed class BackstageAdorner : Adorner
         FrameworkElement? topEdgeAnchor = null)
         : base(adornedElement)
     {
+        BindingOperations.SetBinding(this, Ribbon.DensityProperty,
+            new Binding { Source = flowSource, Path = new PropertyPath(Ribbon.DensityProperty) });
         BindingOperations.SetBinding(
             this,
             FlowDirectionProperty,
@@ -167,6 +169,12 @@ internal sealed class BackstageAdorner : Adorner
     /// </summary>
     internal void AttachClassicOrbProxy(FrameworkElement proxy, Point origin, Size size)
     {
+        // Ribbon reconciles this from LayoutUpdated. Stable bounds must not queue
+        // another arrange, or the Classic2007 surface never reaches layout idle.
+        if (ReferenceEquals(_classicOrbProxy, proxy)
+            && _classicOrbProxyOrigin == origin && _classicOrbProxySize == size)
+            return;
+
         if (!ReferenceEquals(_classicOrbProxy, proxy))
         {
             DetachClassicOrbProxy();

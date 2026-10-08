@@ -329,6 +329,7 @@
     <CornerRadius x:Key="RibbonKit.Metrics.MenuItemCornerRadius">4</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.SmallControlCornerRadius">5</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.PopupCornerRadius">8</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.DropDownHeaderCornerRadius">8</CornerRadius>
     <!-- A persistent boundary needs less white than a transient hover rim: the
          gallery is surrounded by pale surfaces on both sides of this outline. -->
     <DrawingGroup x:Key="Crystal.Drawing.GalleryRim">
@@ -491,10 +492,13 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.MessageBar.CloseHoverBorder" Color="#BEA874" />
     <Thickness x:Key="RibbonKit.Metrics.MessageBar.Margin">7,3,7,7</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.MessageBar.BorderThickness">1</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.MessageBar.ExposedTopBorderThickness">0</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.MessageBar.ExposedTopCornerRadius">0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.MessageBar.ItemCornerRadius">10</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.MessageBar.LastCornerRadius">10</CornerRadius>
     <Thickness x:Key="RibbonKit.Metrics.MessageBar.ItemMargin">0,2,0,2</Thickness>
     <sys:Double x:Key="RibbonKit.Metrics.QatExtenderMinHeight">32</sys:Double>
+    <sys:Boolean x:Key="RibbonKit.Behaviors.QatExtenderClipTopShadow">False</sys:Boolean>
     <!-- Inset drawer under the rounded body; minimized draws a complete rim.
          A minimized drawer keeps all four corners even when a message is present. -->
     <CornerRadius x:Key="RibbonKit.Metrics.ContentCornerRadiusQatBelow">14</CornerRadius>
@@ -999,4 +1003,45 @@
     <!-- Contrasting keyboard outlines for accent-filled ribbon and Backstage surfaces. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.KeyboardFocus.Light" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.KeyboardFocus.Dark" Color="#000000" />
+
+    <!-- Touch density geometry; dark overlays inherit these metrics. -->
+    <sys:Double x:Key="RibbonKit.Metrics.Touch.TargetSize">44</sys:Double>
+    <sys:Double x:Key="RibbonKit.Metrics.Touch.GroupsRowHeight">136</sys:Double>
+    <sys:Double x:Key="RibbonKit.Metrics.Touch.GalleryHeight">60</sys:Double>
+    <sys:Double x:Key="RibbonKit.Metrics.Touch.GalleryMinWidth">184</sys:Double>
+    <sys:Double x:Key="RibbonKit.Metrics.Touch.FooterHeight">56</sys:Double>
+    <Thickness x:Key="RibbonKit.Metrics.Touch.ControlMargin">2,1</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.Touch.TabPadding">14,10</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.Touch.MenuPadding">10,8</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.Touch.InputPadding">8,6</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.Touch.NavigationPadding">16,12</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.Touch.ComboEditMargin">5,1,44,1</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.Touch.ChromeMargin">0</Thickness>
+    <sys:Double x:Key="RibbonKit.Metrics.Touch.MenuMaxHeight">340</sys:Double>
+
+    <sys:Double x:Key="RibbonKit.Metrics.Touch.IconSize">20</sys:Double>
+    <sys:Double x:Key="RibbonKit.Metrics.Touch.LargeIconSize">36</sys:Double>
+    <sys:Double x:Key="RibbonKit.Metrics.Touch.LargeButtonHeight">136</sys:Double>
+    <sys:Double x:Key="RibbonKit.Metrics.Touch.LargeButtonMinWidth">72</sys:Double>
+    <Thickness x:Key="RibbonKit.Metrics.Touch.LargeLayoutMargin">6,6,6,4</Thickness>
+    <sys:Double x:Key="RibbonKit.Metrics.Touch.NavigationHeight">52</sys:Double>
+    <sys:Double x:Key="RibbonKit.Metrics.Touch.MenuItemHeight">56</sys:Double>
+    <sys:Double x:Key="RibbonKit.Metrics.Touch.MenuNavWidth">192</sys:Double>
+    <sys:Double x:Key="RibbonKit.Metrics.Touch.SeparatorHeight">44</sys:Double>
+    <sys:Double x:Key="RibbonKit.Metrics.Touch.OrbSize">52</sys:Double>
+    <Thickness x:Key="RibbonKit.Metrics.Touch.OrbMargin">8,-10,8,0</Thickness>
+    <GridLength x:Key="RibbonKit.Metrics.Touch.GalleryOpenerWidth">44</GridLength>
+    <sys:Double x:Key="RibbonKit.Metrics.Touch.DropDownMinWidth">56</sys:Double>
+    <Thickness x:Key="RibbonKit.Metrics.Touch.DropDownChevronMargin">8,2,2,0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.Touch.ApplicationButtonMargin">8,0,2,0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.Touch.UtilityMargin">8,0,8,0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.Touch.ClassicRailMargin">8,36,0,8</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.Touch.ApplicationButtonPadding">20,10,20,10</Thickness>
+    <sys:Double x:Key="RibbonKit.Metrics.Touch.ApplicationButtonMinWidth">64</sys:Double>
+    <sys:Double x:Key="RibbonKit.Metrics.Touch.MenuTopBandHeight">8</sys:Double>
+    <Thickness x:Key="RibbonKit.Metrics.Touch.ClassicRailPadding">0,16,0,0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.InRibbonGalleryMargin">4,0,4,0</Thickness>
+    <sys:Double x:Key="RibbonKit.Metrics.Touch.MessageRowHeight">52</sys:Double>
+    <Thickness x:Key="RibbonKit.Metrics.Touch.MessageActionPadding">12,6</Thickness>
+    <sys:Double x:Key="RibbonKit.Metrics.Touch.TitleBarHeight">46</sys:Double>
 </ResourceDictionary>

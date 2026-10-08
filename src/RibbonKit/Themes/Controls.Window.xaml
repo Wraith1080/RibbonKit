@@ -35,6 +35,9 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type controls:RibbonWindow}">
+                    <ControlTemplate.Resources>
+                        <controls:WindowFrameGeometryConverter x:Key="WindowFrameGeometry" />
+                    </ControlTemplate.Resources>
                     <!-- Keep the physical frame LTR. Applying RTL to the direct Window template
                          root makes WPF arrange maximize compensation against the bottom/left
                          edges, losing the top/right inset. Logical content is mirrored one layer
@@ -64,7 +67,7 @@
                                           FlowDirection="{TemplateBinding FlowDirection}">
                         <Grid>
                             <Grid.RowDefinitions>
-                                <RowDefinition Height="34" />
+                                <RowDefinition Height="Auto" MinHeight="34" />
                                 <RowDefinition Height="*" />
                             </Grid.RowDefinitions>
 
@@ -389,6 +392,7 @@
                                  rows belong to that surface (title only in 2007; title + tabs in
                                  2010) instead of drawing bright seams through them. -->
                             <Border x:Name="AeroFrameInnerHighlight"
+                                    Tag="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroInnerHighlightMargin}"
                                     Margin="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroInnerHighlightMargin}"
                                     BorderBrush="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroInnerHighlight}"
                                     BorderThickness="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroInnerHighlightThickness}" />
@@ -436,6 +440,14 @@
                                     Value="{DynamicResource RibbonKit.Brushes.WindowFrame.AeroTitleForeground}" />
                         </Trigger>
                         <Trigger Property="FrameAppearance" Value="Office2010Aero">
+                            <Setter TargetName="AeroFrameInnerHighlight" Property="Margin">
+                                <Setter.Value>
+                                    <MultiBinding Converter="{StaticResource WindowFrameGeometry}">
+                                        <Binding ElementName="AeroFrameInnerHighlight" Path="Tag" />
+                                        <Binding Path="(controls:WindowFrameGeometryConverter.HeaderBottom)" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    </MultiBinding>
+                                </Setter.Value>
+                            </Setter>
                             <Setter TargetName="AeroFrameHost"
                                     Property="BorderThickness"
                                     Value="{DynamicResource RibbonKit.Metrics.WindowFrame.AeroThickness}" />
@@ -654,6 +666,24 @@
                             <Setter TargetName="PART_WindowIcon" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="TitleBarContentHost" Property="Margin" Value="10,0,6,0" />
                         </Trigger>
+                        <!-- The title QAT keeps its density while Backstage hides its presenter.
+                             Reserve its touch row and caption hit area through that transition. -->
+                        <DataTrigger Binding="{Binding Path=TitleBarContent.(controls:Ribbon.Density), RelativeSource={RelativeSource Self}}" Value="Touch">
+                            <Setter TargetName="TitleBarBand" Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.TitleBarHeight}" />
+                            <Setter TargetName="PART_MinimizeButton" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.TitleBarHeight}" />
+                            <Setter TargetName="PART_MaximizeButton" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.TitleBarHeight}" />
+                            <Setter TargetName="PART_RestoreButton" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.TitleBarHeight}" />
+                            <Setter TargetName="PART_CloseButton" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.TitleBarHeight}" />
+                            <Setter Property="WindowChrome.WindowChrome">
+                                <Setter.Value>
+                                    <WindowChrome CaptionHeight="{DynamicResource RibbonKit.Metrics.Touch.TitleBarHeight}"
+                                                  GlassFrameThickness="-1"
+                                                  ResizeBorderThickness="{x:Static SystemParameters.WindowResizeBorderThickness}"
+                                                  CornerRadius="0"
+                                                  UseAeroCaptionButtons="False" />
+                                </Setter.Value>
+                            </Setter>
+                        </DataTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>

@@ -180,6 +180,7 @@ public partial class MainWindow : RibbonWindow
             ApplyTheme(preferences.Theme);
 
             DarkModeToggle.IsChecked = preferences.DarkMode;
+            MainRibbon.Density = preferences.TouchMode ? RibbonDensity.Touch : RibbonDensity.Compact;
             AccentedTitleBarToggle.IsChecked = preferences.AccentedTitleBar;
             ApplyAccentPreference(preferences.Accent);
 
@@ -237,6 +238,7 @@ public partial class MainWindow : RibbonWindow
             Theme = ThemeManager.CurrentTheme ?? RibbonTheme.Office2024,
             Accent = _customAccent,
             DarkMode = ThemeManager.IsDarkMode,
+            TouchMode = MainRibbon.Density == RibbonDensity.Touch,
             AccentedTitleBar = ThemeManager.IsAccentedTitleBar,
             FrameAppearance = _preferredFrameAppearance,
             UseAccentForAeroFrame = _useAccentForAeroFrame,
@@ -499,6 +501,13 @@ public partial class MainWindow : RibbonWindow
         if (_glassTreatmentSync || GlassTreatmentToggle is null) return;
         _glassTreatmentOverride = GlassTreatmentToggle.IsChecked == true;
         RefreshGlassTreatment();
+        SaveAppearancePreferences();
+    }
+
+    private void OnSelectDensity(object sender, RoutedEventArgs e)
+    {
+        if (MainRibbon is null || sender is not RibbonMenuItem { Tag: RibbonDensity density }) return;
+        MainRibbon.Density = density;
         SaveAppearancePreferences();
     }
 

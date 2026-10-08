@@ -29,6 +29,16 @@ internal sealed class PopupDismissHelper
     private readonly Action _close;
     private Window? _window;
 
+    // Moving an open flyout's anchor with a render-only glide would leave its
+    // native popup window at the final layout position until the next placement pass.
+    internal static bool HasOpenPopupWithin(FrameworkElement surface)
+    {
+        var window = Window.GetWindow(surface);
+        return window is not null && OpenStackByWindow.TryGetValue(window, out var stack)
+            && stack.Any(helper => helper._getPopup()?.IsOpen == true
+                && (ReferenceEquals(surface, helper._owner) || surface.IsAncestorOf(helper._owner)));
+    }
+
     public PopupDismissHelper(FrameworkElement owner, Func<Popup?> getPopup, Action close)
     {
         _owner = owner;
@@ -49,6 +59,7 @@ internal sealed class PopupDismissHelper
         }
 
         _window.PreviewMouseDown += OnWindowPreviewMouseDown;
+        _window.PreviewTouchDown += OnWindowPreviewTouchDown;
         _window.PreviewKeyDown += OnWindowPreviewKeyDown;
         _window.Deactivated += OnWindowDeactivated;
         _window.LocationChanged += OnWindowLocationChanged;
@@ -69,6 +80,7 @@ internal sealed class PopupDismissHelper
 
         Window window = _window;
         window.PreviewMouseDown -= OnWindowPreviewMouseDown;
+        window.PreviewTouchDown -= OnWindowPreviewTouchDown;
         window.PreviewKeyDown -= OnWindowPreviewKeyDown;
         window.Deactivated -= OnWindowDeactivated;
         window.LocationChanged -= OnWindowLocationChanged;
@@ -91,6 +103,14 @@ internal sealed class PopupDismissHelper
         {
             _close();
         }
+    }
+
+    private void OnWindowPreviewTouchDown(object? sender, TouchEventArgs e)
+    {
+        // Dismiss even when a host handles touch and suppresses mouse promotion.
+        // Leave the event available to the touched control's own interaction.
+        if (e.OriginalSource is DependencyObject source && !IsInsideOwnerOrPopup(source))
+            _close();
     }
 
     private void OnWindowPreviewKeyDown(object sender, KeyEventArgs e)

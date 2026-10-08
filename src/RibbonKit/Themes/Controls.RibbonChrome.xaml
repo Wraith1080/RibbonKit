@@ -25,7 +25,7 @@
          second application-button state owner; sharing this template prevents the two
          presentations from drifting as theme tokens evolve. -->
     <DataTemplate x:Key="RibbonKit.Templates.ApplicationOrbChrome">
-        <Grid Width="{DynamicResource RibbonKit.Metrics.ApplicationOrbSize}"
+        <Grid x:Name="OrbSurface" Width="{DynamicResource RibbonKit.Metrics.ApplicationOrbSize}"
               Height="{DynamicResource RibbonKit.Metrics.ApplicationOrbSize}"
               Margin="{DynamicResource RibbonKit.Metrics.ApplicationOrbMargin}">
             <!-- The dark edge of a real orb is a soft shadow plus a light rim, not a
@@ -85,6 +85,11 @@
                 <Setter TargetName="OrbFill" Property="Stroke"
                         Value="{DynamicResource RibbonKit.Brushes.ApplicationOrb.HoverRing}" />
             </DataTrigger>
+            <Trigger Property="controls:Ribbon.Density" Value="Touch">
+                <Setter TargetName="OrbSurface" Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.OrbSize}" />
+                <Setter TargetName="OrbSurface" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.OrbSize}" />
+                <Setter TargetName="OrbSurface" Property="Margin" Value="{DynamicResource RibbonKit.Metrics.Touch.OrbMargin}" />
+            </Trigger>
         </DataTemplate.Triggers>
     </DataTemplate>
 
@@ -121,12 +126,16 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type controls:Ribbon}">
+                    <ControlTemplate.Resources>
+                        <controls:QatShadowGeometryConverter x:Key="QatShadowGeometry" />
+                    </ControlTemplate.Resources>
                     <!-- The backstage overlay is hosted in the window's adorner layer
                          by the Ribbon class itself (see BackstageAdorner), not here. -->
                     <Border x:Name="RibbonSurface"
                             Background="{TemplateBinding Background}">
                         <Grid>
                             <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
@@ -139,31 +148,45 @@
                             <!-- Quick access row shown when QuickAccessPosition=BelowRibbon.
                                  Styled as an extender chip that tucks under the ribbon
                                  card (Office 2024); flat themes render a plain strip. -->
-                            <Border x:Name="QatBelowHost"
-                                    Grid.Row="1"
-                                    KeyboardNavigation.TabNavigation="Local"
-                                    KeyboardNavigation.TabIndex="1"
-                                    HorizontalAlignment="Stretch"
-                                    MinHeight="{DynamicResource RibbonKit.Metrics.QatExtenderMinHeight}"
-                                    Margin="{DynamicResource RibbonKit.Metrics.QatExtenderMargin}"
-                                    Padding="8,2"
-                                    Background="{DynamicResource RibbonKit.Brushes.QatExtender.Background}"
-                                    BorderBrush="{DynamicResource RibbonKit.Brushes.QatExtender.Border}"
-                                    BorderThickness="{DynamicResource RibbonKit.Metrics.QatExtenderBorderThickness}"
-                                    CornerRadius="{DynamicResource RibbonKit.Metrics.QatExtenderCornerRadius}"
-                                    Effect="{DynamicResource RibbonKit.Effects.QatExtenderShadow}"
-                                    Visibility="Collapsed">
-                                <!-- ItemsSource bound only by the BelowRibbon trigger. -->
-                                <ItemsControl x:Name="QatBelowItems"
-                                              Focusable="False"
-                                              Margin="4,0">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <StackPanel Orientation="Horizontal" />
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                </ItemsControl>
-                            </Border>
+                            <!-- Clip only the connected drawer's upper shadow; the parent
+                                 clips the rendered child effect while preserving its outer halo. -->
+                            <Grid x:Name="QatBelowShadowHost" Grid.Row="1"
+                                  Tag="{DynamicResource RibbonKit.Behaviors.QatExtenderClipTopShadow}">
+                                <Grid.Clip>
+                                    <MultiBinding Converter="{StaticResource QatShadowGeometry}">
+                                        <Binding Path="ActualWidth" RelativeSource="{RelativeSource Self}" />
+                                        <Binding Path="ActualHeight" RelativeSource="{RelativeSource Self}" />
+                                        <Binding Path="Effect" ElementName="QatBelowHost" />
+                                        <Binding Path="Tag" RelativeSource="{RelativeSource Self}" />
+                                        <Binding Path="IsMinimized" RelativeSource="{RelativeSource TemplatedParent}" />
+                                        <Binding Path="Margin" ElementName="QatBelowHost" />
+                                    </MultiBinding>
+                                </Grid.Clip>
+                                <Border x:Name="QatBelowHost"
+                                        KeyboardNavigation.TabNavigation="Local"
+                                        KeyboardNavigation.TabIndex="1"
+                                        HorizontalAlignment="Stretch"
+                                        MinHeight="{DynamicResource RibbonKit.Metrics.QatExtenderMinHeight}"
+                                        Margin="{DynamicResource RibbonKit.Metrics.QatExtenderMargin}"
+                                        Padding="8,2"
+                                        Background="{DynamicResource RibbonKit.Brushes.QatExtender.Background}"
+                                        BorderBrush="{DynamicResource RibbonKit.Brushes.QatExtender.Border}"
+                                        BorderThickness="{DynamicResource RibbonKit.Metrics.QatExtenderBorderThickness}"
+                                        CornerRadius="{DynamicResource RibbonKit.Metrics.QatExtenderCornerRadius}"
+                                        Effect="{DynamicResource RibbonKit.Effects.QatExtenderShadow}"
+                                        Visibility="Collapsed">
+                                    <!-- ItemsSource bound only by the BelowRibbon trigger. -->
+                                    <ItemsControl x:Name="QatBelowItems"
+                                                  Focusable="False"
+                                                  Margin="4,0">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel Orientation="Horizontal" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                    </ItemsControl>
+                                </Border>
+                            </Grid>
 
                             <!-- A message bar hosted through Ribbon.MessageBar is part of the
                                  ribbon surface, not an unrelated document sibling. Its own
@@ -172,6 +195,18 @@
                                               Grid.Row="2"
                                               Content="{TemplateBinding MessageBar}"
                                               Focusable="False" />
+
+                            <!-- The minimized tab header needs a document boundary only when
+                                 no lower QAT or open message supplies its own border. Bordered
+                                 themes keep their hairline; zero-height themes still opt out. -->
+                            <Border x:Name="MinimizedDivider"
+                                    Grid.Row="3"
+                                    Height="{DynamicResource RibbonKit.Metrics.MinimizedDividerHeight}"
+                                    VerticalAlignment="Top"
+                                    Background="{DynamicResource RibbonKit.Brushes.Ribbon.Border}"
+                                    Visibility="Collapsed"
+                                    IsHitTestVisible="False"
+                                    SnapsToDevicePixels="True" />
 
                             <!-- Application menus are direct ribbon-template siblings. This lets
                                  the menu cover the QAT/messages without promoting the
@@ -183,7 +218,7 @@
                                  layer. -->
                             <Canvas x:Name="ApplicationMenuOverlayLayer"
                                     Grid.Row="0"
-                                    Grid.RowSpan="3"
+                                    Grid.RowSpan="4"
                                     Panel.ZIndex="2"
                                     Width="0"
                                     Height="0"
@@ -207,14 +242,20 @@
                                  preview room on the surface; it has no effect while Collapsed. -->
                             <Border x:Name="PART_DesignBackstageHost"
                                     Grid.Row="0"
-                                    Grid.RowSpan="3"
+                                    Grid.RowSpan="4"
                                     Visibility="Collapsed"
                                     MinHeight="440"
                                     Background="{DynamicResource RibbonKit.Brushes.Backstage.ContentBackground}" />
                         </Grid>
                     </Border>
                     <ControlTemplate.Triggers>
+                        <!-- Use IsMinimized immediately; body collapse can finish after
+                             its render-only transition without delaying this boundary. -->
+                        <Trigger Property="IsMinimized" Value="True">
+                            <Setter TargetName="MinimizedDivider" Property="Visibility" Value="Visible" />
+                        </Trigger>
                         <Trigger Property="QuickAccessPosition" Value="BelowRibbon">
+                            <Setter TargetName="MinimizedDivider" Property="Visibility" Value="Collapsed" />
                             <!-- Crystal raises the body shadow above its inset drawer. Office
                                  retains declaration order; the application-menu overlay stays above both. -->
                             <Setter TargetName="TabControlHost" Property="Panel.ZIndex"
@@ -252,13 +293,14 @@
                              begins at the very next pixel. Keep the QAT shadow: the connected
                              ribbon and message stack intentionally retain their own depth layers. -->
                         <Trigger Property="HasOpenMessages" Value="True">
+                            <Setter TargetName="MinimizedDivider" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="QatBelowHost" Property="CornerRadius"
                                     Value="{DynamicResource RibbonKit.Metrics.QatExtenderCornerRadiusMessageBar}" />
                             <Setter TargetName="QatBelowHost" Property="Margin"
                                     Value="{DynamicResource RibbonKit.Metrics.QatExtenderMarginMessageBar}" />
                         </Trigger>
-                        <!-- The minimized Crystal drawer stays rounded on all four corners
-                             above a message. Office retains its connected message-row geometry. -->
+                        <!-- A minimized drawer keeps its exposed upper corners above a
+                             message; each palette controls its connected lower seam. -->
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
                                 <Condition Property="QuickAccessPosition" Value="BelowRibbon" />
@@ -423,7 +465,7 @@
                                                                         CornerRadius="{DynamicResource RibbonKit.Metrics.ApplicationButtonCornerRadius}"
                                                                         Opacity="{DynamicResource RibbonKit.Metrics.ApplicationButtonInnerRimIdleOpacity}"
                                                                         IsHitTestVisible="False" />
-                                                                <ContentPresenter Margin="{TemplateBinding Padding}"
+                                                                <ContentPresenter x:Name="ApplicationCaption" Margin="{TemplateBinding Padding}"
                                                                                   HorizontalAlignment="Center"
                                                                                   VerticalAlignment="Center" />
                                                             </Grid>
@@ -855,29 +897,6 @@
                                               Visibility="{Binding CanScrollRight, ElementName=PART_ContentScroll, Converter={StaticResource RibbonKit.BoolToVis}}" />
                             </Grid>
                         </Border>
-                        <!-- MINIMIZED divider. With the body collapsed its outline goes with it,
-                             and in the bordered generations (2007/2010/2013) the tab strip then
-                             butts straight into the app's content with no boundary at all. This
-                             hairline stands in for the outline's top edge, in the same
-                             Ribbon.Border colour, so a minimized ribbon still terminates.
-
-                             Height is a per-theme token rather than a trigger: 2019 (tinted band)
-                             and 2024 (floating card) set it to 0, which also costs them no layout
-                             height, exactly as ContextualUnderlineHeight is zeroed to switch off
-                             the contextual underline. Full width by design, including 2007, whose
-                             body is inset 2px a side — a rule that stops short of the window edge
-                             reads as a mistake rather than a boundary.
-
-                             Never visible at the same time as PART_ConnectNotch below (that one
-                             mirrors ContentHost), so their declaration order does not matter. -->
-                        <Border x:Name="MinimizedDivider"
-                                Grid.Row="1"
-                                Height="{DynamicResource RibbonKit.Metrics.MinimizedDividerHeight}"
-                                VerticalAlignment="Top"
-                                Background="{DynamicResource RibbonKit.Brushes.Ribbon.Border}"
-                                Visibility="Collapsed"
-                                IsHitTestVisible="False"
-                                SnapsToDevicePixels="True" />
                         <!-- Body-border NOTCH: a 1px body-coloured sliver lying OVER the body's
                              top border, directly under the selected tab, cutting a tab-wide gap
                              into the border so the active tab opens seamlessly into the body
@@ -915,16 +934,6 @@
                         </Border>
                     </Grid>
                     <ControlTemplate.Triggers>
-                        <!-- The ribbon body's Visibility while minimized is managed in code
-                             (Ribbon.OnIsMinimizedChanged) so it can slide up + fade out before
-                             collapsing, and slide back in on restore. The divider keys off
-                             IsMinimized rather than the body's Visibility, so it is already in
-                             place under the body as that slides up and away — appearing only
-                             after the collapse would pop a line in a frame late. -->
-                        <DataTrigger Binding="{Binding IsMinimized, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
-                                     Value="True">
-                            <Setter TargetName="MinimizedDivider" Property="Visibility" Value="Visible" />
-                        </DataTrigger>
                         <DataTrigger Binding="{Binding QuickAccessPosition, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
                                      Value="TabRow">
                             <Setter TargetName="QatTabRowHost" Property="Visibility" Value="Visible" />
@@ -1046,6 +1055,45 @@
                             </MultiDataTrigger.Conditions>
                             <Setter TargetName="QatTabRowHost" Property="Margin"
                                     Value="{DynamicResource RibbonKit.Metrics.QatTabRowMarginNoApplicationRtl}" />
+                        </MultiDataTrigger>
+                        <Trigger Property="controls:Ribbon.Density" Value="Touch">
+                            <Setter TargetName="PART_ApplicationButton" Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                            <Setter TargetName="PART_ApplicationButton" Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                            <Setter TargetName="PART_ModalClose" Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                            <Setter TargetName="PART_ModalClose" Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                            <Setter TargetName="PART_ModalClose" Property="Height" Value="{Binding ActualHeight, ElementName=PART_TabItemsPanel}" />
+                            <Setter TargetName="PART_ModalClose" Property="Width" Value="Auto" />
+                            <Setter TargetName="MinimizeToggle" Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                            <Setter TargetName="MinimizeToggle" Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                            <Setter TargetName="MinimizeToggle" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                            <Setter TargetName="MinimizeToggle" Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                            <Setter TargetName="PART_MergedCaptionMinimize" Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                            <Setter TargetName="PART_MergedCaptionMinimize" Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                            <Setter TargetName="PART_MergedCaptionMinimize" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                            <Setter TargetName="PART_MergedCaptionMinimize" Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                            <Setter TargetName="PART_MergedCaptionRestore" Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                            <Setter TargetName="PART_MergedCaptionRestore" Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                            <Setter TargetName="PART_MergedCaptionRestore" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                            <Setter TargetName="PART_MergedCaptionRestore" Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                            <Setter TargetName="PART_MergedCaptionClose" Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                            <Setter TargetName="PART_MergedCaptionClose" Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                            <Setter TargetName="PART_MergedCaptionClose" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                            <Setter TargetName="PART_MergedCaptionClose" Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                            <Setter TargetName="PART_TabItemsPanel" Property="VerticalAlignment" Value="Bottom" />
+                            <!-- Retain the minimize chevron's top inset so its modal
+                                 replacement reserves the same Touch header height. -->
+                            <Setter TargetName="PART_ModalClose" Property="VerticalAlignment" Value="Bottom" />
+                        </Trigger>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding Path=(controls:Ribbon.Density), RelativeSource={RelativeSource Self}}" Value="Touch" />
+                                <Condition Binding="{Binding ApplicationButtonShape, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}" Value="Tab" />
+                            </MultiDataTrigger.Conditions>
+                            <Setter TargetName="PART_ApplicationButton" Property="Height" Value="{Binding ActualHeight, ElementName=PART_TabItemsPanel}" />
+                            <Setter TargetName="PART_ApplicationButton" Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.Touch.ApplicationButtonMinWidth}" />
+                            <Setter TargetName="PART_ApplicationButton" Property="Margin" Value="{DynamicResource RibbonKit.Metrics.Touch.ApplicationButtonMargin}" />
+                            <Setter TargetName="PART_ApplicationButton" Property="Padding" Value="{DynamicResource RibbonKit.Metrics.Touch.ApplicationButtonPadding}" />
+                            <Setter TargetName="PART_ApplicationButton" Property="VerticalAlignment" Value="Bottom" />
                         </MultiDataTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

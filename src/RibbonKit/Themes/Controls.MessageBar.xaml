@@ -7,6 +7,8 @@
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.Actions.xaml" />
     </ResourceDictionary.MergedDictionaries>
+    <controls:MessageBarGeometryConverter x:Key="MessageStackGeometry" />
+    <Thickness x:Key="MessageZeroThickness">0</Thickness>
 
     <!-- Repeatable Office-style warning/information strips. Colours come entirely from the
          active token dictionary; hosts may still override Background/Foreground per message. -->
@@ -27,7 +29,69 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type controls:RibbonMessageBar}">
-                    <ItemsPresenter />
+                    <!-- One exposed stack edge survives first-row dismissal without
+                         changing the connected borders between individual messages. -->
+                    <Grid>
+                        <!-- Reserve only the existing top inset. Clip row paint inside the
+                             native rim, leaving the border's antialiased curve untouched. -->
+                        <ItemsPresenter Margin="{Binding Tag, ElementName=ExposedTopBorder}">
+                            <ItemsPresenter.Clip>
+                                <MultiBinding Converter="{StaticResource MessageStackGeometry}" ConverterParameter="Content">
+                                    <Binding Path="ActualWidth" RelativeSource="{RelativeSource Self}" />
+                                    <Binding Path="ActualHeight" RelativeSource="{RelativeSource Self}" />
+                                    <Binding Path="CornerRadius" ElementName="ExposedTopBorder" />
+                                    <Binding Path="Tag" ElementName="ExposedTopBorder" />
+                                    <Binding Path="(controls:MessageBarGeometryConverter.RowBorderThickness)" ElementName="ExposedTopBorder" />
+                                    <Binding RelativeSource="{RelativeSource Self}" />
+                                </MultiBinding>
+                            </ItemsPresenter.Clip>
+                        </ItemsPresenter>
+                        <Border x:Name="ExposedTopBorder"
+                                BorderBrush="{DynamicResource RibbonKit.Brushes.MessageBar.Border}"
+                                Tag="{StaticResource MessageZeroThickness}"
+                                controls:MessageBarGeometryConverter.RowBorderThickness="{DynamicResource RibbonKit.Metrics.MessageBar.BorderThickness}"
+                                CornerRadius="0"
+                                IsHitTestVisible="False"
+                                SnapsToDevicePixels="True">
+                            <Border.BorderThickness>
+                                <MultiBinding Converter="{StaticResource MessageStackGeometry}" ConverterParameter="Thickness">
+                                    <Binding Path="ActualWidth" RelativeSource="{RelativeSource Self}" />
+                                    <Binding Path="ActualHeight" RelativeSource="{RelativeSource Self}" />
+                                    <Binding Path="CornerRadius" RelativeSource="{RelativeSource Self}" />
+                                    <Binding Path="Tag" RelativeSource="{RelativeSource Self}" />
+                                    <Binding Path="(controls:MessageBarGeometryConverter.RowBorderThickness)" RelativeSource="{RelativeSource Self}" />
+                                    <Binding RelativeSource="{RelativeSource Self}" />
+                                </MultiBinding>
+                            </Border.BorderThickness>
+                            <Border.Clip>
+                                <MultiBinding Converter="{StaticResource MessageStackGeometry}" ConverterParameter="Rim">
+                                    <Binding Path="ActualWidth" RelativeSource="{RelativeSource Self}" />
+                                    <Binding Path="ActualHeight" RelativeSource="{RelativeSource Self}" />
+                                    <Binding Path="CornerRadius" RelativeSource="{RelativeSource Self}" />
+                                    <Binding Path="Tag" RelativeSource="{RelativeSource Self}" />
+                                    <Binding Path="(controls:MessageBarGeometryConverter.RowBorderThickness)" RelativeSource="{RelativeSource Self}" />
+                                    <Binding RelativeSource="{RelativeSource Self}" />
+                                </MultiBinding>
+                            </Border.Clip>
+                        </Border>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding HasOpenMessages, RelativeSource={RelativeSource Self}}" Value="True" />
+                                <Condition Binding="{Binding IsMinimized, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}" Value="True" />
+                            </MultiDataTrigger.Conditions>
+                            <Setter TargetName="ExposedTopBorder" Property="Tag"
+                                    Value="{DynamicResource RibbonKit.Metrics.MessageBar.ExposedTopBorderThickness}" />
+                            <Setter TargetName="ExposedTopBorder" Property="CornerRadius"
+                                    Value="{DynamicResource RibbonKit.Metrics.MessageBar.ExposedTopCornerRadius}" />
+                        </MultiDataTrigger>
+                        <DataTrigger Binding="{Binding QuickAccessPosition, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
+                                     Value="BelowRibbon">
+                            <Setter TargetName="ExposedTopBorder" Property="Tag" Value="{StaticResource MessageZeroThickness}" />
+                            <Setter TargetName="ExposedTopBorder" Property="CornerRadius" Value="0" />
+                        </DataTrigger>
+                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
@@ -80,7 +144,7 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
 
-                            <Grid Grid.Column="0"
+                            <Grid x:Name="MessageIconHost" Grid.Column="0"
                                   Width="18" Height="18"
                                   Margin="12,0,8,0"
                                   VerticalAlignment="Center">
@@ -200,9 +264,27 @@
                             <Setter TargetName="PART_Root" Property="CornerRadius"
                                     Value="{DynamicResource RibbonKit.Metrics.MessageBar.LastCornerRadius}" />
                         </Trigger>
+                        <Trigger Property="controls:Ribbon.Density" Value="Touch">
+                            <Setter TargetName="PART_ActionButton" Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                            <Setter TargetName="PART_ActionButton" Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                            <Setter TargetName="PART_ActionButton" Property="Padding" Value="{DynamicResource RibbonKit.Metrics.Touch.MessageActionPadding}" />
+                            <Setter TargetName="PART_CloseButton" Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                            <Setter TargetName="PART_CloseButton" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                            <Setter TargetName="MessageIconHost" Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.IconSize}" />
+                            <Setter TargetName="MessageIconHost" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.IconSize}" />
+                            <Setter TargetName="CustomIcon" Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.IconSize}" />
+                            <Setter TargetName="CustomIcon" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.IconSize}" />
+                            <Setter TargetName="DefaultIcon" Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.IconSize}" />
+                            <Setter TargetName="DefaultIcon" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.IconSize}" />
+                        </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+        <Style.Triggers>
+            <Trigger Property="controls:Ribbon.Density" Value="Touch">
+                <Setter Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.MessageRowHeight}" />
+            </Trigger>
+        </Style.Triggers>
     </Style>
 </ResourceDictionary>

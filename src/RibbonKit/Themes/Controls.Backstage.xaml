@@ -422,6 +422,18 @@
                             </MultiDataTrigger.Conditions>
                             <Setter TargetName="Glass2007OpaqueRailHighlight" Property="Visibility" Value="Visible" />
                         </MultiDataTrigger>
+                        <Trigger Property="controls:Ribbon.Density" Value="Touch">
+                            <Setter TargetName="PART_BackButton" Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                            <Setter TargetName="PART_BackButton" Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="controls:Ribbon.Density" Value="Touch" />
+                                <Condition Property="Design" Value="Classic2007" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="NavColumn" Property="Margin" Value="{DynamicResource RibbonKit.Metrics.Touch.ClassicRailMargin}" />
+                            <Setter TargetName="NavColumn" Property="Padding" Value="{DynamicResource RibbonKit.Metrics.Touch.ClassicRailPadding}" />
+                        </MultiTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
@@ -708,10 +720,19 @@
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.5" />
                         </Trigger>
+                        <Trigger Property="controls:Ribbon.Density" Value="Touch">
+                            <Setter TargetName="Chrome" Property="Padding" Value="{DynamicResource RibbonKit.Metrics.Touch.NavigationPadding}" />
+                        </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+        <Style.Triggers>
+            <Trigger Property="controls:Ribbon.Density" Value="Touch">
+                <Setter Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.NavigationHeight}" />
+                <Setter Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
 </ResourceDictionary>

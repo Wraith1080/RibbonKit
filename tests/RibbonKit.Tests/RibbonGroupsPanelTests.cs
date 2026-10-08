@@ -100,6 +100,40 @@ public class RibbonGroupsPanelTests
         Assert.Equal(RibbonGroupSizeState.Large, group.SizeState);
     });
 
+    [Fact]
+    public void Scroller_retains_reported_overflow_when_the_groups_measure_is_cached() => Sta.Run(() =>
+    {
+        var group = Group(700, 50, priority: null);
+        group.CanResize = false;
+        var panel = new RibbonGroupsPanel();
+        panel.Children.Add(group);
+        var host = new RibbonScrollContentHost { Child = panel, ConstrainChildWidth = true };
+        var viewport = new Size(400, 100);
+        host.Measure(viewport);
+        host.Arrange(new Rect(viewport));
+        Assert.Equal(700, host.ExtentWidth);
+        Assert.True(host.CanScrollRight);
+
+        host.InvalidateMeasure();
+        host.Measure(viewport);
+        host.Arrange(new Rect(viewport));
+        Assert.Equal(700, host.ExtentWidth);
+        Assert.True(host.CanScrollRight);
+
+        panel.Children.Clear();
+        host.InvalidateMeasure();
+        host.Measure(viewport);
+        host.Arrange(new Rect(viewport));
+        Assert.Equal(0, host.ExtentWidth);
+        Assert.False(host.CanScrollRight);
+
+        host.Child = new System.Windows.Controls.Border { Width = 100, Height = 24 };
+        host.Measure(viewport);
+        host.Arrange(new Rect(viewport));
+        Assert.Equal(100, host.ExtentWidth);
+        Assert.False(host.CanScrollRight);
+    });
+
     private static MeasuredGroup Group(double large, double collapsed, int? priority) => new(
         new Dictionary<RibbonGroupSizeState, double>
         {

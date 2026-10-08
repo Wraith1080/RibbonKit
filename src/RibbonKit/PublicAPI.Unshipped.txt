@@ -1,4 +1,23 @@
 #nullable enable
+RibbonKit.Controls.RibbonDropDownButton.DropDownHeader.get -> string?
+RibbonKit.Controls.RibbonDropDownButton.DropDownHeader.set -> void
+static readonly RibbonKit.Controls.RibbonDropDownButton.DropDownHeaderProperty -> System.Windows.DependencyProperty!
+RibbonKit.Controls.RibbonMenuItem.Description.get -> string?
+RibbonKit.Controls.RibbonMenuItem.Description.set -> void
+static readonly RibbonKit.Controls.RibbonMenuItem.DescriptionProperty -> System.Windows.DependencyProperty!
+RibbonKit.Controls.RibbonMenuItem.LargeIcon.get -> System.Windows.Media.ImageSource?
+RibbonKit.Controls.RibbonMenuItem.LargeIcon.set -> void
+static readonly RibbonKit.Controls.RibbonMenuItem.LargeIconProperty -> System.Windows.DependencyProperty!
+override RibbonKit.Controls.RibbonMessageBar.OnApplyTemplate() -> void
+RibbonKit.Animation.RibbonAnimationAction.DensityChange = 15 -> RibbonKit.Animation.RibbonAnimationAction
+RibbonKit.RibbonDensity
+RibbonKit.RibbonDensity.Compact = 0 -> RibbonKit.RibbonDensity
+RibbonKit.RibbonDensity.Touch = 1 -> RibbonKit.RibbonDensity
+RibbonKit.Controls.Ribbon.Density.get -> RibbonKit.RibbonDensity
+RibbonKit.Controls.Ribbon.Density.set -> void
+static readonly RibbonKit.Controls.Ribbon.DensityProperty -> System.Windows.DependencyProperty!
+static RibbonKit.Controls.Ribbon.GetDensity(System.Windows.DependencyObject! element) -> RibbonKit.RibbonDensity
+static RibbonKit.Controls.Ribbon.SetDensity(System.Windows.DependencyObject! element, RibbonKit.RibbonDensity value) -> void
 RibbonKit.Theming.RibbonTheme.CrystalLight = 5 -> RibbonKit.Theming.RibbonTheme
 RibbonKit.Controls.RibbonTab.ContextualSelectionBrush.get -> System.Windows.Media.Brush?
 RibbonKit.Controls.RibbonTab.ContextualSelectionBrush.set -> void

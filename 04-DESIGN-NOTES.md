@@ -856,6 +856,10 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [Keep focus visible on Classic Backstage and colored Office 2019 ribbon headers](docs/history/01-library.md#3225-focus-contrast-on-accent-filled-rails-and-headers--2026-10-05).
 
+### 3.226 Shared Compact/Touch density — 2026-10-07
+
+[Inherited density, detached surfaces, adaptive width refresh and live transitions](docs/history/01-library.md#3226-shared-compacttouch-density--2026-10-07).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),
@@ -910,8 +914,10 @@ technical evidence warrants them; preserve existing dated records.
   Named styles remain unsupported without a complete style/persistence contract.
 - **Library:** MDI arrange/cycle commands, full MVVM proof, tabbed mode and persistence
   (M1–M3); Office 2010 Aero live visual approval (§3.97/§3.125); optional designer
-  scalar reset actions; touch density, richer QAT/custom-control projections and
+  scalar reset actions; richer QAT/custom-control projections and
   future themes. Complete Windows contrast-theme support is not claimed.
+- **Touch density:** shared implementation and current verification/acceptance
+  are tracked in the [active touch plan](docs/14-TOUCH-DENSITY-PLAN.md#verification-and-acceptance).
 - **Crystal portability and Office 2007 orb defaults:** use the
   [active plan's status and acceptance table](docs/13-CRYSTAL-PORTABILITY-AND-ORB-PLAN.md#current-status-and-acceptance)
   for slice progress, remaining live review and deferred issues. Shared work

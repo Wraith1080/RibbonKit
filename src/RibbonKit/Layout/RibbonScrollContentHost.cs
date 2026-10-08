@@ -81,7 +81,8 @@ public class RibbonScrollContentHost : Decorator
     public static readonly DependencyProperty CanScrollRightProperty = CanScrollRightKey.DependencyProperty;
 
     private readonly TranslateTransform _translate = new TranslateTransform();
-    private double _reportedContentWidth;
+    private double? _reportedContentWidth;
+    private UIElement? _reportedContentChild;
 
     // Animated-scroll state: the offset the current glide is heading toward, and a generation
     // counter so a superseded animation's Completed callback doesn't finalize a stale target.
@@ -148,7 +149,11 @@ public class RibbonScrollContentHost : Decorator
     /// it at, so when we constrain the groups row to the viewport we can't otherwise see the overflow
     /// left after full reduction; the panel hands us the real width so the chevrons can still appear.
     /// </summary>
-    internal void ReportContentWidth(double width) => _reportedContentWidth = width;
+    internal void ReportContentWidth(double width)
+    {
+        _reportedContentWidth = width;
+        _reportedContentChild = Child;
+    }
 
     /// <summary>Scrolls one line toward the start; disabled when already at the start.</summary>
     public ICommand ScrollLeftCommand { get; }
@@ -185,6 +190,11 @@ public class RibbonScrollContentHost : Decorator
     protected override Size MeasureOverride(Size constraint)
     {
         UIElement child = Child;
+        if (!ReferenceEquals(child, _reportedContentChild))
+        {
+            _reportedContentWidth = null;
+            _reportedContentChild = null;
+        }
         if (child is null)
         {
             SetValue(ExtentWidthKey, 0d);
@@ -202,11 +212,13 @@ public class RibbonScrollContentHost : Decorator
             ? constraint.Width
             : double.PositiveInfinity;
 
-        _reportedContentWidth = 0d;
+        // Keep the panel's last report when WPF reuses its cached measure at the
+        // same viewport. Resetting it here replaces real overflow with DesiredSize,
+        // which WPF clamps to the viewport, hiding the arrows until another resize.
         child.Measure(new Size(measureWidth, constraint.Height));
 
-        double extent = ConstrainChildWidth && _reportedContentWidth > 0d
-            ? _reportedContentWidth
+        double extent = ConstrainChildWidth && _reportedContentWidth is double reportedWidthValue
+            ? reportedWidthValue
             : child.DesiredSize.Width;
         SetValue(ExtentWidthKey, extent);
 

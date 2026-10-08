@@ -25,6 +25,7 @@ public class ShowcaseAppearancePreferencesTests
             Theme = RibbonTheme.Office2010,
             Accent = "#107c41",
             DarkMode = true,
+            TouchMode = true,
             AccentedTitleBar = true,
             FrameAppearance = RibbonWindowFrameAppearance.Office2010Aero,
             UseAccentForAeroFrame = true,
@@ -43,6 +44,7 @@ public class ShowcaseAppearancePreferencesTests
         Assert.Equal(RibbonTheme.Office2010, restored.Theme);
         Assert.Equal("#FF107C41", restored.Accent);
         Assert.True(restored.DarkMode);
+        Assert.True(restored.TouchMode);
         Assert.True(restored.AccentedTitleBar);
         Assert.Equal(RibbonWindowFrameAppearance.Office2010Aero, restored.FrameAppearance);
         Assert.True(restored.UseAccentForAeroFrame);
@@ -68,6 +70,7 @@ public class ShowcaseAppearancePreferencesTests
         Assert.Equal(RibbonTheme.Office2024, defaults.Theme);
         Assert.Null(defaults.Accent);
         Assert.False(defaults.DarkMode);
+        Assert.False(defaults.TouchMode);
         Assert.False(defaults.AccentedTitleBar);
         Assert.Equal(RibbonWindowFrameAppearance.Default, defaults.FrameAppearance);
         Assert.False(defaults.UseAccentForAeroFrame);

@@ -1,6 +1,7 @@
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:RibbonKit.Controls"
     xmlns:animation="clr-namespace:RibbonKit.Animation">
 
     <!-- ============================================================
@@ -72,7 +73,7 @@
                                  entrance on themed timing instead (§3.42). The surface fades while
                                  its content slides, so this popup needs no headroom margin or
                                  placement offset — the geometry below is the original. -->
-                            <Popup x:Name="PART_Popup"
+                            <Popup controls:Ribbon.Density="{Binding Path=(controls:Ribbon.Density), RelativeSource={RelativeSource TemplatedParent}}" x:Name="PART_Popup"
                                    Placement="Right"
                                    HorizontalOffset="-3"
                                    AllowsTransparency="True"
@@ -134,10 +135,21 @@
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.4" />
                         </Trigger>
+                        <Trigger Property="controls:Ribbon.Density" Value="Touch">
+                            <Setter TargetName="Chrome" Property="Padding" Value="{DynamicResource RibbonKit.Metrics.Touch.MenuPadding}" />
+                            <Setter TargetName="Chrome" Property="Margin" Value="{DynamicResource RibbonKit.Metrics.Touch.ChromeMargin}" />
+                        </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+        <Style.Triggers>
+            <Trigger Property="controls:Ribbon.Density" Value="Touch">
+                <Setter Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                <Setter Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                <Setter Property="Margin" Value="{DynamicResource RibbonKit.Metrics.Touch.ControlMargin}" />
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
     <Style x:Key="RibbonKit.MenuSeparator" TargetType="{x:Type Separator}">

@@ -29,6 +29,7 @@ below describes the current checkout, including post-release additions; see
 - Collapsed-group flyouts, minimized ribbon, double-click/chevron/Ctrl+F1 toggle.
 - Tab/group horizontal scrolling and optional `RibbonWindow` title/QAT/contextual integration.
 - Arbitrary WPF group content, with optional `IRibbonSizeAware` participation.
+- Opt-in Compact/Touch density, shared by ribbon controls, menus, galleries, QAT and File navigation.
 - Simplified single-row ribbon remains a candidate.
 
 ### Controls
@@ -86,6 +87,81 @@ Accent-filled Backstage rails and ribbon headers use a contrasting light or dark
 outline when the usual accent outline would blend into the surface. The outline
 refreshes when the palette or title-bar coloring changes while focus is retained.
 
+### Touch density
+
+Set `Density="Touch"` on a `Ribbon`, or switch it at runtime:
+
+```csharp
+ribbon.Density = RibbonDensity.Touch;
+// Return to the standard geometry.
+ribbon.Density = RibbonDensity.Compact;
+```
+
+Compact is the default. Touch enlarges command targets, vector icons and spacing,
+fits the body to its command stacks, and gives galleries a single popup opener
+beside tiles that fill the strip. File navigation uses larger targets while keeping
+its normal text size. Theme selection stays
+independent of density. Detached QAT hosts, popups and Backstage follow the owning
+ribbon; changing density refreshes adaptive group measurements. Menu and gallery
+scroll viewers support native vertical touch panning.
+
+Live density changes settle gently after the final adaptive layout; ribbon height
+and window caption geometry update immediately. `RibbonAnimationAction.DensityChange`
+follows the global None/Subtle/Expressive level and reduced-motion policy, and can
+be overridden with `RibbonAnimation.SetActionLevel`. Subtle uses 160 ms; Expressive
+uses 224 ms. Only opacity and a small below-ribbon QAT translation animate, without
+scaling text or icons. Initial density, including preferences restored during
+`Loaded` before the first render, appears immediately.
+
+`Ribbon.Density` is also an inherited attached property: use
+`Ribbon.SetDensity(scope, RibbonDensity.Touch)` for standalone ribbon controls or
+detached host content. Local overrides follow WPF precedence; `ClearValue` on
+`Ribbon.DensityProperty` restores inheritance. Custom templates can consume the
+setting and matching `RibbonKit.Metrics.Touch.*` theme keys. Application/window
+resources can override touch metrics consistently across detached surfaces.
+
+Hosts own the selector and persistence. Showcase offers **View → Touch/Mouse Mode**
+with Mouse (Compact) and Touch choices, and saves the choice with appearance
+preferences; customization import/reset does not change
+density. Application-authored fixed-size content and native window/document UI
+remain host-owned. See the [touch plan](docs/14-TOUCH-DENSITY-PLAN.md#verification-and-acceptance)
+for automated evidence and pending native touch, visual and DPI acceptance.
+
+### Dropdown headings and descriptive rows
+
+`RibbonDropDownButton.DropDownHeader` adds a noninteractive heading above the
+scrollable popup items. `RibbonSplitButton` inherits it, and QAT proxies follow
+the source heading. Null or empty keeps the original popup layout. The heading
+uses the shared theme's `RibbonKit.Brushes.ApplicationMenu.HeaderBackground` and
+primary text brush, including scoped resource overrides.
+`RibbonKit.Metrics.DropDownHeaderCornerRadius` rounds all four heading
+corners: 3 DIP for Office2007/2010, 6 for Office2024 and 8 for Crystal; the other
+Office themes remain square. Dark palettes inherit the same geometry.
+
+`RibbonMenuItem.Description` adds wrapped explanatory text below an emphasized
+label and supplies the default UI Automation help text. `LargeIcon` takes
+precedence over `Icon`, using 32 DIP in Compact and the theme's large-icon metric
+in Touch. Leaving these properties unset retains ordinary menu-row geometry.
+
+```xml
+<rk:RibbonDropDownButton Header="Touch/Mouse Mode"
+                       DropDownHeader="Optimize spacing between commands">
+    <rk:RibbonMenuItem Header="Mouse"
+                       Description="Standard ribbon and commands."
+                       LargeIcon="{StaticResource MouseIcon}"
+                       Command="{Binding MouseModeCommand}" />
+    <rk:RibbonMenuItem Header="Touch"
+                       Description="More space between commands."
+                       LargeIcon="{StaticResource TouchIcon}"
+                       Command="{Binding TouchModeCommand}" />
+</rk:RibbonDropDownButton>
+```
+
+Applications provide the icons, commands and chosen-mode state; the menu item's
+existing `Background` can reflect that choice through bindings or style triggers.
+The heading and row presentation are shared RibbonKit behavior and require no
+Showcase resources or helpers.
+
 ### Theming & rendering
 
 Office 2007, 2010, 2013, 2019 and 2024 each have light and dark/black palettes, with
@@ -107,6 +183,17 @@ action and Office's compact appearance. Explicit message styles and the scoped
 `RibbonKit.Templates.MessageBar.ActionButton` template key remain available.
 `RibbonKit.Metrics.ContentCornerRadiusTop` keeps Crystal's body rounded above
 messages. Scoped resources and explicit action styles/values retain WPF precedence.
+`RibbonKit.Metrics.MessageBar.ExposedTopBorderThickness` supplies one top edge
+when messages meet a minimized header without a below-ribbon QAT. All Office
+palettes use `0,1,0,0`; Crystal uses `0` and retains its existing card borders.
+Individual row seams remain unchanged.
+`RibbonKit.Metrics.MessageBar.ExposedTopCornerRadius` rounds that exposed edge:
+`3,3,0,0` in Office2007, `8,8,0,0` in Office2024, and `0` in the other palettes.
+The shared stack clips the first row's paint to those corners and retains its
+single border through dismissal. The exposed rim fades with the first presented
+message, stays aligned with the corner clip during the row's glide, and follows
+the next row after dismissal. Below-ribbon QAT placement keeps the join square;
+the minimized Office2007/2024 QAT retains its own exposed upper corners above messages.
 QAT icon/hover policy follows the ribbon's effective resource scope through
 `RibbonKit.Metrics.QatTitleBarColored` and `QatTabRowColored`. ThemeManager sets
 these alongside its accent bands; independent palettes retain their own defaults.

@@ -397,8 +397,16 @@ public sealed class CrystalMainWindowPresentationTests
                     { Source = new Uri($"/RibbonKit;component/Themes/Tokens.Office{generation}.Dark.xaml", UriKind.Relative) });
                 AssertSamePaint((Brush)resources["RibbonKit.Brushes.Ribbon.ContentBackground"],
                     (Brush)resources["RibbonKit.Brushes.Ribbon.BodyBackground"]);
-                AssertSamePaint((Brush)resources["RibbonKit.Brushes.Ribbon.ContentBackground"],
-                    (Brush)resources["RibbonKit.Brushes.QatExtender.Background"]);
+                var body = (Brush)resources["RibbonKit.Brushes.Ribbon.ContentBackground"];
+                var qat = (Brush)resources["RibbonKit.Brushes.QatExtender.Background"];
+                if (generation == "2010")
+                {
+                    // The flat drawer continues the end color of the body ramp.
+                    var gradient = Assert.IsType<LinearGradientBrush>(body);
+                    Assert.Equal(gradient.GradientStops.OrderBy(stop => stop.Offset).Last().Color,
+                        Assert.IsType<SolidColorBrush>(qat).Color);
+                }
+                else AssertSamePaint(body, qat);
                 Assert.Equal(new Thickness(generation is "2007" or "2010" ? 1 : 0),
                     resources["RibbonKit.Metrics.SplitVerticalPrimaryBorderThickness"]);
             }

@@ -32,7 +32,10 @@ retains implementation decisions and dated gates. Release assets are described i
 | Custom-control/QAT projections | Opt-in factories and source identity; [candidate design](08-CUSTOM-CONTROL-INTEGRATION-PLAN.md) |
 | Additional themes | Office 2021, then original palettes; [candidate design](09-FUTURE-THEMES-PLAN.md) |
 
-Unscheduled candidates include simplified single-row ribbon, touch density, an
+Touch density implementation and acceptance are tracked in the
+[active touch plan](14-TOUCH-DENSITY-PLAN.md).
+
+Unscheduled candidates include simplified single-row ribbon, an
 Office-style status bar, XML-defined ribbon authoring, purpose-authored monochrome
 QAT icons, and an opaque non-Mica theme-transition capture. These are not supported
 APIs or commitments. A ribbon slider is intentionally not planned.

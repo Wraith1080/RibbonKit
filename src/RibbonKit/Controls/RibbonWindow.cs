@@ -134,6 +134,7 @@ public class RibbonWindow : Window
     private double _titleShiftFrom;
     private bool _titleShiftPending;
     private readonly HashSet<Ribbon> _orbApplicationButtonOwners = [];
+    private Ribbon? _aeroFrameHighlightOwner;
 
     internal bool IsTitleBarIconSuppressed => _orbApplicationButtonOwners.Count > 0;
 
@@ -286,10 +287,43 @@ public class RibbonWindow : Window
 
     internal void UnregisterApplicationButton(Ribbon owner)
     {
+        ClearAeroFrameHeaderBottom(owner);
         if (_orbApplicationButtonOwners.Remove(owner))
         {
             UpdateTitleBarIconVisibility();
         }
+    }
+
+    internal void UpdateAeroFrameHeaderBottom(Ribbon owner, FrameworkElement? header)
+    {
+        if (FrameAppearance != RibbonWindowFrameAppearance.Office2010Aero
+            || owner.Density != RibbonDensity.Touch || !owner.IsVisible)
+        {
+            ClearAeroFrameHeaderBottom(owner);
+            return;
+        }
+
+        if (header is not { IsArrangeValid: true, IsVisible: true }
+            || GetTemplateChild("AeroFrameInnerHighlight") is not FrameworkElement highlight
+            || VisualTreeHelper.GetParent(highlight) is not UIElement parent)
+            return;
+
+        // Use the highlight's containing frame coordinates, including the live caption/QAT row.
+        double bottom = header.TranslatePoint(new Point(0, header.ActualHeight), parent).Y;
+        if (!double.IsFinite(bottom) || bottom <= 0) return;
+        double previous = WindowFrameGeometryConverter.GetHeaderBottom(this);
+        // A secondary ribbon farther down the document must not move the main frame bevel.
+        if (_aeroFrameHighlightOwner is not null && !ReferenceEquals(_aeroFrameHighlightOwner, owner)
+            && previous <= bottom) return;
+        _aeroFrameHighlightOwner = owner;
+        if (!previous.Equals(bottom)) WindowFrameGeometryConverter.SetHeaderBottom(this, bottom);
+    }
+
+    private void ClearAeroFrameHeaderBottom(Ribbon owner)
+    {
+        if (!ReferenceEquals(_aeroFrameHighlightOwner, owner)) return;
+        _aeroFrameHighlightOwner = null;
+        ClearValue(WindowFrameGeometryConverter.HeaderBottomProperty);
     }
 
     private void UpdateTitleBarIconVisibility()

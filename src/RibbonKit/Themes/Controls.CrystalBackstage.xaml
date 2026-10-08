@@ -46,6 +46,13 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+        <Style.Triggers>
+            <Trigger Property="rk:Ribbon.Density" Value="Touch">
+                <Setter Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.NavigationHeight}" />
+                <Setter Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                <Setter Property="Padding" Value="{DynamicResource RibbonKit.Metrics.Touch.NavigationPadding}" />
+            </Trigger>
+        </Style.Triggers>
     </Style>
     <Style x:Key="Crystal.Backstage.BackGlyph" TargetType="TextBlock">
         <Setter Property="Text" Value="←" />
@@ -93,6 +100,10 @@
                             <Setter TargetName="RootGrid" Property="Background" Value="Transparent" />
                             <Setter TargetName="NavSurface" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Backstage.Modern.NavBackgroundTranslucent}" />
+                        </Trigger>
+                        <Trigger Property="rk:Ribbon.Density" Value="Touch">
+                            <Setter TargetName="PART_BackButton" Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                            <Setter TargetName="PART_BackButton" Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -151,6 +162,10 @@
                             <Setter TargetName="RootGrid" Property="Background" Value="Transparent" />
                             <Setter TargetName="NavColumn" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Backstage.Modern.NavBackgroundTranslucent}" />
+                        </Trigger>
+                        <Trigger Property="rk:Ribbon.Density" Value="Touch">
+                            <Setter TargetName="PART_BackButton" Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                            <Setter TargetName="PART_BackButton" Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

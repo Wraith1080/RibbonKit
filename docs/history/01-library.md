@@ -6640,6 +6640,16 @@ The RibbonKit-only consumer covers independent Crystal light/dark scopes against
 global Office 2019, Office 2024 and Crystal, every QAT placement, nearer metric
 overrides, palette removal and accent-band toggling.
 
+A 2026-10-08 startup follow-up reproduced `QatTabRowColored` throwing when the
+saved tab-row QAT was restored before the first theme apply. Removing the manual
+App.xaml palette synchronously invalidated the style selectors; their callback
+read a second selector during the temporary resource gap. `ThemeManager.Apply`
+now merges the replacement before retiring earlier dictionaries, and first-call
+cleanup excludes that replacement. No selector fallback, deferred refresh or
+public API change was needed. Actual Showcase startup and independent consumer
+checks passed; current evidence and deferred gates are in the
+[touch plan](../14-TOUCH-DENSITY-PLAN.md#startup-theme-replacement--2026-10-08).
+
 `CrystalMainWindowPresentation` remains Showcase's host adapter for palette and
 optional `CapturedBackdrop` registration. Its previous tab-only discovery missed
 QAT dropdowns and additions to existing groups, and retained removed dropdowns.
@@ -7122,3 +7132,387 @@ inspected, including the independent consumer's colored header. No snapshot
 approvals or tolerances changed. Final appearance and native DPI/mixed-monitor
 acceptance remain with the user; no app was manually launched. Changes remain
 uncommitted on the user's keyboard-improvements branch.
+
+## 3.226 Shared Compact/Touch density — 2026-10-07
+
+Added the documented `RibbonDensity` enum and inherited attached `Ribbon.Density`
+property, with Compact as the default and additive entries in the unshipped API
+baseline. Density is independent of theme, DPI, command size and customization
+state. Hosts own the selector and preference persistence; local values retain
+ordinary WPF precedence. Showcase demonstrates the library setting through
+View → Touch mode and saves it with appearance preferences.
+
+One shared template set consumes matching Touch metrics in all six base
+palettes; dark overlays inherit geometry. Commands, split halves, input boxes,
+tabs, launchers, QAT openers, File navigation and shared actions use 44-DIP targets.
+The body sizes to its command stacks with a 136-DIP minimum. In-ribbon galleries
+retain one tile row with a single 44-DIP popup opener beside it. Long dropdown
+menus gain a scrollable viewport, and native vertical panning is enabled in menu
+and gallery viewers. Popup, detached title-bar QAT, native context menu and
+Backstage roots explicitly follow the owning density. Outside-touch dismissal
+shares existing popup rules and leaves the routed event available to the target.
+
+Switching density invalidates the adaptive width cache and the group's measurement
+subtree. Clearing the cache alone left stale widths when an individual command
+changed density while the group remained in its Large state; the independent
+consumer reproduces collapse and recovery for both local and ribbon-wide changes.
+The gallery opener column uses GridLength, and body-scroll arrows set MinWidth so
+the template's local compact Width cannot leave a narrow touch target.
+
+The RibbonKit-only consumer verifies both modes across all themes, light/dark and
+LTR/RTL, split geometry, retained values, gallery viewport/opener layout, all QAT
+placements, overflow and context menus, File surfaces, token overrides, adaptive
+reduction and routed outside-touch dismissal. Physical input and mouse promotion
+remain separate acceptance gates. Current evidence and remaining live review are
+recorded in the [active touch plan](../14-TOUCH-DENSITY-PLAN.md#verification-and-acceptance).
+
+The user's screenshots led to a geometry cleanup: large commands share a 96-DIP
+height with 36-DIP icons, small/QAT icons grow to 20 DIP, and horizontal split
+content centers within its primary target. Bottom-aligning the tab panel removes
+the enlarged-row seam at the connected notch/hover foot. Application-menu fills
+and arrow spacers match the actual touch arrow width; 56-DIP rows and a wider
+nav column avoid shrinking the Office2007 menu or clipping labels. Shared and
+Crystal Backstage rows use larger text/height, separators stretch with command
+stacks, and the orb/proxy share adjusted touch geometry.
+
+A 96-DIP separator minimum also enlarged the compact Font row, despite its local
+20-DIP Height. Using a 44-DIP minimum with stretch follows the adjacent controls:
+the Font row stays button-height while a large-command divider grows with the
+taller stack. The actual Showcase check compares the separator to its neighboring
+button, rather than only checking the separator's own outer height.
+
+The expanded consumer exposed an Office2007/Classic2007 layout loop. Ribbon
+reconciles the orb proxy from LayoutUpdated; reassigning identical templates,
+focus styles and direction or remeasuring a valid proxy repeatedly invalidated
+layout. Stable proxy bounds now skip adorner invalidation, and reconciliation
+updates only changed values. The all-theme/Backstage matrix reaches layout idle.
+
+The final full consumer exposed a separate fixture race in the existing Classic
+focus cases: after closing Backstage it immediately cleared the content and
+restored the application menu, while the exit animation still owned the old
+adorner. A later Backstage could therefore try to focus a row outside the realized
+surface. The fixture now pumps the dispatcher until that surface detaches before
+replacing it, with a bounded timeout and unchanged focus/activation assertions.
+Initial-focus failures include the row's visibility and visual-parent diagnostics.
+
+Cleanup verification stayed touch-specific: six actual Showcase theme cases and
+the independent consumer's expanded light/dark/LTR/RTL matrix, including all
+seven Backstage designs. Actual Showcase, File-menu, orb and Backstage renders
+were inspected. Normal Debug outputs are refreshed. The final Release suite and
+remaining live gates are recorded in the active plan; snapshot approvals and
+tolerances remain unchanged. No app was manually launched or changes committed.
+
+The next eight screenshot refinements aligned tab-shaped File buttons with the
+tab panel's height/padding and allowed modal Close labels to determine width.
+Large targets now use 136 DIP to match three 44-DIP command rows including their
+margins. Horizontal dropdowns use a 56-DIP minimum, a correctly sized icon wrapper
+and more icon/arrow spacing. Navigation fonts return to their ordinary size;
+only the touch areas grow. Classic2007 navigation receives extra top clearance.
+
+The shared default in-ribbon panel derives equal touch cells from natural tile
+width and the native strip viewport, filling one row's height and width. Compact,
+expanded and explicitly sized panels retain WrapPanel layout. Resizing initially
+left the old scroll offset in place, cutting the selected theme across two rows.
+Cell geometry and density changes now use the existing deferred gallery refresh
+to reveal the selected row. Focused checks assert selection visibility after
+density changes, popup return and strip resizing, alongside geometry and normal
+font sizes. This pass used touch-only tests; the full consumer retry stays deferred
+under the user's instruction recorded in the active plan.
+
+Further screenshot feedback exposed the cost of uniform touch File geometry:
+Office2013/2019 acquired a leading gutter, while Office2024/Crystal lost their
+rounded-body inset and every tab-shaped File target became too narrow. Shared
+touch tokens now retain those theme differences, with a 64-DIP minimum width and
+wider theme-specific caption padding. The Office2007 application's touch top band
+grows to keep its first menu row below the enlarged orb.
+
+Classic2007 Backstage clearance previously moved the navigation background's
+outer margin below the content pane, exposing a different-colored shell strip.
+The rail returns to the content pane's 36-DIP top edge; 16-DIP inner padding keeps
+the first row clear of the orb. Both the actual Showcase surface and the independent
+consumer check painted-edge alignment. Separately requested shared changes give
+in-ribbon galleries four-DIP horizontal outer spacing and flatten Office2010's
+lower QAT in light/dark themes using the body gradient's end color. These defaults
+apply in compact and touch modes, retain local/scoped overrides, and intentionally
+affect compact visual scenes. The current plan records focused evidence and the
+still-deferred full/native/visual gates; snapshot approvals were not changed.
+
+The next touch pass fixes dropdown/split alignment in QAT overflow by moving
+centering from a nested template trigger to the outer style's density default.
+The existing overflow proxy's local left alignment now reaches its native content
+presenter, while normal ribbon commands stay centered. No proxy/factory API changed.
+Message rows use a 52-DIP minimum, 44-DIP action/dismiss targets and 20-DIP icons;
+message/action fonts, command bindings and dismissal behavior are retained.
+
+The shared window template reserves a 46-DIP title band and native caption area
+when retained title-bar content has touch density. Backstage hides that content's
+presenter without removing its density, so the title and caption buttons no longer
+shrink during the transition. Compact density or moving the QAT away from the title
+clears the reservation. The six Showcase cases and RibbonKit-only touch consumer
+pass in normal Debug and Release, including the all-theme/light-dark/LTR-RTL and
+seven-design Backstage matrix. Actual message/title and overflow renders were
+inspected; the active plan retains full/native retries and live appearance gates.
+
+The caption styles still fixed their buttons at 34 DIP despite the enlarged title
+band. Four setters in the existing touch-title trigger now give minimize,
+maximize/restore and close the same 46-DIP height as that band, including their
+hover surfaces. A single Debug consumer check with shared resources verifies
+painted height, hidden title content, compact return and moving the QAT out of the
+title bar. Broader testing remains deferred under the user's minimal-test request.
+
+Office2010 Aero's side bevel still began at the compact 69-DIP title/tab offset,
+leaving two short rules protruding into the taller touch tab row. The owning ribbon
+now supplies the rendered header bottom in frame coordinates during its existing
+layout callback. Private window/template plumbing uses that edge only for
+Office2010 Aero touch geometry, preserves the palette's horizontal/bottom margins,
+and resumes the original token on compact return or owner detachment. Equal values
+do not invalidate layout repeatedly; a secondary ribbon below the main header
+cannot push the bevel into document content. No public API changed. One focused
+Debug consumer test with RibbonKit resources covers all QAT placements, larger
+header text, RTL, scoped margins and compact restoration; actual renders were
+inspected and normal Debug output refreshed.
+
+Full Release validation on 2026-10-07 resumed the previously deferred consumer
+gate. All 974 tests passed (490 runtime, 482 Writer, the full independent consumer,
+and the visual aggregate covering 113 scenes), with no failures/skips. The consumer
+ran in its default scope and completed in 2m56s. Both runtime targets built without
+warnings/errors; package validation also passed for clean net8/net9 WPF consumers.
+
+The initial run exposed two stale structural/paint contracts: one assumed a single
+WindowChrome despite the new touch-caption branch, and another assumed Office2010's
+QAT retained a gradient. The updated contracts verify both caption configurations'
+shared native settings and the flat QAT's match to the body ramp's end color in
+light/dark palettes. The full runtime retry passed. A deterministic capture of all
+113 visual scenes isolated the sole comparison failure to that intentional flat
+QAT strip in `office2010-message-bar-connected-100`; its actual/diff images were
+inspected before updating only that approved PNG. The final aggregate passed with
+unchanged comparison tolerances and no product-code edits during validation.
+
+A later touch recording exposed two adaptive-layout pitfalls. A width probe can
+expand a collapsed group while its flyout is open; waiting for Popup.Closed leaves
+the normal host empty during that synchronous probe, caching a false expanded
+width. RibbonGroup now reclaims the flyout content before measuring, with shared
+nested-popup cleanup and preserved focus-return bookkeeping. Separately, resetting
+the scroller's reported width on every measure loses overflow when WPF short-circuits
+the child's unchanged measure. The last report now survives for the same child;
+empty panels report zero and replacing the child clears the report.
+
+The flyout regression failed in all six themes before the fix; an independent
+cached-measure case also reproduced the missing arrows. Focused coverage includes
+both initial densities, repeated switches from open flyouts, actual Showcase
+serialized-layout/touch initialization, non-resizable overflow and empty/replaced
+content. A clean Release solution build and 64 focused Release checks passed.
+The RibbonKit-only touch consumer and rendered startup/overflow evidence are
+tracked in the active touch plan. The earlier 974-test full checkpoint predates
+this correction; no public API, theme metrics or visual approval changed.
+
+The later Office2024 lower-QAT seam correction clips its upward blur in a parent
+visual, after the child's DropShadowEffect renders. Clipping the effect-bearing
+border alone would occur before that effect. A matching boolean token enables
+the clip for expanded, flush Office2024 drawers while keeping the outer halo,
+minimized floating shadow, scoped top insets and other palettes' existing paint.
+One shared-resource Debug regression covers both densities and light/dark paint,
+retained outer/minimized shadows and Crystal/Office2010 isolation; actual touch
+renders were inspected. No public API, snapshot approval or full-suite retry changed.
+
+The density-animation follow-up appends `RibbonAnimationAction.DensityChange = 15`
+to the unshipped API, retaining every shipped action value. A ribbon queues one
+transition after inherited geometry invalidation and deferred consumer-host layout,
+then completes the window/adaptive layout before a gentle 90%-to-rest opacity settle.
+Subtle uses 160 ms; Expressive uses the shared 1.4 timing and 1.8 travel multipliers.
+Only an expanded below-ribbon QAT translates (four DIP at Subtle), using a private
+layer that restores its existing transform and bindings. An open QAT popup/context
+menu suppresses that glide so its native anchor stays at final layout geometry.
+
+The first-render gate matters: hosts such as Showcase restore preferences in
+`Loaded`, after `IsLoaded` becomes true. Those startup changes must still snap.
+Pending/current transitions are replaced on live toggles; a generation check guards
+layout reentrancy. Unload, root-template replacement, motion-policy/system changes,
+theme/QAT moves and minimize release the transition. Replacing the root template
+also reacquires the nested tab/QAT/body hosts instead of retaining detached visuals.
+Opacity animation does not overwrite its base/binding; completion clears the clock.
+
+The static Office2024 shadow fixture now disables only density motion while comparing
+its two raster samples, then restores the prior action override. Comparing samples
+from different opacity frames caused a two-channel-step mismatch; its tolerance,
+clip geometry and approvals are unchanged. An independent RibbonKit-only consumer
+keeps motion enabled for startup/completion/interruption and adaptive/popup coverage
+across six themes and every QAT placement. Focused results and remaining live gates
+are recorded in the [active touch plan](../14-TOUCH-DENSITY-PLAN.md#live-density-transition--2026-10-07).
+The full historical 974-test checkpoint precedes this animation; no new full-suite
+or native keyboard/input gate is claimed.
+
+The 2026-10-08 recording review found the initial 90% fast ease-out too faint beside
+the QAT glide. The approved refinement deepens the settle to the theme-switch's 85%
+opacity and gives only DensityChange a frozen cubic EaseInOut curve at both levels.
+Durations, travel, final geometry and lifecycle handling remain as before. The
+focused easing/policy test and live RibbonKit-only transition consumer passed in
+Release, including a stronger early-opacity observation and completion/interruption.
+Normal Debug Showcase output is refreshed for renewed visual review; no full-suite
+or native-input retry ran.
+
+The next Touch screenshot exposed the dialog launcher's 44-DIP height enlarging
+its group's caption band relative to adjacent groups. Removing only that shared
+template height setter retains the normal 14-DIP launcher height while keeping
+its 44-DIP Touch width and mirrored spacer. No API or theme token changes.
+The independent launcher consumer checks matching neighboring caption bands and
+baselines, DPI-rounded dimensions, density reversals and visibility across all
+six themes, light/dark modes and both text directions. That Release aggregate and
+the broader Touch consumer passed; an Office2007 render was inspected. Normal
+Release solution and Debug Showcase builds have zero warnings/errors. The active
+touch plan records the evidence and separate user review; no full-suite, snapshot
+approval or native-input retry ran.
+
+The next minimized/message screenshot exposed Office2024's combined-state token
+still selecting square upper QAT corners. That existing token now uses `8,8,0,0`
+in both densities, inherited by the dark palette, retaining the flush lower seam
+and other palettes' geometry. The Touch Print Preview jump came from its modal
+Close margin removing the minimize chevron's six-DIP top inset. Dropping that
+Touch override keeps the replacement's 44-DIP target and the same header extent;
+modal services and adaptive layout need no special case. No API or resource key
+was added. Both failures reproduced in a RibbonKit-only consumer; its all-theme,
+light/dark, LTR/RTL and QAT-placement aggregate and the broader Touch consumer
+passed in Release. Thirteen selected runtime checks, normal Release solution and
+Debug Showcase builds passed; actual corner and before/modal renders were
+inspected. The active touch plan retains separate live review and deferred gates.
+
+The Office2007 minimized divider still belonged to the tab control's body row,
+which placed it above a lower QAT or messages instead of at the document edge.
+It now lives in the owning ribbon's footer; overlays span that row. Subsequent
+review found its extra edge too thick beside the QAT/messages' existing borders,
+so it is suppressed for BelowRibbon QAT placement or any open message, appearing
+only when the minimized header directly meets the document. Existing height/brush
+tokens and the immediate minimized-state trigger
+remain, including the other bordered themes and zero-height opt-outs. No API,
+token or runtime coordinator was added. The RibbonKit-only divider matrix first
+reproduced the failure, then passed across themes, densities, QAT placements,
+message counts, RTL and restore cycles. The broader Touch consumer and 24 focused
+Release checks passed for the initial relocation. The updated visibility matrix
+passed again in Release; Office2007 renders were inspected and normal Debug output
+refreshed. One stale layering contract now recognizes the prior shadow wrapper
+and verifies the menu stays above it and the footer. Full/native gates remain
+separate in the active touch plan.
+
+The next Office2007 minimized screenshot exposed the first message's missing
+upper edge when the QAT was in the title/tab row. Individual rows omit that edge
+to connect to the body or lower QAT. A shared message-bar template border now
+supplies one exposed stack edge, retaining presentation-state cleanup and the
+existing row seams through first-row dismissal. The matching
+`MessageBar.ExposedTopBorderThickness` metric is `0,1,0,0` for Office2007 and zero
+elsewhere, with keys in every light/dark palette and the existing border brush.
+No C# API or shipped baseline changed. The independent all-theme/density/QAT and
+first-row-dismissal matrix and six runtime message checks passed in Release;
+actual light/dark/connected renders were inspected and normal Debug output
+refreshed. Current evidence and separate visual/native gates remain in the active
+touch plan.
+
+Further review found the same exposed edge missing in the other Office themes.
+The existing metric was enabled for Office2010/2013/2019/2024 light/dark, leaving
+Crystal's card borders unchanged. No new key, template behavior or C# API was
+needed. The updated RibbonKit-only theme/density/QAT/dismissal matrix and all six
+runtime message checks passed in Release. Office and unchanged Crystal renders
+were inspected, and normal Release solution and Debug Showcase builds passed
+with zero warnings/errors. The active touch plan records these latest results
+separately from the original Office2007 evidence and deferred visual/native gates.
+
+The next minimized-state review requested exposed upper message corners in
+Office2007/2024 and retained Office2007 QAT upper corners above messages. The
+shared message stack now uses an additive `MessageBar.ExposedTopCornerRadius`
+metric (3/8 DIP in those themes, zero elsewhere), with matching light/dark keys
+and the existing rounded-geometry converter. Its rows are clipped to the exposed
+silhouette, and the single top rim draws afterward so a square row background
+cannot paint over the curve. This follows first-row dismissal without container
+flags; below-QAT joins, row borders and lower corners retain their own geometry.
+Office2007's existing minimized/message QAT metric now uses `3,3,0,0`, inherited
+by its dark palette. No public C# API or shipped baseline changed. The independent
+message and chrome matrices passed after reproducing the square QAT failure;
+sixteen selected runtime checks and normal Release/Debug builds passed. Actual
+message/QAT renders were inspected; the active touch plan records current
+evidence and separate visual/native gates.
+
+A subsequent Office2024 screenshot and Office2007 observation exposed a pitfall
+in the initial corner treatment: clipping the whole stack also cut the native
+rim, and a nominal circular clip did not follow Border's half-stroke geometry.
+The refined shared template clips only row paint inside the native upper rim.
+Private message-specific geometry accounts for the existing stroke and rounded
+layout inset, while the rim uses the rows' side thickness and a rectangular band
+that does not trim its curve. Lower borders, layout, QAT joins and the application
+menu geometry path are unchanged. The independent consumer now compares corner
+alpha against an unclipped native border; it passed at current 125% DPI together
+with dismissal/cleanup and the QAT/chrome matrix. Sixteen focused runtime checks,
+normal builds and actual light/dark render inspection passed. Current results
+and deferred review gates remain in the active touch plan.
+
+The exposed message rim also sat outside the rows' animation roots, leaving a
+fully opaque edge during first-row entrance/dismissal. The message bar now tracks
+its first presented row and mirrors that root's effective opacity onto the rim,
+sharing existing MessageBar timing/policy without another clock. The rim stays
+anchored to the corner clip: separately sliding it briefly separated the border
+from the clipped fill in intermediate renders. It hands off after first-row
+dismissal and releases/rebinds on empty state, unload and template replacement,
+including generated MVVM containers. The inherited `RibbonMessageBar.OnApplyTemplate`
+override is recorded additively in Unshipped; the shipped baseline and theme keys
+are unchanged. A RibbonKit-only live-clock aggregate reproduced the opaque rim,
+then passed in Release for opening/closing, interruption, disabled motion and
+lifecycle handoff. Render-frame observation avoids missing the short transition
+under offscreen theme/layout work. The six-theme native-corner/divider matrix,
+sixteen focused runtime checks, normal Release/Debug builds and intermediate
+render inspection passed. Current evidence and separate live/full/native gates
+remain in the active touch plan.
+
+The 2026-10-08 Touch/Mouse selector follow-up adds native dropdown headings and
+descriptive rows rather than an application-specific popup template.
+`RibbonDropDownButton.DropDownHeader` sits above the native scrolling items and
+is inherited by split buttons and bound by QAT proxies. `RibbonMenuItem.Description`
+adds secondary text/default UI Automation help; `LargeIcon` uses 32 DIP in Compact
+and the existing Touch metric. Null/empty defaults preserve ordinary menus, and
+the existing `Background` now paints row chrome under the usual hover/pressed
+precedence. These three documented properties add nine Unshipped API symbols;
+the shipped baseline and theme-key set remain unchanged. Showcase owns the
+Mouse/Touch commands, highlight, vector icons and existing Boolean preference.
+The former toggle's explicit legacy command ID preserves serialized QAT entries.
+
+The RibbonKit-only heading/row matrix passed across themes, light/dark, densities
+and text directions, plus split/dropdown QAT cases in all three placements.
+Focused Showcase checks verify selected paint, popup dismissal, borrowed-item
+return and legacy customization round trips without changing user preferences.
+An initial Office2019 assertion mistook hover paint for missing selection; the
+fixture now respects the existing hover/pressed precedence while still checking
+the selected background. Final focused checks, normal builds and popup renders
+passed; the [active touch plan](../14-TOUCH-DENSITY-PLAN.md#touchmouse-dropdown-selector--2026-10-08)
+records the exact combined evidence and deferred visual/full/native gates.
+
+The heading's square fill was subsequently refined with the shared
+`DropDownHeaderCornerRadius` metric: upper radii 3 DIP in Office2007/2010, 6 in
+Office2024 and 8 in Crystal, with square lower edges and zero rounding in
+Office2013/2019. Six base palettes define the metric and dark overlays inherit
+it. Both dropdown and split templates consume it without changing popup
+outlines, padding, rows or scrolling; no C# API was added. The updated independent
+matrix and seven Showcase selector checks passed, native-heading renders were
+inspected, and normal Release runtime/Debug Showcase output was rebuilt. The
+active touch plan retains the separate user review and deferred full/native gates.
+
+The next review requested matching lower heading corners beside the rounded
+selection/hover surfaces. The existing metric now uses uniform 3/6/8-DIP radii
+in Office2007/2010, Office2024 and Crystal respectively; the square themes retain
+zero. Minimal verification reran only the updated independent selector scope,
+inspected current native-heading renders and refreshed normal Debug Showcase.
+No API or layout behavior changed; full/native testing remains deferred.
+
+The 2026-10-08 full Release validation covers the later adaptive, QAT-shadow,
+message-rim and dropdown refinements, superseding the historical 974-test gate.
+Combined final results passed all 1003 tests (519 runtime, 482 Writer and the two
+full aggregates, including 113 visual scenes), with clean both-target builds and
+package/designer/net8/net9 consumption validation. Initial Writer keyboard input
+interference cleared on its unchanged serial full retry after input was idle.
+Three fixture pitfalls were corrected without runtime changes: static QAT paint
+must disable theme/minimize motion as well as density motion; the minimized QAT
+with messages consumes its combined-state corner metric; a short offscreen fade
+can miss a middle-opacity observation after earlier theme/layout matrices.
+The message fixture now saves a nonterminal frame's exact row/rim values and
+temporarily uses software rendering, retaining completion/interruption/cleanup
+and identity-transform assertions. Static pixel and snapshot tolerances remain
+unchanged. Only the two Office2024 LTR/RTL message-stack approvals were refreshed
+after actual/diff review confirmed the intended connected-QAT upward-shadow
+removal; the other 111 scenes matched. The active touch plan records final and
+initial evidence separately from remaining live review, without a commit or merge.

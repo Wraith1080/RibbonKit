@@ -280,6 +280,13 @@
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter TargetName="Root" Property="Opacity" Value="0.4" />
                         </Trigger>
+                        <Trigger Property="controls:Ribbon.Density" Value="Touch">
+                            <Setter TargetName="Root" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.MenuItemHeight}" />
+                            <Setter TargetName="PART_Primary" Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                            <Setter TargetName="PART_Arrow" Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                            <Setter TargetName="ArrowFill" Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                            <Setter TargetName="DropdownArrowSpacer" Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                        </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
@@ -388,6 +395,13 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+        <Style.Triggers>
+            <Trigger Property="controls:Ribbon.Density" Value="Touch">
+                <Setter Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                <Setter Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                <Setter Property="Margin" Value="{DynamicResource RibbonKit.Metrics.Touch.ControlMargin}" />
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
     <!-- ============================================================
@@ -451,6 +465,13 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+        <Style.Triggers>
+            <Trigger Property="controls:Ribbon.Density" Value="Touch">
+                <Setter Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                <Setter Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                <Setter Property="Margin" Value="{DynamicResource RibbonKit.Metrics.Touch.ControlMargin}" />
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
     <!-- ============================================================
@@ -546,7 +567,7 @@
                                                     <Border x:Name="Navigation" Grid.Column="0"
                                                             Width="{DynamicResource RibbonKit.Metrics.ApplicationMenuNavWidth}"
                                                             Background="{DynamicResource RibbonKit.Brushes.ApplicationMenu.NavBackground}">
-                                                        <ScrollViewer x:Name="NavigationScroll"
+                                                        <ScrollViewer PanningMode="VerticalOnly" x:Name="NavigationScroll"
                                                                       VerticalScrollBarVisibility="Auto"
                                                                       HorizontalScrollBarVisibility="Disabled"
                                                                       HorizontalContentAlignment="Stretch"
@@ -588,7 +609,7 @@
                                                                  no header band — which is how Office 2007
                                                                  draws Recent Documents. Its heading is
                                                                  part of the content. -->
-                                                            <ScrollViewer x:Name="DefaultPaneScroll"
+                                                            <ScrollViewer PanningMode="VerticalOnly" x:Name="DefaultPaneScroll"
                                                                           VerticalScrollBarVisibility="Auto"
                                                                           HorizontalScrollBarVisibility="Disabled"
                                                                           HorizontalContentAlignment="Stretch"
@@ -630,7 +651,7 @@
                                                                          free to be its visual host —
                                                                          the same split TabControl uses
                                                                          for a TabItem's content. -->
-                                                                    <ScrollViewer x:Name="ActivePaneScroll" Grid.Row="1"
+                                                                    <ScrollViewer PanningMode="VerticalOnly" x:Name="ActivePaneScroll" Grid.Row="1"
                                                                                   VerticalScrollBarVisibility="Auto"
                                                                                   HorizontalScrollBarVisibility="Disabled"
                                                                                   HorizontalContentAlignment="Stretch"
@@ -682,6 +703,17 @@
                         <Trigger Property="ActivePaneHeader" Value="">
                             <Setter TargetName="HeaderBand" Property="Visibility" Value="Collapsed" />
                         </Trigger>
+                        <Trigger Property="controls:Ribbon.Density" Value="Touch">
+                            <Setter TargetName="FooterBand" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.FooterHeight}" />
+                            <Setter TargetName="Navigation" Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.MenuNavWidth}" />
+                        </Trigger>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding Path=(controls:Ribbon.Density), RelativeSource={RelativeSource Self}}" Value="Touch" />
+                                <Condition Binding="{Binding ApplicationButtonShape, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}" Value="Orb" />
+                            </MultiDataTrigger.Conditions>
+                            <Setter TargetName="TopBand" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.MenuTopBandHeight}" />
+                        </MultiDataTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>

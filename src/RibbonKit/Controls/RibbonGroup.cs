@@ -424,6 +424,16 @@ public class RibbonGroup : HeaderedItemsControl
         var group = (RibbonGroup)d;
         var state = (RibbonGroupSizeState)e.NewValue;
 
+        if (state != RibbonGroupSizeState.Collapsed)
+        {
+            // Width probes expand the group synchronously, but Popup.Closed can
+            // arrive later. Reclaim its content now so the probe does not cache
+            // the width of an empty normal host while the commands are in the flyout.
+            group._returnFocusOnClose |= group._popupHost?.IsKeyboardFocusWithin == true;
+            group._collapsedButton?.SetCurrentValue(ToggleButton.IsCheckedProperty, false);
+            group.RestoreFlyoutContent();
+        }
+
         group.ApplyStateRecursive(group, state);
 
         // Defeat WPF's measure short-circuiting: intermediate elements (ItemsPresenter,
@@ -431,12 +441,6 @@ public class RibbonGroup : HeaderedItemsControl
         // re-measure of the group would return STALE sizes. Invalidating the whole
         // subtree guarantees the sizing engine's probe reads true per-state widths.
         InvalidateMeasureRecursive(group);
-
-        // Growing back while the flyout is open: close it (content re-homes to the ribbon).
-        if (state != RibbonGroupSizeState.Collapsed && group._collapsedButton is not null)
-        {
-            group._collapsedButton.SetCurrentValue(ToggleButton.IsCheckedProperty, false);
-        }
     }
 
     private void OnPopupOpened(object? sender, EventArgs e)
@@ -578,6 +582,14 @@ public class RibbonGroup : HeaderedItemsControl
         _returnFocusOnClose = false;
         _dismissHelper?.OnClosed();
 
+        RestoreFlyoutContent();
+
+        if (returnFocus && _collapsedButton is { IsVisible: true, IsEnabled: true })
+            _collapsedButton.Focus();
+    }
+
+    private void RestoreFlyoutContent()
+    {
         // Any gallery still expanded inside this flyout must close FIRST, so it
         // re-homes its items presenter back into its strip before we reclaim the
         // content — otherwise the presenter stays orphaned in the gallery's popup
@@ -593,9 +605,6 @@ public class RibbonGroup : HeaderedItemsControl
             _popupHost.Child = null;
             _normalHost.Child = content;
         }
-
-        if (returnFocus && _collapsedButton is { IsVisible: true, IsEnabled: true })
-            _collapsedButton.Focus();
     }
 
     private static void CloseNestedFlyouts(DependencyObject node)
@@ -618,6 +627,14 @@ public class RibbonGroup : HeaderedItemsControl
         {
             CloseNestedFlyouts(VisualTreeHelper.GetChild(node, i));
         }
+    }
+
+    internal void InvalidateDensityLayout()
+    {
+        // Intermediate presenters can otherwise short-circuit a width probe after
+        // a descendant changes density while the group's size state stays Large.
+        InvalidateMeasureRecursive(this);
+        InvalidateHostPanel();
     }
 
     private void InvalidateHostPanel()

@@ -36,6 +36,62 @@ namespace RibbonKit.Controls;
 [TemplatePart(Name = ApplicationButtonOverlayPartName, Type = typeof(Border))]
 public class Ribbon : Control
 {
+    /// <summary>Identifies the inherited attached <see cref="Density"/> dependency property.</summary>
+    public static readonly DependencyProperty DensityProperty = DependencyProperty.RegisterAttached(
+        nameof(Density), typeof(RibbonDensity), typeof(Ribbon),
+        new FrameworkPropertyMetadata(RibbonDensity.Compact,
+            FrameworkPropertyMetadataOptions.Inherits | FrameworkPropertyMetadataOptions.AffectsMeasure,
+            OnDensityChanged),
+        value => value is RibbonDensity.Compact or RibbonDensity.Touch);
+
+    /// <summary>
+    /// Gets or sets command target size and spacing. The default is
+    /// <see cref="RibbonDensity.Compact"/>. The value is inherited by ribbon controls;
+    /// hosts own the mode selector and preference persistence.
+    /// </summary>
+    public RibbonDensity Density
+    {
+        get => GetDensity(this);
+        set => SetDensity(this, value);
+    }
+
+    /// <summary>Gets the density inherited or explicitly set on an element.</summary>
+    public static RibbonDensity GetDensity(DependencyObject element) =>
+        (RibbonDensity)element.GetValue(DensityProperty);
+
+    /// <summary>Sets a density scope for a ribbon, detached menu or standalone ribbon control.</summary>
+    public static void SetDensity(DependencyObject element, RibbonDensity value) =>
+        element.SetValue(DensityProperty, value);
+
+    private static void OnDensityChanged(DependencyObject element, DependencyPropertyChangedEventArgs args)
+    {
+        if (element is InRibbonGallery gallery) gallery.RefreshStripGeometry();
+        // Geometry changes invalidate the reduction engine's measured widths, including
+        // local overrides within a group. The next layout pass probes the new density.
+        if (element is RibbonGroup group) group.InvalidateDensityLayout();
+        else if (element is RibbonButton or RibbonToggleButton or RibbonDropDownButton
+            or RibbonComboBox or RibbonTextBox or RibbonCheckBox or RibbonRadioButton
+            or InRibbonGallery or RibbonGallery or RibbonGalleryItem or RibbonMenuItem)
+        {
+            for (DependencyObject? node = LogicalTreeHelper.GetParent(element)
+                ?? (element is Visual visual ? VisualTreeHelper.GetParent(visual) : null);
+                node is not null;
+                node = LogicalTreeHelper.GetParent(node)
+                    ?? (node is Visual parentVisual ? VisualTreeHelper.GetParent(parentVisual) : null))
+            {
+                if (node is not RibbonGroup owner) continue;
+                owner.InvalidateDensityLayout();
+                break;
+            }
+        }
+        if (element is Layout.RibbonGroupsPanel panel) panel.InvalidateStateCache();
+        if (element is Ribbon ribbon)
+        {
+            ribbon.RequestSelectionVisualsRefresh();
+            ribbon.RequestDensityTransition((RibbonDensity)args.NewValue);
+        }
+    }
+
     private static readonly DependencyPropertyKey TabsPropertyKey =
         DependencyProperty.RegisterReadOnly(
             nameof(Tabs),
@@ -1167,6 +1223,16 @@ public class Ribbon : Control
             }
         }
 
+        if (proxy is RibbonDropDownButton proxyMenu && source is RibbonDropDownButton sourceMenu)
+        {
+            proxyMenu.SetBinding(RibbonDropDownButton.DropDownHeaderProperty,
+                new System.Windows.Data.Binding(nameof(RibbonDropDownButton.DropDownHeader))
+                {
+                    Source = sourceMenu,
+                    Mode = System.Windows.Data.BindingMode.OneWay,
+                });
+        }
+
         proxy.SetValue(QuickAccessSourcePropertyKey, source);
         MirrorEnabledState(proxy, source);
         return proxy;
@@ -1312,6 +1378,8 @@ public class Ribbon : Control
             // mirror with the owning ribbon.
             FlowDirection = target.FlowDirection,
         };
+        menu.SetBinding(DensityProperty,
+            new Binding { Source = target, Path = new PropertyPath(DensityProperty) });
         ApplyModernMenuStyle(menu);
         menu.Items.Add(addItem);
         menu.Items.Add(customizeItem);
@@ -1627,6 +1695,10 @@ public class Ribbon : Control
 
     // Coalesces the deferred selection-visual refresh triggered by the tab-row QAT resizing.
     private bool _selectionVisualsPending;
+    private bool _densityTransitionsReady;
+    private int _densityTransitionGeneration;
+    private DispatcherOperation? _pendingDensityTransition;
+    private readonly List<RibbonDensityTransition> _densityTransitions = new();
     private System.Windows.Controls.MenuItem? _qatTitleBarItem;
     private System.Windows.Controls.MenuItem? _qatAboveItem;
     private System.Windows.Controls.MenuItem? _qatBelowItem;
@@ -1763,6 +1835,8 @@ public class Ribbon : Control
         {
             return;
         }
+
+        ribbon.CancelDensityTransition();
 
         ribbon._ribbonContentHost ??= FindDescendantByName(ribbon, "ContentHost");
         if (ribbon._ribbonContentHost is not { } host)
@@ -2600,16 +2674,21 @@ public class Ribbon : Control
             }
 
             Button proxy = GetOrCreateClassicBackstageOrbProxy(orbTemplate);
-            proxy.SetCurrentValue(Control.FocusVisualStyleProperty, button.FocusVisualStyle);
-            proxy.SetCurrentValue(FlowDirectionProperty, button.FlowDirection);
+            if (!ReferenceEquals(proxy.FocusVisualStyle, button.FocusVisualStyle))
+                proxy.SetCurrentValue(Control.FocusVisualStyleProperty, button.FocusVisualStyle);
+            if (proxy.FlowDirection != button.FlowDirection)
+                proxy.SetCurrentValue(FlowDirectionProperty, button.FlowDirection);
             var proxySize = new Size(button.ActualWidth, button.ActualHeight);
             _backstageAdorner.AttachClassicOrbProxy(proxy, origin, proxySize);
 
             // Give the shared DataTemplate its first realization opportunity before requesting
             // rotation. A newly attached proxy can still defer OrbGlyph until Loaded/LayoutUpdated;
             // PlayClassicBackstageOrbRotation queues that first request when necessary.
-            proxy.ApplyTemplate();
-            proxy.Measure(proxySize);
+            if (!proxy.IsMeasureValid)
+            {
+                proxy.ApplyTemplate();
+                proxy.Measure(proxySize);
+            }
         }
         catch (InvalidOperationException)
         {
@@ -2622,7 +2701,8 @@ public class Ribbon : Control
     {
         if (_classicBackstageOrbProxy is not null)
         {
-            _classicBackstageOrbProxy.ContentTemplate = orbTemplate;
+            if (!ReferenceEquals(_classicBackstageOrbProxy.ContentTemplate, orbTemplate))
+                _classicBackstageOrbProxy.ContentTemplate = orbTemplate;
             return _classicBackstageOrbProxy;
         }
 
@@ -2968,6 +3048,13 @@ public class Ribbon : Control
     /// <inheritdoc />
     public override void OnApplyTemplate()
     {
+        CancelDensityTransition();
+        DetachRibbonTabControl();
+        _ribbonContentHost = null;
+        _qatBelowHost = null;
+        if (_qatTabRowHost is not null)
+            _qatTabRowHost.SizeChanged -= OnTabRowQatSizeChanged;
+        _qatTabRowHost = null;
         CancelPendingClassicBackstageOrbRotation();
         SetBackstageApplicationButtonSuppressed(false);
         _backstageAdorner?.DetachClassicOrbProxy();
@@ -3032,10 +3119,20 @@ public class Ribbon : Control
         // the template exists; OnLoaded later caches the same instance and attaches interaction
         // handlers without making this visual state depend on that lifecycle event.
         UpdateBackstageTabState();
+        if (IsLoaded) AttachRibbonTabControl();
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
+        // Loaded is also where hosts commonly restore preferences. Only a change
+        // after the first rendered density counts as a live toggle.
+        _densityTransitionsReady = false;
+        CompositionTarget.Rendering -= OnFirstDensityRender;
+        CompositionTarget.Rendering += OnFirstDensityRender;
+        RibbonAnimation.Changed -= OnDensityMotionPolicyChanged;
+        RibbonAnimation.Changed += OnDensityMotionPolicyChanged;
+        SystemParameters.StaticPropertyChanged -= OnDensitySystemMotionChanged;
+        SystemParameters.StaticPropertyChanged += OnDensitySystemMotionChanged;
         EnsureSelection();
 
         // The tab-row QAT host lives in the nested RibbonTabControl's template, so it isn't
@@ -3055,13 +3152,7 @@ public class Ribbon : Control
 
         // Subscribe to the nested tab control's selection so switching tabs can cross-fade
         // the ribbon body (the control lives in the RibbonTabControl template, not ours).
-        if (_ribbonTabControl is null && FindDescendantByType<RibbonTabControl>(this) is { } tabControl)
-        {
-            _ribbonTabControl = tabControl;
-            UpdateBackstageTabState();
-            tabControl.SelectionChanged += OnRibbonTabSelectionChanged;
-            tabControl.PreviewMouseLeftButtonDown += OnRibbonTabPreviewMouseLeftButtonDown;
-        }
+        AttachRibbonTabControl();
 
         // Visibility of the ribbon body is code-managed (see OnIsMinimizedChanged); sync it
         // to the current state in case the ribbon loaded already minimized.
@@ -3080,6 +3171,7 @@ public class Ribbon : Control
 
     private void OnLayoutUpdated(object? sender, EventArgs e)
     {
+        _applicationButtonShapeWindow?.UpdateAeroFrameHeaderBottom(this, _ribbonTabControl?.TabHeaderHost);
         if (IsApplicationMenuOpen)
         {
             UpdateApplicationButtonOverlay();
@@ -3100,12 +3192,42 @@ public class Ribbon : Control
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
+        _densityTransitionsReady = false;
+        CompositionTarget.Rendering -= OnFirstDensityRender;
+        RibbonAnimation.Changed -= OnDensityMotionPolicyChanged;
+        SystemParameters.StaticPropertyChanged -= OnDensitySystemMotionChanged;
+        CancelDensityTransition();
         if (ApplicationMenu is RibbonApplicationMenu menu)
         {
             menu.ClearValue(ApplicationMenuGeometryConverter.AvailableHeightProperty);
         }
         Theming.ThemeManager.Changed -= OnThemeConfigurationChanged;
         UnregisterRibbonWindowApplicationButtonShape();
+        DetachRibbonTabControl();
+    }
+
+    private void AttachRibbonTabControl()
+    {
+        if (_ribbonTabControl is not null) return;
+        if (FindDescendantByType<RibbonTabControl>(this) is not { } tabControl) return;
+        _ribbonTabControl = tabControl;
+        UpdateBackstageTabState();
+        tabControl.SelectionChanged += OnRibbonTabSelectionChanged;
+        tabControl.PreviewMouseLeftButtonDown += OnRibbonTabPreviewMouseLeftButtonDown;
+        // A live root-template replacement does not necessarily raise Ribbon.Loaded.
+        // Reacquire its nested hosts now instead of retaining the detached visuals.
+        tabControl.ApplyTemplate();
+        if (FindDescendantByName(tabControl, "QatTabRowHost") is { } tabRowHost)
+        {
+            _qatTabRowHost = tabRowHost;
+            AttachQatContextMenu(tabRowHost);
+            TrackTabRowQatSize(tabRowHost);
+        }
+        _ribbonContentHost = FindDescendantByName(tabControl, "ContentHost");
+    }
+
+    private void DetachRibbonTabControl()
+    {
         if (_ribbonTabControl is not null)
         {
             _ribbonTabControl.SelectionChanged -= OnRibbonTabSelectionChanged;
@@ -3186,6 +3308,7 @@ public class Ribbon : Control
 
     private void OnThemeConfigurationChanged(object? sender, EventArgs e)
     {
+        CancelDensityTransition();
         UpdateQatButtonContext();
         // Soften a theme/accent swap with a quick opacity settle on the ribbon strip.
         RibbonMotion.PlayThemeCrossfade(_ribbonTabControl, RibbonAnimationAction.ThemeSwitch);
@@ -3359,8 +3482,12 @@ public class Ribbon : Control
         return null;
     }
 
-    private static void OnQuickAccessPositionChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
-        ((Ribbon)d).UpdateQuickAccessPlacement();
+    private static void OnQuickAccessPositionChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        var ribbon = (Ribbon)d;
+        ribbon.CancelDensityTransition();
+        ribbon.UpdateQuickAccessPlacement();
+    }
 
     /// <summary>
     /// Projects the quick-access items into the host <see cref="RibbonWindow"/>'s title
@@ -3504,6 +3631,7 @@ public class Ribbon : Control
         _qatRemoveSeparator = new System.Windows.Controls.Separator();
 
         _qatContextMenu = new System.Windows.Controls.ContextMenu();
+        _qatContextMenu.SetBinding(DensityProperty, new Binding(nameof(Density)) { Source = this });
         ApplyModernMenuStyle(_qatContextMenu);
         _qatContextMenu.Items.Add(_qatRemoveItem);
         _qatContextMenu.Items.Add(_qatRemoveSeparator);
@@ -3567,6 +3695,79 @@ public class Ribbon : Control
             }));
     }
 
+    private void OnFirstDensityRender(object? sender, EventArgs e)
+    {
+        if (!IsLoaded || !IsVisible) return;
+        CompositionTarget.Rendering -= OnFirstDensityRender;
+        _densityTransitionsReady = true;
+    }
+
+    private void RequestDensityTransition(RibbonDensity density)
+    {
+        CancelDensityTransition();
+        if (!_densityTransitionsReady || !IsLoaded || !IsVisible
+            || DesignerProperties.GetIsInDesignMode(this)
+            || !RibbonAnimation.IsEnabled(RibbonAnimationAction.DensityChange)) return;
+        int generation = _densityTransitionGeneration;
+
+        // Wait until inherited density callbacks have reclaimed flyout content and
+        // invalidated every adaptive width. Background also lets deferred selection,
+        // gallery viewport and QAT host updates finish before capturing the surfaces.
+        _pendingDensityTransition = Dispatcher.BeginInvoke(DispatcherPriority.Background, (Action)(() =>
+        {
+            _pendingDensityTransition = null;
+            if (!IsLoaded || !IsVisible
+                || !RibbonAnimation.IsEnabled(RibbonAnimationAction.DensityChange)) return;
+            (Window.GetWindow(this) as FrameworkElement ?? this).UpdateLayout();
+            RefreshSelectionVisuals();
+            // Layout/binding can itself change density or replace the template.
+            if (generation != _densityTransitionGeneration) return;
+            if (_ribbonTabControl is { IsVisible: true } tabs)
+                _densityTransitions.Add(new RibbonDensityTransition(tabs));
+
+            FrameworkElement? qat = QuickAccessPosition switch
+            {
+                RibbonQuickAccessPosition.BelowRibbon => _qatBelowHost,
+                RibbonQuickAccessPosition.TitleBar => _titleBarQatHost,
+                _ => null, // The tab-row QAT is already inside the faded tab control.
+            };
+            if (qat is { IsVisible: true })
+            {
+                double offset = QuickAccessPosition == RibbonQuickAccessPosition.BelowRibbon && !IsMinimized
+                    && qat.ContextMenu?.IsOpen != true && !PopupDismissHelper.HasOpenPopupWithin(qat)
+                    ? RibbonAnimation.GetSlideOffset(RibbonAnimationAction.DensityChange)
+                        * (density == RibbonDensity.Touch ? -1d : 1d)
+                    : 0d;
+                _densityTransitions.Add(new RibbonDensityTransition(qat, offset));
+            }
+        }));
+    }
+
+    private void CancelDensityTransition()
+    {
+        _densityTransitionGeneration++;
+        _pendingDensityTransition?.Abort();
+        _pendingDensityTransition = null;
+        foreach (RibbonDensityTransition transition in _densityTransitions) transition.Dispose();
+        _densityTransitions.Clear();
+    }
+
+    private void OnDensityMotionPolicyChanged(object? sender, EventArgs e)
+    {
+        if (!Dispatcher.CheckAccess())
+        {
+            Dispatcher.BeginInvoke((Action)(() => OnDensityMotionPolicyChanged(sender, e)));
+            return;
+        }
+        if (!RibbonAnimation.IsEnabled(RibbonAnimationAction.DensityChange)) CancelDensityTransition();
+    }
+
+    private void OnDensitySystemMotionChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(SystemParameters.ClientAreaAnimation))
+            OnDensityMotionPolicyChanged(sender, e);
+    }
+
     private void AttachQatContextMenu(FrameworkElement host)
     {
         host.ContextMenu = EnsureQatContextMenu();
@@ -3579,6 +3780,7 @@ public class Ribbon : Control
         if (host is RibbonQuickAccessToolBar toolBar)
         {
             toolBar.Owner = this;
+            toolBar.SetBinding(DensityProperty, new Binding(nameof(Density)) { Source = this });
         }
     }
 

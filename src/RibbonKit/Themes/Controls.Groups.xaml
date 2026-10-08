@@ -401,10 +401,19 @@
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.4" />
                         </Trigger>
+                        <Trigger Property="controls:Ribbon.Density" Value="Touch">
+                            <Setter TargetName="HeaderChrome" Property="Padding" Value="{DynamicResource RibbonKit.Metrics.Touch.TabPadding}" />
+                        </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+        <Style.Triggers>
+            <Trigger Property="controls:Ribbon.Density" Value="Touch">
+                <Setter Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                <Setter Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
     <!-- ============================================================
@@ -432,6 +441,12 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+        <Style.Triggers>
+            <Trigger Property="controls:Ribbon.Density" Value="Touch">
+                <Setter Property="Height" Value="Auto" />
+                <Setter Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.GroupsRowHeight}" />
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
     <!-- ============================================================
@@ -534,7 +549,7 @@
                                     <!-- A TextBlock (not a ContentPresenter) so the name can trim to an
                                          ellipsis. Group headers are strings; a non-string Header falls
                                          back to its ToString(). -->
-                                    <TextBlock Grid.Column="1"
+                                    <TextBlock x:Name="GroupCaption" Grid.Column="1"
                                                Text="{Binding Header, RelativeSource={RelativeSource TemplatedParent}}"
                                                TextAlignment="Center"
                                                TextTrimming="CharacterEllipsis"
@@ -680,7 +695,7 @@
                         </ToggleButton>
 
                         <!-- Flyout that hosts the group's full content while collapsed -->
-                        <Popup x:Name="PART_Popup"
+                        <Popup controls:Ribbon.Density="{Binding Path=(controls:Ribbon.Density), RelativeSource={RelativeSource TemplatedParent}}" x:Name="PART_Popup"
                                AllowsTransparency="True"
                                StaysOpen="True"
                                Placement="Bottom"
@@ -728,6 +743,14 @@
                             <!-- Reserve the mirror-width spacer so the name stays centered over the group. -->
                             <Setter TargetName="PART_LauncherSpacer" Property="Visibility" Value="Hidden" />
                         </Trigger>
+                        <Trigger Property="controls:Ribbon.Density" Value="Touch">
+                            <!-- Keep the launcher's normal height so it cannot enlarge
+                                 the caption band relative to groups without a launcher. -->
+                            <Setter TargetName="PART_DialogLauncher" Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                            <Setter TargetName="PART_LauncherSpacer" Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                            <Setter TargetName="PART_CollapsedButton" Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                            <Setter TargetName="GroupCaption" Property="VerticalAlignment" Value="Bottom" />
+                        </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
@@ -766,6 +789,13 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+        <Style.Triggers>
+            <Trigger Property="controls:Ribbon.Density" Value="Touch">
+                <Setter Property="Height" Value="Auto" />
+                <Setter Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.SeparatorHeight}" />
+                <Setter Property="VerticalAlignment" Value="Stretch" />
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
 </ResourceDictionary>
