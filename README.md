@@ -47,7 +47,7 @@ below describes the current checkout, including post-release additions; see
 - File tab or Office 2007 orb, two-pane application menu, and Backstage with Modern,
   Classic, Classic2010, Glass2007, Classic2007, CrystalSidebar and CrystalFloating designs.
 - Repeatable message bars with actions/dismissal; Backstage page/footer/recent patterns.
-- Three QAT placements, overflow and source-linked button/toggle/split/dropdown proxies.
+- Three QAT placements, overflow and source-linked button/toggle/split/dropdown/combo proxies.
 - Contextual tabs, tab/group merging and modal-tab lifetimes.
 - Ribbon/QAT customization with JSON Import/Export/Reset and application-controlled storage.
 
@@ -179,7 +179,7 @@ Showcase resources or helpers.
 
 ### Commands declared only in QAT
 
-Buttons, toggles, dropdowns and split buttons declared directly in
+Buttons, toggles, dropdowns, split buttons and combo boxes declared directly in
 `Ribbon.QuickAccessItems` appear in both customization pages' available-command
 lists, even after removal from QAT. They can be re-added to QAT or copied into a
 custom ribbon group. RibbonKit retains these command sources for the ribbon's
@@ -193,6 +193,34 @@ and assign each a stable `Ribbon.CommandId` (for example `cmd.undo`). Removed
 commands then remain available after restart, custom-group copies resolve to the
 new application's source, and Reset restores the original QAT items. Untagged
 QAT-only commands remain available in the current instance but are not persisted.
+Combo boxes are displayed as dropdown copies, including after Reset.
+
+### Combo boxes in QAT
+
+`RibbonComboBox.Icon` supplies the optional image for its QAT button and custom
+ribbon-group copies. Add the combo through either customization page, right-click
+its non-editing surface, or call `Ribbon.AddToQuickAccess(combo)`. The QAT dropdown
+lists the source combo's choices, marks the selected choice and updates the
+original selection, bindings and `SelectionChanged` handlers. This also works
+when the source tab is inactive and when the QAT button is in overflow.
+Opening focuses the current enabled choice; hovering moves the active focus
+without selecting it. Click, Enter or Space commits the choice.
+
+```xml
+<rk:RibbonComboBox Header="Font size"
+                   Icon="{StaticResource FontSizeIcon}"
+                   rk:Ribbon.CommandId="command.font.size"
+                   ItemsSource="{Binding FontSizes}"
+                   SelectedItem="{Binding FontSize, Mode=TwoWay}" />
+```
+
+The chooser follows `DisplayMemberPath`, `ItemTemplate`, `ItemTemplateSelector`,
+`ItemStringFormat` and `MaxDropDownHeight`; directly authored `ComboBoxItem`
+presentation overrides take precedence. Use data and templates for rich choice
+presentation. Directly authored visual elements are represented by their text
+or accessible name, so each original item keeps its parent. Editable combos also
+offer their existing choices in QAT; typing and the text-editing context menu
+remain on the original input. Assign a stable command ID for saved customization.
 
 ### Theming & rendering
 

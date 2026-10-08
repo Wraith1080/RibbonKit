@@ -525,12 +525,15 @@ public static class RibbonCustomizationSerializer
                 }
 
                 int index = 0;
+                int comboIndex = 0;
                 foreach (FrameworkElement control in RibbonCommandCatalog.CollectControls(group))
                 {
                     string? explicitId = Ribbon.GetCommandId(control);
                     RibbonCommandEntry described = RibbonCommandCatalog.Describe(control);
-                    string autoId = $"auto:{tabKey}/{groupKey}/{described.DisplayName}#{index}";
-                    index++;
+                    // New combo discovery must not shift previously persisted button ids.
+                    string autoId = control is RibbonComboBox
+                        ? $"auto:combo:{tabKey}/{groupKey}/{described.DisplayName}#{comboIndex++}"
+                        : $"auto:{tabKey}/{groupKey}/{described.DisplayName}#{index++}";
 
                     idOf.TryAdd(control, explicitId ?? autoId);
                     if (explicitId is not null)

@@ -38,6 +38,12 @@ public sealed class ShowcaseViewChoiceTests
                 Assert.NotNull(window.GlassTreatmentToggle.LargeIcon);
                 Assert.Equal("Optimize spacing between commands", window.TouchModeSelector.DropDownHeader);
                 Assert.Equal(2, window.TouchModeSelector.Items.Count);
+                var combos = RibbonCommandCatalog.CollectAvailable(window.MainRibbon)
+                    .Select(entry => entry.Control).OfType<RibbonComboBox>().ToArray();
+                Assert.Equal(2, combos.Length);
+                Assert.All(combos, combo => Assert.NotNull(combo.Icon));
+                Assert.Contains(combos, combo => Ribbon.GetCommandId(combo) == "command.home.font.family");
+                Assert.Contains(combos, combo => Ribbon.GetCommandId(combo) == "command.home.font.size");
 
                 // Exercise the real selection handlers without writing the user's
                 // persisted Showcase appearance from this headless test.

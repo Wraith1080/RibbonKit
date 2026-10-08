@@ -1,4 +1,7 @@
 #nullable enable
+RibbonKit.Controls.RibbonComboBox.Icon.get -> System.Windows.Media.ImageSource?
+RibbonKit.Controls.RibbonComboBox.Icon.set -> void
+static readonly RibbonKit.Controls.RibbonComboBox.IconProperty -> System.Windows.DependencyProperty!
 RibbonKit.Controls.InRibbonGallery.PopupWidth.get -> double
 RibbonKit.Controls.InRibbonGallery.PopupWidth.set -> void
 static readonly RibbonKit.Controls.InRibbonGallery.PopupWidthProperty -> System.Windows.DependencyProperty!

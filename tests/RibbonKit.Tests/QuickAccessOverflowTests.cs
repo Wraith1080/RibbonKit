@@ -189,7 +189,6 @@ public class QuickAccessOverflowTests
         FrameworkElement[] unsupported =
         {
             new RibbonGroup(),
-            new RibbonComboBox(),
             new InRibbonGallery(),
             new Button(),
         };

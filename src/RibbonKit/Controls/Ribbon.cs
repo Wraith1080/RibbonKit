@@ -1081,11 +1081,13 @@ public class Ribbon : Control
         RibbonCustomizeRequested?.Invoke(this, EventArgs.Empty);
 
     /// <summary>
-    /// Adds <paramref name="source"/> (a button, toggle, split button, or drop-down button) to
-    /// the quick access toolbar. A removed directly declared QAT item is restored as itself.
+    /// Adds <paramref name="source"/> (a button, toggle, split button, dropdown, or combo box) to
+    /// the quick access toolbar. A removed directly declared QAT item is restored as itself,
+    /// except combo boxes, which use dropdown copies.
     /// For a ribbon-group source, a small PROXY button is created that mirrors its
     /// 16px icon and ScreenTip and invokes it (toggles stay state-synced via a two-way IsChecked
-    /// binding). Returns <see langword="false"/> when the control is already in the QAT or its type
+    /// binding). Combo boxes use an icon dropdown that selects from their existing items;
+    /// editable text input stays on the original combo. Returns <see langword="false"/> when the control is already in the QAT or its type
     /// does not have a supported quick-access representation.
     /// </summary>
     public bool AddToQuickAccess(FrameworkElement source)
@@ -1097,7 +1099,7 @@ public class Ribbon : Control
             return false;
         }
 
-        if (_declaredQuickAccessCommands.Contains(source))
+        if (_declaredQuickAccessCommands.Contains(source) && source is not RibbonComboBox)
         {
             // Restore the authored item itself, including its command bindings/handlers.
             QuickAccessItems.Add(source);
@@ -1120,7 +1122,7 @@ public class Ribbon : Control
     }
 
     private static bool IsSupportedQuickAccessSource(FrameworkElement source) =>
-        source is RibbonButton or RibbonToggleButton or RibbonDropDownButton;
+        source is RibbonButton or RibbonToggleButton or RibbonDropDownButton or RibbonComboBox;
 
     // Directly declared QAT commands may have no ribbon-group counterpart. Keep their
     // source objects for this ribbon's lifetime so Remove/Clear/Apply cannot erase the
@@ -1167,6 +1169,20 @@ public class Ribbon : Control
                         AddLogicalChild(source);
                     }
                 }
+
+                if (item is RibbonComboBox combo)
+                {
+                    // Normalize directly authored QAT combos after collection notification.
+                    // The source stays retained/logically owned for bindings and Reset.
+                    Dispatcher.BeginInvoke(DispatcherPriority.DataBind, new Action(() =>
+                    {
+                        int index = QuickAccessItems.IndexOf(combo);
+                        if (index < 0) return;
+                        var proxy = CreateCommandProxy(combo, RibbonControlSize.Small);
+                        if (GetMergeSource(combo) is { } mergeSource) SetMergeSourceInternal(proxy, mergeSource);
+                        QuickAccessItems[index] = proxy;
+                    }));
+                }
             }
         }
 
@@ -1190,6 +1206,12 @@ public class Ribbon : Control
         FrameworkElement proxy;
         switch (source)
         {
+            case RibbonComboBox combo:
+                proxy = new RibbonComboBoxQuickAccessProxy(combo, this) { Size = size };
+                // Title-bar and overflow hosts can be outside this ribbon's tree.
+                proxy.SetBinding(FlowDirectionProperty, new Binding(nameof(FlowDirection)) { Source = this });
+                break;
+
             case RibbonToggleButton toggle:
             {
                 // State lives on the SOURCE: the proxy's IsChecked is two-way bound to it, so
@@ -1494,9 +1516,14 @@ public class Ribbon : Control
     // stopping at the ribbon itself.
     private FrameworkElement? ResolveCommandControl(DependencyObject? node)
     {
+        bool textEditor = false;
         while (node is not null && !ReferenceEquals(node, this))
         {
-            if (node is RibbonButton or RibbonToggleButton or RibbonDropDownButton)
+            textEditor |= node is TextBoxBase;
+            if (textEditor && node is RibbonComboBox { IsEditable: true })
+                return null; // Keep the native editing menu on the combo's text input.
+
+            if (node is FrameworkElement command && IsSupportedQuickAccessSource(command))
             {
                 return (FrameworkElement)node;
             }

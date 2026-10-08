@@ -7627,3 +7627,66 @@ combo boxes. Editable typing semantics and the remaining catalog/proxy/overflow
 integration require a later implementation. Dropdown and split buttons still
 offer one `DropDownHeader`; multiple sections currently use composed popup
 content. This follow-up does not add a QAT combo projection or a menu-section API.
+
+### 3.229 Combo-box dropdown copies for QAT and customization — 2026-10-08
+
+`RibbonComboBox.Icon` is an optional, compatible dependency property used by
+QAT and custom-group dropdown copies. Its three symbols are in Unshipped; the
+shipped API baseline is unchanged. The original combo keeps its input layout,
+editable text, items, selection and application handlers. Showcase's Font and
+Font Size combos supply vector icons and stable command IDs.
+
+The command catalog includes combos as single commands, without descending into
+their choices. Both customization pages, the non-editing right-click surface,
+`AddToQuickAccess`, saved customization and QAT overflow use an internal shared
+dropdown projection. Directly declared QAT combos are retained as sources and
+normalized to dropdowns after collection notification, including restoration of
+defaults. Combo automatic IDs use a separate counter and prefix so discovery
+does not shift existing automatically identified button commands.
+
+Each projection builds its own choice buttons and updates the source's native
+SelectedIndex with SetCurrentValue. Source ItemsSource/selection bindings and
+SelectionChanged handlers remain intact, including duplicate boxed values and
+sources on inactive tabs. Weak collection-change listening refreshes an open
+chooser. Data templates, selectors, formats, DisplayMemberPath and authored
+container overrides supply presentation; raw visual items use text or accessible
+names instead of changing parents. Shared lookless row templates use existing
+Office/Crystal paint, focus and Touch tokens. MaxDropDownHeight follows the source.
+Editable typing and its native context menu remain on the original input.
+
+Placement reload restores the owning ribbon's FlowDirection binding. Inspection
+of actual Touch previews also caught a stale Compact height in the popup's
+nonlogical decorators. The projection invalidates the full popup measure branch
+when opening or rebuilding rows; a card-clip assertion now covers that failure.
+No delayed test waits or preview-only layout repairs are required.
+
+The Release solution and normal Debug Showcase builds passed with zero warnings
+and errors. All 54 focused runtime checks passed, including seven new combo
+checks and existing overflow, customization, retained-command and Showcase
+coverage. A RibbonKit-only consumer passed 288 combinations of six themes,
+light/dark, Compact/Touch, LTR/RTL, simulated 125%/200% DPI and all three QAT
+placements. It exercises the real customization pages, inactive-tab sources,
+shared paint and complete row/card bounds. Nested overflow keyboard checks passed
+disabled-item skipping, End scrolling, Enter/Space selection, Escape/focus return,
+outer-popup dismissal and removal/re-addition. Office/Crystal Compact/Touch
+consumer previews were inspected.
+
+The full runtime/Writer/visual/consumer suite remains deferred at the user's
+request. Native mouse interaction, mixed-monitor DPI and user visual acceptance
+are separate unrecorded gates.
+
+Mouse-hover follow-up (2026-10-08): the user found that the first enabled row
+retained the opening keyboard focus while another choice was hovered, producing
+an extra hover-colored row alongside the current selection. Choice rows now
+transfer focus on MouseEnter without changing selection. An internal library
+extension hook lets the combo projection start at its current enabled choice;
+ordinary dropdowns retain first/last focus, and Up still opens at the last row.
+Missing or disabled selections fall back to the first enabled choice.
+
+The independent consumer reproduced the stale-focus failure before the fix and
+then passed hover/focus paint, unchanged selection, disabled-row handling and
+mixed mouse/keyboard activation checks. The expanded focused runtime selection
+passed 64 checks, including an Office2007/Crystal Compact/Touch hover regression
+and the existing ordinary dropdown borrowing checks. The 288-case combo consumer
+matrix and its overflow/keyboard checks passed again. Full-suite and user live
+acceptance remain separate from these synthetic-input results.

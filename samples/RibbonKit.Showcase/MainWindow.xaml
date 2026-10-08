@@ -541,6 +541,8 @@
                     <StackPanel VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                             <rk:RibbonComboBox InputWidth="128"
+                                               rk:Ribbon.CommandId="command.home.font.family"
+                                               Icon="{StaticResource Icon.Font}"
                                                IsEditable="True"
                                                SelectedIndex="0"
                                                ScreenTipTitle="Font"
@@ -553,6 +555,8 @@
                                 <ComboBoxItem Content="Georgia" />
                             </rk:RibbonComboBox>
                             <rk:RibbonComboBox InputWidth="48"
+                                               rk:Ribbon.CommandId="command.home.font.size"
+                                               Icon="{StaticResource Icon.Font}"
                                                Margin="4,0,0,0"
                                                SelectedIndex="2"
                                                ScreenTipTitle="Font Size"

@@ -382,7 +382,8 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
         _focusLastItem = false;
         Dispatcher.BeginInvoke(DispatcherPriority.Input, new Action(() =>
         {
-            if (IsDropDownOpen && ReferenceEquals(menuHost, _menuHost) && menuHost is { IsKeyboardFocusWithin: false })
+            if (IsDropDownOpen && ReferenceEquals(menuHost, _menuHost) && menuHost is { IsKeyboardFocusWithin: false }
+                && !TryFocusInitialMenuItem(last))
                 menuHost.MoveFocus(new TraversalRequest(last ? FocusNavigationDirection.Last : FocusNavigationDirection.First));
         }));
 
@@ -393,6 +394,10 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
         // RibbonSplitButton inherits this unchanged.
         RibbonMotion.PlayFlyoutOpen(_menuHost as FrameworkElement, RibbonAnimationAction.DropdownMenu);
     }
+
+    // Choice projections may start at their current selection. Ordinary menus keep
+    // their existing first/last navigation, including the Up-key opening gesture.
+    internal virtual bool TryFocusInitialMenuItem(bool last) => false;
 
     private void OnPopupClosed(object? sender, EventArgs e)
     {

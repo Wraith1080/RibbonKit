@@ -86,6 +86,9 @@ internal static class RibbonCommandCatalog
             case RibbonDropDownButton dropDown:
                 results.Add(dropDown);
                 return;
+            case RibbonComboBox combo:
+                results.Add(combo);
+                return;
         }
 
         foreach (object child in LogicalTreeHelper.GetChildren(node))
@@ -106,6 +109,7 @@ internal static class RibbonCommandCatalog
             RibbonToggleButton t => (t.Header, t.ScreenTipTitle, t.Icon ?? t.LargeIcon),
             RibbonButton b => (b.Header, b.ScreenTipTitle, b.Icon ?? b.LargeIcon),
             RibbonDropDownButton d => (d.Header, d.ScreenTipTitle, d.Icon ?? d.LargeIcon),
+            RibbonComboBox c => (c.Header, c.ScreenTipTitle, c.Icon),
             _ => (null, null, null),
         };
 
@@ -116,6 +120,7 @@ internal static class RibbonCommandCatalog
             {
                 RibbonToggleButton pt => pt.Header,
                 RibbonButton pb => pb.Header,
+                RibbonDropDownButton pd => pd.Header,
                 _ => null,
             };
             header = proxyHeader ?? header;

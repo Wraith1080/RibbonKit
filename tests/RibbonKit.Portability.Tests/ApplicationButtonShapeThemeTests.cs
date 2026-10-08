@@ -141,6 +141,11 @@ public sealed class ApplicationButtonShapeThemeTests
     public void Theme_default_and_local_value_follow_wpf_precedence() => RunSta(() =>
     {
         var application = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") is "ComboQuickAccess" or "ComboQuickAccessKeyboard")
+        {
+            ComboBoxQuickAccessPortabilityChecks.Verify(application);
+            return;
+        }
         if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "GroupedGalleries")
         {
             GroupedGalleryPortabilityChecks.Verify(application);
@@ -200,6 +205,7 @@ public sealed class ApplicationButtonShapeThemeTests
         GalleryHeaderAndQatCommandChecks.Verify(application);
 
         GroupedGalleryPortabilityChecks.Verify(application);
+        ComboBoxQuickAccessPortabilityChecks.Verify(application);
         ThemeManager.Apply(application, RibbonTheme.Office2024);
         KeyboardFocusPortabilityChecks.Verify(application);
         KeyboardNavigationPortabilityChecks.Verify(application);

@@ -868,6 +868,10 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [Native collection-view groups, shared headings and one-row Theme sections](docs/history/01-library.md#3228-grouped-theme-gallery-with-an-independent-popup-width--2026-10-08).
 
+### 3.229 Combo-box dropdown copies for QAT and customization — 2026-10-08
+
+[Optional combo icons, source-owned choices and selection, overflow and independent-consumer checks](docs/history/01-library.md#3229-combo-box-dropdown-copies-for-qat-and-customization--2026-10-08).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),
