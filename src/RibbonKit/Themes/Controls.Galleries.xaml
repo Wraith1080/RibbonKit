@@ -325,15 +325,12 @@
                                AllowsTransparency="True"
                                StaysOpen="True"
                                Placement="Custom"
-                               PlacementTarget="{Binding ElementName=PART_ContentHost}"
-                               HorizontalOffset="-1"
-                               VerticalOffset="-8"
-                               IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+                               PlacementTarget="{Binding RelativeSource={RelativeSource TemplatedParent}}"
+                               FlowDirection="{Binding FlowDirection, RelativeSource={RelativeSource TemplatedParent}}">
                             <!--
-                                A transparent Popup is a separate HWND. Its custom placement keeps
-                                the natural-width card's edge at PART_ContentHost's edge, so it
-                                expands away from PART_LineUp/LineDown/ExpandToggle rather than
-                                overlapping those main-window controls.
+                                The painted card starts at the gallery's top leading corner
+                                (left in LTR, right in RTL), including the side-button column.
+                                Its shadow margin does not shift this opening point.
                             -->
                             <Border x:Name="PART_PopupHost"
                                     Width="{TemplateBinding PopupWidth}"

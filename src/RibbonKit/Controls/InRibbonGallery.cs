@@ -85,7 +85,8 @@ public class InRibbonGallery : RibbonGallery
             new FrameworkPropertyMetadata(
                 false,
                 FrameworkPropertyMetadataOptions.BindsTwoWayByDefault,
-                OnIsDropDownOpenChanged));
+                OnIsDropDownOpenChanged,
+                CoerceIsDropDownOpen));
 
     private readonly PopupDismissHelper _dismissHelper;
     private Decorator? _contentHost;
@@ -98,6 +99,7 @@ public class InRibbonGallery : RibbonGallery
     private ButtonBase? _lineDown;
     private Window? _dpiOwner;
     private int _viewportRefreshGeneration;
+    private Image? _nativeStripPreview;
 
     // A mouse pick is committed but the close is being held until the button is
     // released (see the class remarks — closing while the button is down drag-follows
@@ -114,6 +116,8 @@ public class InRibbonGallery : RibbonGallery
         DefaultStyleKeyProperty.OverrideMetadata(
             typeof(InRibbonGallery),
             new FrameworkPropertyMetadata(typeof(InRibbonGallery)));
+        FlowDirectionProperty.OverrideMetadata(typeof(InRibbonGallery),
+            new FrameworkPropertyMetadata(FlowDirection.LeftToRight, OnFlowDirectionChanged));
     }
 
     /// <summary>Initializes the gallery and its light-dismiss plumbing.</summary>
@@ -138,7 +142,11 @@ public class InRibbonGallery : RibbonGallery
         SystemParameters.StaticPropertyChanged -= OnSystemParametersChanged;
         SystemParameters.StaticPropertyChanged += OnSystemParametersChanged;
         AttachDpiOwner();
-        if (!IsDropDownOpen && SelectedItem is not null)
+        if (IsDropDownOpen)
+        {
+            QueueNativePopupOpen();
+        }
+        else if (SelectedItem is not null)
         {
             // Tab switching or group re-homing can reset the strip's native offset
             // while the selected item survives. Reveal it after the viewport settles.
@@ -215,8 +223,13 @@ public class InRibbonGallery : RibbonGallery
 
         if (_popup is not null)
         {
+            // Return the live items before a replacement template tears down its
+            // old viewports; an orphaned items host can leave the new one empty.
+            MoveGalleryContent(open: false);
             _popup.Opened -= OnPopupOpened;
+            _popup.Closed -= OnPopupClosed;
             _popup.CustomPopupPlacementCallback = null;
+            _popup.SetCurrentValue(Popup.IsOpenProperty, false);
         }
 
         CancelPendingCommit();
@@ -252,7 +265,8 @@ public class InRibbonGallery : RibbonGallery
         if (_popup is not null)
         {
             _popup.Opened += OnPopupOpened;
-            _popup.CustomPopupPlacementCallback = PlacePopupBesideSideButtons;
+            _popup.Closed += OnPopupClosed;
+            _popup.CustomPopupPlacementCallback = PlacePopupAtGalleryOrigin;
         }
 
         // A template can be reapplied while the DP remains true, in which case no
@@ -260,6 +274,7 @@ public class InRibbonGallery : RibbonGallery
         if (IsDropDownOpen)
         {
             MoveGalleryContent(open: true);
+            QueueNativePopupOpen();
         }
         else if (IsLoaded && SelectedItem is not null)
         {
@@ -267,24 +282,23 @@ public class InRibbonGallery : RibbonGallery
         }
     }
 
-    private CustomPopupPlacement[] PlacePopupBesideSideButtons(
+    private CustomPopupPlacement[] PlacePopupAtGalleryOrigin(
         Size popupSize,
         Size targetSize,
         Point offset)
     {
-        // Keep the separate popup HWND out of the side-button column without
-        // constraining the gallery card itself. In LTR the card keeps its natural
-        // width and expands left from the content host's right edge; RTL mirrors
-        // that behavior and expands right from its left edge.
+        // Popup's target origin is the leading edge of the gallery: physical left
+        // in LTR, right in RTL. Align the painted card there, accounting for the
+        // transparent margin reserved for its shadow; width never moves the anchor.
         Thickness chromeMargin = _popupHost?.Margin ?? default;
         double x = FlowDirection == FlowDirection.RightToLeft
-            ? -offset.X
-            : targetSize.Width - popupSize.Width - chromeMargin.Left - chromeMargin.Right + offset.X;
+            ? -popupSize.Width - chromeMargin.Right + offset.X
+            : -chromeMargin.Left + offset.X;
 
         return new[]
         {
             new CustomPopupPlacement(
-                new Point(x, offset.Y),
+                new Point(x, offset.Y - chromeMargin.Top),
                 PopupPrimaryAxis.Horizontal),
         };
     }
@@ -363,6 +377,25 @@ public class InRibbonGallery : RibbonGallery
         _commitPending = false;
     }
 
+    private static object CoerceIsDropDownOpen(DependencyObject d, object value)
+    {
+        var gallery = (InRibbonGallery)d;
+        // Capture while the effective state still says "strip": changing it can
+        // immediately invalidate wrapping before the popup's HWND has appeared.
+        if (value is true && !gallery.IsDropDownOpen && gallery.IsVisible
+            && gallery._stripScrollViewer is { } strip)
+            gallery._nativeStripPreview = strip.Content as Image ?? GalleryStripPreview.Create(strip);
+        return value;
+    }
+
+    private static void OnFlowDirectionChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        var gallery = (InRibbonGallery)d;
+        if (gallery.IsDropDownOpen) gallery.SetCurrentValue(IsDropDownOpenProperty, false);
+        gallery._nativeStripPreview = null;
+        if (gallery.IsLoaded && gallery.SelectedItem is not null) gallery.QueueViewportRefresh();
+    }
+
     private static void OnIsDropDownOpenChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         ((InRibbonGallery)d).HandleDropDownStateChanged((bool)e.NewValue);
@@ -401,14 +434,13 @@ public class InRibbonGallery : RibbonGallery
             RibbonMotion.StopScrollAnimation(_popupScrollViewer);
             _popupScrollViewer?.ScrollToVerticalOffset(0d);
             MoveGalleryContent(open: true);
+            // The replacement is a drawing of the already visible row. Arrange it
+            // now so the main window never paints an empty borrowed-presenter gap.
+            _stripScrollViewer?.UpdateLayout();
 
-            // Unfold the WHOLE flyout surface — border, shadow and tiles together (honors the
-            // global animation level). This used to animate only _popupHost.Child, on the theory
-            // that transforming the border would drop the transparent popup's resting position;
-            // it does not — a RenderTransform never moves the popup window. What a TRANSLATE does
-            // is get sliced against that window's top edge, which is why this is a scale: it never
-            // leaves its resting bounds, so the overlay's -4 placement is untouched. See §3.42.
-            RibbonMotion.PlayFlyoutOpen(_popupHost, RibbonAnimationAction.Gallery);
+            // Source bindings (width, headings and direction) finish transferring
+            // after this DP callback. Show only after that work has settled.
+            QueueNativePopupOpen();
         }
         else
         {
@@ -424,7 +456,11 @@ public class InRibbonGallery : RibbonGallery
             if (_stripScrollViewer is not null)
             {
                 RefreshViewportLayout(_stripScrollViewer);
+                _stripScrollViewer.ScrollToVerticalOffset(_stripOffsetBeforeOpen);
+                _stripScrollViewer.UpdateLayout();
             }
+            _nativeStripPreview = null;
+            _popup?.SetCurrentValue(Popup.IsOpenProperty, false);
 
             // Reveal the committed pick in the collapsed strip — AFTER the presenter is
             // back in the strip and has re-measured its one-row viewport. Doing this
@@ -438,6 +474,20 @@ public class InRibbonGallery : RibbonGallery
         _stripScrollViewer is not null
         && _popupScrollViewer is not null
         && _itemsPresenter is not null;
+
+    private void QueueNativePopupOpen()
+    {
+        Popup? expected = _popup;
+        Dispatcher.BeginInvoke(DispatcherPriority.Render, new Action(() =>
+        {
+            if (!IsLoaded || !IsDropDownOpen
+                || expected is null || !ReferenceEquals(expected, _popup) || expected.IsOpen) return;
+            MoveGalleryContent(open: true);
+            ResolvePopupHostBackground();
+            RibbonMotion.PlayFlyoutOpen(_popupHost, RibbonAnimationAction.Gallery);
+            expected.SetCurrentValue(Popup.IsOpenProperty, true);
+        }));
+    }
 
     private ScrollViewer? ActiveScrollViewer =>
         QuickAccessViewport ?? (IsDropDownOpen && UsesHostSpecificScrollers
@@ -455,7 +505,7 @@ public class InRibbonGallery : RibbonGallery
 
             if (ReferenceEquals(source.Content, _itemsPresenter))
             {
-                source.Content = null;
+                source.Content = open ? _nativeStripPreview : null;
             }
 
             if (!ReferenceEquals(destination.Content, _itemsPresenter))
@@ -511,9 +561,24 @@ public class InRibbonGallery : RibbonGallery
     /// </summary>
     private void OnPopupOpened(object? sender, EventArgs e)
     {
+        MoveGalleryContent(open: true);
         ResolvePopupHostBackground();
-        PrepareViewportRefresh();
+        if (_popupScrollViewer is not null) RefreshViewportLayout(_popupScrollViewer);
+        // A changed inherited direction/DPI can leave the detached PopupRoot with
+        // cached bounds. Refresh the whole HWND tree, as gallery QAT copies do.
+        if (_popupHost is { } host)
+        {
+            for (DependencyObject? current = host; current is not null; current = VisualTreeHelper.GetParent(current))
+                if (current is UIElement element) { element.InvalidateMeasure(); element.InvalidateArrange(); }
+            (PresentationSource.FromVisual(host)?.RootVisual as UIElement)?.UpdateLayout();
+        }
         QueueViewportRefresh();
+    }
+
+    private void OnPopupClosed(object? sender, EventArgs e)
+    {
+        if (ReferenceEquals(sender, _popup) && _popup?.IsOpen == false && IsDropDownOpen)
+            SetCurrentValue(IsDropDownOpenProperty, false);
     }
 
     private void AttachDpiOwner()
@@ -631,8 +696,18 @@ public class InRibbonGallery : RibbonGallery
         FrameworkElement? activeHost = IsDropDownOpen ? _popupHost : _contentHost;
         if (scrollViewer.Content is UIElement content)
         {
-            content.InvalidateMeasure();
-            content.InvalidateArrange();
+            // Reparenting across a direction change can leave the intervening
+            // ScrollContentPresenter measured as empty while the live gallery
+            // presenter itself has valid tiles. Refresh every viewport wrapper,
+            // not only the two endpoints of that visual path.
+            for (DependencyObject? current = content;
+                 current is not null && !ReferenceEquals(current, scrollViewer);
+                 current = VisualTreeHelper.GetParent(current))
+                if (current is UIElement element)
+                {
+                    element.InvalidateMeasure();
+                    element.InvalidateArrange();
+                }
         }
 
         scrollViewer.InvalidateMeasure();

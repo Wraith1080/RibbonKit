@@ -148,7 +148,9 @@ Consumer-provided `GroupStyle` takes precedence. `InRibbonGallery.PopupWidth`
 sets the expanded card width independently of the strip; its default `NaN`
 retains automatic sizing and wrapping at the strip width. Showcase's Theme
 gallery uses a 440-DIP popup for Modern, Office Modern and Office Legacy,
-with one row of tiles per section. Set `IsSynchronizedWithCurrentItem="False"`
+with one row of tiles per section. The native expanded card starts at the gallery's
+top-left corner in LTR and top-right corner in RTL, including its side buttons;
+WPF keeps the popup inside the available screen area. Set `IsSynchronizedWithCurrentItem="False"`
 when the application owns selection independently of the collection view's
 current item. Dropdown and split buttons retain a single `DropDownHeader`;
 multiple sections can be composed inside their popup content.

@@ -263,6 +263,95 @@
                     </rk:RibbonDropDownButton>
                 </rk:RibbonGroup>
             </rk:RibbonTab>
+
+            <rk:RibbonTab x:Name="RtlChoicesTab" Header="Gallery &amp; Combo"
+                          rk:Ribbon.CommandId="loc.tab.choices">
+                <rk:RibbonGroup Header="Font" Icon="{StaticResource Icon.Font}"
+                                rk:Ribbon.CommandId="loc.group.font" CanResize="False">
+                    <rk:RibbonComboBox x:Name="RtlFontCombo" Header="خط — Font"
+                                       Icon="{StaticResource Icon.Font}"
+                                       rk:Ribbon.CommandId="loc.command.font"
+                                       InputWidth="158" SelectedIndex="1"
+                                       ScreenTipTitle="خط — Font"
+                                       ScreenTipText="Choose a font here, or add this combo to QAT and choose through its dropdown. The selection preview follows both.">
+                        <ComboBoxItem Content="Calibri" />
+                        <ComboBoxItem Content="Segoe UI" />
+                        <ComboBoxItem Content="Arial" />
+                        <ComboBoxItem Content="Times New Roman" />
+                        <ComboBoxItem Content="Consolas" />
+                        <ComboBoxItem Content="Georgia" />
+                    </rk:RibbonComboBox>
+                </rk:RibbonGroup>
+
+                <rk:RibbonGroup Header="Styles" Icon="{StaticResource Icon.Style}"
+                                rk:Ribbon.CommandId="loc.group.styles" CanResize="False">
+                    <rk:InRibbonGallery x:Name="RtlStylesGallery" Header="أنماط — Styles"
+                                        Icon="{StaticResource Icon.Style}"
+                                        rk:Ribbon.CommandId="loc.command.styles"
+                                        DropDownHeader="اختر نمطًا — Choose a style"
+                                        Width="258" PopupWidth="408"
+                                        SelectedIndex="4" SelectedValuePath="Tag">
+                        <rk:RibbonGalleryItem Tag="عادي — Normal">
+                            <StackPanel Width="100">
+                                <TextBlock Text="أبجد AaBb" FontSize="14" HorizontalAlignment="Center" />
+                                <TextBlock Text="عادي — Normal" FontSize="10" HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </rk:RibbonGalleryItem>
+                        <rk:RibbonGalleryItem Tag="عنوان 1 — Heading 1">
+                            <StackPanel Width="100">
+                                <TextBlock Text="أبجد AaBb" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource RibbonKit.Brushes.Accent}" HorizontalAlignment="Center" />
+                                <TextBlock Text="عنوان 1 — Heading 1" FontSize="10" HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </rk:RibbonGalleryItem>
+                        <rk:RibbonGalleryItem Tag="عنوان 2 — Heading 2">
+                            <StackPanel Width="100">
+                                <TextBlock Text="أبجد AaBb" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource RibbonKit.Brushes.Accent}" HorizontalAlignment="Center" />
+                                <TextBlock Text="عنوان 2 — Heading 2" FontSize="10" HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </rk:RibbonGalleryItem>
+                        <rk:RibbonGalleryItem Tag="عنوان — Title">
+                            <StackPanel Width="100">
+                                <TextBlock Text="أبجد AaBb" FontSize="17" FontWeight="Light" HorizontalAlignment="Center" />
+                                <TextBlock Text="عنوان — Title" FontSize="10" HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </rk:RibbonGalleryItem>
+                        <rk:RibbonGalleryItem Tag="عنوان فرعي — Subtitle">
+                            <StackPanel Width="100">
+                                <TextBlock Text="أبجد AaBb" FontSize="13" Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" HorizontalAlignment="Center" />
+                                <TextBlock Text="عنوان فرعي — Subtitle" FontSize="10" HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </rk:RibbonGalleryItem>
+                        <rk:RibbonGalleryItem Tag="اقتباس — Quote">
+                            <StackPanel Width="100">
+                                <TextBlock Text="أبجد AaBb" FontSize="13" FontStyle="Italic" HorizontalAlignment="Center" />
+                                <TextBlock Text="اقتباس — Quote" FontSize="10" HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </rk:RibbonGalleryItem>
+                        <rk:RibbonGalleryItem Tag="غامق — Strong">
+                            <StackPanel Width="100">
+                                <TextBlock Text="أبجد AaBb" FontSize="13" FontWeight="Bold" HorizontalAlignment="Center" />
+                                <TextBlock Text="غامق — Strong" FontSize="10" HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </rk:RibbonGalleryItem>
+                        <rk:RibbonGalleryItem Tag="توكيد — Emphasis">
+                            <StackPanel Width="100">
+                                <TextBlock Text="أبجد AaBb" FontSize="13" FontStyle="Italic" HorizontalAlignment="Center" />
+                                <TextBlock Text="توكيد — Emphasis" FontSize="10" HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </rk:RibbonGalleryItem>
+                    </rk:InRibbonGallery>
+                </rk:RibbonGroup>
+
+                <rk:RibbonGroup Header="Selection Preview" Icon="{StaticResource Icon.Font}"
+                                rk:Ribbon.CommandId="loc.group.choicepreview" CanResize="False">
+                    <StackPanel Width="220" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding SelectedItem.Content, ElementName=RtlFontCombo, StringFormat='Font: {0}'}" />
+                        <TextBlock Text="{Binding SelectedValue, ElementName=RtlStylesGallery, StringFormat='Style: {0}'}" />
+                        <TextBlock Text="RibbonKit — تجربة النص" FontSize="18" Margin="0,6,0,0"
+                                   FontFamily="{Binding SelectedItem.Content, ElementName=RtlFontCombo}" />
+                    </StackPanel>
+                </rk:RibbonGroup>
+            </rk:RibbonTab>
         </rk:Ribbon>
 
         <Grid Margin="16">
@@ -321,7 +410,10 @@
                         4. Right-click Paste, Select, and both QAT buttons. Check submenu placement
                         and the localized built-in commands.&#x0a;
                         5. Create and edit a custom tab/group to exercise names, suffixes, choices,
-                        tooltips, and OK/Cancel.&#x0a;
+                        tooltips, and OK/Cancel. In Gallery &amp; Combo, add Font and Styles to QAT
+                        yourself. Check native and QAT choices in RTL, confirm Selection Preview
+                        follows both, and confirm the ribbon gallery stays visible while its QAT
+                        popup is open.&#x0a;
                         6. Change the main Showcase Backstage rail design, translucency, theme, and
                         2007 Menu toggle; this lab follows live. With RTL enabled, verify each
                         Backstage rail stays on the right and opens/closes toward that edge. Under

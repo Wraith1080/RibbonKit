@@ -876,6 +876,10 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [Gallery metadata, native rich-tile borrowing, selection/preview routing and consumer checks](docs/history/01-library.md#3230-gallery-dropdown-copies-for-qat-and-customization--2026-10-08).
 
+### 3.231 Native gallery direction changes, popup origin and strip retention — 2026-10-08
+
+[Refresh the complete viewport path after RTL changes and retain the visible row while opening](docs/history/01-library.md#3231-native-gallery-direction-changes-popup-origin-and-strip-retention--2026-10-08).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),

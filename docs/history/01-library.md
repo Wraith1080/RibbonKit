@@ -7762,7 +7762,60 @@ before/open images were inspected with matching tile positions, text and chrome.
 Release solution and normal Debug Showcase builds passed with zero warnings and
 errors. No snapshot approvals changed.
 
+The Localization/RTL lab now has a separate Gallery & Combo tab with a native
+Font combo, a bilingual Styles gallery and a bound Selection Preview. Both
+commands have icons and stable IDs for customization; its QAT still starts with
+Save and Undo so the user can add the new commands manually. The lab uses the
+existing shared controls and templates without a runtime change. Normal Debug
+Showcase and Release builds passed, along with four existing lab markup checks
+and the realized bilingual application-menu check. Live review of these new
+controls remains for the user.
+
 The full runtime/Writer/visual/consumer suite remains deferred at the user's
-request. User live gallery acceptance and native mixed-monitor DPI are pending.
+request. The user confirmed the visible-strip fix works in live QAT review on
+2026-10-08; live RTL gallery/combo review and native mixed-monitor DPI are pending.
 Group-to-QAT support is a later slice; group entries must be available only in
 Customize QAT, excluded from Customize Ribbon.
+
+### 3.231 Native gallery direction changes, popup origin and strip retention — 2026-10-08
+
+Live review in the Localization/RTL lab exposed three native `InRibbonGallery`
+failures: the first opening after either direction toggle could show an empty
+strip and a heading-only popup, wide cards opened from the wrong edge, and the
+strip briefly painted another row while opening. The user reproduced the blank
+opening without using any gallery copies. Combo and gallery dropdown copies
+were behaving correctly.
+
+The shared native template now targets the gallery itself. Custom placement
+aligns the painted card's top-left corner in LTR or top-right in RTL to the
+matching gallery corner, accounting for the shadow margin. This intentionally
+overlaps the side buttons, as requested; WPF retains screen-edge constraints.
+The control prepares the presenter and lets source bindings transfer before
+opening at Render priority. Direction changes dismiss an open native popup,
+return its live presenter and refresh the strip. Template replacement returns
+the presenter before dismantling the old viewports.
+
+Rendered independent-consumer diagnostics reproduced a remaining heading-only
+popup after a direction/DPI sequence, although `ViewportHeight` still reported
+the previous nonzero value. Its actual viewport height was zero: an intervening
+`ScrollContentPresenter` retained an empty measure while the gallery's native
+presenter already had valid tiles. Refresh now invalidates measure and arrange
+on the full visual path between presenter and viewport. Coverage checks actual
+height at the first `Popup.Opened` notification, card/viewport containment and
+the rendered surface, rather than trusting cached scrolling metrics.
+
+Opening captures the visible strip before its wrapping flag changes, using the
+existing vector preview used by QAT borrowing. The strip keeps that row painted
+while its one live presenter is expanded; close returns the presenter and the
+previous offset before revealing the selected item. No public API was added.
+
+The focused Release runtime run passed 96 checks, including the real RTL lab,
+grouped/ungrouped data templates, repeated direction/DPI changes, wide-card
+placement, template rebuilding, strip rendering, QAT/combo compatibility and
+customization persistence. The separate RibbonKit-only consumer passed 96
+combinations of six themes, light/dark, Compact/Touch, LTR/RTL and simulated
+125%/200% DPI. Office/Crystal strip and popup images were inspected; no snapshot
+approvals changed. Release solution and normal Debug Showcase builds passed with
+zero warnings and errors. Full-suite testing remains deferred; live review of repeated
+direction toggles, animated opening/closing and native mixed-monitor DPI remains
+for the user.
