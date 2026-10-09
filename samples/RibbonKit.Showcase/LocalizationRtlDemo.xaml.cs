@@ -119,6 +119,13 @@ public partial class LocalizationRtlDemo : RibbonWindow
         UpdateStatus();
     }
 
+    private void OnSelectDensity(object sender, RoutedEventArgs e)
+    {
+        if (sender is not RibbonMenuItem { Tag: RibbonDensity density }) return;
+        DemoRibbon.Density = density;
+        UpdateStatus();
+    }
+
     private void OnOpenCustomizeRibbon(object sender, RoutedEventArgs e) =>
         OpenOptionsDialog(showQuickAccessPage: false);
 
@@ -230,8 +237,9 @@ public partial class LocalizationRtlDemo : RibbonWindow
         string surface = DemoRibbon.ApplicationMenu is not null
             ? $"Application menu ({DemoRibbon.ApplicationButtonShape})"
             : $"{DemoBackstage.Design} Backstage ({DemoRibbon.ApplicationButtonShape})";
+        string density = DemoRibbon.Density == RibbonDensity.Touch ? "Touch" : "Mouse";
         StatusText.Text =
-            $"Layout: {flow}\nFile surface: {surface}\nBuilt-in strings: {localization}\nUI culture: {CultureInfo.CurrentUICulture.Name}" +
+            $"Layout: {flow}\nSpacing: {density}\nFile surface: {surface}\nBuilt-in strings: {localization}\nUI culture: {CultureInfo.CurrentUICulture.Name}" +
             (action is null ? string.Empty : $"\nLast action: {action}");
     }
 

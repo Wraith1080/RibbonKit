@@ -860,6 +860,50 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [Inherited density, detached surfaces, adaptive width refresh and live transitions](docs/history/01-library.md#3226-shared-compacttouch-density--2026-10-07).
 
+### 3.227 Gallery popup headings and QAT-only command recovery — 2026-10-08
+
+[Shared gallery headings and retained command sources for both customization pages and persistence](docs/history/01-library.md#3227-gallery-popup-headings-and-qat-only-command-recovery--2026-10-08).
+
+### 3.228 Grouped Theme gallery with an independent popup width — 2026-10-08
+
+[Native collection-view groups, shared headings and one-row Theme sections](docs/history/01-library.md#3228-grouped-theme-gallery-with-an-independent-popup-width--2026-10-08).
+
+### 3.229 Combo-box dropdown copies for QAT and customization — 2026-10-08
+
+[Optional combo icons, source-owned choices and selection, overflow and independent-consumer checks](docs/history/01-library.md#3229-combo-box-dropdown-copies-for-qat-and-customization--2026-10-08).
+
+### 3.230 Gallery dropdown copies for QAT and customization — 2026-10-08
+
+[Gallery metadata, native rich-tile borrowing, selection/preview routing and consumer checks](docs/history/01-library.md#3230-gallery-dropdown-copies-for-qat-and-customization--2026-10-08).
+
+### 3.231 Native gallery direction changes, popup origin and strip retention — 2026-10-08
+
+[Refresh the complete viewport path after RTL changes and retain the visible row while opening](docs/history/01-library.md#3231-native-gallery-direction-changes-popup-origin-and-strip-retention--2026-10-08).
+
+### 3.232 Native gallery dismissal preserves the viewed row — 2026-10-09
+
+[Freeze the strip outside scrolling through native/QAT handoffs and preserve cancellation focus and row](docs/history/01-library.md#3232-native-gallery-dismissal-preserves-the-viewed-row--2026-10-09).
+
+### 3.233 Sibling popup opening preserves other gallery rows — 2026-10-09
+
+[Ignore descendant DPI notifications that bubble to the window when popup visuals are attached](docs/history/01-library.md#3233-sibling-popup-opening-preserves-other-gallery-rows--2026-10-09).
+
+### 3.234 Combo-copy KeyTips hand control to the choice list — 2026-10-09
+
+[Keep the opener badge, omit choice badges and preserve nested pickers during keyboard handoff](docs/history/01-library.md#3234-combo-copy-keytips-hand-control-to-the-choice-list--2026-10-09).
+
+### 3.235 Touch stacked custom groups keep three rows per column — 2026-10-09
+
+[Wrap extra commands into new columns without increasing the three-row ribbon height](docs/history/01-library.md#3235-touch-stacked-custom-groups-keep-three-rows-per-column--2026-10-09).
+
+### 3.236 Touch horizontal split buttons retain a larger primary action — 2026-10-09
+
+[Keep the primary action wider than the arrow in ribbon groups and QAT copies](docs/history/01-library.md#3236-touch-horizontal-split-buttons-retain-a-larger-primary-action--2026-10-09).
+
+### 3.237 Gallery row scrolling stays aligned after direction reversals — 2026-10-09
+
+[Follow arranged tile rows instead of accumulating viewport-height steps](docs/history/01-library.md#3237-gallery-row-scrolling-stays-aligned-after-direction-reversals--2026-10-09).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),

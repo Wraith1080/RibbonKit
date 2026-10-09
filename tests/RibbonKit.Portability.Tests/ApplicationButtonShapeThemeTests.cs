@@ -141,6 +141,41 @@ public sealed class ApplicationButtonShapeThemeTests
     public void Theme_default_and_local_value_follow_wpf_precedence() => RunSta(() =>
     {
         var application = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "SplitButtonDensity")
+        {
+            SplitButtonDensityPortabilityChecks.Verify(application);
+            return;
+        }
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "StackedCustomGroups")
+        {
+            StackedCustomGroupPortabilityChecks.Verify(application);
+            return;
+        }
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "NativeGalleryPopup")
+        {
+            NativeGalleryPopupPortabilityChecks.Verify(application);
+            return;
+        }
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") is "GalleryQuickAccess" or "GalleryQuickAccessKeyboard" or "GalleryQuickAccessVisible")
+        {
+            GalleryQuickAccessPortabilityChecks.Verify(application);
+            return;
+        }
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") is "ComboQuickAccess" or "ComboQuickAccessKeyboard")
+        {
+            ComboBoxQuickAccessPortabilityChecks.Verify(application);
+            return;
+        }
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "GroupedGalleries")
+        {
+            GroupedGalleryPortabilityChecks.Verify(application);
+            return;
+        }
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "GalleryHeadersAndQatCommands")
+        {
+            GalleryHeaderAndQatCommandChecks.Verify(application);
+            return;
+        }
         if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "DensitySelector")
         {
             DropDownHeaderPortabilityChecks.Verify(application);
@@ -180,6 +215,7 @@ public sealed class ApplicationButtonShapeThemeTests
         if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") != "Touch")
             QuickAccessScopePortabilityChecks.VerifyThemeRestore(application);
         TouchDensityPortabilityChecks.Verify(application);
+        SplitButtonDensityPortabilityChecks.Verify(application);
         // WPF allows only one Application per process. The explicit local touch scope
         // reuses this entry point while leaving the default full consumer run intact.
         if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "Touch")
@@ -187,6 +223,12 @@ public sealed class ApplicationButtonShapeThemeTests
         DensityTransitionPortabilityChecks.Verify(application);
         MessageTransitionPortabilityChecks.Verify(application);
         DropDownHeaderPortabilityChecks.Verify(application);
+        GalleryHeaderAndQatCommandChecks.Verify(application);
+
+        GroupedGalleryPortabilityChecks.Verify(application);
+        NativeGalleryPopupPortabilityChecks.Verify(application);
+        ComboBoxQuickAccessPortabilityChecks.Verify(application);
+        GalleryQuickAccessPortabilityChecks.Verify(application);
         ThemeManager.Apply(application, RibbonTheme.Office2024);
         KeyboardFocusPortabilityChecks.Verify(application);
         KeyboardNavigationPortabilityChecks.Verify(application);

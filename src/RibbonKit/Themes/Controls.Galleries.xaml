@@ -12,6 +12,39 @@
         <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.ScrollBars.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
+    <controls:GalleryPopupWidthConverter x:Key="RibbonKit.GalleryPopupWidthConverter" />
+
+    <!-- Native collection-view groups keep the original selectable items. Leaf
+         presenters use the gallery's ItemsPanel; the outer groups stack vertically. -->
+    <Style x:Key="RibbonKit.GalleryGroupStyle" TargetType="{x:Type GroupItem}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type GroupItem}">
+                    <StackPanel>
+                        <Border x:Name="GroupHeaderHost" Padding="8,6" Margin="0,0,0,2"
+                                IsHitTestVisible="False"
+                                Background="{DynamicResource RibbonKit.Brushes.ApplicationMenu.HeaderBackground}"
+                                CornerRadius="{DynamicResource RibbonKit.Metrics.DropDownHeaderCornerRadius}">
+                            <TextBlock Text="{Binding Content.Name, RelativeSource={RelativeSource TemplatedParent}}"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+                        </Border>
+                        <ItemsPresenter />
+                    </StackPanel>
+                    <ControlTemplate.Triggers>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding TemplatedParent.IsDropDownOpen, RelativeSource={RelativeSource AncestorType={x:Type ItemsPresenter}}}" Value="False" />
+                                <Condition Binding="{Binding TemplatedParent.IsQuickAccessOpen, RelativeSource={RelativeSource AncestorType={x:Type ItemsPresenter}}}" Value="False" />
+                            </MultiDataTrigger.Conditions>
+                            <Setter TargetName="GroupHeaderHost" Property="Visibility" Value="Collapsed" />
+                        </MultiDataTrigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- Part of the shared RibbonKit control-template dictionary; merged by Office2024.xaml.
          RibbonGalleryItem, RibbonGallery, InRibbonGallery.
          Colours/metrics come from Tokens.Office20XX.xaml via {DynamicResource}. -->
@@ -107,6 +140,10 @@
          RibbonGallery — wrapped tiles (for use inside flyouts)
          ============================================================ -->
     <Style TargetType="{x:Type controls:RibbonGallery}">
+        <Style.Resources>
+            <Style x:Key="RibbonKit.GalleryGroupStyle" TargetType="{x:Type GroupItem}"
+                   BasedOn="{StaticResource RibbonKit.GalleryGroupStyle}" />
+        </Style.Resources>
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="ItemsPanel">
@@ -139,6 +176,10 @@
          InRibbonGallery — strip + scroll/expand buttons + overlay popup
          ============================================================ -->
     <Style TargetType="{x:Type controls:InRibbonGallery}">
+        <Style.Resources>
+            <Style x:Key="RibbonKit.GalleryGroupStyle" TargetType="{x:Type GroupItem}"
+                   BasedOn="{StaticResource RibbonKit.GalleryGroupStyle}" />
+        </Style.Resources>
         <Setter Property="Margin" Value="{DynamicResource RibbonKit.Metrics.InRibbonGalleryMargin}" />
         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
         <Setter Property="VerticalAlignment" Value="Center" />
@@ -175,13 +216,22 @@
                                           VerticalScrollBarVisibility="Hidden"
                                           HorizontalScrollBarVisibility="Disabled"
                                           Focusable="False">
-                                <!-- MaxWidth caps wrapping at the strip's width even when
-                                     re-homed into the (unconstrained) popup, so the
-                                     expanded gallery wraps into rows instead of one line -->
-                                <ItemsPresenter x:Name="PART_ItemsPresenter"
-                                                MaxWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}" />
+                                <ItemsPresenter x:Name="PART_ItemsPresenter">
+                                    <ItemsPresenter.MaxWidth>
+                                        <MultiBinding Converter="{StaticResource RibbonKit.GalleryPopupWidthConverter}">
+                                            <Binding Path="ActualWidth" RelativeSource="{RelativeSource TemplatedParent}" />
+                                            <Binding Path="PopupWidth" RelativeSource="{RelativeSource TemplatedParent}" />
+                                            <Binding Path="IsDropDownOpen" RelativeSource="{RelativeSource TemplatedParent}" />
+                                            <Binding Path="IsQuickAccessOpen" RelativeSource="{RelativeSource TemplatedParent}" />
+                                        </MultiBinding>
+                                    </ItemsPresenter.MaxWidth>
+                                </ItemsPresenter>
                             </ScrollViewer>
                         </Decorator>
+                        <!-- The borrowed strip picture has its own surface. Returning the
+                             live presenter can reset scrolling/focus before layout settles. -->
+                        <Decorator x:Name="PART_StripPreviewHost" Grid.Column="0" Margin="2"
+                                   IsHitTestVisible="False" />
                         <Grid x:Name="SideButtonHost"
                               Grid.Column="1"
                               Margin="0,1"
@@ -279,17 +329,15 @@
                                AllowsTransparency="True"
                                StaysOpen="True"
                                Placement="Custom"
-                               PlacementTarget="{Binding ElementName=PART_ContentHost}"
-                               HorizontalOffset="-1"
-                               VerticalOffset="-8"
-                               IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+                               PlacementTarget="{Binding RelativeSource={RelativeSource TemplatedParent}}"
+                               FlowDirection="{Binding FlowDirection, RelativeSource={RelativeSource TemplatedParent}}">
                             <!--
-                                A transparent Popup is a separate HWND. Its custom placement keeps
-                                the natural-width card's edge at PART_ContentHost's edge, so it
-                                expands away from PART_LineUp/LineDown/ExpandToggle rather than
-                                overlapping those main-window controls.
+                                The painted card starts at the gallery's top leading corner
+                                (left in LTR, right in RTL), including the side-button column.
+                                Its shadow margin does not shift this opening point.
                             -->
                             <Border x:Name="PART_PopupHost"
+                                    Width="{TemplateBinding PopupWidth}"
                                     Background="{DynamicResource RibbonKit.Brushes.InRibbonGallery.PopupBackground}"
                                     BorderBrush="{DynamicResource RibbonKit.Brushes.InRibbonGallery.Border}"
                                     BorderThickness="1"
@@ -300,21 +348,42 @@
                                 <Border.Effect>
                                     <DropShadowEffect BlurRadius="8" ShadowDepth="2" Opacity="0.25" />
                                 </Border.Effect>
-                                <!-- This viewport remains owned by the popup HWND. The single
-                                     ItemsPresenter is attached here only while the popup is open. -->
-                                <ScrollViewer PanningMode="VerticalOnly" x:Name="PART_PopupScrollViewer"
-                                              VerticalScrollBarVisibility="Auto"
-                                              HorizontalScrollBarVisibility="Disabled"
-                                              Focusable="False">
-                                    <ScrollViewer.Resources>
-                                        <Style TargetType="{x:Type ScrollBar}"
-                                               BasedOn="{StaticResource RibbonKit.GalleryScrollBarStyle}" />
-                                    </ScrollViewer.Resources>
-                                </ScrollViewer>
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                    </Grid.RowDefinitions>
+                                    <Border x:Name="DropDownHeaderHost" Padding="8,6"
+                                            Background="{DynamicResource RibbonKit.Brushes.ApplicationMenu.HeaderBackground}"
+                                            CornerRadius="{DynamicResource RibbonKit.Metrics.DropDownHeaderCornerRadius}"
+                                            IsHitTestVisible="False">
+                                        <TextBlock x:Name="DropDownHeaderText"
+                                                   Text="{TemplateBinding DropDownHeader}"
+                                                   Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}"
+                                                   FontWeight="SemiBold" TextWrapping="Wrap" />
+                                    </Border>
+                                    <!-- This viewport remains owned by the popup HWND. The single
+                                         ItemsPresenter is attached here only while the popup is open. -->
+                                    <ScrollViewer Grid.Row="1" PanningMode="VerticalOnly" x:Name="PART_PopupScrollViewer"
+                                                  VerticalScrollBarVisibility="Auto"
+                                                  HorizontalScrollBarVisibility="Disabled"
+                                                  Focusable="False">
+                                        <ScrollViewer.Resources>
+                                            <Style TargetType="{x:Type ScrollBar}"
+                                                   BasedOn="{StaticResource RibbonKit.GalleryScrollBarStyle}" />
+                                        </ScrollViewer.Resources>
+                                    </ScrollViewer>
+                                </Grid>
                             </Border>
                         </Popup>
                     </Grid>
                     <ControlTemplate.Triggers>
+                        <Trigger Property="DropDownHeader" Value="{x:Null}">
+                            <Setter TargetName="DropDownHeaderHost" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="DropDownHeader" Value="">
+                            <Setter TargetName="DropDownHeaderHost" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.4" />
                         </Trigger>

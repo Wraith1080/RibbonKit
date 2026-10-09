@@ -373,7 +373,8 @@ public sealed class WriterConsumerFrictionTests
 
             Assert.NotSame(stripScrollViewer, popupScrollViewer);
             Assert.Same(stripScrollViewer, contentHost.Child);
-            Assert.Same(popupScrollViewer, popupHost.Child);
+            var popupLayout = Assert.IsType<Grid>(popupHost.Child);
+            Assert.Same(popupLayout, popupScrollViewer.Parent);
             Assert.Same(itemsPresenter, stripScrollViewer.Content);
             Assert.Null(popupScrollViewer.Content);
 
@@ -385,13 +386,20 @@ public sealed class WriterConsumerFrictionTests
             Sta.Drain(DispatcherPriority.Loaded);
             Sta.Drain(DispatcherPriority.Render);
             Assert.Same(stripScrollViewer, contentHost.Child);
-            Assert.Same(popupScrollViewer, popupHost.Child);
+            Assert.Same(popupLayout, popupHost.Child);
+            Assert.Same(popupLayout, popupScrollViewer.Parent);
             Assert.Null(stripScrollViewer.Content);
+            var stripPreview = Assert.IsType<Decorator>(gallery.Template.FindName("PART_StripPreviewHost", gallery));
+            Assert.IsType<DrawingImage>(Assert.IsType<Image>(stripPreview.Child).Source);
             Assert.Same(itemsPresenter, popupScrollViewer.Content);
 
             gallery.IsDropDownOpen = false;
+            // The presenter returns behind the independent picture after collapsed
+            // bindings have transferred at the next render boundary.
+            Sta.Drain(DispatcherPriority.Render);
             Assert.Same(stripScrollViewer, contentHost.Child);
-            Assert.Same(popupScrollViewer, popupHost.Child);
+            Assert.Same(popupLayout, popupHost.Child);
+            Assert.Same(popupLayout, popupScrollViewer.Parent);
             Assert.Same(itemsPresenter, stripScrollViewer.Content);
             Assert.Null(popupScrollViewer.Content);
         }
@@ -467,7 +475,7 @@ public sealed class WriterConsumerFrictionTests
     [Theory]
     [InlineData(FlowDirection.LeftToRight)]
     [InlineData(FlowDirection.RightToLeft)]
-    public void In_ribbon_gallery_popup_window_stops_before_the_side_button_column(
+    public void In_ribbon_gallery_popup_card_anchors_to_the_gallery_after_dpi_change(
         FlowDirection flowDirection) => Sta.Run(() =>
     {
         var gallery = new InRibbonGallery
@@ -515,50 +523,18 @@ public sealed class WriterConsumerFrictionTests
                 gallery.Template.FindName("PART_PopupHost", gallery));
             var popup = Assert.IsType<Popup>(
                 gallery.Template.FindName("PART_Popup", gallery));
-            var contentHost = Assert.IsType<Decorator>(
-                gallery.Template.FindName("PART_ContentHost", gallery));
-            var expand = Assert.IsAssignableFrom<ButtonBase>(
-                gallery.Template.FindName("PART_ExpandToggle", gallery));
-            FrameworkElement popupRoot = TopmostVisual(popupHost);
-
-            double popupX0 = popupRoot.PointToScreen(default).X;
-            double popupX1 = popupRoot.PointToScreen(new Point(popupRoot.RenderSize.Width, 0d)).X;
-            double popupWindowLeft = Math.Min(popupX0, popupX1);
-            double popupWindowRight = Math.Max(popupX0, popupX1);
-            double buttonX0 = expand.PointToScreen(default).X;
-            double buttonX1 = expand.PointToScreen(new Point(expand.RenderSize.Width, 0d)).X;
-            double sideButtonsLeft = Math.Min(buttonX0, buttonX1);
-            double sideButtonsRight = Math.Max(buttonX0, buttonX1);
-
-            if (flowDirection == FlowDirection.LeftToRight)
-            {
-                Assert.True(
-                    popupWindowRight <= sideButtonsLeft + 0.5d,
-                    $"Popup window ends at {popupWindowRight:F2}, beyond side buttons starting at {sideButtonsLeft:F2}.");
-            }
-            else
-            {
-                Assert.True(
-                    popupWindowLeft >= sideButtonsRight - 0.5d,
-                    $"Popup window starts at {popupWindowLeft:F2}, before side buttons ending at {sideButtonsRight:F2}.");
-            }
-
-            double contentX0 = contentHost.PointToScreen(default).X;
-            double contentX1 = contentHost.PointToScreen(new Point(contentHost.RenderSize.Width, 0d)).X;
-            double contentLeft = Math.Min(contentX0, contentX1);
-            double contentRight = Math.Max(contentX0, contentX1);
+            double galleryX0 = gallery.PointToScreen(default).X;
+            double galleryX1 = gallery.PointToScreen(new Point(gallery.RenderSize.Width, 0d)).X;
             double popupHostX0 = popupHost.PointToScreen(default).X;
             double popupHostX1 = popupHost.PointToScreen(new Point(popupHost.RenderSize.Width, 0d)).X;
             double popupHostLeft = Math.Min(popupHostX0, popupHostX1);
             double popupHostRight = Math.Max(popupHostX0, popupHostX1);
             double horizontalInset = flowDirection == FlowDirection.LeftToRight
-                ? contentRight - popupHostRight
-                : popupHostLeft - contentLeft;
-            if (flowDirection == FlowDirection.LeftToRight)
-            {
-                Assert.InRange(horizontalInset, 3.5d, 5.5d);
-            }
-            Assert.Equal(-8d, popup.VerticalOffset, precision: 6);
+                ? popupHostLeft - Math.Min(galleryX0, galleryX1)
+                : popupHostRight - Math.Max(galleryX0, galleryX1);
+            Assert.InRange(horizontalInset, -1d, 1d);
+            Assert.InRange(popupHost.PointToScreen(default).Y - gallery.PointToScreen(default).Y, -1d, 1d);
+            Assert.Same(gallery, popup.PlacementTarget);
 
             FrameworkElement[] firstRow = gallery.Items
                 .Cast<object>()
@@ -620,9 +596,9 @@ public sealed class WriterConsumerFrictionTests
 
             // Popup paging remains owned by the popup viewport; the presenter returns
             // to the main-window strip without bringing that offset or clip with it.
-            Assert.Equal(0d, popupScrollViewer.VerticalOffset, precision: 6);
             Assert.Equal(0d, stripScrollViewer.VerticalOffset, precision: 6);
             Sta.Drain(DispatcherPriority.Render);
+            Assert.Equal(0d, popupScrollViewer.VerticalOffset, precision: 6);
             Assert.Equal(0d, stripScrollViewer.VerticalOffset, precision: 6);
         }
         finally

@@ -1,4 +1,21 @@
 #nullable enable
+RibbonKit.Controls.RibbonGallery.Header.get -> string?
+RibbonKit.Controls.RibbonGallery.Header.set -> void
+RibbonKit.Controls.RibbonGallery.Icon.get -> System.Windows.Media.ImageSource?
+RibbonKit.Controls.RibbonGallery.Icon.set -> void
+static readonly RibbonKit.Controls.RibbonGallery.HeaderProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonGallery.IconProperty -> System.Windows.DependencyProperty!
+override RibbonKit.Controls.RibbonGallery.OnApplyTemplate() -> void
+RibbonKit.Controls.RibbonComboBox.Icon.get -> System.Windows.Media.ImageSource?
+RibbonKit.Controls.RibbonComboBox.Icon.set -> void
+static readonly RibbonKit.Controls.RibbonComboBox.IconProperty -> System.Windows.DependencyProperty!
+RibbonKit.Controls.InRibbonGallery.PopupWidth.get -> double
+RibbonKit.Controls.InRibbonGallery.PopupWidth.set -> void
+static readonly RibbonKit.Controls.InRibbonGallery.PopupWidthProperty -> System.Windows.DependencyProperty!
+override RibbonKit.Controls.Ribbon.LogicalChildren.get -> System.Collections.IEnumerator!
+RibbonKit.Controls.InRibbonGallery.DropDownHeader.get -> string?
+RibbonKit.Controls.InRibbonGallery.DropDownHeader.set -> void
+static readonly RibbonKit.Controls.InRibbonGallery.DropDownHeaderProperty -> System.Windows.DependencyProperty!
 RibbonKit.Controls.RibbonDropDownButton.DropDownHeader.get -> string?
 RibbonKit.Controls.RibbonDropDownButton.DropDownHeader.set -> void
 static readonly RibbonKit.Controls.RibbonDropDownButton.DropDownHeaderProperty -> System.Windows.DependencyProperty!

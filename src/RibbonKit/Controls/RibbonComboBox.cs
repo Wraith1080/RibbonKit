@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Automation.Peers;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Media;
 using RibbonKit.Animation;
 // Alias: WPF's legacy Microsoft ribbon declares identically-named peers in
 // System.Windows.Automation.Peers, so the reference must be disambiguated.
@@ -28,6 +29,21 @@ public class RibbonComboBox : ComboBox
     private static readonly Uri ScrollBarResourcesUri = new(
         "/RibbonKit;component/Themes/Controls.ScrollBars.xaml",
         UriKind.RelativeOrAbsolute);
+
+    /// <summary>Identifies the <see cref="Icon"/> dependency property.</summary>
+    public static readonly DependencyProperty IconProperty =
+        DependencyProperty.Register(nameof(Icon), typeof(ImageSource), typeof(RibbonComboBox),
+            new FrameworkPropertyMetadata(null));
+
+    /// <summary>
+    /// Icon used by the combo box's quick-access and custom-group dropdown copies.
+    /// The original combo box retains its label and input layout.
+    /// </summary>
+    public ImageSource? Icon
+    {
+        get => (ImageSource?)GetValue(IconProperty);
+        set => SetValue(IconProperty, value);
+    }
 
     /// <summary>Identifies the <see cref="Header"/> dependency property.</summary>
     public static readonly DependencyProperty HeaderProperty =

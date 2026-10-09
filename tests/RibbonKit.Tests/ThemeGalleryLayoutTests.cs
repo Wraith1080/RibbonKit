@@ -48,6 +48,23 @@ public sealed class ThemeGalleryLayoutTests(ITestOutputHelper output)
             VisualTreeHelper.SetRootDpi(window, new DpiScale(scale, scale));
             Layout();
             Assert.Equal(scale, VisualTreeHelper.GetDpi(theme).DpiScaleY, 5);
+            theme.IsDropDownOpen = true;
+            Layout();
+            var popup = Assert.IsType<Border>(theme.Template.FindName("PART_PopupHost", theme));
+            Assert.Equal(440, popup.ActualWidth, 2);
+            var groups = theme.Items.Groups!.Cast<System.Windows.Data.CollectionViewGroup>().ToArray();
+            Assert.Equal(new[] { "Modern", "Office Modern", "Office Legacy" }, groups.Select(group => group.Name));
+            Assert.Equal(new[] { 1, 3, 2 }, groups.Select(group => group.ItemCount));
+            foreach (var group in groups)
+            {
+                var bounds = group.Items.Cast<RibbonGalleryItem>().Select(tile =>
+                    tile.TransformToVisual(popup).TransformBounds(new Rect(tile.RenderSize))).ToArray();
+                Assert.All(bounds, rect => Assert.Equal(bounds[0].Top, rect.Top, 2));
+                Assert.All(bounds, rect => Assert.True(rect.Left >= 0 && rect.Right <= popup.ActualWidth + 0.01));
+            }
+            SavePreview(popup, scale, "grouped-theme-popup");
+            theme.IsDropDownOpen = false;
+            Layout();
             foreach (RibbonGalleryItem tile in theme.Items)
             {
                 // Picking in the expanded gallery reveals the selected row when it closes.
@@ -92,7 +109,7 @@ public sealed class ThemeGalleryLayoutTests(ITestOutputHelper output)
         void Layout() { Sta.Drain(); window.UpdateLayout(); Sta.Drain(); }
     });
 
-    private void SavePreview(FrameworkElement surface, double scale)
+    private void SavePreview(FrameworkElement surface, double scale, string name = "theme-and-styles")
     {
         var image = new RenderTargetBitmap((int)Math.Ceiling(surface.ActualWidth * scale),
             (int)Math.Ceiling(surface.ActualHeight * scale), 96 * scale, 96 * scale, PixelFormats.Pbgra32);
@@ -103,7 +120,7 @@ public sealed class ThemeGalleryLayoutTests(ITestOutputHelper output)
         while (root != null && !File.Exists(Path.Combine(root.FullName, "RibbonKit.sln"))) root = root.Parent;
         var directory = Path.Combine(root!.FullName, "tests", "RibbonKit.Tests", "TestResults", "theme-gallery-diagnostics");
         Directory.CreateDirectory(directory);
-        var path = Path.Combine(directory, $"theme-and-styles-{scale * 100}-{DateTime.UtcNow:HHmmssfff}.png");
+        var path = Path.Combine(directory, $"{name}-{scale * 100}-{DateTime.UtcNow:HHmmssfff}.png");
         using var stream = File.Create(path);
         encoder.Save(stream);
         output.WriteLine(path);

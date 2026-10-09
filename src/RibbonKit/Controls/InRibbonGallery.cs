@@ -48,6 +48,7 @@ namespace RibbonKit.Controls;
 [TemplatePart(Name = ScrollViewerPartName, Type = typeof(ScrollViewer))]
 [TemplatePart(Name = PopupScrollViewerPartName, Type = typeof(ScrollViewer))]
 [TemplatePart(Name = ItemsPresenterPartName, Type = typeof(ItemsPresenter))]
+[TemplatePart(Name = StripPreviewHostPartName, Type = typeof(Decorator))]
 [TemplatePart(Name = LineUpPartName, Type = typeof(ButtonBase))]
 [TemplatePart(Name = LineDownPartName, Type = typeof(ButtonBase))]
 public class InRibbonGallery : RibbonGallery
@@ -58,12 +59,24 @@ public class InRibbonGallery : RibbonGallery
     private const string ScrollViewerPartName = "PART_ScrollViewer";
     private const string PopupScrollViewerPartName = "PART_PopupScrollViewer";
     private const string ItemsPresenterPartName = "PART_ItemsPresenter";
+    private const string StripPreviewHostPartName = "PART_StripPreviewHost";
     private const string LineUpPartName = "PART_LineUp";
     private const string LineDownPartName = "PART_LineDown";
     private const string PopupBackgroundResourceKey =
         "RibbonKit.Brushes.InRibbonGallery.PopupBackground";
     private const string LegacyPopupBackgroundResourceKey =
         "RibbonKit.Brushes.Ribbon.ContentBackground";
+
+    /// <summary>Identifies the <see cref="DropDownHeader"/> dependency property.</summary>
+    public static readonly DependencyProperty DropDownHeaderProperty =
+        RibbonDropDownButton.DropDownHeaderProperty.AddOwner(typeof(InRibbonGallery));
+
+    /// <summary>Identifies the <see cref="PopupWidth"/> dependency property.</summary>
+    public static readonly DependencyProperty PopupWidthProperty =
+        DependencyProperty.Register(
+            nameof(PopupWidth), typeof(double), typeof(InRibbonGallery),
+            new FrameworkPropertyMetadata(double.NaN, FrameworkPropertyMetadataOptions.AffectsMeasure),
+            value => value is double width && (double.IsNaN(width) || (width > 0 && double.IsFinite(width))));
 
     /// <summary>Identifies the <see cref="IsDropDownOpen"/> dependency property.</summary>
     public static readonly DependencyProperty IsDropDownOpenProperty =
@@ -74,7 +87,8 @@ public class InRibbonGallery : RibbonGallery
             new FrameworkPropertyMetadata(
                 false,
                 FrameworkPropertyMetadataOptions.BindsTwoWayByDefault,
-                OnIsDropDownOpenChanged));
+                OnIsDropDownOpenChanged,
+                CoerceIsDropDownOpen));
 
     private readonly PopupDismissHelper _dismissHelper;
     private Decorator? _contentHost;
@@ -87,22 +101,31 @@ public class InRibbonGallery : RibbonGallery
     private ButtonBase? _lineDown;
     private Window? _dpiOwner;
     private int _viewportRefreshGeneration;
+    private Decorator? _stripPreviewHost;
+    private Image? _stripPreview;
+    private double _stripOpacity;
+    private UIElement? _stripFocusBeforeOpen;
+    private int _stripReturnGeneration;
+    private bool _restoringStrip;
+    private Action? _pendingNativeClose;
 
     // A mouse pick is committed but the close is being held until the button is
     // released (see the class remarks — closing while the button is down drag-follows
     // the selection to the tile below).
     private bool _commitPending;
 
-    // The strip's scroll offset captured just before the popup opens (before it is zeroed
-    // for hit-testing). The strip reveal glides FROM this so a higher pick slides up and a
-    // lower pick slides down, instead of always gliding down from the top.
+    // Remember the viewed row before the presenter leaves the strip. Cancellation
+    // restores it; a different pick reveals its row by gliding from this position.
     private double _stripOffsetBeforeOpen;
+    private object? _selectedItemBeforeOpen;
 
     static InRibbonGallery()
     {
         DefaultStyleKeyProperty.OverrideMetadata(
             typeof(InRibbonGallery),
             new FrameworkPropertyMetadata(typeof(InRibbonGallery)));
+        FlowDirectionProperty.OverrideMetadata(typeof(InRibbonGallery),
+            new FrameworkPropertyMetadata(FlowDirection.LeftToRight, OnFlowDirectionChanged));
     }
 
     /// <summary>Initializes the gallery and its light-dismiss plumbing.</summary>
@@ -127,7 +150,11 @@ public class InRibbonGallery : RibbonGallery
         SystemParameters.StaticPropertyChanged -= OnSystemParametersChanged;
         SystemParameters.StaticPropertyChanged += OnSystemParametersChanged;
         AttachDpiOwner();
-        if (!IsDropDownOpen && SelectedItem is not null)
+        if (IsDropDownOpen)
+        {
+            QueueNativePopupOpen();
+        }
+        else if (SelectedItem is not null)
         {
             // Tab switching or group re-homing can reset the strip's native offset
             // while the selected item survives. Reveal it after the viewport settles.
@@ -161,6 +188,27 @@ public class InRibbonGallery : RibbonGallery
         }
     }
 
+    /// <summary>
+    /// Optional noninteractive heading above the expanded gallery's scrollable tiles.
+    /// Null or empty hides the heading without changing the collapsed strip.
+    /// </summary>
+    public string? DropDownHeader
+    {
+        get => (string?)GetValue(DropDownHeaderProperty);
+        set => SetValue(DropDownHeaderProperty, value);
+    }
+
+    /// <summary>
+    /// Width of the expanded gallery card in device-independent units.
+    /// The default, <see cref="double.NaN"/>, sizes the popup from tiles wrapped
+    /// at the strip's width. An explicit width changes only the expanded layout.
+    /// </summary>
+    public double PopupWidth
+    {
+        get => (double)GetValue(PopupWidthProperty);
+        set => SetValue(PopupWidthProperty, value);
+    }
+
     /// <summary>Whether the expanded gallery popup is open.</summary>
     public bool IsDropDownOpen
     {
@@ -171,6 +219,10 @@ public class InRibbonGallery : RibbonGallery
     /// <inheritdoc />
     public override void OnApplyTemplate()
     {
+        FlushPendingNativeClose();
+        _stripReturnGeneration++;
+        HideStripPreview();
+        _restoringStrip = false;
         if (_lineUp is not null)
         {
             _lineUp.Click -= OnLineUpClick;
@@ -183,11 +235,23 @@ public class InRibbonGallery : RibbonGallery
 
         if (_popup is not null)
         {
+            // Return the live items before a replacement template tears down its
+            // old viewports; an orphaned items host can leave the new one empty.
+            MoveGalleryContent(open: false);
             _popup.Opened -= OnPopupOpened;
+            _popup.Closed -= OnPopupClosed;
             _popup.CustomPopupPlacementCallback = null;
+            _popup.SetCurrentValue(Popup.IsOpenProperty, false);
         }
 
         CancelPendingCommit();
+
+        // WPF collection views own grouping and selection. Supply shared heading
+        // chrome only when the consumer has not provided its own GroupStyle.
+        if (GroupStyle.Count == 0 && TryFindResource("RibbonKit.GalleryGroupStyle") is Style groupStyle)
+        {
+            GroupStyle.Add(new GroupStyle { ContainerStyle = groupStyle });
+        }
 
         base.OnApplyTemplate();
 
@@ -197,6 +261,7 @@ public class InRibbonGallery : RibbonGallery
         _stripScrollViewer = GetTemplateChild(ScrollViewerPartName) as ScrollViewer;
         _popupScrollViewer = GetTemplateChild(PopupScrollViewerPartName) as ScrollViewer;
         _itemsPresenter = GetTemplateChild(ItemsPresenterPartName) as ItemsPresenter;
+        _stripPreviewHost = GetTemplateChild(StripPreviewHostPartName) as Decorator;
         _lineUp = GetTemplateChild(LineUpPartName) as ButtonBase;
         _lineDown = GetTemplateChild(LineDownPartName) as ButtonBase;
 
@@ -213,7 +278,8 @@ public class InRibbonGallery : RibbonGallery
         if (_popup is not null)
         {
             _popup.Opened += OnPopupOpened;
-            _popup.CustomPopupPlacementCallback = PlacePopupBesideSideButtons;
+            _popup.Closed += OnPopupClosed;
+            _popup.CustomPopupPlacementCallback = PlacePopupAtGalleryOrigin;
         }
 
         // A template can be reapplied while the DP remains true, in which case no
@@ -221,6 +287,7 @@ public class InRibbonGallery : RibbonGallery
         if (IsDropDownOpen)
         {
             MoveGalleryContent(open: true);
+            QueueNativePopupOpen();
         }
         else if (IsLoaded && SelectedItem is not null)
         {
@@ -228,24 +295,23 @@ public class InRibbonGallery : RibbonGallery
         }
     }
 
-    private CustomPopupPlacement[] PlacePopupBesideSideButtons(
+    private CustomPopupPlacement[] PlacePopupAtGalleryOrigin(
         Size popupSize,
         Size targetSize,
         Point offset)
     {
-        // Keep the separate popup HWND out of the side-button column without
-        // constraining the gallery card itself. In LTR the card keeps its natural
-        // width and expands left from the content host's right edge; RTL mirrors
-        // that behavior and expands right from its left edge.
+        // Popup's target origin is the leading edge of the gallery: physical left
+        // in LTR, right in RTL. Align the painted card there, accounting for the
+        // transparent margin reserved for its shadow; width never moves the anchor.
         Thickness chromeMargin = _popupHost?.Margin ?? default;
         double x = FlowDirection == FlowDirection.RightToLeft
-            ? -offset.X
-            : targetSize.Width - popupSize.Width - chromeMargin.Left - chromeMargin.Right + offset.X;
+            ? -popupSize.Width - chromeMargin.Right + offset.X
+            : -chromeMargin.Left + offset.X;
 
         return new[]
         {
             new CustomPopupPlacement(
-                new Point(x, offset.Y),
+                new Point(x, offset.Y - chromeMargin.Top),
                 PopupPrimaryAxis.Horizontal),
         };
     }
@@ -324,6 +390,24 @@ public class InRibbonGallery : RibbonGallery
         _commitPending = false;
     }
 
+    private static object CoerceIsDropDownOpen(DependencyObject d, object value)
+    {
+        var gallery = (InRibbonGallery)d;
+        // Capture while the effective state still says "strip": changing it can
+        // immediately invalidate wrapping before the popup's HWND has appeared.
+        if (value is true && !gallery.IsDropDownOpen && gallery.IsVisible
+            && gallery._stripScrollViewer is { } strip)
+            gallery.CaptureStripPreview(strip);
+        return value;
+    }
+
+    private static void OnFlowDirectionChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        var gallery = (InRibbonGallery)d;
+        if (gallery.IsDropDownOpen) gallery.SetCurrentValue(IsDropDownOpenProperty, false);
+        if (gallery.IsLoaded && gallery.SelectedItem is not null) gallery.QueueViewportRefresh();
+    }
+
     private static void OnIsDropDownOpenChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         ((InRibbonGallery)d).HandleDropDownStateChanged((bool)e.NewValue);
@@ -343,16 +427,25 @@ public class InRibbonGallery : RibbonGallery
         CancelPendingCommit();
         // It also invalidates a deferred viewport pass for the previous host. An open
         // transition queues a fresh popup pass from OnPopupOpened; a close transition
-        // lets ScrollSelectedIntoStrip own the newly re-homed strip layout.
+        // restores the strip before uncovering it.
         _viewportRefreshGeneration++;
 
         if (open)
         {
+            _stripReturnGeneration++;
+            _restoringStrip = false;
+            bool returning = _pendingNativeClose is not null;
+            _pendingNativeClose = null;
+            CloseQuickAccess();
             _dismissHelper.OnOpened();
 
             // Remember where the strip sat so the reveal can glide FROM here later (an
             // upper pick then slides up, a lower pick down). Captured before zeroing.
-            _stripOffsetBeforeOpen = _stripScrollViewer?.VerticalOffset ?? 0d;
+            if (!returning)
+            {
+                if (_stripPreview is null) _stripOffsetBeforeOpen = _stripScrollViewer?.VerticalOffset ?? 0d;
+                _selectedItemBeforeOpen = SelectedItem;
+            }
 
             // The strip viewport never crosses into the Popup HWND. Stop any strip
             // reveal still in flight, reset the popup's independent viewport, then
@@ -361,37 +454,121 @@ public class InRibbonGallery : RibbonGallery
             RibbonMotion.StopScrollAnimation(_popupScrollViewer);
             _popupScrollViewer?.ScrollToVerticalOffset(0d);
             MoveGalleryContent(open: true);
+            // The replacement is a drawing of the already visible row. Arrange it
+            // now so the main window never paints an empty borrowed-presenter gap.
+            _stripScrollViewer?.UpdateLayout();
 
-            // Unfold the WHOLE flyout surface — border, shadow and tiles together (honors the
-            // global animation level). This used to animate only _popupHost.Child, on the theory
-            // that transforming the border would drop the transparent popup's resting position;
-            // it does not — a RenderTransform never moves the popup window. What a TRANSLATE does
-            // is get sliced against that window's top edge, which is why this is a scale: it never
-            // leaves its resting bounds, so the overlay's -4 placement is untouched. See §3.42.
-            RibbonMotion.PlayFlyoutOpen(_popupHost, RibbonAnimationAction.Gallery);
+            // Source bindings (width, headings and direction) finish transferring
+            // after this DP callback. Show only after that work has settled.
+            QueueNativePopupOpen();
         }
         else
         {
             _dismissHelper.OnClosed();
-
-            // Clear the popup's page while it remains in the Popup HWND, then return
-            // only the presenter. The strip's viewport/clip object has never left the
-            // main window and therefore cannot inherit the popup's stale DPI geometry.
-            RibbonMotion.StopScrollAnimation(_popupScrollViewer);
-            _popupScrollViewer?.ScrollToVerticalOffset(0d);
-            MoveGalleryContent(open: false);
-
-            if (_stripScrollViewer is not null)
+            // Bindings for collapsed wrapping/headings transfer after this callback.
+            // Keep the vector strip in place until the live row can be returned and
+            // restored before the popup uncovers it. Reopening cancels this return.
+            Action close = new Action(CompleteNativeClose);
+            _pendingNativeClose = close;
+            Dispatcher.BeginInvoke(DispatcherPriority.Render, new Action(() =>
             {
-                RefreshViewportLayout(_stripScrollViewer);
-            }
-
-            // Reveal the committed pick in the collapsed strip — AFTER the presenter is
-            // back in the strip and has re-measured its one-row viewport. Doing this
-            // synchronously here reads a stale viewport (design notes §3.13); deferring
-            // to Loaded lets the strip lay out first.
-            ScrollSelectedIntoStrip();
+                if (ReferenceEquals(_pendingNativeClose, close)) FlushPendingNativeClose();
+            }));
         }
+    }
+
+    // Presenter borrowers and template replacement need a synchronous handoff.
+    internal void FlushPendingNativeClose()
+    {
+        Action? close = _pendingNativeClose;
+        _pendingNativeClose = null;
+        close?.Invoke();
+    }
+
+    private void CompleteNativeClose()
+    {
+        if (!ReferenceEquals(_selectedItemBeforeOpen, SelectedItem))
+            _stripFocusBeforeOpen = SelectedItem is null ? null
+                : ItemContainerGenerator.ContainerFromItem(SelectedItem) as UIElement;
+        // Close the native window before its live presenter is removed. Otherwise
+        // an UpdateLayout during the return can briefly paint a heading-only card.
+        _popup?.SetCurrentValue(Popup.IsOpenProperty, false);
+        RibbonMotion.StopScrollAnimation(_popupScrollViewer);
+        _popupScrollViewer?.ScrollToVerticalOffset(0d);
+        MoveGalleryContent(open: false);
+        RestoreStripAfterBorrow();
+    }
+
+    private void CaptureStripPreview(ScrollViewer strip)
+    {
+        if (_stripPreview is null)
+        {
+            _stripPreview = strip.Content as Image ?? GalleryStripPreview.Create(strip);
+            _stripOffsetBeforeOpen = strip.VerticalOffset;
+            _stripFocusBeforeOpen = IsKeyboardFocusWithin ? Keyboard.FocusedElement as UIElement : null;
+        }
+        if (_stripPreview is not null && _stripPreviewHost is not null && _stripPreviewHost.Child is null)
+        {
+            _stripOpacity = strip.Opacity;
+            strip.SetCurrentValue(OpacityProperty, 0d);
+            _stripPreviewHost.Child = _stripPreview;
+        }
+    }
+
+    internal bool FreezeStripForQuickAccess()
+    {
+        _stripReturnGeneration++;
+        _restoringStrip = false;
+        if (IsVisible && _stripScrollViewer is { } strip) CaptureStripPreview(strip);
+        _selectedItemBeforeOpen = SelectedItem;
+        // The QAT dropdown returns focus to its own opener.
+        _stripFocusBeforeOpen = null;
+        RibbonMotion.StopScrollAnimation(_stripScrollViewer);
+        return _stripPreviewHost?.Child is not null;
+    }
+
+    private void HideStripPreview()
+    {
+        if (_stripPreviewHost?.Child is not null)
+        {
+            _stripPreviewHost.Child = null;
+            _stripScrollViewer?.SetCurrentValue(OpacityProperty, _stripOpacity);
+        }
+        _stripPreview = null;
+    }
+
+    private void RestoreStripAfterBorrow()
+    {
+        int generation = ++_stripReturnGeneration;
+        _restoringStrip = true;
+        RestoreViewedStripOffset();
+        // Keep the separate picture through WPF's Loaded/Render work for the
+        // reattached presenter. Input priority runs after those layout/focus passes;
+        // the source never exposes the interim zero offset or first focused tile.
+        Dispatcher.BeginInvoke(DispatcherPriority.Input, new Action(() =>
+        {
+            if (generation != _stripReturnGeneration || IsDropDownOpen || IsQuickAccessOpen) return;
+            if (_stripFocusBeforeOpen is { IsVisible: true, IsEnabled: true } focus
+                && (Keyboard.FocusedElement is null || IsKeyboardFocusWithin))
+                focus.Focus();
+            RestoreViewedStripOffset();
+            _restoringStrip = false;
+            HideStripPreview();
+
+            // Dismissal keeps the browsed row. A different pick gets its reveal.
+            if (!ReferenceEquals(_selectedItemBeforeOpen, SelectedItem)) ScrollSelectedIntoStrip();
+            _selectedItemBeforeOpen = null;
+            _stripFocusBeforeOpen = null;
+        }));
+    }
+
+    private void RestoreViewedStripOffset()
+    {
+        if (_stripScrollViewer is not { } strip) return;
+        RefreshViewportLayout(strip);
+        strip.ScrollToVerticalOffset(_stripOffsetBeforeOpen);
+        (PresentationSource.FromVisual(strip)?.RootVisual as UIElement)?.UpdateLayout();
+        strip.UpdateLayout();
     }
 
     private bool UsesHostSpecificScrollers =>
@@ -399,10 +576,35 @@ public class InRibbonGallery : RibbonGallery
         && _popupScrollViewer is not null
         && _itemsPresenter is not null;
 
+    private void QueueNativePopupOpen()
+    {
+        Popup? expected = _popup;
+        Dispatcher.BeginInvoke(DispatcherPriority.Render, new Action(() =>
+        {
+            if (!IsLoaded || !IsDropDownOpen
+                || expected is null || !ReferenceEquals(expected, _popup) || expected.IsOpen) return;
+            MoveGalleryContent(open: true);
+            ResolvePopupHostBackground();
+            RibbonMotion.PlayFlyoutOpen(_popupHost, RibbonAnimationAction.Gallery);
+            expected.SetCurrentValue(Popup.IsOpenProperty, true);
+        }));
+    }
+
     private ScrollViewer? ActiveScrollViewer =>
-        IsDropDownOpen && UsesHostSpecificScrollers
+        QuickAccessViewport ?? (IsDropDownOpen && UsesHostSpecificScrollers
             ? _popupScrollViewer
-            : _stripScrollViewer;
+            : _stripScrollViewer);
+
+    internal void RefreshAfterQuickAccess()
+    {
+        _restoringStrip = true;
+        int generation = ++_stripReturnGeneration;
+        Dispatcher.BeginInvoke(DispatcherPriority.Render, new Action(() =>
+        {
+            if (generation == _stripReturnGeneration && !IsDropDownOpen && !IsQuickAccessOpen)
+                RestoreStripAfterBorrow();
+        }));
+    }
 
     private void MoveGalleryContent(bool open)
     {
@@ -413,7 +615,7 @@ public class InRibbonGallery : RibbonGallery
 
             if (ReferenceEquals(source.Content, _itemsPresenter))
             {
-                source.Content = null;
+                source.Content = open && _stripPreviewHost?.Child is null ? _stripPreview : null;
             }
 
             if (!ReferenceEquals(destination.Content, _itemsPresenter))
@@ -469,9 +671,24 @@ public class InRibbonGallery : RibbonGallery
     /// </summary>
     private void OnPopupOpened(object? sender, EventArgs e)
     {
+        MoveGalleryContent(open: true);
         ResolvePopupHostBackground();
-        PrepareViewportRefresh();
+        if (_popupScrollViewer is not null) RefreshViewportLayout(_popupScrollViewer);
+        // A changed inherited direction/DPI can leave the detached PopupRoot with
+        // cached bounds. Refresh the whole HWND tree, as gallery QAT copies do.
+        if (_popupHost is { } host)
+        {
+            for (DependencyObject? current = host; current is not null; current = VisualTreeHelper.GetParent(current))
+                if (current is UIElement element) { element.InvalidateMeasure(); element.InvalidateArrange(); }
+            (PresentationSource.FromVisual(host)?.RootVisual as UIElement)?.UpdateLayout();
+        }
         QueueViewportRefresh();
+    }
+
+    private void OnPopupClosed(object? sender, EventArgs e)
+    {
+        if (ReferenceEquals(sender, _popup) && _popup?.IsOpen == false && IsDropDownOpen)
+            SetCurrentValue(IsDropDownOpenProperty, false);
     }
 
     private void AttachDpiOwner()
@@ -506,6 +723,11 @@ public class InRibbonGallery : RibbonGallery
 
     private void OnOwnerDpiChanged(object sender, DpiChangedEventArgs e)
     {
+        // DpiChanged bubbles from newly attached descendants too (popup icons and
+        // the frozen strip image). Those do not change the owning window's scale;
+        // resetting every gallery for them exposes an unrelated strip's first row.
+        if (!ReferenceEquals(e.OriginalSource, sender)) return;
+
         // Reset both host-specific offsets synchronously, then remeasure the active
         // viewport after WPF has applied the new root/Popup DPI. Neither ScrollViewer
         // crosses the HWND boundary; only the presenter moves on the next open/close.
@@ -543,7 +765,9 @@ public class InRibbonGallery : RibbonGallery
 
     internal void RefreshStripGeometry()
     {
-        if (IsLoaded && !IsDropDownOpen && SelectedItem is not null)
+        // Re-homing already refreshes and restores the strip. A Touch panel's
+        // measure notification must not queue a second reset to the selected row.
+        if (IsLoaded && !IsDropDownOpen && !IsQuickAccessOpen && !_restoringStrip && SelectedItem is not null)
             QueueViewportRefresh();
     }
 
@@ -574,7 +798,7 @@ public class InRibbonGallery : RibbonGallery
                         DispatcherPriority.Render,
                         queueRenderPass: false);
                 }
-                else if (!IsDropDownOpen)
+                else if (!IsDropDownOpen && !IsQuickAccessOpen)
                 {
                     RestoreSelectedStripOffset(expectedScrollViewer);
                 }
@@ -589,8 +813,18 @@ public class InRibbonGallery : RibbonGallery
         FrameworkElement? activeHost = IsDropDownOpen ? _popupHost : _contentHost;
         if (scrollViewer.Content is UIElement content)
         {
-            content.InvalidateMeasure();
-            content.InvalidateArrange();
+            // Reparenting across a direction change can leave the intervening
+            // ScrollContentPresenter measured as empty while the live gallery
+            // presenter itself has valid tiles. Refresh every viewport wrapper,
+            // not only the two endpoints of that visual path.
+            for (DependencyObject? current = content;
+                 current is not null && !ReferenceEquals(current, scrollViewer);
+                 current = VisualTreeHelper.GetParent(current))
+                if (current is UIElement element)
+                {
+                    element.InvalidateMeasure();
+                    element.InvalidateArrange();
+                }
         }
 
         scrollViewer.InvalidateMeasure();
@@ -709,7 +943,7 @@ public class InRibbonGallery : RibbonGallery
             DispatcherPriority.Loaded,
             new Action(() =>
             {
-                if (IsDropDownOpen || _stripScrollViewer is null)
+                if (IsDropDownOpen || IsQuickAccessOpen || _stripScrollViewer is null)
                 {
                     return;
                 }
@@ -752,10 +986,9 @@ public class InRibbonGallery : RibbonGallery
     private void OnLineDownClick(object sender, RoutedEventArgs e) => AnimateStripScroll(+1);
 
     /// <summary>
-    /// Glide the gallery one viewport toward <paramref name="direction"/> (−1 up, +1 down) —
-    /// one tile row in the collapsed strip, one page in the expanded popup — matching the
-    /// old PageUp/PageDown reach but animated. The active host's permanent scroller is
-    /// used, so no viewport object crosses the Popup HWND boundary.
+    /// Glide to the adjacent arranged row in the collapsed strip, or one viewport
+    /// toward <paramref name="direction"/> (−1 up, +1 down) in an expanded popup.
+    /// The active host's permanent scroller stays inside its HWND boundary.
     /// </summary>
     private void AnimateStripScroll(int direction)
     {
@@ -777,8 +1010,65 @@ public class InRibbonGallery : RibbonGallery
             return;
         }
 
-        double target = scrollViewer.VerticalOffset + (direction * viewport);
+        double target = GetAdjacentStripRowOffset(scrollViewer, direction)
+            ?? scrollViewer.VerticalOffset + (direction * viewport);
         target = Math.Max(0d, Math.Min(target, scrollViewer.ScrollableHeight));
         RibbonMotion.AnimateScrollToVerticalOffset(scrollViewer, target, RibbonAnimationAction.RibbonScroll);
+    }
+
+    private double? GetAdjacentStripRowOffset(ScrollViewer scrollViewer, int direction)
+    {
+        if (!ReferenceEquals(scrollViewer, _stripScrollViewer) || IsDropDownOpen || IsQuickAccessOpen
+            || scrollViewer.CanContentScroll)
+        {
+            return null;
+        }
+
+        // A viewport is not necessarily a row pitch: fractional-DPI rounding,
+        // grouping and differently sized tiles can all change the arranged rows.
+        // Measuring their current positions also avoids carrying the bottom clamp's
+        // remainder into every upward step (and the opposite drift from the top).
+        double current = scrollViewer.VerticalOffset;
+        var rows = new List<double>();
+        double currentRow = current;
+        double nearestDistance = double.PositiveInfinity;
+        foreach (object item in Items)
+        {
+            if (ItemContainerGenerator.ContainerFromItem(item) is not FrameworkElement container
+                || container.Visibility == Visibility.Collapsed || container.ActualHeight <= 0
+                || !scrollViewer.IsAncestorOf(container))
+            {
+                continue;
+            }
+
+            double top = current + container.TransformToAncestor(scrollViewer).Transform(default).Y;
+            if (!double.IsFinite(top)) continue;
+            double candidate = Math.Max(0d, Math.Min(top, scrollViewer.ScrollableHeight));
+            rows.Add(candidate);
+            double distance = Math.Abs(candidate - current);
+            if (distance < nearestDistance)
+            {
+                currentRow = candidate;
+                nearestDistance = distance;
+            }
+        }
+
+        double? target = null;
+        foreach (double row in rows)
+        {
+            if (direction > 0 ? row > currentRow + 0.5d : row < currentRow - 0.5d)
+            {
+                if (target is null || (direction > 0 ? row < target.Value : row > target.Value))
+                    target = row;
+            }
+        }
+
+        if (rows.Count == 0) return null;
+        if (target is null) return direction > 0 ? scrollViewer.ScrollableHeight : 0d;
+        // A last row taller/shorter than the viewport must still reach the native
+        // endpoint. Its remainder identifies that row; it never becomes the step.
+        if (direction > 0 && target.Value >= rows.Max() - 0.5d) return scrollViewer.ScrollableHeight;
+        if (direction < 0 && target.Value <= rows.Min() + 0.5d) return 0d;
+        return target;
     }
 }

@@ -12,7 +12,7 @@ namespace RibbonKit.Controls;
 /// </summary>
 internal static class RibbonCommandCatalog
 {
-    /// <summary>All commandable controls in the ribbon's groups, with their tab › group path.</summary>
+    /// <summary>Group commands with their tab › group path, plus directly declared QAT commands.</summary>
     internal static ObservableCollection<RibbonCommandEntry> CollectAvailable(Ribbon ribbon)
     {
         var entries = new ObservableCollection<RibbonCommandEntry>();
@@ -28,6 +28,14 @@ internal static class RibbonCommandCatalog
                     entries.Add(new RibbonCommandEntry(
                         control, $"{tabName} › {groupName} › {described.DisplayName}", described.Icon));
                 }
+            }
+        }
+
+        foreach (FrameworkElement control in ribbon.DeclaredQuickAccessCommands)
+        {
+            if (!entries.Any(entry => ReferenceEquals(entry.Control, control)))
+            {
+                entries.Add(Describe(control));
             }
         }
 
@@ -78,6 +86,12 @@ internal static class RibbonCommandCatalog
             case RibbonDropDownButton dropDown:
                 results.Add(dropDown);
                 return;
+            case RibbonComboBox combo:
+                results.Add(combo);
+                return;
+            case RibbonGallery gallery:
+                results.Add(gallery);
+                return;
         }
 
         foreach (object child in LogicalTreeHelper.GetChildren(node))
@@ -98,6 +112,8 @@ internal static class RibbonCommandCatalog
             RibbonToggleButton t => (t.Header, t.ScreenTipTitle, t.Icon ?? t.LargeIcon),
             RibbonButton b => (b.Header, b.ScreenTipTitle, b.Icon ?? b.LargeIcon),
             RibbonDropDownButton d => (d.Header, d.ScreenTipTitle, d.Icon ?? d.LargeIcon),
+            RibbonComboBox c => (c.Header, c.ScreenTipTitle, c.Icon),
+            RibbonGallery g => (g.Header, (g as InRibbonGallery)?.DropDownHeader, g.Icon),
             _ => (null, null, null),
         };
 
@@ -108,6 +124,7 @@ internal static class RibbonCommandCatalog
             {
                 RibbonToggleButton pt => pt.Header,
                 RibbonButton pb => pb.Header,
+                RibbonDropDownButton pd => pd.Header,
                 _ => null,
             };
             header = proxyHeader ?? header;
@@ -147,6 +164,11 @@ internal static class RibbonCommandCatalog
                     Add(Describe(control).Icon);
                 }
             }
+        }
+
+        foreach (FrameworkElement control in ribbon.DeclaredQuickAccessCommands)
+        {
+            Add(Describe(control).Icon);
         }
 
         return icons;
