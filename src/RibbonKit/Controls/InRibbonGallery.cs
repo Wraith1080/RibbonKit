@@ -723,6 +723,11 @@ public class InRibbonGallery : RibbonGallery
 
     private void OnOwnerDpiChanged(object sender, DpiChangedEventArgs e)
     {
+        // DpiChanged bubbles from newly attached descendants too (popup icons and
+        // the frozen strip image). Those do not change the owning window's scale;
+        // resetting every gallery for them exposes an unrelated strip's first row.
+        if (!ReferenceEquals(e.OriginalSource, sender)) return;
+
         // Reset both host-specific offsets synchronously, then remeasure the active
         // viewport after WPF has applied the new root/Popup DPI. Neither ScrollViewer
         // crosses the HWND boundary; only the presenter moves on the next open/close.
@@ -981,10 +986,9 @@ public class InRibbonGallery : RibbonGallery
     private void OnLineDownClick(object sender, RoutedEventArgs e) => AnimateStripScroll(+1);
 
     /// <summary>
-    /// Glide the gallery one viewport toward <paramref name="direction"/> (−1 up, +1 down) —
-    /// one tile row in the collapsed strip, one page in the expanded popup — matching the
-    /// old PageUp/PageDown reach but animated. The active host's permanent scroller is
-    /// used, so no viewport object crosses the Popup HWND boundary.
+    /// Glide to the adjacent arranged row in the collapsed strip, or one viewport
+    /// toward <paramref name="direction"/> (−1 up, +1 down) in an expanded popup.
+    /// The active host's permanent scroller stays inside its HWND boundary.
     /// </summary>
     private void AnimateStripScroll(int direction)
     {
@@ -1006,8 +1010,65 @@ public class InRibbonGallery : RibbonGallery
             return;
         }
 
-        double target = scrollViewer.VerticalOffset + (direction * viewport);
+        double target = GetAdjacentStripRowOffset(scrollViewer, direction)
+            ?? scrollViewer.VerticalOffset + (direction * viewport);
         target = Math.Max(0d, Math.Min(target, scrollViewer.ScrollableHeight));
         RibbonMotion.AnimateScrollToVerticalOffset(scrollViewer, target, RibbonAnimationAction.RibbonScroll);
+    }
+
+    private double? GetAdjacentStripRowOffset(ScrollViewer scrollViewer, int direction)
+    {
+        if (!ReferenceEquals(scrollViewer, _stripScrollViewer) || IsDropDownOpen || IsQuickAccessOpen
+            || scrollViewer.CanContentScroll)
+        {
+            return null;
+        }
+
+        // A viewport is not necessarily a row pitch: fractional-DPI rounding,
+        // grouping and differently sized tiles can all change the arranged rows.
+        // Measuring their current positions also avoids carrying the bottom clamp's
+        // remainder into every upward step (and the opposite drift from the top).
+        double current = scrollViewer.VerticalOffset;
+        var rows = new List<double>();
+        double currentRow = current;
+        double nearestDistance = double.PositiveInfinity;
+        foreach (object item in Items)
+        {
+            if (ItemContainerGenerator.ContainerFromItem(item) is not FrameworkElement container
+                || container.Visibility == Visibility.Collapsed || container.ActualHeight <= 0
+                || !scrollViewer.IsAncestorOf(container))
+            {
+                continue;
+            }
+
+            double top = current + container.TransformToAncestor(scrollViewer).Transform(default).Y;
+            if (!double.IsFinite(top)) continue;
+            double candidate = Math.Max(0d, Math.Min(top, scrollViewer.ScrollableHeight));
+            rows.Add(candidate);
+            double distance = Math.Abs(candidate - current);
+            if (distance < nearestDistance)
+            {
+                currentRow = candidate;
+                nearestDistance = distance;
+            }
+        }
+
+        double? target = null;
+        foreach (double row in rows)
+        {
+            if (direction > 0 ? row > currentRow + 0.5d : row < currentRow - 0.5d)
+            {
+                if (target is null || (direction > 0 ? row < target.Value : row > target.Value))
+                    target = row;
+            }
+        }
+
+        if (rows.Count == 0) return null;
+        if (target is null) return direction > 0 ? scrollViewer.ScrollableHeight : 0d;
+        // A last row taller/shorter than the viewport must still reach the native
+        // endpoint. Its remainder identifies that row; it never becomes the step.
+        if (direction > 0 && target.Value >= rows.Max() - 0.5d) return scrollViewer.ScrollableHeight;
+        if (direction < 0 && target.Value <= rows.Min() + 0.5d) return 0d;
+        return target;
     }
 }

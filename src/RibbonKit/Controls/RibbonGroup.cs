@@ -265,7 +265,7 @@ public class RibbonGroup : HeaderedItemsControl
         }
 
         // Panel: Large = one horizontal row; Stacked = vertical wrap into 3-row columns
-        // (bounded by the groups-row height, so overflow starts a new column).
+        // (Touch wraps by row count because the groups row can grow with targets).
         FrameworkElementFactory panel;
         if (layout == RibbonGroupLayout.Large)
         {
@@ -274,7 +274,7 @@ public class RibbonGroup : HeaderedItemsControl
         }
         else
         {
-            panel = new FrameworkElementFactory(typeof(WrapPanel));
+            panel = new FrameworkElementFactory(typeof(RibbonStackedGroupPanel));
             panel.SetValue(WrapPanel.OrientationProperty, Orientation.Vertical);
         }
 

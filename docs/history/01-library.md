@@ -7771,6 +7771,15 @@ Showcase and Release builds passed, along with four existing lab markup checks
 and the realized bilingual application-menu check. Live review of these new
 controls remains for the user.
 
+The 2026-10-09 lab follow-up adds the existing Touch/Mouse Mode menu presentation
+to Localization Lab > Mode, with a stable customization ID and active-choice
+highlight. Its handler changes only `DemoRibbon.Density`, and the status text
+reports the current spacing. The QAT still starts with Save and Undo; Font and
+Styles copies remain user-added for Touch/RTL testing. The normal Debug Showcase
+build passed without warnings or errors, and five focused Release lab checks
+passed (four markup checks and the realized bilingual application-menu check).
+Live Touch/RTL combo and gallery popup review remains for the user.
+
 The full runtime/Writer/visual/consumer suite remains deferred at the user's
 request. The user confirmed the visible-strip fix works in live QAT review on
 2026-10-08; live RTL gallery/combo review and native mixed-monitor DPI are pending.
@@ -7871,3 +7880,160 @@ inspected; no snapshot approvals changed. Release
 solution and normal Debug Showcase builds passed with zero warnings and errors.
 User live retesting remains pending. The full suite and native mixed-monitor
 DPI gate remain deferred.
+
+### 3.233 Sibling popup opening preserves other gallery rows — 2026-10-09
+
+After confirming the native/QAT frozen-strip behavior, the user reported that
+opening Accent or an ordinary dropdown could make the separate Theme gallery
+briefly show Crystal, then return to its selected Office 2024 row. Eight new
+rendered-frame tests reproduced the reset in Compact/Touch and LTR/RTL, with no
+reload of the observed gallery. The trace showed `Window.DpiChanged` receiving a
+routed notification whose `OriginalSource` was a newly attached `Image`.
+
+WPF propagates DPI notifications from descendants such as popup icons and the
+frozen strip picture. Every gallery subscribed to the owning window had treated
+these as a window monitor transition, synchronously zeroed its strip and then
+queued the selected-row refresh. The owner handler now requires `OriginalSource`
+to be the window itself before resetting viewports. Actual owner notifications
+retain the existing DPI refresh. The correction is local to `InRibbonGallery`;
+no public API, template or shared animation behavior changed.
+
+All eight reproduction cases failed before the correction. The final focused
+Release run passed 128 checks, including repeated sibling gallery/dropdown
+opening, descendant DPI notifications, continued handling of simulated window
+DPI changes, and the existing native/QAT, RTL, focus, layout and customization
+coverage. The RibbonKit-only consumer passed its 96 theme/palette/density/
+direction/simulated-DPI combinations and 16 additional animated sibling-popup
+scenarios across Office 2024/Crystal, Compact/Touch and LTR/RTL. Rendered strip
+comparisons were inspected; no snapshot approvals changed.
+
+Release solution and normal Debug Showcase builds passed with zero warnings and
+errors. Live retesting of this sibling-popup correction remains pending; the full
+suite and native mixed-monitor DPI review remain deferred.
+
+### 3.234 Combo-copy KeyTips hand control to the choice list — 2026-10-09
+
+Combo-box dropdown copies were classified as ordinary menu openers, so activating
+a custom-tab or overflow copy produced a KeyTip for each choice. Direct QAT
+activation also lacked an invocation path for the dropdown projection's automation
+peer, which exposes ExpandCollapse rather than Invoke/Toggle. Eight realized-window
+reproductions failed before the correction in QAT, overflow, expanded custom groups
+and collapsed groups, in both directions.
+
+`KeyTipService` now treats the internal combo projection as an input leaf. Its
+opener keeps its badge; activation focuses the opener, opens the choice list and
+exits KeyTip mode. Choice rows receive no badges, and the containing overflow or
+collapsed-group popup stays available while the user navigates. The existing
+source selection, arrow/Enter/Escape and focus-return behavior remain in use.
+Ordinary dropdown and split-button menus still descend into their KeyTip levels.
+No public API, template or animation policy changed.
+
+The final focused Release selection passed 73 checks, including ten new combo/menu
+KeyTip cases and existing input, KeyTip, overflow, retained-command and collapsed
+group coverage. The independent RibbonKit-only consumer passed 24 QAT/overflow/
+custom-tab scenarios across Office 2007/Crystal, Compact/Touch and LTR/RTL, plus
+its existing nested-overflow keyboard/mouse checks. It adds the custom-tab copy
+through the public customization page, with the source input on an inactive tab.
+The collapsed fixture uses real adaptive reduction: manually forcing a fixed
+group's size state is unstable because a later probe restores its Large state.
+
+A broader combined run failed three existing native focus-outline cases; a fresh
+eight-case focus-only rerun passed seven and still failed Office 2013 RTL accent
+focus because the expected adorner collection was null. This remains an unresolved
+verification limit, with no focus implementation or approval changes. Earlier
+combo input failures passed in the final focused run; their intermittent cause
+was not established. Both runtime targets and normal Debug Showcase built with
+zero warnings/errors. User live review and the full suite remain pending/deferred.
+
+### 3.235 Touch stacked custom groups keep three rows per column — 2026-10-09
+
+The user's custom group showed a fourth command below the first three in Touch
+mode, increasing the ribbon's height. Stacked groups used a vertical WrapPanel
+whose wrapping depended on the height constraint. Compact supplies that constraint;
+Touch uses an automatically sized groups row to accommodate larger targets, so
+the panel could keep extending its first column.
+
+The generated Stacked items panel now derives from WrapPanel and limits Touch
+columns to three noncollapsed commands during measure and arrange. Commands four
+and seven start the next columns, retaining the ribbon's height for three rows.
+Each column measures its actual command widths and heights; existing target-size
+tokens supply the control geometry. WPF mirrors the columns in RTL. Compact still
+uses WrapPanel's existing layout, and Default/Large layouts use their existing
+panels. The same panel works after content moves into a collapsed-group flyout.
+There are no new public APIs or theme tokens.
+
+All eight realized-window reproductions failed before the fix: adding the fourth
+Touch command increased the measured ribbon height from 224 to 269.6 DIP. They
+now pass with combo, dropdown and gallery copies, initial Touch or density toggles,
+LTR/RTL, four through seven commands, collapsed-command visibility, removal and
+collapsed-group popup layout. The final focused Release selection passed 64
+checks, including existing adaptive sizing, density animation, customization and
+combo KeyTip regressions.
+
+A RibbonKit-only consumer creates the copies through the public customization
+page with their source tab inactive. Its 48 theme/density/direction/simulated-DPI
+combinations passed, including stable height after each added or removed command.
+Office 2024 LTR and Crystal RTL Touch previews were inspected without changing
+snapshot approvals. Release solution and normal Debug Showcase builds passed with
+zero warnings/errors. User live retesting remains pending; the full suite and
+native mixed-monitor DPI review remain deferred.
+
+### 3.236 Touch horizontal split buttons retain a larger primary action — 2026-10-09
+
+The shared Touch template gave both split halves a 44-DIP minimum width. Large
+horizontal content could shrink to 48 DIP beside the 44-DIP arrow, and small/QAT
+halves could be equal. The independent consumer reproduced this before the fix.
+Horizontal primary targets now have a 56-DIP minimum through the matching
+`Touch.SplitPrimaryMinWidth` token in every base palette; Large horizontal
+primaries use the existing 72-DIP Large-button minimum. The arrow retains its
+44-DIP touch target. Vertical halves still span the same width, and Compact
+geometry, menu borrowing, primary routing and public APIs are unchanged.
+
+The RibbonKit-only regression passed 288 theme/light-dark/direction/simulated-DPI/
+density/QAT-placement combinations, plus Compact return checks, Large/Medium/
+Small ribbon buttons, reduced vertical layouts, source-backed QAT copies, scoped
+metric overrides and primary/menu invocation. LTR/RTL Office 2024 Touch renders
+were inspected. The focused runtime selection passed 35 checks for hover,
+Showcase sizing, adaptive groups and menu borrowing. Release solution and normal
+Debug Showcase builds passed without warnings or errors.
+
+The broader Touch consumer failed its existing gallery selected-row visibility
+assertion (item top 224 DIP against a 56-DIP viewport). Removing only the new
+split triggers reproduced the same failure; the corrected template was restored
+and rebuilt, and its focused consumer passed again. That gallery check remains
+an unresolved verification gap. Full-suite and native touch/DPI review were not
+rerun; user live split-button acceptance remains pending.
+
+### 3.237 Gallery row scrolling stays aligned after direction reversals — 2026-10-09
+
+The user's recording shows compact Theme tiles drifting vertically after browsing
+to the bottom and reversing, then drifting the other way after reaching the top.
+The arrow handler advanced by `ViewportHeight`; fractional-DPI rounding, grouping
+and varying row heights make that different from the arranged tile-row pitch.
+The native end clamp then carried its remainder into every subsequent step.
+Six of ten new realized-window cases reproduced the error before the correction,
+including grouped and two-column Compact galleries and animated LTR/RTL browsing.
+
+`InRibbonGallery` now finds the nearest arranged strip row and scrolls to its
+adjacent row using current container coordinates plus the native vertical offset.
+First/last steps retain the native scroll limits even when the last row is taller
+or shorter than the viewport. Expanded native/QAT popups and logical-scroll
+custom templates retain viewport paging. Selection, panning, animation policy,
+frozen popup borrowing and public APIs are unchanged.
+
+All ten new cases pass two complete direction-reversal cycles in Compact/Touch,
+grouped and multi-column layouts, LTR/RTL, and with motion enabled/disabled.
+The wider gallery selection passed 88 checks; its one failure was an existing
+template-test substring lookup matching both `RibbonComboBox` and
+`RibbonComboBoxQuickAccessItem`, also present in HEAD. Restricting that helper to
+the exact type name retains the intended surface assertions, and all six
+dark-theme template-contract checks pass.
+
+The separate RibbonKit-only grouped-gallery consumer passed 96 theme/palette/
+density/direction/simulated-DPI combinations with repeated endpoint reversals,
+stable row origins, retained selection and existing popup/width-binding checks.
+Office 2024 LTR and Crystal RTL strip renders were inspected. Release solution
+and normal Debug Showcase builds passed with zero warnings/errors. New live
+row-scrolling acceptance, full-suite and native monitor/DPI checks remain pending
+or deferred. The earlier broader Touch consumer's selection-visibility assertion
+is a separate unresolved verification gap.

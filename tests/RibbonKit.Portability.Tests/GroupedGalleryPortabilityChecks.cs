@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -70,6 +71,36 @@ internal static class GroupedGalleryPortabilityChecks
                     $"groups={view.Groups?.Count}; grouping={gallery.IsGrouping}; styles={gallery.GroupStyle.Count}; descendants={string.Join(",", Descendants<FrameworkElement>(presenter).Select(element => element.GetType().Name))}");
                 Assert.All(Descendants<GroupItem>(presenter), group =>
                     Assert.Equal(Visibility.Collapsed, Part<Border>(group, "GroupHeaderHost").Visibility));
+
+                // Arrow steps follow native row positions, including the remainder
+                // at the bottom, rather than accumulating rounded viewport heights.
+                var rowStrip = Part<ScrollViewer>(gallery, "PART_ScrollViewer");
+                var rows = Descendants<RibbonGalleryItem>(presenter)
+                    .OrderBy(item => Bounds(item, presenter).Top).ToArray();
+                int initialSelection = gallery.SelectedIndex;
+                Assert.Equal(6, rows.Length);
+                for (int cycle = 0; cycle < 2; cycle++)
+                {
+                    rowStrip.ScrollToVerticalOffset(rowStrip.ScrollableHeight); Layout();
+                    for (int row = rows.Length - 2; row >= 0; row--)
+                    {
+                        Part<ButtonBase>(gallery, "PART_LineUp").RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent)); Layout();
+                        Assert.InRange(Bounds(rows[row], rowStrip).Top, -0.1, 0.1);
+                    }
+                    for (int row = 1; row < rows.Length - 1; row++)
+                    {
+                        Part<ButtonBase>(gallery, "PART_LineDown").RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent)); Layout();
+                        Assert.InRange(Bounds(rows[row], rowStrip).Top, -0.1, 0.1);
+                        if (cycle == 0 && row == 2 && !dark && scale == 1.25 && density == RibbonDensity.Compact
+                            && (theme == RibbonTheme.Office2024 && flow == FlowDirection.LeftToRight
+                                || theme == RibbonTheme.CrystalLight && flow == FlowDirection.RightToLeft))
+                            SaveStrip(window, gallery, $"{theme}-{flow}-row-scroll");
+                    }
+                    Part<ButtonBase>(gallery, "PART_LineDown").RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent)); Layout();
+                    Assert.Equal(rowStrip.ScrollableHeight, rowStrip.VerticalOffset, 3);
+                    Assert.Equal(initialSelection, gallery.SelectedIndex);
+                }
+                rowStrip.ScrollToVerticalOffset(0); Layout();
 
                 gallery.IsDropDownOpen = true;
                 Layout();
@@ -170,6 +201,23 @@ internal static class GroupedGalleryPortabilityChecks
             (int)Math.Ceiling(element.ActualHeight), 96, 96, PixelFormats.Pbgra32);
         bitmap.Render(element);
         var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap));
+        using var stream = File.Create(Path.Combine(directory, name + ".png")); encoder.Save(stream);
+    }
+
+    private static void SaveStrip(Window window, FrameworkElement element, string name)
+    {
+        string? directory = Environment.GetEnvironmentVariable("RIBBONKIT_GROUPED_GALLERY_DIAGNOSTICS");
+        if (string.IsNullOrEmpty(directory)) return;
+        Directory.CreateDirectory(directory);
+        var dpi = VisualTreeHelper.GetDpi(window);
+        var bitmap = new RenderTargetBitmap((int)Math.Ceiling(window.ActualWidth * dpi.DpiScaleX),
+            (int)Math.Ceiling(window.ActualHeight * dpi.DpiScaleY), dpi.PixelsPerInchX, dpi.PixelsPerInchY, PixelFormats.Pbgra32);
+        bitmap.Render(window);
+        var bounds = Bounds(element, window);
+        int left = (int)Math.Floor(bounds.Left * dpi.DpiScaleX), top = (int)Math.Floor(bounds.Top * dpi.DpiScaleY);
+        var crop = new CroppedBitmap(bitmap, new Int32Rect(left, top,
+            (int)Math.Ceiling(bounds.Right * dpi.DpiScaleX) - left, (int)Math.Ceiling(bounds.Bottom * dpi.DpiScaleY) - top));
+        var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(crop));
         using var stream = File.Create(Path.Combine(directory, name + ".png")); encoder.Save(stream);
     }
 }

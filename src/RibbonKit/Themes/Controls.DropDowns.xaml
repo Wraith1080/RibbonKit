@@ -748,6 +748,23 @@
                             <Setter TargetName="SmallLayout" Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.IconSize}" />
                             <Setter TargetName="SmallLayout" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.IconSize}" />
                         </Trigger>
+                        <!-- Horizontal command content keeps its own width instead of sharing
+                             the arrow's minimum. Vertical halves still span the same columns. -->
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="controls:Ribbon.Density" Value="Touch" />
+                                <Condition Property="IsVerticalLayout" Value="False" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="PART_Primary" Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.Touch.SplitPrimaryMinWidth}" />
+                        </MultiTrigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="controls:Ribbon.Density" Value="Touch" />
+                                <Condition Property="IsVerticalLayout" Value="False" />
+                                <Condition Property="Size" Value="Large" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="PART_Primary" Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.Touch.LargeButtonMinWidth}" />
+                        </MultiTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>

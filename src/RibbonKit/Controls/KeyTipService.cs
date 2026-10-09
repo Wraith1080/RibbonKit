@@ -916,7 +916,10 @@ internal sealed class KeyTipService
     private static KeyTipItem CreateControlItem(UIElement control)
     {
         // Split buttons derive from dropdown buttons, so this ordering matters.
-        KeyTipKind kind = control is RibbonDropDownButton ? KeyTipKind.MenuOpener : KeyTipKind.Leaf;
+        // Combo copies are input pickers: their opener hands the keyboard to the
+        // choice list, just like the original combo, rather than badging each row.
+        KeyTipKind kind = control is RibbonDropDownButton and not RibbonComboBoxQuickAccessProxy
+            ? KeyTipKind.MenuOpener : KeyTipKind.Leaf;
         var item = new KeyTipItem(control, kind, GetLabel(control), KeyTip.GetKeys(control));
         if (kind == KeyTipKind.MenuOpener)
         {
@@ -987,7 +990,7 @@ internal sealed class KeyTipService
     /// controls whose action opens a nested picker keep it available.
     /// </summary>
     internal static bool KeepsContainingSurfaceOpenAfterKeyTip(UIElement element) =>
-        element is TextBox or ComboBox or InRibbonGallery;
+        element is TextBox or ComboBox or InRibbonGallery or RibbonComboBoxQuickAccessProxy;
 
     /// <summary>
     /// Finds explicitly tagged controls in the currently realized Backstage page. Navigation items
@@ -1129,6 +1132,10 @@ internal sealed class KeyTipService
             case ComboBox combo:
                 combo.Focus();
                 combo.SetCurrentValue(ComboBox.IsDropDownOpenProperty, true);
+                return;
+            case RibbonComboBoxQuickAccessProxy comboCopy:
+                (comboCopy.Template?.FindName("PART_Toggle", comboCopy) as UIElement)?.Focus();
+                comboCopy.SetCurrentValue(RibbonDropDownButton.IsDropDownOpenProperty, true);
                 return;
             case InRibbonGallery gallery:
                 gallery.Focus();

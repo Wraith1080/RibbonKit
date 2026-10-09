@@ -149,6 +149,44 @@
                                            Unchecked="OnToggleRightToLeft"
                                            ScreenTipTitle="Right-to-left layout"
                                            ScreenTipText="Mirror this lab window without changing the main Showcase window." />
+                    <rk:RibbonDropDownButton x:Name="TouchModeSelector"
+                                             rk:Ribbon.CommandId="loc.command.touch-mouse-mode"
+                                             Header="Touch/Mouse Mode"
+                                             DropDownHeader="Optimize spacing between commands"
+                                             Size="Large"
+                                             LargeIcon="{StaticResource Icon.Touch}"
+                                             Icon="{StaticResource Icon.Touch}"
+                                             ScreenTipTitle="Touch/Mouse Mode"
+                                             ScreenTipText="Choose Mouse for standard spacing or Touch for larger command targets in this lab window.">
+                        <rk:RibbonMenuItem x:Name="MouseModeChoice" Header="Mouse"
+                                           Description="Standard ribbon and commands.&#x0a;Optimized for use with mouse."
+                                           LargeIcon="{StaticResource Icon.Mouse}"
+                                           Tag="{x:Static rk:RibbonDensity.Compact}" Click="OnSelectDensity">
+                            <rk:RibbonMenuItem.Style>
+                                <Style TargetType="{x:Type rk:RibbonMenuItem}" BasedOn="{StaticResource {x:Type rk:RibbonMenuItem}}">
+                                    <Style.Triggers>
+                                        <Trigger Property="rk:Ribbon.Density" Value="Compact">
+                                            <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Control.CheckedBackground}" />
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </rk:RibbonMenuItem.Style>
+                        </rk:RibbonMenuItem>
+                        <rk:RibbonMenuItem x:Name="TouchModeChoice" Header="Touch"
+                                           Description="More space between commands.&#x0a;Optimized for use with touch."
+                                           LargeIcon="{StaticResource Icon.Touch}"
+                                           Tag="{x:Static rk:RibbonDensity.Touch}" Click="OnSelectDensity">
+                            <rk:RibbonMenuItem.Style>
+                                <Style TargetType="{x:Type rk:RibbonMenuItem}" BasedOn="{StaticResource {x:Type rk:RibbonMenuItem}}">
+                                    <Style.Triggers>
+                                        <Trigger Property="rk:Ribbon.Density" Value="Touch">
+                                            <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Control.CheckedBackground}" />
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </rk:RibbonMenuItem.Style>
+                        </rk:RibbonMenuItem>
+                    </rk:RibbonDropDownButton>
                 </rk:RibbonGroup>
 
                 <rk:RibbonGroup Header="Customization"
@@ -411,7 +449,8 @@
                         and the localized built-in commands.&#x0a;
                         5. Create and edit a custom tab/group to exercise names, suffixes, choices,
                         tooltips, and OK/Cancel. In Gallery &amp; Combo, add Font and Styles to QAT
-                        yourself. Check native and QAT choices in RTL, confirm Selection Preview
+                        yourself. Use Touch/Mouse Mode in the Mode group to check native and QAT
+                        choices in both densities and RTL, confirm Selection Preview
                         follows both, and confirm the ribbon gallery stays visible while its QAT
                         popup is open.&#x0a;
                         6. Change the main Showcase Backstage rail design, translucency, theme, and

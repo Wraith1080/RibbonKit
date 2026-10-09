@@ -166,7 +166,7 @@ public sealed class DarkModeTemplateContractTests
     private static XElement Template(XDocument document, string targetType) =>
         Assert.Single(
             document.Descendants(Presentation + "ControlTemplate"),
-            template => ((string?)template.Attribute("TargetType"))?.Contains(targetType) == true);
+            template => ((string?)template.Attribute("TargetType"))?.EndsWith(":" + targetType + "}", StringComparison.Ordinal) == true);
 
     private static string ThemePart(string name) =>
         Path.Combine(RepositoryRoot(), "src", "RibbonKit", "Themes", name);

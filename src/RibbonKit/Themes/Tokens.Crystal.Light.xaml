@@ -1032,6 +1032,7 @@
     <Thickness x:Key="RibbonKit.Metrics.Touch.OrbMargin">8,-10,8,0</Thickness>
     <GridLength x:Key="RibbonKit.Metrics.Touch.GalleryOpenerWidth">44</GridLength>
     <sys:Double x:Key="RibbonKit.Metrics.Touch.DropDownMinWidth">56</sys:Double>
+    <sys:Double x:Key="RibbonKit.Metrics.Touch.SplitPrimaryMinWidth">56</sys:Double>
     <Thickness x:Key="RibbonKit.Metrics.Touch.DropDownChevronMargin">8,2,2,0</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.Touch.ApplicationButtonMargin">8,0,2,0</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.Touch.UtilityMargin">8,0,8,0</Thickness>

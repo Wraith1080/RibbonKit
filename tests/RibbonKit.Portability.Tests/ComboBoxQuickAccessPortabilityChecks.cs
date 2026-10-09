@@ -7,6 +7,7 @@ using System.Windows.Automation.Provider;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Data;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -30,6 +31,7 @@ internal static class ComboBoxQuickAccessPortabilityChecks
             if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") != "ComboQuickAccessKeyboard")
                 VerifyPlacements(application);
             VerifyOverflowAndKeyboard(application);
+            VerifyKeyTipHandoff(application);
         }
         finally { RibbonAnimation.GlobalLevel = motion; ThemeManager.SetDarkMode(application, false); }
     }
@@ -195,6 +197,76 @@ internal static class ComboBoxQuickAccessPortabilityChecks
             Assert.Equal(3, combo.SelectedIndex); Assert.Equal(25, combo.Items.Count);
         }
         finally { window.Close(); Layout(window); }
+    }
+
+    private static void VerifyKeyTipHandoff(Application application)
+    {
+        var combo = new RibbonComboBox { Header = "Font", Icon = Icon(), SelectedIndex = 0 };
+        combo.Items.Add("Calibri"); combo.Items.Add("Georgia");
+        var ribbon = RibbonFor(combo);
+        for (int i = 0; i < 3; i++) ribbon.QuickAccessItems.Add(new RibbonButton { Header = "Save", Size = RibbonControlSize.Small, Icon = Icon() });
+        Assert.True(ribbon.AddToQuickAccess(combo));
+        var qat = Assert.IsAssignableFrom<RibbonDropDownButton>(ribbon.QuickAccessItems[^1]);
+        KeyTip.SetKeys(qat, "F");
+        var customTab = new RibbonTab { Header = "Custom" };
+        var customGroup = new RibbonGroup { Header = "My commands", CanResize = false };
+        Ribbon.SetIsCustom(customTab, true); Ribbon.SetIsCustom(customGroup, true);
+        customTab.Groups.Add(customGroup); ribbon.Tabs.Add(customTab); KeyTip.SetKeys(customTab, "C");
+        var page = new RibbonCustomizePage { Ribbon = ribbon };
+        var root = new StackPanel(); root.Children.Add(ribbon); root.Children.Add(page);
+        var window = Window(root);
+        try
+        {
+            ThemeManager.Apply(application, RibbonTheme.Office2024);
+            window.Show(); window.Activate(); Layout(window);
+            var available = Part<ListBox>(page, "PART_AvailableList");
+            available.SelectedItem = available.Items.Cast<RibbonCommandEntry>().Single(entry => ReferenceEquals(entry.Control, combo));
+            Assert.IsType<RibbonCustomizeNode>(Part<TreeView>(page, "PART_Tree").Items[2]).Children.Single().IsSelected = true;
+            Layout(window); Part<ButtonBase>(page, "PART_AddButton").RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent)); Layout(window);
+            var customCopy = Assert.IsAssignableFrom<RibbonDropDownButton>(Assert.Single(customGroup.Items));
+            KeyTip.SetKeys(customCopy, "F");
+            foreach (var theme in new[] { RibbonTheme.Office2007, RibbonTheme.CrystalLight })
+            foreach (var density in Enum.GetValues<RibbonDensity>())
+            foreach (var flow in Enum.GetValues<FlowDirection>())
+            foreach (string placement in new[] { "QAT", "Overflow", "Custom" })
+            {
+                ThemeManager.Apply(application, theme); ribbon.Density = density; ribbon.FlowDirection = flow;
+                ribbon.SelectedTab = placement == "Custom" ? customTab : ribbon.Tabs[0];
+                ribbon.QuickAccessMaxWidth = placement == "Overflow" ? 55 : 600;
+                combo.SelectedIndex = 0; Layout(window);
+                Assert.False(combo.IsLoaded); // The original input is on an inactive source tab.
+                var toolbar = Part<RibbonQuickAccessToolBar>(Part<RibbonTabControl>(ribbon, "TabControlHost"), "QatTabRowHost");
+                if (placement == "Overflow") KeyTip.SetKeys(Part<ToggleButton>(toolbar, "PART_OverflowButton"), "Q");
+                KeyTipPress(Key.F10);
+                RibbonDropDownButton copy = placement == "Custom" ? customCopy : qat;
+                if (placement == "Custom") KeyTipPress(Key.C);
+                if (placement == "Overflow")
+                {
+                    Assert.True(toolbar.HasOverflow); KeyTipPress(Key.Q);
+                    copy = Assert.Single(Part<ItemsControl>(toolbar, "PART_OverflowHost").Items.OfType<RibbonDropDownButton>());
+                }
+                Assert.Contains(AdornerLayer.GetAdornerLayer(copy)?.GetAdorners(copy) ?? Array.Empty<Adorner>(), a => a.GetType().Name == "KeyTipAdorner");
+                KeyTipPress(Key.F);
+                Assert.True(copy.IsDropDownOpen, $"{theme}/{density}/{flow}/{placement}: KeyTip did not open the combo copy.");
+                var rows = copy.Items.OfType<Button>().ToArray(); Assert.Same(rows[0], Keyboard.FocusedElement);
+                foreach (var row in rows)
+                    Assert.DoesNotContain(AdornerLayer.GetAdornerLayer(row)?.GetAdorners(row) ?? Array.Empty<Adorner>(), a => a.GetType().Name == "KeyTipAdorner");
+                Press(Key.Down); Layout(window); Assert.Same(rows[1], Keyboard.FocusedElement);
+                Press(Key.Enter); Layout(window); Assert.Equal(1, combo.SelectedIndex); Assert.False(copy.IsDropDownOpen);
+                Assert.Same(Part<ToggleButton>(copy, "PART_Toggle"), Keyboard.FocusedElement);
+                Press(Key.Down); Layout(window); Assert.True(copy.IsDropDownOpen);
+                Press(Key.Escape); Layout(window); Assert.False(copy.IsDropDownOpen); Assert.Equal(1, combo.SelectedIndex);
+                if (placement == "Overflow") Part<ToggleButton>(toolbar, "PART_OverflowButton").IsChecked = false;
+                Layout(window);
+            }
+        }
+        finally { window.Close(); Layout(window); }
+        void KeyTipPress(Key key)
+        {
+            window.RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice, PresentationSource.FromVisual(window)!, Environment.TickCount, key)
+                { RoutedEvent = Keyboard.PreviewKeyDownEvent });
+            Layout(window);
+        }
     }
 
     private static Ribbon RibbonFor(RibbonComboBox combo)

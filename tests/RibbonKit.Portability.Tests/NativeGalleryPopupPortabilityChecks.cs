@@ -39,12 +39,18 @@ internal static class NativeGalleryPopupPortabilityChecks
         var home = new RibbonTab { Header = "Gallery" };
         var group = new RibbonGroup { Header = "Styles", CanResize = false };
         group.Items.Add(gallery); home.Groups.Add(group); ribbon.Tabs.Add(home);
+        var other = new InRibbonGallery { Header = "Accent", Width = 150, SelectedIndex = 0, DropDownHeader = "Choose an accent color" };
+        for (int i = 0; i < 18; i++) other.Items.Add(new RibbonGalleryItem { Content = new Border { Width = 40, Height = 22, Background = Brushes.SeaGreen } });
+        var menu = new RibbonDropDownButton { Header = "Other popup", Size = RibbonControlSize.Large };
+        menu.Items.Add(new RibbonMenuItem { Header = "First choice" });
+        var otherGroup = new RibbonGroup { Header = "Other commands", CanResize = false }; otherGroup.Items.Add(other); otherGroup.Items.Add(menu);
+        home.Groups.Add(otherGroup);
         var mode = new RibbonTab { Header = "Direction" };
         mode.Groups.Add(new RibbonGroup { Header = "Direction" }); ribbon.Tabs.Add(mode);
         ribbon.SelectedTab = home;
         ribbon.AddToQuickAccess(gallery);
         var proxy = Assert.IsAssignableFrom<RibbonDropDownButton>(Assert.Single(ribbon.QuickAccessItems));
-        var window = new Window { Content = ribbon, Width = 600, Height = 400, Left = 50, Top = 50,
+        var window = new Window { Content = ribbon, Width = 1000, Height = 400, Left = 50, Top = 50,
             WindowStyle = WindowStyle.None, ShowActivated = false, ShowInTaskbar = false };
         ThemeManager.Apply(application, RibbonTheme.Office2024);
         try
@@ -146,6 +152,27 @@ internal static class NativeGalleryPopupPortabilityChecks
                                 Assert.True(frames.All(pixels => pixels >= expected * .9), $"{context}, QAT={qat}: {string.Join(", ", frames)}");
                                 Save(RenderStrip(window, gallery), $"{theme}-{density}-{flow}-focused-{(qat ? "qat" : "native")}-close");
                                 Assert.Equal(4, gallery.SelectedIndex);
+                            }
+                            finally { CompositionTarget.Rendering -= frame; }
+                        }
+                        foreach (bool dropdown in new[] { false, true })
+                        {
+                            double offset = strip.VerticalOffset;
+                            int expected = RedPixels(RenderStrip(window, gallery));
+                            var frames = new List<(int Pixels, double Offset)>();
+                            EventHandler frame = (_, _) => frames.Add((RedPixels(RenderStrip(window, gallery)), strip.VerticalOffset));
+                            CompositionTarget.Rendering += frame;
+                            try
+                            {
+                                if (dropdown) menu.IsDropDownOpen = true; else other.IsDropDownOpen = true;
+                                Pump(180);
+                                if (dropdown) menu.IsDropDownOpen = false; else other.IsDropDownOpen = false;
+                                Pump(180);
+                                Assert.NotEmpty(frames);
+                                Assert.True(frames.All(f => f.Pixels >= expected * .9 && Math.Abs(f.Offset - offset) < 1),
+                                    $"{context}, dropdown={dropdown}: {string.Join(", ", frames)}");
+                                Assert.Equal(4, gallery.SelectedIndex);
+                                Save(RenderStrip(window, gallery), $"{theme}-{density}-{flow}-unrelated-{(dropdown ? "dropdown" : "gallery")}-close");
                             }
                             finally { CompositionTarget.Rendering -= frame; }
                         }
