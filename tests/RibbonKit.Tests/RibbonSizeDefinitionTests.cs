@@ -6,16 +6,6 @@ namespace RibbonKit.Tests;
 public class RibbonSizeDefinitionTests
 {
     [Fact]
-    public void Parses_standard_definition()
-    {
-        var sizes = RibbonSizeDefinition.Parse("Large, Medium, Small");
-
-        Assert.Equal(
-            new[] { RibbonControlSize.Large, RibbonControlSize.Medium, RibbonControlSize.Small },
-            sizes);
-    }
-
-    [Fact]
     public void Parsing_is_case_insensitive_and_accepts_middle_alias()
     {
         var sizes = RibbonSizeDefinition.Parse("large,MIDDLE,small");
@@ -39,6 +29,9 @@ public class RibbonSizeDefinitionTests
     {
         const string def = "Large, Medium, Small";
 
+        Assert.Equal(
+            new[] { RibbonControlSize.Large, RibbonControlSize.Medium, RibbonControlSize.Small },
+            RibbonSizeDefinition.Parse(def));
         Assert.Equal(RibbonControlSize.Large, RibbonSizeDefinition.SizeFor(def, RibbonGroupSizeState.Large));
         Assert.Equal(RibbonControlSize.Medium, RibbonSizeDefinition.SizeFor(def, RibbonGroupSizeState.Medium));
         Assert.Equal(RibbonControlSize.Small, RibbonSizeDefinition.SizeFor(def, RibbonGroupSizeState.Small));

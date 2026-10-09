@@ -24,31 +24,23 @@ public sealed class RibbonOptionControlTests
         "http://schemas.microsoft.com/winfx/2006/xaml";
 
     [Fact]
-    public void Option_controls_are_lookless_wpf_controls_with_ribbon_style_keys() => Sta.Run(() =>
+    public void Option_controls_keep_their_style_keys_and_create_rich_screen_tips() => Sta.Run(() =>
     {
-        var checkBox = new TestRibbonCheckBox();
-        var radioButton = new TestRibbonRadioButton();
-
-        Assert.IsAssignableFrom<CheckBox>(checkBox);
-        Assert.IsAssignableFrom<RadioButton>(radioButton);
-        Assert.Equal(typeof(RibbonCheckBox), checkBox.StyleKey);
-        Assert.Equal(typeof(RibbonRadioButton), radioButton.StyleKey);
-    });
-
-    [Fact]
-    public void Option_controls_create_rich_screen_tips() => Sta.Run(() =>
-    {
-        var checkBox = new RibbonCheckBox
+        var checkBox = new TestRibbonCheckBox
         {
             ScreenTipTitle = "Show ruler",
             ScreenTipText = "Shows the horizontal ruler.",
         };
-        var radioButton = new RibbonRadioButton
+        var radioButton = new TestRibbonRadioButton
         {
             ScreenTipTitle = "Compact",
             ScreenTipText = "Uses compact spacing.",
         };
 
+        Assert.IsAssignableFrom<CheckBox>(checkBox);
+        Assert.IsAssignableFrom<RadioButton>(radioButton);
+        Assert.Equal(typeof(RibbonCheckBox), checkBox.StyleKey);
+        Assert.Equal(typeof(RibbonRadioButton), radioButton.StyleKey);
         var checkTip = Assert.IsType<RibbonScreenTip>(checkBox.ToolTip);
         Assert.Equal("Show ruler", checkTip.Title);
         Assert.Equal("Shows the horizontal ruler.", checkTip.Description);

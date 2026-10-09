@@ -73,44 +73,26 @@ public class PopupMotionTests
                     "layout size, so a transformed surface is clipped at the window edge, and the " +
                     "margin/offset compensation that would give it room is not portable across " +
                     "popup kinds (§3.42). Move the content instead.");
+
+                if (level == RibbonAnimationLevel.None)
+                {
+                    Assert.Equal(1d, surface.Opacity);
+                    Assert.Equal(0d, OffsetY(content));
+                }
+                else
+                {
+                    // Seed both properties before the first animation tick: the content settles
+                    // downward while the surface fades in without a fully opaque first frame.
+                    Assert.Equal(0d, surface.Opacity);
+                    Assert.True(OffsetY(content) < 0d, $"{action} at {level} should seed the content above its rest.");
+                    Assert.True(content.HasAnimatedProperties || content.RenderTransform is TranslateTransform);
+                }
             }
         }
         finally
         {
             RibbonAnimation.GlobalLevel = original;
         }
-    });
-
-    [Theory]
-    [MemberData(nameof(FlyoutActions))]
-    public void The_content_starts_above_its_resting_place(RibbonAnimationAction action) => Sta.Run(() =>
-    {
-        using var motion = new ForcedMotion();
-
-        var content = new Border();
-        var surface = new Border { Child = content };
-
-        RibbonMotion.PlayFlyoutOpen(surface, action);
-
-        // Seeded negative, so the content settles DOWNWARD out of the opener. Seeding before
-        // BeginAnimation is deliberate — see PlayFlyoutOpen and §3.41's FLIP notes.
-        Assert.True(OffsetY(content) < 0d, $"{action} should seed the content above its rest.");
-        Assert.True(content.HasAnimatedProperties || content.RenderTransform is TranslateTransform);
-    });
-
-    [Theory]
-    [MemberData(nameof(FlyoutActions))]
-    public void The_surface_starts_transparent(RibbonAnimationAction action) => Sta.Run(() =>
-    {
-        using var motion = new ForcedMotion();
-
-        var surface = new Border { Child = new Border() };
-        RibbonMotion.PlayFlyoutOpen(surface, action);
-
-        // Seeded, not merely animated from 0. An unseeded fade renders ONE frame at the base value
-        // (1) before the clock ticks, so the surface pops in at full strength and only then fades —
-        // a flicker, not a fade. §3.41 found the same rule for the title glide.
-        Assert.Equal(0d, surface.Opacity);
     });
 
     [Fact]

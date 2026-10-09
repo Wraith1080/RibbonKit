@@ -22,19 +22,9 @@ public sealed class RibbonTextBoxTests
         "http://schemas.microsoft.com/winfx/2006/xaml";
 
     [Fact]
-    public void Text_box_is_a_lookless_native_editor_with_a_ribbon_style_key() => Sta.Run(() =>
+    public void Native_editor_contract_and_rich_screen_tip_remain_available() => Sta.Run(() =>
     {
-        var textBox = new TestRibbonTextBox();
-
-        Assert.IsAssignableFrom<TextBox>(textBox);
-        Assert.Equal(typeof(RibbonTextBox), textBox.StyleKey);
-        Assert.Equal(130d, textBox.InputWidth);
-    });
-
-    [Fact]
-    public void Native_text_state_and_rich_screen_tip_remain_available() => Sta.Run(() =>
-    {
-        var textBox = new RibbonTextBox
+        var textBox = new TestRibbonTextBox
         {
             Text = "Quarterly report",
             IsReadOnly = true,
@@ -43,6 +33,9 @@ public sealed class RibbonTextBoxTests
             ScreenTipText = "Edits the current title.",
         };
 
+        Assert.IsAssignableFrom<TextBox>(textBox);
+        Assert.Equal(typeof(RibbonTextBox), textBox.StyleKey);
+        Assert.Equal(130d, textBox.InputWidth);
         Assert.Equal("Quarterly report", textBox.Text);
         Assert.True(textBox.IsReadOnly);
         Assert.Equal(40, textBox.MaxLength);

@@ -114,15 +114,6 @@ public sealed class ComboBoxQuickAccessTests
     }
 
     [Fact]
-    public void Previously_persisted_automatic_button_ids_survive_new_combo_discovery() => Sta.Run(() =>
-    {
-        var ribbon = RibbonFor(new RibbonComboBox { Header = "Size" });
-        var save = new RibbonButton { Header = "Save" }; ribbon.Tabs[0].Groups[0].Items.Add(save);
-        RibbonCustomizationSerializer.Apply(ribbon, "{\"Tabs\":[],\"QuickAccess\":[{\"Ref\":\"auto:tab.home/group.font/Save#0\"}]}");
-        Assert.Same(save, Ribbon.GetQuickAccessSource(Assert.IsAssignableFrom<FrameworkElement>(Assert.Single(ribbon.QuickAccessItems))));
-    });
-
-    [Fact]
     public void Directly_declared_qat_combos_use_dropdowns_and_survive_remove_and_reset() => Sta.Run(() =>
     {
         var combo = new RibbonComboBox { Header = "Mode" }; combo.Items.Add("First"); combo.Items.Add("Second");

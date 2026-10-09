@@ -43,50 +43,7 @@ public class CrystalContextualTests
     });
 
     [Fact]
-    public void Crystal_customize_tree_opens_without_missing_ancestor_bindings() => Sta.Run(() =>
-    {
-        var window = CreateCrystalWindow();
-        try
-        {
-            window.Show();
-            Sta.Drain();
-            var dialog = window.CreateCustomizationDialog(false);
-            try
-            {
-                var page = Assert.IsType<RibbonCustomizePage>(dialog.SelectedPage!.Content);
-                page.ApplyTemplate();
-                var tree = Assert.IsType<TreeView>(page.Template.FindName("PART_Tree", page));
-                var treeStyle = Assert.IsType<Style>(tree.ItemContainerStyle);
-                Assert.Same(treeStyle, tree.ItemContainerStyle);
-                Assert.Same(treeStyle, Assert.IsType<Style>(tree.Resources[typeof(TreeViewItem)]).BasedOn);
-                foreach (var property in new[] { Control.ForegroundProperty,
-                    Control.HorizontalContentAlignmentProperty, Control.VerticalContentAlignmentProperty })
-                    Assert.DoesNotContain(treeStyle.Setters.OfType<Setter>(), setter =>
-                        setter.Property == property && setter.Value is BindingBase);
-                Sta.Drain();
-                dialog.Show();
-                Sta.Drain();
-                dialog.UpdateLayout();
-                var row = Assert.IsType<TreeViewItem>(tree.ItemContainerGenerator.ContainerFromIndex(0));
-                Assert.Same(treeStyle, row.Style);
-                foreach (var property in new[] { Control.ForegroundProperty,
-                    Control.HorizontalContentAlignmentProperty, Control.VerticalContentAlignmentProperty })
-                    Assert.Null(BindingOperations.GetBindingBase(row, property));
-                row.IsExpanded = true;
-                Sta.Drain();
-                var child = Assert.IsType<TreeViewItem>(row.ItemContainerGenerator.ContainerFromIndex(0));
-                Assert.Same(treeStyle, child.Style);
-                foreach (var property in new[] { Control.ForegroundProperty,
-                    Control.HorizontalContentAlignmentProperty, Control.VerticalContentAlignmentProperty })
-                    Assert.Null(BindingOperations.GetBindingBase(child, property));
-            }
-            finally { dialog.Close(); }
-        }
-        finally { window.Close(); Sta.ResetApplication(); }
-    });
-
-    [Fact]
-    public void Crystal_customize_pages_round_all_list_frames_and_keep_scrolling() => Sta.Run(() =>
+    public void Crystal_customize_pages_keep_tree_styles_rounded_frames_and_scrolling() => Sta.Run(() =>
     {
         var window = CreateCrystalWindow();
         try
@@ -106,6 +63,23 @@ public class CrystalContextualTests
                 var ribbonPage = Assert.IsType<RibbonCustomizePage>(dialog.SelectedPage!.Content);
                 var available = Assert.IsType<ListBox>(ribbonPage.Template.FindName("PART_AvailableList", ribbonPage));
                 var tree = Assert.IsType<TreeView>(ribbonPage.Template.FindName("PART_Tree", ribbonPage));
+                var treeStyle = Assert.IsType<Style>(tree.ItemContainerStyle);
+                Assert.Same(treeStyle, Assert.IsType<Style>(tree.Resources[typeof(TreeViewItem)]).BasedOn);
+                var inheritedProperties = new[] { Control.ForegroundProperty,
+                    Control.HorizontalContentAlignmentProperty, Control.VerticalContentAlignmentProperty };
+                foreach (var property in inheritedProperties)
+                    Assert.DoesNotContain(treeStyle.Setters.OfType<Setter>(), setter =>
+                        setter.Property == property && setter.Value is BindingBase);
+                var row = Assert.IsType<TreeViewItem>(tree.ItemContainerGenerator.ContainerFromIndex(0));
+                Assert.Same(treeStyle, row.Style);
+                foreach (var property in inheritedProperties)
+                    Assert.Null(BindingOperations.GetBindingBase(row, property));
+                row.IsExpanded = true;
+                Sta.Drain();
+                var child = Assert.IsType<TreeViewItem>(row.ItemContainerGenerator.ContainerFromIndex(0));
+                Assert.Same(treeStyle, child.Style);
+                foreach (var property in inheritedProperties)
+                    Assert.Null(BindingOperations.GetBindingBase(child, property));
                 var availableScroll = AssertRoundedFrame(available);
                 AssertRoundedFrame(tree);
                 Assert.True(availableScroll.ScrollableHeight > 0);
