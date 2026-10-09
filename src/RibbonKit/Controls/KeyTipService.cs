@@ -205,22 +205,19 @@ internal sealed class KeyTipService
 
     private void TearDown(bool respectPersist, UIElement? activatedTarget)
     {
-        bool isActivatedLevel = true;
+        // A nested picker still needs every containing flyout (including QAT
+        // overflow), otherwise tearing down an ancestor unloads the input.
+        bool preserveContainingSurface = respectPersist && activatedTarget is not null
+            && KeepsContainingSurfaceOpenAfterKeyTip(activatedTarget);
         while (_levels.Count > 0)
         {
             KeyTipLevel level = _levels.Pop();
             RemoveAdorners(level);
-            bool preserveContainingSurface =
-                respectPersist &&
-                isActivatedLevel &&
-                activatedTarget is not null &&
-                KeepsContainingSurfaceOpenAfterKeyTip(activatedTarget);
             if (!(respectPersist && level.PersistOnActivate) && !preserveContainingSurface)
             {
                 level.OnExit?.Invoke();
             }
 
-            isActivatedLevel = false;
         }
 
         _active = false;
@@ -667,7 +664,11 @@ internal sealed class KeyTipService
 
             string? keys = KeyTip.GetKeys(element) ?? (digit <= 9 ? digit.ToString() : null);
             digit++;
-            items.Add(new KeyTipItem(element, KeyTipKind.Leaf, null, keys));
+            items.Add(new KeyTipItem(element,
+                element is RibbonGroupQuickAccessProxy ? KeyTipKind.MenuOpener : KeyTipKind.Leaf, null, keys)
+            {
+                Payload = element is RibbonGroupQuickAccessProxy ? element : null,
+            });
         }
 
         // The chevron represents every zero-slotted item as one root action. It takes the next QAT
@@ -758,6 +759,18 @@ internal sealed class KeyTipService
     private KeyTipLevel BuildMenuLevel(RibbonDropDownButton opener)
     {
         var items = new List<KeyTipItem>();
+
+        if (opener is RibbonGroupQuickAccessProxy { GroupContent: { } content })
+        {
+            var controls = new List<UIElement>();
+            CollectKeyTipControls(content, controls);
+            foreach (UIElement control in controls) AddControlItems(control, items);
+            if (Ribbon.GetQuickAccessSource(opener) is RibbonGroup { ShowDialogLauncher: true } group
+                && group.DialogLauncher is { IsVisible: true } launcher)
+                items.Add(new KeyTipItem(launcher, KeyTipKind.Leaf, group.Header?.ToString(), KeyTip.GetKeys(group)));
+            AutoAssign(items);
+            return new KeyTipLevel(items);
+        }
 
         foreach (object? entry in opener.Items)
         {

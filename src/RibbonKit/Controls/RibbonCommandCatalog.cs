@@ -13,7 +13,7 @@ namespace RibbonKit.Controls;
 internal static class RibbonCommandCatalog
 {
     /// <summary>Group commands with their tab › group path, plus directly declared QAT commands.</summary>
-    internal static ObservableCollection<RibbonCommandEntry> CollectAvailable(Ribbon ribbon)
+    internal static ObservableCollection<RibbonCommandEntry> CollectAvailable(Ribbon ribbon, bool includeGroups = false)
     {
         var entries = new ObservableCollection<RibbonCommandEntry>();
         foreach (RibbonTab tab in ribbon.Tabs)
@@ -22,6 +22,8 @@ internal static class RibbonCommandCatalog
             foreach (RibbonGroup group in tab.Groups)
             {
                 string groupName = group.Header?.ToString() ?? "Group";
+                if (includeGroups)
+                    entries.Add(new RibbonCommandEntry(group, $"{tabName} › {groupName}", group.Icon));
                 foreach (FrameworkElement control in CollectControls(group))
                 {
                     RibbonCommandEntry described = Describe(control);
@@ -33,6 +35,7 @@ internal static class RibbonCommandCatalog
 
         foreach (FrameworkElement control in ribbon.DeclaredQuickAccessCommands)
         {
+            if (control is RibbonGroup && !includeGroups) continue;
             if (!entries.Any(entry => ReferenceEquals(entry.Control, control)))
             {
                 entries.Add(Describe(control));
@@ -114,6 +117,7 @@ internal static class RibbonCommandCatalog
             RibbonDropDownButton d => (d.Header, d.ScreenTipTitle, d.Icon ?? d.LargeIcon),
             RibbonComboBox c => (c.Header, c.ScreenTipTitle, c.Icon),
             RibbonGallery g => (g.Header, (g as InRibbonGallery)?.DropDownHeader, g.Icon),
+            RibbonGroup g => (g.Header?.ToString(), null, g.Icon),
             _ => (null, null, null),
         };
 

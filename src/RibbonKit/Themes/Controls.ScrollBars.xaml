@@ -27,7 +27,7 @@
                                           VerticalAlignment="Center" />
                     </Border>
                     <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
+                        <Trigger Property="controls:RibbonPopupInteraction.IsHovered" Value="True">
                             <Setter Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
                             <Setter Property="BorderBrush"
@@ -84,7 +84,7 @@
                         </Border.Background>
                     </Border>
                     <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
+                        <Trigger Property="controls:RibbonPopupInteraction.IsHovered" Value="True">
                             <Setter Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.ScrollBar.ThumbHover}" />
                         </Trigger>

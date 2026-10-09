@@ -165,7 +165,7 @@
                         <!-- Hover shows the fill AND the underline; each theme zeroes the
                              one it doesn't use. SourceName scoping matters — TabItem.IsMouseOver
                              is also true over the tab CONTENT, which would flicker the header. -->
-                        <Trigger SourceName="HeaderChrome" Property="IsMouseOver" Value="True">
+                        <Trigger SourceName="HeaderChrome" Property="controls:RibbonPopupInteraction.IsHovered" Value="True">
                             <Setter TargetName="HeaderChrome" Property="Background">
                             <Setter.Value>
                                 <MultiBinding Converter="{StaticResource RibbonKit.ContextualMaterial}" ConverterParameter="Hover">
@@ -333,7 +333,7 @@
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
                                 <Condition Property="IsBackstageActive" Value="True" />
-                                <Condition SourceName="HeaderChrome" Property="IsMouseOver" Value="True" />
+                                <Condition SourceName="HeaderChrome" Property="controls:RibbonPopupInteraction.IsHovered" Value="True" />
                             </MultiTrigger.Conditions>
                             <Setter TargetName="HeaderChrome" Property="Background">
                             <Setter.Value>
@@ -524,7 +524,7 @@
                                                 VerticalAlignment="Center" />
                                 <!-- Label band. Transparent in every theme but 2007, where it is a
                                      shaded strip across the foot of the box. -->
-                                <Border Grid.Row="1"
+                                <Border x:Name="PART_CaptionHost" Grid.Row="1"
                                         Background="{DynamicResource RibbonKit.Brushes.Group.LabelBackground}"
                                         CornerRadius="{DynamicResource RibbonKit.Metrics.GroupLabelCornerRadius}">
                                 <Grid Margin="2,3,2,4">
@@ -583,7 +583,7 @@
                                                                       VerticalAlignment="Center" />
                                                             </Border>
                                                             <ControlTemplate.Triggers>
-                                                                <Trigger Property="IsMouseOver" Value="True">
+                                                                <Trigger Property="controls:RibbonPopupInteraction.IsHovered" Value="True">
                                                                     <Setter TargetName="Chrome" Property="Background"
                                                                             Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
                                                                 </Trigger>
@@ -647,7 +647,7 @@
                                                 </Border>
                                                 </Border>
                                                 <ControlTemplate.Triggers>
-                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                    <Trigger Property="controls:RibbonPopupInteraction.IsHovered" Value="True">
                                                         <Setter TargetName="Chrome" Property="Background"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
                                                         <Setter TargetName="Chrome" Property="BorderBrush"

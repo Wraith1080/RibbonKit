@@ -188,7 +188,7 @@ public class RibbonQuickAccessPage : Control, IRibbonFillPage
         }
 
         _availableList.ItemsSource = Ribbon is { } ribbon
-            ? RibbonCommandCatalog.CollectAvailable(ribbon)
+            ? RibbonCommandCatalog.CollectAvailable(ribbon, includeGroups: true)
             : new ObservableCollection<RibbonCommandEntry>();
     }
 

@@ -1081,14 +1081,15 @@ public class Ribbon : Control
         RibbonCustomizeRequested?.Invoke(this, EventArgs.Empty);
 
     /// <summary>
-    /// Adds <paramref name="source"/> (a button, toggle, split button, dropdown, combo box or gallery) to
+    /// Adds <paramref name="source"/> (a button, toggle, split button, dropdown, combo box, gallery or group) to
     /// the quick access toolbar. A removed directly declared QAT item is restored as itself,
-    /// except combo boxes and galleries, which use dropdown copies.
-    /// For a ribbon-group source, a small PROXY button is created that mirrors its
+    /// except combo boxes, galleries and groups, which use dropdown copies.
+    /// For a command inside a ribbon group, a small PROXY button is created that mirrors its
     /// 16px icon and ScreenTip and invokes it (toggles stay state-synced via a two-way IsChecked
     /// binding). Combo boxes use an icon dropdown that selects from their existing items;
     /// editable text input stays on the original combo. Galleries retain their native tiles,
     /// grouping, selection and preview handlers in the copy's popup.
+    /// Groups open their original full content in a flyout and restore it on dismissal.
     /// Returns <see langword="false"/> when the control is already in the QAT or its type
     /// does not have a supported quick-access representation.
     /// </summary>
@@ -1101,7 +1102,7 @@ public class Ribbon : Control
             return false;
         }
 
-        if (_declaredQuickAccessCommands.Contains(source) && source is not (RibbonComboBox or RibbonGallery))
+        if (_declaredQuickAccessCommands.Contains(source) && source is not (RibbonComboBox or RibbonGallery or RibbonGroup))
         {
             // Restore the authored item itself, including its command bindings/handlers.
             QuickAccessItems.Add(source);
@@ -1124,12 +1125,13 @@ public class Ribbon : Control
     }
 
     private static bool IsSupportedQuickAccessSource(FrameworkElement source) =>
-        source is RibbonButton or RibbonToggleButton or RibbonDropDownButton or RibbonComboBox or RibbonGallery;
+        source is RibbonButton or RibbonToggleButton or RibbonDropDownButton or RibbonComboBox or RibbonGallery or RibbonGroup;
 
     // Directly declared QAT commands may have no ribbon-group counterpart. Keep their
     // source objects for this ribbon's lifetime so Remove/Clear/Apply cannot erase the
     // catalog. Proxies and transient merge commands must never become catalog sources.
     private readonly List<FrameworkElement> _declaredQuickAccessCommands = new();
+    private readonly HashSet<RibbonGroupQuickAccessProxy> _quickAccessGroups = new();
 
     internal IReadOnlyList<FrameworkElement> DeclaredQuickAccessCommands => _declaredQuickAccessCommands;
 
@@ -1154,10 +1156,17 @@ public class Ribbon : Control
 
     private void OnQuickAccessItemsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
+        foreach (var removed in _quickAccessGroups.Where(copy => !QuickAccessItems.Contains(copy)).ToList())
+        {
+            // The active borrower may be the overflow copy of this strip item.
+            removed.CloseSource();
+            _quickAccessGroups.Remove(removed);
+        }
         if (e.NewItems is not null)
         {
             foreach (object item in e.NewItems)
             {
+                if (item is RibbonGroupQuickAccessProxy groupCopy) _quickAccessGroups.Add(groupCopy);
                 if (item is FrameworkElement source && IsSupportedQuickAccessSource(source)
                     && GetQuickAccessSource(source) is null && GetMergeSource(source) is null
                     && !_declaredQuickAccessCommands.Contains(source))
@@ -1172,7 +1181,7 @@ public class Ribbon : Control
                     }
                 }
 
-                if (item is FrameworkElement choice && item is (RibbonComboBox or RibbonGallery))
+                if (item is FrameworkElement choice && item is (RibbonComboBox or RibbonGallery or RibbonGroup))
                 {
                     // Normalize directly authored QAT choices after collection notification.
                     // The source stays retained/logically owned for bindings and Reset.
@@ -1208,6 +1217,11 @@ public class Ribbon : Control
         FrameworkElement proxy;
         switch (source)
         {
+            case RibbonGroup group:
+                proxy = new RibbonGroupQuickAccessProxy(group, this) { Size = size };
+                proxy.SetBinding(FlowDirectionProperty, new Binding(nameof(FlowDirection)) { Source = this });
+                break;
+
             case RibbonGallery gallery:
                 proxy = new RibbonGalleryQuickAccessProxy(gallery, this) { Size = size };
                 proxy.SetBinding(FlowDirectionProperty, new Binding(nameof(FlowDirection)) { Source = this });
@@ -1530,7 +1544,10 @@ public class Ribbon : Control
             if (textEditor && node is RibbonComboBox { IsEditable: true })
                 return null; // Keep the native editing menu on the combo's text input.
 
-            if (node is FrameworkElement command && IsSupportedQuickAccessSource(command))
+            if (node is FrameworkElement { TemplatedParent: RibbonGroup group, Name: "GroupCaption" or "PART_CaptionHost" or "PART_CollapsedButton" })
+                return group;
+
+            if (node is FrameworkElement command && command is not RibbonGroup && IsSupportedQuickAccessSource(command))
             {
                 return (FrameworkElement)node;
             }
@@ -3863,6 +3880,11 @@ public class Ribbon : Control
 
     private void AttachQatContextMenu(FrameworkElement host)
     {
+        // Below-ribbon placement is a Border/ItemsControl wrapper. Carry the
+        // same owner and hover boundary as the title-bar/tab-row toolbar.
+        host.SetValue(RibbonPopupInteraction.QuickAccessOwnerProperty, this);
+        host.SetValue(RibbonPopupInteraction.IsQuickAccessHostProperty, true);
+        RibbonPopupInteraction.SetSuppressHover(host, false);
         host.ContextMenu = EnsureQatContextMenu();
         host.ContextMenuOpening -= OnQatHostContextMenuOpening;
         host.ContextMenuOpening += OnQatHostContextMenuOpening;

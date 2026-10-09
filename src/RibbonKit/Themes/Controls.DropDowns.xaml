@@ -16,6 +16,15 @@
          RibbonDropDownButton — button that opens a menu flyout
          ============================================================ -->
     <Style TargetType="{x:Type controls:RibbonDropDownButton}">
+        <Style.Resources>
+            <!-- Default QAT glyph for groups without an application-authored Icon. -->
+            <DrawingImage x:Key="RibbonKit.Images.QuickAccessGroup">
+                <DrawingImage.Drawing>
+                    <GeometryDrawing Brush="{DynamicResource RibbonKit.Brushes.Text.Primary}"
+                                     Geometry="M1,1 H15 V3 H1 Z M1,5 H5 V9 H1 Z M6,5 H10 V9 H6 Z M11,5 H15 V9 H11 Z M1,11 H15 V14 H1 Z" />
+                </DrawingImage.Drawing>
+            </DrawingImage>
+        </Style.Resources>
         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
         <Setter Property="Focusable" Value="False" />
         <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
@@ -49,7 +58,7 @@
                                                                       VerticalAlignment="Center" />
                                                 </Border>
                                                 <ControlTemplate.Triggers>
-                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                    <Trigger Property="controls:RibbonPopupInteraction.IsHovered" Value="True">
                                                         <Setter TargetName="Chrome" Property="Background"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
                                                         <Setter TargetName="Chrome" Property="BorderBrush"
@@ -72,7 +81,7 @@
                                                          which is what was flickering. -->
                                                     <MultiTrigger>
                                                         <MultiTrigger.Conditions>
-                                                            <Condition Property="IsMouseOver" Value="True" />
+                                                            <Condition Property="controls:RibbonPopupInteraction.IsHovered" Value="True" />
                                                             <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
                                                         </MultiTrigger.Conditions>
                                                         <Setter TargetName="Chrome" Property="Background"
@@ -383,7 +392,7 @@
                                                         <Setter TargetName="CompanionRim" Property="BorderBrush"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Control.CompanionGlow}" />
                                                     </Trigger>
-                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                    <Trigger Property="controls:RibbonPopupInteraction.IsHovered" Value="True">
                                                         <Setter TargetName="Chrome" Property="Background"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Control.SplitActiveHover}" />
                                                         <Setter TargetName="Chrome" Property="BorderBrush"
@@ -397,7 +406,7 @@
                                                     </Trigger>
                                                     <MultiTrigger>
                                                         <MultiTrigger.Conditions>
-                                                            <Condition Property="IsMouseOver" Value="True" />
+                                                            <Condition Property="controls:RibbonPopupInteraction.IsHovered" Value="True" />
                                                             <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
                                                         </MultiTrigger.Conditions>
                                                         <Setter TargetName="Chrome" Property="Background"
@@ -565,7 +574,7 @@
                                                         <Setter TargetName="CompanionRim" Property="BorderBrush"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Control.CompanionGlow}" />
                                                     </Trigger>
-                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                    <Trigger Property="controls:RibbonPopupInteraction.IsHovered" Value="True">
                                                         <Setter TargetName="Chrome" Property="Background"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Control.SplitActiveHover}" />
                                                         <Setter TargetName="Chrome" Property="BorderBrush"
@@ -589,7 +598,7 @@
                                                     </Trigger>
                                                     <MultiTrigger>
                                                         <MultiTrigger.Conditions>
-                                                            <Condition Property="IsMouseOver" Value="True" />
+                                                            <Condition Property="controls:RibbonPopupInteraction.IsHovered" Value="True" />
                                                             <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
                                                         </MultiTrigger.Conditions>
                                                         <Setter TargetName="Chrome" Property="Background"
@@ -709,13 +718,13 @@
                              merely-adjacent button look almost as hot as the hovered one); the flat
                              themes have no border to glow inside, so they publish a lighter hover
                              fill and leave the border and glow Transparent. -->
-                        <Trigger SourceName="PART_Toggle" Property="IsMouseOver" Value="True">
+                        <Trigger SourceName="PART_Toggle" Property="controls:RibbonPopupInteraction.IsHovered" Value="True">
                             <Setter TargetName="PART_Primary" Property="Tag" Value="Companion" />
                         </Trigger>
                         <Trigger SourceName="PART_Toggle" Property="IsChecked" Value="True">
                             <Setter TargetName="PART_Primary" Property="Tag" Value="Companion" />
                         </Trigger>
-                        <Trigger SourceName="PART_Primary" Property="IsMouseOver" Value="True">
+                        <Trigger SourceName="PART_Primary" Property="controls:RibbonPopupInteraction.IsHovered" Value="True">
                             <Setter TargetName="PART_Toggle" Property="Tag" Value="Companion" />
                         </Trigger>
                         <Trigger SourceName="PART_Primary" Property="IsPressed" Value="True">
@@ -848,7 +857,7 @@
                             <Setter TargetName="LargeImage" Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.LargeIconSize}" />
                             <Setter TargetName="LargeImage" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.LargeIconSize}" />
                         </Trigger>
-                        <Trigger Property="IsMouseOver" Value="True">
+                        <Trigger Property="controls:RibbonPopupInteraction.IsHovered" Value="True">
                             <Setter TargetName="Chrome" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
                             <Setter TargetName="Chrome" Property="BorderBrush"
@@ -905,7 +914,7 @@
                             <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource RibbonKit.Brushes.Control.CheckedBackground}" />
                             <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Control.CheckedBorder}" />
                         </Trigger>
-                        <Trigger Property="IsMouseOver" Value="True">
+                        <Trigger Property="controls:RibbonPopupInteraction.IsHovered" Value="True">
                             <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
                             <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
                         </Trigger>
@@ -1078,7 +1087,7 @@
                             <Setter TargetName="InputBox" Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
                             <Setter TargetName="PART_EditableTextBox" Property="Margin" Value="{DynamicResource RibbonKit.Metrics.Touch.ComboEditMargin}" />
                         </Trigger>
-                        <Trigger Property="IsMouseOver" Value="True">
+                        <Trigger Property="controls:RibbonPopupInteraction.IsHovered" Value="True">
                             <Setter TargetName="Chrome" Property="BorderBrush"
                                     Value="{DynamicResource RibbonKit.Brushes.Input.HoverBorder}" />
                         </Trigger>
@@ -1151,7 +1160,7 @@
                         <Trigger Property="Header" Value="{x:Null}">
                             <Setter TargetName="HeaderText" Property="Visibility" Value="Collapsed" />
                         </Trigger>
-                        <Trigger Property="IsMouseOver" Value="True">
+                        <Trigger Property="controls:RibbonPopupInteraction.IsHovered" Value="True">
                             <Setter TargetName="Chrome" Property="BorderBrush"
                                     Value="{DynamicResource RibbonKit.Brushes.Input.HoverBorder}" />
                         </Trigger>

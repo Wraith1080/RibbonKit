@@ -47,7 +47,7 @@ below describes the current checkout, including post-release additions; see
 - File tab or Office 2007 orb, two-pane application menu, and Backstage with Modern,
   Classic, Classic2010, Glass2007, Classic2007, CrystalSidebar and CrystalFloating designs.
 - Repeatable message bars with actions/dismissal; Backstage page/footer/recent patterns.
-- Three QAT placements, overflow and source-linked button/toggle/split/dropdown/combo/gallery proxies.
+- Three QAT placements, overflow and source-linked button/toggle/split/dropdown/combo/gallery/group proxies.
 - Contextual tabs, tab/group merging and modal-tab lifetimes.
 - Ribbon/QAT customization with JSON Import/Export/Reset and application-controlled storage.
 
@@ -259,6 +259,43 @@ opening another copy or the source's native flyout closes the previous copy.
 Custom gallery templates must keep their items presenter inside a `ScrollViewer`.
 The shared `InRibbonGallery` template also has a noninteractive
 `PART_StripPreviewHost` decorator beside its viewport for this frozen strip view.
+
+### Ribbon groups in QAT
+
+Customize QAT offers entire ribbon groups alongside their individual commands.
+Group entries appear only on that page; Customize Ribbon continues to offer
+individual commands. Add a group there, right-click its caption, or call
+`Ribbon.AddToQuickAccess(group)`.
+Showcase's existing groups demonstrate this through its Customize QAT page;
+the Localization/RTL lab also leaves additions under your control.
+
+The compact icon button opens the group's full content using the shared flyout
+templates. `RibbonGroup.Icon` supplies its icon; groups without an icon use a
+theme-colored vector glyph. Header/icon changes and enabled state remain live.
+Commands, bindings, selection, gallery preview, local resources and nested
+pickers keep their original controls and handlers. Up/Down opens at the first/last
+command; Tab and arrows navigate, Escape closes the innermost popup, and KeyTips
+descend into the group's commands. Invoking a command dismisses the group;
+opening a picker keeps its containing surfaces available.
+
+One flyout can hold a group's content at a time. Opening a different copy or the
+native collapsed flyout hands it over safely. A vector preview preserves a
+visible source group while its live content is borrowed. Close, removal, overflow
+dismissal, disabling, template replacement and adaptive state changes restore
+the content and close nested popups. Inactive tabs work without selecting them.
+Custom group templates must preserve `PART_NormalHost` and its content tree.
+
+While a QAT flyout is open, the shared ribbon controls and tab headers pause
+pointer hover and ScreenTips. An outside press dismisses the flyouts without
+taking focus or mouse capture from its target, so commands and File/orb respond
+on the first click. Clicking a group's ribbon preview restores its real content
+before delivering the press to the control under the pointer.
+
+Give groups stable `Ribbon.CommandId` values for persistence across renames and
+reordering. Built-in groups also have automatic path identities as a fallback;
+custom groups restore against their rebuilt instances. QAT order, duplicate
+prevention and Reset use the existing customization machinery. Transient merged
+groups remain excluded from application-owned saved customization.
 
 ### Theming & rendering
 

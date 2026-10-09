@@ -62,7 +62,7 @@
                 <Setter TargetName="DefaultOrbGlyph" Property="Visibility" Value="Visible" />
                 <Setter TargetName="CustomOrbGlyph" Property="Visibility" Value="Collapsed" />
             </DataTrigger>
-            <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType={x:Type primitives:ButtonBase}}}"
+            <DataTrigger Binding="{Binding (controls:RibbonPopupInteraction.IsHovered), RelativeSource={RelativeSource AncestorType={x:Type primitives:ButtonBase}}}"
                          Value="True">
                 <Setter TargetName="OrbFill" Property="Fill"
                         Value="{DynamicResource RibbonKit.Brushes.ApplicationOrb.HoverBackground}" />
@@ -487,7 +487,7 @@
                                                                           VerticalAlignment="Top" />
                                                     </Grid>
                                                     <ControlTemplate.Triggers>
-                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                        <Trigger Property="controls:RibbonPopupInteraction.IsHovered" Value="True">
                                                             <Setter TargetName="Chrome" Property="Background"
                                                                     Value="{DynamicResource RibbonKit.Brushes.ApplicationButton.HoverBackground}" />
                                                             <Setter TargetName="HoverUnderline" Property="Visibility" Value="Visible" />
@@ -496,7 +496,7 @@
                                                              palettes retain their existing inner-rim opacity. -->
                                                         <MultiTrigger>
                                                             <MultiTrigger.Conditions>
-                                                                <Condition Property="IsMouseOver" Value="True" />
+                                                                <Condition Property="controls:RibbonPopupInteraction.IsHovered" Value="True" />
                                                                 <Condition Property="IsPressed" Value="False" />
                                                                 <Condition Property="IsChecked" Value="False" />
                                                             </MultiTrigger.Conditions>
@@ -713,7 +713,7 @@
                                                                 CornerRadius="{Binding CornerRadius, ElementName=Chrome}" />
                                                     </Grid>
                                                     <ControlTemplate.Triggers>
-                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                        <Trigger Property="controls:RibbonPopupInteraction.IsHovered" Value="True">
                                                             <Setter TargetName="Chrome" Property="Background"
                                                                     Value="{DynamicResource RibbonKit.Brushes.TabStrip.ControlHoverBackground}" />
                                                         </Trigger>
@@ -782,7 +782,7 @@
                                                                 CornerRadius="{Binding CornerRadius, ElementName=Chrome}" />
                                                     </Grid>
                                                     <ControlTemplate.Triggers>
-                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                        <Trigger Property="controls:RibbonPopupInteraction.IsHovered" Value="True">
                                                             <Setter TargetName="Chrome" Property="Background"
                                                                     Value="{DynamicResource RibbonKit.Brushes.TabStrip.ControlHoverBackground}" />
                                                         </Trigger>

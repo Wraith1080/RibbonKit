@@ -119,6 +119,8 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
     private UIElement? _focusBeforeOpen;
     private bool _returnFocusOnClose;
     private bool _focusLastItem;
+    private bool _pointerOpening;
+    private int _pointerOpeningGeneration;
 
     static RibbonDropDownButton()
     {
@@ -137,6 +139,10 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
 
         Unloaded += OnDropDownUnloaded;
         AddHandler(Keyboard.PreviewKeyDownEvent, new KeyEventHandler(OnOpenerKeyDown));
+        AddHandler(Mouse.PreviewMouseDownEvent, new MouseButtonEventHandler(OnOpenerPointer));
+        AddHandler(Mouse.PreviewMouseUpEvent, new MouseButtonEventHandler(OnOpenerPointer));
+        AddHandler(PreviewTouchDownEvent, new EventHandler<TouchEventArgs>((_, _) => MarkPointerOpening()));
+        AddHandler(PreviewTouchUpEvent, new EventHandler<TouchEventArgs>((_, _) => MarkPointerOpening()));
     }
 
     /// <summary>The button's label text.</summary>
@@ -268,7 +274,7 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
     /// the one that bites — has to drive the return explicitly, because the proxy's own popup close
     /// path cannot be trusted there. See <see cref="OnPopupClosed"/>.
     /// </remarks>
-    internal void EnsureBorrowedItemsReturned()
+    internal virtual void EnsureBorrowedItemsReturned()
     {
         if (_borrowSource is null || !_borrowed)
         {
@@ -373,6 +379,8 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
 
     private void OnPopupOpened(object? sender, EventArgs e)
     {
+        bool pointerOpening = _pointerOpening;
+        _pointerOpening = false;
         _dismissHelper.OnOpened();
         _returnFocusOnClose = false;
         _focusBeforeOpen = IsKeyboardFocusWithin ? Keyboard.FocusedElement as UIElement
@@ -380,7 +388,7 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
         var menuHost = _menuHost;
         bool last = _focusLastItem;
         _focusLastItem = false;
-        Dispatcher.BeginInvoke(DispatcherPriority.Input, new Action(() =>
+        if (!pointerOpening) Dispatcher.BeginInvoke(DispatcherPriority.Input, new Action(() =>
         {
             if (IsDropDownOpen && ReferenceEquals(menuHost, _menuHost) && menuHost is { IsKeyboardFocusWithin: false }
                 && !TryFocusInitialMenuItem(last))
@@ -398,6 +406,26 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
     // Choice projections may start at their current selection. Ordinary menus keep
     // their existing first/last navigation, including the Up-key opening gesture.
     internal virtual bool TryFocusInitialMenuItem(bool last) => false;
+
+    internal bool WasPointerDismissed => _dismissHelper.WasPointerDismissed;
+
+    private void OnOpenerPointer(object sender, MouseButtonEventArgs e)
+    {
+        if (e.ChangedButton == MouseButton.Left) MarkPointerOpening();
+    }
+
+    private void MarkPointerOpening()
+    {
+        if (IsDropDownOpen) return;
+        _pointerOpening = true;
+        int generation = ++_pointerOpeningGeneration;
+        // Press-mode opens synchronously on down; release-mode gets a fresh mark
+        // on up. A cancelled/disabled press cannot affect a later keyboard open.
+        Dispatcher.BeginInvoke(DispatcherPriority.Input, new Action(() =>
+        {
+            if (generation == _pointerOpeningGeneration) _pointerOpening = false;
+        }));
+    }
 
     private void OnPopupClosed(object? sender, EventArgs e)
     {
@@ -423,7 +451,7 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
             ScheduleReturnBorrowedItems();
         }
 
-        if (returnFocus && _focusBeforeOpen is { IsVisible: true, IsEnabled: true })
+        if (returnFocus && !WasPointerDismissed && _focusBeforeOpen is { IsVisible: true, IsEnabled: true })
             _focusBeforeOpen.Focus();
         _focusBeforeOpen = null;
     }
@@ -439,7 +467,7 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
         }
     }
 
-    private void OnMenuKeyDown(object sender, KeyEventArgs e)
+    internal virtual void OnMenuKeyDown(object sender, KeyEventArgs e)
     {
         if (e.Handled) return;
         if (e.Key == Key.Escape)
@@ -478,7 +506,7 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
                 }
             }));
 
-    private void OnMenuItemClicked(object sender, RoutedEventArgs e)
+    internal virtual void OnMenuItemClicked(object sender, RoutedEventArgs e)
     {
         // Any button click inside the dropdown closes it (menu semantics).
         SetCurrentValue(IsDropDownOpenProperty, false);

@@ -84,6 +84,7 @@ public class RibbonGallery : ListBox
         _originalViewport = original;
         QuickAccessViewport = viewport;
         _closeQuickAccess = close;
+        RibbonPopupInteraction.BeginBorrowedContent(this, viewport);
         if (original.TryFindResource(typeof(ScrollBar)) is Style scrollBarStyle)
             viewport.Resources[typeof(ScrollBar)] = scrollBarStyle;
         // Keep the ribbon's visible strip painted while its live presenter is in
@@ -108,6 +109,7 @@ public class RibbonGallery : ListBox
         _originalViewport = null;
         QuickAccessViewport = null;
         _closeQuickAccess = null;
+        RibbonPopupInteraction.EndBorrowedContent(this);
         SetValue(IsQuickAccessOpenProperty, false);
         if (this is InRibbonGallery gallery) gallery.RefreshAfterQuickAccess();
     }
@@ -193,6 +195,7 @@ public class RibbonGallery : ListBox
 
     private void OnItemContainerMouseEnter(object sender, MouseEventArgs e)
     {
+        if (RibbonPopupInteraction.IsHoverSuppressed((DependencyObject)sender)) return;
         object? item = ItemContainerGenerator.ItemFromContainer((DependencyObject)sender);
         if (item == DependencyProperty.UnsetValue)
         {

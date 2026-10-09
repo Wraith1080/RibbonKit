@@ -152,12 +152,86 @@ public class RibbonGroup : HeaderedItemsControl
     private PopupDismissHelper? _dismissHelper;
     private bool _focusLastItem;
     private bool _returnFocusOnClose;
+    private Border? _quickAccessHost;
+    private UIElement? _quickAccessContent;
+    private Action? _closeQuickAccess;
+    private Image? _quickAccessPreview;
+
+    internal UIElement? QuickAccessContent => _quickAccessContent;
+    internal void CloseQuickAccess() => _closeQuickAccess?.Invoke();
+
+    internal bool BeginQuickAccess(Border host, Ribbon owner, Action close)
+    {
+        CloseQuickAccess();
+        // An inactive tab may never have generated its groups. Realize its own
+        // host without selecting the tab, establishing the normal logical route
+        // for ribbon-scoped resources, inherited data and routed commands.
+        if (Parent is null && VisualTreeHelper.GetParent(this) is null)
+            foreach (var tab in owner.Tabs)
+                if (tab.Groups.Contains(this) && tab.Content is RibbonGroupsHost groupsHost)
+                {
+                    groupsHost.ApplyTemplate();
+                    groupsHost.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+                    break;
+                }
+        _collapsedButton?.SetCurrentValue(ToggleButton.IsCheckedProperty, false);
+        RestoreFlyoutContent();
+        ApplyTemplate();
+        if (!IsLoaded) Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        if (_normalHost?.Child is not FrameworkElement content) return false;
+
+        CloseNestedFlyouts(content);
+        var preview = GalleryStripPreview.Create(content, live: true);
+        _quickAccessPreview = preview;
+        // Retain the source's measured footprint even before it has been rendered.
+        UIElement placeholder = preview ?? (UIElement)new Border
+        {
+            Width = content.DesiredSize.Width, Height = content.DesiredSize.Height,
+            IsHitTestVisible = false,
+        };
+        _normalHost.Child = placeholder;
+        _quickAccessContent = content;
+        _quickAccessHost = host;
+        _closeQuickAccess = close;
+        RibbonPopupInteraction.BeginBorrowedContent(this, host);
+        ApplyStateRecursive(this, RibbonGroupSizeState.Large);
+        host.Child = content;
+        InvalidateMeasureRecursive(content);
+        CommandManager.InvalidateRequerySuggested();
+        return true;
+    }
+
+    internal void EndQuickAccess(Border host)
+    {
+        if (!ReferenceEquals(host, _quickAccessHost)) return;
+        GalleryStripPreview.DetachLive(_quickAccessPreview);
+        _quickAccessPreview = null;
+        if (_quickAccessContent is { } content)
+        {
+            CloseNestedFlyouts(content);
+            host.Child = null;
+            if (_normalHost is not null) _normalHost.Child = content;
+        }
+        _quickAccessContent = null;
+        _quickAccessHost = null;
+        _closeQuickAccess = null;
+        RibbonPopupInteraction.EndBorrowedContent(this);
+        ApplyStateRecursive(this, SizeState);
+        InvalidateMeasureRecursive(this);
+        CommandManager.InvalidateRequerySuggested();
+    }
 
     static RibbonGroup()
     {
         DefaultStyleKeyProperty.OverrideMetadata(
             typeof(RibbonGroup),
             new FrameworkPropertyMetadata(typeof(RibbonGroup)));
+    }
+
+    /// <summary>Initializes a ribbon group.</summary>
+    public RibbonGroup()
+    {
+        Unloaded += (_, _) => CloseQuickAccess();
     }
 
     /// <summary>The size state currently assigned by the sizing engine.</summary>
@@ -344,6 +418,9 @@ public class RibbonGroup : HeaderedItemsControl
     /// <inheritdoc />
     public override void OnApplyTemplate()
     {
+        CloseQuickAccess();
+        _collapsedButton?.SetCurrentValue(ToggleButton.IsCheckedProperty, false);
+        RestoreFlyoutContent();
         if (_popup is not null)
         {
             _popup.Opened -= OnPopupOpened;
@@ -423,6 +500,8 @@ public class RibbonGroup : HeaderedItemsControl
     {
         var group = (RibbonGroup)d;
         var state = (RibbonGroupSizeState)e.NewValue;
+        // A new adaptive probe must measure the real controls, never the preview.
+        group.CloseQuickAccess();
 
         if (state != RibbonGroupSizeState.Collapsed)
         {
@@ -445,6 +524,7 @@ public class RibbonGroup : HeaderedItemsControl
 
     private void OnPopupOpened(object? sender, EventArgs e)
     {
+        CloseQuickAccess();
         // Light-dismiss is managed explicitly (the popup uses StaysOpen=True so WPF's
         // capture-based dismissal never races the collapsed button's clicks).
         _dismissHelper ??= new PopupDismissHelper(
@@ -564,7 +644,7 @@ public class RibbonGroup : HeaderedItemsControl
     /// or are the primary part itself. A tree walk would have to hop the popup boundary between a
     /// menu item and its drop-down button, which is exactly where it would get this backwards.
     /// </remarks>
-    private static bool KeepsFlyoutOpen(object? originalSource) =>
+    internal static bool KeepsFlyoutOpen(object? originalSource) =>
         originalSource is FrameworkElement element
         && element.TemplatedParent switch
         {
@@ -573,6 +653,7 @@ public class RibbonGroup : HeaderedItemsControl
             RibbonDropDownButton => true,
             InRibbonGallery => true,
             RibbonComboBox => true,
+            RibbonGallery => true,
             _ => false,
         };
 
@@ -584,7 +665,7 @@ public class RibbonGroup : HeaderedItemsControl
 
         RestoreFlyoutContent();
 
-        if (returnFocus && _collapsedButton is { IsVisible: true, IsEnabled: true })
+        if (returnFocus && _dismissHelper?.WasPointerDismissed != true && _collapsedButton is { IsVisible: true, IsEnabled: true })
             _collapsedButton.Focus();
     }
 
@@ -607,18 +688,28 @@ public class RibbonGroup : HeaderedItemsControl
         }
     }
 
-    private static void CloseNestedFlyouts(DependencyObject node)
+    internal static void CloseNestedFlyouts(DependencyObject node)
     {
         switch (node)
         {
             case InRibbonGallery { IsDropDownOpen: true } gallery:
                 gallery.SetCurrentValue(InRibbonGallery.IsDropDownOpenProperty, false);
+                gallery.FlushPendingNativeClose();
+                break;
+
+            case RibbonGallery gallery:
+                gallery.CloseQuickAccess();
+                break;
+
+            case RibbonComboBox { IsDropDownOpen: true } combo:
+                combo.SetCurrentValue(ComboBox.IsDropDownOpenProperty, false);
                 break;
 
             // A drop-down or split button left open when the group flyout closes would otherwise
             // keep a popup alive over a button that is no longer where the user left it.
             case RibbonDropDownButton { IsDropDownOpen: true } dropDown:
                 dropDown.SetCurrentValue(RibbonDropDownButton.IsDropDownOpenProperty, false);
+                dropDown.EnsureBorrowedItemsReturned();
                 break;
         }
 

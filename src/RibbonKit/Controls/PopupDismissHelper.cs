@@ -28,6 +28,11 @@ internal sealed class PopupDismissHelper
     private readonly Func<Popup?> _getPopup;
     private readonly Action _close;
     private Window? _window;
+    private Ribbon? _quickAccessRibbon;
+
+    // Popup.Closed can arrive after the outside button has acquired focus/capture.
+    // Restoring the opener then cancels ButtonBase's press before mouse-up.
+    internal bool WasPointerDismissed { get; private set; }
 
     // Moving an open flyout's anchor with a render-only glide would leave its
     // native popup window at the final layout position until the next placement pass.
@@ -51,6 +56,7 @@ internal sealed class PopupDismissHelper
     public void OnOpened()
     {
         OnClosed(); // Defensive: never double-subscribe.
+        WasPointerDismissed = false;
 
         _window = Window.GetWindow(_owner);
         if (_window is null)
@@ -68,6 +74,13 @@ internal sealed class PopupDismissHelper
         List<PopupDismissHelper> stack = OpenStackByWindow.GetOrCreateValue(_window);
         stack.Remove(this);
         stack.Add(this);
+        _quickAccessRibbon = (Ribbon?)_owner.GetValue(RibbonPopupInteraction.QuickAccessOwnerProperty);
+        if (_quickAccessRibbon is not null)
+        {
+            RibbonPopupInteraction.SetSuppressHover(_quickAccessRibbon, true);
+            if (_getPopup()?.Child is { } child)
+                RibbonPopupInteraction.SetSuppressHover(child, false);
+        }
     }
 
     /// <summary>Call from the popup's Closed event.</summary>
@@ -89,9 +102,12 @@ internal sealed class PopupDismissHelper
         if (OpenStackByWindow.TryGetValue(window, out List<PopupDismissHelper>? stack))
         {
             stack.Remove(this);
+            if (_quickAccessRibbon is { } ribbon)
+                RibbonPopupInteraction.SetSuppressHover(ribbon, stack.Any(h => ReferenceEquals(h._quickAccessRibbon, ribbon)));
         }
 
         _window = null;
+        _quickAccessRibbon = null;
     }
 
     private void OnWindowPreviewMouseDown(object sender, MouseButtonEventArgs e)
@@ -101,7 +117,26 @@ internal sealed class PopupDismissHelper
         // (whose own toggle click handles open/close) or, defensively, in the popup.
         if (e.OriginalSource is DependencyObject source && !IsInsideOwnerOrPopup(source))
         {
-            _close();
+            // A borrowed group is painted by a noninteractive preview. Restore it
+            // before resolving the press, then let the real target use its normal
+            // button/input path (including the subsequent native mouse-up).
+            RibbonGroup? previewGroup = FindBorrowedGroup(source);
+            Point point = previewGroup is null ? default : e.GetPosition(previewGroup);
+            DismissForPointer(source);
+            if (previewGroup is not null && previewGroup.QuickAccessContent is null)
+            {
+                previewGroup.UpdateLayout();
+                Mouse.Synchronize();
+                if (previewGroup.InputHitTest(point) is UIElement target && !ReferenceEquals(target, source))
+                {
+                    e.Handled = true;
+                    var press = new MouseButtonEventArgs(e.MouseDevice, e.Timestamp, e.ChangedButton, e.StylusDevice)
+                        { RoutedEvent = Mouse.PreviewMouseDownEvent };
+                    target.RaiseEvent(press);
+                    press.RoutedEvent = Mouse.MouseDownEvent;
+                    target.RaiseEvent(press);
+                }
+            }
         }
     }
 
@@ -110,7 +145,23 @@ internal sealed class PopupDismissHelper
         // Dismiss even when a host handles touch and suppresses mouse promotion.
         // Leave the event available to the touched control's own interaction.
         if (e.OriginalSource is DependencyObject source && !IsInsideOwnerOrPopup(source))
-            _close();
+            DismissForPointer(source);
+    }
+
+    private void DismissForPointer(DependencyObject source)
+    {
+        if (_window is null || !OpenStackByWindow.TryGetValue(_window, out var stack)) return;
+        var outside = stack.Where(h => !h.IsInsideOwnerOrPopup(source)).ToArray();
+        // Mark every containing flyout before any close can unload a nested owner.
+        foreach (var helper in outside) helper.WasPointerDismissed = true;
+        for (int i = outside.Length - 1; i >= 0; i--) outside[i]._close();
+    }
+
+    private static RibbonGroup? FindBorrowedGroup(DependencyObject source)
+    {
+        for (DependencyObject? node = source; node is not null; node = GetParent(node))
+            if (node is RibbonGroup { QuickAccessContent: not null } group) return group;
+        return null;
     }
 
     private void OnWindowPreviewKeyDown(object sender, KeyEventArgs e)

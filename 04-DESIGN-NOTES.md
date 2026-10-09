@@ -904,6 +904,14 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [Follow arranged tile rows instead of accumulating viewport-height steps](docs/history/01-library.md#3237-gallery-row-scrolling-stays-aligned-after-direction-reversals--2026-10-09).
 
+### 3.238 Ribbon groups in Quick Access Toolbar — 2026-10-09
+
+[QAT-only group discovery, original-content flyouts, safe restoration and persistence](docs/history/01-library.md#3238-ribbon-groups-in-quick-access-toolbar--2026-10-09).
+
+### 3.239 QAT popup input, hover and group-caption menu — 2026-10-09
+
+[Preserve outside presses, pause shared ribbon hover and restore preview targets before input](docs/history/01-library.md#3239-qat-popup-input-hover-and-group-caption-menu--2026-10-09).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),

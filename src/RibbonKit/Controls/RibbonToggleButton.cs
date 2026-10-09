@@ -162,7 +162,7 @@ public class RibbonToggleButton : ToggleButton, IRibbonSizeAware
     protected override void OnPropertyChanged(DependencyPropertyChangedEventArgs e)
     {
         base.OnPropertyChanged(e);
-        if (e.Property == IsMouseOverProperty
+        if (e.Property == RibbonPopupInteraction.IsHoveredProperty
             || e.Property == IsPressedProperty
             || e.Property == IsCheckedProperty
             || e.Property == Ribbon.QatOnColoredSurfaceProperty)
@@ -176,7 +176,7 @@ public class RibbonToggleButton : ToggleButton, IRibbonSizeAware
     private void UpdateWashes()
     {
         bool neutral = !Ribbon.GetQatOnColoredSurface(this);
-        RibbonMotion.FadeWash(_hoverWash, neutral && IsMouseOver, RibbonAnimationAction.Hover);
+        RibbonMotion.FadeWash(_hoverWash, neutral && RibbonPopupInteraction.GetIsHovered(this), RibbonAnimationAction.Hover);
         RibbonMotion.FadeWash(_pressWash, neutral && IsPressed, RibbonAnimationAction.Hover);
         RibbonMotion.FadeWash(_checkWash, neutral && IsChecked == true, RibbonAnimationAction.ToggleState);
     }

@@ -8037,3 +8037,99 @@ and normal Debug Showcase builds passed with zero warnings/errors. New live
 row-scrolling acceptance, full-suite and native monitor/DPI checks remain pending
 or deferred. The earlier broader Touch consumer's selection-visibility assertion
 is a separate unresolved verification gap.
+
+### 3.238 Ribbon groups in Quick Access Toolbar — 2026-10-09
+
+Customize QAT discovers whole groups without changing Customize Ribbon's command
+catalog. `AddToQuickAccess` and overflow use an internal group dropdown, shared
+templates and a theme-colored vector fallback icon. No public symbols or generic
+projection-provider API were added. Existing Showcase groups demonstrate it
+through the shared customization page; the RTL lab keeps additions manual.
+
+The source owns one transfer of its `PART_NormalHost` content, preserving items,
+logical ownership, resources, data/selection bindings, handlers and dialog launcher.
+A temporary vector preview retains a visible group's footprint. Inactive tabs
+generate their own group host without changing tab selection; checking only
+`Parent` is insufficient because WPF's own items containers may have a visual
+parent and no logical Parent. Nested command routes finish through the source,
+and command requery refreshes enabled state after each handoff.
+
+Native collapsed opening and another copy return the previous borrower first.
+Close/removal, disabled/parked sources, overflow dismissal, template replacement
+and adaptive state changes return content synchronously. Nested galleries return
+their presenters before the outer group; opening a group also closes a standalone
+QAT gallery copy of its content. Overflow removes stale cached entries and closed
+snapshots so they cannot retain a removed group's tree. Command-click closure is
+deferred and guarded against a newer opening.
+
+The root group KeyTip descends into native controls and the launcher, rather than
+invoking the group as a leaf. Activating a nested input retains every containing
+surface, including overflow. Spatial keys keep normal group navigation, while
+Up/Down reaches a nested dropdown's opener; Escape follows the existing stack.
+The popup exposes native control peers under a named Group peer, with the standard
+ExpandCollapse provider on its opener.
+
+Existing command IDs identify group references. Separate automatic group paths
+leave previous command/combo/gallery IDs unchanged; custom-group references resolve
+after reconstruction. Import uses the existing duplicate prevention, rejects group
+references as custom-group commands, and retains transient merge exclusions.
+
+All 58 final focused Release runtime checks pass, including 13 new group cases,
+existing overflow, serialization and combo KeyTips. The initial RibbonKit-only
+consumer passed 288 theme/light-dark/density/direction/simulated-DPI/placement
+layout and state cases. Its final four Office/Crystal Compact/Touch previews and
+nested overflow input checks pass after the cleanup corrections. It covers scoped
+resources and routed commands on inactive tabs, native nested controls, selection,
+preview, UIA, bounds, keyboard/focus return, persistence and removal. Popup renders
+were inspected. Release solution and normal Debug Showcase builds pass without
+warnings/errors.
+
+Full validation was stopped at user request. The interrupted runtime run completed
+629/631 checks: one obsolete group-unsupported assertion was corrected and passes
+in the focused run; an Office2013 LTR focus-adorner failure remains for later
+verification. The visual actual/diff for `office2024-rtl-qat-customize-100` shows
+the intended new available-group rows; approvals were not changed. Writer testing
+was interrupted and full portability did not run. Current live acceptance and
+deferred gates are maintained in the custom-control integration plan.
+
+### 3.239 QAT popup input, hover and group-caption menu — 2026-10-09
+
+Outside mouse/touch dismissal marks every containing flyout before closing them
+from the inside out. Dropdown and group close paths preserve the new target's
+focus and capture instead of restoring their opener after its down phase. That
+late focus restoration could cancel a `ButtonBase` press before mouse-up, causing
+the reported flash and missed command, including File/orb. Keyboard dismissal
+retains the existing focus return.
+
+Shared templates and hover washes use an internal effective-hover state while
+QAT flyouts are open. The ribbon body, tab headers and File/orb pause hover and
+ScreenTips; the QAT and popup controls remain interactive. Visual location
+determines suppression because borrowed items retain their source's logical
+group/gallery parent. Original group/gallery templates therefore stay paused
+while their transferred controls and tiles remain hoverable. Group and gallery
+handoffs carry the internal QAT-owner context to nested flyouts and clear it on
+return. No public API or theme keys were added.
+
+A mouse press on a group's vector preview first dismisses the popup and restores
+the real tree. A fresh hit test then delivers the press through the target's
+normal input route, followed by native mouse-up. Group caption/label-band and
+collapsed-button targets resolve to the existing themed QAT context menu, with
+normal duplicate handling. Other commands retain their own menu targets and
+custom editors retain their editing menus.
+
+70 focused Release runtime checks pass, covering all four QAT popup kinds,
+overflow, delayed-close focus/capture, paused hover, borrowed tiles/collapsed
+chrome, caption resolution, and existing group/combo/gallery/KeyTip behavior.
+The strengthened collapsed-source setup was rerun separately and passes. The
+RibbonKit-only consumer's nested keyboard check passes. Its opt-in
+`QuickAccessPopupInput` scope passes eight native mouse scenarios: group, combo,
+gallery and dropdown in Office2007 Compact/LTR and Office2024 Touch/RTL. These
+verify command execution, File/orb opening, tab selection, shared hover paint,
+group-preview click-through and caption-menu opening while a QAT group is open.
+The check uses an unlocked desktop and idle input and stays outside the normal
+portability aggregate. It is automated input evidence, not manual acceptance.
+
+Release solution and normal Debug Showcase builds pass with zero warnings/errors.
+The full suite and previously deferred visual approval/focus follow-up remain
+deferred, along with manual mouse/keyboard review, physical touch, reduced motion
+and native mixed-monitor DPI acceptance.

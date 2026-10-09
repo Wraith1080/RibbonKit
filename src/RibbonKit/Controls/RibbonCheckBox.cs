@@ -85,7 +85,7 @@ public class RibbonCheckBox : CheckBox
     protected override void OnPropertyChanged(DependencyPropertyChangedEventArgs e)
     {
         base.OnPropertyChanged(e);
-        if (e.Property == IsMouseOverProperty || e.Property == IsPressedProperty)
+        if (e.Property == RibbonPopupInteraction.IsHoveredProperty || e.Property == IsPressedProperty)
         {
             UpdateWashes();
         }
@@ -99,7 +99,7 @@ public class RibbonCheckBox : CheckBox
 
     private void UpdateWashes()
     {
-        RibbonMotion.FadeWash(_hoverWash, IsMouseOver, RibbonAnimationAction.Hover);
+        RibbonMotion.FadeWash(_hoverWash, RibbonPopupInteraction.GetIsHovered(this), RibbonAnimationAction.Hover);
         RibbonMotion.FadeWash(_pressWash, IsPressed, RibbonAnimationAction.Hover);
     }
 

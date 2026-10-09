@@ -159,7 +159,7 @@ public class RibbonButton : Button, IRibbonSizeAware
     protected override void OnPropertyChanged(DependencyPropertyChangedEventArgs e)
     {
         base.OnPropertyChanged(e);
-        if (e.Property == IsMouseOverProperty
+        if (e.Property == RibbonPopupInteraction.IsHoveredProperty
             || e.Property == IsPressedProperty
             || e.Property == Ribbon.QatOnColoredSurfaceProperty)
         {
@@ -172,7 +172,7 @@ public class RibbonButton : Button, IRibbonSizeAware
     private void UpdateWashes()
     {
         bool neutral = !Ribbon.GetQatOnColoredSurface(this);
-        RibbonMotion.FadeWash(_hoverWash, neutral && IsMouseOver, RibbonAnimationAction.Hover);
+        RibbonMotion.FadeWash(_hoverWash, neutral && RibbonPopupInteraction.GetIsHovered(this), RibbonAnimationAction.Hover);
         RibbonMotion.FadeWash(_pressWash, neutral && IsPressed, RibbonAnimationAction.Hover);
     }
 

@@ -71,7 +71,14 @@ public class RibbonQuickAccessToolBar : ItemsControl
     /// including the title bar — where the toolbar is hosted by the window, outside the ribbon's
     /// visual tree, so it cannot be found by walking up.
     /// </summary>
-    internal Ribbon? Owner { get; set; }
+    internal Ribbon? Owner
+    {
+        get => (Ribbon?)GetValue(RibbonPopupInteraction.QuickAccessOwnerProperty);
+        set => SetValue(RibbonPopupInteraction.QuickAccessOwnerProperty, value);
+    }
+
+    /// <summary>Initializes the quick access strip.</summary>
+    public RibbonQuickAccessToolBar() => RibbonPopupInteraction.SetSuppressHover(this, false);
 
     /// <summary>The chevron that opens the overflow flyout, exposed for the KeyTip service.</summary>
     internal ToggleButton? OverflowButton => _overflowButton;
@@ -132,10 +139,14 @@ public class RibbonQuickAccessToolBar : ItemsControl
         // Deferred to Background so the collection change finishes dispatching first: closing can
         // make a drop-down entry return its borrowed menu items, and §3.19's rule is never to
         // reparent a menu item mid-dispatch.
-        if (_overflowPopup is { IsOpen: true })
+        Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
         {
-            Dispatcher.BeginInvoke(DispatcherPriority.Background, (Action)CloseOverflow);
-        }
+            if (_overflowPopup is { IsOpen: true }) CloseOverflow();
+            PruneEntries();
+            // A closed snapshot must not retain a removed group's source tree.
+            if (_overflowPopup is not { IsOpen: true } && _overflowHost is not null)
+                _overflowHost.ItemsSource = null;
+        }));
     }
 
     /// <summary>

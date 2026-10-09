@@ -138,7 +138,7 @@
                              AFTER hover so it wins while the button is held. -->
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
-                                <Condition Property="IsMouseOver" Value="True" />
+                                <Condition Property="controls:RibbonPopupInteraction.IsHovered" Value="True" />
                                 <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
                             </MultiTrigger.Conditions>
                             <Setter TargetName="Chrome" Property="Background"
@@ -365,7 +365,7 @@
                         </Trigger>
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
-                                <Condition Property="IsMouseOver" Value="True" />
+                                <Condition Property="controls:RibbonPopupInteraction.IsHovered" Value="True" />
                                 <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
                             </MultiTrigger.Conditions>
                             <Setter TargetName="Chrome" Property="Background"
@@ -497,7 +497,7 @@
                             <Setter TargetName="HeaderPresenter" Property="Content"
                                     Value="{Binding Content, RelativeSource={RelativeSource TemplatedParent}}" />
                         </Trigger>
-                        <Trigger Property="IsMouseOver" Value="True">
+                        <Trigger Property="controls:RibbonPopupInteraction.IsHovered" Value="True">
                             <Setter TargetName="Indicator" Property="BorderBrush"
                                     Value="{DynamicResource RibbonKit.Brushes.Option.SelectedBorder}" />
                         </Trigger>
@@ -597,7 +597,7 @@
                             <Setter TargetName="HeaderPresenter" Property="Content"
                                     Value="{Binding Content, RelativeSource={RelativeSource TemplatedParent}}" />
                         </Trigger>
-                        <Trigger Property="IsMouseOver" Value="True">
+                        <Trigger Property="controls:RibbonPopupInteraction.IsHovered" Value="True">
                             <Setter TargetName="Indicator" Property="Stroke"
                                     Value="{DynamicResource RibbonKit.Brushes.Option.SelectedBorder}" />
                         </Trigger>

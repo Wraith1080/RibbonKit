@@ -14,9 +14,43 @@ fresh-view contract below remains a candidate for third-party controls. A tempor
 vector preview preserves the visible source strip while a gallery copy is open;
 closing restores the live strip and reveals the committed selection.
 
-Group-to-QAT support remains a later slice. The user requires group entries to
-appear and be addable only in Customize QAT, with those entries excluded from
-Customize Ribbon. Individual commands keep their normal customization availability.
+Group-to-QAT support is implemented as a separate internal projection. Group
+entries appear and are addable only in Customize QAT, with those entries excluded
+from Customize Ribbon. Individual commands keep their normal customization
+availability. The generic provider API below remains a proposal.
+
+The source group owns one content handoff, reusing the shared collapsed-group
+template content. A vector preview retains its visible footprint while borrowed.
+Native/QAT/overflow opening, close/removal, template changes and adaptive resizing
+restore that tree and nested popups. Inactive tabs establish their normal resource
+and command route without changing selection. Persistence uses existing group IDs
+and resolves custom groups after rebuilding them.
+
+Current group slice verification (2026-10-09): 58 focused runtime checks pass,
+including 13 group checks. The independent consumer's initial 288-case layout/state
+matrix passed; final Office/Crystal Compact/Touch previews and nested overflow
+keyboard checks pass after the cleanup corrections. Release solution and normal
+Debug Showcase builds pass with zero warnings/errors. Detailed implementation and
+evidence are in [library history §3.238](history/01-library.md#3238-ribbon-groups-in-quick-access-toolbar--2026-10-09).
+
+The QAT popup follow-up implements outside-click focus/capture preservation,
+paused ribbon/tab hover and ScreenTips, click-through restoration of a group's
+preview, and the existing QAT menu on group captions. It adds no public API.
+70 focused Release runtime checks pass; the final collapsed-source case was also
+rerun after strengthening its setup. The independent consumer's nested keyboard
+check and eight native mouse scenarios pass (four popup kinds in Office2007
+Compact/LTR and Office2024 Touch/RTL), including commands, File/orb, tab selection,
+preview click-through and the themed caption menu. Manual review remains pending.
+Details are in [library history §3.239](history/01-library.md#3239-qat-popup-input-hover-and-group-caption-menu--2026-10-09).
+
+Full validation is deferred by user direction. The interrupted run completed
+631 runtime checks (629 passed, an obsolete group-unsupported assertion now
+corrected and passing, plus an Office2013 LTR focus-adorner failure remaining for
+later verification). Its visual run stopped at `office2024-rtl-qat-customize-100`:
+actual/diff images show the intended added group rows; approvals remain unchanged
+pending live review. Writer testing was interrupted and the unfiltered portability
+aggregate did not run. Live mouse/keyboard, physical touch, reduced-motion and
+native mixed-monitor DPI acceptance remain pending.
 
 ## Capability and lifetime contract
 

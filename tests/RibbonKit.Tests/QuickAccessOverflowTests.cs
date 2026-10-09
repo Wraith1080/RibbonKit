@@ -188,7 +188,7 @@ public class QuickAccessOverflowTests
         var ribbon = new Ribbon();
         FrameworkElement[] unsupported =
         {
-            new RibbonGroup(),
+            new RibbonTextBox(),
             new Button(),
         };
 

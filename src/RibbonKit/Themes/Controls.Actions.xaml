@@ -13,13 +13,13 @@
         <Setter Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}" />
         <Setter Property="BorderThickness" Value="1" />
         <Style.Triggers>
-            <Trigger Property="IsMouseOver" Value="True">
+            <Trigger Property="controls:RibbonPopupInteraction.IsHovered" Value="True">
                 <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
             </Trigger>
             <MultiTrigger>
                 <MultiTrigger.Conditions>
                     <Condition Property="controls:ActionChrome.UseGlassMaterial" Value="True" />
-                    <Condition Property="IsMouseOver" Value="True" />
+                    <Condition Property="controls:RibbonPopupInteraction.IsHovered" Value="True" />
                 </MultiTrigger.Conditions>
                 <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Tab.SelectedBackground}" />
             </MultiTrigger>
